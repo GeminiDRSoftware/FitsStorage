@@ -1,3 +1,6 @@
+import sys
+sys.path.append('/data/pythonpath/lib/python2.5/site-packages')
+
 import sqlalchemy
 import sqlalchemy.orm
 import os
