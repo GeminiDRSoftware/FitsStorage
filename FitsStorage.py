@@ -16,7 +16,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 # Configure the path to the storage root here for now
-storage_root = '/net/wikiwiki/dataflow'
+storage_root = '/data/dataflow'
 
 # We need to handle the database connection in here too so that the
 # orm can properly handle the relations defined in the database
