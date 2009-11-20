@@ -6,7 +6,7 @@ from mod_python import apache
 
 import sys
 import FitsStorage
-from FitsStorageWebSummary import webhdrsummary, list_headers
+from FitsStorageWebSummary import *
 
 import re
 
@@ -77,14 +77,4 @@ def debugmessage(req):
   req.write("Pythonpath: %s\n" % (str(sys.path)))
   req.write("uri: %s\n" % (str(req.uri)))
   return apache.OK
-
-def summary(req, progid, obsid, date):
-  req.content_type = "text/plain"
-  req.write("This is the python summary handler\n")
-  req.write("%s: %s\n" %('progid', progid))
-  req.write("%s: %s\n" %('obsid', obsid))
-  req.write("%s: %s\n" %('date', date))
-  webhdrsummary(req, list_headers(progid, obsid, date))
-  return apache.OK
-
 
