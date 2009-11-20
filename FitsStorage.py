@@ -1,5 +1,4 @@
 import sys
-sys.path.append('/data/pythonpath/lib/python2.5/site-packages')
 
 import sqlalchemy
 import sqlalchemy.orm
@@ -13,7 +12,7 @@ from sqlalchemy import Table, Column, MetaData, ForeignKey
 from sqlalchemy import Integer, String, Boolean, Text, DateTime
 from sqlalchemy.databases.postgres import PGBigInteger
 
-from sqlalchemy.orm import relation, backref
+from sqlalchemy.orm import relation, backref, join
 
 from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
@@ -112,13 +111,21 @@ class Header(Base):
   def populate_fits(self, diskfile):
     fullpath = diskfile.file.fullpath()
     hdulist = pyfits.open(fullpath)
-    self.progid = hdulist[0].header['GEMPRGID']
-    self.obsid = hdulist[0].header['OBSID']
-    self.datalab = hdulist[0].header['DATALAB']
-    self.telescope = hdulist[0].header['TELESCOP']
-    self.instrument = hdulist[0].header['INSTRUME']
-    datetime_string = hdulist[0].header['DATE-OBS'] +' '+ hdulist[0].header['TIME-OBS']
-    self.utdatetime = dateutil.parser.parse(datetime_string)
-    self.obstype = hdulist[0].header['OBSTYPE']
+    self.progid = self.get_header(hdulist[0], 'GEMPRGID')
+    self.obsid = self.get_header(hdulist[0], 'OBSID')
+    self.datalab = self.get_header(hdulist[0], 'DATALAB')
+    self.telescope = self.get_header(hdulist[0], 'TELESCOP')
+    self.instrument = self.get_header(hdulist[0], 'INSTRUME')
+    datetime_string = self.get_header(hdulist[0], 'DATE-OBS') +' '+ self.get_header(hdulist[0], 'TIME-OBS')
+    if(len(datetime_string) > 13):
+      self.utdatetime = dateutil.parser.parse(datetime_string)
+    self.obstype = self.get_header(hdulist[0], 'OBSTYPE')
     hdulist.close()
 
+  def get_header(self, hdu, keyword):
+    try:
+      retary = hdu.header[keyword]
+    except:
+      retary=''
+      print "keyword not present: ", keyword
+    return retary
