@@ -18,7 +18,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 # Configure the path to the storage root here for now
-storage_root = '/data/dataflow'
+storage_root = '/net/wikiwiki/dataflow'
 
 # We need to handle the database connection in here too so that the
 # orm can properly handle the relations defined in the database
@@ -49,7 +49,9 @@ class File(Base):
     return os.path.join(storage_root, self.path, self.filename)
 
   def exists(self):
-    return os.access(self.fullpath(), os.F_OK | os.R_OK)
+    exists = os.access(self.fullpath(), os.F_OK | os.R_OK)
+    isfile = os.path.isfile(self.fullpath())
+    return (exists and isfile)
 
   def size(self):
     return os.path.getsize(self.fullpath())
