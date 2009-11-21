@@ -12,7 +12,7 @@ def ingest_file(filename, path):
   # First check if the file exists
   if(not(file.exists())):
     print "cannot access ", file.fullpath
-    exit
+    return
 
   # Check if this filename is already in the database
 
