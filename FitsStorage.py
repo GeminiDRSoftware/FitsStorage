@@ -7,6 +7,7 @@ import pyfits
 import datetime
 import dateutil.parser
 import zlib
+import re
 
 from sqlalchemy import Table, Column, MetaData, ForeignKey
 from sqlalchemy import Integer, String, Boolean, Text, DateTime, Time, Numeric
@@ -18,7 +19,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 # Configure the path to the storage root here for now
-storage_root = '/net/wikiwiki/dataflow'
+storage_root = '/data/dataflow'
 
 # We need to handle the database connection in here too so that the
 # orm can properly handle the relations defined in the database
@@ -130,44 +131,56 @@ class Header(Base):
   def populate_fits(self, diskfile):
     fullpath = diskfile.file.fullpath()
     # Try and open it as a fits file
+    hdulist=[]
     try:
       hdulist = pyfits.open(fullpath)
-      if(len(hdulist)):
-        self.progid = self.get_header(hdulist[0], 'GEMPRGID')
-        self.obsid = self.get_header(hdulist[0], 'OBSID')
-        self.datalab = self.get_header(hdulist[0], 'DATALAB')
-        self.telescope = self.get_header(hdulist[0], 'TELESCOP')
-        self.instrument = self.get_header(hdulist[0], 'INSTRUME')
-        datestring = self.get_header(hdulist[0], 'DATE-OBS')
-        timestring = self.get_header(hdulist[0], 'TIME-OBS')
-        if(datestring and timestring):
-          datetime_string = "%s %s" % (self.get_header(hdulist[0], 'DATE-OBS'), self.get_header(hdulist[0], 'TIME-OBS'))
-          self.utdatetime = dateutil.parser.parse(datetime_string)
-        localtime_string = self.get_header(hdulist[0], 'LT')
-        if(localtime_string):
-          # This is a bit of a hack so as to use the nice parser
-          self.localtime = dateutil.parser.parse("2000-01-01 %s" % (localtime_string)).time()
-        self.obstype = self.get_header(hdulist[0], 'OBSTYPE')
-        self.obsclass = self.get_header(hdulist[0], 'OBSCLASS')
-        self.observer = self.get_header(hdulist[0], 'OBSERVER')
-        self.ssa = self.get_header(hdulist[0], 'SSA')
-        self.object = self.get_header(hdulist[0], 'OBJECT')
-        self.ra = self.get_header(hdulist[0], 'RA')
-        self.dec = self.get_header(hdulist[0], 'DEC')
-        self.az = self.get_header(hdulist[0], 'AZIMUTH')
-        self.el = self.get_header(hdulist[0], 'ELEVATIO')
-        self.crpa = self.get_header(hdulist[0], 'CRPA')
-        self.rawiq = self.get_header(hdulist[0], 'RAWIQ')
-        self.rawcc = self.get_header(hdulist[0], 'RAWCC')
-        self.rawwv = self.get_header(hdulist[0], 'RAWWV')
-        self.rawbg = self.get_header(hdulist[0], 'RAWBG')
-        self.rawpireq = self.get_header(hdulist[0], 'RAWPIREQ')
-        self.rawgemqa = self.get_header(hdulist[0], 'RAWGEMQA')
-      else:
-        print "Not a valid FITS file - not attempting to read headers"
-      hdulist.close()
     except:
       print "Not a valid FITS file - not attempting to read headers"
+    if(len(hdulist)):
+      self.progid = self.get_header(hdulist[0], 'GEMPRGID')
+      self.obsid = self.get_header(hdulist[0], 'OBSID')
+      self.datalab = self.get_header(hdulist[0], 'DATALAB')
+      self.telescope = self.get_header(hdulist[0], 'TELESCOP')
+      self.instrument = self.get_header(hdulist[0], 'INSTRUME')
+      datestring = self.get_header(hdulist[0], 'DATE-OBS')
+      timestring = self.get_header(hdulist[0], 'TIME-OBS')
+      if(not timestring):
+        timestring = self.get_header(hdulist[0], 'UT')
+      if(datestring and timestring):
+        datetime_string = "%s %s" % (datestring, timestring)
+        self.utdatetime = dateutil.parser.parse(datetime_string)
+      if(not datestring):
+        # Bleah. Bodge it from the filename for now
+        fn = diskfile.file.filename
+        datestring = fn[1:9]
+        if(re.match('20\d\d[01]\d[0123]\d', datestring)):
+          # Assume it's a valid datestring
+          # We'll stick these at 23:59:59.99 to put them at the end of the day
+          datetime_string = "%s %s" % (datestring, '23:59:59.99')
+          self.utdatetime = dateutil.parser.parse(datetime_string)
+      localtime_string = self.get_header(hdulist[0], 'LT')
+      if(localtime_string):
+        # This is a bit of a hack so as to use the nice parser
+        self.localtime = dateutil.parser.parse("2000-01-01 %s" % (localtime_string)).time()
+      self.obstype = self.get_header(hdulist[0], 'OBSTYPE')
+      self.obsclass = self.get_header(hdulist[0], 'OBSCLASS')
+      self.observer = self.get_header(hdulist[0], 'OBSERVER')
+      self.ssa = self.get_header(hdulist[0], 'SSA')
+      self.object = self.get_header(hdulist[0], 'OBJECT')
+      self.ra = self.get_header(hdulist[0], 'RA')
+      self.dec = self.get_header(hdulist[0], 'DEC')
+      self.az = self.get_header(hdulist[0], 'AZIMUTH')
+      self.el = self.get_header(hdulist[0], 'ELEVATIO')
+      self.crpa = self.get_header(hdulist[0], 'CRPA')
+      self.rawiq = self.get_header(hdulist[0], 'RAWIQ')
+      self.rawcc = self.get_header(hdulist[0], 'RAWCC')
+      self.rawwv = self.get_header(hdulist[0], 'RAWWV')
+      self.rawbg = self.get_header(hdulist[0], 'RAWBG')
+      self.rawpireq = self.get_header(hdulist[0], 'RAWPIREQ')
+      self.rawgemqa = self.get_header(hdulist[0], 'RAWGEMQA')
+    else:
+      print "Not a valid FITS file - not attempting to read headers"
+    hdulist.close()
      
 
   def get_header(self, hdu, keyword):
