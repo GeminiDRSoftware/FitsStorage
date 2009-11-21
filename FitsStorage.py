@@ -9,7 +9,7 @@ import dateutil.parser
 import zlib
 
 from sqlalchemy import Table, Column, MetaData, ForeignKey
-from sqlalchemy import Integer, String, Boolean, Text, DateTime
+from sqlalchemy import Integer, String, Boolean, Text, DateTime, Time, Numeric
 from sqlalchemy.databases.postgres import PGBigInteger
 
 from sqlalchemy.orm import relation, backref, join
@@ -99,7 +99,24 @@ class Header(Base):
   telescope = Column(Text)
   instrument = Column(Text)
   utdatetime = Column(DateTime(timezone=False))
+  localtime = Column(Time(timezone=False))
   obstype = Column(Text)
+  obsclass = Column(Text)
+  observer = Column(Text)
+  ssa = Column(Text)
+  object = Column(Text)
+  ra = Column(Numeric)
+  dec = Column(Numeric)
+  az = Column(Numeric)
+  el = Column(Numeric)
+  crpa = Column(Numeric)
+  rawiq = Column(Text)
+  rawcc = Column(Text)
+  rawwv = Column(Text)
+  rawbg = Column(Text)
+  rawpireq = Column(Text)
+  rawgemqa = Column(Text)
+  
 
   def __init__(self, diskfile):
     self.diskfile_id = diskfile.id
@@ -116,16 +133,39 @@ class Header(Base):
     self.datalab = self.get_header(hdulist[0], 'DATALAB')
     self.telescope = self.get_header(hdulist[0], 'TELESCOP')
     self.instrument = self.get_header(hdulist[0], 'INSTRUME')
-    datetime_string = self.get_header(hdulist[0], 'DATE-OBS') +' '+ self.get_header(hdulist[0], 'TIME-OBS')
-    if(len(datetime_string) > 13):
+    datestring = self.get_header(hdulist[0], 'DATE-OBS')
+    timestring = self.get_header(hdulist[0], 'TIME-OBS')
+    if(datestring and timestring):
+      datetime_string = "%s %s" % (self.get_header(hdulist[0], 'DATE-OBS'), self.get_header(hdulist[0], 'TIME-OBS'))
       self.utdatetime = dateutil.parser.parse(datetime_string)
+    localtime_string = self.get_header(hdulist[0], 'LT')
+    if(localtime_string):
+      # This is a bit of a hack so as to use the nice parser
+      self.localtime = dateutil.parser.parse("2000-01-01 %s" % (localtime_string)).time()
     self.obstype = self.get_header(hdulist[0], 'OBSTYPE')
+    self.obsclass = self.get_header(hdulist[0], 'OBSCLASS')
+    self.observer = self.get_header(hdulist[0], 'OBSERVER')
+    self.ssa = self.get_header(hdulist[0], 'SSA')
+    self.object = self.get_header(hdulist[0], 'OBJECT')
+    self.ra = self.get_header(hdulist[0], 'RA')
+    self.dec = self.get_header(hdulist[0], 'DEC')
+    self.az = self.get_header(hdulist[0], 'AZIMUTH')
+    self.el = self.get_header(hdulist[0], 'ELEVATIO')
+    self.crpa = self.get_header(hdulist[0], 'CRPA')
+    self.rawiq = self.get_header(hdulist[0], 'RAWIQ')
+    self.rawcc = self.get_header(hdulist[0], 'RAWCC')
+    self.rawwv = self.get_header(hdulist[0], 'RAWWV')
+    self.rawbg = self.get_header(hdulist[0], 'RAWBG')
+    self.rawpireq = self.get_header(hdulist[0], 'RAWPIREQ')
+    self.rawgemqa = self.get_header(hdulist[0], 'RAWGEMQA')
     hdulist.close()
 
   def get_header(self, hdu, keyword):
+    # If the keyword is not present, do not return anything
+    # This is better than returning an emtpy string as it works with numeric types too
     try:
-      retary = hdu.header[keyword]
+      val = hdu.header[keyword]
+      if(val):
+        return(val)
     except:
-      retary=''
       print "keyword not present: ", keyword
-    return retary
