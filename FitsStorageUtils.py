@@ -5,7 +5,7 @@ def create_tables():
   DiskFile.metadata.create_all(bind=pg_db)
   Header.metadata.create_all(bind=pg_db)
 
-def ingest_file(filename, path):
+def ingest_file(filename, path, force_crc):
   # Make a file instance
   file = File(filename, path)
 
@@ -35,22 +35,23 @@ def ingest_file(filename, path):
     #print "already present in diskfile table..."
     # Ensure there's only one and get an instance of it
     diskfile = query.one()
-    # Has the lastmod time changed since we last recorded it?
+    # Has the file changed since we last recorded it?
+    # By default check lastmod time first
     # there is a subelty wrt timezones here.
-    if(diskfile.lastmod.replace(tzinfo=None) == diskfile.file.lastmod()):
-      #print "lastmod time not changed - not updating"
-      add_diskfile=0
-    else:
+    if((diskfile.lastmod.replace(tzinfo=None) != diskfile.file.lastmod()) or force_crc):
       #print "lastmod time indicates file modification"
       # Check the CRC to be sure if it's changed
       if(diskfile.ccrc == diskfile.file.ccrc()):
         #print "crc indicates no change"
         add_diskfile=0
       else:
-        #print "crc indicates file has changed"
+        print "crc indicates file has changed - reingesting"
         # Set the present flag on the current one to false and create a new entry
         diskfile.present=False
         add_diskfile=1
+    else:
+      #print "lastmod time indicates file unchanged, not checking further"
+      add_diskfile=0
 
   else:
     # No not present, insert into diskfile table
@@ -58,7 +59,7 @@ def ingest_file(filename, path):
     add_diskfile=1
   
   if(add_diskfile):
-    #print "Adding new DiskFile entry"
+    print "Adding new DiskFile entry"
     diskfile = DiskFile(file)
     session.add(diskfile)
     session.commit()
