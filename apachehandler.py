@@ -64,10 +64,22 @@ def handler(req):
   return usagemessage(req)
 
 def usagemessage(req):
-  req.content_type = "text/plain"
-  req.write("This is the fits storage web help\n")
-  req.write("/ or /help returns this text\n")
-  req.write("/summary gives file / header summaries")
+  req.content_type = "text/html"
+  req.write('<html')
+  req.write('<head><title>FITS storage web help page</title></head>')
+  req.write('<body>')
+  req.write('<H1>FITS storage web help page</H1>')
+  req.write('<UL>')
+  req.write('<LI><a href="/">/</a> or <a href="/help">/help</a> gives this help page</LI>')
+  req.write('<LI>/summary gives file/header summaries:<UL>')
+  req.write('<LI><a href="/summary">/summary</a> by itself shows the last 2500 files, newest first</LI>')
+  req.write('<LI><a href="/summary/20091120">/summary/20091120</a> shows the data from 20091120, in order</LI>')
+  req.write('<LI><a href="/summary/GN-2009B-Q-51">/summary/GN-2009B-Q-51</a> shows all data for program GN-2009B-Q-51</LI>')
+  req.write('<LI><a href="/summary/GN-2009B-Q-51-15">/summary/GN-2009B-Q-51-15</a> shows all data for observatio GN-2009B-Q-51-15</LI>')
+  req.write('<LI><a href="/summary/GN-2009B-Q-51/20091123">/summary/GN-2009B-Q-51/20091123</a> or indeed <a href="/summary/20091123/GN-2009B-Q-51">/summary/20091123/GN-2009B-Q-51</a> shows all the data for GN-2009B-Q-51 taken on 20091123</LI>')
+  req.write('<LI>In fact you can use any combination of date, obsid and progid in the URL and it will combine them with a logical and</LI>')
+  req.write('</UL></LI></UL>')
+  req.write('</body></html>')
   return apache.OK
 
 
