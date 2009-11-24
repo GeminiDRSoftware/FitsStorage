@@ -24,13 +24,18 @@ def list_headers(progid, obsid, date):
   # We want to select Header object for which diskfile.present is true
   query = session.query(Header).select_from(join(Header, DiskFile)).filter(DiskFile.present == True)
 
+  # Is this a completely open query?
+  openquery=1
+
   # Should we query by obsid?
   if(len(obsid)>0):
     query = query.filter(Header.obsid==obsid)
+    openquery=0
 
   # Should we query by progid?
   if(len(progid)>0):
     query = query.filter(Header.progid==progid)
+    openquery=0
 
   # Should we query by date?
   if(len(date)>0):
@@ -40,9 +45,15 @@ def list_headers(progid, obsid, date):
     enddt = startdt + oneday
     # check it's between these two
     query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
+    openquery=0
 
-  # We should order by datetime and impose a sensible limit (say 5000)
-  query = query.order_by(Header.utdatetime)
+  # If this is a completely open query, we should reverse sort by date-time
+  # and limit the number of responses to say 2500
+  if(openquery):
+    query = query.order_by(desc(Header.utdatetime)).limit(2500)
+  else:
+    # We should order by datetime
+    query = query.order_by(Header.utdatetime)
 
   # Return the list of DiskFile objects
   return query.all()
