@@ -10,6 +10,7 @@ import zlib
 import re
 
 from sqlalchemy import Table, Column, MetaData, ForeignKey
+from sqlalchemy import desc
 from sqlalchemy import Integer, String, Boolean, Text, DateTime, Time, Numeric
 from sqlalchemy.databases.postgres import PGBigInteger
 
