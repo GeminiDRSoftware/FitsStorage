@@ -17,6 +17,10 @@ from sqlalchemy.databases.postgres import PGBigInteger
 from sqlalchemy.orm import relation, backref, join
 
 from sqlalchemy.ext.declarative import declarative_base
+
+import FitsVerify
+import CadcCRC
+
 Base = declarative_base()
 
 # Configure the path to the storage root here for now
@@ -37,7 +41,7 @@ class File(Base):
   __tablename__ = 'file'
 
   id = Column(Integer, primary_key=True)
-  filename = Column(Text, nullable=False)
+  filename = Column(Text, nullable=False, unique=True, index=True)
   path = Column(Text)
 
   def __init__(self, filename, path):
@@ -59,10 +63,7 @@ class File(Base):
     return os.path.getsize(self.fullpath())
 
   def ccrc(self):
-    f = open(self.fullpath(), "r")
-    ccrc = zlib.crc32(f.read())
-    f.close()
-    return ccrc
+    return CadcCRC.cadcCRC(self.fullpath())
 
   def lastmod(self):
     return datetime.datetime.fromtimestamp(os.path.getmtime(self.fullpath()))
@@ -71,14 +72,17 @@ class DiskFile(Base):
   __tablename__ = 'diskfile'
 
   id = Column(Integer, primary_key=True)
-  file_id = Column(Integer, ForeignKey('file.id'), nullable=False)
+  file_id = Column(Integer, ForeignKey('file.id'), nullable=False, index=True)
   file = relation(File, order_by=id)
-  present = Column(Boolean)
-  ccrc = Column(PGBigInteger)
+  present = Column(Boolean, index=True)
+  ccrc = Column(Text)
   size = Column(Integer)
   lastmod = Column(DateTime(timezone=True))
   entrytime = Column(DateTime(timezone=True))
-  source = Column(Text)
+  isfits = Column(Boolean)
+  fvwarnings = Column(Integer)
+  fverrors = Column(Integer)
+  fvreport = Column(Text)
 
   def __init__(self, file):
     self.file_id = file.id
@@ -87,22 +91,31 @@ class DiskFile(Base):
     self.size = file.size()
     self.ccrc = file.ccrc()
     self.lastmod = file.lastmod()
+    self.fits_verify(file)
 
   def __repr__(self):
     return "<DiskFile('%s', '%s')>" %(self.id, self.file_id)
+
+  def fits_verify(self, file):
+    list = FitsVerify.fitsverify(file.fullpath())
+    self.isfits = bool(list[0])
+    self.fvwarnings = list[1]
+    self.fverrors = list[2]
+    self.fvreport = list[3]
+    
 
 class Header(Base):
   __tablename__ = 'header'
 
   id = Column(Integer, primary_key=True)
-  diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False)
+  diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
   diskfile = relation(DiskFile, order_by=id)
-  progid = Column(Text)
-  obsid = Column(Text)
-  datalab = Column(Text)
+  progid = Column(Text, index=True)
+  obsid = Column(Text, index=True)
+  datalab = Column(Text, index=True)
   telescope = Column(Text)
   instrument = Column(Text)
-  utdatetime = Column(DateTime(timezone=False))
+  utdatetime = Column(DateTime(timezone=False), index=True)
   localtime = Column(Time(timezone=False))
   obstype = Column(Text)
   obsclass = Column(Text)
@@ -114,6 +127,7 @@ class Header(Base):
   az = Column(Numeric)
   el = Column(Numeric)
   crpa = Column(Numeric)
+  airmass = Column(Numeric)
   rawiq = Column(Text)
   rawcc = Column(Text)
   rawwv = Column(Text)
@@ -173,6 +187,7 @@ class Header(Base):
       self.az = self.get_header(hdulist[0], 'AZIMUTH')
       self.el = self.get_header(hdulist[0], 'ELEVATIO')
       self.crpa = self.get_header(hdulist[0], 'CRPA')
+      self.airmass = self.get_header(hdulist[0], 'AIRMASS')
       self.rawiq = self.get_header(hdulist[0], 'RAWIQ')
       self.rawcc = self.get_header(hdulist[0], 'RAWCC')
       self.rawwv = self.get_header(hdulist[0], 'RAWWV')
