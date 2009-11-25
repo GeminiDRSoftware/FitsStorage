@@ -3,6 +3,8 @@ Database schema changes:
 -- add exposure time and filter to headers table and to summary report
 **** Add task to summary generator or whatever when these are done
 
+Apachehandler:
+
 Summary Generator:
 add sort by columns functionality to summary generator
 add keywords: local time, airmass
