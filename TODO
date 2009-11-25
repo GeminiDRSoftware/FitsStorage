@@ -1,13 +1,12 @@
-add fitsverify to diskfiles table
-add wmd to diskfiles table
+Database schema changes:
+-- add wmd to diskfiles table
+-- add exposure time and filter to headers table and to summary report
+**** Add task to summary generator or whatever when these are done
 
-full header viewer
-
-sort by columns
-
-add keywords: local time, airmass, exposure time, filter
-
-make qastate the combined header
+Summary Generator:
+add sort by columns functionality to summary generator
+add keywords: local time, airmass
+make qastate the combined header - Do this in orm/db layer from raw headers
 
 
 low priority:
