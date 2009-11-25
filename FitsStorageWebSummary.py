@@ -27,7 +27,7 @@ def fullheader(req, filename):
   hdulist.close()
   return apache.OK
 
-def summary(req, progid, obsid, date):
+def summary(req, progid, obsid, date, inst):
   req.content_type = "text/html"
   req.write("<html>")
   title = "FITS header summary table"
@@ -37,16 +37,18 @@ def summary(req, progid, obsid, date):
     title += "; Observation ID: %s" % (obsid)
   if(len(date)>0):
     title += "; Date: %s" % (date)
+  if(len(inst)>0):
+    title += "; Instrument: %s" % (inst)
   req.write("<head>")
   req.write("<title>%s</title>" % (title))
   req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
   req.write("</head>\n")
   req.write("<body>")
   req.write("<H1>%s</H1>" % (title))
-  webhdrsummary(req, list_headers(progid, obsid, date))
+  webhdrsummary(req, list_headers(progid, obsid, date, inst))
   return apache.OK
 
-def list_headers(progid, obsid, date):
+def list_headers(progid, obsid, date, inst):
   # We want to select Header object for which diskfile.present is true
   query = session.query(Header).select_from(join(Header, DiskFile)).filter(DiskFile.present == True)
 
@@ -73,7 +75,12 @@ def list_headers(progid, obsid, date):
     query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
     openquery=0
 
-  # If this is a completely open query, we should reverse sort by date-time
+  # Should we query by instrument?
+  if(len(inst)>0):
+    query = query.filter(Header.instrument==inst)
+    # do not alter openquery here.
+
+  # If this is an open query, we should reverse sort by date-time
   # and limit the number of responses to say 2500
   if(openquery):
     query = query.order_by(desc(Header.utdatetime)).limit(2500)
