@@ -89,7 +89,9 @@ def usagemessage(req):
   req.write('<LI><a href="/summary/GN-2009B-Q-51-15">/summary/GN-2009B-Q-51-15</a> shows all data for observatio GN-2009B-Q-51-15</LI>')
   req.write('<LI><a href="/summary/GN-2009B-Q-51/20091123">/summary/GN-2009B-Q-51/20091123</a> or indeed <a href="/summary/20091123/GN-2009B-Q-51">/summary/20091123/GN-2009B-Q-51</a> shows all the data for GN-2009B-Q-51 taken on 20091123</LI>')
   req.write('<LI>In fact you can use any combination of date, obsid and progid in the URL and it will combine them with a logical and</LI>')
-  req.write('</UL></LI></UL>')
+  req.write('</UL></LI>')
+  req.write('<LI><a href="/fullheader/N20091123S0455.fits">/fullheader/N20091123S0455.fits</a> or <a href="/fullheader/N20091123S0455">/fullheader/N20091123S0455</a> gives the full fits header of that file</LI>')
+  req.write('</UL>')
   req.write('</body></html>')
   return apache.OK
 
