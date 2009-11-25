@@ -147,7 +147,13 @@ def usagemessage(req):
 def debugmessage(req):
   req.content_type = "text/plain"
   req.write("Debug info\n\n")
-  req.write("Pythonpath: %s\n" % (str(sys.path)))
-  req.write("uri: %s\n" % (str(req.uri)))
+  req.write("Pythonpath: %s\n\n" % (str(sys.path)))
+  req.write("uri: %s\n\n" % (str(req.uri)))
+  req.write("unparsed_uri: %s\n\n" % (str(req.unparsed_uri)))
+  req.write("the_request: %s\n\n" % (str(req.the_request)))
+  req.write("filename: %s\n\n" % (str(req.filename)))
+  req.write("path_info: %s\n\n" % (str(req.path_info)))
+  req.write("args: %s\n\n" % (str(req.args)))
+  
   return apache.OK
 
