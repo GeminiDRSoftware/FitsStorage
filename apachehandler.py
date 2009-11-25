@@ -18,6 +18,11 @@ def handler(req):
   #The next line is for serious debugging
   #return debugmessage(req)
 
+  # Set the no_cache flag on all our output
+  # no_cache is not writable, have to set the headers directly
+  req.headers_out['Cache-Control'] = 'no-cache'
+  req.headers_out['Expired'] = '-1'
+
   # This gives everything from the uri below the handler
   # eg if we're handling /python and we're the client requests
   # http://server/python/a/b.fits then we get a/b.fits
