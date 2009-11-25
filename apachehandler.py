@@ -55,6 +55,7 @@ def handler(req):
     date=''
     progid=''
     obsid=''
+    inst=''
     while(len(things)):
       thing = things.pop(0)
       if(re.match("20\d\d[01]\d[0123]\d", thing)):
@@ -63,7 +64,15 @@ def handler(req):
         progid=thing
       if(re.match("G[NS]-20\d\d[AB]-[A-Z]*-\d*-\d*$", thing)):
         obsid=thing
-    return summary(req, progid, obsid, date)
+      if((re.match("NIRI", thing)) or (re.match('niri', thing))):
+        inst='NIRI'
+      if((re.match("NIFS", thing)) or (re.match('nifs', thing))):
+        inst='NIFS'
+      if((re.match("GMOS-N", thing)) or (re.match("gmos-n", thing))):
+        inst='GMOS-N'
+      if((re.match("MICHELLE", thing)) or (re.match("michelle", thing))):
+        inst='MICHELLE'
+    return summary(req, progid, obsid, date, inst)
 
   # This returns the full header of the filename that follows.
   if(this ==  'fullheader'):
