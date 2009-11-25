@@ -1,6 +1,32 @@
 from FitsStorage import *
 from mod_python import apache
 
+fitscre = re.compile('\S*.fits$')
+
+def fullheader(req, filename):
+  # If the filename is missing the .fits, then add it
+  match = fitscre.match(filename)
+  if(not match):
+    filename = "%s.fits" % (filename)
+  
+  # First search for a file object with the given filename
+  query = session.query(File).filter(File.filename == filename)
+  if(query.count()==0):
+    req.content_type="text/plain"
+    req.write("Cannot find file for: %s\n" % filename)
+    return apache.OK
+
+  file = query.one()
+  hdulist = pyfits.open(file.fullpath())
+  req.write("FITS File: %s (%s)\n\n" % (filename, file.fullpath()))
+
+  for i in range(len(hdulist)):
+    req.write("\n--- HDU %s ---\n" % (i))
+    req.write(str(hdulist[i].header.ascardlist()))
+    req.write('\n')
+  hdulist.close()
+  return apache.OK
+
 def summary(req, progid, obsid, date):
   req.content_type = "text/html"
   req.write("<html>")
