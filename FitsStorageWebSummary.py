@@ -90,7 +90,6 @@ def webhdrsummary(req, headers):
   req.write("<TABLE border=0>")
   req.write("<TR class=tr_head>")
   req.write("<TH>Filename</TH>")
-  req.write("<TH>FV E - W</TH>")
   req.write("<TH>Data Label</TH>")
   req.write("<TH>Instrument</TH>")
   req.write("<TH>ObsClass</TH>")
@@ -110,8 +109,11 @@ def webhdrsummary(req, headers):
     else:
       cs = "tr_odd"
     req.write("<TR class=%s>" % (cs))
-    req.write('<TD><A HREF="/fullheader/%s">%s</A></TD>' % (h.diskfile.file.filename, h.diskfile.file.filename))
-    req.write('<TD><A HREF="/fitsverify/%s">%d - %d</A></TD>' % (h.diskfile.id, h.diskfile.fverrors, h.diskfile.fvwarnings))
+    if(h.diskfile.fverrors):
+      fve='<a href="/fvreport/%d"> - !FITS!</a>' % (h.diskfile.id)
+    else:
+      fve=''
+    req.write('<TD><A HREF="/fullheader/%s">%s</A>%s</TD>' % (h.diskfile.file.filename, h.diskfile.file.filename, fve))
     req.write("<TD>%s</TD>" % (h.datalab))
     req.write("<TD>%s</TD>" % (h.instrument))
     req.write("<TD>%s</TD>" % (h.obsclass))
