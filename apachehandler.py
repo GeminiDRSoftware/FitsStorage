@@ -10,6 +10,7 @@ from FitsStorageWebSummary import *
 
 import re
 
+
 # The top level handler. This essentially calls out to the specific
 # handler function depending on the uri that we're handling
 
@@ -59,16 +60,62 @@ def handler(req):
         obsid=thing
     return summary(req, progid, obsid, date)
 
+  # This returns the full header of the filename that follows.
   if(this ==  'fullheader'):
-    # This returns the full header of the filename that follows.
     if(len(things)):
       filename=things.pop(0)
       return fullheader(req, filename)
     else:
       req.content_type="text/plain"
-      req.write("You must specify a filename, eg: /fullheader/N20091020S1234.fitsi\n")
+      req.write("You must specify a filename, eg: /fullheader/N20091020S1234.fits\n")
       return apache.OK
-      
+
+  # This returns the fitsverify text from the database
+  # you can give it either a diskfile_id or a filename
+  if(this == 'fitsverify'):
+    if(len(things)==0):
+      req.content_type="text/plain"
+      req.write("You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
+      return apache.OK
+    thing=things.pop(0)
+
+    # OK, see if we got a filename
+    match=re.search('^[NS]20\d\d[01]\d[0123]\dS\d\d\d\d', thing)
+    if(match):
+      # Ensure it has the .fits on it
+      match = re.match('\S*.fits$', thing)
+      if(not match):
+        thing = "%s.fits" % (thing)
+      query = session.query(File).filter(File.filename == thing)
+      if(query.count()==0):
+        req.content_type="text/plain"
+        req.write("Cannot find file for: %s\n" % thing)
+        return apache.OK
+      file = query.one()
+      # Query diskfiles to find the diskfile for file that is present
+      query = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.file_id == file.id)
+      diskfile = query.one()
+      req.content_type="text/plain"
+      req.write(diskfile.fvreport)
+      return apache.OK
+   
+    # See if we got a diskfile_id
+    match = re.match('\d+', thing)
+    if(match):
+      query = session.query(DiskFile).filter(DiskFile.id == thing)
+      if(query.count()==0):
+        req.content_type="text/plain"
+        req.write("Cannot find diskfile for id: %s\n" % thing)
+        return apache.OK
+      diskfile = query.one()
+      req.content_type="text/plain"
+      req.write(diskfile.fvreport)
+      return apache.OK
+
+    # OK, they must have fed us garbage
+    req.content_type="text/plain"
+    req.write("Could not understand argument - You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
+    return apache.OK
 
   # Last one on the list - if we haven't return(ed) out of this function
   # by one of the methods above, then we should send out the usage message
@@ -91,6 +138,7 @@ def usagemessage(req):
   req.write('<LI>In fact you can use any combination of date, obsid and progid in the URL and it will combine them with a logical and</LI>')
   req.write('</UL></LI>')
   req.write('<LI><a href="/fullheader/N20091123S0455.fits">/fullheader/N20091123S0455.fits</a> or <a href="/fullheader/N20091123S0455">/fullheader/N20091123S0455</a> gives the full fits header of that file</LI>')
+  req.write('<LI><a href="/fitsverify/N20091120S0003.fits">/fitsverify/N20091120S0003.fits</a> or <a href="/fitsverify/N20091120S0003">/fitsverify/N20091120S0003</a> gives the fitsverify report for that file. The filename maybe replaced by a database diskfile_id for internal links to specific diskfile instances, but these should not be used externally as the id may change</LI>')
   req.write('</UL>')
   req.write('</body></html>')
   return apache.OK
