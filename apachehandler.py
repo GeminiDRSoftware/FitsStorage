@@ -59,6 +59,17 @@ def handler(req):
         obsid=thing
     return summary(req, progid, obsid, date)
 
+  if(this ==  'fullheader'):
+    # This returns the full header of the filename that follows.
+    if(len(things)):
+      filename=things.pop(0)
+      return fullheader(req, filename)
+    else:
+      req.content_type="text/plain"
+      req.write("You must specify a filename, eg: /fullheader/N20091020S1234.fitsi\n")
+      return apache.OK
+      
+
   # Last one on the list - if we haven't return(ed) out of this function
   # by one of the methods above, then we should send out the usage message
   return usagemessage(req)
