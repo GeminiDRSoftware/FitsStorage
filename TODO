@@ -6,6 +6,7 @@ Database schema changes:
 Apachehandler:
 
 Summary Generator:
+create a diskfile summary
 add sort by columns functionality to summary generator
 add keywords: local time, airmass
 make qastate the combined header - Do this in orm/db layer from raw headers
