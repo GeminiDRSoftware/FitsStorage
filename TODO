@@ -1,0 +1,18 @@
+add fitsverify to diskfiles table
+add wmd to diskfiles table
+
+full header viewer
+
+sort by columns
+
+add keywords: local time, airmass, exposure time, filter
+
+make qastate the combined header
+
+
+low priority:
+add /INSTRUMENT to summary search fields
+investigate parsing eObslog to get comments.
+any way to get pre-imaging flag from odb? anything else we need? requestd conditions
+completely customisable columns in summary.
+
