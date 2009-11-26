@@ -23,13 +23,14 @@ def handler(req):
   req.headers_out['Cache-Control'] = 'no-cache'
   req.headers_out['Expired'] = '-1'
 
+  # Parse the uri we were given.
   # This gives everything from the uri below the handler
   # eg if we're handling /python and we're the client requests
   # http://server/python/a/b.fits then we get a/b.fits
-  request = req.uri
+  uri = req.uri
   
-  # Split this about and /s
-  things=request.split('/')
+  # Split this about any /s
+  things=uri.split('/')
 
   # Remove any blanks
   while(things.count('')):
@@ -40,6 +41,13 @@ def handler(req):
     # Empty request
     return usagemessage(req)
 
+  # Before we process the request, parse any arguments into a list
+  args=[]
+  if(req.args):
+    args = req.args.split('&')
+    while(args.count('')):
+      args.remove('')
+ 
   # OK, need to parse what we got.
 
   this = things.pop(0)
@@ -72,7 +80,7 @@ def handler(req):
         inst='GMOS-N'
       if((re.match("MICHELLE", thing)) or (re.match("michelle", thing))):
         inst='MICHELLE'
-    return summary(req, progid, obsid, date, inst)
+    return summary(req, progid, obsid, date, inst, args)
 
   # This returns the full header of the filename that follows.
   if(this ==  'fullheader'):
