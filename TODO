@@ -7,7 +7,7 @@ Apachehandler:
 
 Summary Generator:
 create a diskfile summary
-add sort by columns functionality to summary generator
+create a history summary
 add keywords: local time, airmass
 make qastate the combined header - Do this in orm/db layer from raw headers
 
