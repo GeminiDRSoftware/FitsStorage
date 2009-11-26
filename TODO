@@ -5,6 +5,8 @@ Database schema changes:
 
 Apachehandler:
 
+create fits file server
+
 Summary Generator:
 create a diskfile summary
 create a history summary
