@@ -27,7 +27,7 @@ def fullheader(req, filename):
   hdulist.close()
   return apache.OK
 
-def summary(req, progid, obsid, date, inst):
+def summary(req, progid, obsid, date, inst, args):
   req.content_type = "text/html"
   req.write("<html>")
   title = "FITS header summary table"
@@ -45,10 +45,11 @@ def summary(req, progid, obsid, date, inst):
   req.write("</head>\n")
   req.write("<body>")
   req.write("<H1>%s</H1>" % (title))
-  webhdrsummary(req, list_headers(progid, obsid, date, inst))
+  webhdrsummary(req, list_headers(progid, obsid, date, inst, args))
+  req.write("</body></html>")
   return apache.OK
 
-def list_headers(progid, obsid, date, inst):
+def list_headers(progid, obsid, date, inst, args):
   # We want to select Header object for which diskfile.present is true
   query = session.query(Header).select_from(join(Header, DiskFile)).filter(DiskFile.present == True)
 
@@ -80,13 +81,66 @@ def list_headers(progid, obsid, date, inst):
     query = query.filter(Header.instrument==inst)
     # do not alter openquery here.
 
+  # Do we have any valid orderby arguments?
+  # we should validate more here
+  orderby=[]
+  for i in range(len(args)):
+    match=re.match('orderby\=(\S*)', args[i])
+    if(match):
+      thing=match.group(1)
+      orderby.append(thing)
+
+  # Do we have any order by arguments?
+  if(orderby):
+    # Yes, apply them to the query
+    for i in range(len(orderby)):
+      if((orderby[i] == 'instrument') or (orderby[i] == 'instrument_asc')):
+        query = query.order_by(Header.instrument)
+      if(orderby[i] == 'instrument_desc'):
+        query = query.order_by(desc(Header.instrument))
+      if((orderby[i] == 'datalab') or (orderby[i] == 'datalab_asc')):
+        query = query.order_by(Header.datalab)
+      if(orderby[i] == 'datalab_desc'):
+        query = query.order_by(desc(Header.datalab))
+      if((orderby[i] == 'obsclass') or (orderby[i] == 'obsclass_asc')):
+        query = query.order_by(Header.obsclass)
+      if(orderby[i] == 'obsclass_desc'):
+        query = query.order_by(desc(Header.obsclass))
+      if((orderby[i] == 'obstype') or (orderby[i] == 'obstype_asc')):
+        query = query.order_by(Header.obstype)
+      if(orderby[i] == 'obstype_desc'):
+        query = query.order_by(desc(Header.obstype))
+      if((orderby[i] == 'utdatetime') or (orderby[i] == 'utdatetime_asc')):
+        query = query.order_by(Header.utdatetime)
+      if(orderby[i] == 'utdatetime_desc'):
+        query = query.order_by(desc(Header.utdatetime))
+      if((orderby[i] == 'rawiq') or (orderby[i] == 'rawiq_asc')):
+        query = query.order_by(Header.rawiq)
+      if(orderby[i] == 'rawiq_desc'):
+        query = query.order_by(desc(Header.rawiq))
+      if((orderby[i] == 'rawcc') or (orderby[i] == 'rawcc_asc')):
+        query = query.order_by(Header.rawcc)
+      if(orderby[i] == 'rawcc_desc'):
+        query = query.order_by(desc(Header.rawcc))
+      if((orderby[i] == 'rawbg') or (orderby[i] == 'rawbg_asc')):
+        query = query.order_by(Header.rawbg)
+      if(orderby[i] == 'rawbg_desc'):
+        query = query.order_by(desc(Header.rawbg))
+      if((orderby[i] == 'rawwv') or (orderby[i] == 'rawwv_asc')):
+        query = query.order_by(Header.rawwv)
+      if(orderby[i] == 'rawwv_desc'):
+        query = query.order_by(desc(Header.rawwv))
+
   # If this is an open query, we should reverse sort by date-time
-  # and limit the number of responses to say 2500
   if(openquery):
-    query = query.order_by(desc(Header.utdatetime)).limit(2500)
+    query = query.order_by(desc(Header.utdatetime))
   else:
     # We should order by datetime
     query = query.order_by(Header.utdatetime)
+
+  # If this is an open query, we should limit to 2500 responses
+  if(openquery):
+    query = query.limit(2500)
 
   # Return the list of DiskFile objects
   return query.all()
@@ -94,20 +148,22 @@ def list_headers(progid, obsid, date, inst):
 def webhdrsummary(req, headers):
   # Given a list of header instances and an apache request oject
   # Write a header summary table to the request object
-  req.write("<TABLE border=0>")
-  req.write("<TR class=tr_head>")
-  req.write("<TH>Filename</TH>")
-  req.write("<TH>Data Label</TH>")
-  req.write("<TH>Instrument</TH>")
-  req.write("<TH>ObsClass</TH>")
-  req.write("<TH>ObsType</TH>")
-  req.write("<TH>Date Time</TH>")
-  req.write("<TH>QA State</TH>")
-  req.write("<TH>Raw IQ</TH>")
-  req.write("<TH>Raw CC</TH>")
-  req.write("<TH>Raw WV</TH>")
-  req.write("<TH>Raw BG</TH>")
-  req.write("</TR>")
+  # Get the uri to use for the re-sort links
+  myuri = req.uri
+  req.write('<TABLE border=0>')
+  req.write('<TR class=tr_head>')
+  req.write('<TH>Filename</TH>')
+  req.write('<TH>Data Label <a href="%s?orderby=datalab_asc">&uarr</a><a href="%s?orderby=datalab_desc">&darr</a></TH>')
+  req.write('<TH>Instrument <a href="%s?orderby=instrument_asc">&uarr</a><a href="%s?orderby=instrument_desc">&darr</a></TH>' % (myuri, myuri))
+  req.write('<TH>ObsClass <a href="%s?orderby=obsclass_asc">&uarr</a><a href="%s?orderby=obsclass_desc">&darr</a></TH>' % (myuri, myuri))
+  req.write('<TH>ObsType <a href="%s?orderby=obstype_asc">&uarr</a><a href="%s?orderby=obstype_desc">&darr</a></TH>' % (myuri, myuri))
+  req.write('<TH>Date Time <a href="%s?orderby=utdatetime_asc">&uarr</a><a href="%s?orderby=utdatetime_desc">&darr</a></TH>' % (myuri, myuri))
+  req.write('<TH>QA State</TH>')
+  req.write('<TH>Raw IQ <a href="%s?orderby=rawiq_asc">&uarr</a><a href="%s?orderby=rawiq_desc">&darr</a></TH>' % (myuri, myuri))
+  req.write('<TH>Raw CC <a href="%s?orderby=rawcc_asc">&uarr</a><a href="%s?orderby=rawcc_desc">&darr</a></TH>' % (myuri, myuri))
+  req.write('<TH>Raw WV <a href="%s?orderby=rawwv_asc">&uarr</a><a href="%s?orderby=rawwv_desc">&darr</a></TH>' % (myuri, myuri))
+  req.write('<TH>Raw BG <a href="%s?orderby=rawbg_asc">&uarr</a><a href="%s?orderby=rawbg_desc">&darr</a></TH>' % (myuri, myuri))
+  req.write('</TR>')
   even=0
   for h in headers:
     even = not even
