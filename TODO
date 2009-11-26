@@ -16,6 +16,8 @@ get fits dns CNAME
 create virtual servers for fits and hbffits1
 comment, document and mark authorship on code
 
+write ingest and update scripts to support NFS operation - eg update data from today only to run every rew mins etc
+
 
 low priority:
 investigate parsing eObslog to get comments.
