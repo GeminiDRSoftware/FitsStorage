@@ -134,7 +134,7 @@ class Header(Base):
   rawbg = Column(Text)
   rawpireq = Column(Text)
   rawgemqa = Column(Text)
-  
+  qastate = Column(Text)
 
   def __init__(self, diskfile):
     self.diskfile_id = diskfile.id
@@ -197,7 +197,19 @@ class Header(Base):
     else:
       print "Not a valid FITS file - not attempting to read headers"
     hdulist.close()
-     
+
+    # Set the derived QA state
+    self.qastate = "%s:%s" % (self.rawpireq, self.rawgemqa)
+    if((self.rawpireq == 'UNKNOWN') and (self.rawgemqa == 'UNKNOWN')):
+      self.qastate = 'Undefined'
+    if((self.rawpireq == 'YES') and (self.rawgemqa == 'USABLE')):
+      self.qastate = 'Pass'
+    if((self.rawpireq == 'NO') and (self.rawgemqa == 'USABLE')):
+      self.qastate = 'Usable'
+    if((self.rawpireq == 'NO') and (self.rawgemqa == 'BAD')):
+      self.qastate = 'Fail'
+    if((self.rawpireq == 'CHECK') and (self.rawgemqa == 'CHECK')):
+      self.qastate = 'CHECK'
 
   def get_header(self, hdu, keyword):
     # If the keyword is not present, do not return anything
