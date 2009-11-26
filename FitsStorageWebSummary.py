@@ -106,14 +106,22 @@ def list_headers(progid, obsid, date, inst, args):
         query = query.order_by(Header.obsclass)
       if(orderby[i] == 'obsclass_desc'):
         query = query.order_by(desc(Header.obsclass))
-      if((orderby[i] == 'obstype') or (orderby[i] == 'obstype_asc')):
-        query = query.order_by(Header.obstype)
+      if((orderby[i] == 'airmass') or (orderby[i] == 'airmass_asc')):
+        query = query.order_by(Header.airmass)
+      if(orderby[i] == 'airmass_desc'):
+        query = query.order_by(desc(Header.airmass))
+      if((orderby[i] == 'utdatetime') or (orderby[i] == 'utdatetime_asc')):
+        query = query.order_by(Header.utdatetime)
       if(orderby[i] == 'obstype_desc'):
         query = query.order_by(desc(Header.obstype))
       if((orderby[i] == 'utdatetime') or (orderby[i] == 'utdatetime_asc')):
         query = query.order_by(Header.utdatetime)
       if(orderby[i] == 'utdatetime_desc'):
         query = query.order_by(desc(Header.utdatetime))
+      if((orderby[i] == 'localtime') or (orderby[i] == 'localtime_asc')):
+        query = query.order_by(Header.localtime)
+      if(orderby[i] == 'localtime_desc'):
+        query = query.order_by(desc(Header.localtime))
       if((orderby[i] == 'rawiq') or (orderby[i] == 'rawiq_asc')):
         query = query.order_by(Header.rawiq)
       if(orderby[i] == 'rawiq_desc'):
@@ -130,6 +138,10 @@ def list_headers(progid, obsid, date, inst, args):
         query = query.order_by(Header.rawwv)
       if(orderby[i] == 'rawwv_desc'):
         query = query.order_by(desc(Header.rawwv))
+      if((orderby[i] == 'qastate') or (orderby[i] == 'qastate_asc')):
+        query = query.order_by(Header.qastate)
+      if(orderby[i] == 'qastate_desc'):
+        query = query.order_by(desc(Header.qastate))
 
   # If this is an open query, we should reverse sort by date-time
   if(openquery):
@@ -157,8 +169,10 @@ def webhdrsummary(req, headers):
   req.write('<TH>Instrument <a href="%s?orderby=instrument_asc">&uarr</a><a href="%s?orderby=instrument_desc">&darr</a></TH>' % (myuri, myuri))
   req.write('<TH>ObsClass <a href="%s?orderby=obsclass_asc">&uarr</a><a href="%s?orderby=obsclass_desc">&darr</a></TH>' % (myuri, myuri))
   req.write('<TH>ObsType <a href="%s?orderby=obstype_asc">&uarr</a><a href="%s?orderby=obstype_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH>Date Time <a href="%s?orderby=utdatetime_asc">&uarr</a><a href="%s?orderby=utdatetime_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH>QA State</TH>')
+  req.write('<TH>Airmass <a href="%s?orderby=airmass_asc">&uarr</a><a href="%s?orderby=airmass_desc">&darr</a></TH>' % (myuri, myuri))
+  req.write('<TH>UT Date Time <a href="%s?orderby=utdatetime_asc">&uarr</a><a href="%s?orderby=utdatetime_desc">&darr</a></TH>' % (myuri, myuri))
+  req.write('<TH>Lcltime <a href="%s?orderby=localtime_asc">&uarr</a><a href="%s?orderby=localtime_desc">&darr</a></TH>' % (myuri, myuri))
+  req.write('<TH>QA State <a href="%s?orderby=qastate_asc">&uarr</a><a href="%s?orderby=qastate_desc">&darr</a></TH>')
   req.write('<TH>Raw IQ <a href="%s?orderby=rawiq_asc">&uarr</a><a href="%s?orderby=rawiq_desc">&darr</a></TH>' % (myuri, myuri))
   req.write('<TH>Raw CC <a href="%s?orderby=rawcc_asc">&uarr</a><a href="%s?orderby=rawcc_desc">&darr</a></TH>' % (myuri, myuri))
   req.write('<TH>Raw WV <a href="%s?orderby=rawwv_asc">&uarr</a><a href="%s?orderby=rawwv_desc">&darr</a></TH>' % (myuri, myuri))
@@ -181,11 +195,16 @@ def webhdrsummary(req, headers):
     req.write("<TD>%s</TD>" % (h.instrument))
     req.write("<TD>%s</TD>" % (h.obsclass))
     req.write("<TD>%s</TD>" % (h.obstype))
+    req.write("<TD>%s</TD>" % (h.airmass))
     if(h.utdatetime):
       req.write("<TD>%s</TD>" % (h.utdatetime.strftime("%Y-%m-%d %H:%M:%S")))
     else:
       req.write("<TD>%s</TD>" % ("None"))
-    req.write("<TD>%s</TD>" % (h.rawgemqa))
+    if(h.localtime):
+      req.write("<TD>%s</TD>" % (h.localtime.strftime("%H:%M:%S")))
+    else:
+      req.write("<TD>%s</TD>" % ("None"))
+    req.write("<TD>%s</TD>" % (h.qastate))
     req.write("<TD>%s</TD>" % (h.rawiq))
     req.write("<TD>%s</TD>" % (h.rawcc))
     req.write("<TD>%s</TD>" % (h.rawwv))
