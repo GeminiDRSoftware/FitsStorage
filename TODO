@@ -8,12 +8,8 @@ Apachehandler:
 Summary Generator:
 create a diskfile summary
 create a history summary
-add keywords: local time, airmass
-make qastate the combined header - Do this in orm/db layer from raw headers
-
 
 low priority:
-add /INSTRUMENT to summary search fields
 investigate parsing eObslog to get comments.
 any way to get pre-imaging flag from odb? anything else we need? requestd conditions
 completely customisable columns in summary.
