@@ -11,6 +11,12 @@ Summary Generator:
 create a diskfile summary
 create a history summary
 
+Logistics:
+get fits dns CNAME
+create virtual servers for fits and hbffits1
+comment, document and mark authorship on code
+
+
 low priority:
 investigate parsing eObslog to get comments.
 any way to get pre-imaging flag from odb? anything else we need? requestd conditions
