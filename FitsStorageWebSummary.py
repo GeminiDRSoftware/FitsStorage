@@ -51,7 +51,7 @@ def summary(req, progid, obsid, date, inst, args):
 
 def list_headers(progid, obsid, date, inst, args):
   # We want to select Header object for which diskfile.present is true
-  query = session.query(Header).select_from(join(Header, DiskFile)).filter(DiskFile.present == True)
+  query = session.query(Header).select_from(join(Header, join(DiskFile, File))).filter(DiskFile.present == True)
 
   # Is this a completely open query?
   openquery=1
@@ -142,6 +142,10 @@ def list_headers(progid, obsid, date, inst, args):
         query = query.order_by(Header.qastate)
       if(orderby[i] == 'qastate_desc'):
         query = query.order_by(desc(Header.qastate))
+      if((orderby[i] == 'filename') or (orderby[i] == 'filename_asc')):
+        query = query.order_by(File.filename)
+      if(orderby[i] == 'filename_desc'):
+        query = query.order_by(desc(File.filename))
 
   # If this is an open query, we should reverse sort by date-time
   if(openquery):
@@ -164,7 +168,7 @@ def webhdrsummary(req, headers):
   myuri = req.uri
   req.write('<TABLE border=0>')
   req.write('<TR class=tr_head>')
-  req.write('<TH>Filename</TH>')
+  req.write('<TH>Filename <a href="%s?orderby=filename_asc">&uarr</a><a href="%s?orderby=filename_desc">&darr</a></TH>' % (myuri, myuri))
   req.write('<TH>Data Label <a href="%s?orderby=datalab_asc">&uarr</a><a href="%s?orderby=datalab_desc">&darr</a></TH>' % (myuri, myuri))
   req.write('<TH>Instrument <a href="%s?orderby=instrument_asc">&uarr</a><a href="%s?orderby=instrument_desc">&darr</a></TH>' % (myuri, myuri))
   req.write('<TH>ObsClass <a href="%s?orderby=obsclass_asc">&uarr</a><a href="%s?orderby=obsclass_desc">&darr</a></TH>' % (myuri, myuri))
