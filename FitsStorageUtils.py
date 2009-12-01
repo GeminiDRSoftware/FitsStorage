@@ -1,9 +1,20 @@
 from FitsStorage import *
 
+# Compile regular expresisons here
+crefits = re.compile("\S*.fits$")
+
 def create_tables():
   File.metadata.create_all(bind=pg_db)
   DiskFile.metadata.create_all(bind=pg_db)
   Header.metadata.create_all(bind=pg_db)
+
+def fitsfilename(filename):
+  # Takes a filename with optional .fits ending and returns it
+  # ensuring that it ends in .fits
+  match = crefits.match(filename)
+  if(not match):
+    filename = "%s.fits" % filename
+  return filename
 
 def ingest_file(filename, path, force_crc):
   # Make a file instance
