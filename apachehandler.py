@@ -67,7 +67,7 @@ def handler(req):
     return debugmessage(req)
 
   # This is the header summary handler
-  if(this == 'summary'):
+  if((this == 'summary') or (this == 'diskfiles')):
     # Parse the rest of the uri here while we're at it
     # Expect some combination of progid, obsid, date and instrument name
     # We put the ones we got in a dictionary
@@ -99,7 +99,7 @@ def handler(req):
       if(match):
         orderby.append(match.group(1))
 
-    return summary(req, selection, orderby)
+    return summary(req, this, selection, orderby)
 
   # This returns the full header of the filename that follows.
   if(this ==  'fullheader'):
