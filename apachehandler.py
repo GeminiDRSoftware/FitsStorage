@@ -162,6 +162,37 @@ def handler(req):
   # by one of the methods above, then we should send out the usage message
   return usagemessage(req)
 
+# End of apache handler() function.
+# Below are various helper functions called from above.
+# The web summary has it's own module
+
+# This reads the full fits header from the file currently on disk and
+# returns in in text form to the browser.
+# Arguments are the apache request object and the filename
+def fullheader(req, filename):
+  # If the filename is missing the .fits, then add it
+  filename=fitsfilename(filename)
+
+  # First search for a file object with the given filename
+  query = session.query(File).filter(File.filename == filename)
+  if(query.count()==0):
+    req.content_type="text/plain"
+    req.write("Cannot find file for: %s\n" % filename)
+    return apache.OK
+
+  file = query.one()
+  hdulist = pyfits.open(file.fullpath())
+  req.write("FITS File: %s (%s)\n\n" % (filename, file.fullpath()))
+
+  for i in range(len(hdulist)):
+    req.write("\n--- HDU %s ---\n" % (i))
+    req.write(str(hdulist[i].header.ascardlist()))
+    req.write('\n')
+  hdulist.close()
+  return apache.OK
+
+
+# Send usage message to browser
 def usagemessage(req):
   req.content_type = "text/html"
   req.write('<html')
@@ -187,6 +218,7 @@ def usagemessage(req):
   return apache.OK
 
 
+# Send debugging info to browser
 def debugmessage(req):
   req.content_type = "text/plain"
   req.write("Debug info\n\n")
