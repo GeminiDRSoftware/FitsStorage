@@ -6,14 +6,24 @@ from mod_python import apache
 
 import sys
 import FitsStorage
+from FitsStorageUtils import *
 from FitsStorageWebSummary import *
 
 import re
 
+# Compile regexps here
+datecre=re.compile('20\d\d[01]\d[0123]\d')
+progidcre=re.compile('G[NS]-20\d\d[AB]-[A-Z]*-\d*$')
+obsidcre=re.compile('G[NS]-20\d\d[AB]-[A-Z]*-\d*-\d*$')
+niricre=re.compile('[Nn][Ii][Rr][Ii]')
+nifscre=re.compile('[Nn][Ii][Ff][Ss]')
+gmosncre=re.compile('[Gg][Mm][Oo][Ss]-[Nn]')
+michellecre=re.compile('[Mm][Ii][Cc][Hh][Ee][Ll][Ll][Ee]')
+
+orderbycre=re.compile('orderby\=(\S*)')
 
 # The top level handler. This essentially calls out to the specific
 # handler function depending on the uri that we're handling
-
 def handler(req):
   #The next line is for serious debugging
   #return debugmessage(req)
@@ -58,34 +68,44 @@ def handler(req):
 
   # This is the header summary handler
   if(this == 'summary'):
-    # Parse the rest here while we're at it
-    # Expect some combination of progid, obsid and date
-    date=''
-    progid=''
-    obsid=''
-    inst=''
+    # Parse the rest of the uri here while we're at it
+    # Expect some combination of progid, obsid, date and instrument name
+    # We put the ones we got in a dictionary
+    selection={}
     while(len(things)):
       thing = things.pop(0)
-      if(re.match("20\d\d[01]\d[0123]\d", thing)):
-        date=thing
-      if(re.match("G[NS]-20\d\d[AB]-[A-Z]*-\d*$", thing)):
-        progid=thing
-      if(re.match("G[NS]-20\d\d[AB]-[A-Z]*-\d*-\d*$", thing)):
-        obsid=thing
-      if((re.match("NIRI", thing)) or (re.match('niri', thing))):
-        inst='NIRI'
-      if((re.match("NIFS", thing)) or (re.match('nifs', thing))):
-        inst='NIFS'
-      if((re.match("GMOS-N", thing)) or (re.match("gmos-n", thing))):
-        inst='GMOS-N'
-      if((re.match("MICHELLE", thing)) or (re.match("michelle", thing))):
-        inst='MICHELLE'
-    return summary(req, progid, obsid, date, inst, args)
+      if(datecre.match(thing)):
+        selection['date']=thing
+      if(progidcre.match(thing)):
+        selection['progid']=thing
+      if(obsidcre.match(thing)):
+        selection['obsid']=thing
+      if(niricre.match(thing)):
+        selection['inst']='NIRI'
+      if(nifscre.match(thing)):
+        selection['inst']='NIFS'
+      if(gmosncre.match(thing)):
+        selection['inst']='GMOS-N'
+      if(michellecre.match(thing)):
+        selection['inst']='MICHELLE'
+
+    # We should parse the arguments here too
+    # All we have for now are order_by arguments
+    # We form a list of order_by keywords
+    # We should probably do more validation here
+    orderby=[]
+    for i in range(len(args)):
+      match=orderbycre.match(args[i])
+      if(match):
+        orderby.append(match.group(1))
+
+    return summary(req, selection, orderby)
 
   # This returns the full header of the filename that follows.
   if(this ==  'fullheader'):
     if(len(things)):
       filename=things.pop(0)
+      filename=fitsfilename(filename)
       return fullheader(req, filename)
     else:
       req.content_type="text/plain"
@@ -105,9 +125,8 @@ def handler(req):
     match=re.search('^[NS]20\d\d[01]\d[0123]\dS\d\d\d\d', thing)
     if(match):
       # Ensure it has the .fits on it
-      match = re.match('\S*.fits$', thing)
-      if(not match):
-        thing = "%s.fits" % (thing)
+      thing = fitsfilename(thing)
+      # Now construct the query
       query = session.query(File).filter(File.filename == thing)
       if(query.count()==0):
         req.content_type="text/plain"
