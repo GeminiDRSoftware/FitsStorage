@@ -1,13 +1,13 @@
 from FitsStorage import *
+from FitsStorageUtils import *
 from mod_python import apache
 
-fitscre = re.compile('\S*.fits$')
-
+# This reads the full fits header from the file currently on disk and
+# returns in in text form to the browser.
+# Arguments are the apache request object and the filename
 def fullheader(req, filename):
   # If the filename is missing the .fits, then add it
-  match = fitscre.match(filename)
-  if(not match):
-    filename = "%s.fits" % (filename)
+  filename=fitsfilename(filename)
   
   # First search for a file object with the given filename
   query = session.query(File).filter(File.filename == filename)
@@ -27,29 +27,30 @@ def fullheader(req, filename):
   hdulist.close()
   return apache.OK
 
-def summary(req, progid, obsid, date, inst, args):
+# This is the main header summary generator
+def summary(req, selection, orderby):
   req.content_type = "text/html"
   req.write("<html>")
   title = "FITS header summary table"
-  if(len(progid)>0):
-    title += "; Program ID: %s" % (progid)
-  if(len(obsid)>0):
-    title += "; Observation ID: %s" % (obsid)
-  if(len(date)>0):
-    title += "; Date: %s" % (date)
-  if(len(inst)>0):
-    title += "; Instrument: %s" % (inst)
+  if('progid' in selection):
+    title += "; Program ID: %s" % (selection['progid'])
+  if('obsid' in selection):
+    title += "; Observation ID: %s" % (selection['obsid'])
+  if('date' in selection):
+    title += "; Date: %s" % (selection['date'])
+  if('inst' in selection):
+    title += "; Instrument: %s" % (selection['inst'])
   req.write("<head>")
   req.write("<title>%s</title>" % (title))
   req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
   req.write("</head>\n")
   req.write("<body>")
   req.write("<H1>%s</H1>" % (title))
-  webhdrsummary(req, list_headers(progid, obsid, date, inst, args))
+  webhdrsummary(req, list_headers(selection, orderby))
   req.write("</body></html>")
   return apache.OK
 
-def list_headers(progid, obsid, date, inst, args):
+def list_headers(selection, orderby):
   # We want to select Header object for which diskfile.present is true
   query = session.query(Header).select_from(join(Header, join(DiskFile, File))).filter(DiskFile.present == True)
 
@@ -57,19 +58,19 @@ def list_headers(progid, obsid, date, inst, args):
   openquery=1
 
   # Should we query by obsid?
-  if(len(obsid)>0):
-    query = query.filter(Header.obsid==obsid)
+  if('obsid' in selection):
+    query = query.filter(Header.obsid==selection['obsid'])
     openquery=0
 
   # Should we query by progid?
-  if(len(progid)>0):
-    query = query.filter(Header.progid==progid)
+  if('progid' in selection):
+    query = query.filter(Header.progid==selection['progid'])
     openquery=0
 
   # Should we query by date?
-  if(len(date)>0):
+  if('date' in selection):
     # Parse the date to start and end datetime objects
-    startdt = dateutil.parser.parse("%s 00:00:00" % (date))
+    startdt = dateutil.parser.parse("%s 00:00:00" % (selection['date']))
     oneday = datetime.timedelta(days=1)
     enddt = startdt + oneday
     # check it's between these two
@@ -77,18 +78,9 @@ def list_headers(progid, obsid, date, inst, args):
     openquery=0
 
   # Should we query by instrument?
-  if(len(inst)>0):
-    query = query.filter(Header.instrument==inst)
+  if('inst' in selection):
+    query = query.filter(Header.instrument==selection['inst'])
     # do not alter openquery here.
-
-  # Do we have any valid orderby arguments?
-  # we should validate more here
-  orderby=[]
-  for i in range(len(args)):
-    match=re.match('orderby\=(\S*)', args[i])
-    if(match):
-      thing=match.group(1)
-      orderby.append(thing)
 
   # Do we have any order by arguments?
   if(orderby):
