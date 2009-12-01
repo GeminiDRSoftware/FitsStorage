@@ -3,10 +3,10 @@ from FitsStorageUtils import *
 from mod_python import apache
 
 # This is the main header summary generator
-def summary(req, selection, orderby):
+def summary(req, type, selection, orderby):
   req.content_type = "text/html"
   req.write("<html>")
-  title = "FITS header summary table"
+  title = "FITS header %s table" % (type)
   if('progid' in selection):
     title += "; Program ID: %s" % (selection['progid'])
   if('obsid' in selection):
@@ -21,13 +21,23 @@ def summary(req, selection, orderby):
   req.write("</head>\n")
   req.write("<body>")
   req.write("<H1>%s</H1>" % (title))
-  webhdrsummary(req, list_headers(selection, orderby))
+
+  # If this is a diskfiles summary, select even ones that are not present
+  if(type != 'diskfiles'):
+    # Usually, we want to only select headers with diskfiles that are present
+    selection['present']=True
+
+  webhdrsummary(req, type, list_headers(selection, orderby))
   req.write("</body></html>")
   return apache.OK
 
 def list_headers(selection, orderby):
-  # We want to select Header object for which diskfile.present is true
-  query = session.query(Header).select_from(join(Header, join(DiskFile, File))).filter(DiskFile.present == True)
+  # The basic query...
+  query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
+
+  # Do want to select Header object for which diskfile.present is true?
+  if('present' in selection):
+    query = query.filter(DiskFile.present == selection['present'])
 
   # Is this a completely open query?
   openquery=1
@@ -128,27 +138,56 @@ def list_headers(selection, orderby):
   # Return the list of DiskFile objects
   return query.all()
 
-def webhdrsummary(req, headers):
-  # Given a list of header instances and an apache request oject
-  # Write a header summary table to the request object
+def webhdrsummary(req, type, headers):
+  # Given an apache request object, summary type and list of header instances
+  # Write a header summary table of the appropriate type to the request object
   # Get the uri to use for the re-sort links
   myuri = req.uri
+
+  # A certain amount of parsing the summary type...
+  want=[]
+  if(type == 'summary'):
+    want.append('obs')
+    want.append('qa')
+  if(type == 'diskfiles'):
+    want.append('diskfiles')
+
+  # Output the start of the table including column headings
+  # First part included in all summary types
   req.write('<TABLE border=0>')
   req.write('<TR class=tr_head>')
   req.write('<TH>Filename <a href="%s?orderby=filename_asc">&uarr</a><a href="%s?orderby=filename_desc">&darr</a></TH>' % (myuri, myuri))
   req.write('<TH>Data Label <a href="%s?orderby=datalab_asc">&uarr</a><a href="%s?orderby=datalab_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH>Instrument <a href="%s?orderby=instrument_asc">&uarr</a><a href="%s?orderby=instrument_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH>ObsClass <a href="%s?orderby=obsclass_asc">&uarr</a><a href="%s?orderby=obsclass_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH>ObsType <a href="%s?orderby=obstype_asc">&uarr</a><a href="%s?orderby=obstype_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH>Airmass <a href="%s?orderby=airmass_asc">&uarr</a><a href="%s?orderby=airmass_desc">&darr</a></TH>' % (myuri, myuri))
   req.write('<TH>UT Date Time <a href="%s?orderby=utdatetime_asc">&uarr</a><a href="%s?orderby=utdatetime_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH>Lcltime <a href="%s?orderby=localtime_asc">&uarr</a><a href="%s?orderby=localtime_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH>QA State <a href="%s?orderby=qastate_asc">&uarr</a><a href="%s?orderby=qastate_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH>Raw IQ <a href="%s?orderby=rawiq_asc">&uarr</a><a href="%s?orderby=rawiq_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH>Raw CC <a href="%s?orderby=rawcc_asc">&uarr</a><a href="%s?orderby=rawcc_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH>Raw WV <a href="%s?orderby=rawwv_asc">&uarr</a><a href="%s?orderby=rawwv_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH>Raw BG <a href="%s?orderby=rawbg_asc">&uarr</a><a href="%s?orderby=rawbg_desc">&darr</a></TH>' % (myuri, myuri))
+  req.write('<TH>Instrument <a href="%s?orderby=instrument_asc">&uarr</a><a href="%s?orderby=instrument_desc">&darr</a></TH>' % (myuri, myuri))
+  
+  # This is the 'obs' part 
+  if('obs' in want):
+    req.write('<TH>ObsClass <a href="%s?orderby=obsclass_asc">&uarr</a><a href="%s?orderby=obsclass_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH>ObsType <a href="%s?orderby=obstype_asc">&uarr</a><a href="%s?orderby=obstype_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH>Airmass <a href="%s?orderby=airmass_asc">&uarr</a><a href="%s?orderby=airmass_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH>Lcltime <a href="%s?orderby=localtime_asc">&uarr</a><a href="%s?orderby=localtime_desc">&darr</a></TH>' % (myuri, myuri))
+
+  # This is the 'qa' part
+  if('qa' in want):
+    req.write('<TH>QA State <a href="%s?orderby=qastate_asc">&uarr</a><a href="%s?orderby=qastate_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH>Raw IQ <a href="%s?orderby=rawiq_asc">&uarr</a><a href="%s?orderby=rawiq_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH>Raw CC <a href="%s?orderby=rawcc_asc">&uarr</a><a href="%s?orderby=rawcc_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH>Raw WV <a href="%s?orderby=rawwv_asc">&uarr</a><a href="%s?orderby=rawwv_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH>Raw BG <a href="%s?orderby=rawbg_asc">&uarr</a><a href="%s?orderby=rawbg_desc">&darr</a></TH>' % (myuri, myuri))
+
+  # This is the 'diskfiles' part
+  if('diskfiles' in want):
+    req.write('<TH>Present</TH>')
+    req.write('<TH>Entry</TH>')
+    req.write('<TH>Lastmod</TH>')
+    req.write('<TH>Size</TH>')
+    req.write('<TH>CCRC</TH>')
+
+  # Last bit included in all summary types
   req.write('</TR>')
+
+  # Loop through the header list, outputing table rows
   even=0
   for h in headers:
     even = not even
@@ -156,6 +195,7 @@ def webhdrsummary(req, headers):
       cs = "tr_even"
     else:
       cs = "tr_odd"
+    # Again, the first part included in all summary types
     req.write("<TR class=%s>" % (cs))
     if(h.diskfile.fverrors):
       fve='<a href="/fvreport/%d"> - !FITS!</a>' % (h.diskfile.id)
@@ -163,22 +203,38 @@ def webhdrsummary(req, headers):
       fve=''
     req.write('<TD><A HREF="/fullheader/%s">%s</A>%s</TD>' % (h.diskfile.file.filename, h.diskfile.file.filename, fve))
     req.write("<TD>%s</TD>" % (h.datalab))
-    req.write("<TD>%s</TD>" % (h.instrument))
-    req.write("<TD>%s</TD>" % (h.obsclass))
-    req.write("<TD>%s</TD>" % (h.obstype))
-    req.write("<TD>%s</TD>" % (h.airmass))
     if(h.utdatetime):
       req.write("<TD>%s</TD>" % (h.utdatetime.strftime("%Y-%m-%d %H:%M:%S")))
     else:
       req.write("<TD>%s</TD>" % ("None"))
-    if(h.localtime):
-      req.write("<TD>%s</TD>" % (h.localtime.strftime("%H:%M:%S")))
-    else:
-      req.write("<TD>%s</TD>" % ("None"))
-    req.write("<TD>%s</TD>" % (h.qastate))
-    req.write("<TD>%s</TD>" % (h.rawiq))
-    req.write("<TD>%s</TD>" % (h.rawcc))
-    req.write("<TD>%s</TD>" % (h.rawwv))
-    req.write("<TD>%s</TD>" % (h.rawbg))
+    req.write("<TD>%s</TD>" % (h.instrument))
+
+    # Now the 'obs' part
+    if('obs' in want):
+      req.write("<TD>%s</TD>" % (h.obsclass))
+      req.write("<TD>%s</TD>" % (h.obstype))
+      req.write("<TD>%s</TD>" % (h.airmass))
+      if(h.localtime):
+        req.write("<TD>%s</TD>" % (h.localtime.strftime("%H:%M:%S")))
+      else:
+        req.write("<TD>%s</TD>" % ("None"))
+
+    # Now the 'qa' part
+    if('qa' in want):
+      req.write("<TD>%s</TD>" % (h.qastate))
+      req.write("<TD>%s</TD>" % (h.rawiq))
+      req.write("<TD>%s</TD>" % (h.rawcc))
+      req.write("<TD>%s</TD>" % (h.rawwv))
+      req.write("<TD>%s</TD>" % (h.rawbg))
+
+    # the 'diskfiles' part
+    if('diskfiles' in want):
+      req.write("<TD>%s</TD>" % (h.diskfile.present))
+      req.write("<TD>%s</TD>" % (h.diskfile.entrytime))
+      req.write("<TD>%s</TD>" % (h.diskfile.lastmod))
+      req.write("<TD>%s</TD>" % (h.diskfile.size))
+      req.write("<TD>%s</TD>" % (h.diskfile.ccrc))
+
+    # And again last bit included in all summary types
     req.write("</TR>\n")
   req.write("</TABLE>\n")
