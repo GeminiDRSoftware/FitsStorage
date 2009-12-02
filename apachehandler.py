@@ -3,6 +3,7 @@
 # When a request comes in, handler(req) gets called by the apache server
 
 from mod_python import apache
+from mod_python import Cookie
 
 import sys
 import FitsStorage
@@ -158,6 +159,50 @@ def handler(req):
     req.write("Could not understand argument - You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
     return apache.OK
 
+
+  # This is the fits file server
+  if(this == 'fits'):
+    # First, see if we have a valid authorization cookie
+    cookies = Cookie.get_cookies(req)
+    if(cookies.has_key('gemini_fits_authorization')):
+      auth = cookies['gemini_fits_authorization'].value
+      if(auth=='good_to_go'):
+        # Authenticated OK, find the file in the database
+        # Did we get a valid filename?
+        if(len(things)==0):
+          #req.content_type="text/plain"
+          #req.write("You must specify a filename eg: /fits/N20091020S1234.fits\n")
+          return apache.HTTP_NOT_FOUND
+        filename=things.pop(0)
+        match=re.search('^[NS]20\d\d[01]\d[0123]\dS\d\d\d\d', filename)
+        if(match):
+          # Ensure it has the .fits on it
+          filename = fitsfilename(filename)
+        else:
+          #req.content_type="text/plain"
+          #req.write("You must specify a filename eg: /fits/N20091020S1234.fits\n")
+          return apache.HTTP_NOT_FOUND
+        query=session.query(File).filter(File.filename==filename)
+        if(query.count()==0):
+          req.content_type="text/plain"
+          req.write("Cannot find file for: %s\n" % filename)
+          return apache.HTTP_NOT_FOUND
+        file=query.one()
+        req.sendfile(file.fullpath())
+        return apache.OK
+      else:
+        #req.content_type="text/plain"
+        #req.write("Authorization not valid\n")
+        return apache.HTTP_FORBIDDEN
+    else:
+      #req.content_type="text/plain"
+      #req.write("Authorization data missing")
+      return apache.HTTP_FORBIDDEN
+
+  # Database Statistics
+  if(this == "stats"):
+    return stats(req)
+
   # Last one on the list - if we haven't return(ed) out of this function
   # by one of the methods above, then we should send out the usage message
   return usagemessage(req)
@@ -178,7 +223,7 @@ def fullheader(req, filename):
   if(query.count()==0):
     req.content_type="text/plain"
     req.write("Cannot find file for: %s\n" % filename)
-    return apache.OK
+    return apache.HTTP_NOT_FOUND
 
   file = query.one()
   hdulist = pyfits.open(file.fullpath())
@@ -232,3 +277,42 @@ def debugmessage(req):
   
   return apache.OK
 
+# Send database statistics to browser
+def stats(req):
+  req.content_type = "text/html"
+  req.write("<html>")
+  req.write("<head><title>FITS Storage database statistics</title></head>")
+  req.write("<body>")
+  req.write("<h1>FITS Storage database statistics</h1>")
+
+  # File table statistics
+  query=session.query(File)
+  req.write("<h2>File Table:</h2>")
+  req.write("<ul>")
+  req.write("<li>Total Rows: %d</li>" % query.count())
+  req.write("</ul>")
+  
+  # DiskFile table statistics
+  query=session.query(DiskFile)
+  req.write("<h2>DiskFile Table:</h2>")
+  req.write("<ul>")
+  req.write("<li>Total Rows: %d</li>" % query.count())
+  query=query.filter(DiskFile.present == True)
+  presentrows = query.count()
+  req.write("<li>Present Rows: %d</li>" % presentrows)
+  tpq = session.query(func.sum(DiskFile.size)).filter(DiskFile.present == True)
+  tpsize=tpq.one()[0]
+  req.write("<li>Total present size: %d bytes (%.02f GB)</li>" % (tpsize, (tpsize/1073741824.0)))
+  req.write("</ul>")
+  
+  # Header table statistics
+  query=session.query(Header)
+  req.write("<h2>Header Table:</h2>")
+  req.write("<ul>")
+  req.write("<li>Total Rows: %d</li>" % query.count())
+  req.write("</ul>")
+  
+
+  req.write("</body></html>")
+
+  return apache.OK
