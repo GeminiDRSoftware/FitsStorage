@@ -2,6 +2,7 @@ import FitsStorage
 import FitsStorageUtils
 import os
 import re
+import datetime
 
 from optparse import OptionParser
 
@@ -15,16 +16,39 @@ print "Ingesting files from: ", fulldirpath
 
 parser = OptionParser()
 parser.add_option("--force-crc", action="store_true", dest="force_crc", help="Force crc check on pre-existing files")
-parser.add_option("--file-re", action="store", type="string", dest="file_re", help="python regular expression string to select files by")
+parser.add_option("--file-re", action="store", type="string", dest="file_re", help="python regular expression string to select files by. Special values are today, twoday, fourday to include only files from today, the last two days, or the last four days respectively (days counted as UTC days)")
 
 (options, args) = parser.parse_args()
 
+file_re = options.file_re
+# Handle the today and twoday options
+now=datetime.datetime.utcnow()
+delta=datetime.timedelta(days=1)
+if(options.file_re == "today"):
+  file_re=now.date().strftime("%Y%m%d")
+
+if(options.file_re == "twoday"):
+  then=now-delta
+  a=now.date().strftime("%Y%m%d")
+  b=then.date().strftime("%Y%m%d")
+  file_re="%s|%s" % (a, b)
+
+if(options.file_re == "fourday"):
+  a=now.date().strftime("%Y%m%d")
+  then=now-delta
+  b=then.date().strftime("%Y%m%d")
+  then=then-delta
+  c=then.date().strftime("%Y%m%d")
+  then=then-delta
+  d=then.date().strftime("%Y%m%d")
+  file_re="%s|%s|%s|%s" % (a, b, c, d)
+
 filelist = os.listdir(fulldirpath)
 
-cre=re.compile(options.file_re)
+cre=re.compile(file_re)
 
 files=[]
-if(options.file_re):
+if(file_re):
   for filename in filelist:
     if(cre.search(filename)):
       files.append(filename)
