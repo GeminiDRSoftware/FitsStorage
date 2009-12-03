@@ -198,10 +198,14 @@ def webhdrsummary(req, type, headers):
     # Again, the first part included in all summary types
     req.write("<TR class=%s>" % (cs))
     if(h.diskfile.fverrors):
-      fve='<a href="/fvreport/%d"> - !FITS!</a>' % (h.diskfile.id)
+      fve='<a href="/fvreport/%d">- !FITS!</a>' % (h.diskfile.id)
     else:
       fve=''
-    req.write('<TD><A HREF="/fullheader/%s">%s</A>%s</TD>' % (h.diskfile.file.filename, h.diskfile.file.filename, fve))
+    if(not h.diskfile.wmdready):
+      wmd='<a href="/wmdreport/%d">- !WMD!</a>' % (h.diskfile.id)
+    else:
+      wmd=''
+    req.write('<TD><A HREF="/fullheader/%s">%s</A> %s %s</TD>' % (h.diskfile.file.filename, h.diskfile.file.filename, fve, wmd))
     req.write("<TD>%s</TD>" % (h.datalab))
     if(h.utdatetime):
       req.write("<TD>%s</TD>" % (h.utdatetime.strftime("%Y-%m-%d %H:%M:%S")))
