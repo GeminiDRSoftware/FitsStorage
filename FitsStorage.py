@@ -20,6 +20,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 import FitsVerify
 import CadcCRC
+import CadcWMD
 
 Base = declarative_base()
 
@@ -83,6 +84,8 @@ class DiskFile(Base):
   fvwarnings = Column(Integer)
   fverrors = Column(Integer)
   fvreport = Column(Text)
+  wmdready = Column(Boolean)
+  wmdreport = Column(Text)
 
   def __init__(self, file):
     self.file_id = file.id
@@ -92,6 +95,7 @@ class DiskFile(Base):
     self.ccrc = file.ccrc()
     self.lastmod = file.lastmod()
     self.fits_verify(file)
+    self.wmd(file)
 
   def __repr__(self):
     return "<DiskFile('%s', '%s')>" %(self.id, self.file_id)
@@ -103,6 +107,10 @@ class DiskFile(Base):
     self.fverrors = list[2]
     self.fvreport = list[3]
     
+  def wmd(self, file):
+    list = CadcWMD.cadcWMD(file.fullpath())
+    self.wmdready = bool(list[0])
+    self.wmdreport = list[1]
 
 class Header(Base):
   __tablename__ = 'header'
