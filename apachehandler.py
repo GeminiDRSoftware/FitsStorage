@@ -309,13 +309,18 @@ def stats(req):
   query=session.query(DiskFile)
   req.write("<h2>DiskFile Table:</h2>")
   req.write("<ul>")
-  req.write("<li>Total Rows: %d</li>" % query.count())
+  totalrows=query.count()
+  req.write("<li>Total Rows: %d</li>" % totalrows)
   query=query.filter(DiskFile.present == True)
   presentrows = query.count()
-  req.write("<li>Present Rows: %d</li>" % presentrows)
+  percent = 100.0 * presentrows / totalrows
+  req.write("<li>Present Rows: %d (%.2f %%)</li>" % (presentrows, percent))
   tpq = session.query(func.sum(DiskFile.size)).filter(DiskFile.present == True)
   tpsize=tpq.one()[0]
   req.write("<li>Total present size: %d bytes (%.02f GB)</li>" % (tpsize, (tpsize/1073741824.0)))
+  query=session.query(func.max(DiskFile.entrytime))
+  latest = query.one()[0]
+  req.write("<li>Most recent diskfile entry was at: %s</li>" % latest)
   req.write("</ul>")
   
   # Header table statistics
