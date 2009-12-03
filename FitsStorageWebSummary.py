@@ -128,8 +128,8 @@ def list_headers(selection, orderby):
   if(openquery):
     query = query.order_by(desc(Header.utdatetime))
   else:
-    # We should order by datetime
-    query = query.order_by(Header.utdatetime)
+    # By default we should order by filename
+    query = query.order_by(File.filename)
 
   # If this is an open query, we should limit to 2500 responses
   if(openquery):
