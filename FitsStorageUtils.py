@@ -34,7 +34,7 @@ def ingest_file(filename, path, force_crc):
     # There's a way to handle that nicely internally if we want.
     file = query.one()
   else:
-    #print "Creating new file table entry"
+    print "Adding new file table entry"
     file = File(filename, path)
     session.add(file)
     session.commit();
@@ -74,6 +74,7 @@ def ingest_file(filename, path, force_crc):
     diskfile = DiskFile(file)
     session.add(diskfile)
     session.commit()
+    print "Adding new Header entry"
     header = Header(diskfile)
     session.add(header)
     session.commit()
