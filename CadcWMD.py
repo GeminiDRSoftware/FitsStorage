@@ -3,7 +3,7 @@ import os
 import re
 
 # the path to the fitsverify binary
-wmd = ['/astro/i686/jre1.5.0_03/bin/java', '-Djava.library.path=/data/extern/mdIngest/lib.x86_fedora/', '-D"ca.nrc.cadc.configDir=/data/extern/mdIngest/config"', '-jar', '/data/extern/mdIngest/lib/mdIngest.jar', '--archive=GEMINI', '-c', '-d']
+wmd = ['/astro/i686/jre1.5.0_03/bin/java', '-Djava.library.path=/data/extern/mdIngest/lib.x86_fedora', '-Dca.nrc.cadc.configDir=/data/extern/mdIngest/config', '-jar', '/data/extern/mdIngest/lib/mdIngest.jar', '--archive=GEMINI', '-c', '-d', '--log=/dev/null']
 
 # Compile the regular expression here for efficiency
 cre=re.compile('File \S* (IS|IS NOT) ready for ingestion')
@@ -30,7 +30,7 @@ def cadcWMD(filename):
     itis=0
     if(isit=="IS"):
       itis=1
-    if(ISIT=="IS NOT"):
+    if(isit=="IS NOT"):
       itis=0
   else:
     print "Could not match cadcCRC return value"
