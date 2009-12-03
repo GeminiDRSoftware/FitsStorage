@@ -171,11 +171,11 @@ def webhdrsummary(req, type, headers):
 
   # This is the 'qa' part
   if('qa' in want):
-    req.write('<TH>QA State <a href="%s?orderby=qastate_asc">&uarr</a><a href="%s?orderby=qastate_desc">&darr</a></TH>' % (myuri, myuri))
-    req.write('<TH>Raw IQ <a href="%s?orderby=rawiq_asc">&uarr</a><a href="%s?orderby=rawiq_desc">&darr</a></TH>' % (myuri, myuri))
-    req.write('<TH>Raw CC <a href="%s?orderby=rawcc_asc">&uarr</a><a href="%s?orderby=rawcc_desc">&darr</a></TH>' % (myuri, myuri))
-    req.write('<TH>Raw WV <a href="%s?orderby=rawwv_asc">&uarr</a><a href="%s?orderby=rawwv_desc">&darr</a></TH>' % (myuri, myuri))
-    req.write('<TH>Raw BG <a href="%s?orderby=rawbg_asc">&uarr</a><a href="%s?orderby=rawbg_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH><abbr title="QA State">QA</abbr> <a href="%s?orderby=qastate_asc">&uarr</a><a href="%s?orderby=qastate_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH><abbr title="Raw IQ">IQ</abbr> <a href="%s?orderby=rawiq_asc">&uarr</a><a href="%s?orderby=rawiq_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH><abbr title="Raw CC">CC</abbr> <a href="%s?orderby=rawcc_asc">&uarr</a><a href="%s?orderby=rawcc_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH><abbr title="Raw WV">WV</abbr> <a href="%s?orderby=rawwv_asc">&uarr</a><a href="%s?orderby=rawwv_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH><abbr title="Raw BG">BG</abbr> <a href="%s?orderby=rawbg_asc">&uarr</a><a href="%s?orderby=rawbg_desc">&darr</a></TH>' % (myuri, myuri))
 
   # This is the 'diskfiles' part
   if('diskfiles' in want):
@@ -237,12 +237,29 @@ def webhdrsummary(req, type, headers):
         req.write("<TD>%s</TD>" % ("None"))
 
     # Now the 'qa' part
+    # Abreviate the raw XX values to 4 characters
     if('qa' in want):
-      req.write("<TD>%s</TD>" % (h.qastate))
-      req.write("<TD>%s</TD>" % (h.rawiq))
-      req.write("<TD>%s</TD>" % (h.rawcc))
-      req.write("<TD>%s</TD>" % (h.rawwv))
-      req.write("<TD>%s</TD>" % (h.rawbg))
+      req.write('<TD>%s</TD>' % (h.qastate))
+
+      if(h.rawiq and len(h.rawiq)>4):
+        req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.rawiq, h.rawiq[0:4]))
+      else:
+        req.write('<TD>%s</TD>' % (h.rawiq))
+
+      if(h.rawcc and len(h.rawcc)>4):
+        req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.rawcc, h.rawcc[0:4]))
+      else:
+        req.write('<TD>%s</TD>' % (h.rawcc))
+
+      if(h.rawwv and len(h.rawwv)>4):
+        req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.rawwv, h.rawwv[0:4]))
+      else:
+        req.write('<TD>%s</TD>' % (h.rawwv))
+ 
+      if(h.rawbg and len(h.rawbg)>4):
+        req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.rawbg, h.rawbg[0:4]))
+      else:
+        req.write('<TD>%s</TD>' % (h.rawbg))
 
     # the 'diskfiles' part
     if('diskfiles' in want):
