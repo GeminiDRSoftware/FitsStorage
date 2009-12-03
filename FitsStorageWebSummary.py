@@ -197,6 +197,8 @@ def webhdrsummary(req, type, headers):
       cs = "tr_odd"
     # Again, the first part included in all summary types
     req.write("<TR class=%s>" % (cs))
+
+    # The filename cell, with the link to the full headers and the optional WMD and FITS error flags
     if(h.diskfile.fverrors):
       fve='<a href="/fvreport/%d">- !FITS!</a>' % (h.diskfile.id)
     else:
@@ -206,7 +208,27 @@ def webhdrsummary(req, type, headers):
     else:
       wmd=''
     req.write('<TD><A HREF="/fullheader/%s">%s</A> %s %s</TD>' % (h.diskfile.file.filename, h.diskfile.file.filename, fve, wmd))
-    req.write("<TD>%s</TD>" % (h.datalab))
+
+    # The datalabel, parsed to link to the programid and obsid,
+    # This code is a bit ugly. I can't figure out a single regex that does this...
+    # This one matches a science type progid
+    dlpcrea=re.compile('^(G[NS]-20\d\d[AB]-[A-Z]*-\d*)-(\d*)-(\d*)$')
+    # This one matches a cal or eng progid
+    dlpcreb=re.compile('^(G[NS]-\S\S\S20\d\d[01]\d[0123]\d)-(\d*)-(\d*)$')
+    if(h.datalab):
+      matcha=dlpcrea.match(h.datalab)
+      matchb=dlpcreb.match(h.datalab)
+      if(matcha):
+        match=matcha
+      if(matchb):
+        match=matchb
+      if(match):
+        req.write('<TD><NOBR><a href="/summary/%s">%s</a>-<a href="/summary/%s">%s</a>-%s</NOBR></TD>' % (h.progid, match.group(1), h.obsid, match.group(2), match.group(3)))
+      else:
+        req.write('<TD>%s</TD>' % h.datalab)
+    else:
+      req.write('<TD>%s</TD>' % h.datalab)
+
     if(h.utdatetime):
       req.write("<TD>%s</TD>" % (h.utdatetime.strftime("%Y-%m-%d %H:%M:%S")))
     else:
