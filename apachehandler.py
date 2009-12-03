@@ -10,12 +10,12 @@ import FitsStorage
 from FitsStorageUtils import *
 from FitsStorageWebSummary import *
 
+from GeminiMetadataUtils import *
+
 import re
 
 # Compile regexps here
 datecre=re.compile('20\d\d[01]\d[0123]\d')
-progidcre=re.compile('G[NS]-20\d\d[AB]-[A-Z]*-\d*$')
-obsidcre=re.compile('G[NS]-20\d\d[AB]-[A-Z]*-\d*-\d*$')
 niricre=re.compile('[Nn][Ii][Rr][Ii]')
 nifscre=re.compile('[Nn][Ii][Ff][Ss]')
 gmosncre=re.compile('[Gg][Mm][Oo][Ss]-[Nn]')
@@ -77,9 +77,11 @@ def handler(req):
       thing = things.pop(0)
       if(datecre.match(thing)):
         selection['date']=thing
-      if(progidcre.match(thing)):
+      gp=GeminiProject(thing)
+      if(gp.progid):
         selection['progid']=thing
-      if(obsidcre.match(thing)):
+      go=GeminiObservation(thing)
+      if(go.obsid):
         selection['obsid']=thing
       if(niricre.match(thing)):
         selection['inst']='NIRI'
