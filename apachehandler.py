@@ -113,9 +113,9 @@ def handler(req):
       req.write("You must specify a filename, eg: /fullheader/N20091020S1234.fits\n")
       return apache.OK
 
-  # This returns the fitsverify text from the database
+  # This returns the fitsverify or wmdreport text from the database
   # you can give it either a diskfile_id or a filename
-  if(this == 'fitsverify'):
+  if(this == 'fitsverify' or this == 'wmdreport'):
     if(len(things)==0):
       req.content_type="text/plain"
       req.write("You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
@@ -138,7 +138,10 @@ def handler(req):
       query = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.file_id == file.id)
       diskfile = query.one()
       req.content_type="text/plain"
-      req.write(diskfile.fvreport)
+      if(this == 'fitsverify'):
+        req.write(diskfile.fvreport)
+      if(this == 'wmdreport'):
+        req.write(diskfile.wmdreport)
       return apache.OK
    
     # See if we got a diskfile_id
@@ -151,7 +154,10 @@ def handler(req):
         return apache.OK
       diskfile = query.one()
       req.content_type="text/plain"
-      req.write(diskfile.fvreport)
+      if(this == 'fitsverify'):
+        req.write(diskfile.fvreport)
+      if(this == 'wmdreport'):
+        req.write(diskfile.wmdreport)
       return apache.OK
 
     # OK, they must have fed us garbage
