@@ -167,7 +167,7 @@ def handler(req):
 
 
   # This is the fits file server
-  if(this == 'fits'):
+  if(this == 'file'):
     # First, see if we have a valid authorization cookie
     cookies = Cookie.get_cookies(req)
     if(cookies.has_key('gemini_fits_authorization')):
@@ -262,8 +262,11 @@ def usagemessage(req):
   req.write('<LI>In fact you can use any combination of date, obsid, progid and instrument in the URL and it will combine them with a logical and</LI>')
   req.write('<LI>You can add ?orderby=somethign arguments to the summary to change the sorting - see the urls linked via the arrows in the table headers for examples</LI>')
   req.write('</UL></LI>')
-  req.write('<LI><a href="/fullheader/N20091123S0455.fits">/fullheader/N20091123S0455.fits</a> or <a href="/fullheader/N20091123S0455">/fullheader/N20091123S0455</a> gives the full fits header of that file</LI>')
+  req.write('<LI><a href="/fullheader/N20091123S0455.fits">/fullheader/N20091123S0455.fits</a> or <a href="/fullheader/N20091123S0455">/fullheader/N20091123S0455</a> gives the full fits header of that file. The headers are read from the file on demand, they are not from the database</LI>')
   req.write('<LI><a href="/fitsverify/N20091120S0003.fits">/fitsverify/N20091120S0003.fits</a> or <a href="/fitsverify/N20091120S0003">/fitsverify/N20091120S0003</a> gives the fitsverify report for that file. The filename maybe replaced by a database diskfile_id for internal links to specific diskfile instances, but these should not be used externally as the id may change</LI>')
+  req.write('<LI><a href="/wmdreport/N20091120S0003.fits">/wmdreport/N20091120S0003.fits</a> or <a href="/wmdreport/N20091120S0003">/wmdreport/N20091120S0003</a> gives the wmd report for that file. The filename maybe replaced by a database diskfile_id for internal links to specific diskfile instances, but these should not be used externally as the id may change</LI>')
+  req.write('<LI><a href="/file/N20091120S0003.fits">/file/N20091120S0003.fits</a> or <a href="/file/N20091120S0003">/file/N20091120S0003</a> will stream that fitsfile to your browser. Note that your browser must have the magic authentication cookie for this to work.</LI>')
+  req.write('<LI><a href="/stats">/stats</a> will give some statistics from the database.</LI>')
   req.write('</UL>')
   req.write('</body></html>')
   return apache.OK
