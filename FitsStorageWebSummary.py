@@ -230,7 +230,7 @@ def webhdrsummary(req, type, headers):
       req.write('<TD>%s</TD>' % h.datalab)
 
     if(h.utdatetime):
-      req.write("<TD>%s</TD>" % (h.utdatetime.strftime("%Y-%m-%d %H:%M:%S")))
+      req.write("<TD><NORB>%s</NOBR></TD>" % (h.utdatetime.strftime("%Y-%m-%d %H:%M:%S")))
     else:
       req.write("<TD>%s</TD>" % ("None"))
     req.write("<TD>%s</TD>" % (h.instrument))
