@@ -1,5 +1,7 @@
 import re
 
+# This first block of regexps are compiled here but used elsewhere
+percentilecre=re.compile('^\d\d-percentile$')
 
 # Compile some regular expressions here. This is fairly complex, so I've
 # split it up in substrings to make it easier to follow.
@@ -36,8 +38,6 @@ class GeminiDataLabel:
     self.obsid = ''
     self.obsnum = ''
     self.dlnum = ''
-    self.iseng = False
-    self.iscal = False
     if(self.datalabel):
       self.parse()
 
