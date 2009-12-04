@@ -224,7 +224,7 @@ class Header(Base):
     # This is better than returning an emtpy string as it works with numeric types too
     try:
       val = hdu.header[keyword]
-      if(val):
+      if(val and val!='No Value'):
         return(val)
     except:
       print "keyword not present: ", keyword
