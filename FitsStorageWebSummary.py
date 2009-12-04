@@ -204,11 +204,12 @@ def webhdrsummary(req, type, headers):
 
     # The filename cell, with the link to the full headers and the optional WMD and FITS error flags
     if(h.diskfile.fverrors):
-      fve='<a href="/fvreport/%d">- fits!</a>' % (h.diskfile.id)
+      fve='<a href="/fitsverify/%d">- fits!</a>' % (h.diskfile.id)
     else:
       fve=''
     # Do not raise the WMD flag on ENG data
-    if((not dl.iseng) and (not h.diskfile.wmdready)):
+    iseng = bool(dl.datalabel) and dl.project.iseng
+    if((not iseng) and (not h.diskfile.wmdready)):
       wmd='<a href="/wmdreport/%d">- md!</a>' % (h.diskfile.id)
     else:
       wmd=''
@@ -241,22 +242,22 @@ def webhdrsummary(req, type, headers):
     if('qa' in want):
       req.write('<TD>%s</TD>' % (h.qastate))
 
-      if(h.rawiq and len(h.rawiq)>4):
+      if(h.rawiq and percentilecre.match(h.rawiq)):
         req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.rawiq, h.rawiq[0:4]))
       else:
         req.write('<TD>%s</TD>' % (h.rawiq))
 
-      if(h.rawcc and len(h.rawcc)>4):
+      if(h.rawcc and percentilecre.match(h.rawcc)):
         req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.rawcc, h.rawcc[0:4]))
       else:
         req.write('<TD>%s</TD>' % (h.rawcc))
 
-      if(h.rawwv and len(h.rawwv)>4):
+      if(h.rawwv and percentilecre.match(h.rawwv)):
         req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.rawwv, h.rawwv[0:4]))
       else:
         req.write('<TD>%s</TD>' % (h.rawwv))
  
-      if(h.rawbg and len(h.rawbg)>4):
+      if(h.rawbg and percentilecre.match(h.rawbg)):
         req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.rawbg, h.rawbg[0:4]))
       else:
         req.write('<TD>%s</TD>' % (h.rawbg))
