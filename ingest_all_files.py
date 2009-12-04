@@ -1,3 +1,6 @@
+import sys
+sys.path=['/data/bin', '/data/pythonpath/lib64/python2.4/site-packages/', '/data/pythonpath/lib/python2.4/site-packages/', '/data/pythonpath/lib/python2.4/site-packages/python_dateutil-1.4.1-py2.4.egg']+sys.path
+
 import FitsStorage
 import FitsStorageUtils
 import os
@@ -6,19 +9,35 @@ import datetime
 
 from optparse import OptionParser
 
-# Get a list of all the files in the datastore
-# We assume this is just one dir (ie non recursive) for now.
-
-path=''
-
-fulldirpath = os.path.join(FitsStorage.storage_root, path)
-print "Ingesting files from: ", fulldirpath
+lockfilename = "/data/autoingest/lockfile"
 
 parser = OptionParser()
 parser.add_option("--force-crc", action="store_true", dest="force_crc", help="Force crc check on pre-existing files")
 parser.add_option("--file-re", action="store", type="string", dest="file_re", help="python regular expression string to select files by. Special values are today, twoday, fourday to include only files from today, the last two days, or the last four days respectively (days counted as UTC days)")
+parser.add_option("--lockfile", action="store_true", dest="lockfile", help="Use a lockfile to prevent multiple instances")
 
 (options, args) = parser.parse_args()
+
+# Annouce startup
+now = datetime.datetime.now()
+startup = "*********  ingest_all_files.py - starting up at %s" % now
+print "\n\n%s\n" % startup
+
+if(options.lockfile):
+  # Check for lockfile existance
+  if(os.access(lockfilename, os.F_OK | os.R_OK | os.W_OK)):
+    print "lockfile already exists. Aborting"
+    sys.exit(1)
+  else:
+    lf=open(lockfilename, 'w')
+    lf.write(startup)
+    lf.close()
+
+# Get a list of all the files in the datastore
+# We assume this is just one dir (ie non recursive) for now.
+path=''
+fulldirpath = os.path.join(FitsStorage.storage_root, path)
+print "Ingesting files from: ", fulldirpath
 
 file_re = options.file_re
 # Handle the today and twoday options
@@ -61,3 +80,10 @@ for filename in files:
   i+=1
   print "-- Ingesting (%d/%d): %s" % (i, n, filename)
   FitsStorageUtils.ingest_file(filename, path, options.force_crc)
+
+now=datetime.datetime.now()
+print "*** ingest_all_files.py exiting normally at %s" % now
+
+if(options.lockfile):
+  # Blow away the lockfile
+  os.unlink(lockfilename)
