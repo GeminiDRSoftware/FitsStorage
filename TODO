@@ -1,22 +1,16 @@
 Database schema changes:
--- add wmd to diskfiles table
 -- add exposure time and filter to headers table and to summary report
 **** Add task to summary generator or whatever when these are done
 
 Apachehandler:
 
-create fits file server
-
 Summary Generator:
-create a diskfile summary
 create a history summary
 
 Logistics:
 get fits dns CNAME
 create virtual servers for fits and hbffits1
 comment, document and mark authorship on code
-
-write ingest and update scripts to support NFS operation - eg update data from today only to run every rew mins etc
 
 
 low priority:
