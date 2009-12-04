@@ -273,3 +273,32 @@ def webhdrsummary(req, type, headers):
     # And again last bit included in all summary types
     req.write("</TR>\n")
   req.write("</TABLE>\n")
+
+# this lists programs observed on a given night
+datecre = re.compile('(20\d\d)([01]\d)([0123]\d)')
+def progsobserved(req, things):
+  if(things):
+    arg = things.pop(0)
+  else:
+    arg=''
+  match=datecre.match(arg)
+  if(match):
+    date=datetime.date(int(match.group(1)), int(match.group(2)), int(match.group(3)))
+  else:
+    date=datetime.datetime.utcnow().date()
+  # Parse the date to start and end datetime objects
+  startdt = dateutil.parser.parse("%s 00:00:00" % (date))
+  oneday = datetime.timedelta(days=1)
+  enddt = startdt + oneday
+  # create a query for between these two
+  query = session.query(Header.progid).filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt).group_by(Header.progid)
+  list = query.all()
+  req.content_type = "text/html"
+  req.write('<html><head><title>Programs Observed on %s</title></head><body><h1>Programs Observed on %s</h1><p>' % (date, date))
+  for row in list:
+    p = row[0]
+    if(p):
+      req.write('%s ' % p)
+  req.write('</p></body></html>')
+  return apache.OK
+
