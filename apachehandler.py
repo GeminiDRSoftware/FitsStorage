@@ -208,6 +208,11 @@ def handler(req):
       #req.write("Authorization data missing")
       return apache.HTTP_FORBIDDEN
 
+  # This is the projects observed feature
+  if(this == "programsobserved"):
+    return progsobserved(req, things)
+    
+
   # Database Statistics
   if(this == "stats"):
     return stats(req)
@@ -278,6 +283,7 @@ def usagemessage(req):
   req.write('<LI><a href="/diskfiles/20091120">/diskfiles/20091120</a> shows some lower level details from the diskfiles table. You can use all the same stuff as with /summary</LI>')
   req.write('<LI><a href="/file/N20091120S0003.fits">/file/N20091120S0003.fits</a> or <a href="/file/N20091120S0003">/file/N20091120S0003</a> will stream that fitsfile to your browser. Note that your browser must have the magic authentication cookie for this to work.</LI>')
   req.write('<LI><a href="/stats">/stats</a> will give some statistics from the database.</LI>')
+  req.write('<LI><a href="/programsobserved/20091201">/programsobserved/20091201</a> will show you which programs have datafiles from that UT night. <a href="/programsobserved">/programsobserved</a> will default to the current UT date.</LI>')
   req.write('</UL>')
   req.write('</body></html>')
   return apache.OK
