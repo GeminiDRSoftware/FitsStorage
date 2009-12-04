@@ -4,6 +4,7 @@
 
 from mod_python import apache
 from mod_python import Cookie
+from mod_python import util
 
 import sys
 import FitsStorage
@@ -211,6 +212,11 @@ def handler(req):
   if(this == "stats"):
     return stats(req)
 
+  # Some static files that the server should serve via a redirect.
+  if((this == "robots.txt") or (this == "favicon.ico")):
+    newurl = "/htmldocs/%s" % this
+    util.redirect(req, newurl)
+  
   # Last one on the list - if we haven't return(ed) out of this function
   # by one of the methods above, then we should send out the usage message
   return usagemessage(req)
