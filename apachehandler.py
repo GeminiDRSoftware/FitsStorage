@@ -14,6 +14,7 @@ from FitsStorageWebSummary import *
 from GeminiMetadataUtils import *
 
 import re
+import datetime
 
 # Compile regexps here
 datecre=re.compile('20\d\d[01]\d[0123]\d')
@@ -319,21 +320,44 @@ def stats(req):
   req.write("</ul>")
   
   # DiskFile table statistics
-  query=session.query(DiskFile)
   req.write("<h2>DiskFile Table:</h2>")
   req.write("<ul>")
+  # Total rows
+  query=session.query(DiskFile)
   totalrows=query.count()
   req.write("<li>Total Rows: %d</li>" % totalrows)
+  # Present rows
   query=query.filter(DiskFile.present == True)
   presentrows = query.count()
   percent = 100.0 * presentrows / totalrows
   req.write("<li>Present Rows: %d (%.2f %%)</li>" % (presentrows, percent))
+  # Present size
   tpq = session.query(func.sum(DiskFile.size)).filter(DiskFile.present == True)
   tpsize=tpq.one()[0]
   req.write("<li>Total present size: %d bytes (%.02f GB)</li>" % (tpsize, (tpsize/1073741824.0)))
+  # most recent entry
   query=session.query(func.max(DiskFile.entrytime))
   latest = query.one()[0]
   req.write("<li>Most recent diskfile entry was at: %s</li>" % latest)
+  # Number of entries in last minute / hour / day
+  mbefore = datetime.datetime.now() - datetime.timedelta(minutes=1)
+  hbefore = datetime.datetime.now() - datetime.timedelta(hours=1)
+  dbefore = datetime.datetime.now() - datetime.timedelta(days=1)
+  mcount = session.query(DiskFile).filter(DiskFile.entrytime > mbefore).count()
+  hcount = session.query(DiskFile).filter(DiskFile.entrytime > hbefore).count()
+  dcount = session.query(DiskFile).filter(DiskFile.entrytime > dbefore).count()
+  req.write('<LI>Number of DiskFile rows added in the last minute: %d</LI>' % mcount)
+  req.write('<LI>Number of DiskFile rows added in the last hour: %d</LI>' % hcount)
+  req.write('<LI>Number of DiskFile rows added in the last day: %d</LI>' % dcount)
+  # Last 10 entries
+  query = session.query(DiskFile).order_by(desc(DiskFile.entrytime)).limit(10)
+  list = query.all()
+  req.write('<LI>Last 10 diskfile entries added:<UL>')
+  for i in list:
+    req.write('<LI>%s : %s</LI>' % (i.file.filename, i.entrytime))
+  req.write('</UL></LI>')
+
+  
   req.write("</ul>")
   
   # Header table statistics
