@@ -1,3 +1,7 @@
+Features:
+ - Duplicate data label detection
+
+
 Database schema changes:
 -- add exposure time and filter to headers table and to summary report
 **** Add task to summary generator or whatever when these are done
