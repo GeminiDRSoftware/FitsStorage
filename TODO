@@ -1,5 +1,6 @@
 Features:
  - Duplicate data label detection
+ - mark data that uses the AO system (and LGS/NGS?)
 
 
 Database schema changes:
