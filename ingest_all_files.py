@@ -6,6 +6,7 @@ import FitsStorageUtils
 import os
 import re
 import datetime
+import time
 
 from optparse import OptionParser
 
@@ -74,8 +75,16 @@ if(file_re):
 else:
   files = filelist
 
+
 i=0
 n=len(files)
+# print what we're about to do, and give abort opportunity
+print "About to scan %d files" % n
+if (n>5000):
+  print "That's a lot of files. Hit ctrl-c within 5 secs to abort"
+  time.sleep(6)
+
+files.sort()
 for filename in files:
   i+=1
   print "-- Ingesting (%d/%d): %s" % (i, n, filename)
