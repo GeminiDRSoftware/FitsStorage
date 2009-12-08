@@ -275,17 +275,16 @@ def webhdrsummary(req, type, headers):
   req.write("</TABLE>\n")
 
 # this lists programs observed on a given night
-datecre = re.compile('(20\d\d)([01]\d)([0123]\d)')
 def progsobserved(req, things):
   if(things):
     arg = things.pop(0)
   else:
-    arg=''
-  match=datecre.match(arg)
-  if(match):
-    date=datetime.date(int(match.group(1)), int(match.group(2)), int(match.group(3)))
+    arg='today'
+  if(gemini_date(arg)):
+    date=gemini_date(arg)
   else:
-    date=datetime.datetime.utcnow().date()
+    date=gemini_date('today')
+
   # Parse the date to start and end datetime objects
   startdt = dateutil.parser.parse("%s 00:00:00" % (date))
   oneday = datetime.timedelta(days=1)
