@@ -1,4 +1,5 @@
 import re
+import datetime
 
 # This first block of regexps are compiled here but used elsewhere
 percentilecre=re.compile('^\d\d-percentile$')
@@ -17,6 +18,33 @@ progre='(?:^%s$)|(?:^%s$)' % (calengre, scire)
 
 # This matches an observation id with the project id and obsnum as groups
 obsre='((?:^%s)|(?:^%s))-(\d*)$' % (calengre, scire)
+
+# A utility function for matching instrument names
+niricre=re.compile('[Nn][Ii][Rr][Ii]')
+nifscre=re.compile('[Nn][Ii][Ff][Ss]')
+gmosncre=re.compile('[Gg][Mm][Oo][Ss]-[Nn]')
+gmosscre=re.compile('[Gg][Mm][Oo][Ss]-[Ss]')
+michellecre=re.compile('[Mm][Ii][Cc][Hh][Ee][Ll][Ll][Ee]')
+gnirscre=re.compile('[Gg][Nn][Ii][Rr][Ss]')
+
+def gemini_instrument(string):
+  # If the string argument matches a gemini instrument name, then we
+  # return the "official" (ie same as in the fits headers) name of the instrument
+  # Otherwise we return an empty string
+  retary=''
+  if(niricre.match(string)):
+    retary='NIRI'
+  if(nifscre.match(string)):
+    retary='NIFS'
+  if(gmosncre.match(string)):
+    retary='GMOS-N'
+  if(gmosscre.match(string)):
+    retary='GMOS-S'
+  if(michellecre.match(string)):
+    retary='michelle'
+  if(gnirscre.match(string)):
+    retary='GNIRS'
+  return retary
 
 # The Gemini Data Label Class
 
