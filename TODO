@@ -1,10 +1,17 @@
 Features:
  - Duplicate data label detection
  - mark data that uses the AO system (and LGS/NGS?)
+ - add option to filter summary also by ObsClass and ObsType?
+ - add data rates to stats
 
 - ingest reduced calibration data
 - consider reduced data files too
 - does one DB need to handle multiple data stores?
+
+- database backup cronjob
+
+- hyperlinks to fits files
+- jpeg previews of FITS files...
 
 Database schema changes:
 -- add exposure time and filter to headers table and to summary report
