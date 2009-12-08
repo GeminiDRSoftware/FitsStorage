@@ -2,7 +2,9 @@ Features:
  - Duplicate data label detection
  - mark data that uses the AO system (and LGS/NGS?)
 
-- write rollcall script to check everything that should be present actually is.
+- ingest reduced calibration data
+- consider reduced data files too
+- does one DB need to handle multiple data stores?
 
 Database schema changes:
 -- add exposure time and filter to headers table and to summary report
