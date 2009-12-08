@@ -18,10 +18,6 @@ import datetime
 
 # Compile regexps here
 datecre=re.compile('20\d\d[01]\d[0123]\d')
-niricre=re.compile('[Nn][Ii][Rr][Ii]')
-nifscre=re.compile('[Nn][Ii][Ff][Ss]')
-gmosncre=re.compile('[Gg][Mm][Oo][Ss]-[Nn]')
-michellecre=re.compile('[Mm][Ii][Cc][Hh][Ee][Ll][Ll][Ee]')
 
 orderbycre=re.compile('orderby\=(\S*)')
 
@@ -85,14 +81,8 @@ def handler(req):
       go=GeminiObservation(thing)
       if(go.obsid):
         selection['obsid']=thing
-      if(niricre.match(thing)):
-        selection['inst']='NIRI'
-      if(nifscre.match(thing)):
-        selection['inst']='NIFS'
-      if(gmosncre.match(thing)):
-        selection['inst']='GMOS-N'
-      if(michellecre.match(thing)):
-        selection['inst']='MICHELLE'
+      if(gemini_instrument(thing)):
+        selection['inst']=gemini_instrument(thing)
 
     # We should parse the arguments here too
     # All we have for now are order_by arguments
