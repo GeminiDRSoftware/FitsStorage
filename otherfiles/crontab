@@ -1,0 +1,3 @@
+2,17,32,47 * * * * /usr/bin/python /data/bin/ingest_all_files.py --lockfile --file-re=fourday >> /data/autoingest/logfile
+*/5 * * * * /usr/bin/python /data/bin/ingest_all_files.py --lockfile --file-re=twoday >> /data/autoingest/logfile
+
