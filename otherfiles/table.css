@@ -1,0 +1,15 @@
+.tr_head {
+  background-color: #A0A0FF;
+  font-size: small
+}
+
+.tr_odd {
+  background-color: #F0F0FF;
+  font-size: small
+}
+
+.tr_even {
+  background-color: #E0E0FF;
+  font-size: small
+}
+
