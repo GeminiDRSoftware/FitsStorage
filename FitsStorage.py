@@ -24,8 +24,11 @@ import CadcWMD
 
 Base = declarative_base()
 
-# Configure the path to the storage root here for now
+# Configure the path to the storage root here 
 storage_root = '/net/wikiwiki/dataflow'
+
+# Configure the path the data postgres database here
+fits_database = 'postgres:///fits'
 
 # We need to handle the database connection in here too so that the
 # orm can properly handle the relations defined in the database
@@ -33,7 +36,7 @@ storage_root = '/net/wikiwiki/dataflow'
 
 # Create a databas engine connection to the postgres database
 # and an sqlalchemy session to go with it
-pg_db = sqlalchemy.create_engine('postgres:///pytest')
+pg_db = sqlalchemy.create_engine(fits_database)
 sessionfactory = sqlalchemy.orm.sessionmaker(pg_db)
 session = sessionfactory()
 
