@@ -1,5 +1,5 @@
 import sys
-sys.path=['/data/bin', '/data/pythonpath/lib64/python2.4/site-packages/', '/data/pythonpath/lib/python2.4/site-packages/', '/data/pythonpath/lib/python2.4/site-packages/python_dateutil-1.4.1-py2.4.egg']+sys.path
+sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
 
 from FitsStorage import *
 #import FitsStorageUtils
