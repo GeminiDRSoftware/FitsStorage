@@ -22,16 +22,9 @@ import FitsVerify
 import CadcCRC
 import CadcWMD
 
+from FitsStorageConfig import *
+
 Base = declarative_base()
-
-# Configure the path to the storage root here 
-storage_root = '/net/wikiwiki/dataflow'
-
-# Configure the path the data postgres database here
-fits_database = 'postgres:///fitsdata'
-
-# Configure the site and other misc stuff here
-fits_installation = "fits-install"
 
 # We need to handle the database connection in here too so that the
 # orm can properly handle the relations defined in the database
