@@ -30,6 +30,9 @@ storage_root = '/net/wikiwiki/dataflow'
 # Configure the path the data postgres database here
 fits_database = 'postgres:///fits'
 
+# Configure the site and other misc stuff here
+fits_installation = "fits-install"
+
 # We need to handle the database connection in here too so that the
 # orm can properly handle the relations defined in the database
 # at this level rather than in the main script
