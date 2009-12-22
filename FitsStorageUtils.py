@@ -4,9 +4,13 @@ from FitsStorage import *
 crefits = re.compile("\S*.fits$")
 
 def create_tables():
+  # Create the tables
   File.metadata.create_all(bind=pg_db)
   DiskFile.metadata.create_all(bind=pg_db)
   Header.metadata.create_all(bind=pg_db)
+
+  # Now grant the apache user select on them for the www queries
+  session.execute("GRANT SELECT ON file, diskfile, header TO apache");
 
 def fitsfilename(filename):
   # Takes a filename with optional .fits ending and returns it
