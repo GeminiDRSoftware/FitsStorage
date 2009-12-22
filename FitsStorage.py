@@ -28,7 +28,7 @@ Base = declarative_base()
 storage_root = '/net/wikiwiki/dataflow'
 
 # Configure the path the data postgres database here
-fits_database = 'postgres:///fits'
+fits_database = 'postgres:///pytest'
 
 # Configure the site and other misc stuff here
 fits_installation = "fits-install"
