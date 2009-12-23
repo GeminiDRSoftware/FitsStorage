@@ -177,15 +177,6 @@ class Header(Base):
     if(datestring and timestring):
       datetime_string = "%s %s" % (datestring, timestring)
       self.utdatetime = dateutil.parser.parse(datetime_string)
-    if(not datestring):
-      # Bleah. Bodge it from the filename for now
-      fn = diskfile.file.filename
-      datestring = fn[1:9]
-      if(re.match('20\d\d[01]\d[0123]\d', datestring)):
-        # Assume it's a valid datestring
-        # We'll stick these at 23:59:59.99 to put them at the end of the day
-        datetime_string = "%s %s" % (datestring, '23:59:59.99')
-        self.utdatetime = dateutil.parser.parse(datetime_string)
     localtime_string = ad.phuHeader('LT')
     if(localtime_string):
       # This is a bit of a hack so as to use the nice parser
