@@ -63,6 +63,26 @@ def gemini_date(string):
     return then.date().strftime('%Y%m%d')
   return ''
 
+# A utility function for matching Gemini obstypes
+def gemini_obstype(string):
+  # If the string argument matches a gemini obstype then we return the obstype
+  # Otherwise return an empty string
+  list = ['DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT']
+  retary = ''
+  if(string in list):
+    retary = string
+  return retary
+  
+# A utility function matching Gemini obsclasses
+def gemini_obsclass(string):
+  # If the string argument matches a gemini obsclass then we return the obsclass
+  # Otherwise we return an empty string
+  list = ['dayCal', 'partnerCal', 'acqCal', 'acq', 'science', 'progCal']
+  retary = ''
+  if (string in list):
+    retary = string
+  return retary
+
 # The Gemini Data Label Class
 
 # This re matches progid-obsum-dlnum - ie a datalabel,
