@@ -21,6 +21,8 @@ def summary(req, type, selection, orderby):
   req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
   req.write("</head>\n")
   req.write("<body>")
+  if (fits_system_status == "development"):
+    req.write('<h1>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h1>')
   req.write("<H1>%s</H1>" % (title))
 
   # If this is a diskfiles summary, select even ones that are not present
@@ -124,6 +126,14 @@ def list_headers(selection, orderby):
         query = query.order_by(File.filename)
       if(orderby[i] == 'filename_desc'):
         query = query.order_by(desc(File.filename))
+      if((orderby[i] == 'filter') or (orderby[i] == 'filter_asc')):
+        query = query.order_by(Header.filter)
+      if(orderby[i] == 'filter_desc'):
+        query = query.order_by(desc(Header.filter))
+      if((orderby[i] == 'exptime') or (orderby[i] == 'exptime_asc')):
+        query = query.order_by(Header.exptime)
+      if(orderby[i] == 'exptime_desc'):
+        query = query.order_by(desc(Header.exptime))
 
   # If this is an open query, we should reverse sort by date-time
   if(openquery):
@@ -166,6 +176,8 @@ def webhdrsummary(req, type, headers):
   if('obs' in want):
     req.write('<TH><abbr title="ObsClass">Class</abbr> <a href="%s?orderby=obsclass_asc">&uarr</a><a href="%s?orderby=obsclass_desc">&darr</a></TH>' % (myuri, myuri))
     req.write('<TH><abbr title="ObsType">Type</abbr> <a href="%s?orderby=obstype_asc">&uarr</a><a href="%s?orderby=obstype_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH>Filter <a href="%s?orderby=filter_asc">&uarr</a><a href="%s?orderby=filter_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH><abbr title="Exposure Time">ExpTime</abbr> <a href="%s?orderby=exptime_asc">&uarr</a><a href="%s?orderby=exptime_desc">&darr</a>' % (myuri, myuri))
     req.write('<TH><abbr title="AirMass">AM</abbr> <a href="%s?orderby=airmass_asc">&uarr</a><a href="%s?orderby=airmass_desc">&darr</a></TH>' % (myuri, myuri))
     req.write('<TH><abbr title="Localtime">Lcltime</abbr> <a href="%s?orderby=localtime_asc">&uarr</a><a href="%s?orderby=localtime_desc">&darr</a></TH>' % (myuri, myuri))
 
@@ -231,6 +243,8 @@ def webhdrsummary(req, type, headers):
     if('obs' in want):
       req.write("<TD>%s</TD>" % (h.obsclass))
       req.write("<TD>%s</TD>" % (h.obstype))
+      req.write("<TD>%s</TD>" % (h.filter))
+      req.write("<TD>%s</TD>" % (h.exptime))
       req.write("<TD>%s</TD>" % (h.airmass))
       if(h.localtime):
         req.write("<TD>%s</TD>" % (h.localtime.strftime("%H:%M:%S")))
