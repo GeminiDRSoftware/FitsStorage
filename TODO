@@ -1,7 +1,6 @@
 Features:
  - Duplicate data label detection
  - mark data that uses the AO system (and LGS/NGS?)
- - add option to filter summary also by ObsClass and ObsType?
  - add data rates to stats
  - option to ingest old files from an alternate dir with present=false
  - option to ingest without wmd and/or fitsverify
@@ -18,8 +17,6 @@ Features:
 - jpeg previews of FITS files...
 
 Database schema changes:
--- add exposure time and filter to headers table and to summary report
-**** Add task to summary generator or whatever when these are done
 
 Apachehandler:
 
@@ -27,8 +24,6 @@ Summary Generator:
 create a history summary
 
 Logistics:
-get fits dns CNAME
-create virtual servers for fits and hbffits1
 comment, document and mark authorship on code
 
 
