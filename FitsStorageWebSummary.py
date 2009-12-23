@@ -16,6 +16,11 @@ def summary(req, type, selection, orderby):
     title += "; Date: %s" % (selection['date'])
   if('inst' in selection):
     title += "; Instrument: %s" % (selection['inst'])
+  if('obstype' in selection):
+    title += "; ObsType: %s" % (selection['obstype'])
+  if('obsclass' in selection):
+    title += "; ObsClass: %s" % (selection['obsclass'])
+
   req.write("<head>")
   req.write("<title>%s</title>" % (title))
   req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
@@ -64,6 +69,16 @@ def list_headers(selection, orderby):
     # check it's between these two
     query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
     openquery=0
+
+  # Should we query by obstype?
+  if('obstype' in selection):
+    query = query.filter(Header.obstype==selection['obstype'])
+    # do not alter openquery here
+
+  # Should we query by obsclass?
+  if('obsclass' in selection):
+    query = query.filter(Header.obsclass==selection['obsclass'])
+    # do not alter openquery here
 
   # Should we query by instrument?
   if('inst' in selection):
