@@ -10,4 +10,5 @@ fits_database = 'postgres:///fitsdata'
 
 # Configure the site and other misc stuff here
 fits_installation = "fits-install"
+fits_system_status = "development"
 
