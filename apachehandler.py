@@ -82,6 +82,10 @@ def handler(req):
         selection['obsid']=thing
       if(gemini_instrument(thing)):
         selection['inst']=gemini_instrument(thing)
+      if(gemini_obstype(thing)):
+        selection['obstype']=gemini_obstype(thing)
+      if(gemini_obsclass(thing)):
+        selection['obsclass']=gemini_obsclass(thing)
 
     # We should parse the arguments here too
     # All we have for now are order_by arguments
