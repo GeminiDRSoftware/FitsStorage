@@ -285,6 +285,7 @@ def debugmessage(req):
   req.content_type = "text/plain"
   req.write("Debug info\n\n")
   req.write("fits_installation: %s\n\n" % (str(FitsStorage.fits_installation)))
+  req.write("python interpreter name: %s\n\n" % (str(req.interpreter)))
   req.write("Pythonpath: %s\n\n" % (str(sys.path)))
   req.write("uri: %s\n\n" % (str(req.uri)))
   req.write("unparsed_uri: %s\n\n" % (str(req.unparsed_uri)))
