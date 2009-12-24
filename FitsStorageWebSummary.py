@@ -149,6 +149,10 @@ def list_headers(selection, orderby):
         query = query.order_by(Header.exptime)
       if(orderby[i] == 'exptime_desc'):
         query = query.order_by(desc(Header.exptime))
+      if((orderby[i] == 'object') or (orderby[i] == 'object_asc')):
+        query = query.order_by(Header.object)
+      if(orderby[i] == 'object_desc'):
+        query = query.order_by(desc(Header.object))
 
   # If this is an open query, we should reverse sort by date-time
   if(openquery):
@@ -191,6 +195,7 @@ def webhdrsummary(req, type, headers):
   if('obs' in want):
     req.write('<TH><abbr title="ObsClass">Class</abbr> <a href="%s?orderby=obsclass_asc">&uarr</a><a href="%s?orderby=obsclass_desc">&darr</a></TH>' % (myuri, myuri))
     req.write('<TH><abbr title="ObsType">Type</abbr> <a href="%s?orderby=obstype_asc">&uarr</a><a href="%s?orderby=obstype_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH><abbr title="Object Name">Object</abbr> <a href="%s?orderby=object_asc">&uarr</a><a href="%s?orderby=object_desc">&darr</a></TH>' % (myuri, myuri))
     req.write('<TH>Filter <a href="%s?orderby=filter_asc">&uarr</a><a href="%s?orderby=filter_desc">&darr</a></TH>' % (myuri, myuri))
     req.write('<TH><abbr title="Exposure Time">ExpTime</abbr> <a href="%s?orderby=exptime_asc">&uarr</a><a href="%s?orderby=exptime_desc">&darr</a>' % (myuri, myuri))
     req.write('<TH><abbr title="AirMass">AM</abbr> <a href="%s?orderby=airmass_asc">&uarr</a><a href="%s?orderby=airmass_desc">&darr</a></TH>' % (myuri, myuri))
@@ -258,6 +263,7 @@ def webhdrsummary(req, type, headers):
     if('obs' in want):
       req.write("<TD>%s</TD>" % (h.obsclass))
       req.write("<TD>%s</TD>" % (h.obstype))
+      req.write("<TD>%s</TD>" % (h.object))
       req.write("<TD>%s</TD>" % (h.filter))
       req.write("<TD>%s</TD>" % (h.exptime))
       req.write("<TD>%s</TD>" % (h.airmass))
