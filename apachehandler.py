@@ -362,6 +362,23 @@ def stats(req):
   req.write("<ul>")
   req.write("<li>Total Rows: %d</li>" % query.count())
   req.write("</ul>")
+
+  # Data rate statistics
+  req.write("<h2>Data Rates</h2>")
+  today = datetime.datetime.now().date()
+  zerohour = datetime.time(0,0,0)
+  ddelta = datetime.timedelta(days=1)
+  mdelta = datetime.timedelta(months=1)
+
+  start = datetime.datetime.combine(today, zerohour)
+  end = start + ddelta
+  query = session.query(func.sum(DiskFile.size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.utdatetime > start).filter(Header.utdatetime < end)
+  bytes = query.one()[0]
+ 
+  req.write("<ul>")
+  req.write("<li>%s - %s: %s GB</li>" % (str(start.date()), str(end.date()), bytes))
+  req.write("</ul>")
+
   
 
   req.write("</body></html>")
