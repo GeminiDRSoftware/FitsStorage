@@ -141,6 +141,9 @@ class Header(Base):
   airmass = Column(Numeric)
   filter = Column(Text)
   exptime = Column(Numeric)
+  disperser = Column(Text)
+  cwave = Column(Numeric)
+  fpmask = Column(Text)
   rawiq = Column(Text)
   rawcc = Column(Text)
   rawwv = Column(Text)
@@ -202,6 +205,9 @@ class Header(Base):
     self.rawgemqa = ad.phuHeader('RAWGEMQA')
     self.filter = ad.filtername()
     self.exptime = ad.exptime()
+    self.disperser = ad.disperser()
+    self.cwave = ad.cwave()
+    self.fpmask = ad.fpmask()
     ad.close()
 
     # Set the derived QA state
