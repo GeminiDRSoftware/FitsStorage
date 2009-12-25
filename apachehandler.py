@@ -365,7 +365,7 @@ def stats(req):
 
   # Data rate statistics
   req.write("<h2>Data Rates</h2>")
-  today = datetime.datetime.now().date()
+  today = datetime.datetime.utcnow().date()
   zerohour = datetime.time(0,0,0)
   ddelta = datetime.timedelta(days=1)
   wdelta = datetime.timedelta(days=7)
