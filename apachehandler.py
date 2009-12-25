@@ -368,15 +368,47 @@ def stats(req):
   today = datetime.datetime.now().date()
   zerohour = datetime.time(0,0,0)
   ddelta = datetime.timedelta(days=1)
-  mdelta = datetime.timedelta(months=1)
+  wdelta = datetime.timedelta(days=7)
+  mdelta = datetime.timedelta(days=30)
 
   start = datetime.datetime.combine(today, zerohour)
   end = start + ddelta
-  query = session.query(func.sum(DiskFile.size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.utdatetime > start).filter(Header.utdatetime < end)
-  bytes = query.one()[0]
  
-  req.write("<ul>")
-  req.write("<li>%s - %s: %s GB</li>" % (str(start.date()), str(end.date()), bytes))
+  req.write("<h3>Last 10 days</h3><ul>")
+  for i in range(10):
+    query = session.query(func.sum(DiskFile.size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.utdatetime > start).filter(Header.utdatetime < end)
+    bytes = query.one()[0]
+    if(not bytes):
+      bytes = 0
+    req.write("<li>%s: %.2f GB</li>" % (str(start.date()), bytes/1E9))
+    start -= ddelta
+    end -= ddelta
+  req.write("</ul>")
+
+  end = datetime.datetime.combine(today, zerohour)
+  start = end - wdelta
+  req.write("<h3>Last 6 weeks</h3><ul>")
+  for i in range(6):
+    query = session.query(func.sum(DiskFile.size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.utdatetime > start).filter(Header.utdatetime < end)
+    bytes = query.one()[0]
+    if(not bytes):
+      bytes = 0
+    req.write("<li>%s - %s: %.2f GB</li>" % (str(start.date()), str(end.date()), bytes/1E9))
+    start -= wdelta
+    end -= wdelta
+  req.write("</ul>")
+
+  end = datetime.datetime.combine(today, zerohour)
+  start = end - mdelta
+  req.write("<h3>Last 6 pseudo-months</h3><ul>")
+  for i in range(6):
+    query = session.query(func.sum(DiskFile.size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.utdatetime > start).filter(Header.utdatetime < end)
+    bytes = query.one()[0]
+    if(not bytes):
+      bytes = 0
+    req.write("<li>%s - %s: %.2f GB</li>" % (str(start.date()), str(end.date()), bytes/1E9))
+    start -= mdelta
+    end -= mdelta
   req.write("</ul>")
 
   
