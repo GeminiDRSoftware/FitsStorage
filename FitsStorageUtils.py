@@ -20,7 +20,7 @@ def fitsfilename(filename):
     filename = "%s.fits" % filename
   return filename
 
-def ingest_file(filename, path, force_crc):
+def ingest_file(filename, path, force_crc, skip_fv, skip_wmd):
   # Make a file instance
   file = File(filename, path)
 
@@ -75,7 +75,7 @@ def ingest_file(filename, path, force_crc):
   
   if(add_diskfile):
     print "Adding new DiskFile entry"
-    diskfile = DiskFile(file)
+    diskfile = DiskFile(file, skip_fv, skip_wmd)
     session.add(diskfile)
     session.commit()
     print "Adding new Header entry"
