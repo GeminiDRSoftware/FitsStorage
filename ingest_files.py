@@ -16,6 +16,8 @@ parser = OptionParser()
 parser.add_option("--force-crc", action="store_true", dest="force_crc", help="Force crc check on pre-existing files")
 parser.add_option("--file-re", action="store", type="string", dest="file_re", help="python regular expression string to select files by. Special values are today, twoday, fourday to include only files from today, the last two days, or the last four days respectively (days counted as UTC days)")
 parser.add_option("--lockfile", action="store_true", dest="lockfile", help="Use a lockfile to prevent multiple instances")
+parser.add_option("--skip-fv", action="store_true", dest="skip_fv", help="Do not run fitsverify on the files")
+parser.add_option("--skip-wmd", action="store_true", dest="skip_wmd", help="Do not run a wmd check on the files")
 
 (options, args) = parser.parse_args()
 
@@ -88,7 +90,7 @@ files.sort()
 for filename in files:
   i+=1
   print "-- Ingesting (%d/%d): %s" % (i, n, filename)
-  FitsStorageUtils.ingest_file(filename, path, options.force_crc)
+  FitsStorageUtils.ingest_file(filename, path, options.force_crc, options.skip_fv, options.skip_wmd)
 
 now=datetime.datetime.now()
 print "*** ingest_all_files.py exiting normally at %s" % now
