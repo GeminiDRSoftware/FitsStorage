@@ -1,9 +1,10 @@
 Features:
  - Duplicate data label detection
- - mark data that uses the AO system (and LGS/NGS?)
- - add data rates to stats
+ - mark data that uses the AO system (and LGS/NGS?) (AOFOLD = IN/OUT, LGUSTAGE = IN/OUT)
  - option to ingest old files from an alternate dir with present=false
  - option to ingest without wmd and/or fitsverify
+
+ - in summary, give disperser / cwavelen rather than filter for spectroscopy
 
  - decide about GSA interaction.
 
@@ -17,6 +18,9 @@ Features:
 - jpeg previews of FITS files...
 
 Database schema changes:
+
+Add utdate and uttime columns.
+Add spectroscopy boolean
 
 Apachehandler:
 
