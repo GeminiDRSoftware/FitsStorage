@@ -90,15 +90,21 @@ class DiskFile(Base):
   wmdready = Column(Boolean)
   wmdreport = Column(Text)
 
-  def __init__(self, file):
+  def __init__(self, file, skip_fv, skip_wmd):
     self.file_id = file.id
     self.present = True
     self.entrytime = 'now'
     self.size = file.size()
     self.ccrc = file.ccrc()
     self.lastmod = file.lastmod()
-    self.fits_verify(file)
-    self.wmd(file)
+    if(skip_fv):
+      self.fverrors=0
+    else:
+      self.fits_verify(file)
+    if(skip_wmd):
+      self.wmdready = True
+    else:
+      self.wmd(file)
 
   def __repr__(self):
     return "<DiskFile('%s', '%s')>" %(self.id, self.file_id)
