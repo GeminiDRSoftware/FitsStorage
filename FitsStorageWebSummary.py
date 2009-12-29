@@ -154,9 +154,9 @@ def list_headers(session, selection, orderby):
       if(orderby[i] == 'object_desc'):
         query = query.order_by(desc(Header.object))
 
-  # If this is an open query, we should reverse sort by date-time
+  # If this is an open query, we should reverse sort by filename
   if(openquery):
-    query = query.order_by(desc(Header.utdatetime))
+    query = query.order_by(desc(File.filename))
   else:
     # By default we should order by filename
     query = query.order_by(File.filename)
