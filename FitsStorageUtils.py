@@ -14,6 +14,7 @@ def create_tables(session):
 
   # Now grant the apache user select on them for the www queries
   session.execute("GRANT SELECT ON file, diskfile, header TO apache");
+  session.commit()
 
 def fitsfilename(filename):
   # Takes a filename with optional .fits ending and returns it
