@@ -1,13 +1,16 @@
 from FitsStorage import *
+from sqlalchemy.orm.exc import NoResultFound
+
 
 # Compile regular expresisons here
 crefits = re.compile("\S*.fits$")
 
-def create_tables():
+def create_tables(session):
   # Create the tables
   File.metadata.create_all(bind=pg_db)
   DiskFile.metadata.create_all(bind=pg_db)
   Header.metadata.create_all(bind=pg_db)
+  IngestQueue.metadata.create_all(bind=pg_db)
 
   # Now grant the apache user select on them for the www queries
   session.execute("GRANT SELECT ON file, diskfile, header TO apache");
@@ -20,7 +23,7 @@ def fitsfilename(filename):
     filename = "%s.fits" % filename
   return filename
 
-def ingest_file(filename, path, force_crc, skip_fv, skip_wmd):
+def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
   # Make a file instance
   file = File(filename, path)
 
@@ -84,3 +87,43 @@ def ingest_file(filename, path, force_crc, skip_fv, skip_wmd):
     session.commit()
   
   session.commit();
+
+def pop_ingestqueue(session):
+  # Return the next thing to ingest off the ingest queue
+  # Next is defined by a sort on the filename to get most recent first
+  # ... and not inprogress
+  # Set the inprogress column to true
+  # Must do this atomically, or at least check for race condition
+  # Also, when we go inprogress on an entry in the queue, we should delete all other entries for the same filename
+
+  # Ensure nothing outstanding
+  session.flush()
+
+  # Form the query, with for_update which adds FOR UPDATE to the SQL query. The resulting lock ends when the transaction ends
+  query=session.query(IngestQueue).with_lockmode('update').filter(IngestQueue.inprogress == False).order_by(desc(IngestQueue.filename))
+
+  # Try and get a value. If we fail, there are none, so bail out
+  try:
+    iq = query.first()
+  except NoResultFound:
+    # Not that anything has been done yet, but rollback anyway to clear the transaction...
+    session.rollback()
+    session.close()
+    return ''
+
+  iq.inprogress=True
+
+  # Find other instances
+  others = session.query(IngestQueue).filter(IngestQueue.inprogress == False).filter(IngestQueue.filename==iq.filename).all()
+  for o in others:
+    session.delete(o)
+
+  # And we're done
+  session.commit()
+  return iq
+  
+def addto_ingestqueue(session, filename, path):
+  # Adds to the ingestqueu
+  iq = IngestQueue(filename, path)
+  session.add(iq)
+  session.commit()
