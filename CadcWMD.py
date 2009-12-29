@@ -17,11 +17,13 @@ def cadcWMD(filename):
     return
 
   wmd_arg = "--file=%s" % filename
-  wmd.append(wmd_arg)
+  wmdcmd=list(wmd)
+  wmdcmd.append(wmd_arg)
+
   env=os.environ
   env['LD_LIBRARY_PATH']='/data/extern/mdIngest/lib.x86_fedora'
   # Fire off the subprocess and capture the output
-  sp = subprocess.Popen(wmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  sp = subprocess.Popen(wmdcmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   (stdoutstring, stderrstring) = sp.communicate()
 
   match=cre.search(stdoutstring)
