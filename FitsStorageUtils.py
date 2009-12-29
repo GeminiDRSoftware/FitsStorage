@@ -109,14 +109,15 @@ def pop_ingestqueue(session):
     # Not that anything has been done yet, but rollback anyway to clear the transaction...
     session.rollback()
     session.close()
-    return ''
+    iq=''
 
-  iq.inprogress=True
+  if(iq):
+    iq.inprogress=True
 
-  # Find other instances
-  others = session.query(IngestQueue).filter(IngestQueue.inprogress == False).filter(IngestQueue.filename==iq.filename).all()
-  for o in others:
-    session.delete(o)
+    # Find other instances
+    others = session.query(IngestQueue).filter(IngestQueue.inprogress == False).filter(IngestQueue.filename==iq.filename).all()
+    for o in others:
+      session.delete(o)
 
   # And we're done
   session.commit()
@@ -127,3 +128,8 @@ def addto_ingestqueue(session, filename, path):
   iq = IngestQueue(filename, path)
   session.add(iq)
   session.commit()
+
+def ingestqueue_length(session):
+  # return the length of the ingest queue
+  length = session.query(IngestQueue).filter(IngestQueue.inprogress == False).count()
+  return length
