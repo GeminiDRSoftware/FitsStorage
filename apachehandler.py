@@ -23,6 +23,9 @@ orderbycre=re.compile('orderby\=(\S*)')
 # The top level handler. This essentially calls out to the specific
 # handler function depending on the uri that we're handling
 def handler(req):
+  # Create the database session here, and close it before we exit
+  session = sessionfactory()
+
   #The next line is for serious debugging
   #return debugmessage(req)
 
@@ -97,7 +100,7 @@ def handler(req):
       if(match):
         orderby.append(match.group(1))
 
-    return summary(req, this, selection, orderby)
+    return summary(session, req, this, selection, orderby)
 
   # This returns the full header of the filename that follows.
   if(this ==  'fullheader'):
@@ -220,6 +223,7 @@ def handler(req):
   # by one of the methods above, then we should send out the usage message
   return usagemessage(req)
 
+  session.close()
 # End of apache handler() function.
 # Below are various helper functions called from above.
 # The web summary has it's own module
