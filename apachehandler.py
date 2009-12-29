@@ -107,7 +107,7 @@ def handler(req):
     if(len(things)):
       filename=things.pop(0)
       filename=fitsfilename(filename)
-      return fullheader(req, filename)
+      return fullheader(session, req, filename)
     else:
       req.content_type="text/plain"
       req.write("You must specify a filename, eg: /fullheader/N20091020S1234.fits\n")
@@ -231,7 +231,7 @@ def handler(req):
 # This reads the full fits header from the file currently on disk and
 # returns in in text form to the browser.
 # Arguments are the apache request object and the filename
-def fullheader(req, filename):
+def fullheader(session, req, filename):
   # If the filename is missing the .fits, then add it
   filename=fitsfilename(filename)
 
