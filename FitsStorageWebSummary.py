@@ -4,7 +4,7 @@ from GeminiMetadataUtils import *
 from mod_python import apache
 
 # This is the main header summary generator
-def summary(req, type, selection, orderby):
+def summary(session, req, type, selection, orderby):
   req.content_type = "text/html"
   req.write("<html>")
   title = "FITS header %s table" % (type)
@@ -35,11 +35,11 @@ def summary(req, type, selection, orderby):
     # Usually, we want to only select headers with diskfiles that are present
     selection['present']=True
 
-  webhdrsummary(req, type, list_headers(selection, orderby))
+  webhdrsummary(session, req, type, list_headers(session, selection, orderby))
   req.write("</body></html>")
   return apache.OK
 
-def list_headers(selection, orderby):
+def list_headers(session, selection, orderby):
   # The basic query...
   query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
 
@@ -168,7 +168,7 @@ def list_headers(selection, orderby):
   # Return the list of DiskFile objects
   return query.all()
 
-def webhdrsummary(req, type, headers):
+def webhdrsummary(session, req, type, headers):
   # Given an apache request object, summary type and list of header instances
   # Write a header summary table of the appropriate type to the request object
   # Get the uri to use for the re-sort links
