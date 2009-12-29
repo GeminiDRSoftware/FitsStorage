@@ -152,6 +152,8 @@ class Header(Base):
   disperser = Column(Text)
   cwave = Column(Numeric)
   fpmask = Column(Text)
+  spectroscopy = Column(Boolean)
+  adaptive_optics = Column(Boolean)
   rawiq = Column(Text)
   rawcc = Column(Text)
   rawwv = Column(Text)
@@ -216,7 +218,20 @@ class Header(Base):
     self.disperser = ad.disperser()
     self.cwave = ad.cwave()
     self.fpmask = ad.fpmask()
-    ad.close()
+
+    # Hack the AO header for now
+    aofold = ad.phuHeader('AOFOLD')
+    self.adaptive_optics = (aofold == 'IN')
+
+    # And the Spectroscopy header
+    self.spectroscopy = False
+    if('NIFS' in ad.types):
+      self.spectroscopy = True
+    if('NIRI_SPECTRUM' in ad.types):
+      self.spectroscopy = True
+    if('GMOS_SPECTRUM' in ad.types):
+      self.spectroscopy = True
+
 
     # Set the derived QA state
     self.qastate = "%s:%s" % (self.rawpireq, self.rawgemqa)
@@ -230,6 +245,8 @@ class Header(Base):
       self.qastate = 'Fail'
     if((self.rawpireq == 'CHECK') and (self.rawgemqa == 'CHECK')):
       self.qastate = 'CHECK'
+
+    ad.close()
 
 class IngestQueue(Base):
   __tablename__ = 'ingestqueue'
