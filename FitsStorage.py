@@ -38,7 +38,9 @@ Base = declarative_base()
 # and an sqlalchemy session to go with it
 pg_db = sqlalchemy.create_engine(fits_database)
 sessionfactory = sqlalchemy.orm.sessionmaker(pg_db)
-session = sessionfactory()
+
+# Do not create the session here, these are not supposed to be global
+#session = sessionfactory()
 
 
 class File(Base):
@@ -228,3 +230,22 @@ class Header(Base):
       self.qastate = 'Fail'
     if((self.rawpireq == 'CHECK') and (self.rawgemqa == 'CHECK')):
       self.qastate = 'CHECK'
+
+class IngestQueue(Base):
+  __tablename__ = 'ingestqueue'
+
+  id = Column(Integer, primary_key=True)
+  filename = Column(Text, nullable=False, unique=True, index=True)
+  path = Column(Text)
+  inprogress = Column(Boolean, index=True)
+  added = Column(DateTime)
+
+  def __init__(self, filename, path):
+    self.filename = filename
+    self.path = path
+    self.added = datetime.datetime.now()
+    self.inprogress = False
+
+  def __repr__(self):
+    return "<IngestQueue('%s', '%s')>" %(self.id, self.filename)
+
