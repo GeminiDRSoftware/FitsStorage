@@ -212,7 +212,7 @@ def handler(req):
 
   # Database Statistics
   if(this == "stats"):
-    return stats(req)
+    return stats(session, req)
 
   # Some static files that the server should serve via a redirect.
   if((this == "robots.txt") or (this == "favicon.ico")):
@@ -305,7 +305,7 @@ def debugmessage(req):
   return apache.OK
 
 # Send database statistics to browser
-def stats(req):
+def stats(session, req):
   req.content_type = "text/html"
   req.write("<html>")
   req.write("<head><title>FITS Storage database statistics</title></head>")
