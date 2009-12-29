@@ -33,7 +33,7 @@ while(1):
     print "Nothing on queue. Waiting"
     time.sleep(30)
   else:
-    print "Ingesting %s" % iq.filename
+    print "Ingesting %s, (%d in queue)" % (iq.filename, ingestqueue_length(session))
     session.flush()
     try:
       ingest_file(session, iq.filename, iq.path, options.force_crc, options.skip_fv, options.skip_wmd)
