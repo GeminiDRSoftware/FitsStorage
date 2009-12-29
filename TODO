@@ -1,11 +1,12 @@
 Features:
  - Duplicate data label detection
- - mark data that uses the AO system (and LGS/NGS?) (AOFOLD = IN/OUT, LGUSTAGE = IN/OUT)
  - option to ingest old files from an alternate dir with present=false
 
- - in summary, give disperser / cwavelen rather than filter for spectroscopy
-
  - decide about GSA interaction.
+
+ - write curation script that checks for missing entries etc
+
+ - fix cadcCRC and wmd classes to handle ctrl-c s properly.
 
 - ingest reduced calibration data
 - consider reduced data files too
