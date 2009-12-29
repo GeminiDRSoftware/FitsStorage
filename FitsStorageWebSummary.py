@@ -257,7 +257,11 @@ def webhdrsummary(session, req, type, headers):
       req.write("<TD><NORB>%s</NOBR></TD>" % (h.utdatetime.strftime("%Y-%m-%d %H:%M:%S")))
     else:
       req.write("<TD>%s</TD>" % ("None"))
-    req.write("<TD>%s</TD>" % (h.instrument))
+
+    inst = h.instrument
+    if(h.adaptive_optics):
+      inst += " + AO"
+    req.write("<TD>%s</TD>" % (inst))
 
     # Now the 'obs' part
     if('obs' in want):
