@@ -252,7 +252,7 @@ class IngestQueue(Base):
   __tablename__ = 'ingestqueue'
 
   id = Column(Integer, primary_key=True)
-  filename = Column(Text, nullable=False, unique=True, index=True)
+  filename = Column(Text, nullable=False, unique=False, index=True)
   path = Column(Text)
   inprogress = Column(Boolean, index=True)
   added = Column(DateTime)
