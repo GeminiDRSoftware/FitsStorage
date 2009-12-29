@@ -263,7 +263,7 @@ def webhdrsummary(session, req, type, headers):
     if('obs' in want):
       req.write("<TD>%s</TD>" % (h.obsclass))
       req.write("<TD>%s</TD>" % (h.obstype))
-      if(len(h.object)>12):
+      if (h.object and len(h.object)>12):
         req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.object, (h.object)[0:12]))
       else:
         req.write("<TD>%s</TD>" % (h.object))
