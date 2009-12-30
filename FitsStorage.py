@@ -227,11 +227,21 @@ class Header(Base):
     self.spectroscopy = False
     if('NIFS' in ad.types):
       self.spectroscopy = True
+      self.disperser = ad.disperser()[0:1]
     if('NIRI_SPECTRUM' in ad.types):
       self.spectroscopy = True
+      self.disperser = ad.phuHeader('FILTER3')[0:6]
     if('GMOS_SPECTRUM' in ad.types):
       self.spectroscopy = True
 
+    # Kludge GMOS for now
+    if(ad.instrument() == 'GMOS-N' and ad.disperser() != 'MIRROR'):
+      self.spectroscopy = True
+
+    # and michelle for what it's worth
+    if('MICHELLE' in ad.types):
+      if(ad.phuHeader('CAMERA') == 'spectroscopy'):
+        self.spectroscopy = True
 
     # Set the derived QA state
     self.qastate = "%s:%s" % (self.rawpireq, self.rawgemqa)
