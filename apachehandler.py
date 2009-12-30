@@ -256,37 +256,7 @@ def fullheader(session, req, filename):
 
 # Send usage message to browser
 def usagemessage(req):
-  req.content_type = "text/html"
-  req.write('<html')
-  req.write('<head><title>FITS storage web help page</title></head>')
-  req.write('<body>')
-  req.write('<H1>FITS storage web help page</H1>')
-  req.write('<UL>')
-  req.write('<LI><a href="/">/</a> or <a href="/help">/help</a> gives this help page</LI>')
-  req.write('<LI>/summary gives file/header summaries:<UL>')
-  req.write('<LI><a href="/summary">/summary</a> by itself shows the last 2500 files, newest first</LI>')
-  req.write('<LI><a href="/summary/20091120">/summary/20091120</a> shows the data from 20091120, in order</LI>')
-  req.write('<LI><a href="/summary/today">/summary/today</a> shows the data from today (UT), in order. <a href="/summary/yesterday">yesterday</a> works too</LI>')
-  req.write('<LI><a href="/summary/GN-2009B-Q-51">/summary/GN-2009B-Q-51</a> shows all data for program GN-2009B-Q-51</LI>')
-  req.write('<LI><a href="/summary/GN-2009B-Q-51-15">/summary/GN-2009B-Q-51-15</a> shows all data for observatio GN-2009B-Q-51-15</LI>')
-  req.write('<LI><a href="/summary/GN-2009B-Q-51/20091123">/summary/GN-2009B-Q-51/20091123</a> or indeed <a href="/summary/20091123/GN-2009B-Q-51">/summary/20091123/GN-2009B-Q-51</a> shows all the data for GN-2009B-Q-51 taken on 20091123</LI>')
-  req.write('<LI><a href="/summary/20091120/NIRI">/summary/20091120/NIRI</a> shows all the files for that date using that instrument</LI>')
-  req.write('<LI>In fact you can use any combination of date, obsid, progid and instrument in the URL and it will combine them with a logical and, and for a date, you can give a YYYYMMDD or simply today or yesterday</LI>')
-  req.write('<LI>You can add ?orderby=something arguments to the summary to change the sorting - see the urls linked via the arrows in the table headers for examples</LI>')
-  req.write('<LI> Any file with fitsverify errors will show - fits! after the filename, this is linked to the fitsverify report. Any non engineering file with mdIngest / wmd errors will show - md! after the filename, linked to the wmdreport</LI>')
-  req.write('<LI>Some items are abbreviated in the summary to save space. These are marked as abbreviations, so will usually render in your browser with a faint underline, and you can mouse over them to see the full text in a tooltip</LI>')
-  req.write('</UL></LI>')
-  req.write('<LI><a href="/fullheader/N20091123S0455.fits">/fullheader/N20091123S0455.fits</a> or <a href="/fullheader/N20091123S0455">/fullheader/N20091123S0455</a> gives the full fits header of that file. The headers are read from the file on demand, they are not from the database</LI>')
-  req.write('<LI><a href="/fitsverify/N20091120S0003.fits">/fitsverify/N20091120S0003.fits</a> or <a href="/fitsverify/N20091120S0003">/fitsverify/N20091120S0003</a> gives the fitsverify report for that file. The filename maybe replaced by a database diskfile_id for internal links to specific diskfile instances, but these should not be used externally as the id may change</LI>')
-  req.write('<LI><a href="/wmdreport/N20091120S0003.fits">/wmdreport/N20091120S0003.fits</a> or <a href="/wmdreport/N20091120S0003">/wmdreport/N20091120S0003</a> gives the wmd report for that file. The filename maybe replaced by a database diskfile_id for internal links to specific diskfile instances, but these should not be used externally as the id may change</LI>')
-  req.write('<LI><a href="/diskfiles/20091120">/diskfiles/20091120</a> shows some lower level details from the diskfiles table. You can use all the same stuff as with /summary</LI>')
-  req.write('<LI><a href="/file/N20091120S0003.fits">/file/N20091120S0003.fits</a> or <a href="/file/N20091120S0003">/file/N20091120S0003</a> will stream that fitsfile to your browser. Note that your browser must have the magic authentication cookie for this to work.</LI>')
-  req.write('<LI><a href="/stats">/stats</a> will give some statistics from the database.</LI>')
-  req.write('<LI><a href="/programsobserved/20091201">/programsobserved/20091201</a> will show you which programs have datafiles from that UT night. <a href="/programsobserved">/programsobserved</a> will default to the current UT date. You can also say <a href="/programsobserved/today">/programsobserved/today</a> or <a href="/programsobserved/yesterday">/programsobserved/yesterday</a> too</LI>')
-  req.write('</UL>')
-  req.write('</body></html>')
-  return apache.OK
-
+  return util.redirect(req, "/htmldocs/usage.html")
 
 # Send debugging info to browser
 def debugmessage(req):
