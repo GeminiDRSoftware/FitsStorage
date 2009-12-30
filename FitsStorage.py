@@ -233,10 +233,12 @@ class Header(Base):
       self.disperser = ad.phuHeader('FILTER3')[0:6]
     if('GMOS_SPECTRUM' in ad.types):
       self.spectroscopy = True
+      self.disperser = ad.disperser()[0:4]
 
     # Kludge GMOS for now
     if(ad.instrument() == 'GMOS-N' and ad.disperser() != 'MIRROR'):
       self.spectroscopy = True
+      self.disperser = ad.disperser()[0:4]
 
     # and michelle for what it's worth
     if('MICHELLE' in ad.types):
