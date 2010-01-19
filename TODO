@@ -19,8 +19,7 @@ Features:
 
 Database schema changes:
 
-Add utdate and uttime columns.
-Add spectroscopy boolean
+Add utdate and uttime columns. ?
 
 Apachehandler:
 
