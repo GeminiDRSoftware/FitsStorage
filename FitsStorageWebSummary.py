@@ -273,12 +273,17 @@ def webhdrsummary(session, req, type, headers):
         req.write("<TD>%s</TD>" % (h.object))
 
       if(h.spectroscopy):
-        req.write("<TD>%s : %s</TD>" % (h.cwave, h.disperser))
+        s = h.cwave and "%.3f" % h.cwave
+        req.write("<TD>%s : %s</TD>" % (s, h.disperser))
       else:
         req.write("<TD>%s</TD>" % (h.filter))
 
-      req.write("<TD>%s</TD>" % (h.exptime))
-      req.write("<TD>%s</TD>" % (h.airmass))
+      s = (h.exptime != None) and "%.2f" % h.exptime
+      req.write("<TD>%s</TD>" % s)
+ 
+      s = h.airmass and "%.2f" % h.airmass
+      req.write("<TD>%s</TD>" % s)
+
       if(h.localtime):
         req.write("<TD>%s</TD>" % (h.localtime.strftime("%H:%M:%S")))
       else:
