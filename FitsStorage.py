@@ -213,7 +213,7 @@ class Header(Base):
     self.rawbg = ad.phuHeader('RAWBG')
     self.rawpireq = ad.phuHeader('RAWPIREQ')
     self.rawgemqa = ad.phuHeader('RAWGEMQA')
-    self.filter = ad.filtername()
+    self.filter = ad.filtername(pretty=True)
     self.exptime = ad.exptime()
     self.disperser = ad.disperser()
     self.cwave = ad.cwave()
@@ -228,15 +228,10 @@ class Header(Base):
     if('NIFS' in ad.types):
       self.spectroscopy = True
       self.disperser = ad.disperser()[0:1]
-    if('NIRI_SPECTRUM' in ad.types):
+    if('NIRI_SPECT' in ad.types):
       self.spectroscopy = True
-      self.disperser = ad.phuHeader('FILTER3')[0:6]
-    if('GMOS_SPECTRUM' in ad.types):
-      self.spectroscopy = True
-      self.disperser = ad.disperser()[0:4]
-
-    # Kludge GMOS for now
-    if(ad.instrument() == 'GMOS-N' and ad.disperser() != 'MIRROR'):
+      self.disperser = ad.disperser()[0:6]
+    if('GMOS_SPECT' in ad.types):
       self.spectroscopy = True
       self.disperser = ad.disperser()[0:4]
 
