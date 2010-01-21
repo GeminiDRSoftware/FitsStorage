@@ -1,3 +1,11 @@
+"""
+This is the FitsVerify module. It provides a python interface to the
+fitsverify command.
+
+The fitsverify_bin string contains the path to the fitsverify
+executable
+"""
+
 import subprocess
 import os
 import re
@@ -10,6 +18,15 @@ nfre=re.compile('This does not look like a FITS file.')
 were=re.compile('\*\*\*\* Verification found (\d*) warning\(s\) and (\d*) error\(s\). \*\*\*\*')
 
 def fitsverify(filename):
+  """
+  Runs the fitsverify command on the filename argument.
+  Returns a 4 component array containing
+
+  * a boolean that is true if the argument is a fits file
+  * an integer giving the number of warnings
+  * an integer giving the number of errors
+  * a string containing the full fitsverify report
+  """
   # First check that the filename exists is readable and is a file
   exists = os.access(filename, os.F_OK | os.R_OK)
   isfile = os.path.isfile(filename)
