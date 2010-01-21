@@ -1,3 +1,21 @@
+"""
+This is the "CadcWMD" module. It provides a python interface to the 
+CADC provided wmd tool.
+
+This module provides one function, cadcWMD(filename) which causes the 
+wmd command to be run on filename, and returns two values, a boolean 
+and a string. 
+
+The boolean is true if wmd says the file IS ready to be ingested into 
+the GSA, and false if wmd says IS NOT ready for ingestion.  
+
+The string is the text output of the wmd report.
+
+The path to the executable (java in this case) and all the necessary 
+arguments to make it run are contained in the wmd array.
+"""
+
+
 import subprocess
 import os
 import re
@@ -9,6 +27,13 @@ wmd = ['/astro/i686/jre1.5.0_03/bin/java', '-Djava.library.path=/data/extern/mdI
 cre=re.compile('File \S* (IS|IS NOT) ready for ingestion')
 
 def cadcWMD(filename):
+  """
+  Run the wmd command on filename.
+  Returns a (boolean, string) pair. 
+  The boolean is true if wmd says the file IS ready to be ingested 
+  into the GSA, and false if wmd says IS NOT ready for ingestion. 
+  The string is the text output of the wmd report.
+  """
   # First check that the filename exists is readable and is a file
   exists = os.access(filename, os.F_OK | os.R_OK)
   isfile = os.path.isfile(filename)
