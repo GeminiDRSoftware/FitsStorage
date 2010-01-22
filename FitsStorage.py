@@ -1,3 +1,7 @@
+"""
+This module contains the ORM classes for the tables in the fits storage
+database.
+"""
 import sys
 
 sys.path.append('/data/extern/gemini_python')
@@ -44,6 +48,9 @@ sessionfactory = sqlalchemy.orm.sessionmaker(pg_db)
 
 
 class File(Base):
+  """
+  This is the ORM class for the file table
+  """
   __tablename__ = 'file'
 
   id = Column(Integer, primary_key=True)
@@ -75,6 +82,9 @@ class File(Base):
     return datetime.datetime.fromtimestamp(os.path.getmtime(self.fullpath()))
     
 class DiskFile(Base):
+  """
+  This is the ORM class for the diskfile table.
+  """
   __tablename__ = 'diskfile'
 
   id = Column(Integer, primary_key=True)
@@ -112,6 +122,10 @@ class DiskFile(Base):
     return "<DiskFile('%s', '%s')>" %(self.id, self.file_id)
 
   def fits_verify(self, file):
+    """
+    Calls the FitsVerify module and records the results
+    in the current diskfile object / table row
+    """
     list = FitsVerify.fitsverify(file.fullpath())
     self.isfits = bool(list[0])
     self.fvwarnings = list[1]
@@ -119,11 +133,18 @@ class DiskFile(Base):
     self.fvreport = list[3]
     
   def wmd(self, file):
+    """
+    Calls the CadcWMD module and records the results
+    in the current diskfile object / table row
+    """
     list = CadcWMD.cadcWMD(file.fullpath())
     self.wmdready = bool(list[0])
     self.wmdreport = list[1]
 
 class Header(Base):
+  """
+  This is the ORM class for the Header table
+  """
   __tablename__ = 'header'
 
   id = Column(Integer, primary_key=True)
@@ -170,6 +191,10 @@ class Header(Base):
     return "<Header('%s', '%s')>" %(self.id, self.diskfile_id)
 
   def populate_fits(self, diskfile):
+    """
+    Populates header table values from the FITS headers of the file.
+    Uses the AstroData object to access the file.
+    """
     fullpath = diskfile.file.fullpath()
     # Try and open it as a fits file
     ad=0
@@ -256,6 +281,9 @@ class Header(Base):
     ad.close()
 
 class IngestQueue(Base):
+  """
+  This is the ORM object for the IngestQueue table
+  """
   __tablename__ = 'ingestqueue'
 
   id = Column(Integer, primary_key=True)
