@@ -1,3 +1,7 @@
+"""
+This module provides various utility functions for the Fits Storage
+System.
+"""
 from FitsStorage import *
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -6,6 +10,10 @@ from sqlalchemy.orm.exc import NoResultFound
 crefits = re.compile("\S*.fits$")
 
 def create_tables(session):
+  """
+  Creates the database tables and grants the apache user
+  SELECT on the appropriate ones
+  """
   # Create the tables
   File.metadata.create_all(bind=pg_db)
   DiskFile.metadata.create_all(bind=pg_db)
@@ -17,14 +25,37 @@ def create_tables(session):
   session.commit()
 
 def fitsfilename(filename):
-  # Takes a filename with optional .fits ending and returns it
-  # ensuring that it ends in .fits
+  """
+  Takes a filename with optional .fits ending and returns it
+  ensuring that it ends in .fits
+  """
   match = crefits.match(filename)
   if(not match):
     filename = "%s.fits" % filename
   return filename
 
 def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
+  """
+  Ingests a file into the databse. If the file isn't known to the database
+  at all, all three (file, diskfile, header) table entries are created.
+  If the file is already in the database but has been modified, the
+  existing diskfile entry is marked as not present and nee diskfile
+  and header entries are created. If the file is in the database and
+  has not been modified since it was last ingested, then this function
+  does not modify the database.
+
+  session: the sqlalchemy database session to use
+  filename: the filename of the file to ingest
+  path: the path to the file to ingest
+  force_crc: normally this function will compare the last modified
+             timestamp on the file to that of the record of the file
+             in the database to determine if it has possibly changed,
+             and only checks the CRC if it has possibly changed. Setting
+             this parameter to true forces a CRC comparison irrespective
+             of the last modification timestamps.
+  skip_fv: causes the ingest to skip running fitsverify on the file
+  skip_wmd: causes the ingest to skip running wmd on the file.
+  """
   # Make a file instance
   file = File(filename, path)
 
@@ -90,12 +121,20 @@ def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
   session.commit();
 
 def pop_ingestqueue(session):
-  # Return the next thing to ingest off the ingest queue
-  # Next is defined by a sort on the filename to get most recent first
-  # ... and not inprogress
-  # Set the inprogress column to true
-  # Must do this atomically, or at least check for race condition
-  # Also, when we go inprogress on an entry in the queue, we should delete all other entries for the same filename
+  """
+  Returns the next thing to ingest off the ingest queuei, and sets the
+  inprogress flag on that entry.
+
+  The select and update inprogress are done with a transaction lock
+  to avoid race conditions or duplications when there is more than 
+  one process processing the ingest queue.
+
+  Next to ingest is defined by a sort on the filename to get the
+  newest filename that is not already inprogress.
+
+  Also, when we go inprogress on an entry in the queue, we 
+  delete all other entries for the same filename.
+  """
 
   # Ensure nothing outstanding
   session.flush()
@@ -125,12 +164,16 @@ def pop_ingestqueue(session):
   return iq
   
 def addto_ingestqueue(session, filename, path):
-  # Adds to the ingestqueu
+  """
+  Adds a file to the ingest queue
+  """
   iq = IngestQueue(filename, path)
   session.add(iq)
   session.commit()
 
 def ingestqueue_length(session):
-  # return the length of the ingest queue
+  """
+  return the length of the ingest queue
+  """
   length = session.query(IngestQueue).filter(IngestQueue.inprogress == False).count()
   return length
