@@ -241,6 +241,7 @@ def webhdrsummary(session, req, type, headers):
     req.write('<TH><abbr title="Imaging Filter or Spectroscopy Wavelength and Disperser">WaveBand<abbr></TH>')
 
   # This is the 'expamlt' part - exposure time, airmass, localtime
+  if('expamlt' in want):
     req.write('<TH><abbr title="Exposure Time">ExpT</abbr> <a href="%s?orderby=exptime_asc">&uarr</a><a href="%s?orderby=exptime_desc">&darr</a>' % (myuri, myuri))
     req.write('<TH><abbr title="AirMass">AM</abbr> <a href="%s?orderby=airmass_asc">&uarr</a><a href="%s?orderby=airmass_desc">&darr</a></TH>' % (myuri, myuri))
     req.write('<TH><abbr title="Localtime">Lcltime</abbr> <a href="%s?orderby=localtime_asc">&uarr</a><a href="%s?orderby=localtime_desc">&darr</a></TH>' % (myuri, myuri))
