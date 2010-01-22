@@ -68,7 +68,7 @@ def handler(req):
     return debugmessage(req)
 
   # This is the header summary handler
-  if((this == 'summary') or (this == 'diskfiles')):
+  if((this == 'summary') or (this == 'diskfiles') or (this == 'ssummary')):
     # Parse the rest of the uri here while we're at it
     # Expect some combination of progid, obsid, date and instrument name
     # We put the ones we got in a dictionary
