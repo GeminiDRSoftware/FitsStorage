@@ -1,10 +1,30 @@
+"""
+This is the Fits Storage Web Summary module. It provides the functions
+which query the database and generate html for the web header
+summaries.
+"""
 from FitsStorage import *
 from FitsStorageUtils import *
 from GeminiMetadataUtils import *
 from mod_python import apache
 
-# This is the main header summary generator
 def summary(session, req, type, selection, orderby):
+  """
+  This is the main summary generator.
+  session is an sqlalchemy session to access the database
+  req is an apache request handler request object
+  type is the summary type required
+  selection is an array of items to select on, simply passed
+    through to the webhdrsummary function
+  orderby specifies how to order the output table, simply
+    passed through to the webhdrsummary function
+
+  returns an apache request status code
+
+  This function outputs header and footer for the html page,
+  and calls the webhdrsummary function to actually generate
+  the html table containing the actually summary information.
+  """
   req.content_type = "text/html"
   req.write("<html>")
   title = "FITS header %s table" % (type)
@@ -40,6 +60,16 @@ def summary(session, req, type, selection, orderby):
   return apache.OK
 
 def list_headers(session, selection, orderby):
+  """
+  This function queries the database for a list of header table 
+  entries that satsify the selection criteria.
+
+  session is an sqlalchemy session on the database
+  selection is a dictionary containing fields to select on
+  orderby is a list of fields to sort the results by
+
+  Returns a list of Header objects
+  """
   # The basic query...
   query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
 
@@ -169,8 +199,16 @@ def list_headers(session, selection, orderby):
   return query.all()
 
 def webhdrsummary(session, req, type, headers):
-  # Given an apache request object, summary type and list of header instances
-  # Write a header summary table of the appropriate type to the request object
+  """
+  Generates an HTML header summary table of the specified type from
+  the list of header objects provided. Writes that table to an apache
+  request object.
+
+  session: sqlalchemy database session
+  req: the apache request object to write the output
+  type: the summary type required
+  headers: the list of header objects to include in the summary
+  """
   # Get the uri to use for the re-sort links
   myuri = req.uri
 
@@ -326,8 +364,10 @@ def webhdrsummary(session, req, type, headers):
     req.write("</TR>\n")
   req.write("</TABLE>\n")
 
-# this lists programs observed on a given night
 def progsobserved(req, things):
+  """
+  This function generates a list of programs observed on a given night
+  """
   if(things):
     arg = things.pop(0)
   else:
