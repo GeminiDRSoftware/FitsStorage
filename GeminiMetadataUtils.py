@@ -1,3 +1,7 @@
+"""
+This is the GeminiMetadataUtils module. It provides a number of utility
+classes and functions for parsing the metadata in Gemini FITS files.
+"""
 import re
 import datetime
 
@@ -28,9 +32,11 @@ michellecre=re.compile('[Mm][Ii][Cc][Hh][Ee][Ll][Ll][Ee]')
 gnirscre=re.compile('[Gg][Nn][Ii][Rr][Ss]')
 
 def gemini_instrument(string):
-  # If the string argument matches a gemini instrument name, then we
-  # return the "official" (ie same as in the fits headers) name of the instrument
-  # Otherwise we return an empty string
+  """
+  If the string argument matches a gemini instrument name, 
+  then returns the "official" (ie same as in the fits headers) 
+  name of the instrument. Otherwise returns an empty string.
+  """
   retary=''
   if(niricre.match(string)):
     retary='NIRI'
@@ -46,13 +52,15 @@ def gemini_instrument(string):
     retary='GNIRS'
   return retary
 
-# A utility function for matching dates\
-# of the form YYYYMMDD
-# also supports today, yesterday
-# returns the YYYYMMDD string, or '' if not a date
-# May need modification to make today and yesterday work usefully for Chile
 datecre=re.compile('20\d\d[01]\d[0123]\d')
 def gemini_date(string):
+  """
+  A utility function for matching dates of the form YYYYMMDD
+  also supports today, yesterday
+  returns the YYYYMMDD string, or '' if not a date
+  May need modification to make today and yesterday work usefully 
+  for Chile
+  """
   if(datecre.match(string)):
     return string
   if(string == 'today'):
@@ -63,25 +71,32 @@ def gemini_date(string):
     return then.date().strftime('%Y%m%d')
   return ''
 
-# A utility function for matching Gemini obstypes
 def gemini_obstype(string):
-  # If the string argument matches a gemini obstype then we return the obstype
-  # Otherwise return an empty string
+  """
+  A utility function for matching Gemini ObsTypes
+  If the string argument matches a gemini ObsType 
+  then we return the obstype
+  Otherwise return an empty string
+  """
   list = ['DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT']
   retary = ''
   if(string in list):
     retary = string
   return retary
   
-# A utility function matching Gemini obsclasses
 def gemini_obsclass(string):
-  # If the string argument matches a gemini obsclass then we return the obsclass
-  # Otherwise we return an empty string
+  """
+  A utility function matching Gemini ObsClasses
+  If the string argument matches a gemini ObsClass then we return 
+  the obsclass
+  Otherwise we return an empty string
+  """
   list = ['dayCal', 'partnerCal', 'acqCal', 'acq', 'science', 'progCal']
   retary = ''
   if (string in list):
     retary = string
   return retary
+
 
 # The Gemini Data Label Class
 
@@ -90,6 +105,22 @@ def gemini_obsclass(string):
 dlcre=re.compile('^((?:%s)|(?:%s))-(\d*)-(\d*)$' % (calengre, scire))
 
 class GeminiDataLabel:
+  """
+  The Gemini Data Label Class. This class parses various
+  useful things from a Gemini Data Label.
+
+  Simply instantiate the class with the datalabel, then
+  reference the following data members:
+
+  * datalabel: The datalabel provided. If the class could cannot
+               make sense of the datalabel string passed in,
+               this field will be empty.
+  * projectid: The Project ID
+  * obsid: The Observation ID
+  * obsnum: The Observation Number within the project
+  * dlnum: The Dataset Number within the observation
+  * project: A GeminiProject object for the project this is part of
+  """
   datalabel = ''
   projectid = ''
   obsid = ''
@@ -122,6 +153,18 @@ class GeminiDataLabel:
 obscre = re.compile(obsre)
 
 class GeminiObservation:
+  """
+  The GeminiObservation class parses an observation ID
+
+  Simply instantiate the class with an observation id string
+  then reference the following data members:
+
+  * obsid: The observation ID provided. If the class cannot
+           make sense of the string passed in, this field will
+           be empty
+  * project: A GeminiProject object for the project this is part of
+  * obsnum: The observation numer within the project
+  """
   obsid = ''
   project = ''
   obsnum =''
@@ -147,6 +190,18 @@ progcre=re.compile(progre)
 cecre=re.compile('G[NS]-((?:CAL)|(?:ENG))(20\d\d[01]\d[0123]\d)')
 
 class GeminiProject:
+  """
+  The GeminiProject class parses a Gemini Project ID and provides
+  various useful information deduced from it.
+
+  Simply instantiate the class with a project ID string, then
+  referernce the following data members:
+
+  * progid: The program ID passed in. If the class could not 
+            make sense of the string, this will be empty.
+  * iscal: a Boolean that is true if this is a CAL project
+  * iseng: a Boolean that is true if this is an ENG project
+  """
   progid = ''
   iscal = ''
   iseng = ''
