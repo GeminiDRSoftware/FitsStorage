@@ -6,9 +6,12 @@
 storage_root = '/net/wikiwiki/dataflow'
 
 # Configure the path the data postgres database here
-fits_database = 'postgres:///fitsdata'
+fits_dbname = 'fitsdata'
+fits_database = 'postgres:///'+fits_dbname
 
 # Configure the site and other misc stuff here
 fits_installation = "fits-install"
 fits_system_status = "operational"
 
+# Configure the Backup and Logfile Directories here
+fits_db_backup_dir = "/data/autoingest"
