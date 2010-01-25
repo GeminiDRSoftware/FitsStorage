@@ -2,11 +2,7 @@ import sys
 sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
 
 from FitsStorage import *
-#import FitsStorageUtils
-#import os
-#import re
 import datetime
-#import time
 
 from optparse import OptionParser
 
@@ -19,6 +15,9 @@ parser.add_option("--limit", action="store", type="int", help="specify a limit o
 now = datetime.datetime.now()
 startup = "*********  rollcall.py - starting up at %s" % now
 print "\n\n%s\n" % startup
+
+# Get a database session
+session = sessionfactory()
 
 # Get a list of all diskfile_ids marked as present
 # If we try and really brute force a list of DiskFile objects, we run out of memory...
