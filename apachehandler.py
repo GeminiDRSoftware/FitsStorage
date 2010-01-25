@@ -207,7 +207,7 @@ def handler(req):
 
   # This is the projects observed feature
   if(this == "programsobserved"):
-    return progsobserved(req, things)
+    return progsobserved(session, req, things)
     
 
   # Database Statistics

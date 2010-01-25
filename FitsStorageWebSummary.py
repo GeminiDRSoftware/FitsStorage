@@ -373,7 +373,7 @@ def webhdrsummary(session, req, type, headers):
     req.write("</TR>\n")
   req.write("</TABLE>\n")
 
-def progsobserved(req, things):
+def progsobserved(session, req, things):
   """
   This function generates a list of programs observed on a given night
   """
