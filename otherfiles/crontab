@@ -1,3 +1,5 @@
-2,17,32,47 * * * * /usr/bin/python /data/bin/ingest_all_files.py --lockfile --file-re=fourday >> /data/autoingest/logfile
-*/5 * * * * /usr/bin/python /data/bin/ingest_all_files.py --lockfile --file-re=twoday >> /data/autoingest/logfile
-
+*/5 * * * * /astro/iraf/x86_64/gempylocal/bin/python /data/fits-installed/add_to_ingest_queue.py --file-re=twoday >& /data/autoingest/fits-autoingest-log-twoday.txt
+2,17,32,47 * * * * /astro/iraf/x86_64/gempylocal/bin/python /data/fits-installed/add_to_ingest_queue.py --file-re=fourday >& /data/autoingest/fits-autoingest-log-fourday.txt
+1,16,31,47 * * * * /astro/iraf/x86_64/gempylocal/bin/python /data/fits-installed/rollcall.py --limit 10000 >& /data/autoingest/fits-rollcall.log
+0 7 * * * /usr/bin/vacuumdb --verbose --analyze --dbname fitsdata >& /data/autoingest/fits-vacuum.log
+30 7 * * * /astro/iraf/x86_64/gempylocal/bin/python /data/fits-installed/database_backup.py >& /data/autoingest/fits-backup.log
