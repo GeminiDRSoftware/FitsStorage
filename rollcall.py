@@ -2,19 +2,25 @@ import sys
 sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
 
 from FitsStorage import *
+from FitsStorageLogger import *
 import datetime
 
 from optparse import OptionParser
 
 parser = OptionParser()
 parser.add_option("--limit", action="store", type="int", help="specify a limit on the number of files to examine. The list is sorted by lastmod time before the limit is applied")
+parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
+parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
 (options, args) = parser.parse_args()
 
+# Logging level to debug? Include stdio log?
+setdebug(options.debug)
+setdemon(options.demon)
+
+
 # Annouce startup
-now = datetime.datetime.now()
-startup = "*********  rollcall.py - starting up at %s" % now
-print "\n\n%s\n" % startup
+logger.info("*********  rollcall.py - starting up at %s" % datetime.datetime.now())
 
 # Get a database session
 session = sessionfactory()
@@ -27,16 +33,16 @@ query = session.query(DiskFile.id).filter(DiskFile.present == True).order_by(Dis
 if(options.limit):
   query = query.limit(options.limit)
 
-print "evaluating number of rows..."
+logger.info("evaluating number of rows...")
 n = query.count()
-print "%d files to check" % n
+logger.info("%d files to check" % n)
 
 # Semi Brute force approach for now. 
 # It might be better to find some way to retrieve the items from the DB layer one at a time...
 # If we try and really brute force a list of DiskFile objects, we run out of memory...
-print "Getting list..."
+logger.info("Getting list...")
 list = query.all()
-print "Starting checking..."
+logger.info("Starting checking...")
 
 i=0
 j=0
@@ -47,13 +53,12 @@ for dfid in list:
     # This one doesn't actually exist
     df.present=False
     j+=1
-    print "File %d/%d: Marking file %s (diskfile id %d) as not present" % (i, n, df.file.filename, df.id)
+    logger.info("File %d/%d: Marking file %s (diskfile id %d) as not present" % (i, n, df.file.filename, df.id))
   else:
     if ((i % 1000) == 0):
-      print "File %d/%d: present and correct" % (i, n)
+      logger.info("File %d/%d: present and correct" % (i, n))
   i+=1
 
-print "\nMarked %d files as no longer present\n" % j
+logger.info("\nMarked %d files as no longer present\n" % j)
 
-now=datetime.datetime.now()
-print "*** rollcall.py exiting normally at %s" % now
+logger.info("*** rollcall.py exiting normally at %s" % datetime.datetime.now())
