@@ -23,5 +23,19 @@ streamhandler.setFormatter(formatter)
 
 # Add Handlers to logger
 logger.addHandler(filehandler)
-logger.addHandler(streamhandler)
+
+# Do not add this one by default. Applications can do this if they're running online
+#logger.addHandler(streamhandler)
+
+
+# Utility Functions
+def setdebug(want):
+  if(want):
+    logger.setLevel(logging.DEBUG)
+
+def setdemon(want):
+  if(want):
+    pass
+  else:
+    logger.addHandler(streamhandler)
 
