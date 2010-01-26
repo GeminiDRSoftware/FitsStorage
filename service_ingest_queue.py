@@ -3,6 +3,7 @@ sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gem
 
 import FitsStorage
 from FitsStorageUtils import *
+from FitsStorageLogger import logger
 import os
 import re
 import datetime
@@ -19,8 +20,7 @@ parser.add_option("--skip-wmd", action="store_true", dest="skip_wmd", help="Do n
 
 # Annouce startup
 now = datetime.datetime.now()
-startup = "*********  service_ingest_queue.py - starting up at %s" % now
-print "\n\n%s\n" % startup
+logger.info("*********  service_ingest_queue.py - starting up at %s" % now)
 
 session = sessionfactory()
 
@@ -30,10 +30,10 @@ while(1):
   iq = pop_ingestqueue(session)
 
   if(not iq):
-    print "Nothing on queue. Waiting"
+    logger.info("Nothing on queue. Waiting")
     time.sleep(30)
   else:
-    print "Ingesting %s, (%d in queue)" % (iq.filename, ingestqueue_length(session))
+    logger.info("Ingesting %s, (%d in queue)" % (iq.filename, ingestqueue_length(session)))
     session.flush()
     try:
       ingest_file(session, iq.filename, iq.path, options.force_crc, options.skip_fv, options.skip_wmd)
