@@ -2,28 +2,29 @@ import sys
 sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
 
 import FitsStorage
+import FitsStorageConfig
+from FitsStorageLogger import logger
 from FitsStorageUtils import *
 import os
 import re
 import datetime
 import time
 
+# Option Parsing
 from optparse import OptionParser
-
 parser = OptionParser()
 parser.add_option("--file-re", action="store", type="string", dest="file_re", help="python regular expression string to select files by. Special values are today, twoday, fourday to include only files from today, the last two days, or the last four days respectively (days counted as UTC days)")
 (options, args) = parser.parse_args()
 
 # Annouce startup
 now = datetime.datetime.now()
-startup = "*********  add_to_ingest_queue.py - starting up at %s" % now
-print "\n\n%s\n" % startup
+logger.info("*********  add_to_ingest_queue.py - starting up at %s" % now)
 
 # Get a list of all the files in the datastore
 # We assume this is just one dir (ie non recursive) for now.
 path=''
 fulldirpath = os.path.join(FitsStorage.storage_root, path)
-print "Ingesting files from: ", fulldirpath
+logger.info("Ingesting files from: %s" % fulldirpath)
 
 file_re = options.file_re
 # Handle the today and twoday options
@@ -63,29 +64,29 @@ else:
 # Skip files with tmp in the filename
 thefiles=[]
 tmpcre = re.compile("tmp")
-print "Checking for tmp files"
+logger.info("Checking for tmp files")
 for filename in files:
-  if(tmpcre.search(filename):
-    print "skipping tmp file: %s" % filename
+  if(tmpcre.search(filename)):
+    logger.info("skipping tmp file: %s" % filename)
   else:
     thefiles.append(filename)
 
 i=0
 n=len(thefiles)
 # print what we're about to do, and give abort opportunity
-print "About to scan %d files" % n
+logger.info("About to scan %d files" % n)
 if (n>5000):
-  print "That's a lot of files. Hit ctrl-c within 5 secs to abort"
+  logger.info("That's a lot of files. Hit ctrl-c within 5 secs to abort")
   time.sleep(6)
 
 session = sessionfactory()
 
 for filename in thefiles:
   i+=1
-  print "-- Inserting (%d/%d): %s" % (i, n, filename)
+  logger.info("Ingesting (%d/%d): %s" % (i, n, filename))
   addto_ingestqueue(session, filename, path)
 
 session.close()
 now=datetime.datetime.now()
-print "*** add_to_ingestqueue.py exiting normally at %s" % now
+logger.info("*** add_to_ingestqueue.py exiting normally at %s" % now)
 
