@@ -2,9 +2,11 @@ import sys
 sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
 
 import FitsStorage
+import FitsStorageConfig
 from FitsStorageUtils import *
 from FitsStorageLogger import *
 import os
+import sys
 import re
 import datetime
 import time
@@ -17,6 +19,7 @@ parser.add_option("--skip-fv", action="store_true", dest="skip_fv", help="Do not
 parser.add_option("--skip-wmd", action="store_true", dest="skip_wmd", help="Do not run a wmd check on the files")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
+parser.add_option("--lockfile", action="store", dest="lockfile", help="Use this as a lockfile to limit instances")
 
 (options, args) = parser.parse_args()
 
@@ -28,24 +31,43 @@ setdemon(options.demon)
 now = datetime.datetime.now()
 logger.info("*********  service_ingest_queue.py - starting up at %s" % now)
 
+if(options.lockfile):
+  # Does the Lockfile exist?
+  lockfile = "%s/%s" % (FitsStorageConfig.fits_lockfile_dir, options.lockfile)
+  if(os.path.exists(lockfile)):
+    logger.info("Lockfile %s already exists, bailing out" % lockfile)
+    sys.exit()
+  else:
+    logger.info("Creating lockfile %s" % lockfile)
+    open(lockfile, 'w').close()
+
 session = sessionfactory()
 
 # Go into loop. should there be an exit clause?
-while(1):
-  # Request a queue entry
-  iq = pop_ingestqueue(session)
+try:
+  while(1):
+    # Request a queue entry
+    iq = pop_ingestqueue(session)
 
-  if(not iq):
-    logger.info("Nothing on queue. Waiting")
-    time.sleep(30)
-  else:
-    logger.info("Ingesting %s, (%d in queue)" % (iq.filename, ingestqueue_length(session)))
-    session.flush()
-    try:
-      ingest_file(session, iq.filename, iq.path, options.force_crc, options.skip_fv, options.skip_wmd)
-      session.delete(iq)
-      session.commit()
-    except:
-      session.rollback()
+    if(not iq):
+      logger.info("Nothing on queue. Waiting")
+      time.sleep(30)
+    else:
+      logger.info("Ingesting %s, (%d in queue)" % (iq.filename, ingestqueue_length(session)))
+      session.flush()
+      try:
+        ingest_file(session, iq.filename, iq.path, options.force_crc, options.skip_fv, options.skip_wmd)
+        session.delete(iq)
+        session.commit()
+      except:
+        session.rollback()
 
-session.close()
+except:
+  session.close()
+
+  if(options.lockfile):
+    # Delete lockfile
+    logger.info("Deleting Lockfile %s" % lockfile)
+    os.unlink(lockfile)
+  now = datetime.datetime.now()
+  logger.info("*********  service_ingest_queue.py - exiting at %s" % now)
