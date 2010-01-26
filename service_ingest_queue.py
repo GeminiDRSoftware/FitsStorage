@@ -3,7 +3,7 @@ sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gem
 
 import FitsStorage
 from FitsStorageUtils import *
-from FitsStorageLogger import logger
+from FitsStorageLogger import *
 import os
 import re
 import datetime
@@ -15,8 +15,14 @@ parser = OptionParser()
 parser.add_option("--force-crc", action="store_true", dest="force_crc", help="Force crc check on pre-existing files")
 parser.add_option("--skip-fv", action="store_true", dest="skip_fv", help="Do not run fitsverify on the files")
 parser.add_option("--skip-wmd", action="store_true", dest="skip_wmd", help="Do not run a wmd check on the files")
+parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
+parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
 (options, args) = parser.parse_args()
+
+# Logging level to debug? Include stdio log?
+setdebug(options.debug)
+setdemon(options.demon)
 
 # Annouce startup
 now = datetime.datetime.now()
