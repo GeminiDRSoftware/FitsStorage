@@ -29,6 +29,7 @@ import CadcCRC
 import CadcWMD
 
 from FitsStorageConfig import *
+from FitsStorageLogger import logger
 
 from astrodata import AstroData
 
@@ -201,7 +202,7 @@ class Header(Base):
     try:
       ad=AstroData.AstroData(fullpath)
     except:
-      print "Not a valid FITS file - not attempting to read headers"
+      logger.warning("%s not a valid FITS file - not attempting to read headers" % fullpath)
     # Basic data identification part
     self.progid = ad.phuHeader('GEMPRGID')
     self.obsid = ad.phuHeader('OBSID')
