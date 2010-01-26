@@ -60,9 +60,18 @@ if(file_re):
 else:
   files = filelist
 
+# Skip files with tmp in the filename
+thefiles=[]
+tmpcre = re.compile("tmp")
+print "Checking for tmp files"
+for filename in files:
+  if(tmpcre.search(filename):
+    print "skipping tmp file: %s" % filename
+  else:
+    thefiles.append(filename)
 
 i=0
-n=len(files)
+n=len(thefiles)
 # print what we're about to do, and give abort opportunity
 print "About to scan %d files" % n
 if (n>5000):
@@ -71,7 +80,7 @@ if (n>5000):
 
 session = sessionfactory()
 
-for filename in files:
+for filename in thefiles:
   i+=1
   print "-- Inserting (%d/%d): %s" % (i, n, filename)
   addto_ingestqueue(session, filename, path)
