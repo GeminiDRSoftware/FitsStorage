@@ -13,8 +13,11 @@ fits_database = 'postgres:///'+fits_dbname
 fits_installation = "fits-install"
 fits_system_status = "operational"
 
-# Configure the Backup Directories here
+# Configure the Backup Directory here
 fits_db_backup_dir = "/data/autoingest"
+
+# Configure the LockFile Directory here
+fits_lockfile_dir = "/data/autoingest"
 
 # Configure the log file here
 fits_log_file = "/data/autoingest/fits.log"
