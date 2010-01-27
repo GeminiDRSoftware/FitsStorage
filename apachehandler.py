@@ -8,7 +8,7 @@ from mod_python import util
 
 import sys
 import FitsStorage
-from FitsStorageUtils import *
+import FitsStorageUtils
 from FitsStorageWebSummary import *
 
 from GeminiMetadataUtils import *
@@ -16,6 +16,7 @@ from GeminiMetadataUtils import *
 import re
 import datetime
 
+import pyfits
 # Compile regexps here
 
 orderbycre=re.compile('orderby\=(\S*)')
