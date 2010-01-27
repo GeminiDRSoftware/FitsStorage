@@ -31,7 +31,7 @@ logger.info("*********  add_to_ingest_queue.py - starting up at %s" % now)
 # We assume this is just one dir (ie non recursive) for now.
 path=''
 fulldirpath = os.path.join(FitsStorage.storage_root, path)
-logger.info("Ingesting files from: %s" % fulldirpath)
+logger.info("Queueing files for ingest from: %s" % fulldirpath)
 
 file_re = options.file_re
 # Handle the today and twoday options
@@ -56,9 +56,10 @@ if(options.file_re == "fourday"):
   d=then.date().strftime("%Y%m%d")
   file_re="%s|%s|%s|%s" % (a, b, c, d)
 
-filelist = os.listdir(fulldirpath)
+if(file_re):
+  cre=re.compile(file_re)
 
-cre=re.compile(file_re)
+filelist = os.listdir(fulldirpath)
 
 files=[]
 if(file_re):
@@ -90,7 +91,7 @@ session = sessionfactory()
 
 for filename in thefiles:
   i+=1
-  logger.info("Ingesting (%d/%d): %s" % (i, n, filename))
+  logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
   addto_ingestqueue(session, filename, path)
 
 session.close()
