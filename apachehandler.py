@@ -243,7 +243,7 @@ def fullheader(session, req, filename):
     return apache.HTTP_NOT_FOUND
 
   file = query.one()
-  hdulist = pyfits.open(file.fullpath())
+  hdulist = pyfits.open(file.fullpath(), mode='readonly')
   req.write("FITS File: %s (%s)\n\n" % (filename, file.fullpath()))
 
   for i in range(len(hdulist)):
