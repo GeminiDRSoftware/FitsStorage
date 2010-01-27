@@ -4,9 +4,20 @@ which query the database and generate html for the web header
 summaries.
 """
 from FitsStorage import *
-from FitsStorageUtils import *
 from GeminiMetadataUtils import *
 from mod_python import apache
+
+# Fits filename extension utility
+crefits = re.compile("\S*.fits$")
+def fitsfilename(filename):
+  """
+  Takes a filename with optional .fits ending and returns it
+  ensuring that it ends in .fits
+  """
+  match = crefits.match(filename)
+  if(not match):
+    filename = "%s.fits" % filename
+  return filename
 
 def summary(session, req, type, selection, orderby):
   """

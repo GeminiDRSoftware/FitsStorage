@@ -6,10 +6,6 @@ from FitsStorage import *
 from FitsStorageLogger import logger
 from sqlalchemy.orm.exc import NoResultFound
 
-
-# Compile regular expresisons here
-crefits = re.compile("\S*.fits$")
-
 def create_tables(session):
   """
   Creates the database tables and grants the apache user
@@ -24,16 +20,6 @@ def create_tables(session):
   # Now grant the apache user select on them for the www queries
   session.execute("GRANT SELECT ON file, diskfile, header TO apache");
   session.commit()
-
-def fitsfilename(filename):
-  """
-  Takes a filename with optional .fits ending and returns it
-  ensuring that it ends in .fits
-  """
-  match = crefits.match(filename)
-  if(not match):
-    filename = "%s.fits" % filename
-  return filename
 
 def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
   """
