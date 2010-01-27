@@ -8,7 +8,6 @@ from mod_python import util
 
 import sys
 import FitsStorage
-import FitsStorageUtils
 from FitsStorageWebSummary import *
 
 from GeminiMetadataUtils import *
