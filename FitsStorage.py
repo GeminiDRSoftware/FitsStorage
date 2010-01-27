@@ -301,3 +301,51 @@ class IngestQueue(Base):
   def __repr__(self):
     return "<IngestQueue('%s', '%s')>" %(self.id, self.filename)
 
+class Tape(Base):
+  """
+  This is the ORM object for the Tape table
+  Each row in this table represents a data tape
+  """
+  __tablename__ = 'tape'
+
+  id = Column(Integer, primary_key=True)
+  label = Column(Text, nullable=False, index=True)
+  firstwrite = Column(DateTime)
+  lastwrite = Column(DateTime)
+  lastverified = Column(DateTime)
+  location = Column(Text)
+  lastmoved = Column(DateTime)
+  active = Column(Boolean)
+  fate = Column(String)
+
+class TapeWrite(Base):
+  """
+  This is the ORM object for the TapeWrite table
+  Each row in this table represents a tape writing session
+  """
+
+  __tablename__ = 'tapewrite'
+
+  id = Column(Integer, primary_key=True)
+  tape_id = Column(Integer, ForeignKey('tape.id'), nullable=False, index=True)
+  startdate = Column(DateTime)
+  enddate = Column(DateTime)
+  command = Column(Text)
+  commandStatus = Column(Integer)
+  beforeStatus = Column(Text)
+  afterStatus = Column(Text)
+  hostname = Column(Text)
+  tapedrive = Column(Text)
+  notes = Column(Text)
+
+  
+class TapeFile(Base):
+  """
+  This is the ORM object for the TapeFile table
+  """
+  __tablename__ = 'tapefile'
+
+  id = Column(Integer, primary_key=True)
+  tape_id = Column(Integer, ForeignKey('tape.id'), nullable=False, index=True)
+  diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
+  tapewrite_id = Column(Integer, ForeignKey('tapewrite.id'), nullable=False)
