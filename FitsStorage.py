@@ -231,7 +231,10 @@ class Header(Base):
     self.az = ad.phuHeader('AZIMUTH')
     self.el = ad.phuHeader('ELEVATIO')
     self.crpa = ad.phuHeader('CRPA')
-    self.airmass = ad.airmass()
+    airmass = ad.airmass()
+    if(airmass < 0):
+      airmass = None
+    self.airmass = airmass
     self.rawiq = ad.phuHeader('RAWIQ')
     self.rawcc = ad.phuHeader('RAWCC')
     self.rawwv = ad.phuHeader('RAWWV')
