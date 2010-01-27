@@ -51,23 +51,18 @@ try:
 
     if(not iq):
       logger.info("Nothing on queue. Waiting")
-      time.sleep(30)
+      time.sleep(10)
     else:
       logger.info("Ingesting %s, (%d in queue)" % (iq.filename, ingestqueue_length(session)))
-      session.flush()
-      try:
-        ingest_file(session, iq.filename, iq.path, options.force_crc, options.skip_fv, options.skip_wmd)
-        session.delete(iq)
-        session.commit()
-      except:
-        session.rollback()
+      ingest_file(session, iq.filename, iq.path, options.force_crc, options.skip_fv, options.skip_wmd)
+      logger.debug("Deleteing ingestqueue id %d" % iq.id)
+      session.delete(iq)
+      session.commit()
 
-except:
+except KeyboardInterrupt:
   session.close()
-
   if(options.lockfile):
     # Delete lockfile
     logger.info("Deleting Lockfile %s" % lockfile)
     os.unlink(lockfile)
-  now = datetime.datetime.now()
-  logger.info("*********  service_ingest_queue.py - exiting at %s" % now)
+  logger.info("*********  service_ingest_queue.py - exiting at %s" % datetime.datetime.now())
