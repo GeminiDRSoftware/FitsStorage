@@ -3,6 +3,7 @@ This module provides various utility functions for the Fits Storage
 System.
 """
 from FitsStorage import *
+from FitsStorageLogger import logger
 from sqlalchemy.orm.exc import NoResultFound
 
 
@@ -56,12 +57,14 @@ def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
   skip_fv: causes the ingest to skip running fitsverify on the file
   skip_wmd: causes the ingest to skip running wmd on the file.
   """
+  logger.debug("ingest_file %s" % filename)
   # Make a file instance
   file = File(filename, path)
 
   # First check if the file exists
   if(not(file.exists())):
-    logger.error("cannot access ", file.fullpath)
+    logger.debug("cannot access %s", file.fullpath())
+    check_present(session, filename)
     return
 
   # Check if this filename is already in the database
@@ -119,9 +122,35 @@ def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
   
   session.commit();
 
+def check_present(session, filename):
+  """
+  Check to see if the named file is present in the database and
+  marked as present in the diskfile table.
+  If so, checks to see if it's actually on disk and if not
+  marks it as not present in the diskfile table
+  """
+
+  # Search for file
+  query = session.query(File).filter(File.filename == filename)
+  if(query.first()):
+    logger.debug("%s is present in file table", filename)
+    file = query.one()
+    # OK, is there a diskfile that's present for it
+    query = session.query(DiskFile).filter(DiskFile.file_id==file.id).filter(DiskFile.present==True)
+    if(query.first()):
+      diskfile = query.one()
+      logger.debug("%s is present=True in diskfile table at diskfile_id = %s" % (filename, diskfile.id))
+      # Is the file actually present on disk?
+      if(file.exists()):
+        logger.debug("%s is actually present on disk. That's good" % filename)
+      else:
+        logger.info("%s is present in diskfile table id %d but missing on the disk." % (filename, diskfile.id))
+        logger.info("Marking diskfile id %d as not present" % diskfile.id)
+        diskfile.present=False
+
 def pop_ingestqueue(session):
   """
-  Returns the next thing to ingest off the ingest queuei, and sets the
+  Returns the next thing to ingest off the ingest queue, and sets the
   inprogress flag on that entry.
 
   The select and update inprogress are done with a transaction lock
@@ -145,10 +174,8 @@ def pop_ingestqueue(session):
   try:
     iq = query.first()
   except NoResultFound:
-    # Not that anything has been done yet, but rollback anyway to clear the transaction...
-    session.rollback()
-    session.close()
-    iq=''
+    logger.debug("No item to pop on ingestqueue")
+    iq=None
 
   if(iq):
     iq.inprogress=True
@@ -160,6 +187,10 @@ def pop_ingestqueue(session):
 
   # And we're done
   session.commit()
+  if(iq):
+    logger.debug("Popped id %d from ingestqueue" % iq.id)
+  else:
+    logger.debug("Popped null entry from ingest queue")
   return iq
   
 def addto_ingestqueue(session, filename, path):
@@ -169,6 +200,8 @@ def addto_ingestqueue(session, filename, path):
   iq = IngestQueue(filename, path)
   session.add(iq)
   session.commit()
+  logger.debug("Added id %d for filename %s to ingestqueue" % (iq.id, iq.filename))
+  return iq.id
 
 def ingestqueue_length(session):
   """
