@@ -36,9 +36,7 @@ session = sessionfactory()
 wm = pyinotify.WatchManager()
 
 # Create the event mask
-delmask = pyinotify.IN_MOVED_FROM | pyinotify.IN_DELETE
-modmask = pyinotify.IN_CLOSE_WRITE | pyinotify.IN_MOVED_TO
-mask = delmask | modmask
+mask = pyinotify.IN_MOVED_FROM | pyinotify.IN_DELETE | pyinotify.IN_CLOSE_WRITE | pyinotify.IN_MOVED_TO
 
 # Create the Event Handler
 class HandleEvents(pyinotify.ProcessEvent):
@@ -51,12 +49,9 @@ class HandleEvents(pyinotify.ProcessEvent):
       logger.debug("Ignoring Event on tmp file: %s" % event.name)
     else:
       # Go ahead and process it
-      if(event.mask & delmask):
-        logger.info("Delete Type Event on pathname: %s" % event.pathname)
-      if(event.mask & modmask):
-        logger.info("Modification Type Event on pathname: %s" % event.pathname)
-        logger.info("Adding to Ingest Queue: %s" % event.name)
-        addto_ingestqueue(session, event.name, '')
+      logger.info("Processing PyInotify Event on pathname: %s" % event.pathname)
+      logger.info("Adding to Ingest Queue: %s" % event.name)
+      addto_ingestqueue(session, event.name, '')
 
 # Create the notifier
 notifier = pyinotify.Notifier(wm, HandleEvents())
