@@ -9,7 +9,6 @@ sys.path.append('/data/extern/gemini_python')
 import sqlalchemy
 import sqlalchemy.orm
 import os
-import pyfits
 import datetime
 import dateutil.parser
 import zlib
@@ -199,7 +198,7 @@ class Header(Base):
     # Try and open it as a fits file
     ad=0
     try:
-      ad=AstroData.AstroData(fullpath)
+      ad=AstroData.AstroData(fullpath, mode='readonly')
     except:
       pass
       #print "%s not a valid FITS file - not attempting to read headers" % fullpath
