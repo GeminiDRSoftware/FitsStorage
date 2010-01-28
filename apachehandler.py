@@ -214,6 +214,10 @@ def handler(req):
   if(this == "stats"):
     return stats(session, req)
 
+  # Tape handler
+  if(this == "tape"):
+    return tape(session, req, things)
+
   # Some static files that the server should serve via a redirect.
   if((this == "robots.txt") or (this == "favicon.ico")):
     newurl = "/htmldocs/%s" % this
