@@ -5,7 +5,7 @@ summaries.
 """
 from FitsStorage import *
 from GeminiMetadataUtils import *
-from mod_python import apache
+from mod_python import apache, util
 
 # Fits filename extension utility
 crefits = re.compile("\S*.fits$")
@@ -419,3 +419,99 @@ def progsobserved(session, req, things):
   req.write('</p></body></html>')
   return apache.OK
 
+def tape(session, req, things):
+  """
+  This is the tape list function
+  """
+  req.content_type="text/html"
+  req.write("<html>")
+  req.write("<head><title>FITS Storage tape information</title></head>")
+  req.write("<body>")
+  req.write("<h1>FITS Storage tape information</h1>")
+
+  # Process form data first
+  formdata = util.FieldStorage(req)
+  #req.write(str(formdata) )
+  for key in formdata.keys():
+    field=key.split('-')[0]
+    tapeid=int(key.split('-')[1])
+    value = formdata[key].value
+    if(tapeid):
+      tape=session.query(Tape).filter(Tape.id==tapeid).one()
+      if(field == 'moveto'):
+        tape.location = value
+        tape.lastmoved = datetime.datetime.now()
+      if(field == 'active'):
+        if(value == 'Yes'):
+          tape.active = True
+        if(value == 'No'):
+          tape.active = False
+      if(field == 'fate'):
+        tape.fate = value
+    if(field == 'newlabel'):
+      # Add a new tape to the database
+      newtape = Tape(value)
+      session.add(newtape)
+
+    session.commit()
+    
+  query = session.query(Tape)
+  # Get a list of the tapes that apply
+  if(len(things)):
+    searchstring = '%'+things[0]+'%'
+    query = query.filter(Tape.label.like(searchstring))
+  query=query.order_by(Tape.id)
+  list = query.all()
+
+  req.write("<HR>")
+  for tape in list:
+    req.write("<H2>ID: %d, Label: %s</H2>" % (tape.id, tape.label))
+    req.write("<UL>")
+    req.write("<LI>First Write: %s - Last Write: %s</LI>" % (tape.firstwrite, tape.lastwrite))
+    req.write("<LI>Last Verified: %s</LI>" % tape.lastverified)
+    req.write("<LI>Location: %s; Last Moved: %s</LI>" % (tape.location, tape.lastmoved))
+    req.write("<LI>Active: %s</LI>" % tape.active)
+    req.write("<LI>Fate: %s</LI>" % tape.fate)
+    req.write("</UL>")
+
+    # The form for modifications
+    req.write('<FORM action="/tape" method="post">')
+    req.write('<TABLE>')
+    # First Row
+    req.write('<TR>')
+    movekey = "moveto-%d" % tape.id
+    req.write('<TD><LABEL for="%s">Move to new location:</LABEL></TD>' % movekey)
+    req.write('<TD><INPUT type="text" size=32 name="%s"></TD>' % movekey)
+    req.write('</TR>')
+    # Second Row
+    activekey = "active-%d" % tape.id
+    req.write('<TR>')
+    req.write('<TD><LABEL for="%s">Active:</LABEL></TD>' % activekey)
+    yeschecked = ""
+    nochecked = ""
+    if(tape.active):
+      yeschecked="checked"
+    else:
+      nochecked="checked"
+    req.write('<TD><INPUT type="radio" name="%s" value="Yes" %s>Yes</INPUT> ' % (activekey, yeschecked))
+    req.write('<INPUT type="radio" name="%s" value="No" %s>No</INPUT></TD>' % (activekey, nochecked))
+    req.write('</TR>')
+    # Third Row
+    req.write('<TR>')
+    fatekey = "fate-%d" % tape.id
+    req.write('<TD><LABEL for="%s">Fate:</LABEL></TD>' % fatekey)
+    req.write('<TD><INPUT type="text" name="%s" size=32></INPUT></TD>' % fatekey)
+    req.write('</TR>')
+    req.write('</TABLE>')
+    req.write('<INPUT type="submit" value="Save"> <INPUT type="reset">')
+    req.write('</FORM>')
+    req.write('<HR>')
+
+  req.write('<HR>')
+  req.write('<H2>Add a New Tape</H2>')
+  req.write('<FORM action="/tape" method="post">')
+  req.write('<LABEL for=newlabel-0>Label</LABEL> <INPUT type="text" size=32 name=newlabel-0> <INPUT type="submit" value="Save"> <INPUT type="reset">')
+  req.write('</FORM>')
+
+  req.write("</body></html>")
+  return apache.OK
