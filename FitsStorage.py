@@ -319,7 +319,11 @@ class Tape(Base):
   location = Column(Text)
   lastmoved = Column(DateTime)
   active = Column(Boolean)
-  fate = Column(String)
+  fate = Column(Text)
+
+  def __init__(self, label):
+    self.label = label
+    self.active = True
 
 class TapeWrite(Base):
   """
