@@ -18,7 +18,8 @@ def create_tables(session):
   IngestQueue.metadata.create_all(bind=pg_db)
 
   # Now grant the apache user select on them for the www queries
-  session.execute("GRANT SELECT ON file, diskfile, header TO apache");
+  session.execute("GRANT SELECT ON file, diskfile, header, tape, tape_id_seq, tapewrite, tapefile TO apache");
+  session.execute("GRANT INSERT,UPDATE ON tape, tape_id_seq TO apache");
   session.commit()
 
 def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
