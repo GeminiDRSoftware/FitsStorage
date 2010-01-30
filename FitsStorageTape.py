@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import tarfile
+import re
 
 class TapeDrive:
   """
@@ -81,6 +82,15 @@ class TapeDrive:
     [returncode, stdoutstring, stderrstring]=self.mt('rewind', fail=fail) 
     return returncode
      
+  def eod(self, fail=True):
+    """
+    Send the tape to eod
+    The fail argument determines whether to exit with an error if it fails
+    Returns the return code from the mt command
+    """
+    [returncode, stdoutstring, stderrstring]=self.mt('eod', fail=fail)
+    return returncode
+
   def setblk0(self, fail=False):
     """
     Calls mt setblk 0 on the tape drive
@@ -102,6 +112,30 @@ class TapeDrive:
 
     return retval
 
+  def online(self):
+    """
+    returns True if the tape drive is online
+    returns False otherwise
+    """
+    string = self.status()
+    if(re.search('ONLINE', string)):
+      retval = True
+    else:
+      retval = False
+    return retval
+
+  def fileno(self):
+    """
+    Returns the file number the drive is currently
+    positioned at
+    """
+    retval = None
+    string = self.status()
+    match = re.search('(File number=)(\d+)(,)', string)
+    if(match):
+      retval = match.group(2)
+
+    return retval
 
   def readlabel(self, fail=False):
     """
