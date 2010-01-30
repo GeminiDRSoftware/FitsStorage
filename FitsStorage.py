@@ -199,89 +199,89 @@ class Header(Base):
     ad=0
     try:
       ad=AstroData.AstroData(fullpath, mode='readonly')
-    except:
-      pass
-      #print "%s not a valid FITS file - not attempting to read headers" % fullpath
-    # Basic data identification part
-    self.progid = ad.phuHeader('GEMPRGID')
-    self.obsid = ad.phuHeader('OBSID')
-    self.datalab = ad.phuHeader('DATALAB')
-    self.telescope = ad.phuHeader('TELESCOP')
-    self.instrument = ad.instrument()
+      # Basic data identification part
+      self.progid = ad.phuHeader('GEMPRGID')
+      self.obsid = ad.phuHeader('OBSID')
+      self.datalab = ad.phuHeader('DATALAB')
+      self.telescope = ad.phuHeader('TELESCOP')
+      self.instrument = ad.instrument()
 
-    # Date and times part
-    datestring = ad.utdate()
-    timestring = ad.uttime()
-    if(datestring and timestring):
-      datetime_string = "%s %s" % (datestring, timestring)
-      self.utdatetime = dateutil.parser.parse(datetime_string)
-    localtime_string = ad.phuHeader('LT')
-    if(localtime_string):
-      # This is a bit of a hack so as to use the nice parser
-      self.localtime = dateutil.parser.parse("2000-01-01 %s" % (localtime_string)).time()
+      # Date and times part
+      datestring = ad.utdate()
+      timestring = ad.uttime()
+      if(datestring and timestring):
+        datetime_string = "%s %s" % (datestring, timestring)
+        self.utdatetime = dateutil.parser.parse(datetime_string)
+      localtime_string = ad.phuHeader('LT')
+      if(localtime_string):
+        # This is a bit of a hack so as to use the nice parser
+        self.localtime = dateutil.parser.parse("2000-01-01 %s" % (localtime_string)).time()
 
-    # Data Types
-    self.obstype = ad.phuHeader('OBSTYPE')
-    self.obsclass = ad.phuHeader('OBSCLASS')
-    self.observer = ad.phuHeader('OBSERVER')
-    self.ssa = ad.phuHeader('SSA')
-    self.object = ad.phuHeader('OBJECT')
-    self.ra = ad.phuHeader('RA')
-    self.dec = ad.phuHeader('DEC')
-    self.az = ad.phuHeader('AZIMUTH')
-    self.el = ad.phuHeader('ELEVATIO')
-    self.crpa = ad.phuHeader('CRPA')
-    airmass = ad.airmass()
-    if(airmass < 0):
-      airmass = None
-    self.airmass = airmass
-    self.rawiq = ad.phuHeader('RAWIQ')
-    self.rawcc = ad.phuHeader('RAWCC')
-    self.rawwv = ad.phuHeader('RAWWV')
-    self.rawbg = ad.phuHeader('RAWBG')
-    self.rawpireq = ad.phuHeader('RAWPIREQ')
-    self.rawgemqa = ad.phuHeader('RAWGEMQA')
-    self.filter = ad.filtername(pretty=True)
-    self.exptime = ad.exptime()
-    self.disperser = ad.disperser()
-    self.cwave = ad.cwave()
-    self.fpmask = ad.fpmask()
+      # Data Types
+      self.obstype = ad.phuHeader('OBSTYPE')
+      self.obsclass = ad.phuHeader('OBSCLASS')
+      self.observer = ad.phuHeader('OBSERVER')
+      self.ssa = ad.phuHeader('SSA')
+      self.object = ad.phuHeader('OBJECT')
+      self.ra = ad.phuHeader('RA')
+      self.dec = ad.phuHeader('DEC')
+      self.az = ad.phuHeader('AZIMUTH')
+      self.el = ad.phuHeader('ELEVATIO')
+      self.crpa = ad.phuHeader('CRPA')
+      airmass = ad.airmass()
+      if(airmass < 0):
+        airmass = None
+      self.airmass = airmass
+      self.rawiq = ad.phuHeader('RAWIQ')
+      self.rawcc = ad.phuHeader('RAWCC')
+      self.rawwv = ad.phuHeader('RAWWV')
+      self.rawbg = ad.phuHeader('RAWBG')
+      self.rawpireq = ad.phuHeader('RAWPIREQ')
+      self.rawgemqa = ad.phuHeader('RAWGEMQA')
+      self.filter = ad.filtername(pretty=True)
+      self.exptime = ad.exptime()
+      self.disperser = ad.disperser()
+      self.cwave = ad.cwave()
+      self.fpmask = ad.fpmask()
 
-    # Hack the AO header for now
-    aofold = ad.phuHeader('AOFOLD')
-    self.adaptive_optics = (aofold == 'IN')
+      # Hack the AO header for now
+      aofold = ad.phuHeader('AOFOLD')
+      self.adaptive_optics = (aofold == 'IN')
 
-    # And the Spectroscopy header
-    self.spectroscopy = False
-    if('NIFS' in ad.types):
-      self.spectroscopy = True
-      self.disperser = ad.disperser()[0:1]
-    if('NIRI_SPECT' in ad.types):
-      self.spectroscopy = True
-      self.disperser = ad.disperser()[0:6]
-    if('GMOS_SPECT' in ad.types):
-      self.spectroscopy = True
-      self.disperser = ad.disperser()[0:4]
-
-    # and michelle for what it's worth
-    if('MICHELLE' in ad.types):
-      if(ad.phuHeader('CAMERA') == 'spectroscopy'):
+      # And the Spectroscopy header
+      self.spectroscopy = False
+      if('NIFS' in ad.types):
         self.spectroscopy = True
-
-    # Set the derived QA state
-    self.qastate = "%s:%s" % (self.rawpireq, self.rawgemqa)
-    if((self.rawpireq == 'UNKNOWN') and (self.rawgemqa == 'UNKNOWN')):
-      self.qastate = 'Undefined'
-    if((self.rawpireq == 'YES') and (self.rawgemqa == 'USABLE')):
-      self.qastate = 'Pass'
-    if((self.rawpireq == 'NO') and (self.rawgemqa == 'USABLE')):
-      self.qastate = 'Usable'
-    if((self.rawpireq == 'NO') and (self.rawgemqa == 'BAD')):
-      self.qastate = 'Fail'
-    if((self.rawpireq == 'CHECK') and (self.rawgemqa == 'CHECK')):
-      self.qastate = 'CHECK'
-
-    ad.close()
+        self.disperser = ad.disperser()[0:1]
+      if('NIRI_SPECT' in ad.types):
+        self.spectroscopy = True
+        self.disperser = ad.disperser()[0:6]
+      if('GMOS_SPECT' in ad.types):
+        self.spectroscopy = True
+        self.disperser = ad.disperser()[0:4]
+  
+      # and michelle for what it's worth
+      if('MICHELLE' in ad.types):
+        if(ad.phuHeader('CAMERA') == 'spectroscopy'):
+          self.spectroscopy = True
+  
+      # Set the derived QA state
+      self.qastate = "%s:%s" % (self.rawpireq, self.rawgemqa)
+      if((self.rawpireq == 'UNKNOWN') and (self.rawgemqa == 'UNKNOWN')):
+        self.qastate = 'Undefined'
+      if((self.rawpireq == 'YES') and (self.rawgemqa == 'USABLE')):
+        self.qastate = 'Pass'
+      if((self.rawpireq == 'NO') and (self.rawgemqa == 'USABLE')):
+        self.qastate = 'Usable'
+      if((self.rawpireq == 'NO') and (self.rawgemqa == 'BAD')):
+        self.qastate = 'Fail'
+      if((self.rawpireq == 'CHECK') and (self.rawgemqa == 'CHECK')):
+        self.qastate = 'CHECK'
+  
+      ad.close()
+    except:
+      # Astrodata open or any of the above failed
+      pass
 
 class IngestQueue(Base):
   """
@@ -353,6 +353,5 @@ class TapeFile(Base):
   __tablename__ = 'tapefile'
 
   id = Column(Integer, primary_key=True)
-  tape_id = Column(Integer, ForeignKey('tape.id'), nullable=False, index=True)
   diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
   tapewrite_id = Column(Integer, ForeignKey('tapewrite.id'), nullable=False)
