@@ -11,6 +11,7 @@ fits_database = 'postgres:///'+fits_dbname
 
 # Configure the site and other misc stuff here
 fits_installation = "fits-install"
+fits_servername = "fits"
 fits_system_status = "operational"
 
 # Configure the Backup Directory here
@@ -19,6 +20,12 @@ fits_db_backup_dir = "/data/autoingest"
 # Configure the LockFile Directory here
 fits_lockfile_dir = "/data/autoingest"
 
-# Configure the log file here
-fits_log_file = "/data/autoingest/fits.log"
+# Configure the log directory here
+fits_log_dir = "/data/autoingest/"
+
+# Configure the tape device here
+fits_tape_device = "/dev/nst0"
+
+# Configure the tape scratch directory here
+fits_tape_scratchdir = "/data/tapescratch"
 
