@@ -11,6 +11,8 @@ import os
 import re
 import datetime
 import time
+import subprocess
+import tarfile
 
 # Option Parsing
 from optparse import OptionParser
@@ -55,16 +57,19 @@ if(num):
       logger.info("Filename: %s" % diskfile.file.filename)
   else:
     # Get the tape object for this tape label
-    query = session.query(Tape).filter(Tape.label == options.label).filter(Tape.active == True)
+    logger.debug("Finding tape record in DB")
+    query = session.query(Tape).filter(Tape.label == options.tape_label).filter(Tape.active == True)
     if(query.count() == 0):
-      logger.error("Could not find active tape with label %s" % options.label)
+      logger.error("Could not find active tape with label %s" % options.tape_label)
       sys.exit(1)
     if(query.count() > 1):
-      logger.error("Multiple active tapes with label %s:" % options.label)
+      logger.error("Multiple active tapes with label %s:" % options.tape_label)
       sys.exit(1)
     tape = query.one()
+    logger.debug("Found tape id: %d, label: %s" % (tape.id, tape.label))
 
     # Check the tape label in the drive
+    logger.debug("Checking tape label in drive")
     if(td.online() == False):
       logger.error("No tape in drive")
       sys.exit(1)
@@ -73,18 +78,20 @@ if(num):
       logger.error("Label of tape in drive does not match label given.")
       logger.error("Tape in Drive: %s; Tape specified: %s" % (label, options.tape_label))
       sys.exit(1)
+    logger.debug("Found tape in drive with label: %s" % label)
     
     # Position Tape
+    logger.debug("Positioning Tape")
     td.setblk0()
     td.eod(fail=True)
 
     # Copy the files to the local scratch, and check CRCs.
-    td.cdwordingdir()
+    td.cdworkingdir()
     for diskfile in diskfiles:
       filename = diskfile.file.filename
-      url="http://%s/file/%s" % fits_servername, filename
+      url="http://%s/file/%s" % (fits_servername, filename)
       logger.debug("Fetching file: %s" % filename)
-      retcode=subprocess.call(['/usr/bin/curl', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url)
+      retcode=subprocess.call(['/usr/bin/curl', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url])
       if(retcode):
         # Curl command failed. Bail out
         logger.error("Fetch failed for url: %s" % url)
@@ -97,7 +104,7 @@ if(num):
         filecrc = CadcCRC.cadcCRC(filename)
         dbcrc = diskfile.ccrc
         if(filecrc != dbcrc):
-          logger.error("CRC mismatch for file %s" % filename)
+          logger.error("CRC mismatch for file %s: file: %s, database: %s" % (filename, filecrc, dbcrc))
           td.cdback()
           td.cleanup()
           sys.exit(1)
@@ -106,20 +113,22 @@ if(num):
        
     
     # Update tape first/lastwrite
+    logger.debug("Updating tape record")
     if(not tape.firstwrite):
-      tape.firstwrite(datetime.datetime.now())
-    tape.lastwrite(datetime.datetime.now())
+      tape.firstwrite = datetime.datetime.now()
+    tape.lastwrite = datetime.datetime.now()
     session.commit()
 
+    logger.debug("Creating TapeWrite record")
     # Create tapewrite record
-    tw = FitsStorage.TapeWrite
+    tw = FitsStorage.TapeWrite()
     tw.tape_id = tape.id
     session.add(tw)
     session.commit()
     tw.beforestatus = td.status()
-    tw.fileno = td.fileno()
-    tw.startdata = datetime.datetime.now()
-    tw.hostname = os.uname[1]
+    tw.filenum = td.fileno()
+    tw.startdate = datetime.datetime.now()
+    tw.hostname = os.uname()[1]
     tw.tapedrive = td.dev
     tw.suceeded = False
     session.commit()
@@ -127,13 +136,13 @@ if(num):
     # Write the tape.
     blksize = 64 * 1024
     logger.info("Creating tar archive")
-    tar = tarfile.open(name=self.dev, mode='w|', bufsize=blksize)
+    tar = tarfile.open(name=td.dev, mode='w|', bufsize=blksize)
     for diskfile in diskfiles:
       filename = diskfile.file.filename
       logger.info("Adding %s to tar file" % filename)
       tar.add(filename)
       # Create the TapeFile entry and add to DB
-      tapefile = FitsStorage.TapeFile
+      tapefile = FitsStorage.TapeFile()
       tapefile.tapewrite_id = tw.id
       tapefile.diskfile_id = diskfile.id
       session.add(tapefile)
@@ -142,6 +151,7 @@ if(num):
     tar.close()
 
     # update records
+    logger.debug("Updating tapewrite record")
     tw.enddate = datetime.datetime.now()
     tw.suceeded = True
     tw.afterstatus = td.status()
