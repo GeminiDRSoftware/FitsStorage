@@ -29,6 +29,7 @@ class TapeDrive:
     will operate in that subdir when necessary.
     """
     self.dev = device
+    self.scratchdir = scratchdir
 
   def mkworkingdir(self):
     pid = str(os.getpid())
@@ -37,7 +38,7 @@ class TapeDrive:
       os.mkdir(self.workingdir)
 
   def cdworkingdir(self):
-    if(not os.access(self.workingdir, os.F_OK)):
+    if(len(self.workingdir)==0):
       self.mkworkingdir()
     self.origdir = os.getcwd()
     os.chdir(self.workingdir)
@@ -49,6 +50,7 @@ class TapeDrive:
   def cleanup(self):
     self.cdback()
     shutil.rmtree(self.workingdir, ignore_errors=True)
+    self.workingdir = ''
 
   def mt(self, mtcmd, mtarg='', fail=False):
     """
