@@ -342,10 +342,12 @@ class TapeWrite(Base):
 
   id = Column(Integer, primary_key=True)
   tape_id = Column(Integer, ForeignKey('tape.id'), nullable=False, index=True)
+  tape = relation(Tape, order_by=id)
   filenum = Column(Integer)
   startdate = Column(DateTime)
   enddate = Column(DateTime)
   suceeded = Column(Boolean)
+  size = Column(Integer)
   beforestatus = Column(Text)
   afterstatus = Column(Text)
   hostname = Column(Text)
@@ -361,4 +363,7 @@ class TapeFile(Base):
 
   id = Column(Integer, primary_key=True)
   diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
+  diskfile = relation(DiskFile, order_by=id)
   tapewrite_id = Column(Integer, ForeignKey('tapewrite.id'), nullable=False)
+  tapewrite = relation(TapeWrite, order_by=id)
+
