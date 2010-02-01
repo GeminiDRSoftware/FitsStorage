@@ -342,6 +342,7 @@ class TapeWrite(Base):
 
   id = Column(Integer, primary_key=True)
   tape_id = Column(Integer, ForeignKey('tape.id'), nullable=False, index=True)
+  filenum = Column(Integer)
   startdate = Column(DateTime)
   enddate = Column(DateTime)
   suceeded = Column(Boolean)
