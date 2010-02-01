@@ -52,66 +52,64 @@ if(num):
   size = squery.one()[0]
   logger.info("found %d files totalling %.2f GB" % (num, size/1.0E9))
   diskfiles = query.all()
-  if(options.dryrun):
-    for diskfile in diskfiles:
-      logger.info("Filename: %s" % diskfile.file.filename)
-  else:
-    # Get the tape object for this tape label
-    logger.debug("Finding tape record in DB")
-    query = session.query(Tape).filter(Tape.label == options.tape_label).filter(Tape.active == True)
-    if(query.count() == 0):
-      logger.error("Could not find active tape with label %s" % options.tape_label)
-      sys.exit(1)
-    if(query.count() > 1):
-      logger.error("Multiple active tapes with label %s:" % options.tape_label)
-      sys.exit(1)
-    tape = query.one()
-    logger.debug("Found tape id: %d, label: %s" % (tape.id, tape.label))
+  # Get the tape object for this tape label
+  logger.debug("Finding tape record in DB")
+  query = session.query(Tape).filter(Tape.label == options.tape_label).filter(Tape.active == True)
+  if(query.count() == 0):
+    logger.error("Could not find active tape with label %s" % options.tape_label)
+    sys.exit(1)
+  if(query.count() > 1):
+    logger.error("Multiple active tapes with label %s:" % options.tape_label)
+    sys.exit(1)
+  tape = query.one()
+  logger.debug("Found tape id: %d, label: %s" % (tape.id, tape.label))
 
-    # Check the tape label in the drive
-    logger.debug("Checking tape label in drive")
-    if(td.online() == False):
-      logger.error("No tape in drive")
-      sys.exit(1)
-    label = td.readlabel()
-    if(label != options.tape_label):
-      logger.error("Label of tape in drive does not match label given.")
-      logger.error("Tape in Drive: %s; Tape specified: %s" % (label, options.tape_label))
-      sys.exit(1)
-    logger.debug("Found tape in drive with label: %s" % label)
+  # Check the tape label in the drive
+  logger.debug("Checking tape label in drive")
+  if(td.online() == False):
+    logger.error("No tape in drive")
+    sys.exit(1)
+  label = td.readlabel()
+  if(label != options.tape_label):
+    logger.error("Label of tape in drive does not match label given.")
+    logger.error("Tape in Drive: %s; Tape specified: %s" % (label, options.tape_label))
+    sys.exit(1)
+  logger.debug("Found tape in drive with label: %s" % label)
     
-    # Position Tape
+  # Position Tape
+  if(not options.dryrun):
     logger.debug("Positioning Tape")
     td.setblk0()
     td.eod(fail=True)
 
-    # Copy the files to the local scratch, and check CRCs.
-    td.cdworkingdir()
-    for diskfile in diskfiles:
-      filename = diskfile.file.filename
-      url="http://%s/file/%s" % (fits_servername, filename)
-      logger.debug("Fetching file: %s" % filename)
-      retcode=subprocess.call(['/usr/bin/curl', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url])
-      if(retcode):
-        # Curl command failed. Bail out
-        logger.error("Fetch failed for url: %s" % url)
+  # Copy the files to the local scratch, and check CRCs.
+  td.cdworkingdir()
+  for diskfile in diskfiles:
+    filename = diskfile.file.filename
+    url="http://%s/file/%s" % (fits_servername, filename)
+    logger.debug("Fetching file: %s" % filename)
+    retcode=subprocess.call(['/usr/bin/curl', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url])
+    if(retcode):
+      # Curl command failed. Bail out
+      logger.error("Fetch failed for url: %s" % url)
+      td.cdback()
+      td.cleanup()
+      sys.exit(1)
+    else:
+      # Curl command suceeded.
+      # Check the CRC of the file we got against the DB
+      filecrc = CadcCRC.cadcCRC(filename)
+      dbcrc = diskfile.ccrc
+      if(filecrc != dbcrc):
+        logger.error("CRC mismatch for file %s: file: %s, database: %s" % (filename, filecrc, dbcrc))
         td.cdback()
         td.cleanup()
         sys.exit(1)
-      else:
-        # Curl command suceeded.
-        # Check the CRC of the file we got against the DB
-        filecrc = CadcCRC.cadcCRC(filename)
-        dbcrc = diskfile.ccrc
-        if(filecrc != dbcrc):
-          logger.error("CRC mismatch for file %s: file: %s, database: %s" % (filename, filecrc, dbcrc))
-          td.cdback()
-          td.cleanup()
-          sys.exit(1)
 
-    logger.info("All files fetched OK")
-       
+  logger.info("All files fetched OK")
+      
     
+  if(not options.dryrun):
     # Update tape first/lastwrite
     logger.debug("Updating tape record")
     if(not tape.firstwrite):
@@ -119,6 +117,7 @@ if(num):
     tape.lastwrite = datetime.datetime.now()
     session.commit()
 
+  if(not options.dryrun):
     logger.debug("Creating TapeWrite record")
     # Create tapewrite record
     tw = FitsStorage.TapeWrite()
@@ -133,6 +132,7 @@ if(num):
     tw.suceeded = False
     session.commit()
 
+  if(not options.dryrun):
     # Write the tape.
     bytecount = 0
     blksize = 64 * 1024
@@ -151,8 +151,10 @@ if(num):
       # Keep a running total of bytes written
       bytecount += diskfile.size
     logger.info("Completed writing tar archive")
+    logger.info("Wrote %d bytes" % bytecount)
     tar.close()
 
+  if(not options.dryrun):
     # update records
     logger.debug("Updating tapewrite record")
     tw.enddate = datetime.datetime.now()
@@ -160,7 +162,7 @@ if(num):
     tw.afterstatus = td.status()
     tw.size = bytecount
     session.commit()
-    
+   
 else:
   logger.info("no files found")
 
