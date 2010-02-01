@@ -19,10 +19,9 @@ def fitsfilename(filename):
     filename = "%s.fits" % filename
   return filename
 
-def summary(session, req, type, selection, orderby):
+def summary(req, type, selection, orderby):
   """
   This is the main summary generator.
-  session is an sqlalchemy session to access the database
   req is an apache request handler request object
   type is the summary type required
   selection is an array of items to select on, simply passed
@@ -66,7 +65,9 @@ def summary(session, req, type, selection, orderby):
     # Usually, we want to only select headers with diskfiles that are present
     selection['present']=True
 
+  session = sessionfactory()
   webhdrsummary(session, req, type, list_headers(session, selection, orderby))
+  session.close()
   req.write("</body></html>")
   return apache.OK
 
@@ -390,7 +391,7 @@ def webhdrsummary(session, req, type, headers):
     req.write("</TR>\n")
   req.write("</TABLE>\n")
 
-def progsobserved(session, req, things):
+def progsobserved(req, things):
   """
   This function generates a list of programs observed on a given night
   """
@@ -408,6 +409,7 @@ def progsobserved(session, req, things):
   oneday = datetime.timedelta(days=1)
   enddt = startdt + oneday
   # create a query for between these two
+  session = sessionfactory()
   query = session.query(Header.progid).filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt).group_by(Header.progid)
   list = query.all()
   req.content_type = "text/html"
@@ -417,9 +419,10 @@ def progsobserved(session, req, things):
     if(p):
       req.write('%s ' % p)
   req.write('</p></body></html>')
+  session.close()
   return apache.OK
 
-def tape(session, req, things):
+def tape(req, things):
   """
   This is the tape list function
   """
@@ -428,6 +431,8 @@ def tape(session, req, things):
   req.write("<head><title>FITS Storage tape information</title></head>")
   req.write("<body>")
   req.write("<h1>FITS Storage tape information</h1>")
+
+  session = sessionfactory()
 
   # Process form data first
   formdata = util.FieldStorage(req)
@@ -514,4 +519,5 @@ def tape(session, req, things):
   req.write('</FORM>')
 
   req.write("</body></html>")
+  session.close()
   return apache.OK

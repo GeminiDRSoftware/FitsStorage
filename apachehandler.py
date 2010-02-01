@@ -16,6 +16,7 @@ import re
 import datetime
 
 import pyfits
+
 # Compile regexps here
 
 orderbycre=re.compile('orderby\=(\S*)')
@@ -23,12 +24,6 @@ orderbycre=re.compile('orderby\=(\S*)')
 # The top level handler. This essentially calls out to the specific
 # handler function depending on the uri that we're handling
 def handler(req):
-  # Create the database session here, and close it before we exit
-  session = sessionfactory()
-
-  #The next line is for serious debugging
-  #return debugmessage(req)
-
   # Set the no_cache flag on all our output
   # no_cache is not writable, have to set the headers directly
   req.headers_out['Cache-Control'] = 'no-cache'
@@ -100,14 +95,16 @@ def handler(req):
       if(match):
         orderby.append(match.group(1))
 
-    return summary(session, req, this, selection, orderby)
+    retval = summary(req, this, selection, orderby)
+    return retval
 
   # This returns the full header of the filename that follows.
   if(this ==  'fullheader'):
     if(len(things)):
       filename=things.pop(0)
       filename=fitsfilename(filename)
-      return fullheader(session, req, filename)
+      retval = fullheader(req, filename)
+      return retval
     else:
       req.content_type="text/plain"
       req.write("You must specify a filename, eg: /fullheader/N20091020S1234.fits\n")
@@ -128,10 +125,12 @@ def handler(req):
       # Ensure it has the .fits on it
       thing = fitsfilename(thing)
       # Now construct the query
+      session = sessionfactory()
       query = session.query(File).filter(File.filename == thing)
       if(query.count()==0):
         req.content_type="text/plain"
         req.write("Cannot find file for: %s\n" % thing)
+        session.close()
         return apache.OK
       file = query.one()
       # Query diskfiles to find the diskfile for file that is present
@@ -142,6 +141,7 @@ def handler(req):
         req.write(diskfile.fvreport)
       if(this == 'wmdreport'):
         req.write(diskfile.wmdreport)
+      session.close()
       return apache.OK
    
     # See if we got a diskfile_id
@@ -151,6 +151,7 @@ def handler(req):
       if(query.count()==0):
         req.content_type="text/plain"
         req.write("Cannot find diskfile for id: %s\n" % thing)
+        session.close()
         return apache.OK
       diskfile = query.one()
       req.content_type="text/plain"
@@ -158,6 +159,7 @@ def handler(req):
         req.write(diskfile.fvreport)
       if(this == 'wmdreport'):
         req.write(diskfile.wmdreport)
+      session.close()
       return apache.OK
 
     # OK, they must have fed us garbage
@@ -188,13 +190,16 @@ def handler(req):
           #req.content_type="text/plain"
           #req.write("You must specify a filename eg: /fits/N20091020S1234.fits\n")
           return apache.HTTP_NOT_FOUND
+        session = sessionfactory()
         query=session.query(File).filter(File.filename==filename)
         if(query.count()==0):
           req.content_type="text/plain"
           req.write("Cannot find file for: %s\n" % filename)
+          session.close()
           return apache.HTTP_NOT_FOUND
         file=query.one()
         req.sendfile(file.fullpath())
+        session.close()
         return apache.OK
       else:
         #req.content_type="text/plain"
@@ -207,16 +212,19 @@ def handler(req):
 
   # This is the projects observed feature
   if(this == "programsobserved"):
-    return progsobserved(session, req, things)
+    retval =  progsobserved(req, things)
+    return retval
     
 
   # Database Statistics
   if(this == "stats"):
-    return stats(session, req)
+    retval = stats(req)
+    return retval
 
   # Tape handler
   if(this == "tape"):
-    return tape(session, req, things)
+    retval = tape(req, things)
+    return retval
 
   # Some static files that the server should serve via a redirect.
   if((this == "robots.txt") or (this == "favicon.ico")):
@@ -227,7 +235,6 @@ def handler(req):
   # by one of the methods above, then we should send out the usage message
   return usagemessage(req)
 
-  session.close()
 # End of apache handler() function.
 # Below are various helper functions called from above.
 # The web summary has it's own module
@@ -235,15 +242,17 @@ def handler(req):
 # This reads the full fits header from the file currently on disk and
 # returns in in text form to the browser.
 # Arguments are the apache request object and the filename
-def fullheader(session, req, filename):
+def fullheader(req, filename):
   # If the filename is missing the .fits, then add it
   filename=fitsfilename(filename)
 
   # First search for a file object with the given filename
+  session=sessionfactory()
   query = session.query(File).filter(File.filename == filename)
   if(query.count()==0):
     req.content_type="text/plain"
     req.write("Cannot find file for: %s\n" % filename)
+    session.close()
     return apache.HTTP_NOT_FOUND
 
   file = query.one()
@@ -255,6 +264,7 @@ def fullheader(session, req, filename):
     req.write(str(hdulist[i].header.ascardlist()))
     req.write('\n')
   hdulist.close()
+  session.close()
   return apache.OK
 
 
@@ -279,12 +289,14 @@ def debugmessage(req):
   return apache.OK
 
 # Send database statistics to browser
-def stats(session, req):
+def stats(req):
   req.content_type = "text/html"
   req.write("<html>")
   req.write("<head><title>FITS Storage database statistics</title></head>")
   req.write("<body>")
   req.write("<h1>FITS Storage database statistics</h1>")
+
+  session = sessionfactory()
 
   # File table statistics
   query=session.query(File)
@@ -330,7 +342,6 @@ def stats(session, req):
   for i in list:
     req.write('<LI>%s : %s</LI>' % (i.file.filename, i.entrytime))
   req.write('</UL></LI>')
-
   
   req.write("</ul>")
   
@@ -389,8 +400,7 @@ def stats(session, req):
     end -= mdelta
   req.write("</ul>")
 
-  
-
   req.write("</body></html>")
 
+  session.close()
   return apache.OK
