@@ -218,13 +218,19 @@ def handler(req):
 
   # Database Statistics
   if(this == "stats"):
-    retval = stats(req)
-    return retval
+    return stats(req)
 
   # Tape handler
   if(this == "tape"):
-    retval = tape(req, things)
-    return retval
+    return tape(req, things)
+
+  # TapeWrite handler
+  if(this == "tapewrite"):
+    return tapewrite(req, things)
+
+  # TapeFile handler
+  if(this == "tapefile"):
+    return tapefile(req, things)
 
   # Some static files that the server should serve via a redirect.
   if((this == "robots.txt") or (this == "favicon.ico")):
