@@ -31,6 +31,12 @@ from FitsStorageConfig import *
 
 from astrodata import AstroData
 
+# This was to debug the number of open database sessions.
+#import logging
+#logging.basicConfig(filename='/data/autoingest/debug.log', level=logging.DEBUG)
+#logging.getLogger('sqlalchemy.pool').setLevel(logging.INFO)
+
+
 Base = declarative_base()
 
 # We need to handle the database connection in here too so that the
@@ -41,6 +47,7 @@ Base = declarative_base()
 # and an sqlalchemy session to go with it
 pg_db = sqlalchemy.create_engine(fits_database)
 sessionfactory = sqlalchemy.orm.sessionmaker(pg_db)
+
 
 # Do not create the session here, these are not supposed to be global
 #session = sessionfactory()
