@@ -14,7 +14,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Create log message handlers 
-myname = "%s-%s.log" % (FitsStorageConfig.fits_installation, sys.argv[0])
+myname = "%s-%s.log" % (FitsStorageConfig.fits_installation, os.path.basename(sys.argv[0]))
 logfile = os.path.join(FitsStorageConfig.fits_log_dir, myname)
 filehandler=logging.handlers.TimedRotatingFileHandler(logfile, backupCount=10, when='midnight', interval=1)
 streamhandler=logging.StreamHandler()
