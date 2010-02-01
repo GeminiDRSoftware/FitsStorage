@@ -134,6 +134,7 @@ if(num):
     session.commit()
 
     # Write the tape.
+    bytecount = 0
     blksize = 64 * 1024
     logger.info("Creating tar archive")
     tar = tarfile.open(name=td.dev, mode='w|', bufsize=blksize)
@@ -147,6 +148,8 @@ if(num):
       tapefile.diskfile_id = diskfile.id
       session.add(tapefile)
       session.commit()
+      # Keep a running total of bytes written
+      bytecount += diskfile.size
     logger.info("Completed writing tar archive")
     tar.close()
 
@@ -155,6 +158,7 @@ if(num):
     tw.enddate = datetime.datetime.now()
     tw.suceeded = True
     tw.afterstatus = td.status()
+    tw.size = bytecount
     session.commit()
     
 else:
