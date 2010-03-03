@@ -16,6 +16,9 @@ def create_tables(session):
   DiskFile.metadata.create_all(bind=pg_db)
   Header.metadata.create_all(bind=pg_db)
   IngestQueue.metadata.create_all(bind=pg_db)
+  Tape.metadata.create_all(bind=pg_db)
+  TapeWrite.metadata.create_all(bind=pg_db)
+  TapeFile.metadata.create_all(bind=pg_db)
 
   # Now grant the apache user select on them for the www queries
   session.execute("GRANT SELECT ON file, diskfile, header, tape, tape_id_seq, tapewrite, tapefile TO apache");
