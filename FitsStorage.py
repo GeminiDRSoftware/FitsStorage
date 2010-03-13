@@ -4,7 +4,7 @@ database.
 """
 import sys
 
-sys.path.append('/data/extern/gemini_python')
+sys.path.append('/opt/gemini_python')
 
 import sqlalchemy
 import sqlalchemy.orm
