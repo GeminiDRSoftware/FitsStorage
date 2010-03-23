@@ -5,6 +5,7 @@ import FitsStorage
 import FitsStorageConfig
 from FitsStorageUtils import *
 from FitsStorageLogger import *
+import signal
 import os
 import sys
 import re
@@ -27,6 +28,17 @@ parser.add_option("--lockfile", action="store", dest="lockfile", help="Use this 
 setdebug(options.debug)
 setdemon(options.demon)
 
+# Define signal handler. This allows us to bail out neatly if we get a signal
+def handler(signum, frame):
+  logger.info("Received signal: %d " % signum)
+  raise Exception('Signal', signum)
+
+# Set handlers for the signals we want to handle
+signal.signal(signal.SIGHUP, handler)
+signal.signal(signal.SIGINT, handler)
+signal.signal(signal.SIGQUIT, handler)
+signal.signal(signal.SIGTERM, handler)
+
 # Annouce startup
 now = datetime.datetime.now()
 logger.info("*********  service_ingest_queue.py - starting up at %s" % now)
@@ -43,7 +55,7 @@ if(options.lockfile):
 
 session = sessionfactory()
 
-# Go into loop. should there be an exit clause?
+# Loop forever.
 try:
   while(1):
     # Request a queue entry
@@ -59,10 +71,13 @@ try:
       session.delete(iq)
       session.commit()
 
-except KeyboardInterrupt:
+except:
+  logger.error("Exception: %s" % sys.exec_info()[0])
+
+finally:
   session.close()
   if(options.lockfile):
-    # Delete lockfile
     logger.info("Deleting Lockfile %s" % lockfile)
     os.unlink(lockfile)
   logger.info("*********  service_ingest_queue.py - exiting at %s" % datetime.datetime.now())
+
