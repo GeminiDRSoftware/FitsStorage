@@ -66,8 +66,13 @@ def summary(req, type, selection, orderby):
     selection['present']=True
 
   session = sessionfactory()
-  webhdrsummary(session, req, type, list_headers(session, selection, orderby))
-  session.close()
+  try:
+    webhdrsummary(session, req, type, list_headers(session, selection, orderby))
+  except IOError:
+    pass
+  finally:
+    session.close()
+
   req.write("</body></html>")
   return apache.OK
 
@@ -410,17 +415,21 @@ def progsobserved(req, things):
   enddt = startdt + oneday
   # create a query for between these two
   session = sessionfactory()
-  query = session.query(Header.progid).filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt).group_by(Header.progid)
-  list = query.all()
-  req.content_type = "text/html"
-  req.write('<html><head><title>Programs Observed on %s</title></head><body><h1>Programs Observed on %s</h1><p>' % (date, date))
-  for row in list:
-    p = row[0]
-    if(p):
-      req.write('%s ' % p)
-  req.write('</p></body></html>')
-  session.close()
-  return apache.OK
+  try:
+    query = session.query(Header.progid).filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt).group_by(Header.progid)
+    list = query.all()
+    req.content_type = "text/html"
+    req.write('<html><head><title>Programs Observed on %s</title></head><body><h1>Programs Observed on %s</h1><p>' % (date, date))
+    for row in list:
+      p = row[0]
+      if(p):
+        req.write('%s ' % p)
+    req.write('</p></body></html>')
+    return apache.OK
+  except IOError:
+    pass
+  finally:
+    session.close()
 
 def tape(req, things):
   """
@@ -433,105 +442,108 @@ def tape(req, things):
   req.write("<h1>FITS Storage tape information</h1>")
 
   session = sessionfactory()
+  try:
+    # Process form data first
+    formdata = util.FieldStorage(req)
+    #req.write(str(formdata) )
+    for key in formdata.keys():
+      field=key.split('-')[0]
+      tapeid=int(key.split('-')[1])
+      value = formdata[key].value
+      if(tapeid):
+        tape=session.query(Tape).filter(Tape.id==tapeid).one()
+        if(field == 'moveto'):
+          tape.location = value
+          tape.lastmoved = datetime.datetime.now()
+        if(field == 'active'):
+          if(value == 'Yes'):
+            tape.active = True
+          if(value == 'No'):
+            tape.active = False
+        if(field == 'fate'):
+          tape.fate = value
+      if(field == 'newlabel'):
+        # Add a new tape to the database
+        newtape = Tape(value)
+        session.add(newtape)
 
-  # Process form data first
-  formdata = util.FieldStorage(req)
-  #req.write(str(formdata) )
-  for key in formdata.keys():
-    field=key.split('-')[0]
-    tapeid=int(key.split('-')[1])
-    value = formdata[key].value
-    if(tapeid):
-      tape=session.query(Tape).filter(Tape.id==tapeid).one()
-      if(field == 'moveto'):
-        tape.location = value
-        tape.lastmoved = datetime.datetime.now()
-      if(field == 'active'):
-        if(value == 'Yes'):
-          tape.active = True
-        if(value == 'No'):
-          tape.active = False
-      if(field == 'fate'):
-        tape.fate = value
-    if(field == 'newlabel'):
-      # Add a new tape to the database
-      newtape = Tape(value)
-      session.add(newtape)
-
-    session.commit()
+      session.commit()
     
-  query = session.query(Tape)
-  # Get a list of the tapes that apply
-  if(len(things)):
-    searchstring = '%'+things[0]+'%'
-    query = query.filter(Tape.label.like(searchstring))
-  query=query.order_by(Tape.id)
-  list = query.all()
+    query = session.query(Tape)
+    # Get a list of the tapes that apply
+    if(len(things)):
+      searchstring = '%'+things[0]+'%'
+      query = query.filter(Tape.label.like(searchstring))
+    query=query.order_by(Tape.id)
+    list = query.all()
 
-  req.write("<HR>")
-  for tape in list:
-    req.write("<H2>ID: %d, Label: %s</H2>" % (tape.id, tape.label))
-    req.write("<UL>")
-    req.write("<LI>First Write: %s - Last Write: %s</LI>" % (tape.firstwrite, tape.lastwrite))
-    req.write("<LI>Last Verified: %s</LI>" % tape.lastverified)
-    req.write("<LI>Location: %s; Last Moved: %s</LI>" % (tape.location, tape.lastmoved))
-    req.write("<LI>Active: %s</LI>" % tape.active)
-    req.write("<LI>Fate: %s</LI>" % tape.fate)
+    req.write("<HR>")
+    for tape in list:
+      req.write("<H2>ID: %d, Label: %s</H2>" % (tape.id, tape.label))
+      req.write("<UL>")
+      req.write("<LI>First Write: %s - Last Write: %s</LI>" % (tape.firstwrite, tape.lastwrite))
+      req.write("<LI>Last Verified: %s</LI>" % tape.lastverified)
+      req.write("<LI>Location: %s; Last Moved: %s</LI>" % (tape.location, tape.lastmoved))
+      req.write("<LI>Active: %s</LI>" % tape.active)
+      req.write("<LI>Fate: %s</LI>" % tape.fate)
+  
+      # Count Writes
+      twq = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id)
+      # Count Bytes
+      if(twq.count()):
+        bytesquery = session.query(func.sum(TapeWrite.size)).filter(TapeWrite.tape_id == tape.id)
+        bytes = bytesquery.one()[0]
+      else:
+        bytes=0
+      req.write('<LI>Writes: <A HREF="/tapewrite/%d">%d</A>, totalling %.2f GB</LI>' % (tape.id, twq.count(), bytes/1.0E9))
+        
+      req.write("</UL>")
 
-    # Count Writes
-    twq = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id)
-    # Count Bytes
-    if(twq.count()):
-      bytesquery = session.query(func.sum(TapeWrite.size)).filter(TapeWrite.tape_id == tape.id)
-      bytes = bytesquery.one()[0]
-    else:
-      bytes=0
-    req.write('<LI>Writes: <A HREF="/tapewrite/%d">%d</A>, totalling %.2f GB</LI>' % (tape.id, twq.count(), bytes/1.0E9))
-      
-    req.write("</UL>")
+      # The form for modifications
+      req.write('<FORM action="/tape" method="post">')
+      req.write('<TABLE>')
+      # First Row
+      req.write('<TR>')
+      movekey = "moveto-%d" % tape.id
+      req.write('<TD><LABEL for="%s">Move to new location:</LABEL></TD>' % movekey)
+      req.write('<TD><INPUT type="text" size=32 name="%s"></TD>' % movekey)
+      req.write('</TR>')
+      # Second Row
+      activekey = "active-%d" % tape.id
+      req.write('<TR>')
+      req.write('<TD><LABEL for="%s">Active:</LABEL></TD>' % activekey)
+      yeschecked = ""
+      nochecked = ""
+      if(tape.active):
+        yeschecked="checked"
+      else:
+        nochecked="checked"
+      req.write('<TD><INPUT type="radio" name="%s" value="Yes" %s>Yes</INPUT> ' % (activekey, yeschecked))
+      req.write('<INPUT type="radio" name="%s" value="No" %s>No</INPUT></TD>' % (activekey, nochecked))
+      req.write('</TR>')
+      # Third Row
+      req.write('<TR>')
+      fatekey = "fate-%d" % tape.id
+      req.write('<TD><LABEL for="%s">Fate:</LABEL></TD>' % fatekey)
+      req.write('<TD><INPUT type="text" name="%s" size=32></INPUT></TD>' % fatekey)
+      req.write('</TR>')
+      req.write('</TABLE>')
+      req.write('<INPUT type="submit" value="Save"> <INPUT type="reset">')
+      req.write('</FORM>')
+      req.write('<HR>')
 
-    # The form for modifications
-    req.write('<FORM action="/tape" method="post">')
-    req.write('<TABLE>')
-    # First Row
-    req.write('<TR>')
-    movekey = "moveto-%d" % tape.id
-    req.write('<TD><LABEL for="%s">Move to new location:</LABEL></TD>' % movekey)
-    req.write('<TD><INPUT type="text" size=32 name="%s"></TD>' % movekey)
-    req.write('</TR>')
-    # Second Row
-    activekey = "active-%d" % tape.id
-    req.write('<TR>')
-    req.write('<TD><LABEL for="%s">Active:</LABEL></TD>' % activekey)
-    yeschecked = ""
-    nochecked = ""
-    if(tape.active):
-      yeschecked="checked"
-    else:
-      nochecked="checked"
-    req.write('<TD><INPUT type="radio" name="%s" value="Yes" %s>Yes</INPUT> ' % (activekey, yeschecked))
-    req.write('<INPUT type="radio" name="%s" value="No" %s>No</INPUT></TD>' % (activekey, nochecked))
-    req.write('</TR>')
-    # Third Row
-    req.write('<TR>')
-    fatekey = "fate-%d" % tape.id
-    req.write('<TD><LABEL for="%s">Fate:</LABEL></TD>' % fatekey)
-    req.write('<TD><INPUT type="text" name="%s" size=32></INPUT></TD>' % fatekey)
-    req.write('</TR>')
-    req.write('</TABLE>')
-    req.write('<INPUT type="submit" value="Save"> <INPUT type="reset">')
-    req.write('</FORM>')
     req.write('<HR>')
+    req.write('<H2>Add a New Tape</H2>')
+    req.write('<FORM action="/tape" method="post">')
+    req.write('<LABEL for=newlabel-0>Label</LABEL> <INPUT type="text" size=32 name=newlabel-0> <INPUT type="submit" value="Save"> <INPUT type="reset">')
+    req.write('</FORM>')
 
-  req.write('<HR>')
-  req.write('<H2>Add a New Tape</H2>')
-  req.write('<FORM action="/tape" method="post">')
-  req.write('<LABEL for=newlabel-0>Label</LABEL> <INPUT type="text" size=32 name=newlabel-0> <INPUT type="submit" value="Save"> <INPUT type="reset">')
-  req.write('</FORM>')
-
-  req.write("</body></html>")
-  session.close()
-  return apache.OK
+    req.write("</body></html>")
+    return apache.OK
+  except IOError:
+    pass
+  finally:
+    session.close()
 
 def tapewrite(req, things):
   """
@@ -544,55 +556,58 @@ def tapewrite(req, things):
   req.write("<h1>FITS Storage tapewrite information</h1>")
 
   session = sessionfactory()
+  try:
 
-  # Find the appropriate TapeWrite entries
-  query = session.query(TapeWrite)
+    # Find the appropriate TapeWrite entries
+    query = session.query(TapeWrite)
 
-  # Can give a tape id (numeric) or label as an argument
-  if(len(things)):
-    thing = things[0]
-    tapeid=0
-    try:
-      tapeid = int(thing)
-    except:
-      pass
-    if(tapeid):
-      query=query.filter(TapeWrite.tape_id == tapeid)
-    else:
-      thing = '%'+thing+'%'
-      tapequery = session.query(Tape).filter(Tape.label.like(thing))
-      if(tapequery.count() == 0):
-        req.write("<P>Could not find tape by label search</P>")
-        req.write("</body></html>")
-        session.close()
-        return apache.OK
-      if(tapequery.count() > 1):
-        req.write("<P>Found multiple tapes by label search. Please give the ID instead</P>")
-        req.write("</body></html>")
-        session.close()
-        return apache.OK
-      tape = query.one()
-      query = query.filter(TapeWrite.tape_id == tape.id)
+    # Can give a tape id (numeric) or label as an argument
+    if(len(things)):
+      thing = things[0]
+      tapeid=0
+      try:
+        tapeid = int(thing)
+      except:
+        pass
+      if(tapeid):
+        query=query.filter(TapeWrite.tape_id == tapeid)
+      else:
+        thing = '%'+thing+'%'
+        tapequery = session.query(Tape).filter(Tape.label.like(thing))
+        if(tapequery.count() == 0):
+          req.write("<P>Could not find tape by label search</P>")
+          req.write("</body></html>")
+          session.close()
+          return apache.OK
+        if(tapequery.count() > 1):
+          req.write("<P>Found multiple tapes by label search. Please give the ID instead</P>")
+          req.write("</body></html>")
+          return apache.OK
+        tape = query.one()
+        query = query.filter(TapeWrite.tape_id == tape.id)
 
-  query = query.order_by(TapeWrite.startdate)
-  tws = query.all()
+    query = query.order_by(TapeWrite.startdate)
+    tws = query.all()
 
-  for tw in tws:
-    req.write("<h2>ID: %d; Tape ID: %d; Tape Label: %s; File Number: %d</h2>" % (tw.id, tw.tape_id, tw.tape.label, tw.filenum))
-    req.write("<UL>")
-    req.write("<LI>Start Date: %s - End Date: %s</LI>" % (tw.startdate, tw.enddate))
-    req.write("<LI>Suceeded: %s</LI>" % tw.suceeded)
-    req.write("<LI>Size: %.2f GB</LI>" % (tw.size / 1.0E9))
-    req.write("<LI>Status Before: <CODE>%s</CODE></LI>" % tw.beforestatus)
-    req.write("<LI>Status After: <CODE>%s</CODE></LI>" % tw.afterstatus)
-    req.write("<LI>Hostname: %s, Tape Device: %s</LI>" % (tw.hostname, tw.tapedrive))
-    req.write("<LI>Notes: %s</LI>" % tw.notes)
-    req.write('<LI>Files: <A HREF="/tapefile/%d">List</A></LI>' % tw.id)
-    req.write("</UL>")
-
-  req.write("</BODY></HTML>")
-  session.close()
-  return apache.OK
+    for tw in tws:
+      req.write("<h2>ID: %d; Tape ID: %d; Tape Label: %s; File Number: %d</h2>" % (tw.id, tw.tape_id, tw.tape.label, tw.filenum))
+      req.write("<UL>")
+      req.write("<LI>Start Date: %s - End Date: %s</LI>" % (tw.startdate, tw.enddate))
+      req.write("<LI>Suceeded: %s</LI>" % tw.suceeded)
+      req.write("<LI>Size: %.2f GB</LI>" % (tw.size / 1.0E9))
+      req.write("<LI>Status Before: <CODE>%s</CODE></LI>" % tw.beforestatus)
+      req.write("<LI>Status After: <CODE>%s</CODE></LI>" % tw.afterstatus)
+      req.write("<LI>Hostname: %s, Tape Device: %s</LI>" % (tw.hostname, tw.tapedrive))
+      req.write("<LI>Notes: %s</LI>" % tw.notes)
+      req.write('<LI>Files: <A HREF="/tapefile/%d">List</A></LI>' % tw.id)
+      req.write("</UL>")
+  
+    req.write("</BODY></HTML>")
+    return apache.OK
+  except IOError:
+    pass
+  finally:
+    session.close()
 
 def tapefile(req, things):
   """
@@ -615,44 +630,47 @@ def tapefile(req, things):
   tapewrite_id = things[0]
 
   session = sessionfactory()
-  query=session.query(TapeFile).filter(TapeFile.tapewrite_id == tapewrite_id).order_by(TapeFile.id)
+  try:
+    query=session.query(TapeFile).filter(TapeFile.tapewrite_id == tapewrite_id).order_by(TapeFile.id)
 
-  req.write('<TABLE border=0>')
-  req.write('<TR class=tr_head>')
-  req.write('<TH>TapeFile ID</TH>')
-  req.write('<TH>TapeWrite ID</TH>')
-  req.write('<TH>TapeWrite Start Date</TH>')
-  req.write('<TH>Tape ID</TH>')
-  req.write('<TH>Tape Label</TH>')
-  req.write('<TH>File Num on Tape</TH>')
-  req.write('<TH>DiskFile ID</TH>')
-  req.write('<TH>Filename</TH>')
-  req.write('<TH>Size</TH>')
-  req.write('<TH>Last Modified</TH>')
-  req.write('</TR>')
+    req.write('<TABLE border=0>')
+    req.write('<TR class=tr_head>')
+    req.write('<TH>TapeFile ID</TH>')
+    req.write('<TH>TapeWrite ID</TH>')
+    req.write('<TH>TapeWrite Start Date</TH>')
+    req.write('<TH>Tape ID</TH>')
+    req.write('<TH>Tape Label</TH>')
+    req.write('<TH>File Num on Tape</TH>')
+    req.write('<TH>DiskFile ID</TH>')
+    req.write('<TH>Filename</TH>')
+    req.write('<TH>Size</TH>')
+    req.write('<TH>Last Modified</TH>')
+    req.write('</TR>')
+  
+    even=0
+    for tf in query.all():
+      even = not even
+      if(even):
+        cs = "tr_even"
+      else:
+        cs = "tr_odd"
+      # Now the Table Row
+      req.write("<TR class=%s>" % (cs))
+      req.write("<TD>%d</TD>" % tf.id)
+      req.write("<TD>%d</TD>" % tf.tapewrite_id)
+      req.write("<TD>%s</TD>" % tf.tapewrite.startdate)
+      req.write("<TD>%d</TD>" % tf.tapewrite.tape.id)
+      req.write("<TD>%s</TD>" % tf.tapewrite.tape.label)
+      req.write("<TD>%d</TD>" % tf.tapewrite.filenum)
+      req.write("<TD>%d</TD>" % tf.diskfile_id)
+      req.write("<TD>%s</TD>" % tf.diskfile.file.filename)
+      req.write("<TD>%s</TD>" % tf.diskfile.size)
+      req.write("<TD>%s</TD>" % tf.diskfile.lastmod)
+      req.write("</TR>")
 
-  even=0
-  for tf in query.all():
-    even = not even
-    if(even):
-      cs = "tr_even"
-    else:
-      cs = "tr_odd"
-    # Now the Table Row
-    req.write("<TR class=%s>" % (cs))
-    req.write("<TD>%d</TD>" % tf.id)
-    req.write("<TD>%d</TD>" % tf.tapewrite_id)
-    req.write("<TD>%s</TD>" % tf.tapewrite.startdate)
-    req.write("<TD>%d</TD>" % tf.tapewrite.tape.id)
-    req.write("<TD>%s</TD>" % tf.tapewrite.tape.label)
-    req.write("<TD>%d</TD>" % tf.tapewrite.filenum)
-    req.write("<TD>%d</TD>" % tf.diskfile_id)
-    req.write("<TD>%s</TD>" % tf.diskfile.file.filename)
-    req.write("<TD>%s</TD>" % tf.diskfile.size)
-    req.write("<TD>%s</TD>" % tf.diskfile.lastmod)
-    req.write("</TR>")
-
-  req.write("</TABLE></BODY></HTML>")
-  session.close()
-
-  return apache.OK
+    req.write("</TABLE></BODY></HTML>")
+    return apache.OK
+  except IOError:
+    pass
+  finally:
+    session.close()
