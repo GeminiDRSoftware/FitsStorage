@@ -126,41 +126,43 @@ def handler(req):
       thing = fitsfilename(thing)
       # Now construct the query
       session = sessionfactory()
-      query = session.query(File).filter(File.filename == thing)
-      if(query.count()==0):
+      try:
+        query = session.query(File).filter(File.filename == thing)
+        if(query.count()==0):
+          req.content_type="text/plain"
+          req.write("Cannot find file for: %s\n" % thing)
+          return apache.OK
+        file = query.one()
+        # Query diskfiles to find the diskfile for file that is present
+        query = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.file_id == file.id)
+        diskfile = query.one()
         req.content_type="text/plain"
-        req.write("Cannot find file for: %s\n" % thing)
-        session.close()
+        if(this == 'fitsverify'):
+          req.write(diskfile.fvreport)
+        if(this == 'wmdreport'):
+          req.write(diskfile.wmdreport)
         return apache.OK
-      file = query.one()
-      # Query diskfiles to find the diskfile for file that is present
-      query = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.file_id == file.id)
-      diskfile = query.one()
-      req.content_type="text/plain"
-      if(this == 'fitsverify'):
-        req.write(diskfile.fvreport)
-      if(this == 'wmdreport'):
-        req.write(diskfile.wmdreport)
-      session.close()
-      return apache.OK
    
-    # See if we got a diskfile_id
-    match = re.match('\d+', thing)
-    if(match):
-      query = session.query(DiskFile).filter(DiskFile.id == thing)
-      if(query.count()==0):
-        req.content_type="text/plain"
-        req.write("Cannot find diskfile for id: %s\n" % thing)
+        # See if we got a diskfile_id
+        match = re.match('\d+', thing)
+        if(match):
+          query = session.query(DiskFile).filter(DiskFile.id == thing)
+          if(query.count()==0):
+            req.content_type="text/plain"
+            req.write("Cannot find diskfile for id: %s\n" % thing)
+            session.close()
+            return apache.OK
+          diskfile = query.one()
+          req.content_type="text/plain"
+          if(this == 'fitsverify'):
+            req.write(diskfile.fvreport)
+          if(this == 'wmdreport'):
+            req.write(diskfile.wmdreport)
+          return apache.OK
+      except IOError:
+        pass
+      finally:
         session.close()
-        return apache.OK
-      diskfile = query.one()
-      req.content_type="text/plain"
-      if(this == 'fitsverify'):
-        req.write(diskfile.fvreport)
-      if(this == 'wmdreport'):
-        req.write(diskfile.wmdreport)
-      session.close()
-      return apache.OK
 
     # OK, they must have fed us garbage
     req.content_type="text/plain"
@@ -191,16 +193,19 @@ def handler(req):
           #req.write("You must specify a filename eg: /fits/N20091020S1234.fits\n")
           return apache.HTTP_NOT_FOUND
         session = sessionfactory()
-        query=session.query(File).filter(File.filename==filename)
-        if(query.count()==0):
-          req.content_type="text/plain"
-          req.write("Cannot find file for: %s\n" % filename)
+        try:
+          query=session.query(File).filter(File.filename==filename)
+          if(query.count()==0):
+            req.content_type="text/plain"
+            req.write("Cannot find file for: %s\n" % filename)
+            return apache.HTTP_NOT_FOUND
+          file=query.one()
+          req.sendfile(file.fullpath())
+          return apache.OK
+        except IOError:
+          pass
+        finally:
           session.close()
-          return apache.HTTP_NOT_FOUND
-        file=query.one()
-        req.sendfile(file.fullpath())
-        session.close()
-        return apache.OK
       else:
         #req.content_type="text/plain"
         #req.write("Authorization not valid\n")
@@ -254,25 +259,27 @@ def fullheader(req, filename):
 
   # First search for a file object with the given filename
   session=sessionfactory()
-  query = session.query(File).filter(File.filename == filename)
-  if(query.count()==0):
-    req.content_type="text/plain"
-    req.write("Cannot find file for: %s\n" % filename)
+  try:
+    query = session.query(File).filter(File.filename == filename)
+    if(query.count()==0):
+      req.content_type="text/plain"
+      req.write("Cannot find file for: %s\n" % filename)
+      return apache.HTTP_NOT_FOUND
+
+    file = query.one()
+    hdulist = pyfits.open(file.fullpath(), mode='readonly')
+    req.write("FITS File: %s (%s)\n\n" % (filename, file.fullpath()))
+
+    for i in range(len(hdulist)):
+      req.write("\n--- HDU %s ---\n" % (i))
+      req.write(str(hdulist[i].header.ascardlist()))
+      req.write('\n')
+    hdulist.close()
+    return apache.OK
+  except IOError:
+    pass
+  finally:
     session.close()
-    return apache.HTTP_NOT_FOUND
-
-  file = query.one()
-  hdulist = pyfits.open(file.fullpath(), mode='readonly')
-  req.write("FITS File: %s (%s)\n\n" % (filename, file.fullpath()))
-
-  for i in range(len(hdulist)):
-    req.write("\n--- HDU %s ---\n" % (i))
-    req.write(str(hdulist[i].header.ascardlist()))
-    req.write('\n')
-  hdulist.close()
-  session.close()
-  return apache.OK
-
 
 # Send usage message to browser
 def usagemessage(req):
@@ -303,110 +310,113 @@ def stats(req):
   req.write("<h1>FITS Storage database statistics</h1>")
 
   session = sessionfactory()
+  try:
 
-  # File table statistics
-  query=session.query(File)
-  req.write("<h2>File Table:</h2>")
-  req.write("<ul>")
-  req.write("<li>Total Rows: %d</li>" % query.count())
-  req.write("</ul>")
+    # File table statistics
+    query=session.query(File)
+    req.write("<h2>File Table:</h2>")
+    req.write("<ul>")
+    req.write("<li>Total Rows: %d</li>" % query.count())
+    req.write("</ul>")
   
-  # DiskFile table statistics
-  req.write("<h2>DiskFile Table:</h2>")
-  req.write("<ul>")
-  # Total rows
-  query=session.query(DiskFile)
-  totalrows=query.count()
-  req.write("<li>Total Rows: %d</li>" % totalrows)
-  # Present rows
-  query=query.filter(DiskFile.present == True)
-  presentrows = query.count()
-  percent = 100.0 * presentrows / totalrows
-  req.write("<li>Present Rows: %d (%.2f %%)</li>" % (presentrows, percent))
-  # Present size
-  tpq = session.query(func.sum(DiskFile.size)).filter(DiskFile.present == True)
-  tpsize=tpq.one()[0]
-  req.write("<li>Total present size: %d bytes (%.02f GB)</li>" % (tpsize, (tpsize/1073741824.0)))
-  # most recent entry
-  query=session.query(func.max(DiskFile.entrytime))
-  latest = query.one()[0]
-  req.write("<li>Most recent diskfile entry was at: %s</li>" % latest)
-  # Number of entries in last minute / hour / day
-  mbefore = datetime.datetime.now() - datetime.timedelta(minutes=1)
-  hbefore = datetime.datetime.now() - datetime.timedelta(hours=1)
-  dbefore = datetime.datetime.now() - datetime.timedelta(days=1)
-  mcount = session.query(DiskFile).filter(DiskFile.entrytime > mbefore).count()
-  hcount = session.query(DiskFile).filter(DiskFile.entrytime > hbefore).count()
-  dcount = session.query(DiskFile).filter(DiskFile.entrytime > dbefore).count()
-  req.write('<LI>Number of DiskFile rows added in the last minute: %d</LI>' % mcount)
-  req.write('<LI>Number of DiskFile rows added in the last hour: %d</LI>' % hcount)
-  req.write('<LI>Number of DiskFile rows added in the last day: %d</LI>' % dcount)
-  # Last 10 entries
-  query = session.query(DiskFile).order_by(desc(DiskFile.entrytime)).limit(10)
-  list = query.all()
-  req.write('<LI>Last 10 diskfile entries added:<UL>')
-  for i in list:
-    req.write('<LI>%s : %s</LI>' % (i.file.filename, i.entrytime))
-  req.write('</UL></LI>')
+    # DiskFile table statistics
+    req.write("<h2>DiskFile Table:</h2>")
+    req.write("<ul>")
+    # Total rows
+    query=session.query(DiskFile)
+    totalrows=query.count()
+    req.write("<li>Total Rows: %d</li>" % totalrows)
+    # Present rows
+    query=query.filter(DiskFile.present == True)
+    presentrows = query.count()
+    percent = 100.0 * presentrows / totalrows
+    req.write("<li>Present Rows: %d (%.2f %%)</li>" % (presentrows, percent))
+    # Present size
+    tpq = session.query(func.sum(DiskFile.size)).filter(DiskFile.present == True)
+    tpsize=tpq.one()[0]
+    req.write("<li>Total present size: %d bytes (%.02f GB)</li>" % (tpsize, (tpsize/1073741824.0)))
+    # most recent entry
+    query=session.query(func.max(DiskFile.entrytime))
+    latest = query.one()[0]
+    req.write("<li>Most recent diskfile entry was at: %s</li>" % latest)
+    # Number of entries in last minute / hour / day
+    mbefore = datetime.datetime.now() - datetime.timedelta(minutes=1)
+    hbefore = datetime.datetime.now() - datetime.timedelta(hours=1)
+    dbefore = datetime.datetime.now() - datetime.timedelta(days=1)
+    mcount = session.query(DiskFile).filter(DiskFile.entrytime > mbefore).count()
+    hcount = session.query(DiskFile).filter(DiskFile.entrytime > hbefore).count()
+    dcount = session.query(DiskFile).filter(DiskFile.entrytime > dbefore).count()
+    req.write('<LI>Number of DiskFile rows added in the last minute: %d</LI>' % mcount)
+    req.write('<LI>Number of DiskFile rows added in the last hour: %d</LI>' % hcount)
+    req.write('<LI>Number of DiskFile rows added in the last day: %d</LI>' % dcount)
+    # Last 10 entries
+    query = session.query(DiskFile).order_by(desc(DiskFile.entrytime)).limit(10)
+    list = query.all()
+    req.write('<LI>Last 10 diskfile entries added:<UL>')
+    for i in list:
+      req.write('<LI>%s : %s</LI>' % (i.file.filename, i.entrytime))
+    req.write('</UL></LI>')
   
-  req.write("</ul>")
+    req.write("</ul>")
   
-  # Header table statistics
-  query=session.query(Header)
-  req.write("<h2>Header Table:</h2>")
-  req.write("<ul>")
-  req.write("<li>Total Rows: %d</li>" % query.count())
-  req.write("</ul>")
+    # Header table statistics
+    query=session.query(Header)
+    req.write("<h2>Header Table:</h2>")
+    req.write("<ul>")
+    req.write("<li>Total Rows: %d</li>" % query.count())
+    req.write("</ul>")
 
-  # Data rate statistics
-  req.write("<h2>Data Rates</h2>")
-  today = datetime.datetime.utcnow().date()
-  zerohour = datetime.time(0,0,0)
-  ddelta = datetime.timedelta(days=1)
-  wdelta = datetime.timedelta(days=7)
-  mdelta = datetime.timedelta(days=30)
+    # Data rate statistics
+    req.write("<h2>Data Rates</h2>")
+    today = datetime.datetime.utcnow().date()
+    zerohour = datetime.time(0,0,0)
+    ddelta = datetime.timedelta(days=1)
+    wdelta = datetime.timedelta(days=7)
+    mdelta = datetime.timedelta(days=30)
 
-  start = datetime.datetime.combine(today, zerohour)
-  end = start + ddelta
+    start = datetime.datetime.combine(today, zerohour)
+    end = start + ddelta
  
-  req.write("<h3>Last 10 days</h3><ul>")
-  for i in range(10):
-    query = session.query(func.sum(DiskFile.size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.utdatetime > start).filter(Header.utdatetime < end)
-    bytes = query.one()[0]
-    if(not bytes):
-      bytes = 0
-    req.write("<li>%s: %.2f GB</li>" % (str(start.date()), bytes/1E9))
-    start -= ddelta
-    end -= ddelta
-  req.write("</ul>")
+    req.write("<h3>Last 10 days</h3><ul>")
+    for i in range(10):
+      query = session.query(func.sum(DiskFile.size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.utdatetime > start).filter(Header.utdatetime < end)
+      bytes = query.one()[0]
+      if(not bytes):
+        bytes = 0
+      req.write("<li>%s: %.2f GB</li>" % (str(start.date()), bytes/1E9))
+      start -= ddelta
+      end -= ddelta
+    req.write("</ul>")
 
-  end = datetime.datetime.combine(today, zerohour)
-  start = end - wdelta
-  req.write("<h3>Last 6 weeks</h3><ul>")
-  for i in range(6):
-    query = session.query(func.sum(DiskFile.size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.utdatetime > start).filter(Header.utdatetime < end)
-    bytes = query.one()[0]
-    if(not bytes):
-      bytes = 0
-    req.write("<li>%s - %s: %.2f GB</li>" % (str(start.date()), str(end.date()), bytes/1E9))
-    start -= wdelta
-    end -= wdelta
-  req.write("</ul>")
+    end = datetime.datetime.combine(today, zerohour)
+    start = end - wdelta
+    req.write("<h3>Last 6 weeks</h3><ul>")
+    for i in range(6):
+      query = session.query(func.sum(DiskFile.size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.utdatetime > start).filter(Header.utdatetime < end)
+      bytes = query.one()[0]
+      if(not bytes):
+        bytes = 0
+      req.write("<li>%s - %s: %.2f GB</li>" % (str(start.date()), str(end.date()), bytes/1E9))
+      start -= wdelta
+      end -= wdelta
+    req.write("</ul>")
 
-  end = datetime.datetime.combine(today, zerohour)
-  start = end - mdelta
-  req.write("<h3>Last 6 pseudo-months</h3><ul>")
-  for i in range(6):
-    query = session.query(func.sum(DiskFile.size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.utdatetime > start).filter(Header.utdatetime < end)
-    bytes = query.one()[0]
-    if(not bytes):
-      bytes = 0
-    req.write("<li>%s - %s: %.2f GB</li>" % (str(start.date()), str(end.date()), bytes/1E9))
-    start -= mdelta
-    end -= mdelta
-  req.write("</ul>")
+    end = datetime.datetime.combine(today, zerohour)
+    start = end - mdelta
+    req.write("<h3>Last 6 pseudo-months</h3><ul>")
+    for i in range(6):
+      query = session.query(func.sum(DiskFile.size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.utdatetime > start).filter(Header.utdatetime < end)
+      bytes = query.one()[0]
+      if(not bytes):
+        bytes = 0
+      req.write("<li>%s - %s: %.2f GB</li>" % (str(start.date()), str(end.date()), bytes/1E9))
+      start -= mdelta
+      end -= mdelta
+    req.write("</ul>")
 
-  req.write("</body></html>")
-
-  session.close()
-  return apache.OK
+    req.write("</body></html>")
+    return apache.OK
+  except IOError:
+    pass
+  finally:
+    session.close()
