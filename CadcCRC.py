@@ -10,7 +10,7 @@ import os
 import re
 
 # the path to the fitsverify binary
-cadcCRC_bin = '/data/extern/bin/cadcCRC'
+cadcCRC_bin = '/opt/cadc/cadcCRC'
 
 # Compile the regular expression here for efficiency
 cre=re.compile('\S*\s*([0123456789abcdef]*)\n')
