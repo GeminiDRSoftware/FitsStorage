@@ -21,7 +21,7 @@ import os
 import re
 
 # the path to the fitsverify binary
-wmd = ['/astro/i686/jre1.5.0_03/bin/java', '-Djava.library.path=/data/extern/mdIngest/lib.x86_fedora', '-Dca.nrc.cadc.configDir=/data/extern/mdIngest/config', '-jar', '/data/extern/mdIngest/lib/mdIngest.jar', '--archive=GEMINI', '-c', '-d', '--log=/dev/null']
+wmd = ['/astro/i686/jre1.5.0_03/bin/java', '-Djava.library.path=/opt/cadc/mdIngest/lib.x86_fedora', '-Dca.nrc.cadc.configDir=/opt/cadc/mdIngest/config', '-jar', '/opt/cadc/mdIngest/lib/mdIngest.jar', '--archive=GEMINI', '-c', '-d', '--log=/dev/null']
 
 # Compile the regular expression here for efficiency
 cre=re.compile('File \S* (IS|IS NOT) ready for ingestion')
@@ -46,7 +46,7 @@ def cadcWMD(filename):
   wmdcmd.append(wmd_arg)
 
   env=os.environ
-  env['LD_LIBRARY_PATH']='/data/extern/mdIngest/lib.x86_fedora'
+  env['LD_LIBRARY_PATH']='/opt/cadc/mdIngest/lib.x86_fedora'
   # Fire off the subprocess and capture the output
   sp = subprocess.Popen(wmdcmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   (stdoutstring, stderrstring) = sp.communicate()
@@ -60,7 +60,7 @@ def cadcWMD(filename):
     if(isit=="IS NOT"):
       itis=0
   else:
-    print "Could not match cadcCRC return value"
+    print "Could not match cadcWMD return value"
     itis = 0
 
   return (itis, stdoutstring)
