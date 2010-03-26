@@ -11,7 +11,7 @@ import os
 import re
 
 # the path to the fitsverify binary
-fitsverify_bin = '/data/extern/fitsverify/fitsverify'
+fitsverify_bin = '/opt/fitsverify/fitsverify'
 
 # Compile the regular expression here for efficiency
 nfre=re.compile('This does not look like a FITS file.')
