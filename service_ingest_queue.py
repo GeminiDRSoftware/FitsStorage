@@ -7,10 +7,10 @@ from FitsStorageUtils import *
 from FitsStorageLogger import *
 import signal
 import os
-import sys
 import re
 import datetime
 import time
+import traceback
 
 from optparse import OptionParser
 
@@ -72,7 +72,8 @@ try:
       session.commit()
 
 except:
-  logger.error("Exception: %s" % sys.exec_info()[0])
+  logger.error("Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+  #traceback.print_tb(sys.exc_info()[2])
 
 finally:
   session.close()
