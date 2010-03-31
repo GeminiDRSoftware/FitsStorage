@@ -10,6 +10,9 @@ sudo yum install httpd
 sudo yum install httpd-devel
 sudo chmod oug+rx /var/log/httpd
 sudo yum install postgresql 
+sudo yum install postgresql-server
+sudo yum install postgresql-devel
+
 
 sudo /usr/sbin/groupadd -g 5179 fitsdata
 sudo /usr/sbin/useradd -c 'FITS data' -u 5179 -g 5179 fitsdata
@@ -97,6 +100,9 @@ exit
 
 # Need to set postgresql and httpd to start at boot
 sudo /etc/init.d/httpd start
+sudo /sbin/chkconfig httpd on
+sudo /sbin/chkconfig postgresql on
+
 
 # Log and backup directories
 sudo mkdir /data/logs
