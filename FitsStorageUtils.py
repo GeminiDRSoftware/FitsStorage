@@ -4,7 +4,7 @@ System.
 """
 from FitsStorage import *
 from FitsStorageLogger import logger
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 
 def create_tables(session):
   """
@@ -190,8 +190,11 @@ def addto_ingestqueue(session, filename, path):
   iq = IngestQueue(filename, path)
   session.add(iq)
   session.commit()
-  logger.debug("Added id %d for filename %s to ingestqueue" % (iq.id, iq.filename))
-  return iq.id
+  try:
+    logger.debug("Added id %d for filename %s to ingestqueue" % (iq.id, iq.filename))
+    return iq.id
+  except ObjectDeletedError:
+    logger.debug("Added filename %s to ingestqueue which was immediately deleted" % filename)
 
 def ingestqueue_length(session):
   """
