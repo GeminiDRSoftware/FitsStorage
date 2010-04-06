@@ -142,23 +142,29 @@ def handler(req):
         if(this == 'wmdreport'):
           req.write(diskfile.wmdreport)
         return apache.OK
+      except IOError:
+        pass
+      finally:
+        session.close()
    
-        # See if we got a diskfile_id
-        match = re.match('\d+', thing)
-        if(match):
-          query = session.query(DiskFile).filter(DiskFile.id == thing)
-          if(query.count()==0):
-            req.content_type="text/plain"
-            req.write("Cannot find diskfile for id: %s\n" % thing)
-            session.close()
-            return apache.OK
-          diskfile = query.one()
+    # See if we got a diskfile_id
+    match = re.match('\d+', thing)
+    if(match):
+      session = sessionfactory()
+      try:
+        query = session.query(DiskFile).filter(DiskFile.id == thing)
+        if(query.count()==0):
           req.content_type="text/plain"
-          if(this == 'fitsverify'):
-            req.write(diskfile.fvreport)
-          if(this == 'wmdreport'):
-            req.write(diskfile.wmdreport)
+          req.write("Cannot find diskfile for id: %s\n" % thing)
+          session.close()
           return apache.OK
+        diskfile = query.one()
+        req.content_type="text/plain"
+        if(this == 'fitsverify'):
+          req.write(diskfile.fvreport)
+        if(this == 'wmdreport'):
+          req.write(diskfile.wmdreport)
+        return apache.OK
       except IOError:
         pass
       finally:
