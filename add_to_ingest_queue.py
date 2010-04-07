@@ -16,8 +16,10 @@ parser = OptionParser()
 parser.add_option("--file-re", action="store", type="string", dest="file_re", help="python regular expression string to select files by. Special values are today, twoday, fourday to include only files from today, the last two days, or the last four days respectively (days counted as UTC days)")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
+parser.add_option("--path", action="store", dest="path", default = "", help="Use given path relative to storage root")
 
 (options, args) = parser.parse_args()
+path = options.path
 
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
@@ -29,7 +31,7 @@ logger.info("*********  add_to_ingest_queue.py - starting up at %s" % now)
 
 # Get a list of all the files in the datastore
 # We assume this is just one dir (ie non recursive) for now.
-path=''
+
 fulldirpath = os.path.join(FitsStorage.storage_root, path)
 logger.info("Queueing files for ingest from: %s" % fulldirpath)
 
@@ -70,11 +72,13 @@ else:
   files = filelist
 
 # Skip files with tmp in the filename
+# Also require .fits in the filename
 thefiles=[]
 tmpcre = re.compile("tmp")
+fitscre = re.compile(".fits")
 logger.info("Checking for tmp files")
 for filename in files:
-  if(tmpcre.search(filename)):
+  if(tmpcre.search(filename) or not fitscre.search(filename)):
     logger.info("skipping tmp file: %s" % filename)
   else:
     thefiles.append(filename)
