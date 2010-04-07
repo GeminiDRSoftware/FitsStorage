@@ -230,8 +230,8 @@ class Header(Base):
       self.observer = ad.phuHeader('OBSERVER')
       self.ssa = ad.phuHeader('SSA')
       self.object = ad.phuHeader('OBJECT')
-      self.ra = ad.phuHeader('RA')
-      self.dec = ad.phuHeader('DEC')
+      self.ra = ad.ra()
+      self.dec = ad.dec()
       self.az = ad.phuHeader('AZIMUTH')
       self.el = ad.phuHeader('ELEVATIO')
       self.crpa = ad.phuHeader('CRPA')
@@ -264,6 +264,9 @@ class Header(Base):
         self.spectroscopy = True
         self.disperser = ad.disperser()[0:6]
       if('GMOS_SPECT' in ad.types):
+        self.spectroscopy = True
+        self.disperser = ad.disperser()[0:4]
+      if('PHOENIX_SPECT' in ad.types):
         self.spectroscopy = True
         self.disperser = ad.disperser()[0:4]
   
