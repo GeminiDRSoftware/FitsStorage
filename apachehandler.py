@@ -98,6 +98,37 @@ def handler(req):
     retval = summary(req, this, selection, orderby)
     return retval
 
+  # The calibrations handler
+  if(this == 'calibrations'):
+    # Parse the rest of the URL.
+    # Expect some combination of progid, obsid, date and instrument name
+    # We put the ones we got in a dictionary
+    selection={}
+    while(len(things)):
+      thing = things.pop(0)
+      if(gemini_date(thing)):
+        selection['date']=gemini_date(thing)
+      gp=GeminiProject(thing)
+      if(gp.progid):
+        selection['progid']=thing
+      go=GeminiObservation(thing)
+      if(go.obsid):
+        selection['obsid']=thing
+      if(gemini_instrument(thing)):
+        selection['inst']=gemini_instrument(thing)
+      if(gemini_obstype(thing)):
+        selection['obstype']=gemini_obstype(thing)
+      if(gemini_obsclass(thing)):
+        selection['obsclass']=gemini_obsclass(thing)
+
+    # If we want other arguments like order by
+    # we should parse them here
+
+    retval = calibrations(req, this, selection)
+    return retval
+
+
+
   # This returns the full header of the filename that follows.
   if(this ==  'fullheader'):
     if(len(things)):
