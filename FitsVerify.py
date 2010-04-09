@@ -38,6 +38,7 @@ def fitsverify(filename):
   sp = subprocess.Popen([fitsverify_bin, filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   (stdoutstring, stderrstring) = sp.communicate()
 
+  stdoutstring += stderrstring
   # Check to see if we got a not a fits file situation
   nfmatch = nfre.search(stdoutstring)
   if(nfmatch):
