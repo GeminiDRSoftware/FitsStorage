@@ -2,9 +2,8 @@
 This module provides calibration handling
 """
 
-import FitsStorage
+from FitsStorage import *
 import FitsStorageConfig
-from FitsStorageUtils import *
 import GeminiMetadataUtils
 
 
