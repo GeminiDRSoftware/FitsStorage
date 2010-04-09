@@ -3,9 +3,11 @@ This is the Fits Storage Web Summary module. It provides the functions
 which query the database and generate html for the web header
 summaries.
 """
+from sqlalchemy import or_
 from FitsStorage import *
 from GeminiMetadataUtils import *
 from mod_python import apache, util
+import FitsStorageCal
 
 # Fits filename extension utility
 crefits = re.compile("\S*.fits$")
@@ -674,3 +676,120 @@ def tapefile(req, things):
     pass
   finally:
     session.close()
+
+def calibrations(req, type, selection):
+  """
+  This is the calibrations generator.
+  req is an apache request handler request object
+  type is the summary type required
+  selection is an array of items to select on, simply passed
+    through to the webhdrsummary function
+
+  returns an apache request status code
+  """
+  req.content_type = "text/html"
+  req.write("<html>")
+  title = "Calibrations" 
+  if('progid' in selection):
+    title += "; Program ID: %s" % (selection['progid'])
+  if('obsid' in selection):
+    title += "; Observation ID: %s" % (selection['obsid'])
+  if('date' in selection):
+    title += "; Date: %s" % (selection['date'])
+
+  req.write("<head>")
+  req.write("<title>%s</title>" % (title))
+  req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+  req.write("</head>\n")
+  req.write("<body>")
+  if (fits_system_status == "development"):
+    req.write('<h1>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h1>')
+  req.write("<H1>%s</H1>" % (title))
+
+  session = sessionfactory()
+  try:
+    # OK, find the target files
+    # The Basic Query
+    query = session.query(Header).select_from(join(Header, DiskFile))
+
+    # For now, only files that are present for simplicity.
+    query = query.filter(DiskFile.present == True)
+
+    # For now, limit this to GMOS spectroscopy OBJECT data. This is a bit of a hack that will need sorting out later
+    query = query.filter(or_(Header.instrument=='GMOS-N', Header.instrument=='GMOS-S')).filter(Header.spectroscopy==True).filter(Header.obstype=='OBJECT')
+
+    # Knock out the "Twilight" targets
+    query = query.filter(Header.object != 'Twilight')
+
+    openquery = 1
+
+    # Did we get a progid selectoion?
+    if('progid' in selection):
+      query = query.filter(Header.progid==selection['progid'])
+      openquery = 0
+
+    # Did we get an obsid selection?
+    if('obsid' in selection):
+      query = query.filter(Header.obsid==selection['obsid'])
+      openquery=0
+
+    # Did we get a date selection?
+    if('date' in selection):
+      # Parse the date to start and end datetime objects
+      startdt = dateutil.parser.parse("%s 00:00:00" % (selection['date']))
+      oneday = datetime.timedelta(days=1)
+      enddt = startdt + oneday
+      # check it's between these two
+      query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
+      openquery=0
+
+    # OK, default order by utdatetime
+    query = query.order_by(Header.utdatetime)
+
+    # If openquery, limit number of responses
+    if(openquery):
+      query = query.limit(100)
+
+    # OK, do the query
+    headers = query.all()
+
+    req.write("<H2>Found %d datasets requiring GMOS ARCs</H2>" % len(headers))
+    req.write("<HR>")
+
+    for object in headers:
+      # Find an arc for this object
+      req.write("<H3>OBJECT: %s - %s</H3>" % (object.diskfile.file.filename, object.datalab))
+      req.write("<P>Disperser=%s Central Wavelength=%d Focal Plane Mask=%s Object Name=%s</P>" %(object.disperser, 1000*object.cwave, object.fpmask, object.object))
+      c = FitsStorageCal.Calibration(session, None, object)
+      arc = c.arc()
+      if(arc):
+        req.write("<H4>ARC: %s - %s</H4>" % (arc.diskfile.file.filename, arc.datalab))
+        interval = arc.utdatetime - object.utdatetime
+        tdelta = (interval.days * 24.0) + (interval.seconds / 3600.0)
+        word = "after"
+        unit = "hours"
+        if(tdelta < 0.0):
+          word = "before"
+          tdelta *= -1.0
+        if (tdelta > 48):
+          tdelta = tdelta/24.0
+          unit = "days"
+        req.write("<P>arc was taken %.1f %s %s object</P>" %(tdelta, unit, word))
+        if(tdelta > 5 and unit=='days'):
+          req.write('<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>')
+        if(arc.progid != object.progid):
+          req.write('<P><FONT COLOR="Red">WARNING: ARC and OBJECT come from different project IDs.</FONT></P>')
+
+      else:
+        req.write('<H3><FONT COLOR="Red">NO ARC FOUND!</FONT></H3>')
+      req.write("<HR>")
+
+    req.write("</body></html>")
+    return apache.OK
+
+  except IOError:
+    pass
+  finally:
+    session.close()
+
+
