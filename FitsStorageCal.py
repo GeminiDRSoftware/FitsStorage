@@ -52,6 +52,9 @@ class Calibration:
     # For simplicity for now we require the file to be present.
     query = query.filter(DiskFile.present==True)
 
+    # Knock out the FAILs
+    query = query.filter(Header.rawgemqa!='BAD')
+
     # Must Totally Match: Instrument, disperser
     query = query.filter(Header.instrument==self.header.instrument).filter(Header.disperser==self.header.disperser)
     # Must Match cwave and fpmask
