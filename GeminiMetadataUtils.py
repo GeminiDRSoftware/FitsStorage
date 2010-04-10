@@ -58,7 +58,7 @@ def gemini_instrument(string):
     retary='TReCS'
   return retary
 
-datecre=re.compile('20\d\d[01]\d[0123]\d')
+datecre=re.compile('^20\d\d[01]\d[0123]\d$')
 def gemini_date(string):
   """
   A utility function for matching dates of the form YYYYMMDD
@@ -76,6 +76,19 @@ def gemini_date(string):
     then=datetime.datetime.utcnow() - datetime.timedelta(days=1)
     return then.date().strftime('%Y%m%d')
   return ''
+
+daterangecre=re.compile('(20\d\d[01]\d[0123]\d)-(20\d\d[01]\d[0123]\d)')
+def gemini_daterange(string):
+  """
+  A utility function for matching date ranges of the form YYYYMMDD-YYYYMMDD
+  Could make this support today and yesterday, but right now it doesn't
+  Also this does not yet check for sensible date ordering
+  returns the YYYYMMDD-YYYYMMDD string, or '' if not a daterange
+  """
+  if(daterangecre.match(string)):
+    return string
+  else:
+    return ''
 
 def gemini_obstype(string):
   """
