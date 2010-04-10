@@ -798,9 +798,10 @@ def calibrations(req, type, selection):
     # OK, do the query
     headers = query.all()
 
-    req.write("<H2>Found %d datasets requiring GMOS ARCs</H2>" % len(headers))
+    req.write("<H2>Found %d datasets to check for suitable GMOS ARCs</H2>" % len(headers))
     req.write("<HR>")
 
+    warnings = 0
     for object in headers:
       # Find an arc for this object
 
@@ -846,7 +847,11 @@ def calibrations(req, type, selection):
           req.write(html)
       else:
         req.write(html)
+      if(warning):
+        warnings +=1
 
+    req.write("<HR>")
+    req.write("<H2>Counted %d potential missing ARCs</H2>" % warnings)
     req.write("</body></html>")
     return apache.OK
 
