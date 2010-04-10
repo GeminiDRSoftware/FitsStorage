@@ -46,6 +46,8 @@ def summary(req, type, selection, orderby):
     title += "; Observation ID: %s" % (selection['obsid'])
   if('date' in selection):
     title += "; Date: %s" % (selection['date'])
+  if('daterange' in selection):
+    title += "; Daterange: %s" % (selection['daterange'])
   if('inst' in selection):
     title += "; Instrument: %s" % (selection['inst'])
   if('obstype' in selection):
@@ -115,6 +117,26 @@ def list_headers(session, selection, orderby):
     startdt = dateutil.parser.parse("%s 00:00:00" % (selection['date']))
     oneday = datetime.timedelta(days=1)
     enddt = startdt + oneday
+    # check it's between these two
+    query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
+    openquery=0
+
+  # Should we query by daterange?
+  if('daterange' in selection):
+    # Parse the date to start and end datetime objects
+    daterangecre=re.compile('(20\d\d[01]\d[0123]\d)-(20\d\d[01]\d[0123]\d)')
+    m = daterangecre.match(selection['daterange'])
+    startdate = m.group(1)
+    enddate = m.group(2)
+    startdt = dateutil.parser.parse("%s 00:00:00" % startdate)
+    enddt = dateutil.parser.parse("%s 00:00:00" % enddate)
+    oneday = datetime.timedelta(days=1)
+    enddt = enddt + oneday
+    # Flip them round if reversed
+    if(startdt > enddt):
+      tmp = enddt
+      enddt = startdt
+      started = tmp
     # check it's between these two
     query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
     openquery=0
@@ -721,6 +743,9 @@ def calibrations(req, type, selection):
     # Knock out the "Twilight" targets
     query = query.filter(Header.object != 'Twilight')
 
+    # Knock out the FAILs
+    query = query.filter(Header.rawgemqa!='BAD')
+
     openquery = 1
 
     # Did we get a progid selectoion?
@@ -743,8 +768,28 @@ def calibrations(req, type, selection):
       query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
       openquery=0
 
+    # Should we query by daterange?
+    if('daterange' in selection):
+      # Parse the date to start and end datetime objects
+      daterangecre=re.compile('(20\d\d[01]\d[0123]\d)-(20\d\d[01]\d[0123]\d)')
+      m = daterangecre.match(selection['daterange'])
+      startdate = m.group(1)
+      enddate = m.group(2)
+      startdt = dateutil.parser.parse("%s 00:00:00" % startdate)
+      enddt = dateutil.parser.parse("%s 00:00:00" % enddate)
+      oneday = datetime.timedelta(days=1)
+      enddt = enddt + oneday
+      # Flip them round if reversed
+      if(startdt > enddt):
+        tmp = enddt
+        enddt = startdt
+        started = tmp
+      # check it's between these two
+      query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
+      openquery=0
+
     # OK, default order by utdatetime
-    query = query.order_by(Header.utdatetime)
+    query = query.order_by(desc(Header.utdatetime))
 
     # If openquery, limit number of responses
     if(openquery):
@@ -758,31 +803,49 @@ def calibrations(req, type, selection):
 
     for object in headers:
       # Find an arc for this object
-      req.write("<H3>OBJECT: %s - %s</H3>" % (object.diskfile.file.filename, object.datalab))
-      req.write("<P>Disperser=%s Central Wavelength=%d Focal Plane Mask=%s Object Name=%s</P>" %(object.disperser, 1000*object.cwave, object.fpmask, object.object))
+
+      # Accumulate the html in a string, so we can decide whether to display it all at once
+      html=""
+      warning=False
+
+      html+="<H3>OBJECT: %s - %s</H3>" % (object.diskfile.file.filename, object.datalab)
+      html+="<P>Disperser=%s Central Wavelength=%d Focal Plane Mask=%s Object Name=%s</P>" %(object.disperser, 1000*object.cwave, object.fpmask, object.object)
       c = FitsStorageCal.Calibration(session, None, object)
       arc = c.arc()
+
       if(arc):
-        req.write("<H4>ARC: %s - %s</H4>" % (arc.diskfile.file.filename, arc.datalab))
-        interval = arc.utdatetime - object.utdatetime
-        tdelta = (interval.days * 24.0) + (interval.seconds / 3600.0)
-        word = "after"
-        unit = "hours"
-        if(tdelta < 0.0):
-          word = "before"
-          tdelta *= -1.0
-        if (tdelta > 48):
-          tdelta = tdelta/24.0
-          unit = "days"
-        req.write("<P>arc was taken %.1f %s %s object</P>" %(tdelta, unit, word))
-        if(tdelta > 5 and unit=='days'):
-          req.write('<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>')
+        html += "<H4>ARC: %s - %s</H4>" % (arc.diskfile.file.filename, arc.datalab)
+        if(arc.utdatetime and object.utdatetime):
+          interval = arc.utdatetime - object.utdatetime
+          tdelta = (interval.days * 24.0) + (interval.seconds / 3600.0)
+          word = "after"
+          unit = "hours"
+          if(tdelta < 0.0):
+            word = "before"
+            tdelta *= -1.0
+          if (tdelta > 48):
+            tdelta = tdelta/24.0
+            unit = "days"
+          html += "<P>arc was taken %.1f %s %s object</P>" %(tdelta, unit, word)
+          if(tdelta > 5 and unit=='days'):
+            html += '<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>'
+            warning = True
+        else:
+          html += '<P><FONT COLOR="Red">Hmmm, could not determine time delta...</FONT></P>'
+          warning = True
         if(arc.progid != object.progid):
-          req.write('<P><FONT COLOR="Red">WARNING: ARC and OBJECT come from different project IDs.</FONT></P>')
+          html += '<P><FONT COLOR="Red">WARNING: ARC and OBJECT come from different project IDs.</FONT></P>'
+          warning = True
 
       else:
-        req.write('<H3><FONT COLOR="Red">NO ARC FOUND!</FONT></H3>')
-      req.write("<HR>")
+        html += '<H3><FONT COLOR="Red">NO ARC FOUND!</FONT></H3>'
+        warning = True
+      html += "<HR>"
+      if('warnings' in selection):
+        if(warning):
+          req.write(html)
+      else:
+        req.write(html)
 
     req.write("</body></html>")
     return apache.OK
