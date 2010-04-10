@@ -57,8 +57,12 @@ class Calibration:
 
     # Must Totally Match: Instrument, disperser
     query = query.filter(Header.instrument==self.header.instrument).filter(Header.disperser==self.header.disperser)
-    # Must Match cwave and fpmask
-    query = query.filter(Header.fpmask==self.header.fpmask).filter(Header.cwave==self.header.cwave)
+    # Must Match cwave 
+    query = query.filter(Header.cwave==self.header.cwave)
+
+    # Must match fpmask only if it's not the 5.0arcsec slit in the target 
+    if(self.header.fpmask != '5.0arcsec'):
+      query = query.filter(Header.fpmask==self.header.fpmask)
 
     # Order by absolute time separation. Maybe there's a better way to do this
     query = query.order_by("ABS(EXTRACT(EPOCH FROM (header.utdatetime - :utdatetime_x)))").params(utdatetime_x= self.header.utdatetime)
