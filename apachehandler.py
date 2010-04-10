@@ -72,6 +72,8 @@ def handler(req):
       thing = things.pop(0)
       if(gemini_date(thing)):
         selection['date']=gemini_date(thing)
+      if(gemini_daterange(thing)):
+        selection['daterange']=gemini_daterange(thing)
       gp=GeminiProject(thing)
       if(gp.progid):
         selection['progid']=thing
@@ -108,6 +110,8 @@ def handler(req):
       thing = things.pop(0)
       if(gemini_date(thing)):
         selection['date']=gemini_date(thing)
+      if(gemini_daterange(thing)):
+        selection['daterange']=gemini_daterange(thing)
       gp=GeminiProject(thing)
       if(gp.progid):
         selection['progid']=thing
@@ -120,6 +124,8 @@ def handler(req):
         selection['obstype']=gemini_obstype(thing)
       if(gemini_obsclass(thing)):
         selection['obsclass']=gemini_obsclass(thing)
+      if(thing=='warnings'):
+        selection['warnings']=True
 
     # If we want other arguments like order by
     # we should parse them here
