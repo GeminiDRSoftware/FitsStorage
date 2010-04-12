@@ -247,7 +247,7 @@ class Header(Base):
       self.rawgemqa = ad.phuHeader('RAWGEMQA')
       self.filter = ad.filtername(pretty=True)
       self.exptime = ad.exptime()
-      self.disperser = ad.disperser()
+      self.disperser = ad.disperser(stripID=True)
       self.cwave = ad.cwave()
       self.fpmask = ad.fpmask()
 
@@ -259,16 +259,12 @@ class Header(Base):
       self.spectroscopy = False
       if('NIFS' in ad.types):
         self.spectroscopy = True
-        self.disperser = ad.disperser()[0:1]
       if('NIRI_SPECT' in ad.types):
         self.spectroscopy = True
-        self.disperser = ad.disperser()[0:6]
       if('GMOS_SPECT' in ad.types):
         self.spectroscopy = True
-        self.disperser = ad.disperser()[0:4]
       if('PHOENIX_SPECT' in ad.types):
         self.spectroscopy = True
-        self.disperser = ad.disperser()[0:4]
   
       # and michelle for what it's worth
       if('MICHELLE' in ad.types):
