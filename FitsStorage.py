@@ -247,7 +247,7 @@ class Header(Base):
       self.rawgemqa = ad.phuHeader('RAWGEMQA')
       self.filter = ad.filtername(pretty=True)
       self.exptime = ad.exptime()
-      self.disperser = ad.disperser(stripID=True)
+      self.disperser = ad.disperser(pretty=True)
       self.cwave = ad.cwave()
       self.fpmask = ad.fpmask()
 
@@ -366,3 +366,37 @@ class TapeFile(Base):
   tapewrite_id = Column(Integer, ForeignKey('tapewrite.id'), nullable=False)
   tapewrite = relation(TapeWrite, order_by=id)
 
+class Gmos(Base):
+  """
+  This is the ORM object for the GMOS details.
+  This is used for both GMOS-N and GMOS-S\
+  """
+  __tablename__ = 'gmos'
+
+  id = Column(Integer, primary_key=True)
+  header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+  header = relation(Header, order_by=id)
+  disperser = Column(Text)
+  filtername = Column(Text)
+  xccdbin = Column(Integer)
+  yccdbin = Column(Integer)
+  detroa = Column(Text)
+  amproa = Column(Text)
+
+  def __init__(self, header):
+    self.header = header
+
+    # Populate from the astrodata object
+    self.populate()
+
+  def populate(self):
+    # Get an AstroData object on it
+    ad = AstroData.AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+    # Populate values
+    self.disperser = ad.disperser()
+    self.filtername = ad.filtername()
+    self.xccdbin = ad.xccdbin()
+    self.yccdbin = ad.yccdbin()
+    self.detroa = ad.detroa()
+    self.amproa = ad.amproa()
+    ad.close()
