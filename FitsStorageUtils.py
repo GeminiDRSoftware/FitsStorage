@@ -19,9 +19,10 @@ def create_tables(session):
   Tape.metadata.create_all(bind=pg_db)
   TapeWrite.metadata.create_all(bind=pg_db)
   TapeFile.metadata.create_all(bind=pg_db)
+  Gmos.metadata.create_all(bind=pg_db)
 
   # Now grant the apache user select on them for the www queries
-  session.execute("GRANT SELECT ON file, diskfile, header, tape, tape_id_seq, tapewrite, tapefile TO apache");
+  session.execute("GRANT SELECT ON file, diskfile, header, gmos, tape, tape_id_seq, tapewrite, tapefile TO apache");
   session.execute("GRANT INSERT,UPDATE ON tape, tape_id_seq TO apache");
   session.commit()
 
@@ -108,7 +109,15 @@ def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
     logger.debug("Adding new Header entry")
     header = Header(diskfile)
     session.add(header)
+    inst = header.instrument
+    logger.debug("Instrument is: %s" % inst)
     session.commit()
+    # Add the instrument specific tables
+    if(inst=='GMOS-N' or inst=='GMOS-S'):
+      logger.debug("Adding new GMOS entry")
+      gmos = Gmos(header)
+      session.add(gmos)
+      session.commit()
   
   session.commit();
 
