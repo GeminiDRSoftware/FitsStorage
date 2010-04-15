@@ -89,8 +89,9 @@ def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
         add_diskfile=0
       else:
         logger.debug("crc indicates file has changed - reingesting")
-        # Set the present flag on the current one to false and create a new entry
+        # Set the present and canonical flags on the current one to false and create a new entry
         diskfile.present=False
+        diskfile.canonical=False
         add_diskfile=1
     else:
       logger.debug("lastmod time indicates file unchanged, not checking further")
