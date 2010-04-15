@@ -802,17 +802,23 @@ def calibrations(req, type, selection):
     req.write("<HR>")
 
     warnings = 0
+    missings = 0
     for object in headers:
       # Find an arc for this object
 
       # Accumulate the html in a string, so we can decide whether to display it all at once
       html=""
       warning=False
+      missing=False
 
       html+="<H3>OBJECT: %s - %s</H3>" % (object.diskfile.file.filename, object.datalab)
-      html+="<P>Disperser=%s Central Wavelength=%d Focal Plane Mask=%s Object Name=%s</P>" %(object.disperser, 1000*object.cwave, object.fpmask, object.object)
+      try:
+        html+="<P>Disperser=%s Central Wavelength=%d Focal Plane Mask=%s Object Name=%s</P>" %(object.disperser, 1000*object.cwave, object.fpmask, object.object)
+      except TypeError:
+        html+="<P>Something wierd with this data</P>"
       c = FitsStorageCal.Calibration(session, None, object)
-      arc = c.arc()
+      arc = c.arc(sameprog=True)
+      arc_a=None
 
       if(arc):
         html += "<H4>ARC: %s - %s</H4>" % (arc.diskfile.file.filename, arc.datalab)
@@ -831,27 +837,61 @@ def calibrations(req, type, selection):
           if(tdelta > 5 and unit=='days'):
             html += '<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>'
             warning = True
+            arc_a=arc.id
         else:
           html += '<P><FONT COLOR="Red">Hmmm, could not determine time delta...</FONT></P>'
-          warning = True
-        if(arc.progid != object.progid):
-          html += '<P><FONT COLOR="Red">WARNING: ARC and OBJECT come from different project IDs.</FONT></P>'
           warning = True
 
       else:
         html += '<H3><FONT COLOR="Red">NO ARC FOUND!</FONT></H3>'
         warning = True
+        missing = True
+
+      if(warning):
+        # Re-do the search accross all program IDs
+        arc = c.arc()
+        if(arc and (arc.id != arc_a)):
+          missing = False
+          html += "<H4>ARC: %s - %s</H4>" % (arc.diskfile.file.filename, arc.datalab)
+          if(arc.utdatetime and object.utdatetime):
+            interval = arc.utdatetime - object.utdatetime
+            tdelta = (interval.days * 24.0) + (interval.seconds / 3600.0)
+            word = "after"
+            unit = "hours"
+            if(tdelta < 0.0):
+              word = "before"
+              tdelta *= -1.0
+            if (tdelta > 48):
+              tdelta = tdelta/24.0
+              unit = "days"
+            html += "<P>arc was taken %.1f %s %s object</P>" %(tdelta, unit, word)
+            if(tdelta > 5 and unit=='days'):
+              html += '<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>'
+              warning = True
+          else:
+            html += '<P><FONT COLOR="Red">Hmmm, could not determine time delta...</FONT></P>'
+            warning = True
+          if(arc.progid != object.progid):
+            html += '<P><FONT COLOR="Red">WARNING: ARC and OBJECT come from different project IDs.</FONT></P>'
+            warning = True
+
       html += "<HR>"
       if('warnings' in selection):
         if(warning):
+          req.write(html)
+      elif('missing' in selection):
+        if(missing):
           req.write(html)
       else:
         req.write(html)
       if(warning):
         warnings +=1
+      if(missing):
+        missings +=1
 
     req.write("<HR>")
-    req.write("<H2>Counted %d potential missing ARCs</H2>" % warnings)
+    req.write("<H2>Counted %d potential missing ARCs</H2>" % missings)
+    req.write("<H2>Query generated %d warnings</H2>" % warnings)
     req.write("</body></html>")
     return apache.OK
 
