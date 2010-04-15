@@ -58,23 +58,24 @@ class Calibration:
       query = self.session.query(Gmos).filter(Gmos.header_id==self.header.id).limit(1)
       self.instheader = query.first()
 
-  def arc(self):
+  def arc(self, sameprog=False):
     if('GMOS' in self.header.instrument):
-      return self.gmos_arc()
+      return self.gmos_arc(sameprog)
     else:
       return None
 
-  def gmos_arc(self):
+  def gmos_arc(self, sameprog=False):
     query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
     query = query.filter(Header.obstype=='ARC')
-    # For simplicity for now we require the file to be present.
-    query = query.filter(DiskFile.present==True)
+
+    # Search only the canonical (latest) entries
+    query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
     query = query.filter(Header.rawgemqa!='BAD')
 
     # Must Totally Match: Instrument, disperser
-    query = query.filter(Header.instrument==self.header.instrument).filter(Header.disperser==self.header.disperser)
+    query = query.filter(Header.instrument==self.header.instrument).filter(Gmos.disperser==self.instheader.disperser)
     # Must Match cwave 
     query = query.filter(Header.cwave==self.header.cwave)
 
@@ -85,8 +86,12 @@ class Calibration:
     # Must match ccd binning
     query = query.filter(Gmos.xccdbin==self.instheader.xccdbin).filter(Gmos.yccdbin==self.instheader.yccdbin)
 
-    # The science detroa must be equal or substring of the arc detroa
-    query = query.filter(Gmos.detroa.like('%'+self.instheader.detroa+'%'))
+    # The science amproa must be equal or substring of the arc amproa
+    query = query.filter(Gmos.amproa.like('%'+self.instheader.amproa+'%'))
+
+    # Should we insist on the program ID matching?
+    if(sameprog):
+      query = query.filter(Header.progid==self.header.progid)
 
     # Order by absolute time separation. Maybe there's a better way to do this
     query = query.order_by("ABS(EXTRACT(EPOCH FROM (header.utdatetime - :utdatetime_x)))").params(utdatetime_x= self.header.utdatetime)
