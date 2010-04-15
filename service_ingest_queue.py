@@ -73,7 +73,7 @@ try:
 
 except:
   logger.error("Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
-  #traceback.print_tb(sys.exc_info()[2])
+  traceback.print_tb(sys.exc_info()[2])
 
 finally:
   session.close()
