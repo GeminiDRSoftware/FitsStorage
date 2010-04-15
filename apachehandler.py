@@ -124,6 +124,8 @@ def handler(req):
         selection['obstype']=gemini_obstype(thing)
       if(gemini_obsclass(thing)):
         selection['obsclass']=gemini_obsclass(thing)
+      if(thing=='missing'):
+        selection['missing']=True
       if(thing=='warnings'):
         selection['warnings']=True
 
