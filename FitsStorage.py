@@ -97,6 +97,7 @@ class DiskFile(Base):
   file_id = Column(Integer, ForeignKey('file.id'), nullable=False, index=True)
   file = relation(File, order_by=id)
   present = Column(Boolean, index=True)
+  canonical = Column(Boolean, index=True)
   ccrc = Column(Text)
   size = Column(Integer)
   lastmod = Column(DateTime(timezone=True))
@@ -111,6 +112,7 @@ class DiskFile(Base):
   def __init__(self, file, skip_fv, skip_wmd):
     self.file_id = file.id
     self.present = True
+    self.canonical = True
     self.entrytime = 'now'
     self.size = file.size()
     self.ccrc = file.ccrc()
