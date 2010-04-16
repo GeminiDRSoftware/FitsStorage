@@ -209,10 +209,10 @@ class Header(Base):
     try:
       ad=AstroData.AstroData(fullpath, mode='readonly')
       # Basic data identification part
-      self.progid = ad.phuHeader('GEMPRGID')
-      self.obsid = ad.phuHeader('OBSID')
-      self.datalab = ad.phuHeader('DATALAB')
-      self.telescope = ad.phuHeader('TELESCOP')
+      self.progid = ad.progid()
+      self.obsid = ad.obsid()
+      self.datalab = ad.datalab()
+      self.telescope = ad.telescope()
       self.instrument = ad.instrument()
 
       # Date and times part
@@ -227,26 +227,26 @@ class Header(Base):
         self.localtime = dateutil.parser.parse("2000-01-01 %s" % (localtime_string)).time()
 
       # Data Types
-      self.obstype = ad.phuHeader('OBSTYPE')
-      self.obsclass = ad.phuHeader('OBSCLASS')
-      self.observer = ad.phuHeader('OBSERVER')
-      self.ssa = ad.phuHeader('SSA')
-      self.object = ad.phuHeader('OBJECT')
+      self.obstype = ad.obstype()
+      self.obsclass = ad.obsclass()
+      self.observer = ad.observer()
+      self.ssa = ad.ssa()
+      self.object = ad.object()
       self.ra = ad.ra()
       self.dec = ad.dec()
-      self.az = ad.phuHeader('AZIMUTH')
-      self.el = ad.phuHeader('ELEVATIO')
-      self.crpa = ad.phuHeader('CRPA')
+      self.az = ad.az()
+      self.el = ad.el()
+      self.crpa = ad.crpa()
       airmass = ad.airmass()
       if(airmass < 0):
         airmass = None
       self.airmass = airmass
-      self.rawiq = ad.phuHeader('RAWIQ')
-      self.rawcc = ad.phuHeader('RAWCC')
-      self.rawwv = ad.phuHeader('RAWWV')
-      self.rawbg = ad.phuHeader('RAWBG')
-      self.rawpireq = ad.phuHeader('RAWPIREQ')
-      self.rawgemqa = ad.phuHeader('RAWGEMQA')
+      self.rawiq = ad.rawiq()
+      self.rawcc = ad.rawcc()
+      self.rawwv = ad.rawwv()
+      self.rawbg = ad.rawbg()
+      self.rawpireq = ad.rawpireq()
+      self.rawgemqa = ad.rawgemqa()
       self.filter = ad.filtername(pretty=True)
       self.exptime = ad.exptime()
       self.disperser = ad.disperser(pretty=True)
