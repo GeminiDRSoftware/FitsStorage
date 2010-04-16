@@ -190,6 +190,7 @@ class Header(Base):
   rawpireq = Column(Text)
   rawgemqa = Column(Text)
   qastate = Column(Text)
+  reduction = Column(Text)
 
   def __init__(self, diskfile):
     self.diskfile_id = diskfile.id
@@ -285,6 +286,15 @@ class Header(Base):
         self.qastate = 'Fail'
       if((self.rawpireq == 'CHECK') and (self.rawgemqa == 'CHECK')):
         self.qastate = 'CHECK'
+
+      # Set the reduction state
+      self.reduction = 'RAW'
+      if('PREPARED' in ad.types):
+        self.reduction = 'PREPARED'
+      if('PROCESSED_FLAT' in ad.types):
+        self.reduction = 'PROCESSED_FLAT'
+      if('PROCESSED_BIAS' in ad.types):
+        self.reduction = 'PROCESSED_BIAS'
   
       ad.close()
     except:
