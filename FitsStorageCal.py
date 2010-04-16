@@ -79,9 +79,11 @@ class Calibration:
     # Must Match cwave 
     query = query.filter(Header.cwave==self.header.cwave)
 
-    # Must match fpmask only if it's not the 5.0arcsec slit in the target 
+    # Must match fpmask only if it's not the 5.0arcsec slit in the target, otherwise any longslit is OK
     if(self.header.fpmask != '5.0arcsec'):
       query = query.filter(Header.fpmask==self.header.fpmask)
+    else:
+      query = query.filter(Header.fpmask.like('%arcsec'))
 
     # Must match ccd binning
     query = query.filter(Gmos.xccdbin==self.instheader.xccdbin).filter(Gmos.yccdbin==self.instheader.yccdbin)
