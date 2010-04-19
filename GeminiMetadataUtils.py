@@ -116,7 +116,45 @@ def gemini_obsclass(string):
     retary = string
   return retary
 
+def gemini_caltype(string):
+  """
+  A utility function matching Gemini calibration types.
+  If the string argument matches a gemini calibration type then we return
+  the calibration type, otherwise we return an empty string
 
+  The list of calibration types is somewhat arbitrary, it's not coupled
+  to the DHS or ODB, it's more or less defined by the Fits Storage project
+
+  These should all be lower case so as to avoid conflict with gemini_obstype
+  """
+  list = ['bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_flat']
+  retary = ''
+  if (string in list):
+    retary = string
+  return retary
+
+fitsfilenamecre = re.compile('^([NS])(20\d\d)([01]\d[0123]\d)(S)(\d\d\d\d)(.fits)*$')
+def gemini_fitsfilename(string):
+  """
+  A utility function matching Gemini raw data fits filenames
+  If the string argument matches the format of a gemini raw
+  data filename, with or without the .fits on the end, this
+  function will return the filename, with the .fits on the end.
+
+  If the string does not look like a filename, we return an empty string.
+  """
+  retval = ''
+  m = fitsfilenamecre.match(string)
+  if(m):
+    # Yes, but does it not have a .fits?
+    if(m.groups()[5] == None):
+      retval = "%s.fits" % string
+    else:
+      retval = string
+
+  return retval
+    
+  
 # The Gemini Data Label Class
 
 # This re matches progid-obsum-dlnum - ie a datalabel,
