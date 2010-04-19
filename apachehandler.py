@@ -67,25 +67,7 @@ def handler(req):
     # Parse the rest of the uri here while we're at it
     # Expect some combination of progid, obsid, date and instrument name
     # We put the ones we got in a dictionary
-    selection={}
-    while(len(things)):
-      thing = things.pop(0)
-      if(gemini_date(thing)):
-        selection['date']=gemini_date(thing)
-      if(gemini_daterange(thing)):
-        selection['daterange']=gemini_daterange(thing)
-      gp=GeminiProject(thing)
-      if(gp.progid):
-        selection['progid']=thing
-      go=GeminiObservation(thing)
-      if(go.obsid):
-        selection['obsid']=thing
-      if(gemini_instrument(thing)):
-        selection['inst']=gemini_instrument(thing)
-      if(gemini_obstype(thing)):
-        selection['obstype']=gemini_obstype(thing)
-      if(gemini_obsclass(thing)):
-        selection['obsclass']=gemini_obsclass(thing)
+    selection=getselection(things)
 
     # We should parse the arguments here too
     # All we have for now are order_by arguments
@@ -103,31 +85,7 @@ def handler(req):
   # The calibrations handler
   if(this == 'calibrations'):
     # Parse the rest of the URL.
-    # Expect some combination of progid, obsid, date and instrument name
-    # We put the ones we got in a dictionary
-    selection={}
-    while(len(things)):
-      thing = things.pop(0)
-      if(gemini_date(thing)):
-        selection['date']=gemini_date(thing)
-      if(gemini_daterange(thing)):
-        selection['daterange']=gemini_daterange(thing)
-      gp=GeminiProject(thing)
-      if(gp.progid):
-        selection['progid']=thing
-      go=GeminiObservation(thing)
-      if(go.obsid):
-        selection['obsid']=thing
-      if(gemini_instrument(thing)):
-        selection['inst']=gemini_instrument(thing)
-      if(gemini_obstype(thing)):
-        selection['obstype']=gemini_obstype(thing)
-      if(gemini_obsclass(thing)):
-        selection['obsclass']=gemini_obsclass(thing)
-      if(thing=='missing'):
-        selection['missing']=True
-      if(thing=='warnings'):
-        selection['warnings']=True
+    selection=getselection(things)
 
     # If we want other arguments like order by
     # we should parse them here
@@ -136,12 +94,11 @@ def handler(req):
     return retval
 
 
-
   # This returns the full header of the filename that follows.
   if(this ==  'fullheader'):
     if(len(things)):
       filename=things.pop(0)
-      filename=fitsfilename(filename)
+      filename=gemini_fitsfilename(filename)
       retval = fullheader(req, filename)
       return retval
     else:
@@ -159,10 +116,8 @@ def handler(req):
     thing=things.pop(0)
 
     # OK, see if we got a filename
-    match=re.search('^[NS]20\d\d[01]\d[0123]\dS\d\d\d\d', thing)
-    if(match):
-      # Ensure it has the .fits on it
-      thing = fitsfilename(thing)
+    thing = gemini_fitsfilename(thing)
+    if(thing):
       # Now construct the query
       session = sessionfactory()
       try:
@@ -229,10 +184,9 @@ def handler(req):
           #req.write("You must specify a filename eg: /fits/N20091020S1234.fits\n")
           return apache.HTTP_NOT_FOUND
         filename=things.pop(0)
-        match=re.search('^[NS]20\d\d[01]\d[0123]\dS\d\d\d\d', filename)
-        if(match):
-          # Ensure it has the .fits on it
-          filename = fitsfilename(filename)
+        filename = gemini_fitsfilename(filename)
+        if(fitsfilename):
+          pass
         else:
           #req.content_type="text/plain"
           #req.write("You must specify a filename eg: /fits/N20091020S1234.fits\n")
@@ -295,12 +249,46 @@ def handler(req):
 # Below are various helper functions called from above.
 # The web summary has it's own module
 
+def getselection(things):
+  # this takes a list of things from the URL, and returns a
+  # selection hash that is used by the html generators
+  selection = {}
+  while(len(things)):
+    thing = things.pop(0)
+    if(gemini_date(thing)):
+      selection['date']=gemini_date(thing)
+    if(gemini_daterange(thing)):
+      selection['daterange']=gemini_daterange(thing)
+    gp=GeminiProject(thing)
+    if(gp.progid):
+      selection['progid']=thing
+    go=GeminiObservation(thing)
+    if(go.obsid):
+      selection['obsid']=thing
+    gdl=GeminiDataLabel(thing)
+    if(gdl.datalabel):
+      selection['datalab']=thing
+    if(gemini_instrument(thing)):
+      selection['inst']=gemini_instrument(thing)
+    if(gemini_fitsfilename(thing)):
+      selection['filename'] = gemini_fitsfilename(thing)
+    if(gemini_obstype(thing)):
+      selection['obstype']=gemini_obstype(thing)
+    if(gemini_obsclass(thing)):
+      selection['obsclass']=gemini_obsclass(thing)
+    if(gemini_caltype(thing)):
+      selection['caltype']=gemini_caltype(thing)
+    if(thing=='warnings' or thing=='missing'):
+      selection['caloption']=thing
+
+  return selection
+
 # This reads the full fits header from the file currently on disk and
 # returns in in text form to the browser.
 # Arguments are the apache request object and the filename
 def fullheader(req, filename):
   # If the filename is missing the .fits, then add it
-  filename=fitsfilename(filename)
+  filename=gemini_fitsfilename(filename)
 
   # First search for a file object with the given filename
   session=sessionfactory()
