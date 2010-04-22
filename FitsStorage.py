@@ -29,7 +29,7 @@ import CadcWMD
 
 from FitsStorageConfig import *
 
-from astrodata import AstroData
+from astrodata.AstroData import AstroData
 
 # This was to debug the number of open database sessions.
 #import logging
@@ -172,8 +172,8 @@ class Header(Base):
   object = Column(Text)
   ra = Column(Numeric(precision=16, scale=12))
   dec = Column(Numeric(precision=16, scale=12))
-  az = Column(Numeric(precision=16, scale=12))
-  el = Column(Numeric(precision=16, scale=12))
+  azimuth = Column(Numeric(precision=16, scale=12))
+  elevation = Column(Numeric(precision=16, scale=12))
   crpa = Column(Numeric(precision=16, scale=12))
   airmass = Column(Numeric(precision=8, scale=6))
   filter = Column(Text)
@@ -208,7 +208,7 @@ class Header(Base):
     # Try and open it as a fits file
     ad=0
     try:
-      ad=AstroData.AstroData(fullpath, mode='readonly')
+      ad=AstroData(fullpath, mode='readonly')
       # Basic data identification part
       self.progid = ad.progid()
       self.obsid = ad.obsid()
@@ -235,8 +235,8 @@ class Header(Base):
       self.object = ad.object()
       self.ra = ad.ra()
       self.dec = ad.dec()
-      self.az = ad.az()
-      self.el = ad.el()
+      self.azimuth = ad.azimuth()
+      self.elevation = ad.elevation()
       self.crpa = ad.crpa()
       airmass = ad.airmass()
       if(airmass < 0):
@@ -392,8 +392,9 @@ class Gmos(Base):
   filtername = Column(Text)
   xccdbin = Column(Integer)
   yccdbin = Column(Integer)
-  detroa = Column(Text)
   amproa = Column(Text)
+  readspeedmode = Column(Text)
+  gainmode = Column(Text)
 
   def __init__(self, header):
     self.header = header
@@ -403,12 +404,13 @@ class Gmos(Base):
 
   def populate(self):
     # Get an AstroData object on it
-    ad = AstroData.AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+    ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
     # Populate values
     self.disperser = ad.disperser()
     self.filtername = ad.filtername()
     self.xccdbin = ad.xccdbin()
     self.yccdbin = ad.yccdbin()
-    self.detroa = ad.detroa()
     self.amproa = ad.amproa()
+    self.readspeedmode = ad.readspeedmode()
+    self.gainmode = ad.gainmode()
     ad.close()
