@@ -9,18 +9,6 @@ from GeminiMetadataUtils import *
 from mod_python import apache, util
 import FitsStorageCal
 
-# Fits filename extension utility
-crefits = re.compile("\S*.fits$")
-def fitsfilename(filename):
-  """
-  Takes a filename with optional .fits ending and returns it
-  ensuring that it ends in .fits
-  """
-  match = crefits.match(filename)
-  if(not match):
-    filename = "%s.fits" % filename
-  return filename
-
 def summary(req, type, selection, orderby):
   """
   This is the main summary generator.
@@ -44,6 +32,8 @@ def summary(req, type, selection, orderby):
     title += "; Program ID: %s" % (selection['progid'])
   if('obsid' in selection):
     title += "; Observation ID: %s" % (selection['obsid'])
+  if('datalab' in selection):
+    title += "; Data Label: %s" % (selection['datalab'])
   if('date' in selection):
     title += "; Date: %s" % (selection['date'])
   if('daterange' in selection):
@@ -104,6 +94,11 @@ def list_headers(session, selection, orderby):
   # Should we query by obsid?
   if('obsid' in selection):
     query = query.filter(Header.obsid==selection['obsid'])
+    openquery=0
+
+  # Should we query by datalabel?
+  if('datalab' in selection):
+    query = query.filter(Header.datalab==selection['datalab'])
     openquery=0
 
   # Should we query by progid?
@@ -734,14 +729,8 @@ def calibrations(req, type, selection):
     # The Basic Query
     query = session.query(Header).select_from(join(Header, DiskFile))
 
-    # For now, only files that are present for simplicity.
-    query = query.filter(DiskFile.present == True)
-
-    # For now, limit this to GMOS spectroscopy OBJECT data. This is a bit of a hack that will need sorting out later
-    query = query.filter(or_(Header.instrument=='GMOS-N', Header.instrument=='GMOS-S')).filter(Header.spectroscopy==True).filter(Header.obstype=='OBJECT')
-
-    # Knock out the "Twilight" targets
-    query = query.filter(Header.object != 'Twilight')
+    # Only the canonical versions
+    query = query.filter(DiskFile.canonical == True)
 
     # Knock out the FAILs
     query = query.filter(Header.rawgemqa!='BAD')
@@ -757,6 +746,15 @@ def calibrations(req, type, selection):
     if('obsid' in selection):
       query = query.filter(Header.obsid==selection['obsid'])
       openquery=0
+
+    # Did we get an datalab selection?
+    if('datalab' in selection):
+      query = query.filter(Header.obsid==selection['datalab'])
+      openquery=0
+
+    # Did we get an instrument selection?
+    if('inst' in selection):
+      query = query.filter(Header.instrument==selection['inst'])
 
     # Did we get a date selection?
     if('date' in selection):
@@ -798,89 +796,94 @@ def calibrations(req, type, selection):
     # OK, do the query
     headers = query.all()
 
-    req.write("<H2>Found %d datasets to check for suitable GMOS ARCs</H2>" % len(headers))
+    req.write("<H2>Found %d datasets to check for suitable calibrations</H2>" % len(headers))
     req.write("<HR>")
+
+    # Was the request for only one type of calibration?
+    caltype='all'
+    if('caltype' in selection):
+      caltype = selection['caltype']
 
     warnings = 0
     missings = 0
     for object in headers:
-      # Find an arc for this object
-
       # Accumulate the html in a string, so we can decide whether to display it all at once
       html=""
       warning=False
       missing=False
+      requires=False
 
-      html+="<H3>OBJECT: %s - %s</H3>" % (object.diskfile.file.filename, object.datalab)
-      try:
-        html+="<P>Disperser=%s Central Wavelength=%d Focal Plane Mask=%s Object Name=%s</P>" %(object.disperser, 1000*object.cwave, object.fpmask, object.object)
-      except TypeError:
-        html+="<P>Something wierd with this data</P>"
-      c = FitsStorageCal.Calibration(session, None, object)
-      arc = c.arc(sameprog=True)
-      arc_a=None
+      html+='<H3><a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H3>' % (object.diskfile.file.filename, object.diskfile.file.filename, object.datalab, object.datalab)
 
-      if(arc):
-        html += "<H4>ARC: %s - %s</H4>" % (arc.diskfile.file.filename, arc.datalab)
-        if(arc.utdatetime and object.utdatetime):
-          interval = arc.utdatetime - object.utdatetime
-          tdelta = (interval.days * 24.0) + (interval.seconds / 3600.0)
-          word = "after"
-          unit = "hours"
-          if(tdelta < 0.0):
-            word = "before"
-            tdelta *= -1.0
-          if (tdelta > 48):
-            tdelta = tdelta/24.0
-            unit = "days"
-          html += "<P>arc was taken %.1f %s %s object</P>" %(tdelta, unit, word)
-          if(tdelta > 5 and unit=='days'):
-            html += '<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>'
-            warning = True
-            arc_a=arc.id
-        else:
-          html += '<P><FONT COLOR="Red">Hmmm, could not determine time delta...</FONT></P>'
-          warning = True
+      c = FitsStorageCal.get_cal_object(session, None, header=object)
+      if('arc' in c.required and (caltype=='all' or caltype=='arc')):
+        requires=True
 
-      else:
-        html += '<H3><FONT COLOR="Red">NO ARC FOUND!</FONT></H3>'
-        warning = True
-        missing = True
+        # Look for an arc in the same program
+        arc = c.arc(sameprog=True)
 
-      if(warning):
-        # Re-do the search accross all program IDs
-        arc = c.arc()
-        if(arc and (arc.id != arc_a)):
-          missing = False
-          html += "<H4>ARC: %s - %s</H4>" % (arc.diskfile.file.filename, arc.datalab)
+        if(arc):
+          html += '<H4>ARC: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (arc.diskfile.file.filename, arc.diskfile.file.filename, arc.datalab, arc.datalab)
           if(arc.utdatetime and object.utdatetime):
-            interval = arc.utdatetime - object.utdatetime
-            tdelta = (interval.days * 24.0) + (interval.seconds / 3600.0)
-            word = "after"
-            unit = "hours"
-            if(tdelta < 0.0):
-              word = "before"
-              tdelta *= -1.0
-            if (tdelta > 48):
-              tdelta = tdelta/24.0
-              unit = "days"
-            html += "<P>arc was taken %.1f %s %s object</P>" %(tdelta, unit, word)
-            if(tdelta > 5 and unit=='days'):
+            html += "<P>arc was taken %s object</P>" % interval_string(arc, object)
+            if(abs(interval_hours(arc, object)) > 120):
               html += '<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>'
               warning = True
+              arc_a=arc.id
           else:
             html += '<P><FONT COLOR="Red">Hmmm, could not determine time delta...</FONT></P>'
             warning = True
-          if(arc.progid != object.progid):
-            html += '<P><FONT COLOR="Red">WARNING: ARC and OBJECT come from different project IDs.</FONT></P>'
-            warning = True
+
+        else:
+          html += '<H3><FONT COLOR="Red">NO ARC FOUND!</FONT></H3>'
+          warning = True
+          missing = True
+
+        # If we didn't find one in the same program or we did, but with warnings,
+        # Re-do the search accross all program IDs
+        if(warning):
+          oldarc = arc
+          arc = c.arc()
+          # If we find a different one
+          if(arc and oldarc and (arc.id != oldarc.id)):
+            missing = False
+            html += '<H4>ARC: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (arc.diskfile.file.filename, arc.diskfile.file.filename, arc.datalab, arc.datalab)
+            if(arc.utdatetime and object.utdatetime):
+              html += "<P>arc was taken %s object</P>" % interval_string(arc, object)
+              if(abs(interval_hours(arc, object)) > 120):
+                html += '<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>'
+                warning = True
+            else:
+              html += '<P><FONT COLOR="Red">Hmmm, could not determine time delta...</FONT></P>'
+              warning = True
+            if(arc.progid != object.progid):
+              html += '<P><FONT COLOR="Red">WARNING: ARC and OBJECT come from different project IDs.</FONT></P>'
+              warning = True
+
+      if('bias' in c.required and (caltype=='all' or caltype=='bias')):
+        requires=True
+        bias = c.bias()
+        if(bias):
+          html += "<H4>BIAS: %s - %s</H4>" % (bias.diskfile.file.filename, bias.datalab)
+        else:
+          html += '<H3><FONT COLOR="Red">NO BIAS FOUND!</FONT></H3>'
+          warning = True
+          missing = True
 
       html += "<HR>"
-      if('warnings' in selection):
+
+      caloption=None
+      if('caloption' in selection):
+        caloption = selection['caloption']
+
+      if(caloption=='warnings'):
         if(warning):
           req.write(html)
-      elif('missing' in selection):
+      elif(caloption=='missing'):
         if(missing):
+          req.write(html)
+      elif(caloption=='requires'):
+        if(requires):
           req.write(html)
       else:
         req.write(html)
@@ -890,7 +893,7 @@ def calibrations(req, type, selection):
         missings +=1
 
     req.write("<HR>")
-    req.write("<H2>Counted %d potential missing ARCs</H2>" % missings)
+    req.write("<H2>Counted %d potential missing Calibrations</H2>" % missings)
     req.write("<H2>Query generated %d warnings</H2>" % warnings)
     req.write("</body></html>")
     return apache.OK
@@ -900,4 +903,37 @@ def calibrations(req, type, selection):
   finally:
     session.close()
 
+def interval_hours(a, b):
+  """
+  Given two header objects, returns the number of hours b was taken after a
+  """
+  interval = a.utdatetime - b.utdatetime
+  tdelta = (interval.days * 24.0) + (interval.seconds / 3600.0)
 
+  return tdelta
+
+def interval_string(a, b):
+  """
+  Given two header objects, return a human readable string describing the time difference between them
+  """
+  t = interval_hours(a, b)
+
+  word = "after"
+  unit = "hours"
+
+  if(t < 0.0):
+    word = "before"
+    t *= -1.0
+
+  if(t > 48.0):
+    t /= 24.0
+    unit = "days"
+
+  if(t < 1.0):
+    t *= 60
+    unit = "minutes"
+
+  # 1.2 days after
+  string = "%.1f %s %s" % (t, unit, word)
+
+  return string
