@@ -711,8 +711,14 @@ def calibrations(req, type, selection):
     title += "; Program ID: %s" % (selection['progid'])
   if('obsid' in selection):
     title += "; Observation ID: %s" % (selection['obsid'])
+  if('inst' in selection):
+    title += "; Instrument: %s" % (selection['inst'])
+  if('datalab' in selection):
+    title += "; Datalabel: %s" % (selection['datalab'])
   if('date' in selection):
     title += "; Date: %s" % (selection['date'])
+  if('daterange' in selection):
+    title += "; Daterange: %s" % (selection['daterange'])
 
   req.write("<head>")
   req.write("<title>%s</title>" % (title))
@@ -749,7 +755,7 @@ def calibrations(req, type, selection):
 
     # Did we get an datalab selection?
     if('datalab' in selection):
-      query = query.filter(Header.obsid==selection['datalab'])
+      query = query.filter(Header.datalab==selection['datalab'])
       openquery=0
 
     # Did we get an instrument selection?
@@ -809,6 +815,7 @@ def calibrations(req, type, selection):
     for object in headers:
       # Accumulate the html in a string, so we can decide whether to display it all at once
       html=""
+      takenow = False
       warning=False
       missing=False
       requires=False
@@ -872,6 +879,40 @@ def calibrations(req, type, selection):
 
       html += "<HR>"
 
+      # Handle the 'takenow' flag. This should get set to true if
+      # no arc exists or 
+      # all the arcs generate warnings, and
+      # the time difference between 'now' and the science frame is 
+      # less than the time difference between the science frame and the closest
+      # arc to it that we currently have
+      if(missing):
+        takenow = True
+      if(warning):
+        # Is it worth re-taking?
+        # Find the smallest interval between a valid arc and the science
+        oldinterval = None
+        newinterval = None
+        smallestinterval = None
+        if (oldarc):
+          oldinterval = abs(interval_hours(oldarc, object))
+          smallestinterval = oldinterval
+        if (arc):
+          newinterval = abs(interval_hours(arc, object))
+          smallestinterval = newinterval
+        if (oldinterval and newinterval):
+          if (oldinterval > newinterval):
+            smallestinterval = newinterval
+          else:
+            smallestinterval = oldinterval
+        # Is the smallest interval larger than the interval between now and the science?
+        now = datetime.datetime.utcnow()
+        then = object.utdatetime
+        nowinterval = now - then
+        nowhours = (nowinterval.days * 24.0) + (nowinterval.seconds / 3600.0)
+        if(smallestinterval > nowhours):
+          takenow=True
+
+   
       caloption=None
       if('caloption' in selection):
         caloption = selection['caloption']
@@ -884,6 +925,9 @@ def calibrations(req, type, selection):
           req.write(html)
       elif(caloption=='requires'):
         if(requires):
+          req.write(html)
+      elif(caloption=='takenow'):
+        if(takenow):
           req.write(html)
       else:
         req.write(html)
