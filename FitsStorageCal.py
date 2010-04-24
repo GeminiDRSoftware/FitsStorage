@@ -102,6 +102,10 @@ class CalibrationGMOS(Calibration):
 
     # Must Totally Match: Instrument, disperser
     query = query.filter(Header.instrument==self.header.instrument).filter(Gmos.disperser==self.gmos.disperser)
+
+    # Must match filter (from KR 20100423)
+    query = query.filter(Gmos.filtername==self.gmos.filtername)
+
     # Must Match cwave 
     query = query.filter(Header.cwave==self.header.cwave)
 
