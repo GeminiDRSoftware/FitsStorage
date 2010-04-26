@@ -27,23 +27,7 @@ def summary(req, type, selection, orderby):
   """
   req.content_type = "text/html"
   req.write("<html>")
-  title = "FITS header %s table" % (type)
-  if('progid' in selection):
-    title += "; Program ID: %s" % (selection['progid'])
-  if('obsid' in selection):
-    title += "; Observation ID: %s" % (selection['obsid'])
-  if('datalab' in selection):
-    title += "; Data Label: %s" % (selection['datalab'])
-  if('date' in selection):
-    title += "; Date: %s" % (selection['date'])
-  if('daterange' in selection):
-    title += "; Daterange: %s" % (selection['daterange'])
-  if('inst' in selection):
-    title += "; Instrument: %s" % (selection['inst'])
-  if('obstype' in selection):
-    title += "; ObsType: %s" % (selection['obstype'])
-  if('obsclass' in selection):
-    title += "; ObsClass: %s" % (selection['obsclass'])
+  title = "FITS header %s table %s" % (type, sayselection(selection))
 
   req.write("<head>")
   req.write("<title>%s</title>" % (title))
@@ -84,72 +68,7 @@ def list_headers(session, selection, orderby):
   # The basic query...
   query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
 
-  # Do want to select Header object for which diskfile.present is true?
-  if('present' in selection):
-    query = query.filter(DiskFile.present == selection['present'])
-
-  # Is this a completely open query?
-  openquery=1
-
-  # Should we query by obsid?
-  if('obsid' in selection):
-    query = query.filter(Header.obsid==selection['obsid'])
-    openquery=0
-
-  # Should we query by datalabel?
-  if('datalab' in selection):
-    query = query.filter(Header.datalab==selection['datalab'])
-    openquery=0
-
-  # Should we query by progid?
-  if('progid' in selection):
-    query = query.filter(Header.progid==selection['progid'])
-    openquery=0
-
-  # Should we query by date?
-  if('date' in selection):
-    # Parse the date to start and end datetime objects
-    startdt = dateutil.parser.parse("%s 00:00:00" % (selection['date']))
-    oneday = datetime.timedelta(days=1)
-    enddt = startdt + oneday
-    # check it's between these two
-    query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
-    openquery=0
-
-  # Should we query by daterange?
-  if('daterange' in selection):
-    # Parse the date to start and end datetime objects
-    daterangecre=re.compile('(20\d\d[01]\d[0123]\d)-(20\d\d[01]\d[0123]\d)')
-    m = daterangecre.match(selection['daterange'])
-    startdate = m.group(1)
-    enddate = m.group(2)
-    startdt = dateutil.parser.parse("%s 00:00:00" % startdate)
-    enddt = dateutil.parser.parse("%s 00:00:00" % enddate)
-    oneday = datetime.timedelta(days=1)
-    enddt = enddt + oneday
-    # Flip them round if reversed
-    if(startdt > enddt):
-      tmp = enddt
-      enddt = startdt
-      started = tmp
-    # check it's between these two
-    query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
-    openquery=0
-
-  # Should we query by obstype?
-  if('obstype' in selection):
-    query = query.filter(Header.obstype==selection['obstype'])
-    # do not alter openquery here
-
-  # Should we query by obsclass?
-  if('obsclass' in selection):
-    query = query.filter(Header.obsclass==selection['obsclass'])
-    # do not alter openquery here
-
-  # Should we query by instrument?
-  if('inst' in selection):
-    query = query.filter(Header.instrument==selection['inst'])
-    # do not alter openquery here.
+  query = queryselection(query, selection)
 
   # Do we have any order by arguments?
   if(orderby):
@@ -221,15 +140,14 @@ def list_headers(session, selection, orderby):
         query = query.order_by(desc(Header.object))
 
   # If this is an open query, we should reverse sort by filename
-  if(openquery):
+  # and limit the number of responses
+  if(openquery(selection)):
     query = query.order_by(desc(File.filename))
+    query = query.limit(2500)
   else:
     # By default we should order by filename
     query = query.order_by(File.filename)
 
-  # If this is an open query, we should limit to 2500 responses
-  if(openquery):
-    query = query.limit(2500)
 
   # Return the list of DiskFile objects
   return query.all()
@@ -706,19 +624,7 @@ def calibrations(req, type, selection):
   """
   req.content_type = "text/html"
   req.write("<html>")
-  title = "Calibrations" 
-  if('progid' in selection):
-    title += "; Program ID: %s" % (selection['progid'])
-  if('obsid' in selection):
-    title += "; Observation ID: %s" % (selection['obsid'])
-  if('inst' in selection):
-    title += "; Instrument: %s" % (selection['inst'])
-  if('datalab' in selection):
-    title += "; Datalabel: %s" % (selection['datalab'])
-  if('date' in selection):
-    title += "; Date: %s" % (selection['date'])
-  if('daterange' in selection):
-    title += "; Daterange: %s" % (selection['daterange'])
+  title = "Calibrations %s" % sayselection(selection)
 
   req.write("<head>")
   req.write("<title>%s</title>" % (title))
@@ -733,71 +639,20 @@ def calibrations(req, type, selection):
   try:
     # OK, find the target files
     # The Basic Query
-    query = session.query(Header).select_from(join(Header, DiskFile))
+    query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
 
     # Only the canonical versions
-    query = query.filter(DiskFile.canonical == True)
+    selection['canonical'] = True
+
+    query = queryselection(query, selection)
 
     # Knock out the FAILs
     query = query.filter(Header.rawgemqa!='BAD')
 
-    openquery = 1
-
-    # Did we get a progid selectoion?
-    if('progid' in selection):
-      query = query.filter(Header.progid==selection['progid'])
-      openquery = 0
-
-    # Did we get an obsid selection?
-    if('obsid' in selection):
-      query = query.filter(Header.obsid==selection['obsid'])
-      openquery=0
-
-    # Did we get an datalab selection?
-    if('datalab' in selection):
-      query = query.filter(Header.datalab==selection['datalab'])
-      openquery=0
-
-    # Did we get an instrument selection?
-    if('inst' in selection):
-      query = query.filter(Header.instrument==selection['inst'])
-
-    # Did we get a date selection?
-    if('date' in selection):
-      # Parse the date to start and end datetime objects
-      startdt = dateutil.parser.parse("%s 00:00:00" % (selection['date']))
-      oneday = datetime.timedelta(days=1)
-      enddt = startdt + oneday
-      # check it's between these two
-      query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
-      openquery=0
-
-    # Should we query by daterange?
-    if('daterange' in selection):
-      # Parse the date to start and end datetime objects
-      daterangecre=re.compile('(20\d\d[01]\d[0123]\d)-(20\d\d[01]\d[0123]\d)')
-      m = daterangecre.match(selection['daterange'])
-      startdate = m.group(1)
-      enddate = m.group(2)
-      startdt = dateutil.parser.parse("%s 00:00:00" % startdate)
-      enddt = dateutil.parser.parse("%s 00:00:00" % enddate)
-      oneday = datetime.timedelta(days=1)
-      enddt = enddt + oneday
-      # Flip them round if reversed
-      if(startdt > enddt):
-        tmp = enddt
-        enddt = startdt
-        started = tmp
-      # check it's between these two
-      query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
-      openquery=0
-
-    # OK, default order by utdatetime
-    query = query.order_by(desc(Header.utdatetime))
 
     # If openquery, limit number of responses
-    if(openquery):
-      query = query.limit(100)
+    if(openquery(selection)):
+      query = query.limit(2500)
 
     # OK, do the query
     headers = query.all()
@@ -981,3 +836,126 @@ def interval_string(a, b):
   string = "%.1f %s %s" % (t, unit, word)
 
   return string
+
+def sayselection(selection):
+  """
+  returns a string that describes  the selection dictionary passed in
+  suitable for pasting into html
+  """
+  string = ""
+
+  if('progid' in selection):
+    string += "; Program ID: %s" % selection['progid']
+  if('obsid' in selection):
+    string += "; Observation ID: %s" % selection['obsid']
+  if('datalab' in selection):
+    string += "; Data Label: %s" % selection['datalab']
+  if('date' in selection):
+    string += "; Date: %s" % selection['date']
+  if('daterange' in selection):
+    string += "; Daterange: %s" % selection['daterange']
+  if('inst' in selection):
+    string += "; Instrument: %s" % selection['inst']
+  if('obstype' in selection):
+    string += "; ObsType: %s" % selection['obstype']
+  if('obsclass' in selection):
+    title += "; ObsClass: %s" % selection['obsclass']
+  if('filename' in selection):
+    string += "; Filename: %s" % selection['filename']
+  if('gmos_grating' in selection):
+    string += "; GMOS Grating: %s" % selection['gmos_grating']
+  if('gmos_fpmask' in selection):
+    string += "; GMOS FP Mask: %s" % selection['gmos_fpmask']
+  if('caltype' in selection):
+    string += "; Calibration Type: %s" % selection['caltype']
+  if('caloption' in selection):
+    string += "; Calibration Option: %s" % selection['caloption']
+
+  return string
+
+def queryselection(query, selection):
+  """
+  Given an sqlalchemy query object and a selection dictionary,
+  add filters to the query for the items in the selection
+  and return the query object
+  """
+
+  # Do want to select Header object for which diskfile.present is true?
+  if('present' in selection):
+    query = query.filter(DiskFile.present == selection['present'])
+
+  if('canonical' in selection):
+    query = query.filter(DiskFile.present == selection['canonical'])
+
+  if('progid' in selection):
+    query = query.filter(Header.progid==selection['progid'])
+
+  if('obsid' in selection):
+    query = query.filter(Header.obsid==selection['obsid'])
+
+  if('datalab' in selection):
+    query = query.filter(Header.datalab==selection['datalab'])
+
+  # Should we query by date?
+  if('date' in selection):
+    # Parse the date to start and end datetime objects
+    startdt = dateutil.parser.parse("%s 00:00:00" % (selection['date']))
+    oneday = datetime.timedelta(days=1)
+    enddt = startdt + oneday
+    # check it's between these two
+    query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
+
+  # Should we query by daterange?
+  if('daterange' in selection):
+    # Parse the date to start and end datetime objects
+    daterangecre=re.compile('(20\d\d[01]\d[0123]\d)-(20\d\d[01]\d[0123]\d)')
+    m = daterangecre.match(selection['daterange'])
+    startdate = m.group(1)
+    enddate = m.group(2)
+    startdt = dateutil.parser.parse("%s 00:00:00" % startdate)
+    enddt = dateutil.parser.parse("%s 00:00:00" % enddate)
+    oneday = datetime.timedelta(days=1)
+    enddt = enddt + oneday
+    # Flip them round if reversed
+    if(startdt > enddt):
+      tmp = enddt
+      enddt = startdt
+      started = tmp
+    # check it's between these two
+    query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
+
+  if('obstype' in selection):
+    query = query.filter(Header.obstype==selection['obstype'])
+
+  if('obsclass' in selection):
+    query = query.filter(Header.obsclass==selection['obsclass'])
+
+  if('inst' in selection):
+    query = query.filter(Header.instrument==selection['inst'])
+
+  if('filename' in selection):
+    query = query.filter(File.filename == selection['filename'])
+
+  if('gmos_grating' in selection):
+    query = query.filter(Header.disperser == selection['gmos_grating'])
+
+  if('gmos_fpmask' in selection):
+    query = query.filter(Header.fpmask == selection['gmos_fpmask'])
+
+  return query
+
+def openquery(selection):
+  """
+  Returns a boolean to say if the selection is limited to a reasonable number of
+  results - ie does it contain a date, daterange, prog_id, obs_id etc
+  returns True if this selection will likely return a large number of results
+  """
+  openquery = True
+
+  things = ['date', 'daterange', 'progid', 'obsid', 'datalab', 'filename']
+
+  for thing in things:
+    if(thing in selection):
+      openquery = False
+
+  return openquery
