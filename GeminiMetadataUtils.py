@@ -133,6 +133,47 @@ def gemini_caltype(string):
     retary = string
   return retary
 
+def gmos_gratingname(string):
+  """
+  A utility function matching a GMOS Grating name. This could be expanded to
+  other instruments, but for many instruments the grating name is too ambiguous and 
+  could be confused with a filter or band (eg 'H'). Also most of the use cases 
+  for this are where gratings are swapped.
+
+  This function doesn't match or return the component ID.
+
+  If the string argument matches a grating, we return the official name for
+  that grating.
+  """
+  retary = ''
+  list = ['MIRROR', 'B600', 'R600', 'R400', 'R831', 'R150', 'B1200']
+  if (string in list):
+    retary = string
+  return retary
+
+gmosfpmaskcre = re.compile('^G[NS](20\d\d)[AB](.)(\d\d\d)-(\d\d)$')
+def gmos_fpmask(string):
+  """
+  A utility function matching gmos focal plane mask names. This could be expanded to
+  other instruments. Most of the uses cases for this are for masks that are swapped.
+  This function knows the names of the facility masks (long slits, NSlongslits and IFUs)
+  Also it knows the form of the MOS mask names and will return a mosmask name if the string
+  matches that format, even if that maskname does not actually exist
+
+  If the string matches an fpmask, we return the fpmask.
+  """
+
+  retary = ''
+  facility = ['NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', 'IFU', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec']
+
+  retary = None
+  if(string in facility):
+    retary = string
+  elif(gmosfpmaskcre.match(string)):
+    retary = string
+
+  return retary
+ 
 fitsfilenamecre = re.compile('^([NS])(20\d\d)([01]\d[0123]\d)(S)(\d\d\d\d)(.fits)*$')
 def gemini_fitsfilename(string):
   """
