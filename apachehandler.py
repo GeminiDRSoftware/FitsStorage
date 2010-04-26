@@ -278,6 +278,10 @@ def getselection(things):
       selection['obsclass']=gemini_obsclass(thing)
     if(gemini_caltype(thing)):
       selection['caltype']=gemini_caltype(thing)
+    if(gmos_gratingname(thing)):
+      selection['gmos_grating']=gmos_gratingname(thing)
+    if(gmos_fpmask(thing)):
+      selection['gmos_fpmask']=gmos_fpmask(thing)
     if(thing=='warnings' or thing=='missing' or thing=='requires' or thing=='takenow'):
       selection['caloption']=thing
 
