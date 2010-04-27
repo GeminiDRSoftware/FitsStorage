@@ -873,6 +873,8 @@ def sayselection(selection):
 
   return string
 
+# import time module to get local timezone
+import time
 def queryselection(query, selection):
   """
   Given an sqlalchemy query object and a selection dictionary,
@@ -899,8 +901,12 @@ def queryselection(query, selection):
   # Should we query by date?
   if('date' in selection):
     # Parse the date to start and end datetime objects
-    startdt = dateutil.parser.parse("%s 00:00:00" % (selection['date']))
+    # We consider the night boundary to be 14:00 local time
+    # This is midnight UTC in Hawaii, completely arbitrary in Chile
+    startdt = dateutil.parser.parse("%s 14:00:00" % (selection['date']))
+    tzoffset = datetime.timedelta(seconds=time.timezone)
     oneday = datetime.timedelta(days=1)
+    startdt = startdt + tzoffset - oneday
     enddt = startdt + oneday
     # check it's between these two
     query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
@@ -912,9 +918,12 @@ def queryselection(query, selection):
     m = daterangecre.match(selection['daterange'])
     startdate = m.group(1)
     enddate = m.group(2)
-    startdt = dateutil.parser.parse("%s 00:00:00" % startdate)
-    enddt = dateutil.parser.parse("%s 00:00:00" % enddate)
+    tzoffset = datetime.timedelta(seconds=time.timezone)
     oneday = datetime.timedelta(days=1)
+    startdt = dateutil.parser.parse("%s 14:00:00" % startdate)
+    startdt = startdt + tzoffset - oneday
+    enddt = dateutil.parser.parse("%s 14:00:00" % enddate)
+    enddt = enddt + tzoffset - oneday
     enddt = enddt + oneday
     # Flip them round if reversed
     if(startdt > enddt):
