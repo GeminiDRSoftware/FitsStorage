@@ -320,7 +320,12 @@ def fullheader(req, filename):
 
 # Send usage message to browser
 def usagemessage(req):
-  return util.redirect(req, "/htmldocs/usage.html")
+  fp = open("/opt/FitsStorage/htmldocroot/htmldocs/usage.html", "r")
+  stuff = fp.read()
+  fp.close()
+  req.content_type="text/html"
+  req.write(stuff)
+  return apache.OK
 
 # Send debugging info to browser
 def debugmessage(req):
