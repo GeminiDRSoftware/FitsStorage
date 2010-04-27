@@ -388,13 +388,13 @@ class Gmos(Base):
   id = Column(Integer, primary_key=True)
   header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
   header = relation(Header, order_by=id)
-  disperser = Column(Text)
-  filtername = Column(Text)
-  xccdbin = Column(Integer)
-  yccdbin = Column(Integer)
-  amproa = Column(Text)
-  readspeedmode = Column(Text)
-  gainmode = Column(Text)
+  disperser = Column(Text, index=True)
+  filtername = Column(Text, index=True)
+  xccdbin = Column(Integer, index=True)
+  yccdbin = Column(Integer, index=True)
+  amproa = Column(Text, index=True)
+  readspeedmode = Column(Text, index=True)
+  gainmode = Column(Text, index=True)
 
   def __init__(self, header):
     self.header = header
