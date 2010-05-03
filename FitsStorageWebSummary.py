@@ -674,6 +674,7 @@ def calibrations(req, type, selection):
       warning=False
       missing=False
       requires=False
+      oldarc = None
 
       html+='<H3><a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H3>' % (object.diskfile.file.filename, object.diskfile.file.filename, object.datalab, object.datalab)
 
@@ -722,6 +723,41 @@ def calibrations(req, type, selection):
               html += '<P><FONT COLOR="Red">WARNING: ARC and OBJECT come from different project IDs.</FONT></P>'
               warning = True
 
+        # Handle the 'takenow' flag. This should get set to true if
+        # no arc exists or 
+        # all the arcs generate warnings, and
+        # the time difference between 'now' and the science frame is 
+        # less than the time difference between the science frame and the closest
+        # arc to it that we currently have
+        if(missing):
+          takenow = True
+        if(warning):
+          # Is it worth re-taking?
+          # Find the smallest interval between a valid arc and the science
+          oldinterval = None
+          newinterval = None
+          smallestinterval = None
+          if (oldarc):
+            oldinterval = abs(interval_hours(oldarc, object))
+            smallestinterval = oldinterval
+          if (arc):
+            newinterval = abs(interval_hours(arc, object))
+            smallestinterval = newinterval
+          if (oldinterval and newinterval):
+            if (oldinterval > newinterval):
+              smallestinterval = newinterval
+            else:
+              smallestinterval = oldinterval
+          # Is the smallest interval larger than the interval between now and the science?
+          now = datetime.datetime.utcnow()
+          then = object.utdatetime
+          nowinterval = now - then
+          nowhours = (nowinterval.days * 24.0) + (nowinterval.seconds / 3600.0)
+          if(smallestinterval > nowhours):
+            takenow=True
+
+      html += "<HR>"
+
       if('bias' in c.required and (caltype=='all' or caltype=='bias')):
         requires=True
         bias = c.bias()
@@ -733,39 +769,6 @@ def calibrations(req, type, selection):
           missing = True
 
       html += "<HR>"
-
-      # Handle the 'takenow' flag. This should get set to true if
-      # no arc exists or 
-      # all the arcs generate warnings, and
-      # the time difference between 'now' and the science frame is 
-      # less than the time difference between the science frame and the closest
-      # arc to it that we currently have
-      if(missing):
-        takenow = True
-      if(warning):
-        # Is it worth re-taking?
-        # Find the smallest interval between a valid arc and the science
-        oldinterval = None
-        newinterval = None
-        smallestinterval = None
-        if (oldarc):
-          oldinterval = abs(interval_hours(oldarc, object))
-          smallestinterval = oldinterval
-        if (arc):
-          newinterval = abs(interval_hours(arc, object))
-          smallestinterval = newinterval
-        if (oldinterval and newinterval):
-          if (oldinterval > newinterval):
-            smallestinterval = newinterval
-          else:
-            smallestinterval = oldinterval
-        # Is the smallest interval larger than the interval between now and the science?
-        now = datetime.datetime.utcnow()
-        then = object.utdatetime
-        nowinterval = now - then
-        nowhours = (nowinterval.days * 24.0) + (nowinterval.seconds / 3600.0)
-        if(smallestinterval > nowhours):
-          takenow=True
 
    
       caloption=None
