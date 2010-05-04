@@ -116,15 +116,15 @@ def handler(req):
     thing=things.pop(0)
 
     # OK, see if we got a filename
-    thing = gemini_fitsfilename(thing)
-    if(thing):
+    fnthing = gemini_fitsfilename(thing)
+    if(fnthing):
       # Now construct the query
       session = sessionfactory()
       try:
-        query = session.query(File).filter(File.filename == thing)
+        query = session.query(File).filter(File.filename == fnthing)
         if(query.count()==0):
           req.content_type="text/plain"
-          req.write("Cannot find file for: %s\n" % thing)
+          req.write("Cannot find file for: %s\n" % fnthing)
           return apache.OK
         file = query.one()
         # Query diskfiles to find the diskfile for file that is present
