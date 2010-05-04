@@ -862,7 +862,7 @@ def sayselection(selection):
   if('obstype' in selection):
     string += "; ObsType: %s" % selection['obstype']
   if('obsclass' in selection):
-    title += "; ObsClass: %s" % selection['obsclass']
+    string += "; ObsClass: %s" % selection['obsclass']
   if('filename' in selection):
     string += "; Filename: %s" % selection['filename']
   if('gmos_grating' in selection):
