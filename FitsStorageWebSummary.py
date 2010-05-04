@@ -248,7 +248,7 @@ def webhdrsummary(session, req, type, headers):
 
     # The datalabel, parsed to link to the programid and obsid,
     if(dl.datalabel):
-      req.write('<TD><NOBR><a href="/summary/%s">%s</a>-<a href="/summary/%s">%s</a>-%s</NOBR></TD>' % (dl.projectid, dl.projectid, dl.obsid, dl.obsnum, dl.dlnum))
+      req.write('<TD><NOBR><a href="/summary/%s">%s</a>-<a href="/summary/%s">%s</a>-<a href="/summary/%s">%s</a></NOBR></TD>' % (dl.projectid, dl.projectid, dl.obsid, dl.obsnum, dl.datalabel, dl.dlnum))
     else:
       req.write('<TD>%s</TD>' % h.datalab)
 
