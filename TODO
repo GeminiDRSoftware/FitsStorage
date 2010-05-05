@@ -1,3 +1,19 @@
+- make it generate a warning at top of page if a selection item isn't recognised
+
+- make programsobserved respect use the selection systems
+
+- add phoenix data
+
+- track down Jorge's calibration error, unless it's gone away now
+
+- make the backup and vacuum cronjobs use the usual logging system
+
+- change logging so that it doesn't include the system name
+
+- figure out why vacuum and backup aren't working from cron
+
+
+
 Features:
  - Duplicate data label detection
  - option to ingest old files from an alternate dir with present=false
