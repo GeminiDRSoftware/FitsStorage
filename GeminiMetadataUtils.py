@@ -32,6 +32,7 @@ michellecre=re.compile('[Mm][Ii][Cc][Hh][Ee][Ll][Ll][Ee]')
 gnirscre=re.compile('[Gg][Nn][Ii][Rr][Ss]')
 phoenixcre = re.compile('[Pp][Hh][Oo][Ee][Nn][Ii][Xx]')
 trecscre = re.compile('[Tt][Rr][Ee][Cc][Ss]')
+nicicre = re.compile('[Nn][Ii][Cc][Ii]')
 
 def gemini_instrument(string):
   """
@@ -56,6 +57,8 @@ def gemini_instrument(string):
     retary='PHOENIX'
   if(trecscre.match(string)):
     retary='TReCS'
+  if(nicicre.match(string)):
+    retary='NICI'
   return retary
 
 datecre=re.compile('^20\d\d[01]\d[0123]\d$')
