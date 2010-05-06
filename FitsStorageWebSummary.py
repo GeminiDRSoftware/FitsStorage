@@ -871,6 +871,9 @@ def sayselection(selection):
   if('caloption' in selection):
     string += "; Calibration Option: %s" % selection['caloption']
 
+  if('notrecognised' in selection):
+    string += ". WARNING: I didn't understand these (case-sensitive) words: %s" % selection['notrecognised']
+
   return string
 
 # import time module to get local timezone

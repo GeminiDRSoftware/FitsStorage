@@ -258,36 +258,55 @@ def getselection(things):
   selection = {}
   while(len(things)):
     thing = things.pop(0)
+    recognised=False
     if(gemini_date(thing)):
       selection['date']=gemini_date(thing)
+      recognised=True
     if(gemini_daterange(thing)):
       selection['daterange']=gemini_daterange(thing)
+      recognised=True
     gp=GeminiProject(thing)
     if(gp.progid):
       selection['progid']=thing
+      recognised=True
     go=GeminiObservation(thing)
     if(go.obsid):
       selection['obsid']=thing
+      recognised=True
     gdl=GeminiDataLabel(thing)
     if(gdl.datalabel):
       selection['datalab']=thing
+      recognised=True
     if(gemini_instrument(thing)):
       selection['inst']=gemini_instrument(thing)
+      recognised=True
     if(gemini_fitsfilename(thing)):
       selection['filename'] = gemini_fitsfilename(thing)
+      recognised=True
     if(gemini_obstype(thing)):
       selection['obstype']=gemini_obstype(thing)
+      recognised=True
     if(gemini_obsclass(thing)):
       selection['obsclass']=gemini_obsclass(thing)
+      recognised=True
     if(gemini_caltype(thing)):
       selection['caltype']=gemini_caltype(thing)
+      recognised=True
     if(gmos_gratingname(thing)):
       selection['gmos_grating']=gmos_gratingname(thing)
+      recognised=True
     if(gmos_fpmask(thing)):
       selection['gmos_fpmask']=gmos_fpmask(thing)
+      recognised=True
     if(thing=='warnings' or thing=='missing' or thing=='requires' or thing=='takenow'):
       selection['caloption']=thing
+      recognised=True
 
+    if(not recognised):
+      if('notrecognised' in selection):
+        selection['notrecognised'] += " "+thing
+      else:
+        selection['notrecognised'] = thing
   return selection
 
 # This reads the full fits header from the file currently on disk and
