@@ -333,30 +333,27 @@ def webhdrsummary(session, req, type, headers):
     req.write("</TR>\n")
   req.write("</TABLE>\n")
 
-def progsobserved(req, things):
+def progsobserved(req, selection):
   """
   This function generates a list of programs observed on a given night
   """
-  if(things):
-    arg = things.pop(0)
-  else:
-    arg='today'
-  if(gemini_date(arg)):
-    date=gemini_date(arg)
-  else:
-    date=gemini_date('today')
 
-  # Parse the date to start and end datetime objects
-  startdt = dateutil.parser.parse("%s 00:00:00" % (date))
-  oneday = datetime.timedelta(days=1)
-  enddt = startdt + oneday
-  # create a query for between these two
+  # Get a database session
   session = sessionfactory()
   try:
-    query = session.query(Header.progid).filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt).group_by(Header.progid)
+    # the basic query in this case
+    query = session.query(Header.progid).select_from(join(Header, join(DiskFile, File)))
+
+    # Add the selection criteria
+    query = queryselection(query, selection)
+
+    # And the group by clause
+    query = query.group_by(Header.progid)
+
     list = query.all()
+    title = "Programs Observed: %s" % sayselection(selection)
     req.content_type = "text/html"
-    req.write('<html><head><title>Programs Observed on %s</title></head><body><h1>Programs Observed on %s</h1><p>' % (date, date))
+    req.write('<html><head><title>%s</title></head><body><h1>%s</h1><p>' % (title, title))
     for row in list:
       p = row[0]
       if(p):
