@@ -2,8 +2,6 @@
 
 - track down Jorge's calibration error, unless it's gone away now
 
-- make the backup and vacuum cronjobs use the usual logging system
-
 - change logging so that it doesn't include the system name
 
 - figure out why vacuum and backup aren't working from cron
