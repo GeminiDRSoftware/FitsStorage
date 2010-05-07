@@ -268,6 +268,8 @@ class Header(Base):
         self.spectroscopy = True
       if('PHOENIX_SPECT' in ad.types):
         self.spectroscopy = True
+      if('GNIRS_SPECT' in ad.types):
+        self.spectroscopy = True
   
       # and michelle for what it's worth
       if('MICHELLE' in ad.types):
