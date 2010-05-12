@@ -6,7 +6,6 @@
 storage_root = '/net/wikiwiki/dataflow'
 
 # Configure the site and other misc stuff here
-fits_installation = "fits-install"
 fits_servername = "fits"
 fits_system_status = "operational"
 
