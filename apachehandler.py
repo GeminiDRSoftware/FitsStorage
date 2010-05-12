@@ -222,6 +222,11 @@ def handler(req):
     retval =  progsobserved(req, selection)
     return retval
     
+  # The GMOS twilight flat and bias report
+  if(this == "gmoscal"):
+    selection = getselection(things)
+    retval = gmoscal(req, selection)
+    return retval
 
   # Database Statistics
   if(this == "stats"):
@@ -277,8 +282,8 @@ def getselection(things):
     if(gdl.datalabel):
       selection['datalab']=thing
       recognised=True
-    if(gemini_instrument(thing)):
-      selection['inst']=gemini_instrument(thing)
+    if(gemini_instrument(thing, gmos=True)):
+      selection['inst']=gemini_instrument(thing, gmos=True)
       recognised=True
     if(gemini_fitsfilename(thing)):
       selection['filename'] = gemini_fitsfilename(thing)
@@ -300,6 +305,15 @@ def getselection(things):
       recognised=True
     if(thing=='warnings' or thing=='missing' or thing=='requires' or thing=='takenow'):
       selection['caloption']=thing
+      recognised=True
+    if(thing=='imaging' or thing=='Imaging'):
+      selection['spectroscopy']=False
+      recognised=True
+    if(thing=='spectroscopy' or thing=='Spectroscopy'):
+      selection['spectroscopy']=True
+      recognised=True
+    if(thing=='Pass' or thing=='Usable' or thing=='Fail' or thing=='Win'):
+      selection['qastate']=thing
       recognised=True
 
     if(not recognised):
