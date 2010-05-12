@@ -2,10 +2,19 @@
 
 - change logging so that it doesn't include the system name
 
-- integrate Mike's twilight flat stuff
-
 - debug open database sessions
 
+- email warning if ingestqueue gets too deep
+
+- emails allerts for data on programs.
+
+- Check GNIRS data (this is more an AD descriptors thing), but still needs doing
+
+- NIRI darks
+
+- make fullheader text have info section at top.
+
+- handle non-present files properly
 
 Features:
  - Duplicate data label detection
@@ -28,7 +37,7 @@ Features:
 
 Database schema changes:
 
-Add utdate and uttime columns. ?
+- add a text column in diskfile that contains a full header text dump.
 
 Apachehandler:
 
