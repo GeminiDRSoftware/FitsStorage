@@ -535,6 +535,11 @@ def gmoscal(req, selection):
          roi = "Full"
        if(roi == "'EEV 9273-16-03, right':[1:2048,1792:2815],'EEV 9273-20-04, right':[2049:4096,1792:2815],'EEV 9273-20-03, left':[4097:6144,1792:2815]"):
          roi = "Cent"
+       if(roi == "'EEV 2037-06-03, left':[1:2048,1:4608],'EEV 8194-19-04, left':[2049:4096,1:4608],'EEV 8261-07-04, right':[4097:6144,1:4608]"):
+         roi = "Full"
+       if(roi == "'EEV 2037-06-03, left':[1:2048,1792:2815],'EEV 8194-19-04, left':[2049:4096,1792:2815],'EEV 8261-07-04, right':[4097:6144,1792:2815]"):
+         roi = "Cent"
+
 
        if(utdate not in dict.keys()):
          dict[utdate]={}
