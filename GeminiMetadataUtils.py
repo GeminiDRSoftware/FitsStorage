@@ -28,17 +28,20 @@ niricre=re.compile('[Nn][Ii][Rr][Ii]')
 nifscre=re.compile('[Nn][Ii][Ff][Ss]')
 gmosncre=re.compile('[Gg][Mm][Oo][Ss]-[Nn]')
 gmosscre=re.compile('[Gg][Mm][Oo][Ss]-[Ss]')
+gmoscre=re.compile('[Gg][Mm][Oo][Ss]')
 michellecre=re.compile('[Mm][Ii][Cc][Hh][Ee][Ll][Ll][Ee]')
 gnirscre=re.compile('[Gg][Nn][Ii][Rr][Ss]')
 phoenixcre = re.compile('[Pp][Hh][Oo][Ee][Nn][Ii][Xx]')
 trecscre = re.compile('[Tt][Rr][Ee][Cc][Ss]')
 nicicre = re.compile('[Nn][Ii][Cc][Ii]')
 
-def gemini_instrument(string):
+def gemini_instrument(string, gmos=False):
   """
   If the string argument matches a gemini instrument name, 
   then returns the "official" (ie same as in the fits headers) 
   name of the instrument. Otherwise returns an empty string.
+  If the gmos argument is true, this also recognises GMOS as
+  a valid instruemnt name.
   """
   retary=''
   if(niricre.match(string)):
@@ -59,6 +62,9 @@ def gemini_instrument(string):
     retary='TReCS'
   if(nicicre.match(string)):
     retary='NICI'
+  if(gmos):
+    if(gmoscre.match(string)):
+      retary='GMOS'
   return retary
 
 datecre=re.compile('^20\d\d[01]\d[0123]\d$')
