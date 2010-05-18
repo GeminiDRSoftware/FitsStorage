@@ -377,9 +377,9 @@ def gmoscal(req, selection):
    req.content_type = "text/html"
    req.write('<html><head><title>%s</title><link rel="stylesheet" href="/htmldocs/table.css"></head><body><h1>%s</h1>' % (title, title))
  
-   # If no date or daterange, look on endor to get the last processing date
+   # If no date or daterange, look on endor or josie to get the last processing date
    if(('date' not in selection) and ('daterange' not in selection)):
-     base_dir='/net/endor/export/home/dataproc/data/gmos/'
+     base_dir=das_calproc_path
      checkfile = 'Basecalib/biasall.list'
      enddate = datetime.datetime.now().date()
      oneday = datetime.timedelta(days=1)
@@ -1033,7 +1033,7 @@ def calibrations(req, type, selection):
           if(smallestinterval > nowhours):
             takenow=True
 
-      html += "<HR>"
+        html += "<HR>"
 
       if('bias' in c.required and (caltype=='all' or caltype=='bias')):
         requires=True
@@ -1042,6 +1042,23 @@ def calibrations(req, type, selection):
           html += "<H4>BIAS: %s - %s</H4>" % (bias.diskfile.file.filename, bias.datalab)
         else:
           html += '<H3><FONT COLOR="Red">NO BIAS FOUND!</FONT></H3>'
+          warning = True
+          missing = True
+
+        html += "<HR>"
+
+      if('dark' in c.required and (caltype=='all' or caltype=='dark')):
+        requires=True
+        dark = c.dark()
+        if(dark):
+          html += "<H4>DARK: %s - %s</H4>" % (dark.diskfile.file.filename, dark.datalab)
+          if(dark.utdatetime and object.utdatetime):
+            html += "<P>dark was taken %s object</P>" % interval_string(dark, object)
+            if(abs(interval_hours(dark, object)) > 120):
+              html += '<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>'
+              warning = True
+        else:
+          html += '<H3><FONT COLOR="Red">NO DARK FOUND!</FONT></H3>'
           warning = True
           missing = True
 
