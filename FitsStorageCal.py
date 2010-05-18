@@ -23,8 +23,8 @@ def get_cal_object(session, filename, header=None):
   c = None
   if('GMOS' in header.instrument):
     c = CalibrationGMOS(session, header)
-  #if('NIRI' == header.instrument):
-    # c = CalibrationNIRI(session, header)
+  if('NIRI' == header.instrument):
+    c = CalibrationNIRI(session, header)
   # if('NIFS' == header.instrument):
     # c = CalibrationNIFS(session, header)
   # Add other instruments here
@@ -158,4 +158,56 @@ class CalibrationGMOS(Calibration):
     query = query.limit(1)
 
     return query.first()
+
+class CalibrationNIRI(Calibration):
+  """
+  This class implements a calibration manager for NIRI.
+  It is a subclass of Calibration
+  """
+  niri = None
+
+  def __init__(self, session, header):
+    # Init the superclass
+    Calibration.__init__(self, session, header)
+
+    # Find the niriheader
+    query = session.query(Niri).filter(Niri.header_id==self.header.id)
+    self.niri = query.first()
+
+    # Set the list of required calibrations
+    self.required = self.required()
+
+  def required(self):
+    # Return a list of the calibrations required for this NIRI dataset
+    list=[]
+
+    # Science Imaging OBJECTs require a DARK
+    if((self.header.obstype == 'OBJECT') and (self.header.spectroscopy == False) and (self.header.obsclass=='science')):
+      list.append('dark')
+
+    return list
+
+  def dark(self):
+    query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
+    query = query.filter(Header.obstype=='DARK')
+
+    # Search only canonical entries
+    query = query.filter(DiskFile.canonical == True)
+
+    # Knock out the FAILs
+    query = query.filter(Header.rawgemqa!='BAD')
+
+    # Must totally match: detsec, readmode, welldepthmode, exptime, coadds
+    query = query.filter(Niri.detsec == self.niri.detsec)
+    query = query.filter(Niri.readmode == self.niri.readmode).filter(Niri.welldepthmode == self.niri.welldepthmode)
+    query = query.filter(Header.exptime == self.header.exptime).filter(Niri.coadds == self.niri.coadds)
+
+    # Order by absolute time separation. Maybe there's a better way to do this
+    query = query.order_by("ABS(EXTRACT(EPOCH FROM (header.utdatetime - :utdatetime_x)))").params(utdatetime_x= self.header.utdatetime)
+
+    # For now, we only want one result - the closest in time
+    query = query.limit(1)
+
+    return query.first()
+
 
