@@ -54,6 +54,7 @@ for dfid in list:
     df.present=False
     j+=1
     logger.info("File %d/%d: Marking file %s (diskfile id %d) as not present" % (i, n, df.file.filename, df.id))
+    session.commit()
   else:
     if ((i % 1000) == 0):
       logger.info("File %d/%d: present and correct" % (i, n))
