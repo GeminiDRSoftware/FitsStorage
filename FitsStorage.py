@@ -416,3 +416,38 @@ class Gmos(Base):
     self.readspeedmode = ad.readspeedmode()
     self.gainmode = ad.gainmode()
     ad.close()
+
+class Niri(Base):
+  """
+  This is the ORM object for the NIRI details
+  """
+  __tablename__ = 'niri'
+
+  id = Column(Integer, primary_key=True)
+  header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+  header = relation(Header, order_by=id)
+  disperser = Column(Text, index=True)
+  filtername = Column(Text, index=True)
+  readmode = Column(Text, index=True)
+  welldepthmode = Column(Text, index=True)
+  detsec = Column(Text, index=True)
+  coadds = Column(Integer, index=True)
+
+  def __init__(self, header):
+    self.header = header
+
+    # Populate from an astrodata object
+    self.populate()
+
+  def populate(self):
+    # Get an AstroData object on it
+    ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+    # Populate values
+    self.disperser = ad.disperser()
+    self.filtername = ad.filtername()
+    self.readmode = ad.readmode()
+    self.welldepthmode = ad.welldepthmode()
+    self.detsec = ad.detsec()
+    self.coadds = ad.coadds()
+    ad.close()
+
