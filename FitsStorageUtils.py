@@ -112,6 +112,11 @@ def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
       gmos = Gmos(header)
       session.add(gmos)
       session.commit()
+    if(inst=='NIRI'):
+      logger.debug("Adding new NIRI entry")
+      niri = Niri(header)
+      session.add(niri)
+      session.commit()
   
   session.commit();
 
