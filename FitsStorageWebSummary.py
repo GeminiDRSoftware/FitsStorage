@@ -972,8 +972,8 @@ def calibrations(req, type, selection):
           html += '<H4>ARC: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (arc.diskfile.file.filename, arc.diskfile.file.filename, arc.datalab, arc.datalab)
           if(arc.utdatetime and object.utdatetime):
             html += "<P>arc was taken %s object</P>" % interval_string(arc, object)
-            if(abs(interval_hours(arc, object)) > 120):
-              html += '<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>'
+            if(abs(interval_hours(arc, object)) > 24):
+              html += '<P><FONT COLOR="Red">WARNING - this is more than 1 day different</FONT></P>'
               warning = True
               arc_a=arc.id
           else:
