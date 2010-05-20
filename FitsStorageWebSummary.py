@@ -485,9 +485,15 @@ def gmoscal(req, selection):
      for key in keys:
        even = not even
        if(even):
-         cs = "tr_even"
+         if((all[key][0] > 0) and (all[key][1] == 0)):
+           cs = "tr_warneven"
+         else:
+           cs = "tr_even"
        else:
-         cs = "tr_odd"
+         if((all[key][0] > 0) and (all[key][1] == 0)):
+           cs = "tr_warnodd"
+         else:
+           cs = "tr_odd"
 
        req.write("<TR class=%s>" % cs)
        req.write("<TD>%d</TD>" % all[key][0])
@@ -990,8 +996,8 @@ def calibrations(req, type, selection):
             html += '<H4>ARC: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (arc.diskfile.file.filename, arc.diskfile.file.filename, arc.datalab, arc.datalab)
             if(arc.utdatetime and object.utdatetime):
               html += "<P>arc was taken %s object</P>" % interval_string(arc, object)
-              if(abs(interval_hours(arc, object)) > 120):
-                html += '<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>'
+              if(abs(interval_hours(arc, object)) > 24):
+                html += '<P><FONT COLOR="Red">WARNING - this is more than 1 day different</FONT></P>'
                 warning = True
             else:
               html += '<P><FONT COLOR="Red">Hmmm, could not determine time delta...</FONT></P>'
