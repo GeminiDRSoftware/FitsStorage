@@ -191,6 +191,7 @@ class Header(Base):
   rawgemqa = Column(Text, index=True)
   qastate = Column(Text)
   reduction = Column(Text)
+  fulltext = Column(Text)
 
   def __init__(self, diskfile):
     self.diskfile_id = diskfile.id
@@ -209,27 +210,36 @@ class Header(Base):
     ad=0
     try:
       ad=AstroData(fullpath, mode='readonly')
+      # Full header text first
+      self.fulltext = ""
+      self.fulltext += "Full Path Filename: " +  diskfile.file.fullpath() + "\n\n"
+      self.fulltext += "AstroData Types: " +str(ad.types) + "\n\n"
+      for i in range(len(ad.hdulist)):
+        self.fulltext += "\n--- HDU %s ---\n" % i
+        self.fulltext += str(ad.hdulist[i].header.ascardlist())
+        self.fulltext += '\n'
+
       # Basic data identification part
-      self.progid = ad.progid()
-      self.obsid = ad.obsid()
-      self.datalab = ad.datalab()
+      self.progid = ad.program_id()
+      self.obsid = ad.observation_id()
+      self.datalab = ad.data_label()
       self.telescope = ad.telescope()
       self.instrument = ad.instrument()
 
       # Date and times part
-      datestring = ad.utdate()
-      timestring = ad.uttime()
+      datestring = ad.ut_date()
+      timestring = ad.ut_time()
       if(datestring and timestring):
         datetime_string = "%s %s" % (datestring, timestring)
         self.utdatetime = dateutil.parser.parse(datetime_string)
-      localtime_string = ad.phuHeader('LT')
+      localtime_string = ad.local_time()
       if(localtime_string):
         # This is a bit of a hack so as to use the nice parser
         self.localtime = dateutil.parser.parse("2000-01-01 %s" % (localtime_string)).time()
 
       # Data Types
-      self.obstype = ad.obstype()
-      self.obsclass = ad.obsclass()
+      self.obstype = ad.observation_type()
+      self.obsclass = ad.observation_class()
       self.observer = ad.observer()
       self.ssa = ad.ssa()
       self.object = ad.object()
@@ -237,22 +247,19 @@ class Header(Base):
       self.dec = ad.dec()
       self.azimuth = ad.azimuth()
       self.elevation = ad.elevation()
-      self.crpa = ad.crpa()
-      airmass = ad.airmass()
-      if(airmass < 0):
-        airmass = None
-      self.airmass = airmass
-      self.rawiq = ad.rawiq()
-      self.rawcc = ad.rawcc()
-      self.rawwv = ad.rawwv()
-      self.rawbg = ad.rawbg()
-      self.rawpireq = ad.rawpireq()
-      self.rawgemqa = ad.rawgemqa()
-      self.filter = ad.filtername(pretty=True)
-      self.exptime = ad.exptime()
+      self.crpa = ad.cass_rotator_pa()
+      self.airmass = ad.airmass()
+      self.rawiq = ad.raw_iq()
+      self.rawcc = ad.raw_cc()
+      self.rawwv = ad.raw_wv()
+      self.rawbg = ad.raw_bg()
+      self.rawpireq = ad.raw_pi_requirement()
+      self.rawgemqa = ad.raw_gemini_qa()
+      self.filter = ad.filter_name(pretty=True)
+      self.exptime = ad.exposure_time()
       self.disperser = ad.disperser(pretty=True)
-      self.cwave = ad.cwave()
-      self.fpmask = ad.fpmask()
+      self.cwave = ad.central_wavelength()
+      self.fpmask = ad.focal_plane_mask()
 
       # Hack the AO header for now
       aofold = ad.phuHeader('AOFOLD')
@@ -299,7 +306,7 @@ class Header(Base):
         self.reduction = 'PROCESSED_BIAS'
   
       ad.close()
-    except:
+    except ZeroDivisionError:
       # Astrodata open or any of the above failed
       pass
 
@@ -409,12 +416,12 @@ class Gmos(Base):
     ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
     # Populate values
     self.disperser = ad.disperser()
-    self.filtername = ad.filtername()
-    self.xccdbin = ad.xccdbin()
-    self.yccdbin = ad.yccdbin()
-    self.amproa = ad.amproa()
-    self.readspeedmode = ad.readspeedmode()
-    self.gainmode = ad.gainmode()
+    self.filtername = ad.filter_name()
+    self.xccdbin = ad.detector_x_bin()
+    self.yccdbin = ad.detector_y_bin()
+    self.amproa = str(ad.amp_read_area(asList=True))
+    self.readspeedmode = ad.read_speed_mode()
+    self.gainmode = ad.gain_mode()
     ad.close()
 
 class Niri(Base):
@@ -444,10 +451,10 @@ class Niri(Base):
     ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
     # Populate values
     self.disperser = ad.disperser()
-    self.filtername = ad.filtername()
-    self.readmode = ad.readmode()
-    self.welldepthmode = ad.welldepthmode()
-    self.detsec = ad.detsec()
+    self.filtername = ad.filter_name()
+    self.readmode = ad.read_mode()
+    self.welldepthmode = ad.well_depth_mode()
+    self.detsec = ad.detector_section()
     self.coadds = ad.coadds()
     ad.close()
 
