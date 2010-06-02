@@ -376,6 +376,8 @@ def gmoscal(req, selection):
    title = "GMOS Cal (Imaging Twilight Flats and Biases) Report %s" % sayselection(selection)
    req.content_type = "text/html"
    req.write('<html><head><title>%s</title><link rel="stylesheet" href="/htmldocs/table.css"></head><body><h1>%s</h1>' % (title, title))
+   if(fits_system_status == 'development'):
+     req.write("<H1>This is the Development Server, not the operational system. If you're not sure why you're seeing this message, please consult PH</H1>")
  
    # If no date or daterange, look on endor or josie to get the last processing date
    if(('date' not in selection) and ('daterange' not in selection)):
@@ -514,7 +516,10 @@ def gmoscal(req, selection):
      # Now the BIAS report
      req.write('<H2>Biases</H2>')
 
-     query = session.query(func.count(1), cast(Header.utdatetime, sqlalchemy.types.DATE).label('utdate'), Gmos.xccdbin, Gmos.yccdbin, Gmos.amproa).select_from(join(Gmos, join(Header, join(DiskFile, File))))
+     tzoffset = datetime.timedelta(seconds=time.timezone)
+     oneday = datetime.timedelta(days=1)
+     offset = sqlalchemy.sql.expression.literal(tzoffset - oneday, sqlalchemy.types.Interval)
+     query = session.query(func.count(1), cast((Header.utdatetime + offset), sqlalchemy.types.DATE).label('utdate'), Gmos.xccdbin, Gmos.yccdbin, Gmos.amproa).select_from(join(Gmos, join(Header, join(DiskFile, File))))
 
      query = query.filter(DiskFile.canonical == True)
 
@@ -537,15 +542,14 @@ def gmoscal(req, selection):
        utdate = row[1]
        binning = "%dx%d" % (row[2], row[3])
        roi = row[4]
-       if(roi == "'EEV 9273-16-03, right':[1:2048,1:4608],'EEV 9273-20-04, right':[2049:4096,1:4608],'EEV 9273-20-03, left':[4097:6144,1:4608]"):
+       if(roi == '''["'EEV 9273-16-03, right':[1:2048,1:4608]", "'EEV 9273-20-04, right':[2049:4096,1:4608]", "'EEV 9273-20-03, left':[4097:6144,1:4608]"]'''):
          roi = "Full"
-       if(roi == "'EEV 9273-16-03, right':[1:2048,1792:2815],'EEV 9273-20-04, right':[2049:4096,1792:2815],'EEV 9273-20-03, left':[4097:6144,1792:2815]"):
+       if(roi == '''["'EEV 9273-16-03, right':[1:2048,1792:2815]", "'EEV 9273-20-04, right':[2049:4096,1792:2815]", "'EEV 9273-20-03, left':[4097:6144,1792:2815]"]'''):
          roi = "Cent"
-       if(roi == "'EEV 2037-06-03, left':[1:2048,1:4608],'EEV 8194-19-04, left':[2049:4096,1:4608],'EEV 8261-07-04, right':[4097:6144,1:4608]"):
+       if(roi == '''["'EEV 2037-06-03, left':[1:2048,1:4608]", "'EEV 8194-19-04, left':[2049:4096,1:4608]", "'EEV 8261-07-04, right':[4097:6144,1:4608]"]'''):
          roi = "Full"
-       if(roi == "'EEV 2037-06-03, left':[1:2048,1792:2815],'EEV 8194-19-04, left':[2049:4096,1792:2815],'EEV 8261-07-04, right':[4097:6144,1792:2815]"):
+       if(roi == '''["'EEV 2037-06-03, left':[1:2048,1792:2815]", "'EEV 8194-19-04, left':[2049:4096,1792:2815]", "'EEV 8261-07-04, right':[4097:6144,1792:2815]"]'''):
          roi = "Cent"
-
 
        if(utdate not in dict.keys()):
          dict[utdate]={}
