@@ -94,21 +94,9 @@ def handler(req):
     return retval
 
 
-  # This returns the full header of the filename that follows.
-  if(this ==  'fullheader'):
-    if(len(things)):
-      filename=things.pop(0)
-      filename=gemini_fitsfilename(filename)
-      retval = fullheader(req, filename)
-      return retval
-    else:
-      req.content_type="text/plain"
-      req.write("You must specify a filename, eg: /fullheader/N20091020S1234.fits\n")
-      return apache.OK
-
-  # This returns the fitsverify or wmdreport text from the database
+  # This returns the fitsverify, wmdreport or fullheader text from the database
   # you can give it either a diskfile_id or a filename
-  if(this == 'fitsverify' or this == 'wmdreport'):
+  if(this == 'fitsverify' or this == 'wmdreport' or this == 'fullheader'):
     if(len(things)==0):
       req.content_type="text/plain"
       req.write("You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
@@ -127,14 +115,19 @@ def handler(req):
           req.write("Cannot find file for: %s\n" % fnthing)
           return apache.OK
         file = query.one()
-        # Query diskfiles to find the diskfile for file that is present
-        query = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.file_id == file.id)
+        # Query diskfiles to find the diskfile for file that is canonical
+        query = session.query(DiskFile).filter(DiskFile.canonical == True).filter(DiskFile.file_id == file.id)
         diskfile = query.one()
         req.content_type="text/plain"
         if(this == 'fitsverify'):
           req.write(diskfile.fvreport)
         if(this == 'wmdreport'):
           req.write(diskfile.wmdreport)
+        if(this == 'fullheader'):
+          # Need to find the header associated with this diskfile
+          query = session.query(Header).filter(Header.diskfile_id == diskfile.id)
+          header = query.one()
+          req.write(header.fulltext)
         return apache.OK
       except IOError:
         pass
@@ -322,37 +315,6 @@ def getselection(things):
       else:
         selection['notrecognised'] = thing
   return selection
-
-# This reads the full fits header from the file currently on disk and
-# returns in in text form to the browser.
-# Arguments are the apache request object and the filename
-def fullheader(req, filename):
-  # If the filename is missing the .fits, then add it
-  filename=gemini_fitsfilename(filename)
-
-  # First search for a file object with the given filename
-  session=sessionfactory()
-  try:
-    query = session.query(File).filter(File.filename == filename)
-    if(query.count()==0):
-      req.content_type="text/plain"
-      req.write("Cannot find file for: %s\n" % filename)
-      return apache.HTTP_NOT_FOUND
-
-    file = query.one()
-    hdulist = pyfits.open(file.fullpath(), mode='readonly')
-    req.write("FITS File: %s (%s)\n\n" % (filename, file.fullpath()))
-
-    for i in range(len(hdulist)):
-      req.write("\n--- HDU %s ---\n" % (i))
-      req.write(str(hdulist[i].header.ascardlist()))
-      req.write('\n')
-    hdulist.close()
-    return apache.OK
-  except IOError:
-    pass
-  finally:
-    session.close()
 
 # Send usage message to browser
 def usagemessage(req):
