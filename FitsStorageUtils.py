@@ -223,7 +223,7 @@ def ingest_standards(session, filename):
   # Loop through entries, adding to table
   for line in list:
     if(line[0]!='#'):
-      fields = line.split()
+      fields = line.strip().split(',')
 
       # Create and populate a standard instance
       std = PhotStandard()
