@@ -230,7 +230,7 @@ def ingest_standards(session, filename):
       try:
         std.name = fields[0]
         std.field = fields[1]
-        std.ra = float(fields[2])
+        std.ra = 15.0*float(fields[2])
         std.dec = float(fields[3])
         if(fields[4]!='None'):
           std.u_mag = float(fields[4])
