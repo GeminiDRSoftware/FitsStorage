@@ -1,4 +1,4 @@
-#Name Field RA DEC u_mag v_mag g_mag r_mag i_mag z_mag y_mag j_mag k_mag lprime_mag m_mag
+#Name Field RA DEC u_mag v_mag g_mag r_mag i_mag z_mag y_mag j_mag h_mag k_mag lprime_mag m_mag
 fs35 35 18.4538 4.05261 None None None None None None None 12.188 11.835 11.741 None None
 101_207 SA101-330 9.96458 -0.793389 13.64336 12.419 12.6271 12.3124 12.1888 12.1508 None None None None None None
 101_262 SA101-330 9.93558 -0.497361 16.16337 14.295 14.64836 14.07004 13.8808 13.7992 None None None None None None
