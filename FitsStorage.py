@@ -458,3 +458,26 @@ class Niri(Base):
     self.coadds = ad.coadds()
     ad.close()
 
+class PhotStandard(Base):
+  """
+  This is the ORM class for the table holding the standard star list for the instrument monitoring
+  """
+  __tablename__ = 'standards'
+
+  id = Column(Integer, primary_key=True)
+  name = Column(Text)
+  field = Column(Text)
+  ra = Column(Numeric(precision=16, scale=12), index=True)
+  dec = Column(Numeric(precision=16, scale=12), index=True)
+  u_mag = Column(Numeric(precision=6, scale=4))
+  v_mag = Column(Numeric(precision=6, scale=4))
+  g_mag = Column(Numeric(precision=6, scale=4))
+  r_mag = Column(Numeric(precision=6, scale=4))
+  i_mag = Column(Numeric(precision=6, scale=4))
+  z_mag = Column(Numeric(precision=6, scale=4))
+  y_mag = Column(Numeric(precision=6, scale=4))
+  j_mag = Column(Numeric(precision=6, scale=4))
+  h_mag = Column(Numeric(precision=6, scale=4))
+  k_mag = Column(Numeric(precision=6, scale=4))
+  lprime_mag = Column(Numeric(precision=6, scale=4))
+  m_mag = Column(Numeric(precision=6, scale=4))
