@@ -61,7 +61,10 @@ try:
     # Request a queue entry
     iq = pop_ingestqueue(session)
 
-    if(not iq):
+    if(iq==None):
+      logger.info("Didn't get anything to ingest, retrying")
+      iq = pop_ingestqueue(session)
+    if(iq==None):
       logger.info("Nothing on queue. Waiting")
       time.sleep(10)
     else:
