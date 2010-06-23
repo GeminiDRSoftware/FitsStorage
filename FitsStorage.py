@@ -220,46 +220,130 @@ class Header(Base):
         self.fulltext += '\n'
 
       # Basic data identification part
-      self.progid = ad.program_id()
-      self.obsid = ad.observation_id()
-      self.datalab = ad.data_label()
-      self.telescope = ad.telescope()
-      self.instrument = ad.instrument()
+      try:
+        self.progid = ad.program_id()
+      except KeyError:
+        pass
+      try:
+        self.obsid = ad.observation_id()
+      except KeyError:
+        pass
+      try:
+        self.datalab = ad.data_label()
+      except KeyError:
+        pass
+      try:
+        self.telescope = ad.telescope()
+      except KeyError:
+        pass
+      try:
+        self.instrument = ad.instrument()
+      except KeyError:
+        pass
 
       # Date and times part
-      datestring = ad.ut_date()
-      timestring = ad.ut_time()
-      if(datestring and timestring):
-        datetime_string = "%s %s" % (datestring, timestring)
-        self.utdatetime = dateutil.parser.parse(datetime_string)
-      localtime_string = ad.local_time()
-      if(localtime_string):
-        # This is a bit of a hack so as to use the nice parser
-        self.localtime = dateutil.parser.parse("2000-01-01 %s" % (localtime_string)).time()
+      try:
+        datestring = ad.ut_date()
+        timestring = ad.ut_time()
+        if(datestring and timestring):
+          datetime_string = "%s %s" % (datestring, timestring)
+          self.utdatetime = dateutil.parser.parse(datetime_string)
+        localtime_string = ad.local_time()
+        if(localtime_string):
+          # This is a bit of a hack so as to use the nice parser
+          self.localtime = dateutil.parser.parse("2000-01-01 %s" % (localtime_string)).time()
+      except KeyError:
+        pass
 
       # Data Types
-      self.obstype = ad.observation_type()
-      self.obsclass = ad.observation_class()
-      self.observer = ad.observer()
-      self.ssa = ad.ssa()
-      self.object = ad.object()
-      self.ra = ad.ra()
-      self.dec = ad.dec()
-      self.azimuth = ad.azimuth()
-      self.elevation = ad.elevation()
-      self.crpa = ad.cass_rotator_pa()
-      self.airmass = ad.airmass()
-      self.rawiq = ad.raw_iq()
-      self.rawcc = ad.raw_cc()
-      self.rawwv = ad.raw_wv()
-      self.rawbg = ad.raw_bg()
-      self.rawpireq = ad.raw_pi_requirement()
-      self.rawgemqa = ad.raw_gemini_qa()
-      self.filter = ad.filter_name(pretty=True)
-      self.exptime = ad.exposure_time()
-      self.disperser = ad.disperser(pretty=True)
-      self.cwave = ad.central_wavelength()
-      self.fpmask = ad.focal_plane_mask()
+      try:
+        self.obstype = ad.observation_type()
+      except KeyError:
+        pass
+      try:
+        self.obsclass = ad.observation_class()
+      except KeyError:
+        pass
+      try:
+        self.observer = ad.observer()
+      except KeyError:
+        pass
+      try:
+        self.ssa = ad.ssa()
+      except KeyError:
+        pass
+      try:
+        self.object = ad.object()
+      except KeyError:
+        pass
+      try:
+        self.ra = ad.ra()
+      except KeyError:
+        pass
+      try:
+        self.dec = ad.dec()
+      except KeyError:
+        pass
+      try:
+        self.azimuth = ad.azimuth()
+      except KeyError:
+        pass
+      try:
+        self.elevation = ad.elevation()
+      except KeyError:
+        pass
+      try:
+        self.crpa = ad.cass_rotator_pa()
+      except KeyError:
+        pass
+      try:
+        self.airmass = ad.airmass()
+      except KeyError:
+        pass
+      try:
+        self.rawiq = ad.raw_iq()
+      except KeyError:
+        pass
+      try:
+        self.rawcc = ad.raw_cc()
+      except KeyError:
+        pass
+      try:
+        self.rawwv = ad.raw_wv()
+      except KeyError:
+        pass
+      try:
+        self.rawbg = ad.raw_bg()
+      except KeyError:
+        pass
+      try:
+        self.rawpireq = ad.raw_pi_requirement()
+      except KeyError:
+        pass
+      try:
+        self.rawgemqa = ad.raw_gemini_qa()
+      except KeyError:
+        pass
+      try:
+        self.filter = ad.filter_name(pretty=True)
+      except KeyError:
+        pass
+      try:
+        self.exptime = ad.exposure_time()
+      except KeyError:
+        pass
+      try:
+        self.disperser = ad.disperser(pretty=True)
+      except KeyError:
+        pass
+      try:
+        self.cwave = ad.central_wavelength()
+      except KeyError:
+        pass
+      try:
+        self.fpmask = ad.focal_plane_mask()
+      except KeyError:
+        pass
 
       # Hack the AO header for now
       aofold = ad.phuHeader('AOFOLD')
@@ -267,21 +351,8 @@ class Header(Base):
 
       # And the Spectroscopy header
       self.spectroscopy = False
-      if('NIFS' in ad.types):
+      if('SPECT' in ad.types):
         self.spectroscopy = True
-      if('NIRI_SPECT' in ad.types):
-        self.spectroscopy = True
-      if('GMOS_SPECT' in ad.types):
-        self.spectroscopy = True
-      if('PHOENIX_SPECT' in ad.types):
-        self.spectroscopy = True
-      if('GNIRS_SPECT' in ad.types):
-        self.spectroscopy = True
-  
-      # and michelle for what it's worth
-      if('MICHELLE' in ad.types):
-        if(ad.phuHeader('CAMERA') == 'spectroscopy'):
-          self.spectroscopy = True
   
       # Set the derived QA state
       self.qastate = "%s:%s" % (self.rawpireq, self.rawgemqa)
@@ -415,13 +486,34 @@ class Gmos(Base):
     # Get an AstroData object on it
     ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
     # Populate values
-    self.disperser = ad.disperser()
-    self.filtername = ad.filter_name()
-    self.xccdbin = ad.detector_x_bin()
-    self.yccdbin = ad.detector_y_bin()
-    self.amproa = str(ad.amp_read_area(asList=True))
-    self.readspeedmode = ad.read_speed_mode()
-    self.gainmode = ad.gain_mode()
+    try:
+      self.disperser = ad.disperser()
+    except KeyError:
+      pass
+    try:
+      self.filtername = ad.filter_name()
+    except KeyError:
+      pass
+    try:
+      self.xccdbin = ad.detector_x_bin()
+    except KeyError:
+      pass
+    try:
+      self.yccdbin = ad.detector_y_bin()
+    except KeyError:
+      pass
+    try:
+      self.amproa = str(ad.amp_read_area(asList=True))
+    except KeyError:
+      pass
+    try:
+      self.readspeedmode = ad.read_speed_mode()
+    except KeyError:
+      pass
+    try:
+      self.gainmode = ad.gain_mode()
+    except KeyError:
+      pass
     ad.close()
 
 class Niri(Base):
@@ -450,12 +542,30 @@ class Niri(Base):
     # Get an AstroData object on it
     ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
     # Populate values
-    self.disperser = ad.disperser()
-    self.filtername = ad.filter_name()
-    self.readmode = ad.read_mode()
-    self.welldepthmode = ad.well_depth_mode()
-    self.detsec = ad.detector_section()
-    self.coadds = ad.coadds()
+    try:
+      self.disperser = ad.disperser()
+    except KeyError:
+      pass
+    try:
+      self.filtername = ad.filter_name()
+    except KeyError:
+      pass
+    try:
+      self.readmode = ad.read_mode()
+    except KeyError:
+      pass
+    try:
+      self.welldepthmode = ad.well_depth_mode()
+    except KeyError:
+      pass
+    try:
+      self.detsec = ad.detector_section()
+    except KeyError:
+      pass
+    try:
+      self.coadds = ad.coadds()
+    except KeyError:
+      pass
     ad.close()
 
 class PhotStandard(Base):
