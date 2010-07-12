@@ -430,6 +430,9 @@ def gmoscal(req, selection):
          selection['qastate']='Win'
        else:
          selection['qastate']='Pass'
+         # Only select full frame dayCals
+         query = query.filter(or_(Gmos.amproa == "'EEV 9273-16-03, right':[1:2048,1:4608],'EEV 9273-20-04, right':[2049:4096,1:4608],'EEV 9273-20-03, left':[4097:6144,1:4608]", Gmos.amproa == "'EEV 2037-06-03, left':[1:2048,1:4608],'EEV 8194-19-04, left':[2049:4096,1:4608],'EEV 8261-07-04, right':[4097:6144,1:4608]"))
+
        query = queryselection(query, selection)
   
        # Knock out ENG programs
