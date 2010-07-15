@@ -496,23 +496,23 @@ class Gmos(Base):
       pass
     try:
       self.xccdbin = ad.detector_x_bin()
-    except KeyError, IndexError:
+    except (KeyError, IndexError):
       pass
     try:
       self.yccdbin = ad.detector_y_bin()
-    except KeyError, IndexError:
+    except (KeyError, IndexError):
       pass
     try:
       self.amproa = str(ad.amp_read_area(asList=True))
-    except KeyError, IndexError:
+    except (KeyError, IndexError):
       pass
     try:
       self.readspeedmode = ad.read_speed_mode()
-    except KeyError, IndexError:
+    except (KeyError, IndexError):
       pass
     try:
       self.gainmode = ad.gain_mode()
-    except KeyError, IndexError:
+    except (KeyError, IndexError):
       pass
     ad.close()
 
