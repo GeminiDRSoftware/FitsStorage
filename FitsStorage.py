@@ -377,7 +377,7 @@ class Header(Base):
         self.reduction = 'PROCESSED_BIAS'
   
       ad.close()
-    except ZeroDivisionError:
+    except:
       # Astrodata open or any of the above failed
       pass
 
@@ -461,7 +461,7 @@ class TapeFile(Base):
 class Gmos(Base):
   """
   This is the ORM object for the GMOS details.
-  This is used for both GMOS-N and GMOS-S\
+  This is used for both GMOS-N and GMOS-S
   """
   __tablename__ = 'gmos'
 
@@ -484,37 +484,41 @@ class Gmos(Base):
 
   def populate(self):
     # Get an AstroData object on it
-    ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
-    # Populate values
     try:
-      self.disperser = ad.disperser()
-    except KeyError:
+      ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      # Populate values
+      try:
+        self.disperser = ad.disperser()
+      except KeyError:
+        pass
+      try:
+        self.filtername = ad.filter_name()
+      except KeyError:
+        pass
+      try:
+        self.xccdbin = ad.detector_x_bin()
+      except (KeyError, IndexError):
+        pass
+      try:
+        self.yccdbin = ad.detector_y_bin()
+      except (KeyError, IndexError):
+        pass
+      try:
+        self.amproa = str(ad.amp_read_area(asList=True))
+      except (KeyError, IndexError):
+        pass
+      try:
+        self.readspeedmode = ad.read_speed_mode()
+      except (KeyError, IndexError):
+        pass
+      try:
+        self.gainmode = ad.gain_mode()
+      except (KeyError, IndexError):
+        pass
+      ad.close()
+    except:
+      # Astrodata open failed
       pass
-    try:
-      self.filtername = ad.filter_name()
-    except KeyError:
-      pass
-    try:
-      self.xccdbin = ad.detector_x_bin()
-    except (KeyError, IndexError):
-      pass
-    try:
-      self.yccdbin = ad.detector_y_bin()
-    except (KeyError, IndexError):
-      pass
-    try:
-      self.amproa = str(ad.amp_read_area(asList=True))
-    except (KeyError, IndexError):
-      pass
-    try:
-      self.readspeedmode = ad.read_speed_mode()
-    except (KeyError, IndexError):
-      pass
-    try:
-      self.gainmode = ad.gain_mode()
-    except (KeyError, IndexError):
-      pass
-    ad.close()
 
 class Niri(Base):
   """
@@ -540,33 +544,37 @@ class Niri(Base):
 
   def populate(self):
     # Get an AstroData object on it
-    ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
-    # Populate values
     try:
-      self.disperser = ad.disperser()
-    except KeyError:
+      ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      # Populate values
+      try:
+        self.disperser = ad.disperser()
+      except KeyError:
+        pass
+      try:
+        self.filtername = ad.filter_name()
+      except KeyError:
+        pass
+      try:
+        self.readmode = ad.read_mode()
+      except KeyError:
+        pass
+      try:
+        self.welldepthmode = ad.well_depth_mode()
+      except KeyError:
+        pass
+      try:
+        self.detsec = ad.detector_section()
+      except KeyError:
+        pass
+      try:
+        self.coadds = ad.coadds()
+      except KeyError:
+        pass
+      ad.close()
+    except:
+      # Astrodata open failed
       pass
-    try:
-      self.filtername = ad.filter_name()
-    except KeyError:
-      pass
-    try:
-      self.readmode = ad.read_mode()
-    except KeyError:
-      pass
-    try:
-      self.welldepthmode = ad.well_depth_mode()
-    except KeyError:
-      pass
-    try:
-      self.detsec = ad.detector_section()
-    except KeyError:
-      pass
-    try:
-      self.coadds = ad.coadds()
-    except KeyError:
-      pass
-    ad.close()
 
 class PhotStandard(Base):
   """
