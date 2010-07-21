@@ -944,6 +944,9 @@ def calibrations(req, type, selection):
     if(openquery(selection)):
       query = query.limit(2500)
 
+    # Order by date, most recent first
+    query = query.order_by(desc(Header.utdatetime))
+
     # OK, do the query
     headers = query.all()
 
