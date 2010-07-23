@@ -23,10 +23,10 @@ missing = int(cremissing.search(html).group(1))
 
 mailhost = "smtp.gemini.edu"
 fromaddr = "fitsdata@gemini.edu"
-toaddr = "phirst@gemini.edu"
+toaddr = "gnda@gemini.edu"
 
 if(missing==0):
-  subject = "No missing calibrations this week, Yay!"
+  subject = "No missing calibrations this week. Yay!"
 else:
   subject = "MISSING CALIBRATIONS: %d missing arcs" % missing
 
