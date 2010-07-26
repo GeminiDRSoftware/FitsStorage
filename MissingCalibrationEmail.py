@@ -8,17 +8,20 @@ from optparse import OptionParser
 
 parser = OptionParser()
 parser.add_option("--emailto", action="store", dest="toaddr", default="gnda@gemini.edu", help="Email Address to send to")
-parser.add_option("--emailfrom", action="store", dest="fromaddr", default="fitsdata@gemini.edu", help="Email Address to send from")
+parser.add_option("--emailfrom", action="store", dest="fromaddr", default="Missing GMOS Arc Check <fitsdata@gemini.edu>", help="Email Address to send from")
 parser.add_option("--replyto", action="store", dest="replyto", default="gnda@gemini.edu", help="Set a Reply-To email header")
+parser.add_option("--ndays", action="store", type="int", dest="ndays", default=14, help="Number of days to query")
+parser.add_option("--skipdays", action="store", type="int", dest="skipdays", default=4, help="Number of days ago to start query from")
+parser.add_option("--httpserver", action="store", dest="httpserver", default="fits", help="hostname of FitsStorage http server to query")
 (options, args) = parser.parse_args()
 
 # Work out the date range to query
 utcnow = datetime.datetime.utcnow()
-delta=datetime.timedelta(days=7)
-utcthen = utcnow - delta
-daterange="%s-%s" % (utcthen.date().strftime("%Y%m%d"), utcnow.date().strftime("%Y%m%d"))
+utcend = utcnow - datetime.timedelta(days=options.skipdays)
+utcstart = utcend - datetime.timedelta(days=options.ndays)
+daterange="%s-%s" % (utcstart.date().strftime("%Y%m%d"), utcend.date().strftime("%Y%m%d"))
 
-url = "http://fits/calibrations/GMOS/Win/%s/arc/warnings" % daterange
+url = "http://%s/calibrations/GMOS/Win/%s/arc/warnings" % (options.httpserver, daterange)
 
 f = urllib2.urlopen(url)
 html = f.read()
