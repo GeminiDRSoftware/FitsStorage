@@ -308,6 +308,9 @@ def getselection(things):
     if(thing=='Pass' or thing=='Usable' or thing=='Fail' or thing=='Win'):
       selection['qastate']=thing
       recognised=True
+    if(thing=='AO' or thing=='NOTAO'):
+      selection['ao']=thing
+      recognised=True
 
     if(not recognised):
       if('notrecognised' in selection):
