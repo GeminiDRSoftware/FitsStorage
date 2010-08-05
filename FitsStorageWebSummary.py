@@ -1193,6 +1193,11 @@ def sayselection(selection):
       string += "; QA State: Win (Pass or Usable)"
     else:
       string += "; QA State: %s" % selection['qastate']
+  if('ao' in selection):
+    if(selection['ao']=='AO'):
+      string += "; Adaptive Optics in beam"
+    else:
+      string += "; No Adaptive Optics in beam"
 
   if('notrecognised' in selection):
     string += ". WARNING: I didn't understand these (case-sensitive) words: %s" % selection['notrecognised']
@@ -1288,6 +1293,12 @@ def queryselection(query, selection):
       query = query.filter(or_(Header.qastate=='Pass', Header.qastate=='Usable'))
     else:
       query = query.filter(Header.qastate==selection['qastate'])
+
+  if('ao' in selection):
+    if(selection['ao']=='AO'):
+      query = query.filter(Header.adaptive_optics==True)
+    else:
+      query = query.filter(Header.adaptive_optics==False)
 
   return query
 
