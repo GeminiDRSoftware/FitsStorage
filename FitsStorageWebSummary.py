@@ -144,7 +144,7 @@ def list_headers(session, selection, orderby):
   # and limit the number of responses
   if(openquery(selection)):
     query = query.order_by(desc(File.filename))
-    query = query.limit(2500)
+    query = query.limit(1000)
   else:
     # By default we should order by filename
     query = query.order_by(File.filename)
@@ -942,7 +942,7 @@ def calibrations(req, type, selection):
 
     # If openquery, limit number of responses
     if(openquery(selection)):
-      query = query.limit(2500)
+      query = query.limit(1000)
 
     # Order by date, most recent first
     query = query.order_by(desc(Header.utdatetime))
