@@ -162,33 +162,27 @@ def pop_ingestqueue(session):
   delete all other entries for the same filename.
   """
 
-  # Ensure nothing outstanding
-  session.flush()
-
-  # Form the query, with for_update which adds FOR UPDATE to the SQL query. The resulting lock ends when the transaction ends
+  # Form the query, with for_update which adds FOR UPDATE to the SQL query. The resulting lock ends when the transaction gets committed
   query=session.query(IngestQueue).with_lockmode('update').filter(IngestQueue.inprogress == False).order_by(desc(IngestQueue.filename))
 
   # Try and get a value. If we fail, there are none, so bail out
-  try:
-    iq = query.first()
-  except NoResultFound:
+  iq = query.first()
+  if(iq == None):
     logger.debug("No item to pop on ingestqueue")
-    iq=None
-
-  if(iq):
+  else:
+    logger.debug("Popped id %d from ingestqueue" % iq.id)
+    # Set this entry to in progres and flush to the DB.
     iq.inprogress=True
+    session.flush()
 
-    # Find other instances
+    # Find other instances and delete them
     others = session.query(IngestQueue).filter(IngestQueue.inprogress == False).filter(IngestQueue.filename==iq.filename).all()
     for o in others:
+      logger.debug("Deleting duplicate file entry at ingestqueue id %d" % o.id)
       session.delete(o)
 
-  # And we're done
+  # And we're done, commit the transaction and release the update lock
   session.commit()
-  if(iq):
-    logger.debug("Popped id %d from ingestqueue" % iq.id)
-  else:
-    logger.debug("Popped null entry from ingest queue")
   return iq
   
 def addto_ingestqueue(session, filename, path):
