@@ -69,7 +69,15 @@ try:
       time.sleep(10)
     else:
       logger.info("Ingesting %s, (%d in queue)" % (iq.filename, ingestqueue_length(session)))
-      ingest_file(session, iq.filename, iq.path, options.force_crc, options.skip_fv, options.skip_wmd)
+      session.begin_nested()
+      try:
+        ingest_file(session, iq.filename, iq.path, options.force_crc, options.skip_fv, options.skip_wmd)
+        session.commit()
+      except:
+        logger.info("Problem Ingesting File %s - Rolling back" % iq.filename)
+        session.rollback()
+        session.commit()
+        raise
       logger.debug("Deleteing ingestqueue id %d" % iq.id)
       session.delete(iq)
       session.commit()
