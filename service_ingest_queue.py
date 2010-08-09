@@ -74,7 +74,7 @@ try:
         ingest_file(session, iq.filename, iq.path, options.force_crc, options.skip_fv, options.skip_wmd)
         session.commit()
       except:
-        logger.info("Problem Ingesting File %s - Rolling back" % iq.filename)
+        logger.info("Problem Ingesting File - Rolling back" )
         session.rollback()
         session.commit()
         raise
