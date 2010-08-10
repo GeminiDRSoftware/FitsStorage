@@ -39,10 +39,10 @@ def summary(req, type, selection, orderby):
     req.write('<h1>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h1>')
   req.write("<H1>%s</H1>" % (title))
 
-  # If this is a diskfiles summary, select even ones that are not present
+  # If this is a diskfiles summary, select even ones that are not canonical
   if(type != 'diskfiles'):
-    # Usually, we want to only select headers with diskfiles that are present
-    selection['present']=True
+    # Usually, we want to only select headers with diskfiles that are canonical
+    selection['canonical']=True
 
   session = sessionfactory()
   try:
@@ -1218,7 +1218,7 @@ def queryselection(query, selection):
     query = query.filter(DiskFile.present == selection['present'])
 
   if('canonical' in selection):
-    query = query.filter(DiskFile.present == selection['canonical'])
+    query = query.filter(DiskFile.canonical == selection['canonical'])
 
   if('progid' in selection):
     query = query.filter(Header.progid==selection['progid'])
