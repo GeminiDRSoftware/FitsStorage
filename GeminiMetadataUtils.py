@@ -183,11 +183,11 @@ def gmos_fpmask(string):
 
   return retary
  
-fitsfilenamecre = re.compile('^([NS])(20\d\d)([01]\d[0123]\d)(S)(\d\d\d\d)(.fits)*$')
+fitsfilenamecre = re.compile('^([NS])(20\d\d)([01]\d[0123]\d)(S)(\d\d\d\d)(\w*)(.fits)?$')
 def gemini_fitsfilename(string):
   """
   A utility function matching Gemini raw data fits filenames
-  If the string argument matches the format of a gemini raw
+  If the string argument matches the format of a gemini
   data filename, with or without the .fits on the end, this
   function will return the filename, with the .fits on the end.
 
@@ -197,7 +197,7 @@ def gemini_fitsfilename(string):
   m = fitsfilenamecre.match(string)
   if(m):
     # Yes, but does it not have a .fits?
-    if(m.groups()[5] == None):
+    if(m.groups()[6] == None):
       retval = "%s.fits" % string
     else:
       retval = string
