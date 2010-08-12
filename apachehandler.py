@@ -90,7 +90,19 @@ def handler(req):
     # If we want other arguments like order by
     # we should parse them here
 
-    retval = calibrations(req, this, selection)
+    retval = calibrations(req, selection)
+    return retval
+
+
+  # The calmgr handler
+  if(this == 'calmgr'):
+    # Parse the rest of the URL.
+    selection=getselection(things)
+
+    # If we want other arguments like order by
+    # we should parse them here
+
+    retval = calmgr(req, selection)
     return retval
 
 
@@ -178,7 +190,7 @@ def handler(req):
           return apache.HTTP_NOT_FOUND
         filename=things.pop(0)
         filename = gemini_fitsfilename(filename)
-        if(fitsfilename):
+        if(filename):
           pass
         else:
           #req.content_type="text/plain"
