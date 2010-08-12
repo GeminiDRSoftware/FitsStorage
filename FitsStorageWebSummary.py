@@ -902,11 +902,100 @@ def tapefile(req, things):
   finally:
     session.close()
 
-def calibrations(req, type, selection):
+def calmgr(req, selection):
   """
-  This is the calibrations generator.
-  req is an apache request handler request object
+  This is the calibration manager. It implements a machine readable calibration association server
+  req is an apache request handler object
   type is the summary type required
+  selection is an array of items to select on, simply passed through to the webhdrsummary function
+    - in this case, this will usually be a datalabel or filename
+
+  returns an apache request status code
+  """
+  req.content_type = "text/xml"
+  req.write('<?xml version="1.0" ?>')
+  req.write("<calibration_associations>\n")
+
+  session = sessionfactory()
+  try:
+    # OK, find the target files
+    # The Basic Query
+    query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
+
+    # Only the canonical versions
+    selection['canonical'] = True
+
+    query = queryselection(query, selection)
+
+    # Knock out the FAILs
+    query = query.filter(Header.rawgemqa!='BAD')
+
+    # Order by date, most recent first
+    query = query.order_by(desc(Header.utdatetime))
+
+    # If openquery, limit number of responses
+    if(openquery(selection)):
+      query = query.limit(1000)
+
+
+    # OK, do the query
+    headers = query.all()
+
+    # Was the request for only one type of calibration?
+    caltype=''
+    if('caltype' in selection):
+      caltype = selection['caltype']
+    else:
+      req.write("<!-- Error: No calibration type specified-->\n")
+      return apache.OK
+
+    # Did we get anything?
+    if(len(headers)>0):
+      # Loop through targets frames we found
+      for object in headers:
+        req.write("<dataset>\n")
+        req.write("<datalabel>%s</datalabel>\n" % object.datalab)
+        req.write("<filename>%s</filename>\n" % object.diskfile.file.filename)
+        req.write("<ccrc>%s</ccrc>\n" % object.diskfile.ccrc)
+
+        # Get a cal object for this target data
+        c = FitsStorageCal.get_cal_object(session, None, header=object)
+   
+        # Call the appropriate method depending what calibration type we want
+        cal = None
+        if(caltype == 'processed_bias'):
+          cal = c.processed_bias()
+        if(caltype == 'processed_flat'):
+          cal = c.processed_flat()
+
+        if(cal):
+          # OK, say what we found
+          req.write("<calibration>\n")
+          req.write("<caltype>%s</caltype>\n" % caltype)
+          req.write("<datalabel>%s</datalabel>\n" % cal.datalab)
+          req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
+          req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
+          req.write("<url>http://%s/file/%s</url>\n" % (req.server.server_hostname, cal.diskfile.file.filename))
+          req.write("</calibration>\n")
+        else:
+          req.write("<!-- NO CALIBRATION FOUND-->\n")
+        req.write("</dataset>\n")
+    else:
+      req.write("<!-- COULD NOT LOCATE METADATA FOR DATASET -->\n")
+
+    req.write("</calibration_associations>\n")
+    return apache.OK
+  except IOError:
+    pass
+  finally:
+    session.close()
+
+
+def calibrations(req, selection):
+  """
+  This is the calibrations generator. It implements a human readable calibration association server
+
+  req is an apache request handler request object
   selection is an array of items to select on, simply passed
     through to the webhdrsummary function
 
