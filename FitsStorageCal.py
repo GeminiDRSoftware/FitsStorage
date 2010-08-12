@@ -159,6 +159,61 @@ class CalibrationGMOS(Calibration):
 
     return query.first()
 
+  def processed_bias(self):
+    query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
+    query = query.filter(Header.obstype=='BIAS')
+    query = query.filter(Header.reduction=='PROCESSED_BIAS')
+
+    # Search only the canonical (latest) entries
+    query = query.filter(DiskFile.canonical==True)
+
+    # Knock out the FAILs
+    query = query.filter(Header.rawgemqa!='BAD')
+
+    # Must totally match instrument, xccdbin, yccdbin, readspeedmode, gainmode
+    query = query.filter(Header.instrument==self.header.instrument)
+    query = query.filter(Gmos.xccdbin==self.gmos.xccdbin).filter(Gmos.yccdbin==self.gmos.yccdbin)
+    query = query.filter(Gmos.readspeedmode==self.gmos.readspeedmode).filter(Gmos.gainmode==self.gmos.gainmode)
+
+    # The science amproa must be equal or substring of the bias amproa
+    query = query.filter(Gmos.amproa.like('%'+self.gmos.amproa+'%'))
+
+    # Order by absolute time separation. Maybe there's a better way to do this
+    query = query.order_by("ABS(EXTRACT(EPOCH FROM (header.utdatetime - :utdatetime_x)))").params(utdatetime_x= self.header.utdatetime)
+
+    # For now, we only want one result - the closest in time
+    query = query.limit(1)
+
+    return query.first()
+
+  def processed_flat(self):
+    query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
+    query = query.filter(Header.reduction=='PROCESSED_FLAT')
+
+    # Search only the canonical (latest) entries
+    query = query.filter(DiskFile.canonical==True)
+
+    # Knock out the FAILs
+    query = query.filter(Header.rawgemqa!='BAD')
+
+    # Must totally match instrument, xccdbin, yccdbin, filter
+    query = query.filter(Header.instrument==self.header.instrument)
+    query = query.filter(Gmos.xccdbin==self.gmos.xccdbin).filter(Gmos.yccdbin==self.gmos.yccdbin)
+    query = query.filter(Gmos.filtername==self.gmos.filtername)
+    #query = query.filter(Gmos.readspeedmode==self.gmos.readspeedmode).filter(Gmos.gainmode==self.gmos.gainmode)
+
+    # The science amproa must be equal or substring of the flat amproa
+    query = query.filter(Gmos.amproa.like('%'+self.gmos.amproa+'%'))
+
+    # Order by absolute time separation. Maybe there's a better way to do this
+    query = query.order_by("ABS(EXTRACT(EPOCH FROM (header.utdatetime - :utdatetime_x)))").params(utdatetime_x= self.header.utdatetime)
+
+    # For now, we only want one result - the closest in time
+    query = query.limit(1)
+
+    return query.first()
+
+
 class CalibrationNIRI(Calibration):
   """
   This class implements a calibration manager for NIRI.
