@@ -7,6 +7,7 @@ ad = AstroData("/net/wikiwiki/dataflow/N20100820S0241.fits")
 
 
 desc_dict = {'instrument':ad.instrument(),
+             'data_label':ad.data_label(),
              'detector_x_bin':ad.detector_x_bin(),
              'detector_y_bin':ad.detector_y_bin(),
              'read_speed_mode':ad.read_speed_mode(),
@@ -23,7 +24,7 @@ sequence = (('descriptors', desc_dict), ('types', type_list))
 
 postdata = urllib.urlencode(sequence)
 
-url = "http://hbffits1/calmgr/"
+url = "http://hbffits1/calmgr/processed_bias/"
 
 u = urllib.urlopen(url, postdata)
 
