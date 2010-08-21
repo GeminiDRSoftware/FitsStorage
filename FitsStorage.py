@@ -355,17 +355,10 @@ class Header(Base):
         self.spectroscopy = True
   
       # Set the derived QA state
-      self.qastate = "%s:%s" % (self.rawpireq, self.rawgemqa)
-      if((self.rawpireq == 'UNKNOWN') and (self.rawgemqa == 'UNKNOWN')):
-        self.qastate = 'Undefined'
-      if((self.rawpireq == 'YES') and (self.rawgemqa == 'USABLE')):
-        self.qastate = 'Pass'
-      if((self.rawpireq == 'NO') and (self.rawgemqa == 'USABLE')):
-        self.qastate = 'Usable'
-      if((self.rawpireq == 'NO') and (self.rawgemqa == 'BAD')):
-        self.qastate = 'Fail'
-      if((self.rawpireq == 'CHECK') and (self.rawgemqa == 'CHECK')):
-        self.qastate = 'CHECK'
+      try:
+        self.qastate = ad.qa_state()
+      except KeyError:
+        pass
 
       # Set the reduction state
       self.reduction = 'RAW'
