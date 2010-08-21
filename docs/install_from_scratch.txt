@@ -28,6 +28,10 @@ sudo chown phirst /opt/mod_python /opt/sqlalchemy /opt/pyinotify
 cd /opt/FitsStorage
 svn checkout http://scisoft/svn/FitsStorage/trunk .
 
+gcc invoke.c -o invoke
+chmod oug+x invoke
+chmod ug+s invoke
+
 * Log out and back in as yourself (phirst)
 
 cd /opt/mod_python/
