@@ -16,7 +16,7 @@ import re
 
 from sqlalchemy import Table, Column, MetaData, ForeignKey
 from sqlalchemy import desc, func
-from sqlalchemy import Integer, String, Boolean, Text, DateTime, Time, Numeric
+from sqlalchemy import Integer, String, Boolean, Text, DateTime, Time, Date, Numeric
 from sqlalchemy.databases.postgres import PGBigInteger
 
 from sqlalchemy.orm import relation, backref, join
@@ -190,6 +190,7 @@ class Header(Base):
   rawpireq = Column(Text)
   rawgemqa = Column(Text, index=True)
   qastate = Column(Text)
+  release = Column(Date(TimeZone=False))
   reduction = Column(Text)
   fulltext = Column(Text)
 
@@ -354,11 +355,19 @@ class Header(Base):
       if('SPECT' in ad.types):
         self.spectroscopy = True
   
-      # Set the derived QA state
+      # Set the derived QA state and release date
       try:
         self.qastate = ad.qa_state()
       except KeyError:
         pass
+      try:
+        reldatestring = ad.release_date()
+        if(reldatestring):
+          reldts = "%s 00:00:00" % reldatestring
+          self.release = dateutil.parser.parse(reldts).date()
+      except KeyError:
+        pass
+
 
       # Set the reduction state
       self.reduction = 'RAW'
