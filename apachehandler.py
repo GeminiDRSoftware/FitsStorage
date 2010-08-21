@@ -177,47 +177,58 @@ def handler(req):
 
   # This is the fits file server
   if(this == 'file'):
-    # First, see if we have a valid authorization cookie
-    cookies = Cookie.get_cookies(req)
-    if(cookies.has_key('gemini_fits_authorization')):
-      auth = cookies['gemini_fits_authorization'].value
-      if(auth=='good_to_go'):
-        # Authenticated OK, find the file in the database
-        # Did we get a valid filename?
-        if(len(things)==0):
-          #req.content_type="text/plain"
-          #req.write("You must specify a filename eg: /fits/N20091020S1234.fits\n")
-          return apache.HTTP_NOT_FOUND
-        filename=things.pop(0)
-        filename = gemini_fitsfilename(filename)
-        if(filename):
-          pass
-        else:
-          #req.content_type="text/plain"
-          #req.write("You must specify a filename eg: /fits/N20091020S1234.fits\n")
-          return apache.HTTP_NOT_FOUND
-        session = sessionfactory()
-        try:
-          query=session.query(File).filter(File.filename==filename)
-          if(query.count()==0):
-            req.content_type="text/plain"
-            req.write("Cannot find file for: %s\n" % filename)
-            return apache.HTTP_NOT_FOUND
-          file=query.one()
+    # OK, first find the file they asked for in the database
+    # did we get a valid filename?
+    if(len(things)==0):
+      return apache.HTTP_NOT_FOUND
+    filename=things.pop(0)
+    filename = gemini_fitsfilename(filename)
+    if(filename):
+      pass
+    else:
+      return apache.HTTP_NOT_FOUND
+    session = sessionfactory()
+    try:
+      query=session.query(File).filter(File.filename==filename)
+      if(query.count()==0):
+        return apache.HTTP_NOT_FOUND
+      file=query.one()
+      # OK, we should have the file record now.
+      # Next, find the canonical diskfile for it
+      query=session.query(DiskFile).filter(DiskFile.canonical==True).filter(DiskFile.file_id==file.id)
+      diskfile = query.one()
+      # And now find the header record...
+      query=session.query(Header).filter(Header.diskfile_id==diskfile.id)
+      header=query.one()
+
+      # OK, now figure out if the data are public
+      today = datetime.datetime.utcnow().date()
+      canhaveit = False
+
+      if((header.release) and (today > header.release)):
+        # Yes, the data are public
+        canhaveit = True
+      else:
+        # No, the data are not public. See if we got the magic cookie
+        cookies = Cookie.get_cookies(req)
+        if(cookies.has_key('gemini_fits_authorization')):
+          auth = cookies['gemini_fits_authorization'].value
+          if(auth=='good_to_go'):
+            # OK, we got the magic cookie
+            canhaveit = True
+
+      if(canhaveit):
+        # Send them the data
           req.sendfile(file.fullpath())
           return apache.OK
-        except IOError:
-          pass
-        finally:
-          session.close()
       else:
-        #req.content_type="text/plain"
-        #req.write("Authorization not valid\n")
+        # Refuse to send data
         return apache.HTTP_FORBIDDEN
-    else:
-      #req.content_type="text/plain"
-      #req.write("Authorization data missing")
-      return apache.HTTP_FORBIDDEN
+
+    except IOError:
+      pass
+    finally:
+      session.close()
 
   # This is the projects observed feature
   if(this == "programsobserved"):
