@@ -413,11 +413,11 @@ class Tape(Base):
 
   id = Column(Integer, primary_key=True)
   label = Column(Text, nullable=False, index=True)
-  firstwrite = Column(DateTime)
-  lastwrite = Column(DateTime)
-  lastverified = Column(DateTime)
+  firstwrite = Column(DateTime(timezone=True))
+  lastwrite = Column(DateTime(timezone=True))
+  lastverified = Column(DateTime(timezone=True))
   location = Column(Text)
-  lastmoved = Column(DateTime)
+  lastmoved = Column(DateTime(timezone=True))
   active = Column(Boolean)
   fate = Column(Text)
 
@@ -437,8 +437,8 @@ class TapeWrite(Base):
   tape_id = Column(Integer, ForeignKey('tape.id'), nullable=False, index=True)
   tape = relation(Tape, order_by=id)
   filenum = Column(Integer)
-  startdate = Column(DateTime)
-  enddate = Column(DateTime)
+  startdate = Column(DateTime(timezone=True))
+  enddate = Column(DateTime(timezone=True))
   suceeded = Column(Boolean)
   size = Column(Integer)
   beforestatus = Column(Text)
@@ -455,10 +455,13 @@ class TapeFile(Base):
   __tablename__ = 'tapefile'
 
   id = Column(Integer, primary_key=True)
-  diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
-  diskfile = relation(DiskFile, order_by=id)
   tapewrite_id = Column(Integer, ForeignKey('tapewrite.id'), nullable=False)
   tapewrite = relation(TapeWrite, order_by=id)
+  filename = Column(Text)
+  size = Column(Integer)
+  ccrc = Column(Text)
+  md5sum = Column(Text)
+  lastmod = Column(DateTime(timezone=True))
 
 class Gmos(Base):
   """
