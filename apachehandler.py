@@ -105,6 +105,11 @@ def handler(req):
     retval = calmgr(req, selection)
     return retval
 
+  # The processed_cal upload server
+  if(this == 'upload_processed_cal'):
+    retval = upload_processed_cal(req, things[0])
+    return retval
+    
 
   # This returns the fitsverify, wmdreport or fullheader text from the database
   # you can give it either a diskfile_id or a filename
