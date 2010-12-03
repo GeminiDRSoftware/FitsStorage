@@ -9,6 +9,8 @@ from FitsStorage import *
 from GeminiMetadataUtils import *
 from mod_python import apache, util
 import FitsStorageCal
+import FitsStorageConfig
+import urllib
 
 def summary(req, type, selection, orderby):
   """
@@ -910,81 +912,142 @@ def calmgr(req, selection):
   selection is an array of items to select on, simply passed through to the webhdrsummary function
     - in this case, this will usually be a datalabel or filename
 
+  if this code is called via an HTTP POST request rather than a GET, it expects to
+  receive a string representation of a python dictionary containing descriptor values
+  and a string representation of a python array containg astrodata types
+  and it will use this data as the science target details with which to associate 
+  the calibration.
+
   returns an apache request status code
   """
-  req.content_type = "text/xml"
-  req.write('<?xml version="1.0" ?>')
-  req.write("<calibration_associations>\n")
-
   session = sessionfactory()
   try:
-    # OK, find the target files
-    # The Basic Query
-    query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
-
-    # Only the canonical versions
-    selection['canonical'] = True
-
-    query = queryselection(query, selection)
-
-    # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
-
-    # Order by date, most recent first
-    query = query.order_by(desc(Header.utdatetime))
-
-    # If openquery, limit number of responses
-    if(openquery(selection)):
-      query = query.limit(1000)
-
-
-    # OK, do the query
-    headers = query.all()
-
     # Was the request for only one type of calibration?
     caltype=''
     if('caltype' in selection):
       caltype = selection['caltype']
     else:
+      req.content_type="text/plain"
       req.write("<!-- Error: No calibration type specified-->\n")
+      return apache.HTTP_NOT_ACCEPTABLE
+
+    # Did we get called via an HTTP POST or HTTP GET?
+    if(req.method == 'POST'):
+      # OK, get the details from the POST data
+      req.content_type = "text/plain"
+      clientdata = req.read()
+      #req.write("\nclient data: %s\n" % clientdata)
+      clientstr = urllib.unquote_plus(clientdata)
+      #req.write("\nclient str: %s\n" % clientstr)
+      clientlist = clientstr.split('&')
+      desc_str = clientlist[0].split('=')[1]
+      type_str = clientlist[1].split('=')[1]
+      #req.write("\ndesc_str: %s\n" % desc_str)
+      #req.write("\ntype_str: %s\n" % type_str)
+      descriptors = eval(desc_str)
+      types = eval(type_str)
+      #req.write("Descriptor Dictionary: %s\n" % descriptors)
+      #req.write("Instrument Descriptor: %s\n\n" % descriptors['instrument'])
+      #req.write("Types List: %s\n" % types)
+      #gn = 'GMOS_N' in types
+      #gs = 'GMOS_S' in types
+      #req.write("IsType GMOS_N: %s\n" % gn)
+      #req.write("IsType GMOS_S: %s\n" % gs)
+
+      # Get a cal object for this target data
+      c = FitsStorageCal.get_cal_object(session, None, header=None, descriptors=descriptors, types=types)
+      req.content_type = "text/xml"
+      req.write('<?xml version="1.0" ?>')
+      req.write("<calibration_associations>\n")
+      req.write("<dataset>\n")
+      req.write("<datalabel>%s</datalabel>\n" % descriptors['data_label'])
+
+      # Call the appropriate method depending what calibration type we want
+      cal = None
+      if(caltype == 'processed_bias'):
+        cal = c.processed_bias()
+      if(caltype == 'processed_flat'):
+        cal = c.processed_flat()
+
+      if(cal):
+        req.write("<calibration>\n")
+        req.write("<caltype>%s</caltype>\n" % caltype)
+        req.write("<datalabel>%s</datalabel>\n" % cal.datalab)
+        req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
+        req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
+        req.write("<url>http://%s/file/%s</url>\n" % (req.server.server_hostname, cal.diskfile.file.filename))
+        req.write("</calibration>\n")
+      else:
+        req.write("<!-- NO CALIBRATION FOUND-->\n")
+
+      req.write("</dataset>\n");
+      req.write("</calibration_associations>\n")
+
+
       return apache.OK
 
-    # Did we get anything?
-    if(len(headers)>0):
-      # Loop through targets frames we found
-      for object in headers:
-        req.write("<dataset>\n")
-        req.write("<datalabel>%s</datalabel>\n" % object.datalab)
-        req.write("<filename>%s</filename>\n" % object.diskfile.file.filename)
-        req.write("<ccrc>%s</ccrc>\n" % object.diskfile.ccrc)
-
-        # Get a cal object for this target data
-        c = FitsStorageCal.get_cal_object(session, None, header=object)
-   
-        # Call the appropriate method depending what calibration type we want
-        cal = None
-        if(caltype == 'processed_bias'):
-          cal = c.processed_bias()
-        if(caltype == 'processed_flat'):
-          cal = c.processed_flat()
-
-        if(cal):
-          # OK, say what we found
-          req.write("<calibration>\n")
-          req.write("<caltype>%s</caltype>\n" % caltype)
-          req.write("<datalabel>%s</datalabel>\n" % cal.datalab)
-          req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
-          req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
-          req.write("<url>http://%s/file/%s</url>\n" % (req.server.server_hostname, cal.diskfile.file.filename))
-          req.write("</calibration>\n")
-        else:
-          req.write("<!-- NO CALIBRATION FOUND-->\n")
-        req.write("</dataset>\n")
     else:
-      req.write("<!-- COULD NOT LOCATE METADATA FOR DATASET -->\n")
+      # OK, we got called via a GET - find the science dataset in the database
+      # The Basic Query
+      query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
 
-    req.write("</calibration_associations>\n")
-    return apache.OK
+      # Only the canonical versions
+      selection['canonical'] = True
+
+      query = queryselection(query, selection)
+
+      # Knock out the FAILs
+      query = query.filter(Header.rawgemqa!='BAD')
+
+      # Order by date, most recent first
+      query = query.order_by(desc(Header.utdatetime))
+
+      # If openquery, limit number of responses
+      if(openquery(selection)):
+        query = query.limit(1000)
+
+      # OK, do the query
+      headers = query.all()
+
+      req.content_type = "text/xml"
+      req.write('<?xml version="1.0" ?>')
+      req.write("<calibration_associations>\n")
+      # Did we get anything?
+      if(len(headers)>0):
+        # Loop through targets frames we found
+        for object in headers:
+          req.write("<dataset>\n")
+          req.write("<datalabel>%s</datalabel>\n" % object.datalab)
+          req.write("<filename>%s</filename>\n" % object.diskfile.file.filename)
+          req.write("<ccrc>%s</ccrc>\n" % object.diskfile.ccrc)
+
+          # Get a cal object for this target data
+          c = FitsStorageCal.get_cal_object(session, None, header=object)
+   
+          # Call the appropriate method depending what calibration type we want
+          cal = None
+          if(caltype == 'processed_bias'):
+            cal = c.processed_bias()
+          if(caltype == 'processed_flat'):
+            cal = c.processed_flat()
+
+          if(cal):
+            # OK, say what we found
+            req.write("<calibration>\n")
+            req.write("<caltype>%s</caltype>\n" % caltype)
+            req.write("<datalabel>%s</datalabel>\n" % cal.datalab)
+            req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
+            req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
+            req.write("<url>http://%s/file/%s</url>\n" % (req.server.server_hostname, cal.diskfile.file.filename))
+            req.write("</calibration>\n")
+          else:
+            req.write("<!-- NO CALIBRATION FOUND-->\n")
+          req.write("</dataset>\n")
+      else:
+        req.write("<!-- COULD NOT LOCATE METADATA FOR DATASET -->\n")
+
+      req.write("</calibration_associations>\n")
+      return apache.OK
   except IOError:
     pass
   finally:
@@ -1203,6 +1266,33 @@ def calibrations(req, selection):
     pass
   finally:
     session.close()
+
+def upload_processed_cal(req, filename):
+  """
+  This handles uploading processed calibrations.
+  It has to be called via a POST request with a binary data payload
+  We drop the data in a staging area, then call a (setuid) script to
+  copy it into place and trigger the ingest.
+  """
+
+  if(req.method != 'POST'):
+    return apache.HTTP_NOT_ACCEPTABLE
+
+  # It's a bit brute force to read all the data in one chunk...
+  clientdata = req.read()
+  fullfilename = os.path.join(FitsStorageConfig.upload_staging_path, filename)
+
+  f = open(fullfilename, 'w')
+  f.write(clientdata)
+  f.close()
+  clientdata=None
+
+  # Now invoke the setuid ingest program
+  command="/opt/FitsStorage/invoke /opt/FitsStorage/ingest_uploaded_calibration.py %s" % filename
+  os.system(command)
+
+  return apache.OK
+
 
 def interval_hours(a, b):
   """
