@@ -93,6 +93,11 @@ def handler(req):
     retval = calibrations(req, selection)
     return retval
 
+  # The xml file list handler
+  if(this == 'xmlfilelist'):
+    selection = getselection(things)
+    retval = xmlfilelist(req, selection)
+    return retval
 
   # The calmgr handler
   if(this == 'calmgr'):
@@ -338,6 +343,9 @@ def getselection(things):
       recognised=True
     if(thing=='AO' or thing=='NOTAO'):
       selection['ao']=thing
+      recognised=True
+    if(thing=='present' or thing=='Present'):
+      selection['present']=True
       recognised=True
 
     if(not recognised):
