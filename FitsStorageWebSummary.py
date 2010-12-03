@@ -336,6 +336,30 @@ def webhdrsummary(session, req, type, headers):
     req.write("</TR>\n")
   req.write("</TABLE>\n")
 
+def xmlfilelist(req, selection):
+  """
+  This generates an xml list of the files that met the selection
+  """
+  req.content_type = "text/xml"
+  req.write('<?xml version="1.0" ?>')
+  req.write("<file_list>")
+
+  session = sessionfactory()
+  orderby = ['filename_asc']
+  selection['present']=True
+  try:
+    headers = list_headers(session, selection, orderby)
+    for h in headers:
+      req.write("<file>")
+      req.write("<filename>%s</filename>" % h.diskfile.file.filename)
+      req.write("<size>%d</size>" % h.diskfile.size)
+      req.write("<ccrc>%s</ccrc>" % h.diskfile.ccrc)
+      req.write("</file>")
+  finally:
+    session.close()
+  req.write("</file_list>")
+  return apache.OK
+
 def progsobserved(req, selection):
   """
   This function generates a list of programs observed on a given night
