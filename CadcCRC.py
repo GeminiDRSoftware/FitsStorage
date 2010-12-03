@@ -4,6 +4,9 @@ used by CADC at the GSA.
 
 The full path filename of the executable to run is contained in the
 cadcCRC_bin string.
+
+This module also contains an md5sum function for convenience when we
+move to md5
 """
 import subprocess
 import os
@@ -39,3 +42,22 @@ def cadcCRC(filename):
     retary=None
 
   return retary
+
+def md5sum(filename):
+  """
+  Generates the md5sum of the filename, returns the hex string.
+  """
+  import md5
+  m = md5.new()
+
+  block = 64*1024
+  f = open(filename, 'r')
+  data = f.read(block)
+  m.update(data)
+  while(data):
+    data = f.read(block)
+    m.update(data)
+
+  f.close()
+  return m.hexdigest()
+  
