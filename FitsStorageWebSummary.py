@@ -354,6 +354,7 @@ def xmlfilelist(req, selection):
       req.write("<filename>%s</filename>" % h.diskfile.file.filename)
       req.write("<size>%d</size>" % h.diskfile.size)
       req.write("<ccrc>%s</ccrc>" % h.diskfile.ccrc)
+      req.write("<lastmod>%s</lastmod>" % h.diskfile.lastmod)
       req.write("</file>")
   finally:
     session.close()
