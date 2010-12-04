@@ -460,7 +460,7 @@ class TapeFile(Base):
   filename = Column(Text)
   size = Column(Integer)
   ccrc = Column(Text)
-  md5sum = Column(Text)
+  md5 = Column(Text)
   lastmod = Column(DateTime(timezone=True))
 
 class Gmos(Base):
