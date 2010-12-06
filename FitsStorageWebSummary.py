@@ -708,7 +708,7 @@ def tape(req, things):
         tape=session.query(Tape).filter(Tape.id==tapeid).one()
         if(field == 'moveto'):
           tape.location = value
-          tape.lastmoved = datetime.datetime.now()
+          tape.lastmoved = datetime.datetime.utcnow()
         if(field == 'active'):
           if(value == 'Yes'):
             tape.active = True
@@ -735,9 +735,9 @@ def tape(req, things):
     for tape in list:
       req.write("<H2>ID: %d, Label: %s</H2>" % (tape.id, tape.label))
       req.write("<UL>")
-      req.write("<LI>First Write: %s - Last Write: %s</LI>" % (tape.firstwrite, tape.lastwrite))
-      req.write("<LI>Last Verified: %s</LI>" % tape.lastverified)
-      req.write("<LI>Location: %s; Last Moved: %s</LI>" % (tape.location, tape.lastmoved))
+      req.write("<LI>First Write: %s UTC - Last Write: %s UTC</LI>" % (tape.firstwrite, tape.lastwrite))
+      req.write("<LI>Last Verified: %s UTC</LI>" % tape.lastverified)
+      req.write("<LI>Location: %s; Last Moved: %s UTC</LI>" % (tape.location, tape.lastmoved))
       req.write("<LI>Active: %s</LI>" % tape.active)
       req.write("<LI>Fate: %s</LI>" % tape.fate)
   
@@ -747,6 +747,8 @@ def tape(req, things):
       if(twq.count()):
         bytesquery = session.query(func.sum(TapeWrite.size)).filter(TapeWrite.tape_id == tape.id)
         bytes = bytesquery.one()[0]
+        if(not bytes):
+          bytes=0
       else:
         bytes=0
       req.write('<LI>Writes: <A HREF="/tapewrite/%d">%d</A>, totalling %.2f GB</LI>' % (tape.id, twq.count(), bytes/1.0E9))
@@ -846,7 +848,7 @@ def tapewrite(req, things):
     for tw in tws:
       req.write("<h2>ID: %d; Tape ID: %d; Tape Label: %s; File Number: %d</h2>" % (tw.id, tw.tape_id, tw.tape.label, tw.filenum))
       req.write("<UL>")
-      req.write("<LI>Start Date: %s - End Date: %s</LI>" % (tw.startdate, tw.enddate))
+      req.write("<LI>Start Date: %s UTC - End Date: %s UTC</LI>" % (tw.startdate, tw.enddate))
       req.write("<LI>Suceeded: %s</LI>" % tw.suceeded)
       req.write("<LI>Size: %.2f GB</LI>" % (tw.size / 1.0E9))
       req.write("<LI>Status Before: <CODE>%s</CODE></LI>" % tw.beforestatus)
@@ -895,9 +897,10 @@ def tapefile(req, things):
     req.write('<TH>Tape ID</TH>')
     req.write('<TH>Tape Label</TH>')
     req.write('<TH>File Num on Tape</TH>')
-    req.write('<TH>DiskFile ID</TH>')
     req.write('<TH>Filename</TH>')
     req.write('<TH>Size</TH>')
+    req.write('<TH>CCRC</TH>')
+    req.write('<TH>MD5</TH>')
     req.write('<TH>Last Modified</TH>')
     req.write('</TR>')
   
@@ -912,14 +915,15 @@ def tapefile(req, things):
       req.write("<TR class=%s>" % (cs))
       req.write("<TD>%d</TD>" % tf.id)
       req.write("<TD>%d</TD>" % tf.tapewrite_id)
-      req.write("<TD>%s</TD>" % tf.tapewrite.startdate)
+      req.write("<TD>%s UTC</TD>" % tf.tapewrite.startdate)
       req.write("<TD>%d</TD>" % tf.tapewrite.tape.id)
       req.write("<TD>%s</TD>" % tf.tapewrite.tape.label)
       req.write("<TD>%d</TD>" % tf.tapewrite.filenum)
-      req.write("<TD>%d</TD>" % tf.diskfile_id)
-      req.write("<TD>%s</TD>" % tf.diskfile.file.filename)
-      req.write("<TD>%s</TD>" % tf.diskfile.size)
-      req.write("<TD>%s</TD>" % tf.diskfile.lastmod)
+      req.write("<TD>%s</TD>" % tf.filename)
+      req.write("<TD>%s</TD>" % tf.size)
+      req.write("<TD>%s</TD>" % tf.ccrc)
+      req.write("<TD>%s</TD>" % tf.md5)
+      req.write("<TD>%s</TD>" % tf.lastmod)
       req.write("</TR>")
 
     req.write("</TABLE></BODY></HTML>")
