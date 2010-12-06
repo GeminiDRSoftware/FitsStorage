@@ -14,6 +14,8 @@ import time
 import subprocess
 import tarfile
 import urllib
+from xml.dom.minidom import parseString
+
 
 # Option Parsing
 from optparse import OptionParser
@@ -35,6 +37,10 @@ setdemon(options.demon)
 # Annouce startup
 logger.info("*********  write_to_tape.py - starting up at %s" % datetime.datetime.now())
 
+if(not options.selection):
+  logger.error("You must specify a file selection")
+  sys.exit(1)
+
 # Get the list of files to put on tape from the server
 url = "http://" + options.diskserver + "/xmlfilelist/" + options.selection
 logger.debug("file list url: %s" % url)
@@ -49,11 +55,11 @@ totalsize=0
 for fe in dom.getElementsByTagName("file"):
   dict = {}
   dict['filename']=fe.getElementsByTagName("filename")[0].childNodes[0].data
-  dict['size']=fe.getElementsByTagName("size")[0].childNodes[0].data
+  dict['size']=int(fe.getElementsByTagName("size")[0].childNodes[0].data)
   dict['ccrc']=fe.getElementsByTagName("ccrc")[0].childNodes[0].data
   dict['lastmod']=fe.getElementsByTagName("lastmod")[0].childNodes[0].data
   files.append(dict)
-  totalsize += size
+  totalsize += dict['size']
 
 numfiles = len(files)
 logger.info("Got %d files to write to tape" % numfiles)
@@ -101,107 +107,117 @@ if(not options.dryrun):
 logger.info("Fetching files to local disk")
 td.cdworkingdir()
 for f in files:
-    filename = f['filename']
-    size = int(f['size'])
-    ccrc = f['ccrc']
-    url="http://%s/file/%s" % (options.diskserver, filename)
-    logger.debug("Fetching file: %s from %s" % (filename, url))
-    retcode=subprocess.call(['/usr/bin/curl', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url])
-    if(retcode):
-      # Curl command failed. Bail out
-      logger.error("Fetch failed for url: %s" % url)
+  filename = f['filename']
+  size = int(f['size'])
+  ccrc = f['ccrc']
+  url="http://%s/file/%s" % (options.diskserver, filename)
+  logger.info("Fetching file: %s from %s" % (filename, url))
+  retcode=subprocess.call(['/usr/bin/curl', '-s', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url])
+  if(retcode):
+    # Curl command failed. Bail out
+    logger.error("Fetch failed for url: %s" % url)
+    td.cdback()
+    td.cleanup()
+    sys.exit(1)
+  else:
+    # Curl command suceeded.
+    # Check the CRC of the file we got against the DB
+    filecrc = CadcCRC.cadcCRC(filename)
+    if(filecrc != ccrc):
+      logger.error("CRC mismatch for file %s: file: %s, database: %s" % (filename, filecrc, ccrc))
       td.cdback()
       td.cleanup()
       sys.exit(1)
-    else:
-      # Curl command suceeded.
-      # Check the CRC of the file we got against the DB
-      filecrc = CadcCRC.cadcCRC(filename)
-      if(filecrc != ccrc):
-        logger.error("CRC mismatch for file %s: file: %s, database: %s" % (filename, filecrc, ccrc))
-        td.cdback()
-        td.cleanup()
-        sys.exit(1)
-       # Check the md5sum of the file we got against the DB
-       # Actually, the DB doesn't have md5 yet, so just calcultate it here for use later.
-       md5sum = CadcCRC.md5sum(filename)
-       f['md5sum'] = md5sum
+    # Check the md5sum of the file we got against the DB
+    # Actually, the DB doesn't have md5 yet, so just calcultate it here for use later.
+    md5sum = CadcCRC.md5sum(filename)
+    f['md5sum'] = md5sum
 
-  logger.info("All files fetched OK")
+logger.info("All files fetched OK")
       
     
-  if(not options.dryrun):
-    # Update tape first/lastwrite
-    logger.debug("Updating tape record")
-    if(not tape.firstwrite):
-      tape.firstwrite = datetime.datetime.now()
-    tape.lastwrite = datetime.datetime.now()
-    session.commit()
+if(not options.dryrun):
+  # Need this to stop the ORM doing a bad datetime comparison for some reason
+  session.commit()
 
-  if(not options.dryrun):
-    logger.debug("Creating TapeWrite record")
-    # Create tapewrite record
-    tw = FitsStorage.TapeWrite()
-    tw.tape_id = tape.id
-    session.add(tw)
-    session.commit()
-    # Update tapewrite values pre-write
-    tw.beforestatus = td.status()
-    tw.filenum = td.fileno()
-    tw.startdate = datetime.datetime.now()
-    tw.hostname = os.uname()[1]
-    tw.tapedrive = td.dev
-    tw.suceeded = False
-    session.commit()
+  # Update tape first/lastwrite
+  logger.debug("Updating tape record")
+  #if(not tape.firstwrite):
+    #tape.firstwrite = datetime.datetime.now()
+  tape.lastwrite = datetime.datetime.now()
+  session.commit()
 
-  if(not options.dryrun):
-    tarok = True
-    # Write the tape.
-    bytecount = 0
-    blksize = 64 * 1024
-    logger.info("Creating tar archive")
+if(not options.dryrun):
+  logger.debug("Creating TapeWrite record")
+  # Create tapewrite record
+  tw = FitsStorage.TapeWrite()
+  tw.tape_id = tape.id
+  session.add(tw)
+  session.commit()
+  # Update tapewrite values pre-write
+  tw.beforestatus = td.status()
+  tw.filenum = td.fileno()
+  tw.startdate = datetime.datetime.now()
+  tw.hostname = os.uname()[1]
+  tw.tapedrive = td.dev
+  tw.suceeded = False
+  session.commit()
+
+if(not options.dryrun):
+  tarok = True
+  # Write the tape.
+  bytecount = 0
+  blksize = 64 * 1024
+  logger.info("Creating tar archive")
+  try:
+    tar = tarfile.open(name=td.dev, mode='w|', bufsize=blksize)
+  except:
+    logger.error("Error opening tar archive:")
+    tarok = False
+  for f in files:
+    filename = f['filename']
+    size = int(f['size'])
+    ccrc = f['ccrc']
+    md5 = f['md5sum']
+    lastmod = f['lastmod']
+    sys.exc_clear()
+    logger.info("Adding %s to tar file" % filename)
     try:
-      tar = tarfile.open(name=td.dev, mode='w|', bufsize=blksize)
+    # the filename is a unicode string, and tarfile cannot handle this, convert to ascii
+      filename = filename.encode('ascii')
+      tar.add(filename)
     except:
+      logger.error("Error adding file to tar archive")
       tarok = False
-    for f in files:
-      filename = f['filename']
-      size = int(f['size'])
-      ccrc = f['ccrc']
-      md5 = f['md5']
-      lastmod = f['lastmod']
-      logger.info("Adding %s to tar file" % filename)
-      try:
-        tar.add(filename)
-      except:
-        tarok = False
-      # Create the TapeFile entry and add to DB
-      tapefile = FitsStorage.TapeFile()
-      tapefile.tapewrite_id = tw.id
-      tapefile.filename = filename
-      tapefile.ccrc = ccrc
-      tapefile.md5 = md5
-      tapefile.lastmod = lastmod
-      tapefile.size = size
-      session.add(tapefile)
-      session.commit()
-      # Keep a running total of bytes written
-      bytecount += size
-    logger.info("Completed writing tar archive")
-    logger.info("Wrote %d bytes" % bytecount)
-    try:
-      tar.close()
-    except:
-      tarok = False
-
-  if(not options.dryrun):
-    # update records post-write
-    logger.debug("Updating tapewrite record")
-    tw.enddate = datetime.datetime.now()
-    tw.suceeded = tarok
-    tw.afterstatus = td.status()
-    tw.size = bytecount
+    # Create the TapeFile entry and add to DB
+    tapefile = FitsStorage.TapeFile()
+    tapefile.tapewrite_id = tw.id
+    tapefile.filename = filename
+    tapefile.ccrc = ccrc
+    tapefile.md5 = md5
+    tapefile.lastmod = lastmod
+    tapefile.size = size
+    session.add(tapefile)
     session.commit()
+    # Keep a running total of bytes written
+    bytecount += size
+  logger.info("Completed writing tar archive")
+  logger.info("Wrote %d bytes" % bytecount)
+  try:
+    tar.close()
+  except:
+    logger.error("Error closing tar archive")
+    tarok = False
+
+if(not options.dryrun):
+  # update records post-write
+  logger.debug("Updating tapewrite record")
+  tw.enddate = datetime.datetime.now()
+  logger.debug("Suceeded: %s" % tarok)
+  tw.suceeded = tarok
+  tw.afterstatus = td.status()
+  tw.size = bytecount
+  session.commit()
    
 session.close()
 logger.info("*** write_to_tape exiting normally at %s" % datetime.datetime.now())
