@@ -104,47 +104,48 @@ if(not options.dryrun):
   td.eod(fail=True)
 
 # Copy the files to the local scratch, and check CRCs.
-logger.info("Fetching files to local disk")
-td.cdworkingdir()
-for f in files:
-  filename = f['filename']
-  size = int(f['size'])
-  ccrc = f['ccrc']
-  url="http://%s/file/%s" % (options.diskserver, filename)
-  logger.info("Fetching file: %s from %s" % (filename, url))
-  retcode=subprocess.call(['/usr/bin/curl', '-s', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url])
-  if(retcode):
-    # Curl command failed. Bail out
-    logger.error("Fetch failed for url: %s" % url)
-    td.cdback()
-    td.cleanup()
-    sys.exit(1)
-  else:
-    # Curl command suceeded.
-    # Check the CRC of the file we got against the DB
-    filecrc = CadcCRC.cadcCRC(filename)
-    if(filecrc != ccrc):
-      logger.error("CRC mismatch for file %s: file: %s, database: %s" % (filename, filecrc, ccrc))
+try:
+  logger.info("Fetching files to local disk")
+  td.cdworkingdir()
+  for f in files:
+    filename = f['filename']
+    size = int(f['size'])
+    ccrc = f['ccrc']
+    url="http://%s/file/%s" % (options.diskserver, filename)
+    logger.info("Fetching file: %s from %s" % (filename, url))
+    retcode=subprocess.call(['/usr/bin/curl', '-s', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url])
+    if(retcode):
+      # Curl command failed. Bail out
+      logger.error("Fetch failed for url: %s" % url)
       td.cdback()
       td.cleanup()
       sys.exit(1)
-    # Check the md5sum of the file we got against the DB
-    # Actually, the DB doesn't have md5 yet, so just calcultate it here for use later.
-    md5sum = CadcCRC.md5sum(filename)
-    f['md5sum'] = md5sum
+    else:
+      # Curl command suceeded.
+      # Check the CRC of the file we got against the DB
+      filecrc = CadcCRC.cadcCRC(filename)
+      if(filecrc != ccrc):
+        logger.error("CRC mismatch for file %s: file: %s, database: %s" % (filename, filecrc, ccrc))
+        td.cdback()
+        td.cleanup()
+        sys.exit(1)
+      # Check the md5sum of the file we got against the DB
+      # Actually, the DB doesn't have md5 yet, so just calcultate it here for use later.
+      md5sum = CadcCRC.md5sum(filename)
+      f['md5sum'] = md5sum
+  logger.info("All files fetched OK")
+except:
+  logger.error("Problem Fetching Files, aborting")
+  td.cdback()
+  td.cleanup()
+  sys.exit(1)
 
-logger.info("All files fetched OK")
-      
-    
 if(not options.dryrun):
-  # Need this to stop the ORM doing a bad datetime comparison for some reason
-  session.commit()
-
   # Update tape first/lastwrite
   logger.debug("Updating tape record")
-  #if(not tape.firstwrite):
-    #tape.firstwrite = datetime.datetime.now()
-  tape.lastwrite = datetime.datetime.now()
+  if(tape.firstwrite == None):
+    tape.firstwrite = datetime.datetime.utcnow()
+  tape.lastwrite = datetime.datetime.utcnow()
   session.commit()
 
 if(not options.dryrun):
@@ -157,7 +158,7 @@ if(not options.dryrun):
   # Update tapewrite values pre-write
   tw.beforestatus = td.status()
   tw.filenum = td.fileno()
-  tw.startdate = datetime.datetime.now()
+  tw.startdate = datetime.datetime.utcnow()
   tw.hostname = os.uname()[1]
   tw.tapedrive = td.dev
   tw.suceeded = False
@@ -212,7 +213,7 @@ if(not options.dryrun):
 if(not options.dryrun):
   # update records post-write
   logger.debug("Updating tapewrite record")
-  tw.enddate = datetime.datetime.now()
+  tw.enddate = datetime.datetime.utcnow()
   logger.debug("Suceeded: %s" % tarok)
   tw.suceeded = tarok
   tw.afterstatus = td.status()
