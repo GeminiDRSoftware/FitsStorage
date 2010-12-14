@@ -728,7 +728,7 @@ def tape(req, things):
     if(len(things)):
       searchstring = '%'+things[0]+'%'
       query = query.filter(Tape.label.like(searchstring))
-    query=query.order_by(Tape.id)
+    query=query.order_by(desc(Tape.id))
     list = query.all()
 
     req.write("<HR>")
@@ -751,7 +751,7 @@ def tape(req, things):
           bytes=0
       else:
         bytes=0
-      req.write('<LI>Writes: <A HREF="/tapewrite/%d">%d</A>, totalling %.2f GB</LI>' % (tape.id, twq.count(), bytes/1.0E9))
+      req.write('<LI>Writes: <A HREF="/tapewrite/%d">%d</A>, totalling %.2f GB</LI>' % (tape.id, twq.count(), float(bytes)/1.0E9))
         
       req.write("</UL>")
 
@@ -842,7 +842,7 @@ def tapewrite(req, things):
         tape = query.one()
         query = query.filter(TapeWrite.tape_id == tape.id)
 
-    query = query.order_by(TapeWrite.startdate)
+    query = query.order_by(desc(TapeWrite.startdate))
     tws = query.all()
 
     for tw in tws:
@@ -850,7 +850,10 @@ def tapewrite(req, things):
       req.write("<UL>")
       req.write("<LI>Start Date: %s UTC - End Date: %s UTC</LI>" % (tw.startdate, tw.enddate))
       req.write("<LI>Suceeded: %s</LI>" % tw.suceeded)
-      req.write("<LI>Size: %.2f GB</LI>" % (tw.size / 1.0E9))
+      if(tw.size is None):
+        req.write("<LI>Size: None")
+      else:
+        req.write("<LI>Size: %.2f GB</LI>" % (tw.size / 1.0E9))
       req.write("<LI>Status Before: <CODE>%s</CODE></LI>" % tw.beforestatus)
       req.write("<LI>Status After: <CODE>%s</CODE></LI>" % tw.afterstatus)
       req.write("<LI>Hostname: %s, Tape Device: %s</LI>" % (tw.hostname, tw.tapedrive))
