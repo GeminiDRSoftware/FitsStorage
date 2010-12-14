@@ -22,9 +22,10 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--diskserver", action="store", type="string", dest="diskserver", default="fits", help="The Fits Storage Disk server to get the files from")
 parser.add_option("--selection", action="store", type="string", dest="selection", help="the file selection criteria to use. This is a / separated list like in the URLs. Can be a date or daterange for example")
-parser.add_option("--tapedrive", action="store", type="string", dest="tapedrive", help="tapedrive to use")
-parser.add_option("--tape-label", action="store", type="string", dest="tape_label", help="tape label of tape")
+parser.add_option("--tapedrive", action="append", type="string", dest="tapedrive", help="tapedrive to use. Give this option multiple times to specify multiple drives")
+parser.add_option("--tapelabel", action="append", type="string", dest="tapelabel", help="tape label of tape. Give this option multiple times to specify multiple tapes. Give the tapedrive and tapelabel arguments in the same order.")
 parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
+parser.add_option("--dontcheck", action="store_true", dest="dontcheck", help="Don't rewind and check the tape label in the drive, go direct to eod and write")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
@@ -41,6 +42,17 @@ if(not options.selection):
   logger.error("You must specify a file selection")
   sys.exit(1)
 
+if(len(options.tapedrive) < 1):
+  logger.error("You must specify a tape drive")
+  sys.exit(1)
+
+if(len(options.tapedrive) != len(options.tapelabel)):
+  logger.error("You must specify the same number of tape drives as tape labels")
+  sys.exit(1)
+
+logger.info("TapeDrive: %s; TapeLabel: %s" % (options.tapedrive, options.tapelabel))
+
+logger.info("Fetching file list from disk server...")
 # Get the list of files to put on tape from the server
 url = "http://" + options.diskserver + "/xmlfilelist/" + options.selection
 logger.debug("file list url: %s" % url)
@@ -62,51 +74,53 @@ for fe in dom.getElementsByTagName("file"):
   totalsize += dict['size']
 
 numfiles = len(files)
-logger.info("Got %d files to write to tape" % numfiles)
-logger.info("Total size is %.2f GB" % (totalsize / 1.0E9))
+logger.info("Got %d files totalling %.2f GB to write to tape" % (numfiles, (totalsize / 1.0E9)))
 if(numfiles == 0):
   logger.info("Exiting - no files")
   exit(0)
  
-td = TapeDrive(options.tapedrive, fits_tape_scratchdir)
+# Make a list containing the tape device objects
+tds = []
+for i in range(0, len(options.tapedrive)):
+  tds.append(TapeDrive(options.tapedrive[i], fits_tape_scratchdir))
 
 session = sessionfactory()
 
-# Get the tape object for this tape label
-logger.debug("Finding tape record in DB")
-query = session.query(Tape).filter(Tape.label == options.tape_label).filter(Tape.active == True)
-if(query.count() == 0):
-  logger.error("Could not find active tape with label %s" % options.tape_label)
-  sys.exit(1)
-if(query.count() > 1):
-  logger.error("Multiple active tapes with label %s:" % options.tape_label)
-  sys.exit(1)
-tape = query.one()
-logger.debug("Found tape id: %d, label: %s" % (tape.id, tape.label))
-
-# Check the tape label in the drive
-logger.debug("Checking tape label in drive")
-if(td.online() == False):
-  logger.error("No tape in drive")
-  sys.exit(1)
-label = td.readlabel()
-if(options.tape_label):
-  if(label != options.tape_label):
-    logger.error("Label of tape in drive does not match label given.")
-    logger.error("Tape in Drive: %s; Tape specified: %s" % (label, options.tape_label))
+# Get the database tape object for each tape label given
+logger.debug("Finding tape records in DB")
+tapes = []
+for i in range(0, len(options.tapelabel)):
+  query = session.query(Tape).filter(Tape.label == options.tapelabel[i]).filter(Tape.active == True)
+  if(query.count() == 0):
+    logger.error("Could not find active tape with label %s" % options.tapelabel[i])
+    session.close()
     sys.exit(1)
-logger.info("Found tape in drive with label: %s" % label)
-    
-# Position Tape
-if(not options.dryrun):
-  logger.info("Positioning Tape")
-  td.setblk0()
-  td.eod(fail=True)
+  if(query.count() > 1):
+    logger.error("Multiple active tapes with label %s:" % options.tapelabel[i])
+    session.close()
+    sys.exit(1)
+  tapes.append(query.one())
+  logger.debug("Found tape id in database: %d, label: %s" % (tapes[i].id, tapes[i].label))
 
+# Check the tape label in the drives
+if(not options.dontcheck):
+  for i in range(0, len(options.tapelabel)):
+    logger.info("Checking tape label in drive %s" % tds[i].dev)
+    if(tds[i].online() == False):
+      logger.error("No tape in drive %s" % tds[i].dev)
+      session.close()
+      sys.exit(1)
+    thislabel = tds[i].readlabel()
+    if(thislabel != options.tapelabel[i]):
+      logger.error("Label of tape in drive %s: %s does not match label given as %s" % (tds[i].dev, thislabel, options.tapelabel[i]))
+      session.close()
+      sys.exit(1)
+    logger.info("OK - found tape in drive %s with label: %s" % (tds[i].dev, thislabel))
+    
 # Copy the files to the local scratch, and check CRCs.
 try:
   logger.info("Fetching files to local disk")
-  td.cdworkingdir()
+  tds[0].cdworkingdir()
   for f in files:
     filename = f['filename']
     size = int(f['size'])
@@ -117,8 +131,9 @@ try:
     if(retcode):
       # Curl command failed. Bail out
       logger.error("Fetch failed for url: %s" % url)
-      td.cdback()
-      td.cleanup()
+      tds[0].cdback()
+      tds[0].cleanup()
+      session.close()
       sys.exit(1)
     else:
       # Curl command suceeded.
@@ -126,8 +141,9 @@ try:
       filecrc = CadcCRC.cadcCRC(filename)
       if(filecrc != ccrc):
         logger.error("CRC mismatch for file %s: file: %s, database: %s" % (filename, filecrc, ccrc))
-        td.cdback()
-        td.cleanup()
+        tds[0].cdback()
+        tds[0].cleanup()
+        session.close()
         sys.exit(1)
       # Check the md5sum of the file we got against the DB
       # Actually, the DB doesn't have md5 yet, so just calcultate it here for use later.
@@ -136,90 +152,106 @@ try:
   logger.info("All files fetched OK")
 except:
   logger.error("Problem Fetching Files, aborting")
-  td.cdback()
-  td.cleanup()
+  tds[0].cdback()
+  tds[0].cleanup()
+  session.close()
   sys.exit(1)
 
-if(not options.dryrun):
-  # Update tape first/lastwrite
-  logger.debug("Updating tape record")
-  if(tape.firstwrite == None):
-    tape.firstwrite = datetime.datetime.utcnow()
-  tape.lastwrite = datetime.datetime.utcnow()
-  session.commit()
 
-if(not options.dryrun):
-  logger.debug("Creating TapeWrite record")
-  # Create tapewrite record
-  tw = FitsStorage.TapeWrite()
-  tw.tape_id = tape.id
-  session.add(tw)
-  session.commit()
-  # Update tapewrite values pre-write
-  tw.beforestatus = td.status()
-  tw.filenum = td.fileno()
-  tw.startdate = datetime.datetime.utcnow()
-  tw.hostname = os.uname()[1]
-  tw.tapedrive = td.dev
-  tw.suceeded = False
-  session.commit()
+# Now loop through the tapes, doing all the stuff on each
+for i in range(0, len(tds)):
+  td = tds[i]
+  tape = tapes[i]
 
-if(not options.dryrun):
-  tarok = True
-  # Write the tape.
-  bytecount = 0
-  blksize = 64 * 1024
-  logger.info("Creating tar archive")
-  try:
-    tar = tarfile.open(name=td.dev, mode='w|', bufsize=blksize)
-  except:
-    logger.error("Error opening tar archive:")
-    tarok = False
-  for f in files:
-    filename = f['filename']
-    size = int(f['size'])
-    ccrc = f['ccrc']
-    md5 = f['md5sum']
-    lastmod = f['lastmod']
-    sys.exc_clear()
-    logger.info("Adding %s to tar file" % filename)
-    try:
-    # the filename is a unicode string, and tarfile cannot handle this, convert to ascii
-      filename = filename.encode('ascii')
-      tar.add(filename)
-    except:
-      logger.error("Error adding file to tar archive")
-      tarok = False
-    # Create the TapeFile entry and add to DB
-    tapefile = FitsStorage.TapeFile()
-    tapefile.tapewrite_id = tw.id
-    tapefile.filename = filename
-    tapefile.ccrc = ccrc
-    tapefile.md5 = md5
-    tapefile.lastmod = lastmod
-    tapefile.size = size
-    session.add(tapefile)
+  logger.debug("About to write on tape label %s in drive %s" % (tape.label, td.dev))
+  # Position Tape
+  if(not options.dryrun):
+    logger.info("Positioning Tape %s" % td.dev)
+    td.setblk0()
+    td.eod(fail=True)
+
+    # Update tape first/lastwrite
+    logger.debug("Updating tape record for tape label %s" % tape.label)
+    if(tape.firstwrite == None):
+      tape.firstwrite = datetime.datetime.utcnow()
+    tape.lastwrite = datetime.datetime.utcnow()
     session.commit()
-    # Keep a running total of bytes written
-    bytecount += size
-  logger.info("Completed writing tar archive")
-  logger.info("Wrote %d bytes" % bytecount)
-  try:
-    tar.close()
-  except:
-    logger.error("Error closing tar archive")
-    tarok = False
 
-if(not options.dryrun):
-  # update records post-write
-  logger.debug("Updating tapewrite record")
-  tw.enddate = datetime.datetime.utcnow()
-  logger.debug("Suceeded: %s" % tarok)
-  tw.suceeded = tarok
-  tw.afterstatus = td.status()
-  tw.size = bytecount
-  session.commit()
+    # Create tapewrite record
+    logger.debug("Creating TapeWrite record for tape %s" % tape.label)
+    tw = FitsStorage.TapeWrite()
+    tw.tape_id = tape.id
+    session.add(tw)
+    session.commit()
+    # Update tapewrite values pre-write
+    tw.beforestatus = td.status()
+    tw.filenum = td.fileno()
+    tw.startdate = datetime.datetime.utcnow()
+    tw.hostname = os.uname()[1]
+    tw.tapedrive = td.dev
+    tw.suceeded = False
+    session.commit()
+
+    # Write the tape.
+    bytecount = 0
+    blksize = 64 * 1024
+    tarok = True
+  
+    logger.info("Creating tar archive on tape %s on drive %s" % (tape.label, td.dev))
+    try:
+      tar = tarfile.open(name=td.dev, mode='w|', bufsize=blksize)
+    except:
+      logger.error("Error opening tar archive:")
+      logger.error("Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+      tarok = False
+    for f in files:
+      filename = f['filename']
+      size = int(f['size'])
+      ccrc = f['ccrc']
+      md5 = f['md5sum']
+      lastmod = f['lastmod']
+      logger.info("Adding %s to tar file" % filename)
+      try:
+      # the filename is a unicode string, and tarfile cannot handle this, convert to ascii
+        filename = filename.encode('ascii')
+        tar.add(filename)
+      except:
+        logger.error("Error adding file to tar archive")
+        logger.error("Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+        tarok = False
+      # Create the TapeFile entry and add to DB
+      tapefile = FitsStorage.TapeFile()
+      tapefile.tapewrite_id = tw.id
+      tapefile.filename = filename
+      tapefile.ccrc = ccrc
+      tapefile.md5 = md5
+      tapefile.lastmod = lastmod
+      tapefile.size = size
+      session.add(tapefile)
+      session.commit()
+      # Keep a running total of bytes written
+      bytecount += size
+    logger.info("Completed writing tar archive on tape %s in drive %s" % (tape.label, td.dev))
+    logger.info("Wrote %d bytes = %.2f GB" % (bytecount , (bytecount/1.0E9)))
+    try:
+      tar.close()
+    except:
+      logger.error("Error closing tar archive")
+      tarok = False
+      logger.error("Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+
+    # update records post-write
+    logger.debug("Updating tapewrite record")
+    tw.enddate = datetime.datetime.utcnow()
+    logger.debug("Suceeded: %s" % tarok)
+    tw.suceeded = tarok
+    tw.afterstatus = td.status()
+    tw.size = bytecount
+    session.commit()
    
+logger.info("Cleaning up disk staging files")
+tds[0].cleanup()
+tds[0].cdback()
 session.close()
 logger.info("*** write_to_tape exiting normally at %s" % datetime.datetime.now())
 
