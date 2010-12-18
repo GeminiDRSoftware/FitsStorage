@@ -742,16 +742,17 @@ def tape(req, things):
       req.write("<LI>Fate: %s</LI>" % tape.fate)
   
       # Count Writes
-      twq = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id)
+      twqtotal = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id)
+      twq = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.suceeded == True)
       # Count Bytes
       if(twq.count()):
-        bytesquery = session.query(func.sum(TapeWrite.size)).filter(TapeWrite.tape_id == tape.id)
+        bytesquery = session.query(func.sum(TapeWrite.size)).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.suceeded == True)
         bytes = bytesquery.one()[0]
         if(not bytes):
           bytes=0
       else:
         bytes=0
-      req.write('<LI>Writes: <A HREF="/tapewrite/%d">%d</A>, totalling %.2f GB</LI>' % (tape.id, twq.count(), float(bytes)/1.0E9))
+      req.write('<LI>Sucessfull/Total Writes: <A HREF="/tapewrite/%d">%d/%d</A>. %.2f GB Sucessfully written</LI>' % (tape.id, twq.count(), twqtotal.count(), float(bytes)/1.0E9))
         
       req.write("</UL>")
 
