@@ -243,7 +243,7 @@ def handler(req):
   # This is the projects observed feature
   if(this == "programsobserved"):
     selection = getselection(things)
-    if("date" not in selection):
+    if(("date" not in selection) and ("daterange" not in selection)):
       selection["date"]=gemini_date("today")
     retval =  progsobserved(req, selection)
     return retval
