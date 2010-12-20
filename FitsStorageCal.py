@@ -6,7 +6,7 @@ from FitsStorage import *
 import FitsStorageConfig
 import GeminiMetadataUtils
 
-def get_cal_object(session, filename, header=None):
+def get_cal_object(session, filename, header=None, descriptors=None, types=None):
   """
   This function returns an appropriate calibration object for the given dataset
   Need to pass in an sqlalchemy session that should already be open, the class will not close it
@@ -14,22 +14,26 @@ def get_cal_object(session, filename, header=None):
   """
 
   # Did we get a header?
-  if(header==None):
+  if(header==None and descriptors==None):
     # Get the header object from the filename
     query = session.query(Header).select_from(join(Header, join(DiskFile, File))).filter(File.filename==filename).order_by(desc(DiskFile.lastmod)).limit(1)
     header = query.first()
 
   # OK, now instantiate the appropriate Calibration object and return it
   c = None
-  if('GMOS' in header.instrument):
-    c = CalibrationGMOS(session, header)
-  if('NIRI' == header.instrument):
-    c = CalibrationNIRI(session, header)
+  if(header):
+    instrument = header.instrument
+  else:
+    instrument = descriptors['instrument']
+  if('GMOS' in instrument):
+    c = CalibrationGMOS(session, header, descriptors, types)
+  if(instrument == 'NIRI'):
+    c = CalibrationNIRI(session, header, descriptors, types)
   # if('NIFS' == header.instrument):
     # c = CalibrationNIFS(session, header)
   # Add other instruments here
   if(c==None):
-    c = Calibration(session, header)
+    c = Calibration(session, header, descriptors, types)
 
   return c
 
@@ -41,9 +45,11 @@ class Calibration():
 
   session = None
   header = None
+  descriptors = None
+  types = None
   required = []
 
-  def __init__(self, session, header):
+  def __init__(self, session, header, descriptors, types):
     """
     Initialise a calibration manager for a given header object (ie data file)
     Need to pass in an sqlalchemy session that should already be open, this class will not close it
@@ -51,6 +57,8 @@ class Calibration():
     """
     self.session = session
     self.header = header
+    self.descriptors = descriptors
+    self.types = types
 
   def arc(self):
     return "arc method not defined for this instrument"
@@ -65,13 +73,14 @@ class CalibrationGMOS(Calibration):
   """
   gmos = None
 
-  def __init__(self, session, header):
+  def __init__(self, session, header, descriptors, types):
     # Init the superclass
-    Calibration.__init__(self, session, header)
+    Calibration.__init__(self, session, header, descriptors, types)
 
-    # Find the gmosheader
-    query = session.query(Gmos).filter(Gmos.header_id==self.header.id)
-    self.gmos = query.first()
+    # if header based, Find the gmosheader
+    if(header):
+      query = session.query(Gmos).filter(Gmos.header_id==self.header.id)
+      self.gmos = query.first()
 
     # Set the list of required calibrations
     self.required = self.required()
@@ -80,13 +89,14 @@ class CalibrationGMOS(Calibration):
     # Return a list of the calibrations required for this GMOS dataset
     list=[]
 
-    # BIASes do not require a bias. 
-    if(self.header.obstype != 'BIAS'):
-      list.append('bias')
+    if(self.header):
+      # BIASes do not require a bias. 
+      if(self.header.obstype != 'BIAS'):
+        list.append('bias')
 
-    # If it (is spectroscopy) and (is not an OBJECT) and (is not a Twilight) then it needs an arc
-    if((self.header.spectroscopy == True) and (self.header.obstype == 'OBJECT') and (self.header.object != 'Twilight')):
-      list.append('arc')
+      # If it (is spectroscopy) and (is not an OBJECT) and (is not a Twilight) then it needs an arc
+      if((self.header.spectroscopy == True) and (self.header.obstype == 'OBJECT') and (self.header.object != 'Twilight')):
+        list.append('arc')
 
     return list
 
@@ -160,6 +170,7 @@ class CalibrationGMOS(Calibration):
     return query.first()
 
   def processed_bias(self):
+    # The basic PROCESSED_BIAS search
     query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
     query = query.filter(Header.obstype=='BIAS')
     query = query.filter(Header.reduction=='PROCESSED_BIAS')
@@ -170,16 +181,31 @@ class CalibrationGMOS(Calibration):
     # Knock out the FAILs
     query = query.filter(Header.rawgemqa!='BAD')
 
+    if(self.descriptors==None):
+      self.descriptors = {}
+      self.descriptors['instrument']=self.header.instrument
+      self.descriptors['detector_x_bin']=self.gmos.xccdbin
+      self.descriptors['detector_y_bin']=self.gmos.yccdbin
+      self.descriptors['read_speed_mode']=self.gmos.readspeedmode
+      self.descriptors['gain_mode']=self.gmos.gainmode
+      self.descriptors['amp_read_area']=self.gmos.amproa
+      self.descriptors['ut_datetime']=self.header.utdatetime
+    else:
+      datetime_string = "%s %s" % (self.descriptors['ut_date'], self.descriptors['ut_time'])
+      self.descriptors['ut_datetime'] = dateutil.parser.parse(datetime_string)
+
     # Must totally match instrument, xccdbin, yccdbin, readspeedmode, gainmode
-    query = query.filter(Header.instrument==self.header.instrument)
-    query = query.filter(Gmos.xccdbin==self.gmos.xccdbin).filter(Gmos.yccdbin==self.gmos.yccdbin)
-    query = query.filter(Gmos.readspeedmode==self.gmos.readspeedmode).filter(Gmos.gainmode==self.gmos.gainmode)
+    query = query.filter(Header.instrument==self.descriptors['instrument'])
+    query = query.filter(Gmos.xccdbin==self.descriptors['detector_x_bin'])
+    query = query.filter(Gmos.yccdbin==self.descriptors['detector_y_bin'])
+    query = query.filter(Gmos.readspeedmode==self.descriptors['read_speed_mode'])
+    query = query.filter(Gmos.gainmode==self.descriptors['gain_mode'])
 
     # The science amproa must be equal or substring of the bias amproa
-    query = query.filter(Gmos.amproa.like('%'+self.gmos.amproa+'%'))
+    query = query.filter(Gmos.amproa.like('%'+str(self.descriptors['amp_read_area'])+'%'))
 
     # Order by absolute time separation. Maybe there's a better way to do this
-    query = query.order_by("ABS(EXTRACT(EPOCH FROM (header.utdatetime - :utdatetime_x)))").params(utdatetime_x= self.header.utdatetime)
+    query = query.order_by("ABS(EXTRACT(EPOCH FROM (header.utdatetime - :utdatetime_x)))").params(utdatetime_x= self.descriptors['ut_datetime'] )
 
     # For now, we only want one result - the closest in time
     query = query.limit(1)
