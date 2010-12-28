@@ -126,6 +126,18 @@ class TapeDrive:
       retval = False
     return retval
 
+  def eot(self):
+    """
+    returns True if the tape is at EOT (End Of Tape)
+    returns False otherwise
+    """
+    string = self.status()
+    if(re.search('EOT', string)):
+      retval = True
+    else:
+      retval = False
+    return retval
+
   def fileno(self):
     """
     Returns the file number the drive is currently
