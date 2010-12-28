@@ -188,15 +188,15 @@ def handler(req):
   # This is the fits file server
   if(this == 'file'):
     # OK, first find the file they asked for in the database
-    # did we get a valid filename?
+    # tart up the filename if possible
     if(len(things)==0):
       return apache.HTTP_NOT_FOUND
-    filename=things.pop(0)
-    filename = gemini_fitsfilename(filename)
+    filenamegiven=things.pop(0)
+    filename = gemini_fitsfilename(filenamegiven)
     if(filename):
       pass
     else:
-      return apache.HTTP_NOT_FOUND
+      filename = filenamegiven
     session = sessionfactory()
     try:
       query=session.query(File).filter(File.filename==filename)
@@ -205,7 +205,7 @@ def handler(req):
       file=query.one()
       # OK, we should have the file record now.
       # Next, find the canonical diskfile for it
-      query=session.query(DiskFile).filter(DiskFile.canonical==True).filter(DiskFile.file_id==file.id)
+      query=session.query(DiskFile).filter(DiskFile.present==True).filter(DiskFile.file_id==file.id)
       diskfile = query.one()
       # And now find the header record...
       query=session.query(Header).filter(Header.diskfile_id==diskfile.id)
