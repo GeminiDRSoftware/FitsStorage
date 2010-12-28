@@ -92,8 +92,15 @@ def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
 
   else:
     # No not present, insert into diskfile table
-    logger.debug("No DiskFile exists")
+    logger.debug("No Present DiskFile exists")
     add_diskfile=1
+    # Check to see if there is are older non-present but canonical versions to mark non-canonical
+    query = session.query(DiskFile).filter(DiskFile.file_id==file.id).filter(DiskFile.present==False).filter(DiskFile.canonical==True)
+    list = query.all()
+    for df in list:
+      logger.debug("Marking old diskfile id %d as no longer canonical" % df.id)
+      df.canonical=False
+      session.commit()
   
   if(add_diskfile):
     logger.debug("Adding new DiskFile entry")
