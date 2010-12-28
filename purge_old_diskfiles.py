@@ -94,5 +94,5 @@ for fileid in fileids:
         logger.debug("Dry Run - not deleting DiskFile id %d" % diskfile.id)
 
 session.close()
-logger.info("*** delete_old_diskfiles exiting normally at %s" % datetime.datetime.now())
+logger.info("*** purge_old_diskfiles exiting normally at %s" % datetime.datetime.now())
 
