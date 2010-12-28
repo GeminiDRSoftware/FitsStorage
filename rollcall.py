@@ -9,6 +9,7 @@ from optparse import OptionParser
 
 parser = OptionParser()
 parser.add_option("--limit", action="store", type="int", help="specify a limit on the number of files to examine. The list is sorted by lastmod time before the limit is applied")
+parser.add_option("--file-pre", action="store", type="string", dest="filepre", help="File prefix to check (omit for all)")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
@@ -27,7 +28,11 @@ session = sessionfactory()
 
 # Get a list of all diskfile_ids marked as present
 # If we try and really brute force a list of DiskFile objects, we run out of memory...
-query = session.query(DiskFile.id).filter(DiskFile.present == True).order_by(DiskFile.lastmod)
+query = session.query(DiskFile.id).select_from(join(DiskFile, File)).filter(DiskFile.present == True).order_by(DiskFile.lastmod)
+
+if(options.filepre):
+  likestr = "%s%%" % options.filepre
+  query = query.filter(File.filename.like(likestr))
 
 # Did we get a limit option?
 if(options.limit):
