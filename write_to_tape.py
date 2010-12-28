@@ -170,6 +170,13 @@ for i in range(0, len(tds)):
     td.setblk0()
     td.eod(fail=True)
 
+    if(td.eot()):
+      logger.error("Tape %s in %s is at End of Tape. Tape is Full. Aborting" % (tape.label, td.dev))
+      td.cleanup()
+      td.cdback()
+      session.close()
+      sys.exit(1)
+
     # Update tape first/lastwrite
     logger.debug("Updating tape record for tape label %s" % tape.label)
     if(tape.firstwrite == None):
@@ -210,7 +217,7 @@ for i in range(0, len(tds)):
       ccrc = f['ccrc']
       md5 = f['md5sum']
       lastmod = f['lastmod']
-      logger.info("Adding %s to tar file" % filename)
+      logger.info("Adding %s to tar file on tape %s in drive %s" % (filename, tape.label, td.dev))
       try:
       # the filename is a unicode string, and tarfile cannot handle this, convert to ascii
         filename = filename.encode('ascii')
