@@ -170,12 +170,13 @@ for diskfileid in diskfileids:
       if(sumgb>options.maxgb):
         logger.info("Allready deleted %.2f GB - stopping now" % sumgb)
         break
-    if((numtodelete > 0)and (sumfiles >= numtodelete)):
-       logger.info("Have now deleted the necessary number of files: %d Stopping now" % sumfiles)
-       break
-    if((gbtodelete > 0) and (sumgb >= gbtodelete)):
-       logger.info("Have now deleted the necessary number of GB: %.2f Stopping now" % sumgb)
-       break
+    if(options.auto):
+      if((numtodelete > 0)and (sumfiles >= numtodelete)):
+         logger.info("Have now deleted the necessary number of files: %d Stopping now" % sumfiles)
+         break
+      if((gbtodelete > 0) and (sumgb >= gbtodelete)):
+         logger.info("Have now deleted the necessary number of GB: %.2f Stopping now" % sumgb)
+         break
 
 session.close()
 if(options.emailto):
