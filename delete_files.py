@@ -56,22 +56,19 @@ if(options.auto):
   os.chdir(cwd)
   gbavail = s.f_bsize * s.f_bavail / (1024 * 1024 * 1024)
   numfiles = s.f_files - s.f_favail
-  logger.debug("Disk has %d files and %.2f GB available" % (numfiles, gbavail))
+  logger.debug("Disk has %d files present and %.2f GB available" % (numfiles, gbavail))
   numtodelete = numfiles - target_max_files
   if(numtodelete > 0):
-    logger.debug("Need to delete %d files" % numtodelete)
-    if(options.maxnum and (numtodelete < options.maxnum)):
-      options.maxnum = numtodelete
-    else:
-      options.maxnum = numtodelete
+    logger.debug("Need to delete at least %d files" % numtodelete)
 
   gbtodelete = target_gb_free - gbavail
   if(gbtodelete > 0):
-    logger.debug("Need to delete %.2f GB" % gbtodelete)
-    if(options.maxgb and (gbtodelete < options.maxgb)):
-      options.maxgb = gbtodelete
-    else:
-      options.maxgb = gbtodelete
+    logger.debug("Need to delete at least %.2f GB" % gbtodelete)
+
+  if((numtodelete <=0) and (gbtodelete <=0)):
+    logger.info("In Auto mode and nothing needs deleting. Exiting")
+    session.close()
+    sys.exit(0)
 
 if(options.filepre):
   likestr = "%s%%" % options.filepre
@@ -80,10 +77,10 @@ if(options.filepre):
 if(not options.notpresent):
   query = query.filter(DiskFile.present==True)
 
-if(options.oldbyfilename):
-  query = query.order_by(File.filename)
-else:
+if(options.oldbylastmod):
   query = query.order_by(desc(DiskFile.lastmod))
+else:
+  query = query.order_by(File.filename)
 
 if(options.maxnum):
   query = query.limit(options.maxnum)
@@ -101,7 +98,8 @@ if(len(diskfileids) > 2000 and not options.yesimsure):
   session.close()
   sys.exit(1)
 
-sumbytes = 0;
+sumbytes = 0
+sumfiles = 0
 
 for diskfileid in diskfileids:
 
@@ -151,6 +149,8 @@ for diskfileid in diskfileids:
 
       if(len(tapeids) >= options.mintapes):
         sumbytes += diskfile.size
+        sumgb = sumbytes / 1.0E9
+        sumfiles += 1
         if(options.dryrun):
           logger.info("Dry run - not actually deleting File %s - %s which is on %d tapes: %s" % (fullpath, fileccrc, len(tapeids), tapeids))
           msg+="Dry run - not deleting File %s - %s which is on %d tapes: %s\n" % (fullpath, fileccrc, len(tapeids), tapeids)
@@ -167,10 +167,15 @@ for diskfileid in diskfileids:
       else:
         logger.info("File %s is not on sufficient tapes to be elligable for deletion" % dbfilename)
     if(options.maxgb):
-      sumgb = sumbytes / 1.0E9
       if(sumgb>options.maxgb):
         logger.info("Allready deleted %.2f GB - stopping now" % sumgb)
         break
+    if((numtodelete > 0)and (sumfiles >= numtodelete)):
+       logger.info("Have now deleted the necessary number of files: %d Stopping now" % sumfiles)
+       break
+    if((gbtodelete > 0) and (sumgb >= gbtodelete)):
+       logger.info("Have now deleted the necessary number of GB: %.2f Stopping now" % sumgb)
+       break
 
 session.close()
 if(options.emailto):
