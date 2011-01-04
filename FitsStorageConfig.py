@@ -3,9 +3,10 @@
 
 
 # Configure the path to the storage root here 
-storage_root = '/net/hahalua/data/export'
-#storage_root = '/net/wikiwiki/dataflow'
-#storage_root = "/data/dataflow"
+storage_root = '/net/wikiwiki/dataflow'
+
+target_gb_free = 100
+target_max_files = 125000
 
 # This is the path in the storage root where processed calibrations
 # uploaded through the http server get stored.
@@ -18,24 +19,21 @@ das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
 #das_calproc_path = '/net/josie/staging/dataproc/gmos'
 
 # Configure the site and other misc stuff here
-fits_servername = "hbffits1"
-fits_system_status = "development"
+fits_servername = "mkofits1"
+fits_system_status = "production"
 
 # Configure the path the data postgres database here
 fits_dbname = 'fitsdata'
 fits_database = 'postgresql:///'+fits_dbname
 
 # Configure the Backup Directory here
-fits_db_backup_dir = "/data/backups"
+fits_db_backup_dir = "/net/endor/Sci_ARCH/mkofits1_backup/"
 
 # Configure the LockFile Directory here
 fits_lockfile_dir = "/data/logs"
 
 # Configure the log directory here
 fits_log_dir = "/data/logs/"
-
-# Configure the tape device here
-fits_tape_device = "/dev/nst0"
 
 # Configure the tape scratch directory here
 fits_tape_scratchdir = "/data/tapescratch"
