@@ -247,9 +247,9 @@ class CalibrationNIRI(Calibration):
   """
   niri = None
 
-  def __init__(self, session, header):
+  def __init__(self, session, header, descriptors, types):
     # Init the superclass
-    Calibration.__init__(self, session, header)
+    Calibration.__init__(self, session, header, descriptors, types)
 
     # Find the niriheader
     query = session.query(Niri).filter(Niri.header_id==self.header.id)
