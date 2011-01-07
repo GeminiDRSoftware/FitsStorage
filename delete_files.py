@@ -59,11 +59,13 @@ if(options.auto):
   logger.debug("Disk has %d files present and %.2f GB available" % (numfiles, gbavail))
   numtodelete = numfiles - target_max_files
   if(numtodelete > 0):
-    logger.debug("Need to delete at least %d files" % numtodelete)
+    logger.info("Need to delete at least %d files" % numtodelete)
+    msg+="Need to delete at least %d files\n" % numtodelete
 
   gbtodelete = target_gb_free - gbavail
   if(gbtodelete > 0):
-    logger.debug("Need to delete at least %.2f GB" % gbtodelete)
+    logger.info("Need to delete at least %.2f GB" % gbtodelete)
+    msg+="Need to delete at least %.2f GB\n" % gbtodelete
 
   if((numtodelete <=0) and (gbtodelete <=0)):
     logger.info("In Auto mode and nothing needs deleting. Exiting")
