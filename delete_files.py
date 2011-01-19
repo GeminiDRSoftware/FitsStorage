@@ -94,7 +94,7 @@ if(len(diskfileids) == 0):
   session.close()
   sys.exit(0)
 
-logger.info("Got %d files to delete" % len(diskfileids))
+logger.info("Got %d files to consider for deletion" % len(diskfileids))
 if(len(diskfileids) > 2000 and not options.yesimsure):
   logger.error("To proceed with this many files, you must say --yesimsure")
   session.close()
@@ -166,18 +166,23 @@ for diskfileid in diskfileids:
             session.commit()
           except:
             logger.error("Could not unlink file %s: %s - %s" % (fullpath, sys.exc_info()[0], sys.exc_info()[1]))
+            msg+="Could not unlink file %s: %s - %s\n" % (fullpath, sys.exc_info()[0], sys.exc_info()[1])
       else:
         logger.info("File %s is not on sufficient tapes to be elligable for deletion" % dbfilename)
+        msg+="File %s is not on sufficient tapes to be elligable for deletion\n" % dbfilename
     if(options.maxgb):
       if(sumgb>options.maxgb):
         logger.info("Allready deleted %.2f GB - stopping now" % sumgb)
+        msg+="Allready deleted %.2f GB - stopping now\n" % sumgb
         break
     if(options.auto):
       if((numtodelete > 0)and (sumfiles >= numtodelete)):
          logger.info("Have now deleted the necessary number of files: %d Stopping now" % sumfiles)
+         msg+="Have now deleted the necessary number of files: %d Stopping now\n" % sumfiles
          break
       if((gbtodelete > 0) and (sumgb >= gbtodelete)):
          logger.info("Have now deleted the necessary number of GB: %.2f Stopping now" % sumgb)
+         msg+="Have now deleted the necessary number of GB: %.2f Stopping now\n" % sumgb
          break
 
 session.close()
