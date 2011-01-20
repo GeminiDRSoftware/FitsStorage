@@ -15,8 +15,8 @@ def duplicate_datalabels(session):
   conn = session.connection()
   # A select statement that joins the Header and DiskFile tables and reduces its size with filters
   s = text("""SELECT a.df_id 
-              FROM (Header JOIN DiskFile ON DiskFile.id = Header.diskfile_id) AS a (df_id), 
-                   (Header JOIN DiskFile ON DiskFile.id = Header.diskfile_id) AS b (df_id) 
+              FROM (Diskfile JOIN Header ON DiskFile.id = Header.diskfile_id) AS a (df_id), 
+                   (DiskFile JOIN Header ON DiskFile.id = Header.diskfile_id) AS b (df_id) 
               WHERE a.df_id != b.df_id AND 
                     a.canonical = 'True' AND 
                     b.canonical = 'True' AND 
