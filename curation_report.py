@@ -26,11 +26,12 @@ if dupdata != []:
   for val in dupdata:
     this_ans = val
     header = session.query(Header).filter(Header.diskfile_id == val).first()
-    if previous_ans == '':
-      pass
-    if previous_ans != this_ans:
-      print "duplicate datalabel rows: DiskFile id = %s,  Filename = %s,  Datalabel = %s" %  (header.diskfile.id, header.diskfile.file.filename, header.datalab) 
-    previous_ans = this_ans
+    if header:
+      if previous_ans == '':
+        pass
+      if previous_ans != this_ans:
+        print "duplicate datalabel rows: DiskFile id = %s,  Filename = %s,  Datalabel = %s" %  (header.diskfile.id, header.diskfile.file.filename, header.datalab) 
+      previous_ans = this_ans
 else:
   print "No duplicate datalabel rows detected."
 
