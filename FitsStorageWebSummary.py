@@ -1452,7 +1452,7 @@ def queryselection(query, selection):
     startdt = startdt + tzoffset - oneday
     enddt = startdt + oneday
     # check it's between these two
-    query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime <= enddt)
+    query = query.filter(Header.utdatetime >= startdt).filter(Header.utdatetime < enddt)
 
   # Should we query by daterange?
   if('daterange' in selection):
