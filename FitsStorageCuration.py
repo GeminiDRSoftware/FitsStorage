@@ -6,7 +6,10 @@ from FitsStorage import *
 from sqlalchemy import *
 from sqlalchemy.orm import aliased
 
-def duplicate_datalabels(session):
+checkonly = None
+exclude = None
+
+def duplicate_datalabels(session, checkonly, exclude):
   """
   Returns a list of df_ids as ids that were created to represent the join of DiskFile and 
   Header tables and identify which rows have duplicate datalabels.
@@ -14,16 +17,22 @@ def duplicate_datalabels(session):
   # Form a connection with session
   conn = session.connection()
   # A select statement that joins the Header and DiskFile tables and reduces its size with filters
-  s = text("""SELECT a.df_id 
-              FROM (Diskfile JOIN Header ON DiskFile.id = Header.diskfile_id) AS a (df_id), 
-                   (DiskFile JOIN Header ON DiskFile.id = Header.diskfile_id) AS b (df_id) 
-              WHERE a.df_id != b.df_id AND 
-                    a.canonical = 'True' AND 
-                    b.canonical = 'True' AND 
-                    a.datalab = b.datalab
-              ORDER BY a.diskfile_id ASC""")
+  s = """SELECT a.df_id 
+                FROM (Diskfile JOIN Header ON DiskFile.id = Header.diskfile_id) AS a (df_id), 
+                     (DiskFile JOIN Header ON DiskFile.id = Header.diskfile_id) AS b (df_id) 
+                WHERE a.df_id != b.df_id AND
+                      a.canonical = 'True' AND 
+                      b.canonical = 'True' AND 
+                      a.datalab = b.datalab"""
+  if checkonly:
+    s += """ AND a.datalab LIKE '%%%s%%'""" % (checkonly)
+  if exclude:
+    s += """ AND a.datalab NOT LIKE '%%%s%%'""" % (exclude)
+  
+  s += """ ORDER BY a.diskfile_id ASC"""
+
   # Execute the select statement
-  result = conn.execute(s)
+  result = conn.execute(text(s))   
   # Makes a list of all the joined table ids, df_id, in the list "duplicates"
   duplicates = []
   for row in result:

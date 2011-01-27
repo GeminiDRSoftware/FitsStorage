@@ -11,15 +11,21 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
+parser.add_option("--checkonly", action="store", type="string", dest="checkonly", help="Limits the search by identifying a specific substring")
+parser.add_option("--exclude", action="store", type="string", dest="exclude" , help="Limits the search by excluding  data with a specific substring")
+parser.add_option("--noeng", action="store_const", const="ENG", dest="exclude", help="Limits the search by excluding data with the ENG substring")
 
 (options, args) = parser.parse_args()
+checkonly = options.checkonly
+exclude = options.exclude
+
 
 # Get a database session
 session = sessionfactory()
 
 
 # Work for duplicate_datalabels
-dupdata = duplicate_datalabels(session)
+dupdata = duplicate_datalabels(session, checkonly, exclude)
 previous_ans = ''
 # This for loop changes the list of df_ids to the corresponding DiskFile ids
 if dupdata != []:
