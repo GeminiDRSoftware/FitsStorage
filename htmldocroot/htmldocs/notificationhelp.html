@@ -15,6 +15,7 @@
 
 <H2>Data Selection</H2>
 <P>This is you you specify what data should trigger an email. It's the same syntax as you can use in the Fits Storage Web summary. I would imagine that in most cases for email notification, you will want to use PROJECT-ID/science - this will only trigger notifications from data with obsclass of science. If you just put the project id and leave off the /science then it will trigger if only non-science data, for example mask images or other daytime calibrations are taken.</P>
+<P>There are many possibilities for advanced usage - see the "Selection Criteria" section in the <a href="/htmldocs/usage.html">Fits Storage Help Page</a> for more info. All these will work, though in general you will not want to specify a date or daterange here, as "today" is assumed for the (daily) notification emails.</P>
 
 <H2>Email To</H2>
 <P>The Email address that the notification should be sent to. You can use a comma separated list of addresses if you like.</P>
