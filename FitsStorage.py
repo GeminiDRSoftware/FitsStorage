@@ -641,3 +641,19 @@ class PhotStandard(Base):
   k_mag = Column(Numeric(precision=6, scale=4))
   lprime_mag = Column(Numeric(precision=6, scale=4))
   m_mag = Column(Numeric(precision=6, scale=4))
+
+class Notification(Base):
+  """
+  This is the ORM class for the table holding the email notification list for this server.
+  """
+  __tablename__ = 'notification'
+
+  id = Column(Integer, primary_key=True)
+  label = Column(Text)
+  selection = Column(Text)
+  to = Column(Text)
+  cc = Column(Text)
+  internal = Column(Boolean)
+
+  def __init__(self, label):
+    self.label = label
