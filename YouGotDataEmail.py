@@ -44,11 +44,12 @@ for notif in notifs:
 
     msg = MIMEMultipart()
 
-    text = "New data has been taken for %s\n\n" % (notif.selection)
+    text = "New data has been taken for %s. The attached html file gives details.\n\n" % (notif.selection)
     if(notif.internal):
       text += "The fits storage summary table for this data be found at: %s\n\n" % url
     else:
-      text += "As with all Gemini data, access to this data is via the Gemini Science Archive at http://www1.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/gsa/\n\n"
+      text += "Access to all Gemini data is via the Gemini Science Archive at http://www1.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/gsa/\n"
+      text += "Data Quality assessment and data package release will proceed as normal over the next few days."
 
     part1 = MIMEText(text, 'plain')
     part2 = MIMEText(html, 'html')
