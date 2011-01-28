@@ -28,9 +28,9 @@ notifs = session.query(Notification).all()
 for notif in notifs:
 
   if(notif.internal):
-    url = "http://hbffits1/summary/today/%s" % notif.selection
+    url = "http://fits/summary/today/%s" % notif.selection
   else:
-    url = "http://hbffits1/summary/nolinks/today/%s" % notif.selection
+    url = "http://fits/summary/nolinks/today/%s" % notif.selection
 
   f = urllib2.urlopen(url)
   html = f.read()
