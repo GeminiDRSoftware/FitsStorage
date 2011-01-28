@@ -13,6 +13,9 @@
 <H2>Notification ID: X - label</H2>
 <P>The ID number is mainly for internal reference, but it's the unique identifier for this notification, so it's shown here for referene. The label, after the hyphen in the title, is simply a lable or title for this notification. It's free form text, so set it to whatever you think is useful to identify or label this notification.</P>
 
+<H2>Data Selection</H2>
+<P>This is you you specify what data should trigger an email. It's the same syntax as you can use in the Fits Storage Web summary. I would imagine that in most cases for email notification, you will want to use PROJECT-ID/science - this will only trigger notifications from data with obsclass of science. If you just put the project id and leave off the /science then it will trigger if only non-science data, for example mask images or other daytime calibrations are taken.</P>
+
 <H2>Email To</H2>
 <P>The Email address that the notification should be sent to. You can use a comma separated list of addresses if you like.</P>
 
