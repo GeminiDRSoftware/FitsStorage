@@ -1,3 +1,10 @@
+import sys
+sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
+
+import FitsStorage
+import FitsStorageConfig
+from FitsStorageUtils import *
+
 import urllib2
 import re
 import smtplib
@@ -14,12 +21,16 @@ parser.add_option("--replyto", action="store", dest="replyto", default="gnda@gem
 mailhost = "smtp.gemini.edu"
 cre = re.compile('\.fits')
 
-# The project / email list. Hardcoded for now.
-list={'GN-2010B-SV-142': 'phirst@gemini.edu'}
+# The project / email list. Get from the database
+session = sessionfactory()
+notifs = session.query(Notification).all()
 
-for projectid in list.keys():
+for notif in notifs:
 
-  url = "http://fits/summary/today/%s" % projectid
+  if(notif.internal):
+    url = "http://hbffits1/summary/today/%s" % notif.selection
+  else:
+    url = "http://hbffits1/summary/nolinks/today/%s" % notif.selection
 
   f = urllib2.urlopen(url)
   html = f.read()
@@ -29,23 +40,36 @@ for projectid in list.keys():
 
   if(match):
 
-    subject = "New Data for %s" % projectid
+    subject = "New Data for %s" % notif.selection
 
     msg = MIMEMultipart()
 
-    text = "New data has been taken for project ID %s\n\n%s" % (projectid, url)
+    text = "New data has been taken for %s\n\n" % (notif.selection)
+    if(notif.internal):
+      text += "The fits storage summary table for this data be found at: %s\n\n" % url
+    else:
+      text += "As with all Gemini data, access to this data is via the Gemini Science Archive at http://www1.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/gsa/\n\n"
 
     part1 = MIMEText(text, 'plain')
     part2 = MIMEText(html, 'html')
 
     msg['Subject'] = subject
     msg['From'] = options.fromaddr
-    msg['To'] = list[projectid]
+    msg['To'] = notif.to
+    msg['Cc'] = notif.cc
     msg['Reply-To'] = options.replyto
 
     msg.attach(part1)
     msg.attach(part2)
 
+    fulllist = []
+    tolist = notif.to.split(',')
+    fulllist += tolist
+    if(notif.cc):
+      cclist = notif.cc.split(',')
+      fulllist += cclist
+
+
     smtp = smtplib.SMTP(mailhost)
-    smtp.sendmail(options.fromaddr, list[projectid], msg.as_string())
+    smtp.sendmail(options.fromaddr, fulllist, msg.as_string())
     smtp.quit()
