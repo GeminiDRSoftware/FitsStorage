@@ -12,7 +12,7 @@ import FitsStorageCal
 import FitsStorageConfig
 import urllib
 
-def summary(req, type, selection, orderby):
+def summary(req, type, selection, orderby, links=True):
   """
   This is the main summary generator.
   req is an apache request handler request object
@@ -48,7 +48,7 @@ def summary(req, type, selection, orderby):
 
   session = sessionfactory()
   try:
-    webhdrsummary(session, req, type, list_headers(session, selection, orderby))
+    webhdrsummary(session, req, type, list_headers(session, selection, orderby), links)
   except IOError:
     pass
   finally:
@@ -155,7 +155,7 @@ def list_headers(session, selection, orderby):
   # Return the list of DiskFile objects
   return query.all()
 
-def webhdrsummary(session, req, type, headers):
+def webhdrsummary(session, req, type, headers, links=True):
   """
   Generates an HTML header summary table of the specified type from
   the list of header objects provided. Writes that table to an apache
@@ -185,31 +185,56 @@ def webhdrsummary(session, req, type, headers):
   # First part included in all summary types
   req.write('<TABLE border=0>')
   req.write('<TR class=tr_head>')
-  req.write('<TH>Filename <a href="%s?orderby=filename_asc">&uarr</a><a href="%s?orderby=filename_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH>Data Label <a href="%s?orderby=datalab_asc">&uarr</a><a href="%s?orderby=datalab_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH>UT Date Time <a href="%s?orderby=utdatetime_asc">&uarr</a><a href="%s?orderby=utdatetime_desc">&darr</a></TH>' % (myuri, myuri))
-  req.write('<TH><abbr title="Instrument">Inst</abbr> <a href="%s?orderby=instrument_asc">&uarr</a><a href="%s?orderby=instrument_desc">&darr</a></TH>' % (myuri, myuri))
+  if(links):
+    req.write('<TH>Filename <a href="%s?orderby=filename_asc">&uarr</a><a href="%s?orderby=filename_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH>Data Label <a href="%s?orderby=datalab_asc">&uarr</a><a href="%s?orderby=datalab_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH>UT Date Time <a href="%s?orderby=utdatetime_asc">&uarr</a><a href="%s?orderby=utdatetime_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH><abbr title="Instrument">Inst</abbr> <a href="%s?orderby=instrument_asc">&uarr</a><a href="%s?orderby=instrument_desc">&darr</a></TH>' % (myuri, myuri))
+  else:
+    req.write('<TH>Filename</TH>')
+    req.write('<TH>Data Label</TH>')
+    req.write('<TH>UT Date Time</TH>')
+    req.write('<TH><abbr title="Instrument">Inst</abbr></TH>')
+
   
   # This is the 'obs' part 
   if('obs' in want):
-    req.write('<TH><abbr title="ObsClass">Class</abbr> <a href="%s?orderby=obsclass_asc">&uarr</a><a href="%s?orderby=obsclass_desc">&darr</a></TH>' % (myuri, myuri))
-    req.write('<TH><abbr title="ObsType">Type</abbr> <a href="%s?orderby=obstype_asc">&uarr</a><a href="%s?orderby=obstype_desc">&darr</a></TH>' % (myuri, myuri))
-    req.write('<TH><abbr title="Object Name">Object</abbr> <a href="%s?orderby=object_asc">&uarr</a><a href="%s?orderby=object_desc">&darr</a></TH>' % (myuri, myuri))
+    if(links):
+      req.write('<TH><abbr title="ObsClass">Class</abbr> <a href="%s?orderby=obsclass_asc">&uarr</a><a href="%s?orderby=obsclass_desc">&darr</a></TH>' % (myuri, myuri))
+      req.write('<TH><abbr title="ObsType">Type</abbr> <a href="%s?orderby=obstype_asc">&uarr</a><a href="%s?orderby=obstype_desc">&darr</a></TH>' % (myuri, myuri))
+      req.write('<TH><abbr title="Object Name">Object</abbr> <a href="%s?orderby=object_asc">&uarr</a><a href="%s?orderby=object_desc">&darr</a></TH>' % (myuri, myuri))
+    else:
+      req.write('<TH><abbr title="ObsClass">Class</abbr></TH>')
+      req.write('<TH><abbr title="ObsType">Type</abbr></TH>')
+      req.write('<TH><abbr title="Object Name">Object</abbr></TH>')
     req.write('<TH><abbr title="Imaging Filter or Spectroscopy Wavelength and Disperser">WaveBand<abbr></TH>')
+
 
   # This is the 'expamlt' part - exposure time, airmass, localtime
   if('expamlt' in want):
-    req.write('<TH><abbr title="Exposure Time">ExpT</abbr> <a href="%s?orderby=exptime_asc">&uarr</a><a href="%s?orderby=exptime_desc">&darr</a>' % (myuri, myuri))
-    req.write('<TH><abbr title="AirMass">AM</abbr> <a href="%s?orderby=airmass_asc">&uarr</a><a href="%s?orderby=airmass_desc">&darr</a></TH>' % (myuri, myuri))
-    req.write('<TH><abbr title="Localtime">Lcltime</abbr> <a href="%s?orderby=localtime_asc">&uarr</a><a href="%s?orderby=localtime_desc">&darr</a></TH>' % (myuri, myuri))
+    if(links):
+      req.write('<TH><abbr title="Exposure Time">ExpT</abbr> <a href="%s?orderby=exptime_asc">&uarr</a><a href="%s?orderby=exptime_desc">&darr</a></TH>' % (myuri, myuri))
+      req.write('<TH><abbr title="AirMass">AM</abbr> <a href="%s?orderby=airmass_asc">&uarr</a><a href="%s?orderby=airmass_desc">&darr</a></TH>' % (myuri, myuri))
+      req.write('<TH><abbr title="Localtime">Lcltime</abbr> <a href="%s?orderby=localtime_asc">&uarr</a><a href="%s?orderby=localtime_desc">&darr</a></TH>' % (myuri, myuri))
+    else:
+      req.write('<TH><abbr title="Exposure Time">ExpT</abbr></TH>')
+      req.write('<TH><abbr title="AirMass">AM</abbr></TH>')
+      req.write('<TH><abbr title="Localtime">Lcltime</abbr></TH>')
 
   # This is the 'qa' part
   if('qa' in want):
-    req.write('<TH><abbr title="QA State">QA</abbr> <a href="%s?orderby=qastate_asc">&uarr</a><a href="%s?orderby=qastate_desc">&darr</a></TH>' % (myuri, myuri))
-    req.write('<TH><abbr title="Raw IQ">IQ</abbr> <a href="%s?orderby=rawiq_asc">&uarr</a><a href="%s?orderby=rawiq_desc">&darr</a></TH>' % (myuri, myuri))
-    req.write('<TH><abbr title="Raw CC">CC</abbr> <a href="%s?orderby=rawcc_asc">&uarr</a><a href="%s?orderby=rawcc_desc">&darr</a></TH>' % (myuri, myuri))
-    req.write('<TH><abbr title="Raw WV">WV</abbr> <a href="%s?orderby=rawwv_asc">&uarr</a><a href="%s?orderby=rawwv_desc">&darr</a></TH>' % (myuri, myuri))
-    req.write('<TH><abbr title="Raw BG">BG</abbr> <a href="%s?orderby=rawbg_asc">&uarr</a><a href="%s?orderby=rawbg_desc">&darr</a></TH>' % (myuri, myuri))
+    if(links):
+      req.write('<TH><abbr title="QA State">QA</abbr> <a href="%s?orderby=qastate_asc">&uarr</a><a href="%s?orderby=qastate_desc">&darr</a></TH>' % (myuri, myuri))
+      req.write('<TH><abbr title="Raw IQ">IQ</abbr> <a href="%s?orderby=rawiq_asc">&uarr</a><a href="%s?orderby=rawiq_desc">&darr</a></TH>' % (myuri, myuri))
+      req.write('<TH><abbr title="Raw CC">CC</abbr> <a href="%s?orderby=rawcc_asc">&uarr</a><a href="%s?orderby=rawcc_desc">&darr</a></TH>' % (myuri, myuri))
+      req.write('<TH><abbr title="Raw WV">WV</abbr> <a href="%s?orderby=rawwv_asc">&uarr</a><a href="%s?orderby=rawwv_desc">&darr</a></TH>' % (myuri, myuri))
+      req.write('<TH><abbr title="Raw BG">BG</abbr> <a href="%s?orderby=rawbg_asc">&uarr</a><a href="%s?orderby=rawbg_desc">&darr</a></TH>' % (myuri, myuri))
+    else:
+      req.write('<TH><abbr title="QA State">QA</abbr></TH>')
+      req.write('<TH><abbr title="Raw IQ">IQ</abbr></TH>')
+      req.write('<TH><abbr title="Raw CC">CC</abbr></TH>')
+      req.write('<TH><abbr title="Raw WV">WV</abbr></TH>')
+      req.write('<TH><abbr title="Raw BG">BG</abbr></TH>')
 
   # This is the 'diskfiles' part
   if('diskfiles' in want):
@@ -238,20 +263,34 @@ def webhdrsummary(session, req, type, headers):
 
     # The filename cell, with the link to the full headers and the optional WMD and FITS error flags
     if(h.diskfile.fverrors):
-      fve='<a href="/fitsverify/%d">- fits!</a>' % (h.diskfile.id)
+      if(links):
+        fve='<a href="/fitsverify/%d">- fits!</a>' % (h.diskfile.id)
+      else:
+        fve='- fits!'
     else:
       fve=''
     # Do not raise the WMD flag on ENG data
     iseng = bool(dl.datalabel) and dl.project.iseng
     if((not iseng) and (not h.diskfile.wmdready)):
-      wmd='<a href="/wmdreport/%d">- md!</a>' % (h.diskfile.id)
+      if(links):
+        wmd='<a href="/wmdreport/%d">- md!</a>' % (h.diskfile.id)
+      else:
+        wmd='- md!'
     else:
       wmd=''
-    req.write('<TD><A HREF="/fullheader/%s">%s</A> %s %s</TD>' % (h.diskfile.file.filename, h.diskfile.file.filename, fve, wmd))
+
+    if(links):
+      req.write('<TD><A HREF="/fullheader/%s">%s</A> %s %s</TD>' % (h.diskfile.file.filename, h.diskfile.file.filename, fve, wmd))
+    else:
+      req.write('<TD>%s %s %s</TD>' % (h.diskfile.file.filename, fve, wmd))
+
 
     # The datalabel, parsed to link to the programid and obsid,
     if(dl.datalabel):
-      req.write('<TD><NOBR><a href="/summary/%s">%s</a>-<a href="/summary/%s">%s</a>-<a href="/summary/%s">%s</a></NOBR></TD>' % (dl.projectid, dl.projectid, dl.obsid, dl.obsnum, dl.datalabel, dl.dlnum))
+      if(links):
+        req.write('<TD><NOBR><a href="/summary/%s">%s</a>-<a href="/summary/%s">%s</a>-<a href="/summary/%s">%s</a></NOBR></TD>' % (dl.projectid, dl.projectid, dl.obsid, dl.obsnum, dl.datalabel, dl.dlnum))
+      else:
+        req.write('<TD><NOBR>%s-%s-%s</NOBR></TD>' % (dl.projectid, dl.obsnum, dl.dlnum))
     else:
       req.write('<TD>%s</TD>' % h.datalab)
 
@@ -546,7 +585,10 @@ def gmoscal(req, selection):
      # Now the BIAS report
      req.write('<H2>Biases</H2>')
 
-     tzoffset = datetime.timedelta(seconds=time.timezone)
+     #tzoffset = datetime.timedelta(seconds=time.timezone)
+     #hack to make hbffits1 look chilean for tmp work Dec 2010
+     tzoffset = datetime.timedelta(seconds=14400)
+     
      oneday = datetime.timedelta(days=1)
      offset = sqlalchemy.sql.expression.literal(tzoffset - oneday, sqlalchemy.types.Interval)
      query = session.query(func.count(1), cast((Header.utdatetime + offset), sqlalchemy.types.DATE).label('utdate'), Gmos.xccdbin, Gmos.yccdbin, Gmos.amproa).select_from(join(Gmos, join(Header, join(DiskFile, File))))
@@ -936,6 +978,143 @@ def tapefile(req, things):
     pass
   finally:
     session.close()
+
+def notification(req, things):
+  """
+  This is the email notifications page. It's both to show the current notifcation list and to update it.
+  """
+  req.content_type="text/html"
+  req.write("<html>")
+  req.write("<head><title>FITS Storage new data email notification list</title></head>")
+  req.write("<body>")
+  req.write("<h1>FITS Storage new data email notification list</h1>")
+
+  session = sessionfactory()
+  try:
+    # Process form data first
+    formdata = util.FieldStorage(req)
+    #req.write(str(formdata))
+    for key in formdata.keys():
+      field=key.split('-')[0]
+      id=int(key.split('-')[1])
+      value = formdata[key].value
+      if(id):
+        notif=session.query(Notification).filter(Notification.id==id).first()
+        if(field == 'delete' and value == 'Yes'):
+          session.delete(notif)
+        if(field == 'newlabel'):
+          notif.label = value
+        if(field == 'newsel'):
+          notif.selection = value
+        if(field == 'newto'):
+          notif.to = value
+        if(field == 'newcc'):
+          notif.cc = value
+        if(field == 'internal'):
+          if(value == 'Yes'):
+            notif.internal = True
+          if(value == 'No'):
+            notif.internal = False
+   
+      if(field == 'newone'):
+        # Add a new notification to the database
+        notif = Notification(value)
+        session.add(notif)
+
+      session.commit()
+
+    # Get a list of the notifications in the table
+    query = session.query(Notification).order_by(Notification.id)
+    list = query.all()
+
+    for notif in list:
+      req.write("<H2>Notification ID: %d - %s</H2>" % (notif.id, notif.label))
+      req.write("<UL>")
+      req.write("<LI>Data Selection: %s</LI>" % notif.selection)
+      req.write("<LI>Email To: %s</LI>" % notif.to)
+      req.write("<LI>Email CC: %s</LI>" % notif.cc)
+      req.write("<LI>Gemini Internal: %s</LI>" % notif.internal)
+      req.write("</UL>")
+
+      # The form for modifications
+      req.write('<FORM action="/notification" method="post">')
+      req.write('<TABLE>')
+
+      # New label row
+      newlabelkey = "newlabel-%d" % notif.id
+      req.write('<TR>')
+      req.write('<TD><LABEL for="%s">Update notification label:</LABEL></TD>' % newlabelkey)
+      req.write('<TD><INPUT type="text" size=32 name="%s"></TD>' % newlabelkey)
+      req.write('</TR>')
+
+      # New data selection row
+      newselkey = "newsel-%d" % notif.id
+      req.write('<TR>')
+      req.write('<TD><LABEL for="%s">Update data selection:</LABEL></TD>' % newselkey)
+      req.write('<TD><INPUT type="text" size=32 name="%s"></TD>' % newselkey)
+      req.write('</TR>')
+
+      # New To address row
+      newtokey = "newto-%d" % notif.id
+      req.write('<TR>')
+      req.write('<TD><LABEL for="%s">Update Email To:</LABEL></TD>' % newtokey)
+      req.write('<TD><INPUT type="text" size=32 name="%s"></TD>' % newtokey)
+      req.write('</TR>')
+
+      # New CC address row
+      newcckey = "newcc-%d" % notif.id
+      req.write('<TR>')
+      req.write('<TD><LABEL for="%s">Update Email Cc:</LABEL></TD>' % newcckey)
+      req.write('<TD><INPUT type="text" size=32 name="%s"></TD>' % newcckey)
+      req.write('</TR>')
+
+      # Internal email row
+      internalkey = "internal-%d" % notif.id
+      req.write('<TR>')
+      req.write('<TD><LABEL for="%s">Internal Email:</LABEL></TD>' % internalkey)
+      yeschecked = ""
+      nochecked = ""
+      if(notif.internal):
+        yeschecked="checked"
+      else:
+        nochecked="checked"
+      req.write('<TD><INPUT type="radio" name="%s" value="Yes" %s>Yes</INPUT> ' % (internalkey, yeschecked))
+      req.write('<INPUT type="radio" name="%s" value="No" %s>No</INPUT></TD>' % (internalkey, nochecked))
+      req.write('</TR>')
+
+      # Delete row
+      deletekey = "delete-%d" % notif.id
+      req.write('<TR>')
+      req.write('<TD><LABEL for="%s">Delete:</LABEL></TD>' % deletekey)
+      yeschecked = ""
+      nochecked = "checked"
+      req.write('<TD><INPUT type="radio" name="%s" value="Yes" %s>Yes</INPUT> ' % (deletekey, yeschecked))
+      req.write('<INPUT type="radio" name="%s" value="No" %s>No</INPUT></TD>' % (deletekey, nochecked))
+      req.write('</TR>')
+
+
+      req.write('</TABLE>')
+      req.write('<INPUT type="submit" value="Save"> <INPUT type="reset">')
+      req.write('</FORM>')
+      req.write('<HR>')
+
+    req.write('<HR>')
+    req.write('<H2>Add a New Notification</H2>')
+    req.write('<FORM action="/notification" method="post">')
+    req.write('<LABEL for=newone-0>Label</LABEL> <INPUT type="text" size=32 name=newone-0> <INPUT type="submit" value="Save"> <INPUT type="reset">')
+    req.write('</FORM>')
+
+    req.write("</body></html>")
+    return apache.OK
+  except IOError:
+    pass
+  finally:
+    session.close()
+
+
+
+
+
 
 def calmgr(req, selection):
   """

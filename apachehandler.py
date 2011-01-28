@@ -64,6 +64,13 @@ def handler(req):
 
   # This is the header summary handler
   if((this == 'summary') or (this == 'diskfiles') or (this == 'ssummary')):
+
+    links = True
+    # the nolinks thing is for the external email notifications
+    if 'nolinks' in things:
+      links = False
+      things.remove('nolinks')
+
     # Parse the rest of the uri here while we're at it
     # Expect some combination of progid, obsid, date and instrument name
     # We put the ones we got in a dictionary
@@ -79,7 +86,7 @@ def handler(req):
       if(match):
         orderby.append(match.group(1))
 
-    retval = summary(req, this, selection, orderby)
+    retval = summary(req, this, selection, orderby, links)
     return retval
 
   # The calibrations handler
@@ -269,6 +276,10 @@ def handler(req):
   # TapeFile handler
   if(this == "tapefile"):
     return tapefile(req, things)
+
+  # Emailnotification handler
+  if(this == "notification"):
+    return notification(req, things)
 
   # Some static files that the server should serve via a redirect.
   if((this == "robots.txt") or (this == "favicon.ico")):
