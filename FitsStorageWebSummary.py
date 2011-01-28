@@ -988,6 +988,8 @@ def notification(req, things):
   req.write("<head><title>FITS Storage new data email notification list</title></head>")
   req.write("<body>")
   req.write("<h1>FITS Storage new data email notification list</h1>")
+  req.write("<P>There is a <a href='htmldocs/notificationhelp.html'>help page</a> if you're unsure how to use this.</P>")
+  req.write("<HR>")
 
   session = sessionfactory()
   try:
