@@ -418,8 +418,9 @@ def stats(req):
     # Present rows
     query=query.filter(DiskFile.present == True)
     presentrows = query.count()
-    percent = 100.0 * presentrows / totalrows
-    req.write("<li>Present Rows: %d (%.2f %%)</li>" % (presentrows, percent))
+    if totalrows != 0:
+      percent = 100.0 * presentrows / totalrows
+      req.write("<li>Present Rows: %d (%.2f %%)</li>" % (presentrows, percent))
     # Present size
     tpq = session.query(func.sum(DiskFile.size)).filter(DiskFile.present == True)
     tpsize=tpq.one()[0]
