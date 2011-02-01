@@ -42,9 +42,9 @@ Base = declarative_base()
 # orm can properly handle the relations defined in the database
 # at this level rather than in the main script
 
-# Create a databas engine connection to the postgres database
+# Create a database engine connection to the postgres database
 # and an sqlalchemy session to go with it
-pg_db = sqlalchemy.create_engine(fits_database)
+pg_db = sqlalchemy.create_engine(fits_database, echo = False)
 sessionfactory = sqlalchemy.orm.sessionmaker(pg_db)
 
 
@@ -577,6 +577,7 @@ class Niri(Base):
   welldepthmode = Column(Text, index=True)
   detsec = Column(Text, index=True)
   coadds = Column(Integer, index=True)
+  camera = Column(Text, index=True)
 
   def __init__(self, header):
     self.header = header
@@ -607,6 +608,168 @@ class Niri(Base):
         pass
       try:
         self.detsec = ad.detector_section()
+      except KeyError:
+        pass
+      try:
+        self.coadds = ad.coadds()
+      except KeyError:
+        pass
+      try:
+        self.camera = ad.camera()
+      except KeyError:
+        pass
+      ad.close()
+    except:
+      # Astrodata open failed
+      pass
+
+class Gnirs(Base):
+  """
+  This is the ORM object for the GNIRS details
+  """
+  __tablename__ = 'gnirs'
+
+  id = Column(Integer, primary_key=True)
+  header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+  header = relation(Header, order_by=id)
+  disperser = Column(Text, index=True)
+  filtername = Column(Text, index=True)
+  readmode = Column(Text, index=True)
+  welldepthmode = Column(Text, index=True)
+  coadds = Column(Integer, index=True)
+  camera = Column(Text, index=True)
+  
+  def __init__(self, header):
+    self.header = header
+
+    # Populate from an astrodata object
+    self.populate()
+
+  def populate(self):
+    # Get an AstroData object on it
+    try:
+      ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      # Populate values
+      try:
+        self.disperser = ad.disperser()
+      except KeyError:
+        pass
+      try:
+        self.filtername = ad.filter_name()
+      except KeyError:
+        pass
+      try:
+        self.readmode = ad.read_mode()
+      except KeyError:
+        pass
+      try:
+        self.welldepthmode = ad.well_depth_mode()
+      except KeyError:
+        pass
+      try:
+        self.coadds = ad.coadds()
+      except KeyError:
+        pass
+      try:
+        self.camera = ad.camera()
+      except KeyError:
+        pass
+      ad.close()
+    except:
+      # Astrodata open failed
+      pass
+
+class Nifs(Base):
+  """
+  This is the ORM object for the NIFS details
+  """
+  __tablename__ = 'nifs'
+
+  id = Column(Integer, primary_key=True)
+  header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+  header = relation(Header, order_by=id)
+  disperser = Column(Text, index=True)
+  filtername = Column(Text, index=True)
+  readmode = Column(Text, index=True)
+  welldepthmode = Column(Text, index=True)
+  coadds = Column(Integer, index=True)
+  
+  def __init__(self, header):
+    self.header = header
+
+    # Populate from an astrodata object
+    self.populate()
+
+  def populate(self):
+    # Get an AstroData object on it
+    try:
+      ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      # Populate values
+      try:
+        self.disperser = ad.disperser()
+      except KeyError:
+        pass
+      try:
+        self.filtername = ad.filter_name()
+      except KeyError:
+        pass
+      try:
+        self.readmode = ad.read_mode()
+      except KeyError:
+        pass
+      try:
+        self.welldepthmode = ad.well_depth_mode()
+      except KeyError:
+        pass
+      try:
+        self.coadds = ad.coadds()
+      except KeyError:
+        pass
+      ad.close()
+    except:
+      # Astrodata open failed
+      pass
+
+class Michelle(Base):
+  """
+  This is the ORM object for the MICHELLE details
+  """
+  __tablename__ = 'michelle'
+
+  id = Column(Integer, primary_key=True)
+  header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+  header = relation(Header, order_by=id)
+  disperser = Column(Text, index=True)
+  filtername = Column(Text, index=True)
+  readmode = Column(Text, index=True)
+  welldepthmode = Column(Text, index=True)
+  coadds = Column(Integer, index=True)
+  
+  def __init__(self, header):
+    self.header = header
+
+    # Populate from an astrodata object
+    self.populate()
+
+  def populate(self):
+    # Get an AstroData object on it
+    try:
+      ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      # Populate values
+      try:
+        self.disperser = ad.disperser()
+      except KeyError:
+        pass
+      try:
+        self.filtername = ad.filter_name()
+      except KeyError:
+        pass
+      try:
+        self.readmode = ad.read_mode()
+      except KeyError:
+        pass
+      try:
+        self.welldepthmode = ad.well_depth_mode()
       except KeyError:
         pass
       try:
