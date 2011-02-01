@@ -22,10 +22,10 @@ def create_tables(session):
 
 def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
   """
-  Ingests a file into the databse. If the file isn't known to the database
+  Ingests a file into the database. If the file isn't known to the database
   at all, all three (file, diskfile, header) table entries are created.
   If the file is already in the database but has been modified, the
-  existing diskfile entry is marked as not present and nee diskfile
+  existing diskfile entry is marked as not present and new diskfile
   and header entries are created. If the file is in the database and
   has not been modified since it was last ingested, then this function
   does not modify the database.
@@ -125,7 +125,22 @@ def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
       niri = Niri(header)
       session.add(niri)
       session.commit()
-  
+    if(inst=='GNIRS'):
+      logger.debug("Adding new GNIRS entry")
+      gnirs = Gnirs(header)
+      session.add(gnirs)
+      session.commit()
+    if(inst=='NIFS'):
+      logger.debug("Adding new NIFS entry")
+      nifs = Nifs(header)
+      session.add(nifs)
+      session.commit()
+    if(inst=='michelle'):
+      logger.debug("Adding new MICHELLE entry")
+      michelle = Michelle(header)
+      session.add(michelle)
+      session.commit()
+
   session.commit();
 
 def check_present(session, filename):
