@@ -424,7 +424,8 @@ def stats(req):
     # Present size
     tpq = session.query(func.sum(DiskFile.size)).filter(DiskFile.present == True)
     tpsize=tpq.one()[0]
-    req.write("<li>Total present size: %d bytes (%.02f GB)</li>" % (tpsize, (tpsize/1073741824.0)))
+    if tpsize != None:
+      req.write("<li>Total present size: %d bytes (%.02f GB)</li>" % (tpsize, (tpsize/1073741824.0)))
     # most recent entry
     query=session.query(func.max(DiskFile.entrytime))
     latest = query.one()[0]
