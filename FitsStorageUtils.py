@@ -15,9 +15,16 @@ def create_tables(session):
   File.metadata.create_all(bind=pg_db)
 
   # Now grant the apache user select on them for the www queries
-  session.execute("GRANT SELECT ON file, diskfile, header, gmos, niri, tape, tape_id_seq, tapewrite, tapefile, notification TO apache");
+  session.execute("GRANT SELECT ON file, diskfile, header, gmos, niri, michelle, gnirs, nifs, tape, tape_id_seq, tapewrite, tapefile, notification TO apache");
   session.execute("GRANT INSERT,UPDATE ON tape, tape_id_seq, notification, notification_id_seq TO apache");
   session.execute("GRANT DELETE ON notification TO apache");
+  session.commit()
+
+def drop_tables(session):
+  """
+  Drops all the database tables. Very unsubtle. Use with caution
+  """
+  session.execute("DROP TABLE gmos, niri, nifs, gnirs, michelle, header, diskfile, file, tape, tapewrite, tapefile, notification, standards, ingestqueue CASCADE")
   session.commit()
 
 def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
