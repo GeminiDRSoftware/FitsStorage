@@ -36,7 +36,10 @@ missing = int(cremissing.search(html).group(1))
 mailhost = "smtp.gemini.edu"
 
 if(missing==0):
-  subject = "No missing calibrations this week. Yay!"
+  if options.skipdays == 0:
+    subject = "No missing calibrations today. Yay!"
+  else:
+    subject = "No missing calibrations this week. Yay!"
 else:
   subject = "MISSING CALIBRATIONS: %d missing arcs" % missing
 
