@@ -43,105 +43,108 @@ def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
   skip_wmd: causes the ingest to skip running wmd on the file.
   """
   logger.debug("ingest_file %s" % filename)
-  # Make a file instance
-  file = File(filename, path)
-
-  # First check if the file exists
-  if(not(file.exists())):
-    logger.debug("cannot access %s", file.fullpath())
-    check_present(session, filename)
-    return
-
-  # Check if this filename is already in the database
-
-  query = session.query(File).filter(File.filename==file.filename).filter(File.path==file.path)
-  if(query.first()):
-    logger.debug("Already in file table")
-    # This will throw an error if there is more than one entry
-    file = query.one()
-  else:
-    logger.debug("Adding new file table entry")
+  # Wrap everything in a try except to log any exceptions that occur
+  try:
+    # Make a file instance
     file = File(filename, path)
-    session.add(file)
+
+    # First check if the file exists
+    if(not(file.exists())):
+      logger.debug("cannot access %s", file.fullpath())
+      check_present(session, filename)
+      return
+
+    # Check if this filename is already in the database
+    query = session.query(File).filter(File.filename==file.filename).filter(File.path==file.path)
+    if(query.first()):
+      logger.debug("Already in file table")
+      # This will throw an error if there is more than one entry
+      file = query.one()
+    else:
+      logger.debug("Adding new file table entry")
+      session.add(file)
+      session.commit();
+
+    # See if a diskfile for this file already exists and is present
+    query = session.query(DiskFile).filter(DiskFile.file_id==file.id).filter(DiskFile.present==True)
+    if(query.first()):
+      # Yes, it's already there.
+      logger.debug("already present in diskfile table...")
+      # Ensure there's only one and get an instance of it
+      diskfile = query.one()
+      # Has the file changed since we last recorded it?
+      # By default check lastmod time first
+      # there is a subelty wrt timezones here.
+      if((diskfile.lastmod.replace(tzinfo=None) != diskfile.file.lastmod()) or force_crc):
+        logger.debug("lastmod time indicates file modification")
+        # Check the CRC to be sure if it's changed
+        if(diskfile.ccrc == diskfile.file.ccrc()):
+          logger.debug("crc indicates no change")
+          add_diskfile=0
+        else:
+          logger.debug("crc indicates file has changed - reingesting")
+          # Set the present and canonical flags on the current one to false and create a new entry
+          diskfile.present=False
+          diskfile.canonical=False
+          add_diskfile=1
+      else:
+        logger.debug("lastmod time indicates file unchanged, not checking further")
+        add_diskfile=0
+  
+    else:
+      # No not present, insert into diskfile table
+      logger.debug("No Present DiskFile exists")
+      add_diskfile=1
+      # Check to see if there is are older non-present but canonical versions to mark non-canonical
+      query = session.query(DiskFile).filter(DiskFile.file_id==file.id).filter(DiskFile.present==False).filter(DiskFile.canonical==True)
+      list = query.all()
+      for df in list:
+        logger.debug("Marking old diskfile id %d as no longer canonical" % df.id)
+        df.canonical=False
+        session.commit()
+    
+    if(add_diskfile):
+      logger.debug("Adding new DiskFile entry")
+      diskfile = DiskFile(file, skip_fv, skip_wmd)
+      session.add(diskfile)
+      session.commit()
+      logger.debug("Adding new Header entry")
+      header = Header(diskfile)
+      session.add(header)
+      inst = header.instrument
+      logger.debug("Instrument is: %s" % inst)
+      session.commit()
+      # Add the instrument specific tables
+      if(inst=='GMOS-N' or inst=='GMOS-S'):
+        logger.debug("Adding new GMOS entry")
+        gmos = Gmos(header)
+        session.add(gmos)
+        session.commit()
+      if(inst=='NIRI'):
+        logger.debug("Adding new NIRI entry")
+        niri = Niri(header)
+        session.add(niri)
+        session.commit()
+      if(inst=='GNIRS'):
+        logger.debug("Adding new GNIRS entry")
+        gnirs = Gnirs(header)
+        session.add(gnirs)
+        session.commit()
+      if(inst=='NIFS'):
+        logger.debug("Adding new NIFS entry")
+        nifs = Nifs(header)
+        session.add(nifs)
+        session.commit()
+      if(inst=='michelle'):
+        logger.debug("Adding new MICHELLE entry")
+        michelle = Michelle(header)
+        session.add(michelle)
+        session.commit()
+  
     session.commit();
 
-  # See if a diskfile for this file already exists and is present
-  query = session.query(DiskFile).filter(DiskFile.file_id==file.id).filter(DiskFile.present==True)
-  if(query.first()):
-    # Yes, it's already there.
-    logger.debug("already present in diskfile table...")
-    # Ensure there's only one and get an instance of it
-    diskfile = query.one()
-    # Has the file changed since we last recorded it?
-    # By default check lastmod time first
-    # there is a subelty wrt timezones here.
-    if((diskfile.lastmod.replace(tzinfo=None) != diskfile.file.lastmod()) or force_crc):
-      logger.debug("lastmod time indicates file modification")
-      # Check the CRC to be sure if it's changed
-      if(diskfile.ccrc == diskfile.file.ccrc()):
-        logger.debug("crc indicates no change")
-        add_diskfile=0
-      else:
-        logger.debug("crc indicates file has changed - reingesting")
-        # Set the present and canonical flags on the current one to false and create a new entry
-        diskfile.present=False
-        diskfile.canonical=False
-        add_diskfile=1
-    else:
-      logger.debug("lastmod time indicates file unchanged, not checking further")
-      add_diskfile=0
-
-  else:
-    # No not present, insert into diskfile table
-    logger.debug("No Present DiskFile exists")
-    add_diskfile=1
-    # Check to see if there is are older non-present but canonical versions to mark non-canonical
-    query = session.query(DiskFile).filter(DiskFile.file_id==file.id).filter(DiskFile.present==False).filter(DiskFile.canonical==True)
-    list = query.all()
-    for df in list:
-      logger.debug("Marking old diskfile id %d as no longer canonical" % df.id)
-      df.canonical=False
-      session.commit()
-  
-  if(add_diskfile):
-    logger.debug("Adding new DiskFile entry")
-    diskfile = DiskFile(file, skip_fv, skip_wmd)
-    session.add(diskfile)
-    session.commit()
-    logger.debug("Adding new Header entry")
-    header = Header(diskfile)
-    session.add(header)
-    inst = header.instrument
-    logger.debug("Instrument is: %s" % inst)
-    session.commit()
-    # Add the instrument specific tables
-    if(inst=='GMOS-N' or inst=='GMOS-S'):
-      logger.debug("Adding new GMOS entry")
-      gmos = Gmos(header)
-      session.add(gmos)
-      session.commit()
-    if(inst=='NIRI'):
-      logger.debug("Adding new NIRI entry")
-      niri = Niri(header)
-      session.add(niri)
-      session.commit()
-    if(inst=='GNIRS'):
-      logger.debug("Adding new GNIRS entry")
-      gnirs = Gnirs(header)
-      session.add(gnirs)
-      session.commit()
-    if(inst=='NIFS'):
-      logger.debug("Adding new NIFS entry")
-      nifs = Nifs(header)
-      session.add(nifs)
-      session.commit()
-    if(inst=='michelle'):
-      logger.debug("Adding new MICHELLE entry")
-      michelle = Michelle(header)
-      session.add(michelle)
-      session.commit()
-
-  session.commit();
+  except:
+    logger.error("Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
 
 def check_present(session, filename):
   """
