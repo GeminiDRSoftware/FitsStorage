@@ -691,7 +691,6 @@ class Nifs(Base):
   disperser = Column(Text, index=True)
   filtername = Column(Text, index=True)
   readmode = Column(Text, index=True)
-  welldepthmode = Column(Text, index=True)
   coadds = Column(Integer, index=True)
   
   def __init__(self, header):
@@ -715,10 +714,6 @@ class Nifs(Base):
         pass
       try:
         self.readmode = ad.read_mode()
-      except KeyError:
-        pass
-      try:
-        self.welldepthmode = ad.well_depth_mode()
       except KeyError:
         pass
       try:
