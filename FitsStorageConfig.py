@@ -22,6 +22,8 @@ das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
 fits_servername = "mkofits1"
 fits_system_status = "production"
 
+email_errors_to = "phirst@gemini.edu"
+
 # Configure the path the data postgres database here
 fits_dbname = 'fitsdata'
 fits_database = 'postgresql:///'+fits_dbname
