@@ -418,7 +418,7 @@ class Header(Base):
       ad.close()
     except:
       # Astrodata open or any of the above failed
-      pass
+      raise
 
 class IngestQueue(Base):
   """
@@ -560,7 +560,7 @@ class Gmos(Base):
       ad.close()
     except:
       # Astrodata open failed
-      pass
+      raise
 
 class Niri(Base):
   """
@@ -621,7 +621,7 @@ class Niri(Base):
       ad.close()
     except:
       # Astrodata open failed
-      pass
+      raise
 
 class Gnirs(Base):
   """
@@ -677,7 +677,7 @@ class Gnirs(Base):
       ad.close()
     except:
       # Astrodata open failed
-      pass
+      raise
 
 class Nifs(Base):
   """
@@ -728,7 +728,7 @@ class Nifs(Base):
       ad.close()
     except:
       # Astrodata open failed
-      pass
+      raise
 
 class Michelle(Base):
   """
@@ -742,7 +742,6 @@ class Michelle(Base):
   disperser = Column(Text, index=True)
   filtername = Column(Text, index=True)
   readmode = Column(Text, index=True)
-  welldepthmode = Column(Text, index=True)
   coadds = Column(Integer, index=True)
   
   def __init__(self, header):
@@ -769,17 +768,13 @@ class Michelle(Base):
       except KeyError:
         pass
       try:
-        self.welldepthmode = ad.well_depth_mode()
-      except KeyError:
-        pass
-      try:
         self.coadds = ad.coadds()
       except KeyError:
         pass
       ad.close()
     except:
       # Astrodata open failed
-      pass
+      raise
 
 class PhotStandard(Base):
   """
