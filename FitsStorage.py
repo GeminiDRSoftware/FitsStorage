@@ -607,7 +607,7 @@ class Niri(Base):
       except KeyError:
         pass
       try:
-        self.detsec = ad.detector_section()
+        self.detsec = ad.data_section()
       except KeyError:
         pass
       try:
