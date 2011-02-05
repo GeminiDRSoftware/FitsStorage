@@ -358,6 +358,15 @@ def getselection(things):
     if(thing=='present' or thing=='Present'):
       selection['present']=True
       recognised=True
+    if(thing=='notpresent' or thing=='NotPresent'):
+      selection['present']=False
+      recognised=True
+    if(thing=='canonical' or thing=='Canonical'):
+      selection['canonical']=True
+      recognised=True
+    if(thing=='notcanonical' or thing=='NotCanonical'):
+      selection['canonical']=False
+      recognised=True
 
     if(not recognised):
       if('notrecognised' in selection):
