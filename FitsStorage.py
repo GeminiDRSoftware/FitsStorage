@@ -296,6 +296,10 @@ class Header(Base):
       # Data Types
       try:
         self.obstype = ad.observation_type()
+        if('GNIRS_PINHOLE' in ad.types):
+          self.obstype='PINHOLE'
+        if('NIFS_RONCHI' in ad.types):
+          self.obstype='RONCHI'
       except KeyError:
         pass
       try:

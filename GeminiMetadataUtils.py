@@ -105,8 +105,9 @@ def gemini_obstype(string):
   If the string argument matches a gemini ObsType 
   then we return the obstype
   Otherwise return an empty string
+  We add the unofficial values PINHOLE for GNIRS pinhole mask observations and RONCHI for NIFS Ronchi mask observations here too
   """
-  list = ['DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT']
+  list = ['DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI']
   retary = ''
   if(string in list):
     retary = string
