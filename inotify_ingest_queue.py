@@ -18,6 +18,7 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
+parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Do not actually add to ingest queue")
 
 (options, args) = parser.parse_args()
 
@@ -40,18 +41,22 @@ mask = pyinotify.IN_MOVED_FROM | pyinotify.IN_DELETE | pyinotify.IN_CLOSE_WRITE 
 
 # Create the Event Handler
 class HandleEvents(pyinotify.ProcessEvent):
-  tmpre = re.compile('(tmp)|(swp)')
+  tmpre = re.compile('(tmp)|(swp)|(^\.)')
   def process_default(self, event):
     logger.debug("Pyinotify Event: %s" % str(event))
-    # Does it have a tmp or swp in the filename?
+    # Does it have a tmp or swp in the filename or start with a dot?
     if(self.tmpre.search(event.name)):
       # It's a tmp file, ignore it
       logger.debug("Ignoring Event on tmp file: %s" % event.name)
     else:
       # Go ahead and process it
       logger.info("Processing PyInotify Event on pathname: %s" % event.pathname)
-      logger.info("Adding to Ingest Queue: %s" % event.name)
-      addto_ingestqueue(session, event.name, '')
+      if(options.dryrun):
+        logger.info("Dryrun mode - not actually adding to ingest queue: %s" % event.name)
+      else:
+        logger.info("Adding to Ingest Queue: %s" % event.name)
+        addto_ingestqueue(session, event.name, '')
+
 
 # Create the notifier
 notifier = pyinotify.Notifier(wm, HandleEvents())
