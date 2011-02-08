@@ -83,6 +83,9 @@ class File(Base):
   def ccrc(self):
     return CadcCRC.cadcCRC(self.fullpath())
 
+  def md5(self):
+    return CadcCRC.md5sum(self.fullpath())
+
   def lastmod(self):
     return datetime.datetime.fromtimestamp(os.path.getmtime(self.fullpath()))
     
@@ -98,6 +101,7 @@ class DiskFile(Base):
   present = Column(Boolean, index=True)
   canonical = Column(Boolean, index=True)
   ccrc = Column(Text)
+  md5 = Column(Text)
   size = Column(Integer)
   lastmod = Column(DateTime(timezone=True), index=True)
   entrytime = Column(DateTime(timezone=True), index=True)
@@ -115,6 +119,7 @@ class DiskFile(Base):
     self.entrytime = 'now'
     self.size = file.size()
     self.ccrc = file.ccrc()
+    self.md5 = file.md5()
     self.lastmod = file.lastmod()
     if(skip_fv):
       self.fverrors=0

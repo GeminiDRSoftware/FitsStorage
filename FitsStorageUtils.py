@@ -27,7 +27,7 @@ def drop_tables(session):
   session.execute("DROP TABLE gmos, niri, nifs, gnirs, michelle, header, diskfile, file, tape, tapewrite, tapefile, notification, standards, ingestqueue CASCADE")
   session.commit()
 
-def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
+def ingest_file(session, filename, path, force_md5, skip_fv, skip_wmd):
   """
   Ingests a file into the database. If the file isn't known to the database
   at all, all three (file, diskfile, header) table entries are created.
@@ -40,7 +40,7 @@ def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
   session: the sqlalchemy database session to use
   filename: the filename of the file to ingest
   path: the path to the file to ingest
-  force_crc: normally this function will compare the last modified
+  force_md5: normally this function will compare the last modified
              timestamp on the file to that of the record of the file
              in the database to determine if it has possibly changed,
              and only checks the CRC if it has possibly changed. Setting
@@ -82,14 +82,14 @@ def ingest_file(session, filename, path, force_crc, skip_fv, skip_wmd):
       # Has the file changed since we last recorded it?
       # By default check lastmod time first
       # there is a subelty wrt timezones here.
-      if((diskfile.lastmod.replace(tzinfo=None) != diskfile.file.lastmod()) or force_crc):
+      if((diskfile.lastmod.replace(tzinfo=None) != diskfile.file.lastmod()) or force_md5):
         logger.debug("lastmod time indicates file modification")
         # Check the CRC to be sure if it's changed
-        if(diskfile.ccrc == diskfile.file.ccrc()):
-          logger.debug("crc indicates no change")
+        if(diskfile.md5 == diskfile.file.md5()):
+          logger.debug("md5 indicates no change")
           add_diskfile=0
         else:
-          logger.debug("crc indicates file has changed - reingesting")
+          logger.debug("md5 indicates file has changed - reingesting")
           # Set the present and canonical flags on the current one to false and create a new entry
           diskfile.present=False
           diskfile.canonical=False
