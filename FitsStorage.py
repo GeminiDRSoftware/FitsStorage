@@ -15,7 +15,7 @@ import zlib
 import re
 
 from sqlalchemy import Table, Column, MetaData, ForeignKey
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, extract
 from sqlalchemy import Integer, String, Boolean, Text, DateTime, Time, Date, Numeric, BigInteger
 
 from sqlalchemy.orm import relation, backref, join

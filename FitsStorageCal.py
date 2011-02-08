@@ -135,8 +135,8 @@ class CalibrationGMOS(Calibration):
     if(sameprog):
       query = query.filter(Header.progid==self.header.progid)
 
-    # Order by absolute time separation. Maybe there's a better way to do this
-    query = query.order_by("ABS(EXTRACT(EPOCH FROM (header.utdatetime - :utdatetime_x)))").params(utdatetime_x= self.header.utdatetime)
+    # Order by absolute time separation. 
+    query = query.order_by(func.abs(extract('epoch', Header.utdatetime - self.header.utdatetime)).asc())
 
     # For now, we only want one result - the closest in time
     query = query.limit(1)
@@ -161,8 +161,8 @@ class CalibrationGMOS(Calibration):
     # The science amproa must be equal or substring of the arc amproa
     query = query.filter(Gmos.amproa.like('%'+self.gmos.amproa+'%'))
 
-    # Order by absolute time separation. Maybe there's a better way to do this
-    query = query.order_by("ABS(EXTRACT(EPOCH FROM (header.utdatetime - :utdatetime_x)))").params(utdatetime_x= self.header.utdatetime)
+    # Order by absolute time separation. 
+    query = query.order_by(func.abs(extract('epoch', Header.utdatetime - self.header.utdatetime)).asc())
 
     # For now, we only want one result - the closest in time
     query = query.limit(1)
@@ -204,8 +204,8 @@ class CalibrationGMOS(Calibration):
     # The science amproa must be equal or substring of the bias amproa
     query = query.filter(Gmos.amproa.like('%'+str(self.descriptors['amp_read_area'])+'%'))
 
-    # Order by absolute time separation. Maybe there's a better way to do this
-    query = query.order_by("ABS(EXTRACT(EPOCH FROM (header.utdatetime - :utdatetime_x)))").params(utdatetime_x= self.descriptors['ut_datetime'] )
+    # Order by absolute time separation.
+    query = query.order_by(func.abs(extract('epoch', Header.utdatetime - self.descriptors['ut_datetime'])).asc())
 
     # For now, we only want one result - the closest in time
     query = query.limit(1)
@@ -231,8 +231,8 @@ class CalibrationGMOS(Calibration):
     # The science amproa must be equal or substring of the flat amproa
     query = query.filter(Gmos.amproa.like('%'+self.gmos.amproa+'%'))
 
-    # Order by absolute time separation. Maybe there's a better way to do this
-    query = query.order_by("ABS(EXTRACT(EPOCH FROM (header.utdatetime - :utdatetime_x)))").params(utdatetime_x= self.header.utdatetime)
+    # Order by absolute time separation.
+    query = query.order_by(func.abs(extract('epoch', Header.utdatetime - self.header.utdatetime)).asc())
 
     # For now, we only want one result - the closest in time
     query = query.limit(1)
@@ -283,8 +283,8 @@ class CalibrationNIRI(Calibration):
     query = query.filter(Niri.readmode == self.niri.readmode).filter(Niri.welldepthmode == self.niri.welldepthmode)
     query = query.filter(Header.exptime == self.header.exptime).filter(Niri.coadds == self.niri.coadds)
 
-    # Order by absolute time separation. Maybe there's a better way to do this
-    query = query.order_by("ABS(EXTRACT(EPOCH FROM (header.utdatetime - :utdatetime_x)))").params(utdatetime_x= self.header.utdatetime)
+    # Order by absolute time separation.
+    query = query.order_by(func.abs(extract('epoch', Header.utdatetime - self.header.utdatetime)).asc())
 
     # For now, we only want one result - the closest in time
     query = query.limit(1)
