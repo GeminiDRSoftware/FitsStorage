@@ -1014,7 +1014,7 @@ def notification(req, things):
   try:
     # Process form data first
     formdata = util.FieldStorage(req)
-    #req.write(str(formdata))
+    # req.write(str(formdata))
     for key in formdata.keys():
       field=key.split('-')[0]
       id=int(key.split('-')[1])
@@ -1023,19 +1023,20 @@ def notification(req, things):
         notif=session.query(Notification).filter(Notification.id==id).first()
         if(field == 'delete' and value == 'Yes'):
           session.delete(notif)
-        if(field == 'newlabel'):
-          notif.label = value
-        if(field == 'newsel'):
-          notif.selection = value
-        if(field == 'newto'):
-          notif.to = value
-        if(field == 'newcc'):
-          notif.cc = value
-        if(field == 'internal'):
-          if(value == 'Yes'):
-            notif.internal = True
-          if(value == 'No'):
-            notif.internal = False
+        else:
+          if(field == 'newlabel'):
+            notif.label = value
+          if(field == 'newsel'):
+            notif.selection = value
+          if(field == 'newto'):
+            notif.to = value
+          if(field == 'newcc'):
+            notif.cc = value
+          if(field == 'internal'):
+            if(value == 'Yes'):
+              notif.internal = True
+            if(value == 'No'):
+              notif.internal = False
    
       if(field == 'newone'):
         # Add a new notification to the database
@@ -1061,58 +1062,28 @@ def notification(req, things):
       req.write('<FORM action="/notification" method="post">')
       req.write('<TABLE>')
 
-      # New label row
-      newlabelkey = "newlabel-%d" % notif.id
-      req.write('<TR>')
-      req.write('<TD><LABEL for="%s">Update notification label:</LABEL></TD>' % newlabelkey)
-      req.write('<TD><INPUT type="text" size=32 name="%s"></TD>' % newlabelkey)
-      req.write('</TR>')
-
-      # New data selection row
-      newselkey = "newsel-%d" % notif.id
-      req.write('<TR>')
-      req.write('<TD><LABEL for="%s">Update data selection:</LABEL></TD>' % newselkey)
-      req.write('<TD><INPUT type="text" size=32 name="%s"></TD>' % newselkey)
-      req.write('</TR>')
-
-      # New To address row
-      newtokey = "newto-%d" % notif.id
-      req.write('<TR>')
-      req.write('<TD><LABEL for="%s">Update Email To:</LABEL></TD>' % newtokey)
-      req.write('<TD><INPUT type="text" size=32 name="%s"></TD>' % newtokey)
-      req.write('</TR>')
-
-      # New CC address row
-      newcckey = "newcc-%d" % notif.id
-      req.write('<TR>')
-      req.write('<TD><LABEL for="%s">Update Email Cc:</LABEL></TD>' % newcckey)
-      req.write('<TD><INPUT type="text" size=32 name="%s"></TD>' % newcckey)
-      req.write('</TR>')
-
-      # Internal email row
-      internalkey = "internal-%d" % notif.id
-      req.write('<TR>')
-      req.write('<TD><LABEL for="%s">Internal Email:</LABEL></TD>' % internalkey)
-      yeschecked = ""
-      nochecked = ""
-      if(notif.internal):
-        yeschecked="checked"
-      else:
-        nochecked="checked"
-      req.write('<TD><INPUT type="radio" name="%s" value="Yes" %s>Yes</INPUT> ' % (internalkey, yeschecked))
-      req.write('<INPUT type="radio" name="%s" value="No" %s>No</INPUT></TD>' % (internalkey, nochecked))
-      req.write('</TR>')
-
-      # Delete row
-      deletekey = "delete-%d" % notif.id
-      req.write('<TR>')
-      req.write('<TD><LABEL for="%s">Delete:</LABEL></TD>' % deletekey)
-      yeschecked = ""
-      nochecked = "checked"
-      req.write('<TD><INPUT type="radio" name="%s" value="Yes" %s>Yes</INPUT> ' % (deletekey, yeschecked))
-      req.write('<INPUT type="radio" name="%s" value="No" %s>No</INPUT></TD>' % (deletekey, nochecked))
-      req.write('</TR>')
-
+      mod_list = [['newlabel', 'Update notification label'], ['newsel', 'Update data selection'], ['newto', 'Update Email To'], ['newcc', 'Update Email Cc'], ['internal', 'Internal Email'], ['delete', 'Delete']]
+      for key in range(len(mod_list)):
+        user = mod_list[key][0]+"-%d" % notif.id
+        req.write('<TR>')
+        req.write('<TD><LABEL for="%s">%s:</LABEL></TD>' % (user, mod_list[key][1]))
+        if (mod_list[key][0] == 'internal'):
+          yeschecked = ""
+          nochecked = ""
+          if (notif.internal):
+            yeschecked="checked"
+          else:
+            nochecked="checked"
+          req.write('<TD><INPUT type="radio" name="%s" value="Yes" %s>Yes</INPUT> ' % (user, yeschecked))
+          req.write('<INPUT type="radio" name="%s" value="No" %s>No</INPUT></TD>' % (user, nochecked))
+        elif (mod_list[key][0] == 'delete'):
+          yeschecked = ""
+          nochecked = "checked"
+          req.write('<TD><INPUT type="radio" name="%s" value="Yes" %s>Yes</INPUT> ' % (user, yeschecked))
+          req.write('<INPUT type="radio" name="%s" value="No" %s>No</INPUT></TD>' % (user, nochecked))
+        else:
+          req.write('<TD><INPUT type="text" size=32 name="%s"></TD>' % user)
+        req.write('</TR>')
 
       req.write('</TABLE>')
       req.write('<INPUT type="submit" value="Save"> <INPUT type="reset">')
@@ -1324,13 +1295,12 @@ def calibrations(req, selection):
     # Knock out the FAILs
     query = query.filter(Header.rawgemqa!='BAD')
 
+    # Order by date, most recent first
+    query = query.order_by(desc(Header.utdatetime))
 
     # If openquery, limit number of responses
     if(openquery(selection)):
       query = query.limit(1000)
-
-    # Order by date, most recent first
-    query = query.order_by(desc(Header.utdatetime))
 
     # OK, do the query
     headers = query.all()
