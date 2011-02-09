@@ -388,7 +388,7 @@ class Header(Base):
       except KeyError:
         pass
       try:
-        self.fpmask = ad.focal_plane_mask()
+        self.fpmask = ad.focal_plane_mask(pretty=True)
       except KeyError:
         pass
 
@@ -526,6 +526,7 @@ class Gmos(Base):
   amproa = Column(Text, index=True)
   readspeedmode = Column(Text, index=True)
   gainmode = Column(Text, index=True)
+  fpmask = Column(Text)
 
   def __init__(self, header):
     self.header = header
@@ -566,6 +567,10 @@ class Gmos(Base):
         self.gainmode = ad.gain_mode()
       except (KeyError, IndexError):
         pass
+      try:
+        self.fpmask = ad.focal_plane_mask()
+      except KeyError:
+        pass
       ad.close()
     except:
       # Astrodata open failed
@@ -587,6 +592,7 @@ class Niri(Base):
   detsec = Column(Text, index=True)
   coadds = Column(Integer, index=True)
   camera = Column(Text, index=True)
+  fpmask = Column(Text)
 
   def __init__(self, header):
     self.header = header
@@ -627,6 +633,10 @@ class Niri(Base):
         self.camera = ad.camera()
       except KeyError:
         pass
+      try:
+        self.fpmask = ad.focal_plane_mask()
+      except KeyError:
+        pass
       ad.close()
     except:
       # Astrodata open failed
@@ -647,6 +657,7 @@ class Gnirs(Base):
   welldepthmode = Column(Text, index=True)
   coadds = Column(Integer, index=True)
   camera = Column(Text, index=True)
+  fpmask = Column(Text)
   
   def __init__(self, header):
     self.header = header
@@ -683,6 +694,10 @@ class Gnirs(Base):
         self.camera = ad.camera()
       except KeyError:
         pass
+      try:
+        self.fpmask = ad.focal_plane_mask()
+      except KeyError:
+        pass
       ad.close()
     except:
       # Astrodata open failed
@@ -701,6 +716,7 @@ class Nifs(Base):
   filtername = Column(Text, index=True)
   readmode = Column(Text, index=True)
   coadds = Column(Integer, index=True)
+  fpmask = Column(Text)
   
   def __init__(self, header):
     self.header = header
@@ -727,6 +743,10 @@ class Nifs(Base):
         pass
       try:
         self.coadds = ad.coadds()
+      except KeyError:
+        pass
+      try:
+        self.fpmask = ad.focal_plane_mask()
       except KeyError:
         pass
       ad.close()
@@ -747,6 +767,7 @@ class Michelle(Base):
   filtername = Column(Text, index=True)
   readmode = Column(Text, index=True)
   coadds = Column(Integer, index=True)
+  fpmask = Column(Text)
   
   def __init__(self, header):
     self.header = header
@@ -773,6 +794,10 @@ class Michelle(Base):
         pass
       try:
         self.coadds = ad.coadds()
+      except KeyError:
+        pass
+      try:
+        self.fpmask = ad.focal_plane_mask()
       except KeyError:
         pass
       ad.close()
