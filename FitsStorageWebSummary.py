@@ -74,6 +74,7 @@ def list_headers(session, selection, orderby):
   query = queryselection(query, selection)
 
   # Do we have any order by arguments?
+  """
   if(orderby):
     # Yes, apply them to the query
     for i in range(len(orderby)):
@@ -93,7 +94,7 @@ def list_headers(session, selection, orderby):
         query = query.order_by(Header.airmass)
       if(orderby[i] == 'airmass_desc'):
         query = query.order_by(desc(Header.airmass))
-      if((orderby[i] == 'utdatetime') or (orderby[i] == 'utdatetime_asc')):
+      if((orderby[i] == 'obstype') or (orderby[i] == 'obstype_asc')):
         query = query.order_by(Header.utdatetime)
       if(orderby[i] == 'obstype_desc'):
         query = query.order_by(desc(Header.obstype))
@@ -141,6 +142,24 @@ def list_headers(session, selection, orderby):
         query = query.order_by(Header.object)
       if(orderby[i] == 'object_desc'):
         query = query.order_by(desc(Header.object))
+  """
+  whichorderby = ['instrument', 'datalab', 'obsclass', 'airmass', 'utdatetime', 'localtime', 'rawiq', 'rawcc', 'rawbg', 'rawwv', 'qastate', 'filter', 'exptime', 'object']
+  if (orderby):
+    for i in range(len(orderby)):
+      if '_desc' in orderby[i]:
+        orderby[i] = orderby[i].replace('_desc', '')
+        if (orderby[i] == 'filename'):
+          query = query.order_by(desc('File.%s' % orderby[i]))
+        if orderby[i] in whichorderby:
+          query = query.order_by(desc('Header.%s' % orderby[i]))
+      else:
+        if '_asc' in orderby[i]:
+          orderby[i] = orderby[i].replace('_asc', '')
+        if (orderby[i] == 'filename'):
+          query = query.order_by('File.%s' % orderby[i])
+        if orderby[i] in whichorderby:
+          query = query.order_by('Header.%s' % orderby[i])
+
 
   # If this is an open query, we should reverse sort by filename
   # and limit the number of responses
@@ -1545,7 +1564,7 @@ def interval_string(a, b):
 
 def sayselection(selection):
   """
-  returns a string that describes  the selection dictionary passed in
+  returns a string that describes the selection dictionary passed in
   suitable for pasting into html
   """
   string = ""
@@ -1710,3 +1729,150 @@ def openquery(selection):
       openquery = False
 
   return openquery
+
+def curation_report(req, things):
+  """
+  Retrieves and prints out the desired values from the list created in 
+  FitsStorageCuration.py in the hbffits3 browser.
+  """
+  req.content_type = 'text/html'
+  req.write('<html>')
+  req.write('<head><title>FITS Storage database curation report</title><link rel="stylesheet" href="/htmldocs/table.css"></head>')
+  req.write('<body>')
+  req.write('<h1>FITS Storage database curation report</h1>')
+
+  session = sessionfactory()
+  try:
+    from FitsStorageCuration import *
+    checkonly = None
+    exclude = None
+    if len(things) != 0 and things[0] == 'noeng':
+      exclude = 'ENG'    
+
+
+    # Work for duplicate_datalabels
+    dupdata = duplicate_datalabels(session, checkonly, exclude)
+    previous_ans = ''
+    even_or_odd = []
+    req.write('<h2>Duplicate Datalabel Rows:</h2>')
+    if dupdata != []:
+      # Write the table headers
+      req.write('<table border=0><tr class=tr_head><th>DiskFile ID</th><th>FileName</th><th>DataLabel</th></tr>')
+      # Makes a list of diskfile ids such that every duplicate found has only one diskfile id
+      for val in dupdata:
+        this_ans = val
+        if previous_ans != this_ans:
+          header = session.query(Header).filter(Header.diskfile_id == this_ans).first()
+          even_or_odd.append(this_ans)
+          index = even_or_odd.index(this_ans)
+          # Writes out the row for every duplicate in html
+          if header:
+            if index%2 == 0:
+              req.write('<tr class=tr_even>')
+            else:
+              req.write('<tr class=tr_odd>')
+            req.write('<td>%s</td><td><a href="/summary/%s"> %s </a></td><td><a href="/summary/%s"> %s </a></td></tr>' %  (header.diskfile.id, header.diskfile.file.filename, header.diskfile.file.filename, header.datalab, header.datalab))        
+        previous_ans = this_ans
+      req.write('</table>')
+    else:
+      req.write("No rows with duplicate datalabels where canonical=True.<br/>")
+
+
+    # Work for duplicate_canonicals
+    dupcanon = duplicate_canonicals(session)
+    previous_file = ''
+    oneheader = 0
+    even_or_odd = []
+    empty = 0
+    req.write('<h2>Duplicate Canonical Rows:</h2>')      
+    # Makes a list of diskfile ids such that every duplicate row found has only one diskfile id
+    for val in dupcanon:
+      this_file = val.file_id
+      if previous_file == this_file:
+        # Writes the table headers
+        if oneheader == 1:
+          pass
+        else: 
+          req.write('<table border=0><tr class=tr_head><th>DiskFile id</th><th>FileName</th><th>Canonical</th></tr>')
+          oneheader += 1
+        even_or_odd.append(val.id)
+        index = even_or_odd.index(val.id)
+        # Writes out the row for every duplicate in html
+        if index%2 == 0:
+          req.write('<tr class=tr_even>')
+        else:
+          req.write('<tr class=tr_odd>')
+        req.write('<td>%s</td><td><a href="/summary/%s"> %s </a></td><td>%s</td></tr>' %  (val.id, val.file.filename, val.file.filename, val.canonical))
+        empty += 1 
+      previous_file = this_file
+    req.write('</table>')
+    if empty == 0:
+      req.write("No rows with duplicate file ids with canonical=True.<br/>")
+
+
+    # Work for duplicate_present
+    duppres = duplicate_present(session)
+    previous_file = ''
+    oneheader = 0
+    even_or_odd = []
+    empty = 0
+    req.write('<h2>Duplicate Present Rows:</h2>')
+    # Makes a list of diskfile ids such that every duplicate row found has only one diskfile id
+    for val in duppres: 
+      this_file = val.file_id
+      if previous_file == this_file:
+        # Writes the table headers
+        if oneheader == 1:
+          pass
+        else:
+          req.write('<table border=0><tr class=tr_head><th>DiskFile id</th><th>FileName</th><th>Present</th></tr>')
+          oneheader += 1
+        even_or_odd.append(val.id)
+        index = even_or_odd.index(val.id)
+        # Writes out the row for every duplicate in html
+        if index%2 == 0:
+          req.write('<tr class=tr_even>')
+        else:
+          req.write('<tr class=tr_odd>')
+        req.write('<td>%s</td><td><a href="/summary/%s"> %s </a></td><td>%s</td></tr>' %  (val.id, val.file.filename, val.file.filename, val.present))
+        empty += 1 
+      previous_file = this_file
+    req.write('</table>')
+    if empty == 0:
+      req.write("No rows with duplicate file ids with present=True.<br/>")
+
+
+    # Work for present_not_canonical
+    presnotcanon = present_not_canonical(session)
+    previous_ans = ''
+    even_or_odd = []
+    req.write('<h2>Present Not Canonical Rows:</h2>')
+    if presnotcanon != []:
+      # Writes the table headers
+      req.write('<table border=0><tr class=tr_head><th>DiskFile id</th><th>FileName</th><th>Present</th><th>Canonical</th></tr>')
+      # Makes a list of diskfile ids such that every duplicate row found has only one diskfile id
+      for val in presnotcanon:
+        this_ans = val
+        if previous_ans != this_ans:
+          even_or_odd.append(this_ans.id)
+          index = even_or_odd.index(this_ans.id)
+          # Writes out the row for every duplicate in html
+          if index%2 == 0:
+            req.write('<tr class=tr_even>')
+          else:
+            req.write('<tr class=tr_odd>')
+          req.write('<td>%s</td><td><a href="/summary/%s"> %s </a></td><td>%s</td><td>%s</td></tr>' %  (val.id, val.file.filename, val.file.filename, val.present, val.canonical))         
+        previous_ans = this_ans 
+      req.write('</table>')
+    else:
+      req.write("No rows with the conditions present=True and canonical=False.<br/>")
+
+
+    req.write('</body>')
+    req.write('</html>')
+    return apache.OK
+  except IOError:
+    pass
+  finally:
+    session.close()
+  
