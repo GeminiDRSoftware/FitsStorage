@@ -1569,32 +1569,11 @@ def sayselection(selection):
   """
   string = ""
 
-  if('progid' in selection):
-    string += "; Program ID: %s" % selection['progid']
-  if('obsid' in selection):
-    string += "; Observation ID: %s" % selection['obsid']
-  if('datalab' in selection):
-    string += "; Data Label: %s" % selection['datalab']
-  if('date' in selection):
-    string += "; Date: %s" % selection['date']
-  if('daterange' in selection):
-    string += "; Daterange: %s" % selection['daterange']
-  if('inst' in selection):
-    string += "; Instrument: %s" % selection['inst']
-  if('obstype' in selection):
-    string += "; ObsType: %s" % selection['obstype']
-  if('obsclass' in selection):
-    string += "; ObsClass: %s" % selection['obsclass']
-  if('filename' in selection):
-    string += "; Filename: %s" % selection['filename']
-  if('gmos_grating' in selection):
-    string += "; GMOS Grating: %s" % selection['gmos_grating']
-  if('gmos_fpmask' in selection):
-    string += "; GMOS FP Mask: %s" % selection['gmos_fpmask']
-  if('caltype' in selection):
-    string += "; Calibration Type: %s" % selection['caltype']
-  if('caloption' in selection):
-    string += "; Calibration Option: %s" % selection['caloption']
+  defs = {'progid': 'Program ID', 'obsid': 'Observation ID', 'datalab': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'obstype':'ObsType', 'obsclass': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_fpmask': 'GMOS FP Mask', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option'}
+  for key in defs:
+    if key in selection:
+      string += "; %s: %s" % (defs[key], selection[key])
+
   if('spectroscopy' in selection):
     if(selection['spectroscopy']):
       string += "; Spectroscopy"
