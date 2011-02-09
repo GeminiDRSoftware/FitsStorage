@@ -281,6 +281,9 @@ def handler(req):
   if(this == "notification"):
     return notification(req, things)
 
+  if(this == "curation"):
+    return curation_report(req, things)
+
   # Some static files that the server should serve via a redirect.
   if((this == "robots.txt") or (this == "favicon.ico")):
     newurl = "/htmldocs/%s" % this
