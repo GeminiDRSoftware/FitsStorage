@@ -411,6 +411,7 @@ def xmlfilelist(req, selection):
       req.write("<file>")
       req.write("<filename>%s</filename>" % h.diskfile.file.filename)
       req.write("<size>%d</size>" % h.diskfile.size)
+      req.write("<md5>%s</md5>" % h.diskfile.md5)
       req.write("<ccrc>%s</ccrc>" % h.diskfile.ccrc)
       req.write("<lastmod>%s</lastmod>" % h.diskfile.lastmod)
       req.write("</file>")
@@ -1178,6 +1179,7 @@ def calmgr(req, selection):
         req.write("<caltype>%s</caltype>\n" % caltype)
         req.write("<datalabel>%s</datalabel>\n" % cal.datalab)
         req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
+        req.write("<md5>%s</md5>\n" % cal.diskfile.md5)
         req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
         req.write("<url>http://%s/file/%s</url>\n" % (req.server.server_hostname, cal.diskfile.file.filename))
         req.write("</calibration>\n")
@@ -1223,6 +1225,7 @@ def calmgr(req, selection):
           req.write("<dataset>\n")
           req.write("<datalabel>%s</datalabel>\n" % object.datalab)
           req.write("<filename>%s</filename>\n" % object.diskfile.file.filename)
+          req.write("<md5>%s</md5>\n" % object.diskfile.md5)
           req.write("<ccrc>%s</ccrc>\n" % object.diskfile.ccrc)
 
           # Get a cal object for this target data
@@ -1241,6 +1244,7 @@ def calmgr(req, selection):
             req.write("<caltype>%s</caltype>\n" % caltype)
             req.write("<datalabel>%s</datalabel>\n" % cal.datalab)
             req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
+            req.write("<md5>%s</md5>\n" % cal.diskfile.md5)
             req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
             req.write("<url>http://%s/file/%s</url>\n" % (req.server.server_hostname, cal.diskfile.file.filename))
             req.write("</calibration>\n")
