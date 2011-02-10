@@ -76,6 +76,7 @@ try:
       except:
         logger.info("Problem Ingesting File - Rolling back" )
         session.rollback()
+        iq.inprogress=False
         session.commit()
         raise
       logger.debug("Deleteing ingestqueue id %d" % iq.id)
@@ -83,7 +84,7 @@ try:
       session.commit()
 
 except:
-  logger.error("Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+  logger.error("File %s - Exception: %s : %s" % (iq.filename, sys.exc_info()[0], sys.exc_info()[1]))
   traceback.print_tb(sys.exc_info()[2])
 
 finally:
