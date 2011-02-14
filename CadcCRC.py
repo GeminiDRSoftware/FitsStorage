@@ -11,6 +11,7 @@ move to md5
 import subprocess
 import os
 import re
+from FitsStorageConfig import *
 
 # the path to the fitsverify binary
 cadcCRC_bin = '/opt/cadc/cadcCRC'
@@ -23,6 +24,8 @@ def cadcCRC(filename):
   Runs the executable on the specified filename.
   Retuns a string containing the CRC string.
   """
+  if fsc_localmode == True:
+    return None
   # First check that the filename exists is readable and is a file
   exists = os.access(filename, os.F_OK | os.R_OK)
   isfile = os.path.isfile(filename)
@@ -42,6 +45,15 @@ def cadcCRC(filename):
     retary=None
 
   return retary
+  
+# commented out but left for reference, how an AstroData ID could be
+# gotten using the IDFactory
+#def cadcCRC_ADID(filename):
+#    from astrodata import AstroData
+#    from astrodata import IDFactory
+#    ad = AstroData(filename)
+#    retary = IDFactory.generateFingerprint( ad)
+#    return retary
 
 def md5sum(filename):
   """

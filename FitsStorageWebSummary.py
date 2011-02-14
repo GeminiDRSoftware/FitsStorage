@@ -7,7 +7,22 @@ from sqlalchemy import or_
 from sqlalchemy.sql.expression import alias, cast
 from FitsStorage import *
 from GeminiMetadataUtils import *
-from mod_python import apache, util
+from FitsStorageConfig import *
+
+import os
+
+class stub:
+    pass
+    
+if fsc_localmode:
+    apache = stub()
+    apache.OK = True
+    
+try:
+    from mod_python import apache, util
+except ImportError:
+    pass
+    
 import FitsStorageCal
 import FitsStorageConfig
 import urllib
@@ -31,7 +46,6 @@ def summary(req, type, selection, orderby, links=True):
   req.content_type = "text/html"
   req.write("<html>")
   title = "FITS header %s table %s" % (type, sayselection(selection))
-
   req.write("<head>")
   req.write("<title>%s</title>" % (title))
   req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
@@ -68,9 +82,14 @@ def list_headers(session, selection, orderby):
 
   Returns a list of Header objects
   """
+  localmode = fsc_localmode
   # The basic query...
-  query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
-
+  if localmode:
+    query = session.query(Header, DiskFile, File)
+    query = query.filter(Header.diskfile_id == DiskFile.id)
+    query = query.filter(DiskFile.file_id == File.id)
+  else:
+    query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
   query = queryselection(query, selection)
 
   # Do we have any order by arguments?
@@ -94,7 +113,7 @@ def list_headers(session, selection, orderby):
         query = query.order_by(Header.airmass)
       if(orderby[i] == 'airmass_desc'):
         query = query.order_by(desc(Header.airmass))
-      if((orderby[i] == 'obstype') or (orderby[i] == 'obstype_asc')):
+      if((orderby[i] == 'utdatetime') or (orderby[i] == 'utdatetime_asc')):
         query = query.order_by(Header.utdatetime)
       if(orderby[i] == 'obstype_desc'):
         query = query.order_by(desc(Header.obstype))
@@ -170,9 +189,14 @@ def list_headers(session, selection, orderby):
     # By default we should order by filename
     query = query.order_by(File.filename)
 
-
+  if localmode:
+    results = query.all()
+    headers, diskfiles, files = zip(*results)
+  else:
+    headers = query.all()
+  
   # Return the list of DiskFile objects
-  return query.all()
+  return headers
 
 def webhdrsummary(session, req, type, headers, links=True):
   """
@@ -186,8 +210,10 @@ def webhdrsummary(session, req, type, headers, links=True):
   headers: the list of header objects to include in the summary
   """
   # Get the uri to use for the re-sort links
-  myuri = req.uri
-
+  try:
+    myuri = req.uri
+  except AttributeError:
+    myuri = "localmode"
   # A certain amount of parsing the summary type...
   want=[]
   if(type == 'summary'):
@@ -1682,7 +1708,6 @@ def openquery(selection):
       openquery = False
 
   return openquery
-
 def curation_report(req, things):
   """
   Retrieves and prints out the desired values from the list created in 

@@ -47,7 +47,6 @@ Base = declarative_base()
 pg_db = sqlalchemy.create_engine(fits_database, echo = False)
 sessionfactory = sqlalchemy.orm.sessionmaker(pg_db)
 
-
 # Do not create the session here, these are not supposed to be global
 #session = sessionfactory()
 
@@ -70,7 +69,9 @@ class File(Base):
     return "<File('%s', '%s')>" %(self.id, self.filename)
 
   def fullpath(self):
-    return os.path.join(storage_root, self.path, self.filename)
+    fullpath = os.path.join(storage_root, self.path, self.filename)
+    # print "FS74:", fullpath
+    return fullpath
 
   def exists(self):
     exists = os.access(self.fullpath(), os.F_OK | os.R_OK)
@@ -116,12 +117,12 @@ class DiskFile(Base):
     self.file_id = file.id
     self.present = True
     self.canonical = True
-    self.entrytime = 'now'
+    self.entrytime = datetime.datetime.now()
     self.size = file.size()
     self.ccrc = file.ccrc()
     self.md5 = file.md5()
     self.lastmod = file.lastmod()
-    if(skip_fv):
+    if(skip_fv or fsc_localmode == True):
       self.fverrors=0
     else:
       self.fits_verify(file)

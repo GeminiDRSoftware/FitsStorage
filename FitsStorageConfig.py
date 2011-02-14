@@ -1,6 +1,9 @@
 # These are config parameters that are imported into the FitsStorage namespace
 # We put them in a separate file to ease install issues
 
+# controls if the system operates in regular FITSSTORE mode or Local Mode, as used by
+# the Astrodata Recipe System.
+fsc_localmode = False
 
 # Configure the path to the storage root here 
 storage_root = '/net/wikiwiki/dataflow'

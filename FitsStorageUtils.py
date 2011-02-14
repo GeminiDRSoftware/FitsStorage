@@ -6,6 +6,8 @@ from FitsStorage import *
 from FitsStorageLogger import logger
 from sqlalchemy.orm.exc import NoResultFound, ObjectDeletedError
 
+import os
+
 def create_tables(session):
   """
   Creates the database tables and grants the apache user
@@ -14,10 +16,11 @@ def create_tables(session):
   # Create the tables
   File.metadata.create_all(bind=pg_db)
 
-  # Now grant the apache user select on them for the www queries
-  session.execute("GRANT SELECT ON file, diskfile, header, gmos, niri, michelle, gnirs, nifs, tape, tape_id_seq, tapewrite, tapefile, notification TO apache");
-  session.execute("GRANT INSERT,UPDATE ON tape, tape_id_seq, notification, notification_id_seq TO apache");
-  session.execute("GRANT DELETE ON notification TO apache");
+  if fsc_localmode == False:
+      # Now grant the apache user select on them for the www queries
+      session.execute("GRANT SELECT ON file, diskfile, header, gmos, niri, michelle, gnirs, nifs, tape, tape_id_seq, tapewrite, tapefile, notification TO apache");
+      session.execute("GRANT INSERT,UPDATE ON tape, tape_id_seq, notification, notification_id_seq TO apache");
+      session.execute("GRANT DELETE ON notification TO apache");
   session.commit()
 
 def drop_tables(session):
@@ -49,6 +52,7 @@ def ingest_file(session, filename, path, force_md5, skip_fv, skip_wmd):
   skip_fv: causes the ingest to skip running fitsverify on the file
   skip_wmd: causes the ingest to skip running wmd on the file.
   """
+
   logger.debug("ingest_file %s" % filename)
   # Wrap everything in a try except to log any exceptions that occur
   try:

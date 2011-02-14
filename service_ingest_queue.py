@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys
 sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
 
@@ -14,6 +15,7 @@ import traceback
 
 from optparse import OptionParser
 
+fsc_localmode = FitsStorageConfig.fsc_localmode
 parser = OptionParser()
 parser.add_option("--force-crc", action="store_true", dest="force_crc", help="Force crc check on pre-existing files")
 parser.add_option("--skip-fv", action="store_true", dest="skip_fv", help="Do not run fitsverify on the files")
@@ -21,7 +23,7 @@ parser.add_option("--skip-wmd", action="store_true", dest="skip_wmd", help="Do n
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 parser.add_option("--lockfile", action="store", dest="lockfile", help="Use this as a lockfile to limit instances")
-
+parser.add_option("--empty", action="store_true", default=False, dest="empty", help="This flag indicates that service ingest queue should empty the current queue and then exit.")
 (options, args) = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
@@ -65,11 +67,19 @@ try:
       logger.info("Didn't get anything to ingest, retrying")
       iq = pop_ingestqueue(session)
     if(iq==None):
-      logger.info("Nothing on queue. Waiting")
+      logger.info("Nothing on queue.")
+      if options.empty:
+        logger.info("--empty flag set, exiting")
+        break
+      else:
+        logger.info("...Waiting")
       time.sleep(10)
     else:
       logger.info("Ingesting %s, (%d in queue)" % (iq.filename, ingestqueue_length(session)))
-      session.begin_nested()
+      if not fsc_localmode:
+        session.begin_nested()
+      else:
+        session.begin(subtransactions=True)
       try:
         ingest_file(session, iq.filename, iq.path, options.force_crc, options.skip_fv, options.skip_wmd)
         session.commit()

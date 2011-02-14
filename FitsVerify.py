@@ -27,6 +27,7 @@ def fitsverify(filename):
   * an integer giving the number of errors
   * a string containing the full fitsverify report
   """
+  
   # First check that the filename exists is readable and is a file
   exists = os.access(filename, os.F_OK | os.R_OK)
   isfile = os.path.isfile(filename)

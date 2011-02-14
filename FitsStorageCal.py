@@ -205,7 +205,13 @@ class CalibrationGMOS(Calibration):
     query = query.filter(Gmos.amproa.like('%'+str(self.descriptors['amp_read_area'])+'%'))
 
     # Order by absolute time separation.
-    query = query.order_by(func.abs(extract('epoch', Header.utdatetime - self.descriptors['ut_datetime'])).asc())
+    if fsc_localmode:
+        # note: double check if this even works, we suspect it doesn't
+        # but it's hard to notice as a somewhat fitting cal will be returned
+        # but perhaps not the most recent.
+        query = query.order_by(func.abs(Header.utdatetime - self.header.utdatetime))
+    else:
+        query = query.order_by(func.abs(extract('epoch', Header.utdatetime - self.descriptors['ut_datetime'])).asc())
 
     # For now, we only want one result - the closest in time
     query = query.limit(1)
@@ -232,7 +238,13 @@ class CalibrationGMOS(Calibration):
     query = query.filter(Gmos.amproa.like('%'+self.gmos.amproa+'%'))
 
     # Order by absolute time separation.
-    query = query.order_by(func.abs(extract('epoch', Header.utdatetime - self.header.utdatetime)).asc())
+    if fsc_localmode:
+        # note: double check if this even works, we suspect it doesn't
+        # but it's hard to notice as a somewhat fitting cal will be returned
+        # but perhaps not the most recent.
+        query = query.order_by(func.abs(Header.utdatetime - self.header.utdatetime))
+    else:
+        query = query.order_by(func.abs(extract('epoch', Header.utdatetime - self.descriptors['ut_datetime'])).asc())
 
     # For now, we only want one result - the closest in time
     query = query.limit(1)
