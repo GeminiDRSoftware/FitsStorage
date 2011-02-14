@@ -85,7 +85,7 @@ def list_headers(session, selection, orderby):
   localmode = fsc_localmode
   # The basic query...
   if localmode:
-    query = session.query(Header, DiskFile, File)
+    query = session.query(Header).select_from(Header, DiskFile, File)
     query = query.filter(Header.diskfile_id == DiskFile.id)
     query = query.filter(DiskFile.file_id == File.id)
   else:
