@@ -1207,7 +1207,7 @@ def calmgr(req, selection):
         req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
         req.write("<md5>%s</md5>\n" % cal.diskfile.md5)
         req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
-        req.write("<url>http://%s/file/%s</url>\n" % (req.server.server_hostname, cal.diskfile.file.filename))
+        req.write("<url>http://%s/file/%s</url>\n" % (fits_servername, cal.diskfile.file.filename))
         req.write("</calibration>\n")
       else:
         req.write("<!-- NO CALIBRATION FOUND-->\n")
