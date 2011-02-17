@@ -527,7 +527,8 @@ class Gmos(Base):
   amproa = Column(Text, index=True)
   readspeedmode = Column(Text, index=True)
   gainmode = Column(Text, index=True)
-  fpmask = Column(Text)
+  fpmask = Column(Text, index=True)
+  nodandshuffle = Column(Boolean, index=True)
 
   def __init__(self, header):
     self.header = header
@@ -570,6 +571,10 @@ class Gmos(Base):
         pass
       try:
         self.fpmask = ad.focal_plane_mask()
+      except KeyError:
+        pass
+      try:
+        self.nodandshuffle = ad.isType('GMOS_NODANDSHUFFLE')
       except KeyError:
         pass
       ad.close()
