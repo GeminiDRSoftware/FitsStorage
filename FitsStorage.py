@@ -228,23 +228,23 @@ class Header(Base):
       # Basic data identification part
       try:
         self.progid = ad.program_id()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.obsid = ad.observation_id()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.datalab = ad.data_label()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.telescope = ad.telescope()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.instrument = ad.instrument()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
 
       # Date and times part
@@ -256,7 +256,7 @@ class Header(Base):
           datetime_string = "%s %s" % (datestring, timestring)
           self.utdatetime = dateutil.parser.parse(datetime_string)
           gotut = True
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       if(gotut==False):
         try:
@@ -296,7 +296,7 @@ class Header(Base):
         if(localtime_string):
           # This is a bit of a hack so as to use the nice parser
           self.localtime = dateutil.parser.parse("2000-01-01 %s" % (localtime_string)).time()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
 
       # Data Types
@@ -306,91 +306,91 @@ class Header(Base):
           self.obstype='PINHOLE'
         if('NIFS_RONCHI' in ad.types):
           self.obstype='RONCHI'
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.obsclass = ad.observation_class()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.observer = ad.observer()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.ssa = ad.ssa()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.object = ad.object()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.ra = ad.ra()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.dec = ad.dec()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.azimuth = ad.azimuth()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.elevation = ad.elevation()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.crpa = ad.cass_rotator_pa()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.airmass = ad.airmass()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.rawiq = ad.raw_iq()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.rawcc = ad.raw_cc()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.rawwv = ad.raw_wv()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.rawbg = ad.raw_bg()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.rawpireq = ad.raw_pi_requirement()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.rawgemqa = ad.raw_gemini_qa()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.filter = ad.filter_name(pretty=True)
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.exptime = ad.exposure_time()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.disperser = ad.disperser(pretty=True)
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.cwave = ad.central_wavelength()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.fpmask = ad.focal_plane_mask(pretty=True)
-      except KeyError:
+      except (KeyError, ValueError):
         pass
 
       # Hack the AO header for now
@@ -405,14 +405,14 @@ class Header(Base):
       # Set the derived QA state and release date
       try:
         self.qastate = ad.qa_state()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         reldatestring = ad.release_date()
         if(reldatestring):
           reldts = "%s 00:00:00" % reldatestring
           self.release = dateutil.parser.parse(reldts).date()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
 
 
@@ -545,47 +545,47 @@ class Gmos(Base):
       # Populate values
       try:
         self.disperser = ad.disperser()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.filtername = ad.filter_name()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.xccdbin = ad.detector_x_bin()
-      except (KeyError, IndexError):
+      except (KeyError, IndexError, ValueError):
         pass
       try:
         self.yccdbin = ad.detector_y_bin()
-      except (KeyError, IndexError):
+      except (KeyError, IndexError, ValueError):
         pass
       try:
         self.amproa = str(ad.amp_read_area(asList=True))
-      except (KeyError, IndexError):
+      except (KeyError, IndexError, ValueError):
         pass
       try:
         self.readspeedmode = ad.read_speed_mode()
-      except (KeyError, IndexError):
+      except (KeyError, IndexError, ValueError):
         pass
       try:
         self.gainmode = ad.gain_mode()
-      except (KeyError, IndexError):
+      except (KeyError, IndexError, ValueError):
         pass
       try:
         self.fpmask = ad.focal_plane_mask()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.nod_count = ad.nod_count()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.nod_pixels = ad.nod_pixels()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.nodandshuffle = ad.isType('GMOS_NODANDSHUFFLE')
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       ad.close()
     except:
@@ -623,35 +623,35 @@ class Niri(Base):
       # Populate values
       try:
         self.disperser = ad.disperser()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.filtername = ad.filter_name()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.readmode = ad.read_mode()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.welldepthmode = ad.well_depth_mode()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.detsec = ad.data_section()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.coadds = ad.coadds()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.camera = ad.camera()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.fpmask = ad.focal_plane_mask()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       ad.close()
     except:
@@ -688,31 +688,31 @@ class Gnirs(Base):
       # Populate values
       try:
         self.disperser = ad.disperser()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.filtername = ad.filter_name()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.readmode = ad.read_mode()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.welldepthmode = ad.well_depth_mode()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.coadds = ad.coadds()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.camera = ad.camera()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.fpmask = ad.focal_plane_mask()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       ad.close()
     except:
@@ -747,23 +747,23 @@ class Nifs(Base):
       # Populate values
       try:
         self.disperser = ad.disperser()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.filtername = ad.filter_name()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.readmode = ad.read_mode()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.coadds = ad.coadds()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.fpmask = ad.focal_plane_mask()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       ad.close()
     except:
@@ -798,23 +798,23 @@ class Michelle(Base):
       # Populate values
       try:
         self.disperser = ad.disperser()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.filtername = ad.filter_name()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.readmode = ad.read_mode()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.coadds = ad.coadds()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       try:
         self.fpmask = ad.focal_plane_mask()
-      except KeyError:
+      except (KeyError, ValueError):
         pass
       ad.close()
     except:
