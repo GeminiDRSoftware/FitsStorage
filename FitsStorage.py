@@ -529,8 +529,8 @@ class Gmos(Base):
   gainmode = Column(Text, index=True)
   fpmask = Column(Text, index=True)
   nodandshuffle = Column(Boolean, index=True)
-  nod_count = Column(Text)
-  nod_pixels = Column(Text)
+  nod_count = Column(Integer, index=True)
+  nod_pixels = Column(Integer, index=True)
 
   def __init__(self, header):
     self.header = header
