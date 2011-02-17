@@ -529,6 +529,8 @@ class Gmos(Base):
   gainmode = Column(Text, index=True)
   fpmask = Column(Text, index=True)
   nodandshuffle = Column(Boolean, index=True)
+  nod_count = Column(Text)
+  nod_pixels = Column(Text)
 
   def __init__(self, header):
     self.header = header
@@ -571,6 +573,14 @@ class Gmos(Base):
         pass
       try:
         self.fpmask = ad.focal_plane_mask()
+      except KeyError:
+        pass
+      try:
+        self.nod_count = ad.nod_count()
+      except KeyError:
+        pass
+      try:
+        self.nod_pixels = ad.nod_pixels()
       except KeyError:
         pass
       try:
