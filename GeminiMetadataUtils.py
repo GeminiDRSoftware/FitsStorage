@@ -35,6 +35,7 @@ phoenixcre = re.compile('[Pp][Hh][Oo][Ee][Nn][Ii][Xx]')
 trecscre = re.compile('[Tt][Rr][Ee][Cc][Ss]')
 nicicre = re.compile('[Nn][Ii][Cc][Ii]')
 hqcre = re.compile('Hokupaa\+QUIRC')
+gsaoicre = re.compile('[Gg][Ss][Aa][Oo][Ii]')
 
 def gemini_instrument(string, gmos=False):
   """
@@ -65,6 +66,8 @@ def gemini_instrument(string, gmos=False):
     retary='NICI'
   if(hqcre.match(string)):
     retary='Hokupaa+QUIRC'
+  if(gsaoicre.match(string)):
+    retary='GSAOI'
   if(gmos):
     if(gmoscre.match(string)):
       retary='GMOS'
