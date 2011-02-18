@@ -172,8 +172,6 @@ class Header(Base):
   localtime = Column(Time(timezone=False))
   obstype = Column(Text, index=True)
   obsclass = Column(Text, index=True)
-  observer = Column(Text)
-  ssa = Column(Text)
   object = Column(Text)
   ra = Column(Numeric(precision=16, scale=12))
   dec = Column(Numeric(precision=16, scale=12))
@@ -310,14 +308,6 @@ class Header(Base):
         pass
       try:
         self.obsclass = ad.observation_class()
-      except (KeyError, ValueError):
-        pass
-      try:
-        self.observer = ad.observer()
-      except (KeyError, ValueError):
-        pass
-      try:
-        self.ssa = ad.ssa()
       except (KeyError, ValueError):
         pass
       try:
