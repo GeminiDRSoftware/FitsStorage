@@ -93,75 +93,7 @@ def list_headers(session, selection, orderby):
   query = queryselection(query, selection)
 
   # Do we have any order by arguments?
-  """
-  if(orderby):
-    # Yes, apply them to the query
-    for i in range(len(orderby)):
-      if((orderby[i] == 'instrument') or (orderby[i] == 'instrument_asc')):
-        query = query.order_by(Header.instrument)
-      if(orderby[i] == 'instrument_desc'):
-        query = query.order_by(desc(Header.instrument))
-      if((orderby[i] == 'datalab') or (orderby[i] == 'datalab_asc')):
-        query = query.order_by(Header.datalab)
-      if(orderby[i] == 'datalab_desc'):
-        query = query.order_by(desc(Header.datalab))
-      if((orderby[i] == 'obsclass') or (orderby[i] == 'obsclass_asc')):
-        query = query.order_by(Header.obsclass)
-      if(orderby[i] == 'obsclass_desc'):
-        query = query.order_by(desc(Header.obsclass))
-      if((orderby[i] == 'airmass') or (orderby[i] == 'airmass_asc')):
-        query = query.order_by(Header.airmass)
-      if(orderby[i] == 'airmass_desc'):
-        query = query.order_by(desc(Header.airmass))
-      if((orderby[i] == 'utdatetime') or (orderby[i] == 'utdatetime_asc')):
-        query = query.order_by(Header.utdatetime)
-      if(orderby[i] == 'obstype_desc'):
-        query = query.order_by(desc(Header.obstype))
-      if((orderby[i] == 'utdatetime') or (orderby[i] == 'utdatetime_asc')):
-        query = query.order_by(Header.utdatetime)
-      if(orderby[i] == 'utdatetime_desc'):
-        query = query.order_by(desc(Header.utdatetime))
-      if((orderby[i] == 'localtime') or (orderby[i] == 'localtime_asc')):
-        query = query.order_by(Header.localtime)
-      if(orderby[i] == 'localtime_desc'):
-        query = query.order_by(desc(Header.localtime))
-      if((orderby[i] == 'rawiq') or (orderby[i] == 'rawiq_asc')):
-        query = query.order_by(Header.rawiq)
-      if(orderby[i] == 'rawiq_desc'):
-        query = query.order_by(desc(Header.rawiq))
-      if((orderby[i] == 'rawcc') or (orderby[i] == 'rawcc_asc')):
-        query = query.order_by(Header.rawcc)
-      if(orderby[i] == 'rawcc_desc'):
-        query = query.order_by(desc(Header.rawcc))
-      if((orderby[i] == 'rawbg') or (orderby[i] == 'rawbg_asc')):
-        query = query.order_by(Header.rawbg)
-      if(orderby[i] == 'rawbg_desc'):
-        query = query.order_by(desc(Header.rawbg))
-      if((orderby[i] == 'rawwv') or (orderby[i] == 'rawwv_asc')):
-        query = query.order_by(Header.rawwv)
-      if(orderby[i] == 'rawwv_desc'):
-        query = query.order_by(desc(Header.rawwv))
-      if((orderby[i] == 'qastate') or (orderby[i] == 'qastate_asc')):
-        query = query.order_by(Header.qastate)
-      if(orderby[i] == 'qastate_desc'):
-        query = query.order_by(desc(Header.qastate))
-      if((orderby[i] == 'filename') or (orderby[i] == 'filename_asc')):
-        query = query.order_by(File.filename)
-      if(orderby[i] == 'filename_desc'):
-        query = query.order_by(desc(File.filename))
-      if((orderby[i] == 'filter') or (orderby[i] == 'filter_asc')):
-        query = query.order_by(Header.filter)
-      if(orderby[i] == 'filter_desc'):
-        query = query.order_by(desc(Header.filter))
-      if((orderby[i] == 'exptime') or (orderby[i] == 'exptime_asc')):
-        query = query.order_by(Header.exptime)
-      if(orderby[i] == 'exptime_desc'):
-        query = query.order_by(desc(Header.exptime))
-      if((orderby[i] == 'object') or (orderby[i] == 'object_asc')):
-        query = query.order_by(Header.object)
-      if(orderby[i] == 'object_desc'):
-        query = query.order_by(desc(Header.object))
-  """
+
   whichorderby = ['instrument', 'datalab', 'obsclass', 'airmass', 'utdatetime', 'localtime', 'rawiq', 'rawcc', 'rawbg', 'rawwv', 'qastate', 'filter', 'exptime', 'object']
   if (orderby):
     for i in range(len(orderby)):
@@ -241,45 +173,26 @@ def webhdrsummary(session, req, type, headers, links=True):
     req.write('<TH>UT Date Time</TH>')
     req.write('<TH><abbr title="Instrument">Inst</abbr></TH>')
 
-  
-  # This is the 'obs' part 
-  if('obs' in want):
-    if(links):
-      req.write('<TH><abbr title="ObsClass">Class</abbr> <a href="%s?orderby=obsclass_asc">&uarr</a><a href="%s?orderby=obsclass_desc">&darr</a></TH>' % (myuri, myuri))
-      req.write('<TH><abbr title="ObsType">Type</abbr> <a href="%s?orderby=obstype_asc">&uarr</a><a href="%s?orderby=obstype_desc">&darr</a></TH>' % (myuri, myuri))
-      req.write('<TH><abbr title="Object Name">Object</abbr> <a href="%s?orderby=object_asc">&uarr</a><a href="%s?orderby=object_desc">&darr</a></TH>' % (myuri, myuri))
-    else:
-      req.write('<TH><abbr title="ObsClass">Class</abbr></TH>')
-      req.write('<TH><abbr title="ObsType">Type</abbr></TH>')
-      req.write('<TH><abbr title="Object Name">Object</abbr></TH>')
-    req.write('<TH><abbr title="Imaging Filter or Spectroscopy Wavelength and Disperser">WaveBand<abbr></TH>')
+  # This is the 'obs', 'expamlt' and 'qa' parts
+  wants = ['obs', 'expamlt', 'qa']
+  for w in wants:
+    if w in want:
+      if(w == 'obs'):
+        vals = [['ObsClass', 'Class', 'obsclass'], ['ObsType', 'Type', 'obstype'], ['Object Name', 'Object', 'object']]
+      elif(w == 'expamlt'):
+        vals = [['Exposure Time', 'ExpT', 'exptime'], ['AirMass', 'AM', 'airmass'], ['Localtime', 'Lcltime', 'localtime']]
+      elif(w == 'qa'):
+        vals = [['QA State', 'QA', 'qastate'], ['Raw IQ', 'IQ', 'rawiq'], ['Raw CC', 'CC', 'rawcc'], ['Raw WV', 'WV', 'rawwv'], ['Raw BG', 'BG', 'rawbg']]
 
-
-  # This is the 'expamlt' part - exposure time, airmass, localtime
-  if('expamlt' in want):
-    if(links):
-      req.write('<TH><abbr title="Exposure Time">ExpT</abbr> <a href="%s?orderby=exptime_asc">&uarr</a><a href="%s?orderby=exptime_desc">&darr</a></TH>' % (myuri, myuri))
-      req.write('<TH><abbr title="AirMass">AM</abbr> <a href="%s?orderby=airmass_asc">&uarr</a><a href="%s?orderby=airmass_desc">&darr</a></TH>' % (myuri, myuri))
-      req.write('<TH><abbr title="Localtime">Lcltime</abbr> <a href="%s?orderby=localtime_asc">&uarr</a><a href="%s?orderby=localtime_desc">&darr</a></TH>' % (myuri, myuri))
-    else:
-      req.write('<TH><abbr title="Exposure Time">ExpT</abbr></TH>')
-      req.write('<TH><abbr title="AirMass">AM</abbr></TH>')
-      req.write('<TH><abbr title="Localtime">Lcltime</abbr></TH>')
-
-  # This is the 'qa' part
-  if('qa' in want):
-    if(links):
-      req.write('<TH><abbr title="QA State">QA</abbr> <a href="%s?orderby=qastate_asc">&uarr</a><a href="%s?orderby=qastate_desc">&darr</a></TH>' % (myuri, myuri))
-      req.write('<TH><abbr title="Raw IQ">IQ</abbr> <a href="%s?orderby=rawiq_asc">&uarr</a><a href="%s?orderby=rawiq_desc">&darr</a></TH>' % (myuri, myuri))
-      req.write('<TH><abbr title="Raw CC">CC</abbr> <a href="%s?orderby=rawcc_asc">&uarr</a><a href="%s?orderby=rawcc_desc">&darr</a></TH>' % (myuri, myuri))
-      req.write('<TH><abbr title="Raw WV">WV</abbr> <a href="%s?orderby=rawwv_asc">&uarr</a><a href="%s?orderby=rawwv_desc">&darr</a></TH>' % (myuri, myuri))
-      req.write('<TH><abbr title="Raw BG">BG</abbr> <a href="%s?orderby=rawbg_asc">&uarr</a><a href="%s?orderby=rawbg_desc">&darr</a></TH>' % (myuri, myuri))
-    else:
-      req.write('<TH><abbr title="QA State">QA</abbr></TH>')
-      req.write('<TH><abbr title="Raw IQ">IQ</abbr></TH>')
-      req.write('<TH><abbr title="Raw CC">CC</abbr></TH>')
-      req.write('<TH><abbr title="Raw WV">WV</abbr></TH>')
-      req.write('<TH><abbr title="Raw BG">BG</abbr></TH>')
+      if(links):
+        for i in range(len(vals)):
+          req.write('<TH><abbr title="%s">%s</abbr> <a href="%s?orderby=%s_asc">&uarr</a><a href="%s?orderby=%s_desc">&darr</a></TH>' % (vals[i][0], vals[i][1], myuri, vals[i][2], myuri, vals[i][2]))
+      else:
+        for i in range(len(vals)):
+          req.write('<TH><abbr title="%s">%s</abbr></TH>' % (vals[i][0], vals[i][1]))
+      if(w == 'obs'):
+        req.write('<TH><abbr title="Imaging Filter or Spectroscopy Wavelength and Disperser">WaveBand<abbr></TH>')
+ 
 
   # This is the 'diskfiles' part
   if('diskfiles' in want):
@@ -501,19 +414,19 @@ def gmoscal(req, selection):
      found = -1000
      startdate = None
      while(found < 0):
-      datestr = date.strftime("%Y%b%d").lower()
-      file = os.path.join(base_dir, datestr, checkfile)
-      if(os.path.exists(file)):
-        found = 1
-        startdate = date
-      date -= oneday
-      found += 1
+       datestr = date.strftime("%Y%b%d").lower()
+       file = os.path.join(base_dir, datestr, checkfile)
+       if(os.path.exists(file)):
+         found = 1
+         startdate = date
+       date -= oneday
+       found += 1
 
-      if(startdate):
-        # Start the day after the last reduction
-        startdate += oneday
-        selection['daterange']="%s-%s" % (startdate.strftime("%Y%m%d"), enddate.strftime("%Y%m%d"))
-        req.write("<H2>Auto-detecting Last Processing Date: %s<H2>" % selection['daterange'])
+       if(startdate):
+         # Start the day after the last reduction
+         startdate += oneday
+         selection['daterange']="%s-%s" % (startdate.strftime("%Y%m%d"), enddate.strftime("%Y%m%d"))
+         req.write("<H2>Auto-detecting Last Processing Date: %s<H2>" % selection['daterange'])
 
    # Get a database session
    session = sessionfactory()
@@ -613,10 +526,10 @@ def gmoscal(req, selection):
            cs = "tr_odd"
 
        req.write("<TR class=%s>" % cs)
-       req.write("<TD>%d</TD>" % all[key][0])
-       req.write("<TD>%d</TD>" % all[key][1])
-       req.write("<TD>%s</TD>" % all[key][2])
-       req.write("<TD>%s</TD>" % all[key][3])
+
+       for i in range(4):
+         req.write("<TD>%d</TD>" % all[key][i])
+
        req.write("</TR>")
      req.write("</TABLE>")
      datething=''
@@ -915,7 +828,7 @@ def tapewrite(req, things):
       except:
         pass
       if(tapeid):
-        query=query.filter(TapeWrite.tape_id == tapeid)
+        query = query.filter(TapeWrite.tape_id == tapeid)
       else:
         thing = '%'+thing+'%'
         tapequery = session.query(Tape).filter(Tape.label.like(thing))
@@ -1129,9 +1042,6 @@ def notification(req, things):
     pass
   finally:
     session.close()
-
-
-
 
 
 
@@ -1708,6 +1618,7 @@ def openquery(selection):
       openquery = False
 
   return openquery
+
 def curation_report(req, things):
   """
   Retrieves and prints out the desired values from the list created in 
