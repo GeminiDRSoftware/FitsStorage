@@ -398,7 +398,7 @@ class Header(Base):
       except (KeyError, ValueError):
         pass
       try:
-        reldatestring = ad.release_date()
+        reldatestring = ad.phuHeader('RELEASE')
         if(reldatestring):
           reldts = "%s 00:00:00" % reldatestring
           self.release = dateutil.parser.parse(reldts).date()
