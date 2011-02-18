@@ -554,11 +554,11 @@ class Gmos(Base):
       except (KeyError, IndexError, ValueError):
         pass
       try:
-        self.readspeedmode = ad.read_speed_mode()
+        self.readspeedmode = ad.read_speed_setting()
       except (KeyError, IndexError, ValueError):
         pass
       try:
-        self.gainmode = ad.gain_mode()
+        self.gainmode = ad.gain_setting()
       except (KeyError, IndexError, ValueError):
         pass
       try:
@@ -624,7 +624,7 @@ class Niri(Base):
       except (KeyError, ValueError):
         pass
       try:
-        self.welldepthmode = ad.well_depth_mode()
+        self.welldepthmode = ad.well_depth_setting()
       except (KeyError, ValueError):
         pass
       try:
@@ -689,7 +689,7 @@ class Gnirs(Base):
       except (KeyError, ValueError):
         pass
       try:
-        self.welldepthmode = ad.well_depth_mode()
+        self.welldepthmode = ad.well_depth_setting()
       except (KeyError, ValueError):
         pass
       try:
