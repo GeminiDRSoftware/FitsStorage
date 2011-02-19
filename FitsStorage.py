@@ -190,8 +190,6 @@ class Header(Base):
   rawcc = Column(Text)
   rawwv = Column(Text)
   rawbg = Column(Text)
-  rawpireq = Column(Text)
-  rawgemqa = Column(Text, index=True)
   qastate = Column(Text)
   release = Column(Date(TimeZone=False))
   reduction = Column(Text)
@@ -352,14 +350,6 @@ class Header(Base):
         pass
       try:
         self.rawbg = ad.raw_bg()
-      except (KeyError, ValueError):
-        pass
-      try:
-        self.rawpireq = ad.raw_pi_requirement()
-      except (KeyError, ValueError):
-        pass
-      try:
-        self.rawgemqa = ad.raw_gemini_qa()
       except (KeyError, ValueError):
         pass
       try:
