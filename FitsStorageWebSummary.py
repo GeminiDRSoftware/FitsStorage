@@ -377,15 +377,29 @@ def progsobserved(req, selection):
     query = query.group_by(Header.progid)
 
     list = query.all()
+
     title = "Programs Observed: %s" % sayselection(selection)
     req.content_type = "text/html"
-    req.write('<html><head><title>%s</title></head><body><h1>%s</h1><p>' % (title, title))
+    req.write('<html><head><title>%s</title></head><body><h1>%s</h1>' % (title, title))
+    req.write('<H2>To paste into nightlog: </H2>')
+    req.write('<P>')
     for row in list:
       p = row[0]
       if(p):
         req.write('%s ' % p)
-    req.write('</p></body></html>')
+    req.write('</P>')
+
+    req.write('<H2>With more detail: </H2>')
+    req.write('<UL>')
+    for row in list:
+      p = row[0]
+      if(p):
+        req.write('<LI><a href="/summary/%s/%s">%s</a></LI> ' % (p, '/'.join(selection.values()), p))
+    req.write('</UL>')
+    req.write('</body></html>')
     return apache.OK
+
+  
   except IOError:
     pass
   finally:
@@ -1139,7 +1153,7 @@ def calmgr(req, selection):
       query = queryselection(query, selection)
 
       # Knock out the FAILs
-      query = query.filter(Header.rawgemqa!='BAD')
+      query = query.filter(Header.qastate!='Fail')
 
       # Order by date, most recent first
       query = query.order_by(desc(Header.utdatetime))
@@ -1233,7 +1247,7 @@ def calibrations(req, selection):
     query = queryselection(query, selection)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Order by date, most recent first
     query = query.order_by(desc(Header.utdatetime))
