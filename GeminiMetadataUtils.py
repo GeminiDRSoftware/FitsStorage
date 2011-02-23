@@ -34,8 +34,9 @@ gnirscre=re.compile('[Gg][Nn][Ii][Rr][Ss]')
 phoenixcre = re.compile('[Pp][Hh][Oo][Ee][Nn][Ii][Xx]')
 trecscre = re.compile('[Tt][Rr][Ee][Cc][Ss]')
 nicicre = re.compile('[Nn][Ii][Cc][Ii]')
-hqcre = re.compile('Hokupaa\+QUIRC')
+hqcre = re.compile('[Hh][Oo][Kk][Uu][Pp]([Aa])+(\+)*[Qq][Uu][Ii][Rr][Cc]')
 gsaoicre = re.compile('[Gg][Ss][Aa][Oo][Ii]')
+oscircre = re.compile('[Oo][Ss][Cc][Ii][Rr]')
 
 def gemini_instrument(string, gmos=False):
   """
@@ -68,6 +69,8 @@ def gemini_instrument(string, gmos=False):
     retary='Hokupaa+QUIRC'
   if(gsaoicre.match(string)):
     retary='GSAOI'
+  if(oscircre.match(string)):
+    retary='oscir'
   if(gmos):
     if(gmoscre.match(string)):
       retary='GMOS'
@@ -191,7 +194,7 @@ def gmos_fpmask(string):
   return retary
  
 fitsfilenamecre = re.compile('^([NS])(20\d\d)([01]\d[0123]\d)(S)(\d\d\d\d)([\d-]*)(?P<fits>.fits)?$')
-vfitsfilenamecre = re.compile('^(20)?(\d\d)(jan|feb|mar|apr|man|jun|jul|aug|sep|oct|nov|dec)(\d\d)_(\d+)(?P<fits>.fits)?$')
+vfitsfilenamecre = re.compile('^(20)?(\d\d)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d\d)_(\d+)(?P<fits>.fits)?$')
 def gemini_fitsfilename(string):
   """
   A utility function matching Gemini raw data fits filenames
