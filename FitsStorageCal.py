@@ -112,7 +112,7 @@ class CalibrationGMOS(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must Totally Match: Instrument, disperser
     query = query.filter(Header.instrument==self.header.instrument).filter(Gmos.disperser==self.gmos.disperser)
@@ -155,7 +155,7 @@ class CalibrationGMOS(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must totally match instrument, xccdbin, yccdbin, readspeedmode, gainmode, exptime, nodandshuffle
     query = query.filter(Header.instrument==self.header.instrument)
@@ -186,7 +186,7 @@ class CalibrationGMOS(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must totally match instrument, xccdbin, yccdbin, readspeedmode, gainmode
     query = query.filter(Header.instrument==self.header.instrument)
@@ -214,7 +214,7 @@ class CalibrationGMOS(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     if(self.descriptors==None):
       self.descriptors = {}
@@ -261,7 +261,7 @@ class CalibrationGMOS(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must totally match instrument, xccdbin, yccdbin, filter
     query = query.filter(Header.instrument==self.header.instrument)
@@ -293,7 +293,7 @@ class CalibrationGMOS(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must totally match instrument, xccdbin, yccdbin, filter
     query = query.filter(Header.instrument==self.header.instrument)
@@ -331,7 +331,7 @@ class CalibrationGMOS(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must totally match instrument, xccdbin, yccdbin, filter
     query = query.filter(Header.instrument==self.header.instrument)
@@ -389,7 +389,7 @@ class CalibrationNIRI(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must totally match: detsec, readmode, welldepthmode, exptime, coadds
     query = query.filter(Niri.detsec==self.niri.detsec)
@@ -412,7 +412,7 @@ class CalibrationNIRI(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must totally match: detsec, readmode, welldepthmode, filtername, camera
     query = query.filter(Niri.detsec==self.niri.detsec)
@@ -468,7 +468,7 @@ class CalibrationGNIRS(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must totally match: readmode, welldepthmode, exptime, coadds
     query = query.filter(Gnirs.readmode==self.gnirs.readmode).filter(Gnirs.welldepthmode==self.gnirs.welldepthmode)
@@ -490,7 +490,7 @@ class CalibrationGNIRS(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must totally match: disperser, cwave, fpmask, camera, filtername, readmode, welldepthmode
     query = query.filter(Gnirs.disperser==self.gnirs.disperser)
@@ -517,7 +517,7 @@ class CalibrationGNIRS(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must Totally Match: disperser, cwave, fpmask, filtername, camera
     query = query.filter(Gnirs.disperser==self.gnirs.disperser)
@@ -542,7 +542,7 @@ class CalibrationGNIRS(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must totally match: disperser, cwave, camera, (only for cross dispersed mode?)
     query = query.filter(Gnirs.disperser==self.gnirs.disperser)
@@ -594,7 +594,7 @@ class CalibrationNIFS(Calibration):
     query = query.filter(DiskFile.canonical == True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must totally match: readmode, exptime, coadds, disperser
     query = query.filter(Nifs.readmode==self.nifs.readmode)
@@ -618,7 +618,7 @@ class CalibrationNIFS(Calibration):
     query = query.filter(DiskFile.canonical == True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must totally match: disperser, cwave, fpmask, filter, readmode
     query = query.filter(Nifs.disperser==self.nifs.disperser)
@@ -643,7 +643,7 @@ class CalibrationNIFS(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must Totally Match: disperser, cwave, fpmask, filter
     query = query.filter(Nifs.disperser==self.nifs.disperser)
@@ -667,7 +667,7 @@ class CalibrationNIFS(Calibration):
     query = query.filter(DiskFile.canonical==True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must totally match: disperser, cwave
     query = query.filter(Nifs.disperser==self.nifs.disperser)
@@ -718,7 +718,7 @@ class CalibrationMICHELLE(Calibration):
     query = query.filter(DiskFile.canonical == True)
 
     # Knock out the FAILs
-    query = query.filter(Header.rawgemqa!='BAD')
+    query = query.filter(Header.qastate!='Fail')
 
     # Must totally match: readmode, exptime, coadds
     query = query.filter(Michelle.readmode == self.michelle.readmode)
