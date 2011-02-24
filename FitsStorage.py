@@ -143,7 +143,10 @@ class DiskFile(Base):
     self.isfits = bool(list[0])
     self.fvwarnings = list[1]
     self.fverrors = list[2]
-    self.fvreport = list[3]
+    # If the FITS file has bad strings in it, fitsverify will quote them in 
+    # the report, and the database will object to the bad characters in 
+    # the unicode string - errors=ignore makes it ignore these.
+    self.fvreport = unicode(list[3], errors='replace')
     
   def wmd(self, file):
     """
@@ -218,7 +221,7 @@ class Header(Base):
       self.fulltext += "AstroData Types: " +str(ad.types) + "\n\n"
       for i in range(len(ad.hdulist)):
         self.fulltext += "\n--- HDU %s ---\n" % i
-        self.fulltext += str(ad.hdulist[i].header.ascardlist())
+        self.fulltext += unicode(str(ad.hdulist[i].header.ascardlist()), errors='replace')
         self.fulltext += '\n'
 
       # Basic data identification part
@@ -275,28 +278,28 @@ class Header(Base):
       except (KeyError, ValueError):
         pass
       try:
-        self.ra = ad.ra()
-      except (KeyError, ValueError):
+        self.ra = float(ad.ra())
+      except (KeyError, ValueError, TypeError):
         pass
       try:
-        self.dec = ad.dec()
-      except (KeyError, ValueError):
+        self.dec = float(ad.dec())
+      except (KeyError, ValueError, TypeError):
         pass
       try:
-        self.azimuth = ad.azimuth()
-      except (KeyError, ValueError):
+        self.azimuth = float(ad.azimuth())
+      except (KeyError, ValueError, TypeError):
         pass
       try:
-        self.elevation = ad.elevation()
-      except (KeyError, ValueError):
+        self.elevation = float(ad.elevation())
+      except (KeyError, ValueError, TypeError):
         pass
       try:
-        self.crpa = ad.cass_rotator_pa()
-      except (KeyError, ValueError):
+        self.crpa = float(ad.cass_rotator_pa())
+      except (KeyError, ValueError, TypeError):
         pass
       try:
-        self.airmass = ad.airmass()
-      except (KeyError, ValueError):
+        self.airmass = float(ad.airmass())
+      except (KeyError, ValueError, TypeError):
         pass
       try:
         self.rawiq = ad.raw_iq()
@@ -319,16 +322,16 @@ class Header(Base):
       except (KeyError, ValueError):
         pass
       try:
-        self.exptime = ad.exposure_time()
-      except (KeyError, ValueError):
+        self.exptime = float(ad.exposure_time())
+      except (KeyError, ValueError, TypeError):
         pass
       try:
         self.disperser = ad.disperser(pretty=True)
       except (KeyError, ValueError):
         pass
       try:
-        self.cwave = ad.central_wavelength()
-      except (KeyError, ValueError):
+        self.cwave = float(ad.central_wavelength())
+      except (KeyError, ValueError, TypeError):
         pass
       try:
         self.fpmask = ad.focal_plane_mask(pretty=True)
@@ -347,7 +350,7 @@ class Header(Base):
       # Set the derived QA state and release date
       try:
         self.qastate = ad.qa_state()
-      except (KeyError, ValueError):
+      except (KeyError, ValueError, AttributeError):
         pass
       try:
         reldatestring = ad.phuHeader('RELEASE')
