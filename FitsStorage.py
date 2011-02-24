@@ -244,49 +244,11 @@ class Header(Base):
         pass
 
       # Date and times part
-      gotut = False
       try:
-        datestring = ad.ut_date()
-        timestring = ad.ut_time()
-        if(datestring and timestring):
-          datetime_string = "%s %s" % (datestring, timestring)
-          self.utdatetime = dateutil.parser.parse(datetime_string)
-          gotut = True
-      except (KeyError, ValueError):
-        pass
-      if(gotut==False):
-        try:
-          # We didn't get a ut_date and a ut_time. Maybe we got a MJD_OBS header
-          # This picks up most broken NIRI data
-          mjd = ad.phuHeader('MJD_OBS')
-          if(mjd > 1):
-             mjdzero = datetime.datetime(1858, 11, 17, 0, 0, 0, 0, None)
-             mjddelta = datetime.timedelta(mjd)
-             self.utdatetime = mjdzero + mjddelta
-             gotut=True
-        except:
-          pass
-      if(gotut==False):
-        # Maybe we have an obsstart header we can parse
-        # This should work for broken Michelle data
-        try:
-          obsstart = ad.phuHeader('OBSSTART')
-          self.utdatetime = dateutil.parser.parse(obsstart)
-          gotut=True
-        except:
-          pass
-      if(gotut==False):
-        # OK, last ditch is we make it up from the filename and zero hours.
-        try:
-          filename = diskfile.file.filename
-          year = int(filename[1:5])
-          month = int(filename[5:7])
-          day = int(filename[7:9])
-          self.utdatetime = datetime.datetime(year, month, day, 0, 0, 0, 0, None)
-          gotut=True
-        except:
-          pass
-        
+        self.utdatetime = ad.ut_datetime()
+      except:
+        raise
+
       try:
         localtime_string = ad.local_time()
         if(localtime_string):
