@@ -33,7 +33,7 @@ setdemon(options.demon)
 # Define signal handler. This allows us to bail out neatly if we get a signal
 def handler(signum, frame):
   logger.info("Received signal: %d " % signum)
-  raise Exception('Signal', signum)
+  raise KeyboardInterrupt('Signal', signum)
 
 # Set handlers for the signals we want to handle
 signal.signal(signal.SIGHUP, handler)
@@ -58,8 +58,9 @@ if(options.lockfile):
 session = sessionfactory()
 
 # Loop forever.
-try:
-  while(1):
+loop = True
+while(loop):
+  try:
     # Request a queue entry
     iq = pop_ingestqueue(session)
 
@@ -93,14 +94,21 @@ try:
       session.delete(iq)
       session.commit()
 
-except:
-  logger.error("File %s - Exception: %s : %s" % (iq.filename, sys.exc_info()[0], sys.exc_info()[1]))
-  traceback.print_tb(sys.exc_info()[2])
+  except KeyboardInterrupt:
+    loop=False
+    break
 
-finally:
-  session.close()
-  if(options.lockfile):
-    logger.info("Deleting Lockfile %s" % lockfile)
-    os.unlink(lockfile)
-  logger.info("*********  service_ingest_queue.py - exiting at %s" % datetime.datetime.now())
+  except:
+    string = traceback.format_tb(sys.exc_info()[2])
+    logger.error("File %s - Exception: %s : %s... %s" % (iq.filename, sys.exc_info()[0], sys.exc_info()[1], string))
+  
+
+  finally:
+    session.close()
+
+session.close()
+if(options.lockfile):
+  logger.info("Deleting Lockfile %s" % lockfile)
+  os.unlink(lockfile)
+logger.info("*********  service_ingest_queue.py - exiting at %s" % datetime.datetime.now())
 
