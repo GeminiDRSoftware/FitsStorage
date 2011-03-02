@@ -85,18 +85,19 @@ class TapeDrive:
     [returncode, stdoutstring, stderrstring]=self.mt('rewind', fail=fail) 
     return returncode
      
-  def skipto(self, fail=True, filenum=filenum):
+  def skipto(self, filenum, fail=True):
     """
     Fast forward the tape to file number filenum
     The fail argument determines whether to exit with an error if it fails
     Returns the return code from the mt command
     """
 
-    current = self.fileno
-    if(current >= filenum):
+    if(self.fileno() >= filenum):
+      print "rewinding..."
       returncode = self.rewind()
-    while (current < filenum):
-      current = self.fileno
+    while (self.fileno() < filenum):
+      current = self.fileno()
+      print "fsf"
       [returncode, stdoutstring, stderrstring]=self.mt('fsf', fail=fail)
 
     return returncode
@@ -164,7 +165,7 @@ class TapeDrive:
     string = self.status()
     match = re.search('(File number=)(\d+)(,)', string)
     if(match):
-      retval = match.group(2)
+      retval = int(match.group(2))
 
     return retval
 
