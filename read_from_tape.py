@@ -87,33 +87,33 @@ while(range(len(query))):
       print "read file %s" % name[0]
 
 
-      tar = tarfile.open("file.tar")
-      def py_files(members):
-        for tarinfo in members:
-          print "tarinfo.name: %s" % tarinfo.name
-          yield tarinfo
-
-      print "tar: %s" % tar
-      tar.extractall(members=py_files(tar))
-
-      session.query(TapeRead).filter(TapeRead.filename==fn).delete()
-      session.flush()
-      logger.info("removing file %s from taperead" % fn)
-
-
-
-#    def py_files(members):
-#      for tarinfo in members:
-#        if tarinfo.name in filenames:
+#      tar = tarfile.open("file.tar")
+#      def py_files(members):
+#        for tarinfo in members:
 #          print "tarinfo.name: %s" % tarinfo.name
-#          session.query(TapeRead).filter(TapeRead.filename==tarinfo.name).delete()
-#          session.flush()
-#          logger.info("removing file %s from taperead" % tarinfo.name)
 #          yield tarinfo
 
-#    tar = tarfile.open("file.tar")
-#    tar.extractall(members=py_files(tar))
-#    print "tar: %s" % tar
+#      print "tar: %s" % tar
+#      tar.extractall(members=py_files(tar))
+
+#      session.query(TapeRead).filter(TapeRead.filename==fn).delete()
+#      session.flush()
+#      logger.info("removing file %s from taperead" % fn)
+
+
+
+    def py_files(members):
+      for tarinfo in members:
+        if tarinfo.name in filenames:
+          print "tarinfo.name: %s" % tarinfo.name
+          session.query(TapeRead).filter(TapeRead.filename==tarinfo.name).delete()
+          session.flush()
+          logger.info("removing file %s from taperead" % tarinfo.name)
+          yield tarinfo
+
+    tar = tarfile.open("file.tar")
+    tar.extractall(members=py_files(tar))
+    print "tar: %s" % tar
 
   query = session.query(TapeRead).all()
 
