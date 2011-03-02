@@ -377,7 +377,6 @@ def progsobserved(req, selection):
     query = query.group_by(Header.progid)
 
     list = query.all()
-
     title = "Programs Observed: %s" % sayselection(selection)
     req.content_type = "text/html"
     req.write('<html><head><title>%s</title></head><body><h1>%s</h1>' % (title, title))
@@ -399,11 +398,12 @@ def progsobserved(req, selection):
     req.write('</body></html>')
     return apache.OK
 
-  
+
   except IOError:
     pass
   finally:
     session.close()
+
 
 def gmoscal(req, selection):
    """
@@ -778,7 +778,7 @@ def tape(req, things):
       req.write('<TR>')
       movekey = "moveto-%d" % tape.id
       req.write('<TD><LABEL for="%s">Move to new location:</LABEL></TD>' % movekey)
-      req.write('<TD><INPUT type="text" size=32 name="%s"></TD>' % movekey)
+      req.write('<TD><INPUT type="text" size=32 name="%s"></INPUT></TD>' % movekey)
       req.write('</TR>')
       # Second Row
       activekey = "active-%d" % tape.id
@@ -800,14 +800,14 @@ def tape(req, things):
       req.write('<TD><INPUT type="text" name="%s" size=32></INPUT></TD>' % fatekey)
       req.write('</TR>')
       req.write('</TABLE>')
-      req.write('<INPUT type="submit" value="Save"> <INPUT type="reset">')
+      req.write('<INPUT type="submit" value="Save"></INPUT> <INPUT type="reset"></INPUT>')
       req.write('</FORM>')
       req.write('<HR>')
 
     req.write('<HR>')
     req.write('<H2>Add a New Tape</H2>')
     req.write('<FORM action="/tape" method="post">')
-    req.write('<LABEL for=newlabel-0>Label</LABEL> <INPUT type="text" size=32 name=newlabel-0> <INPUT type="submit" value="Save"> <INPUT type="reset">')
+    req.write('<LABEL for=newlabel-0>Label</LABEL> <INPUT type="text" size=32 name=newlabel-0></INPUT> <INPUT type="submit" value="Save"></INPUT> <INPUT type="reset"></INPUT>')
     req.write('</FORM>')
 
     req.write("</body></html>")
@@ -952,6 +952,59 @@ def tapefile(req, things):
   finally:
     session.close()
 
+
+def taperead(req, things):
+  """
+  This is the taperead list function
+  """
+  req.content_type="text/html"
+  req.write("<html>")
+  req.write("<head>")
+  req.write("<title>FITS Storage taperead information</title>")
+  req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+  req.write("</head>")
+  req.write("<body>")
+  req.write("<h1>FITS Storage taperead information</h1>")
+
+  session = sessionfactory()
+  try:
+    query = session.query(TapeRead).order_by(TapeRead.id)
+
+    req.write('<TABLE border=0>')
+    req.write('<TR class=tr_head>')
+    req.write('<TH>Filename</TH>')
+    req.write('<TH>MD5</TH>')
+    req.write('<TH>Tape ID</TH>')
+    req.write('<TH>Tape Label</TH>')
+    req.write('<TH>File Num on Tape</TH>')
+    req.write('<TH>Requester</TH>')
+    req.write('</TR>')
+  
+    even=0
+    for tr in query.all():
+      even = not even
+      if(even):
+        cs = "tr_even"
+      else:
+        cs = "tr_odd"
+      # Now the Table Row
+      req.write("<TR class=%s>" % (cs))
+      req.write("<TD>%s</TD>" % tr.filename)
+      req.write("<TD>%s</TD>" % tr.md5)
+      req.write("<TD>%d</TD>" % tr.tape_id)
+      req.write("<TD>%s</TD>" % tr.tape_label)
+      req.write("<TD>%d</TD>" % tr.filenum)
+      req.write("<TD>%s</TD>" % tr.requester)
+      req.write("</TR>")
+
+    req.write("</TABLE></BODY></HTML>")
+    return apache.OK
+  except IOError:
+    pass
+  finally:
+    session.close()
+
+
 def notification(req, things):
   """
   This is the email notifications page. It's both to show the current notifcation list and to update it.
@@ -1036,18 +1089,18 @@ def notification(req, things):
           req.write('<TD><INPUT type="radio" name="%s" value="Yes" %s>Yes</INPUT> ' % (user, yeschecked))
           req.write('<INPUT type="radio" name="%s" value="No" %s>No</INPUT></TD>' % (user, nochecked))
         else:
-          req.write('<TD><INPUT type="text" size=32 name="%s"></TD>' % user)
+          req.write('<TD><INPUT type="text" size=32 name="%s"></INPUT></TD>' % user)
         req.write('</TR>')
 
       req.write('</TABLE>')
-      req.write('<INPUT type="submit" value="Save"> <INPUT type="reset">')
+      req.write('<INPUT type="submit" value="Save"></INPUT> <INPUT type="reset"></INPUT>')
       req.write('</FORM>')
       req.write('<HR>')
 
     req.write('<HR>')
     req.write('<H2>Add a New Notification</H2>')
     req.write('<FORM action="/notification" method="post">')
-    req.write('<LABEL for=newone-0>Label</LABEL> <INPUT type="text" size=32 name=newone-0> <INPUT type="submit" value="Save"> <INPUT type="reset">')
+    req.write('<LABEL for=newone-0>Label</LABEL> <INPUT type="text" size=32 name=newone-0></INPUT> <INPUT type="submit" value="Save"></INPUT> <INPUT type="reset"></INPUT>')
     req.write('</FORM>')
 
     req.write("</body></html>")
@@ -1640,7 +1693,9 @@ def curation_report(req, things):
   """
   req.content_type = 'text/html'
   req.write('<html>')
-  req.write('<head><title>FITS Storage database curation report</title><link rel="stylesheet" href="/htmldocs/table.css"></head>')
+  req.write('<head>')
+  req.write('<title>FITS Storage database curation report</title><link rel="stylesheet" href="/htmldocs/table.css">')
+  req.write('</head>')
   req.write('<body>')
   req.write('<h1>FITS Storage database curation report</h1>')
 
@@ -1656,7 +1711,7 @@ def curation_report(req, things):
     # Work for duplicate_datalabels
     dupdata = duplicate_datalabels(session, checkonly, exclude)
     previous_ans = ''
-    even_or_odd = []
+    even = 0
     req.write('<h2>Duplicate Datalabel Rows:</h2>')
     if dupdata != []:
       # Write the table headers
@@ -1666,11 +1721,10 @@ def curation_report(req, things):
         this_ans = val
         if previous_ans != this_ans:
           header = session.query(Header).filter(Header.diskfile_id == this_ans).first()
-          even_or_odd.append(this_ans)
-          index = even_or_odd.index(this_ans)
           # Writes out the row for every duplicate in html
           if header:
-            if index%2 == 0:
+            even = not even
+            if(even):
               req.write('<tr class=tr_even>')
             else:
               req.write('<tr class=tr_odd>')
@@ -1685,8 +1739,8 @@ def curation_report(req, things):
     dupcanon = duplicate_canonicals(session)
     previous_file = ''
     oneheader = 0
-    even_or_odd = []
     empty = 0
+    even = 0
     req.write('<h2>Duplicate Canonical Rows:</h2>')      
     # Makes a list of diskfile ids such that every duplicate row found has only one diskfile id
     for val in dupcanon:
@@ -1698,10 +1752,9 @@ def curation_report(req, things):
         else: 
           req.write('<table border=0><tr class=tr_head><th>DiskFile id</th><th>FileName</th><th>Canonical</th></tr>')
           oneheader += 1
-        even_or_odd.append(val.id)
-        index = even_or_odd.index(val.id)
         # Writes out the row for every duplicate in html
-        if index%2 == 0:
+        even = not even
+        if(even):
           req.write('<tr class=tr_even>')
         else:
           req.write('<tr class=tr_odd>')
@@ -1710,15 +1763,15 @@ def curation_report(req, things):
       previous_file = this_file
     req.write('</table>')
     if empty == 0:
-      req.write("No rows with duplicate file ids with canonical=True.<br/>")
+      req.write("No rows with duplicate file ids where canonical=True.<br/>")
 
 
     # Work for duplicate_present
     duppres = duplicate_present(session)
     previous_file = ''
     oneheader = 0
-    even_or_odd = []
     empty = 0
+    even = 0
     req.write('<h2>Duplicate Present Rows:</h2>')
     # Makes a list of diskfile ids such that every duplicate row found has only one diskfile id
     for val in duppres: 
@@ -1730,10 +1783,9 @@ def curation_report(req, things):
         else:
           req.write('<table border=0><tr class=tr_head><th>DiskFile id</th><th>FileName</th><th>Present</th></tr>')
           oneheader += 1
-        even_or_odd.append(val.id)
-        index = even_or_odd.index(val.id)
         # Writes out the row for every duplicate in html
-        if index%2 == 0:
+        even = not even
+        if(even):
           req.write('<tr class=tr_even>')
         else:
           req.write('<tr class=tr_odd>')
@@ -1742,13 +1794,13 @@ def curation_report(req, things):
       previous_file = this_file
     req.write('</table>')
     if empty == 0:
-      req.write("No rows with duplicate file ids with present=True.<br/>")
+      req.write("No rows with duplicate file ids where present=True.<br/>")
 
 
     # Work for present_not_canonical
     presnotcanon = present_not_canonical(session)
     previous_ans = ''
-    even_or_odd = []
+    even = 0
     req.write('<h2>Present Not Canonical Rows:</h2>')
     if presnotcanon != []:
       # Writes the table headers
@@ -1757,10 +1809,9 @@ def curation_report(req, things):
       for val in presnotcanon:
         this_ans = val
         if previous_ans != this_ans:
-          even_or_odd.append(this_ans.id)
-          index = even_or_odd.index(this_ans.id)
           # Writes out the row for every duplicate in html
-          if index%2 == 0:
+          even = not even
+          if(even):
             req.write('<tr class=tr_even>')
           else:
             req.write('<tr class=tr_odd>')
