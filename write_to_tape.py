@@ -101,6 +101,9 @@ for i in range(0, len(options.tapelabel)):
     sys.exit(1)
   tapes.append(query.one())
   logger.debug("Found tape id in database: %d, label: %s" % (tapes[i].id, tapes[i].label))
+  if(tapes[i].full):
+    logger.error("Tape with label %s is full according to the DB. Exiting" % tapes[i].label)
+    sys.exit(2)
 
 # Check the tape label in the drives
 if(not options.dontcheck):
@@ -171,7 +174,9 @@ for i in range(0, len(tds)):
     td.eod(fail=True)
 
     if(td.eot()):
-      logger.error("Tape %s in %s is at End of Tape. Tape is Full. Aborting" % (tape.label, td.dev))
+      logger.error("Tape %s in %s is at End of Tape. Tape is Full. Marking tape as full in DB and aborting" % (tape.label, td.dev))
+      tape.full = True
+      session.commit()
       td.cleanup()
       td.cdback()
       session.close()
@@ -208,8 +213,7 @@ for i in range(0, len(tds)):
     try:
       tar = tarfile.open(name=td.dev, mode='w|', bufsize=blksize)
     except:
-      logger.error("Error opening tar archive:")
-      logger.error("Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+      logger.error("Error opening tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
       tarok = False
     for f in files:
       filename = f['filename']
@@ -223,9 +227,12 @@ for i in range(0, len(tds)):
         filename = filename.encode('ascii')
         tar.add(filename)
       except:
-        logger.error("Error adding file to tar archive")
-        logger.error("Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+        logger.error("Error adding file to tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+        logger.info("Probably the tape filled up - Marking tape as full in the DB - label: %s" % tape.label)
+        tape.full = True
+        session.commit()
         tarok = False
+        break
       # Create the TapeFile entry and add to DB
       tapefile = FitsStorage.TapeFile()
       tapefile.tapewrite_id = tw.id
@@ -243,9 +250,8 @@ for i in range(0, len(tds)):
     try:
       tar.close()
     except:
-      logger.error("Error closing tar archive")
+      logger.error("Error closing tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
       tarok = False
-      logger.error("Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
 
     # update records post-write
     logger.debug("Updating tapewrite record")
