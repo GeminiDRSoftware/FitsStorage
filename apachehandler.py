@@ -147,16 +147,19 @@ def handler(req):
         # Query diskfiles to find the diskfile for file that is canonical
         query = session.query(DiskFile).filter(DiskFile.canonical == True).filter(DiskFile.file_id == file.id)
         diskfile = query.one()
+        # Find the diskfilereport
+        query = session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == diskfile.id)
+        diskfilereport = query.one()
         req.content_type="text/plain"
         if(this == 'fitsverify'):
-          req.write(diskfile.fvreport)
+          req.write(diskfilereport.fvreport)
         if(this == 'wmdreport'):
-          req.write(diskfile.wmdreport)
+          req.write(diskfilereport.wmdreport)
         if(this == 'fullheader'):
           # Need to find the header associated with this diskfile
-          query = session.query(Header).filter(Header.diskfile_id == diskfile.id)
-          header = query.one()
-          req.write(header.fulltext)
+          query = session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == diskfile.id)
+          ftheader = query.one()
+          req.write(ftheader.fulltext)
         return apache.OK
       except IOError:
         pass
@@ -175,11 +178,14 @@ def handler(req):
           session.close()
           return apache.OK
         diskfile = query.one()
+        # Find the diskfilereport
+        query = session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == diskfile.id)
+        diskfilereport = query.one()
         req.content_type="text/plain"
         if(this == 'fitsverify'):
-          req.write(diskfile.fvreport)
+          req.write(diskfilereport.fvreport)
         if(this == 'wmdreport'):
-          req.write(diskfile.wmdreport)
+          req.write(diskfilereport.wmdreport)
         return apache.OK
       except IOError:
         pass

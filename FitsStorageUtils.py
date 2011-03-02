@@ -18,7 +18,7 @@ def create_tables(session):
 
   if fsc_localmode == False:
       # Now grant the apache user select on them for the www queries
-      session.execute("GRANT SELECT ON file, diskfile, header, gmos, niri, michelle, gnirs, nifs, tape, tape_id_seq, tapewrite, tapefile, taperead, notification TO apache");
+      session.execute("GRANT SELECT ON file, diskfile, diskfilereport, header, fulltextheader, gmos, niri, michelle, gnirs, nifs, tape, tape_id_seq, tapewrite, taperead, tapefile, notification TO apache");
       session.execute("GRANT INSERT,UPDATE ON tape, tape_id_seq, notification, notification_id_seq TO apache");
       session.execute("GRANT DELETE ON notification TO apache");
   session.commit()
@@ -27,7 +27,7 @@ def drop_tables(session):
   """
   Drops all the database tables. Very unsubtle. Use with caution
   """
-  session.execute("DROP TABLE gmos, niri, nifs, gnirs, michelle, header, diskfile, file, tape, tapewrite, tapefile, taperead, notification, standards, ingestqueue CASCADE")
+  session.execute("DROP TABLE gmos, niri, nifs, gnirs, michelle, header, fulltextheader, diskfile, diskfilereport, file, tape, tapewrite, taperead, tapefile, notification, standards, ingestqueue CASCADE")
   session.commit()
 
 def ingest_file(session, filename, path, force_md5, skip_fv, skip_wmd):
@@ -116,14 +116,20 @@ def ingest_file(session, filename, path, force_md5, skip_fv, skip_wmd):
     
     if(add_diskfile):
       logger.debug("Adding new DiskFile entry")
-      diskfile = DiskFile(file, skip_fv, skip_wmd)
+      diskfile = DiskFile(file)
       session.add(diskfile)
+      session.commit()
+      dfreport = DiskFileReport(diskfile, skip_fv, skip_wmd)
+      session.add(dfreport)
       session.commit()
       logger.debug("Adding new Header entry")
       header = Header(diskfile)
       session.add(header)
       inst = header.instrument
       logger.debug("Instrument is: %s" % inst)
+      session.commit()
+      ftheader = FullTextHeader(diskfile)
+      session.add(ftheader)
       session.commit()
       # Add the instrument specific tables
       if(inst=='GMOS-N' or inst=='GMOS-S'):

@@ -109,11 +109,9 @@ class DiskFile(Base):
   isfits = Column(Boolean)
   fvwarnings = Column(Integer)
   fverrors = Column(Integer)
-  fvreport = Column(Text)
   wmdready = Column(Boolean)
-  wmdreport = Column(Text)
 
-  def __init__(self, file, skip_fv, skip_wmd):
+  def __init__(self, file):
     self.file_id = file.id
     self.present = True
     self.canonical = True
@@ -122,40 +120,67 @@ class DiskFile(Base):
     self.ccrc = file.ccrc()
     self.md5 = file.md5()
     self.lastmod = file.lastmod()
-    if(skip_fv or fsc_localmode == True):
-      self.fverrors=0
-    else:
-      self.fits_verify(file)
-    if(skip_wmd):
-      self.wmdready = True
-    else:
-      self.wmd(file)
 
   def __repr__(self):
     return "<DiskFile('%s', '%s')>" %(self.id, self.file_id)
 
-  def fits_verify(self, file):
+
+class DiskFileReport(Base):
+  """
+  This is the ORM object for DiskFileReport.
+  Contains the Fits Verify and WMD reports for a diskfile
+  These can be fairly large chunks of text, so we split this
+  out from the DiskFile table for DB performance reasons
+
+  When we instantiate this class, we pass it the diskfile object.
+  This class will update that diskfile object with the fverrors and wmdready
+  values, but will not commit the changes.
+  """
+  __tablename__ = 'diskfilereport'
+
+  id = Column(Integer, primary_key=True)
+  diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
+  fvreport = Column(Text)
+  wmdreport = Column(Text)
+
+
+  def __init__(self, diskfile, skip_fv, skip_wmd):
+    self.diskfile_id = diskfile.id
+    if(skip_fv or fsc_localmode == True):
+      diskfile.fverrors=0
+    else:
+      self.fits_verify(diskfile)
+    if(skip_wmd or fsc_localmode == True):
+      diskfile.wmdready = True
+    else:
+      self.wmd(diskfile)
+
+  def fits_verify(self, diskfile):
     """
-    Calls the FitsVerify module and records the results
-    in the current diskfile object / table row
+    Calls the FitsVerify module and records the results.
+    - Populates the isfits, fverrors and fvwarnings in the diskfile object
+      passed in
+    - Populates the fvreport in self
     """
-    list = FitsVerify.fitsverify(file.fullpath())
-    self.isfits = bool(list[0])
-    self.fvwarnings = list[1]
-    self.fverrors = list[2]
+    list = FitsVerify.fitsverify(diskfile.file.fullpath())
+    diskfile.isfits = bool(list[0])
+    diskfile.fvwarnings = list[1]
+    diskfile.fverrors = list[2]
     # If the FITS file has bad strings in it, fitsverify will quote them in 
     # the report, and the database will object to the bad characters in 
     # the unicode string - errors=ignore makes it ignore these.
     self.fvreport = unicode(list[3], errors='replace')
-    
-  def wmd(self, file):
+
+  def wmd(self, diskfile):
     """
     Calls the CadcWMD module and records the results
-    in the current diskfile object / table row
+    - Populates the wmdready flag in the diskfile object passed in
+    - Populates the wmdreport text in self
     """
-    list = CadcWMD.cadcWMD(file.fullpath())
-    self.wmdready = bool(list[0])
+    list = CadcWMD.cadcWMD(diskfile.file.fullpath())
+    diskfile.wmdready = bool(list[0])
     self.wmdreport = list[1]
+
 
 class Header(Base):
   """
@@ -196,7 +221,6 @@ class Header(Base):
   qastate = Column(Text)
   release = Column(Date(TimeZone=False))
   reduction = Column(Text)
-  fulltext = Column(Text)
 
   def __init__(self, diskfile):
     self.diskfile_id = diskfile.id
@@ -215,14 +239,6 @@ class Header(Base):
     ad=0
     try:
       ad=AstroData(fullpath, mode='readonly')
-      # Full header text first
-      self.fulltext = ""
-      self.fulltext += "Full Path Filename: " +  diskfile.file.fullpath() + "\n\n"
-      self.fulltext += "AstroData Types: " +str(ad.types) + "\n\n"
-      for i in range(len(ad.hdulist)):
-        self.fulltext += "\n--- HDU %s ---\n" % i
-        self.fulltext += unicode(str(ad.hdulist[i].header.ascardlist()), errors='replace')
-        self.fulltext += '\n'
 
       # Basic data identification part
       try:
@@ -374,6 +390,40 @@ class Header(Base):
     except:
       # Astrodata open or any of the above failed
       raise
+
+class FullTextHeader(Base):
+  """
+  This is the ORM object for the Full Text of the header.
+  We keep this is a separate table from Header to improve DB performance
+  """
+  __tablename__ = 'fulltextheader'
+
+  id = Column(Integer, primary_key=True)
+  diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
+  fulltext = Column(Text)
+
+  def __init__(self, diskfile):
+    self.diskfile_id = diskfile.id
+    self.populate(diskfile)
+
+  def populate(self, diskfile):
+    fullpath = diskfile.file.fullpath()
+    # Try and open it as a fits file
+    ad=0
+    try:
+      ad=AstroData(fullpath, mode='readonly')
+      self.fulltext = ""
+      self.fulltext += "Full Path Filename: " +  diskfile.file.fullpath() + "\n\n"
+      self.fulltext += "AstroData Types: " +str(ad.types) + "\n\n"
+      for i in range(len(ad.hdulist)):
+        self.fulltext += "\n--- HDU %s ---\n" % i
+        self.fulltext += unicode(str(ad.hdulist[i].header.ascardlist()), errors='replace')
+        self.fulltext += '\n'
+
+    except:
+      # Astrodata open or header reference failed
+      raise
+
 
 class IngestQueue(Base):
   """
