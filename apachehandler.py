@@ -277,10 +277,15 @@ def handler(req):
   if(this == "tapefile"):
     return tapefile(req, things)
 
+  # TapeRead handler
+  if(this == "taperead"):
+    return taperead(req, things)
+
   # Emailnotification handler
   if(this == "notification"):
     return notification(req, things)
 
+  # curation_report handler
   if(this == "curation"):
     return curation_report(req, things)
 
