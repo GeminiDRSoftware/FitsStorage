@@ -455,6 +455,23 @@ class TapeFile(Base):
   md5 = Column(Text)
   lastmod = Column(DateTime(timezone=True))
 
+class TapeRead(Base):
+  """
+  This is the ORM object for the TapeRead table
+  """
+  __tablename__ = 'taperead'
+
+  id = Column(Integer, primary_key=True)
+  tapefile_id = Column(Integer, ForeignKey('tapefile.id'), nullable=False, index=True)
+  tapefile = relation(TapeFile, order_by=id)
+  filename = Column(Text, index=True)
+  md5 = Column(Text, index=True)
+  tape_id = Column(Integer, index=True)
+  tape_label = Column(Text, index=True)
+  filenum = Column(Integer, index=True)
+  requester = Column(Text)
+
+
 class Gmos(Base):
   """
   This is the ORM object for the GMOS details.
