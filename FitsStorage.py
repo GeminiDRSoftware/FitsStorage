@@ -461,11 +461,15 @@ class Tape(Base):
   location = Column(Text)
   lastmoved = Column(DateTime(timezone=False))
   active = Column(Boolean)
+  full = Column(Boolean)
+  set = Column(Integer)
   fate = Column(Text)
 
   def __init__(self, label):
     self.label = label
     self.active = True
+    self.full = False
+    self.set = 0
 
 class TapeWrite(Base):
   """

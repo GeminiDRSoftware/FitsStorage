@@ -729,6 +729,13 @@ def tape(req, things):
             tape.active = True
           if(value == 'No'):
             tape.active = False
+        if(field == 'full'):
+          if(value == 'Yes'):
+            tape.full = True
+          if(value == 'No'):
+            tape.full = False
+        if(field == 'set'):
+          tape.set = value
         if(field == 'fate'):
           tape.fate = value
       if(field == 'newlabel'):
@@ -748,12 +755,13 @@ def tape(req, things):
 
     req.write("<HR>")
     for tape in list:
-      req.write("<H2>ID: %d, Label: %s</H2>" % (tape.id, tape.label))
+      req.write("<H2>ID: %d, Label: %s, Set: %d</H2>" % (tape.id, tape.label, tape.set))
       req.write("<UL>")
       req.write("<LI>First Write: %s UTC - Last Write: %s UTC</LI>" % (tape.firstwrite, tape.lastwrite))
       req.write("<LI>Last Verified: %s UTC</LI>" % tape.lastverified)
       req.write("<LI>Location: %s; Last Moved: %s UTC</LI>" % (tape.location, tape.lastmoved))
       req.write("<LI>Active: %s</LI>" % tape.active)
+      req.write("<LI>Full: %s</LI>" % tape.full)
       req.write("<LI>Fate: %s</LI>" % tape.fate)
   
       # Count Writes
@@ -774,13 +782,19 @@ def tape(req, things):
       # The form for modifications
       req.write('<FORM action="/tape" method="post">')
       req.write('<TABLE>')
-      # First Row
+      # Row 1
       req.write('<TR>')
       movekey = "moveto-%d" % tape.id
       req.write('<TD><LABEL for="%s">Move to new location:</LABEL></TD>' % movekey)
       req.write('<TD><INPUT type="text" size=32 name="%s"></INPUT></TD>' % movekey)
       req.write('</TR>')
-      # Second Row
+      # Row 2
+      req.write('<TR>')
+      setkey = "set-%d" % tape.id
+      req.write('<TD><LABEL for="%s">Change Set Number to:</LABEL></TD>' % setkey)
+      req.write('<TD><INPUT type="text" size=4 name="%s"></INPUT></TD>' % setkey)
+      req.write('</TR>')
+      # Row 3
       activekey = "active-%d" % tape.id
       req.write('<TR>')
       req.write('<TD><LABEL for="%s">Active:</LABEL></TD>' % activekey)
@@ -793,12 +807,26 @@ def tape(req, things):
       req.write('<TD><INPUT type="radio" name="%s" value="Yes" %s>Yes</INPUT> ' % (activekey, yeschecked))
       req.write('<INPUT type="radio" name="%s" value="No" %s>No</INPUT></TD>' % (activekey, nochecked))
       req.write('</TR>')
-      # Third Row
+      # Row 4
+      fullkey = "full-%d" % tape.id
+      req.write('<TR>')
+      req.write('<TD><LABEL for="%s">Full:</LABEL></TD>' % fullkey)
+      yeschecked = ""
+      nochecked = ""
+      if(tape.full):
+        yeschecked="checked"
+      else:
+        nochecked="checked"
+      req.write('<TD><INPUT type="radio" name="%s" value="Yes" %s>Yes</INPUT> ' % (fullkey, yeschecked))
+      req.write('<INPUT type="radio" name="%s" value="No" %s>No</INPUT></TD>' % (fullkey, nochecked))
+      req.write('</TR>')
+      # Row 5
       req.write('<TR>')
       fatekey = "fate-%d" % tape.id
       req.write('<TD><LABEL for="%s">Fate:</LABEL></TD>' % fatekey)
       req.write('<TD><INPUT type="text" name="%s" size=32></INPUT></TD>' % fatekey)
       req.write('</TR>')
+      # End of form
       req.write('</TABLE>')
       req.write('<INPUT type="submit" value="Save"></INPUT> <INPUT type="reset"></INPUT>')
       req.write('</FORM>')
