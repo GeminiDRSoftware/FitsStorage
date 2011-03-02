@@ -359,6 +359,42 @@ def xmlfilelist(req, selection):
   req.write("</file_list>")
   return apache.OK
 
+def fileontape(req, things):
+  """
+  Outputs xml describing the tapes that the specified file is on
+  """
+  req.content_type = "text/xml"
+  req.write('<?xml version="1.0" ?>')
+  req.write("<file_list>")
+
+  filename = things[0]
+
+  session = sessionfactory()
+  try:
+    query = session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape)))
+    query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
+    query = query.filter(TapeFile.filename == filename)
+    list = query.all()
+
+    for tf in list:
+      req.write("<file>")
+      req.write("<filename>%s</filename>" % tf.filename)
+      req.write("<size>%d</size>" % tf.size)
+      req.write("<md5>%s</md5>" % tf.md5)
+      req.write("<ccrc>%s</ccrc>" % tf.ccrc)
+      req.write("<lastmod>%s</lastmod>" % tf.lastmod)
+      req.write("<tapeid>%d</tapeid>" % tf.tapewrite.tape.id)
+      req.write("<tapeset>%d</tapeset>" % tf.tapewrite.tape.set)
+      req.write("</file>")
+
+  finally:
+    session.close()
+
+  req.write("</file_list>")
+  return apache.OK
+
+
+
 def progsobserved(req, selection):
   """
   This function generates a list of programs observed on a given night

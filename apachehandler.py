@@ -106,6 +106,11 @@ def handler(req):
     retval = xmlfilelist(req, selection)
     return retval
 
+  # The fileontape handler
+  if(this == 'fileontape'):
+    retval = fileontape(req, things)
+    return retval
+
   # The calmgr handler
   if(this == 'calmgr'):
     # Parse the rest of the URL.
