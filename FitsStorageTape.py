@@ -19,6 +19,7 @@ class TapeDrive:
   scratchdir = ''
   workingdir = ''
   origdir = ''
+  filenum = ''
 
   def __init__(self, device, scratchdir):
     """
@@ -84,6 +85,22 @@ class TapeDrive:
     [returncode, stdoutstring, stderrstring]=self.mt('rewind', fail=fail) 
     return returncode
      
+  def skipto(self, fail=True, filenum=filenum):
+    """
+    Fast forward the tape to file number filenum
+    The fail argument determines whether to exit with an error if it fails
+    Returns the return code from the mt command
+    """
+
+    current = self.fileno
+    if(current >= filenum):
+      returncode = self.rewind()
+    while (current < filenum):
+      current = self.fileno
+      [returncode, stdoutstring, stderrstring]=self.mt('fsf', fail=fail)
+
+    return returncode
+
   def eod(self, fail=True):
     """
     Send the tape to eod
