@@ -15,6 +15,7 @@ import subprocess
 import tarfile
 import urllib
 from xml.dom.minidom import parseString
+import tarfile
 
 
 # Option Parsing
@@ -26,16 +27,18 @@ parser.add_option("--all", action="store_true", dest="all", help="When multiple 
 parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
+parser.add_option("--requester", action="store", type="string", dest="requester", help="filters the table for specific filenames")
 
 (options, args) = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
 setdemon(options.demon)
+requester = options.requester
 
 # Annouce startup
 logger.info("*********  read_from_tape.py - starting up at %s" % datetime.datetime.now())
-options.filere = 'N2009101'
+options.filere = '2009101'
 options.tapedrive = 1
 
 if(not options.filere):
@@ -52,67 +55,70 @@ if(not options.tapedrive):
 # non identical version of the file on tapes too.
 session = sessionfactory()
 
-# First, we get a list of filename, md5 pairs for the files we want to extract
-query = session.query(TapeFile.filename, TapeFile.md5, Tape.id).select_from(join(TapeFile, join(TapeWrite, Tape)))
-query = query.filter(TapeFile.filename.like('%'+options.filere+'%'))
-query = query.filter(TapeWrite.suceeded == True)
-query = query.filter(Tape.active == True)
-query = query.order_by(TapeFile.filename, desc(TapeFile.lastmod))
-query = query.distinct().all()
 
-# Now, where the same filename occurs with multiple md5s, we should weed out the ones we don't want
-todolist = []
-todolist2 = []
-filenames = []
-previous_file = ''
-if(not options.all):
-  for que in query:
-    this_file = que.filename
-    if(previous_file != this_file):
-      todolist.append(que)
-      todolist2.append(que)
-      filenames.append(que[0])
-    previous_file = this_file
-  print "count: %d" % len(todolist)
+query = session.query(TapeRead).all()
+while(range(len(query))):
 
-# need a todolist of (file, md5) left to read, that we can whittle down as we go
-while(len(todolist)):
-  tapeslist = []
-  while(len(todolist)):
-    todo = todolist.pop()
-    # If the next item is on a tape that is already listed in tapeslist, then we don't query it!
-    if todo[2] not in tapeslist:
-      tapes = session.query(Tape.id).select_from(join(TapeFile, join(TapeWrite, Tape))).filter(TapeFile.filename.like('%s' % todo[0])).all()
-      print "tapes: %s" % tapes
-      for t in tapes:
-        tapeslist.append(t[0])
+  findlabels = session.query(TapeRead.tape_label).distinct().all()
+  tapelabels = []
+  for find in findlabels:
+    label = find[0].encode()
+    tapelabels.append(label)
+  print "Choose a tape from these tape labels: %s" % tapelabels
 
-  print 'tapes: %s' % sorted(tapeslist)
-  it = raw_input('Which tape would you like to read? ')
+  #FitsStorageTape.readlabel()
 
-  # Query for all the rows from the selected tape
-  onetape = session.query(TapeFile.filename, TapeFile.md5, Tape.id).select_from(join(TapeFile, join(TapeWrite, Tape)))
-  onetape = onetape.filter(TapeFile.filename.like('%'+options.filere+'%'))
-  onetape = onetape.filter(TapeWrite.suceeded == True)
-  onetape = onetape.filter(Tape.id == it)
-  onetape = onetape.distinct().all()
+  it = raw_input("Which tape would you like to read? ")
 
-  # Reducing the todolist of filenames by removing the files that were read on the tape selected
-  for one in onetape:
-    if one[0] in filenames:
-      filenames.remove(one[0])
+  filenums = session.query(TapeRead.filenum).filter(TapeRead.tape_label==it).order_by(TapeRead.filenum).distinct().all()
 
-  # Must repopulate todolist...
-  counttodo = 0
-  for todo2 in todolist2:
-    if todo2[0] in filenames:
-      todolist.append(todo2)
-      counttodo += 1
-  print "todolist: %s" % len(todolist)
+  #FitsStorageTape.rewind()
+
+  for nums in filenums:
+
+    #FitsStorageTape.fastforward()
+
+    filename = session.query(TapeRead.filename).filter(TapeRead.tape_label==it).filter(TapeRead.filenum==nums[0]).all()
+
+    filenames = []
+    for name in filename:
+      fn = name[0].encode()
+      filenames.append(fn)
+      print "read file %s" % name[0]
 
 
-print "No files in the todolist are unread."
-# Verify (file, md5) read OK and if so, delete it from the todolist
+      tar = tarfile.open("file.tar")
+      def py_files(members):
+        for tarinfo in members:
+          print "tarinfo.name: %s" % tarinfo.name
+          yield tarinfo
 
+      print "tar: %s" % tar
+      tar.extractall(members=py_files(tar))
+
+      session.query(TapeRead).filter(TapeRead.filename==fn).delete()
+      session.flush()
+      logger.info("removing file %s from taperead" % fn)
+
+
+
+#    def py_files(members):
+#      for tarinfo in members:
+#        if tarinfo.name in filenames:
+#          print "tarinfo.name: %s" % tarinfo.name
+#          session.query(TapeRead).filter(TapeRead.filename==tarinfo.name).delete()
+#          session.flush()
+#          logger.info("removing file %s from taperead" % tarinfo.name)
+#          yield tarinfo
+
+#    tar = tarfile.open("file.tar")
+#    tar.extractall(members=py_files(tar))
+#    print "tar: %s" % tar
+
+  query = session.query(TapeRead).all()
+
+
+
+tar.close()
 session.close()
 
