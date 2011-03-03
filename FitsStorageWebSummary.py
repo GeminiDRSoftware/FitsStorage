@@ -207,6 +207,8 @@ def webhdrsummary(session, req, type, headers, links=True):
 
   # Loop through the header list, outputing table rows
   even=0
+  bytecount = 0
+  filecount = 0
   for h in headers:
     even = not even
     if(even):
@@ -331,7 +333,11 @@ def webhdrsummary(session, req, type, headers, links=True):
 
     # And again last bit included in all summary types
     req.write("</TR>\n")
+
+    bytecount += h.diskfile.size
+    filecount += 1
   req.write("</TABLE>\n")
+  req.write("<P>%d files totalling %.2f GB</P>" % (filecount, bytecount/1.0E9))
 
 def xmlfilelist(req, selection):
   """
