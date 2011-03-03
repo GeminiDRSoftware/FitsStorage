@@ -20,7 +20,7 @@ parser.add_option("--tapeserver", action="store", type="string", dest="tapeserve
 parser.add_option("--file-pre", action="store", type="string", dest="filepre", help="File prefix to operate on, eg N20090130, N200812 etc")
 parser.add_option("--notpresent", action="store_true", dest="notpresent", help="Include files that are marked as not present")
 parser.add_option("--mintapes", action="store", type="int", dest="mintapes", default=2, help="Minimum number of tapes file must be on to be eligable for deletion")
-parser.add_option("--tapeset", action="store", type="int", dest="tapset", help="Only consider tapes in this tapeset")
+parser.add_option("--tapeset", action="store", type="int", dest="tapeset", help="Only consider tapes in this tapeset")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
@@ -88,7 +88,7 @@ for diskfileid in diskfileids:
     logger.debug("Filename: %s; md5=%s, tapeid=%d, tapeset=%d" % (filename, md5, tapeid, tapeset))
     if((filename == dbfilename) and (md5 == dbmd5) and (tapeid not in tapeids)):
       logger.debug("Found it on tape id %d" % tapeid)
-      if(options.tapeset and tapeset != options.tapeset):
+      if(options.tapeset is not None and tapeset != options.tapeset):
         logger.debug("But this tape id is not in the requested tapeset")
       else:
         tapeids.append(tapeid)
