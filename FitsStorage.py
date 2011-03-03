@@ -346,7 +346,7 @@ class Header(Base):
       except (KeyError, ValueError):
         pass
       try:
-        self.cwave = float(ad.central_wavelength())
+        self.cwave = float(ad.central_wavelength(asMicrometers=True))
       except (KeyError, ValueError, TypeError):
         pass
       try:
