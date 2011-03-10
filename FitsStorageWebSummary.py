@@ -123,7 +123,10 @@ def list_headers(session, selection, orderby):
 
   if localmode:
     results = query.all()
-    headers, diskfiles, files = zip(*results)
+    # print "FSWS126:", repr(results)
+    # print "FSWS127:", str(results)
+    headers = results
+    # headers, diskfiles, files = zip(*results)
   else:
     headers = query.all()
   

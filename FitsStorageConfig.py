@@ -43,3 +43,18 @@ fits_log_dir = "/data/logs/"
 # Configure the tape scratch directory here
 fits_tape_scratchdir = "/data/tapescratch"
 
+
+# the following implements logic where a if a copy of FitsStorageConfig 
+# a subdirectory of the current directory, .fitsstore, then this is also
+# loaded (equiv of from ___ import *) in the current directory
+
+import os
+runconfig = ".fitsstore/FitsStorageConfig.py"
+
+if os.path.exists(runconfig):
+    print "Found local config files"
+    rc = open(runconfig)
+    exec(rc)
+    rc.close()
+    print "after run config set"
+
