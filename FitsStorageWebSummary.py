@@ -1201,6 +1201,10 @@ def calmgr(req, selection):
 
   returns an apache request status code
   """
+  # this allow me to force the flag back and forth to test integration attempts (we try to 
+  # remove the localmode conditionals if possible). fsc_localmode comes from FitsStorageConfig.py
+  localmode = fsc_localmode 
+  
   session = sessionfactory()
   try:
     # Was the request for only one type of calibration?
@@ -1271,7 +1275,12 @@ def calmgr(req, selection):
     else:
       # OK, we got called via a GET - find the science dataset in the database
       # The Basic Query
-      query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
+      if localmode:
+        query = session.query(Header).select_from(Header, DiskFile, File)
+        query = query.filter(Header.diskfile_id == DiskFile.id)
+        query = query.filter(DiskFile.file_id == File.id)
+      else:
+        query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
 
       # Only the canonical versions
       selection['canonical'] = True
