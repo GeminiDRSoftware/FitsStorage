@@ -45,7 +45,8 @@ def setdebug(want):
 
 def setdemon(want):
   if(want):
-    logger.addHandler(smtphandler)
+    if(len(FitsStorageConfig.email_errors_to)):
+      logger.addHandler(smtphandler)
   else:
     logger.addHandler(streamhandler)
 
