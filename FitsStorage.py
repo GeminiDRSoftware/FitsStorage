@@ -576,7 +576,7 @@ class Gmos(Base):
       except (KeyError, IndexError, ValueError):
         pass
       try:
-        self.amp_read_area = str(ad.amp_read_area(asList=True))
+        self.amp_read_area = str(ad.amp_read_area(asDict=True))
       except (KeyError, IndexError, ValueError):
         pass
       try:
@@ -592,17 +592,18 @@ class Gmos(Base):
       except (KeyError, ValueError):
         pass
       try:
-        self.nod_count = ad.nod_count()
-      except (KeyError, ValueError):
-        pass
-      try:
-        self.nod_pixels = ad.nod_pixels()
-      except (KeyError, ValueError):
-        pass
-      try:
         self.nodandshuffle = ad.isType('GMOS_NODANDSHUFFLE')
       except (KeyError, ValueError):
         pass
+      if(self.nodandshuffle):
+        try:
+          self.nod_count = ad.nod_count()
+        except (KeyError, ValueError):
+          pass
+        try:
+          self.nod_pixels = ad.nod_pixels()
+        except (KeyError, ValueError):
+          pass
       ad.close()
     except:
       # Astrodata open failed
