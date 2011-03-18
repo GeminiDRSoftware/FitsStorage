@@ -23,7 +23,7 @@ try:
 except ImportError:
     pass
     
-import FitsStorageCal
+import FitsStorageCal 
 import FitsStorageConfig
 import urllib
 
@@ -48,10 +48,7 @@ def summary(req, type, selection, orderby, links=True):
   title = "FITS header %s table %s" % (type, sayselection(selection))
   req.write("<head>")
   req.write("<title>%s</title>" % (title))
-  if fsc_localmode:
-      req.write('<link rel="stylesheet" href="/htmldocs/FS_LOCALMODE_table.css">')
-  else:
-      req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+  req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
   req.write("</head>\n")
   req.write("<body>")
   if (fits_system_status == "development"):
@@ -384,7 +381,7 @@ def fileontape(req, things):
   session = sessionfactory()
   try:
     query = session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape)))
-    query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
+    query = query.filter(Tape.active == True).filter(TapeWrite.succeeded == True)
     query = query.filter(TapeFile.filename == filename)
     list = query.all()
 
@@ -814,10 +811,10 @@ def tape(req, things):
   
       # Count Writes
       twqtotal = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id)
-      twq = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.suceeded == True)
+      twq = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.succeeded == True)
       # Count Bytes
       if(twq.count()):
-        bytesquery = session.query(func.sum(TapeWrite.size)).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.suceeded == True)
+        bytesquery = session.query(func.sum(TapeWrite.size)).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.succeeded == True)
         bytes = bytesquery.one()[0]
         if(not bytes):
           bytes=0
@@ -941,7 +938,7 @@ def tapewrite(req, things):
       req.write("<h2>ID: %d; Tape ID: %d; Tape Label: %s; File Number: %d</h2>" % (tw.id, tw.tape_id, tw.tape.label, tw.filenum))
       req.write("<UL>")
       req.write("<LI>Start Date: %s UTC - End Date: %s UTC</LI>" % (tw.startdate, tw.enddate))
-      req.write("<LI>Suceeded: %s</LI>" % tw.suceeded)
+      req.write("<LI>Succeeded: %s</LI>" % tw.succeeded)
       if(tw.size is None):
         req.write("<LI>Size: None")
       else:
@@ -1510,8 +1507,6 @@ def calibrations(req, selection):
           if(smallestinterval > nowhours):
             takenow=True
 
-        html += "<HR>"
-
       if('dark' in c.required and (caltype=='all' or caltype=='dark')):
         requires=True
         dark = c.dark()
@@ -1527,8 +1522,6 @@ def calibrations(req, selection):
           warning = True
           missing = True
 
-      html += "<HR>"
-
       if('bias' in c.required and (caltype=='all' or caltype=='bias')):
         requires=True
         bias = c.bias()
@@ -1539,8 +1532,6 @@ def calibrations(req, selection):
           warning = True
           missing = True
 
-        html += "<HR>"
-
       if('flat' in c.required and (caltype=='all' or caltype=='flat')):
         requires=True
         flat = c.flat()
@@ -1550,21 +1541,7 @@ def calibrations(req, selection):
           html += '<H3><FONT COLOR="Red">NO FLAT FOUND!</FONT></H3>'
           warning = True
           missing = True
-
-        html += "<HR>"
-   
-      if('arc' in c.required and (caltype=='all' or caltype=='arc')):
-        requires=True
-        arc = c.arc()
-        if(arc):
-          html += "<H4>ARC: %s - %s</H4>" % (arc.diskfile.file.filename, arc.data_label)
-        else:
-          html += '<H3><FONT COLOR="Red">NO ARC FOUND!</FONT></H3>'
-          warning = True
-          missing = True
-
-        html += "<HR>"
-   
+      
       if('processed_bias' in c.required and (caltype=='all' or caltype=='processed_bias')):
         requires=True
         processed_bias = c.processed_bias()
@@ -1574,9 +1551,7 @@ def calibrations(req, selection):
           html += '<H3><FONT COLOR="Red">NO PROCESSED_BIAS FOUND!</FONT></H3>'
           warning = True
           missing = True
-
-        html += "<HR>"
-   
+  
       if('processed_flat' in c.required and (caltype=='all' or caltype=='processed_flat')):
         requires=True
         processed_flat = c.processed_flat()
@@ -1587,8 +1562,6 @@ def calibrations(req, selection):
           warning = True
           missing = True
 
-        html += "<HR>"
-   
       if('processed_fringe' in c.required and (caltype=='all' or caltype=='processed_fringe')):
         requires=True
         processed_fringe = c.processed_fringe()
@@ -1599,8 +1572,6 @@ def calibrations(req, selection):
           warning = True
           missing = True
 
-        html += "<HR>"
-   
       if('pinhole_mask' in c.required and (caltype=='all' or caltype=='pinhole_mask')):
         requires=True
         pinhole_mask = c.pinhole_mask()
@@ -1611,8 +1582,6 @@ def calibrations(req, selection):
           warning = True
           missing = True
 
-        html += "<HR>"
-   
       if('ronchi_mask' in c.required and (caltype=='all' or caltype=='ronchi_mask')):
         requires=True
         ronchi_mask = c.ronchi_mask()
@@ -1623,7 +1592,7 @@ def calibrations(req, selection):
           warning = True
           missing = True
 
-        html += "<HR>"
+      html += "<HR>"
    
       caloption=None
       if('caloption' in selection):
