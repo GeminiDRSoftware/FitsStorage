@@ -14,6 +14,7 @@ import time
 import subprocess
 import tarfile
 import urllib
+import traceback
 from xml.dom.minidom import parseString
 
 
@@ -154,6 +155,8 @@ try:
       f['md5sum'] = md5sum
   logger.info("All files fetched OK")
 except:
+  string = traceback.format_tb(sys.exc_info()[2])
+  logger.error("Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
   logger.error("Problem Fetching Files, aborting")
   tds[0].cdback()
   tds[0].cleanup()
