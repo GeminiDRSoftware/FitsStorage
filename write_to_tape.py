@@ -140,7 +140,7 @@ try:
       session.close()
       sys.exit(1)
     else:
-      # Curl command suceeded.
+      # Curl command succeeded.
       # Check the CRC of the file we got against the DB
       filecrc = CadcCRC.cadcCRC(filename)
       if(filecrc != ccrc):
@@ -259,7 +259,7 @@ for i in range(0, len(tds)):
     # update records post-write
     logger.debug("Updating tapewrite record")
     tw.enddate = datetime.datetime.utcnow()
-    logger.debug("Suceeded: %s" % tarok)
+    logger.debug("Succeeded: %s" % tarok)
     tw.suceeded = tarok
     tw.afterstatus = td.status()
     tw.size = bytecount
