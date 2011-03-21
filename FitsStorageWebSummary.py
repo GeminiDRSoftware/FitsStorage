@@ -381,7 +381,7 @@ def fileontape(req, things):
   session = sessionfactory()
   try:
     query = session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape)))
-    query = query.filter(Tape.active == True).filter(TapeWrite.succeeded == True)
+    query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
     query = query.filter(TapeFile.filename == filename)
     list = query.all()
 
@@ -811,10 +811,10 @@ def tape(req, things):
   
       # Count Writes
       twqtotal = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id)
-      twq = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.succeeded == True)
+      twq = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.suceeded == True)
       # Count Bytes
       if(twq.count()):
-        bytesquery = session.query(func.sum(TapeWrite.size)).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.succeeded == True)
+        bytesquery = session.query(func.sum(TapeWrite.size)).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.suceeded == True)
         bytes = bytesquery.one()[0]
         if(not bytes):
           bytes=0
@@ -938,7 +938,7 @@ def tapewrite(req, things):
       req.write("<h2>ID: %d; Tape ID: %d; Tape Label: %s; File Number: %d</h2>" % (tw.id, tw.tape_id, tw.tape.label, tw.filenum))
       req.write("<UL>")
       req.write("<LI>Start Date: %s UTC - End Date: %s UTC</LI>" % (tw.startdate, tw.enddate))
-      req.write("<LI>Succeeded: %s</LI>" % tw.succeeded)
+      req.write("<LI>Succeeded: %s</LI>" % tw.suceeded)
       if(tw.size is None):
         req.write("<LI>Size: None")
       else:
