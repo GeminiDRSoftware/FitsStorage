@@ -28,6 +28,7 @@ import CadcWMD
 
 from FitsStorageConfig import *
 
+from astrodata import Errors
 from astrodata.AstroData import AstroData
 
 # This was to debug the number of open database sessions.
@@ -89,7 +90,7 @@ class File(Base):
 
   def lastmod(self):
     return datetime.datetime.fromtimestamp(os.path.getmtime(self.fullpath()))
-    
+
 class DiskFile(Base):
   """
   This is the ORM class for the diskfile table.
@@ -273,7 +274,7 @@ class Header(Base):
         if(localtime_string):
           # This is a bit of a hack so as to use the nice parser
           self.local_time = dateutil.parser.parse("2000-01-01 %s" % (localtime_string)).time()
-      except (KeyError, ValueError):
+      except (KeyError, ValueError, Errors.InvalidValueError):
         pass
 
       # Data Types
@@ -311,11 +312,11 @@ class Header(Base):
         pass
       try:
         self.cass_rotator_pa = float(ad.cass_rotator_pa())
-      except (KeyError, ValueError, TypeError):
+      except (KeyError, ValueError, Errors.InvalidValueError, TypeError):
         pass
       try:
         self.airmass = float(ad.airmass())
-      except (KeyError, ValueError, TypeError):
+      except (KeyError, ValueError, Errors.InvalidValueError, TypeError):
         pass
       try:
         self.raw_iq = ad.raw_iq()
@@ -362,7 +363,7 @@ class Header(Base):
       self.spectroscopy = False
       if('SPECT' in ad.types):
         self.spectroscopy = True
-  
+
       # Set the derived QA state and release date
       try:
         self.qa_state = ad.qa_state()
@@ -385,7 +386,7 @@ class Header(Base):
         self.reduction = 'PROCESSED_FLAT'
       if('PROCESSED_BIAS' in ad.types):
         self.reduction = 'PROCESSED_BIAS'
-  
+
       ad.close()
     except:
       # Astrodata open or any of the above failed
@@ -525,7 +526,6 @@ class TapeRead(Base):
   filenum = Column(Integer, index=True)
   requester = Column(Text)
 
-
 class Gmos(Base):
   """
   This is the ORM object for the GMOS details.
@@ -568,11 +568,11 @@ class Gmos(Base):
       except (KeyError, ValueError):
         pass
       try:
-        self.detector_x_bin = ad.detector_x_bin()
+        self.detector_x_bin = ad.detector_x_bin().values()[0]
       except (KeyError, IndexError, ValueError):
         pass
       try:
-        self.detector_y_bin = ad.detector_y_bin()
+        self.detector_y_bin = ad.detector_y_bin().values()[0]
       except (KeyError, IndexError, ValueError):
         pass
       try:
@@ -691,7 +691,7 @@ class Gnirs(Base):
   coadds = Column(Integer, index=True)
   camera = Column(Text, index=True)
   focal_plane_mask = Column(Text)
-  
+
   def __init__(self, header):
     self.header = header
 
