@@ -240,6 +240,7 @@ class Header(Base):
     ad=0
     try:
       ad=AstroData(fullpath, mode='readonly')
+      ad.descriptorFormat = "db"
 
       # Basic data identification part
       try:
@@ -295,28 +296,28 @@ class Header(Base):
       except (KeyError, ValueError):
         pass
       try:
-        self.ra = float(ad.ra())
-      except (KeyError, ValueError, TypeError):
+        self.ra = ad.ra()
+      except (KeyError, ValueError):
         pass
       try:
-        self.dec = float(ad.dec())
-      except (KeyError, ValueError, TypeError):
+        self.dec = ad.dec()
+      except (KeyError, ValueError):
         pass
       try:
-        self.azimuth = float(ad.azimuth())
-      except (KeyError, ValueError, TypeError):
+        self.azimuth = ad.azimuth()
+      except (KeyError, ValueError):
         pass
       try:
-        self.elevation = float(ad.elevation())
-      except (KeyError, ValueError, TypeError):
+        self.elevation = ad.elevation()
+      except (KeyError, ValueError):
         pass
       try:
-        self.cass_rotator_pa = float(ad.cass_rotator_pa())
-      except (KeyError, ValueError, Errors.InvalidValueError, TypeError):
+        self.cass_rotator_pa = ad.cass_rotator_pa()
+      except (KeyError, ValueError, Errors.InvalidValueError):
         pass
       try:
-        self.airmass = float(ad.airmass())
-      except (KeyError, ValueError, Errors.InvalidValueError, TypeError):
+        self.airmass = ad.airmass()
+      except (KeyError, ValueError, Errors.InvalidValueError):
         pass
       try:
         self.raw_iq = ad.raw_iq()
@@ -339,16 +340,16 @@ class Header(Base):
       except (KeyError, ValueError):
         pass
       try:
-        self.exposure_time = float(ad.exposure_time())
-      except (KeyError, ValueError, TypeError):
+        self.exposure_time = ad.exposure_time()
+      except (KeyError, ValueError):
         pass
       try:
         self.disperser = ad.disperser(pretty=True)
       except (KeyError, ValueError):
         pass
       try:
-        self.central_wavelength = float(ad.central_wavelength(asMicrometers=True))
-      except (KeyError, ValueError, TypeError):
+        self.central_wavelength = ad.central_wavelength(asMicrometers=True)
+      except (KeyError, ValueError):
         pass
       try:
         self.focal_plane_mask = ad.focal_plane_mask(pretty=True)
@@ -558,6 +559,7 @@ class Gmos(Base):
     # Get an AstroData object on it
     try:
       ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      ad.descriptorFormat = "db"
       # Populate values
       try:
         self.disperser = ad.disperser()
@@ -568,15 +570,15 @@ class Gmos(Base):
       except (KeyError, ValueError):
         pass
       try:
-        self.detector_x_bin = ad.detector_x_bin().values()[0]
-      except (KeyError, IndexError, ValueError):
+        self.detector_x_bin = int(ad.detector_x_bin())
+      except (KeyError, IndexError, ValueError, TypeError):
         pass
       try:
-        self.detector_y_bin = ad.detector_y_bin().values()[0]
-      except (KeyError, IndexError, ValueError):
+        self.detector_y_bin = int(ad.detector_y_bin())
+      except (KeyError, IndexError, ValueError, TypeError):
         pass
       try:
-        self.amp_read_area = str(ad.amp_read_area(asDict=True))
+        self.amp_read_area = str(ad.amp_read_area())
       except (KeyError, IndexError, ValueError):
         pass
       try:
@@ -637,6 +639,7 @@ class Niri(Base):
     # Get an AstroData object on it
     try:
       ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      ad.descriptorFormat = "db"
       # Populate values
       try:
         self.disperser = ad.disperser()
@@ -656,7 +659,7 @@ class Niri(Base):
         pass
       try:
         self.data_section = ad.data_section()
-      except (KeyError, ValueError):
+      except (KeyError, ValueError, IndexError):
         pass
       try:
         self.coadds = ad.coadds()
@@ -702,6 +705,7 @@ class Gnirs(Base):
     # Get an AstroData object on it
     try:
       ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      ad.descriptorFormat = "db"
       # Populate values
       try:
         self.disperser = ad.disperser()
@@ -761,6 +765,7 @@ class Nifs(Base):
     # Get an AstroData object on it
     try:
       ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      ad.descriptorFormat = "db"
       # Populate values
       try:
         self.disperser = ad.disperser()
@@ -812,6 +817,7 @@ class Michelle(Base):
     # Get an AstroData object on it
     try:
       ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      ad.descriptorFormat = "db"
       # Populate values
       try:
         self.disperser = ad.disperser()
