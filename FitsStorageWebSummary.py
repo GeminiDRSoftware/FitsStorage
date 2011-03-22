@@ -23,7 +23,7 @@ try:
 except ImportError:
     pass
     
-import FitsStorageCal 
+from FitsStorageCal import get_cal_object
 import FitsStorageConfig
 import urllib
 
@@ -1240,7 +1240,7 @@ def calmgr(req, selection):
       #req.write("IsType GMOS_S: %s\n" % gs)
 
       # Get a cal object for this target data
-      c = FitsStorageCal.get_cal_object(session, None, header=None, descriptors=descriptors, types=types)
+      c = get_cal_object(session, None, header=None, descriptors=descriptors, types=types)
       req.content_type = "text/xml"
       req.write('<?xml version="1.0" ?>')
       req.write("<calibration_associations>\n")
@@ -1328,7 +1328,7 @@ def calmgr(req, selection):
           req.write("<ccrc>%s</ccrc>\n" % object.diskfile.ccrc)
 
           # Get a cal object for this target data
-          c = FitsStorageCal.get_cal_object(session, None, header=object)
+          c = get_cal_object(session, None, header=object)
    
           # Call the appropriate method depending what calibration type we want
           cal = None
@@ -1429,7 +1429,7 @@ def calibrations(req, selection):
 
       html+='<H3><a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H3>' % (object.diskfile.file.filename, object.diskfile.file.filename, object.data_label, object.data_label)
 
-      c = FitsStorageCal.get_cal_object(session, None, header=object)
+      c = get_cal_object(session, None, header=object)
       if('arc' in c.required and (caltype=='all' or caltype=='arc')):
         requires=True
 
