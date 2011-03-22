@@ -9,7 +9,7 @@
 #   something more appropriate.
 
 from FitsStorage import *
-import FitsStorageCal
+from FitsStorageCal import get_cal_object
 
 
 def openquery(selection):
