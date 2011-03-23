@@ -125,12 +125,14 @@ if(not options.dontcheck):
 try:
   logger.info("Fetching files to local disk")
   tds[0].cdworkingdir()
+  i=0
   for f in files:
+    i+=1
     filename = f['filename']
     size = int(f['size'])
     ccrc = f['ccrc']
     url="http://%s/file/%s" % (options.diskserver, filename)
-    logger.info("Fetching file: %s from %s" % (filename, url))
+    logger.info("Fetching file (%d/%d): %s from %s" % (i, numfiles, filename, url))
     retcode=subprocess.call(['/usr/bin/curl', '-s', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url])
     if(retcode):
       # Curl command failed. Bail out
