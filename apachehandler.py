@@ -8,7 +8,16 @@ from mod_python import util
 
 import sys
 import FitsStorage
-from FitsStorageWebSummary import *
+from FitsStorageWebSummary.Summary import summary
+from FitsStorageWebSummary.XMLFileList import xmlfilelist
+from FitsStorageWebSummary.TapeStuff import *
+from FitsStorageWebSummary.ProgsObserved import progsobserved
+from FitsStorageWebSummary.GMOSCal import gmoscal
+from FitsStorageWebSummary.Notification import notification
+from FitsStorageWebSummary.CalMGR import calmgr
+from FitsStorageWebSummary.Calibrations import calibrations
+from FitsStorageWebSummary.UploadProcessedCal import upload_processed_cal
+from FitsStorageWebSummary.CurationReport import curation_report
 
 from GeminiMetadataUtils import *
 
