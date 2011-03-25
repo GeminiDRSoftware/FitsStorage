@@ -390,7 +390,8 @@ class Header(Base):
 
       ad.close()
     except:
-      # Astrodata open or any of the above failed
+      # Astrodata open failed or there was some other exception
+      ad.close()
       raise
 
 class FullTextHeader(Base):
@@ -421,9 +422,11 @@ class FullTextHeader(Base):
         self.fulltext += "\n--- HDU %s ---\n" % i
         self.fulltext += unicode(str(ad.hdulist[i].header.ascardlist()), errors='replace')
         self.fulltext += '\n'
+      ad.close()
 
     except:
-      # Astrodata open or header reference failed
+      # Astrodata open failed or there was some other exception
+      ad.close()
       raise
 
 
@@ -462,9 +465,9 @@ class Tape(Base):
   lastverified = Column(DateTime(timezone=False))
   location = Column(Text)
   lastmoved = Column(DateTime(timezone=False))
-  active = Column(Boolean)
-  full = Column(Boolean)
-  set = Column(Integer)
+  active = Column(Boolean, index=True)
+  full = Column(Boolean, index=True)
+  set = Column(Integer, index=True)
   fate = Column(Text)
 
   def __init__(self, label):
@@ -484,10 +487,10 @@ class TapeWrite(Base):
   id = Column(Integer, primary_key=True)
   tape_id = Column(Integer, ForeignKey('tape.id'), nullable=False, index=True)
   tape = relation(Tape, order_by=id)
-  filenum = Column(Integer)
+  filenum = Column(Integer, index=True)
   startdate = Column(DateTime(timezone=False))
   enddate = Column(DateTime(timezone=False))
-  suceeded = Column(Boolean)
+  suceeded = Column(Boolean, index=True)
   size = Column(BigInteger)
   beforestatus = Column(Text)
   afterstatus = Column(Text)
@@ -503,12 +506,12 @@ class TapeFile(Base):
   __tablename__ = 'tapefile'
 
   id = Column(Integer, primary_key=True)
-  tapewrite_id = Column(Integer, ForeignKey('tapewrite.id'), nullable=False)
+  tapewrite_id = Column(Integer, ForeignKey('tapewrite.id'), nullable=False, index=True)
   tapewrite = relation(TapeWrite, order_by=id)
-  filename = Column(Text)
-  size = Column(Integer)
+  filename = Column(Text, index=True)
+  size = Column(Integer, index=True)
   ccrc = Column(Text)
-  md5 = Column(Text)
+  md5 = Column(Text, index=True)
   lastmod = Column(DateTime(timezone=True))
 
 class TapeRead(Base):
@@ -608,7 +611,8 @@ class Gmos(Base):
           pass
       ad.close()
     except:
-      # Astrodata open failed
+      # Astrodata open failed or there was some other exception
+      ad.close()
       raise
 
 class Niri(Base):
@@ -675,7 +679,8 @@ class Niri(Base):
         pass
       ad.close()
     except:
-      # Astrodata open failed
+      # Astrodata open failed or there was some other exception
+      ad.close()
       raise
 
 class Gnirs(Base):
@@ -737,7 +742,8 @@ class Gnirs(Base):
         pass
       ad.close()
     except:
-      # Astrodata open failed
+      # Astrodata open failed or there was some other exception
+      ad.close()
       raise
 
 class Nifs(Base):
@@ -789,7 +795,8 @@ class Nifs(Base):
         pass
       ad.close()
     except:
-      # Astrodata open failed
+      # Astrodata open failed or there was some other exception
+      ad.close()
       raise
 
 class Michelle(Base):
@@ -841,7 +848,8 @@ class Michelle(Base):
         pass
       ad.close()
     except:
-      # Astrodata open failed
+      # Astrodata open failed or there was some other exception
+      ad.close()
       raise
 
 class PhotStandard(Base):
