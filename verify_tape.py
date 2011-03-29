@@ -2,9 +2,7 @@ import sys
 sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
 
 import FitsStorage
-from FitsStorageConfig import *
-from FitsStorageLogger import *
-from FitsStorageUtils import *
+import FitsStorageConfig
 from FitsStorageTape import TapeDrive
 import CadcCRC
 import os
@@ -21,22 +19,19 @@ from xml.dom.minidom import parseString
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--tapedrive", action="store", type="string", default="/dev/nst0", dest="tapedrive", help="tapedrive to use.")
-parser.add_option("--file-re", action="store", type="string", dest="filere", help="Regular expression used to select files to extract")
-parser.add_option("--requester", action="store", type="string", dest="requester", help="filters the table for specific filenames")
 parser.add_option("--verbose", action="store_true", dest="verbose", help="Make it print something to say 'this file is OK' for the files that are OK, as opposed to the normal mode that would only print something when there is a problem...")
-parser.add_option("--list-tapes", action="store_true", dest="list_tapes", help="only lists the tapes in TapeRead")
-parser.add_option("--all", action="store_true", dest="all", help="When multiple versions of a file are on tape, get them all, not just the most recent")
-parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
 (options, args) = parser.parse_args()
 
+FitsStorageConfig.logname = "%s-%s.log" % (os.path.basename(sys.argv[0]), options.tapedrive.split('/')[-1])
+
+from FitsStorageUtils import *
+from FitsStorageLogger import *
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
 setdemon(options.demon)
-requester = options.requester
-verbose = options.verbose
 
 session = sessionfactory()
 
@@ -78,7 +73,7 @@ try:
     tarfile = tarfile.open(name=options.tapedrive, mode='r|', bufsize=block)
     for tar_info in tarfile:
       filename = tar_info.name
-      if(verbose):
+      if(options.verbose):
         logger.info("Found file %s on tape." % filename)
 
       # Find the tapefile object
@@ -92,8 +87,7 @@ try:
         files_on_tape.append(filename)
         # Compare the tapefile object in the DB and the tarinfo object for the actual thing on tape
         if(tar_info.size==tf.size):
-          if(verbose):
-            logger.info("Size matches in tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
+          logger.debug("Size matches in tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
           # Calculate the md5 of the data on tape
           f = tarfile.extractfile(tar_info)
           md5 = CadcCRC.md5sumfile(f)
@@ -106,6 +100,8 @@ try:
         if(md5 != tf.md5):
           logger.error("md5 mismatch between tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
           errors.append(("MD5 mismatch at filenum = %d, filename = %s" % (tw.filenum, tf.filename)).encode())
+        else:
+          logger.debug("md5 matches in tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
       else:
         logger.error("File %s not found in DB." % filename)
         errors.append(("File not in DB at filenum = %d, filename = %s" % (tw.filenum, tf.filename)).encode())
@@ -120,7 +116,15 @@ try:
         errors.append(("File not on Tape at filenum = %d, filename = %s" % (file.filenum, file.filename)).encode())
 
   # Print a list of all the errors found
-  print "List of Differences Found: %s" % errors
+  logger.info("List of Differences Found: %s" % errors)
+
+  if(len(errors)):
+    logger.info("There were verify errors - not updating lastverified")
+  else:
+    now = datetime.datetime.utcnow()
+    logger.info("There were no verify errors - updating lastverified to: %s UTC" % now)
+    tape.lastverified = now
+    session.commit()
 
 finally:
   td.cdback()
