@@ -18,7 +18,7 @@ logger.setLevel(logging.INFO)
 try:
   if(FitsStorageConfig.logname):
     logname = FitsStorageConfig.logname
-except NameError:
+except (NameError, AttributeError):
   logname = "%s.log" % (os.path.basename(sys.argv[0]))
 
 logfile = os.path.join(FitsStorageConfig.fits_log_dir, logname)
