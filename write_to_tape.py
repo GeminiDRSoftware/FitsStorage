@@ -52,6 +52,7 @@ if(len(options.tapedrive) != len(options.tapelabel)):
   sys.exit(1)
 
 logger.info("TapeDrive: %s; TapeLabel: %s" % (options.tapedrive, options.tapelabel))
+logger.info("Selection: %s" % options.selection)
 
 logger.info("Fetching file list from disk server...")
 # Get the list of files to put on tape from the server
