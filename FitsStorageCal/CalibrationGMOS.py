@@ -128,7 +128,7 @@ class CalibrationGMOS(Calibration):
       query = query.filter(Gmos.nod_count==self.descriptors['nod_count'])
       query = query.filter(Gmos.nod_pixels==self.descriptors['nod_pixels'])
 
-    # The science amp_read_area must be equal or substring of the arc amp_read_area
+    # The science amp_read_area must be equal or substring of the dark amp_read_area
     query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
 
     # Order by absolute time separation. 
@@ -139,9 +139,11 @@ class CalibrationGMOS(Calibration):
 
     return query.first()
 
-  def bias(self):
+  def bias(self, processed=False):
     query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
     query = query.filter(Header.observation_type=='BIAS')
+    if(processed):
+      query = query.filter(Header.reduction=='PROCESSED_BIAS')
 
      # Search only the canonical (latest) entries
     query = query.filter(DiskFile.canonical==True)
@@ -154,54 +156,32 @@ class CalibrationGMOS(Calibration):
     query = query.filter(Gmos.detector_x_bin==self.descriptors['detector_x_bin']).filter(Gmos.detector_y_bin==self.descriptors['detector_y_bin'])
     query = query.filter(Gmos.read_speed_setting==self.descriptors['read_speed_setting']).filter(Gmos.gain_setting==self.descriptors['gain_setting'])
 
-    # The science amp_read_area must be equal or substring of the arc amp_read_area
-    query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
-
-    # Order by absolute time separation. 
-    query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-
-    # For now, we only want one result - the closest in time
-    query = query.limit(1)
-
-    return query.first()
-
-  def processed_bias(self):
-    # The basic PROCESSED_BIAS search
-    query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
-    query = query.filter(Header.observation_type=='BIAS')
-    query = query.filter(Header.reduction=='PROCESSED_BIAS')
-
-    # Search only the canonical (latest) entries
-    query = query.filter(DiskFile.canonical==True)
-
-    # Knock out the FAILs
-    query = query.filter(Header.qa_state!='Fail')
-
-    # Must totally match instrument, detector_x_bin, detector_y_bin, read_speed_setting, gain_setting
-    query = query.filter(Header.instrument==self.descriptors['instrument'])
-    query = query.filter(Gmos.detector_x_bin==self.descriptors['detector_x_bin']).filter(Gmos.detector_y_bin==self.descriptors['detector_y_bin'])
-    query = query.filter(Gmos.read_speed_setting==self.descriptors['read_speed_setting']).filter(Gmos.gain_setting==self.descriptors['gain_setting'])
-
     # The science amp_read_area must be equal or substring of the bias amp_read_area
-    query = query.filter(Gmos.amp_read_area.like('%'+str(self.descriptors['amp_read_area'])+'%'))
+    if(processed):
+      query = query.filter(Gmos.amp_read_area.like('%'+str(self.descriptors['amp_read_area'])+'%'))
+    else:
+      query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
 
     # Order by absolute time separation.
-    if fsc_localmode:
-        # note: double check if this even works, we suspect it doesn't
-        # but it's hard to notice as a somewhat fitting cal will be returned
-        # but perhaps not the most recent.
-        query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
+    if(processed and fsc_localmode):
+      # note: double check if this even works, we suspect it doesn't
+      # but it's hard to notice as a somewhat fitting cal will be returned
+      # but perhaps not the most recent.
+      query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
     else:
-        query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+      query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
     # For now, we only want one result - the closest in time
     query = query.limit(1)
 
     return query.first()
 
-  def flat(self):
+  def flat(self, processed=False):
     query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
-    query = query.filter(Header.reduction=='FLAT')
+    if(processed):
+      query = query.filter(Header.reduction=='PROCESSED_FLAT')
+    else:
+      query = query.filter(Header.reduction=='FLAT')
 
     # Search only the canonical (latest) entries
     query = query.filter(DiskFile.canonical==True)
@@ -224,45 +204,13 @@ class CalibrationGMOS(Calibration):
     query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
 
     # Order by absolute time separation.
-    query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-
-    # For now, we only want one result - the closest in time
-    query = query.limit(1)
-
-    return query.first()
-
-  def processed_flat(self):
-    query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
-    query = query.filter(Header.reduction=='PROCESSED_FLAT')
-
-    # Search only the canonical (latest) entries
-    query = query.filter(DiskFile.canonical==True)
-
-    # Knock out the FAILs
-    query = query.filter(Header.qa_state!='Fail')
-
-    # Must totally match instrument, detector_x_bin, detector_y_bin, filter
-    query = query.filter(Header.instrument==self.descriptors['instrument'])
-    query = query.filter(Gmos.detector_x_bin==self.descriptors['detector_x_bin']).filter(Gmos.detector_y_bin==self.descriptors['detector_y_bin'])
-    query = query.filter(Gmos.filter_name==self.descriptors['filter_name'])
-    #query = query.filter(Gmos.read_speed_setting==self.descriptors['read_speed_setting']).filter(Gmos.gain_setting==self.descriptors['gain_setting'])
-    query = query.filter(Header.spectroscopy==self.descriptors['spectroscopy'])
-    if(self.descriptors['spectroscopy']):
-      query = query.filter(Gmos.disperser==self.descriptors['disperser'])
-      query = query.filter(Header.central_wavelength==self.descriptors['central_wavelength'])
-      query = query.filter(Gmos.focal_plane_mask==self.descriptors['focal_plane_mask'])
-
-    # The science amp_read_area must be equal or substring of the flat amp_read_area
-    query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
-
-    # Order by absolute time separation.
-    if fsc_localmode:
-        # note: double check if this even works, we suspect it doesn't
-        # but it's hard to notice as a somewhat fitting cal will be returned
-        # but perhaps not the most recent.
-        query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
+    if(processed and fsc_localmode):
+      # note: double check if this even works, we suspect it doesn't
+      # but it's hard to notice as a somewhat fitting cal will be returned
+      # but perhaps not the most recent.
+      query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
     else:
-        query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+      query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
     # For now, we only want one result - the closest in time
     query = query.limit(1)
