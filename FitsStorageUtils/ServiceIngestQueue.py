@@ -37,7 +37,7 @@ def ingest_file(session, filename, path, force_md5, skip_fv, skip_wmd):
 
     # First check if the file exists
     if(not(file.exists())):
-      logger.debug("cannot access %s", file.fullpath())
+      logger.error("cannot access %s", file.fullpath())
       check_present(session, filename)
       return
 
