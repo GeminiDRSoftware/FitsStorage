@@ -23,7 +23,6 @@ def xmltape(req):
   Outputs xml describing the tapes that the specified file is on
   """
   req.content_type = "text/xml"
-  #req.content_type = "text/plain"
   req.write('<?xml version="1.0" ?>')
   req.write("<on_tape>")
 
