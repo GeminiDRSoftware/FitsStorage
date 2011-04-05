@@ -80,9 +80,9 @@ def calmgr(req, selection):
       if(caltype == 'arc'):
         cal = c.arc()
       if(caltype == 'processed_bias'):
-        cal = c.processed_bias()
+        cal = c.bias(processed=True)
       if(caltype == 'processed_flat'):
-        cal = c.processed_flat()
+        cal = c.flat(processed=True)
       if(caltype == 'processed_fringe'):
         cal = c.processed_fringe()
       if(caltype == 'pinhole_mask'):
@@ -155,9 +155,9 @@ def calmgr(req, selection):
           # Call the appropriate method depending what calibration type we want
           cal = None
           if(caltype == 'processed_bias'):
-            cal = c.processed_bias()
+            cal = c.bias(processed=True)
           if(caltype == 'processed_flat'):
-            cal = c.processed_flat()
+            cal = c.flat(processed=True)
 
           if(cal):
             # OK, say what we found
