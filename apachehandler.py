@@ -11,6 +11,7 @@ import FitsStorage
 from FitsStorageWebSummary.Summary import summary
 from FitsStorageWebSummary.XMLFileList import xmlfilelist
 from FitsStorageWebSummary.TapeStuff import *
+from FitsStorageWebSummary.XMLTape import *
 from FitsStorageWebSummary.ProgsObserved import progsobserved
 from FitsStorageWebSummary.GMOSCal import gmoscal
 from FitsStorageWebSummary.Notification import notification
@@ -301,6 +302,10 @@ def handler(req):
   if(this == "taperead"):
     return taperead(req, things)
 
+  # XML Tape handler
+  if(this == "xmltape"):
+    return xmltape(req)
+
   # Emailnotification handler
   if(this == "notification"):
     return notification(req, things)
@@ -320,7 +325,7 @@ def handler(req):
 
 # End of apache handler() function.
 # Below are various helper functions called from above.
-# The web summary has it's own module
+# The web summary has it's own package
 
 def getselection(things):
   # this takes a list of things from the URL, and returns a
@@ -394,6 +399,9 @@ def getselection(things):
       recognised=True
     if(thing=='notcanonical' or thing=='NotCanonical'):
       selection['canonical']=False
+      recognised=True
+    if(thing[:7]=='filter=' or thing[:7]=='Filter='):
+      selection['filter']=thing[7:]
       recognised=True
 
     if(not recognised):
