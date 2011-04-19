@@ -65,10 +65,10 @@ def queryselection(query, selection):
 
   # Do want to select Header object for which diskfile.present is true?
   if('present' in selection):
-    query = query.filter(DiskFile.present == selection['present'])
+    query = query.filter(DiskFile.present==selection['present'])
 
   if('canonical' in selection):
-    query = query.filter(DiskFile.canonical == selection['canonical'])
+    query = query.filter(DiskFile.canonical==selection['canonical'])
 
   if('program_id' in selection):
     query = query.filter(Header.program_id==selection['program_id'])
@@ -122,21 +122,21 @@ def queryselection(query, selection):
 
   if('inst' in selection):
     if(selection['inst']=='GMOS'):
-      query = query.filter(or_(Header.instrument == 'GMOS-N', Header.instrument == 'GMOS-S'))
+      query = query.filter(or_(Header.instrument=='GMOS-N', Header.instrument=='GMOS-S'))
     else:
       query = query.filter(Header.instrument==selection['inst'])
 
   if('filename' in selection):
-    query = query.filter(File.filename == selection['filename'])
+    query = query.filter(File.filename==selection['filename'])
 
   if('gmos_grating' in selection):
-    query = query.filter(Header.disperser == selection['gmos_grating'])
+    query = query.filter(Header.disperser==selection['gmos_grating'])
 
   if('gmos_focal_plane_mask' in selection):
-    query = query.filter(Header.focal_plane_mask == selection['gmos_focal_plane_mask'])
+    query = query.filter(Header.focal_plane_mask==selection['gmos_focal_plane_mask'])
 
   if('spectroscopy' in selection):
-    query = query.filter(Header.spectroscopy == selection['spectroscopy'])
+    query = query.filter(Header.spectroscopy==selection['spectroscopy'])
 
   if('qa_state' in selection):
     if(selection['qa_state']=='Win'):
@@ -149,6 +149,9 @@ def queryselection(query, selection):
       query = query.filter(Header.adaptive_optics==True)
     else:
       query = query.filter(Header.adaptive_optics==False)
+
+  if('filter' in selection):
+    query = query.filter(Header.filter_name==selection['filter'])
 
   return query
 
