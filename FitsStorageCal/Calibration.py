@@ -17,7 +17,7 @@ class Calibration():
 
   def __init__(self, session, header, descriptors, types):
     """
-    Initialise a calibration manager for a given header object (ie data file)
+    Initialize a calibration manager for a given header object (ie data file)
     Need to pass in an sqlalchemy session that should already be open, this class will not close it
     Also pass in a header object
     """
