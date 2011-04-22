@@ -86,14 +86,14 @@ for file in db_backup:
         if(options.dontdelete):
           logger.info("This file would be deleted: %s" % file)
         else:
-          os.remove("/net/endor/Sci_ARCH/mkofits1_backup/%s" % file)
+          os.remove("%s/%s" % (fits_db_backup_dir, file))
           logger.info("Deleting file: %s" % file)
     else:
       if(options.dontdelete):
         logger.info("This file would be deleted: %s" % file)
       else:
         logger.info("Deleting file: %s" % file)
-        os.remove("/net/endor/Sci_ARCH/mkofits1_backup/%s" % file)
+        os.remove("%s/%s" % (fits_db_backup_dir, file))
   else:
     logger.info("The file %s is not in the expected format." % file)
 
