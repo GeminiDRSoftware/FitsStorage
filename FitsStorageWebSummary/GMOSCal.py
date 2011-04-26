@@ -3,6 +3,10 @@ This module contains the gmoscal html generator function.
 """
 from sqlalchemy.sql.expression import cast
 from FitsStorageWebSummary.Selection import *
+from FitsStorageWebSummary.Calibrations import interval_hours
+from FitsStorageCal import get_cal_object
+
+from math import fabs
 
 import os
 
@@ -144,7 +148,7 @@ def gmoscal(req, selection):
        req.write("<TR class=%s>" % cs)
 
        for i in range(4):
-         req.write("<TD>%d</TD>" % all[key][i])
+         req.write("<TD>%s</TD>" % all[key][i])
 
        req.write("</TR>")
      req.write("</TABLE>")
@@ -206,7 +210,7 @@ def gmoscal(req, selection):
          dict[utdate][binning][roi] = num
 
      # Output the HTML table 
-     # While we do it, add up the totals as a simply column tally
+     # While we do it, add up the totals as a simple column tally
      binlist = ['1x1', '2x2', '2x1', '1x2', '2x4', '4x2', '4x1', '1x4', '4x4']
      roilist = ['Full', 'Cent']
      req.write('<TABLE border=0>')
@@ -291,6 +295,98 @@ def gmoscal(req, selection):
        if(len(nobiases)>0):
          req.write(', '.join(nobiases))
        req.write('</P>')
+
+     # Now the Nod and Shuffle report
+     req.write('<H2>Nod and Shuffle</H2>')
+     req.write('<P>This table shows the darks found for every nodandshuffle OBJECT science frame</P>')
+
+     # The basic query for this
+     query = session.query(Header).select_from(join(Gmos, join(Header, DiskFile)))
+
+     # Fudge and add the selection criteria
+     selection={}
+     selection['canonical']=True
+     selection['observation_class']='science'
+     selection['observation_type']='OBJECT'
+     selection['inst']='GMOS'
+     selection['qa_state']='Pass'
+
+     query = queryselection(query, selection)
+  
+     # Only Nod and Shuffle frames
+     query = query.filter(Gmos.nodandshuffle == True)
+
+     # Knock out ENG programs
+     query = query.filter(~Header.program_id.like('%ENG%'))
+
+     #query = query.group_by(Header.observation_id).order_by(Header.observation_id, desc(Header.ut_datetime))
+     query = query.order_by(Header.observation_id, desc(Header.ut_datetime))
+
+     list = query.all()
+
+     # Output the HTML table and links to summaries etc
+     req.write('<TABLE border=0>')
+     req.write('<TR class=tr_head>')
+     req.write('<TH>Data Label</TH>')
+     req.write('<TH>Number of Dark Frames</TH>')
+     req.write('<TH># of Frames Within 6 Months</TH>')
+     req.write('<TH>Oldest Dark (months)</TH>')
+     req.write('</TR>')
+
+     # Find 15 darks for each Nod and Shuffle frame
+     #(doesn't account for science frames where 15 frames are found but some are older than 6 months)
+     size = 0
+     found_enough = 0
+     even = True
+     previous = None
+     for l in list:
+       c = get_cal_object(session, None, header=l)
+       dark = c.dark(List=15)
+       count = 0
+       this = l.data_label
+       if(this!=previous):
+         size += 1
+         young = 0
+         oldest = 0
+         for d in dark:
+           count += 1
+           # For each dark, figure out the time difference
+           age = interval_hours(l, d)
+           if(age<4320):
+             young += 1
+           if(fabs(age)>fabs(oldest)):
+             oldest = age
+         if(oldest>4320):
+           if(even):
+             cs = "tr_warneven"
+           else:
+             cs = "tr_warnodd"
+         else:
+           if(even):
+             cs = "tr_even"
+           else:
+             cs = "tr_odd"
+         even = not even
+         req.write("<TR class=%s>" % cs)
+         req.write("<TD>%s</TD>" % l.data_label)
+         req.write("<TD>%d</TD>" % count)
+         if(young):
+           req.write("<TD>%d</TD>" % young)
+         else:
+           req.write("<TD>n/a</TD>")
+         if(oldest):
+           req.write("<TD>%s</TD>" % round(oldest/720, 1))
+         else:
+           req.write("<TD>n/a</TD>")
+         if(count==15):
+           found_enough += 1
+       previous = this
+       req.write("</TR>")
+     req.write("<TR class=tr_head>")
+     req.write("</TABLE>")
+
+     # Count how many we get...
+     req.write('<P>There were %d nodandshuffle science frames found and %s didn\'t have 15 darks</P>' % (size, (size-found_enough)))
 
      req.write("</body></html>")
      return apache.OK
