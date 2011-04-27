@@ -38,8 +38,18 @@ def curation_report(req, things):
     from FitsStorageCuration import *
     checkonly = None
     exclude = None
-    if len(things) != 0 and things[0] == 'noeng':
-      exclude = 'ENG'    
+    if len(things) == 1:
+      if things[0] == 'noeng':
+        exclude = 'ENG'
+      else:
+        checkonly = things[0]
+    if len(things) == 2:
+      if things[0] == 'noeng':
+        exclude = 'ENG'
+        checkonly = things[1]
+      elif things[1] == 'noeng':
+        exclude = 'ENG'
+        checkonly = things[0]
 
 
     # Work for duplicate_datalabels
