@@ -19,6 +19,7 @@ from FitsStorageWebSummary.CalMGR import calmgr
 from FitsStorageWebSummary.Calibrations import calibrations
 from FitsStorageWebSummary.UploadProcessedCal import upload_processed_cal
 from FitsStorageWebSummary.CurationReport import curation_report
+from FitsStorageWebSummary.Standards import standardobs
 
 from GeminiMetadataUtils import *
 
@@ -98,6 +99,13 @@ def handler(req):
 
     retval = summary(req, this, selection, orderby, links)
     return retval
+
+  # This is the standard star in observation server
+  if(this == 'standardobs'):
+   header_id = things.pop(0)
+   retval = standardobs(req, header_id)
+   return retval
+
 
   # The calibrations handler
   if(this == 'calibrations'):
@@ -402,6 +410,9 @@ def getselection(things):
       recognised=True
     if(thing[:7]=='filter=' or thing[:7]=='Filter='):
       selection['filter']=thing[7:]
+      recognised=True
+    if(thing=='photstandard'):
+      selection['photstandard']=True
       recognised=True
 
     if(not recognised):
