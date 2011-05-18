@@ -13,16 +13,23 @@ def create_tables(session):
   # Create the tables
   File.metadata.create_all(bind=pg_db)
 
+  # Add the geometry types separately. this is postgres specific and referencing these column in local mode isn't going to work
   if fsc_localmode == False:
-      # Now grant the apache user select on them for the www queries
-      session.execute("GRANT SELECT ON file, diskfile, diskfilereport, header, fulltextheader, gmos, niri, michelle, gnirs, nifs, tape, tape_id_seq, tapewrite, taperead, tapefile, notification TO apache");
-      session.execute("GRANT INSERT,UPDATE ON tape, tape_id_seq, notification, notification_id_seq TO apache");
-      session.execute("GRANT DELETE ON notification TO apache");
+    session.execute("ALTER TABLE footprint ADD COLUMN area polygon")
+    session.commit()
+    session.execute("ALTER TABLE photstandard ADD COLUMN coords point")
+    session.commit()
+
+  if fsc_localmode == False:
+    # Now grant the apache user select on them for the www queries
+    session.execute("GRANT SELECT ON file, diskfile, diskfilereport, header, fulltextheader, gmos, niri, michelle, gnirs, nifs, tape, tape_id_seq, tapewrite, taperead, tapefile, notification, photstandard, photstandardobs, footprint TO apache");
+    session.execute("GRANT INSERT,UPDATE ON tape, tape_id_seq, notification, notification_id_seq TO apache");
+    session.execute("GRANT DELETE ON notification TO apache");
   session.commit()
 
 def drop_tables(session):
   """
   Drops all the database tables. Very unsubtle. Use with caution
   """
-  session.execute("DROP TABLE gmos, niri, nifs, gnirs, michelle, header, fulltextheader, diskfile, diskfilereport, file, tape, tapewrite, taperead, tapefile, notification, standards, ingestqueue CASCADE")
+  File.metadata.drop_all(bind=pg_db)
   session.commit()
