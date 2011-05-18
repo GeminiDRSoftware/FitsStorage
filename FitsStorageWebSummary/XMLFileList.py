@@ -4,6 +4,7 @@ which query the database and generate html for the web header
 summaries.
 """
 from FitsStorageWebSummary.Summary import *
+from FitsStorageWebSummary.Standards import xmlstandardobs
 
 
 def xmlfilelist(req, selection):
@@ -26,6 +27,7 @@ def xmlfilelist(req, selection):
       req.write("<md5>%s</md5>" % h.diskfile.md5)
       req.write("<ccrc>%s</ccrc>" % h.diskfile.ccrc)
       req.write("<lastmod>%s</lastmod>" % h.diskfile.lastmod)
+      xmlstandardobs(req, h.id)
       req.write("</file>")
   finally:
     session.close()
