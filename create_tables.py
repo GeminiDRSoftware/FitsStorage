@@ -1,5 +1,5 @@
 import sys
-sys.path += ['/opt/sqlalchemy/lib/python2.5/site-packages']
+sys.path.append('/opt/sqlalchemy/lib/python2.5/site-packages')
 
 
 from FitsStorageUtils.CreateTables import *
@@ -25,3 +25,4 @@ if not options.nocreate:
 
 session.close()
 
+print "You may now want to ingest the standard star list"
