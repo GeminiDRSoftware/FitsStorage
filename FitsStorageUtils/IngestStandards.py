@@ -3,6 +3,7 @@ This module provides various utility functions for ingest_standards.py
 in the Fits Storage System.
 """
 from FitsStorage import *
+from GeometryHacks import add_point
 
 
 def ingest_standards(session, filename):
@@ -57,3 +58,6 @@ def ingest_standards(session, filename):
       # Add to database session
       session.add(std)
       session.commit()
+
+      # Hack in the geometrical point column
+      add_point(session, std.id, std.ra, std.dec)
