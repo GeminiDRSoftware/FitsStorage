@@ -2,6 +2,7 @@
 This module contains the main summary html generator function. 
 """
 from FitsStorageWebSummary.Selection import *
+from FitsStorageWebSummary.Standards import *
 from FitsStorageConfig import fsc_localmode
 
 
@@ -187,10 +188,14 @@ def webhdrsummary(session, req, type, headers, links=True):
     if('obs' in want):
       req.write("<TD>%s</TD>" % (h.observation_class))
       req.write("<TD>%s</TD>" % (h.observation_type))
+
+      stdhtml = ''
+      if(len(list_phot_std_obs(session, h.id))):
+        stdhtml = ' <a href="/standardobs/%d">*</a>' % h.id
       if (h.object and len(h.object)>12):
-        req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.object, (h.object)[0:12]))
+        req.write('<TD><abbr title="%s">%s%s</abbr></TD>' % (h.object, (h.object)[0:12], stdhtml))
       else:
-        req.write("<TD>%s</TD>" % (h.object))
+        req.write("<TD>%s%s</TD>" % (h.object, stdhtml))
 
       if(h.spectroscopy):
         try:
@@ -271,12 +276,9 @@ def list_headers(session, selection, orderby):
   """
   localmode = fsc_localmode
   # The basic query...
-  if localmode:
-    query = session.query(Header).select_from(Header, DiskFile, File)
-    query = query.filter(Header.diskfile_id == DiskFile.id)
-    query = query.filter(DiskFile.file_id == File.id)
-  else:
-    query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
+  query = session.query(Header).select_from(Header, DiskFile, File)
+  query = query.filter(Header.diskfile_id == DiskFile.id)
+  query = query.filter(DiskFile.file_id == File.id)
   query = queryselection(query, selection)
 
   # Do we have any order by arguments?
