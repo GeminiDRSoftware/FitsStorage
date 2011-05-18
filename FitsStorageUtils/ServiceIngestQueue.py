@@ -4,6 +4,7 @@ in the Fits Storage System.
 """
 from FitsStorage import *
 from FitsStorageLogger import logger
+from GeometryHacks import *
 
 
 def ingest_file(session, filename, path, force_md5, skip_fv, skip_wmd):
@@ -104,6 +105,20 @@ def ingest_file(session, filename, path, force_md5, skip_fv, skip_wmd):
       inst = header.instrument
       logger.debug("Instrument is: %s" % inst)
       session.commit()
+      logger.debug("Adding new Footprint entries")
+      fps = header.footprints()
+      for i in fps.keys():
+        fp = Footprint(header)
+        fp.populate(i)
+        session.add(fp)
+        session.commit()
+        add_footprint(session, fp.id, fps[i])
+      if(header.spectroscopy == False):
+        logger.debug("Imaging - populating PhotStandardObs")
+        do_std_obs(session, header.id)
+        
+      
+      logger.debug("Adding FullTextHeader entry")
       ftheader = FullTextHeader(diskfile)
       session.add(ftheader)
       session.commit()
