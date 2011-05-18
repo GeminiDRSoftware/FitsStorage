@@ -13,7 +13,7 @@ import time
 # Option Parsing
 from optparse import OptionParser
 parser = OptionParser()
-parser.add_option("--file", action="store", type="string", dest="filename", help="Standards text filename")
+parser.add_option("--file", action="store", type="string", dest="filename", default="data/standards.txt", help="Standards text filename")
 parser.add_option("--clean", action="store_true", dest="clean", help="Delete all rows in the table before adding")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 
