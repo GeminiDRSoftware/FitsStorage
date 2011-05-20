@@ -27,8 +27,13 @@ def add_point(session, id, x, y):
 def do_std_obs(session, header_id):
   """
   Populates the PhotStandardObs table wrt reference to the given header id
+  Also sets the flag in the Header table to say it has a standard
   """
   sql = "insert into photstandardobs (select nextval('photstandardobs_id_seq') as id, photstandard.id AS photstandard_id, footprint.id AS footprint_id from photstandard, footprint where photstandard.coords @ footprint.area and footprint.header_id=%d)" % header_id
-  session.execute(sql)
+  result = session.execute(sql)
   session.commit()
 
+  if(result.rowcount):
+    header = session.query(Header).filter(Header.id == header_id).one()
+    header.phot_standard = True
+    session.commit()

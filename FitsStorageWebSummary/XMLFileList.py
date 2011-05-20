@@ -27,7 +27,8 @@ def xmlfilelist(req, selection):
       req.write("<md5>%s</md5>" % h.diskfile.md5)
       req.write("<ccrc>%s</ccrc>" % h.diskfile.ccrc)
       req.write("<lastmod>%s</lastmod>" % h.diskfile.lastmod)
-      xmlstandardobs(req, h.id)
+      if(h.phot_standard):
+        xmlstandardobs(req, h.id)
       req.write("</file>")
   finally:
     session.close()

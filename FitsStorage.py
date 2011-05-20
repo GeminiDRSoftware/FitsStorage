@@ -224,6 +224,7 @@ class Header(Base):
   qa_state = Column(Text)
   release = Column(Date(TimeZone=False))
   reduction = Column(Text)
+  phot_standard = Column(Boolean)
 
   def __init__(self, diskfile):
     self.diskfile_id = diskfile.id
