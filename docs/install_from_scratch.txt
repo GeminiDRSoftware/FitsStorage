@@ -58,12 +58,6 @@ python setup.py install --prefix=/opt/sqlalchemy
 cd ..
 # Make sure using /astro python, and have DPD pythonpath
 # add /opt/sqlalchemy to python path
-sh setuptools-0.6c11-py2.5.egg --prefix=/opt/sqlalchemy
-tar xvzf GeoAlchemy-0.5.tar.gz
-cd GeoAlchemy-0.5
-python setup.py build
-python setup.py install --prefix=/opt/sqlalchemy
-
 
 cd /opt/pyinotify
 tar xvf /opt/FitsStorage/otherfiles/pyinotify-0.8.8.tar.gz
