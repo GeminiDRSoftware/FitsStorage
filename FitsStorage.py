@@ -406,17 +406,25 @@ class Header(Base):
     try:
       ad=AstroData(fullpath, mode='readonly')
       # Horrible hack - GNIRS has the WCS in the PHU
-      if 'GNIRS' in ad.types:
+      if(('GNIRS' in ad.types) or ('MICHELLE' in ad.types)):
         wcs = pywcs.WCS(ad.phu.header)
-        fp = wcs.calcFootprint()
-        retary['PHU'] = fp
+        try:
+          fp = wcs.calcFootprint()
+          retary['PHU'] = fp
+        except pywcs._pywcs.SingularMatrixError:
+          # WCS was all zeros.
+          pass
       else:
         for i in range(len(ad)):
           extension = "%s,%s" % (ad[i].extname(), ad[i].extver())
           wcs = pywcs.WCS(ad[i].header)
-          fp = wcs.calcFootprint()
+          try:
+            fp = wcs.calcFootprint()
+            retary[extension] = fp
+          except pywcs._pywcs.SingularMatrixError:
+            # WCS was all zeros.
+            pass
 
-          retary[extension] = fp
 
       ad.close()
       return retary
