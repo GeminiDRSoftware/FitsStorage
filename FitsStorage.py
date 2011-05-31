@@ -350,12 +350,11 @@ class Header(Base):
         self.disperser = ad.disperser(pretty=True).for_db()
       except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
         pass
-      try:
-        self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError):
-        print "Exception: %s : %s : %s" % (sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2])
-        print "Types are: %s" % ad.types
-        pass
+      if('SPECT' in ad.types):
+        try:
+          self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
+        except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError):
+          pass
       try:
         self.focal_plane_mask = ad.focal_plane_mask(pretty=True).for_db()
       except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
