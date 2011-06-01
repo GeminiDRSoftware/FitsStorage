@@ -405,25 +405,29 @@ class Header(Base):
     retary={}
     try:
       ad=AstroData(fullpath, mode='readonly')
-      # Horrible hack - GNIRS has the WCS in the PHU
-      if(('GNIRS' in ad.types) or ('MICHELLE' in ad.types)):
-        wcs = pywcs.WCS(ad.phu.header)
-        try:
-          fp = wcs.calcFootprint()
-          retary['PHU'] = fp
-        except pywcs._pywcs.SingularMatrixError:
-          # WCS was all zeros.
-          pass
-      else:
-        for i in range(len(ad)):
-          extension = "%s,%s" % (ad[i].extname(), ad[i].extver())
-          wcs = pywcs.WCS(ad[i].header)
+      # Horrible hack - GNIRS etc has the WCS in the PHU
+      if(('GNIRS' in ad.types) or ('MICHELLE' in ad.types) or ('NIFS' in ad.types)):
+        # If we're not in an RA/Dec TANgent frame, don't even bother
+        if((ad.phu_get_key_value('CTYPE1') == 'RA---TAN') and (ad.phu_get_key_value('CTYPE2') == 'DEC--TAN')):
+          wcs = pywcs.WCS(ad.phu.header)
           try:
             fp = wcs.calcFootprint()
-            retary[extension] = fp
+            retary['PHU'] = fp
           except pywcs._pywcs.SingularMatrixError:
             # WCS was all zeros.
             pass
+      else:
+        # If we're not in an RA/Dec TANgent frame, don't even bother
+        for i in range(len(ad)):
+          if((ad[i].get_key_value('CTYPE1') == 'RA---TAN') and (ad[i].get_key_value('CTYPE2') == 'DEC--TAN')):
+            extension = "%s,%s" % (ad[i].extname(), ad[i].extver())
+            wcs = pywcs.WCS(ad[i].header)
+            try:
+              fp = wcs.calcFootprint()
+              retary[extension] = fp
+            except pywcs._pywcs.SingularMatrixError:
+              # WCS was all zeros.
+              pass
 
 
       ad.close()
