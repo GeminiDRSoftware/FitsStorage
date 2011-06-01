@@ -39,9 +39,21 @@ def standardobs(req, header_id):
   
     req.write('<TR class=tr_head>')
     req.write('<TH>Name</TH>')
+    req.write('<TH>Field</TH>')
     req.write('<TH>RA</TH>')
     req.write('<TH>Dec</TH>')
-    req.write('</TR>')
+    req.write('<TH>u_mag</TH>')
+    req.write('<TH>v_mag</TH>')
+    req.write('<TH>g_mag</TH>')
+    req.write('<TH>r_mag</TH>')
+    req.write('<TH>i_mag</TH>')
+    req.write('<TH>z_mag</TH>')
+    req.write('<TH>y_mag</TH>')
+    req.write('<TH>j_mag</TH>')
+    req.write('<TH>h_mag</TH>')
+    req.write('<TH>k_mag</TH>')
+    req.write('<TH>l_prime_mag</TH>')
+    req.write('<TH>m_mag</TH>')
   
     list = list_phot_std_obs(session, header_id)
   
@@ -55,8 +67,57 @@ def standardobs(req, header_id):
         cs = "tr_odd"
       req.write("<TR class=%s>" % (cs))
       req.write("<TD>%s</TD>" % std.name)
+      req.write("<TD>%s</TD>" % std.field)
       req.write("<TD>%f</TD>" % std.ra)
       req.write("<TD>%f</TD>" % std.dec)
+      try:
+        req.write("<TD>%f</TD>" % std.u_mag)
+      except TypeError:
+        req.write("<TD></TD>")
+      try:
+        req.write("<TD>%f</TD>" % std.v_mag)
+      except TypeError:
+        req.write("<TD></TD>")
+      try:
+        req.write("<TD>%f</TD>" % std.g_mag)
+      except TypeError:
+        req.write("<TD></TD>")
+      try:
+        req.write("<TD>%f</TD>" % std.r_mag)
+      except TypeError:
+        req.write("<TD></TD>")
+      try:
+        req.write("<TD>%f</TD>" % std.i_mag)
+      except TypeError:
+        req.write("<TD></TD>")
+      try:
+        req.write("<TD>%f</TD>" % std.z_mag)
+      except TypeError:
+        req.write("<TD></TD>")
+      try:
+        req.write("<TD>%f</TD>" % std.y_mag)
+      except TypeError:
+        req.write("<TD></TD>")
+      try:
+        req.write("<TD>%f</TD>" % std.j_mag)
+      except TypeError:
+        req.write("<TD></TD>")
+      try:
+        req.write("<TD>%f</TD>" % std.h_mag)
+      except TypeError:
+        req.write("<TD></TD>")
+      try:
+        req.write("<TD>%f</TD>" % std.k_mag)
+      except TypeError:
+        req.write("<TD></TD>")
+      try:
+        req.write("<TD>%f</TD>" % std.lprime_mag)
+      except TypeError:
+        req.write("<TD></TD>")
+      try:
+        req.write("<TD>%f</TD>" % std.m_mag)
+      except TypeError:
+        req.write("<TD></TD>")
       req.write("</TR>")
   
     req.write("</TABLE>")
