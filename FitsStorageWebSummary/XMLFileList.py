@@ -17,7 +17,6 @@ def xmlfilelist(req, selection):
 
   session = sessionfactory()
   orderby = ['filename_asc']
-  selection['present']=True
   try:
     headers = list_headers(session, selection, orderby)
     for h in headers:
