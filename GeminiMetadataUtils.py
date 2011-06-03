@@ -24,19 +24,19 @@ progre='(?:^%s$)|(?:^%s$)' % (calengre, scire)
 obsre='((?:^%s)|(?:^%s))-(\d*)$' % (calengre, scire)
 
 # A utility function for matching instrument names
-niricre=re.compile('[Nn][Ii][Rr][Ii]')
-nifscre=re.compile('[Nn][Ii][Ff][Ss]')
-gmosncre=re.compile('[Gg][Mm][Oo][Ss]-[Nn]')
-gmosscre=re.compile('[Gg][Mm][Oo][Ss]-[Ss]')
-gmoscre=re.compile('[Gg][Mm][Oo][Ss]')
-michellecre=re.compile('[Mm][Ii][Cc][Hh][Ee][Ll][Ll][Ee]')
-gnirscre=re.compile('[Gg][Nn][Ii][Rr][Ss]')
-phoenixcre = re.compile('[Pp][Hh][Oo][Ee][Nn][Ii][Xx]')
-trecscre = re.compile('[Tt][Rr][Ee][Cc][Ss]')
-nicicre = re.compile('[Nn][Ii][Cc][Ii]')
-hqcre = re.compile('[Hh][Oo][Kk][Uu][Pp]([Aa])+(\+)*[Qq][Uu][Ii][Rr][Cc]')
-gsaoicre = re.compile('[Gg][Ss][Aa][Oo][Ii]')
-oscircre = re.compile('[Oo][Ss][Cc][Ii][Rr]')
+niricre=re.compile('^[Nn][Ii][Rr][Ii]$')
+nifscre=re.compile('^[Nn][Ii][Ff][Ss]$')
+gmosncre=re.compile('^[Gg][Mm][Oo][Ss]-[Nn]$')
+gmosscre=re.compile('^[Gg][Mm][Oo][Ss]-[Ss]$')
+gmoscre=re.compile('^[Gg][Mm][Oo][Ss]$')
+michellecre=re.compile('^[Mm][Ii][Cc][Hh][Ee][Ll][Ll][Ee]$')
+gnirscre=re.compile('^[Gg][Nn][Ii][Rr][Ss]$')
+phoenixcre = re.compile('^[Pp][Hh][Oo][Ee][Nn][Ii][Xx]$')
+trecscre = re.compile('^[Tt][Rr][Ee][Cc][Ss]$')
+nicicre = re.compile('^[Nn][Ii][Cc][Ii]$')
+hqcre = re.compile('^[Hh][Oo][Kk][Uu][Pp]([Aa])+(\+)*[Qq][Uu][Ii][Rr][Cc]$')
+gsaoicre = re.compile('^[Gg][Ss][Aa][Oo][Ii]$')
+oscircre = re.compile('^[Oo][Ss][Cc][Ii][Rr]$')
 
 def gemini_instrument(string, gmos=False):
   """
@@ -71,8 +71,8 @@ def gemini_instrument(string, gmos=False):
     retary='GSAOI'
   if(oscircre.match(string)):
     retary='oscir'
-  if(gmos):
-    if(gmoscre.match(string)):
+  if(gmoscre.match(string)):
+    if(gmos):
       retary='GMOS'
   return retary
 
