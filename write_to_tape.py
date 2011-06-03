@@ -56,7 +56,7 @@ logger.info("Selection: %s" % options.selection)
 
 logger.info("Fetching file list from disk server...")
 # Get the list of files to put on tape from the server
-url = "http://" + options.diskserver + "/xmlfilelist/" + options.selection
+url = "http://" + options.diskserver + "/xmlfilelist/present/" + options.selection 
 logger.debug("file list url: %s" % url)
 
 u = urllib.urlopen(url)
