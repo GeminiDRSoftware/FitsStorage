@@ -30,17 +30,17 @@ like a summary of </P>
 <LI>You can add ?orderby=something arguments to the summary to change the sorting - see the urls linked via the arrows in the table headers for examples</LI>
 <LI> Any file with fitsverify errors will show - fits! after the filename, this is linked to the fitsverify report. Any non engineering file with mdIngest / wmd errors will show - md! after the filename, linked to the wmdreport</LI>
 <LI>Some items are abbreviated in the summary to save space. These are marked as abbreviations, so will usually render in your browser with a faint underline, and you can mouse over them to see the full text in a tooltip</LI>
+<LI>If the target name has a hyperlinked star (asterisk) after it, the observation contains photometric standard stars within the field of view described by the WCS in the file. You can click on the star to see a list of the standards that are on the field</LI>
 <LI>If you replace 'summary' with 'ssummary' you will get a short summary, which has a couple of columns dropped to make the table narrower to fit in a browser window better.</LI>
 </UL></P>
 
 <H2>Calibration Management</H2>
 <P>This system can associate certain types of calibration data with the files they are appropriate to calibrate. This can
-also be used to check that suitable calibrations exist. At the moment, the only calibration type that is fully implemented
-is GMOS ARCs. The Calibration manager is found under the <a href="/calibrations">/calibrations</a> URL.</P>
+also be used to check that suitable calibrations exist. The Calibration web interface is found under the <a href="/calibrations">/calibrations</a> URL.</P>
 
 <P>In the calibrations system, you use the usual <em>selection criteria</em> to specify which files you would like to find
-calibrations for. You can specify what type of calibrations you are interested in, though <tt>arc</tt> is the only
-fully supported type at this time. You can also specify the type of report you would like from the calibration manager:
+calibrations for. You can specify what type of calibrations you are interested in, for example <tt>arc</tt>.
+You can also specify the type of report you would like from the calibration manager:
 <UL>
 <LI>requires - only list files that require the given calibration type</LI>
 <LI>warnings - only list files that generate calibration warnings</LI>
@@ -58,7 +58,7 @@ These options are simply added as extra elements of the URL like directories in 
 </UL></P>
 
 <H2>Selection Criteria</H2>
-<P>Both the summary and calibrations systems use the same selection criteria to specify the data you are interested in. 
+<P>Almost all the pages use the same selection criteria to specify the data you are interested in. 
 These are inserted into the URL just like directories. You can use as many of these as you like, and the system will return
 data that meets all the criteria you specify. You can put them in any order.</P>
 
@@ -76,6 +76,17 @@ data that meets all the criteria you specify. You can put them in any order.</P>
 <LI>A filename, eg N20091028S0097.fits. It works if you leave off the .fits too</LI>
 <LI>A GMOS grating name, eg B600</LI>
 <LI>A GMOS mask name, eg GN2009BC009-04</LI>
+
+<LI>A Calibration Type, eg ARC - this is only useful with the calibration systems</LI>
+
+<LI>A Data Reduction state - for example RAW, PREPARED, PROCESSED_BIAS, PROCESSED_FLAT</LI>
+<LI>The words <tt>imaging</tt> or <tt>spectroscopy</tt> to only select imaging or spectroscopy data</LI>
+<LI>A QA state - <tt>Pass</tt>, <tt>Usable</tt>, <tt>Fail</tt> or <tt>Win</tt> - Win is taken to mean Pass or Usable (ie not Fail)</LI>
+<LI>The words <tt>Present</tt> or <tt>NotPresent</tt> to select only files which are or are not currently present on the storage disk.</LI>
+<LI>The words <tt>canonical</tt> or <tt>notcanonical</tt>. Canonical implies the most recent version of a file.</LI>
+<LI>The word <tt>photstandard</tt> to only show files that contain an observation containing a photometric standard in the Gemini list</LI>
+<LI>The string <tt>filter=xxx</tt> will only include observations where the filter is xxx</LI>
+
 </UL></P>
 
 <P>You can combine these arbitrarity, for example:
@@ -89,8 +100,10 @@ Note that it's possible (and indeed easy) to generate selections that will retur
 you from this, it simply returns no results.</P>
 
 
-<H2>Other features</H2>
+<H2> Complete URL list, Other features</H2>
 <UL>
+<LI><a href="/summary">/summary</a> is the main data file summary page described above</LI>
+<LI><a href="/calibrations">/calibrations</a> is the calibration web system described above</LI>
 <LI><a href="/gmoscal">/gmoscal</a> or <a href="/gmoscal/20100801-20100901">/gmoscal/20100801-20100901</a> shows the number of GMOS biases and imaging twilight flats taken over the date range. Without a date range it defaults to the date that the DASs last did processing through to today. This can be used to help determine which imaging twilight flats need to be taken</LI>
 <LI><a href="/fullheader/N20091123S0455.fits">/fullheader/N20091123S0455.fits</a> or <a href="/fullheader/N20091123S0455">/fullheader/N20091123S0455</a> gives the full fits header of that file. The headers are read from the file on demand, they are not from the database</LI>
 <LI><a href="/fitsverify/N20091120S0003.fits">/fitsverify/N20091120S0003.fits</a> or <a href="/fitsverify/N20091120S0003">/fitsverify/N20091120S0003</a> gives the fitsverify report for that file. The filename maybe replaced by a database diskfile_id for internal links to specific diskfile instances, but these should not be used externally as the id may change</LI>
@@ -100,6 +113,20 @@ you from this, it simply returns no results.</P>
 <LI><a href="/stats">/stats</a> will give some statistics from the database.</LI>
 <LI><a href="/programsobserved/20091201">/programsobserved/20091201</a> will show you which programs have datafiles from that UT night. <a href="/programsobserved">/programsobserved</a> will default to the current UT date. You can also say <a href="/programsobserved/today">/programsobserved/today</a> or <a href="/programsobserved/yesterday">/programsobserved/yesterday</a> too. In fact, all the selection criteria above work, so you can say <a href="/programsobserved/today/GMOS-N/science">/programsobserved/today/GMOS-N/science</a> etc.</LI>
 <LI><a href="/notification">/notification</a> is where you can edit and add new data notifications for data managed by this server.</LI>
+<LI><a href="/standardobs">/standardobs/header_id</a> will show you the standard stars contained on the field of the file with the given header_id. This is linked to from the star after the object name in the summary pages for observations that contain standard stars</LI>
+<LI><a href="/debug"</debug></a> gives some debugging information, especially related to the apache mod_python instance</LI>
+<LI><a href="/xmlfilelist">/xmlfilelist</a> is similar to the web based summary system, except it returns an xml document listing the files that match the selection critera. You can use any of the selection criteria above with this.</LI>
+<LI><a href="/calmgr">/calmgr</a> is the machine interface to the calibration manager. You form a URL with a selection and a calibration type as per the /calibrations system, but this will return you an xml document describing the relevant calibration associations.</LI>
+<LI><a href="/upload_processed_cal">/upload_processed_cal</a> is used to upload processed calibrations to the system via HTTP POST.</LI>
+<LI><a href="/tape">/tape</a> can be used on the fits storage servers hosting a tape database to list or add tapes to the system.</LI>
+<LI><a href="/tapewrite">/tapewrite</a> can be used on the fits storage servers hosting a tape database to list tape writes.</LI>
+<LI><a href="/tapefile">/tapefile</a> can be used on the fits storage servers hosting a tape database to list tape files.</LI>
+<LI><a href="/taperead">/taperead</a> can be used on the fits storage servers hosting a tape database to list the tape read queue</LI>
+<LI><a href="/xmltape">/xmltape</a> can be used on the fits storage servers hosting a tape database to get an xml dump of the tape database</LI>
+<LI><a href="/curation">/curation</a> generates a database curation report. Adding <a href="/curation/noeng">/noeng</a> surpresses warnings from engineering data.</LI>
+
+<LI><a href="/fileontape">/fileontape</a> can be used on the fits storage servers hosting a tape database to determine if a given file in on tape</LI>
+
 </UL>
 </body></html>
 
