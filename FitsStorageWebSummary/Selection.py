@@ -28,7 +28,7 @@ def sayselection(selection):
   """
   string = ""
 
-  defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard'}
+  defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State'}
   for key in defs:
     if key in selection:
       string += "; %s: %s" % (defs[key], selection[key])
@@ -119,6 +119,9 @@ def queryselection(query, selection):
 
   if('observation_class' in selection):
     query = query.filter(Header.observation_class==selection['observation_class'])
+
+  if('reduction' in selection):
+    query = query.filter(Header.reduction==selection['reduction'])
 
   if('inst' in selection):
     if(selection['inst']=='GMOS'):

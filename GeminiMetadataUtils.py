@@ -135,6 +135,20 @@ def gemini_observation_class(string):
     retary = string
   return retary
 
+def gemini_reduction_state(string):
+  """
+  A utility function matching Gemini reduction states
+  If the string argument matches a gemini reduction state then we return 
+  the reduction state
+  Otherwise we return an empty string
+  """
+  list = ['RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS']
+  retary = ''
+  if (string in list):
+    retary = string
+  return retary
+
+
 def gemini_caltype(string):
   """
   A utility function matching Gemini calibration types.

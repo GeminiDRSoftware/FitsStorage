@@ -375,6 +375,9 @@ def getselection(things):
     if(gemini_caltype(thing)):
       selection['caltype']=gemini_caltype(thing)
       recognised=True
+    if(gemini_reduction_state(thing)):
+      selection['reduction']=gemini_reduction_state(thing)
+      recognised=True
     if(gmos_gratingname(thing)):
       selection['gmos_grating']=gmos_gratingname(thing)
       recognised=True
