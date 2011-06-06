@@ -57,6 +57,11 @@ class CalibrationGMOS(Calibration):
       # If it (is spectroscopy) and (is an OBJECT) and (is not a Twilight) then it needs an arc
       if((self.descriptors['spectroscopy']==True) and (self.descriptors['observation_type']=='OBJECT') and (self.descriptors['object']!='Twilight')):
         list.append('arc')
+
+      # If it (is imaging) and (is an OBJECT) and (is not a Twilight) then it needs a processed_flat
+      if((self.descriptors['spectroscopy']==False) and (self.descriptors['observation_type']=='OBJECT') and (self.descriptors['object']!='Twilight')):
+        list.append('processed_flat')
+
         #list.append('dark')
         #list.append('flat')
         #list.append('processed_flat')
