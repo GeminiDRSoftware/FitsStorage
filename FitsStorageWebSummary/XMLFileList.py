@@ -14,6 +14,7 @@ def xmlfilelist(req, selection):
   req.content_type = "text/xml"
   req.write('<?xml version="1.0" ?>')
   req.write("<file_list>")
+  req.write("<selection>%s</selection>" % selection)
 
   session = sessionfactory()
   orderby = ['filename_asc']
