@@ -33,7 +33,16 @@ logger.info("*********  ingest_uploaded_calibration.py - starting up at %s" % no
 src = os.path.join(FitsStorageConfig.upload_staging_path, options.filename)
 dst = os.path.join(FitsStorageConfig.storage_root, FitsStorageConfig.processed_cals_path, options.filename)
 logger.debug("Moving %s to %s" % (src, dst))
-os.rename(src, dst)
+# We can't use os.rename as that keeps the old permissions and ownership, which we specifically want to avoid
+fin = open(src, 'r')
+fout = open(dst, 'w')
+# this is a bit brute force
+buffer = fin.read()
+fout.write(buffer)
+buffer = None
+fin.close()
+fout.close()
+os.remove(src)
 
 session = sessionfactory()
 
