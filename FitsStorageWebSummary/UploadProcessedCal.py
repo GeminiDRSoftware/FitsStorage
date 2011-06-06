@@ -46,7 +46,7 @@ def upload_processed_cal(req, filename):
   clientdata=None
 
   # Now invoke the setuid ingest program
-  command="/opt/FitsStorage/invoke /opt/FitsStorage/ingest_uploaded_calibration.py %s" % filename
+  command="/opt/FitsStorage/invoke /opt/FitsStorage/ingest_uploaded_calibration.py --filename=%s --demon" % filename
   os.system(command)
 
   return apache.OK
