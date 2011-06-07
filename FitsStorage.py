@@ -391,6 +391,8 @@ class Header(Base):
         self.reduction = 'PROCESSED_FLAT'
       if('PROCESSED_BIAS' in ad.types):
         self.reduction = 'PROCESSED_BIAS'
+      if('PROCESSED_FRINGE' in ad.types):
+        self.reduction = 'PROCESSED_FRINGE'
 
       ad.close()
     except:
@@ -653,7 +655,7 @@ class Gmos(Base):
         pass
       try:
         self.gain_setting = ad.gain_setting().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, IndexError):
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, IndexError, Errors.DescriptorTypeError):
         pass
       try:
         self.focal_plane_mask = ad.focal_plane_mask().for_db()
