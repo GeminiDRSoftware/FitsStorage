@@ -675,8 +675,12 @@ class Gmos(Base):
         except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError):
           pass
       ad.close()
+    except Errors.CorruptDataError:
+      # Astrodata open failed or there was some other exception that we want to ignore
+      ad.close()
+      pass
     except:
-      # Astrodata open failed or there was some other exception
+      # Astrodata open failed or there was some other exception that we want to report
       ad.close()
       raise
 
