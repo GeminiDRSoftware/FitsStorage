@@ -577,7 +577,7 @@ class TapeFile(Base):
   size = Column(Integer, index=True)
   ccrc = Column(Text)
   md5 = Column(Text, index=True)
-  lastmod = Column(DateTime(timezone=True, index=True)
+  lastmod = Column(DateTime(timezone=True, index=True))
 
 class TapeRead(Base):
   """
