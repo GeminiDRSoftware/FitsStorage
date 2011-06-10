@@ -24,6 +24,7 @@ parser.add_option("--tapedrive", action="store", type="string", default="/dev/ns
 parser.add_option("--file-re", action="store", type="string", dest="filere", help="Regular expression used to select files to extract")
 parser.add_option("--list-tapes", action="store_true", dest="list_tapes", help="only lists the tapes in TapeRead")
 parser.add_option("--maxtars", action="store", type="int", dest="maxtars", help="Read a maximum of maxfiles tar archives")
+parser.add_option("--maxgbs", action="store", type="int", dest="maxgbs", help="Stop at the end of the tarfile after we read maxgbs GBs")
 parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
@@ -89,29 +90,35 @@ try:
 
   # Loop through the filenums
   tars=0
+  bytes=0
   logger.info("Going to read from %d file numbers on this tape" % len(filenums))
   for filenum in filenums:
     logger.info("Going to read from file number %d" % filenum)
     tars = tars+1
     if(options.maxtars and (tars > options.maxtars)):
+      logger.info("Read maxtars tar files. Stopping now")
+      break
+    if(options.maxgbs and ((bytes / 1.0E9) > options.maxgbs)):
+      logger.info("Read maxgbs GBs. Stopping now")
       break
     # Fast forward the drive to that filenum
     logger.debug("Reading from filenumber %d" % filenum[0])
     td.skipto(filenum=filenum[0])
 
     # Query the filenames at the filenum and make a list of filenames
-    query = session.query(TapeFile.filename).select_from(Tape, TapeWrite, TapeFile, TapeRead)
+    query = session.query(TapeFile).select_from(Tape, TapeWrite, TapeFile, TapeRead)
     query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
     query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
     query = query.filter(TapeFile.filename == TapeRead.filename).filter(TapeFile.md5 == TapeRead.md5)
     query = query.filter(Tape.label == label)
     query = query.filter(TapeWrite.filenum == filenum[0])
 
-    filenameresults = query.all()
-    logger.info("Going to extract %d files from this tar archive" % len(filenameresults))
+    fileresults = query.all()
+    logger.info("Going to extract %d files from this tar archive" % len(fileresults))
     filenames = []
-    for thing in filenameresults:
-      filenames.append(thing[0].encode())
+    for thing in fileresults:
+      filenames.append(thing.filename.encode())
+      bytes += thing.size
 
     # A function to yeild all tarinfo objects and 'delete' all the read files from the taperead table
     blksize = 64*1024
