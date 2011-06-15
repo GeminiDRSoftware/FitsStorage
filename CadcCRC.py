@@ -5,8 +5,7 @@ used by CADC at the GSA.
 The full path filename of the executable to run is contained in the
 cadcCRC_bin string.
 
-This module also contains an md5sum function for convenience when we
-move to md5
+This module also contains an md5sum function for convenience.
 """
 import subprocess
 import os
@@ -46,21 +45,12 @@ def cadcCRC(filename):
 
   return retary
   
-# commented out but left for reference, how an AstroData ID could be
-# gotten using the IDFactory
-#def cadcCRC_ADID(filename):
-#    from astrodata import AstroData
-#    from astrodata import IDFactory
-#    ad = AstroData(filename)
-#    retary = IDFactory.generateFingerprint( ad)
-#    return retary
-
 def md5sumfile(f):
   """
   Generates the md5sum of the thing represented by the file object f
   """
-  import md5
-  m = md5.new()
+  import hashlib
+  m = hashlib.md5()
 
   block = 64*1024
   data = f.read(block)
