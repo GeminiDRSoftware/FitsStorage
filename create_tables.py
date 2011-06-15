@@ -1,7 +1,3 @@
-import sys
-sys.path.append('/opt/sqlalchemy/lib/python2.5/site-packages')
-
-
 from FitsStorageUtils.CreateTables import *
 
 # Option Parsing
