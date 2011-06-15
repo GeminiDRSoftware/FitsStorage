@@ -13,6 +13,8 @@ sudo yum install postgresql
 sudo yum install postgresql-server
 sudo yum install postgresql-devel
 
+# needed to get mod_python to build as /astro python links against X11
+sudo yum install libX11-devel
 
 sudo /usr/sbin/groupadd -g 5179 fitsdata
 sudo /usr/sbin/useradd -c 'FITS data' -u 5179 -g 5179 fitsdata
@@ -46,8 +48,8 @@ cd dist
 python setup.py install --prefix=/opt/mod_python
 
 cd /opt/sqlalchemy
-tar xvzf /opt/FitsStorage/otherfiles/psycopg2-2.4.1.tar.gz
-cd psycopg2-2.4.1
+tar xvzf /opt/FitsStorage/otherfiles/psycopg2-2.4.2.tar.gz
+cd psycopg2-2.4.2
 vi setup.cfg 
 # set pg_config=/usr/bin/pg_config
 python setup.py build
