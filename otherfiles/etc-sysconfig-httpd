@@ -21,4 +21,6 @@
 #
 #HTTPD_LANG=C
 
-export PYTHONPATH=/opt/mod_python/lib/python2.5/site-packages:/opt/sqlalchemy/lib/python2.5/site-packages:/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages:/data/software/pythonpath/lib/python2.5/site-packages
+
+export PYTHONPATH=/opt/mod_python/lib/python2.6/site-packages:/opt/sqlalchemy/lib/python2.6/site-packages:/astro/iraf/rhux-x86_64-glibc2.5/gempylocal/lib/stsci_python/lib/python2.6/site-packages:/astro/iraf/rhux-x86_64-glibc2.5/gempylocal/gemaux_python_internal/lib/python2.6/site-packages:/astro/iraf/rhux-x86_64-glibc2.5/gempylocal/gemaux_python_internal/lib/python2.6/site-packages
+
