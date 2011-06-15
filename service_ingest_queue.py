@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-import sys
-sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
-
 import FitsStorage
 import FitsStorageConfig
 from FitsStorageUtils.ServiceIngestQueue import *
