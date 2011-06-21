@@ -43,6 +43,7 @@ def notification(req, things):
         notif=session.query(Notification).filter(Notification.id==id).first()
         if(field == 'delete' and value == 'Yes'):
           session.delete(notif)
+          session.commit()
         else:
           if(field == 'newlabel'):
             notif.label = value
