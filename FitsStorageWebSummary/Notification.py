@@ -40,10 +40,13 @@ def notification(req, things):
       id=int(key.split('-')[1])
       value = formdata[key].value
       if(id):
+        #debug print:
+        #req.write("<H1>id=%d, field=%s. value=%s</H1>" % (id, field, value))
         notif=session.query(Notification).filter(Notification.id==id).first()
         if(field == 'delete' and value == 'Yes'):
           session.delete(notif)
           session.commit()
+          break
         else:
           if(field == 'newlabel'):
             notif.label = value
