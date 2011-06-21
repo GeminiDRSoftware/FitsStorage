@@ -15,6 +15,7 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape1", help="The Fits Storage Tape server to use to check the files are on tape")
 parser.add_option("--file-pre", action="store", type="string", dest="filepre", help="File prefix to operate on, eg N20090130, N200812 etc")
+parser.add_option("--only", action="store_true", dest="only", help="Only list files that need to go to tape")
 parser.add_option("--notpresent", action="store_true", dest="notpresent", help="Include files that are marked as not present")
 parser.add_option("--mintapes", action="store", type="int", dest="mintapes", default=2, help="Minimum number of tapes file must be on to be eligable for deletion")
 parser.add_option("--tapeset", action="store", type="int", dest="tapeset", help="Only consider tapes in this tapeset")
@@ -95,7 +96,8 @@ for diskfileid in diskfileids:
     sumfiles += 1
     logger.info("*** File %s - %s needs to go to tape, it is on %d tapes: %s" % (fullpath, dbmd5, len(tapeids), tapeids))
   else:
-    logger.info("File %s - %s is OK, it already is on %d tapes: %s" % (fullpath, dbmd5, len(tapeids), tapeids))
+    if(not options.only):
+      logger.info("File %s - %s is OK, it already is on %d tapes: %s" % (fullpath, dbmd5, len(tapeids), tapeids))
     
 
 logger.info("Found %d files totalling %.2f GB that should go to tape" % (sumfiles, sumbytes/1.0E9))
