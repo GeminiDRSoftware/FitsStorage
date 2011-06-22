@@ -191,7 +191,10 @@ def webhdrsummary(session, req, type, headers, links=True):
 
       stdhtml = ''
       if(h.phot_standard):
-        stdhtml = '<a href="/standardobs/%d">*</a>' % h.id
+        if(links):
+          stdhtml = '<a href="/standardobs/%d">*</a>' % h.id
+        else:
+          stdhtml = '*'
       if (h.object and len(h.object)>12):
         req.write('<TD><abbr title="%s">%s%s</abbr></TD>' % (h.object, (h.object)[0:12], stdhtml))
       else:
