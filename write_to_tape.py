@@ -51,6 +51,8 @@ if(len(options.tapedrive) != len(options.tapelabel)):
   logger.error("You must specify the same number of tape drives as tape labels")
   sys.exit(1)
 
+options.selection += "/present"
+
 logger.info("TapeDrive: %s; TapeLabel: %s" % (options.tapedrive, options.tapelabel))
 logger.info("Selection: %s" % options.selection)
 
