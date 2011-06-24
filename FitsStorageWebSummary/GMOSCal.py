@@ -76,7 +76,7 @@ def gmoscal(req, selection):
        else:
          selection['qa_state']='Pass'
          # Only select full frame dayCals
-         query = query.filter(or_(Gmos.amp_read_area == '''["'EEV 9273-16-03, right':[1:2048,1:4608]", "'EEV 9273-20-04, right':[2049:4096,1:4608]", "'EEV 9273-20-03, left':[4097:6144,1:4608]"]''', Gmos.amp_read_area == '''["'EEV 2037-06-03, left':[1:2048,1:4608]", "'EEV 8194-19-04, left':[2049:4096,1:4608]", "'EEV 8261-07-04, right':[4097:6144,1:4608]"]'''))
+         query = query.filter(or_(Gmos.amp_read_area == ''''EEV 9273-20-04, right':[2049:4096,1:4608]+'EEV 9273-16-03, right':[1:2048,1:4608]+'EEV 9273-20-03, left':[4097:6144,1:4608]''', Gmos.amp_read_area == '''["'EEV 2037-06-03, left':[1:2048,1:4608]", "'EEV 8194-19-04, left':[2049:4096,1:4608]", "'EEV 8261-07-04, right':[4097:6144,1:4608]"]'''))
 
        query = queryselection(query, selection)
   
@@ -195,7 +195,11 @@ def gmoscal(req, selection):
        roi = row[4]
        if(roi == '''["'EEV 9273-16-03, right':[1:2048,1:4608]", "'EEV 9273-20-04, right':[2049:4096,1:4608]", "'EEV 9273-20-03, left':[4097:6144,1:4608]"]'''):
          roi = "Full"
+       if(roi == ''''EEV 9273-20-04, right':[2049:4096,1:4608]+'EEV 9273-16-03, right':[1:2048,1:4608]+'EEV 9273-20-03, left':[4097:6144,1:4608]'''):
+         roi = "Full"
        if(roi == '''["'EEV 9273-16-03, right':[1:2048,1792:2815]", "'EEV 9273-20-04, right':[2049:4096,1792:2815]", "'EEV 9273-20-03, left':[4097:6144,1792:2815]"]'''):
+         roi = "Cent"
+       if(roi == ''''EEV 9273-20-04, right':[2049:4096,1793:2816]+'EEV 9273-16-03, right':[1:2048,1793:2816]+'EEV 9273-20-03, left':[4097:6144,1793:2816]'''):
          roi = "Cent"
        if(roi == '''["'EEV 2037-06-03, left':[1:2048,1:4608]", "'EEV 8194-19-04, left':[2049:4096,1:4608]", "'EEV 8261-07-04, right':[4097:6144,1:4608]"]'''):
          roi = "Full"
