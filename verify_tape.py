@@ -119,7 +119,7 @@ try:
   logger.info("List of Differences Found: %s" % errors)
 
   if(len(errors)):
-    logger.info("There were verify errors - not updating lastverified")
+    logger.error("There were verify errors - not updating lastverified")
   else:
     now = datetime.datetime.utcnow()
     logger.info("There were no verify errors - updating lastverified to: %s UTC" % now)
