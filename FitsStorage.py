@@ -2,10 +2,6 @@
 This module contains the ORM classes for the tables in the fits storage
 database.
 """
-import sys
-
-sys.path.append('/opt/gemini_python')
-
 import sqlalchemy
 import sqlalchemy.orm
 import os
@@ -29,7 +25,7 @@ import CadcWMD
 from FitsStorageConfig import *
 
 from astrodata import Errors
-from astrodata.AstroData import AstroData
+from astrodata import AstroData
 
 import pywcs
 
