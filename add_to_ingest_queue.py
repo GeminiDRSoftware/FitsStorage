@@ -10,7 +10,7 @@ import time
 # Option Parsing
 from optparse import OptionParser
 parser = OptionParser()
-parser.add_option("--file-re", action="store", type="string", dest="file_re", help="python regular expression string to select files by. Special values are today, twoday, fourday to include only files from today, the last two days, or the last four days respectively (days counted as UTC days)")
+parser.add_option("--file-re", action="store", type="string", dest="file_re", help="python regular expression string to select files by. Special values are today, twoday, fourday, tenday to include only files from today, the last two days, the last four days, or the last 10 days respectively (days counted as UTC days)")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 parser.add_option("--path", action="store", dest="path", default = "", help="Use given path relative to storage root")
@@ -33,7 +33,7 @@ fulldirpath = os.path.join(FitsStorage.storage_root, path)
 logger.info("Queueing files for ingest from: %s" % fulldirpath)
 
 file_re = options.file_re
-# Handle the today and twoday options
+# Handle the today and twoday etc options
 now=datetime.datetime.utcnow()
 delta=datetime.timedelta(days=1)
 if(options.file_re == "today"):
@@ -54,6 +54,14 @@ if(options.file_re == "fourday"):
   then=then-delta
   d=then.date().strftime("%Y%m%d")
   file_re="%s|%s|%s|%s" % (a, b, c, d)
+
+if(options.file_re == "tenday"):
+  list = []
+  then = now
+  for i in range(10):
+    list.append(then.date().strftime("%Y%m%d"))
+    then = then-delta
+  file_re = '|'.join(list)
 
 if(file_re):
   cre=re.compile(file_re)
