@@ -2,6 +2,7 @@
 This module provides various utility functions for service_ingest_queue.py 
 in the Fits Storage System.
 """
+import sys
 from FitsStorage import *
 from FitsStorageLogger import logger
 from GeometryHacks import *
