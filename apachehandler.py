@@ -251,7 +251,7 @@ def handler(req):
       today = datetime.datetime.utcnow().date()
       canhaveit = False
 
-      if((header.release) and (today > header.release)):
+      if((header.release) and (today >= header.release)):
         # Yes, the data are public
         canhaveit = True
       else:
