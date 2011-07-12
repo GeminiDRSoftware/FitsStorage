@@ -91,11 +91,51 @@ class TapeDrive:
     The fail argument determines whether to exit with an error if it fails
     Returns the return code from the mt command
     """
-    if(self.fileno() >= filenum):
-      returncode = self.rewind()
-    while (self.fileno() < filenum):
-      [returncode, stdoutstring, stderrstring]=self.mt('fsf', fail=fail)
+    if(filenum == 0):
+      r = self.rewind()
+      return r
 
+    if(self.fileno() > filenum):
+      #print "too far on. Rewinding"
+      r = self.rewind()
+
+    num = filenum - self.fileno()
+    if(num):
+      #print "need to move forward %d files" % num
+      r = self.fsf(num)
+
+    if(self.fileno() == filenum):
+      if(self.blockno() == 0):
+        #print "already there"
+        return 0
+      else:
+        #print "right file, but part way in"
+        r = self.bsf()
+        r = r + self.fsf()
+        return r
+
+  def fsf(self, n=0, fail=True):
+    """
+    Issue fsf command to tape drive
+    """
+
+    if(n==0):
+      arg = ''
+    else:
+      arg = "%d" % n
+    [returncode, stdoutstring, stderrstring]=self.mt('fsf', mtarg=arg, fail=fail)
+    return returncode
+
+  def bsf(self, n=0, fail=True):
+    """
+    Issue bsf command to tape drive
+    """
+
+    if(n==0):
+      arg = ''
+    else:
+      arg = "%d" % n
+    [returncode, stdoutstring, stderrstring]=self.mt('bsf', mtarg=arg, fail=fail)
     return returncode
 
   def eod(self, fail=True):
@@ -160,6 +200,19 @@ class TapeDrive:
     retval = None
     string = self.status()
     match = re.search('(File number=)(\d+)(,)', string)
+    if(match):
+      retval = int(match.group(2))
+
+    return retval
+
+  def blockno(self):
+    """
+    Returns the block number within the file the drive is currently
+    positioned at
+    """
+    retval = None
+    string = self.status()
+    match = re.search('(block number=)(\d+)(,)', string)
     if(match):
       retval = int(match.group(2))
 
