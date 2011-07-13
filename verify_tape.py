@@ -1,7 +1,8 @@
-import FitsStorage
+from FitsStorage import *
 import FitsStorageConfig
 from FitsStorageTape import TapeDrive
 import CadcCRC
+import sys
 import os
 import re
 import datetime
