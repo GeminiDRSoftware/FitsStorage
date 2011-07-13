@@ -1,7 +1,6 @@
 import sys
-sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
 
-import FitsStorage
+from FitsStorage import *
 from FitsStorageConfig import *
 from FitsStorageLogger import *
 from FitsStorageUtils import *
@@ -58,10 +57,12 @@ if(options.filere):
 
 if(options.tape_label):
   query = query.filter(Tape.label == options.tape_label)
+else:
+  # Other housekeeping checks - tape should be active, unless a tape-label request as you might be trying to recover from a bad tape
+  query = query.filter(Tape.active == True)
 
-# Other housekeeping checks
+# Other housekeeping checks - if the write never suceeded, we probably don't care about it
 query = query.filter(TapeWrite.suceeded == True)
-query = query.filter(Tape.active == True)
 
 query = query.distinct()
 
