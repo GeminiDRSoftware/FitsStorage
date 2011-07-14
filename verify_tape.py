@@ -41,6 +41,7 @@ logger.info("*********  verify_tape.py - starting up at %s" % datetime.datetime.
 try:
   # Make a FitsStorageTape object from class TapeDrive initializing the device and scratchdir
   td = TapeDrive(options.tapedrive, FitsStorageConfig.fits_tape_scratchdir)
+  td.setblk0()
   label = td.readlabel()
 
   # Find the tape in the DB
