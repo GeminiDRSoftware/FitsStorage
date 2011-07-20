@@ -47,7 +47,7 @@ try:
   # Find the tape in the DB
   try:
     tape = session.query(Tape).filter(Tape.label==label).filter(Tape.active==True).one()
-  except (NoResultFound):
+  except (sqlalchemy.orm.exc.NoResultFound):
     logger.error("The tape %s was not found in the DB." % label)
     sys.exit(1)
 
