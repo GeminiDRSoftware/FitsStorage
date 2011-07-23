@@ -83,10 +83,10 @@ def webhdrsummary(session, req, type, headers, links=True):
   req.write('<TABLE border=0>')
   req.write('<TR class=tr_head>')
   if(links):
-    req.write('<TH>Filename <a href="%s?orderby=filename_asc">&uarr</a><a href="%s?orderby=filename_desc">&darr</a></TH>' % (myuri, myuri))
-    req.write('<TH>Data Label <a href="%s?orderby=data_label_asc">&uarr</a><a href="%s?orderby=data_label_desc">&darr</a></TH>' % (myuri, myuri))
-    req.write('<TH>UT Date Time <a href="%s?orderby=ut_datetime_asc">&uarr</a><a href="%s?orderby=ut_datetime_desc">&darr</a></TH>' % (myuri, myuri))
-    req.write('<TH><abbr title="Instrument">Inst</abbr> <a href="%s?orderby=instrument_asc">&uarr</a><a href="%s?orderby=instrument_desc">&darr</a></TH>' % (myuri, myuri))
+    req.write('<TH>Filename <a href="%s?orderby=filename_asc">&uarr;</a><a href="%s?orderby=filename_desc">&darr;</a></TH>' % (myuri, myuri))
+    req.write('<TH>Data Label <a href="%s?orderby=data_label_asc">&uarr;</a><a href="%s?orderby=data_label_desc">&darr;</a></TH>' % (myuri, myuri))
+    req.write('<TH>UT Date Time <a href="%s?orderby=ut_datetime_asc">&uarr;</a><a href="%s?orderby=ut_datetime_desc">&darr;</a></TH>' % (myuri, myuri))
+    req.write('<TH><abbr title="Instrument">Inst</abbr> <a href="%s?orderby=instrument_asc">&uarr;</a><a href="%s?orderby=instrument_desc">&darr;</a></TH>' % (myuri, myuri))
   else:
     req.write('<TH>Filename</TH>')
     req.write('<TH>Data Label</TH>')
@@ -106,7 +106,7 @@ def webhdrsummary(session, req, type, headers, links=True):
 
       if(links):
         for i in range(len(vals)):
-          req.write('<TH><abbr title="%s">%s</abbr> <a href="%s?orderby=%s_asc">&uarr</a><a href="%s?orderby=%s_desc">&darr</a></TH>' % (vals[i][0], vals[i][1], myuri, vals[i][2], myuri, vals[i][2]))
+          req.write('<TH><abbr title="%s">%s</abbr> <a href="%s?orderby=%s_asc">&uarr;</a><a href="%s?orderby=%s_desc">&darr;</a></TH>' % (vals[i][0], vals[i][1], myuri, vals[i][2], myuri, vals[i][2]))
       else:
         for i in range(len(vals)):
           req.write('<TH><abbr title="%s">%s</abbr></TH>' % (vals[i][0], vals[i][1]))
