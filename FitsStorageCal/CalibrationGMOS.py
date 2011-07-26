@@ -211,7 +211,7 @@ class CalibrationGMOS(Calibration):
     query = query.filter(Header.instrument==self.descriptors['instrument'])
     query = query.filter(Gmos.detector_x_bin==self.descriptors['detector_x_bin']).filter(Gmos.detector_y_bin==self.descriptors['detector_y_bin'])
     query = query.filter(Gmos.filter_name==self.descriptors['filter_name'])
-    #query = query.filter(Gmos.read_speed_setting==self.descriptors['read_speed_setting']).filter(Gmos.gain_setting==self.descriptors['gain_setting'])
+    query = query.filter(Gmos.read_speed_setting==self.descriptors['read_speed_setting']).filter(Gmos.gain_setting==self.descriptors['gain_setting'])
     query = query.filter(Header.spectroscopy==self.descriptors['spectroscopy'])
     if(self.descriptors['spectroscopy']):
       query = query.filter(Gmos.disperser==self.descriptors['disperser'])
