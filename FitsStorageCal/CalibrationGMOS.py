@@ -177,6 +177,10 @@ class CalibrationGMOS(Calibration):
     else:
       query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
 
+    # The data section should be a equal or substring match, - so that we get the correctly trimmed bias, but also can select only CCD2 out of a 3 chip bias
+    # This needs adding to FLAT and FRINGE once the DB supports it.
+    # query.filter(Gmos.data_section.like('%'+self.descriptors['data_section']+'%'))
+
     # Order by absolute time separation.
     if(processed and fsc_localmode):
       # note: double check if this even works, we suspect it doesn't
