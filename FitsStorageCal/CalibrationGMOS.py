@@ -213,10 +213,13 @@ class CalibrationGMOS(Calibration):
     query = query.filter(Gmos.filter_name==self.descriptors['filter_name'])
     query = query.filter(Gmos.read_speed_setting==self.descriptors['read_speed_setting']).filter(Gmos.gain_setting==self.descriptors['gain_setting'])
     query = query.filter(Header.spectroscopy==self.descriptors['spectroscopy'])
+
+    # Focal plane mask must match for imaging too... To avoid daytime thru-MOS mask imaging "flats"
+    query = query.filter(Gmos.focal_plane_mask==self.descriptors['focal_plane_mask'])
+
     if(self.descriptors['spectroscopy']):
       query = query.filter(Gmos.disperser==self.descriptors['disperser'])
       query = query.filter(Header.central_wavelength==self.descriptors['central_wavelength'])
-      query = query.filter(Gmos.focal_plane_mask==self.descriptors['focal_plane_mask'])
 
     # The science amp_read_area must be equal or substring of the flat amp_read_area
     query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
