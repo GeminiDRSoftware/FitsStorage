@@ -2,10 +2,10 @@
 This module holds the CalibrationNIFS class
 """
 
-import FitsStorageConfig
-import GeminiMetadataUtils
-from FitsStorage import DiskFile, Header, Nifs
-from FitsStorageCal.Calibration import Calibration
+from fitsstore import FitsStorageConfig
+from fitsstore import GeminiMetadataUtils
+from fitsstore.FitsStorage import DiskFile, Header, Nifs
+from fitsstore.FitsStorageCal.Calibration import Calibration
 
 from sqlalchemy.orm import join
 from sqlalchemy import func, extract

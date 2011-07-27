@@ -2,10 +2,10 @@
 This module holds the CalibrationGMOS class
 """
 
-from FitsStorageConfig import fsc_localmode
-import GeminiMetadataUtils
-from FitsStorage import DiskFile, Header, Gmos
-from FitsStorageCal.Calibration import Calibration
+from fitsstore.FitsStorageConfig import fsc_localmode
+from fitsstore import GeminiMetadataUtils
+from fitsstore.FitsStorage import DiskFile, Header, Gmos
+from fitsstore.FitsStorageCal.Calibration import Calibration
 
 from sqlalchemy.orm import join
 from sqlalchemy import func, extract
@@ -24,8 +24,11 @@ class CalibrationGMOS(Calibration):
 
     # if header based, Find the gmosheader
     if(header):
+      print "CGMOS27:", repr(self.descriptors)
       query = session.query(Gmos).filter(Gmos.header_id==self.descriptors['header_id'])
       self.gmos = query.first()
+      print "CGMOS30:", repr(self.gmos)
+      print "CGMOS31: self.from_descriptors =", self.from_descriptors
 
     # Populate the descriptors dictionary for GMOS
     if(self.from_descriptors):
@@ -40,6 +43,7 @@ class CalibrationGMOS(Calibration):
       self.descriptors['nodandshuffle']=self.gmos.nodandshuffle
       self.descriptors['nod_count']=self.gmos.nod_count
       self.descriptors['nod_pixels']=self.gmos.nod_pixels
+      print "CM46:", repr(self.descriptors)
 
     # Set the list of required calibrations
     self.required = self.required()
@@ -156,6 +160,9 @@ class CalibrationGMOS(Calibration):
 
   def bias(self, processed=False, List=None):
     query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
+    
+    # @@DEBUGQUERY
+    
     query = query.filter(Header.observation_type=='BIAS')
     if(processed):
       query = query.filter(Header.reduction=='PROCESSED_BIAS')
@@ -190,6 +197,10 @@ class CalibrationGMOS(Calibration):
     else:
       query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
+    d2 = query.statement.compile()
+    d2.visit_bindparam=d2.render_literal_bindparam
+    print "CG190:", str(d2)
+    
     # For now, we only want one result - the closest in time, unless otherwise indicated
     if(List):
       query = query.limit(List)
