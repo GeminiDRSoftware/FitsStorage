@@ -5,6 +5,7 @@ from FitsStorageWebSummary.Selection import *
 from FitsStorageCal import get_cal_object
 
 import urllib
+import re
 
 
 def calmgr(req, selection):
@@ -45,10 +46,10 @@ def calmgr(req, selection):
       clientdata = req.read()
       #req.write("\nclient data: %s\n" % clientdata)
       clientstr = urllib.unquote_plus(clientdata)
-      #req.write("\nclient str: %s\n" % clientstr)
-      clientlist = clientstr.split('&')
-      desc_str = clientlist[0].split('=')[1]
-      type_str = clientlist[1].split('=')[1]
+      req.write("\nclient str: %s\n" % clientstr)
+      match = re.match("descriptors=(.*)&types=(.*)", clientstr)
+      desc_str = match.group(1)
+      type_str = match.group(2)
       #req.write("\ndesc_str: %s\n" % desc_str)
       #req.write("\ntype_str: %s\n" % type_str)
       descriptors = eval(desc_str)
@@ -60,6 +61,12 @@ def calmgr(req, selection):
       #gs = 'GMOS_S' in types
       #req.write("IsType GMOS_N: %s\n" % gn)
       #req.write("IsType GMOS_S: %s\n" % gs)
+
+      # OK, there are a couple of items that are handled in the DB as if they are descriptors
+      # but they're actually types. This is where we push them into the descriptor disctionary
+      descriptors['nodandshuffle'] = 'GMOS_NODANDSHUFFLE' in types
+      descriptors['spectroscopy'] = 'SPECT' in types
+    
 
       # Get a cal object for this target data
       c = get_cal_object(session, None, header=None, descriptors=descriptors, types=types)
