@@ -24,7 +24,6 @@ def get_cal_object(session, filename, header=None, descriptors=None, types=None)
   c = None
   if(header):
     instrument = header.instrument
-    print "FSCi27:",instrument
   else:
     instrument = descriptors['instrument']
   if('GMOS' in instrument):
