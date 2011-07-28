@@ -46,7 +46,7 @@ def calmgr(req, selection):
       clientdata = req.read()
       #req.write("\nclient data: %s\n" % clientdata)
       clientstr = urllib.unquote_plus(clientdata)
-      req.write("\nclient str: %s\n" % clientstr)
+      #req.write("\nclient str: %s\n" % clientstr)
       match = re.match("descriptors=(.*)&types=(.*)", clientstr)
       desc_str = match.group(1)
       type_str = match.group(2)
