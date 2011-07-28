@@ -1,5 +1,6 @@
-from astrodata import AstroData
 import urllib
+import datetime
+from astrodata import AstroData
 
 # This is a GMOS_N imaging science dataset
 ad = AstroData("/net/wikiwiki/dataflow/N20110728S0350.fits")
@@ -21,12 +22,18 @@ desc_dict = {'instrument':ad.instrument().for_db(),
 type_list = ad.types
 ad.close()
 
+start = datetime.datetime.now()
 sequence = (('descriptors', desc_dict), ('types', type_list))
 postdata = urllib.urlencode(sequence)
 
 #url = "http://hbffits3/calmgr/processed_flat/"
 url = "http://hbffits3/calmgr/processed_bias/"
 u = urllib.urlopen(url, postdata)
+end = datetime.datetime.now()
+
+interval = end - start
 print u.read()
 u.close()
 
+print "-----\n"
+print "query took %s" % interval
