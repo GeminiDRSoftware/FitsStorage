@@ -1,7 +1,4 @@
-import sys
-sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
-
-import FitsStorage
+from FitsStorage import *
 from FitsStorageConfig import *
 from FitsStorageLogger import *
 from FitsStorageUtils import *
@@ -199,7 +196,7 @@ for i in range(0, len(tds)):
 
     # Create tapewrite record
     logger.debug("Creating TapeWrite record for tape %s" % tape.label)
-    tw = FitsStorage.TapeWrite()
+    tw = TapeWrite()
     tw.tape_id = tape.id
     session.add(tw)
     session.commit()
@@ -242,7 +239,7 @@ for i in range(0, len(tds)):
         tarok = False
         break
       # Create the TapeFile entry and add to DB
-      tapefile = FitsStorage.TapeFile()
+      tapefile = TapeFile()
       tapefile.tapewrite_id = tw.id
       tapefile.filename = filename
       tapefile.ccrc = ccrc
