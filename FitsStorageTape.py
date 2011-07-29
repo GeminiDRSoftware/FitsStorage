@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tarfile
 import re
+import time
 
 class TapeDrive:
   """
@@ -68,6 +69,16 @@ class TapeDrive:
     (stdoutstring, stderrstring) = sp.communicate()
     retval = sp.returncode
 
+    retry = 10
+    while (retry and retval):
+      # Maybe got a device in use error, try waiting 10 secs then re-try
+      print "mt failed, waiting 30 secs and re-try"
+      time.sleep(20)
+      sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      (stdoutstring, stderrstring) = sp.communicate()
+      retval = sp.returncode
+      retry -= 1
+
     if(retval and fail):
       print '"mt -f %s %s %s" failed with exit value %d:' % (self.dev, mtcmd, mtarg, retval)
       print stdoutstring
@@ -92,26 +103,26 @@ class TapeDrive:
     Returns the return code from the mt command
     """
     if(filenum == 0):
-      r = self.rewind()
+      r = self.rewind(fail=fail)
       return r
 
-    if(self.fileno() > filenum):
+    if(self.fileno(fail=fail) > filenum):
       #print "too far on. Rewinding"
-      r = self.rewind()
+      r = self.rewind(fail=fail)
 
-    num = filenum - self.fileno()
+    num = filenum - self.fileno(fail=fail)
     if(num):
       #print "need to move forward %d files" % num
-      r = self.fsf(num)
+      r = self.fsf(num, fail=fail)
 
-    if(self.fileno() == filenum):
-      if(self.blockno() == 0):
+    if(self.fileno(fail=fail) == filenum):
+      if(self.blockno(fail=fail) == 0):
         #print "already there"
         return 0
       else:
         #print "right file, but part way in"
-        r = self.bsf()
-        r = r + self.fsf()
+        r = self.bsf(fail=fail)
+        r = r + self.fsf(fail=fail)
         return r
 
   def fsf(self, n=0, fail=True):
@@ -192,26 +203,26 @@ class TapeDrive:
       retval = False
     return retval
 
-  def fileno(self):
+  def fileno(self, fail=False):
     """
     Returns the file number the drive is currently
     positioned at
     """
     retval = None
-    string = self.status()
+    string = self.status(fail=fail)
     match = re.search('(File number=)(\d+)(,)', string)
     if(match):
       retval = int(match.group(2))
 
     return retval
 
-  def blockno(self):
+  def blockno(self, fail=False):
     """
     Returns the block number within the file the drive is currently
     positioned at
     """
     retval = None
-    string = self.status()
+    string = self.status(fail=fail)
     match = re.search('(block number=)(\d+)(,)', string)
     if(match):
       retval = int(match.group(2))
