@@ -59,7 +59,8 @@ try:
   for tw in tw_list:
     # Send the tapedrive to this tapewrite
     try:
-      td.skipto(filenum=tw.filenum)
+      logger.debug("Sending tape to filenumber %d" % tw.filenum)
+      td.skipto(filenum=tw.filenum, fail=True)
     except (IOError):
       logger.error("Found file number in the database but not on tape at filenum: %s" % tw.filenum)
       errors.append(("File number not on tape at filenum = %s" % tw.filenum).encode())
@@ -69,43 +70,51 @@ try:
     # Read all the fits files in the tar archive, one at a time, looping through and calculating the md5
     files_on_tape = []
     block = 64*1024
-    tarfile = tarfile.open(name=options.tapedrive, mode='r|', bufsize=block)
-    for tar_info in tarfile:
-      filename = tar_info.name
-      if(options.verbose):
-        logger.info("Found file %s on tape." % filename)
+    try:
+      # We have to open the tape drive independently so we've got something to close if the tar header read fails
+      tdfileobj = open(options.tapedrive, 'rb')
+      tar = tarfile.open(name=options.tapedrive, fileobj=tdfileobj, mode='r|', bufsize=block)
+      for tar_info in tar:
+        filename = tar_info.name
+        if(options.verbose):
+          logger.info("Found file %s on tape." % filename)
 
-      # Find the tapefile object
-      try:
-        tf = session.query(TapeFile).filter(TapeFile.tapewrite_id==tw.id).filter(TapeFile.filename==filename).one()
-      except (NoResultFound):
-        pass
+        # Find the tapefile object
+        try:
+          tf = session.query(TapeFile).filter(TapeFile.tapewrite_id==tw.id).filter(TapeFile.filename==filename).one()
+        except (NoResultFound):
+          pass
 
-      # Check whether this filename is in the DB
-      if(tf):
-        files_on_tape.append(filename)
-        # Compare the tapefile object in the DB and the tarinfo object for the actual thing on tape
-        if(tar_info.size==tf.size):
-          logger.debug("Size matches in tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
-          # Calculate the md5 of the data on tape
-          f = tarfile.extractfile(tar_info)
-          md5 = CadcCRC.md5sumfile(f)
-          f.close()
+        # Check whether this filename is in the DB
+        if(tf):
+          files_on_tape.append(filename)
+          # Compare the tapefile object in the DB and the tarinfo object for the actual thing on tape
+          if(tar_info.size==tf.size):
+            logger.debug("Size matches in tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
+            # Calculate the md5 of the data on tape
+            f = tar.extractfile(tar_info)
+            md5 = CadcCRC.md5sumfile(f)
+            f.close()
+          else:
+            logger.error("Size mismatch between tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
+            errors.append(("SIZE mismatch at filenum = %d, filename = %s" % (tw.filenum, tf.filename)).encode())
+            break
+          # Compare against the DB
+          if(md5 != tf.md5):
+            logger.error("md5 mismatch between tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
+            errors.append(("MD5 mismatch at filenum = %d, filename = %s" % (tw.filenum, tf.filename)).encode())
+          else:
+            logger.debug("md5 matches in tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
         else:
-          logger.error("Size mismatch between tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
-          errors.append(("SIZE mismatch at filenum = %d, filename = %s" % (tw.filenum, tf.filename)).encode())
+          logger.error("File %s not found in DB." % filename)
+          errors.append(("File not in DB at filenum = %d, filename = %s" % (tw.filenum, tf.filename)).encode())
           break
-        # Compare against the DB
-        if(md5 != tf.md5):
-          logger.error("md5 mismatch between tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
-          errors.append(("MD5 mismatch at filenum = %d, filename = %s" % (tw.filenum, tf.filename)).encode())
-        else:
-          logger.debug("md5 matches in tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
-      else:
-        logger.error("File %s not found in DB." % filename)
-        errors.append(("File not in DB at filenum = %d, filename = %s" % (tw.filenum, tf.filename)).encode())
-        break
-    tarfile.close()
+      tar.close()
+    except (tarfile.ReadError):
+      logger.error("Tar read error on open - most likely an empty tar file: tape %s, file number %d" % (label, tw.filenum))
+    finally:
+      tdfileobj.close()
+
 
     # Check whether we read everything in the DB
     files_in_DB = session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape))).filter(TapeWrite.filenum==tw.filenum).filter(Tape.label==label).order_by(TapeFile.filename).all()
