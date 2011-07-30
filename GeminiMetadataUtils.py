@@ -207,11 +207,11 @@ def gmos_focal_plane_mask(string):
 
   return retary
  
-fitsfilenamecre = re.compile('^([NS])(20\d\d)([01]\d[0123]\d)(S)(\d\d\d\d)([\d-]*)(?P<fits>.fits)?$')
+fitsfilenamecre = re.compile('^([NS])(20\d\d)([01]\d[0123]\d)(S)(\d\d\d\d)([\d-]*)(\w*)(?P<fits>.fits)?$')
 vfitsfilenamecre = re.compile('^(20)?(\d\d)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d\d)_(\d+)(?P<fits>.fits)?$')
 def gemini_fitsfilename(string):
   """
-  A utility function matching Gemini raw data fits filenames
+  A utility function matching Gemini data fits filenames
   If the string argument matches the format of a gemini
   data filename, with or without the .fits on the end, this
   function will return the filename, with the .fits on the end.
