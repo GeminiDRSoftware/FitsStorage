@@ -88,6 +88,7 @@ def gmoscal(req, selection):
 
        list = query.all()
 
+
        # Populate the dictionary
        # as {'i-2x2':[10, 'i', '2x2'], ...}  ie [number, filter_name, binning]
        if(observation_class == 'science'):
@@ -164,9 +165,7 @@ def gmoscal(req, selection):
      # Now the BIAS report
      req.write('<H2>Biases</H2>')
 
-     #tzoffset = datetime.timedelta(seconds=time.timezone)
-     #hack to make hbffits1 look chilean for tmp work Dec 2010
-     tzoffset = datetime.timedelta(seconds=14400)
+     tzoffset = datetime.timedelta(seconds=time.timezone)
      
      oneday = datetime.timedelta(days=1)
      offset = sqlalchemy.sql.expression.literal(tzoffset - oneday, sqlalchemy.types.Interval)
@@ -175,6 +174,8 @@ def gmoscal(req, selection):
      query = query.filter(DiskFile.canonical == True)
 
      # Fudge and add the selection criteria
+     # Keep the same selection from the flats above, but drop the spectroscopy specifier and add some others
+     selection.pop('spectroscopy')
      selection['observation_type']='BIAS'
      selection['inst']='GMOS'
      selection['qa_state']='Pass'
