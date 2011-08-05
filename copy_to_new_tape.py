@@ -5,7 +5,6 @@ from FitsStorageConfig import *
 from FitsStorageLogger import *
 from FitsStorageUtils import *
 from FitsStorageTape import TapeDrive
-#from subprocess import call
 import os
 import re
 import datetime
@@ -13,7 +12,6 @@ import time
 import subprocess
 import tarfile
 import urllib
-import cStringIO
 from xml.dom.minidom import parseString
 
 
@@ -53,14 +51,20 @@ query = query.filter(TapeFile.md5 == TapeRead.md5)
 
 tapes = query.all()
 
-labels = []
 if(len(tapes) == 0):
   logger.info("No tapes to be read, exiting")
   sys.exit(0)
 
 for tape in tapes:
-  labels.append(tape.label)
-logger.info("The following tapes contain requested files: %s" % labels)
+  query = session.query(func.sum(TapeFile.size)).select_from(Tape, TapeWrite, TapeFile, TapeRead)
+  query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
+  query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
+  query = query.filter(TapeFile.filename == TapeRead.filename)
+  query = query.filter(TapeFile.md5 == TapeRead.md5)
+  query = query.filter(Tape.label == tape.label)
+  query = query.group_by(Tape)
+  s = query.first()
+  logger.info("Tape %s contains %.2f GB to read" % (tape.label, s[0] / 1.0E9))
 
 if(options.list_tapes):
   sys.exit(0)
@@ -183,7 +187,8 @@ try:
     # Open the tarfile on the read tape
     fromtar = tarfile.open(name=fromtd.dev, mode='r|', bufsize=blksize)
 
-    # Loop through the tar file
+    # Loop through the tar file. Don't delete from the to-do lists until we sucessfully close the files
+    done = []
     for tarinfo in fromtar:
       if tarinfo.name in filenames:
         logger.info("Processing file %s" % tarinfo.name)
@@ -193,24 +198,7 @@ try:
             tf = thing
             break
         logger.debug("Found old tapefile: id=%d; filename=%s" % (tf.id, tf.filename))
-        # Read the data into memory
-        logger.debug("Reading data from source tape")
         f = fromtar.extractfile(tarinfo)
-        bigbuffer = f.read()
-        f.close()
-        filelike = cStringIO.StringIO(bigbuffer)
-        # Check the md5sum
-        md5 = CadcCRC.md5sumfile(filelike)
-        if (md5 == tf.md5) :
-          logger.debug("md5sum for filename %s matches" % tf.filename)
-        else:
-          logger.error("md5sum mismatch for filename %s" % tf.filename)
-        filelike.seek(0)
-        # Delete from tape read
-        logger.debug("Deleting %s from taperead" % tarinfo.name)
-        session.query(TapeRead).filter(TapeRead.filename==tarinfo.name).delete()
-        session.commit()
-        filenames.remove(tarinfo.name)
         # Add the file to the new tar archive.
         # For some reason we need to construct the TarInfo object manually.
         # I guess because it has the header from the other tarfile in it otherwise
@@ -224,11 +212,12 @@ try:
         newtarinfo.gid = tarinfo.gid
         newtarinfo.uname = tarinfo.uname
         newtarinfo.gname = tarinfo.gname
-        #logger.debug("newtarinfo: %s" % newtarinfo.get_info(encoding=None, errors=None))
         try:
-          logger.debug("Writing data of %s to destination tar archive" % newtarinfo.name)
-          totar.addfile(newtarinfo, filelike)
-          filelike.close()
+          logger.debug("Copying data of file %s" % newtarinfo.name)
+          totar.addfile(newtarinfo, f)
+          f.close()
+          # Add the file to the done list
+          done.append(tarinfo.name)
         except:
           logger.error("Error adding file to tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
           logger.info("Probably the tape filled up - Marking tape as full in the DB - label: %s" % totape.label)
@@ -263,6 +252,13 @@ try:
       logger.info("Closing both tar archives")
       fromtar.close()
       totar.close()
+      # Delete the files we processed from the to-do lists
+      for fn in done:
+        logger.debug("Deleting %s from taperead" % fn)
+        session.query(TapeRead).filter(TapeRead.filename==fn).delete()
+        session.commit()
+        filenames.remove(fn)
+
     except:
       logger.error("Error closing tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
       totarok = False
@@ -275,7 +271,10 @@ try:
     tw.size = bytecount
     session.commit()
 
-
+    # If the previous tar failed, we should bail out now
+    if(totarok == False):
+      logger.error("Previous Tar operation failed, stopping now")
+      break
 
   # Are there any more files in TapeRead?
   taperead = session.query(TapeRead).all()
