@@ -55,7 +55,9 @@ if(len(tapes) == 0):
   logger.info("No tapes to be read, exiting")
   sys.exit(0)
 
+labels = []
 for tape in tapes:
+  labels.append(tape.label)
   query = session.query(func.sum(TapeFile.size)).select_from(Tape, TapeWrite, TapeFile, TapeRead)
   query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
   query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
@@ -72,6 +74,7 @@ if(options.list_tapes):
 try:
   # Make a FitsStorageTape object from class TapeDrive initializing the device and scratchdir
   fromtd = TapeDrive(options.fromtapedrive, FitsStorageConfig.fits_tape_scratchdir)
+  logger.info("Reading tape labels...")
   fromlabel = fromtd.readlabel()
   logger.info("You are reading from this tape: %s" % fromlabel)
   if fromlabel not in labels:
