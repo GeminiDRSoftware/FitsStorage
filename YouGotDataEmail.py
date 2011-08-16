@@ -1,8 +1,11 @@
 from FitsStorage import *
 import FitsStorageConfig
 from FitsStorageUtils import *
+from FitsStorageLogger import *
+
 
 import urllib2
+import sys
 import re
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -17,6 +20,8 @@ parser.add_option("--replyto", action="store", dest="replyto", default="gnda@gem
 
 mailhost = "smtp.gemini.edu"
 cre = re.compile('\.fits')
+
+logger.info("YouveGotDataEmail.py starting")
 
 # The project / email list. Get from the database
 session = sessionfactory()
@@ -38,6 +43,7 @@ for notif in notifs:
   if(match):
 
     subject = "New Data for %s" % notif.selection
+    logger.info(subject)
 
     msg = MIMEMultipart()
 
@@ -67,7 +73,11 @@ for notif in notifs:
       cclist = notif.cc.split(',')
       fulllist += cclist
 
-
-    smtp = smtplib.SMTP(mailhost)
-    smtp.sendmail(options.fromaddr, fulllist, msg.as_string())
-    smtp.quit()
+    try:
+      logger.info("Sending Email- To: %s; CC: %s; Subject: %s" % (msg['To'], msg['Cc'], msg['Subject']))
+      smtp = smtplib.SMTP(mailhost)
+      smtp.sendmail(options.fromaddr, fulllist, msg.as_string())
+      retval = smtp.quit()
+      logger.info("SMTP seems to have worked OK: %s" % str(retval))
+    except smtplib.SMTPRecipientsRefused:
+      logger.error("Error sending mail message - Exception: %s: %s" % (sys.exc_info()[0], sys.exc_info()[1]))
