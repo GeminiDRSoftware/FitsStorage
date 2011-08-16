@@ -81,3 +81,5 @@ for notif in notifs:
       logger.info("SMTP seems to have worked OK: %s" % str(retval))
     except smtplib.SMTPRecipientsRefused:
       logger.error("Error sending mail message - Exception: %s: %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+
+logger.info("YouveGotDataEmail.py exiting normally")
