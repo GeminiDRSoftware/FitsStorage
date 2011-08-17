@@ -66,10 +66,13 @@ class CalibrationGMOS(Calibration):
       if((self.descriptors['spectroscopy']==False) and (self.descriptors['observation_type']=='OBJECT') and (self.descriptors['object']!='Twilight')):
         list.append('processed_fringe')
 
-        #list.append('dark')
-        #list.append('flat')
-        #list.append('processed_flat')
-        #list.append('processed_fringe')
+      # If it (is nod and shuffle) and (is an OBJECT), then it needs a dark
+      if((self.descriptors['nodandshuffle']==True) and (self.descriptors['observation_type']=='OBJECT')):
+        list.append('dark')
+
+      #list.append('flat')
+      #list.append('processed_flat')
+      #list.append('processed_fringe')
 
     return list
 
@@ -134,7 +137,10 @@ class CalibrationGMOS(Calibration):
     query = query.filter(Gmos.detector_x_bin==self.descriptors['detector_x_bin']).filter(Gmos.detector_y_bin==self.descriptors['detector_y_bin'])
     query = query.filter(Gmos.read_speed_setting==self.descriptors['read_speed_setting'])
     query = query.filter(Gmos.gain_setting==self.descriptors['gain_setting'])
-    query = query.filter(Header.exposure_time==self.descriptors['exposure_time'])
+
+    # For some strange reason, GMOS exposure times sometimes come out a few 10s of ms different between the darks and science frames
+    # K.Roth 20110817 told PH just make it the nearest second, as you can't demand non integer times anyway.
+    query = query.filter(func.abs(Header.exposure_time - self.descriptors['exposure_time']) < 1.0)
     query = query.filter(Gmos.nodandshuffle==self.descriptors['nodandshuffle'])
     if(self.descriptors['nodandshuffle']):
       query = query.filter(Gmos.nod_count==self.descriptors['nod_count'])
