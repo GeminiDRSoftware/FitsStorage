@@ -303,7 +303,7 @@ def gmoscal(req, selection):
        req.write('</P>')
 
      # Now the Nod and Shuffle report
-     req.write('<H2>Nod and Shuffle</H2>')
+     req.write('<H2>Nod and Shuffle Darks</H2>')
      req.write('<P>This table shows how many suitable N&S darks can be found for every nodandshuffle OBJECT science frame within the last year. It counts darks taken within 6 months of the science as well as the total number found. We aim to have 15 darks taken within 6 months of the science. You can also see the number of months between the science and the most distant one within the 15 to give you an idea how far back you have to go to find a set of 15. If you see the same observation Id listed twice, then there are observations in that observation ID that require different darks.</P>')
 
      # The basic query for this
