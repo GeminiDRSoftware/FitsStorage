@@ -4,6 +4,7 @@ from FitsStorageUtils import *
 from FitsStorageLogger import *
 
 
+import base64
 import urllib2
 import sys
 import re
@@ -16,12 +17,22 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--emailfrom", action="store", dest="fromaddr", default="fitsdata@gemini.edu", help="Email Address to send from")
 parser.add_option("--replyto", action="store", dest="replyto", default="gnda@gemini.edu", help="Set a Reply-To email header")
+parser.add_option("--date", action="store", dest="date", default = "today", help="Specify an alternate date to check for data from")
+parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
+parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 (options, args) = parser.parse_args()
+# Logging level to debug? Include stdio log?
+setdebug(options.debug)
+setdemon(options.demon)
 
-mailhost = "smtp.gemini.edu"
+
+# ISG have local smtp servers set up on the fits hosts (mkofits1 and cpofits1) that relay mail to the gemini smtp
+# servers without needing to authenticate. Otherwise, the gemini smtp will not relay to external addresses.
+
+mailhost = "localhost"
 cre = re.compile('\.fits')
 
-logger.info("YouveGotDataEmail.py starting")
+logger.info("YouveGotDataEmail.py starting for date %s" % options.date)
 
 # The project / email list. Get from the database
 session = sessionfactory()
@@ -30,10 +41,11 @@ notifs = session.query(Notification).all()
 for notif in notifs:
 
   if(notif.internal):
-    url = "http://fits/summary/today/%s" % notif.selection
+    url = "http://fits/summary/%s/%s" % (options.date, notif.selection)
   else:
-    url = "http://fits/summary/nolinks/today/%s" % notif.selection
+    url = "http://fits/summary/nolinks/%s/%s" % (options.date, notif.selection)
 
+  logger.debug("URL is: %s" % url)
   f = urllib2.urlopen(url)
   html = f.read()
   f.close()
@@ -72,6 +84,8 @@ for notif in notifs:
     if(notif.cc):
       cclist = notif.cc.split(',')
       fulllist += cclist
+    # For now, I Bcc myself on all the emails to see that it's working...
+    fulllist.append('phirst@gemini.edu')
 
     try:
       logger.info("Sending Email- To: %s; CC: %s; Subject: %s" % (msg['To'], msg['Cc'], msg['Subject']))
