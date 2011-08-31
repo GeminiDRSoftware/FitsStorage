@@ -70,6 +70,7 @@ for fe in dom.getElementsByTagName("file"):
   dict['filename']=fe.getElementsByTagName("filename")[0].childNodes[0].data
   dict['size']=int(fe.getElementsByTagName("size")[0].childNodes[0].data)
   dict['ccrc']=fe.getElementsByTagName("ccrc")[0].childNodes[0].data
+  dict['md5']=fe.getElementsByTagName("md5")[0].childNodes[0].data
   dict['lastmod']=fe.getElementsByTagName("lastmod")[0].childNodes[0].data
   files.append(dict)
   totalsize += dict['size']
@@ -130,7 +131,7 @@ try:
     i+=1
     filename = f['filename']
     size = int(f['size'])
-    ccrc = f['ccrc']
+    md5 = f['md5']
     url="http://%s/file/%s" % (options.diskserver, filename)
     logger.info("Fetching file (%d/%d): %s from %s" % (i, numfiles, filename, url))
     retcode=subprocess.call(['/usr/bin/curl', '-s', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url])
@@ -143,18 +144,14 @@ try:
       sys.exit(1)
     else:
       # Curl command succeeded.
-      # Check the CRC of the file we got against the DB
-      filecrc = CadcCRC.cadcCRC(filename)
-      if(filecrc != ccrc):
-        logger.error("CRC mismatch for file %s: file: %s, database: %s" % (filename, filecrc, ccrc))
+      # Check the md5 of the file we got against the DB
+      filemd5 = CadcCRC.md5sum(filename)
+      if(filemd5 != md5):
+        logger.error("md5sum mismatch for file %s: file: %s, database: %s" % (filename, filemd5, md5))
         tds[0].cdback()
         tds[0].cleanup()
         session.close()
         sys.exit(1)
-      # Check the md5sum of the file we got against the DB
-      # Actually, the DB doesn't have md5 yet, so just calcultate it here for use later.
-      md5sum = CadcCRC.md5sum(filename)
-      f['md5sum'] = md5sum
   logger.info("All files fetched OK")
 except:
   string = traceback.format_tb(sys.exc_info()[2])
@@ -224,7 +221,7 @@ for i in range(0, len(tds)):
       filename = f['filename']
       size = int(f['size'])
       ccrc = f['ccrc']
-      md5 = f['md5sum']
+      md5 = f['md5']
       lastmod = f['lastmod']
       logger.info("Adding %s to tar file on tape %s in drive %s" % (filename, tape.label, td.dev))
       try:
