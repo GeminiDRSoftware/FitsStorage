@@ -107,13 +107,16 @@ def ingest_file(session, filename, path, force_md5, skip_fv, skip_wmd):
       logger.debug("Instrument is: %s" % inst)
       session.commit()
       logger.debug("Adding new Footprint entries")
-      fps = header.footprints()
-      for i in fps.keys():
-        fp = Footprint(header)
-        fp.populate(i)
-        session.add(fp)
-        session.commit()
-        add_footprint(session, fp.id, fps[i])
+      try:
+        fps = header.footprints()
+        for i in fps.keys():
+          fp = Footprint(header)
+          fp.populate(i)
+          session.add(fp)
+          session.commit()
+          add_footprint(session, fp.id, fps[i])
+      except:
+        pass
       if(header.spectroscopy == False):
         logger.debug("Imaging - populating PhotStandardObs")
         do_std_obs(session, header.id)
