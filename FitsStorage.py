@@ -339,7 +339,9 @@ class Header(Base):
       except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
         pass
       try:
-        self.exposure_time = ad.exposure_time().for_db()
+        # NICI exposure times are a pain, because there's two of them... Not sure how to handle this for now.
+        if(self.instrument != 'NICI'):
+          self.exposure_time = ad.exposure_time().for_db()
       except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
         pass
       try:
