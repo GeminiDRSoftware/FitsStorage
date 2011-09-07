@@ -140,7 +140,8 @@ class CalibrationGMOS(Calibration):
 
     # For some strange reason, GMOS exposure times sometimes come out a few 10s of ms different between the darks and science frames
     # K.Roth 20110817 told PH just make it the nearest second, as you can't demand non integer times anyway.
-    query = query.filter(func.abs(Header.exposure_time - self.descriptors['exposure_time']) < 1.0)
+    # Yeah, and GMOS-S ones come out a few 10s of *seconds* different - going to choose darks within 50 secs for now...
+    query = query.filter(func.abs(Header.exposure_time - self.descriptors['exposure_time']) < 50.0)
     query = query.filter(Gmos.nodandshuffle==self.descriptors['nodandshuffle'])
     if(self.descriptors['nodandshuffle']):
       query = query.filter(Gmos.nod_count==self.descriptors['nod_count'])
