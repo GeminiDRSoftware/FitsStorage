@@ -14,8 +14,7 @@ import copy
 
 def gmoscal(req, selection):
    """
-   This generates a GMOS imaging twilight flat report.
-   And a BIAS report.
+   This generates a GMOS imaging twilight flat, bias and nod and shuffle darks report.
    If no date or daterange is given, tries to find last processing date
    """
 
