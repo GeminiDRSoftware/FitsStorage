@@ -3,8 +3,6 @@ import FitsStorageConfig
 from FitsStorageUtils import *
 from FitsStorageLogger import *
 
-
-import base64
 import urllib2
 import sys
 import re
