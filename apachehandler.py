@@ -251,9 +251,17 @@ def handler(req):
       today = datetime.datetime.utcnow().date()
       canhaveit = False
 
+      # Are we passed the release data?
       if((header.release) and (today >= header.release)):
         # Yes, the data are public
         canhaveit = True
+ 
+      # Is the data a dayCal or a partnerCal or an acqCal?
+      elif(header.observation_class in ['dayCal', 'partnerCal', 'acqCal']):
+        # Yes, the data are public. These should have a release date too, except that
+        # Cals from the pipeline processed directly off the DHS machine don't
+        canhaveit = True
+
       else:
         # No, the data are not public. See if we got the magic cookie
         cookies = Cookie.get_cookies(req)
