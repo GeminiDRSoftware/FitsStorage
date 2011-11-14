@@ -210,7 +210,7 @@ class CalibrationGMOS(Calibration):
     if(processed):
       query = query.filter(Header.reduction=='PROCESSED_FLAT')
     else:
-      query = query.filter(Header.reduction=='FLAT')
+      query = query.filter(Header.reduction=='RAW').filter(Header.observation_type=='FLAT')
 
     # Search only the canonical (latest) entries
     query = query.filter(DiskFile.canonical==True)
@@ -230,7 +230,8 @@ class CalibrationGMOS(Calibration):
 
     if(self.descriptors['spectroscopy']):
       query = query.filter(Gmos.disperser==self.descriptors['disperser'])
-      query = query.filter(Header.central_wavelength==self.descriptors['central_wavelength'])
+      # Central wavelength is in microns (by definition in the DB table).
+      query = query.filter(func.abs(Header.central_wavelength-self.descriptors['central_wavelength']) < 0.001)
 
     # The science amp_read_area must be equal or substring of the flat amp_read_area
     query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
