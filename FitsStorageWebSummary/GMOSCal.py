@@ -294,7 +294,7 @@ def gmoscal(req, selection):
            nobiases.append(str(date))
          date += oneday
 
-       req.write('<P>There were %d dates with no biases: ' % len(nobiases))
+       req.write('<P>There were %d dates with no biases set to Pass: ' % len(nobiases))
        if(len(nobiases)>0):
          req.write(', '.join(nobiases))
        req.write('</P>')
