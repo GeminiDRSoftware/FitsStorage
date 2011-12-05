@@ -14,6 +14,7 @@ from optparse import OptionParser
 fsc_localmode = FitsStorageConfig.fsc_localmode
 parser = OptionParser()
 parser.add_option("--force-crc", action="store_true", dest="force_crc", help="Force crc check on pre-existing files")
+parser.add_option("--force", action="store_true", dest="force", help="Force re-ingest of file regardless")
 parser.add_option("--skip-fv", action="store_true", dest="skip_fv", help="Do not run fitsverify on the files")
 parser.add_option("--skip-wmd", action="store_true", dest="skip_wmd", help="Do not run a wmd check on the files")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
@@ -78,7 +79,7 @@ while(loop):
       else:
         session.begin(subtransactions=True)
       try:
-        ingest_file(session, iq.filename, iq.path, options.force_crc, options.skip_fv, options.skip_wmd)
+        ingest_file(session, iq.filename, iq.path, options.force_crc, options.force, options.skip_fv, options.skip_wmd)
         session.commit()
       except:
         logger.info("Problem Ingesting File - Rolling back" )
