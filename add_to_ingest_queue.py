@@ -10,7 +10,7 @@ import time
 # Option Parsing
 from optparse import OptionParser
 parser = OptionParser()
-parser.add_option("--file-re", action="store", type="string", dest="file_re", help="python regular expression string to select files by. Special values are today, twoday, fourday, tenday to include only files from today, the last two days, the last four days, or the last 10 days respectively (days counted as UTC days)")
+parser.add_option("--file-re", action="store", type="string", dest="file_re", help="python regular expression string to select files by. Special values are today, twoday, fourday, tenday twentyday to include only files from today, the last two days, the last four days, or the last 10 days respectively (days counted as UTC days)")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 parser.add_option("--path", action="store", dest="path", default = "", help="Use given path relative to storage root")
@@ -59,6 +59,14 @@ if(options.file_re == "tenday"):
   list = []
   then = now
   for i in range(10):
+    list.append(then.date().strftime("%Y%m%d"))
+    then = then-delta
+  file_re = '|'.join(list)
+
+if(options.file_re == "twentyday"):
+  list = []
+  then = now
+  for i in range(20):
     list.append(then.date().strftime("%Y%m%d"))
     then = then-delta
   file_re = '|'.join(list)
