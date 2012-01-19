@@ -69,16 +69,6 @@ class TapeDrive:
     (stdoutstring, stderrstring) = sp.communicate()
     retval = sp.returncode
 
-    retry = 10
-    while (retry and retval):
-      # Maybe got a device in use error, try waiting 10 secs then re-try
-      print "mt failed, waiting 30 secs and re-try"
-      time.sleep(20)
-      sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-      (stdoutstring, stderrstring) = sp.communicate()
-      retval = sp.returncode
-      retry -= 1
-
     if(retval and fail):
       print '"mt -f %s %s %s" failed with exit value %d:' % (self.dev, mtcmd, mtarg, retval)
       print stdoutstring
