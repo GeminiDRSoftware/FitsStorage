@@ -134,9 +134,19 @@ try:
     md5 = f['md5']
     url="http://%s/file/%s" % (options.diskserver, filename)
     logger.info("Fetching file (%d/%d): %s from %s" % (i, numfiles, filename, url))
-    retcode=subprocess.call(['/usr/bin/curl', '-s', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url])
+    retcode=-1
+    tries=0
+    while((retcode !=0) and (tries < 10)):
+      if(tries !=0):
+        logger.info("Sleeping %d minutes before re-try" % tries)
+        time.sleep(tries * 60)
+      retcode=subprocess.call(['/usr/bin/curl', '-s', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url])
+      tries+=1
+      if(retcode):
+        logger.warning("Curl failed for url: %s" % url)
+
     if(retcode):
-      # Curl command failed. Bail out
+      # Curl failed. Bail out
       logger.error("Fetch failed for url: %s" % url)
       tds[0].cdback()
       tds[0].cleanup()
