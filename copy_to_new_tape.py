@@ -145,9 +145,11 @@ try:
     fileresults = query.all()
     logger.info("Going to copy %d files from this tar archive" % len(fileresults))
     filenames = []
-    for thing in fileresults:
-      filenames.append(thing.filename.encode())
-      bytes += thing.size
+    frindex = {}
+    for i in range(len(fileresults)):
+      filenames.append(fileresults[i].filename.encode())
+      bytes += fileresults[i].size
+      frindex[fileresults[i].filename.encode()] = i
 
     # Prepare to write to the new tape
     # Update tape first/lastwrite
@@ -196,10 +198,14 @@ try:
       if tarinfo.name in filenames:
         logger.info("Processing file %s" % tarinfo.name)
         # Re-find the tapefile instance
-        for thing in fileresults:
-          if thing.filename.encode() == tarinfo.name:
-            tf = thing
-            break
+        tf = fileresults[frindex[tarinfo.name]]
+        if (tf.filename.encode() != tarinfo.name):
+          logger.error("tapefile instance index dereference problem! Skipping")
+          break
+        #for thing in fileresults:
+          #if thing.filename.encode() == tarinfo.name:
+            #tf = thing
+            #break
         logger.debug("Found old tapefile: id=%d; filename=%s" % (tf.id, tf.filename))
         f = fromtar.extractfile(tarinfo)
         # Add the file to the new tar archive.
