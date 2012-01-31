@@ -21,6 +21,10 @@ utcend = utcnow - datetime.timedelta(days=options.skipdays)
 utcstart = utcend - datetime.timedelta(days=options.ndays)
 daterange="%s-%s" % (utcstart.date().strftime("%Y%m%d"), utcend.date().strftime("%Y%m%d"))
 
+# If ndays == 1 then just do a single date
+if(options.ndays == 1):
+  daterange = "%s" % utcend.date().strftime("%Y%m%d")
+
 url = "http://%s/calibrations/GMOS/Win/%s/arc/warnings" % (options.httpserver, daterange)
 
 f = urllib2.urlopen(url)
