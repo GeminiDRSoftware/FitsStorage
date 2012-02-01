@@ -401,7 +401,7 @@ def getselection(things):
     if(thing=='spectroscopy' or thing=='Spectroscopy'):
       selection['spectroscopy']=True
       recognised=True
-    if(thing=='Pass' or thing=='Usable' or thing=='Fail' or thing=='Win'):
+    if(thing=='Pass' or thing=='Usable' or thing=='Fail' or thing=='Win' or thing=='NotFail'):
       selection['qa_state']=thing
       recognised=True
     if(thing=='AO' or thing=='NOTAO'):
