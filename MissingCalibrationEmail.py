@@ -25,7 +25,7 @@ daterange="%s-%s" % (utcstart.date().strftime("%Y%m%d"), utcend.date().strftime(
 if(options.ndays == 1):
   daterange = "%s" % utcend.date().strftime("%Y%m%d")
 
-url = "http://%s/calibrations/GMOS/Win/%s/arc/warnings" % (options.httpserver, daterange)
+url = "http://%s/calibrations/GMOS/NotFail/%s/arc/warnings" % (options.httpserver, daterange)
 
 f = urllib2.urlopen(url)
 html = f.read()
