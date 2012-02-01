@@ -41,6 +41,8 @@ def sayselection(selection):
   if('qa_state' in selection):
     if(selection['qa_state']=='Win'):
       string += "; QA State: Win (Pass or Usable)"
+    elif(selection['qa_state']=='NotFail'):
+      string += "; QA State: Not Fail"
     else:
       string += "; QA State: %s" % selection['qa_state']
   if('ao' in selection):
@@ -144,6 +146,8 @@ def queryselection(query, selection):
   if('qa_state' in selection):
     if(selection['qa_state']=='Win'):
       query = query.filter(or_(Header.qa_state=='Pass', Header.qa_state=='Usable'))
+    elif(selection['qa_state']=='NotFail'):
+      query = query.filter(Header.qa_state!='Fail')
     else:
       query = query.filter(Header.qa_state==selection['qa_state'])
 
