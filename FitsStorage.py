@@ -968,3 +968,101 @@ class Notification(Base):
 
   def __init__(self, label):
     self.label = label
+
+class QAreport(Base):
+  """
+  This is the ORM class for a QA metric report.
+  """
+  __tablename__ = 'qareport'
+
+  id = Column(Integer, primary_key=True)
+  hostname = Column(Text)
+  userid = Column(Text)
+  processid = Column(Integer)
+  executable = Column(Text)
+  software = Column(Text)
+  software_version = Column(Text)
+  context = Column(Text)
+  submit_time = Column(DateTime)
+  submit_host = Column(Text)
+
+class QAmetricIQ(Base):
+  """
+  This is the ORM class for a QA IQ metric measurement
+  """
+  __tablename__ = 'qametriciq'
+
+  id = Column(Integer, primary_key=True)
+  qareport_id = Column(Integer, ForeignKey('qareport.id'))
+  datalabel = Column(Text)
+  filename = Column(Text)
+  # Image Quality Values
+  fwhm = Column(Numeric(precision=6, scale=3))
+  fwhmerr = Column(Numeric(precision=6, scale=3))
+  elip = Column(Numeric(precision=5, scale=3))
+  eliperr = Column(Numeric(precision=5, scale=3))
+  pa = Column(Numeric(precision=6, scale=3))
+  paerr = Column(Numeric(precision=6, scale=3))
+  strehl = Column(Numeric(precision=6, scale=3))
+  strehlerr = Column(Numeric(precision=6, scale=3))
+
+  def __init__(self, qareport):
+    self.qareport_id = qareport.id
+
+
+class QAmetricZP(Base):
+  """
+  This is the ORM class for a QA ZP metric measurement
+  """
+  __tablename__ = 'qametriczp'
+
+  id = Column(Integer, primary_key=True)
+  qareport_id = Column(Integer, ForeignKey('qareport.id'))
+  datalabel = Column(Text)
+  filename = Column(Text)
+  # Photometry
+  mag = Column(Numeric(precision=5, scale=3))
+  magerr = Column(Numeric(precision=5, scale=3))
+
+  def __init__(self, qareport):
+    self.qareport_id = qareport.id
+
+
+class QAmetricSB(Base):
+  """
+  This is the ORM class for a QA SB metric measurement
+  """
+  __tablename__ = 'qametricsb'
+
+  id = Column(Integer, primary_key=True)
+  qareport_id = Column(Integer, ForeignKey('qareport.id'))
+  datalabel = Column(Text)
+  filename = Column(Text)
+  # Sky Background
+  mag = Column(Numeric(precision=5, scale=3))
+  magerr = Column(Numeric(precision=5, scale=3))
+
+  def __init__(self, qareport):
+    self.qareport_id = qareport.id
+
+
+
+class QAmetricPE(Base):
+  """
+  This is the ORM class for a QA PE (Astrometric Pointing Error) metric measurement
+  """
+  __tablename__ = 'qametricpe'
+
+  id = Column(Integer, primary_key=True)
+  qareport_id = Column(Integer, ForeignKey('qareport.id'))
+  datalabel = Column(Text)
+  filename = Column(Text)
+  # Astrometric Pointing Error
+  pe_ra_val = Column(Numeric(precision=9, scale=3))
+  pe_ra_err = Column(Numeric(precision=9, scale=3))
+  pe_dec_val = Column(Numeric(precision=9, scale=3))
+  pe_dec_err = Column(Numeric(precision=9, scale=3))
+
+  def __init__(self, qareport):
+    self.qareport_id = qareport.id
+

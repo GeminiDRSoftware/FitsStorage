@@ -20,6 +20,7 @@ from FitsStorageWebSummary.Calibrations import calibrations
 from FitsStorageWebSummary.UploadProcessedCal import upload_processed_cal
 from FitsStorageWebSummary.CurationReport import curation_report
 from FitsStorageWebSummary.Standards import standardobs
+from FitsStorageQAmetrics import qareport
 
 from GeminiMetadataUtils import *
 
@@ -297,6 +298,10 @@ def handler(req):
     selection = getselection(things)
     retval = gmoscal(req, selection)
     return retval
+
+  # Submit QA metric measurement report
+  if(this == "qareport"):
+    return qareport(req)
 
   # Database Statistics
   if(this == "stats"):
