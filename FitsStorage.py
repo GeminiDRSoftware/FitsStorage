@@ -1058,10 +1058,10 @@ class QAmetricPE(Base):
   datalabel = Column(Text)
   filename = Column(Text)
   # Astrometric Pointing Error
-  pe_ra_val = Column(Numeric(precision=9, scale=3))
-  pe_ra_err = Column(Numeric(precision=9, scale=3))
-  pe_dec_val = Column(Numeric(precision=9, scale=3))
-  pe_dec_err = Column(Numeric(precision=9, scale=3))
+  dra = Column(Numeric(precision=9, scale=3))
+  draerr = Column(Numeric(precision=9, scale=3))
+  ddec = Column(Numeric(precision=9, scale=3))
+  ddecerr = Column(Numeric(precision=9, scale=3))
 
   def __init__(self, qareport):
     self.qareport_id = qareport.id

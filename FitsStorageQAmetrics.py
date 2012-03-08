@@ -91,3 +91,104 @@ def get_value(element):
   except:
     return None
    
+
+def qametrics(req, things):
+  """
+  This function is the initial, simple display of QA metric data
+  """
+  session = sessionfactory()
+  try:
+
+    req.content_type = "text/plain"
+    if ('iq' in things):
+      query = session.query(QAmetricIQ).select_from(QAmetricIQ, QAreport).filter(QAmetricIQ.qareport_id == QAreport.id)
+      qalist = query.all()
+
+      req.write("#Datalabel, filter, utdatetime, FWHM, FWHM_err\n")
+
+      for qa in qalist:
+        hquery = session.query(Header).select_from(Header, DiskFile).filter(Header.diskfile_id == DiskFile.id).filter(DiskFile.canonical == True)
+        hquery = hquery.filter(Header.data_label == qa.datalabel)
+        header = hquery.first()
+        if(header):
+          filter = header.filter_name
+          utdt = header.ut_datetime
+        else:
+          filter = None
+          utdt = None
+
+        req.write("%s, %s, %s, %.3f, %.3f\n" % (qa.datalabel, filter, utdt, qa.fwhm, qa.fwhmerr))
+     
+      req.write("#---------") 
+
+    if ('zp' in things):
+      query = session.query(QAmetricZP).select_from(QAmetricZP, QAreport).filter(QAmetricZP.qareport_id == QAreport.id)
+      qalist = query.all()
+
+      req.write("#Datalabel, filter, utdatetime, zp_mag, zp_mag_err\n")
+
+      for qa in qalist:
+        hquery = session.query(Header).select_from(Header, DiskFile).filter(Header.diskfile_id == DiskFile.id).filter(DiskFile.canonical == True)
+        hquery = hquery.filter(Header.data_label == qa.datalabel)
+        header = hquery.first()
+        if(header):
+          filter = header.filter_name
+          utdt = header.ut_datetime
+        else:
+          filter = None
+          utdt = None
+
+        req.write("%s, %s, %s, %.3f, %.3f\n" % (qa.datalabel, filter, utdt, qa.mag, qa.magerr))
+     
+      req.write("#---------") 
+
+
+    if ('sb' in things):
+      query = session.query(QAmetricSB).select_from(QAmetricSB, QAreport).filter(QAmetricSB.qareport_id == QAreport.id)
+      qalist = query.all()
+
+      req.write("#Datalabel, filter, utdatetime, sb_mag, sb_mag_err\n")
+
+      for qa in qalist:
+        hquery = session.query(Header).select_from(Header, DiskFile).filter(Header.diskfile_id == DiskFile.id).filter(DiskFile.canonical == True)
+        hquery = hquery.filter(Header.data_label == qa.datalabel)
+        header = hquery.first()
+        if(header):
+          filter = header.filter_name
+          utdt = header.ut_datetime
+        else:
+          filter = None
+          utdt = None
+
+        req.write("%s, %s, %s, %.3f, %.3f\n" % (qa.datalabel, filter, utdt, qa.mag, qa.magerr))
+     
+      req.write("#---------") 
+
+    if ('pe' in things):
+      query = session.query(QAmetricPE).select_from(QAmetricPE, QAreport).filter(QAmetricPE.qareport_id == QAreport.id)
+      qalist = query.all()
+
+      req.write("#Datalabel, filter, utdatetime, dra, dra_err, ddec, ddec_err\n")
+
+      for qa in qalist:
+        hquery = session.query(Header).select_from(Header, DiskFile).filter(Header.diskfile_id == DiskFile.id).filter(DiskFile.canonical == True)
+        hquery = hquery.filter(Header.data_label == qa.datalabel)
+        header = hquery.first()
+        if(header):
+          filter = header.filter_name
+          utdt = header.ut_datetime
+        else:
+          filter = None
+          utdt = None
+
+        req.write("%s, %s, %s, %.3f, %.3f, %.3f, %.3f\n" % (qa.datalabel, filter, utdt, qa.dra, qa.draerr, qa.ddec, qa.ddecerr))
+
+      req.write("#---------")
+
+
+  except IOError:
+    pass
+  finally:
+    session.close()
+
+  return apache.OK
