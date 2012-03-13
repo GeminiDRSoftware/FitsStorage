@@ -77,6 +77,8 @@ def gmoscal(req, selection):
          selection['qa_state']='Pass'
          # Only select full frame dayCals
          query = query.filter(or_(Gmos.amp_read_area == ''''e2v 10031-18-04, right':[5121:6144,1:4608]+'e2v 10031-01-03, right':[3073:4096,1:4608]+'e2v 10031-18-04, left':[4097:5120,1:4608]+'e2v 10031-23-05, left':[1:1024,1:4608]+'e2v 10031-01-03, left':[2049:3072,1:4608]+'e2v 10031-23-05, right':[1025:2048,1:4608]''', Gmos.amp_read_area == ''''EEV 8194-19-04, left':[2049:4096,1:4608]+'EEV 2037-06-03, left':[1:2048,1:4608]+'EEV 8261-07-04, right':[4097:6144,1:4608]'''))
+         # Twilight flats must have the target name 'Twilight'
+         query = query.filter(Header.object == 'Twilight')
 
        query = queryselection(query, selection)
   
