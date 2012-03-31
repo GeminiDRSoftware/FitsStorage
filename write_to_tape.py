@@ -24,6 +24,7 @@ parser.add_option("--tapedrive", action="append", type="string", dest="tapedrive
 parser.add_option("--tapelabel", action="append", type="string", dest="tapelabel", help="tape label of tape. Give this option multiple times to specify multiple tapes. Give the tapedrive and tapelabel arguments in the same order.")
 parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
 parser.add_option("--dontcheck", action="store_true", dest="dontcheck", help="Don't rewind and check the tape label in the drive, go direct to eod and write")
+parser.add_option("--skip", action="store_true", dest="skip", help="Skip files that are already on any tape")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
@@ -75,18 +76,38 @@ for fe in dom.getElementsByTagName("file"):
   files.append(dict)
   totalsize += dict['size']
 
+session = sessionfactory()
+ 
+if(options.skip):
+  actual_files = []
+  for f in files:
+    query = session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape)))
+    query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
+    query = query.filter(TapeFile.filename == f['filename']).filter(TapeFile.md5 == f['md5'])
+    num = query.count()
+    if(num == 0):
+      actual_files.append(f)
+      logger.debug("Not skipping file %s as it is on 0 tapes" % f['filename'])
+    else:
+      logger.info("Skipping File %s : is already on tape %d times" % (f['filename'], num))
+
+  files = actual_files
+    
 numfiles = len(files)
 logger.info("Got %d files totalling %.2f GB to write to tape" % (numfiles, (totalsize / 1.0E9)))
 if(numfiles == 0):
   logger.info("Exiting - no files")
   exit(0)
  
+
+# Check the list for files we are ignoring as duplicates
+
+
 # Make a list containing the tape device objects
 tds = []
 for i in range(0, len(options.tapedrive)):
   tds.append(TapeDrive(options.tapedrive[i], fits_tape_scratchdir))
 
-session = sessionfactory()
 
 # Get the database tape object for each tape label given
 logger.debug("Finding tape records in DB")
@@ -140,7 +161,7 @@ try:
       if(tries !=0):
         logger.info("Sleeping %d minutes before re-try" % tries)
         time.sleep(tries * 60)
-      retcode=subprocess.call(['/usr/bin/curl', '-s', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url])
+      retcode=subprocess.call(['/usr/bin/curl', '-s', '-m', '1000', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url])
       tries+=1
       if(retcode):
         logger.warning("Curl failed for url: %s" % url)
