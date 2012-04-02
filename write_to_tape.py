@@ -25,6 +25,7 @@ parser.add_option("--tapelabel", action="append", type="string", dest="tapelabel
 parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
 parser.add_option("--dontcheck", action="store_true", dest="dontcheck", help="Don't rewind and check the tape label in the drive, go direct to eod and write")
 parser.add_option("--skip", action="store_true", dest="skip", help="Skip files that are already on any tape")
+parser.add_option("--nodeduplicate", action="store_true", dest="nodedup", help="Do Not skip files that are already sucessfully written to this tape or any of these tapes")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
@@ -77,7 +78,64 @@ for fe in dom.getElementsByTagName("file"):
   totalsize += dict['size']
 
 session = sessionfactory()
+
+# Make a list containing the tape device objects
+tds = []
+for i in range(0, len(options.tapedrive)):
+  tds.append(TapeDrive(options.tapedrive[i], fits_tape_scratchdir))
+
+# Get the database tape object for each tape label given
+logger.debug("Finding tape records in DB")
+tapes = []
+for i in range(0, len(options.tapelabel)):
+  query = session.query(Tape).filter(Tape.label == options.tapelabel[i]).filter(Tape.active == True)
+  if(query.count() == 0):
+    logger.error("Could not find active tape with label %s" % options.tapelabel[i])
+    session.close()
+    sys.exit(1)
+  if(query.count() > 1):
+    logger.error("Multiple active tapes with label %s:" % options.tapelabel[i])
+    session.close()
+    sys.exit(1)
+  tapes.append(query.one())
+  logger.debug("Found tape id in database: %d, label: %s" % (tapes[i].id, tapes[i].label))
+  if(tapes[i].full):
+    logger.error("Tape with label %s is full according to the DB. Exiting" % tapes[i].label)
+    sys.exit(2)
+
+tapeids = []
+for t in tapes:
+  tapeids.append(t.id)
+
  
+if(options.nodedup):
+  logger.info("Nodeduplicate option given - not skipping files already on any of these tapes")
+else:
+  logger.info("Checking for duplication on these tapes")
+  actual_files = []
+  for f in files:
+    query = session.query(Tape.id).select_from(join(TapeFile, join(TapeWrite, Tape)))
+    query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
+    query = query.filter(TapeFile.filename == f['filename']).filter(TapeFile.md5 == f['md5'])
+    mytapeids = query.all()
+    if(len(mytapeids)==0):
+      # this file is not on any tapes, include it
+      logger.debug("File not on any tapes, not de-duping it")
+      actual_files.append(f)
+    else:
+      # Need to loop through the tapes that the file is on (mytapeids) and see if any of them
+      # are in the tapes in the drives (tapeids). If so, ditch the file
+      ditch = False
+      mytapeids = mytapeids[0]
+      for mtid in mytapeids:
+        if(mtid in tapeids):
+          logger.info("File %s is on one of the tapes we have, skipping it" % f['filename'])
+          ditch = True
+      if(ditch == False):
+        actual_files.append(f)
+
+  files = actual_files
+
 if(options.skip):
   actual_files = []
   for f in files:
@@ -99,34 +157,6 @@ if(numfiles == 0):
   logger.info("Exiting - no files")
   exit(0)
  
-
-# Check the list for files we are ignoring as duplicates
-
-
-# Make a list containing the tape device objects
-tds = []
-for i in range(0, len(options.tapedrive)):
-  tds.append(TapeDrive(options.tapedrive[i], fits_tape_scratchdir))
-
-
-# Get the database tape object for each tape label given
-logger.debug("Finding tape records in DB")
-tapes = []
-for i in range(0, len(options.tapelabel)):
-  query = session.query(Tape).filter(Tape.label == options.tapelabel[i]).filter(Tape.active == True)
-  if(query.count() == 0):
-    logger.error("Could not find active tape with label %s" % options.tapelabel[i])
-    session.close()
-    sys.exit(1)
-  if(query.count() > 1):
-    logger.error("Multiple active tapes with label %s:" % options.tapelabel[i])
-    session.close()
-    sys.exit(1)
-  tapes.append(query.one())
-  logger.debug("Found tape id in database: %d, label: %s" % (tapes[i].id, tapes[i].label))
-  if(tapes[i].full):
-    logger.error("Tape with label %s is full according to the DB. Exiting" % tapes[i].label)
-    sys.exit(2)
 
 # Check the tape label in the drives
 if(not options.dontcheck):
