@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from astrodata import localfitsstore
 
 from FitsStorageUtils.CreateTables import *
 

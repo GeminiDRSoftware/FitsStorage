@@ -6,8 +6,9 @@ import os
 if not os.path.exists("logs"):
     os.mkdir("logs")
 
+from astrodata import localfitsstore
 import FitsStorage
-import LOCAL_FitsStorageConfig
+import FitsStorageConfig
 from FitsStorageLogger import *
 from FitsStorageUtils.AddToIngestQueue import *
 import re
