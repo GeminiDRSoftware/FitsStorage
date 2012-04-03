@@ -105,7 +105,6 @@ def calmgr(req, selection):
         req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
         req.write("<md5>%s</md5>\n" % cal.diskfile.md5)
         req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
-        print "FITSSTORE108:"+fsc_localmode
         if (not fsc_localmode):
             req.write("<url>http://%s/file/%s</url>\n" % (fits_servername, cal.diskfile.file.filename))
         else:
