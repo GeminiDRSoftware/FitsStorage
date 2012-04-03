@@ -137,6 +137,7 @@ else:
   files = actual_files
 
 if(options.skip):
+  logger.info("Checking for duplication to any tapes")
   actual_files = []
   for f in files:
     query = session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape)))
@@ -152,6 +153,10 @@ if(options.skip):
   files = actual_files
     
 numfiles = len(files)
+totalsize=0
+for f in files:
+  totalsize += f['size']
+
 logger.info("Got %d files totalling %.2f GB to write to tape" % (numfiles, (totalsize / 1.0E9)))
 if(numfiles == 0):
   logger.info("Exiting - no files")
