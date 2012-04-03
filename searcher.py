@@ -48,7 +48,7 @@ class reqProxy():
 
 def search(criteria):
     from astrodata import AstroData
-    # print "search:",repr(criteria)
+    print "FITSSTORE:search:51",repr(criteria)
     #ad = AstroData(sciencefile)
   
     try:

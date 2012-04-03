@@ -3,6 +3,7 @@ This module contains the calmgr html generator function.
 """
 from FitsStorageWebSummary.Selection import *
 from FitsStorageCal import get_cal_object
+from FitsStorageConfig import fsc_localmode
 
 import urllib
 import re
@@ -104,7 +105,11 @@ def calmgr(req, selection):
         req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
         req.write("<md5>%s</md5>\n" % cal.diskfile.md5)
         req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
-        req.write("<url>http://%s/file/%s</url>\n" % (fits_servername, cal.diskfile.file.filename))
+        print "FITSSTORE108:"+fsc_localmode
+        if (not fsc_localmode):
+            req.write("<url>http://%s/file/%s</url>\n" % (fits_servername, cal.diskfile.file.filename))
+        else:
+            req.write("<path>%s</path>" % cal.diskfile.file.path)
         req.write("</calibration>\n")
       else:
         req.write("<!-- NO CALIBRATION FOUND-->\n")
@@ -188,7 +193,10 @@ def calmgr(req, selection):
             req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
             req.write("<md5>%s</md5>\n" % cal.diskfile.md5)
             req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
-            req.write("<url>http://%s/file/%s</url>\n" % (req.server.server_hostname, cal.diskfile.file.filename))
+            if not fsc_localmode:
+                req.write("<url>http://%s/file/%s</url>\n" % (req.server.server_hostname, cal.diskfile.file.filename))
+            else:
+                req.write("<url>file://%s</url>\n" % os.path.join(cal.diskfile.file.path, cal.diskfile.file.filename))
             req.write("</calibration>\n")
           else:
             req.write("<!-- NO CALIBRATION FOUND-->\n")

@@ -3,7 +3,8 @@
 
 # this flag used to fascilitate local mode, as used by Astrodata Recipe System
 fsc_localmode=True
-
+from astrodata import Descriptors
+Descriptors.DescriptorValue._set_db_type("local")
 # Configure the path to the storage root here 
 #storage_root = '/net/wikiwiki/dataflow'
 storage_root = '/home/callen/SVN-AD/gemini_python/test_data'

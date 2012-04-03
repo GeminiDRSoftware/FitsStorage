@@ -1,11 +1,13 @@
 # This is the apache python handler
 # See /etc/httpd/conf.d/python.conf
 # When a request comes in, handler(req) gets called by the apache server
-
-from mod_python import apache
-from mod_python import Cookie
-from mod_python import util
-
+try:
+    from mod_python import apache
+    from mod_python import Cookie
+    from mod_python import util
+except:
+    print "can't import mod_python, not apache environment?"
+    
 import sys
 import FitsStorage
 from FitsStorageWebSummary.Summary import summary
@@ -20,8 +22,10 @@ from FitsStorageWebSummary.Calibrations import calibrations
 from FitsStorageWebSummary.UploadProcessedCal import upload_processed_cal
 from FitsStorageWebSummary.CurationReport import curation_report
 from FitsStorageWebSummary.Standards import standardobs
-from FitsStorageQAmetrics import qareport, qametrics
-
+try:
+    from FitsStorageQAmetrics import qareport, qametrics
+except:
+    print "can't import qareport, qametrics"
 from GeminiMetadataUtils import *
 
 import re

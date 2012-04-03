@@ -2,11 +2,14 @@
 import sys
 sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
 
+import os
+if not os.path.exists("logs"):
+    os.mkdir("logs")
+
 import FitsStorage
-import FitsStorageConfig
+import LOCAL_FitsStorageConfig
 from FitsStorageLogger import *
 from FitsStorageUtils.AddToIngestQueue import *
-import os
 import re
 import datetime
 import time

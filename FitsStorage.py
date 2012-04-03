@@ -266,6 +266,7 @@ class Header(Base):
       # Date and times part
       try:
         self.ut_datetime = ad.ut_datetime().for_db()
+        print "FS269:", self.ut_datetime
       except:
         raise
 
