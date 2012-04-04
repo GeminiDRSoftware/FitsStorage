@@ -1,9 +1,12 @@
 # These are config parameters that are imported into the FitsStorage namespace
 # We put them in a separate file to ease install issues
 
+# NOTE: all setting may be overwritten if environment variable,
+#   FITSSTORAGECONFIG_LOCALMODE, is true
+
 # controls if the system operates in regular FITSSTORE mode or Local Mode, as used by
 # the Astrodata Recipe System.
-fsc_localmode = False
+fsc_localmode = False 
 
 # Configure the path to the storage root here 
 #storage_root = '/data/dataflow'
@@ -46,17 +49,11 @@ fits_log_dir = "/data/logs/"
 fits_tape_scratchdir = "/data/tapescratch"
 
 
-# the following implements logic where a if a copy of FitsStorageConfig 
-# a subdirectory of the current directory, .fitsstore, then this is also
-# loaded (equiv of from ___ import *) in the current directory
-
-import os
-runconfig = ".fitsstore/FitsStorageConfig.py"
-
-if os.path.exists(runconfig):
-    print "Found local config files"
-    rc = open(runconfig)
-    exec(rc)
-    rc.close()
-    print "after run config set"
-
+# the following implements allows astrodata to set local versions of 
+# setting in this module
+import os,sys
+if "FITSSTORAGECONFIG_LOCALMODE" in os.environ:
+    fsc_lm = os.environ["FITSSTORAGECONFIG_LOCALMODE"].strip().lower()
+    if fsc_lm == "true":
+        from astrodata import fscpatch
+        fscpatch.local_fsc_patch(sys.modules[__name__])

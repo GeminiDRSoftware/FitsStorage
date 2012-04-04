@@ -11,7 +11,6 @@
 from FitsStorage import *
 from FitsStorageCal import get_cal_object
 
-
 def openquery(selection):
   """
   Returns a boolean to say if the selection is limited to a reasonable number of
