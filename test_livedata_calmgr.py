@@ -5,7 +5,10 @@ from astrodata import AstroData
 # This is a GMOS_N imaging science dataset
 ad = AstroData("/net/wikiwiki/dataflow/N20110728S0350.fits")
 
+
 desc_dict = {'instrument':ad.instrument().for_db(),
+             'disperser':ad.disperser().for_db(),
+             'central_wavelength':ad.central_wavelength(asMicrometers=True).for_db(),
              'observation_type':ad.observation_type().for_db(),
              'data_label':ad.data_label().for_db(),
              'detector_x_bin':ad.detector_x_bin().for_db(),
@@ -26,8 +29,10 @@ start = datetime.datetime.now()
 sequence = (('descriptors', desc_dict), ('types', type_list))
 postdata = urllib.urlencode(sequence)
 
-#url = "http://hbffits3/calmgr/processed_flat/"
-url = "http://hbffits3/calmgr/processed_bias/"
+#print desc_dict
+
+
+url = "http://fits/calmgr/processed_flat/"
 u = urllib.urlopen(url, postdata)
 end = datetime.datetime.now()
 
