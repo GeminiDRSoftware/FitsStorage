@@ -11,6 +11,7 @@ parser = OptionParser()
 parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape1", help="The Fits Storage Tape server to use to check the files are on tape")
 parser.add_option("--file-pre", action="store", type="string", dest="filepre", help="File prefix to operate on, eg N20090130, N200812 etc")
 parser.add_option("--mintapes", action="store", type="int", dest="mintapes", default=2, help="Minimum number of tapes file must be on to be eligable for deletion")
+parser.add_option("--nomd5", action="store_true", dest="nomd5", help="Do not check md5, match on filename only")
 parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
@@ -57,7 +58,7 @@ for thefile in thelist:
     filename = fe.getElementsByTagName("filename")[0].childNodes[0].data
     md5 = fe.getElementsByTagName("md5")[0].childNodes[0].data
     tapeid = int(fe.getElementsByTagName("tapeid")[0].childNodes[0].data)
-    if((filename == thefile) and (md5 == filemd5) and (tapeid not in tapeids)):
+    if((filename == thefile) and ((md5 == filemd5) or options.nomd5) and (tapeid not in tapeids)):
       #print "Found it on tape id %d" % tapeid
       tapeids.append(tapeid)
 
