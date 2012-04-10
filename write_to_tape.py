@@ -26,6 +26,9 @@ parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run 
 parser.add_option("--dontcheck", action="store_true", dest="dontcheck", help="Don't rewind and check the tape label in the drive, go direct to eod and write")
 parser.add_option("--skip", action="store_true", dest="skip", help="Skip files that are already on any tape")
 parser.add_option("--nodeduplicate", action="store_true", dest="nodedup", help="Do Not skip files that are already sucessfully written to this tape or any of these tapes")
+parser.add_option("--auto", action="store_true", dest="auto", help="Automatically construct selection for cron job")
+parser.add_option("--ndays", action="store", type="int", dest="ndays", default=14, help="Number of days for auto mode")
+parser.add_option("--skipdays", action="store", type="int", dest="skipdays", default=10, help="Number of days to skip for auto mode")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
@@ -38,7 +41,7 @@ setdemon(options.demon)
 # Annouce startup
 logger.info("*********  write_to_tape.py - starting up at %s" % datetime.datetime.now())
 
-if(not options.selection):
+if((not options.selection) and (not options.auto)):
   logger.error("You must specify a file selection")
   sys.exit(1)
 
@@ -50,6 +53,18 @@ if(len(options.tapedrive) != len(options.tapelabel)):
   logger.error("You must specify the same number of tape drives as tape labels")
   sys.exit(1)
 
+if(options.auto):
+  utcnow = datetime.datetime.utcnow()
+  utcend = utcnow - datetime.timedelta(days=options.skipdays)
+  utcstart = utcend - datetime.timedelta(days=options.ndays)
+  daterange="%s-%s" % (utcstart.date().strftime("%Y%m%d"), utcend.date().strftime("%Y%m%d"))
+  # If ndays == 1 then just do a single date
+  if(options.ndays == 1):
+    daterange = "%s" % utcend.date().strftime("%Y%m%d")
+  options.selection = daterange
+  options.skip = True
+
+  
 options.selection += "/present"
 
 logger.info("TapeDrive: %s; TapeLabel: %s" % (options.tapedrive, options.tapelabel))
