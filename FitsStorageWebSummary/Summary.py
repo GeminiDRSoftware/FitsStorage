@@ -160,7 +160,7 @@ def webhdrsummary(session, req, type, headers, links=True):
       wmd=''
 
     if(links):
-      req.write('<TD><A HREF="/fullheader/%s">%s</A> %s %s</TD>' % (h.diskfile.file.filename, h.diskfile.file.filename, fve, wmd))
+      req.write('<TD><A HREF="/fullheader/%d">%s</A> %s %s</TD>' % (h.diskfile.id, h.diskfile.file.filename, fve, wmd))
     else:
       req.write('<TD>%s %s %s</TD>' % (h.diskfile.file.filename, fve, wmd))
 
