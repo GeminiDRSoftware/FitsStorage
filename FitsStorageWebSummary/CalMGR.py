@@ -55,13 +55,8 @@ def calmgr(req, selection):
       #req.write("\ntype_str: %s\n" % type_str)
       descriptors = eval(desc_str)
       types = eval(type_str)
-      #req.write("Descriptor Dictionary: %s\n" % descriptors)
-      #req.write("Instrument Descriptor: %s\n\n" % descriptors['instrument'])
-      #req.write("Types List: %s\n" % types)
-      #gn = 'GMOS_N' in types
-      #gs = 'GMOS_S' in types
-      #req.write("IsType GMOS_N: %s\n" % gn)
-      #req.write("IsType GMOS_S: %s\n" % gs)
+      req.log_error("CalMGR request Descriptor Dictionary: %s\n" % descriptors)
+      req.log_error("Types List: %s\n" % types)
 
       # OK, there are a couple of items that are handled in the DB as if they are descriptors
       # but they're actually types. This is where we push them into the descriptor disctionary
@@ -99,6 +94,7 @@ def calmgr(req, selection):
         cal = c.ronchi_mask()
 
       if(cal):
+        req.log_error("CalMGR returning: %s" % cal.diskfile.file.filename)
         req.write("<calibration>\n")
         req.write("<caltype>%s</caltype>\n" % caltype)
         req.write("<datalabel>%s</datalabel>\n" % cal.data_label)
