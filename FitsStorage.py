@@ -69,7 +69,6 @@ class File(Base):
 
   def fullpath(self):
     fullpath = os.path.join(storage_root, self.path, self.filename)
-    # print "FS74:", fullpath
     return fullpath
 
   def exists(self):
@@ -266,7 +265,6 @@ class Header(Base):
       # Date and times part
       try:
         self.ut_datetime = ad.ut_datetime().for_db()
-        print "FS269:", self.ut_datetime
       except:
         raise
 
