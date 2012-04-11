@@ -144,7 +144,10 @@ else:
       mytapeids = mytapeids[0]
       for mtid in mytapeids:
         if(mtid in tapeids):
-          logger.info("File %s is on one of the tapes we have, skipping it" % f['filename'])
+          if(options.auto):
+            logger.debug("File %s is on one of the tapes we have, skipping it" % f['filename'])
+          else:
+            logger.info("File %s is on one of the tapes we have, skipping it" % f['filename'])
           ditch = True
       if(ditch == False):
         actual_files.append(f)
@@ -163,7 +166,10 @@ if(options.skip):
       actual_files.append(f)
       logger.debug("Not skipping file %s as it is on 0 tapes" % f['filename'])
     else:
-      logger.info("Skipping File %s : is already on tape %d times" % (f['filename'], num))
+      if(options.auto):
+        logger.debug("Skipping File %s : is already on tape %d times" % (f['filename'], num))
+      else:
+        logger.info("Skipping File %s : is already on tape %d times" % (f['filename'], num))
 
   files = actual_files
     
