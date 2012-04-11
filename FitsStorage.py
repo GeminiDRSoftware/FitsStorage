@@ -350,7 +350,7 @@ class Header(Base):
       if('SPECT' in ad.types):
         try:
           self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
-        except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError):
+        except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError, Errors.TableKeyError):
           pass
       try:
         self.focal_plane_mask = ad.focal_plane_mask(pretty=True).for_db()
