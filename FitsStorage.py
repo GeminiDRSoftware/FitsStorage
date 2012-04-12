@@ -390,6 +390,10 @@ class Header(Base):
         self.reduction = 'PROCESSED_BIAS'
       if('PROCESSED_FRINGE' in ad.types):
         self.reduction = 'PROCESSED_FRINGE'
+      if('PROCESSED_DARK' in ad.types):
+        self.reduction = 'PROCESSED_DARK'
+      if('PROCESSED_ARC' in ad.types):
+        self.reduction = 'PROCESSED_ARC'
 
       ad.close()
     except:
