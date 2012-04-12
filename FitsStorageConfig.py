@@ -9,8 +9,8 @@
 fsc_localmode = False 
 
 # Configure the path to the storage root here 
-storage_root = '/data/dataflow'
-#storage_root = '/net/wikiwiki/dataflow'
+#storage_root = '/data/dataflow'
+storage_root = '/net/wikiwiki/dataflow'
 #storage_root = '/net/hahalua/data/export'
 
 target_gb_free = 100
@@ -27,7 +27,7 @@ das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
 #das_calproc_path = '/net/josie/staging/dataproc/gmos'
 
 # Configure the site and other misc stuff here
-fits_servername = "hbffits3"
+fits_servername = "hbffits2"
 fits_system_status = "development"
 
 email_errors_to = "phirst@gemini.edu"
@@ -37,7 +37,7 @@ fits_dbname = 'fitsdata'
 fits_database = 'postgresql:///'+fits_dbname
 
 # Configure the Backup Directory here
-fits_db_backup_dir = "/data/backups"
+fits_db_backup_dir = "/net/endor/Sci_ARCH/mkofits1_backup"
 
 # Configure the LockFile Directory here
 fits_lockfile_dir = "/data/logs"
