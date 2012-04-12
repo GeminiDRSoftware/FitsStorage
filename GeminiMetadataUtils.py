@@ -232,7 +232,20 @@ def gemini_fitsfilename(string):
 
   return retval
     
-  
+binningcre = re.compile('^[124]x[124]$')
+def gemini_binning(string):
+  """
+  A utility function that matches a binning string -
+  for example 1x1, 2x2, 1x4
+  """
+  retval = ''
+  m = binningcre.match(string)
+  if(m):
+    retval = string
+
+  return retval
+
+
 # The Gemini Data Label Class
 
 # This re matches program_id-obsum-dlnum - ie a datalabel,
