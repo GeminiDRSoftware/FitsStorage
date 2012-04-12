@@ -210,15 +210,16 @@ class Header(Base):
   disperser = Column(Text)
   central_wavelength = Column(Numeric(precision=8, scale=6))
   focal_plane_mask = Column(Text)
-  spectroscopy = Column(Boolean)
+  binning = Column(Text)
+  spectroscopy = Column(Boolean, index=True)
   adaptive_optics = Column(Boolean)
   raw_iq = Column(Text)
   raw_cc = Column(Text)
   raw_wv = Column(Text)
   raw_bg = Column(Text)
-  qa_state = Column(Text)
+  qa_state = Column(Text, index=True)
   release = Column(Date(TimeZone=False))
-  reduction = Column(Text)
+  reduction = Column(Text, index=True)
   phot_standard = Column(Boolean)
 
   def __init__(self, diskfile):
@@ -354,6 +355,10 @@ class Header(Base):
           pass
       try:
         self.focal_plane_mask = ad.focal_plane_mask(pretty=True).for_db()
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+        pass
+      try:
+        self.binning="%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
       except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
         pass
 
