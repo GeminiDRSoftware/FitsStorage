@@ -28,7 +28,7 @@ def sayselection(selection):
   """
   string = ""
 
-  defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State'}
+  defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State'}
   for key in defs:
     if key in selection:
       string += "; %s: %s" % (defs[key], selection[key])
@@ -156,6 +156,9 @@ def queryselection(query, selection):
       query = query.filter(Header.adaptive_optics==True)
     else:
       query = query.filter(Header.adaptive_optics==False)
+
+  if('binning' in selection):
+    query = query.filter(Header.binning==selection['binning'])
 
   if('filter' in selection):
     query = query.filter(Header.filter_name==selection['filter'])

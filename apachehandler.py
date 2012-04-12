@@ -448,6 +448,9 @@ def getselection(things):
     if(thing[:7]=='filter=' or thing[:7]=='Filter='):
       selection['filter']=thing[7:]
       recognised=True
+    if(gemini_binning(thing)):
+      selection['binning']=gemini_binning(thing)
+      recognised=True
     if(thing=='photstandard'):
       selection['photstandard']=True
       recognised=True
