@@ -180,6 +180,8 @@ def calmgr(req, selection):
             cal = c.bias(processed=True)
           if(caltype == 'processed_flat'):
             cal = c.flat(processed=True)
+          if(caltype == 'processed_arc'):
+            cal = c.arc(processed=True)
           if(caltype == 'processed_fringe'):
             cal = c.processed_fringe()
           if(caltype == 'pinhole_mask'):
