@@ -103,10 +103,15 @@ def calmgr(req, selection):
         req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
         req.write("<md5>%s</md5>\n" % cal.diskfile.md5)
         req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
-        if (not fsc_localmode):
+        if(cal.diskfile.present):
+          if (fsc_localmode):
             req.write("<url>http://%s/file/%s</url>\n" % (fits_servername, cal.diskfile.file.filename))
+          else:
+            req.write("<url>file://%s/%s/%s</url>\n" % (FitsStorageConfig.storage_root, cal.diskfile.file.path, cal.diskfile.file.filename))
         else:
-            req.write("<path>%s</path>" % cal.diskfile.file.path)
+          # Once we are sending new stlye processed calibrations to the GSA,
+          # we can form a URL to the GSA here and return that.
+          req.write("<!-- Calibration Result found in DB, but file is not present on FITS server -->")
         req.write("</calibration>\n")
       else:
         req.write("<!-- NO CALIBRATION FOUND-->\n")
