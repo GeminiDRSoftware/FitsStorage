@@ -8,21 +8,8 @@ from GeminiMetadataUtils import *
 from FitsStorageConfig import *
 
 import os
-import FitsStorageConfig
 
-from FitsStorageConfig import fsc_localmode
-
-class stub:
-    pass
-    
-if fsc_localmode:
-    apache = stub()
-    apache.OK = True
-    
-try:
-    from mod_python import apache
-except ImportError:
-    pass
+from mod_python import apache
 
 
 def upload_processed_cal(req, filename):

@@ -4,18 +4,7 @@ This module contains the tape related html generator functions.
 from FitsStorage import *
 from GeminiMetadataUtils import *
 from FitsStorageConfig import *
-
-class stub:
-    pass
-    
-if fsc_localmode:
-    apache = stub()
-    apache.OK = True
-    
-try:
-    from mod_python import apache, util
-except ImportError:
-    pass
+from mod_python import apache, util
 
 
 def fileontape(req, things):

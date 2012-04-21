@@ -3,7 +3,8 @@ This is the Fits Storage Web Summary module. It provides the functions
 which query the database and generate html for the web header
 summaries.
 """
-from FitsStorageWebSummary.Summary import *
+from FitsStorage import *
+from mod_python import apache
 
 def list_phot_std_obs(session, header_id):
   """

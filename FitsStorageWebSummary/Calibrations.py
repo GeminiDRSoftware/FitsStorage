@@ -1,9 +1,10 @@
 """
 This module contains the calibrations html generator function. 
 """
-from FitsStorageWebSummary.Selection import *
-from FitsStorageConfig import fsc_localmode
+from FitsStorage import *
+from FitsStorageWebSummary.Selection import sayselection, queryselection, openquery
 from FitsStorageCal import get_cal_object
+import ApacheReturnCodes as apache
 
 
 def calibrations(req, selection):

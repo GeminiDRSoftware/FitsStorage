@@ -1,8 +1,11 @@
 """
 This module contains the calmgr html generator function. 
 """
-from FitsStorageWebSummary.Selection import *
+from FitsStorage import *
+from FitsStorageWebSummary.Selection import sayselection, queryselection, openquery
 from FitsStorageCal import get_cal_object
+
+import ApacheReturnCodes as apache
 from FitsStorageConfig import fsc_localmode
 
 import urllib
@@ -25,9 +28,6 @@ def calmgr(req, selection):
 
   returns an apache request status code
   """
-  # this allow me to force the flag back and forth to test integration attempts (we try to 
-  # remove the localmode conditionals if possible). fsc_localmode comes from FitsStorageConfig.py
-  localmode = fsc_localmode 
   
   session = sessionfactory()
   try:

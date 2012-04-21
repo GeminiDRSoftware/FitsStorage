@@ -3,27 +3,13 @@ This module contains the curation_report html generator function.
 """
 from FitsStorage import *
 from GeminiMetadataUtils import *
-from FitsStorageConfig import *
     
-from FitsStorageConfig import fsc_localmode
-
-class stub:
-    pass
-    
-if fsc_localmode:
-    apache = stub()
-    apache.OK = True
-    
-try:
-    from mod_python import apache
-except ImportError:
-    pass
-
+import ApacheReturnCodes as apache
 
 def curation_report(req, things):
   """
   Retrieves and prints out the desired values from the list created in 
-  FitsStorageCuration.py in the hbffits3 browser.
+  FitsStorageCuration.py
   """
   req.content_type = 'text/html'
   req.write('<html>')

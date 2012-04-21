@@ -3,19 +3,12 @@
 # When a request comes in, handler(req) gets called by the apache server
 
 import sys
-import FitsStorage
 from GeminiMetadataUtils import *
 
-try:
-    from mod_python import apache
-    from mod_python import Cookie
-    from mod_python import util
-except:
-    if(fsc_localmode):
-      print "can't import mod_python, not apache environment?"
-    else:
-      raise
-    
+from mod_python import apache
+from mod_python import Cookie
+from mod_python import util
+
 from FitsStorageWebSummary.Summary import summary
 from FitsStorageWebSummary.XMLFileList import xmlfilelist
 from FitsStorageWebSummary.TapeStuff import *
@@ -28,13 +21,7 @@ from FitsStorageWebSummary.Calibrations import calibrations
 from FitsStorageWebSummary.UploadProcessedCal import upload_processed_cal
 from FitsStorageWebSummary.CurationReport import curation_report
 from FitsStorageWebSummary.Standards import standardobs
-try:
-    from FitsStorageQAmetrics import qareport, qametrics
-except:
-    if(fsc_localmode):
-      print "can't import qareport, qametrics"
-    else:
-      raise
+from FitsStorageQAmetrics import qareport, qametrics
 
 import re
 import datetime

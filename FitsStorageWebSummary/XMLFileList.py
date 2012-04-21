@@ -3,8 +3,10 @@ This is the Fits Storage Web Summary module. It provides the functions
 which query the database and generate html for the web header
 summaries.
 """
-from FitsStorageWebSummary.Summary import *
+from FitsStorage import sessionfactory
+from FitsStorageWebSummary.Summary import list_headers
 from FitsStorageWebSummary.Standards import xmlstandardobs
+import ApacheReturnCodes as apache
 
 
 def xmlfilelist(req, selection):

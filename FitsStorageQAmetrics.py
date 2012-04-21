@@ -2,10 +2,10 @@
 This module contains the QA metric database interface
 """
 
-import urllib
-from mod_python import apache
-from xml.dom.minidom import parseString
 from FitsStorage import *
+from FitsStorageConfig import fsc_localmode
+import urllib
+from xml.dom.minidom import parseString
 
 def qareport(req):
   """

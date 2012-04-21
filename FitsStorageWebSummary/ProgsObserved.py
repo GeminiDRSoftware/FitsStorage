@@ -3,7 +3,9 @@ This is the Fits Storage Web Summary module. It provides the functions
 which query the database and generate html for the web header
 summaries.
 """
-from FitsStorageWebSummary.Selection import *
+from FitsStorage import *
+from FitsStorageWebSummary.Selection import sayselection, queryselection, openquery
+from mod_python import apache
 
 
 def progsobserved(req, selection):

@@ -7,20 +7,6 @@ from FitsStorage import *
 from GeminiMetadataUtils import *
 from FitsStorageConfig import *
 
-from FitsStorageConfig import fsc_localmode
-
-class stub:
-    pass
-    
-if fsc_localmode:
-    apache = stub()
-    apache.OK = True
-    
-try:
-    from mod_python import apache
-except ImportError:
-    pass
-
 def sayselection(selection):
   """
   returns a string that describes the selection dictionary passed in

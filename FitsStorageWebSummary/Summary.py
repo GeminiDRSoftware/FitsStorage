@@ -1,9 +1,10 @@
 """
 This module contains the main summary html generator function. 
 """
-from FitsStorageWebSummary.Selection import *
-from FitsStorageWebSummary.Standards import *
-from FitsStorageConfig import fsc_localmode
+from FitsStorage import *
+from FitsStorageWebSummary.Selection import sayselection, queryselection, openquery
+from GeminiMetadataUtils import *
+import ApacheReturnCodes as apache
 
 
 def summary(req, type, selection, orderby, links=True):
@@ -62,10 +63,8 @@ def webhdrsummary(session, req, type, headers, links=True):
   headers: the list of header objects to include in the summary
   """
   # Get the uri to use for the re-sort links
-  try:
-    myuri = req.uri
-  except AttributeError:
-    myuri = "localmode"
+  myuri = req.uri
+
   # A certain amount of parsing the summary type...
   want=[]
   if(type == 'summary'):
@@ -277,7 +276,6 @@ def list_headers(session, selection, orderby):
 
   Returns a list of Header objects
   """
-  localmode = fsc_localmode
   # The basic query...
   query = session.query(Header).select_from(Header, DiskFile, File)
   query = query.filter(Header.diskfile_id == DiskFile.id)
@@ -313,14 +311,7 @@ def list_headers(session, selection, orderby):
     # By default we should order by filename
     query = query.order_by(File.filename)
 
-  if localmode:
-    results = query.all()
-    # print "FSWS126:", repr(results)
-    # print "FSWS127:", str(results)
-    headers = results
-    # headers, diskfiles, files = zip(*results)
-  else:
-    headers = query.all()
+  headers = query.all()
   
   # Return the list of DiskFile objects
   return headers
