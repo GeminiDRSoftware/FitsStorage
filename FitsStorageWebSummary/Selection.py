@@ -36,6 +36,8 @@ def sayselection(selection):
       string += "; Adaptive Optics in beam"
     else:
       string += "; No Adaptive Optics in beam"
+  if('detector_config' in selection):
+    string += "; Detector Config: " + '+'.join(selection['detector_config'])
 
   if('notrecognised' in selection):
     string += ". WARNING: I didn't understand these (case-sensitive) words: %s" % selection['notrecognised']
@@ -152,6 +154,10 @@ def queryselection(query, selection):
   if('photstandard' in selection):
     query = query.filter(Footprint.header_id == Header.id)
     query = query.filter(PhotStandardObs.footprint_id == Footprint.id)
+
+  if('detector_config' in selection):
+    for thing in selection['detector_config']:
+      query = query.filter(Header.detector_config.like('%'+thing+'%'))
 
   return query
 

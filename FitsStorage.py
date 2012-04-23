@@ -212,6 +212,7 @@ class Header(Base):
   central_wavelength = Column(Numeric(precision=8, scale=6))
   focal_plane_mask = Column(Text)
   binning = Column(Text)
+  detector_config = Column(Text)
   spectroscopy = Column(Boolean, index=True)
   adaptive_optics = Column(Boolean)
   raw_iq = Column(Text)
@@ -362,6 +363,17 @@ class Header(Base):
         self.binning="%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
       except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
         pass
+
+      try:
+        gainsetting = str(ad.gain_setting())
+      except (Errors.ExistError, KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+        gainsetting = "None"
+      try:
+        readspeedsetting = str(ad.read_speed_setting())
+      except (Errors.ExistError, KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+        readspeedsetting = "None"
+      nodandshuffle = "NodAndShuffle" if ad.is_type("GMOS_NODANDSHUFFLE") else ""
+      self.detector_config = "%s %s %s" % (gainsetting, readspeedsetting, nodandshuffle)
 
       # Hack the AO header for now
       aofold = ad.phuHeader('AOFOLD')

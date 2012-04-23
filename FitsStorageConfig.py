@@ -27,7 +27,7 @@ das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
 #das_calproc_path = '/net/josie/staging/dataproc/gmos'
 
 # Configure the site and other misc stuff here
-fits_servername = "hbffits2"
+fits_servername = "hbffits3"
 fits_system_status = "development"
 
 email_errors_to = "phirst@gemini.edu"

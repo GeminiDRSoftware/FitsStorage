@@ -441,6 +441,11 @@ def getselection(things):
     if(thing=='photstandard'):
       selection['photstandard']=True
       recognised=True
+    if(thing in ['low', 'high', 'slow', 'fast']):
+      if(not selection.has_key('detector_config')):
+        selection['detector_config']=[]
+      selection['detector_config'].append(thing)
+      recognised=True
 
     if(not recognised):
       if('notrecognised' in selection):
