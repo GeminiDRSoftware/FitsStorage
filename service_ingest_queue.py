@@ -103,7 +103,6 @@ while(loop):
       logger.error("File %s - Exception: %s : %s... %s" % (iq.filename, sys.exc_info()[0], sys.exc_info()[1], string))
     else:
       logger.error("Nothing on ingest queue - Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
-    sys.exit()
 
   finally:
     session.close()
