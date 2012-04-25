@@ -211,7 +211,7 @@ class Header(Base):
   disperser = Column(Text)
   central_wavelength = Column(Numeric(precision=8, scale=6))
   focal_plane_mask = Column(Text)
-  binning = Column(Text)
+  detector_binning = Column(Text)
   detector_config = Column(Text)
   detector_roi_setting = Column(Text)
   spectroscopy = Column(Boolean, index=True)
@@ -361,7 +361,7 @@ class Header(Base):
       except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
         pass
       try:
-        self.binning="%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
+        self.detector_binning="%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
       except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
         pass
 
