@@ -68,7 +68,7 @@ def gmoscal(req, selection):
      for observation_class in (['science', 'dayCal']):
 
        # The basic query for this
-       query = session.query(func.count(1), Header.filter_name, Gmos.detector_x_bin, Gmos.detector_y_bin).select_from(join(Gmos, join(Header, join(DiskFile, File))))
+       query = session.query(func.count(1), Header.filter_name, Header.detector_binning).select_from(join(Header, join(DiskFile, File)))
        query = query.filter(DiskFile.canonical == True)
 
        # Fudge and add the selection criteria
@@ -81,7 +81,7 @@ def gmoscal(req, selection):
        else:
          selection['qa_state']='Pass'
          # Only select full frame dayCals
-         query = query.filter(or_(Gmos.amp_read_area == ''''e2v 10031-18-04, right':[5121:6144,1:4608]+'e2v 10031-01-03, right':[3073:4096,1:4608]+'e2v 10031-18-04, left':[4097:5120,1:4608]+'e2v 10031-23-05, left':[1:1024,1:4608]+'e2v 10031-01-03, left':[2049:3072,1:4608]+'e2v 10031-23-05, right':[1025:2048,1:4608]''', Gmos.amp_read_area == ''''EEV 8194-19-04, left':[2049:4096,1:4608]+'EEV 2037-06-03, left':[1:2048,1:4608]+'EEV 8261-07-04, right':[4097:6144,1:4608]'''))
+         query = query.filter(Header.detector_roi_setting == 'Full Frame')
          # Twilight flats must have the target name 'Twilight'
          query = query.filter(Header.object == 'Twilight')
 
@@ -91,7 +91,7 @@ def gmoscal(req, selection):
        query = query.filter(~Header.program_id.like('%ENG%'))
 
        # Group by clause
-       query = query.group_by(Header.filter_name, Gmos.detector_x_bin, Gmos.detector_y_bin).order_by(Gmos.detector_x_bin, Header.filter_name)
+       query = query.group_by(Header.filter_name, Header.detector_binning).order_by(Header.detector_binning, Header.filter_name)
 
        list = query.all()
 
@@ -104,9 +104,9 @@ def gmoscal(req, selection):
          dict = tlf
 
        for row in list:
-         binning = "%dx%d" % (row[2], row[3])
-         key = "%s-%s" % (row[1], binning)
-         dict[key]=[row[0], row[1], binning]
+         # row[0] = count, [1] = filter, [2] = binning
+         key = "%s-%s" % (row[1], row[2])
+         dict[key]=[row[0], row[1], row[2]]
 
      # Make the master dictionary
      # as {'i-2x2':[10, 20, 'i', '2x2'], ...}   [n_sci, n_tlf, filter_name, binning]
@@ -176,7 +176,7 @@ def gmoscal(req, selection):
      
      oneday = datetime.timedelta(days=1)
      offset = sqlalchemy.sql.expression.literal(tzoffset - oneday, sqlalchemy.types.Interval)
-     query = session.query(func.count(1), cast((Header.ut_datetime + offset), sqlalchemy.types.DATE).label('utdate'), Gmos.detector_x_bin, Gmos.detector_y_bin, Gmos.amp_read_area).select_from(join(Gmos, join(Header, join(DiskFile, File))))
+     query = session.query(func.count(1), cast((Header.ut_datetime + offset), sqlalchemy.types.DATE).label('utdate'), Header.detector_binning, Header.detector_roi_setting).select_from(join(Header, join(DiskFile, File)))
 
      query = query.filter(DiskFile.canonical == True)
 
@@ -188,7 +188,7 @@ def gmoscal(req, selection):
      selection['qa_state']='Pass'
      query = queryselection(query, selection)
 
-     query = query.group_by('utdate', Gmos.detector_x_bin, Gmos.detector_y_bin, Gmos.amp_read_area).order_by('utdate', Gmos.detector_x_bin, Gmos.detector_y_bin, Gmos.amp_read_area)
+     query = query.group_by('utdate', Header.detector_binning, Header.detector_roi_setting).order_by('utdate', Header.detector_binning, Header.detector_roi_setting)
 
      list = query.all()
 
@@ -199,18 +199,8 @@ def gmoscal(req, selection):
        # Parse the element numbers for simplicity
        num = row[0]
        utdate = row[1]
-       binning = "%dx%d" % (row[2], row[3])
-       roi = row[4]
-       if(roi == ''''e2v 10031-18-04, right':[5121:6144,1:4608]+'e2v 10031-01-03, right':[3073:4096,1:4608]+'e2v 10031-18-04, left':[4097:5120,1:4608]+'e2v 10031-23-05, left':[1:1024,1:4608]+'e2v 10031-01-03, left':[2049:3072,1:4608]+'e2v 10031-23-05, right':[1025:2048,1:4608]'''):
-         roi = "Full"
-       if(roi == ''''e2v 10031-18-04, right':[5121:6144,1793:2816]+'e2v 10031-01-03, right':[3073:4096,1793:2816]+'e2v 10031-18-04, left':[4097:5120,1793:2816]+'e2v 10031-23-05, left':[1:1024,1793:2816]+'e2v 10031-01-03, left':[2049:3072,1793:2816]+'e2v 10031-23-05, right':[1025:2048,1793:2816]'''):
-         roi = "Cent"
-       # GMOS-S
-       if(roi == ''''EEV 8194-19-04, left':[2049:4096,1:4608]+'EEV 2037-06-03, left':[1:2048,1:4608]+'EEV 8261-07-04, right':[4097:6144,1:4608]'''):
-         roi = "Full"
-       # GMOS-S
-       if(roi == ''''EEV 8194-19-04, left':[2049:4096,1793:2816]+'EEV 2037-06-03, left':[1:2048,1793:2816]+'EEV 8261-07-04, right':[4097:6144,1793:2816]'''):
-         roi = "Cent"
+       binning = row[2]
+       roi = row[3]
 
        if(utdate not in dict.keys()):
          dict[utdate]={}
@@ -222,7 +212,7 @@ def gmoscal(req, selection):
      # Output the HTML table 
      # While we do it, add up the totals as a simple column tally
      binlist = ['1x1', '2x2', '2x1', '1x2', '2x4', '4x2', '4x1', '1x4', '4x4']
-     roilist = ['Full', 'Cent']
+     roilist = ['Full Frame', 'Central Spectrum']
      req.write('<TABLE border=0>')
      req.write('<TR class=tr_head>')
      req.write('<TH rowspan=2>UT Date</TH>')
