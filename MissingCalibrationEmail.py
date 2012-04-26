@@ -37,7 +37,10 @@ crewarning = re.compile('Query generated (\d*) warnings')
 warnings = int(crewarning.search(html).group(1))
 missing = int(cremissing.search(html).group(1))
 
-mailhost = "smtp.gemini.edu"
+# ISG have put local mail servers on these machines, that relay mail to the 
+# main mail servers without requiring authentication. This also provides
+# a spooling queue if there's a network issue
+mailhost = "localhost"
 
 if(missing==0):
   if options.skipdays == 0:
