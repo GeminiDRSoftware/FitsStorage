@@ -82,9 +82,13 @@ class CalibrationGMOS(Calibration):
 
     return list
 
-  def arc(self, sameprog=False, List=None):
+  def arc(self, processed=False, sameprog=False, List=None):
     query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
-    query = query.filter(Header.observation_type=='ARC')
+
+    if(processed):
+        query = query.filter(Header.reduction=='PROCESSED_ARC')
+    else:
+        query = query.filter(Header.observation_type=='ARC').filter(Header.reduction='RAW')
 
     # Search only the canonical (latest) entries
     query = query.filter(DiskFile.canonical==True)
