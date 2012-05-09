@@ -145,7 +145,7 @@ def gemini_reduction_state(string):
   the reduction state
   Otherwise we return an empty string
   """
-  list = ['RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS', 'PROCESSED_FRINGE']
+  list = ['RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS', 'PROCESSED_FRINGE', 'PROCESSED_ARC']
   retary = ''
   if (string in list):
     retary = string
