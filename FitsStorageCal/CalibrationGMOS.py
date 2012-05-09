@@ -88,7 +88,7 @@ class CalibrationGMOS(Calibration):
     if(processed):
         query = query.filter(Header.reduction=='PROCESSED_ARC')
     else:
-        query = query.filter(Header.observation_type=='ARC').filter(Header.reduction='RAW')
+        query = query.filter(Header.observation_type=='ARC').filter(Header.reduction=='RAW')
 
     # Search only the canonical (latest) entries
     query = query.filter(DiskFile.canonical==True)
