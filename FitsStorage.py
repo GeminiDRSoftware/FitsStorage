@@ -1024,15 +1024,22 @@ class QAmetricIQ(Base):
   qareport_id = Column(Integer, ForeignKey('qareport.id'))
   datalabel = Column(Text)
   filename = Column(Text)
+  detector = Column(Text)
   # Image Quality Values
   fwhm = Column(Numeric(precision=6, scale=3))
-  fwhmerr = Column(Numeric(precision=6, scale=3))
+  fwhm_std = Column(Numeric(precision=6, scale=3))
+  isofwhm = Column(Numeric(precision=6, scale=3))
+  isofwhm_std = Column(Numeric(precision=6, scale=3))
+  ee50d = Column(Numeric(precision=6, scale=3))
+  ee50d_std =Column(Numeric(precision=6, scale=3))
   elip = Column(Numeric(precision=5, scale=3))
-  eliperr = Column(Numeric(precision=5, scale=3))
+  elip_std = Column(Numeric(precision=5, scale=3))
   pa = Column(Numeric(precision=6, scale=3))
-  paerr = Column(Numeric(precision=6, scale=3))
+  pa_std = Column(Numeric(precision=6, scale=3))
   strehl = Column(Numeric(precision=6, scale=3))
-  strehlerr = Column(Numeric(precision=6, scale=3))
+  strehl_std = Column(Numeric(precision=6, scale=3))
+  nsamples = Column(Integer)
+  comment = Column(Text)
 
   def __init__(self, qareport):
     self.qareport_id = qareport.id
@@ -1048,9 +1055,13 @@ class QAmetricZP(Base):
   qareport_id = Column(Integer, ForeignKey('qareport.id'))
   datalabel = Column(Text)
   filename = Column(Text)
+  detector = Column(Text)
   # Photometry
   mag = Column(Numeric(precision=5, scale=3))
-  magerr = Column(Numeric(precision=5, scale=3))
+  mag_std = Column(Numeric(precision=5, scale=3))
+  photref = Column(Text)
+  nsamples = Column(Integer)
+  comment = Column(Text)
 
   def __init__(self, qareport):
     self.qareport_id = qareport.id
@@ -1066,9 +1077,14 @@ class QAmetricSB(Base):
   qareport_id = Column(Integer, ForeignKey('qareport.id'))
   datalabel = Column(Text)
   filename = Column(Text)
+  detector = Column(Text)
   # Sky Background
   mag = Column(Numeric(precision=5, scale=3))
-  magerr = Column(Numeric(precision=5, scale=3))
+  mag_std = Column(Numeric(precision=5, scale=3))
+  electrons = Column(Numeric(precision=7, scale=2))
+  electrons_std = Column(Numeric(precision=7, scale=2))
+  nsamples = Column(Integer)
+  comment = Column(Text)
 
   def __init__(self, qareport):
     self.qareport_id = qareport.id
@@ -1085,11 +1101,15 @@ class QAmetricPE(Base):
   qareport_id = Column(Integer, ForeignKey('qareport.id'))
   datalabel = Column(Text)
   filename = Column(Text)
+  detector = Column(Text)
   # Astrometric Pointing Error
   dra = Column(Numeric(precision=9, scale=3))
-  draerr = Column(Numeric(precision=9, scale=3))
+  dra_std = Column(Numeric(precision=9, scale=3))
   ddec = Column(Numeric(precision=9, scale=3))
-  ddecerr = Column(Numeric(precision=9, scale=3))
+  ddec_std = Column(Numeric(precision=9, scale=3))
+  astref = Column(Text)
+  nsamples = Column(Integer)
+  comment = Column(Text)
 
   def __init__(self, qareport):
     self.qareport_id = qareport.id
