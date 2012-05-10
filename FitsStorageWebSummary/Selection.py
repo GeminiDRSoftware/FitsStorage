@@ -146,7 +146,7 @@ def queryselection(query, selection):
       query = query.filter(Header.adaptive_optics==False)
 
   if('binning' in selection):
-    query = query.filter(Header.binning==selection['binning'])
+    query = query.filter(Header.detector_binning==selection['binning'])
 
   if('filter' in selection):
     query = query.filter(Header.filter_name==selection['filter'])
