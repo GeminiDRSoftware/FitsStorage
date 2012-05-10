@@ -446,6 +446,12 @@ def getselection(things):
         selection['detector_config']=[]
       selection['detector_config'].append(thing)
       recognised=True
+    if(thing=='Twilight'):
+      selection['twilight']=True
+      recognised=True
+    if(thing=='NotTwilight'):
+      selection['twilight']=False
+      recognised=True
 
     if(not recognised):
       if('notrecognised' in selection):

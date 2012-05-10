@@ -14,7 +14,7 @@ def sayselection(selection):
   """
   string = ""
 
-  defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State'}
+  defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight'}
   for key in defs:
     if key in selection:
       string += "; %s: %s" % (defs[key], selection[key])
@@ -158,6 +158,12 @@ def queryselection(query, selection):
   if('detector_config' in selection):
     for thing in selection['detector_config']:
       query = query.filter(Header.detector_config.like('%'+thing+'%'))
+
+  if('twilight' in selection):
+    if(selection['twilight'] == True):
+      query = query.filter(Header.object == 'Twilight')
+    if(selection['twilight'] == False):
+      query = query.filter(Header.object != 'Twilight')
 
   return query
 
