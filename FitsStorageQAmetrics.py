@@ -57,6 +57,7 @@ def qareport(req):
             qametriciq.strehl = get_value(iq.getElementsByTagName("strehl"))
             qametriciq.strehl_std = get_value(iq.getElementsByTagName("strehl_std"))
             qametriciq.nsamples = get_value(iq.getElementsByTagName("nsamples"))
+            qametriciq.percentile_band = get_value(iq.getElementsByTagName("percentile_band"))
             qametriciq.comment = get_value(iq.getElementsByTagName("comment"))
             session.add(qametriciq)
             session.commit()
@@ -67,8 +68,11 @@ def qareport(req):
             qametriczp.detector = detector
             qametriczp.mag = get_value(zp.getElementsByTagName("mag"))
             qametriczp.mag_std = get_value(zp.getElementsByTagName("mag_std"))
+            qametriczp.cloud = get_value(zp.getElementsByTagName("cloud"))
+            qametriczp.cloud_std = get_value(zp.getElementsByTagName("cloud_std"))
             qametriczp.photref = get_value(zp.getElementsByTagName("photref"))
             qametriczp.nsamples = get_value(zp.getElementsByTagName("nsamples"))
+            qametriczp.percentile_band = get_value(zp.getElementsByTagName("percentile_band"))
             qametriczp.comment = get_value(zp.getElementsByTagName("comment"))
             session.add(qametriczp)
             session.commit()
@@ -83,6 +87,7 @@ def qareport(req):
             qametricsb.electrons_std = get_value(sb.getElementsByTagName("elecrons_std"))
             qametricsb.nsamples = get_value(sb.getElementsByTagName("nsamples"))
             qametricsb.comment = get_value(sb.getElementsByTagName("comment"))
+            qametricsb.percentile_band = get_value(sb.getElementsByTagName("percentile_band"))
             session.add(qametricsb)
             session.commit()
           for pe in qam.getElementsByTagName("pe"):
@@ -126,7 +131,7 @@ def qametrics(req, things):
       query = session.query(QAmetricIQ).select_from(QAmetricIQ, QAreport).filter(QAmetricIQ.qareport_id == QAreport.id)
       qalist = query.all()
 
-      req.write("#Datalabel, filename, detector, filter, utdatetime, Nsamples, FWHM, FWHM_std, isoFWHM, isoFWHM_std, EE50d, EE50d_std, elip, elip_std, pa, pa_std, strehl, strehl_std, comments\n")
+      req.write("#Datalabel, filename, detector, filter, utdatetime, Nsamples, FWHM, FWHM_std, isoFWHM, isoFWHM_std, EE50d, EE50d_std, elip, elip_std, pa, pa_std, strehl, strehl_std, percentile_band, comments\n")
 
       for qa in qalist:
         hquery = session.query(Header).select_from(Header, DiskFile).filter(Header.diskfile_id == DiskFile.id).filter(DiskFile.canonical == True)
@@ -139,7 +144,7 @@ def qametrics(req, things):
           filter = None
           utdt = None
 
-        req.write("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s\n" % (qa.datalabel, qa.filename, qa.detector, filter, utdt, qa.nsamples, qa.fwhm, qa.fwhm_std, qa.isofwhm, qa.isofwhm_std, qa.ee50d, qa.ee50d_std, qa.elip, qa.elip_std, qa.pa, qa.pa_std, qa.strehl, qa.strehl_std, qa.comment))
+        req.write("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s\n" % (qa.datalabel, qa.filename, qa.detector, filter, utdt, qa.nsamples, qa.fwhm, qa.fwhm_std, qa.isofwhm, qa.isofwhm_std, qa.ee50d, qa.ee50d_std, qa.elip, qa.elip_std, qa.pa, qa.pa_std, qa.strehl, qa.strehl_std, qa.percentile_band, qa.comment))
      
       req.write("#---------") 
 
@@ -147,7 +152,7 @@ def qametrics(req, things):
       query = session.query(QAmetricZP).select_from(QAmetricZP, QAreport).filter(QAmetricZP.qareport_id == QAreport.id)
       qalist = query.all()
 
-      req.write("#Datalabel, filename, detector, filter, utdatetime, Nsamples, zp_mag, zp_mag_std, photref, comment\n")
+      req.write("#Datalabel, filename, detector, filter, utdatetime, Nsamples, zp_mag, zp_mag_std, cloud, cloud_std, photref, percentile_band, comment\n")
 
       for qa in qalist:
         hquery = session.query(Header).select_from(Header, DiskFile).filter(Header.diskfile_id == DiskFile.id).filter(DiskFile.canonical == True)
@@ -160,7 +165,7 @@ def qametrics(req, things):
           filter = None
           utdt = None
 
-        req.write("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s\n" % (qa.datalabel, qa.filename, qa.detector, filter, utdt, qa.nsamples, qa.mag, qa.mag_std, qa.photref, qa.comment))
+        req.write("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s\n" % (qa.datalabel, qa.filename, qa.detector, filter, utdt, qa.nsamples, qa.mag, qa.mag_std, qa.cloud, qa.cloud_std, qa.photref, qa.percentile_band, qa.comment))
      
       req.write("#---------") 
 
@@ -169,7 +174,7 @@ def qametrics(req, things):
       query = session.query(QAmetricSB).select_from(QAmetricSB, QAreport).filter(QAmetricSB.qareport_id == QAreport.id)
       qalist = query.all()
 
-      req.write("#Datalabel, filename, detector, filter, utdatetime, Nsamples, sb_mag, sb_mag_std, sb_electrons, sb_electrons_std, comment\n")
+      req.write("#Datalabel, filename, detector, filter, utdatetime, Nsamples, sb_mag, sb_mag_std, sb_electrons, sb_electrons_std, percentile_band, comment\n")
 
       for qa in qalist:
         hquery = session.query(Header).select_from(Header, DiskFile).filter(Header.diskfile_id == DiskFile.id).filter(DiskFile.canonical == True)
@@ -182,7 +187,7 @@ def qametrics(req, things):
           filter = None
           utdt = None
 
-        req.write("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s\n" % (qa.datalabel, qa.filename, qa.detector, filter, utdt, qa.nsamples, qa.mag, qa.mag_std, qa.electrons, qa.electrons_std, qa.comment))
+        req.write("%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s\n" % (qa.datalabel, qa.filename, qa.detector, filter, utdt, qa.nsamples, qa.mag, qa.mag_std, qa.electrons, qa.electrons_std, qa.percentile_band, qa.comment))
      
       req.write("#---------") 
 

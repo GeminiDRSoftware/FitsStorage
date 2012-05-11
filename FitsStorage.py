@@ -1039,6 +1039,7 @@ class QAmetricIQ(Base):
   strehl = Column(Numeric(precision=6, scale=3))
   strehl_std = Column(Numeric(precision=6, scale=3))
   nsamples = Column(Integer)
+  percentile_band = Column(Text)
   comment = Column(Text)
 
   def __init__(self, qareport):
@@ -1059,8 +1060,11 @@ class QAmetricZP(Base):
   # Photometry
   mag = Column(Numeric(precision=5, scale=3))
   mag_std = Column(Numeric(precision=5, scale=3))
+  cloud = Column(Numeric(precision=5, scale=3))
+  cloud_std = Column(Numeric(precision=5, scale=3))
   photref = Column(Text)
   nsamples = Column(Integer)
+  percentile_band = Column(Text)
   comment = Column(Text)
 
   def __init__(self, qareport):
@@ -1084,6 +1088,7 @@ class QAmetricSB(Base):
   electrons = Column(Numeric(precision=7, scale=2))
   electrons_std = Column(Numeric(precision=7, scale=2))
   nsamples = Column(Integer)
+  percentile_band = Column(Text)
   comment = Column(Text)
 
   def __init__(self, qareport):
