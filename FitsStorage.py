@@ -110,13 +110,14 @@ class DiskFile(Base):
   fverrors = Column(Integer)
   wmdready = Column(Boolean)
 
-  def __init__(self, file):
+  def __init__(self, file, skip_ccrc=False):
     self.file_id = file.id
     self.present = True
     self.canonical = True
     self.entrytime = datetime.datetime.now()
     self.size = file.size()
-    self.ccrc = file.ccrc()
+    if(skip_ccrc==False):
+      self.ccrc = file.ccrc()
     self.md5 = file.md5()
     self.lastmod = file.lastmod()
 
@@ -210,6 +211,7 @@ class Header(Base):
   exposure_time = Column(Numeric(precision=8, scale=4))
   disperser = Column(Text)
   central_wavelength = Column(Numeric(precision=8, scale=6))
+  wavelength_band = Column(Text)
   focal_plane_mask = Column(Text)
   detector_binning = Column(Text)
   detector_config = Column(Text)
@@ -354,6 +356,10 @@ class Header(Base):
       if('SPECT' in ad.types):
         try:
           self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
+        except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError, Errors.TableKeyError):
+          pass
+        try:
+          self.wavelength_band = ad.wavelength_band().for_db()
         except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError, Errors.TableKeyError):
           pass
       try:

@@ -8,7 +8,7 @@ from FitsStorageLogger import logger
 from GeometryHacks import *
 
 
-def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
+def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, skip_ccrc):
   """
   Ingests a file into the database. If the file isn't known to the database
   at all, all three (file, diskfile, header) table entries are created.
@@ -96,7 +96,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
     
     if(add_diskfile):
       logger.debug("Adding new DiskFile entry")
-      diskfile = DiskFile(file)
+      diskfile = DiskFile(file, skip_ccrc)
       session.add(diskfile)
       session.commit()
       dfreport = DiskFileReport(diskfile, skip_fv, skip_wmd)
