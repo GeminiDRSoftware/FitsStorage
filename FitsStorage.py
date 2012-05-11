@@ -225,6 +225,7 @@ class Header(Base):
   qa_state = Column(Text, index=True)
   release = Column(Date(TimeZone=False))
   reduction = Column(Text, index=True)
+  types = Column(Text)
   phot_standard = Column(Boolean)
 
   def __init__(self, diskfile):
@@ -425,6 +426,9 @@ class Header(Base):
         self.reduction = 'PROCESSED_DARK'
       if('PROCESSED_ARC' in ad.types):
         self.reduction = 'PROCESSED_ARC'
+
+      # Get the types list
+      self.types = str(ad.types)
 
       ad.close()
     except:
