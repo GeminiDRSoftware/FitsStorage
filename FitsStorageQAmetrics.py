@@ -219,3 +219,207 @@ def qametrics(req, things):
     session.close()
 
   return apache.OK
+
+import json
+import datetime
+import dateutil.parser
+import math
+
+def qaforgui(req, things):
+ 
+  """
+  This function outputs a JSON dump, aimed at feeding the QA metric GUI display
+  If you pass it a timestamp string in things, it will only list reports submitted after that timestamp
+  """
+  datestamp = None
+  try:
+    datestampstr = things[0]
+    datestamp = dateutil.parser.parse(datestampstr)
+  except (IndexError, ValueError):
+    pass
+
+  session = sessionfactory()
+  try:
+    req.content_type = "application/json"
+    #req.content_type = "text/plain"
+
+    # We only want the most recent of each value for each datalabel
+    # Interested in IQ, ZP, BG
+
+    # Get a list of datalabels
+    iqquery = session.query(QAmetricIQ.datalabel)
+    zpquery = session.query(QAmetricZP.datalabel)
+    sbquery = session.query(QAmetricSB.datalabel)
+    query = iqquery.union(zpquery).union(sbquery).distinct()
+    datalabels = query.all()
+
+    # Now loop through the datalabels. 
+    # For each datalabel, get the most recent QA measurement of each type. Only ones reported after the datestamp
+    for datalabel in datalabels:
+
+      # Comes back as a 1 element list
+      datalabel = datalabel[0]
+
+      metadata = {}
+      iq = {}
+      cc = {}
+      bg = {}
+      metadata['datalabel']=datalabel
+
+      # Fitst try and find the header entry for this datalabel, and populate what comes from that
+      query = session.query(Header).select_from(Header, DiskFile).filter(Header.diskfile_id == DiskFile.id)
+      query = query.filter(DiskFile.canonical == True).filter(Header.data_label == datalabel)
+      header = query.first()
+      # We can only populate the header info if it is in the header table
+      if(header):
+        metadata['filename']=header.diskfile.file.filename
+        metadata['ut_time']=str(header.ut_datetime)
+        metadata['local_time']=str(header.local_time)
+        metadata['wavelength']=header.central_wavelength
+        metadata['waveband']=header.wavelength_band
+        metadata['airmass']=float(header.airmass)
+        metadata['filter']=header.filter_name
+        metadata['instrument']=header.instrument
+        metadata['object']=header.object
+        # Parse the types string back into a list using a locked-down eval
+        metadata['types']=eval(header.types, {"__builtins__":None}, {})
+
+      # Look for IQ metrics to report. Going to need to do the same merging trick here
+      query = session.query(QAmetricIQ).select_from(QAmetricIQ, QAreport).filter(QAmetricIQ.qareport_id == QAreport.id)
+      if(datestamp):
+        query = query.filter_by(QAreport.submit_time > datestamp)
+      query.filter(QAmetricIQ.datalabel == datalabel)
+      query.order_by(desc(QAreport.submit_time))
+      qaiq = query.first()
+
+      # If we got anything, add it to the dict
+      if(qaiq):
+        iq['band']=qaiq.percentile_band
+        iq['delivered']=float(qaiq.fwhm)
+        iq['delivered_error']=float(qaiq.fwhm_std)
+        iq['zenith']=float(qaiq.fwhm) * float(header.airmass)**(-0.6)
+        iq['ellipticity']=float(qaiq.elip)
+        iq['ellip_error']=float(qaiq.elip_std)
+        iq['comment']=[qaiq.comment]
+        if(header):
+          iq['requested']=int(header.requested_iq)
+
+      # Look for CC metrics to report. The DB has the different detectors in different entries, have to do some merging.
+      # Find the qareport id of the most recent zp report for this datalabel
+      query = session.query(QAreport).select_from(QAmetricZP, QAreport).filter(QAmetricZP.qareport_id == QAreport.id)
+      if(datestamp):
+        query = query.filter_by(QAreport.id.submit_time > datestamp)
+      query.filter(QAmetricZP.datalabel == datalabel)
+      query.order_by(desc(QAreport.submit_time))
+      qarep = query.first()
+
+      # Now find all the ZPmetrics for this qareport_id
+      # By definition, it must be after the timestamp etc.
+      zpmetrics=[]
+      if(qarep):
+        query = session.query(QAmetricZP).filter(QAmetricZP.qareport_id == qarep.id)
+        zpmetrics = query.all()
+
+      # Now go through those and merge them into the form required
+      # This is a bit tediouos, given that we may have a result that is split by amp,
+      # or we may have one from a mosaiced full frame image.
+      cc_band=[]
+      cc_zeropoint = {}
+      cc_extinction = []
+      cc_extinction_error = []
+      cc_comment = []
+      for z in zpmetrics:
+        if z.percentile_band not in cc_band:
+          cc_band.append(z.percentile_band)
+        cc_extinction.append(float(z.cloud))
+        cc_extinction_error.append(float(z.cloud_std))
+        cc_zeropoint[z.detector]={'value':float(z.mag), 'error':float(z.mag_std)}
+        if(z.comment not in cc_comment):
+          cc_comment.append(z.comment)
+
+      # Need to combine some of these to a single value
+      cc['band'] = ', '.join(cc_band)
+      cc['zeropoint']=cc_zeropoint
+      if(len(cc_extinction)):
+        cc['extinction'] = sum(cc_extinction) / len(cc_extinction)
+
+        # Quick variance calculation, we could load numpy instead..
+        s = 0
+        for e in cc_extinction_error:
+          s += e*e
+        s /= len(cc_extinction_error)
+        cc['extinction_error'] = math.sqrt(s)
+      
+      cc['comment'] = cc_comment
+      if(header):
+        cc['requested']=int(header.requested_cc)
+
+
+      # Look for BG metrics to report. The DB has the different detectors in different entries, have to do some merging.
+      # Find the qareport id of the most recent zp report for this datalabel
+      query = session.query(QAreport).select_from(QAmetricSB, QAreport).filter(QAmetricSB.qareport_id == QAreport.id)
+      if(datestamp):
+        query = query.filter_by(QAreport.id.submit_time > datestamp)
+      query.filter(QAmetricSB.datalabel == datalabel)
+      query.order_by(desc(QAreport.submit_time))
+      qarep = query.first()
+
+      # Now find all the SBmetrics for this qareport_id
+      # By definition, it must be after the timestamp etc.
+      sbmetrics=[]
+      if(qarep):
+        query = session.query(QAmetricSB).filter(QAmetricSB.qareport_id == qarep.id)
+        sbmetrics = query.all()
+
+      # Now go through those and merge them into the form required
+      # This is a bit tediouos, given that we may have a result that is split by amp,
+      # or we may have one from a mosaiced full frame image.
+      bg_band=[]
+      bg_mag =[]
+      bg_mag_std = []
+      bg_comment = []
+      for b in sbmetrics:
+        if b.percentile_band not in bg_band:
+          bg_band.append(b.percentile_band)
+        bg_mag.append(float(b.mag))
+        bg_mag_std.append(float(b.mag_std))
+        if(b.comment not in bg_comment):
+          bg_comment.append(b.comment)
+
+      # Need to combine some of these to a single value
+      bg['band'] = ', '.join(bg_band)
+      if(len(bg_mag)):
+        bg['brightness'] = sum(bg_mag) / len(bg_mag)
+
+        # Quick variance calculation, we could load numpy instead..
+        s = 0
+        for e in bg_mag_std:
+          s += e*e
+        s /= len(bg_mag_std)
+        bg['brightness_error'] = math.sqrt(s)
+      
+      bg['comment'] = bg_comment
+      if(header):
+        bg['requested']=int(header.requested_bg)
+
+      # Now, put the stuff we built into a dict that we can push out to json
+      dict={}
+      if(len(metadata)):
+        dict['metadata']=metadata
+      if(len(iq)):
+        dict['iq']=iq
+      if(len(cc)):
+        dict['cc']=cc
+      if(len(bg)):
+        dict['bg']=bg
+
+      # Serialze it out via json to the request object 
+      json.dump(dict, req, indent=4, )
+
+  except IOError:
+    pass
+  finally:
+    session.close()
+
+  return apache.OK
+
