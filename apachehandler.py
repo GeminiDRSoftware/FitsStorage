@@ -21,7 +21,7 @@ from FitsStorageWebSummary.Calibrations import calibrations
 from FitsStorageWebSummary.UploadProcessedCal import upload_processed_cal
 from FitsStorageWebSummary.CurationReport import curation_report
 from FitsStorageWebSummary.Standards import standardobs
-from FitsStorageQAmetrics import qareport, qametrics
+from FitsStorageQAmetrics import qareport, qametrics, qaforgui
 
 import re
 import datetime
@@ -310,6 +310,10 @@ def handler(req):
   # Retrieve QA metrics, simple initial version
   if(this == "qametrics"):
     return qametrics(req, things)
+
+  # Retrieve QA metrics, json version for GUI
+  if(this == "qaforgui"):
+    return qaforgui(req, things)
 
   # Database Statistics
   if(this == "stats"):
