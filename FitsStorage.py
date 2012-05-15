@@ -222,6 +222,10 @@ class Header(Base):
   raw_cc = Column(Text)
   raw_wv = Column(Text)
   raw_bg = Column(Text)
+  requested_iq = Column(Integer)
+  requested_cc = Column(Integer)
+  requested_wv = Column(Integer)
+  requested_bg = Column(Integer)
   qa_state = Column(Text, index=True)
   release = Column(Date(TimeZone=False))
   reduction = Column(Text, index=True)
@@ -341,6 +345,23 @@ class Header(Base):
       except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
         pass
       try:
+        self.requested_iq = ad.requested_iq().for_db()
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+        pass
+      try:
+        self.requested_cc = ad.requested_cc().for_db()
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+        pass
+      try:
+        self.requested_wv = ad.requested_wv().for_db()
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+        pass
+      try:
+        self.requested_bg = ad.requested_bg().for_db()
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+        pass
+
+      try:
         self.filter_name = ad.filter_name(pretty=True).for_db()
       except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
         pass
@@ -359,10 +380,10 @@ class Header(Base):
           self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
         except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError, Errors.TableKeyError):
           pass
-        try:
-          self.wavelength_band = ad.wavelength_band().for_db()
-        except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError, Errors.TableKeyError):
-          pass
+      try:
+        self.wavelength_band = ad.wavelength_band().for_db()
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError, Errors.TableKeyError, Errors.CalcError):
+        pass
       try:
         self.focal_plane_mask = ad.focal_plane_mask(pretty=True).for_db()
       except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
