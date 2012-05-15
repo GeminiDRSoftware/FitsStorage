@@ -5,9 +5,6 @@ classes and functions for parsing the metadata in Gemini FITS files.
 import re
 import datetime
 
-# This first block of regexps are compiled here but used elsewhere
-percentilecre=re.compile('^\d\d-percentile$')
-
 # Compile some regular expressions here. This is fairly complex, so I've
 # split it up in substrings to make it easier to follow.
 # Also these substrings are used directly by the classes
@@ -245,6 +242,21 @@ def gemini_binning(string):
 
   return retval
 
+def percentilestring(num, type):
+  """
+  A utility function that converts a numeric percentile
+  number, and the site condition type, into a compact string,
+  eg (20, 'IQ') -> IQ20. Maps 100 onto 'Any' and gives
+  'Unknown' if the num is None
+  """
+  if(num is None):
+    retval = 'Undefined'
+  elif(num == 100):
+    retval = type + "Any"
+  else:
+    retval = "%s%02d" % (type, num)
+
+  return retval
 
 # The Gemini Data Label Class
 
