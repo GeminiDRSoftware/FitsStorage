@@ -174,7 +174,7 @@ def webhdrsummary(session, req, type, headers, links=True):
       req.write('<TD>%s</TD>' % h.data_label)
 
     if(h.ut_datetime):
-      req.write("<TD><NORB>%s</NOBR></TD>" % (h.ut_datetime.strftime("%Y-%m-%d %H:%M:%S")))
+      req.write("<TD><NOBR>%s</NOBR></TD>" % (h.ut_datetime.strftime("%Y-%m-%d %H:%M:%S")))
     else:
       req.write("<TD>%s</TD>" % ("None"))
 
@@ -229,25 +229,30 @@ def webhdrsummary(session, req, type, headers, links=True):
     if('qa' in want):
       req.write('<TD>%s</TD>' % (h.qa_state))
 
-      if(h.raw_iq and percentilecre.match(h.raw_iq)):
-        req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.raw_iq, h.raw_iq[0:4]))
-      else:
-        req.write('<TD>%s</TD>' % (h.raw_iq))
+      style=""
+      if(h.requested_iq < h.raw_iq):
+        style = "style='color:red'"
+      text = "<p %s>%s</p>" % (style, percentilestring(h.raw_iq, 'IQ'))
+      req.write('<TD><abbr title="Raw: %s, Requested: %s">%s</abbr></TD>' % (percentilestring(h.raw_iq, 'IQ'), percentilestring(h.requested_iq, 'IQ'), text))
 
-      if(h.raw_cc and percentilecre.match(h.raw_cc)):
-        req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.raw_cc, h.raw_cc[0:4]))
-      else:
-        req.write('<TD>%s</TD>' % (h.raw_cc))
+      style=""
+      if(h.requested_cc < h.raw_cc):
+        style = "style='color:red'"
+      text = "<p %s>%s</p>" % (style, percentilestring(h.raw_cc, 'CC'))
+      req.write('<TD><abbr title="Raw: %s, Requested: %s">%s</abbr></TD>' % (percentilestring(h.raw_cc, 'CC'), percentilestring(h.requested_cc, 'CC'), text))
 
-      if(h.raw_wv and percentilecre.match(h.raw_wv)):
-        req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.raw_wv, h.raw_wv[0:4]))
-      else:
-        req.write('<TD>%s</TD>' % (h.raw_wv))
- 
-      if(h.raw_bg and percentilecre.match(h.raw_bg)):
-        req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.raw_bg, h.raw_bg[0:4]))
-      else:
-        req.write('<TD>%s</TD>' % (h.raw_bg))
+      style=""
+      if(h.requested_wv < h.raw_wv):
+        style = "style='color:red'"
+      text = "<p %s>%s</p>" % (style, percentilestring(h.raw_wv, 'WV'))
+      req.write('<TD><abbr title="Raw: %s, Requested: %s">%s</abbr></TD>' % (percentilestring(h.raw_wv, 'WV'), percentilestring(h.requested_wv, 'WV'), text))
+
+      style=""
+      if(h.requested_bg < h.raw_bg):
+        style = "style='color:red'"
+      text = "<p %s>%s</p>" % (style, percentilestring(h.raw_bg, 'BG'))
+      req.write('<TD><abbr title="Raw: %s, Requested: %s">%s</abbr></TD>' % (percentilestring(h.raw_bg, 'BG'), percentilestring(h.requested_bg, 'BG'), text))
+
 
     # the 'diskfiles' part
     if('diskfiles' in want):

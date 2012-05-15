@@ -218,10 +218,10 @@ class Header(Base):
   detector_roi_setting = Column(Text)
   spectroscopy = Column(Boolean, index=True)
   adaptive_optics = Column(Boolean)
-  raw_iq = Column(Text)
-  raw_cc = Column(Text)
-  raw_wv = Column(Text)
-  raw_bg = Column(Text)
+  raw_iq = Column(Integer)
+  raw_cc = Column(Integer)
+  raw_wv = Column(Integer)
+  raw_bg = Column(Integer)
   requested_iq = Column(Integer)
   requested_cc = Column(Integer)
   requested_wv = Column(Integer)
@@ -280,12 +280,9 @@ class Header(Base):
         raise
 
       try:
-        localtime_string = ad.local_time().for_db()
-        if(localtime_string):
-          # This is a bit of a hack so as to use the nice parser
-          self.local_time = dateutil.parser.parse("2000-01-01 %s" % (localtime_string)).time()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
-        pass
+        self.local_time = ad.local_time().for_db()
+      except:
+        raise
 
       # Data Types
       try:
