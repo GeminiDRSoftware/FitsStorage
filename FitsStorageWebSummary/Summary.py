@@ -231,26 +231,26 @@ def webhdrsummary(session, req, type, headers, links=True):
 
       style=""
       if(h.requested_iq < h.raw_iq):
-        style = "style='color:red'"
-      text = "<p %s>%s</p>" % (style, percentilestring(h.raw_iq, 'IQ'))
+        style = " style='color:red'"
+      text = "<span%s>%s</span>" % (style, percentilestring(h.raw_iq, 'IQ'))
       req.write('<TD><abbr title="Raw: %s, Requested: %s">%s</abbr></TD>' % (percentilestring(h.raw_iq, 'IQ'), percentilestring(h.requested_iq, 'IQ'), text))
 
       style=""
       if(h.requested_cc < h.raw_cc):
-        style = "style='color:red'"
-      text = "<p %s>%s</p>" % (style, percentilestring(h.raw_cc, 'CC'))
+        style = " style='color:red'"
+      text = "<span%s>%s</span>" % (style, percentilestring(h.raw_cc, 'CC'))
       req.write('<TD><abbr title="Raw: %s, Requested: %s">%s</abbr></TD>' % (percentilestring(h.raw_cc, 'CC'), percentilestring(h.requested_cc, 'CC'), text))
 
       style=""
       if(h.requested_wv < h.raw_wv):
-        style = "style='color:red'"
-      text = "<p %s>%s</p>" % (style, percentilestring(h.raw_wv, 'WV'))
+        style = " style='color:red'"
+      text = "<span%s>%s</span>" % (style, percentilestring(h.raw_wv, 'WV'))
       req.write('<TD><abbr title="Raw: %s, Requested: %s">%s</abbr></TD>' % (percentilestring(h.raw_wv, 'WV'), percentilestring(h.requested_wv, 'WV'), text))
 
       style=""
       if(h.requested_bg < h.raw_bg):
-        style = "style='color:red'"
-      text = "<p %s>%s</p>" % (style, percentilestring(h.raw_bg, 'BG'))
+        style = " style='color:red'"
+      text = "<span%s>%s</span>" % (style, percentilestring(h.raw_bg, 'BG'))
       req.write('<TD><abbr title="Raw: %s, Requested: %s">%s</abbr></TD>' % (percentilestring(h.raw_bg, 'BG'), percentilestring(h.requested_bg, 'BG'), text))
 
 
