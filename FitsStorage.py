@@ -665,6 +665,8 @@ class Gmos(Base):
   nodandshuffle = Column(Boolean, index=True)
   nod_count = Column(Integer, index=True)
   nod_pixels = Column(Integer, index=True)
+  overscan_subtracted = Column(Boolean, index=True)
+  overscan_trimmed = Column(Boolean, index=True)
 
   def __init__(self, header):
     self.header = header
@@ -723,6 +725,15 @@ class Gmos(Base):
           self.nod_pixels = ad.nod_pixels().for_db()
         except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError):
           pass
+      try:
+        self.overscan_trimmed = ad.is_type('OVERSCAN_TRIMMED')
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+        pass
+      try:
+        self.overscan_subtracted = ad.is_type('OVERSCAN_SUBTRACTED')
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+        pass
+
       ad.close()
     except Errors.CorruptDataError:
       # Astrodata open failed or there was some other exception that we want to ignore
