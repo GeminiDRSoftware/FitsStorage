@@ -74,6 +74,11 @@ def webhdrsummary(session, req, type, headers, links=True):
   if(type == 'ssummary'):
     want.append('obs')
     want.append('qa')
+  if(type == 'lsummary'):
+    want.append('obs')
+    want.append('expamlt')
+    want.append('details')
+    want.append('qa')
   if(type == 'diskfiles'):
     want.append('diskfiles')
 
@@ -93,16 +98,18 @@ def webhdrsummary(session, req, type, headers, links=True):
     req.write('<TH><abbr title="Instrument">Inst</abbr></TH>')
 
   # This is the 'obs', 'expamlt' and 'qa' parts
-  wants = ['obs', 'expamlt', 'qa']
+  # In the 3 element lists below, the first element is the full title, the second is the shortform title, and the third is the order by key
+  wants = ['obs', 'expamlt', 'details', 'qa']
   for w in wants:
     if w in want:
       if(w == 'obs'):
         vals = [['ObsClass', 'Class', 'observation_class'], ['ObsType', 'Type', 'observation_type'], ['Object Name', 'Object', 'object']]
       elif(w == 'expamlt'):
         vals = [['Exposure Time', 'ExpT', 'exposure_time'], ['AirMass', 'AM', 'airmass'], ['Localtime', 'Lcltime', 'local_time']]
+      elif(w == 'details'):
+        vals = [['Filter', 'Filter', 'filter_name'], ['Disperser : Central Wavelength', 'Disperser', 'disperser'], ['Focal Plane Mask', 'FPmask', 'fpmask'], ['Detector ROI', 'ROI', 'detector_roi'], ['Detector Binning', 'Binning', 'detector_binning'], ['Detector Configuration', 'DetConf', 'detctor_config']]
       elif(w == 'qa'):
         vals = [['QA State', 'QA', 'qa_state'], ['Raw IQ', 'IQ', 'raw_iq'], ['Raw CC', 'CC', 'raw_cc'], ['Raw WV', 'WV', 'raw_wv'], ['Raw BG', 'BG', 'raw_bg']]
-
       if(links):
         for i in range(len(vals)):
           req.write('<TH><abbr title="%s">%s</abbr> <a href="%s?orderby=%s_asc">&uarr;</a><a href="%s?orderby=%s_desc">&darr;</a></TH>' % (vals[i][0], vals[i][1], myuri, vals[i][2], myuri, vals[i][2]))
@@ -112,7 +119,6 @@ def webhdrsummary(session, req, type, headers, links=True):
       if(w == 'obs'):
         req.write('<TH><abbr title="Imaging Filter or Spectroscopy Wavelength and Disperser">WaveBand<abbr></TH>')
  
-
   # This is the 'diskfiles' part
   if('diskfiles' in want):
     req.write('<TH>Present</TH>')
@@ -224,6 +230,19 @@ def webhdrsummary(session, req, type, headers, links=True):
       else:
         req.write("<TD>%s</TD>" % ("None"))
 
+    # the 'details' part
+    if('details' in want):
+      req.write("<TD>%s</TD>" % (h.filter_name))
+      try:
+        string = "%.3f" % h.central_wavelength
+      except:
+        string = "%s" % h.central_wavelength
+      req.write("<TD><NOBR>%s : %s</NOBR></TD>" % (h.disperser, string))
+      req.write("<TD>%s</TD>" % (h.focal_plane_mask))
+      req.write("<TD>%s</TD>" % (h.detector_roi_setting))
+      req.write("<TD>%s</TD>" % (h.detector_binning))
+      req.write("<TD>%s</TD>" % (h.detector_config))
+
     # Now the 'qa' part
     # Abreviate the raw XX values to 4 characters
     if('qa' in want):
@@ -261,6 +280,7 @@ def webhdrsummary(session, req, type, headers, links=True):
       req.write("<TD>%s</TD>" % (h.diskfile.lastmod))
       req.write("<TD>%s</TD>" % (h.diskfile.size))
       req.write("<TD>%s</TD>" % (h.diskfile.ccrc))
+
 
     # And again last bit included in all summary types
     req.write("</TR>\n")

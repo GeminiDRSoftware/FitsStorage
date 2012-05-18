@@ -74,7 +74,7 @@ def handler(req):
     return debugmessage(req)
 
   # This is the header summary handler
-  if((this == 'summary') or (this == 'diskfiles') or (this == 'ssummary')):
+  if((this == 'summary') or (this == 'diskfiles') or (this == 'ssummary') or (this == 'lsummary')):
 
     links = True
     # the nolinks thing is for the external email notifications
