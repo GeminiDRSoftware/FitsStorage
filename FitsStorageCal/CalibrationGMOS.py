@@ -40,6 +40,9 @@ class CalibrationGMOS(Calibration):
       self.descriptors['nodandshuffle']=self.gmos.nodandshuffle
       self.descriptors['nod_count']=self.gmos.nod_count
       self.descriptors['nod_pixels']=self.gmos.nod_pixels
+      self.descriptors['prepared']=self.gmos.prepared
+      self.descriptors['overscan_trimmed']=self.gmos.overscan_trimmed
+      self.descriptors['overscan_subtracted']=self.gmos.overscan_subtracted
 
     # Set the list of required calibrations
     self.required = self.required()
@@ -194,9 +197,21 @@ class CalibrationGMOS(Calibration):
     else:
       query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
 
-    # The data section should be a equal or substring match, - so that we get the correctly trimmed bias, but also can select only CCD2 out of a 3 chip bias
-    # This needs adding to FLAT and FRINGE once the DB supports it.
-    # query.filter(Gmos.data_section.like('%'+self.descriptors['data_section']+'%'))
+
+    # The Overscan section handling: this only applies to processed biases
+    # as raw biases will never be overscan trimmed or subtracted, and if they're
+    # processing their own biases, they ought to know what they want to do.
+ 
+    # If the target frame is prepared, then we match the overscan state. If the target frame is
+    # not prepared, then we don't know what thier procesing intentions are, so we 
+    # give them the default (which is trimmed and subtracted).
+    if(processed):
+      if (self.descriptors['prepared']==True):
+        query.filter(Gmos.overscan_trimmed == self.descriptors['overscan_trimmed'])
+        query.filter(Gmos.overscan_subtracted == self.descriptors['overscan_subtracted'])
+      else:
+        query.filter(Gmos.overscan_trimmed == True)
+        query.filter(Gmos.overscan_subtracted == True)
 
     # Order by absolute time separation.
     if(processed and fsc_localmode):

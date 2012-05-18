@@ -62,6 +62,8 @@ def calmgr(req, selection):
       # but they're actually types. This is where we push them into the descriptor disctionary
       descriptors['nodandshuffle'] = 'GMOS_NODANDSHUFFLE' in types
       descriptors['spectroscopy'] = 'SPECT' in types
+      descriptors['overscan_subtracted'] = 'OVERSCAN_SUBTRACTED' in types
+      descriptors['overscan_trimmed'] = 'OVERSCAN_TRIMMED' in types
     
 
       # Get a cal object for this target data
