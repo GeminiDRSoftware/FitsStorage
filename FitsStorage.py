@@ -276,13 +276,13 @@ class Header(Base):
       # Date and times part
       try:
         self.ut_datetime = ad.ut_datetime().for_db()
-      except:
-        raise
+      except (KeyError):
+        pass
 
       try:
         self.local_time = ad.local_time().for_db()
-      except:
-        raise
+      except (KeyError):
+        pass
 
       # Data Types
       try:
