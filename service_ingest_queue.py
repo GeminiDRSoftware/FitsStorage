@@ -29,16 +29,32 @@ parser.add_option("--empty", action="store_true", default=False, dest="empty", h
 setdebug(options.debug)
 setdemon(options.demon)
 
-# Define signal handler. This allows us to bail out neatly if we get a signal
+# Need to set up the global loop variable before we define the signal handlers
+# This is the loop forever variable later, allowing us to stop cleanly via kill
+global loop
+loop=True
+
+# Define signal handlers. This allows us to bail out neatly if we get a signal
 def handler(signum, frame):
-  logger.info("Received signal: %d " % signum)
+  logger.error("Received signal: %d. Crashing out. " % signum)
   raise KeyboardInterrupt('Signal', signum)
 
+def nicehandler(signum, frame):
+  logger.error("Received signal: %d. Attempting to stop nicely " % signum)
+  global loop
+  loop=False
+
 # Set handlers for the signals we want to handle
-signal.signal(signal.SIGHUP, handler)
-signal.signal(signal.SIGINT, handler)
-signal.signal(signal.SIGQUIT, handler)
-signal.signal(signal.SIGTERM, handler)
+# Cannot trap SIGKILL or SIGSTOP, all others are fair game
+signal.signal(signal.SIGHUP, nicehandler)
+signal.signal(signal.SIGINT, nicehandler)
+signal.signal(signal.SIGQUIT, nicehandler)
+signal.signal(signal.SIGILL, handler)
+signal.signal(signal.SIGABRT, handler)
+signal.signal(signal.SIGFPE, handler)
+signal.signal(signal.SIGSEGV, handler)
+signal.signal(signal.SIGPIPE, handler)
+signal.signal(signal.SIGTERM, nicehandler)
 
 # Annouce startup
 now = datetime.datetime.now()
@@ -56,8 +72,7 @@ if(options.lockfile):
 
 session = sessionfactory()
 
-# Loop forever.
-loop = True
+# Loop forever. loop is a global variable defined up top
 while(loop):
   try:
     # Request a queue entry
@@ -95,7 +110,6 @@ while(loop):
 
   except KeyboardInterrupt:
     loop=False
-    break
 
   except:
     string = traceback.format_tb(sys.exc_info()[2])
