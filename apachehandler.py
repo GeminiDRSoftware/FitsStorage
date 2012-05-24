@@ -21,7 +21,7 @@ from FitsStorageWebSummary.Calibrations import calibrations
 from FitsStorageWebSummary.UploadProcessedCal import upload_processed_cal
 from FitsStorageWebSummary.CurationReport import curation_report
 from FitsStorageWebSummary.Standards import standardobs
-from FitsStorageWebSummart.Selection import getselection
+from FitsStorageWebSummary.Selection import getselection
 from FitsStorageQAmetrics import qareport, qametrics, qaforgui
 
 import re
