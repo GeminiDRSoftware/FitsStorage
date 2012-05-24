@@ -21,6 +21,7 @@ from FitsStorageWebSummary.Calibrations import calibrations
 from FitsStorageWebSummary.UploadProcessedCal import upload_processed_cal
 from FitsStorageWebSummary.CurationReport import curation_report
 from FitsStorageWebSummary.Standards import standardobs
+from FitsStorageWebSummart.Selection import getselection
 from FitsStorageQAmetrics import qareport, qametrics, qaforgui
 
 import re
@@ -359,110 +360,6 @@ def handler(req):
 # End of apache handler() function.
 # Below are various helper functions called from above.
 # The web summary has it's own package
-
-def getselection(things):
-  # this takes a list of things from the URL, and returns a
-  # selection hash that is used by the html generators
-  selection = {}
-  while(len(things)):
-    thing = things.pop(0)
-    recognised=False
-    if(gemini_date(thing)):
-      selection['date']=gemini_date(thing)
-      recognised=True
-    if(gemini_daterange(thing)):
-      selection['daterange']=gemini_daterange(thing)
-      recognised=True
-    gp=GeminiProject(thing)
-    if(gp.program_id):
-      selection['program_id']=thing
-      recognised=True
-    go=GeminiObservation(thing)
-    if(go.observation_id):
-      selection['observation_id']=thing
-      recognised=True
-    gdl=GeminiDataLabel(thing)
-    if(gdl.datalabel):
-      selection['data_label']=thing
-      recognised=True
-    if(gemini_instrument(thing, gmos=True)):
-      selection['inst']=gemini_instrument(thing, gmos=True)
-      recognised=True
-    if(gemini_fitsfilename(thing)):
-      selection['filename'] = gemini_fitsfilename(thing)
-      recognised=True
-    if(gemini_observation_type(thing)):
-      selection['observation_type']=gemini_observation_type(thing)
-      recognised=True
-    if(gemini_observation_class(thing)):
-      selection['observation_class']=gemini_observation_class(thing)
-      recognised=True
-    if(gemini_caltype(thing)):
-      selection['caltype']=gemini_caltype(thing)
-      recognised=True
-    if(gemini_reduction_state(thing)):
-      selection['reduction']=gemini_reduction_state(thing)
-      recognised=True
-    if(gmos_gratingname(thing)):
-      selection['gmos_grating']=gmos_gratingname(thing)
-      recognised=True
-    if(gmos_focal_plane_mask(thing)):
-      selection['gmos_focal_plane_mask']=gmos_focal_plane_mask(thing)
-      recognised=True
-    if(thing=='warnings' or thing=='missing' or thing=='requires' or thing=='takenow'):
-      selection['caloption']=thing
-      recognised=True
-    if(thing=='imaging' or thing=='Imaging'):
-      selection['spectroscopy']=False
-      recognised=True
-    if(thing=='spectroscopy' or thing=='Spectroscopy'):
-      selection['spectroscopy']=True
-      recognised=True
-    if(thing=='Pass' or thing=='Usable' or thing=='Fail' or thing=='Win' or thing=='NotFail'):
-      selection['qa_state']=thing
-      recognised=True
-    if(thing=='AO' or thing=='NOTAO'):
-      selection['ao']=thing
-      recognised=True
-    if(thing=='present' or thing=='Present'):
-      selection['present']=True
-      recognised=True
-    if(thing=='notpresent' or thing=='NotPresent'):
-      selection['present']=False
-      recognised=True
-    if(thing=='canonical' or thing=='Canonical'):
-      selection['canonical']=True
-      recognised=True
-    if(thing=='notcanonical' or thing=='NotCanonical'):
-      selection['canonical']=False
-      recognised=True
-    if(thing[:7]=='filter=' or thing[:7]=='Filter='):
-      selection['filter']=thing[7:]
-      recognised=True
-    if(gemini_binning(thing)):
-      selection['binning']=gemini_binning(thing)
-      recognised=True
-    if(thing=='photstandard'):
-      selection['photstandard']=True
-      recognised=True
-    if(thing in ['low', 'high', 'slow', 'fast']):
-      if(not selection.has_key('detector_config')):
-        selection['detector_config']=[]
-      selection['detector_config'].append(thing)
-      recognised=True
-    if(thing=='Twilight'):
-      selection['twilight']=True
-      recognised=True
-    if(thing=='NotTwilight'):
-      selection['twilight']=False
-      recognised=True
-
-    if(not recognised):
-      if('notrecognised' in selection):
-        selection['notrecognised'] += " "+thing
-      else:
-        selection['notrecognised'] = thing
-  return selection
 
 # Send usage message to browser
 def usagemessage(req):
