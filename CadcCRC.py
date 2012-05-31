@@ -10,7 +10,6 @@ This module also contains an md5sum function for convenience.
 import subprocess
 import os
 import re
-from FitsStorageConfig import *
 
 # the path to the fitsverify binary
 cadcCRC_bin = '/opt/cadc/cadcCRC'
@@ -23,8 +22,6 @@ def cadcCRC(filename):
   Runs the executable on the specified filename.
   Retuns a string containing the CRC string.
   """
-  if fsc_localmode == True:
-    return None
   # First check that the filename exists is readable and is a file
   exists = os.access(filename, os.F_OK | os.R_OK)
   isfile = os.path.isfile(filename)

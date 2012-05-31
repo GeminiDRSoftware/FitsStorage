@@ -20,8 +20,6 @@ import subprocess
 import os
 import re
 
-from FitsStorageConfig import *
-
 # the path to the fitsverify binary
 wmd = ['/astro/i686/jre1.5.0_03/bin/java', '-Djava.library.path=/opt/cadc/mdIngest/lib.x86_fedora', '-Dca.nrc.cadc.configDir=/opt/cadc/mdIngest/config', '-jar', '/opt/cadc/mdIngest/lib/mdIngest.jar', '--archive=GEMINI', '-c', '-d', '--log=/dev/null']
 
@@ -37,8 +35,6 @@ def cadcWMD(filename):
   The string is the text output of the wmd report.
   """
   
-  if fsc_localmode:
-    return (False, "No WMD Report, local mode")
   # First check that the filename exists is readable and is a file
   exists = os.access(filename, os.F_OK | os.R_OK)
   isfile = os.path.isfile(filename)
