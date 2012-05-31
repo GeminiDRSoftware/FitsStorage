@@ -17,7 +17,7 @@ def progsobserved(req, selection):
   session = sessionfactory()
   try:
     # the basic query in this case
-    query = session.query(Header.program_id).select_from(join(Header, join(DiskFile, File)))
+    query = session.query(Header.program_id).select_from(join(join(DiskFile, File), Header))
 
     # Add the selection criteria
     query = queryselection(query, selection)

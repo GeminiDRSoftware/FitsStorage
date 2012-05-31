@@ -68,7 +68,7 @@ def gmoscal(req, selection):
      for observation_class in (['science', 'dayCal']):
 
        # The basic query for this
-       query = session.query(func.count(1), Header.filter_name, Header.detector_binning).select_from(join(Header, join(DiskFile, File)))
+       query = session.query(func.count(1), Header.filter_name, Header.detector_binning).select_from(join(join(DiskFile, File), Header))
        query = query.filter(DiskFile.canonical == True)
 
        # Fudge and add the selection criteria
@@ -176,7 +176,7 @@ def gmoscal(req, selection):
      
      oneday = datetime.timedelta(days=1)
      offset = sqlalchemy.sql.expression.literal(tzoffset - oneday, sqlalchemy.types.Interval)
-     query = session.query(func.count(1), cast((Header.ut_datetime + offset), sqlalchemy.types.DATE).label('utdate'), Header.detector_binning, Header.detector_roi_setting).select_from(join(Header, join(DiskFile, File)))
+     query = session.query(func.count(1), cast((Header.ut_datetime + offset), sqlalchemy.types.DATE).label('utdate'), Header.detector_binning, Header.detector_roi_setting).select_from(join(join(DiskFile, File), Header))
 
      query = query.filter(DiskFile.canonical == True)
 
@@ -301,7 +301,7 @@ def gmoscal(req, selection):
      req.write('<P>This table shows how many suitable N&S darks can be found for every nodandshuffle OBJECT science frame within the last year. It counts darks taken within 6 months of the science as well as the total number found. We aim to have 15 darks taken within 6 months of the science. You can also see the number of months between the science and the most distant one within the 15 to give you an idea how far back you have to go to find a set of 15. If you see the same observation Id listed twice, then there are observations in that observation ID that require different darks.</P>')
 
      # The basic query for this
-     query = session.query(Header).select_from(join(Gmos, join(Header, DiskFile)))
+     query = session.query(Header).select_from(join(join(Header, DiskFile), Gmos))
 
      # Fudge and add the selection criteria
      selection={}

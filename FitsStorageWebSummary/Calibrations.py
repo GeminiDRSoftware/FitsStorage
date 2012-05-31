@@ -34,7 +34,7 @@ def calibrations(req, selection):
   try:
     # OK, find the target files
     # The Basic Query
-    query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
+    query = session.query(Header).select_from(join(join(DiskFile, File), Header))
 
     # Only the canonical versions
     selection['canonical'] = True
