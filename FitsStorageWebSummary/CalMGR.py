@@ -6,7 +6,6 @@ from FitsStorageWebSummary.Selection import sayselection, queryselection, openqu
 from FitsStorageCal import get_cal_object
 
 import ApacheReturnCodes as apache
-from FitsStorageConfig import fsc_localmode
 
 import urllib
 import re
@@ -106,7 +105,7 @@ def calmgr(req, selection):
         req.write("<md5>%s</md5>\n" % cal.diskfile.md5)
         req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
         if(cal.diskfile.present):
-          if (fsc_localmode):
+          if (using_apache):
             req.write("<url>http://%s/file/%s</url>\n" % (fits_servername, cal.diskfile.file.filename))
           else:
             req.write("<url>file://%s/%s/%s</url>\n" % (FitsStorageConfig.storage_root, cal.diskfile.file.path, cal.diskfile.file.filename))
@@ -127,12 +126,7 @@ def calmgr(req, selection):
     else:
       # OK, we got called via a GET - find the science dataset in the database
       # The Basic Query
-      if localmode:
-        query = session.query(Header).select_from(Header, DiskFile, File)
-        query = query.filter(Header.diskfile_id == DiskFile.id)
-        query = query.filter(DiskFile.file_id == File.id)
-      else:
-        query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
+      query = session.query(Header).select_from(join(join(File, DiskFile), Header))
 
       # Only the canonical versions
       selection['canonical'] = True
@@ -199,7 +193,7 @@ def calmgr(req, selection):
             req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
             req.write("<md5>%s</md5>\n" % cal.diskfile.md5)
             req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
-            if not fsc_localmode:
+            if using_apache:
                 req.write("<url>http://%s/file/%s</url>\n" % (req.server.server_hostname, cal.diskfile.file.filename))
             else:
                 req.write("<url>file://%s</url>\n" % os.path.join(cal.diskfile.file.path, cal.diskfile.file.filename))
