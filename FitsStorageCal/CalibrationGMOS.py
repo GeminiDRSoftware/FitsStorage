@@ -2,7 +2,7 @@
 This module holds the CalibrationGMOS class
 """
 
-from FitsStorageConfig import fsc_localmode
+from FitsStorageConfig import using_sqlite
 import GeminiMetadataUtils
 from FitsStorage import DiskFile, Header, Gmos
 from FitsStorageCal.Calibration import Calibration
@@ -214,13 +214,15 @@ class CalibrationGMOS(Calibration):
         query.filter(Gmos.overscan_subtracted == True)
 
     # Order by absolute time separation.
-    if(processed and fsc_localmode):
+    query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
+    # WTF WTF WTF
+    #if(processed and fsc_localmode):
       # note: double check if this even works, we suspect it doesn't
       # but it's hard to notice as a somewhat fitting cal will be returned
       # but perhaps not the most recent.
-      query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
-    else:
-      query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+      #query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
+    #else:
+      #query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
     # For now, we only want one result - the closest in time, unless otherwise indicated
     if(List):
@@ -262,13 +264,16 @@ class CalibrationGMOS(Calibration):
     query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
 
     # Order by absolute time separation.
-    if(processed and fsc_localmode):
+    query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
+    
+    # WTF WTF WTF
+    #if(processed and fsc_localmode):
       # note: double check if this even works, we suspect it doesn't
       # but it's hard to notice as a somewhat fitting cal will be returned
       # but perhaps not the most recent.
-      query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
-    else:
-      query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+      #query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
+    #else:
+      #query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
     # For now, we only want one result - the closest in time, unless otherwise indicated
     if(List):
