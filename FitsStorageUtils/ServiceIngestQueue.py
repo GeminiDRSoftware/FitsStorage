@@ -119,7 +119,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, sk
           add_footprint(session, fp.id, fps[i])
       except:
         pass
-      if (not fsc_localmode): # defined and set in FitsStoreConfig.py
+      if (not using_sqlite): # defined and set in FitsStoreConfig.py
           if(header.spectroscopy == False):
             logger.debug("Imaging - populating PhotStandardObs")
 

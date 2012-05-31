@@ -12,7 +12,6 @@ import traceback
 
 from optparse import OptionParser
 
-fsc_localmode = FitsStorageConfig.fsc_localmode
 parser = OptionParser()
 parser.add_option("--force-crc", action="store_true", dest="force_crc", help="Force crc check on pre-existing files")
 parser.add_option("--force", action="store_true", dest="force", help="Force re-ingest of file regardless")
@@ -91,10 +90,12 @@ while(loop):
       time.sleep(10)
     else:
       logger.info("Ingesting %s, (%d in queue)" % (iq.filename, ingestqueue_length(session)))
-      if not fsc_localmode:
-        session.begin_nested()
-      else:
+      if(FitsStorageConfig.using_sqlite):
+        # SQLite doesn't support nested transactions
         session.begin(subtransactions=True)
+      else:
+        session.begin_nested()
+
       try:
         ingest_file(session, iq.filename, iq.path, options.force_crc, options.force, options.skip_fv, options.skip_wmd, options.skip_ccrc)
         session.commit()

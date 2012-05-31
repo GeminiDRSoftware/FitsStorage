@@ -3,7 +3,6 @@ This module contains the QA metric database interface
 """
 
 from FitsStorage import *
-from FitsStorageConfig import fsc_localmode
 import urllib
 from xml.dom.minidom import parseString
 import ApacheReturnCodes as apache

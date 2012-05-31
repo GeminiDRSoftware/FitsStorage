@@ -47,7 +47,7 @@ session.commit()
 # Create the tables
 File.metadata.create_all(bind=pg_db)
 
-if fsc_localmode == False:
+if(using_apache):
   # Now grant the apache user select on them for the www queries
   session.execute("GRANT SELECT ON tape, tape_id_seq, tapewrite, tapefile TO apache");
   session.execute("GRANT INSERT,UPDATE ON tape, tape_id_seq TO apache");
