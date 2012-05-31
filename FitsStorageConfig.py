@@ -4,10 +4,6 @@
 # NOTE: all setting may be overwritten if environment variable,
 #   FITSSTORAGECONFIG_LOCALMODE, is true
 
-# controls if the system operates in regular FITSSTORE mode or Local Mode, as used by
-# the Astrodata Recipe System.
-fsc_localmode = False 
-
 # Configure the path to the storage root here 
 #storage_root = '/data/dataflow'
 storage_root = '/net/wikiwiki/dataflow'
@@ -35,6 +31,7 @@ email_errors_to = "phirst@gemini.edu"
 # Configure the path the data postgres database here
 fits_dbname = 'fitsdata'
 fits_database = 'postgresql:///'+fits_dbname
+#fits_database = 'sqlite:////home/fitsdata/sqlite-database'
 
 # Configure the Backup Directory here
 fits_db_backup_dir = "/net/endor/Sci_ARCH/mkofits1_backup"
@@ -47,6 +44,14 @@ fits_log_dir = "/data/logs/"
 
 # Configure the tape scratch directory here
 fits_tape_scratchdir = "/data/tapescratch"
+
+# Configure install specifics such as database backend tweaks, apache presence, etc
+# fsc_localmode is depreciated
+using_apache = True
+using_sqlite = False
+using_cadc = True
+
+
 
 
 # the following implements allows astrodata to set local versions of 
