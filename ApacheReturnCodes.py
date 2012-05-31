@@ -5,10 +5,10 @@
 # directly by the apache request handler.
 # Importing this module allows use of those functions without apache mod_python
 
-from FitsStorageConfig import fsc_localmode
+from FitsStorageConfig import using_apache
 
-if(fsc_localmode):
-  OK = 100
+if(not using_apache):
+  OK = 200
   HTTP_NOT_FOUND = 404
   HTTP_FORBIDDEN = 403
   HTTP_NOT_ACCEPTABLE = 406
