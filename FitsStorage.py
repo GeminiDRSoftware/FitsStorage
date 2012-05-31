@@ -146,11 +146,11 @@ class DiskFileReport(Base):
 
   def __init__(self, diskfile, skip_fv, skip_wmd):
     self.diskfile_id = diskfile.id
-    if(skip_fv or fsc_localmode == True):
+    if(skip_fv or not using_cadc):
       diskfile.fverrors=0
     else:
       self.fits_verify(diskfile)
-    if(skip_wmd or fsc_localmode == True):
+    if(skip_wmd or not using_cadc):
       diskfile.wmdready = True
     else:
       self.wmd(diskfile)
@@ -227,7 +227,7 @@ class Header(Base):
   requested_wv = Column(Integer)
   requested_bg = Column(Integer)
   qa_state = Column(Text, index=True)
-  release = Column(Date(TimeZone=False))
+  release = Column(Date)
   reduction = Column(Text, index=True)
   types = Column(Text)
   phot_standard = Column(Boolean)
@@ -249,7 +249,6 @@ class Header(Base):
     ad=0
     try:
       ad=AstroData(fullpath, mode='readonly')
-      ad.descriptorFormat = "db"
 
       # Basic data identification part
       try:
@@ -408,7 +407,7 @@ class Header(Base):
 
 
       # Hack the AO header for now
-      aofold = ad.phuHeader('AOFOLD')
+      aofold = ad.phu_get_key_value('AOFOLD')
       self.adaptive_optics = (aofold == 'IN')
 
       # And the Spectroscopy header
@@ -422,7 +421,7 @@ class Header(Base):
       except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
         pass
       try:
-        reldatestring = ad.phuHeader('RELEASE')
+        reldatestring = ad.phu_get_key_value('RELEASE')
         if(reldatestring):
           reldts = "%s 00:00:00" % reldatestring
           self.release = dateutil.parser.parse(reldts).date()
