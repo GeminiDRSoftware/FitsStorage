@@ -214,15 +214,12 @@ class CalibrationGMOS(Calibration):
         query.filter(Gmos.overscan_subtracted == True)
 
     # Order by absolute time separation.
-    query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
-    # WTF WTF WTF
-    #if(processed and fsc_localmode):
-      # note: double check if this even works, we suspect it doesn't
-      # but it's hard to notice as a somewhat fitting cal will be returned
-      # but perhaps not the most recent.
-      #query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
-    #else:
-      #query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+    if(using_sqlite):
+      # Need to check that this simplistic approach actually works
+      query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
+    else:
+      # Postgres at least seems to need this, as sqlalchemy func.abs(interval) is not defined
+      query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
     # For now, we only want one result - the closest in time, unless otherwise indicated
     if(List):
@@ -264,16 +261,12 @@ class CalibrationGMOS(Calibration):
     query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
 
     # Order by absolute time separation.
-    query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
-    
-    # WTF WTF WTF
-    #if(processed and fsc_localmode):
-      # note: double check if this even works, we suspect it doesn't
-      # but it's hard to notice as a somewhat fitting cal will be returned
-      # but perhaps not the most recent.
-      #query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
-    #else:
-      #query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+    if(using_sqlite):
+      # This doesn't actually work. The difference always comes out as zero
+      query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
+    else:
+      # Postgres needs the following:
+      query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
     # For now, we only want one result - the closest in time, unless otherwise indicated
     if(List):
