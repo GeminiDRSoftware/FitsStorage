@@ -5,7 +5,7 @@ summaries.
 """
 from FitsStorage import *
 from FitsStorageWebSummary.Selection import sayselection, queryselection, openquery
-from mod_python import apache
+import ApacheReturnCodes as apache
 
 
 def progsobserved(req, selection):
