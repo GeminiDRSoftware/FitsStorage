@@ -63,6 +63,7 @@ def calmgr(req, selection):
       descriptors['spectroscopy'] = 'SPECT' in types
       descriptors['overscan_subtracted'] = 'OVERSCAN_SUBTRACTED' in types
       descriptors['overscan_trimmed'] = 'OVERSCAN_TRIMMED' in types
+      descriptors['prepared'] = 'PREPARED' in types
     
 
       # Get a cal object for this target data
