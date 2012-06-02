@@ -12,6 +12,8 @@ if(not using_apache):
   HTTP_NOT_FOUND = 404
   HTTP_FORBIDDEN = 403
   HTTP_NOT_ACCEPTABLE = 406
+  HTTP_NOT_IMPLEMENTED = 501
+  HTTP_SERVICE_UNAVAILABLE = 503
 
 else:
   from mod_python.apache import *

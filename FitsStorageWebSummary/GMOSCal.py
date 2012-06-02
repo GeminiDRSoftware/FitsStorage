@@ -23,12 +23,19 @@ def gmoscal(req, selection):
    If no date or daterange is given, tries to find last processing date
    """
 
+     
    title = "GMOS Cal (Imaging Twilight Flats and Biases) Report %s" % sayselection(selection)
    req.content_type = "text/html"
    req.write('<html><head><title>%s</title><link rel="stylesheet" href="/htmldocs/table.css"></head><body><h1>%s</h1>' % (title, title))
    if(fits_system_status == 'development'):
      req.write("<H1>This is the Development Server, not the operational system. If you're not sure why you're seeing this message, please consult PH</H1>")
  
+   if(using_sqlite):
+     req.write("<H1>The GMOS Cal page is not implemented with the SQLite database backend as it uses database functionality not supported by SQLite.</H1>")
+     req.write("<P>Talk to PH is you have a use case needing this.</P>")
+     req.write("<P>You should not see this message from facility central servers</P>")
+     return apache.HTTP_NOT_IMPLEMENTED
+
    # If no date or daterange, look on endor or josie to get the last processing date
    if(('date' not in selection) and ('daterange' not in selection)):
      base_dir=das_calproc_path
