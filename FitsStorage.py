@@ -374,7 +374,7 @@ class Header(Base):
       if('SPECT' in ad.types):
         try:
           self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
-        except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError, Errors.TableKeyError):
+        except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError, Errors.TableKeyError, Errors.CalcError):
           pass
       try:
         self.wavelength_band = ad.wavelength_band().for_db()
