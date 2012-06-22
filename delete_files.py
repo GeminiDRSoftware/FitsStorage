@@ -24,7 +24,7 @@ parser.add_option("--oldbylastmod", action="store_true", dest="oldbylastmod", he
 parser.add_option("--yesimsure", action="store_true", dest="yesimsure", help="Needed when file count is large")
 parser.add_option("--notpresent", action="store_true", dest="notpresent", help="Include files that are marked as not present")
 parser.add_option("--mintapes", action="store", type="int", dest="mintapes", default=2, help="Minimum number of tapes file must be on to be eligable for deletion")
-parser.add_option("--skip-crc", action="store_true", dest="skipcrc", help="Do not bother to verify the crc of the file on disk")
+parser.add_option("--skip-md5", action="store_true", dest="skipmd5", help="Do not bother to verify the md5 of the file on disk")
 parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
 parser.add_option("--emailto", action="store", type="string", dest="emailto", help="Email address to send message to")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
@@ -102,12 +102,12 @@ sumfiles = 0
 
 for diskfileid in diskfileids:
 
-  badcrc=False
+  badmd5=False
 
   diskfile = session.query(DiskFile).filter(DiskFile.id == diskfileid).one()
 
   fullpath = diskfile.file.fullpath()
-  dbccrc = diskfile.ccrc
+  dbmd5 = diskfile.md5
   dbfilename = diskfile.file.filename
 
   logger.debug("Full path filename: %s" % fullpath)
@@ -115,16 +115,16 @@ for diskfileid in diskfileids:
     logger.error("Cannot access file %s" % fullpath)
   else:
 
-    if(not options.skipcrc):
-      fileccrc = CadcCRC.cadcCRC(diskfile.file.fullpath())
-      logger.debug("Actual File CCRC and canonical database diskfile CCRC are: %s and %s" % (fileccrc, dbccrc))
-      if(fileccrc != dbccrc):
-        logger.error("File: %s has a ccrc mismatch between the database and the actual file. Skipping" % dbfilename)
-        badcrc=True
+    if(not options.skipmd5):
+      filemd5 = CadcCRC.md5sum(diskfile.file.fullpath())
+      logger.debug("Actual File MD5 and canonical database diskfile MD5 are: %s and %s" % (filemd5, dbmd5))
+      if(filemd5 != dbmd5):
+        logger.error("File: %s has an md5sum mismatch between the database and the actual file. Skipping" % dbfilename)
+        badmd5=True
     else:
-      fileccrc = dbccrc
+      filemd5 = dbmd5
 
-    if(not badcrc):
+    if(not badmd5):
       url = "http://%s/fileontape/%s" % (options.tapeserver, dbfilename)
       logger.debug("Querying tape server DB at %s" % url)
 
@@ -139,10 +139,10 @@ for diskfileid in diskfileids:
       tapeids = []
       for fe in fileelements:
         filename = fe.getElementsByTagName("filename")[0].childNodes[0].data
-        ccrc = fe.getElementsByTagName("ccrc")[0].childNodes[0].data
+        md5 = fe.getElementsByTagName("md5")[0].childNodes[0].data
         tapeid = int(fe.getElementsByTagName("tapeid")[0].childNodes[0].data)
-        logger.debug("Filename: %s; ccrc=%s, tapeid=%d" % (filename, ccrc, tapeid))
-        if((filename == dbfilename) and (ccrc == fileccrc) and (tapeid not in tapeids)):
+        logger.debug("Filename: %s; md5=%s, tapeid=%d" % (filename, md5, tapeid))
+        if((filename == dbfilename) and (md5 == filemd5) and (tapeid not in tapeids)):
           logger.debug("Found it on tape id %d" % tapeid)
           tapeids.append(tapeid)
 
@@ -151,11 +151,11 @@ for diskfileid in diskfileids:
         sumgb = sumbytes / 1.0E9
         sumfiles += 1
         if(options.dryrun):
-          logger.info("Dry run - not actually deleting File %s - %s which is on %d tapes: %s" % (fullpath, fileccrc, len(tapeids), tapeids))
-          msg+="Dry run - not deleting File %s - %s which is on %d tapes: %s\n" % (fullpath, fileccrc, len(tapeids), tapeids)
+          logger.info("Dry run - not actually deleting File %s - %s which is on %d tapes: %s" % (fullpath, filemd5, len(tapeids), tapeids))
+          msg+="Dry run - not deleting File %s - %s which is on %d tapes: %s\n" % (fullpath, filemd5, len(tapeids), tapeids)
         else:
-          logger.info("Deleting File %s - %s which is on %d tapes: %s" % (fullpath, fileccrc, len(tapeids), tapeids))
-          msg+="Deleting File %s - %s which is on %d tapes: %s\n" % (fullpath, fileccrc, len(tapeids), tapeids) 
+          logger.info("Deleting File %s - %s which is on %d tapes: %s" % (fullpath, filemd5, len(tapeids), tapeids))
+          msg+="Deleting File %s - %s which is on %d tapes: %s\n" % (fullpath, filemd5, len(tapeids), tapeids) 
           try:
             os.unlink(fullpath)
             logger.debug("Marking diskfile id %d as not present" % diskfile.id)
