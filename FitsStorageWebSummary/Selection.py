@@ -333,10 +333,10 @@ def openquery(selection):
 
   return openquery
 
-range_cre = re.compile('(\d*\.?\d*)-(\d*\.?\d*)')
+range_cre = re.compile('(-?\d*\.?\d*):(-?\d*\.?\d*)')
 def _parse_range(string):
   """
-  Expects a string in the form '12.345-67.89' as per the co-ordinate searches.
+  Expects a string in the form '12.345:67.89' as per the co-ordinate searches.
   Returns a list with the two values
   """
 
