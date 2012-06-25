@@ -103,6 +103,27 @@ def getselection(things):
     if(thing=='NotTwilight'):
       selection['twilight']=False
       recognised=True
+    if(thing[:3]=='az=' or thing[:3]=='Az='):
+      selection['az']=thing[3:]
+      recognised=True
+    if(thing[:8]=='azimuth=' or thing[:8]=='Azimuth='):
+      selection['az']=thing[8:]
+      recognised=True
+    if(thing[:3]=='el=' or thing[:3]=='El='):
+      selection['el']=thing[3:]
+      recognised=True
+    if(thing[:10]=='elevation=' or thing[:10]=='Elevation='):
+      selection['el']=thing[10:]
+      recognised=True
+    if(thing[:3]=='ra=' or thing[:3]=='RA='):
+      selection['ra']=thing[3:]
+      recognised=True
+    if(thing[:4]=='dec=' or thing[:4]=='Dec='):
+      selection['dec']=thing[4:]
+      recognised=True
+    if(thing[:5]=='crpa=' or thing[:5]=='CRPA='):
+      selection['crpa']=thing[5:]
+      recognised=True
 
     if(not recognised):
       if('notrecognised' in selection):
@@ -118,7 +139,7 @@ def sayselection(selection):
   """
   string = ""
 
-  defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight'}
+  defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'crpa': 'CRPA'}
   for key in defs:
     if key in selection:
       string += "; %s: %s" % (defs[key], selection[key])
@@ -269,6 +290,31 @@ def queryselection(query, selection):
     if(selection['twilight'] == False):
       query = query.filter(Header.object != 'Twilight')
 
+  if('az' in selection):
+    [a, b] = _parse_range(selection['az'])
+    if(a is not None and b is not None):
+      query = query.filter(Header.azimuth >= a).filter(Header.azimuth < b)
+
+  if('el' in selection):
+    [a, b] = _parse_range(selection['el'])
+    if(a is not None and b is not None):
+      query = query.filter(Header.elevation >= a).filter(Header.elevation < b)
+
+  if('ra' in selection):
+    [a, b] = _parse_range(selection['ra'])
+    if(a is not None and b is not None):
+      query = query.filter(Header.ra >= a).filter(Header.ra < b)
+
+  if('dec' in selection):
+    [a, b] = _parse_range(selection['dec'])
+    if(a is not None and b is not None):
+      query = query.filter(Header.dec >= a).filter(Header.dec < b)
+
+  if('crpa' in selection):
+    [a, b] = _parse_range(selection['crpa'])
+    if(a is not None and b is not None):
+      query = query.filter(Header.cass_rotator_pa >= a).filter(Header.cass_rotator_pa < b)
+
   return query
 
 def openquery(selection):
@@ -286,3 +332,27 @@ def openquery(selection):
       openquery = False
 
   return openquery
+
+range_cre = re.compile('(\d*\.?\d*)-(\d*\.?\d*)')
+def _parse_range(string):
+  """
+  Expects a string in the form '12.345-67.89' as per the co-ordinate searches.
+  Returns a list with the two values
+  """
+
+  match = range_cre.match(string)
+  a = None
+  b = None
+  if(match and len(match.groups())==2):
+    a = match.group(1)
+    b = match.group(2)
+
+    # Check that we can convert them to floats, but don't actually do so
+    try:
+      aa = float(a)
+      bb = float(b)
+    except (ValueError, TypeError):
+      a = None
+      b = None
+
+    return [a,b]
