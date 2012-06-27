@@ -94,12 +94,30 @@ def tape(req, things):
     query=query.order_by(desc(Tape.id))
     list = query.all()
 
+    # datetimes used to colour last verified warnings.
+    now = datetime.datetime.utcnow()
+    year = datetime.timedelta(days=365)
+    nine = datetime.timedelta(days=int(365*0.75))
+    bad = now - year
+    warning = now - nine
+
     req.write("<HR>")
     for tape in list:
       req.write("<H2>ID: %d, Label: %s, Set: %d</H2>" % (tape.id, tape.label, tape.set))
       req.write("<UL>")
       req.write("<LI>First Write: %s UTC - Last Write: %s UTC</LI>" % (tape.firstwrite, tape.lastwrite))
-      req.write("<LI>Last Verified: %s UTC</LI>" % tape.lastverified)
+      style = ""
+      if(tape.active):
+        if(tape.lastverified is None and tape.full==True):
+          style = " style='color:red'"
+        if(tape.lastverified is None and tape.full==False):
+          style = " style='color:purple'"
+        elif(tape.lastverified < bad):
+          style = " style='color:red'"
+        elif(tape.lastverified < warning):
+          style = " style='color:purple'"
+
+      req.write("<LI><span%s>Last Verified: %s UTC</span></LI>" % (style, tape.lastverified))
       req.write("<LI>Location: %s; Last Moved: %s UTC</LI>" % (tape.location, tape.lastmoved))
       req.write("<LI>Active: %s</LI>" % tape.active)
       req.write("<LI>Full: %s</LI>" % tape.full)
