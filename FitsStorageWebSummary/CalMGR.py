@@ -109,7 +109,7 @@ def calmgr(req, selection):
           if (using_apache):
             req.write("<url>http://%s/file/%s</url>\n" % (fits_servername, cal.diskfile.file.filename))
           else:
-            req.write("<url>file://%s/%s/%s</url>\n" % (FitsStorageConfig.storage_root, cal.diskfile.file.path, cal.diskfile.file.filename))
+            req.write("<url>file://%s/%s/%s</url>\n" % (storage_root, cal.diskfile.file.path, cal.diskfile.file.filename))
         else:
           # Once we are sending new stlye processed calibrations to the GSA,
           # we can form a URL to the GSA here and return that.
