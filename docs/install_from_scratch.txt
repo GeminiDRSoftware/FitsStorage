@@ -1,4 +1,4 @@
-clean RHEL5 machine standard ISG install. 
+clean RHEL6 machine standard ISG install. 
 
 - Have ISG set up /astro mount
 - Have ISG set up a user account for you with sudo all.
@@ -6,15 +6,21 @@ clean RHEL5 machine standard ISG install.
 
 - log in and change your password.
 
-sudo yum install httpd
-sudo yum install httpd-devel
+sudo yum -y install httpd
+sudo yum -y install httpd-devel
 sudo chmod oug+rx /var/log/httpd
-sudo yum install postgresql 
-sudo yum install postgresql-server
-sudo yum install postgresql-devel
+sudo yum -y install postgresql 
+sudo yum -y install postgresql-server
+sudo yum -y install postgresql-devel
 
 # needed to get mod_python to build as /astro python links against X11
-sudo yum install libX11-devel
+sudo yum -y install libX11-devel
+
+# On RHEL6 also need these if they're not already there:
+sudo yum -y install libtool
+# Not sure if we really need these:
+sudo yum -y install tk
+sudo yum -y install tk-devel
 
 sudo /usr/sbin/groupadd -g 5179 fitsdata
 sudo /usr/sbin/useradd -c 'FITS data' -u 5179 -g 5179 fitsdata
@@ -37,7 +43,7 @@ chmod ug+s invoke
 * Log out and back in as yourself (phirst)
 
 cd /opt/mod_python/
-tar xvf /opt/FitsStorage/otherfiles/mod_python-3.3.1.tgz
+tar xvzf /opt/FitsStorage/otherfiles/mod_python-3.3.1-1.tar.gz
 cd mod_python-3.3.1
 which python # should be on /astro
 whereis apxs # probably /usr/sbin/apxs
@@ -48,15 +54,16 @@ cd dist
 python setup.py install --prefix=/opt/mod_python
 
 cd /opt/sqlalchemy
-tar xvzf /opt/FitsStorage/otherfiles/psycopg2-2.4.2.tar.gz
-cd psycopg2-2.4.2
+tar xvzf /opt/FitsStorage/otherfiles/psycopg2-2.4.5.tar.gz
+cd psycopg2-2.4.5
 vi setup.cfg 
 # set pg_config=/usr/bin/pg_config
 python setup.py build
 python setup.py install --prefix=/opt/sqlalchemy
 cd ..
-tar xvzf /opt/FitsStorage/otherfiles/SQLAlchemy-0.6.8.tar.gz
-cd SQLAlchemy-0.6.8
+tar xvzf /opt/FitsStorage/otherfiles/SQLAlchemy-0.7.8.tar.gz
+cd SQLAlchemy-0.7.8
+setenv PYTHONPATH ${PYTHONPATH}:/opt/sqlalchemy/lib/python2.6/site-packages
 python setup.py build
 python setup.py install --prefix=/opt/sqlalchemy
 cd ..
@@ -86,6 +93,8 @@ cd
 sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf.d-python.conf /etc/httpd/conf.d/python
 sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf-httpd.conf /etc/httpd/conf/httpd.conf 
 sudo cp /opt/FitsStorage/otherfiles/etc-sysconfig-httpd /etc/sysconfig/httpd
+sudo mkdir /var/www/python-egg-cache
+sudo chmod oug+rwx /var/www/python-egg-cache
 
 sudo mkdir /opt/cadc
 sudo chown phirst /opt/cadc
@@ -103,7 +112,8 @@ sudo mkdir /data/pgsql_data
 sudo chown postgres:postgres /data/pgsql_data
 sudo vi /etc/sysconfig/pgsql/postgresql
 PGDATA=/data/pgsql_data
-sudo /etc/init.d/postgresql start  # will init db
+sudo service postgresql initdb
+sudo /etc/init.d/postgresql start 
 sudo su - postgres
 /usr/bin/createuser --no-superuser --no-createrole --createdb fitsdata
 /usr/bin/createuser --no-superuser --no-createrole --no-createdb apache
@@ -120,6 +130,9 @@ sudo mkdir /data/logs
 sudo chown fitsdata /data/logs
 sudo mkdir /data/backups
 sudo chown fitsdata /data/backups
+sudo mkdir /data/upload_staging
+sudo chown fitsdata /data/upload_staging
+sudo chmod oug+rwx /data/upload_staging
 
 # Now get a shell as fitsdata
 cd /opt/FitsStorage/
