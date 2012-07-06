@@ -84,10 +84,10 @@ if(file_re):
 else:
   files = filelist
 
-# Skip files with tmp in the filename
+# Skip various tmp files
 # Also require .fits in the filename
 thefiles=[]
-tmpcre = re.compile("tmp")
+tmpcre = re.compile("(tmp)|(tiled)")
 fitscre = re.compile(".fits")
 logger.info("Checking for tmp files")
 for filename in files:
