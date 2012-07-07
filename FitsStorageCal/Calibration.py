@@ -43,7 +43,9 @@ class Calibration():
       self.descriptors['observation_class']=self.header.observation_class
 
   def arc(self):
-    return "arc method not defined for this instrument"
+    # Not defined for this instrument
+    return None
 
   def bias(self):
-    return "bias method not defined for this instrument"
+    # Not defined for this instrument
+    return None
