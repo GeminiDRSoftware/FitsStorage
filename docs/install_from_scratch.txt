@@ -117,7 +117,11 @@ sudo /etc/init.d/postgresql start
 sudo su - postgres
 /usr/bin/createuser --no-superuser --no-createrole --createdb fitsdata
 /usr/bin/createuser --no-superuser --no-createrole --no-createdb apache
+vi /data/pgsql_data/postgresql.conf
+#shared_buffers = 256MB
+# 25% of memory if memory > 1GB
 exit
+sudo /etc/init.d/postgresql restart
 
 # Need to set postgresql and httpd to start at boot
 sudo /etc/init.d/httpd start
