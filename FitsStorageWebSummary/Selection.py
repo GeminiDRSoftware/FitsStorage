@@ -71,6 +71,9 @@ def getselection(things):
     if(thing=='AO' or thing=='NOTAO'):
       selection['ao']=thing
       recognised=True
+    if(thing=='LGS' or thing=='NGS'):
+      selection['lgs']=thing
+      recognised=True
     if(thing=='present' or thing=='Present'):
       selection['present']=True
       recognised=True
@@ -161,6 +164,11 @@ def sayselection(selection):
       string += "; Adaptive Optics in beam"
     else:
       string += "; No Adaptive Optics in beam"
+  if('lgs' in selection):
+    if(selection['lgs']=='LGS'):
+      string += "; LGS"
+    else:
+      string += "; NGS"
   if('detector_config' in selection):
     string += "; Detector Config: " + '+'.join(selection['detector_config'])
 
@@ -269,6 +277,12 @@ def queryselection(query, selection):
       query = query.filter(Header.adaptive_optics==True)
     else:
       query = query.filter(Header.adaptive_optics==False)
+
+  if('lgs' in selection):
+    if(selection['lgs']=='LGS'):
+      query = query.filter(Header.laser_guide_star==True)
+    else:
+      query = query.filter(Header.laser_guide_star==False)
 
   if('binning' in selection):
     query = query.filter(Header.detector_binning==selection['binning'])

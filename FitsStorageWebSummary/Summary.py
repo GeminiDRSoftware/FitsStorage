@@ -187,6 +187,8 @@ def webhdrsummary(session, req, type, headers, links=True):
     inst = h.instrument
     if(h.adaptive_optics):
       inst += " + AO"
+    if(h.laser_guide_star):
+      inst += " LGS"
     req.write("<TD>%s</TD>" % (inst))
 
     # Now the 'obs' part

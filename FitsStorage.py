@@ -2,7 +2,6 @@
 This module contains the ORM classes for the tables in the fits storage
 database.
 """
-import sqlalchemy
 import sqlalchemy.orm
 import os
 import datetime
@@ -218,6 +217,8 @@ class Header(Base):
   detector_roi_setting = Column(Text)
   spectroscopy = Column(Boolean, index=True)
   adaptive_optics = Column(Boolean)
+  laser_guide_star = Column(Boolean)
+  wavefront_sensor = Column(Text)
   raw_iq = Column(Integer)
   raw_cc = Column(Integer)
   raw_wv = Column(Integer)
@@ -406,9 +407,24 @@ class Header(Base):
         pass
 
 
-      # Hack the AO header for now
-      aofold = ad.phu_get_key_value('AOFOLD')
-      self.adaptive_optics = (aofold == 'IN')
+      # Hack the AO header and LGS for now
+      try:
+        aofold = ad.phu_get_key_value('AOFOLD')
+        self.adaptive_optics = (aofold == 'IN')
+      except (KeyError, ValueError):
+        pass
+
+      try:
+        lgustage = ad.phu_get_key_value('LGUSTAGE')
+        self.laser_guide_star = (lgustage == 'IN')
+      except (KeyError, ValueError):
+        pass
+
+
+      try:
+        self.wavefront_sensor = ad.wavefront_sensor().for_db()
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.CalcError):
+        pass
 
       # And the Spectroscopy header
       self.spectroscopy = False
