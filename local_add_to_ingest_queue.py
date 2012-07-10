@@ -35,13 +35,12 @@ now = datetime.datetime.now()
 logger.info("*********  add_to_ingest_queue.py - starting up at %s" % now)
 
 # Get a list of all the files in the datastore
-# We assume this is just one dir (ie non recursive) for now.
 
 fulldirpath = os.path.join(FitsStorage.storage_root, path)
 logger.info("Queueing files for ingest from: %s" % fulldirpath)
 
 filelist = []
-for root, dirs, files in os.walk("/home/callen/SVN-AD/gemini_python/test_data"):
+for root, dirs, files in os.walk(fulldirpath):
     if ".svn" in root:
         continue
         
@@ -76,8 +75,14 @@ session = sessionfactory()
 for fullfilename in thefiles:
   filename = os.path.basename(fullfilename)
   path = os.path.dirname(fullfilename)
+  if FitsStorage.storage_root in path:
+        path = path[len(FitsStorage.storage_root)+1:]
+  
+  # logger.info("latiq78: %s | %s" % (filename, path))  
+  
   i+=1
   logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
+  
   addto_ingestqueue(session, filename, path)
 
 session.close()
