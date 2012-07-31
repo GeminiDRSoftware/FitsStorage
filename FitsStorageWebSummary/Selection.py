@@ -24,6 +24,9 @@ def getselection(things):
     if(gp.program_id):
       selection['program_id']=thing
       recognised=True
+    if(thing[:7]=='progid='):
+      selection['program_id']=thing[7:]
+      recognised=True
     go=GeminiObservation(thing)
     if(go.observation_id):
       selection['observation_id']=thing
