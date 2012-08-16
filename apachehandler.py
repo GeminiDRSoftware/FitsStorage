@@ -9,6 +9,7 @@ from mod_python import apache
 from mod_python import Cookie
 from mod_python import util
 
+from FitsStorageConfig import blocked_urls
 from FitsStorageWebSummary.Summary import summary
 from FitsStorageWebSummary.XMLFileList import xmlfilelist
 from FitsStorageWebSummary.TapeStuff import *
@@ -23,6 +24,7 @@ from FitsStorageWebSummary.CurationReport import curation_report
 from FitsStorageWebSummary.Standards import standardobs
 from FitsStorageWebSummary.Selection import getselection
 from FitsStorageQAmetrics import qareport, qametrics, qaforgui
+from FitsStorageWebSummary.ObservingStatistics import observing_statistics
 
 import re
 import datetime
@@ -71,11 +73,11 @@ def handler(req):
   this = things.pop(0)
 
   # A debug util
-  if(this == 'debug'):
+  if((this == 'debug') and 'debug' not in blocked_urls):
     return debugmessage(req)
 
   # This is the header summary handler
-  if((this == 'summary') or (this == 'diskfiles') or (this == 'ssummary') or (this == 'lsummary')):
+  if(((this == 'summary') or (this == 'diskfiles') or (this == 'ssummary') or (this == 'lsummary')) and 'summary' not in blocked_urls):
 
     links = True
     # the nolinks thing is for the external email notifications
@@ -102,14 +104,14 @@ def handler(req):
     return retval
 
   # This is the standard star in observation server
-  if(this == 'standardobs'):
+  if(this == 'standardobs' and 'standardobs' not in blocked_urls):
    header_id = things.pop(0)
    retval = standardobs(req, header_id)
    return retval
 
 
   # The calibrations handler
-  if(this == 'calibrations'):
+  if(this == 'calibrations' and 'calibrations' not in blocked_urls):
     # Parse the rest of the URL.
     selection=getselection(things)
 
@@ -120,18 +122,18 @@ def handler(req):
     return retval
 
   # The xml file list handler
-  if(this == 'xmlfilelist'):
+  if(this == 'xmlfilelist' and 'xmlfilelist' not in blocked_urls):
     selection = getselection(things)
     retval = xmlfilelist(req, selection)
     return retval
 
   # The fileontape handler
-  if(this == 'fileontape'):
+  if(this == 'fileontape' and 'fileontape' not in blocked_urls):
     retval = fileontape(req, things)
     return retval
 
   # The calmgr handler
-  if(this == 'calmgr'):
+  if(this == 'calmgr' and 'calmgr' not in blocked_urls):
     # Parse the rest of the URL.
     selection=getselection(things)
 
@@ -142,14 +144,14 @@ def handler(req):
     return retval
 
   # The processed_cal upload server
-  if(this == 'upload_processed_cal'):
+  if(this == 'upload_processed_cal' and 'upload_processed_cal' not in blocked_urls):
     retval = upload_processed_cal(req, things[0])
     return retval
     
 
   # This returns the fitsverify, wmdreport or fullheader text from the database
   # you can give it either a diskfile_id or a filename
-  if(this == 'fitsverify' or this == 'wmdreport' or this == 'fullheader'):
+  if((this == 'fitsverify' and 'fitsverify' not in blocked_urls) or (this == 'wmdreport' and 'wmdreport' not in blocked_urls) or (this == 'fullheader' and 'fullheader' not in blocked_urls)):
     if(len(things)==0):
       req.content_type="text/plain"
       req.write("You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
@@ -228,7 +230,7 @@ def handler(req):
 
 
   # This is the fits file server
-  if(this == 'file'):
+  if(this == 'file' and 'file' not in blocked_urls):
     # OK, first find the file they asked for in the database
     # tart up the filename if possible
     if(len(things)==0):
@@ -291,7 +293,7 @@ def handler(req):
       session.close()
 
   # This is the projects observed feature
-  if(this == "programsobserved"):
+  if(this == "programsobserved" and 'programsobserved' not in blocked_urls):
     selection = getselection(things)
     if(("date" not in selection) and ("daterange" not in selection)):
       selection["date"]=gemini_date("today")
@@ -299,54 +301,59 @@ def handler(req):
     return retval
     
   # The GMOS twilight flat and bias report
-  if(this == "gmoscal"):
+  if(this == "gmoscal" and 'gmoscal' not in blocked_urls):
     selection = getselection(things)
     retval = gmoscal(req, selection)
     return retval
 
   # Submit QA metric measurement report
-  if(this == "qareport"):
+  if(this == "qareport" and 'qareport' not in blocked_urls):
     return qareport(req)
 
   # Retrieve QA metrics, simple initial version
-  if(this == "qametrics"):
+  if(this == "qametrics" and 'qametrics' not in blocked_urls):
     return qametrics(req, things)
 
   # Retrieve QA metrics, json version for GUI
-  if(this == "qaforgui"):
+  if(this == "qaforgui" and 'qaforgui' not in blocked_urls):
     return qaforgui(req, things)
 
   # Database Statistics
-  if(this == "stats"):
+  if(this == "stats" and 'stats' not in blocked_urls):
     return stats(req)
 
   # Tape handler
-  if(this == "tape"):
+  if(this == "tape" and 'tape' not in blocked_urls):
     return tape(req, things)
 
   # TapeWrite handler
-  if(this == "tapewrite"):
+  if(this == "tapewrite" and 'tapewrite' not in blocked_urls):
     return tapewrite(req, things)
 
   # TapeFile handler
-  if(this == "tapefile"):
+  if(this == "tapefile" and 'tapefile' not in blocked_urls):
     return tapefile(req, things)
 
   # TapeRead handler
-  if(this == "taperead"):
+  if(this == "taperead" and 'taperead' not in blocked_urls):
     return taperead(req, things)
 
   # XML Tape handler
-  if(this == "xmltape"):
+  if(this == "xmltape" and 'xmltape' not in blocked_urls):
     return xmltape(req)
 
   # Emailnotification handler
-  if(this == "notification"):
+  if(this == "notification" and 'notification' not in blocked_urls):
     return notification(req, things)
 
   # curation_report handler
-  if(this == "curation"):
+  if(this == "curation" and 'curation' not in blocked_urls):
     return curation_report(req, things)
+
+  # observing_statistics handler
+  if(this == "observing_statistics" and 'observing_statistics' not in blocked_urls):
+    selection = getselection(things)
+    return observing_statistics(req, selection)
 
   # Some static files that the server should serve via a redirect.
   if((this == "robots.txt") or (this == "favicon.ico")):

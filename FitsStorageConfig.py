@@ -23,7 +23,7 @@ das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
 #das_calproc_path = '/net/josie/staging/dataproc/gmos'
 
 # Configure the site and other misc stuff here
-fits_servername = "hbffits3"
+fits_servername = "hbffits4"
 fits_system_status = "development"
 
 email_errors_to = "phirst@gemini.edu"
@@ -36,7 +36,7 @@ fits_database = 'postgresql:///'+fits_dbname
 #fits_database = 'postgresql://hbffitstape1/'+fits_dbname
 
 # Configure the Backup Directory here
-fits_db_backup_dir = "/net/endor/Sci_ARCH/mkofits1_backup"
+fits_db_backup_dir = "/data/backups"
 
 # Configure the LockFile Directory here
 fits_lockfile_dir = "/data/logs"
@@ -53,8 +53,9 @@ using_apache = True
 using_sqlite = False
 using_cadc = True
 
-
-
+# By default, all URLs on the server are active. List in blocked_urls any that you want to disable
+blocked_urls=['tape']
+#blocked_urls=['debug', 'summary', 'standardobs', 'calibrations', 'xmlfilelist', 'fileontape', 'calmgr', 'upload_processed_cal', 'fitsverify', 'wmdreport', 'fullheader', 'file', 'programsobserved', 'gmoscal', 'qareport', 'qametrics', 'qaforgui', 'stats', 'tape', 'tapewrite', 'tapefile', 'taperead', 'xmltape', 'notification', 'curation', 'observing_statistics']
 
 # the following implements allows astrodata to set local versions of 
 # setting in this module
