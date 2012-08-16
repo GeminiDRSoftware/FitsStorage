@@ -32,6 +32,8 @@ email_errors_to = "phirst@gemini.edu"
 fits_dbname = 'fitsdata'
 fits_database = 'postgresql:///'+fits_dbname
 #fits_database = 'sqlite:////home/fitsdata/sqlite-database'
+#To reference database on another machine: 
+#fits_database = 'postgresql://hbffitstape1/'+fits_dbname
 
 # Configure the Backup Directory here
 fits_db_backup_dir = "/net/endor/Sci_ARCH/mkofits1_backup"
