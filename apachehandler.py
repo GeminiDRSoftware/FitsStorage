@@ -73,11 +73,15 @@ def handler(req):
   this = things.pop(0)
 
   # A debug util
-  if((this == 'debug') and 'debug' not in blocked_urls):
+  if(this == 'debug'):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     return debugmessage(req)
 
   # This is the header summary handler
-  if(((this == 'summary') or (this == 'diskfiles') or (this == 'ssummary') or (this == 'lsummary')) and 'summary' not in blocked_urls):
+  if((this == 'summary') or (this == 'diskfiles') or (this == 'ssummary') or (this == 'lsummary')):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
 
     links = True
     # the nolinks thing is for the external email notifications
@@ -104,14 +108,18 @@ def handler(req):
     return retval
 
   # This is the standard star in observation server
-  if(this == 'standardobs' and 'standardobs' not in blocked_urls):
-   header_id = things.pop(0)
-   retval = standardobs(req, header_id)
-   return retval
+  if(this == 'standardobs'):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
+    header_id = things.pop(0)
+    retval = standardobs(req, header_id)
+    return retval
 
 
   # The calibrations handler
-  if(this == 'calibrations' and 'calibrations' not in blocked_urls):
+  if(this == 'calibrations'):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     # Parse the rest of the URL.
     selection=getselection(things)
 
@@ -122,18 +130,24 @@ def handler(req):
     return retval
 
   # The xml file list handler
-  if(this == 'xmlfilelist' and 'xmlfilelist' not in blocked_urls):
+  if(this == 'xmlfilelist'):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     selection = getselection(things)
     retval = xmlfilelist(req, selection)
     return retval
 
   # The fileontape handler
-  if(this == 'fileontape' and 'fileontape' not in blocked_urls):
+  if(this == 'fileontape'):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     retval = fileontape(req, things)
     return retval
 
   # The calmgr handler
-  if(this == 'calmgr' and 'calmgr' not in blocked_urls):
+  if(this == 'calmgr'):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     # Parse the rest of the URL.
     selection=getselection(things)
 
@@ -144,14 +158,18 @@ def handler(req):
     return retval
 
   # The processed_cal upload server
-  if(this == 'upload_processed_cal' and 'upload_processed_cal' not in blocked_urls):
+  if(this == 'upload_processed_cal'):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     retval = upload_processed_cal(req, things[0])
     return retval
     
 
   # This returns the fitsverify, wmdreport or fullheader text from the database
   # you can give it either a diskfile_id or a filename
-  if((this == 'fitsverify' and 'fitsverify' not in blocked_urls) or (this == 'wmdreport' and 'wmdreport' not in blocked_urls) or (this == 'fullheader' and 'fullheader' not in blocked_urls)):
+  if(this == 'fitsverify' or this == 'wmdreport' or this == 'fullheader'):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     if(len(things)==0):
       req.content_type="text/plain"
       req.write("You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
@@ -230,7 +248,9 @@ def handler(req):
 
 
   # This is the fits file server
-  if(this == 'file' and 'file' not in blocked_urls):
+  if(this == 'file'):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     # OK, first find the file they asked for in the database
     # tart up the filename if possible
     if(len(things)==0):
@@ -293,7 +313,9 @@ def handler(req):
       session.close()
 
   # This is the projects observed feature
-  if(this == "programsobserved" and 'programsobserved' not in blocked_urls):
+  if(this == "programsobserved"):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     selection = getselection(things)
     if(("date" not in selection) and ("daterange" not in selection)):
       selection["date"]=gemini_date("today")
@@ -301,57 +323,83 @@ def handler(req):
     return retval
     
   # The GMOS twilight flat and bias report
-  if(this == "gmoscal" and 'gmoscal' not in blocked_urls):
+  if(this == "gmoscal"):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     selection = getselection(things)
     retval = gmoscal(req, selection)
     return retval
 
   # Submit QA metric measurement report
-  if(this == "qareport" and 'qareport' not in blocked_urls):
+  if(this == "qareport"):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     return qareport(req)
 
   # Retrieve QA metrics, simple initial version
-  if(this == "qametrics" and 'qametrics' not in blocked_urls):
+  if(this == "qametrics"):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     return qametrics(req, things)
 
   # Retrieve QA metrics, json version for GUI
-  if(this == "qaforgui" and 'qaforgui' not in blocked_urls):
+  if(this == "qaforgui"):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     return qaforgui(req, things)
 
   # Database Statistics
-  if(this == "stats" and 'stats' not in blocked_urls):
+  if(this == "stats"):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     return stats(req)
 
   # Tape handler
-  if(this == "tape" and 'tape' not in blocked_urls):
+  if(this == "tape"):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     return tape(req, things)
 
   # TapeWrite handler
-  if(this == "tapewrite" and 'tapewrite' not in blocked_urls):
+  if(this == "tapewrite"):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     return tapewrite(req, things)
 
   # TapeFile handler
-  if(this == "tapefile" and 'tapefile' not in blocked_urls):
+  if(this == "tapefile"):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     return tapefile(req, things)
 
   # TapeRead handler
-  if(this == "taperead" and 'taperead' not in blocked_urls):
+  if(this == "taperead"):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     return taperead(req, things)
 
   # XML Tape handler
-  if(this == "xmltape" and 'xmltape' not in blocked_urls):
+  if(this == "xmltape"):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     return xmltape(req)
 
   # Emailnotification handler
-  if(this == "notification" and 'notification' not in blocked_urls):
+  if(this == "notification"):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     return notification(req, things)
 
   # curation_report handler
-  if(this == "curation" and 'curation' not in blocked_urls):
+  if(this == "curation"):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     return curation_report(req, things)
 
   # observing_statistics handler
-  if(this == "observing_statistics" and 'observing_statistics' not in blocked_urls):
+  if(this == "observing_statistics"):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
     selection = getselection(things)
     return observing_statistics(req, selection)
 
