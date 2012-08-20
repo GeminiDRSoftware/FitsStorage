@@ -6,7 +6,6 @@ import sys
 from GeminiMetadataUtils import *
 
 from mod_python import apache
-from mod_python import Cookie
 from mod_python import util
 
 from FitsStorageConfig import blocked_urls
@@ -23,6 +22,7 @@ from FitsStorageWebSummary.UploadProcessedCal import upload_processed_cal
 from FitsStorageWebSummary.CurationReport import curation_report
 from FitsStorageWebSummary.Standards import standardobs
 from FitsStorageWebSummary.Selection import getselection
+from FitsStorageWebSummary.FileServer import fileserver, authcookie
 from FitsStorageQAmetrics import qareport, qametrics, qaforgui
 from FitsStorageWebSummary.ObservingStatistics import observing_statistics
 
@@ -89,6 +89,12 @@ def handler(req):
       links = False
       things.remove('nolinks')
 
+    download = False
+    # this says whether to include [download] links after the filename
+    if 'download' in things:
+      download = True
+      things.remove('download')
+
     # Parse the rest of the uri here while we're at it
     # Expect some combination of program_id, observation_id, date and instrument name
     # We put the ones we got in a dictionary
@@ -104,7 +110,7 @@ def handler(req):
       if(match):
         orderby.append(match.group(1))
 
-    retval = summary(req, this, selection, orderby, links)
+    retval = summary(req, this, selection, orderby, links, download)
     return retval
 
   # This is the standard star in observation server
@@ -246,71 +252,17 @@ def handler(req):
     req.write("Could not understand argument - You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
     return apache.OK
 
+  # This is the download authentication page
+  if(this == 'authentication'):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
+    return authcookie(req)
 
   # This is the fits file server
   if(this == 'file'):
     if(this in blocked_urls):
       return apache.HTTP_FORBIDDEN
-    # OK, first find the file they asked for in the database
-    # tart up the filename if possible
-    if(len(things)==0):
-      return apache.HTTP_NOT_FOUND
-    filenamegiven=things.pop(0)
-    filename = gemini_fitsfilename(filenamegiven)
-    if(filename):
-      pass
-    else:
-      filename = filenamegiven
-    session = sessionfactory()
-    try:
-      query=session.query(File).filter(File.filename==filename)
-      if(query.count()==0):
-        return apache.HTTP_NOT_FOUND
-      file=query.one()
-      # OK, we should have the file record now.
-      # Next, find the canonical diskfile for it
-      query=session.query(DiskFile).filter(DiskFile.present==True).filter(DiskFile.file_id==file.id)
-      diskfile = query.one()
-      # And now find the header record...
-      query=session.query(Header).filter(Header.diskfile_id==diskfile.id)
-      header=query.one()
-
-      # OK, now figure out if the data are public
-      today = datetime.datetime.utcnow().date()
-      canhaveit = False
-
-      # Are we passed the release data?
-      if((header.release) and (today >= header.release)):
-        # Yes, the data are public
-        canhaveit = True
- 
-      # Is the data a dayCal or a partnerCal or an acqCal?
-      elif(header.observation_class in ['dayCal', 'partnerCal', 'acqCal']):
-        # Yes, the data are public. These should have a release date too, except that
-        # Cals from the pipeline processed directly off the DHS machine don't
-        canhaveit = True
-
-      else:
-        # No, the data are not public. See if we got the magic cookie
-        cookies = Cookie.get_cookies(req)
-        if(cookies.has_key('gemini_fits_authorization')):
-          auth = cookies['gemini_fits_authorization'].value
-          if(auth=='good_to_go'):
-            # OK, we got the magic cookie
-            canhaveit = True
-
-      if(canhaveit):
-        # Send them the data
-          req.sendfile(file.fullpath())
-          return apache.OK
-      else:
-        # Refuse to send data
-        return apache.HTTP_FORBIDDEN
-
-    except IOError:
-      pass
-    finally:
-      session.close()
+    return fileserver(req, things)
 
   # This is the projects observed feature
   if(this == "programsobserved"):

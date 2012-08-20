@@ -32,6 +32,8 @@ like a summary of </P>
 <LI>Some items are abbreviated in the summary to save space. These are marked as abbreviations, so will usually render in your browser with a faint underline, and you can mouse over them to see the full text in a tooltip</LI>
 <LI>If the target name has a hyperlinked star (asterisk) after it, the observation contains photometric standard stars within the field of view described by the WCS in the file. You can click on the star to see a list of the standards that are on the field</LI>
 <LI>If you replace 'summary' with 'ssummary' you will get a short summary, which has a couple of columns dropped to make the table narrower to fit in a browser window better.</LI>
+<LI>There is also 'lsummary' which is a long summary, with some extra columns with additional information.</LI>
+<LI>You can add '/download' to the summary URL and the page will contain a [download] link after the filename that points at the fits data itself.</LI>
 </UL></P>
 
 <H2>Calibration Management</H2>
@@ -66,6 +68,7 @@ data that meets all the criteria you specify. You can put them in any order.</P>
 <UL>
 <LI>A date in the form YYYYMMDD, eg 20100401. You can use today and yesterday as special literal words and they will act as you would expect.</LI>
 <LI>A date range in the form YYYYMMDD-YYYYMMDD, eg 20100401-20100420</LI>
+<LI>A telescope name, eg Gemini-North</LI>
 <LI>An instrument name, eg GMOS-N. Note GMOS will also work to imply either GMOS-N or GMOS-S</LI>
 <LI>AO to select only AO data, NOTAO to select only non-AO data</LI>
 <LI>A program ID, eg GN-2009B-Q-51</LI>

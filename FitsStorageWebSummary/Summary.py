@@ -7,7 +7,7 @@ from GeminiMetadataUtils import *
 import ApacheReturnCodes as apache
 
 
-def summary(req, type, selection, orderby, links=True):
+def summary(req, type, selection, orderby, links=True, download=False):
   """
   This is the main summary generator.
   req is an apache request handler request object
@@ -42,7 +42,7 @@ def summary(req, type, selection, orderby, links=True):
 
   session = sessionfactory()
   try:
-    webhdrsummary(session, req, type, list_headers(session, selection, orderby), links)
+    webhdrsummary(session, req, type, list_headers(session, selection, orderby), links, download)
   except IOError:
     pass
   finally:
@@ -51,7 +51,7 @@ def summary(req, type, selection, orderby, links=True):
   req.write("</body></html>")
   return apache.OK
 
-def webhdrsummary(session, req, type, headers, links=True):
+def webhdrsummary(session, req, type, headers, links=True, download=False):
   """
   Generates an HTML header summary table of the specified type from
   the list of header objects provided. Writes that table to an apache
@@ -146,7 +146,7 @@ def webhdrsummary(session, req, type, headers, links=True):
     # Parse the datalabel first
     dl = GeminiDataLabel(h.data_label)
 
-    # The filename cell, with the link to the full headers and the optional WMD and FITS error flags
+    # The filename cell, with the link to the full headers and the optional WMD and FITS error flags, and the optional [download] link
     if(h.diskfile.fverrors):
       if(links):
         fve='<a href="/fitsverify/%d">- fits!</a>' % (h.diskfile.id)
@@ -164,8 +164,13 @@ def webhdrsummary(session, req, type, headers, links=True):
     else:
       wmd=''
 
+    # The [download] link
+    fdl = ''
+    if(download):
+      fdl = '<a href = "/file/%s">[download]</a>' % h.diskfile.file.filename
+
     if(links):
-      req.write('<TD><A HREF="/fullheader/%d">%s</A> %s %s</TD>' % (h.diskfile.id, h.diskfile.file.filename, fve, wmd))
+      req.write('<TD><A HREF="/fullheader/%d">%s</A> %s %s %s</TD>' % (h.diskfile.id, h.diskfile.file.filename, fve, wmd, fdl))
     else:
       req.write('<TD>%s %s %s</TD>' % (h.diskfile.file.filename, fve, wmd))
 
