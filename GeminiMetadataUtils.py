@@ -20,6 +20,21 @@ progre='(?:^%s$)|(?:^%s$)' % (calengre, scire)
 # This matches an observation id with the project id and obsnum as groups
 obsre='((?:^%s)|(?:^%s))-(\d*)$' % (calengre, scire)
 
+gemininorthcre = re.compile('^[Gg][Ee][Mm][Ii][Nn][Ii]-[Nn][Oo][Rr][Tt][Hh]$')
+geminisouthcre = re.compile('^[Gg][Ee][Mm][Ii][Nn][Ii]-[Ss][Oo][Uu][Tt][Hh]$')
+def gemini_telescope(string):
+  """
+  If the string argument matches a gemini telescope name,
+  then returns the "official" (ie same as in the fits headers)
+  name of the telesope. Otherwise returns an empty string.
+  """
+  retary = ''
+  if(gemininorthcre.match(string)):
+    retary = 'Gemini-North'
+  if(geminisouthcre.match(string)):
+    retary = 'Gemini-South'
+  return retary
+
 # A utility function for matching instrument names
 niricre=re.compile('^[Nn][Ii][Rr][Ii]$')
 nifscre=re.compile('^[Nn][Ii][Ff][Ss]$')

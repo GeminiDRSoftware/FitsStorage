@@ -14,6 +14,9 @@ def getselection(things):
   while(len(things)):
     thing = things.pop(0)
     recognised=False
+    if(gemini_telescope(thing)):
+      selection['telescope']=gemini_telescope(thing)
+      recognised = True
     if(gemini_date(thing)):
       selection['date']=gemini_date(thing)
       recognised=True
@@ -145,7 +148,7 @@ def sayselection(selection):
   """
   string = ""
 
-  defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'crpa': 'CRPA'}
+  defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'crpa': 'CRPA', 'telescope': 'Telescope'}
   for key in defs:
     if key in selection:
       string += "; %s: %s" % (defs[key], selection[key])
@@ -248,6 +251,9 @@ def queryselection(query, selection):
 
   if('reduction' in selection):
     query = query.filter(Header.reduction==selection['reduction'])
+
+  if('telescope' in selection):
+    query = query.filter(Header.telescope==selection['telescope'])
 
   if('inst' in selection):
     if(selection['inst']=='GMOS'):
