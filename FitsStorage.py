@@ -1056,6 +1056,16 @@ class Notification(Base):
   def __init__(self, label):
     self.label = label
 
+class Authentication(Base):
+  """
+  This is the ORM class for file access authentication, done on a program ID basis.
+  """
+  __tablename__ = 'authentication'
+
+  id = Column(Integer, primary_key=True)
+  program_id = Column(Text, unique=True)
+  program_key = Column(Text)
+  
 class QAreport(Base):
   """
   This is the ORM class for a QA metric report.
