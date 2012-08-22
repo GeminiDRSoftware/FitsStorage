@@ -24,7 +24,6 @@ from FitsStorageWebSummary.Standards import standardobs
 from FitsStorageWebSummary.Selection import getselection
 from FitsStorageWebSummary.FileServer import fileserver, authcookie
 from FitsStorageQAmetrics import qareport, qametrics, qaforgui
-from FitsStorageWebSummary.ObservingStatistics import observing_statistics
 
 import re
 import datetime
@@ -347,13 +346,6 @@ def handler(req):
     if(this in blocked_urls):
       return apache.HTTP_FORBIDDEN
     return curation_report(req, things)
-
-  # observing_statistics handler
-  if(this == "observing_statistics"):
-    if(this in blocked_urls):
-      return apache.HTTP_FORBIDDEN
-    selection = getselection(things)
-    return observing_statistics(req, selection)
 
   # Some static files that the server should serve via a redirect.
   if((this == "robots.txt") or (this == "favicon.ico")):
