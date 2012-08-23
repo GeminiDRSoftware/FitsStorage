@@ -73,6 +73,8 @@ def authcookie(req):
     req.write("<p>You can use the cookie in your own scripts, or from the command line, either by having your download tool reference this browsers cookie file, or by giving it the cookie manually.</p>")
     req.write("<p>The cookie's name:value is %s:%s</p>" % (program_id, program_key))
 
+    req.write('<p>You probably want to go to <a href="/mydata/%s">your programs mydata page at /mydata/%s</a> now.</p>' % (program_id, program_id))
+
   else:
     if(login_attempt):
       req.write("<h2>Authentication Failed</h2>")
