@@ -246,7 +246,7 @@ def mydata(req, selection):
     req.write('<UL>')
     req.write('<LI>All files from your program: <a href="/summary/%s/download">/summary/%s/download</a></LI>' % (program_id, program_id))
     req.write('<LI>All files from current UT date: <a href="/summary/today/download">/summary/today/download</a></LI>')
-    req.write('<LI>All files from your program om current UT date: <a href="/summary/today/%s/download">/summary/today/%s/download</a></LI>' % (program_id, program_id))
+    req.write('<LI>All files from your program on current UT date: <a href="/summary/today/%s/download">/summary/today/%s/download</a></LI>' % (program_id, program_id))
 
     req.write('</UL>')
     req.write('</body></html>')
