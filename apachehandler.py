@@ -22,7 +22,7 @@ from FitsStorageWebSummary.UploadProcessedCal import upload_processed_cal
 from FitsStorageWebSummary.CurationReport import curation_report
 from FitsStorageWebSummary.Standards import standardobs
 from FitsStorageWebSummary.Selection import getselection
-from FitsStorageWebSummary.FileServer import fileserver, authcookie
+from FitsStorageWebSummary.FileServer import fileserver, authcookie, mydata
 from FitsStorageQAmetrics import qareport, qametrics, qaforgui
 
 import re
@@ -262,6 +262,13 @@ def handler(req):
     if(this in blocked_urls):
       return apache.HTTP_FORBIDDEN
     return fileserver(req, things)
+
+  # This is the mydata feature
+  if(this == 'mydata'):
+    if(this in blocked_urls):
+      return apache.HTTP_FORBIDDEN
+    selection = getselection(things)
+    return mydata(req, selection)
 
   # This is the projects observed feature
   if(this == "programsobserved"):

@@ -189,3 +189,66 @@ def fileserver(req, things):
     pass
   finally:
     session.close()
+
+def mydata(req, selection):
+  """
+  This is the "mydata" landing page for remote eavesdroppers and others 
+  expecting to download data from this server in a similar context to being a PI
+  """
+
+  req.content_type = "text/html"
+
+  if('program_id' not in selection):
+    req.write('<html><head><title>FITS Storage MyData Page</title></head><body>')
+    req.write('<h1>FITS Storage MyData Page</h1>')
+    req.write('<p>You must supply a program ID to use the MyData pages</p>')
+    req.write('</body></html>')
+    return apache.OK
+
+  program_id = selection['program_id']
+  title = 'FITS Storage MyData Page - %s' % program_id
+  req.write('<html><head><title>%s</title></head><body>' % title)
+  req.write('<h1>%s</h1>' % title)
+
+  # First see if they already authenticated for this project ID
+  # Get a DB session
+  session = sessionfactory()
+  try:
+    req.write('<h2>Authentication</h2>')
+    query = session.query(Authentication).filter(Authentication.program_id == program_id)
+    in_auth_table = (query.count()>0)
+    if(not in_auth_table):
+      req.write('<P>This program has not been authenticated for downloads from this fits server, please visit <a href="/authentication">the authentication page</a> and supply your phase 2 program key to authenticate with this server and receive a browser cookie.</P>')
+
+    else:
+      # count is >0 so there must be an auth entry for this project id
+      auth = query.one()
+      program_key = auth.program_key
+      # Did they send us a matching cookie?
+      cookies = Cookie.get_cookies(req)
+      cookie_key = None
+      if(cookies.has_key(program_id)):
+        cookie_key = cookies[program_id].value
+      if((program_key is not None) and (program_key == cookie_key)):
+        req.write('<P>This program has autehnticated for downloads from this server and your browser is supplying the authorization cookie. Authentication is all good, this server will allow you to download your data with this browser.</P>')
+      else:
+        req.write('<P>This program has autehnticated for downloads from this server, but your browser is not supplying a valid authorization cookie. Please <a href="/authentaction">re-authenticate from this browser</a> if you wish to download data using this browser.</P>')
+
+    req.write('<H2>Data summaries with download links</H2>')
+    req.write('<P>Note that a [download] link will show against all files, however the server will only send you data for files for which you have access to - either calibration data (which is public) or data for a program you are authorized for (see above).</P>') 
+
+    req.write('<UL>')
+    req.write('<LI>All files from your program: <a href="/summary/%s/download">/summary/%s/download</a></LI>' % (program_id, program_id))
+    req.write('<LI>All files from current UT date: <a href="/summary/today/download">/summary/today/download</a></LI>')
+    req.write('<LI>All files from your program om current UT date: <a href="/summary/today/%s/download">/summary/today/%s/download</a></LI>' % (program_id, program_id))
+
+    req.write('</UL>')
+    req.write('</body></html>')
+
+    return apache.OK
+
+
+  except IOError:
+    pass
+  finally:
+    session.close()
