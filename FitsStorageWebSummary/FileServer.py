@@ -182,6 +182,8 @@ def fileserver(req, things):
 
     if(canhaveit):
       # Send them the data
+        req.content_type='application/fits'
+        req.headers_out['Content-Disposition'] = 'attachment; filename="%s"' % filename
         req.sendfile(file.fullpath())
         return apache.OK
     else:
