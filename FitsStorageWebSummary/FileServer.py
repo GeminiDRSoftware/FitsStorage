@@ -44,7 +44,8 @@ def authcookie(req):
   #req.write("<HR>")
 
   req.write("<H2>How this works</H2>")
-  req.write("<P>When you authenticate by giving this page a valid program ID and program key (same as you use in the OT to fetch and store your program), this web server will send an HTTP cookie to your browser that will allow you to download data for that program from this web browser (or others that share its cookie file, for example sharing the same home directory) in the future without authenticating each time. You should not log into this page if you don't want users of this browser's cookie file to be able to download data for your program.</P>")
+  req.write("<P>When you authenticate by giving this page a valid program ID and program key (same as you use in the OT to fetch and store your program), this web server will send an HTTP cookie to your browser that will allow you to download data for that program from this web browser (or others that share its cookie file, for example sharing the same home directory) in the future without authenticating each time.</P>")
+  req.write("<P>A cookie is a small piece of data that your web browser remembers and shows to the server when you request a file to tell the server that the browser is authorized to download data for a given program ID. You should not log into this page if you don't want users of this browser's cookie file to be able to download data for your program.</P>")
 
   if(valid_login):
     session = sessionfactory()
@@ -223,7 +224,7 @@ def mydata(req, selection):
     query = session.query(Authentication).filter(Authentication.program_id == program_id)
     in_auth_table = (query.count()>0)
     if(not in_auth_table):
-      req.write('<P>This program has not been authenticated for downloads from this fits server, please visit <a href="/authentication">the authentication page</a> and supply your phase 2 program key to authenticate with this server and receive a browser cookie.</P>')
+      req.write('<P>This program has not been authenticated for downloads from this fits server, please visit <a href="/authentication">the authentication page</a> and supply your phase 2 program key to authenticate with this server and receive a browser authorization cookie which will allow you to download data.</P>')
 
     else:
       # count is >0 so there must be an auth entry for this project id
@@ -235,9 +236,9 @@ def mydata(req, selection):
       if(cookies.has_key(program_id)):
         cookie_key = cookies[program_id].value
       if((program_key is not None) and (program_key == cookie_key)):
-        req.write('<P>This program has autehnticated for downloads from this server and your browser is supplying the authorization cookie. Authentication is all good, this server will allow you to download your data with this browser.</P>')
+        req.write('<P>This program has already authenticated for downloads from this server and your browser is supplying the authorization cookie. Authentication is all good, this server will allow you to download your data with this browser.</P>')
       else:
-        req.write('<P>This program has autehnticated for downloads from this server, but your browser is not supplying a valid authorization cookie. Please <a href="/authentaction">re-authenticate from this browser</a> if you wish to download data using this browser.</P>')
+        req.write('<P>This program has authenticated for downloads from this server, but your browser is not supplying a valid authorization cookie. Please <a href="/authentaction">re-authenticate from this browser</a> if you wish to download data using this browser.</P>')
 
     req.write('<H2>Data summaries with download links</H2>')
     req.write('<P>Note that a [download] link will show against all files, however the server will only send you data for files for which you have access to - either calibration data (which is public) or data for a program you are authorized for (see above).</P>') 
