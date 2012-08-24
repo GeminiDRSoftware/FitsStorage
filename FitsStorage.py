@@ -531,7 +531,7 @@ class FullTextHeader(Base):
     try:
       ad=AstroData(fullpath, mode='readonly')
       self.fulltext = ""
-      self.fulltext += "Full Path Filename: " +  diskfile.file.fullpath() + "\n\n"
+      self.fulltext += "Filename: " +  diskfile.file.filename + "\n\n"
       self.fulltext += "AstroData Types: " +str(ad.types) + "\n\n"
       for i in range(len(ad.hdulist)):
         self.fulltext += "\n--- HDU %s ---\n" % i
