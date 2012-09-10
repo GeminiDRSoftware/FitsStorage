@@ -99,6 +99,7 @@ if(len(diskfileids) > 2000 and not options.yesimsure):
 
 sumbytes = 0
 sumfiles = 0
+sumgb=0
 
 for diskfileid in diskfileids:
 
