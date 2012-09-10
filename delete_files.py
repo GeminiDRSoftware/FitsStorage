@@ -142,7 +142,11 @@ for diskfileid in diskfileids:
         md5 = fe.getElementsByTagName("md5")[0].childNodes[0].data
         tapeid = int(fe.getElementsByTagName("tapeid")[0].childNodes[0].data)
         logger.debug("Filename: %s; md5=%s, tapeid=%d" % (filename, md5, tapeid))
-        if((filename == dbfilename) and (md5 == filemd5) and (tapeid not in tapeids)):
+        if(not options.skipmd5):
+          found = (filename == dbfilename) and (md5 == filemd5) and (tapeid not in tapeids)
+        else:
+          found = (filename == dbfilename) and (tapeid not in tapeids)
+        if(found):
           logger.debug("Found it on tape id %d" % tapeid)
           tapeids.append(tapeid)
 
