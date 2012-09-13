@@ -120,6 +120,13 @@ sudo su - postgres
 vi /data/pgsql_data/postgresql.conf
 #shared_buffers = 256MB
 # 25% of memory if memory > 1GB
+#
+# If there will be remote access to this database (eg for eavedropping)
+# set listen_addresses = '*' in postgresql.conf, also:
+vi /data/pgsql_data/pg_hba.conf
+# At end of file, add a comment line to say what you're adding, then
+# eg: host    fitsdata    all         10.1.5.47/32          trust
+
 exit
 sudo /etc/init.d/postgresql restart
 
