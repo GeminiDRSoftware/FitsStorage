@@ -194,6 +194,8 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
       inst += " + AO"
     if(h.laser_guide_star):
       inst += " LGS"
+    else:
+      inst += " NGS"
     req.write("<TD>%s</TD>" % (inst))
 
     # Now the 'obs' part
