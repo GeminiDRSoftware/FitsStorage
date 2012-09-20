@@ -74,11 +74,13 @@ def getselection(things):
     if(thing=='Pass' or thing=='Usable' or thing=='Fail' or thing=='Win' or thing=='NotFail'):
       selection['qa_state']=thing
       recognised=True
-    if(thing=='AO' or thing=='NOTAO'):
-      selection['ao']=thing
-      recognised=True
     if(thing=='LGS' or thing=='NGS'):
       selection['lgs']=thing
+      # Make LGS / NGS selection imply AO selection
+      selection['ao']='AO'
+      recognised=True
+    if(thing=='AO' or thing=='NOTAO'):
+      selection['ao']=thing
       recognised=True
     if(thing=='present' or thing=='Present'):
       selection['present']=True
