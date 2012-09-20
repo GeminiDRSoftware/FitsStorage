@@ -95,17 +95,17 @@ datecre=re.compile('^20\d\d[01]\d[0123]\d$')
 def gemini_date(string):
   """
   A utility function for matching dates of the form YYYYMMDD
-  also supports today, yesterday
+  also supports today/tonight, yesterday/lastnight
   returns the YYYYMMDD string, or '' if not a date
   May need modification to make today and yesterday work usefully 
   for Chile
   """
   if(datecre.match(string)):
     return string
-  if(string == 'today'):
+  if(string in ['today', 'tonight']):
     now=datetime.datetime.utcnow().date()
     return now.strftime('%Y%m%d')
-  if(string == 'yesterday'):
+  if(string in ['yesterday', 'lastnight']):
     then=datetime.datetime.utcnow() - datetime.timedelta(days=1)
     return then.date().strftime('%Y%m%d')
   return ''
