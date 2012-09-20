@@ -63,11 +63,35 @@ if(options.lockfile):
   # Does the Lockfile exist?
   lockfile = "%s/%s" % (FitsStorageConfig.fits_lockfile_dir, options.lockfile)
   if(os.path.exists(lockfile)):
-    logger.info("Lockfile %s already exists, bailing out" % lockfile)
-    sys.exit()
+    logger.info("Lockfile %s already exists, testing for viability" % lockfile)
+    actually_locked = True
+    try:
+      # Read the pid from the lockfile
+      lfd = open(lockfile, 'r')
+      oldpid = int(lfd.read())
+      lfd.close()
+    except:
+      logger.info("Could not read pid from lockfile %s" % lockfile)
+      oldpid=0
+    # Try and send a null signal to test if the process is viable.
+    try:
+      if(oldpid):
+        os.kill(oldpid, 0)
+    except:
+      # If this gets called then the lockfile refers to a process which either doesn't exist or is not ours.
+      actually_locked = False
+
+    if(actually_locked):
+      logger.info("Lockfile %s refers to PID %d which appears to be valid. Exiting" % (lockfile, oldpid))
+      sys.exit()
+    else:
+      logger.info("Lockfile %s refers to PID %d which appears to be not us. Deleting lockfile" % (lockfile, oldpid))
+      os.unlink(lockfile)
   else:
     logger.info("Creating lockfile %s" % lockfile)
-    open(lockfile, 'w').close()
+    lfd=open(lockfile, 'w')
+    lfd.write("%s\n" % os.getpid())
+    lfd.close()
 
 session = sessionfactory()
 
