@@ -196,7 +196,7 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
         inst += " LGS"
       else:
         inst += " NGS"
-      req.write("<TD>%s</TD>" % (inst))
+    req.write("<TD>%s</TD>" % (inst))
 
     # Now the 'obs' part
     if('obs' in want):
