@@ -58,7 +58,10 @@ if(len(tapes) == 0):
 
 for tape in tapes:
   labels.append(tape.label)
+labels.sort()
 logger.info("The following tapes contain requested files: %s" % labels)
+for l in labels:
+  logger.info("There is data to read on tape: %s" % l)
 
 if(options.list_tapes):
   sys.exit(0)
