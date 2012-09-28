@@ -14,7 +14,7 @@ from sqlalchemy import desc, func, extract
 from sqlalchemy import Integer, String, Boolean, Text, DateTime, Time, Date, Numeric, BigInteger
 from sqlalchemy import or_
 
-from sqlalchemy.orm import relation, backref, join
+from sqlalchemy.orm import relation, relationship, backref, join, outerjoin
 
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -59,6 +59,7 @@ class File(Base):
   id = Column(Integer, primary_key=True)
   filename = Column(Text, nullable=False, unique=True, index=True)
   path = Column(Text)
+  gsafile = relationship("GsaFile", uselist=False, backref='parent')
 
   def __init__(self, filename, path):
     self.filename = filename
@@ -122,6 +123,20 @@ class DiskFile(Base):
 
   def __repr__(self):
     return "<DiskFile('%s', '%s')>" %(self.id, self.file_id)
+
+class GsaFile(Base):
+  """
+  This is the ORM object for the GsaFile.
+  Contains ccrc values polled from the GSA to allow us
+  to verify if we have the same file version as the GSA
+  """
+  __tablename__ = 'gsafile'
+  id = Column(Integer, primary_key=True)
+  file_id = Column(Integer, ForeignKey('file.id'), nullable=False, index=True)
+  file = relation(File, order_by=id)
+  md5sum = Column(Text)
+  ingestdate = Column(DateTime(timezone=True))
+  lastpoll = Column(DateTime(timezone=True), index=True)
 
 
 class DiskFileReport(Base):
