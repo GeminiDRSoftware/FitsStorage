@@ -24,7 +24,7 @@ def summary(req, type, selection, orderby, links=True, download=False):
   the html table containing the actual summary information.
   """
   req.content_type = "text/html"
-  req.write("<html>")
+  req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html>')
   title = "FITS header %s table %s" % (type, sayselection(selection))
   req.write("<head>")
   req.write("<title>%s</title>" % (title))
@@ -117,7 +117,7 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
         for i in range(len(vals)):
           req.write('<TH><abbr title="%s">%s</abbr></TH>' % (vals[i][0], vals[i][1]))
       if(w == 'obs'):
-        req.write('<TH><abbr title="Imaging Filter or Spectroscopy Wavelength and Disperser">WaveBand<abbr></TH>')
+        req.write('<TH><abbr title="Imaging Filter or Spectroscopy Wavelength and Disperser">WaveBand</abbr></TH>')
  
   # This is the 'diskfiles' part
   if('diskfiles' in want):
@@ -178,14 +178,14 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
     # The datalabel, parsed to link to the program_id and observation_id,
     if(dl.datalabel):
       if(links):
-        req.write('<TD><NOBR><a href="/summary/%s">%s</a>-<a href="/summary/%s">%s</a>-<a href="/summary/%s">%s</a></NOBR></TD>' % (dl.projectid, dl.projectid, dl.observation_id, dl.obsnum, dl.datalabel, dl.dlnum))
+        req.write('<TD><a href="/summary/%s">%s</a>-<a href="/summary/%s">%s</a>-<a href="/summary/%s">%s</a></TD>' % (dl.projectid, dl.projectid, dl.observation_id, dl.obsnum, dl.datalabel, dl.dlnum))
       else:
-        req.write('<TD><NOBR>%s-%s-%s</NOBR></TD>' % (dl.projectid, dl.obsnum, dl.dlnum))
+        req.write('<TD>%s-%s-%s</TD>' % (dl.projectid, dl.obsnum, dl.dlnum))
     else:
       req.write('<TD>%s</TD>' % h.data_label)
 
     if(h.ut_datetime):
-      req.write("<TD><NOBR>%s</NOBR></TD>" % (h.ut_datetime.strftime("%Y-%m-%d %H:%M:%S")))
+      req.write("<TD>%s</TD>" % (h.ut_datetime.strftime("%Y-%m-%d %H:%M:%S")))
     else:
       req.write("<TD>%s</TD>" % ("None"))
 
@@ -246,7 +246,7 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
         string = "%.3f" % h.central_wavelength
       except:
         string = "%s" % h.central_wavelength
-      req.write("<TD><NOBR>%s : %s</NOBR></TD>" % (h.disperser, string))
+      req.write("<TD>%s : %s</TD>" % (h.disperser, string))
       req.write("<TD>%s</TD>" % (h.focal_plane_mask))
       req.write("<TD>%s</TD>" % (h.detector_roi_setting))
       req.write("<TD>%s</TD>" % (h.detector_binning))
