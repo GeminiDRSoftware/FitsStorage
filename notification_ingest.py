@@ -1,4 +1,5 @@
 from FitsStorage import *
+from FitsStorageLogger import *
 from optparse import OptionParser
 
 parser = OptionParser()
@@ -21,18 +22,18 @@ try:
   f = open(options.txtfile, 'r')
 
   for line in f:
-    things = l.split(' ')
+    things = line.split(' ')
 
     projectid = things[0]
 
-    n = Notifcation()
-
-    n.label = 'Auto %s' % projectid
+    n = Notification('Auto %s' % projectid)
     n.selection = '%s/science' % projectid
     n.to = things[1]
-    n.cc = ','.join([things[2:])
+    n.cc = ','.join(things[2:])
     n.internal = False
   
+    logger.info("Adding %s - %s: %s - %s" % (n.label, n.selection, n.to, n.cc))
+
     session.add(n)
     session.commit()
 
