@@ -28,9 +28,8 @@ try:
 
     n = Notification('Auto %s' % projectid)
     n.selection = '%s/science' % projectid
-    for i in [2,3,4]:
-      if(things[i] == 'none'):
-        things[i]=''
+    while('none' in things):
+      things.remove('none')
     n.to = things[1]
     n.cc = ','.join(things[2:])
     n.internal = False
