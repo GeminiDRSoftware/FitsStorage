@@ -6,7 +6,8 @@ import sqlalchemy.orm
 import os
 import datetime
 import dateutil.parser
-import zlib
+#This doesn't seem to be used. Remove it? 20121003
+#import zlib
 import re
 
 from sqlalchemy import Table, Column, MetaData, ForeignKey
