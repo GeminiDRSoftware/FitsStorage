@@ -8,7 +8,7 @@ from FitsStorageLogger import logger
 from GeometryHacks import *
 
 
-def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, skip_ccrc):
+def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
   """
   Ingests a file into the database. If the file isn't known to the database
   at all, all three (file, diskfile, header) table entries are created.
@@ -24,10 +24,10 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, sk
   force_md5: normally this function will compare the last modified
              timestamp on the file to that of the record of the file
              in the database to determine if it has possibly changed,
-             and only checks the CRC if it has possibly changed. Setting
-             this parameter to true forces a CRC comparison irrespective
+             and only checks the md5 if it has possibly changed. Setting
+             this parameter to true forces a md5 comparison irrespective
              of the last modification timestamps.
-  force: causes this function to ingest the file regardless of crc/md5 and
+  force: causes this function to ingest the file regardless of md5 and
          modtime.
   skip_fv: causes the ingest to skip running fitsverify on the file
   skip_wmd: causes the ingest to skip running wmd on the file.
@@ -68,7 +68,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, sk
       # there is a subelty wrt timezones here.
       if((diskfile.lastmod.replace(tzinfo=None) != diskfile.file.lastmod()) or force_md5 or force):
         logger.debug("lastmod time or force flags indicates file modification")
-        # Check the CRC to be sure if it's changed
+        # Check the md5 to be sure if it's changed
         if(diskfile.md5 == diskfile.file.md5() and (force != True)):
           logger.debug("md5 indicates no change")
           add_diskfile=0
@@ -96,7 +96,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, sk
     
     if(add_diskfile):
       logger.debug("Adding new DiskFile entry")
-      diskfile = DiskFile(file, skip_ccrc)
+      diskfile = DiskFile(file)
       session.add(diskfile)
       session.commit()
       dfreport = DiskFileReport(diskfile, skip_fv, skip_wmd)

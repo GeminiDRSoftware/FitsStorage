@@ -104,7 +104,6 @@ def calmgr(req, selection):
         req.write("<datalabel>%s</datalabel>\n" % cal.data_label)
         req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
         req.write("<md5>%s</md5>\n" % cal.diskfile.md5)
-        req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
         if(cal.diskfile.present):
           if (using_apache):
             req.write("<url>http://%s/file/%s</url>\n" % (fits_servername, cal.diskfile.file.filename))
@@ -158,7 +157,6 @@ def calmgr(req, selection):
           req.write("<datalabel>%s</datalabel>\n" % object.data_label)
           req.write("<filename>%s</filename>\n" % object.diskfile.file.filename)
           req.write("<md5>%s</md5>\n" % object.diskfile.md5)
-          req.write("<ccrc>%s</ccrc>\n" % object.diskfile.ccrc)
 
           # Get a cal object for this target data
           c = get_cal_object(session, None, header=object)
@@ -193,7 +191,6 @@ def calmgr(req, selection):
             req.write("<datalabel>%s</datalabel>\n" % cal.data_label)
             req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
             req.write("<md5>%s</md5>\n" % cal.diskfile.md5)
-            req.write("<ccrc>%s</ccrc>\n" % cal.diskfile.ccrc)
             if using_apache:
                 req.write("<url>http://%s/file/%s</url>\n" % (req.server.server_hostname, cal.diskfile.file.filename))
             else:

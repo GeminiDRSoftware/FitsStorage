@@ -17,7 +17,6 @@ parser.add_option("--force-crc", action="store_true", dest="force_crc", default=
 parser.add_option("--force", action="store_true", dest="force", default=False, help="Force re-ingest of file regardless")
 parser.add_option("--skip-fv", action="store_true", dest="skip_fv", default=False, help="Do not run fitsverify on the files")
 parser.add_option("--skip-wmd", action="store_true", dest="skip_wmd", default=False, help="Do not run a wmd check on the files")
-parser.add_option("--skip-ccrc", action="store_true", dest="skip_ccrc", default=False, help="Do not calculate the CCRC for each file")
 parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
 parser.add_option("--lockfile", action="store", dest="lockfile", help="Use this as a lockfile to limit instances")
@@ -121,7 +120,7 @@ while(loop):
         session.begin_nested()
 
       try:
-        ingest_file(session, iq.filename, iq.path, options.force_crc, options.force, options.skip_fv, options.skip_wmd, options.skip_ccrc)
+        ingest_file(session, iq.filename, iq.path, options.force_crc, options.force, options.skip_fv, options.skip_wmd)
         session.commit()
       except:
         logger.info("Problem Ingesting File - Rolling back" )
