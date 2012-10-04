@@ -1,7 +1,7 @@
 from FitsStorage import *
 import FitsStorageConfig
 from FitsStorageTape import TapeDrive
-import CadcCRC
+from FitsStorageUtils.hashes import md5sumfp
 import sys
 import os
 import re
@@ -93,7 +93,7 @@ try:
             logger.debug("Size matches in tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
             # Calculate the md5 of the data on tape
             f = tar.extractfile(tar_info)
-            md5 = CadcCRC.md5sumfile(f)
+            md5 = md5sumfp(f)
             f.close()
           else:
             logger.error("Size mismatch between tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))

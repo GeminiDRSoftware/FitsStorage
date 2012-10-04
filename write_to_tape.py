@@ -2,8 +2,8 @@ from FitsStorage import *
 from FitsStorageConfig import *
 from FitsStorageLogger import *
 from FitsStorageUtils import *
+from FitsStorageUtils.hashes import md5sum
 from FitsStorageTape import TapeDrive
-import CadcCRC
 import os
 import re
 import datetime
@@ -199,7 +199,7 @@ if(not options.dontcheck):
       sys.exit(1)
     logger.info("OK - found tape in drive %s with label: %s" % (tds[i].dev, thislabel))
     
-# Copy the files to the local scratch, and check CRCs.
+# Copy the files to the local scratch, and check md5s.
 try:
   logger.info("Fetching files to local disk")
   tds[0].cdworkingdir()
@@ -232,7 +232,7 @@ try:
     else:
       # Curl command succeeded.
       # Check the md5 of the file we got against the DB
-      filemd5 = CadcCRC.md5sum(filename)
+      filemd5 = md5sum(filename)
       if(filemd5 != md5):
         logger.error("md5sum mismatch for file %s: file: %s, database: %s" % (filename, filemd5, md5))
         tds[0].cdback()
