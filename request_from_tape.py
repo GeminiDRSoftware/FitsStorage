@@ -5,7 +5,6 @@ from FitsStorageConfig import *
 from FitsStorageLogger import *
 from FitsStorageUtils import *
 from sqlalchemy import *
-import CadcCRC
 import os
 import re
 import datetime
