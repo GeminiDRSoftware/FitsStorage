@@ -69,6 +69,9 @@ python setup.py install --prefix=/opt/sqlalchemy
 cd ..
 # Make sure using /astro python, and have DPD pythonpath
 # add /opt/sqlalchemy to python path
+sudo mkdir /var/www/python-egg-cache
+sudo chown apache /var/www/python-egg-cache
+
 
 cd /opt/pyinotify
 tar xvf /opt/FitsStorage/otherfiles/pyinotify-0.8.8.tar.gz
