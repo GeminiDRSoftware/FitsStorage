@@ -2,7 +2,6 @@ from FitsStorage import *
 from FitsStorageConfig import *
 from FitsStorageLogger import *
 from FitsStorageUtils import *
-import CadcCRC
 import datetime
 import urllib
 from xml.dom.minidom import parseString
@@ -117,7 +116,7 @@ for diskfileid in diskfileids:
   else:
 
     if(not options.skipmd5):
-      filemd5 = CadcCRC.md5sum(diskfile.file.fullpath())
+      filemd5 = diskfile.file.calculate_md5()
       logger.debug("Actual File MD5 and canonical database diskfile MD5 are: %s and %s" % (filemd5, dbmd5))
       if(filemd5 != dbmd5):
         logger.error("File: %s has an md5sum mismatch between the database and the actual file. Skipping" % dbfilename)
