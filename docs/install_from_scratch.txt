@@ -103,7 +103,6 @@ sudo mkdir /opt/cadc
 sudo chown phirst /opt/cadc
 cd /opt/cadc
 # install cadc stuff
-cp /opt/FitsStorage/otherfiles/cadcCRC .
 tar xvf /opt/FitsStorage/otherfiles/mdIngest.tar
 sudo mkdir /opt/jars
 sudo chown phirst /opt/jars
