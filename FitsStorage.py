@@ -6,8 +6,6 @@ import sqlalchemy.orm
 import os
 import datetime
 import dateutil.parser
-#This doesn't seem to be used. Remove it? 20121003
-#import zlib
 import re
 
 from sqlalchemy import Table, Column, MetaData, ForeignKey
@@ -20,10 +18,10 @@ from sqlalchemy.orm import relation, relationship, backref, join, outerjoin
 from sqlalchemy.ext.declarative import declarative_base
 
 import FitsVerify
-import CadcCRC
-import CadcWMD
+import Cadc
 
 from FitsStorageConfig import *
+from FitsStorageUtils.hashes import md5sum
 
 from astrodata import Errors
 from astrodata import AstroData
@@ -81,11 +79,8 @@ class File(Base):
   def size(self):
     return os.path.getsize(self.fullpath())
 
-  def ccrc(self):
-    return CadcCRC.cadcCRC(self.fullpath())
-
-  def md5(self):
-    return CadcCRC.md5sum(self.fullpath())
+  def calculate_md5(self):
+    return md5sum(self.fullpath())
 
   def lastmod(self):
     return datetime.datetime.fromtimestamp(os.path.getmtime(self.fullpath()))
@@ -101,7 +96,6 @@ class DiskFile(Base):
   file = relation(File, order_by=id)
   present = Column(Boolean, index=True)
   canonical = Column(Boolean, index=True)
-  ccrc = Column(Text)
   md5 = Column(Text)
   size = Column(Integer)
   lastmod = Column(DateTime(timezone=True), index=True)
@@ -111,15 +105,13 @@ class DiskFile(Base):
   fverrors = Column(Integer)
   wmdready = Column(Boolean)
 
-  def __init__(self, file, skip_ccrc=False):
+  def __init__(self, file):
     self.file_id = file.id
     self.present = True
     self.canonical = True
     self.entrytime = datetime.datetime.now()
     self.size = file.size()
-    if(skip_ccrc==False):
-      self.ccrc = file.ccrc()
-    self.md5 = file.md5()
+    self.md5 = file.calculate_md5()
     self.lastmod = file.lastmod()
 
   def __repr__(self):
@@ -128,14 +120,14 @@ class DiskFile(Base):
 class GsaFile(Base):
   """
   This is the ORM object for the GsaFile.
-  Contains ccrc values polled from the GSA to allow us
+  Contains md5 values polled from the GSA to allow us
   to verify if we have the same file version as the GSA
   """
   __tablename__ = 'gsafile'
   id = Column(Integer, primary_key=True)
   file_id = Column(Integer, ForeignKey('file.id'), nullable=False, index=True)
   file = relation(File, order_by=id)
-  md5sum = Column(Text)
+  md5 = Column(Text)
   ingestdate = Column(DateTime(timezone=True))
   lastpoll = Column(DateTime(timezone=True), index=True)
 
@@ -188,11 +180,11 @@ class DiskFileReport(Base):
 
   def wmd(self, diskfile):
     """
-    Calls the CadcWMD module and records the results
+    Calls the Cadc module and records the wmd results
     - Populates the wmdready flag in the diskfile object passed in
     - Populates the wmdreport text in self
     """
-    list = CadcWMD.cadcWMD(diskfile.file.fullpath())
+    list = Cadc.cadcWMD(diskfile.file.fullpath())
     diskfile.wmdready = bool(list[0])
     self.wmdreport = list[1]
 
