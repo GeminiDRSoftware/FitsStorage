@@ -131,7 +131,7 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
     req.write('<TH>Entry</TH>')
     req.write('<TH>Lastmod</TH>')
     req.write('<TH>Size</TH>')
-    req.write('<TH>CCRC</TH>')
+    req.write('<TH>md5sum</TH>')
 
   # Last bit included in all summary types
   req.write('</TR>\n')
@@ -160,15 +160,29 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
         fve='- fits!'
     else:
       fve=''
-    # Do not raise the WMD flag on ENG data
+    # Do not raise the WMD or GSA flag on ENG data
     iseng = bool(dl.datalabel) and dl.project.iseng
     if((not iseng) and (not h.diskfile.wmdready)):
       if(links):
         wmd='<a href="/wmdreport/%d">- md!</a>' % (h.diskfile.id)
       else:
-        wmd='- md!'
+        wmd='-md!'
     else:
       wmd=''
+
+    # The gsa! flag
+    gsa = ''
+    if(h.diskfile.file.gsafile):
+      gsa_md5 = h.diskfile.file.gsafile.md5
+      df_md5 = h.diskfile.md5
+      if(h.diskfile.file.gsafile.md5 is None):
+        style = " style='color:red'"
+      else:
+        style = ""
+      if ((gsa_md5 == df_md5) or iseng or h.qa_state=='Fail'):
+        gsa = ''
+      else:
+        gsa = "<abbr title='Last GSA poll at %s - Ingested %s, Local lastmod %s'><span%s>-gsa!</span></abbr>" % (h.diskfile.file.gsafile.lastpoll, h.diskfile.file.gsafile.ingestdate, h.diskfile.lastmod, style)
 
     # The [download] link
     fdl = ''
@@ -176,7 +190,7 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
       fdl = '<a href = "/file/%s">[download]</a>' % h.diskfile.file.filename
 
     if(links):
-      req.write('<TD><A HREF="/fullheader/%d">%s</A> %s %s %s</TD>' % (h.diskfile.id, h.diskfile.file.filename, fve, wmd, fdl))
+      req.write('<TD><A HREF="/fullheader/%d">%s</A> %s %s %s %s</TD>' % (h.diskfile.id, h.diskfile.file.filename, fve, wmd, gsa, fdl))
     else:
       req.write('<TD>%s %s %s</TD>' % (h.diskfile.file.filename, fve, wmd))
 
@@ -295,7 +309,7 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
       req.write("<TD>%s</TD>" % (h.diskfile.entrytime))
       req.write("<TD>%s</TD>" % (h.diskfile.lastmod))
       req.write("<TD>%s</TD>" % (h.diskfile.size))
-      req.write("<TD>%s</TD>" % (h.diskfile.ccrc))
+      req.write("<TD>%s</TD>" % (h.diskfile.md5))
 
 
     # And again last bit included in all summary types
