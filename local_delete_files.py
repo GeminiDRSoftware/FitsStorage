@@ -1,4 +1,3 @@
-import CadcCRC
 import urllib
 from xml.dom.minidom import parseString
 import os
