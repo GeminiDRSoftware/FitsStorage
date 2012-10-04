@@ -5,6 +5,7 @@ from FitsStorage import *
 from FitsStorageWebSummary.Selection import sayselection, queryselection, openquery
 from GeminiMetadataUtils import *
 import ApacheReturnCodes as apache
+from cgi import escape as htmlescape
 
 
 def summary(req, type, selection, orderby, links=True, download=False):
@@ -27,13 +28,13 @@ def summary(req, type, selection, orderby, links=True, download=False):
   req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html>')
   title = "FITS header %s table %s" % (type, sayselection(selection))
   req.write("<head>")
-  req.write("<title>%s</title>" % (title))
+  req.write("<title>%s</title>" % htmlescape(title))
   req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
   req.write("</head>\n")
   req.write("<body>")
   if (fits_system_status == "development"):
     req.write('<h1>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h1>')
-  req.write("<H1>%s</H1>" % (title))
+  req.write("<H1>%s</H1>\n" % htmlescape(title))
 
   # If this is a diskfiles summary, select even ones that are not canonical
   if(type != 'diskfiles'):
@@ -97,6 +98,9 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
     req.write('<TH>UT Date Time</TH>')
     req.write('<TH><abbr title="Instrument">Inst</abbr></TH>')
 
+  # Keep the line length below 1000 so can email as text/html
+  req.write('\n')
+
   # This is the 'obs', 'expamlt' and 'qa' parts
   # In the 3 element lists below, the first element is the full title, the second is the shortform title, and the third is the order by key
   wants = ['obs', 'expamlt', 'details', 'qa']
@@ -118,6 +122,8 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
           req.write('<TH><abbr title="%s">%s</abbr></TH>' % (vals[i][0], vals[i][1]))
       if(w == 'obs'):
         req.write('<TH><abbr title="Imaging Filter or Spectroscopy Wavelength and Disperser">WaveBand</abbr></TH>')
+      # Keep the line length down for email attachements
+      req.write('\n')
  
   # This is the 'diskfiles' part
   if('diskfiles' in want):
@@ -128,7 +134,7 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
     req.write('<TH>CCRC</TH>')
 
   # Last bit included in all summary types
-  req.write('</TR>')
+  req.write('</TR>\n')
 
   # Loop through the header list, outputing table rows
   even=0
@@ -209,18 +215,19 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
           stdhtml = '<a href="/standardobs/%d">*</a>' % h.id
         else:
           stdhtml = '*'
+      # nb object names sometimes contain ampersand characters which should be escaped in the html
       if (h.object and len(h.object)>12):
-        req.write('<TD><abbr title="%s">%s%s</abbr></TD>' % (h.object, (h.object)[0:12], stdhtml))
+        req.write('<TD><abbr title="%s">%s%s</abbr></TD>' % (htmlescape(h.object), htmlescape(h.object[0:12]), stdhtml))
       else:
-        req.write("<TD>%s%s</TD>" % (h.object, stdhtml))
+        req.write("<TD>%s%s</TD>" % (htmlescape(h.object), stdhtml))
 
       if(h.spectroscopy):
         try:
-          req.write("<TD>%s : %.3f</TD>" % (h.disperser, h.central_wavelength))
+          req.write("<TD>%s : %.3f</TD>" % (htmlescape(h.disperser), h.central_wavelength))
         except:
-          req.write("<TD>%s : </TD>" % (h.disperser))
+          req.write("<TD>%s : </TD>" % htmlescape(h.disperser))
       else:
-        req.write("<TD>%s</TD>" % (h.filter_name))
+        req.write("<TD>%s</TD>" % htmlescape(h.filter_name))
 
     # Now the 'expamlt' part
     if ('expamlt' in want):
@@ -241,16 +248,16 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
 
     # the 'details' part
     if('details' in want):
-      req.write("<TD>%s</TD>" % (h.filter_name))
+      req.write("<TD>%s</TD>" % htmlescsape(h.filter_name))
       try:
         string = "%.3f" % h.central_wavelength
       except:
         string = "%s" % h.central_wavelength
-      req.write("<TD>%s : %s</TD>" % (h.disperser, string))
-      req.write("<TD>%s</TD>" % (h.focal_plane_mask))
-      req.write("<TD>%s</TD>" % (h.detector_roi_setting))
-      req.write("<TD>%s</TD>" % (h.detector_binning))
-      req.write("<TD>%s</TD>" % (h.detector_config))
+      req.write("<TD>%s : %s</TD>" % (htmlescape(h.disperser), string))
+      req.write("<TD>%s</TD>" % htmlescape(h.focal_plane_mask))
+      req.write("<TD>%s</TD>" % htmlescape(h.detector_roi_setting))
+      req.write("<TD>%s</TD>" % htmlescape(h.detector_binning))
+      req.write("<TD>%s</TD>" % htmlescape(h.detector_config))
 
     # Now the 'qa' part
     # Abreviate the raw XX values to 4 characters
