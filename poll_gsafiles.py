@@ -100,60 +100,83 @@ if(options.lockfile):
     lfd.close()
 
 session = sessionfactory()
+# Setup to Loop forever. loop is a global variable defined up top
 
-# Loop forever. loop is a global variable defined up top
+# Strategy: 
+#1) If a diskfile is not in the gsafile at all, then add it. Use NULLs if not in GSA.
 while(loop):
+  found_one = False
   try:
-    file_id = None
+    # poll files that are not in the gsafile table at all
+    # Most efficient way to find these is to do File LEFT OUTER JOIN GsaFile then select on lastpoll == NULL
+    # Actually left table would be file join diskfile so that we can order by lastmod
+    query = session.query(File).select_from(outerjoin(join(File, DiskFile), GsaFile))
+    query = query.filter(DiskFile.canonical == True)
+    query = query.filter(GsaFile.lastpoll == None)
+    query = query.order_by(desc(DiskFile.lastmod)).limit(1)
+    num = query.count()
+    if(num > 0):
+      found_one = True
+      f = query.first()
+      file_id = f.id
+      logger.info("Found file %d %s which has never been polled" % (f.id, f.filename))
+      gf = GsaFile()
+      gf.file_id = f.id
+      gsainfo = CadcCRC.get_gsa_info(f.filename, gsa_user, gsa_pass)
+      gf.md5sum = gsainfo['md5sum']
+      gf.ingestdate = gsainfo['ingestdate']
+      gf.lastpoll = datetime.datetime.now()
+      session.add(gf)
+      session.commit()
 
-    if(file_id is None):
-      # First priority is to (re-) poll files where the canonical diskfile lastmod is more recent than the gsafile poll date
-      query = session.query(File).select_from(DiskFile, File, GsaFile)
-      query = query.filter(DiskFile.file_id == File.id).filter(GsaFile.file_id == File.id).filter(DiskFile.canonical == True)
-      query = query.filter(DiskFile.lastmod > GsaFile.lastpoll)
+    #2) Now we want to poll files that might have been updated at the GSA since we last polled them.
+
+    if(found_one == False):
+      # Next priority is to (re-) poll non-eng files where the canonical diskfile lastmod is more recent than the gsafile date.
+      # Don't poll any one given file more often than every 10 mins if it is from the last day
+      ## - only poll a file if it is from the last day and it was polled more than 10 mins ago
+      # Don't poll any one given file more often than every hour if it is from from more than a day ago
+      ## - only poll a file if is is from the last 5 days and it was polled more than an hour ago
+      # Don't poll any one given file more often that daily if it is from more than 5 days ago
+      ## - only poll a file if it from more than 5 days ago and it was polled more than a day ago
+
+      # say - only poll a file if was modified more than x hours ago and was polled more than 0.1x hours ago.
+
+      # now() - Diskfile.lastmod gives time since last modification
+      # now() - GsaFile.lastpoll gives time since last poll
+      
+      query = session.query(File).select_from(DiskFile, File, GsaFile, Header)
+      query = query.filter(DiskFile.file_id == File.id).filter(GsaFile.file_id == File.id).filter(DiskFile.canonical == True).filter(Header.diskfile_id == DiskFile.id)
+      query = query.filter(not_(Header.program_id.contains('ENG')))
+      query = query.filter(Header.qa_state != 'Fail')
+      query = query.filter(or_((DiskFile.lastmod > GsaFile.ingestdate), GsaFile.ingestdate == None))
+
+      now = datetime.datetime.now()
+      oneday = datetime.timedelta(days=1)
+      query = query.filter(or_(((now-GsaFile.lastpoll) > (GsaFile.lastpoll-DiskFile.lastmod)), now-GsaFile.lastpoll > oneday))
+      
       query = query.order_by(desc(DiskFile.lastmod)).limit(1)
+      logger.debug("Query: %s" % query)
       num = query.count()
       if(num > 0):
+        found_one = True
         f = query.first()
         file_id = f.id
-        logger.info("Found file %d %s which has been modified since last polled" % (f.id, f.name))
+        logger.info("Found file %d %s which has been modified since last polled" % (f.id, f.filename))
         gquery = session.query(GsaFile).filter(GsaFile.file_id == file_id)
-        gf = query.one()
+        gf = gquery.one()
+        logger.debug("Got GsaFile id %d file_id %d" % (gf.id, gf.file_id))
         gsainfo = CadcCRC.get_gsa_info(f.filename, gsa_user, gsa_pass)
         gf.md5sum = gsainfo['md5sum']
         gf.ingestdate = gsainfo['ingestdate']
-        gf.lastpoll = datetime.datetime.now()
+        gf.lastpoll = text('NOW()')
         session.commit()
+        logger.debug("Updated lastpoll for id %d to %s" % (gf.id, gf.lastpoll))
 
-    if(file_id is None):
-      # Next priority is to poll files that are not in the gsafile table at all
-      # Most efficient way to find these is to do File LEFT OUTER JOIN GsaFile then select on lastpoll == NULL
-      # Actually left table would be file join diskfile so that we can order by lastmod
-      query = session.query(File).select_from(outerjoin(join(File, DiskFile), GsaFile))
-      query = query.filter(DiskFile.canonical == True)
-      query = query.filter(GsaFile.lastpoll == None)
-      query = query.order_by(desc(DiskFile.lastmod)).limit(1)
-      num = query.count()
-      if(num > 0):
-        f = query.first()
-        file_id = f.id
-        logger.info("Found file %d %s which has never been polled" % (f.id, f.filename))
-        gf = GsaFile()
-        gf.file_id = f.id
-        gsainfo = CadcCRC.get_gsa_info(f.filename, gsa_user, gsa_pass)
-        gf.md5sum = gsainfo['md5sum']
-        gf.ingestdate = gsainfo['ingestdate']
-        gf.lastpoll = datetime.datetime.now()
-        session.add(gf)
-        session.commit()
-
-    if(file_id is None):
+    if(found_one == False):
       # Didn't find anything, all up to date
       logger.info("All files up to date. Sleeping 10 seconds more")
       time.sleep(10)
-
-    # Sleep a bit to prevent excessive GSA hammering
-    time.sleep(0.4)
 
   except KeyboardInterrupt:
     loop=False
