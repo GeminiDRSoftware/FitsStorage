@@ -2,7 +2,6 @@ from FitsStorage import *
 from FitsStorageConfig import *
 from FitsStorageLogger import *
 from FitsStorageUtils import *
-import CadcCRC
 import datetime
 import urllib
 from xml.dom.minidom import parseString
