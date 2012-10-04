@@ -8,7 +8,7 @@ import re
 import datetime
 import time
 import traceback
-import CadcCRC
+import Cadc
 
 from optparse import OptionParser
 
@@ -122,8 +122,8 @@ while(loop):
       logger.info("Found file %d %s which has never been polled" % (f.id, f.filename))
       gf = GsaFile()
       gf.file_id = f.id
-      gsainfo = CadcCRC.get_gsa_info(f.filename, gsa_user, gsa_pass)
-      gf.md5sum = gsainfo['md5sum']
+      gsainfo = Cadc.get_gsa_info(f.filename, gsa_user, gsa_pass)
+      gf.md5 = gsainfo['md5sum']
       gf.ingestdate = gsainfo['ingestdate']
       gf.lastpoll = datetime.datetime.now()
       session.add(gf)
@@ -166,8 +166,8 @@ while(loop):
         gquery = session.query(GsaFile).filter(GsaFile.file_id == file_id)
         gf = gquery.one()
         logger.debug("Got GsaFile id %d file_id %d" % (gf.id, gf.file_id))
-        gsainfo = CadcCRC.get_gsa_info(f.filename, gsa_user, gsa_pass)
-        gf.md5sum = gsainfo['md5sum']
+        gsainfo = Cadc.get_gsa_info(f.filename, gsa_user, gsa_pass)
+        gf.md5 = gsainfo['md5sum']
         gf.ingestdate = gsainfo['ingestdate']
         gf.lastpoll = text('NOW()')
         session.commit()
