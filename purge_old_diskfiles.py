@@ -6,7 +6,6 @@ from FitsStorageConfig import *
 from FitsStorageLogger import *
 from FitsStorageUtils import *
 from FitsStorageTape import TapeDrive
-import CadcCRC
 import os
 import re
 import datetime
