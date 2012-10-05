@@ -3,6 +3,7 @@ This module provides various utility functions for service_ingest_queue.py
 in the Fits Storage System.
 """
 import sys
+import traceback
 from FitsStorage import *
 from FitsStorageLogger import logger
 from GeometryHacks import *
@@ -69,7 +70,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
       if((diskfile.lastmod.replace(tzinfo=None) != diskfile.file.lastmod()) or force_md5 or force):
         logger.debug("lastmod time or force flags indicates file modification")
         # Check the md5 to be sure if it's changed
-        if(diskfile.md5 == diskfile.file.md5() and (force != True)):
+        if(diskfile.md5 == diskfile.file.calculate_md5() and (force != True)):
           logger.debug("md5 indicates no change")
           add_diskfile=0
         else:
@@ -160,7 +161,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
     session.commit();
 
   except:
-    logger.error("Exception in ingest_file: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+    logger.error("Exception in ingest_file: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2])))
     raise
 
 def check_present(session, filename):
