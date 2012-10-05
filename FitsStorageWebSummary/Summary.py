@@ -306,8 +306,8 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
     # the 'diskfiles' part
     if('diskfiles' in want):
       req.write("<TD>%s</TD>" % (h.diskfile.present))
-      req.write("<TD>%s</TD>" % (h.diskfile.entrytime))
-      req.write("<TD>%s</TD>" % (h.diskfile.lastmod))
+      req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.diskfile.entrytime, h.diskfile.entrytime.strftime("%Y-%m-%d %H:%M:%S")))
+      req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.diskfile.lastmod, h.diskfile.lastmod.strftime("%Y-%m-%d %H:%M:%S")))
       req.write("<TD>%s</TD>" % (h.diskfile.size))
       req.write("<TD>%s</TD>" % (h.diskfile.md5))
 
