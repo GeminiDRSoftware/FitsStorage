@@ -17,6 +17,7 @@ parser.add_option("--debug", action="store_true", dest="debug", default=False, h
 parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
 parser.add_option("--lockfile", action="store", dest="lockfile", help="Use this as a lockfile to limit instances")
 parser.add_option("--authfile", action="store", dest="authfile", default="/home/fitsdata/.gsaauth", help="File containing the authentication credentials to the GSA")
+parser.add_option("--bulk", action="store_true", dest="bulk", default=False, help="Bulk process files not in gsa table")
 
 (options, args) = parser.parse_args()
 
@@ -113,21 +114,38 @@ while(loop):
     query = session.query(File).select_from(outerjoin(join(File, DiskFile), GsaFile))
     query = query.filter(DiskFile.canonical == True)
     query = query.filter(GsaFile.lastpoll == None)
-    query = query.order_by(desc(DiskFile.lastmod)).limit(1)
+    query = query.order_by(desc(DiskFile.lastmod))
+    if(not options.bulk):
+      query = query.limit(1)
     num = query.count()
+    if(options.bulk):
+      logger.info("Found %d files to bulk process" % num)
     if(num > 0):
       found_one = True
-      f = query.first()
-      file_id = f.id
-      logger.info("Found file %d %s which has never been polled" % (f.id, f.filename))
-      gf = GsaFile()
-      gf.file_id = f.id
-      gsainfo = Cadc.get_gsa_info(f.filename, gsa_user, gsa_pass)
-      gf.md5 = gsainfo['md5sum']
-      gf.ingestdate = gsainfo['ingestdate']
-      gf.lastpoll = datetime.datetime.now()
-      session.add(gf)
-      session.commit()
+      fl = query.all()
+      logger.debug("Got %d files to process" % len(fl))
+      i=0
+      for f in fl:
+        i+=1
+        file_id = f.id
+        logger.info("Found file %d %s which has never been polled" % (f.id, f.filename))
+        gf = GsaFile()
+        gf.file_id = f.id
+        logger.debug("Querying GSA for file %s" % f.filename)
+        gsainfo = Cadc.get_gsa_info(f.filename, gsa_user, gsa_pass)
+        logger.debug("Got md5: %s" % gsainfo['md5sum'])
+        gf.md5 = gsainfo['md5sum']
+        gf.ingestdate = gsainfo['ingestdate']
+        gf.lastpoll = datetime.datetime.now()
+        logger.debug("Adding new GsaFile")
+        session.add(gf)
+        # The Commit is slow when we have a big DB, so do this in batches if were in bulk mode
+        if((not options.bulk) or (i % 25)==0):
+          logger.debug("Committing transaction")
+          session.commit()
+        logger.debug("Done")
+        if(not loop):
+          break
 
     #2) Now we want to poll files that might have been updated at the GSA since we last polled them.
 
