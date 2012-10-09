@@ -65,6 +65,6 @@ msg['Reply-To'] = options.replyto
 msg.attach(part1)
 msg.attach(part2)
 
-smtp = smtplib.SMTP("smtp.gemini.edu")
+smtp = smtplib.SMTP(mailhost)
 smtp.sendmail(options.fromaddr, [options.toaddr], msg.as_string())
 smtp.quit()
