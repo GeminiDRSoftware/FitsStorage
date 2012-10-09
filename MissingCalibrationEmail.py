@@ -9,7 +9,7 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--emailto", action="store", dest="toaddr", default="gnda@gemini.edu", help="Email Address to send to")
 parser.add_option("--emailfrom", action="store", dest="fromaddr", default="Missing GMOS Arc Check <fitsdata@gemini.edu>", help="Email Address to send from")
-parser.add_option("--replyto", action="store", dest="replyto", default="gnda@gemini.edu", help="Set a Reply-To email header")
+parser.add_option("--replyto", action="store", dest="replyto", default="fitsadmin@gemini.edu", help="Set a Reply-To email header")
 parser.add_option("--ndays", action="store", type="int", dest="ndays", default=14, help="Number of days to query")
 parser.add_option("--skipdays", action="store", type="int", dest="skipdays", default=4, help="Number of days ago to start query from")
 parser.add_option("--httpserver", action="store", dest="httpserver", default="fits", help="hostname of FitsStorage http server to query")
