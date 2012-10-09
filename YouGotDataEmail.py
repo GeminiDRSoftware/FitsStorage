@@ -13,7 +13,7 @@ import datetime
 from optparse import OptionParser
 
 parser = OptionParser()
-parser.add_option("--emailfrom", action="store", dest="fromaddr", default="fitsadmin@gemini.edu", help="Email Address to send from")
+parser.add_option("--emailfrom", action="store", dest="fromaddr", default="fitsdata@gemini.edu", help="Email Address to send from")
 parser.add_option("--replyto", action="store", dest="replyto", default="fitsadmin@gemini.edu", help="Set a Reply-To email header")
 parser.add_option("--date", action="store", dest="date", default = "today", help="Specify an alternate date to check for data from")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
