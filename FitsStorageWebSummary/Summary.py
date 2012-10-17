@@ -262,7 +262,7 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
 
     # the 'details' part
     if('details' in want):
-      req.write("<TD>%s</TD>" % htmlescsape(h.filter_name))
+      req.write("<TD>%s</TD>" % htmlescape(h.filter_name))
       try:
         string = "%.3f" % h.central_wavelength
       except:
