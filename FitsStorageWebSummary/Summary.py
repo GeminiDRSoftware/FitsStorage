@@ -5,8 +5,6 @@ from FitsStorage import *
 from FitsStorageWebSummary.Selection import sayselection, queryselection, openquery
 from GeminiMetadataUtils import *
 import ApacheReturnCodes as apache
-import cgi
-
 
 def summary(req, type, selection, orderby, links=True, download=False):
   """
@@ -371,12 +369,13 @@ def list_headers(session, selection, orderby):
   # Return the list of DiskFile objects
   return headers
 
+from cgi import escape
 def htmlescape(string):
   """
-  Escapes html characters in a string. Passes None through silently
+  Convenience wrapper to cgi escape, providing type protection
   """
-  if(string):
-    string = cgi.escape(string)
 
-  return string
-
+  if(type(string) == str):
+    return escape(string)
+  else:
+    return None
