@@ -375,7 +375,7 @@ def htmlescape(string):
   Convenience wrapper to cgi escape, providing type protection
   """
 
-  if(type(string) == str):
+  if(type(string) in [str, unicode]):
     return escape(string)
   else:
     return None
