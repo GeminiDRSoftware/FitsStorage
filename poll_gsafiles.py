@@ -9,6 +9,7 @@ import datetime
 import time
 import traceback
 import Cadc
+import urllib2
 
 from optparse import OptionParser
 
@@ -129,18 +130,25 @@ while(loop):
         i+=1
         file_id = f.id
         logger.info("Found file %d %s which has never been polled" % (f.id, f.filename))
-        gf = GsaFile()
-        gf.file_id = f.id
-        logger.debug("Querying GSA for file %s" % f.filename)
-        gsainfo = Cadc.get_gsa_info(f.filename, gsa_user, gsa_pass)
-        logger.debug("Got md5: %s" % gsainfo['md5sum'])
-        gf.md5 = gsainfo['md5sum']
-        gf.ingestdate = gsainfo['ingestdate']
-        gf.lastpoll = datetime.datetime.now()
-        logger.debug("Adding new GsaFile")
-        session.add(gf)
+        try:
+          gf = GsaFile()
+          gf.file_id = f.id
+          logger.debug("Querying GSA for file %s" % f.filename)
+          gsainfo = Cadc.get_gsa_info(f.filename, gsa_user, gsa_pass)
+          logger.debug("Got md5: %s" % gsainfo['md5sum'])
+          gf.md5 = gsainfo['md5sum']
+          gf.ingestdate = gsainfo['ingestdate']
+          gf.lastpoll = datetime.datetime.now()
+          logger.debug("Adding new GsaFile")
+          session.add(gf)
+        except urllib2.URLError:
+          logger.error("URLError - most likely connection timed out...")
+          string = traceback.format_tb(sys.exc_info()[2])
+          string = "".join(string)
+          logger.error("Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
+
         # The Commit is slow when we have a big DB, so do this in batches if were in bulk mode
-        if((not options.bulk) or (i % 25)==0):
+        if((not options.bulk) or ((i % 25)==0) or (num < 25)):
           logger.debug("Committing transaction")
           session.commit()
         logger.debug("Done")
