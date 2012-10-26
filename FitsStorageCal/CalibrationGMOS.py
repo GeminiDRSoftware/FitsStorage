@@ -52,8 +52,20 @@ class CalibrationGMOS(Calibration):
     list=[]
 
     if(self.descriptors):
+      require_bias = True
       # BIASes do not require a bias. 
       if(self.descriptors['observation_type'] != 'BIAS'):
+        require_bias = False
+
+      # Custom ROI acq images (efficient MOS acquisitions) don't require a BIAS
+      if((self.descriptors['detector_roi_setting'] != 'Custom') and (self.descriptors['observation_class'] != 'acq')):
+        require_bias = False
+
+      # Anything that's ROI = Central Stamp does not require a bias
+      if(self.descriptors['detector_roi_setting'] != 'Central Stamp'):
+        require_bias = False
+
+      if(require_bias):
         list.append('bias')
         list.append('processed_bias')
 
