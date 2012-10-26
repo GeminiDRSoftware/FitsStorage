@@ -41,6 +41,7 @@ class Calibration():
       self.descriptors['ut_datetime']=self.header.ut_datetime
       self.descriptors['exposure_time']=self.header.exposure_time
       self.descriptors['observation_class']=self.header.observation_class
+      self.descriptors['detector_roi_setting']=self.header.detector_roi_setting
 
   def arc(self):
     # Not defined for this instrument
