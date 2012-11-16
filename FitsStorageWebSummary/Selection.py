@@ -226,7 +226,7 @@ def queryselection(query, selection):
   # Should we query by daterange?
   if('daterange' in selection):
     # Parse the date to start and end datetime objects
-    daterangecre=re.compile('(20\d\d[01]\d[0123]\d)-(20\d\d[01]\d[0123]\d)')
+    daterangecre=re.compile('([12][90]\d\d[01]\d[0123]\d)-([12][90]\d\d[01]\d[0123]\d)')
     m = daterangecre.match(selection['daterange'])
     startdate = m.group(1)
     enddate = m.group(2)
