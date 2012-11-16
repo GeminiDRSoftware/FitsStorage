@@ -91,7 +91,7 @@ def gemini_instrument(string, gmos=False):
       retary='GMOS'
   return retary
 
-datecre=re.compile('^(20)|(19)\d\d[01]\d[0123]\d$')
+datecre=re.compile('^[12][90]\d\d[01]\d[0123]\d$')
 def gemini_date(string):
   """
   A utility function for matching dates of the form YYYYMMDD
@@ -110,7 +110,7 @@ def gemini_date(string):
     return then.date().strftime('%Y%m%d')
   return ''
 
-daterangecre=re.compile('((20)|(19)\d\d[01]\d[0123]\d)-((20|19)\d\d[01]\d[0123]\d)')
+daterangecre=re.compile('^([12][90]\d\d[01]\d[0123]\d)-([12][90]\d\d[01]\d[0123]\d)$')
 def gemini_daterange(string):
   """
   A utility function for matching date ranges of the form YYYYMMDD-YYYYMMDD
