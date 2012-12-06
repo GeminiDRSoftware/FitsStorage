@@ -226,7 +226,7 @@ def mydata(req, selection):
     if(not in_auth_table):
       req.write('<P>This program has not been authenticated for downloads from this fits server, please visit <a href="/authentication">the authentication page</a> and supply your phase 2 program key to authenticate with this server and receive a browser authorization cookie which will allow you to download data.</P>')
 
-      req.write('<P style="color:red"><BIG><STRONG>You have not sucessfully authenicated on this browser. You will not be alowed to download data. Go to <a href="/authentication">the authentication page</a>!</STRONG></BIG></P>')
+      req.write('<P style="color:red"><BIG><STRONG>You have not successfully authenticated on this browser. You will not be allowed to download data. Go to <a href="/authentication">the authentication page</a>!</STRONG></BIG></P>')
 
     else:
       # count is >0 so there must be an auth entry for this project id
@@ -241,7 +241,7 @@ def mydata(req, selection):
         req.write('<P>This program has already authenticated for downloads from this server and your browser is supplying the authorization cookie. Authentication is all good, this server will allow you to download your data with this browser.</P>')
       else:
         req.write('<P>This program has authenticated for downloads from this server, but your browser is not supplying a valid authorization cookie. Please <a href="/authentaction">re-authenticate from this browser</a> if you wish to download data using this browser.</P>')
-        req.write('<P style="color:red"><BIG><STRONG>You have not sucessfully authenicated on this browser. You will not be alowed to download data. Go to <a href="/authentication">the authentication page</a>!</STRONG></BIG></P>')
+        req.write('<P style="color:red"><BIG><STRONG>You have not successfully authenticated on this browser. You will not be allowed to download data. Go to <a href="/authentication">the authentication page</a>!</STRONG></BIG></P>')
 
     req.write('<H2>Data summaries with download links</H2>')
     req.write('<P>Note that a [download] link will show against all files, however the server will only send you data for files for which you have access to - either calibration data (which is public) or data for a program you are authorized for (see above).</P>') 
