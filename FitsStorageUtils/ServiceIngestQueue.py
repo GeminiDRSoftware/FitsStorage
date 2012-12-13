@@ -207,13 +207,14 @@ def pop_ingestqueue(session):
   """
 
   # Form the query, with for_update which adds FOR UPDATE to the SQL query. The resulting lock ends when the transaction gets committed
-  query=session.query(IngestQueue).with_lockmode('update').filter(IngestQueue.inprogress == False).order_by(desc(IngestQueue.filename))
+  query=session.query(IngestQueue).with_lockmode('update_nowait').filter(IngestQueue.inprogress == False).order_by(desc(IngestQueue.filename))
 
   # Try and get a value. If we fail, there are none, so bail out
   iq = query.first()
   if(iq == None):
     logger.debug("No item to pop on ingestqueue")
   else:
+    # OK, we got a viable item, set it to inprogress and return it.
     logger.debug("Popped id %d from ingestqueue" % iq.id)
     # Set this entry to in progres and flush to the DB.
     iq.inprogress=True
