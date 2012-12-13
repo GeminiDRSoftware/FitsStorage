@@ -125,7 +125,9 @@ while(loop):
       except:
         logger.info("Problem Ingesting File - Rolling back" )
         session.rollback()
-        iq.inprogress=False
+        # Originally we set the inprogress flag back to False at the point that we abort. But that can lead to an immediate re-try
+        # and subsequent rapid rate re-failures, and it will never move on to the next file. So lets try leaving it set inprogress to avoid that.
+        # iq.inprogress=False
         session.commit()
         raise
       logger.debug("Deleteing ingestqueue id %d" % iq.id)
