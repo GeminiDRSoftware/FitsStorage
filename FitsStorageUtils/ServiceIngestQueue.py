@@ -206,8 +206,9 @@ def pop_ingestqueue(session):
   delete all other entries for the same filename.
   """
 
-  # Form the query, with for_update which adds FOR UPDATE to the SQL query. The resulting lock ends when the transaction gets committed
-  query=session.query(IngestQueue).with_lockmode('update_nowait').filter(IngestQueue.inprogress == False).order_by(desc(IngestQueue.filename))
+  # Form the query, with lockmode update which adds FOR UPDATE to the SQL query. The resulting lock ends when the transaction gets committed
+  # Do not use nowait - it throws an exception rather than waiting. We want it to wait
+  query=session.query(IngestQueue).with_lockmode('update').filter(IngestQueue.inprogress == False).order_by(desc(IngestQueue.filename))
 
   # Try and get a value. If we fail, there are none, so bail out
   iq = query.first()
