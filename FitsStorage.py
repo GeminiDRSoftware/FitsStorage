@@ -255,7 +255,7 @@ class Header(Base):
     """
     fullpath = diskfile.file.fullpath()
     # Try and open it as a fits file
-    ad=0
+    ad=None
     try:
       ad=AstroData(fullpath, mode='readonly')
 
@@ -471,10 +471,12 @@ class Header(Base):
       # Get the types list
       self.types = str(ad.types)
 
-      ad.close()
+      if(ad is not None):
+        ad.close()
     except:
       # Astrodata open failed or there was some other exception
-      ad.close()
+      if(ad is not None):
+        ad.close()
       raise
 
   def footprints(self):
