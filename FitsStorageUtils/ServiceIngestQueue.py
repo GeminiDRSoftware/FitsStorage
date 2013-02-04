@@ -211,7 +211,13 @@ def pop_ingestqueue(session):
   query=session.query(IngestQueue).with_lockmode('update').filter(IngestQueue.inprogress == False).order_by(desc(IngestQueue.filename))
 
   # Try and get a value. If we fail, there are none, so bail out
-  iq = query.first()
+  # We have to fetch *all* the rows here, as we want the FOR UPDATE to apply to all the rows. If we say .first() then it applies a LIMIT 1 to the select for update.
+  iqlist = query.all()
+  if((iqlist is None) or (len(iqlist)==0)):
+    iq = None
+  else:
+    iq = iqlist[0]
+
   if(iq == None):
     logger.debug("No item to pop on ingestqueue")
   else:
