@@ -3,7 +3,7 @@ import datetime
 from astrodata import AstroData
 
 # This is a GMOS_N imaging science dataset
-ad = AstroData("/net/wikiwiki/dataflow/N20110728S0350.fits")
+ad = AstroData("/net/wikiwiki/dataflow/N20121104S0066.fits")
 
 
 desc_dict = {'instrument':ad.instrument().for_db(),
