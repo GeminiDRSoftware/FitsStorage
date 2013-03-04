@@ -135,7 +135,7 @@ class CalibrationNIFS(Calibration):
 
   def ronchi_mask(self, List=None):
     query = self.session.query(Header).select_from(join(join(Nifs, Header), DiskFile))
-    query = query.filter(Header.observation_type=='RONCHI_MASK')
+    query = query.filter(Header.observation_type=='RONCHI')
 
     # Search only the canonical (latest) entries
     query = query.filter(DiskFile.canonical==True)
