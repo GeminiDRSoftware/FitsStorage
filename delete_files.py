@@ -20,6 +20,7 @@ parser.add_option("--maxgb", type="float", action="store", dest="maxgb", help="D
 parser.add_option("--auto", action="store_true", dest="auto", help="Delete old files to get to pre-defined free space")
 parser.add_option("--oldbyfilename", action="store_true", dest="oldbyfilename", help="Sort by filename to determine oldest files")
 parser.add_option("--oldbylastmod", action="store_true", dest="oldbylastmod", help="Sort by lastmod to determine oldest files")
+parser.add_option("--numbystat", action="store_true", dest="numbystat", default=False, help="Use statvfs rather than database to determine number of files on the disk")
 parser.add_option("--yesimsure", action="store_true", dest="yesimsure", help="Needed when file count is large")
 parser.add_option("--notpresent", action="store_true", dest="notpresent", help="Include files that are marked as not present")
 parser.add_option("--mintapes", action="store", type="int", dest="mintapes", default=2, help="Minimum number of tapes file must be on to be eligable for deletion")
@@ -51,7 +52,10 @@ if(options.auto):
   s = os.statvfs(storage_root)
   os.chdir(cwd)
   gbavail = s.f_bsize * s.f_bavail / (1024 * 1024 * 1024)
-  numfiles = s.f_files - s.f_favail
+  if(options.numbystat):
+    numfiles = s.f_files - s.f_favail
+  else:
+    numfiles = session.query(DiskFile).filter(DiskFile.present==True).count()
   logger.debug("Disk has %d files present and %.2f GB available" % (numfiles, gbavail))
   numtodelete = numfiles - target_max_files
   if(numtodelete > 0):
