@@ -70,7 +70,7 @@ if(options.lockfile):
       oldpid = int(lfd.read())
       lfd.close()
     except:
-      logger.info("Could not read pid from lockfile %s" % lockfile)
+      logger.error("Could not read pid from lockfile %s" % lockfile)
       oldpid=0
     # Try and send a null signal to test if the process is viable.
     try:
@@ -78,16 +78,23 @@ if(options.lockfile):
         os.kill(oldpid, 0)
     except:
       # If this gets called then the lockfile refers to a process which either doesn't exist or is not ours.
+      logger.error("PID in lockfile prefers to a process which either doesn't exist, or is not ours - %d" % oldpid)
       actually_locked = False
 
     if(actually_locked):
       logger.info("Lockfile %s refers to PID %d which appears to be valid. Exiting" % (lockfile, oldpid))
       sys.exit()
     else:
-      logger.info("Lockfile %s refers to PID %d which appears to be not us. Deleting lockfile" % (lockfile, oldpid))
+      logger.error("Lockfile %s refers to PID %d which appears to be not us. Deleting lockfile" % (lockfile, oldpid))
       os.unlink(lockfile)
+      logger.info("Creating replacement lockfile %s" % lockfile)
+      lfd=open(lockfile, 'w')
+      lfd.write("%s\n" % os.getpid())
+      lfd.close()
+
   else:
-    logger.info("Creating lockfile %s" % lockfile)
+    logger.info("Lockfile does not exist: %s" % lockfile)
+    logger.info("Creating new lockfile %s" % lockfile)
     lfd=open(lockfile, 'w')
     lfd.write("%s\n" % os.getpid())
     lfd.close()
