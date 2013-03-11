@@ -88,12 +88,12 @@ class CalibrationNIFS(Calibration):
     # Knock out the FAILs
     query = query.filter(Header.qa_state!='Fail')
 
-    # Must totally match: disperser, central_wavelength, focal_plane_mask, filter, read_mode
+    # Must totally match: disperser, central_wavelength, focal_plane_mask, filter
+    # NIFS flats are always taken in short / high readmode. Don't match against readmode (inst sci Email 2013-03-13)
     query = query.filter(Nifs.disperser==self.descriptors['disperser'])
     query = query.filter(Header.central_wavelength==self.descriptors['central_wavelength'])
     query = query.filter(Nifs.focal_plane_mask==self.descriptors['focal_plane_mask'])
     query = query.filter(Nifs.filter_name==self.descriptors['filter_name'])
-    query = query.filter(Nifs.read_mode==self.descriptors['read_mode'])
 
     # Order by absolute time separation
     query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
