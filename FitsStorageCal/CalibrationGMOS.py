@@ -81,8 +81,9 @@ class CalibrationGMOS(Calibration):
         list.append('processed_flat')
 
 
-      # If it (is imaging) and (is an OBJECT) and (is not a Twilight) then it needs a processed_flat
-      if((self.descriptors['spectroscopy']==False) and (self.descriptors['observation_type']=='OBJECT') and (self.descriptors['object']!='Twilight')):
+      # If it (is imaging) and (is Imaging focal plane mask) and (is an OBJECT) and (is not a Twilight) then it needs a processed_flat
+      if((self.descriptors['spectroscopy']==False) and (self.descriptors['focal_plane_mask']=='Imaging') and (self.descriptors['observation_type']=='OBJECT') and (self.descriptors['object']!='Twilight')):
+
         list.append('processed_flat')
  
       # If it (is imaging) and (is an OBJECT) and (is not a Twilight) then it maybe needs a processed_fringe
