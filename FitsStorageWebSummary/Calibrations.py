@@ -211,15 +211,15 @@ def calibrations(req, selection):
           warning = True
           missing = True
 
-      if('processed_fringe' in c.required and (caltype=='all' or caltype=='processed_fringe')):
-        requires=True
-        processed_fringe = c.processed_fringe()
-        if(processed_fringe):
-          html += "<H4>PROCESSED_FRINGE: %s - %s</H4>" % (processed_fringe.diskfile.file.filename, processed_fringe.data_label)
-        else:
-          html += '<H3><FONT COLOR="Red">NO PROCESSED_FRINGE FOUND!</FONT></H3>'
-          warning = True
-          missing = True
+      #if('processed_fringe' in c.required and (caltype=='all' or caltype=='processed_fringe')):
+        #requires=True
+        #processed_fringe = c.processed_fringe()
+        #if(processed_fringe):
+          #html += "<H4>PROCESSED_FRINGE: %s - %s</H4>" % (processed_fringe.diskfile.file.filename, processed_fringe.data_label)
+        #else:
+          #html += '<H3><FONT COLOR="Red">NO PROCESSED_FRINGE FOUND!</FONT></H3>'
+          #warning = True
+          #missing = True
 
       if('pinhole_mask' in c.required and (caltype=='all' or caltype=='pinhole_mask')):
         requires=True
