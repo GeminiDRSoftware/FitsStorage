@@ -44,6 +44,9 @@ def calibrations(req, selection):
     # Knock out the FAILs
     query = query.filter(Header.qa_state!='Fail')
 
+    # Knock out ENG programs
+    query = query.filter(~Header.program_id.like('%ENG%'))
+
     # Order by date, most recent first
     query = query.order_by(desc(Header.ut_datetime))
 
