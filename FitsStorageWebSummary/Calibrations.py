@@ -191,25 +191,26 @@ def calibrations(req, selection):
           warning = True
           missing = True
       
-      if('processed_bias' in c.required and (caltype=='all' or caltype=='processed_bias')):
-        requires=True
-        processed_bias = c.bias(processed=True)
-        if(processed_bias):
-          html += "<H4>PROCESSED_BIAS: %s - %s</H4>" % (processed_bias.diskfile.file.filename, processed_bias.data_label)
-        else:
-          html += '<H3><FONT COLOR="Red">NO PROCESSED_BIAS FOUND!</FONT></H3>'
-          warning = True
-          missing = True
+      # For now (March 2013) we don't want the SOS calibrations page to whine about processed cals at all.
+      #if('processed_bias' in c.required and (caltype=='all' or caltype=='processed_bias')):
+        #requires=True
+        #processed_bias = c.bias(processed=True)
+        #if(processed_bias):
+          #html += "<H4>PROCESSED_BIAS: %s - %s</H4>" % (processed_bias.diskfile.file.filename, processed_bias.data_label)
+        #else:
+          #html += '<H3><FONT COLOR="Red">NO PROCESSED_BIAS FOUND!</FONT></H3>'
+          #warning = True
+          #missing = True
   
-      if('processed_flat' in c.required and (caltype=='all' or caltype=='processed_flat')):
-        requires=True
-        processed_flat = c.flat(processed=True)
-        if(processed_flat):
-          html += "<H4>PROCESSED_FLAT: %s - %s</H4>" % (processed_flat.diskfile.file.filename, processed_flat.data_label)
-        else:
-          html += '<H3><FONT COLOR="Red">NO PROCESSED_FLAT FOUND!</FONT></H3>'
-          warning = True
-          missing = True
+      #if('processed_flat' in c.required and (caltype=='all' or caltype=='processed_flat')):
+        #requires=True
+        #processed_flat = c.flat(processed=True)
+        #if(processed_flat):
+          #html += "<H4>PROCESSED_FLAT: %s - %s</H4>" % (processed_flat.diskfile.file.filename, processed_flat.data_label)
+        #else:
+          #html += '<H3><FONT COLOR="Red">NO PROCESSED_FLAT FOUND!</FONT></H3>'
+          #warning = True
+          #missing = True
 
       #if('processed_fringe' in c.required and (caltype=='all' or caltype=='processed_fringe')):
         #requires=True
