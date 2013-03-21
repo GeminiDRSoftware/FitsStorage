@@ -139,6 +139,9 @@ class CalibrationGMOS(Calibration):
     if(sameprog):
       query = query.filter(Header.program_id==self.descriptors['program_id'])
 
+    # Absolute time separation must be within 1 year (31557600 seconds)
+    query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+
     # Order by absolute time separation. 
     query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
@@ -177,6 +180,9 @@ class CalibrationGMOS(Calibration):
 
     # The science amp_read_area must be equal or substring of the dark amp_read_area
     query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
+
+    # Absolute time separation must be within 1 year (31557600 seconds)
+    query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
 
     # Order by absolute time separation. 
     query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -227,6 +233,9 @@ class CalibrationGMOS(Calibration):
       else:
         query.filter(Gmos.overscan_trimmed == True)
         query.filter(Gmos.overscan_subtracted == True)
+
+    # Absolute time separation must be within 1 year (31557600 seconds)
+    query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
 
     # Order by absolute time separation.
     if(using_sqlite):
@@ -283,6 +292,9 @@ class CalibrationGMOS(Calibration):
       # Postgres needs the following:
       query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
+    # Absolute time separation must be within 1 year (31557600 seconds)
+    query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+
     # For now, we only want one result - the closest in time, unless otherwise indicated
     if(List):
       query = query.limit(List)
@@ -309,6 +321,9 @@ class CalibrationGMOS(Calibration):
 
     # The science amp_read_area must be equal or substring of the flat amp_read_area
     query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
+
+    # Absolute time separation must be within 1 year (31557600 seconds)
+    query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
 
     # Order by absolute time separation
     query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())

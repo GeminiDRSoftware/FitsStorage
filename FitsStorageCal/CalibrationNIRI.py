@@ -64,6 +64,9 @@ class CalibrationNIRI(Calibration):
     query = query.filter(Niri.read_mode==self.descriptors['read_mode']).filter(Niri.well_depth_setting==self.descriptors['well_depth_setting'])
     query = query.filter(Header.exposure_time==self.descriptors['exposure_time']).filter(Niri.coadds==self.descriptors['coadds'])
 
+    # Absolute time separation must be within 1 year (31557600 seconds)
+    query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+
     # Order by absolute time separation
     query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
@@ -91,6 +94,9 @@ class CalibrationNIRI(Calibration):
     query = query.filter(Niri.well_depth_setting==self.descriptors['well_depth_setting'])
     query = query.filter(Niri.filter_name==self.descriptors['filter_name'])
     query = query.filter(Niri.camera==self.descriptors['camera'])
+
+    # Absolute time separation must be within 1 year (31557600 seconds)
+    query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
 
     # Order by absolute time separation
     query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())

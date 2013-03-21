@@ -59,6 +59,9 @@ class CalibrationMICHELLE(Calibration):
     query = query.filter(Header.exposure_time == self.descriptors['exposure_time'])
     query = query.filter(Michelle.coadds == self.descriptors['coadds'])
 
+    # Absolute time separation must be within 1 year (31557600 seconds)
+    query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+
     # Order by absolute time separation
     query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 

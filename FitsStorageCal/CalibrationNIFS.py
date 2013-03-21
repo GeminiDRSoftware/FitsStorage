@@ -69,6 +69,9 @@ class CalibrationNIFS(Calibration):
     query = query.filter(Nifs.coadds==self.descriptors['coadds'])
     query = query.filter(Nifs.disperser==self.descriptors['disperser'])
 
+    # Absolute time separation must be within 1 year (31557600 seconds)
+    query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+
     # Order by absolute time separation.
     query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
@@ -97,6 +100,9 @@ class CalibrationNIFS(Calibration):
     query = query.filter(Nifs.focal_plane_mask==self.descriptors['focal_plane_mask'])
     query = query.filter(Nifs.filter_name==self.descriptors['filter_name'])
 
+    # Absolute time separation must be within 1 year (31557600 seconds)
+    query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+
     # Order by absolute time separation
     query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
@@ -124,6 +130,9 @@ class CalibrationNIFS(Calibration):
     query = query.filter(Nifs.focal_plane_mask==self.descriptors['focal_plane_mask'])
     query = query.filter(Nifs.filter_name==self.descriptors['filter_name'])
 
+    # Absolute time separation must be within 1 year (31557600 seconds)
+    query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+
     # Order by absolute time separation
     query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
@@ -148,6 +157,9 @@ class CalibrationNIFS(Calibration):
     # Must totally match: disperser, central_wavelength
     query = query.filter(Nifs.disperser==self.descriptors['disperser'])
     query = query.filter(Header.central_wavelength==self.descriptors['central_wavelength'])
+
+    # Absolute time separation must be within 1 year (31557600 seconds)
+    query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
 
     # Order by absolute time separation
     query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
