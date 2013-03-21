@@ -44,7 +44,9 @@ class CalibrationNIFS(Calibration):
     # Science Imaging OBJECTs require a DARK
     if((self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == False) and (self.descriptors['observation_class']=='science')):
       list.append('dark')
-    if((self.descriptors['observation_type']=='OBJECT') and (self.descriptors['spectroscopy']==True)):
+
+    # Science spectroscopy that is not a progcal or partnercal requires a flat, arc and ronchi_mask
+    if((self.descriptors['observation_type']=='OBJECT') and (self.descriptors['observation_class'] not in ['partnerCal', 'progCal']) and (self.descriptors['spectroscopy']==True)):
       list.append('flat')
       list.append('arc')
       list.append('ronchi_mask')
