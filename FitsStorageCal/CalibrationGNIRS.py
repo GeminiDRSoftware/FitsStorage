@@ -43,8 +43,8 @@ class CalibrationGNIRS(Calibration):
     # Return a list of the calibrations required for this GNIRS dataset
     list=[]
 
-    # Science Imaging OBJECTs require a DARK
-    if((self.descriptors['observation_type']=='OBJECT') and (self.descriptors['spectroscopy']==False)):
+    # Science Imaging OBJECTs that are not acq or acqCal require a DARK
+    if((self.descriptors['observation_type']=='OBJECT') and (self.descriptors['observation_class'] not in ['acq', 'acqCal']) and (self.descriptors['spectroscopy']==False)):
       list.append('dark')
     if((self.descriptors['observation_type']=='OBJECT') and (self.descriptors['spectroscopy']==True)):
       list.append('flat')
