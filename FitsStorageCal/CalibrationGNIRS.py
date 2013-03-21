@@ -93,13 +93,13 @@ class CalibrationGNIRS(Calibration):
     # Knock out the FAILs
     query = query.filter(Header.qa_state!='Fail')
 
-    # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name, read_mode, well_depth_setting
+    # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name, well_depth_setting
+    # update from RM 20130321 - read mode should not be required to match, but well depth should.
     query = query.filter(Gnirs.disperser==self.descriptors['disperser'])
     query = query.filter(Header.central_wavelength==self.descriptors['central_wavelength'])
     query = query.filter(Gnirs.focal_plane_mask==self.descriptors['focal_plane_mask'])
     query = query.filter(Gnirs.camera==self.descriptors['camera'])
     query = query.filter(Gnirs.filter_name==self.descriptors['filter_name'])
-    query = query.filter(Gnirs.read_mode==self.descriptors['read_mode'])
     query = query.filter(Gnirs.well_depth_setting==self.descriptors['well_depth_setting'])
 
     # Absolute time separation must be within 1 year (31557600 seconds)

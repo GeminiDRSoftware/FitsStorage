@@ -88,9 +88,9 @@ class CalibrationNIRI(Calibration):
     # Knock out the FAILs
     query = query.filter(Header.qa_state!='Fail')
 
-    # Must totally match: data_section, read_mode, well_depth_setting, filter_name, camera
+    # Must totally match: data_section, well_depth_setting, filter_name, camera
+    # Update from AS 20130320 - read mode should not be required to match, but well depth should.
     query = query.filter(Niri.data_section==self.descriptors['data_section'])
-    query = query.filter(Niri.read_mode==self.descriptors['read_mode'])
     query = query.filter(Niri.well_depth_setting==self.descriptors['well_depth_setting'])
     query = query.filter(Niri.filter_name==self.descriptors['filter_name'])
     query = query.filter(Niri.camera==self.descriptors['camera'])
