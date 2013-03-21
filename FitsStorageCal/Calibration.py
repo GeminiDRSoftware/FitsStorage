@@ -33,6 +33,7 @@ class Calibration():
       self.descriptors = {}
       self.descriptors['header_id']=self.header.id
       self.descriptors['observation_type']=self.header.observation_type
+      self.descriptors['observation_class']=self.header.observation_class
       self.descriptors['spectroscopy']=self.header.spectroscopy
       self.descriptors['object']=self.header.object
       self.descriptors['instrument']=self.header.instrument
