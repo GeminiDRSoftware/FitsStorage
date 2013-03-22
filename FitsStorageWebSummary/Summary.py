@@ -185,7 +185,10 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
     # The [download] link
     fdl = ''
     if(download):
-      fdl = '<a href = "/file/%s">[download]</a>' % h.diskfile.file.filename
+      if(h.diskfile.present):
+        fdl = '<a href = "/file/%s">[download]</a>' % h.diskfile.file.filename
+      else:
+        fdl = '[unavailable]'
 
     if(links):
       req.write('<TD><A HREF="/fullheader/%d">%s</A> %s %s %s %s</TD>' % (h.diskfile.id, h.diskfile.file.filename, fve, wmd, gsa, fdl))
