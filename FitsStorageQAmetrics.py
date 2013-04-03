@@ -5,6 +5,7 @@ This module contains the QA metric database interface
 from FitsStorage import *
 import urllib
 from xml.dom.minidom import parseString
+import json
 import ApacheReturnCodes as apache
 
 def qareport(req):
@@ -28,6 +29,14 @@ def qareport(req):
 
     return qareport_ingest(list)
 
+def parse_json(clientdata):
+  """
+  This function takes a string containg a json document containing a list of qareports and
+  makes it into a list of dictionaries.
+  """
+  list = json.loads(clientdata)
+  return list
+  
 
 def parse_xml(clientdata):
   """
