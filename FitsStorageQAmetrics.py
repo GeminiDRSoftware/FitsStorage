@@ -4,6 +4,7 @@ This module contains the QA metric database interface
 
 from FitsStorage import *
 import urllib
+import datetime
 from xml.dom.minidom import parseString
 import json
 import ApacheReturnCodes as apache
@@ -17,6 +18,7 @@ def qareport(req):
  
   if(req.method == 'POST'):
     clientdata = req.read()
+    req.log_error("QAreport clientdata: %s" % clientdata)
 
     if(clientdata[0:4]=='<xml'):
       list = parse_xml(clientdata)
@@ -25,9 +27,110 @@ def qareport(req):
       list = parse_json(clientdata)
 
     else:
-      return apache.BAD_REQUEST
+      return apache.HTTP_BAD_REQUEST
 
-    return qareport_ingest(list)
+    return qareport_ingest(list, submit_host = req.get_remote_host(), submit_time = datetime.datetime.now())
+
+def qareport_ingest(list, submit_host = None, submit_time = datetime.datetime.now()):
+  """
+  This function takes a list of qareport dictionaries and inserts into the database
+  """
+  session = sessionfactory()
+  try:
+
+    for qa_dict in list:
+      # Get a new QAreport ORM object
+      qareport = QAreport()
+
+      qareport.hostname = qa_dict['hostname']
+      qareport.userid = qa_dict['userid']
+      qareport.processid = qa_dict['processid']
+      qareport.executable = qa_dict['executable']
+      qareport.software = qa_dict['software']
+      qareport.software_version = qa_dict['software_version']
+      qareport.context = qa_dict['context']
+      qareport.submit_host = submit_host
+      qareport.submit_time = submit_time
+  
+      session.add(qareport)
+      session.commit()
+
+      for qametric_dict in qa_dict['qametric']:
+
+        if('sb' in qametric_dict.keys()):
+          qametricsb = QAmetricSB(qareport)
+          qametricsb.filename = qametric_dict['filename']
+          qametricsb.datalabel = qametric_dict['datalabel']
+          qametricsb.detector = qametric_dict['detector']
+          sb_dict = qametric_dict['sb']
+          qametricsb.comment = sb_dict['comment']
+          qametricsb.mag = sb_dict['mag']
+          qametricsb.mag_std = sb_dict['mag_std']
+          qametricsb.electrons = sb_dict['electrons']
+          qametricsb.electrons_std = sb_dict['electrons_std']
+          qametricsb.nsamples = sb_dict['nsamples']
+          qametricsb.percentile_band = sb_dict['percentile_band']
+          session.add(qametricsb)
+
+        if('iq' in qametric_dict.keys()):
+          qametriciq = QAmetricIQ(qareport)
+          qametriciq.filename = qametric_dict['filename']
+          qametriciq.datalabel = qametric_dict['datalabel']
+          qametriciq.detector = qametric_dict['detector']
+          iq_dict = qametric_dict['iq']
+          qametriciq.fwhm = iq_dict['fwhm']
+          qametriciq.fwhm_std = iq_dict['fwhm_std']
+          qametriciq.isofwhm = iq_dict['isofwhm']
+          qametriciq.isofwhm_std = iq_dict['isofwhm_std']
+          qametriciq.ee50d = iq_dict['ee50d']
+          qametriciq.ee50d_std = iq_dict['ee50d_std']
+          qametriciq.elip = iq_dict['elip']
+          qametriciq.elip_std = iq_dict['elip_std']
+          qametriciq.pa = iq_dict['pa']
+          qametriciq.pa_std = iq_dict['pa_std']
+          qametriciq.nsamples = iq_dict['nsamples']
+          qametriciq.percentile_band = iq_dict['percentile_band']
+          qametriciq.comment = iq_dict['comment']
+          session.add(qametriciq)
+
+        if('zp' in qametric_dict.keys()):
+          qametriczp = QAmetricZP(qareport)
+          qametriczp.filename = qametric_dict['filename']
+          qametriczp.datalabel = qametric_dict['datalabel']
+          qametriczp.detector = qametric_dict['detector']
+          zp_dict = qametric_dict['zp']
+          qametriczp.mag = zp_dict['mag']
+          qametriczp.mag_std = zp_dict['mag_std']
+          qametriczp.cloud = zp_dict['cloud']
+          qametriczp.cloud_std = zp_dict['cloud_std']
+          qametriczp.nsamples = zp_dict['nsamples']
+          qametriczp.photref = zp_dict['photref']
+          qametriczp.percentile_band = zp_dict['percentile_band']
+          qametriczp.comment = zp_dict['comment']
+          session.add(qametriczp)
+   
+        if('pe' in qametric_dict.keys()):
+          qametricpe = QAmetricPE(qareport)
+          qametricpe.filename = qametric_dict['filename']
+          qametricpe.datalabel = qametric_dict['datalabel']
+          qametricpe.detector = qametric_dict['detector']
+          pe_dict = qametric_dict['pe']
+          qametricpe.astref = pe_dict['astref']
+          qametricpe.dra = pe_dict['dra']
+          qametricpe.dra_std = pe_dict['dra_std']
+          qametricpe.ddec = pe_dict['ddec']
+          qametricpe.ddec_std = pe_dict['ddec_std']
+          qametricpe.nsamples = pe_dict['nsamples']
+          session.add(qametricpe)
+
+
+    session.commit()
+
+
+  finally:
+    session.close()
+
+  return apache.OK
 
 def parse_json(clientdata):
   """
