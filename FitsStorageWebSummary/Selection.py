@@ -71,7 +71,7 @@ def getselection(things):
     if(thing=='spectroscopy' or thing=='Spectroscopy'):
       selection['spectroscopy']=True
       recognised=True
-    if(thing=='Pass' or thing=='Usable' or thing=='Fail' or thing=='Win' or thing=='NotFail'):
+    if(thing=='Pass' or thing=='Usable' or thing=='Fail' or thing=='Win' or thing=='NotFail' or thing=='Lucky'):
       selection['qa_state']=thing
       recognised=True
     if(thing=='LGS' or thing=='NGS'):
@@ -165,6 +165,8 @@ def sayselection(selection):
       string += "; QA State: Win (Pass or Usable)"
     elif(selection['qa_state']=='NotFail'):
       string += "; QA State: Not Fail"
+    elif(selection['qa_state']=='Lucky'):
+      string += "; QA State: Lucky (Pass or Undefined)"
     else:
       string += "; QA State: %s" % selection['qa_state']
   if('ao' in selection):
@@ -280,6 +282,8 @@ def queryselection(query, selection):
       query = query.filter(or_(Header.qa_state=='Pass', Header.qa_state=='Usable'))
     elif(selection['qa_state']=='NotFail'):
       query = query.filter(Header.qa_state!='Fail')
+    elif(selection['qa_state']=='Lucky'):
+      query = query.filter(or_(Header.qa_state=='Pass', Header.qa_state=='Undefined'))
     else:
       query = query.filter(Header.qa_state==selection['qa_state'])
 
