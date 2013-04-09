@@ -108,6 +108,14 @@ def getselection(things):
         selection['detector_config']=[]
       selection['detector_config'].append(thing)
       recognised=True
+    if(thing in ['FullFrame', 'CentralStamp', 'CentralSpectrum']):
+      if(thing=='FullFrame'):
+        selection['detector_roi']='Full Frame'
+      if(thing=='CentralStamp'):
+        selection['detector_roi']='Central Stamp'
+      if(thing=='CentralSpectrum'):
+        selection['detector_roi']='Central Spectrum'
+      recognised = True
     if(thing=='Twilight'):
       selection['twilight']=True
       recognised=True
@@ -150,7 +158,7 @@ def sayselection(selection):
   """
   string = ""
 
-  defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'crpa': 'CRPA', 'telescope': 'Telescope'}
+  defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI'}
   for key in defs:
     if key in selection:
       string += "; %s: %s" % (defs[key], selection[key])
@@ -301,6 +309,12 @@ def queryselection(query, selection):
 
   if('binning' in selection):
     query = query.filter(Header.detector_binning==selection['binning'])
+
+  if('detector_roi' in selection):
+    if(selection['detector_roi']=='Full Frame'):
+      query = query.filter(or_(Header.detector_roi_setting=='Fixed', Header.detector_roi_setting=='Full Frame'))
+    else:
+      query = query.filter(Header.detector_roi_setting==selection['detector_roi'])
 
   if('filter' in selection):
     query = query.filter(Header.filter_name==selection['filter'])
