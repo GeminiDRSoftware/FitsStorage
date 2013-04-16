@@ -5,6 +5,7 @@ from CalibrationNIRI import CalibrationNIRI
 from CalibrationGNIRS import CalibrationGNIRS
 from CalibrationNIFS import CalibrationNIFS
 from CalibrationMICHELLE import CalibrationMICHELLE
+from CalibrationF2 import CalibrationF2
 
 
 def get_cal_object(session, filename, header=None, descriptors=None, types=None):
@@ -36,6 +37,8 @@ def get_cal_object(session, filename, header=None, descriptors=None, types=None)
     c = CalibrationNIFS(session, header, descriptors, types)
   if(instrument == 'michelle'):
     c = CalibrationMICHELLE(session, header, descriptors, types)
+  if(instrument == 'F2'):
+    c = CalibrationF2(session, header, descriptors, types)
   # Add other instruments here
   if(c==None):
     c = Calibration(session, header, descriptors, types)
