@@ -959,6 +959,60 @@ class Nifs(Base):
       ad.close()
       raise
 
+class F2(Base):
+  """
+  This is the ORM object for the F2 details
+  """
+  __tablename__ = 'f2'
+
+  id = Column(Integer, primary_key=True)
+  header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+  header = relation(Header, order_by=id)
+  disperser = Column(Text, index=True)
+  filter_name = Column(Text, index=True)
+  lyot_stop = Column(Text, index=True)
+  read_mode = Column(Text, index=True)
+  focal_plane_mask = Column(Text)
+
+  def __init__(self, header):
+    self.header = header
+
+    # Populate from an astrodata object
+    self.populate()
+
+  def populate(self):
+    # Get an AstroData object on it
+    try:
+      ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      ad.descriptorFormat = "db"
+      # Populate values
+      try:
+        self.disperser = ad.disperser().for_db()
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+        pass
+      try:
+        self.filter_name = ad.filter_name().for_db()
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+        pass
+      try:
+        self.lyot_stop = ad.lyot_stop().for_db()
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+        pass
+      try:
+        self.read_mode = ad.read_mode().for_db()
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+        pass
+      try:
+        self.focal_plane_mask = ad.focal_plane_mask().for_db()
+      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+        pass
+      ad.close()
+    except:
+      # Astrodata open failed or there was some other exception
+      ad.close()
+      raise
+
+
 class Michelle(Base):
   """
   This is the ORM object for the MICHELLE details
@@ -1011,6 +1065,7 @@ class Michelle(Base):
       # Astrodata open failed or there was some other exception
       ad.close()
       raise
+
 
 class PhotStandard(Base):
   """

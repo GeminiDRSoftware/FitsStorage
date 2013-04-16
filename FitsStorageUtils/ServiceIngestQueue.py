@@ -152,6 +152,11 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         nifs = Nifs(header)
         session.add(nifs)
         session.commit()
+      if(inst=='F2'):
+        logger.debug("Assing new F2 entry")
+        f2 = F2(header)
+        session.add(f2)
+        session.commit()
       if(inst=='michelle'):
         logger.debug("Adding new MICHELLE entry")
         michelle = Michelle(header)
