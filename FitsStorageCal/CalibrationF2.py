@@ -99,7 +99,7 @@ class CalibrationF2(Calibration):
     query = query.filter(F2.read_mode==self.descriptors['read_mode'])
 
     if(self.descriptors['spectroscopy']):
-      query = query.filter(Header.central_wavelength==self.descriptors['central_wavelength'])
+      query = query.filter(func.abs(Header.central_wavelength - self.descriptors['central_wavelength']) < 0.001)
 
     # Absolute time separation must be within 1 year (31557600 seconds)
     query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
@@ -127,7 +127,7 @@ class CalibrationF2(Calibration):
 
     # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter_name, lyot_stop
     query = query.filter(F2.disperser==self.descriptors['disperser'])
-    query = query.filter(Header.central_wavelength==self.descriptors['central_wavelength'])
+    query = query.filter(func.abs(Header.central_wavelength - self.descriptors['central_wavelength']) < 0.001)
     query = query.filter(F2.focal_plane_mask==self.descriptors['focal_plane_mask'])
     query = query.filter(F2.filter_name==self.descriptors['filter_name'])
     query = query.filter(F2.lyot_stop==self.descriptors['lyot_stop'])
