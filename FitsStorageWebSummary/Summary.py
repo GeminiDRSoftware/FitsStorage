@@ -231,10 +231,19 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
         else:
           stdhtml = '*'
       # nb object names sometimes contain ampersand characters which should be escaped in the html
+      # And a targetsymbol to denote AzEl targets, Zenith targets and non sidereal targets
+      targetsymbol=''
+      if('AZEL_TARGET' in h.types and 'AT_ZENITH' not in h.types):
+        targetsymbol+=' <abbr title="Target is in AzEl co-ordinate frame">&#x2693</abbr>'
+      if('AT_ZENITH' in h.types):
+        targetsymbol+=' <abbr title="Target is Zenith in AzEl co-ordinate frame">&#x2693&#x2191</abbr>'
+      if('NON_SIDEREAL' in h.types):
+        targetsymbol+=' <abbr title="Target is non-sidereal">&#x2604</abbr>'
+
       if (h.object and len(h.object)>12):
-        req.write('<TD><abbr title="%s">%s%s</abbr></TD>' % (htmlescape(h.object), htmlescape(h.object[0:12]), stdhtml))
+        req.write('<TD><abbr title="%s">%s%s</abbr>%s</TD>' % (htmlescape(h.object), htmlescape(h.object[0:12]), stdhtml, targetsymbol))
       else:
-        req.write("<TD>%s%s</TD>" % (htmlescape(h.object), stdhtml))
+        req.write("<TD>%s%s%s</TD>" % (htmlescape(h.object), stdhtml, targetsymbol))
 
       if(h.spectroscopy):
         try:
