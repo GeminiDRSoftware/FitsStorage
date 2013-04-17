@@ -32,6 +32,7 @@ class CalibrationF2(Calibration):
       self.descriptors['disperser']=self.f2.disperser
       self.descriptors['focal_plane_mask']=self.f2.focal_plane_mask
       self.descriptors['filter_name']=self.f2.filter_name
+      self.descriptors['lyot_stop']=self.f2.lyot_stop
 
     # Set the list of required calibrations
     self.required = self.required()
@@ -94,8 +95,8 @@ class CalibrationF2(Calibration):
     query = query.filter(F2.disperser==self.descriptors['disperser'])
     query = query.filter(F2.focal_plane_mask==self.descriptors['focal_plane_mask'])
     query = query.filter(F2.filter_name==self.descriptors['filter_name'])
-    query = query.filter(F2.lyot_stop=self.descriptors['lyot_stop'])
-    query = query.filter(F2.read_mode=self.descriptors['read_mode'])
+    query = query.filter(F2.lyot_stop==self.descriptors['lyot_stop'])
+    query = query.filter(F2.read_mode==self.descriptors['read_mode'])
 
     if(self.descriptors['spectroscopy']):
       query = query.filter(Header.central_wavelength==self.descriptors['central_wavelength'])
