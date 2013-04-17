@@ -121,7 +121,7 @@ class CalibrationGMOS(Calibration):
     query = query.filter(Gmos.filter_name==self.descriptors['filter_name'])
 
     # Must Match central_wavelength 
-    query = query.filter(Header.central_wavelength==self.descriptors['central_wavelength'])
+    query = query.filter(func.abs(Header.central_wavelength-self.descriptors['central_wavelength']) < 0.001)
 
     # Must match focal_plane_mask only if it's not the 5.0arcsec slit in the target, otherwise any longslit is OK
     if(self.descriptors['focal_plane_mask'] != '5.0arcsec'):
