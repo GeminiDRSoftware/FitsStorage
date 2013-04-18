@@ -48,6 +48,7 @@ logger.info("Starting checking...")
 
 i=0
 j=0
+missingfiles = []
 for dfid in list:
   # Search for it by ID (is there a better way?)
   df=session.query(DiskFile).filter(DiskFile.id == dfid[0]).one()
@@ -56,12 +57,13 @@ for dfid in list:
     df.present=False
     j+=1
     logger.info("File %d/%d: Marking file %s (diskfile id %d) as not present" % (i, n, df.file.filename, df.id))
+    missingfiles.append(df.file.filename)
     session.commit()
   else:
     if ((i % 1000) == 0):
       logger.info("File %d/%d: present and correct" % (i, n))
   i+=1
 
-logger.info("\nMarked %d files as no longer present\n" % j)
+logger.warning("\nMarked %d files as no longer present\n%s\n" % (j, missingfiles))
 
 logger.info("*** rollcall.py exiting normally at %s" % datetime.datetime.now())
