@@ -34,6 +34,9 @@ def getselection(things):
     if(go.observation_id):
       selection['observation_id']=thing
       recognised=True
+    if(thing[:6]=='obsid='):
+      selection['observation_id']=thing[6:]
+      recognised=True
     gdl=GeminiDataLabel(thing)
     if(gdl.datalabel):
       selection['data_label']=thing
