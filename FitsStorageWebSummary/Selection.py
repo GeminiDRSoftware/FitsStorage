@@ -111,12 +111,12 @@ def getselection(things):
         selection['detector_config']=[]
       selection['detector_config'].append(thing)
       recognised=True
-    if(thing in ['FullFrame', 'CentralStamp', 'CentralSpectrum']):
-      if(thing=='FullFrame'):
+    if(thing.lower() in ['fullframe', 'centralstamp', 'centralspectrum']):
+      if(thing.lower()=='fullframe'):
         selection['detector_roi']='Full Frame'
-      if(thing=='CentralStamp'):
+      if(thing.lower()=='centralstamp'):
         selection['detector_roi']='Central Stamp'
-      if(thing=='CentralSpectrum'):
+      if(thing.lower()=='centralspectrum'):
         selection['detector_roi']='Central Spectrum'
       recognised = True
     if(thing.lower()=='twilight'):
