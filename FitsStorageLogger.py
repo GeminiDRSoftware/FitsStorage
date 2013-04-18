@@ -24,11 +24,11 @@ except (NameError, AttributeError):
 logfile = os.path.join(FitsStorageConfig.fits_log_dir, logname)
 filehandler=logging.handlers.RotatingFileHandler(logfile, backupCount=10, maxBytes=10000000)
 streamhandler=logging.StreamHandler()
-emailsubject = "ERROR from FitsStorage on %s" % os.uname[1]
+emailsubject = "Messages from FitsStorage on %s" % os.uname[1]
 smtphandler=logging.handlers.SMTPHandler(mailhost='smtp.gemini.edu', fromaddr='fitsdata@gemini.edu', toaddrs=[FitsStorageConfig.email_errors_to], subject=emailsubject)
 
-# The smtp handler should only do ERRORs or worse
-smtphandler.setLevel(logging.ERROR)
+# The smtp handler should only do WARNINGSs or worse
+smtphandler.setLevel(logging.WARNING)
 
 # Create log formatter
 formatter = logging.Formatter("%(asctime)s %(process)d:%(module)s:%(lineno)d %(levelname)s: %(message)s")
