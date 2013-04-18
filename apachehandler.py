@@ -471,11 +471,12 @@ def stats(req):
  
     req.write("<h3>Last 10 days</h3><ul>")
     for i in range(10):
-      query = session.query(func.sum(DiskFile.size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
-      bytes = query.one()[0]
+      query = session.query(func.sum(DiskFile.size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
+      bytes, count = query.one()
       if(not bytes):
         bytes = 0
-      req.write("<li>%s: %.2f GB</li>" % (str(start.date()), bytes/1E9))
+        count = 0
+      req.write("<li>%s: %.2f GB, %d files</li>" % (str(start.date()), bytes/1E9, count))
       start -= ddelta
       end -= ddelta
     req.write("</ul>")
@@ -484,11 +485,12 @@ def stats(req):
     start = end - wdelta
     req.write("<h3>Last 6 weeks</h3><ul>")
     for i in range(6):
-      query = session.query(func.sum(DiskFile.size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
-      bytes = query.one()[0]
+      query = session.query(func.sum(DiskFile.size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
+      bytes, count = query.one()
       if(not bytes):
         bytes = 0
-      req.write("<li>%s - %s: %.2f GB</li>" % (str(start.date()), str(end.date()), bytes/1E9))
+        count = 0
+      req.write("<li>%s - %s: %.2f GB, %d files</li>" % (str(start.date()), str(end.date()), bytes/1E9, count))
       start -= wdelta
       end -= wdelta
     req.write("</ul>")
@@ -497,11 +499,12 @@ def stats(req):
     start = end - mdelta
     req.write("<h3>Last 6 pseudo-months</h3><ul>")
     for i in range(6):
-      query = session.query(func.sum(DiskFile.size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
-      bytes = query.one()[0]
+      query = session.query(func.sum(DiskFile.size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
+      bytes, count = query.one()
       if(not bytes):
         bytes = 0
-      req.write("<li>%s - %s: %.2f GB</li>" % (str(start.date()), str(end.date()), bytes/1E9))
+        count=0
+      req.write("<li>%s - %s: %.2f GB, %d files</li>" % (str(start.date()), str(end.date()), bytes/1E9, count))
       start -= mdelta
       end -= mdelta
     req.write("</ul>")
