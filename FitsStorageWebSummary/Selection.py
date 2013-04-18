@@ -119,10 +119,10 @@ def getselection(things):
       if(thing=='CentralSpectrum'):
         selection['detector_roi']='Central Spectrum'
       recognised = True
-    if(thing=='Twilight'):
+    if(thing.lower()=='twilight'):
       selection['twilight']=True
       recognised=True
-    if(thing=='NotTwilight'):
+    if(thing.lower()=='nottwilight'):
       selection['twilight']=False
       recognised=True
     if(thing[:3]=='az=' or thing[:3]=='Az='):
