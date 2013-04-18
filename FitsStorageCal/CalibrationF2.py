@@ -46,10 +46,20 @@ class CalibrationF2(Calibration):
       list.append('dark')
       list.append('flat')
 
-    # Spectroscopy OBJECTs require a flat and arc
+    # Spectroscopy OBJECTs require a dark, flat and arc
     if((self.descriptors['observation_type']=='OBJECT') and (self.descriptors['spectroscopy']==True)):
+      list.append('dark')
       list.append('flat')
       list.append('arc')
+
+    # FLAT frames require DARKs
+    if(self.descriptors['observation_type']=='FLAT'):
+      list.append('dark')
+
+    # ARCs require DARKs and FLATs
+    if(self.descriptors['observation_type']=='ARC'):
+      list.append('dark')
+      list.append('flat')
 
     return list
 
