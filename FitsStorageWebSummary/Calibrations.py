@@ -160,7 +160,7 @@ def calibrations(req, selection):
         requires=True
         dark = c.dark()
         if(dark):
-          html += "<H4>DARK: %s - %s</H4>" % (dark.diskfile.file.filename, dark.data_label)
+          html += '<H4>DARK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (dark.diskfile.file.filename, dark.diskfile.file.filename, dark.data_label, dark.data_label)
           if(dark.ut_datetime and object.ut_datetime):
             html += "<P>dark was taken %s object</P>" % interval_string(dark, object)
             if(abs(interval_hours(dark, object)) > 120):
@@ -175,7 +175,7 @@ def calibrations(req, selection):
         requires=True
         bias = c.bias()
         if(bias):
-          html += "<H4>BIAS: %s - %s</H4>" % (bias.diskfile.file.filename, bias.data_label)
+          html += '<H4>BIAS: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (bias.diskfile.file.filename, bias.diskfile.file.filename, bias.data_label, bias.data_label)
         else:
           html += '<H3><FONT COLOR="Red">NO BIAS FOUND!</FONT></H3>'
           warning = True
@@ -185,7 +185,7 @@ def calibrations(req, selection):
         requires=True
         flat = c.flat()
         if(flat):
-          html += "<H4>FLAT: %s - %s</H4>" % (flat.diskfile.file.filename, flat.data_label)
+          html += '<H4>FLAT: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (flat.diskfile.file.filename, flat.diskfile.file.filename, flat.data_label, flat.data_label)
         else:
           html += '<H3><FONT COLOR="Red">NO FLAT FOUND!</FONT></H3>'
           warning = True
@@ -226,7 +226,7 @@ def calibrations(req, selection):
         requires=True
         pinhole_mask = c.pinhole_mask()
         if(pinhole_mask):
-          html += "<H4>PINHOLE_MASK: %s - %s</H4>" % (pinhole_mask.diskfile.file.filename, pinhole_mask.data_label)
+          html += '<H4>PINHOLE_MASK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (pinhole_mask.diskfile.file.filename, pinhole_mask.diskfile.file.filename, pinhole_mask.data_label, pinhole_mask.data_label)
         else:
           html += '<H3><FONT COLOR="Red">NO PINHOLE_MASK FOUND!</FONT></H3>'
           warning = True
@@ -236,7 +236,7 @@ def calibrations(req, selection):
         requires=True
         ronchi_mask = c.ronchi_mask()
         if(ronchi_mask):
-          html += "<H4>RONCHI_MASK: %s - %s</H4>" % (ronchi_mask.diskfile.file.filename, ronchi_mask.data_label)
+          html += '<H4>RONCHI_MASK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (ronchi_mask.diskfile.file.filename, ronchi_mask.diskfile.file.filename, ronchi_mask.data_label, ronchi_mask.data_label)
         else:
           html += '<H3><FONT COLOR="Red">NO RONCHI_MASK FOUND!</FONT></H3>'
           warning = True
