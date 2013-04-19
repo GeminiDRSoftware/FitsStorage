@@ -146,6 +146,9 @@ def getselection(things):
     if(thing[:5]=='crpa=' or thing[:5]=='CRPA='):
       selection['crpa']=thing[5:]
       recognised=True
+    if(thing[:8]=='filepre='):
+      selection['filepre']=thing[8:]
+      recognised=True
 
     if(not recognised):
       if('notrecognised' in selection):
@@ -161,7 +164,7 @@ def sayselection(selection):
   """
   string = ""
 
-  defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI'}
+  defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI', 'filepre': 'File Prefix'}
   for key in defs:
     if key in selection:
       string += "; %s: %s" % (defs[key], selection[key])
@@ -360,6 +363,10 @@ def queryselection(query, selection):
     [a, b] = _parse_range(selection['crpa'])
     if(a is not None and b is not None):
       query = query.filter(Header.cass_rotator_pa >= a).filter(Header.cass_rotator_pa < b)
+
+  if('filepre' in selection):
+    likestr = '%s%%' % selection['filepre']
+    query = query.filter(File.filename.like(likestr))
 
   return query
 
