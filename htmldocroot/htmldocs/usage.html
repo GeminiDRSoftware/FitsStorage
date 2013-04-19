@@ -15,15 +15,16 @@ under the <a href="/summary">/summary</a>, <a href="/ssummary">/ssummary (short 
 <LI><a href="/summary">/summary</a> by itself shows the last 1000 files, newest first</LI>
 <LI><a href="/summary/20091120">/summary/20091120</a> shows the data from 20091120, in order</LI>
 <LI><a href="/summary/today">/summary/today</a> shows the data from today, in order. <a href="/summary/yesterday">yesterday</a> works too</LI>
-<LI><a href="/summary/GN-2009B-Q-51">/summary/GN-2009B-Q-51</a> shows all data for program GN-2009B-Q-51</LI>
+<LI><a href="/summary/GN-2009B-Q-51">/summary/GN-2009B-Q-51</a> or <a href="/summary/GS-2009B-Q-50">/summary/GS-2009B-Q-50</a> shows all data for that program ID</LI>
 <LI><a href="/summary/GN-2009B-Q-51/20091123">/summary/GN-2009B-Q-51/20091123</a> or indeed <a href="/summary/20091123/GN-2009B-Q-51">/summary/20091123/GN-2009B-Q-51</a> shows all the data for GN-2009B-Q-51 taken on 20091123</LI>
-<LI><a href="/summary/20091120/NIRI">/summary/20091120/NIRI</a> shows all the files for that date using that instrument</LI>
+<LI><a href="/summary/20091120/NIRI">/summary/20091120/NIRI</a> or <a href="/summary/20091120/F2">/summary/20091120/F2</a> shows all the files for that date using that instrument. If you use "GMOS" as the instrument name, it will match either GMOS.</LI>
 <LI><a href="/summary/20091120/science">/summary/20091120/science</a> shows all the files for that date with the science ObsClass. You can use any ObsClass type, ie dayCal, partnerCal, acq, acqCal, progCal, science...</LI>
 <LI><a href="/summary/20091120/OBJECT">/summary/20091120/OBJECT</a> shows all the files for that date with the OBJECT ObsType. You can use any ObsType type, ie FLAT, DARK, ARC, BIAS, OBJECT...</LI>
 </UL>
 
-<P> In fact, you can specify any combination of <em>selection criteria</em> to choose the files you would 
-like a summary of </P>
+<P>In fact, you can specify any combination of <em>selection criteria</em> to choose the files you would like a summary of.</P>
+
+<P>Note that there are separate server at Gemini South and Gemini North. These servers only know about data at their respective site, so for example specifying a GN- program ID on the Gemini South server, or searching for NICI data on the Gemini North server is likely going to simply return no results found. If you use the server name 'fits' you generally hit the server at the same site that you're at, you can use <a href="http://fits.hi.gemini.edu">fits.hi.gemini.edu for the Gemini North server</a> and <a href="fits.cl.gemini.edu">fits.cl.gemini.edu for the Gemini South server</a>.</P>
 
 <P>Some other points to note:
 <UL>
@@ -54,9 +55,9 @@ These options are simply added as extra elements of the URL like directories in 
 
 <P>Some examples
 <UL>
-<LI><a href="/calibrations/GMOS-N/today/arc/missing">/calibrations/GMOS-N/today/arc/missing</a> will list missing arc calibrations from GMOS-N data taken today</LI>
-<LI><a href="/calibrations/GMOS-N/arc/missing/GN2009BC009-04">/calibrations/GMOS-N/arc/missing/GN2009BC009-04</a> will list missing arcs for GMOS-N MOS mask GN2009BC009-04. This can of course be used to check for missing calibrations before a mask is removed from the instrument. The same works for gratings too.</LI>
-<LI><a href="/calibrations/GMOS-N/arc/20100301-20100331/takenow">/calibrations/GMOS-N/arc/20100301-20100331/takenow</a> will list arcs for GMOS-N data from march 2010 that it would be good to take or re-take today.</LI>
+<LI><a href="/calibrations/GMOS/today/arc/missing">/calibrations/GMOS/today/arc/missing</a> will list missing arc calibrations from GMOS data taken today</LI>
+<LI><a href="/calibrations/GMOS/arc/missing/GN2009BC009-04">/calibrations/GMOS/arc/missing/GN2009BC009-04</a> will list missing arcs for GMOS MOS mask GN2009BC009-04. This can of course be used to check for missing calibrations before a mask is removed from the instrument. The same works for gratings too.</LI>
+<LI><a href="/calibrations/GMOS/arc/20100301-20100331/takenow">/calibrations/GMOS/arc/20100301-20100331/takenow</a> will list arcs for GMOS data from march 2010 that it would be good to take or re-take today.</LI>
 </UL></P>
 
 <H2>Selection Criteria</H2>
@@ -68,7 +69,7 @@ data that meets all the criteria you specify. You can put them in any order.</P>
 <UL>
 <LI>A date in the form YYYYMMDD, eg 20100401. You can use today and yesterday as special literal words and they will act as you would expect.</LI>
 <LI>A date range in the form YYYYMMDD-YYYYMMDD, eg 20100401-20100420</LI>
-<LI>A telescope name, eg Gemini-North</LI>
+<LI>A telescope name, eg Gemini-South</LI>
 <LI>An instrument name, eg GMOS-N. Note GMOS will also work to imply either GMOS-N or GMOS-S</LI>
 <LI>AO to select only AO data, NOTAO to select only non-AO data</LI>
 <LI>LGS or NGS to select LGS and NGS data. This implies AO automatically to avoid confusion</LI>
@@ -79,9 +80,9 @@ data that meets all the criteria you specify. You can put them in any order.</P>
 <LI>A data label, eg GN-2009B-Q-51-28-001</LI>
 <LI>An ObsType, eg OBJECT</LI>
 <LI>An ObsClass, eg science</LI>
-<LI>A filename, eg N20091028S0097.fits. It works if you leave off the .fits too</LI>
+<LI>A filename, eg S20091028S0097.fits. It works if you leave off the .fits too</LI>
 <LI>A filename prefix eg N20120 will show all files with filenames that start like that.</LI>
-<LI>You can also say eg filepre=N20091028S009 to get all files where the filename starts with that prefix</LI>
+<LI>You can also say eg filepre=S20091028S009 to get all files where the filename starts with that prefix</LI>
 <LI>A GMOS grating name, eg B600</LI>
 <LI>A GMOS mask name, eg GN2009BC009-04</LI>
 <LI>An NxM binning, eg 2x2. Unbinned shows as 1x1</LI>
