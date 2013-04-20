@@ -428,6 +428,12 @@ class Header(Base):
       except (KeyError, ValueError):
         pass
 
+      try:
+        lgsloop = ad.phu_get_key_value('LGSLOOP')
+        self.laser_guide_star = (lgsloop == 'CLOSED')
+      except (KeyError, ValueError):
+        pass
+
 
       try:
         self.wavefront_sensor = ad.wavefront_sensor().for_db()
