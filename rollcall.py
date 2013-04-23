@@ -64,6 +64,9 @@ for dfid in list:
       logger.info("File %d/%d: present and correct" % (i, n))
   i+=1
 
-logger.warning("\nMarked %d files as no longer present\n%s\n" % (j, missingfiles))
+if(j>0):
+  logger.warning("\nMarked %d files as no longer present\n%s\n" % (j, missingfiles))
+else:
+  logger.info("\nMarked %d files as no longer present\n%s\n" % (j, missingfiles))
 
 logger.info("*** rollcall.py exiting normally at %s" % datetime.datetime.now())
