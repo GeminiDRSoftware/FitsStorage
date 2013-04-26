@@ -1,7 +1,6 @@
+#! /usr/bin/env python
 import sys
-sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
-
-import FitsStorage
+from FitsStorage import *
 import FitsStorageConfig
 from FitsStorageUtils import *
 from FitsStorageLogger import *
@@ -43,9 +42,6 @@ now = datetime.datetime.now()
 logger.info("*********  rebuild_inst_table.py - starting up at %s" % now)
 
 inst = options.inst
-"""
-Here is where I began to make changes on this code.
-"""
 session = sessionfactory()
 already = None
 
@@ -67,6 +63,9 @@ try:
   if(inst == 'michelle'):
     logger.info("Rebuilding MICHELLE table")
     query = query.filter(Header.instrument == 'michelle')
+  if(inst == 'f2'):
+    logger.info("Rebuilding F2 table")
+    query = query.filter(Header.instrument == 'F2')
 
   query = query.filter(DiskFile.present == True)
   headers = query.all()
@@ -87,6 +86,8 @@ try:
       already = session.query(Nifs).filter(Nifs.header_id == id).count()
     if(inst == 'michelle'):
       already = session.query(Michelle).filter(Michelle.header_id == id).count()
+    if(inst == 'f2'):
+      already = session.query(Michelle).filter(F2.header_id == id).count()
 
     if(already==0):
       # No, we should add it.
@@ -108,6 +109,9 @@ try:
       if(inst == 'michelle'):
         michelle = Michelle(header)
         session.add(michelle)
+      if(inst == 'f2'):
+        f2 = F2(header)
+        session.add(f2)
 
       session.commit()
     i+= 1
@@ -118,81 +122,5 @@ except:
 
 finally:
   session.close()
-
-
-
-#if(inst == 'gmos'):
-#  logger.info("Rebuilding gmos table")
-
-#  try:
-    # Get a list of header ids for which there is a present diskfile for this instrument
-#    query = session.query(Header.id).select_from(join(Header, DiskFile))
-#    query = query.filter(or_(Header.instrument == 'GMOS-N', Header.instrument == 'GMOS-S'))
-#    query = query.filter(DiskFile.present == True)
-#    headers = query.all()
-#    count = len(headers)
-#    logger.info("Found %s files to process" % count)
-
-#    i=1
-#    for id in headers:
-#      id=id[0]
-      # Does it an instheader for this header id already esist?
-#      already = session.query(Gmos).filter(Gmos.header_id == id).count()
-#      if(already==0):
-        # No, we should add it.
-#        query = session.query(Header).filter(Header.id == id)
-#        header = query.one() 
-        #logger.info("Processing %s (%d/%d)" % (header.diskfile.file.filename, i, count))
-#        logger.info("Processing %d/%d" % (i, count))
-#        gmos = Gmos(header)
-#        session.add(gmos)
-#        session.commit()
-#      i+= 1
-    
-
-#  except:
-#    logger.error("Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
-#    traceback.print_tb(sys.exc_info()[2])
-
-#  finally:
-#    session.close()
-
-
-#if(inst == 'niri'):
-#  logger.info("Rebuilding NIRI table")
-
-#  try:
-    # Get a list of header ids for which there is a present diskfile for this instrument
-#    query = session.query(Header.id).select_from(join(Header, DiskFile))
-#    query = query.filter(Header.instrument == 'NIRI')
-#    query = query.filter(DiskFile.present == True)
-#    headers = query.all()
-#    count = len(headers)
-#    logger.info("Found %s files to process" % count)
-
-#    i=1
-#    for id in headers:
-#      id = id[0]
-      # Does it an instheader for this header id already esist?
-#      already = session.query(Niri).filter(Niri.header_id == id).count()
-#      if(already==0):
-        # No, we should add it.
-#        query = session.query(Header).filter(Header.id == id)
-#        header = query.one()
-#        logger.info("Processing %s (%d/%d)" % (header.diskfile.file.filename, i, count))
-#        niri = Niri(header)
-#        session.add(niri)
-#        session.commit()
-#      i+= 1
-
-
-#  except:
-#    logger.error("Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
-#    traceback.print_tb(sys.exc_info()[2])
-
-#  finally:
-#    session.close()
-
-
 
 logger.info("*********  rebuild_inst_table.py - exiting at %s" % datetime.datetime.now())
