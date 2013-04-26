@@ -710,7 +710,6 @@ class Gmos(Base):
     # Get an AstroData object on it
     try:
       ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
-      ad.descriptorFormat = "db"
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
@@ -808,7 +807,6 @@ class Niri(Base):
     # Get an AstroData object on it
     try:
       ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
-      ad.descriptorFormat = "db"
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
@@ -876,7 +874,6 @@ class Gnirs(Base):
     # Get an AstroData object on it
     try:
       ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
-      ad.descriptorFormat = "db"
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
@@ -937,7 +934,6 @@ class Nifs(Base):
     # Get an AstroData object on it
     try:
       ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
-      ad.descriptorFormat = "db"
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
@@ -990,7 +986,6 @@ class F2(Base):
     # Get an AstroData object on it
     try:
       ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
-      ad.descriptorFormat = "db"
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
@@ -1044,7 +1039,6 @@ class Michelle(Base):
     # Get an AstroData object on it
     try:
       ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
-      ad.descriptorFormat = "db"
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
