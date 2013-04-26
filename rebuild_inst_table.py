@@ -68,6 +68,7 @@ try:
     query = query.filter(Header.instrument == 'F2')
 
   query = query.filter(DiskFile.present == True)
+  query = query.order_by(desc(Header.ut_datetime))
   headers = query.all()
   count = len(headers)
   logger.info("Found %s files to process" % count)
