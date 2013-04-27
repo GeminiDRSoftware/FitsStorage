@@ -458,6 +458,16 @@ def stats(req):
     req.write("<li>Total Rows: %d</li>" % query.count())
     req.write("</ul>")
 
+    # Ingest Queue Depth
+    query=session.query(IngestQueue)
+    req.write("<h2>Ingest Queue</h2>")
+    req.write("<ul>")
+    req.write("<li>Total Rows: %s</li>" % query.count())
+    query = query.filter(IngestQueue.inprogress==True)
+    req.write("<li>Currently In Progress: %s</li>" % query.count())
+    req.write("</ul>")
+
+ 
     # Data rate statistics
     req.write("<h2>Data Rates</h2>")
     today = datetime.datetime.utcnow().date()
