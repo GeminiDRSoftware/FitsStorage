@@ -45,7 +45,9 @@ class CalibrationNIRI(Calibration):
     # Science Imaging OBJECTs require a DARK and FLAT
     if((self.descriptors['observation_type']=='OBJECT') and (self.descriptors['spectroscopy']==False) and (self.descriptors['observation_class']=='science')):
       list.append('dark')
-      list.append('flat')
+      # No flats for L', M' Br(alpha) or Br(alpha) continuum as per AS 20130514
+      if(self.descriptors['filter_name'] not in ['Lprime_G0207', 'Mprime_G0208', 'Bra_G0238', 'Bracont_G0237']):
+        list.append('flat')
 
     return list
 
