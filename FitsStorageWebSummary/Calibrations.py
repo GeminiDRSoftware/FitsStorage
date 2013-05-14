@@ -47,6 +47,9 @@ def calibrations(req, selection):
     # Knock out ENG programs
     query = query.filter(~Header.program_id.like('%ENG%'))
 
+    # Disregard SV-101. This is an undesirable hardwire
+    query = query.filter(~Header.program_id.like('%SV-101%'))
+
     # Order by date, most recent first
     query = query.order_by(desc(Header.ut_datetime))
 
