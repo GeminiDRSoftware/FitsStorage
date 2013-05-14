@@ -166,7 +166,11 @@ def calibrations(req, selection):
           html += '<H4>DARK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (dark.diskfile.file.filename, dark.diskfile.file.filename, dark.data_label, dark.data_label)
           if(dark.ut_datetime and object.ut_datetime):
             html += "<P>dark was taken %s object</P>" % interval_string(dark, object)
-            if(abs(interval_hours(dark, object)) > 120):
+            # GMOS darks can be up to 6 months away, others regular 5 day warning
+            hours_warn = 120
+            if(c.header.instrument in ['GMOS-N', 'GMOS-S']):
+              hours_warn = 4320
+            if(abs(interval_hours(dark, object)) > hours_warn):
               html += '<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>'
               warning = True
         else:
