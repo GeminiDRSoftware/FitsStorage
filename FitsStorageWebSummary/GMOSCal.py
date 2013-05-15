@@ -192,7 +192,7 @@ def gmoscal(req, selection):
      selection.pop('spectroscopy')
      selection['observation_type']='BIAS'
      selection['inst']='GMOS'
-     selection['qa_state']='Pass'
+     selection['qa_state']='NotFail'
      query = queryselection(query, selection)
 
      query = query.group_by('utdate', Header.detector_binning, Header.detector_roi_setting).order_by('utdate', Header.detector_binning, Header.detector_roi_setting)
@@ -298,7 +298,7 @@ def gmoscal(req, selection):
            nobiases.append(str(date))
          date += oneday
 
-       req.write('<P>There were %d dates with no biases set to Pass: ' % len(nobiases))
+       req.write('<P>There were %d dates with no biases not set to Fail: ' % len(nobiases))
        if(len(nobiases)>0):
          req.write(', '.join(nobiases))
        req.write('</P>')
