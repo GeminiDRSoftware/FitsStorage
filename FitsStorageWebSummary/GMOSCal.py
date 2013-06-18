@@ -83,10 +83,9 @@ def gmoscal(req, selection):
        selection['observation_type']='OBJECT'
        selection['spectroscopy']=False
        selection['inst']='GMOS'
-       if(observation_class == 'science'):
-         selection['qa_state']='Win'
-       else:
-         selection['qa_state']='Pass'
+       selection['qa_state']='NotFail'
+       if(observation_class == 'dayCal'):
+         selection['qa_state']='Lucky'
          # Only select full frame dayCals
          query = query.filter(Header.detector_roi_setting == 'Full Frame')
          # Twilight flats must have the target name 'Twilight'
@@ -172,8 +171,8 @@ def gmoscal(req, selection):
        datething = selection['date']
      if('daterange' in selection):
        datething = selection['daterange']
-     req.write('<P><a href="/summary/GMOS/imaging/OBJECT/science/Win/%s">Science Frames Summary Table</a></P>' % datething)
-     req.write('<P><a href="/summary/GMOS/imaging/OBJECT/dayCal/Pass/%s">Twilight Flat Summary Table</a></P>' % datething)
+     req.write('<P><a href="/summary/GMOS/imaging/OBJECT/science/NotFail/%s">Science Frames Summary Table</a></P>' % datething)
+     req.write('<P><a href="/summary/GMOS/imaging/OBJECT/dayCal/Lucky/%s">Twilight Flat Summary Table</a></P>' % datething)
      req.write('<P>NB. Summary tables will show ENG program data not reflected in the counts above.</P>')
 
      # Now the BIAS report
