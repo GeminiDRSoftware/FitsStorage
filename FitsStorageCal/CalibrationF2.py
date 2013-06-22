@@ -41,8 +41,8 @@ class CalibrationF2(Calibration):
     # Return a list of the calibrations required for this dataset
     list=[]
 
-    # Imaging OBJECTs require a DARK and a flat
-    if((self.descriptors['observation_type']=='OBJECT') and (self.descriptors['spectroscopy']==False)):
+    # Imaging OBJECTs require a DARK and a flat except acq images
+    if((self.descriptors['observation_type']=='OBJECT') and (self.descriptors['spectroscopy']==False) and (self.descriptors['observation_class'] not in ['acq', 'acqCal'])):
       list.append('dark')
       list.append('flat')
 
