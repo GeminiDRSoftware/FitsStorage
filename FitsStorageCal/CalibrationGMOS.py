@@ -213,10 +213,7 @@ class CalibrationGMOS(Calibration):
     query = query.filter(Gmos.read_speed_setting==self.descriptors['read_speed_setting']).filter(Gmos.gain_setting==self.descriptors['gain_setting'])
 
     # The science amp_read_area must be equal or substring of the bias amp_read_area
-    if(processed):
-      query = query.filter(Gmos.amp_read_area.like('%'+str(self.descriptors['amp_read_area'])+'%'))
-    else:
-      query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
+    query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
 
 
     # The Overscan section handling: this only applies to processed biases
