@@ -381,6 +381,8 @@ def qaforgui(req, things):
 
     # Now loop through the datalabels. 
     # For each datalabel, get the most recent QA measurement of each type. Only ones reported after the datestamp
+    # Add the QA measurements to a list that we then dump out with json
+    list_for_json=[]
     for datalabel in datalabels:
 
       # Comes back as a 1 element list
@@ -539,8 +541,11 @@ def qaforgui(req, things):
       if(len(bg)):
         dict['bg']=bg
 
-      # Serialze it out via json to the request object 
-      json.dump(dict, req, indent=4, )
+      # Add it to the json list
+      list_for_json.append(dict)
+
+    # Serialze it out via json to the request object 
+    json.dump(list_for_json, req, indent=4)
 
   except IOError:
     pass
