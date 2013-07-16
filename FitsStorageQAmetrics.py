@@ -415,7 +415,7 @@ def qaforgui(req, things):
       # Look for IQ metrics to report. Going to need to do the same merging trick here
       query = session.query(QAmetricIQ).select_from(QAmetricIQ, QAreport).filter(QAmetricIQ.qareport_id == QAreport.id)
       if(datestamp):
-        query = query.filter_by(QAreport.submit_time > datestamp)
+        query = query.filter(QAreport.submit_time > datestamp)
       query.filter(QAmetricIQ.datalabel == datalabel)
       query.order_by(desc(QAreport.submit_time))
       qaiq = query.first()
@@ -436,7 +436,7 @@ def qaforgui(req, things):
       # Find the qareport id of the most recent zp report for this datalabel
       query = session.query(QAreport).select_from(QAmetricZP, QAreport).filter(QAmetricZP.qareport_id == QAreport.id)
       if(datestamp):
-        query = query.filter_by(QAreport.id.submit_time > datestamp)
+        query = query.filter(QAreport.submit_time > datestamp)
       query.filter(QAmetricZP.datalabel == datalabel)
       query.order_by(desc(QAreport.submit_time))
       qarep = query.first()
@@ -448,46 +448,46 @@ def qaforgui(req, things):
         query = session.query(QAmetricZP).filter(QAmetricZP.qareport_id == qarep.id)
         zpmetrics = query.all()
 
-      # Now go through those and merge them into the form required
-      # This is a bit tediouos, given that we may have a result that is split by amp,
-      # or we may have one from a mosaiced full frame image.
-      cc_band=[]
-      cc_zeropoint = {}
-      cc_extinction = []
-      cc_extinction_error = []
-      cc_comment = []
-      for z in zpmetrics:
-        if z.percentile_band not in cc_band:
-          cc_band.append(z.percentile_band)
-        cc_extinction.append(float(z.cloud))
-        cc_extinction_error.append(float(z.cloud_std))
-        cc_zeropoint[z.detector]={'value':float(z.mag), 'error':float(z.mag_std)}
-        if(z.comment not in cc_comment):
-          cc_comment.append(z.comment)
+        # Now go through those and merge them into the form required
+        # This is a bit tediouos, given that we may have a result that is split by amp,
+        # or we may have one from a mosaiced full frame image.
+        cc_band=[]
+        cc_zeropoint = {}
+        cc_extinction = []
+        cc_extinction_error = []
+        cc_comment = []
+        for z in zpmetrics:
+          if z.percentile_band not in cc_band:
+            cc_band.append(z.percentile_band)
+          cc_extinction.append(float(z.cloud))
+          cc_extinction_error.append(float(z.cloud_std))
+          cc_zeropoint[z.detector]={'value':float(z.mag), 'error':float(z.mag_std)}
+          if(z.comment not in cc_comment):
+            cc_comment.append(z.comment)
 
-      # Need to combine some of these to a single value
-      cc['band'] = ', '.join(cc_band)
-      cc['zeropoint']=cc_zeropoint
-      if(len(cc_extinction)):
-        cc['extinction'] = sum(cc_extinction) / len(cc_extinction)
+        # Need to combine some of these to a single value
+        cc['band'] = ', '.join(cc_band)
+        cc['zeropoint']=cc_zeropoint
+        if(len(cc_extinction)):
+          cc['extinction'] = sum(cc_extinction) / len(cc_extinction)
 
-        # Quick variance calculation, we could load numpy instead..
-        s = 0
-        for e in cc_extinction_error:
-          s += e*e
-        s /= len(cc_extinction_error)
-        cc['extinction_error'] = math.sqrt(s)
-      
-      cc['comment'] = cc_comment
-      if(header):
-        cc['requested']=int(header.requested_cc)
+          # Quick variance calculation, we could load numpy instead..
+          s = 0
+          for e in cc_extinction_error:
+            s += e*e
+          s /= len(cc_extinction_error)
+          cc['extinction_error'] = math.sqrt(s)
+        
+        cc['comment'] = cc_comment
+        if(header):
+          cc['requested']=int(header.requested_cc)
 
 
       # Look for BG metrics to report. The DB has the different detectors in different entries, have to do some merging.
       # Find the qareport id of the most recent zp report for this datalabel
       query = session.query(QAreport).select_from(QAmetricSB, QAreport).filter(QAmetricSB.qareport_id == QAreport.id)
       if(datestamp):
-        query = query.filter_by(QAreport.id.submit_time > datestamp)
+        query = query.filter(QAreport.submit_time > datestamp)
       query.filter(QAmetricSB.datalabel == datalabel)
       query.order_by(desc(QAreport.submit_time))
       qarep = query.first()
@@ -499,37 +499,37 @@ def qaforgui(req, things):
         query = session.query(QAmetricSB).filter(QAmetricSB.qareport_id == qarep.id)
         sbmetrics = query.all()
 
-      # Now go through those and merge them into the form required
-      # This is a bit tediouos, given that we may have a result that is split by amp,
-      # or we may have one from a mosaiced full frame image.
-      bg_band=[]
-      bg_mag =[]
-      bg_mag_std = []
-      bg_comment = []
-      for b in sbmetrics:
-        if b.percentile_band not in bg_band:
-          bg_band.append(b.percentile_band)
-        bg_mag.append(float(b.mag))
-        bg_mag_std.append(float(b.mag_std))
-        if(b.comment not in bg_comment):
-          bg_comment.append(b.comment)
-
-      # Need to combine some of these to a single value
-      bg['band'] = ', '.join(bg_band)
-      if(len(bg_mag)):
-        bg['brightness'] = sum(bg_mag) / len(bg_mag)
-
-        # Quick variance calculation, we could load numpy instead..
-        s = 0
-        for e in bg_mag_std:
-          s += e*e
-        s /= len(bg_mag_std)
-        bg['brightness_error'] = math.sqrt(s)
-      
-      bg['comment'] = bg_comment
-      if(header):
-        bg['requested']=int(header.requested_bg)
-
+        # Now go through those and merge them into the form required
+        # This is a bit tediouos, given that we may have a result that is split by amp,
+        # or we may have one from a mosaiced full frame image.
+        bg_band=[]
+        bg_mag =[]
+        bg_mag_std = []
+        bg_comment = []
+        for b in sbmetrics:
+          if b.percentile_band not in bg_band:
+            bg_band.append(b.percentile_band)
+          bg_mag.append(float(b.mag))
+          bg_mag_std.append(float(b.mag_std))
+          if(b.comment not in bg_comment):
+            bg_comment.append(b.comment)
+  
+        # Need to combine some of these to a single value
+        bg['band'] = ', '.join(bg_band)
+        if(len(bg_mag)):
+          bg['brightness'] = sum(bg_mag) / len(bg_mag)
+  
+          # Quick variance calculation, we could load numpy instead..
+          s = 0
+          for e in bg_mag_std:
+            s += e*e
+          s /= len(bg_mag_std)
+          bg['brightness_error'] = math.sqrt(s)
+        
+        bg['comment'] = bg_comment
+        if(header):
+          bg['requested']=int(header.requested_bg)
+  
       # Now, put the stuff we built into a dict that we can push out to json
       dict={}
       if(len(metadata)):
@@ -541,7 +541,7 @@ def qaforgui(req, things):
       if(len(bg)):
         dict['bg']=bg
 
-      # Add it to the json list
+      # Add it to the json list, if there is anything
       list_for_json.append(dict)
 
     # Serialze it out via json to the request object 
