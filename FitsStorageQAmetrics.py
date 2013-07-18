@@ -393,6 +393,7 @@ def qaforgui(req, things):
       cc = {}
       bg = {}
       metadata['datalabel']=datalabel
+      submit_time_kludge = None
 
       # Fitst try and find the header entry for this datalabel, and populate what comes from that
       query = session.query(Header).select_from(Header, DiskFile).filter(Header.diskfile_id == DiskFile.id)
@@ -431,6 +432,7 @@ def qaforgui(req, things):
         iq['comment']=[qaiq.comment]
         if(header):
           iq['requested']=int(header.requested_iq)
+        submit_time_kludge = qaiq.qareport.sibmit_time
 
       # Look for CC metrics to report. The DB has the different detectors in different entries, have to do some merging.
       # Find the qareport id of the most recent zp report for this datalabel
@@ -482,6 +484,8 @@ def qaforgui(req, things):
         if(header):
           cc['requested']=int(header.requested_cc)
 
+        submit_time_kludge = qarep.submit_time
+
 
       # Look for BG metrics to report. The DB has the different detectors in different entries, have to do some merging.
       # Find the qareport id of the most recent zp report for this datalabel
@@ -530,6 +534,8 @@ def qaforgui(req, things):
         if(header):
           bg['requested']=int(header.requested_bg)
   
+        submit_time_kludge = qarep.submit_time
+
       # Now, put the stuff we built into a dict that we can push out to json
       dict={}
       if(len(metadata)):
@@ -540,6 +546,13 @@ def qaforgui(req, things):
         dict['cc']=cc
       if(len(bg)):
         dict['bg']=bg
+
+      # Stuff in the extra stuff to keep adcc happy...
+      dict['msgtype'] = 'qametric'
+      try:
+        dict['timestamp'] = float(submit_time_kludge.strftime("%s.%f"))
+      except:
+        dict['timestamp'] = 0.0
 
       # Add it to the json list, if there is anything
       list_for_json.append(dict)
