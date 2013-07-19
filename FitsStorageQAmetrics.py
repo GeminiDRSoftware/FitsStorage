@@ -367,7 +367,6 @@ def qaforgui(req, things):
   session = sessionfactory()
   try:
     req.content_type = "application/json"
-    #req.content_type = "text/plain"
 
     # We only want the most recent of each value for each datalabel
     # Interested in IQ, ZP, BG
