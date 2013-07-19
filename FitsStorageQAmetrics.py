@@ -394,7 +394,7 @@ def qaforgui(req, things):
       metadata['datalabel']=datalabel
       submit_time_kludge = None
 
-      # Fitst try and find the header entry for this datalabel, and populate what comes from that
+      # First try and find the header entry for this datalabel, and populate what comes from that
       query = session.query(Header).select_from(Header, DiskFile).filter(Header.diskfile_id == DiskFile.id)
       query = query.filter(DiskFile.canonical == True).filter(Header.data_label == datalabel)
       header = query.first()
@@ -416,11 +416,11 @@ def qaforgui(req, things):
       query = session.query(QAmetricIQ).select_from(QAmetricIQ, QAreport).filter(QAmetricIQ.qareport_id == QAreport.id)
       if(datestamp):
         query = query.filter(QAreport.submit_time > datestamp)
-      query.filter(QAmetricIQ.datalabel == datalabel)
-      query.order_by(desc(QAreport.submit_time))
+      query = query.filter(QAmetricIQ.datalabel == datalabel)
+      query = query.order_by(desc(QAreport.submit_time))
       qaiq = query.first()
 
-      # If we got anything, add it to the dict
+      # If we got anything, populate the iq dict
       if(qaiq):
         iq['band']=qaiq.percentile_band
         iq['delivered']=float(qaiq.fwhm)
@@ -431,15 +431,15 @@ def qaforgui(req, things):
         iq['comment']=[qaiq.comment]
         if(header):
           iq['requested']=int(header.requested_iq)
-        submit_time_kludge = qaiq.qareport.sibmit_time
+        submit_time_kludge = qaiq.qareport.submit_time
 
       # Look for CC metrics to report. The DB has the different detectors in different entries, have to do some merging.
       # Find the qareport id of the most recent zp report for this datalabel
       query = session.query(QAreport).select_from(QAmetricZP, QAreport).filter(QAmetricZP.qareport_id == QAreport.id)
       if(datestamp):
         query = query.filter(QAreport.submit_time > datestamp)
-      query.filter(QAmetricZP.datalabel == datalabel)
-      query.order_by(desc(QAreport.submit_time))
+      query = query.filter(QAmetricZP.datalabel == datalabel)
+      query = query.order_by(desc(QAreport.submit_time))
       qarep = query.first()
 
       # Now find all the ZPmetrics for this qareport_id
@@ -466,7 +466,7 @@ def qaforgui(req, things):
           if(z.comment not in cc_comment):
             cc_comment.append(z.comment)
 
-        # Need to combine some of these to a single value
+        # Need to combine some of these to a single value to populate the cc dict
         cc['band'] = ', '.join(cc_band)
         cc['zeropoint']=cc_zeropoint
         if(len(cc_extinction)):
@@ -491,8 +491,8 @@ def qaforgui(req, things):
       query = session.query(QAreport).select_from(QAmetricSB, QAreport).filter(QAmetricSB.qareport_id == QAreport.id)
       if(datestamp):
         query = query.filter(QAreport.submit_time > datestamp)
-      query.filter(QAmetricSB.datalabel == datalabel)
-      query.order_by(desc(QAreport.submit_time))
+      query = query.filter(QAmetricSB.datalabel == datalabel)
+      query = query.order_by(desc(QAreport.submit_time))
       qarep = query.first()
 
       # Now find all the SBmetrics for this qareport_id
@@ -554,7 +554,8 @@ def qaforgui(req, things):
         dict['timestamp'] = 0.0
 
       # Add it to the json list, if there is anything
-      list_for_json.append(dict)
+      if(len(iq) or len(cc) or len(bg)):
+        list_for_json.append(dict)
 
     # Serialze it out via json to the request object 
     json.dump(list_for_json, req, indent=4)
