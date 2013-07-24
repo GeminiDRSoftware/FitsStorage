@@ -400,7 +400,7 @@ def qaforgui(req, things):
       header = query.first()
       # We can only populate the header info if it is in the header table
       if(header):
-        metadata['filename']=header.diskfile.file.filename
+        metadata['raw_filename']=header.diskfile.file.filename
         metadata['ut_time']=str(header.ut_datetime)
         metadata['local_time']=str(header.local_time)
         metadata['wavelength']=header.central_wavelength
