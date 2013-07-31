@@ -428,7 +428,9 @@ def qaforgui(req, things):
         iq['zenith']=float(qaiq.fwhm) * float(header.airmass)**(-0.6)
         iq['ellipticity']=float(qaiq.elip)
         iq['ellip_error']=float(qaiq.elip_std)
-        iq['comment']=[qaiq.comment]
+        iq['comment']=[]
+        if(len(qaiq.comment)):
+          iq['comment']=[qaiq.comment]
         if(header):
           iq['requested']=int(header.requested_iq)
         submit_time_kludge = qaiq.qareport.submit_time
@@ -463,7 +465,7 @@ def qaforgui(req, things):
           cc_extinction.append(float(z.cloud))
           cc_extinction_error.append(float(z.cloud_std))
           cc_zeropoint[z.detector]={'value':float(z.mag), 'error':float(z.mag_std)}
-          if(z.comment not in cc_comment):
+          if((z.comment not in cc_comment) and (len(z.comment))):
             cc_comment.append(z.comment)
 
         # Need to combine some of these to a single value to populate the cc dict
@@ -514,7 +516,7 @@ def qaforgui(req, things):
             bg_band.append(b.percentile_band)
           bg_mag.append(float(b.mag))
           bg_mag_std.append(float(b.mag_std))
-          if(b.comment not in bg_comment):
+          if((b.comment not in bg_comment) and (len(b.comment))):
             bg_comment.append(b.comment)
   
         # Need to combine some of these to a single value
