@@ -262,34 +262,34 @@ class Header(Base):
       # Basic data identification part
       try:
         self.program_id = ad.program_id().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.observation_id = ad.observation_id().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.data_label = ad.data_label().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.telescope = ad.telescope().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.instrument = ad.instrument().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
 
       # Date and times part
       try:
         self.ut_datetime = ad.ut_datetime().for_db()
-      except (KeyError, AttributeError):
+      except ():
         pass
 
       try:
         self.local_time = ad.local_time().for_db()
-      except (KeyError, AttributeError):
+      except ():
         pass
 
       # Data Types
@@ -299,119 +299,119 @@ class Header(Base):
           self.observation_type='PINHOLE'
         if('NIFS_RONCHI' in ad.types):
           self.observation_type='RONCHI'
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.observation_class = ad.observation_class().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.object = ad.object().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.ra = ad.ra().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.dec = ad.dec().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.azimuth = ad.azimuth().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.elevation = ad.elevation().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.cass_rotator_pa = ad.cass_rotator_pa().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.airmass = ad.airmass().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.raw_iq = ad.raw_iq().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.raw_cc = ad.raw_cc().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.raw_wv = ad.raw_wv().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.raw_bg = ad.raw_bg().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.requested_iq = ad.requested_iq().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.requested_cc = ad.requested_cc().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.requested_wv = ad.requested_wv().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.requested_bg = ad.requested_bg().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
 
       try:
         self.filter_name = ad.filter_name(pretty=True).for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         # NICI exposure times are a pain, because there's two of them... Not sure how to handle this for now.
         if(self.instrument != 'NICI'):
           self.exposure_time = ad.exposure_time().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.disperser = ad.disperser(pretty=True).for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       if('SPECT' in ad.types):
         try:
           self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
-        except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError, Errors.TableKeyError, Errors.CalcError, AttributeError):
+        except ():
           pass
       try:
         self.wavelength_band = ad.wavelength_band().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError, Errors.TableKeyError, Errors.CalcError, AttributeError):
+      except ():
         pass
       try:
         self.focal_plane_mask = ad.focal_plane_mask(pretty=True).for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.detector_binning="%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
 
       try:
         gainsetting = str(ad.gain_setting())
-      except (Errors.ExistError, KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         gainsetting = "None"
       try:
         readspeedsetting = str(ad.read_speed_setting())
-      except (Errors.ExistError, KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         readspeedsetting = "None"
       nodandshuffle = "NodAndShuffle" if ad.is_type("GMOS_NODANDSHUFFLE") else ""
       self.detector_config = "%s %s %s" % (gainsetting, readspeedsetting, nodandshuffle)
 
       try:
         self.detector_roi_setting = ad.detector_roi_setting().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
 
 
@@ -419,25 +419,25 @@ class Header(Base):
       try:
         aofold = ad.phu_get_key_value('AOFOLD')
         self.adaptive_optics = (aofold == 'IN')
-      except (KeyError, ValueError):
+      except ():
         pass
 
       try:
         lgustage = ad.phu_get_key_value('LGUSTAGE')
         self.laser_guide_star = (lgustage == 'IN')
-      except (KeyError, ValueError):
+      except ():
         pass
 
       try:
         lgsloop = ad.phu_get_key_value('LGSLOOP')
         self.laser_guide_star = (lgsloop == 'CLOSED')
-      except (KeyError, ValueError):
+      except ():
         pass
 
 
       try:
         self.wavefront_sensor = ad.wavefront_sensor().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.CalcError, AttributeError):
+      except ():
         pass
 
       # And the Spectroscopy header
@@ -448,14 +448,14 @@ class Header(Base):
       # Set the derived QA state and release date
       try:
         self.qa_state = ad.qa_state().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError, AttributeError):
+      except ():
         pass
       try:
         reldatestring = ad.phu_get_key_value('RELEASE')
         if(reldatestring):
           reldts = "%s 00:00:00" % reldatestring
           self.release = dateutil.parser.parse(reldts).date()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError):
+      except ():
         pass
 
 
@@ -713,60 +713,60 @@ class Gmos(Base):
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.filter_name = ad.filter_name().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.detector_x_bin = ad.detector_x_bin().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, IndexError, AttributeError):
+      except ():
         pass
       try:
         self.detector_y_bin = ad.detector_y_bin().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, IndexError, AttributeError):
+      except ():
         pass
       try:
         self.amp_read_area = ad.amp_read_area().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, IndexError, AttributeError):
+      except ():
         pass
       try:
         self.read_speed_setting = ad.read_speed_setting().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, IndexError, AttributeError):
+      except ():
         pass
       try:
         self.gain_setting = ad.gain_setting().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, IndexError, Errors.DescriptorTypeError, AttributeError):
+      except ():
         pass
       try:
         self.focal_plane_mask = ad.focal_plane_mask().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.nodandshuffle = ad.is_type('GMOS_NODANDSHUFFLE')
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       if(self.nodandshuffle):
         try:
           self.nod_count = ad.nod_count().for_db()
-        except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError, AttributeError):
+        except ():
           pass
         try:
           self.nod_pixels = ad.nod_pixels().for_db()
-        except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, Errors.DescriptorTypeError, AttributeError):
+        except ():
           pass
       try:
         self.prepared = ad.is_type('PREPARED')
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.overscan_trimmed = ad.is_type('OVERSCAN_TRIMMED')
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.overscan_subtracted = ad.is_type('OVERSCAN_SUBTRACTED')
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
 
       ad.close()
@@ -810,36 +810,36 @@ class Niri(Base):
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.filter_name = ad.filter_name().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.read_mode = ad.read_mode().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.well_depth_setting = ad.well_depth_setting().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         # the str() is a temp workaround 20110404 PH
         self.data_section = str(ad.data_section().for_db())
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, IndexError, AttributeError):
+      except ():
         pass
       try:
         self.coadds = ad.coadds().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.camera = ad.camera().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.focal_plane_mask = ad.focal_plane_mask().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       ad.close()
     except:
@@ -877,31 +877,31 @@ class Gnirs(Base):
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.filter_name = ad.filter_name().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.read_mode = ad.read_mode().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.well_depth_setting = ad.well_depth_setting().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.coadds = ad.coadds().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.camera = ad.camera().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.focal_plane_mask = ad.focal_plane_mask().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       ad.close()
     except:
@@ -937,23 +937,23 @@ class Nifs(Base):
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.filter_name = ad.filter_name().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.read_mode = ad.read_mode().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.coadds = ad.coadds().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.focal_plane_mask = ad.focal_plane_mask().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       ad.close()
     except:
@@ -989,23 +989,23 @@ class F2(Base):
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.filter_name = ad.filter_name().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.lyot_stop = ad.lyot_stop().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.read_mode = ad.read_mode().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.focal_plane_mask = ad.focal_plane_mask().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       ad.close()
     except:
@@ -1042,23 +1042,23 @@ class Michelle(Base):
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.filter_name = ad.filter_name().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.read_mode = ad.read_mode().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.coadds = ad.coadds().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       try:
         self.focal_plane_mask = ad.focal_plane_mask().for_db()
-      except (KeyError, ValueError, Errors.InvalidValueError, Errors.EmptyKeyError, AttributeError):
+      except ():
         pass
       ad.close()
     except:
