@@ -63,7 +63,7 @@ def qareport_ingest(list, submit_host = None, submit_time = datetime.datetime.no
           qametricsb.datalabel = qametric_dict['datalabel']
           qametricsb.detector = qametric_dict['detector']
           sb_dict = qametric_dict['sb']
-          qametricsb.comment = str(sb_dict['comment'])
+          qametricsb.comment = ", ".join(sb_dict['comment'])
           qametricsb.mag = sb_dict['mag']
           qametricsb.mag_std = sb_dict['mag_std']
           qametricsb.electrons = sb_dict['electrons']
@@ -90,7 +90,7 @@ def qareport_ingest(list, submit_host = None, submit_time = datetime.datetime.no
           qametriciq.pa_std = iq_dict['pa_std']
           qametriciq.nsamples = iq_dict['nsamples']
           qametriciq.percentile_band = iq_dict['percentile_band']
-          qametriciq.comment = str(iq_dict['comment'])
+          qametriciq.comment = ", ".join(iq_dict['comment'])
           session.add(qametriciq)
 
         if('zp' in qametric_dict.keys()):
@@ -106,7 +106,7 @@ def qareport_ingest(list, submit_host = None, submit_time = datetime.datetime.no
           qametriczp.nsamples = zp_dict['nsamples']
           qametriczp.photref = zp_dict['photref']
           qametriczp.percentile_band = zp_dict['percentile_band']
-          qametriczp.comment = str(zp_dict['comment'])
+          qametriczp.comment = ", ".join(zp_dict['comment'])
           session.add(qametriczp)
    
         if('pe' in qametric_dict.keys()):
