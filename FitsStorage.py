@@ -1156,6 +1156,7 @@ class QAmetricIQ(Base):
 
   id = Column(Integer, primary_key=True)
   qareport_id = Column(Integer, ForeignKey('qareport.id'))
+  qareport = relation(QAreport, order_by=id)
   datalabel = Column(Text)
   filename = Column(Text)
   detector = Column(Text)
@@ -1188,6 +1189,7 @@ class QAmetricZP(Base):
 
   id = Column(Integer, primary_key=True)
   qareport_id = Column(Integer, ForeignKey('qareport.id'))
+  qareport = relation(QAreport, order_by=id)
   datalabel = Column(Text)
   filename = Column(Text)
   detector = Column(Text)
@@ -1213,6 +1215,7 @@ class QAmetricSB(Base):
 
   id = Column(Integer, primary_key=True)
   qareport_id = Column(Integer, ForeignKey('qareport.id'))
+  qareport = relation(QAreport, order_by=id)
   datalabel = Column(Text)
   filename = Column(Text)
   detector = Column(Text)
@@ -1238,6 +1241,7 @@ class QAmetricPE(Base):
 
   id = Column(Integer, primary_key=True)
   qareport_id = Column(Integer, ForeignKey('qareport.id'))
+  qareport = relation(QAreport, order_by=id)
   datalabel = Column(Text)
   filename = Column(Text)
   detector = Column(Text)
