@@ -5,7 +5,7 @@ summaries.
 """
 from FitsStorage import *
 from GeminiMetadataUtils import *
-from FitsStorageConfig import *
+import FitsStorageConfig
 
 import os
 
