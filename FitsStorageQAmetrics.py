@@ -415,155 +415,147 @@ def qaforgui(req, things):
         # Parse the types string back into a list using a locked-down eval
         metadata['types']=eval(header.types, {"__builtins__":None}, {})
 
-      # Look for IQ metrics to report. Going to need to do the same merging trick here
-      query = session.query(QAmetricIQ).select_from(QAmetricIQ, QAreport).filter(QAmetricIQ.qareport_id == QAreport.id)
-      if(datestamp):
-        query = query.filter(QAreport.submit_time > datestamp)
-        query = query.filter(QAreport.submit_time < enddatestamp)
-      query = query.filter(QAmetricIQ.datalabel == datalabel)
-      query = query.order_by(desc(QAreport.submit_time))
-      qaiq = query.first()
+      if((datestamp is None) or (header and (header.ut_datetime > datestamp) and (header.ut_datetime < enddatestamp))):
+        # Look for IQ metrics to report. Going to need to do the same merging trick here
+        query = session.query(QAmetricIQ).select_from(QAmetricIQ, QAreport).filter(QAmetricIQ.qareport_id == QAreport.id)
+        query = query.filter(QAmetricIQ.datalabel == datalabel)
+        query = query.order_by(desc(QAreport.submit_time))
+        qaiq = query.first()
 
-      # If we got anything, populate the iq dict
-      if(qaiq):
-        iq['band']=qaiq.percentile_band
-        iq['delivered']=float(qaiq.fwhm)
-        iq['delivered_error']=float(qaiq.fwhm_std)
-        iq['zenith']=float(qaiq.fwhm) * float(header.airmass)**(-0.6)
-        iq['ellipticity']=float(qaiq.elip)
-        iq['ellip_error']=float(qaiq.elip_std)
-        iq['comment']=[]
-        if(len(qaiq.comment)):
-          iq['comment']=[qaiq.comment]
-        if(header):
-          iq['requested']=int(header.requested_iq)
-        submit_time_kludge = qaiq.qareport.submit_time
-
-      # Look for CC metrics to report. The DB has the different detectors in different entries, have to do some merging.
-      # Find the qareport id of the most recent zp report for this datalabel
-      query = session.query(QAreport).select_from(QAmetricZP, QAreport).filter(QAmetricZP.qareport_id == QAreport.id)
-      if(datestamp):
-        query = query.filter(QAreport.submit_time > datestamp)
-        query = query.filter(QAreport.submit_time < enddatestamp)
-      query = query.filter(QAmetricZP.datalabel == datalabel)
-      query = query.order_by(desc(QAreport.submit_time))
-      qarep = query.first()
-
-      # Now find all the ZPmetrics for this qareport_id
-      # By definition, it must be after the timestamp etc.
-      zpmetrics=[]
-      if(qarep):
-        query = session.query(QAmetricZP).filter(QAmetricZP.qareport_id == qarep.id)
-        zpmetrics = query.all()
-
-        # Now go through those and merge them into the form required
-        # This is a bit tediouos, given that we may have a result that is split by amp,
-        # or we may have one from a mosaiced full frame image.
-        cc_band=[]
-        cc_zeropoint = {}
-        cc_extinction = []
-        cc_extinction_error = []
-        cc_comment = []
-        for z in zpmetrics:
-          if z.percentile_band not in cc_band:
-            cc_band.append(z.percentile_band)
-          cc_extinction.append(float(z.cloud))
-          cc_extinction_error.append(float(z.cloud_std))
-          cc_zeropoint[z.detector]={'value':float(z.mag), 'error':float(z.mag_std)}
-          if((z.comment not in cc_comment) and (len(z.comment))):
-            cc_comment.append(z.comment)
-
-        # Need to combine some of these to a single value to populate the cc dict
-        cc['band'] = ', '.join(cc_band)
-        cc['zeropoint']=cc_zeropoint
-        if(len(cc_extinction)):
-          cc['extinction'] = sum(cc_extinction) / len(cc_extinction)
-
-          # Quick variance calculation, we could load numpy instead..
-          s = 0
-          for e in cc_extinction_error:
-            s += e*e
-          s /= len(cc_extinction_error)
-          cc['extinction_error'] = math.sqrt(s)
-        
-        cc['comment'] = cc_comment
-        if(header):
-          cc['requested']=int(header.requested_cc)
-
-        submit_time_kludge = qarep.submit_time
-
-
-      # Look for BG metrics to report. The DB has the different detectors in different entries, have to do some merging.
-      # Find the qareport id of the most recent zp report for this datalabel
-      query = session.query(QAreport).select_from(QAmetricSB, QAreport).filter(QAmetricSB.qareport_id == QAreport.id)
-      if(datestamp):
-        query = query.filter(QAreport.submit_time > datestamp)
-        query = query.filter(QAreport.submit_time < enddatestamp)
-      query = query.filter(QAmetricSB.datalabel == datalabel)
-      query = query.order_by(desc(QAreport.submit_time))
-      qarep = query.first()
-
-      # Now find all the SBmetrics for this qareport_id
-      # By definition, it must be after the timestamp etc.
-      sbmetrics=[]
-      if(qarep):
-        query = session.query(QAmetricSB).filter(QAmetricSB.qareport_id == qarep.id)
-        sbmetrics = query.all()
-
-        # Now go through those and merge them into the form required
-        # This is a bit tediouos, given that we may have a result that is split by amp,
-        # or we may have one from a mosaiced full frame image.
-        bg_band=[]
-        bg_mag =[]
-        bg_mag_std = []
-        bg_comment = []
-        for b in sbmetrics:
-          if b.percentile_band not in bg_band:
-            bg_band.append(b.percentile_band)
-          bg_mag.append(float(b.mag))
-          bg_mag_std.append(float(b.mag_std))
-          if((b.comment not in bg_comment) and (len(b.comment))):
-            bg_comment.append(b.comment)
+        # If we got anything, populate the iq dict
+        if(qaiq):
+          iq['band']=qaiq.percentile_band
+          iq['delivered']=float(qaiq.fwhm)
+          iq['delivered_error']=float(qaiq.fwhm_std)
+          iq['zenith']=float(qaiq.fwhm) * float(header.airmass)**(-0.6)
+          iq['ellipticity']=float(qaiq.elip)
+          iq['ellip_error']=float(qaiq.elip_std)
+          iq['comment']=[]
+          if(len(qaiq.comment)):
+            iq['comment']=[qaiq.comment]
+          if(header):
+            iq['requested']=int(header.requested_iq)
+          submit_time_kludge = qaiq.qareport.submit_time
   
-        # Need to combine some of these to a single value
-        bg['band'] = ', '.join(bg_band)
-        if(len(bg_mag)):
-          bg['brightness'] = sum(bg_mag) / len(bg_mag)
+        # Look for CC metrics to report. The DB has the different detectors in different entries, have to do some merging.
+        # Find the qareport id of the most recent zp report for this datalabel
+        query = session.query(QAreport).select_from(QAmetricZP, QAreport).filter(QAmetricZP.qareport_id == QAreport.id)
+        query = query.filter(QAmetricZP.datalabel == datalabel)
+        query = query.order_by(desc(QAreport.submit_time))
+        qarep = query.first()
   
-          # Quick variance calculation, we could load numpy instead..
-          s = 0
-          for e in bg_mag_std:
-            s += e*e
-          s /= len(bg_mag_std)
-          bg['brightness_error'] = math.sqrt(s)
-        
-        bg['comment'] = bg_comment
-        if(header):
-          bg['requested']=int(header.requested_bg)
+        # Now find all the ZPmetrics for this qareport_id
+        # By definition, it must be after the timestamp etc.
+        zpmetrics=[]
+        if(qarep):
+          query = session.query(QAmetricZP).filter(QAmetricZP.qareport_id == qarep.id)
+          zpmetrics = query.all()
   
-        submit_time_kludge = qarep.submit_time
+          # Now go through those and merge them into the form required
+          # This is a bit tediouos, given that we may have a result that is split by amp,
+          # or we may have one from a mosaiced full frame image.
+          cc_band=[]
+          cc_zeropoint = {}
+          cc_extinction = []
+          cc_extinction_error = []
+          cc_comment = []
+          for z in zpmetrics:
+            if z.percentile_band not in cc_band:
+              cc_band.append(z.percentile_band)
+            cc_extinction.append(float(z.cloud))
+            cc_extinction_error.append(float(z.cloud_std))
+            cc_zeropoint[z.detector]={'value':float(z.mag), 'error':float(z.mag_std)}
+            if((z.comment not in cc_comment) and (len(z.comment))):
+              cc_comment.append(z.comment)
+  
+          # Need to combine some of these to a single value to populate the cc dict
+          cc['band'] = ', '.join(cc_band)
+          cc['zeropoint']=cc_zeropoint
+          if(len(cc_extinction)):
+            cc['extinction'] = sum(cc_extinction) / len(cc_extinction)
+  
+            # Quick variance calculation, we could load numpy instead..
+            s = 0
+            for e in cc_extinction_error:
+              s += e*e
+            s /= len(cc_extinction_error)
+            cc['extinction_error'] = math.sqrt(s)
+          
+          cc['comment'] = cc_comment
+          if(header):
+            cc['requested']=int(header.requested_cc)
+  
+          submit_time_kludge = qarep.submit_time
+  
+  
+        # Look for BG metrics to report. The DB has the different detectors in different entries, have to do some merging.
+        # Find the qareport id of the most recent zp report for this datalabel
+        query = session.query(QAreport).select_from(QAmetricSB, QAreport).filter(QAmetricSB.qareport_id == QAreport.id)
+        query = query.filter(QAmetricSB.datalabel == datalabel)
+        query = query.order_by(desc(QAreport.submit_time))
+        qarep = query.first()
+  
+        # Now find all the SBmetrics for this qareport_id
+        # By definition, it must be after the timestamp etc.
+        sbmetrics=[]
+        if(qarep):
+          query = session.query(QAmetricSB).filter(QAmetricSB.qareport_id == qarep.id)
+          sbmetrics = query.all()
+  
+          # Now go through those and merge them into the form required
+          # This is a bit tediouos, given that we may have a result that is split by amp,
+          # or we may have one from a mosaiced full frame image.
+          bg_band=[]
+          bg_mag =[]
+          bg_mag_std = []
+          bg_comment = []
+          for b in sbmetrics:
+            if b.percentile_band not in bg_band:
+              bg_band.append(b.percentile_band)
+            bg_mag.append(float(b.mag))
+            bg_mag_std.append(float(b.mag_std))
+            if((b.comment not in bg_comment) and (len(b.comment))):
+              bg_comment.append(b.comment)
+    
+          # Need to combine some of these to a single value
+          bg['band'] = ', '.join(bg_band)
+          if(len(bg_mag)):
+            bg['brightness'] = sum(bg_mag) / len(bg_mag)
+    
+            # Quick variance calculation, we could load numpy instead..
+            s = 0
+            for e in bg_mag_std:
+              s += e*e
+            s /= len(bg_mag_std)
+            bg['brightness_error'] = math.sqrt(s)
+          
+          bg['comment'] = bg_comment
+          if(header):
+            bg['requested']=int(header.requested_bg)
+  
+          submit_time_kludge = qarep.submit_time
 
-      # Now, put the stuff we built into a dict that we can push out to json
-      dict={}
-      if(len(metadata)):
-        dict['metadata']=metadata
-      if(len(iq)):
-        dict['iq']=iq
-      if(len(cc)):
-        dict['cc']=cc
-      if(len(bg)):
-        dict['bg']=bg
-
-      # Stuff in the extra stuff to keep adcc happy...
-      dict['msgtype'] = 'qametric'
-      try:
-        dict['timestamp'] = float(submit_time_kludge.strftime("%s.%f"))
-      except:
-        dict['timestamp'] = 0.0
-
-      # Add it to the json list, if there is anything
-      if(len(iq) or len(cc) or len(bg)):
-        list_for_json.append(dict)
+        # Now, put the stuff we built into a dict that we can push out to json
+        dict={}
+        if(len(metadata)):
+          dict['metadata']=metadata
+        if(len(iq)):
+          dict['iq']=iq
+        if(len(cc)):
+          dict['cc']=cc
+        if(len(bg)):
+          dict['bg']=bg
+  
+        # Stuff in the extra stuff to keep adcc happy...
+        dict['msgtype'] = 'qametric'
+        try:
+          dict['timestamp'] = float(submit_time_kludge.strftime("%s.%f"))
+        except:
+          dict['timestamp'] = 0.0
+  
+        # Add it to the json list, if there is anything
+        if(len(iq) or len(cc) or len(bg)):
+          list_for_json.append(dict)
 
     # Serialze it out via json to the request object 
     json.dump(list_for_json, req, indent=4)
