@@ -361,6 +361,9 @@ def qaforgui(req, things):
   try:
     datestampstr = things[0]
     datestamp = dateutil.parser.parse(datestampstr)
+    # Default 3 days worth for the gui, to stop the return getting huge over time
+    window = datetime.timedelta(days=3)
+    enddatestamp = datestamp+window
   except (IndexError, ValueError):
     pass
 
@@ -379,7 +382,7 @@ def qaforgui(req, things):
     datalabels = query.all()
 
     # Now loop through the datalabels. 
-    # For each datalabel, get the most recent QA measurement of each type. Only ones reported after the datestamp
+    # For each datalabel, get the most recent QA measurement of each type. Only ones reported after the datestamp and before enddatestamp
     # Add the QA measurements to a list that we then dump out with json
     list_for_json=[]
     for datalabel in datalabels:
@@ -416,6 +419,7 @@ def qaforgui(req, things):
       query = session.query(QAmetricIQ).select_from(QAmetricIQ, QAreport).filter(QAmetricIQ.qareport_id == QAreport.id)
       if(datestamp):
         query = query.filter(QAreport.submit_time > datestamp)
+        query = query.filter(QAreport.submit_time < enddatestamp)
       query = query.filter(QAmetricIQ.datalabel == datalabel)
       query = query.order_by(desc(QAreport.submit_time))
       qaiq = query.first()
@@ -440,6 +444,7 @@ def qaforgui(req, things):
       query = session.query(QAreport).select_from(QAmetricZP, QAreport).filter(QAmetricZP.qareport_id == QAreport.id)
       if(datestamp):
         query = query.filter(QAreport.submit_time > datestamp)
+        query = query.filter(QAreport.submit_time < enddatestamp)
       query = query.filter(QAmetricZP.datalabel == datalabel)
       query = query.order_by(desc(QAreport.submit_time))
       qarep = query.first()
@@ -493,6 +498,7 @@ def qaforgui(req, things):
       query = session.query(QAreport).select_from(QAmetricSB, QAreport).filter(QAmetricSB.qareport_id == QAreport.id)
       if(datestamp):
         query = query.filter(QAreport.submit_time > datestamp)
+        query = query.filter(QAreport.submit_time < enddatestamp)
       query = query.filter(QAmetricSB.datalabel == datalabel)
       query = query.order_by(desc(QAreport.submit_time))
       qarep = query.first()
