@@ -8,9 +8,9 @@ from GeminiMetadataUtils import *
 import FitsStorageConfig
 
 import os
+import subprocess
 
-from mod_python import apache
-
+import ApacheReturnCodes as apache
 
 def upload_processed_cal(req, filename):
   """
@@ -33,8 +33,15 @@ def upload_processed_cal(req, filename):
   clientdata=None
 
   # Now invoke the setuid ingest program
-  command="/opt/FitsStorage/invoke /opt/FitsStorage/ingest_uploaded_calibration.py --filename=%s --demon" % filename
-  os.system(command)
+  command=["/opt/FitsStorage/invoke", "/opt/FitsStorage/ingest_uploaded_calibration.py", "--filename=%s" % filename, "--demon"]
 
-  return apache.OK
+  ret = subprocess.call(command)
+
+  # Because invoke calls execv(), which in turn replaces the process image of the invoke process with that of
+  # python running ingest_uploaded_calibration.py, the return value we get acutally comes from that script, not invoke
+
+  if(ret!=0):
+    return apache.HTTP_SERVICE_UNAVAILABLE
+  else:
+    return apache.OK
 
