@@ -279,7 +279,7 @@ class CalibrationGMOS(Calibration):
       query = query.filter(func.abs(Header.central_wavelength-self.descriptors['central_wavelength']) < 0.001)
 
     # The science amp_read_area must be equal or substring of the flat amp_read_area
-    query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
+    query = query.filter(Gmos.amp_read_area.like('%%%s%%' % self.descriptors['amp_read_area']))
 
     # Order by absolute time separation.
     if(using_sqlite):
