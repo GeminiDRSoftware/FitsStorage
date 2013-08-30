@@ -59,15 +59,15 @@ cd dist
 python setup.py install --prefix=/opt/mod_python
 
 cd /opt/sqlalchemy
-tar xvzf /opt/FitsStorage/otherfiles/psycopg2-2.4.5.tar.gz
-cd psycopg2-2.4.5
+tar xvzf /opt/FitsStorage/otherfiles/psycopg2-2.4.6.tar.gz
+cd psycopg2-2.4.6
 vi setup.cfg 
 # set pg_config=/usr/bin/pg_config
 python setup.py build
 python setup.py install --prefix=/opt/sqlalchemy
 cd ..
-tar xvzf /opt/FitsStorage/otherfiles/SQLAlchemy-0.7.8.tar.gz
-cd SQLAlchemy-0.7.8
+tar xvzf /opt/FitsStorage/otherfiles/SQLAlchemy-0.7.10.tar.gz
+cd SQLAlchemy-0.7.10
 setenv PYTHONPATH ${PYTHONPATH}:/opt/sqlalchemy/lib/python2.6/site-packages
 python setup.py build
 python setup.py install --prefix=/opt/sqlalchemy
