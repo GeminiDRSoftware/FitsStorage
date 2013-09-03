@@ -394,7 +394,10 @@ class Header(Base):
       except ():
         pass
       try:
-        self.detector_binning="%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
+        dvx = ad.detector_x_bin()
+        dvy = ad.detector_y_bin()
+        if((not dvx.is_none()) and (not dvy.is_none())):
+          self.detector_binning="%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
       except ():
         pass
 
