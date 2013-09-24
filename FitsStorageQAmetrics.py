@@ -428,6 +428,7 @@ def qaforgui(req, things):
           iq['delivered']=float(qaiq.fwhm)
           iq['delivered_error']=float(qaiq.fwhm_std)
           iq['zenith']=float(qaiq.fwhm) * float(header.airmass)**(-0.6)
+          iq['zenith_error']=float(qaiq.fwhm_std) * float(header.airmass)**(-0.6)
           iq['ellipticity']=float(qaiq.elip)
           iq['ellip_error']=float(qaiq.elip_std)
           iq['comment']=[]
