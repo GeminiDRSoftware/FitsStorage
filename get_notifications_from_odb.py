@@ -64,8 +64,21 @@ for pe in dom.getElementsByTagName("program"):
       else:
         logger.info("Dryrun mode - not really adding %s" % label)
     else:
-      logger.info("Skipping %s - already present" % label)
+      logger.info("%s is already present, check for updates" % label)
+      n = query.first()
+      if(n.to != piEmail):
+        if(not options.dryrun):
+          logger.info("Updating to for %s" % label)
+          n.to = piEmail
+          session.commit()
+        else:
+          logger.info("Dryrun - not actually updating Email to for %s" % label)
+      if(n.cc != "%s,%s" % (ngoEmail, csEmail)):
+        if(not options.dryrun):
+          logger.info("Updating cc for %s" % label)
+          n.cc = "%s,%s" % (ngoEmail, csEmail)
+          session.commit()
+        else:
+          logger.info("Dryrun - not actually updating Email CC for %s" % label)
     
-    
-
 logger.info("Processed %s programs" % nprogs)
