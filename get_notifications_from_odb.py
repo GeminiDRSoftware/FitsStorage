@@ -39,14 +39,30 @@ for pe in dom.getElementsByTagName("program"):
   try:
     progid=pe.getElementsByTagName("reference")[0].childNodes[0].data
     logger.debug("got %s" % progid)
-    piEmail=pe.getElementsByTagName("piEmail")[0].childNodes[0].data
-    ngoEmail=pe.getElementsByTagName("ngoEmail")[0].childNodes[0].data
-    csEmail=pe.getElementsByTagName("contactScientistEmail")[0].childNodes[0].data
-    notifyPi=pe.getElementsByTagName("notifyPi")[0].childNodes[0].data
-    nprogs+=1
   except:
-    logger.debug("Failed to process program node")
+    logger.error("Failed to process program node")
     readok = False
+  piEmail=""
+  ngoEmail=""
+  csEmail=""
+  notifyPi="No"
+  nprogs+=1
+  try:
+    piEmail=pe.getElementsByTagName("piEmail")[0].childNodes[0].data
+  except:
+    pass
+  try:
+    ngoEmail=pe.getElementsByTagName("ngoEmail")[0].childNodes[0].data
+  except:
+    pass
+  try:
+    csEmail=pe.getElementsByTagName("contactScientistEmail")[0].childNodes[0].data
+  except:
+    pass
+  try:
+    notifyPi=pe.getElementsByTagName("notifyPi")[0].childNodes[0].data
+  except:
+    pass
 
   if(readok):
     # Search for this program ID in notification table
@@ -56,7 +72,13 @@ for pe in dom.getElementsByTagName("program"):
       n = Notification(label)
       n.selection = "%s/science" % progid
       n.to = piEmail
-      n.cc = "%s,%s" % (ngoEmail, csEmail)
+      if(len(ngoEmail)==0):
+        n.cc = csEmail
+      elif(len(csEmail)==0):
+        n.cc = ngoEmail
+      else:
+        n.cc = "%s,%s" % (ngoEmail, csEmail)
+
       if(not options.dryrun):
         logger.info("Adding notification %s" % label)
         session.add(n)
