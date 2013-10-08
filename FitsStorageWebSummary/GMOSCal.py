@@ -178,7 +178,10 @@ def gmoscal(req, selection):
      # Now the BIAS report
      req.write('<H2>Biases</H2>')
 
-     tzoffset = datetime.timedelta(seconds=time.timezone)
+     if(time.daylight):
+       tzoffset = datetime.timedelta(seconds=time.altzone)
+     else:
+       tzoffset = datetime.timedelta(seconds=time.timezone)
      
      oneday = datetime.timedelta(days=1)
      offset = sqlalchemy.sql.expression.literal(tzoffset - oneday, sqlalchemy.types.Interval)

@@ -236,7 +236,10 @@ def queryselection(query, selection):
     # We consider the night boundary to be 14:00 local time
     # This is midnight UTC in Hawaii, completely arbitrary in Chile
     startdt = dateutil.parser.parse("%s 14:00:00" % (selection['date']))
-    tzoffset = datetime.timedelta(seconds=time.timezone)
+    if(time.daylight):
+      tzoffset = datetime.timedelta(seconds=time.altzone)
+    else:
+      tzoffset = datetime.timedelta(seconds=time.timezone)
     oneday = datetime.timedelta(days=1)
     startdt = startdt + tzoffset - oneday
     enddt = startdt + oneday
