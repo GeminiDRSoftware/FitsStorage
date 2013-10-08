@@ -5,6 +5,7 @@ This module contains the QA metric database interface
 from FitsStorage import *
 import urllib
 import datetime
+import time
 from xml.dom.minidom import parseString
 import json
 import ApacheReturnCodes as apache
@@ -359,8 +360,14 @@ def qaforgui(req, things):
   """
   datestamp = None
   try:
-    datestampstr = things[0]
+    datestampstr ="%s 14:00:00" %  things[0]
     datestamp = dateutil.parser.parse(datestampstr)
+    if(time.daylight):
+      tzoffset = datetime.timedelta(seconds=time.altzone)
+    else:
+      tzoffset = datetime.timedelta(seconds=time.timezone)
+    oneday = datetime.timedelta(days=1)
+    datestamp = datestamp + tzoffset - oneday
     # Default 3 days worth for the gui, to stop the return getting huge over time
     window = datetime.timedelta(days=3)
     enddatestamp = datestamp+window
