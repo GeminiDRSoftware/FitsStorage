@@ -87,6 +87,8 @@ def calmgr(req, selection):
         cal = c.arc()
       if(caltype == 'processed_bias'):
         cal = c.bias(processed=True)
+      if(caltype == 'processed_dark'):
+        cal = c.dark(processed=True)
       if(caltype == 'processed_flat'):
         cal = c.flat(processed=True)
       if(caltype == 'processed_arc'):
@@ -175,6 +177,8 @@ def calmgr(req, selection):
             cal = c.arc()
           if(caltype == 'processed_bias'):
             cal = c.bias(processed=True)
+          if(caltype == 'processed_dark'):
+            cal = c.dark(processed=True)
           if(caltype == 'processed_flat'):
             cal = c.flat(processed=True)
           if(caltype == 'processed_arc'):

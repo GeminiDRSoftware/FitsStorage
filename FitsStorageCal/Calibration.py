@@ -43,6 +43,10 @@ class Calibration():
       self.descriptors['exposure_time']=self.header.exposure_time
       self.descriptors['observation_class']=self.header.observation_class
       self.descriptors['detector_roi_setting']=self.header.detector_roi_setting
+    else:
+      # The data_section comes over as a native python array, needs to be a string
+      if(self.descriptors['data_section']):
+        self.descriptors['data_section']=str(self.descriptors['data_section'])
 
   def arc(self):
     # Not defined for this instrument

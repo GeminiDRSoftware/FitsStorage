@@ -22,9 +22,10 @@ class CalibrationNIRI(Calibration):
     # Init the superclass
     Calibration.__init__(self, session, header, descriptors, types)
 
-    # Find the niriheader
-    query = session.query(Niri).filter(Niri.header_id==self.descriptors['header_id'])
-    self.niri = query.first()
+    # if header based, Find the niriheader
+    if(header):
+      query = session.query(Niri).filter(Niri.header_id==self.descriptors['header_id'])
+      self.niri = query.first()
 
     # Populate the descriptors dictionary for NIRI
     if(self.from_descriptors):
@@ -51,9 +52,13 @@ class CalibrationNIRI(Calibration):
 
     return list
 
-  def dark(self, List=None):
+  def dark(self, processed=False, List=None):
     query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
     query = query.filter(Header.observation_type=='DARK')
+    if(processed):
+      query = query.filter(Header.reduction=='PROCESSED_DARK')
+    else:
+      query = query.filter(Header.reduction=='RAW')
 
     # Search only canonical entries
     query = query.filter(DiskFile.canonical==True)
@@ -64,7 +69,10 @@ class CalibrationNIRI(Calibration):
     # Must totally match: data_section, read_mode, well_depth_setting, exposure_time, coadds
     query = query.filter(Niri.data_section==self.descriptors['data_section'])
     query = query.filter(Niri.read_mode==self.descriptors['read_mode']).filter(Niri.well_depth_setting==self.descriptors['well_depth_setting'])
-    query = query.filter(Header.exposure_time==self.descriptors['exposure_time']).filter(Niri.coadds==self.descriptors['coadds'])
+    # Exposure time must match to within 0.01 (nb floating point match). Coadds must also match.
+    # nb exposure_time is really exposure_time * coadds, but if we're matching both, that doesn't matter
+    query = query.filter(func.abs(Header.exposure_time - self.descriptors['exposure_time']) < 0.01)
+    query = query.filter(Niri.coadds==self.descriptors['coadds'])
 
     # Absolute time separation must be within 1 year (31557600 seconds)
     query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
@@ -80,9 +88,13 @@ class CalibrationNIRI(Calibration):
       query = query.limit(1)
       return query.first()
 
-  def flat(self, List=None):
+  def flat(self, processed=False, List=None):
     query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
     query = query.filter(Header.observation_type=='FLAT')
+    if(processed):
+      query = query.filter(Header.reduction=='PROCESSED_FLAT')
+    else:
+      query = query.filter(Header.reduction=='RAW')
 
     # Search only canonical entries
     query = query.filter(DiskFile.canonical==True)
