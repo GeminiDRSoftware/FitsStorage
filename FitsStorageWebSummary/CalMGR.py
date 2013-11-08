@@ -34,7 +34,8 @@ def calmgr(req, selection):
     caltype=''
     if('caltype' in selection):
       caltype = selection['caltype']
-    else:
+    # An empty cal type is acceptable for GET - means to list all the calibrations available
+    elif(req.method == 'POST'):
       req.content_type="text/plain"
       req.write("<!-- Error: No calibration type specified-->\n")
       return apache.HTTP_NOT_ACCEPTABLE
@@ -127,7 +128,7 @@ def calmgr(req, selection):
       return apache.OK
 
     else:
-      # OK, we got called via a GET - find the science dataset in the database
+      # OK, we got called via a GET - find the science datasets in the database
       # The Basic Query
       query = session.query(Header).select_from(join(join(File, DiskFile), Header))
 
@@ -165,45 +166,57 @@ def calmgr(req, selection):
           # Get a cal object for this target data
           c = get_cal_object(session, None, header=object)
    
-          # Call the appropriate method depending what calibration type we want
-          cal = None
-          if(caltype == 'bias'):
-            cal = c.bias()
-          if(caltype == 'dark'):
-            cal = c.dark()
-          if(caltype == 'flat'):
-            cal = c.flat()
-          if(caltype == 'arc'):
-            cal = c.arc()
-          if(caltype == 'processed_bias'):
-            cal = c.bias(processed=True)
-          if(caltype == 'processed_dark'):
-            cal = c.dark(processed=True)
-          if(caltype == 'processed_flat'):
-            cal = c.flat(processed=True)
-          if(caltype == 'processed_arc'):
-            cal = c.arc(processed=True)
-          if(caltype == 'processed_fringe'):
-            cal = c.processed_fringe()
-          if(caltype == 'pinhole_mask'):
-            cal = c.pinhole_mask()
-          if(caltype == 'ronchi_mask'):
-            cal = c.ronchi_mask()
-
-          if(cal):
-            # OK, say what we found
-            req.write("<calibration>\n")
-            req.write("<caltype>%s</caltype>\n" % caltype)
-            req.write("<datalabel>%s</datalabel>\n" % cal.data_label)
-            req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
-            req.write("<md5>%s</md5>\n" % cal.diskfile.md5)
-            if using_apache:
-                req.write("<url>http://%s/file/%s</url>\n" % (req.server.server_hostname, cal.diskfile.file.filename))
-            else:
-                req.write("<url>file://%s</url>\n" % os.path.join(cal.diskfile.file.path, cal.diskfile.file.filename))
-            req.write("</calibration>\n")
+          # Figure out which caltype(s) we want
+          if(caltype==''):
+            caltypes=['bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark', 'processed_flat', 'processed_arc', 'processed_fringe', 'pinhole_mask', 'ronchi_mask']
           else:
-            req.write("<!-- NO CALIBRATION FOUND-->\n")
+            caltypes=[caltype]
+
+          # Go through the caltypes list
+          for caltype in caltypes:
+            # Call the appropriate method depending what calibration type we want
+            try:
+              cal = None
+              if(caltype == 'bias'):
+                cal = c.bias()
+              if(caltype == 'dark'):
+                cal = c.dark()
+              if(caltype == 'flat'):
+                cal = c.flat()
+              if(caltype == 'arc'):
+                cal = c.arc()
+              if(caltype == 'processed_bias'):
+                cal = c.bias(processed=True)
+              if(caltype == 'processed_dark'):
+                cal = c.dark(processed=True)
+              if(caltype == 'processed_flat'):
+                cal = c.flat(processed=True)
+              if(caltype == 'processed_arc'):
+                cal = c.arc(processed=True)
+              if(caltype == 'processed_fringe'):
+                cal = c.processed_fringe()
+              if(caltype == 'pinhole_mask'):
+                cal = c.pinhole_mask()
+              if(caltype == 'ronchi_mask'):
+                cal = c.ronchi_mask()
+
+              if(cal):
+                # OK, say what we found
+                req.write("<calibration>\n")
+                req.write("<caltype>%s</caltype>\n" % caltype)
+                req.write("<datalabel>%s</datalabel>\n" % cal.data_label)
+                req.write("<filename>%s</filename>\n" % cal.diskfile.file.filename)
+                req.write("<md5>%s</md5>\n" % cal.diskfile.md5)
+                if using_apache:
+                    req.write("<url>http://%s/file/%s</url>\n" % (req.server.server_hostname, cal.diskfile.file.filename))
+                else:
+                    req.write("<url>file://%s</url>\n" % os.path.join(cal.diskfile.file.path, cal.diskfile.file.filename))
+                req.write("</calibration>\n")
+              else:
+                req.write("<!-- NO CALIBRATION FOUND for caltype %s-->\n" % caltype)
+            except:
+              req.write("<!-- PROBLEM WHILE SEARCHING FOR caltype %s-->\n" % caltype)
+
           req.write("</dataset>\n")
       else:
         req.write("<!-- COULD NOT LOCATE METADATA FOR DATASET -->\n")
