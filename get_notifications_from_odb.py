@@ -20,7 +20,7 @@ parser.add_option("--demon", action="store_true", dest="demon", default=False, h
 setdebug(options.debug)
 setdemon(options.demon)
 
-url = "http://%s:8296/odbbrowser/programs" % options.odb
+url = "http://%s:8442/odbbrowser/programs" % options.odb
 if(options.semester):
   url+="?programSemester=%s" % options.semester
 logger.info("Fetching XML from ODB server: %s", url)
