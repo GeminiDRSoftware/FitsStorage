@@ -423,7 +423,7 @@ def stats(req):
       percent = 100.0 * presentrows / totalrows
       req.write("<li>Present Rows: %d (%.2f %%)</li>" % (presentrows, percent))
     # Present size
-    tpq = session.query(func.sum(DiskFile.size)).filter(DiskFile.present == True)
+    tpq = session.query(func.sum(DiskFile.file_size)).filter(DiskFile.present == True)
     tpsize=tpq.one()[0]
     if tpsize != None:
       req.write("<li>Total present size: %d bytes (%.02f GB)</li>" % (tpsize, (tpsize/1073741824.0)))
@@ -481,7 +481,7 @@ def stats(req):
  
     req.write("<h3>Last 10 days</h3><ul>")
     for i in range(10):
-      query = session.query(func.sum(DiskFile.size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
+      query = session.query(func.sum(DiskFile.file_size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
       bytes, count = query.one()
       if(not bytes):
         bytes = 0
@@ -495,7 +495,7 @@ def stats(req):
     start = end - wdelta
     req.write("<h3>Last 6 weeks</h3><ul>")
     for i in range(6):
-      query = session.query(func.sum(DiskFile.size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
+      query = session.query(func.sum(DiskFile.file_size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
       bytes, count = query.one()
       if(not bytes):
         bytes = 0
@@ -509,7 +509,7 @@ def stats(req):
     start = end - mdelta
     req.write("<h3>Last 6 pseudo-months</h3><ul>")
     for i in range(6):
-      query = session.query(func.sum(DiskFile.size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
+      query = session.query(func.sum(DiskFile.file_size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
       bytes, count = query.one()
       if(not bytes):
         bytes = 0
