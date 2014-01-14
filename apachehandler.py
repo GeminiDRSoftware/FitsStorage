@@ -187,7 +187,7 @@ def handler(req):
       # Now construct the query
       session = sessionfactory()
       try:
-        query = session.query(File).filter(File.filename == fnthing)
+        query = session.query(File).filter(File.name == fnthing)
         if(query.count()==0):
           req.content_type="text/plain"
           req.write("Cannot find file for: %s\n" % fnthing)

@@ -37,8 +37,8 @@ session = sessionfactory()
 
 logger.info("Getting list of file_ids to check")
 likestr = "%s%%" % options.filepre
-logger.debug("Matching File.filename LIKE %s" % likestr)
-query = session.query(File.id).filter(File.filename.like(likestr))
+logger.debug("Matching File.name LIKE %s" % likestr)
+query = session.query(File.id).filter(File.name.like(likestr))
 fileids = query.all()
 
 logger.info("Got %d files to check" % len(fileids))

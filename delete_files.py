@@ -74,7 +74,7 @@ if(options.auto):
 
 if(options.filepre):
   likestr = "%s%%" % options.filepre
-  query = query.filter(File.filename.like(likestr))
+  query = query.filter(File.name.like(likestr))
 
 if(not options.notpresent):
   query = query.filter(DiskFile.present==True)
@@ -82,7 +82,7 @@ if(not options.notpresent):
 if(options.oldbylastmod):
   query = query.order_by(desc(DiskFile.lastmod))
 else:
-  query = query.order_by(File.filename)
+  query = query.order_by(File.name)
 
 if(options.maxnum):
   query = query.limit(options.maxnum)

@@ -29,7 +29,7 @@ query = session.query(DiskFile.id).select_from(join(DiskFile, File)).filter(Disk
 
 if(options.filepre):
   likestr = "%s%%" % options.filepre
-  query = query.filter(File.filename.like(likestr))
+  query = query.filter(File.name.like(likestr))
 
 # Did we get a limit option?
 if(options.limit):
