@@ -186,7 +186,7 @@ def check_present(session, filename):
   """
 
   # Search for file
-  query = session.query(File).filter(File.filename == filename)
+  query = session.query(File).filter(File.name == filename)
   if(query.first()):
     logger.debug("%s is present in file table", filename)
     file = query.one()

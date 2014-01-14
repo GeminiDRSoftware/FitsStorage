@@ -287,7 +287,7 @@ def queryselection(query, selection):
       query = query.filter(Header.instrument==selection['inst'])
 
   if('filename' in selection):
-    query = query.filter(File.filename==selection['filename'])
+    query = query.filter(File.name==selection['filename'])
 
   if('gmos_grating' in selection):
     query = query.filter(Header.disperser==selection['gmos_grating'])
@@ -373,7 +373,7 @@ def queryselection(query, selection):
 
   if('filepre' in selection):
     likestr = '%s%%' % selection['filepre']
-    query = query.filter(File.filename.like(likestr))
+    query = query.filter(File.name.like(likestr))
 
   return query
 

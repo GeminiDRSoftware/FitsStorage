@@ -130,7 +130,7 @@ def fileserver(req, things):
     filename = filenamegiven
   session = sessionfactory()
   try:
-    query=session.query(File).filter(File.filename==filename)
+    query=session.query(File).filter(File.name==filename)
     if(query.count()==0):
       return apache.HTTP_NOT_FOUND
     file=query.one()
