@@ -21,7 +21,7 @@ import FitsVerify
 import Cadc
 
 from FitsStorageConfig import *
-from FitsStorageUtils.hashes import md5sum
+from FitsStorageUtils.hashes import md5sum, md5sum_size_gz
 
 from astrodata import Errors
 from astrodata import AstroData
@@ -51,71 +51,100 @@ sessionfactory = sqlalchemy.orm.sessionmaker(pg_db)
 
 class File(Base):
   """
-  This is the ORM class for the file table
+  This is the ORM class for the file table. This is highest level most abstract concept of a 'File'
+  It's essentially just a unique label that other things - actual DiskFiles for example can reference.
+  The 'name' column here may not be the actual filename - the definitive filename is in the diskfile table,
+  when we have a compressed (gzipped) file, we trim off the .gz here.
   """
   __tablename__ = 'file'
 
   id = Column(Integer, primary_key=True)
-  filename = Column(Text, nullable=False, unique=True, index=True)
-  path = Column(Text)
+  name = Column(Text, nullable=False, unique=True, index=True)
   gsafile = relationship("GsaFile", uselist=False, backref='parent')
 
-  def __init__(self, filename, path):
-    self.filename = filename
-    self.path = path
+  def __init__(self, filename):
+    self.name = self.trim_name(filename)
 
   def __repr__(self):
-    return "<File('%s', '%s')>" %(self.id, self.filename)
+    return "<File('%s', '%s')>" %(self.id, self.name)
 
-  def fullpath(self):
-    fullpath = os.path.join(storage_root, self.path, self.filename)
-    return fullpath
-
-  def exists(self):
-    exists = os.access(self.fullpath(), os.F_OK | os.R_OK)
-    isfile = os.path.isfile(self.fullpath())
-    return (exists and isfile)
-
-  def size(self):
-    return os.path.getsize(self.fullpath())
-
-  def calculate_md5(self):
-    return md5sum(self.fullpath())
-
-  def lastmod(self):
-    return datetime.datetime.fromtimestamp(os.path.getmtime(self.fullpath()))
+  def trim_name(self, filename):
+    name = filename
+    # Trim .gz
+    if(filename.endswith(".gz")):
+      name = filename[:-3]
+    return name
 
 class DiskFile(Base):
   """
-  This is the ORM class for the diskfile table.
+  This is the ORM class for the diskfile table. A diskfile represents an instance of a file on disk.
+  If the file is compressed (gzipped) we keep some metadata on the actual file as is and also on the
+  decompressed data. file_md5 and file_size are those of the actual file. data_md5 and data_size correspond
+  to the uncompressed data if the file is compressed, and should be the same as for file_ for uncompressed files.
   """
   __tablename__ = 'diskfile'
 
   id = Column(Integer, primary_key=True)
   file_id = Column(Integer, ForeignKey('file.id'), nullable=False, index=True)
   file = relation(File, order_by=id)
+
+  filename = Column(Text, index=True)
+  path = Column(Text)
   present = Column(Boolean, index=True)
   canonical = Column(Boolean, index=True)
-  md5 = Column(Text)
-  size = Column(Integer)
+  file_md5 = Column(Text)
+  file_size = Column(Integer)
   lastmod = Column(DateTime(timezone=True), index=True)
   entrytime = Column(DateTime(timezone=True), index=True)
+
+  gzipped = Column(Boolean)
+  data_md5 = Column(Text)
+  data_size = Column(Integer)
+
   isfits = Column(Boolean)
   fvwarnings = Column(Integer)
   fverrors = Column(Integer)
   wmdready = Column(Boolean)
 
-  def __init__(self, file):
+  def __init__(self, file, filename, path, gzipped=None):
     self.file_id = file.id
+    self.filename = filename
+    self.path = path
     self.present = True
     self.canonical = True
     self.entrytime = datetime.datetime.now()
-    self.size = file.size()
-    self.md5 = file.calculate_md5()
-    self.lastmod = file.lastmod()
+    self.file_size = self.get_file_size()
+    self.file_md5 = self.get_file_md5()
+    self.lastmod = self.lastmod()
+    if(gzipped==True or filename.endswith(".gz")):
+      self.gzipped = True
+      (u_md5, u_size) = md5sum_size_gz(self.fullpath())
+      self.data_md5 = u_md5
+      self.data_size = u_size
+    else:
+      self.gzipped = False
+      self.data_md5 = self.file_md5
+      self.data_size = self.file_size
+
+  def fullpath(self):
+    return os.path.join(storage_root, self.path, self.filename)
+
+  def get_file_size(self):
+    return os.path.getsize(self.fullpath())
+
+  def exists(self):
+    exists = os.access(self.fullpath(), os.F_OK | os.R_OK)
+    isfile = os.path.isfile(self.fullpath())
+    return (exists and isfile)
+
+  def get_file_md5(self):
+    return md5sum(self.fullpath())
+
+  def lastmod(self):
+    return datetime.datetime.fromtimestamp(os.path.getmtime(self.fullpath()))
 
   def __repr__(self):
-    return "<DiskFile('%s', '%s')>" %(self.id, self.file_id)
+    return "<DiskFile('%s', '%s', '%s', '%s')>" %(self.id, self.file_id, self.filename, self.path)
 
 class GsaFile(Base):
   """
@@ -169,7 +198,7 @@ class DiskFileReport(Base):
       passed in
     - Populates the fvreport in self
     """
-    list = FitsVerify.fitsverify(diskfile.file.fullpath())
+    list = FitsVerify.fitsverify(diskfile.fullpath())
     diskfile.isfits = bool(list[0])
     diskfile.fvwarnings = list[1]
     diskfile.fverrors = list[2]
@@ -184,7 +213,7 @@ class DiskFileReport(Base):
     - Populates the wmdready flag in the diskfile object passed in
     - Populates the wmdreport text in self
     """
-    list = Cadc.cadcWMD(diskfile.file.fullpath())
+    list = Cadc.cadcWMD(diskfile.fullpath())
     diskfile.wmdready = bool(list[0])
     self.wmdreport = list[1]
 
@@ -253,7 +282,7 @@ class Header(Base):
     Populates header table values from the FITS headers of the file.
     Uses the AstroData object to access the file.
     """
-    fullpath = diskfile.file.fullpath()
+    fullpath = diskfile.fullpath()
     # Try and open it as a fits file
     ad=None
     try:
@@ -489,7 +518,7 @@ class Header(Base):
       raise
 
   def footprints(self):
-    fullpath = self.diskfile.file.fullpath()
+    fullpath = self.diskfile.fullpath()
     # Try and open it as a fits file
     ad=0
     retary={}
@@ -544,13 +573,13 @@ class FullTextHeader(Base):
     self.populate(diskfile)
 
   def populate(self, diskfile):
-    fullpath = diskfile.file.fullpath()
+    fullpath = diskfile.fullpath()
     # Try and open it as a fits file
     ad=0
     try:
       ad=AstroData(fullpath, mode='readonly')
       self.fulltext = ""
-      self.fulltext += "Filename: " +  diskfile.file.filename + "\n\n"
+      self.fulltext += "Filename: " +  diskfile.filename + "\n\n"
       self.fulltext += "AstroData Types: " +str(ad.types) + "\n\n"
       for i in range(len(ad.hdulist)):
         self.fulltext += "\n--- HDU %s ---\n" % i
@@ -712,7 +741,7 @@ class Gmos(Base):
   def populate(self):
     # Get an AstroData object on it
     try:
-      ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      ad = AstroData(self.header.diskfile.fullpath(), mode="readonly")
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
@@ -809,7 +838,7 @@ class Niri(Base):
   def populate(self):
     # Get an AstroData object on it
     try:
-      ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      ad = AstroData(self.header.diskfile.fullpath(), mode="readonly")
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
@@ -876,7 +905,7 @@ class Gnirs(Base):
   def populate(self):
     # Get an AstroData object on it
     try:
-      ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      ad = AstroData(self.header.diskfile.fullpath(), mode="readonly")
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
@@ -936,7 +965,7 @@ class Nifs(Base):
   def populate(self):
     # Get an AstroData object on it
     try:
-      ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      ad = AstroData(self.header.diskfile.fullpath(), mode="readonly")
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
@@ -988,7 +1017,7 @@ class F2(Base):
   def populate(self):
     # Get an AstroData object on it
     try:
-      ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      ad = AstroData(self.header.diskfile.fullpath(), mode="readonly")
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()
@@ -1041,7 +1070,7 @@ class Michelle(Base):
   def populate(self):
     # Get an AstroData object on it
     try:
-      ad = AstroData(self.header.diskfile.file.fullpath(), mode="readonly")
+      ad = AstroData(self.header.diskfile.fullpath(), mode="readonly")
       # Populate values
       try:
         self.disperser = ad.disperser().for_db()

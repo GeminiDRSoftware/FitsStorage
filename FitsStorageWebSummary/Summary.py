@@ -186,14 +186,14 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
     fdl = ''
     if(download):
       if(h.diskfile.present):
-        fdl = '<a href = "/file/%s">[download]</a>' % h.diskfile.file.filename
+        fdl = '<a href = "/file/%s">[download]</a>' % h.diskfile.file.name
       else:
         fdl = '[unavailable]'
 
     if(links):
-      req.write('<TD><A HREF="/fullheader/%d">%s</A> %s %s %s %s</TD>' % (h.diskfile.id, h.diskfile.file.filename, fve, wmd, gsa, fdl))
+      req.write('<TD><A HREF="/fullheader/%d">%s</A> %s %s %s %s</TD>' % (h.diskfile.id, h.diskfile.file.name, fve, wmd, gsa, fdl))
     else:
-      req.write('<TD>%s %s %s</TD>' % (h.diskfile.file.filename, fve, wmd))
+      req.write('<TD>%s %s %s</TD>' % (h.diskfile.file.name, fve, wmd))
 
 
     # The datalabel, parsed to link to the program_id and observation_id,
@@ -325,7 +325,7 @@ def webhdrsummary(session, req, type, headers, links=True, download=False):
     # And again last bit included in all summary types
     req.write("</TR>\n")
 
-    bytecount += h.diskfile.size
+    bytecount += h.diskfile.file_size
     filecount += 1
   req.write("</TABLE>\n")
   req.write("<P>%d files totalling %.2f GB</P>" % (filecount, bytecount/1.0E9))
@@ -370,11 +370,11 @@ def list_headers(session, selection, orderby):
   # If this is an open query, we should reverse sort by filename
   # and limit the number of responses
   if(openquery(selection)):
-    query = query.order_by(desc(File.filename))
+    query = query.order_by(desc(File.name))
     query = query.limit(1000)
   else:
     # By default we should order by filename
-    query = query.order_by(File.filename)
+    query = query.order_by(File.name)
 
   headers = query.all()
   
