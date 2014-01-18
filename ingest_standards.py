@@ -1,11 +1,7 @@
-import FitsStorage
-import FitsStorageConfig
-from FitsStorageLogger import *
-from FitsStorageUtils.IngestStandards import *
-import os
-import re
+from orm import sessionfactory
+from logger import logger, setdebug
+from utils.ingest_standards import ingest_standards
 import datetime
-import time
 
 # Option Parsing
 from optparse import OptionParser
@@ -20,18 +16,16 @@ parser.add_option("--debug", action="store_true", dest="debug", help="Increase l
 setdebug(options.debug)
 
 # Annouce startup
-now = datetime.datetime.now()
-logger.info("*********  ingest_standards.py - starting up at %s" % now)
+logger.info("*********  ingest_standards.py - starting up at %s" % datetime.datetime.now)
 
 session = sessionfactory()
 
 if(options.clean):
-  logger.info("Deleting all rows in standards table")
-  session.execute("DELETE FROM standards")
+    logger.info("Deleting all rows in standards table")
+    session.execute("DELETE FROM standards")
 
 ingest_standards(session, options.filename)
 
 session.close()
-now=datetime.datetime.now()
-logger.info("*** ingest_standards exiting normally at %s" % now)
+logger.info("*** ingest_standards exiting normally at %s" % datetime.datetime.now)
 

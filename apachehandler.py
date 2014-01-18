@@ -9,21 +9,26 @@ from mod_python import apache
 from mod_python import util
 
 from FitsStorageConfig import blocked_urls
-from FitsStorageWebSummary.Summary import summary
-from FitsStorageWebSummary.XMLFileList import xmlfilelist
-from FitsStorageWebSummary.TapeStuff import *
-from FitsStorageWebSummary.XMLTape import *
-from FitsStorageWebSummary.ProgsObserved import progsobserved
-from FitsStorageWebSummary.GMOSCal import gmoscal
-from FitsStorageWebSummary.Notification import notification
-from FitsStorageWebSummary.CalMGR import calmgr
-from FitsStorageWebSummary.Calibrations import calibrations
-from FitsStorageWebSummary.UploadProcessedCal import upload_processed_cal
-from FitsStorageWebSummary.CurationReport import curation_report
-from FitsStorageWebSummary.Standards import standardobs
-from FitsStorageWebSummary.Selection import getselection
-from FitsStorageWebSummary.FileServer import fileserver, authcookie, mydata
+from web.summary import summary
+from web.xml_file_list import xmlfilelist
+from web.tapestuff import *
+from web.xml_tape import *
+from web.progsobserved import progsobserved
+from web.gmoscal import gmoscal
+from web.notification import notification
+from web.calmgr import calmgr
+from web.calibrations import calibrations
+from web.upload_processed_cal import upload_processed_cal
+from web.curationreport import curation_report
+from web.standards import standardobs
+from web.selection import getselection
+from web.fileserver import fileserver, authcookie, mydata
 from FitsStorageQAmetrics import qareport, qametrics, qaforgui
+
+from orm.file import File
+from orm.diskfile import DiskFile
+from orm.header import Header
+from orm.ingestqueue import IngestQueue
 
 import re
 import datetime
@@ -446,7 +451,7 @@ def stats(req):
     list = query.all()
     req.write('<LI>Last 10 diskfile entries added:<UL>')
     for i in list:
-      req.write('<LI>%s : %s</LI>' % (i.file.filename, i.entrytime))
+      req.write('<LI>%s : %s</LI>' % (i.file.name, i.entrytime))
     req.write('</UL></LI>')
   
     req.write("</ul>")
