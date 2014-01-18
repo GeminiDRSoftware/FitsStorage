@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-from FitsStorageUtils.CreateTables import *
+from optparse import OptionParser
+from orm import sessionfactory
+from orm.createtables import create_tables, drop_tables
 
 # Option Parsing
-from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--drop", action="store_true", dest="drop", help="Drop the tables first")
 parser.add_option("--nocreate", action="store_true", dest="nocreate", help="Do not actually create the tables")
@@ -14,12 +15,12 @@ parser.add_option("--nocreate", action="store_true", dest="nocreate", help="Do n
 session = sessionfactory()
 
 if options.drop:
-  print "Dropping database tables"
-  drop_tables(session)
+    print "Dropping database tables"
+    drop_tables(session)
 
 if not options.nocreate:
-  print "Creating database tables"
-  create_tables(session)
+    print "Creating database tables"
+    create_tables(session)
 
 session.close()
 
