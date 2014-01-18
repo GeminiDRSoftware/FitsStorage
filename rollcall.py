@@ -1,7 +1,11 @@
-from FitsStorage import *
-from FitsStorageLogger import *
-import datetime
+from orm import sessionfactory
+from orm.file import File
+from orm.diskfile import DiskFile
 
+from logger import logger, setdebug, setdemon
+
+from sqlalchemy import join
+import datetime
 from optparse import OptionParser
 
 parser = OptionParser()
@@ -18,7 +22,7 @@ setdemon(options.demon)
 
 
 # Annouce startup
-logger.info("*********  rollcall.py - starting up at %s" % datetime.datetime.now())
+logger.info("*********    rollcall.py - starting up at %s" % datetime.datetime.now())
 
 # Get a database session
 session = sessionfactory()
@@ -28,12 +32,12 @@ session = sessionfactory()
 query = session.query(DiskFile.id).select_from(join(DiskFile, File)).filter(DiskFile.present == True).order_by(DiskFile.lastmod)
 
 if(options.filepre):
-  likestr = "%s%%" % options.filepre
-  query = query.filter(File.name.like(likestr))
+    likestr = "%s%%" % options.filepre
+    query = query.filter(File.name.like(likestr))
 
 # Did we get a limit option?
 if(options.limit):
-  query = query.limit(options.limit)
+    query = query.limit(options.limit)
 
 logger.info("evaluating number of rows...")
 n = query.count()
@@ -46,27 +50,27 @@ logger.info("Getting list...")
 list = query.all()
 logger.info("Starting checking...")
 
-i=0
-j=0
+i = 0
+j = 0
 missingfiles = []
 for dfid in list:
-  # Search for it by ID (is there a better way?)
-  df=session.query(DiskFile).filter(DiskFile.id == dfid[0]).one()
-  if(not df.file.exists()):
-    # This one doesn't actually exist
-    df.present=False
-    j+=1
-    logger.info("File %d/%d: Marking file %s (diskfile id %d) as not present" % (i, n, df.file.filename, df.id))
-    missingfiles.append(df.file.filename)
-    session.commit()
-  else:
-    if ((i % 1000) == 0):
-      logger.info("File %d/%d: present and correct" % (i, n))
-  i+=1
+    # Search for it by ID (is there a better way?)
+    df = session.query(DiskFile).filter(DiskFile.id == dfid[0]).one()
+    if(not df.exists()):
+        # This one doesn't actually exist
+        df.present = False
+        j += 1
+        logger.info("File %d/%d: Marking file %s (diskfile id %d) as not present" % (i, n, df.filename, df.id))
+        missingfiles.append(df.filename)
+        session.commit()
+    else:
+        if ((i % 1000) == 0):
+            logger.info("File %d/%d: present and correct" % (i, n))
+    i += 1
 
-if(j>0):
-  logger.warning("\nMarked %d files as no longer present\n%s\n" % (j, missingfiles))
+if(j > 0):
+    logger.warning("\nMarked %d files as no longer present\n%s\n" % (j, missingfiles))
 else:
-  logger.info("\nMarked %d files as no longer present\n%s\n" % (j, missingfiles))
+    logger.info("\nMarked %d files as no longer present\n%s\n" % (j, missingfiles))
 
 logger.info("*** rollcall.py exiting normally at %s" % datetime.datetime.now())
