@@ -192,7 +192,17 @@ def fileserver(req, things):
             # Send them the data
             req.content_type = 'application/fits'
             req.headers_out['Content-Disposition'] = 'attachment; filename="%s"' % filename
-            req.sendfile(file.fullpath())
+            if(diskfile.gzipped == True):
+                # Unzip it on the fly
+                req.set_content_length(diskfile.data_size)
+                gzfp = gzip.open(diskfile.fullpath(), 'rb')
+                try:
+                    req.write(gzfp.read())
+                finally:
+                    gzfp.close()
+            else:
+                req.sendfile(diskfile.fullpath())
+
             return apache.OK
         else:
             # Refuse to send data
