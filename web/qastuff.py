@@ -434,7 +434,7 @@ def qaforgui(req, things):
                     iq['comment'] = []
                     if(len(qaiq.comment)):
                         iq['comment'] = [qaiq.comment]
-                    if(header):
+                    if(header.requestd_iq is not None):
                         iq['requested'] = int(header.requested_iq)
                     submit_time_kludge = qaiq.qareport.submit_time
     
