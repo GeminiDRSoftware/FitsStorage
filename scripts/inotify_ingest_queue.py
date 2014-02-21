@@ -1,17 +1,12 @@
-import sys
-sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/opt/pyinotify/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
-
-import FitsStorage
-import fits_storage_config
-from FitsStorageLogger import *
-from FitsStorageUtils.AddToIngestQueue import *
-
 import pyinotify
-
-import os
 import re
 import datetime
-import time
+
+from orm import sessionfactory
+from fits_storage_config import storage_root
+from logger import logger, setdemon, setdebug
+from utils.add_to_ingestqueue import addto_ingestqueue
+
 
 # Option Parsing
 from optparse import OptionParser
@@ -27,9 +22,8 @@ setdebug(options.debug)
 setdemon(options.demon)
 
 # Annouce startup
-logger.info("*********  inotify_ingest_queue.py - starting up at %s" % datetime.datetime.now())
-fulldirpath = FitsStorage.storage_root
-logger.info("Ingesting files from: %s" % fulldirpath)
+logger.info("*********    inotify_ingest_queue.py - starting up at %s" % datetime.datetime.now())
+logger.info("Ingesting files from: %s" % storage_root)
 
 session = sessionfactory()
 
@@ -41,34 +35,34 @@ mask = pyinotify.IN_MOVED_FROM | pyinotify.IN_DELETE | pyinotify.IN_CLOSE_WRITE 
 
 # Create the Event Handler
 class HandleEvents(pyinotify.ProcessEvent):
-  tmpre = re.compile('(tmp)|(swp)|(^\.)')
-  def process_default(self, event):
-    logger.debug("Pyinotify Event: %s" % str(event))
-    # Does it have a tmp or swp in the filename or start with a dot?
-    if(self.tmpre.search(event.name)):
-      # It's a tmp file, ignore it
-      logger.debug("Ignoring Event on tmp file: %s" % event.name)
-    else:
-      # Go ahead and process it
-      logger.info("Processing PyInotify Event on pathname: %s" % event.pathname)
-      if(options.dryrun):
-        logger.info("Dryrun mode - not actually adding to ingest queue: %s" % event.name)
-      else:
-        logger.info("Adding to Ingest Queue: %s" % event.name)
-        addto_ingestqueue(session, event.name, '')
+    tmpre = re.compile('(tmp)|(swp)|(^\.)')
+    def process_default(self, event):
+        logger.debug("Pyinotify Event: %s" % str(event))
+        # Does it have a tmp or swp in the filename or start with a dot?
+        if(self.tmpre.search(event.name)):
+            # It's a tmp file, ignore it
+            logger.debug("Ignoring Event on tmp file: %s" % event.name)
+        else:
+            # Go ahead and process it
+            logger.info("Processing PyInotify Event on pathname: %s" % event.pathname)
+            if(options.dryrun):
+                logger.info("Dryrun mode - not actually adding to ingest queue: %s" % event.name)
+            else:
+                logger.info("Adding to Ingest Queue: %s" % event.name)
+                addto_ingestqueue(session, event.name, '')
 
 
 # Create the notifier
 notifier = pyinotify.Notifier(wm, HandleEvents())
 
 # Add the watch
-wm.add_watch(fulldirpath, mask)
+wm.add_watch(storage_root, mask)
 
 # Go into the notifier event loop
 try:
-  notifier.loop()
+    notifier.loop()
 finally:
-  session.close()
-  logger.info("*** inotify_ingest_queue.py exiting normally at %s" % datetime.datetime.now())
+    session.close()
+    logger.info("*** inotify_ingest_queue.py exiting normally at %s" % datetime.datetime.now())
 
 
