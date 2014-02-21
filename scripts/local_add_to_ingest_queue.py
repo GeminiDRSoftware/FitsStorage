@@ -1,19 +1,13 @@
 #!/usr/bin/env python
-import sys
-sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
-
 import os
-if not os.path.exists("logs"):
-    os.mkdir("logs")
-
-from astrodata import localfitsstore
-import FitsStorage
-import fits_storage_config
-from FitsStorageLogger import *
-from FitsStorageUtils.AddToIngestQueue import *
 import re
 import datetime
 import time
+
+from orm import sessionfactory
+from fits_storage_config import storage_root
+from logger import logger, setdebug, setdemon
+from utils.add_to_ingestqueue import addto_ingestqueue
 
 # Option Parsing
 from optparse import OptionParser
@@ -31,61 +25,56 @@ setdebug(options.debug)
 setdemon(options.demon)
 
 # Annouce startup
-now = datetime.datetime.now()
-logger.info("*********  add_to_ingest_queue.py - starting up at %s" % now)
+logger.info("*********    local_add_to_ingest_queue.py - starting up at %s" % datetime.datetime.now())
 
 # Get a list of all the files in the datastore
 
-fulldirpath = os.path.join(FitsStorage.storage_root, path)
+fulldirpath = os.path.join(storage_root, path)
 logger.info("Queueing files for ingest from: %s" % fulldirpath)
 
 filelist = []
 for root, dirs, files in os.walk(fulldirpath):
     if ".svn" in root:
         continue
-        
-    print "Ingesting:",root
-    flist = []
+                
+    print "Ingesting:", root
     filelist.extend([os.path.abspath(os.path.join(root, fn)) for fn in files])
 
 files = filelist
 
 # Skip files with tmp in the filename
 # Also require .fits in the filename
-thefiles=[]
+thefiles = []
 tmpcre = re.compile("tmp")
 fitscre = re.compile(".fits$")
 logger.info("Checking for tmp files")
 for filename in files:
-  if(tmpcre.search(filename) or not fitscre.search(filename)):
-    logger.info("skipping tmp file: %s" % filename)
-  else:
-    thefiles.append(filename)
+    if(tmpcre.search(filename) or not fitscre.search(filename)):
+        logger.info("skipping tmp file: %s" % filename)
+    else:
+        thefiles.append(filename)
 
-i=0
-n=len(thefiles)
+i = 0
+n = len(thefiles)
 # print what we're about to do, and give abort opportunity
 logger.info("About to scan %d files" % n)
-if (n>5000):
-  logger.info("That's a lot of files. Hit ctrl-c within 5 secs to abort")
-  time.sleep(6)
+if (n > 5000):
+    logger.info("That's a lot of files. Hit ctrl-c within 5 secs to abort")
+    time.sleep(6)
 
 session = sessionfactory()
 
 for fullfilename in thefiles:
-  filename = os.path.basename(fullfilename)
-  path = os.path.dirname(fullfilename)
-  if FitsStorage.storage_root in path:
-        path = path[len(FitsStorage.storage_root)+1:]
-  
-  # logger.info("latiq78: %s | %s" % (filename, path))  
-  
-  i+=1
-  logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
-  
-  addto_ingestqueue(session, filename, path)
+    filename = os.path.basename(fullfilename)
+    path = os.path.dirname(fullfilename)
+    if storage_root in path:
+        path = path[len(storage_root)+1:]
+    
+    i += 1
+    logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
+    
+    addto_ingestqueue(session, filename, path)
 
 session.close()
-now=datetime.datetime.now()
-logger.info("*** add_to_ingestqueue.py exiting normally at %s" % now)
+logger.info("*** local_add_to_ingestqueue.py exiting normally at %s" % datetime.datetime.now())
 
