@@ -1,5 +1,5 @@
 from orm import sessionfactory
-from FitsStorageConfig import storage_root
+from FitsStorageConfig import storage_root, using_s3, s3_bucket_name, aws_access_key, aws_secret_key
 from logger import logger, setdebug, setdemon
 from utils.add_to_ingestqueue import addto_ingestqueue
 import os
@@ -26,11 +26,25 @@ setdemon(options.demon)
 now = datetime.datetime.now()
 logger.info("*********    add_to_ingest_queue.py - starting up at %s" % now)
 
+if(using_s3):
+    import sys
+    sys.path.append("/opt/boto/lib/python2.6/site-packages/boto-2.23.0-py2.6.egg")
+    from boto.s3.connection import S3Connection
+
 # Get a list of all the files in the datastore
 # We assume this is just one dir (ie non recursive) for now.
 
-fulldirpath = os.path.join(storage_root, path)
-logger.info("Queueing files for ingest from: %s" % fulldirpath)
+if(using_s3):
+    logger.info("Querying files for ingest from S3 bucket: %s" % s3_bucket_name)
+    s3conn = S3Connection(aws_access_key, aws_secret_key)
+    bucket = s3conn.get_bucket(s3_bucket_name)
+    filelist = []
+    for key in bucket.list():
+        filelist.append(key.name)
+else:
+    fulldirpath = os.path.join(storage_root, path)
+    logger.info("Queueing files for ingest from: %s" % fulldirpath)
+    filelist = os.listdir(fulldirpath)
 
 file_re = options.file_re
 # Handle the today and twoday etc options
@@ -74,7 +88,6 @@ if(options.file_re == "twentyday"):
 if(file_re):
     cre = re.compile(file_re)
 
-filelist = os.listdir(fulldirpath)
 
 files = []
 if(file_re):
