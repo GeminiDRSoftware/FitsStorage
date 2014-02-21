@@ -1,18 +1,9 @@
-import sys
-
-from FitsStorage import *
-from fits_storage_config import *
-from FitsStorageLogger import *
-from FitsStorageUtils import *
-from sqlalchemy import *
-import os
-import re
 import datetime
-import time
-import subprocess
-import tarfile
-import urllib
-from xml.dom.minidom import parseString
+from sqlalchemy import desc
+
+from orm import sessionfactory
+from orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
+from logger import logger, setdebug, setdemon
 
 # Option Parsing
 from optparse import OptionParser
@@ -31,7 +22,7 @@ setdebug(options.debug)
 setdemon(options.demon)
 
 # Annouce startup
-logger.info("*********  tape_set_diff.py - starting up at %s" % datetime.datetime.now())
+logger.info("*********    tape_set_diff.py - starting up at %s" % datetime.datetime.now())
 
 # Query the DB to find a list of files on the from set
 # This is a little non trivial, given that there are multiple identical
@@ -50,11 +41,11 @@ query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
 
 # Match against the given filere
 if(options.filere):
-  query = query.filter(TapeFile.filename.like('%'+options.filere+'%'))
+    query = query.filter(TapeFile.filename.like('%'+options.filere+'%'))
 
 # Match against the given tape label
 if(options.tape_label):
-  query = query.filter(Tape.label == options.tape_label)
+    query = query.filter(Tape.label == options.tape_label)
 
 # And of course the set number
 query = query.filter(Tape.set == options.from_set)
@@ -67,47 +58,47 @@ filenames = query.all()
 logger.debug("Looping through filenames, finding md5 of correct file instance")
 
 for filename in filenames:
-  filename = filename[0]
-  logger.debug("Considering filename: %s" % filename)
-  query = session.query(TapeFile.md5).select_from(Tape, TapeWrite, TapeFile)
-  query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
+    filename = filename[0]
+    logger.debug("Considering filename: %s" % filename)
+    query = session.query(TapeFile.md5).select_from(Tape, TapeWrite, TapeFile)
+    query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
 
-  query = query.filter(TapeWrite.suceeded == True).filter(Tape.active == True)
+    query = query.filter(TapeWrite.suceeded == True).filter(Tape.active == True)
 
-  query = query.filter(Tape.set == options.from_set)
+    query = query.filter(Tape.set == options.from_set)
 
-  query = query.filter(TapeFile.filename == filename)
-  query = query.order_by(desc(TapeFile.lastmod))
+    query = query.filter(TapeFile.filename == filename)
+    query = query.order_by(desc(TapeFile.lastmod))
 
-  md5 = query.first()
-  md5 = md5[0]
+    md5 = query.first()
+    md5 = md5[0]
 
-  # OK, now we have filename, md5 of all a "canonical" file in the from set
+    # OK, now we have filename, md5 of all a "canonical" file in the from set
 
-  # check how many tapes this is on in the destination set
-  newquery = session.query(Tape).select_from(Tape, TapeWrite, TapeFile)
-  newquery = newquery.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
-  newquery = newquery.filter(TapeWrite.suceeded == True).filter(Tape.active == True)
-  newquery = newquery.filter(Tape.set == options.to_set)
+    # check how many tapes this is on in the destination set
+    newquery = session.query(Tape).select_from(Tape, TapeWrite, TapeFile)
+    newquery = newquery.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
+    newquery = newquery.filter(TapeWrite.suceeded == True).filter(Tape.active == True)
+    newquery = newquery.filter(Tape.set == options.to_set)
 
-  newquery = newquery.filter(TapeFile.filename == filename).filter(TapeFile.md5 == md5)
+    newquery = newquery.filter(TapeFile.filename == filename).filter(TapeFile.md5 == md5)
 
-  newquery = newquery.distinct()
+    newquery = newquery.distinct()
 
-  newtapes = newquery.all()
+    newtapes = newquery.all()
 
-  if(len(newtapes) >= options.to_set_tapes):
-    logger.debug("Filename: %s is on sufficent tapes in destination tape set already" % filename)
-  else:
-    logger.info("Adding %s - %s to request list" % (filename, md5))
-  
-    # Right, add the filename, md5 to the taperead table
-    tr = TapeRead()
-    tr.filename = filename
-    tr.md5 = md5
+    if(len(newtapes) >= options.to_set_tapes):
+        logger.debug("Filename: %s is on sufficent tapes in destination tape set already" % filename)
+    else:
+        logger.info("Adding %s - %s to request list" % (filename, md5))
+    
+        # Right, add the filename, md5 to the taperead table
+        tr = TapeRead()
+        tr.filename = filename
+        tr.md5 = md5
 
-    session.add(tr)
-    session.commit()
+        session.add(tr)
+        session.commit()
 
 
 session.close()
