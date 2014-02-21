@@ -25,6 +25,6 @@ s3conn = S3Connection(aws_access_key, aws_secret_key)
 bucket = s3conn.get_bucket(s3_bucket_name)
 
 for key in bucket.list():
-    logger.info("name: %s, content_type: %s, last_modified: %s, size: %s, md5: %s" % (key.name, key.content_type, key.last_modified, key.size, key.md5))
+    logger.info("name: %s, content_type: %s, last_modified: %s, size: %s, md5: %s" % (key.name, key.content_type, key.last_modified, key.size, key.etag))
 
 logger.info("**** done")
