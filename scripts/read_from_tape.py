@@ -1,11 +1,4 @@
 import sys
-
-from FitsStorage import *
-from fits_storage_config import *
-from FitsStorageLogger import *
-from FitsStorageUtils import *
-from FitsStorageTape import TapeDrive
-#from subprocess import call
 import os
 import re
 import datetime
@@ -14,6 +7,11 @@ import subprocess
 import tarfile
 import urllib
 from xml.dom.minidom import parseString
+
+from orm import sessionfactory
+#from fits_storage_config import *
+from logger import logger, setdebug, setdemon
+from utils.tape import TapeDrive
 
 
 # Option Parsing
@@ -35,7 +33,7 @@ setdebug(options.debug)
 setdemon(options.demon)
 
 # Annouce startup
-logger.info("*********  read_from_tape.py - starting up at %s" % datetime.datetime.now())
+logger.info("*********    read_from_tape.py - starting up at %s" % datetime.datetime.now())
 
 # Query the DB to find a list of files to extract
 # This is a little non trivial, given that there are multiple identical
@@ -53,97 +51,97 @@ tapes = query.all()
 
 labels = []
 if(len(tapes) == 0):
-  logger.info("No tapes to be read, exiting")
-  sys.exit(0)
+    logger.info("No tapes to be read, exiting")
+    sys.exit(0)
 
 for tape in tapes:
-  labels.append(tape.label)
+    labels.append(tape.label)
 labels.sort()
 logger.info("The following tapes contain requested files: %s" % labels)
 for l in labels:
-  logger.info("There is data to read on tape: %s" % l)
+    logger.info("There is data to read on tape: %s" % l)
 
 if(options.list_tapes):
-  sys.exit(0)
+    sys.exit(0)
 
 try:
-  # Make a FitsStorageTape object from class TapeDrive initializing the device and scratchdir
-  td = TapeDrive(options.tapedrive, fits_storage_config.fits_tape_scratchdir)
-  label = td.readlabel()
-  logger.info("You are reading from this tape: %s" % label)
-  if label not in labels:
-    logger.info("This tape does not contain files that were requested. Aborting")
-    sys.exit(1)
+    # Make a FitsStorageTape object from class TapeDrive initializing the device and scratchdir
+    td = TapeDrive(options.tapedrive, fits_storage_config.fits_tape_scratchdir)
+    label = td.readlabel()
+    logger.info("You are reading from this tape: %s" % label)
+    if label not in labels:
+        logger.info("This tape does not contain files that were requested. Aborting")
+        sys.exit(1)
 
-  # OK, now we need to get a list of the filenums that contain files we want
-  query = session.query(TapeWrite.filenum).select_from(Tape, TapeWrite, TapeFile, TapeRead)
-  query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
-  query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
-  query = query.filter(TapeFile.filename == TapeRead.filename).filter(TapeFile.md5 == TapeRead.md5)
-  query = query.filter(Tape.label == label)
-  query = query.distinct()
-  filenums = query.all()
-
-  # Make a working directory and prepare the tapedrive
-  td.mkworkingdir()
-  td.cdworkingdir()
-  td.setblk0()
-  td.rewind()
-
-  # Loop through the filenums
-  tars=0
-  bytes=0
-  logger.info("Going to read from %d file numbers on this tape" % len(filenums))
-  for filenum in filenums:
-    logger.info("Going to read from file number %d" % filenum)
-    tars = tars+1
-    if(options.maxtars and (tars > options.maxtars)):
-      logger.info("Read maxtars tar files. Stopping now")
-      break
-    if(options.maxgbs and ((bytes / 1.0E9) > options.maxgbs)):
-      logger.info("Read maxgbs GBs. Stopping now")
-      break
-    # Fast forward the drive to that filenum
-    logger.debug("Reading from filenumber %d" % filenum[0])
-    td.skipto(filenum=filenum[0])
-
-    # Query the filenames at the filenum and make a list of filenames
-    query = session.query(TapeFile).select_from(Tape, TapeWrite, TapeFile, TapeRead)
+    # OK, now we need to get a list of the filenums that contain files we want
+    query = session.query(TapeWrite.filenum).select_from(Tape, TapeWrite, TapeFile, TapeRead)
     query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
     query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
     query = query.filter(TapeFile.filename == TapeRead.filename).filter(TapeFile.md5 == TapeRead.md5)
     query = query.filter(Tape.label == label)
-    query = query.filter(TapeWrite.filenum == filenum[0])
+    query = query.distinct()
+    filenums = query.all()
 
-    fileresults = query.all()
-    logger.info("Going to extract %d files from this tar archive" % len(fileresults))
-    filenames = []
-    for thing in fileresults:
-      filenames.append(thing.filename.encode())
-      bytes += thing.size
+    # Make a working directory and prepare the tapedrive
+    td.mkworkingdir()
+    td.cdworkingdir()
+    td.setblk0()
+    td.rewind()
 
-    # A function to yeild all tarinfo objects and 'delete' all the read files from the taperead table
-    blksize = 64*1024
-    def fits_files(members):
-      for tarinfo in members:
-        if tarinfo.name in filenames:
-          session.query(TapeRead).filter(TapeRead.filename==tarinfo.name).delete()
-          session.commit()
-          logger.info("Reading file %s" % tarinfo.name)
-          yield tarinfo
+    # Loop through the filenums
+    tars = 0
+    bytes = 0
+    logger.info("Going to read from %d file numbers on this tape" % len(filenums))
+    for filenum in filenums:
+        logger.info("Going to read from file number %d" % filenum)
+        tars = tars+1
+        if(options.maxtars and (tars > options.maxtars)):
+            logger.info("Read maxtars tar files. Stopping now")
+            break
+        if(options.maxgbs and ((bytes / 1.0E9) > options.maxgbs)):
+            logger.info("Read maxgbs GBs. Stopping now")
+            break
+        # Fast forward the drive to that filenum
+        logger.debug("Reading from filenumber %d" % filenum[0])
+        td.skipto(filenum=filenum[0])
 
-    # Open the tarfile on the tape and extract the tarinfo object
-    tar = tarfile.open(name=options.tapedrive, mode='r|', bufsize=blksize)
-    tar.extractall(members=fits_files(tar))
-    tar.close()
+        # Query the filenames at the filenum and make a list of filenames
+        query = session.query(TapeFile).select_from(Tape, TapeWrite, TapeFile, TapeRead)
+        query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
+        query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
+        query = query.filter(TapeFile.filename == TapeRead.filename).filter(TapeFile.md5 == TapeRead.md5)
+        query = query.filter(Tape.label == label)
+        query = query.filter(TapeWrite.filenum == filenum[0])
 
-  # Are there any more files in TapeRead?
-  taperead = session.query(TapeRead).all()
-  if(len(taperead)):
-    logger.info("There are more files to be read on different tapes")
-  else:
-    logger.info("All requested files have been read")
+        fileresults = query.all()
+        logger.info("Going to extract %d files from this tar archive" % len(fileresults))
+        filenames = []
+        for thing in fileresults:
+            filenames.append(thing.filename.encode())
+            bytes += thing.size
+
+        # A function to yeild all tarinfo objects and 'delete' all the read files from the taperead table
+        blksize = 64*1024
+        def fits_files(members):
+            for tarinfo in members:
+                if tarinfo.name in filenames:
+                    session.query(TapeRead).filter(TapeRead.filename == tarinfo.name).delete()
+                    session.commit()
+                    logger.info("Reading file %s" % tarinfo.name)
+                    yield tarinfo
+
+        # Open the tarfile on the tape and extract the tarinfo object
+        tar = tarfile.open(name=options.tapedrive, mode='r|', bufsize=blksize)
+        tar.extractall(members=fits_files(tar))
+        tar.close()
+
+    # Are there any more files in TapeRead?
+    taperead = session.query(TapeRead).all()
+    if(len(taperead)):
+        logger.info("There are more files to be read on different tapes")
+    else:
+        logger.info("All requested files have been read")
 
 finally:
-  td.cdback()
-  session.close()
+    td.cdback()
+    session.close()
