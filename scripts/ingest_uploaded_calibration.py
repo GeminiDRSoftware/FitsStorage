@@ -1,11 +1,10 @@
-import FitsStorage
-from fits_storage_config import storage_root, upload_staging_path, processed_cals_path
-from FitsStorageLogger import *
-from FitsStorageUtils.AddToIngestQueue import *
 import os
-import re
 import datetime
-import time
+
+from orm import sessionfactory
+from fits_storage_config import storage_root, upload_staging_path, processed_cals_path
+from logger import logger, setdemon, setdebug
+from utils.add_to_ingestqueue import addto_ingestqueue
 
 # Option Parsing
 from optparse import OptionParser
@@ -34,9 +33,9 @@ logger.debug("Moving %s to %s" % (src, dst))
 fin = open(src, 'r')
 fout = open(dst, 'w')
 # this is a bit brute force
-buffer = fin.read()
-fout.write(buffer)
-buffer = None
+buf = fin.read()
+fout.write(buf)
+buf = None
 fin.close()
 fout.close()
 os.remove(src)
@@ -47,6 +46,6 @@ logger.info("Queueing for Ingest: %s / %s" % (processed_cals_path, options.filen
 addto_ingestqueue(session, options.filename, processed_cals_path)
 
 session.close()
-now=datetime.datetime.now()
+now = datetime.datetime.now()
 logger.info("*** add_to_ingestqueue.py exiting normally at %s" % now)
 
