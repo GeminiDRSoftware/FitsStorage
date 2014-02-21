@@ -7,7 +7,7 @@ from orm.diskfile import DiskFile
 from orm.header import Header
 from FitsStorageConfig import fits_system_status
 from web.selection import sayselection, queryselection, openquery
-from GeminiMetadataUtils import GeminiDataLabel, percentilestring
+from gemini_metadata_utils import GeminiDataLabel, percentilestring
 import apache_return_codes as apache
 from sqlalchemy import desc
 

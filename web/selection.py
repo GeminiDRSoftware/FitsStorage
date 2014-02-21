@@ -4,7 +4,7 @@ Functions in this module are only used within FitsStorageWebSummary.
 """
 from sqlalchemy import or_
 
-from GeminiMetadataUtils import gemini_telescope, gemini_instrument, gemini_date, gemini_daterange, gemini_observation_type, gemini_observation_class, gemini_reduction_state, gemini_caltype, gmos_gratingname, gmos_focal_plane_mask, gemini_fitsfilename, gemini_binning, GeminiDataLabel, GeminiObservation, GeminiProject
+from gemini_metadata_utils import gemini_telescope, gemini_instrument, gemini_date, gemini_daterange, gemini_observation_type, gemini_observation_class, gemini_reduction_state, gemini_caltype, gmos_gratingname, gmos_focal_plane_mask, gemini_fitsfilename, gemini_binning, GeminiDataLabel, GeminiObservation, GeminiProject
 
 import dateutil.parser
 import datetime

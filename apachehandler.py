@@ -3,7 +3,7 @@
 # When a request comes in, handler(req) gets called by the apache server
 
 import sys
-from GeminiMetadataUtils import gemini_fitsfilename, gemini_date
+from gemini_metadata_utils import gemini_fitsfilename, gemini_date
 
 from sqlalchemy import desc, func, join
 

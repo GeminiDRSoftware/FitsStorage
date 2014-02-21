@@ -2,7 +2,7 @@ from orm import sessionfactory
 
 from FitsStorageConfig import odbkeypass
 
-from GeminiMetadataUtils import gemini_fitsfilename
+from gemini_metadata_utils import gemini_fitsfilename
 
 from orm.file import File
 from orm.diskfile import DiskFile
