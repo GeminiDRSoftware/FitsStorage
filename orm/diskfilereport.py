@@ -1,7 +1,7 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 
-import FitsVerify
+from fits_verify import fitsverify
 
 from FitsStorageConfig import using_cadc
 
@@ -42,12 +42,12 @@ class DiskFileReport(Base):
 
     def fits_verify(self, diskfile):
         """
-        Calls the FitsVerify module and records the results.
+        Calls the fits_verify module and records the results.
         - Populates the isfits, fverrors and fvwarnings in the diskfile object
           passed in
         - Populates the fvreport in self
         """
-        retlist = FitsVerify.fitsverify(diskfile.fullpath())
+        retlist = fitsverify(diskfile.fullpath())
         diskfile.isfits = bool(retlist[0])
         diskfile.fvwarnings = retlist[1]
         diskfile.fverrors = retlist[2]
