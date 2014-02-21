@@ -4,6 +4,12 @@
 # NOTE: all setting may be overwritten if environment variable,
 #   FITSSTORAGECONFIG_LOCALMODE, is true
 
+# AWS S3 info
+using_s3 = True
+s3_bucket_name = 'gemini-archive'
+aws_access_key = 'do-not-put-the-key-in-the-svn'
+aws_secret_key = 'do-not-put-the-key-in-the-svn'
+
 # Configure the path to the storage root here 
 #storage_root = '/data/dataflow'
 storage_root = '/net/wikiwiki/dataflow'
@@ -23,7 +29,7 @@ das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
 #das_calproc_path = '/net/josie/staging/dataproc/gmos'
 
 # Configure the site and other misc stuff here
-fits_servername = "hbffits4"
+fits_servername = "hbffits3"
 fits_system_status = "development"
 
 email_errors_to = "phirst@gemini.edu"
@@ -51,18 +57,19 @@ fits_tape_scratchdir = "/data/tapescratch"
 # fsc_localmode is depreciated
 using_apache = True
 using_sqlite = False
-using_cadc = True
+using_cadc = False
+
 
 # This is used to reference program keys with the odb
 odbkeypass = "dontputtheactualkeyinthesvn"
 
 # By default, all URLs on the server are active. List in blocked_urls any that you want to disable
-blocked_urls=[]
+blocked_urls = []
 #blocked_urls=['debug', 'summary', 'diskfiles', 'ssummary', 'lsummary', 'standardobs', 'calibrations', 'xmlfilelist', 'fileontape', 'calmgr', 'upload_processed_cal', 'fitsverify', 'wmdreport', 'fullheader', 'file', 'programsobserved', 'gmoscal', 'qareport', 'qametrics', 'qaforgui', 'stats', 'tape', 'tapewrite', 'tapefile', 'taperead', 'xmltape', 'notification', 'curation', 'observing_statistics', 'authentication']
 
 # the following implements allows astrodata to set local versions of 
 # setting in this module
-import os,sys
+import os, sys
 if "FITSSTORAGECONFIG_LOCALMODE" in os.environ:
     fsc_lm = os.environ["FITSSTORAGECONFIG_LOCALMODE"].strip().lower()
     if fsc_lm == "true":
