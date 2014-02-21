@@ -1,9 +1,8 @@
-from fits_storage_config import *
-import os
 import datetime
 import subprocess
 
-from FitsStorageLogger import *
+from fits_storage_config import fits_dbname
+from logger import logger, setdebug, setdemon
 
 from optparse import OptionParser
 parser = OptionParser()
