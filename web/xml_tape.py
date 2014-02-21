@@ -5,7 +5,7 @@ from orm import sessionfactory
 
 from orm.tapestuff import Tape, TapeWrite, TapeFile
 
-import ApacheReturnCodes as apache
+import apache_return_codes as apache
 
 def xmltape(req):
     """

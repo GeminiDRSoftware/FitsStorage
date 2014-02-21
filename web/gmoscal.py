@@ -15,7 +15,7 @@ from web.calibrations import interval_hours
 from cal import get_cal_object
 from FitsStorageConfig import using_sqlite, fits_system_status, das_calproc_path
 
-import ApacheReturnCodes as apache
+import apache_return_codes as apache
 
 from math import fabs
 

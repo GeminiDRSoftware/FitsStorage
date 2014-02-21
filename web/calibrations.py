@@ -4,7 +4,7 @@ This module contains the calibrations html generator function.
 from orm import sessionfactory
 from web.selection import sayselection, queryselection, openquery
 from cal import get_cal_object
-import ApacheReturnCodes as apache
+import apache_return_codes as apache
 from FitsStorageConfig import fits_system_status
 
 from orm.header import Header

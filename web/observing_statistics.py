@@ -4,7 +4,7 @@ This module generates the Observing Statistics - ie "Open Shutter" Statistic rep
 
 from orm import sessionfactory
 from web.summary import list_headers
-import ApacheReturnCodes
+import apache_return_codes as apache
 
 import ephem
 import dateutil.parser
@@ -100,7 +100,7 @@ def observing_statistics(req, selection):
 
         
 
-        return ApacheReturnCodes.OK
+        return apache.OK
 
     except IOError:
         pass

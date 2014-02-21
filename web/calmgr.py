@@ -11,7 +11,7 @@ from FitsStorageConfig import using_apache, storage_root, fits_servername
 
 from sqlalchemy import join, desc
 
-import ApacheReturnCodes as apache
+import apache_return_codes as apache
 
 import urllib
 import re

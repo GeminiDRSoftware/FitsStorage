@@ -8,7 +8,7 @@ import subprocess
 
 from FitsStorageConfig import upload_staging_path
 
-import ApacheReturnCodes as apache
+import apache_return_codes as apache
 
 def upload_processed_cal(req, filename):
     """

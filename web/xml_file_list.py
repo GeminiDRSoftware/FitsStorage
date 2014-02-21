@@ -6,7 +6,7 @@ summaries.
 from orm import sessionfactory
 from web.summary import list_headers
 from web.standards import xmlstandardobs
-import ApacheReturnCodes as apache
+import apache_return_codes as apache
 
 
 def xmlfilelist(req, selection):

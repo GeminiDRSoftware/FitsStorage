@@ -5,9 +5,9 @@ from orm import sessionfactory
 
 from orm.header import Header
 
-from FitsStorageCuration import duplicate_datalabels, duplicate_canonicals, duplicate_present, present_not_canonical
+from orm.curation import duplicate_datalabels, duplicate_canonicals, duplicate_present, present_not_canonical
         
-import ApacheReturnCodes as apache
+import apache_return_codes as apache
 
 def curation_report(req, things):
     """
