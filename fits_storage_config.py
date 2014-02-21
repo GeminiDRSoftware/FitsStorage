@@ -7,8 +7,8 @@
 # AWS S3 info
 using_s3 = True
 s3_bucket_name = 'gemini-archive'
-aws_access_key = 'do-not-put-the-key-in-the-svn'
-aws_secret_key = 'do-not-put-the-key-in-the-svn'
+aws_access_key = 'AKIAJ554XPYMJZBPGQAA'
+aws_secret_key = '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'
 
 # Configure the path to the storage root here 
 #storage_root = '/data/dataflow'
