@@ -19,11 +19,11 @@ parser.add_option("--httpserver", action="store", dest="httpserver", default="fi
 utcnow = datetime.datetime.utcnow()
 utcend = utcnow - datetime.timedelta(days=options.skipdays)
 utcstart = utcend - datetime.timedelta(days=options.ndays)
-daterange="%s-%s" % (utcstart.date().strftime("%Y%m%d"), utcend.date().strftime("%Y%m%d"))
+daterange = "%s-%s" % (utcstart.date().strftime("%Y%m%d"), utcend.date().strftime("%Y%m%d"))
 
 # If ndays == 1 then just do a single date
 if(options.ndays == 1):
-  daterange = "%s" % utcend.date().strftime("%Y%m%d")
+    daterange = "%s" % utcend.date().strftime("%Y%m%d")
 
 url = "http://%s/calibrations/GMOS/NotFail/%s/arc/warnings" % (options.httpserver, daterange)
 
@@ -43,12 +43,12 @@ missing = int(cremissing.search(html).group(1))
 mailhost = "localhost"
 
 if(missing==0):
-  if options.skipdays == 0:
-    subject = "No missing calibrations today. Yay!"
-  else:
-    subject = "No missing calibrations this week. Yay!"
+    if options.skipdays == 0:
+        subject = "No missing calibrations today. Yay!"
+    else:
+        subject = "No missing calibrations this week. Yay!"
 else:
-  subject = "MISSING CALIBRATIONS: %d missing arcs" % missing
+    subject = "MISSING CALIBRATIONS: %d missing arcs" % missing
 
 msg = MIMEMultipart()
 
