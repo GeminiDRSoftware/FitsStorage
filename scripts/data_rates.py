@@ -1,11 +1,13 @@
-import sys
-sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
-
-from FitsStorage import *
-from FitsStorageLogger import *
 import datetime
-
 from optparse import OptionParser
+from sqlalchemy import func, join
+
+from orm import sessionfactory
+from orm.header import Header
+from orm.diskfile import DiskFile
+from logger import logger, setdebug, setdemon
+
+
 
 parser = OptionParser()
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
@@ -19,30 +21,30 @@ setdemon(options.demon)
 
 
 # Annouce startup
-logger.info("*********  data_rates.py - starting up at %s" % datetime.datetime.now())
+logger.info("*********    data_rates.py - starting up at %s" % datetime.datetime.now())
 
 # Get a database session
 session = sessionfactory()
 
 f = open("/data/logs/data_rates.py", "w")
 
-ndays=1000
+ndays = 1000
 
 today = datetime.datetime.utcnow().date()
-zerohour = datetime.time(0,0,0)
+zerohour = datetime.time(0, 0, 0)
 ddelta = datetime.timedelta(days=1)
 
 start = datetime.datetime.combine(today, zerohour)
 end = start + ddelta
 
 for i in range(1, ndays):
-  query = session.query(func.sum(DiskFile.data_size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
-  bytes = query.one()[0]
-  if(not bytes):
-    bytes = 0
-  f.write("%s, %f\n" % (str(start.date()), bytes/1.0E9))
-  start -= ddelta
-  end -= ddelta
+    query = session.query(func.sum(DiskFile.data_size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
+    nbytes = query.one()[0]
+    if(not nbytes):
+        nbytes = 0
+    f.write("%s, %f\n" % (str(start.date()), nbytes/1.0E9))
+    start -= ddelta
+    end -= ddelta
 
 f.close()
 
