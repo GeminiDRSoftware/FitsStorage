@@ -1,18 +1,11 @@
 import sys
-
-from FitsStorage import *
-from fits_storage_config import *
-from FitsStorageLogger import *
-from FitsStorageUtils import *
-from sqlalchemy import *
-import os
-import re
 import datetime
-import time
-import subprocess
-import tarfile
-import urllib
-from xml.dom.minidom import parseString
+from sqlalchemy import desc
+
+from orm import sessionfactory
+from orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
+#from fits_storage_config import *
+from logger import logger, setdebug, setdemon
 
 # Option Parsing
 from optparse import OptionParser
@@ -32,11 +25,11 @@ setdemon(options.demon)
 requester = options.requester
 
 # Annouce startup
-logger.info("*********  request_from_tape.py - starting up at %s" % datetime.datetime.now())
+logger.info("*********    request_from_tape.py - starting up at %s" % datetime.datetime.now())
 
 if((not options.filere) and (not options.tape_label)):
-  logger.error("You must specify a file-re or a tape-label. You probably want a file-re")
-  sys.exit(1)
+    logger.error("You must specify a file-re or a tape-label. You probably want a file-re")
+    sys.exit(1)
 
 # Query the DB to find a list of files to extract
 # This is a little non trivial, given that there are multiple identical
@@ -52,13 +45,13 @@ query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFi
 
 # Match against the given filere
 if(options.filere):
-  query = query.filter(TapeFile.filename.like('%'+options.filere+'%'))
+    query = query.filter(TapeFile.filename.like('%'+options.filere+'%'))
 
 if(options.tape_label):
-  query = query.filter(Tape.label == options.tape_label)
+    query = query.filter(Tape.label == options.tape_label)
 else:
-  # Other housekeeping checks - tape should be active, unless a tape-label request as you might be trying to recover from a bad tape
-  query = query.filter(Tape.active == True)
+    # Other housekeeping checks - tape should be active, unless a tape-label request as you might be trying to recover from a bad tape
+    query = query.filter(Tape.active == True)
 
 # Other housekeeping checks - if the write never suceeded, we probably don't care about it
 query = query.filter(TapeWrite.suceeded == True)
@@ -70,24 +63,24 @@ filenames = query.all()
 # OK, now we loop through those filenames, finding the md5 for the version with the most recent lastmod
 
 for filename in filenames:
-  query = session.query(TapeFile.md5).select_from(Tape, TapeWrite, TapeFile)
-  query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
+    query = session.query(TapeFile.md5).select_from(Tape, TapeWrite, TapeFile)
+    query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
 
-  query = query.filter(TapeWrite.suceeded == True).filter(Tape.active == True)
+    query = query.filter(TapeWrite.suceeded == True).filter(Tape.active == True)
 
-  query = query.filter(TapeFile.filename == filename[0])
-  query = query.order_by(desc(TapeFile.lastmod))
+    query = query.filter(TapeFile.filename == filename[0])
+    query = query.order_by(desc(TapeFile.lastmod))
 
-  md5 = query.first()
+    md5 = query.first()
 
-  # Right, add the filename, md5 to the taperead table
-  tr = TapeRead()
-  tr.filename = filename[0]
-  tr.md5 = md5[0]
-  logger.info("Adding %s, %s to taperead", filename[0], md5[0])
+    # Right, add the filename, md5 to the taperead table
+    tr = TapeRead()
+    tr.filename = filename[0]
+    tr.md5 = md5[0]
+    logger.info("Adding %s, %s to taperead", filename[0], md5[0])
 
-  session.add(tr)
-  session.commit()
+    session.add(tr)
+    session.commit()
 
 
 session.close()
