@@ -1,5 +1,5 @@
 import FitsStorage
-import FitsStorageConfig
+from fits_storage_config import storage_root, upload_staging_path, processed_cals_path
 from FitsStorageLogger import *
 from FitsStorageUtils.AddToIngestQueue import *
 import os
@@ -27,8 +27,8 @@ logger.info("*********  ingest_uploaded_calibration.py - starting up at %s" % no
 # Move the file to it's appropriate loaction in storage_root/path
 
 # Construct the full path names and move the file into place
-src = os.path.join(FitsStorageConfig.upload_staging_path, options.filename)
-dst = os.path.join(FitsStorageConfig.storage_root, FitsStorageConfig.processed_cals_path, options.filename)
+src = os.path.join(upload_staging_path, options.filename)
+dst = os.path.join(storage_root, processed_cals_path, options.filename)
 logger.debug("Moving %s to %s" % (src, dst))
 # We can't use os.rename as that keeps the old permissions and ownership, which we specifically want to avoid
 fin = open(src, 'r')
@@ -43,8 +43,8 @@ os.remove(src)
 
 session = sessionfactory()
 
-logger.info("Queueing for Ingest: %s / %s" % (FitsStorageConfig.processed_cals_path, options.filename))
-addto_ingestqueue(session, options.filename, FitsStorageConfig.processed_cals_path)
+logger.info("Queueing for Ingest: %s / %s" % (processed_cals_path, options.filename))
+addto_ingestqueue(session, options.filename, processed_cals_path)
 
 session.close()
 now=datetime.datetime.now()

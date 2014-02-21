@@ -4,7 +4,7 @@ import sys
 import logging
 import logging.handlers
 
-import FitsStorageConfig
+from fits_storage_config import logname, fits_log_dir, email_errors_to
 
 # Create a Logger
 logger = logging.getLogger()
@@ -16,16 +16,16 @@ logger.setLevel(logging.INFO)
 # Create log message handlers 
 #If logname is already set, use it, otherwise default to script name .log
 try:
-    if(FitsStorageConfig.logname):
-        logname = FitsStorageConfig.logname
+    if(logname):
+        logname = logname
 except (NameError, AttributeError):
     logname = "%s.log" % (os.path.basename(sys.argv[0]))
 
-logfile = os.path.join(FitsStorageConfig.fits_log_dir, logname)
+logfile = os.path.join(fits_log_dir, logname)
 filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount=10, maxBytes=10000000)
 streamhandler = logging.StreamHandler()
 emailsubject = "Messages from FitsStorage on %s" % os.uname()[1]
-smtphandler = logging.handlers.SMTPHandler(mailhost='smtp.gemini.edu', fromaddr='fitsdata@gemini.edu', toaddrs=[FitsStorageConfig.email_errors_to], subject=emailsubject)
+smtphandler = logging.handlers.SMTPHandler(mailhost='smtp.gemini.edu', fromaddr='fitsdata@gemini.edu', toaddrs=[email_errors_to], subject=emailsubject)
 
 # The smtp handler should only do WARNINGSs or worse
 smtphandler.setLevel(logging.WARNING)
@@ -52,7 +52,7 @@ def setdebug(want):
 
 def setdemon(want):
     if(want):
-        if(len(FitsStorageConfig.email_errors_to)):
+        if(len(email_errors_to)):
             logger.addHandler(smtphandler)
     else:
         logger.addHandler(streamhandler)

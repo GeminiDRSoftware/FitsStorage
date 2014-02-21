@@ -1,6 +1,6 @@
 from orm import sessionfactory
 
-from FitsStorageConfig import odbkeypass
+from fits_storage_config import odbkeypass
 
 from gemini_metadata_utils import gemini_fitsfilename
 

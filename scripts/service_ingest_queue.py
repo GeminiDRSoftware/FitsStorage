@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 from orm import sessionfactory
-import FitsStorageConfig
+import fits_storage_config
 from utils.service_ingestqueue import ingest_file, pop_ingestqueue, ingestqueue_length
 from logger import logger, setdebug, setdemon
 import signal
@@ -60,7 +60,7 @@ logger.info("*********    service_ingest_queue.py - starting up at %s" % now)
 
 if(options.lockfile):
     # Does the Lockfile exist?
-    lockfile = "%s/%s" % (FitsStorageConfig.fits_lockfile_dir, options.lockfile)
+    lockfile = "%s/%s" % (fits_storage_config.fits_lockfile_dir, options.lockfile)
     if(os.path.exists(lockfile)):
         logger.info("Lockfile %s already exists, testing for viability" % lockfile)
         actually_locked = True
@@ -120,7 +120,7 @@ while(loop):
             time.sleep(10)
         else:
             logger.info("Ingesting %s, (%d in queue)" % (iq.filename, ingestqueue_length(session)))
-            if(FitsStorageConfig.using_sqlite):
+            if(fits_storage_config.using_sqlite):
                 # SQLite doesn't support nested transactions
                 session.begin(subtransactions=True)
             else:

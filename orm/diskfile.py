@@ -9,7 +9,7 @@ from utils.hashes import md5sum, md5sum_size_gz
 from . import Base
 from orm.file import File
 
-from FitsStorageConfig import storage_root
+from fits_storage_config import storage_root
 
 class DiskFile(Base):
     """

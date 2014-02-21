@@ -1,7 +1,7 @@
 import sys
 
 from FitsStorage import *
-from FitsStorageConfig import *
+from fits_storage_config import *
 from FitsStorageLogger import *
 from FitsStorageUtils import *
 from FitsStorageTape import TapeDrive
@@ -73,14 +73,14 @@ if(options.list_tapes):
 
 try:
   # Make a FitsStorageTape object from class TapeDrive initializing the device and scratchdir
-  fromtd = TapeDrive(options.fromtapedrive, FitsStorageConfig.fits_tape_scratchdir)
+  fromtd = TapeDrive(options.fromtapedrive, fits_storage_config.fits_tape_scratchdir)
   logger.info("Reading tape labels...")
   fromlabel = fromtd.readlabel()
   logger.info("You are reading from this tape: %s" % fromlabel)
   if fromlabel not in labels:
     logger.info("This tape does not contain files that were requested. Aborting")
     sys.exit(1)
-  totd = TapeDrive(options.totapedrive, FitsStorageConfig.fits_tape_scratchdir)
+  totd = TapeDrive(options.totapedrive, fits_storage_config.fits_tape_scratchdir)
   tolabel = totd.readlabel()
   logger.info("You are writing to this tape: %s" % tolabel)
   

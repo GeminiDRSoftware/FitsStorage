@@ -7,7 +7,7 @@ from orm.diskfile import DiskFile
 from orm.header import Header
 from web.selection import queryselection, openquery
 from cal import get_cal_object
-from FitsStorageConfig import using_apache, storage_root, fits_servername
+from fits_storage_config import using_apache, storage_root, fits_servername
 
 from sqlalchemy import join, desc
 

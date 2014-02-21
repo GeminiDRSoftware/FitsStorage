@@ -5,7 +5,7 @@ from orm import sessionfactory
 from web.selection import sayselection, queryselection, openquery
 from cal import get_cal_object
 import apache_return_codes as apache
-from FitsStorageConfig import fits_system_status
+from fits_storage_config import fits_system_status
 
 from orm.header import Header
 from orm.diskfile import DiskFile

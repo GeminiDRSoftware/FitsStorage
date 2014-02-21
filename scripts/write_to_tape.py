@@ -1,5 +1,5 @@
 from FitsStorage import *
-from FitsStorageConfig import *
+from fits_storage_config import *
 from FitsStorageLogger import *
 from FitsStorageUtils import *
 from FitsStorageUtils.hashes import md5sum

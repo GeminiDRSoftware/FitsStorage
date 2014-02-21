@@ -13,7 +13,7 @@ from orm.file import File
 from web.selection import sayselection, queryselection
 from web.calibrations import interval_hours
 from cal import get_cal_object
-from FitsStorageConfig import using_sqlite, fits_system_status, das_calproc_path
+from fits_storage_config import using_sqlite, fits_system_status, das_calproc_path
 
 import apache_return_codes as apache
 

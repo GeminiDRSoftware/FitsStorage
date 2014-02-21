@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 from FitsStorage import *
-import FitsStorageConfig
+import fits_storage_config
 from FitsStorageLogger import *
 import signal
 import os
@@ -69,7 +69,7 @@ logger.info("*********  poll_gsafiles.py - starting up at %s" % now)
 
 if(options.lockfile):
   # Does the Lockfile exist?
-  lockfile = "%s/%s" % (FitsStorageConfig.fits_lockfile_dir, options.lockfile)
+  lockfile = "%s/%s" % (fits_storage_config.fits_lockfile_dir, options.lockfile)
   if(os.path.exists(lockfile)):
     logger.info("Lockfile %s already exists, testing for viability" % lockfile)
     actually_locked = True

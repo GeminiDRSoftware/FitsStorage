@@ -6,7 +6,7 @@ summaries.
 import os
 import subprocess
 
-from FitsStorageConfig import upload_staging_path
+from fits_storage_config import upload_staging_path
 
 import apache_return_codes as apache
 

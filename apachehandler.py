@@ -10,7 +10,7 @@ from sqlalchemy import desc, func, join
 from mod_python import apache
 from mod_python import util
 
-from FitsStorageConfig import blocked_urls
+from fits_storage_config import blocked_urls
 from web.summary import summary
 from web.xml_file_list import xmlfilelist
 from web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead

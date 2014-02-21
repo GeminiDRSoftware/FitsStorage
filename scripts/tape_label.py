@@ -1,7 +1,7 @@
 import os
 import sys
 import subprocess
-from FitsStorageConfig import *
+from fits_storage_config import *
 from FitsStorageTape import TapeDrive
 
 # Option Parsing

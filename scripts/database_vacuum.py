@@ -1,4 +1,4 @@
-from FitsStorageConfig import *
+from fits_storage_config import *
 import os
 import datetime
 import subprocess

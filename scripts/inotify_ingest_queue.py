@@ -2,7 +2,7 @@ import sys
 sys.path=['/opt/sqlalchemy/lib/python2.5/site-packages', '/opt/pyinotify/lib/python2.5/site-packages', '/astro/iraf/x86_64/gempylocal/lib/stsci_python/lib/python2.5/site-packages']+sys.path
 
 import FitsStorage
-import FitsStorageConfig
+import fits_storage_config
 from FitsStorageLogger import *
 from FitsStorageUtils.AddToIngestQueue import *
 

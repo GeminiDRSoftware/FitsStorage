@@ -5,7 +5,7 @@ from orm import sessionfactory
 from orm.file import File
 from orm.diskfile import DiskFile
 from orm.header import Header
-from FitsStorageConfig import fits_system_status
+from fits_storage_config import fits_system_status
 from web.selection import sayselection, queryselection, openquery
 from gemini_metadata_utils import GeminiDataLabel, percentilestring
 import apache_return_codes as apache

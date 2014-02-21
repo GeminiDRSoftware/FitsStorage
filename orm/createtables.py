@@ -3,7 +3,7 @@ This module provides various utility functions for create_tables.py
 in the Fits Storage System.
 """
 
-from FitsStorageConfig import using_apache, using_sqlite
+from fits_storage_config import using_apache, using_sqlite
 from . import pg_db
 from orm.file import File
 from orm.diskfile import DiskFile

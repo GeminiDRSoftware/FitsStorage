@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 from FitsStorage import *
-import FitsStorageConfig
+import fits_storage_config
 from FitsStorageLogger import *
 
 import urllib2

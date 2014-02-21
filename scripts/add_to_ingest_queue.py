@@ -1,5 +1,5 @@
 from orm import sessionfactory
-from FitsStorageConfig import storage_root, using_s3, s3_bucket_name, aws_access_key, aws_secret_key
+from fits_storage_config import storage_root, using_s3, s3_bucket_name, aws_access_key, aws_secret_key
 from logger import logger, setdebug, setdemon
 from utils.add_to_ingestqueue import addto_ingestqueue
 import os

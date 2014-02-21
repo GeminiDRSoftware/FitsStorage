@@ -9,7 +9,7 @@ from logger import logger
 from sqlalchemy import desc
 from orm.geometryhacks import add_footprint, do_std_obs
 
-from FitsStorageConfig import storage_root, using_sqlite
+from fits_storage_config import storage_root, using_sqlite
 
 from orm.file import File
 from orm.diskfile import DiskFile

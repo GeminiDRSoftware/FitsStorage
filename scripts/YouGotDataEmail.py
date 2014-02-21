@@ -1,5 +1,5 @@
 from FitsStorage import *
-import FitsStorageConfig
+import fits_storage_config
 from FitsStorageUtils import *
 from FitsStorageLogger import *
 

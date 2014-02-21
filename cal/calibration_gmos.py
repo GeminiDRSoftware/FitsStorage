@@ -2,7 +2,7 @@
 This module holds the CalibrationGMOS class
 """
 
-from FitsStorageConfig import using_sqlite
+from fits_storage_config import using_sqlite
 from orm.diskfile import DiskFile
 from orm.header import Header
 from orm.gmos import Gmos

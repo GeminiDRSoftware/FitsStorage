@@ -1,5 +1,5 @@
 from FitsStorage import *
-import FitsStorageConfig
+import fits_storage_config
 from FitsStorageTape import TapeDrive
 from FitsStorageUtils.hashes import md5sumfp
 import sys
@@ -23,7 +23,7 @@ parser.add_option("--demon", action="store_true", dest="demon", help="Run as a b
 
 (options, args) = parser.parse_args()
 
-FitsStorageConfig.logname = "%s-%s.log" % (os.path.basename(sys.argv[0]), options.tapedrive.split('/')[-1])
+fits_storage_config.logname = "%s-%s.log" % (os.path.basename(sys.argv[0]), options.tapedrive.split('/')[-1])
 
 from FitsStorageUtils import *
 from FitsStorageLogger import *
@@ -40,7 +40,7 @@ logger.info("*********  verify_tape.py - starting up at %s" % datetime.datetime.
 
 try:
   # Make a FitsStorageTape object from class TapeDrive initializing the device and scratchdir
-  td = TapeDrive(options.tapedrive, FitsStorageConfig.fits_tape_scratchdir)
+  td = TapeDrive(options.tapedrive, fits_storage_config.fits_tape_scratchdir)
   td.setblk0()
   label = td.readlabel()
 

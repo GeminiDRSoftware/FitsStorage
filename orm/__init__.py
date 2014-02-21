@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-from FitsStorageConfig import fits_database
+from fits_storage_config import fits_database
 
 # This was to debug the number of open database sessions.
 #import logging

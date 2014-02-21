@@ -8,7 +8,7 @@ request handler.
 Importing this module allows use of those functions without apache mod_python
 """
 
-from FitsStorageConfig import using_apache
+from fits_storage_config import using_apache
 
 if(not using_apache):
     OK = 200

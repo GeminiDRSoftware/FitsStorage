@@ -3,7 +3,7 @@ from sqlalchemy import Integer, Text
 
 from fits_verify import fitsverify
 
-from FitsStorageConfig import using_cadc
+from fits_storage_config import using_cadc
 
 if(using_cadc):
     import Cadc
