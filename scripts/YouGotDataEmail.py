@@ -1,16 +1,15 @@
-from FitsStorage import *
-import fits_storage_config
-from FitsStorageUtils import *
-from FitsStorageLogger import *
-
 import urllib2
 import sys
 import re
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import datetime
 from optparse import OptionParser
+
+from orm import sessionfactory
+from orm.notification import Notification
+from logger import logger, setdebug, setdemon
+
 
 parser = OptionParser()
 parser.add_option("--emailfrom", action="store", dest="fromaddr", default="fitsdata@gemini.edu", help="Email Address to send from")
@@ -38,65 +37,65 @@ notifs = session.query(Notification).all()
 
 for notif in notifs:
 
-  if((notif.selection is None) or (notif.to is None)):
-    logger.error("Critical fields are None in notification id: %s; label: %s" % (notif.id, notif.label))
+    if((notif.selection is None) or (notif.to is None)):
+        logger.error("Critical fields are None in notification id: %s; label: %s" % (notif.id, notif.label))
 
-  else:
-
-    if(notif.internal):
-      url = "http://fits/summary/%s/%s" % (options.date, notif.selection)
     else:
-      url = "http://fits/summary/nolinks/%s/%s" % (options.date, notif.selection)
 
-    logger.debug("URL is: %s" % url)
-    f = urllib2.urlopen(url)
-    html = f.read()
-    f.close()
+        if(notif.internal):
+            url = "http://fits/summary/%s/%s" % (options.date, notif.selection)
+        else:
+            url = "http://fits/summary/nolinks/%s/%s" % (options.date, notif.selection)
 
-    match = cre.search(html)
+        logger.debug("URL is: %s" % url)
+        f = urllib2.urlopen(url)
+        html = f.read()
+        f.close()
 
-    if(match):
+        match = cre.search(html)
 
-      subject = "New Data for %s" % notif.selection
-      logger.info(subject)
+        if(match):
 
-      msg = MIMEMultipart()
+            subject = "New Data for %s" % notif.selection
+            logger.info(subject)
 
-      text = "New data has been taken for %s. The attached html file gives details.\n\n" % (notif.selection)
-      if(notif.internal):
-        text += "The fits storage summary table for this data be found at: %s\n\n" % url
-      else:
-        text += "Access to all Gemini data is via the Gemini Science Archive at http://www1.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/gsa/\n"
-        text += "Data Quality assessment and data package release will proceed as normal over the next few days."
+            msg = MIMEMultipart()
 
-      part1 = MIMEText(text, 'plain')
-      part2 = MIMEText(html, 'html')
+            text = "New data has been taken for %s. The attached html file gives details.\n\n" % (notif.selection)
+            if(notif.internal):
+                text += "The fits storage summary table for this data be found at: %s\n\n" % url
+            else:
+                text += "Access to all Gemini data is via the Gemini Science Archive at http://www1.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/gsa/\n"
+                text += "Data Quality assessment and data package release will proceed as normal over the next few days."
 
-      msg['Subject'] = subject
-      msg['From'] = options.fromaddr
-      msg['To'] = notif.to
-      msg['Cc'] = notif.cc
-      msg['Reply-To'] = options.replyto
+            part1 = MIMEText(text, 'plain')
+            part2 = MIMEText(html, 'html')
 
-      msg.attach(part1)
-      msg.attach(part2)
+            msg['Subject'] = subject
+            msg['From'] = options.fromaddr
+            msg['To'] = notif.to
+            msg['Cc'] = notif.cc
+            msg['Reply-To'] = options.replyto
 
-      fulllist = []
-      tolist = notif.to.split(',')
-      fulllist += tolist
-      if(notif.cc):
-        cclist = notif.cc.split(',')
-        fulllist += cclist
-      # For now, I Bcc myself on all the emails to see that it's working...
-      fulllist.append('phirst@gemini.edu')
+            msg.attach(part1)
+            msg.attach(part2)
 
-      try:
-        logger.info("Sending Email- To: %s; CC: %s; Subject: %s" % (msg['To'], msg['Cc'], msg['Subject']))
-        smtp = smtplib.SMTP(mailhost)
-        smtp.sendmail(options.fromaddr, fulllist, msg.as_string())
-        retval = smtp.quit()
-        logger.info("SMTP seems to have worked OK: %s" % str(retval))
-      except smtplib.SMTPRecipientsRefused:
-        logger.error("Error sending mail message - Exception: %s: %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+            fulllist = []
+            tolist = notif.to.split(',')
+            fulllist += tolist
+            if(notif.cc):
+                cclist = notif.cc.split(',')
+                fulllist += cclist
+            # For now, I Bcc myself on all the emails to see that it's working...
+            fulllist.append('phirst@gemini.edu')
+
+            try:
+                logger.info("Sending Email- To: %s; CC: %s; Subject: %s" % (msg['To'], msg['Cc'], msg['Subject']))
+                smtp = smtplib.SMTP(mailhost)
+                smtp.sendmail(options.fromaddr, fulllist, msg.as_string())
+                retval = smtp.quit()
+                logger.info("SMTP seems to have worked OK: %s" % str(retval))
+            except smtplib.SMTPRecipientsRefused:
+                logger.error("Error sending mail message - Exception: %s: %s" % (sys.exc_info()[0], sys.exc_info()[1]))
 
 logger.info("YouveGotDataEmail.py exiting normally")
