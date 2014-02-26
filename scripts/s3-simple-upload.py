@@ -1,6 +1,3 @@
-import sys
-sys.path.append("/opt/boto/lib/python2.6/site-packages/boto-2.23.0-py2.6.egg")
-
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 
