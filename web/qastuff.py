@@ -483,7 +483,7 @@ def qaforgui(req, things):
                         cc['extinction_error'] = math.sqrt(s)
                     
                     cc['comment'] = cc_comment
-                    if(header):
+                    if(header.requested_cc is not None):
                         cc['requested'] = int(header.requested_cc)
     
                     submit_time_kludge = qarep.submit_time
@@ -531,7 +531,7 @@ def qaforgui(req, things):
                         bg['brightness_error'] = math.sqrt(s)
                     
                     bg['comment'] = bg_comment
-                    if(header):
+                    if(header.requested_bg is not None):
                         bg['requested'] = int(header.requested_bg)
     
                     submit_time_kludge = qarep.submit_time
