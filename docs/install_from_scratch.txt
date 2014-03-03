@@ -84,6 +84,7 @@ cd pyinotify
 python setup.py build
 python setup.py install --prefix=/opt/python_modules
 
+# if using s3
 cd /opt/python_modules
 tar xvf /opt/FitsStorage/otherfiles/boto-2.23.0.tar.gz
 cd boto-2.23.0
@@ -158,6 +159,9 @@ sudo chown fitsdata /data/backups
 sudo mkdir /data/upload_staging
 sudo chown fitsdata /data/upload_staging
 sudo chmod oug+rwx /data/upload_staging
+# if using s3
+sudo mkdir /data/s3_staging_area
+such chown fitsdata /data/s3_staging_area
 
 # Now get a shell as fitsdata
 cd /opt/FitsStorage/
