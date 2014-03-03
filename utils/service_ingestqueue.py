@@ -9,7 +9,7 @@ from logger import logger
 from sqlalchemy import desc
 from orm.geometryhacks import add_footprint, do_std_obs
 
-from fits_storage_config import storage_root, using_sqlite
+from fits_storage_config import storage_root, using_sqlite, using_s3
 
 from orm.file import File
 from orm.diskfile import DiskFile
@@ -25,6 +25,9 @@ from orm.michelle import Michelle
 from orm.f2 import F2
 from orm.ingestqueue import IngestQueue
 
+if(using_s3):
+    from boto.s3.connection import S3Connection
+    from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
 
 def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
     """
@@ -56,12 +59,21 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
     try:
 
         # First, sanity check if the file actually exists
-        fullpath = os.path.join(storage_root, path, filename)
-        exists = os.access(fullpath, os.F_OK | os.R_OK) and os.path.isfile(fullpath)
-        if(not exists):
-            logger.error("cannot access %s", fullpath)
-            check_present(session, filename)
-            return
+        if(using_s3):
+            s3conn = S3Connection(aws_access_key, aws_secret_key)
+            bucket = s3conn.get_bucket(s3_bucket_name)
+            key = bucket.get_key(filename)
+            if(key is None):
+                logger.error("cannot access %s in S3 bucket", filename)
+                check_present(session, filename)
+                return
+        else:
+            fullpath = os.path.join(storage_root, path, filename)
+            exists = os.access(fullpath, os.F_OK | os.R_OK) and os.path.isfile(fullpath)
+            if(not exists):
+                logger.error("cannot access %s", fullpath)
+                check_present(session, filename)
+                return
 
         # Make a file instance
         file = File(filename)
@@ -87,25 +99,42 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
             logger.debug("already present in diskfile table...")
             # Ensure there's only one and get an instance of it
             diskfile = query.one()
-            # Has the file changed since we last recorded it?
-            # By default check lastmod time first
-            # there is a subelty wrt timezones here.
-            if((diskfile.lastmod.replace(tzinfo=None) != diskfile.get_lastmod()) or force_md5 or force):
-                logger.debug("lastmod time or force flags indicates file modification")
-                # Check the md5 to be sure if it's changed
-                if(diskfile.md5 == diskfile.file.calculate_md5() and (force != True)):
-                    logger.debug("md5 indicates no change")
-                    add_diskfile = 0
+
+            # Has the file changed since we last ingested it?
+            if(using_s3):
+                # Check the md5 from the s3 etag first.
+                # Lastmod on s3 is always the upload time, no way to set it manually
+                s3_md5 = key.etag.replace('"', '')
+                if(diskfile.file_md5 == s3_md5):
+                    logger.debug("S3 etag md5 indicates no change")
+                    add_diskfile=0
                 else:
-                    logger.debug("md5/force flag indicates file has changed - reingesting")
+                    logger.debug("S3 etag md5 indicates file has changed - reingesting")
+                    # We could fetch the file and do a local md5 check here if we want
                     # Set the present and canonical flags on the current one to false and create a new entry
                     diskfile.present = False
                     diskfile.canonical = False
                     session.commit()
-                    add_diskfile = 1
+                    add_diskfile=1
             else:
-                logger.debug("lastmod time indicates file unchanged, not checking further")
-                add_diskfile = 0
+                # By default check lastmod time first
+                # there is a subelty wrt timezones here.
+                if((diskfile.lastmod.replace(tzinfo=None) != diskfile.get_lastmod()) or force_md5 or force):
+                    logger.debug("lastmod time or force flags indicates file modification")
+                    # Check the md5 to be sure if it's changed
+                    if(diskfile.file_md5 == diskfile.file.calculate_md5() and (force != True)):
+                        logger.debug("md5 indicates no change")
+                        add_diskfile = 0
+                    else:
+                        logger.debug("md5/force flag indicates file has changed - reingesting")
+                        # Set the present and canonical flags on the current one to false and create a new entry
+                        diskfile.present = False
+                        diskfile.canonical = False
+                        session.commit()
+                        add_diskfile = 1
+                else:
+                    logger.debug("lastmod time indicates file unchanged, not checking further")
+                    add_diskfile = 0
     
         else:
             # No not present, insert into diskfile table
@@ -122,6 +151,14 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         
         if(add_diskfile):
             logger.debug("Adding new DiskFile entry")
+            if(using_s3):
+                # At this point, we fetch a local copy of the file to the staging area
+                # when using_s3, path is always '' for now.
+                path = ''
+                fullpath = os.path.join(storage_root, filename)
+                logger.debug("Fetching %s to s3_staging_area" % filename)
+                key.get_contents_to_filename(fullpath)
+
             diskfile = DiskFile(file, filename, path)
             session.add(diskfile)
             session.commit()
@@ -146,7 +183,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
             except:
                 pass
 
-            if (not using_sqlite): # defined and set in FitsStoreConfig.py
+            if (not using_sqlite):
                 if(header.spectroscopy == False):
                     logger.debug("Imaging - populating PhotStandardObs")
                     do_std_obs(session, header.id)
@@ -186,6 +223,10 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
                 michelle = Michelle(header)
                 session.add(michelle)
                 session.commit()
+
+            if(using_s3):
+                logger.debug("deleting %s from s3_staging_area" % filename)
+                os.unlink(fullpath)
     
         session.commit()
 
