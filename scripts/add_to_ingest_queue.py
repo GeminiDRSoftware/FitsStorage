@@ -6,6 +6,8 @@ import os
 import re
 import datetime
 import time
+if (using_s3):
+    from boto.s3.connection import S3Connection
 
 # Option Parsing
 from optparse import OptionParser
@@ -25,11 +27,6 @@ setdemon(options.demon)
 # Annouce startup
 now = datetime.datetime.now()
 logger.info("*********    add_to_ingest_queue.py - starting up at %s" % now)
-
-if(using_s3):
-    import sys
-    sys.path.append("/opt/boto/lib/python2.6/site-packages/boto-2.23.0-py2.6.egg")
-    from boto.s3.connection import S3Connection
 
 # Get a list of all the files in the datastore
 # We assume this is just one dir (ie non recursive) for now.
