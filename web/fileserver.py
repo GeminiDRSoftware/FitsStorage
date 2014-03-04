@@ -1,6 +1,6 @@
 from orm import sessionfactory
 
-from fits_storage_config import odbkeypass
+from fits_storage_config import odbkeypass, using_s3
 
 from gemini_metadata_utils import gemini_fitsfilename
 
@@ -18,6 +18,10 @@ import time
 import urllib
 import re
 import datetime
+
+if(using_s3):
+    from boto.s3.connection import S3Connection
+    from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
 
 def authcookie(req):
     """
@@ -192,16 +196,27 @@ def fileserver(req, things):
             # Send them the data
             req.content_type = 'application/fits'
             req.headers_out['Content-Disposition'] = 'attachment; filename="%s"' % filename
-            if(diskfile.gzipped == True):
-                # Unzip it on the fly
-                req.set_content_length(diskfile.data_size)
-                gzfp = gzip.open(diskfile.fullpath(), 'rb')
-                try:
-                    req.write(gzfp.read())
-                finally:
-                    gzfp.close()
+            if(using_s3):
+                # S3 file server
+                # For now, just serve what we have.
+                # Need to implement gz and non gz requests somehow
+                s3conn = S3Connection(aws_access_key, aws_secret_key)
+                bucket = s3conn.get_bucket(s3_bucket_name)
+                key = bucket.get_key(filename)
+                req.set_content_length(diskfile.file_size)
+                key.get_contents_to_file(req)
             else:
-                req.sendfile(diskfile.fullpath())
+                # Serve from regular file
+                if(diskfile.gzipped == True):
+                    # Unzip it on the fly
+                    req.set_content_length(diskfile.data_size)
+                    gzfp = gzip.open(diskfile.fullpath(), 'rb')
+                    try:
+                        req.write(gzfp.read())
+                    finally:
+                        gzfp.close()
+                else:
+                    req.sendfile(diskfile.fullpath())
 
             return apache.OK
         else:
