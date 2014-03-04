@@ -8,6 +8,13 @@ from sqlalchemy import join
 import datetime
 from optparse import OptionParser
 
+from fits_storage_config import using_s3
+
+if(using_s3):
+    from boto.s3.connection import S3Connection
+    from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
+
+
 parser = OptionParser()
 parser.add_option("--limit", action="store", type="int", help="specify a limit on the number of files to examine. The list is sorted by lastmod time before the limit is applied")
 parser.add_option("--file-pre", action="store", type="string", dest="filepre", help="File prefix to check (omit for all)")
@@ -50,14 +57,30 @@ logger.info("Getting list...")
 list = query.all()
 logger.info("Starting checking...")
 
+if(using_s3):
+    # Connect to S3
+    logger.debug("Connecting to s3")
+    s3conn = S3Connection(aws_access_key, aws_secret_key)
+    bucket = s3conn.get_bucket(s3_bucket_name)
+
 i = 0
 j = 0
 missingfiles = []
 for dfid in list:
     # Search for it by ID (is there a better way?)
     df = session.query(DiskFile).filter(DiskFile.id == dfid[0]).one()
-    if(not df.exists()):
-        # This one doesn't actually exist
+    exists = True
+    if(using_s3):
+        logger.debug("Getting s3 key for %s" % df.filename)
+        key=bucket.get_key(df.filename)
+        if(key is None):
+            exists = False
+    else:
+        if(not df.exists()):
+            # This one doesn't actually exist
+            exists = False
+
+    if(exists == False):
         df.present = False
         j += 1
         logger.info("File %d/%d: Marking file %s (diskfile id %d) as not present" % (i, n, df.filename, df.id))
