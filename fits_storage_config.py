@@ -7,6 +7,7 @@
 # AWS S3 info
 using_s3 = True
 s3_bucket_name = 'gemini-archive'
+s3_staging_area = '/data/s3_staging'
 aws_access_key = 'AKIAJ554XPYMJZBPGQAA'
 aws_secret_key = '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'
 
@@ -14,6 +15,9 @@ aws_secret_key = 'o6J/3yECuT50FM46sEuFM5wcdtW8iPzqx3ur1m7a'
 #storage_root = '/data/dataflow'
 storage_root = '/net/wikiwiki/dataflow'
 #storage_root = '/net/hahalua/data/export'
+
+if(using_s3):
+    storage_root = s3_staging_area
 
 target_gb_free = 100
 target_max_files = 125000
