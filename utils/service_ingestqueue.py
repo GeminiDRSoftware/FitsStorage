@@ -62,7 +62,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         if(using_s3):
             s3conn = S3Connection(aws_access_key, aws_secret_key)
             bucket = s3conn.get_bucket(s3_bucket_name)
-            key = bucket.get_key(filename)
+            key = bucket.get_key(os.path.join(path, filename))
             if(key is None):
                 logger.error("cannot access %s in S3 bucket", filename)
                 check_present(session, filename)
@@ -153,8 +153,6 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
             logger.debug("Adding new DiskFile entry")
             if(using_s3):
                 # At this point, we fetch a local copy of the file to the staging area
-                # when using_s3, path is always '' for now.
-                path = ''
                 fullpath = os.path.join(storage_root, filename)
                 logger.debug("Fetching %s to s3_staging_area" % filename)
                 key.get_contents_to_filename(fullpath)
