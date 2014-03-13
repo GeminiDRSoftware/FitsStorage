@@ -21,8 +21,9 @@
 #
 #HTTPD_LANG=C
 
-export PYTHONPATH=/opt/python_modules/lib/python2.6/site-packages:/opt/gemini_python:/astro/iraf/rhux-x86_64-glibc2.5/gempylocal/lib/stsci_python/lib/python2.6/site-packages:/astro/iraf/rhux-x86_64-glibc2.5/gempylocal/gemaux_python_internal/lib/python2.6/site-packages:/astro/iraf/rhux-x86_64-glibc2.5/gempylocal/gemaux_python_internal/lib/python2.6/site-packages
+export PATH=/opt/Ureka/Ureka/variants/common/bin:/opt/Ureka/Ureka/bin:/opt/Ureka/Ureka/python/bin:/usr/local/bin:/bin:/usr/bin
+
+export PYTHONPATH=/opt/FitsStorage:/opt/python_modules/lib/python2.7/site-packages:/opt/gemini_python
 
 export PYTHON_EGG_CACHE=/var/www/python-egg-cache
 
-export LD_LIBRARY_PATH=/lib64:/usr/lib64:/astro/iraf/rhux-x86_64-glibc2.5/lib:/astro/iraf/rhux-x86_64-glibc2.5/gempylocal/lib
