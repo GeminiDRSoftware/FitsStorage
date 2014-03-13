@@ -20,13 +20,14 @@ from web.gmoscal import gmoscal
 from web.notification import notification
 from web.calmgr import calmgr
 from web.calibrations import calibrations
-from web.upload_processed_cal import upload_processed_cal
+from web.upload_file import upload_file
 from web.curationreport import curation_report
 from web.standards import standardobs
 from web.selection import getselection
 from web.fileserver import fileserver, authcookie, mydata
 from web.qastuff import qareport, qametrics, qaforgui
 
+from orm import sessionfactory
 from orm.file import File
 from orm.diskfile import DiskFile
 from orm.header import Header
@@ -173,9 +174,15 @@ def handler(req):
     if(this == 'upload_processed_cal'):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
-        retval = upload_processed_cal(req, things[0])
+        retval = upload_file(req, things[0], processed_cal=True)
         return retval
-        
+
+    # The generic uploaD_file server
+    if(this == 'upload_file'):
+        if(this in blocked_urls):
+            return apache.HTTP_FORBIDDEN
+        retval = upload_file(req, things[0])
+        return retval
 
     # This returns the fitsverify, wmdreport or fullheader text from the database
     # you can give it either a diskfile_id or a filename
@@ -389,6 +396,10 @@ def debugmessage(req):
     req.write("Debug info\n\n")
     req.write("python interpreter name: %s\n\n" % (str(req.interpreter)))
     req.write("Pythonpath: %s\n\n" % (str(sys.path)))
+    req.write("python path: \n")
+    for i in sys.path:
+      req.write("-- %s\n" % i)
+    req.write("\n")
     req.write("uri: %s\n\n" % (str(req.uri)))
     req.write("unparsed_uri: %s\n\n" % (str(req.unparsed_uri)))
     req.write("the_request: %s\n\n" % (str(req.the_request)))
