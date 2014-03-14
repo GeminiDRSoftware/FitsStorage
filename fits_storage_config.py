@@ -25,6 +25,13 @@ target_max_files = 125000
 # This is the path in the storage root where processed calibrations
 # uploaded through the http server get stored.
 upload_staging_path = "/data/upload_staging"
+
+# This is the cookie value needed to allow uploading files.
+# Leave it empty to disable upload authentication
+# The cookie name is 'gemini_fits_upload_auth'
+upload_auth_cookie = None
+
+# This is the subdirectory in dataroot where processed_cals live
 processed_cals_path = "reduced_cals"
 
 # The DAS calibration reduction path is used to find the last processing
