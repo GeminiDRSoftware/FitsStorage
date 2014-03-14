@@ -366,14 +366,14 @@ def list_headers(session, selection, orderby):
             if '_desc' in orderby[i]:
                 orderby[i] = orderby[i].replace('_desc', '')
                 if (orderby[i] == 'filename'):
-                    query = query.order_by(desc('File.%s' % orderby[i]))
+                    query = query.order_by(desc('DiskFile.%s' % orderby[i]))
                 if orderby[i] in whichorderby:
                     query = query.order_by(desc('Header.%s' % orderby[i]))
             else:
                 if '_asc' in orderby[i]:
                     orderby[i] = orderby[i].replace('_asc', '')
                 if (orderby[i] == 'filename'):
-                    query = query.order_by('File.%s' % orderby[i])
+                    query = query.order_by('DiskFile.%s' % orderby[i])
                 if orderby[i] in whichorderby:
                     query = query.order_by('Header.%s' % orderby[i])
 
