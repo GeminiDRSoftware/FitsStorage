@@ -56,6 +56,9 @@ def getselection(things):
         if(gemini_fitsfilename(thing)):
             selection['filename'] = gemini_fitsfilename(thing)
             recognised = True
+        if(thing[:9] == 'filename='):
+            selection['filename'] = thing[9:]
+            recognised = True
         if(gemini_observation_type(thing)):
             selection['observation_type'] = gemini_observation_type(thing)
             recognised = True
