@@ -12,7 +12,7 @@ from mod_python import util
 
 from fits_storage_config import blocked_urls
 from web.summary import summary
-from web.xml_file_list import xmlfilelist
+from web.file_list import xmlfilelist, jsonfilelist
 from web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead
 from web.xml_tape import xmltape
 from web.progsobserved import progsobserved
@@ -142,12 +142,18 @@ def handler(req):
         retval = calibrations(req, selection)
         return retval
 
-    # The xml file list handler
+    # The xml and json file list handlers
     if(this == 'xmlfilelist'):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
         selection = getselection(things)
         retval = xmlfilelist(req, selection)
+        return retval
+    if(this == 'jsonfilelist'):
+        if(this in blocked_urls):
+            return apache.HTTP_FORBIDDEN
+        selection = getselection(things)
+        retval = jsonfilelist(req, selection)
         return retval
 
     # The fileontape handler
