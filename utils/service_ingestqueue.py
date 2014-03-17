@@ -274,14 +274,6 @@ def pop_ingestqueue(session):
     delete all other entries for the same filename.
     """
 
-    # Form the query, with lockmode update which adds FOR UPDATE to the SQL query. The resulting lock ends when the transaction gets committed
-    # Do not use nowait - it throws an exception rather than waiting. We want it to wait
-    #query=session.query(IngestQueue).with_lockmode('update').filter(IngestQueue.inprogress == False).order_by(desc(IngestQueue.filename))
-
-    # Try and get a value. If we fail, there are none, so bail out
-    # We have to fetch *all* the rows here, as we want the FOR UPDATE to apply to all the rows. If we say .first() then it applies a LIMIT 1 to the select for update.
-    # ARGH, that's a huge performance hit when we have thousands of rows. Let's try and do the lock manually then...
-
     session.execute("LOCK TABLE ingestqueue IN ACCESS EXCLUSIVE MODE;")
     query = session.query(IngestQueue).filter(IngestQueue.inprogress == False).order_by(desc(IngestQueue.filename))
 
