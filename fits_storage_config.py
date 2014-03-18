@@ -31,6 +31,9 @@ upload_staging_path = "/data/upload_staging"
 # The cookie name is 'gemini_fits_upload_auth'
 upload_auth_cookie = None
 
+# This is the list of downstream servers we export files we ingest to
+export_destinations = ['hbffits2']
+
 # This is the subdirectory in dataroot where processed_cals live
 processed_cals_path = "reduced_cals"
 

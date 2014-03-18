@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 from orm import sessionfactory
-import fits_storage_config
+from fits_storage_config import using_sqlite, fits_lockfile_dir, export_destinations
 from utils.service_ingestqueue import ingest_file, pop_ingestqueue, ingestqueue_length
+from utils.add_to_exportqueue import addto_exportqueue
 from logger import logger, setdebug, setdemon
 import signal
 import sys
@@ -60,7 +61,7 @@ logger.info("*********    service_ingest_queue.py - starting up at %s" % now)
 
 if(options.lockfile):
     # Does the Lockfile exist?
-    lockfile = "%s/%s" % (fits_storage_config.fits_lockfile_dir, options.lockfile)
+    lockfile = "%s/%s" % (fits_lockfile_dir, options.lockfile)
     if(os.path.exists(lockfile)):
         logger.info("Lockfile %s already exists, testing for viability" % lockfile)
         actually_locked = True
@@ -120,7 +121,7 @@ while(loop):
             time.sleep(10)
         else:
             logger.info("Ingesting %s, (%d in queue)" % (iq.filename, ingestqueue_length(session)))
-            if(fits_storage_config.using_sqlite):
+            if(using_sqlite):
                 # SQLite doesn't support nested transactions
                 session.begin(subtransactions=True)
             else:
@@ -129,6 +130,9 @@ while(loop):
             try:
                 ingest_file(session, iq.filename, iq.path, options.force_crc, options.force, options.skip_fv, options.skip_wmd)
                 session.commit()
+                # Now we also add this file to our export list if we have downstream servers
+                for destination in export_destinations:
+                    addto_exportqueue(session, iq.filename, iq.path, destination)
             except:
                 logger.info("Problem Ingesting File - Rolling back" )
                 session.rollback()

@@ -10,6 +10,7 @@ def addto_exportqueue(session, filename, path, destination):
     """
     Adds a file to the export queue
     """
+    logger.info("Adding file %s to %s to exportqueue" % (filename, destination))
     eq = ExportQueue(filename, path, destination)
     session.add(eq)
     session.commit()
