@@ -16,6 +16,7 @@ class ExportQueue(Base):
     destination = Column(Text, nullable=False, unique=False, index=True)
     inprogress = Column(Boolean, index=True)
     added = Column(DateTime)
+    lastfailed = Column(DateTime)
 
     def __init__(self, filename, path, destination):
         self.filename = filename
