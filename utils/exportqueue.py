@@ -3,17 +3,23 @@ This module provides various utility function used to
 manage the export queue
 """
 import os
+import sys
+import traceback
 import urllib2
 import json
 import datetime
+import hashlib
+import gzip
+from io import BytesIO
 
 from logger import logger
-from sqlalchemy import desc
+from sqlalchemy import desc, join
 from sqlalchemy.orm.exc import ObjectDeletedError
 
 
-from fits_storage_config import storage_root, using_s3
+from fits_storage_config import storage_root, using_s3, export_gzip
 
+from orm.file import File
 from orm.diskfile import DiskFile
 from orm.exportqueue import ExportQueue
 
@@ -22,6 +28,8 @@ import apache_return_codes as apache
 if(using_s3):
     from boto.s3.connection import S3Connection
     from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
+    import logging
+    logging.getLogger('boto').setLevel(logging.CRITICAL)
 
 def add_to_exportqueue(session, filename, path, destination):
     """
@@ -48,19 +56,29 @@ def export_file(session, filename, path, destination):
 
     # First, lookup the md5 of the file we have, and see if the
     # destination server already has it with that md5
-    query = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.filename == filename)
-    diskfile = query.one()
-    our_md5 = diskfile.file_md5
+    # This is all done with the data md5 not the file, if the correct data
+    # is there at the other end but the gzip state is wrong, we're not going
+    # to re-export it here. 
+    # To ignore the gzip factor, we match against File.name rather than DiskFile.filename
+    # and we strip any .gz from the local filename
 
-    dest_md5 = get_destination_md5(filename, destination)
+    # Strip any .gz from local filename
+    filename_nogz = filename
+    if(filename_nogz.endswith('.gz')):
+        filename_nogz = filename_nogz[:-3]
+
+    # Search Database
+    query = session.query(DiskFile).select_from(join(File, DiskFile))
+    query = query.filter(DiskFile.present == True).filter(File.name == filename_nogz)
+    diskfile = query.one()
+    our_md5 = diskfile.data_md5
+
+    dest_md5 = get_destination_data_md5(filename, destination)
 
     if((dest_md5 is not None) and (dest_md5 == our_md5)):
-        logger.info("File %s is already at %s with md5 %s" % (filename, destination, dest_md5))
+        logger.info("Data %s is already at %s with md5 %s" % (filename, destination, dest_md5))
         return True
 
-    # Construct upload URL
-    url = "http://%s/upload_file/%s" % (destination, filename)
-    
     # Read the file into the payload postdata buffer to HTTP POST
     if(using_s3):
         # Read the file from S3
@@ -84,15 +102,56 @@ def export_file(session, filename, path, destination):
             data = f.read()
             f.close()
 
+    # Do we need to gzip or ungzip the data?
+    # If the data are already gzipped, we're not going to re-compress it
+    # even if the new gzip level is higher.
+    # Note, gzip contains some header data in addition to the compressed bytes
+    # Use the gzip module rather than zlib directly to do this
+    # Otherwise we would have to handle all the headers ourselves or md5s will differ 
+    # So use a StringIO instance to do that.
+    filename = filename.encode('ascii', 'ignore')
+    if((export_gzip is not None) and (diskfile.gzipped == False)):
+        # Need to compress it
+        logger.debug("gzipping file on the fly")
+        # Create an empty bytesIO object, have gzip write data into it
+        bio = BytesIO()
+        gzip_file = gzip.GzipFile(filename, mode='wb', compresslevel=export_gzip, fileobj=bio)
+        gzip_file.write(data)
+        gzip_file.close()
+        data = bio.getvalue()
+        bio.close()
+        # Add .gz to the filename from here on, update our_md5
+        filename += '.gz'
+        m = hashlib.md5()
+        m.update(data)
+        our_md5 = m.hexdigest()
+
+    if((export_gzip is None) and (diskfile.gzipped == True)):
+        # Need to uncompress it
+        logger.debug("gunzipping on the fly")
+        # Put the compressed data in the StringIO object, have gzip read it
+        bio = BytesIO(data)
+        gzip_file = gzip.GzipFile(filename, mode='rb', fileobg=bio)
+        data = gzip_file.read()
+        gzip_file.close()
+        bio.close()
+        # Trim .gz from the filename from here on, update our_md5
+        filename = filename[:-3]
+        our_md5 = diskfile.data_md5
+        
+    # Construct upload URL
+    url = "http://%s/upload_file/%s" % (destination, filename)
+    
     # Connect to the URL and post the data
     # NB need to make the data buffer into a bytearray not a str
     # Otherwise get ascii encoding errors from httplib layer
     try:
         logger.info("Transferring file %s to destination %s" % (filename, destination))
         postdata = bytearray(data)
+        data = None
         request = urllib2.Request(url, data=postdata)
         request.add_header('Cache-Control', 'no-cache')
-        request.add_header('Content-Length', '%d' % len(data))
+        request.add_header('Content-Length', '%d' % len(postdata))
         request.add_header('Content-Type', 'application/octet-stream')
         u = urllib2.urlopen(request)
         response = u.read()
@@ -104,12 +163,12 @@ def export_file(session, filename, path, destination):
         ok = True
         if(http_status == apache.OK):
             # response is a short json document
-            veification = json.loads(response)[0]
+            verification = json.loads(response)[0]
             if(verification['filename'] != filename):
                 logger.error("Transfer Verification Filename mismatch: %s vs %s" % (verification['filename'], filename))
                 ok = False
-            if(verification['size'] != len(data)):
-                logger.error("Transfer Verification size mismatch: %s vs %s" % (verification['size'], size))
+            if(verification['size'] != len(postdata)):
+                logger.error("Transfer Verification size mismatch: %s vs %s" % (verification['size'], len(postdata)))
                 ok = False
             if(verification['md5'] != our_md5):
                 logger.error("Transfer Verification md5 mismatch: %s vs %s" % (verification['md5'], our_md5))
@@ -126,10 +185,13 @@ def export_file(session, filename, path, destination):
             return False
 
     except urllib2.URLError:
-        logger.error("URLError posting %d bytes of data to destination server at: %s" % (len(data), url))
+        logger.error("URLError posting %d bytes of data to destination server at: %s" % (len(postdata), url))
+        string = traceback.format_tb(sys.exc_info()[2])
+        string = "".join(string)
+        logger.error("Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
         return False
     except:
-        logger.error("Problem posting %d bytes of data to destination server at: %s" % (len(data), url))
+        logger.error("Problem posting %d bytes of data to destination server at: %s" % (len(postdata), url))
         raise
 
 def pop_exportqueue(session):
@@ -186,7 +248,7 @@ def exportqueue_length(session):
     length = session.query(ExportQueue).filter(ExportQueue.inprogress == False).count()
     return length
 
-def get_destination_md5(filename, destination):
+def get_destination_data_md5(filename, destination):
     """
     Queries the jsonfilelist url at the destination to get the md5 of the file
     at the destination.
@@ -217,10 +279,10 @@ def get_destination_md5(filename, destination):
             logger.error("No filename in json data")
         elif(thedict['filename'] != filename):
             logger.error("Wrong filename in json data")
-        elif('md5' not in thedict.keys()):
-            logger.error("No md5 in json data")
+        elif('data_md5' not in thedict.keys()):
+            logger.error("No data_md5 in json data")
         else:
-            return thedict['md5']
+            return thedict['data_md5']
 
     # Should never get here
     return None
