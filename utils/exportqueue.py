@@ -108,7 +108,8 @@ def export_file(session, filename, path, destination):
     # Note, gzip contains some header data in addition to the compressed bytes
     # Use the gzip module rather than zlib directly to do this
     # Otherwise we would have to handle all the headers ourselves or md5s will differ 
-    # So use a StringIO instance to do that.
+    # So use a BytesIO instance to do that. Don't use StringIO with binary data.
+    # And don't try to pass a unicode filename.
     filename = filename.encode('ascii', 'ignore')
     if((export_gzip is not None) and (diskfile.gzipped == False)):
         # Need to compress it
@@ -129,7 +130,7 @@ def export_file(session, filename, path, destination):
     if((export_gzip is None) and (diskfile.gzipped == True)):
         # Need to uncompress it
         logger.debug("gunzipping on the fly")
-        # Put the compressed data in the StringIO object, have gzip read it
+        # Put the compressed data in the BytesIO object, have gzip read it
         bio = BytesIO(data)
         gzip_file = gzip.GzipFile(filename, mode='rb', fileobg=bio)
         data = gzip_file.read()
