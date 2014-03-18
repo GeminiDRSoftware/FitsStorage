@@ -34,6 +34,9 @@ upload_auth_cookie = None
 # This is the list of downstream servers we export files we ingest to
 export_destinations = ['hbffits2']
 
+# Do we want to gzip files we export on the fly? Set to None or the gzip level
+export_gzip = 6
+
 # This is the subdirectory in dataroot where processed_cals live
 processed_cals_path = "reduced_cals"
 
