@@ -43,7 +43,22 @@ def upload_file(req, filename, processed_cal="False"):
     f = open(fullfilename, 'w')
     f.write(clientdata)
     f.close()
+
+    # compute the md5  and size while we still have the buffer in memory
+    m = hashlib.md5()
+    m.update(clientdata)
+    md5 = m.hexdigest()
+    size = len(clientdata)
+
+    # Free up memory
     clientdata = None
+
+    # Construct the verification dictionary and json encode it
+    verification = {'filename': filename, 'size': size, 'md5': md5}
+    verif_json = json.dumps([verification])
+
+    # And write that back to the client
+    req.write(verif_json)
 
     # Now invoke the setuid ingest program
     command = ["/opt/FitsStorage/scripts/invoke", "/opt/FitsStorage/scripts/ingest_uploaded_file.py", "--filename=%s" % filename, "--demon", "--processed_cal=%s" % processed_cal]

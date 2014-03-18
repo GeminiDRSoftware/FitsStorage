@@ -6,13 +6,14 @@ import datetime
 import time
 import traceback
 from orm import sessionfactory
-from utils.service_exportqueue import export_file, pop_exportqueue, exportqueue_length
+from utils.service_exportqueue import export_file, pop_exportqueue, exportqueue_length, retry_failures
 from logger import logger, setdebug, setdemon
 from fits_storage_config import using_sqlite, fits_lockfile_dir
 
 from optparse import OptionParser
 
 parser = OptionParser()
+parser.add_option("--retry_mins", action="store", dest="retry_mins", type="float", default=5.0, help="Minimum number of minutes to wait before retries")
 parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
 parser.add_option("--lockfile", action="store", dest="lockfile", help="Use this as a lockfile to limit instances")
@@ -94,6 +95,9 @@ if(options.lockfile):
         lfd.write("%s\n" % os.getpid())
         lfd.close()
 
+# retry interval option has a default so should always be defined
+interval = datetime.timedelta(minutes = options.retry_mins)
+
 session = sessionfactory()
 
 # Loop forever. loop is a global variable defined up top
@@ -113,6 +117,10 @@ while(loop):
             else:
                 logger.info("...Waiting")
             time.sleep(10)
+
+            # Mark any old failures for retry
+            retry_failures(session, interval)
+
         else:
             logger.info("Exporting %s, (%d in queue)" % (eq.filename, exportqueue_length(session)))
             if(using_sqlite):
@@ -122,7 +130,7 @@ while(loop):
                 session.begin_nested()
 
             try:
-                export_file(session, eq.filename, eq.path, eq.destination)
+                sucess=export_file(session, eq.filename, eq.path, eq.destination)
                 session.commit()
             except:
                 logger.info("Problem Exporting File - Rolling back" )
@@ -133,9 +141,13 @@ while(loop):
                 # iq.inprogress=False
                 session.commit()
                 raise
-            logger.debug("Deleteing exportqueue id %d" % eq.id)
-            session.delete(eq)
-            session.commit()
+            if(sucess):
+                logger.debug("Deleteing exportqueue id %d" % eq.id)
+                session.delete(eq)
+                session.commit()
+            else:
+                logger.info("Exportqueue id %d DID NOT TRANSFER" % eq.id)
+                eq.lastfailed = datetime.datetime.now()
 
     except KeyboardInterrupt:
         loop = False
