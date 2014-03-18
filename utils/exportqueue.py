@@ -277,7 +277,7 @@ def get_destination_data_md5(filename, destination):
         thedict = thelist[0]
         if('filename' not in thedict.keys()):
             logger.error("No filename in json data")
-        elif(thedict['filename'] != filename):
+        elif(thedict['filename'] not in [filename, filename+'.gz']):
             logger.error("Wrong filename in json data")
         elif('data_md5' not in thedict.keys()):
             logger.error("No data_md5 in json data")
