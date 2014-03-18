@@ -1,4 +1,6 @@
 import os
+import json
+import hashlib
 import subprocess
 
 from fits_storage_config import upload_staging_path, upload_auth_cookie
