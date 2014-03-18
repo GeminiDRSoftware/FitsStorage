@@ -25,9 +25,16 @@ def xmlfilelist(req, selection):
         headers = list_headers(session, selection, orderby)
         for header in headers:
             req.write("<file>")
+            req.write("<name>%s</name>" % header.diskfile.file.name)
             req.write("<filename>%s</filename>" % header.diskfile.filename)
+            req.write("<path>%s</path>" % header.diskfile.path)
+            req.write("<gzipped>%s</gzipped>" % header.diskfile.gzipped)
             req.write("<size>%d</size>" % header.diskfile.file_size)
+            req.write("<file_size>%d</file_size>" % header.diskfile.file_size)
+            req.write("<data_size>%d</data_size>" % header.diskfile.data_size)
             req.write("<md5>%s</md5>" % header.diskfile.file_md5)
+            req.write("<file_md5>%s</file_md5>" % header.diskfile.file_md5)
+            req.write("<data_md5>%s</data_md5>" % header.diskfile.data_md5)
             req.write("<lastmod>%s</lastmod>" % header.diskfile.lastmod)
             if(header.phot_standard):
                 xmlstandardobs(req, header.id)
@@ -51,9 +58,16 @@ def jsonfilelist(req, selection):
         thelist = []
         for header in headers:
             thedict = {}
+            thedict['name'] = str(header.diskfile.file.name)
             thedict['filename'] = str(header.diskfile.filename)
+            thedict['path'] = str(header.diskfile.path)
+            thedict['gzipped'] = str(header.diskfile.gzipped)
             thedict['size'] =  str(header.diskfile.file_size)
+            thedict['file_size'] =  str(header.diskfile.file_size)
+            thedict['data_size'] =  str(header.diskfile.data_size)
             thedict['md5'] = str(header.diskfile.file_md5)
+            thedict['file_md5'] = str(header.diskfile.file_md5)
+            thedict['data_md5'] = str(header.diskfile.data_md5)
             thedict['lastmod'] = str(header.diskfile.lastmod)
             thelist.append(thedict)
     finally:
