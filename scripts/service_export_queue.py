@@ -6,7 +6,7 @@ import datetime
 import time
 import traceback
 from orm import sessionfactory
-from utils.service_exportqueue import export_file, pop_exportqueue, exportqueue_length, retry_failures
+from utils.exportqueue import export_file, pop_exportqueue, exportqueue_length, retry_failures
 from logger import logger, setdebug, setdemon
 from fits_storage_config import using_sqlite, fits_lockfile_dir
 
