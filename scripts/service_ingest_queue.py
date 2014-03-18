@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 from orm import sessionfactory
 from fits_storage_config import using_sqlite, fits_lockfile_dir, export_destinations
-from utils.service_ingestqueue import ingest_file, pop_ingestqueue, ingestqueue_length
-from utils.add_to_exportqueue import addto_exportqueue
+from utils.ingestqueue import ingest_file, pop_ingestqueue, ingestqueue_length
+from utils.exportqueue import add_to_exportqueue
 from logger import logger, setdebug, setdemon
 import signal
 import sys
@@ -132,7 +132,7 @@ while(loop):
                 session.commit()
                 # Now we also add this file to our export list if we have downstream servers
                 for destination in export_destinations:
-                    addto_exportqueue(session, iq.filename, iq.path, destination)
+                    add_to_exportqueue(session, iq.filename, iq.path, destination)
             except:
                 logger.info("Problem Ingesting File - Rolling back" )
                 session.rollback()

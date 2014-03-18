@@ -1,7 +1,7 @@
 from orm import sessionfactory
 from fits_storage_config import storage_root, using_s3
 from logger import logger, setdebug, setdemon
-from utils.add_to_exportqueue import addto_exportqueue
+from utils.exportqueue import add_to_exportqueue
 from web.summary import list_headers
 from web.selection import getselection
 import os
@@ -54,7 +54,7 @@ n = len(headers)
 for header in headers:
     i += 1
     logger.info("Queueing for Export: (%d/%d): %s" % (i, n, header.diskfile.filename))
-    addto_exportqueue(session, header.diskfile.filename, header.diskfile.path, options.destination)
+    add_to_exportqueue(session, header.diskfile.filename, header.diskfile.path, options.destination)
 
 session.close()
 logger.info("*** add_to_exportqueue.py exiting normally at %s" % datetime.datetime.now())

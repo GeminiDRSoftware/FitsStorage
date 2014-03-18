@@ -1,12 +1,14 @@
 """
-This module provides various utility functions for service_ingest_queue.py 
-in the Fits Storage System.
+This module provides various utility functions to
+manage and service the ingestqueue
 """
 import os
 import sys
 import traceback
 from logger import logger
 from sqlalchemy import desc
+from sqlalchemy.orm.exc import ObjectDeletedError
+
 from orm.geometryhacks import add_footprint, do_std_obs
 
 from fits_storage_config import storage_root, using_sqlite, using_s3
@@ -28,6 +30,20 @@ from orm.ingestqueue import IngestQueue
 if(using_s3):
     from boto.s3.connection import S3Connection
     from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
+
+def add_to_ingestqueue(session, filename, path):
+    """
+    Adds a file to the ingest queue
+    """
+    iq = IngestQueue(filename, path)
+    session.add(iq)
+    session.commit()
+    try:
+        logger.debug("Added id %d for filename %s to ingestqueue" % (iq.id, iq.filename))
+        return iq.id
+    except ObjectDeletedError:
+        logger.debug("Added filename %s to ingestqueue which was immediately deleted" % filename)
+
 
 def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
     """

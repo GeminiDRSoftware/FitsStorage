@@ -7,7 +7,7 @@ import time
 from orm import sessionfactory
 from fits_storage_config import storage_root
 from logger import logger, setdebug, setdemon
-from utils.add_to_ingestqueue import addto_ingestqueue
+from utils.ingestqueue import add_to_ingestqueue
 
 # Option Parsing
 from optparse import OptionParser
@@ -73,7 +73,7 @@ for fullfilename in thefiles:
     i += 1
     logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
     
-    addto_ingestqueue(session, filename, path)
+    add_to_ingestqueue(session, filename, path)
 
 session.close()
 logger.info("*** local_add_to_ingestqueue.py exiting normally at %s" % datetime.datetime.now())

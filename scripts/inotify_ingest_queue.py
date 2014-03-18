@@ -5,7 +5,7 @@ import datetime
 from orm import sessionfactory
 from fits_storage_config import storage_root
 from logger import logger, setdemon, setdebug
-from utils.add_to_ingestqueue import addto_ingestqueue
+from utils.ingestqueue import add_to_ingestqueue
 
 
 # Option Parsing
@@ -49,7 +49,7 @@ class HandleEvents(pyinotify.ProcessEvent):
                 logger.info("Dryrun mode - not actually adding to ingest queue: %s" % event.name)
             else:
                 logger.info("Adding to Ingest Queue: %s" % event.name)
-                addto_ingestqueue(session, event.name, '')
+                add_to_ingestqueue(session, event.name, '')
 
 
 # Create the notifier

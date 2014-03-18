@@ -1,6 +1,6 @@
 """
-This module provides various utility function used to service
-the export queue
+This module provides various utility function used to 
+manage the export queue
 """
 import os
 import urllib2
@@ -9,6 +9,8 @@ import datetime
 
 from logger import logger
 from sqlalchemy import desc
+from sqlalchemy.orm.exc import ObjectDeletedError
+
 
 from fits_storage_config import storage_root, using_s3
 
@@ -20,6 +22,21 @@ import apache_return_codes as apache
 if(using_s3):
     from boto.s3.connection import S3Connection
     from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
+
+def add_to_exportqueue(session, filename, path, destination):
+    """
+    Adds a file to the export queue
+    """
+    logger.info("Adding file %s to %s to exportqueue" % (filename, destination))
+    eq = ExportQueue(filename, path, destination)
+    session.add(eq)
+    session.commit()
+    try:
+        logger.debug("Added id %d for filename %s to exportqueue" % (eq.id, eq.filename))
+        return eq.id
+    except ObjectDeletedError:
+        logger.debug("Added filename %s to exportqueue which was immediately deleted" % filename)
+
 
 def export_file(session, filename, path, destination):
     """
