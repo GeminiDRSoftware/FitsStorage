@@ -138,7 +138,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
                 if((diskfile.lastmod.replace(tzinfo=None) != diskfile.get_lastmod()) or force_md5 or force):
                     logger.debug("lastmod time or force flags indicates file modification")
                     # Check the md5 to be sure if it's changed
-                    if(diskfile.file_md5 == diskfile.file.calculate_md5() and (force != True)):
+                    if(diskfile.file_md5 == diskfile.get_file_md5() and (force != True)):
                         logger.debug("md5 indicates no change")
                         add_diskfile = 0
                     else:
