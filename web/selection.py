@@ -397,7 +397,7 @@ def openquery(selection):
     """
     openquery = True
 
-    things = ['date', 'daterange', 'program_id', 'observation_id', 'data_label', 'filename']
+    things = ['date', 'daterange', 'program_id', 'observation_id', 'data_label', 'filename', 'filepre']
 
     for thing in things:
         if(thing in selection):
