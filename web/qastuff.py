@@ -402,13 +402,30 @@ def qaforgui(req, things):
             query = query.filter(DiskFile.canonical == True).filter(Header.data_label == datalabel)
             header = query.first()
             # We can only populate the header info if it is in the header table
+            # These items are used later in the code if available from the header, init to None here
+            airmass = None
+            requested_iq = None
+            requested_cc = None
+            requested_bg = None
+
             if(header):
+                # These are not directly used as metadata items, but are used later if available from the header
+                if(header.airmass is not None):
+                    airmass = float(header.airmass)
+                if(header.requested_iq is not None):
+                    requested_iq = header.requested_iq
+                if(header.requested_cc is not None):
+                    requested_cc = header.requested_cc
+                if(header.requested_bg is not None):
+                    requested_bg = header.requested_bg
+
+                # These are the metadata items we forward
                 metadata['raw_filename'] = header.diskfile.file.name
                 metadata['ut_time'] = str(header.ut_datetime)
                 metadata['local_time'] = str(header.local_time)
                 metadata['wavelength'] = header.central_wavelength
                 metadata['waveband'] = header.wavelength_band
-                metadata['airmass'] = float(header.airmass)
+                metadata['airmass'] = airmass
                 metadata['filter'] = header.filter_name
                 metadata['instrument'] = header.instrument
                 metadata['object'] = header.object
@@ -427,15 +444,16 @@ def qaforgui(req, things):
                     iq['band'] = qaiq.percentile_band
                     iq['delivered'] = float(qaiq.fwhm)
                     iq['delivered_error'] = float(qaiq.fwhm_std)
-                    iq['zenith'] = float(qaiq.fwhm) * float(header.airmass)**(-0.6)
-                    iq['zenith_error'] = float(qaiq.fwhm_std) * float(header.airmass)**(-0.6)
+                    if(airmass is not None):
+                        iq['zenith'] = float(qaiq.fwhm) * airmass**(-0.6)
+                        iq['zenith_error'] = float(qaiq.fwhm_std) * airmass**(-0.6)
                     iq['ellipticity'] = float(qaiq.elip)
                     iq['ellip_error'] = float(qaiq.elip_std)
                     iq['comment'] = []
                     if(len(qaiq.comment)):
                         iq['comment'] = [qaiq.comment]
-                    if(header.requestd_iq is not None):
-                        iq['requested'] = int(header.requested_iq)
+                    if(requestd_iq is not None):
+                        iq['requested'] = int(requested_iq)
                     submit_time_kludge = qaiq.qareport.submit_time
     
                 # Look for CC metrics to report. The DB has the different detectors in different entries, have to do some merging.
@@ -483,8 +501,8 @@ def qaforgui(req, things):
                         cc['extinction_error'] = math.sqrt(s)
                     
                     cc['comment'] = cc_comment
-                    if(header.requested_cc is not None):
-                        cc['requested'] = int(header.requested_cc)
+                    if(requested_cc is not None):
+                        cc['requested'] = int(requested_cc)
     
                     submit_time_kludge = qarep.submit_time
     
@@ -531,8 +549,8 @@ def qaforgui(req, things):
                         bg['brightness_error'] = math.sqrt(s)
                     
                     bg['comment'] = bg_comment
-                    if(header.requested_bg is not None):
-                        bg['requested'] = int(header.requested_bg)
+                    if(requested_bg is not None):
+                        bg['requested'] = int(requested_bg)
     
                     submit_time_kludge = qarep.submit_time
 
