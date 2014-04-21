@@ -47,10 +47,30 @@ class Calibration():
             if(self.descriptors['data_section']):
                 self.descriptors['data_section'] = str(self.descriptors['data_section'])
 
-    def arc(self):
+    def bias(self, processed=False, List=None):
         # Not defined for this instrument
         return None
 
-    def bias(self):
+    def dark(self, processed=False, List=None):
+        # Not defined for this instrument
+        return None
+
+    def flat(self, processed=False, List=None):
+        # Not defined for this instrument
+        return None
+
+    def arc(self, processed=False, List=None):
+        # Not defined for this instrument
+        return None
+
+    def fringe(self, processed=False, List=None):
+        # Not defined for this instrument
+        return None
+
+    def ronchi_mask(self, processed=False, List=None):
+        # Not defined for this instrument
+        return None
+
+    def pinhole_mask(self, processed=False, List=None):
         # Not defined for this instrument
         return None
