@@ -4,6 +4,7 @@ manage and service the ingestqueue
 """
 import os
 import sys
+import datetime
 import traceback
 from logger import logger
 from sqlalchemy import desc
@@ -31,11 +32,18 @@ if(using_s3):
     from boto.s3.connection import S3Connection
     from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
 
-def add_to_ingestqueue(session, filename, path):
+def add_to_ingestqueue(session, filename, path, force_md5=False, force=False, after=None):
     """
     Adds a file to the ingest queue
     """
     iq = IngestQueue(filename, path)
+    if(force):
+      iq.force = True
+    if(force_md5):
+      iq.force_md5 = True
+    if(after):
+      iq.after = after
+
     session.add(iq)
     session.commit()
     try:
@@ -291,7 +299,9 @@ def pop_ingestqueue(session):
     """
 
     session.execute("LOCK TABLE ingestqueue IN ACCESS EXCLUSIVE MODE;")
-    query = session.query(IngestQueue).filter(IngestQueue.inprogress == False).order_by(desc(IngestQueue.filename))
+    query = session.query(IngestQueue).filter(IngestQueue.inprogress == False)
+    query = query.filter(IngestQueue.after < datetime.datetime.now())
+    query = query.order_by(desc(IngestQueue.filename))
 
     iq = query.first()
     if(iq == None):
