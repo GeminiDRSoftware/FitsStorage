@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 from orm import sessionfactory
-from fits_storage_config import using_sqlite, fits_lockfile_dir, export_destinations
+from fits_storage_config import using_sqlite, storage_root, defer_seconds, fits_lockfile_dir, export_destinations
 from utils.ingestqueue import ingest_file, pop_ingestqueue, ingestqueue_length
 from utils.exportqueue import add_to_exportqueue
 from logger import logger, setdebug, setdemon
@@ -16,6 +16,7 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--skip-fv", action="store_true", dest="skip_fv", default=False, help="Do not run fitsverify on the files")
 parser.add_option("--skip-wmd", action="store_true", dest="skip_wmd", default=False, help="Do not run a wmd check on the files")
+parser.add_option("--no-defer", action="store_true", dest="no_defer", default=False, help="Do not defer ingestion of recently modified files")
 parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
 parser.add_option("--lockfile", action="store", dest="lockfile", help="Use this as a lockfile to limit instances")
@@ -125,6 +126,23 @@ while(loop):
             else:
                 session.begin_nested()
 
+            # Check if the file was very recently modified, defer ingestion if it was
+            if((options.no_defer == False) and (defer_seconds > 0)):
+                fullpath = os.path.join(storage_root, iq.path, iq.filename)
+                lastmod = datetime.datetime.fromtimestamp(os.path.getmtime(fullpath))
+                now = datetime.datetime.now()
+                age = now - lastmod
+                defer = datetime.timedelta(seconds=defer_seconds)
+                if(age < defer):
+                    logger.info("Deferring ingestion of file %s" % iq.filename)
+                    # Defer ingestion of this file for defer_secs
+                    after = now + defer
+                    iq.after = after
+                    iq.inprogress = False
+                    # Need two commits here, one for each layer of the nested transaction
+                    session.commit()
+                    session.commit()
+                    continue
             try:
                 ingest_file(session, iq.filename, iq.path, iq.force_md5, iq.force, options.skip_fv, options.skip_wmd)
                 session.commit()

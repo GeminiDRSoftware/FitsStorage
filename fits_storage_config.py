@@ -5,20 +5,27 @@
 #   FITSSTORAGECONFIG_LOCALMODE, is true
 
 # AWS S3 info
-using_s3 = True
+using_s3 = False
 s3_bucket_name = 'gemini-archive'
 s3_staging_area = '/data/s3_staging'
 aws_access_key = 'AKIAJ554XPYMJZBPGQAA'
 aws_secret_key = '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'
 
 # Configure the path to the storage root here 
-#storage_root = '/data/dataflow'
-storage_root = '/net/wikiwiki/dataflow'
+storage_root = '/data/dataflow'
+#storage_root = '/net/wikiwiki/dataflow'
 #storage_root = '/net/hahalua/data/export'
 
 if(using_s3):
     storage_root = s3_staging_area
 
+# Defer ingestion of files modified within the last defer_seconds seconds
+# for at least a further defer_seconds seconds
+# Set to zero to disable
+defer_seconds = 30
+
+
+# Target free space and number of files on storage_root for delete script
 target_gb_free = 100
 target_max_files = 125000
 
