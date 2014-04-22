@@ -17,6 +17,9 @@ parser.add_option("--file-re", action="store", type="string", dest="file_re", he
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 parser.add_option("--path", action="store", dest="path", default = "", help="Use given path relative to storage root")
+parser.add_option("--force", action="store_true", dest="force", default = False, help="Force re-ingestion of these files unconditionally")
+parser.add_option("--force_md5", action="store_true", dest="force_md5", default = False, help="Force checking of file change by md5 not just lastmod date")
+parser.add_option("--after", action="store", dest="after", default = None, help="ingest only after this datetime")
 
 (options, args) = parser.parse_args()
 path = options.path
@@ -120,7 +123,7 @@ session = sessionfactory()
 for filename in thefiles:
     i += 1
     logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
-    add_to_ingestqueue(session, filename, path)
+    add_to_ingestqueue(session, filename, path, force=options.force, force_md5=options.force_md5, after=options.after)
 
 session.close()
 logger.info("*** add_to_ingestqueue.py exiting normally at %s" % datetime.datetime.now())
