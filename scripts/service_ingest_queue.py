@@ -14,8 +14,6 @@ import traceback
 from optparse import OptionParser
 
 parser = OptionParser()
-parser.add_option("--force-crc", action="store_true", dest="force_crc", default=False, help="Force crc check on pre-existing files")
-parser.add_option("--force", action="store_true", dest="force", default=False, help="Force re-ingest of file regardless")
 parser.add_option("--skip-fv", action="store_true", dest="skip_fv", default=False, help="Do not run fitsverify on the files")
 parser.add_option("--skip-wmd", action="store_true", dest="skip_wmd", default=False, help="Do not run a wmd check on the files")
 parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
@@ -128,7 +126,7 @@ while(loop):
                 session.begin_nested()
 
             try:
-                ingest_file(session, iq.filename, iq.path, options.force_crc, options.force, options.skip_fv, options.skip_wmd)
+                ingest_file(session, iq.filename, iq.path, iq.force_md5, iq.force, options.skip_fv, options.skip_wmd)
                 session.commit()
                 # Now we also add this file to our export list if we have downstream servers
                 for destination in export_destinations:
