@@ -15,12 +15,18 @@ class IngestQueue(Base):
     path = Column(Text)
     inprogress = Column(Boolean, index=True)
     added = Column(DateTime)
+    force_md5 = Column(Boolean)
+    force = Column(Boolean)
+    after = Column(DateTime)
 
     def __init__(self, filename, path):
         self.filename = filename
         self.path = path
         self.added = datetime.datetime.now()
         self.inprogress = False
+        self.force_md5 = False
+        self.force = False
+        self.after = self.added
 
     def __repr__(self):
         return "<IngestQueue('%s', '%s')>" % (self.id, self.filename)
