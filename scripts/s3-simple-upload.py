@@ -44,7 +44,7 @@ for file in file_list:
     k.key = file
     k.set_contents_from_filename(fullpath)
 
-    logger.info("Uploaded size is %d" % k.size)
-    logger.info("Uploaded MD5 is %s" % k.md5)
+    logger.info("%s: Uploaded size is %d" % (file, k.size))
+    logger.info("%s: Uploaded MD5 is %s" % (file, k.md5))
 
 logger.info("**** done")
