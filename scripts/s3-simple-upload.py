@@ -8,6 +8,7 @@ import os
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--file", action="store", dest="file", help="Filename to upload")
+parser.add_option("--all", action="store_true", dest="all", help="Upload all files in directory")
 parser.add_option("--path", action="store", dest="path", default="/net/wikiwiki/dataflow", help="Path to directory where file is")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
@@ -23,16 +24,27 @@ setdemon(options.demon)
 # Annouce startup
 logger.info("*********  s3-simple-upload starting")
 
-fullpath = os.path.join(path, file)
+file_list = []
+if(options.all):
+    # Get a listing of the directory
+    file_list = os.listdir(path)
+    logger.info("All files mode - found %d files" % len(file_list))
+else:
+    logger.info("Single file mode: %s" % file)
+    file_list.append(file)
 
+logger.info("Connecting to S3 and getting bucket")
 s3conn = S3Connection(aws_access_key, aws_secret_key)
 bucket = s3conn.get_bucket(s3_bucket_name)
 
-k = Key(bucket)
-k.key = file
-k.set_contents_from_filename(fullpath)
+for file in file_list:
+    fullpath = os.path.join(path, file)
 
-logger.info("Uploaded size is %d" % k.size)
-logger.info("Uploaded MD5 is %s" % k.md5)
+    k = Key(bucket)
+    k.key = file
+    k.set_contents_from_filename(fullpath)
+
+    logger.info("Uploaded size is %d" % k.size)
+    logger.info("Uploaded MD5 is %s" % k.md5)
 
 logger.info("**** done")
