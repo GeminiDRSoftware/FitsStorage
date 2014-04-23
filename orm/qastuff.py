@@ -95,7 +95,7 @@ class QAmetricSB(Base):
     # Sky Background
     mag = Column(Numeric(precision=5, scale=3))
     mag_std = Column(Numeric(precision=5, scale=3))
-    electrons = Column(Numeric(precision=7, scale=2))
+    electrons = Column(Numeric(precision=9, scale=2))
     electrons_std = Column(Numeric(precision=7, scale=2))
     nsamples = Column(Integer)
     percentile_band = Column(Text)
