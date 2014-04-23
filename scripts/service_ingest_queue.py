@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 from orm import sessionfactory
-from fits_storage_config import using_sqlite, storage_root, defer_seconds, fits_lockfile_dir, export_destinations
+from fits_storage_config import using_sqlite, using_s3, storage_root, defer_seconds, fits_lockfile_dir, export_destinations
 from utils.ingestqueue import ingest_file, pop_ingestqueue, ingestqueue_length
 from utils.exportqueue import add_to_exportqueue
 from logger import logger, setdebug, setdemon
@@ -127,7 +127,7 @@ while(loop):
                 session.begin_nested()
 
             # Check if the file was very recently modified, defer ingestion if it was
-            if((options.no_defer == False) and (defer_seconds > 0)):
+            if((not using_s3) and (options.no_defer == False) and (defer_seconds > 0)):
                 fullpath = os.path.join(storage_root, iq.path, iq.filename)
                 lastmod = datetime.datetime.fromtimestamp(os.path.getmtime(fullpath))
                 now = datetime.datetime.now()
