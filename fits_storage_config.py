@@ -5,7 +5,7 @@
 #   FITSSTORAGECONFIG_LOCALMODE, is true
 
 # AWS S3 info
-using_s3 = False
+using_s3 = True
 s3_bucket_name = 'gemini-archive'
 s3_staging_area = '/data/s3_staging'
 aws_access_key = 'AKIAJ554XPYMJZBPGQAA'
@@ -39,7 +39,8 @@ upload_staging_path = "/data/upload_staging"
 upload_auth_cookie = None
 
 # This is the list of downstream servers we export files we ingest to
-export_destinations = ['hbffits2']
+export_destinations = []
+#export_destinations = ['hbffits2']
 
 # Do we want to gzip files we export on the fly? Set to None or the gzip level
 export_gzip = 6
