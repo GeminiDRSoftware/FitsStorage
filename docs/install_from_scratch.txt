@@ -16,6 +16,9 @@ sudo yum -y install postgresql-devel
 # needed to get mod_python to build as /astro python links against X11
 sudo yum -y install libX11-devel
 
+# needed with Ureka if not already present:
+sudo yum -y install libXft
+
 # On RHEL6 also need these if they're not already there:
 sudo yum -y install libtool
 # Not sure if we really need these:
