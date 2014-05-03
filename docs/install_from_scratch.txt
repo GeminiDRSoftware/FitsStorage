@@ -112,7 +112,7 @@ cd /opt/fitsverify
 tar xvf /opt/FitsStorage/otherfiles/fitsverify.tar
 mv fitsverify/* .
 rmdir fitsverify
-gcc -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L/astro/x86_64/cfitsio/ -I/astro/x86_64/cfitsio/ -lcfitsio -lm -lnsl
+gcc -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L/opt/Ureka/Ureka/python/lib -I/opt/Ureka/Ureka/iraf/vendor/cfitsio -lcfitsio -lm -lnsl
 
 sudo mkdir /opt/gemini_python
 sudo chown phirst /opt/gemini_python
