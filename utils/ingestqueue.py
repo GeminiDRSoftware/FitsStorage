@@ -6,6 +6,7 @@ import os
 import sys
 import datetime
 import traceback
+import time
 from logger import logger
 from sqlalchemy import desc
 from sqlalchemy.orm.exc import ObjectDeletedError
@@ -178,8 +179,22 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
             if(using_s3):
                 # At this point, we fetch a local copy of the file to the staging area
                 fullpath = os.path.join(storage_root, filename)
-                logger.debug("Fetching %s to s3_staging_area" % filename)
-                key.get_contents_to_filename(fullpath)
+                # Try up to 5 times. Have seen socket.error raised 
+                tries = 0
+                while(tries < 5):
+                    try:
+                        tries += 1
+                        logger.debug("Fetching %s to s3_staging_area, try %d" % (filename, tries))
+                        key.get_contents_to_filename(fullpath)
+                    except socket.error:
+                        if(tries < 5):
+                            logger.error("Socket Error fetching %s from S3 - will retry, tries=%d" % (filename, tries))
+                            time.sleep(10)
+                        else:
+                            logger.error("Socket Error fetching %s from S3. Giving up." % filename)
+                            raise
+                    else:
+                        break
 
             diskfile = DiskFile(file, filename, path)
             session.add(diskfile)
