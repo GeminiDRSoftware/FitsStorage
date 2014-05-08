@@ -61,16 +61,20 @@ class DiskFile(Base):
         if(gzipped==True or given_filename.endswith(".gz")):
             self.gzipped = True
             # Create the unzipped cache filename and unzip to it
-            if(given_filename.endswith(".gz")):
-                nongzfilename = given_filename[:-3]
-            else:
-                nongzfilename = gived_filename + "_gunzipped"
-            self.uncompressed_cache_file = os.path.join(gz_staging_area, nongzfilename)
-            in_file = gzip.GzipFile(self.fullpath(), mode='rb')
-            out_file = open(self.uncompressed_cache_file, 'w')
-            out_file.write(in_file.read())
-            in_file.close()
-            out_file.close()
+            try:
+                if(given_filename.endswith(".gz")):
+                    nongzfilename = given_filename[:-3]
+                else:
+                    nongzfilename = gived_filename + "_gunzipped"
+                self.uncompressed_cache_file = os.path.join(gz_staging_area, nongzfilename)
+                in_file = gzip.GzipFile(self.fullpath(), mode='rb')
+                out_file = open(self.uncompressed_cache_file, 'w')
+                out_file.write(in_file.read())
+                in_file.close()
+                out_file.close()
+            except:
+                # Failed to create the unzipped cache file
+                self.uncompressed_cache_file = None
      
             self.data_md5 = self.get_data_md5()
             self.data_size = self.get_data_size()
