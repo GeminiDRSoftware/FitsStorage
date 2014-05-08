@@ -60,6 +60,7 @@ das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
 fits_servername = "hbffits3"
 fits_system_status = "development"
 
+smtp_server = "smtp.gemini.edu"
 email_errors_to = "phirst@gemini.edu"
 
 # Configure the path the data postgres database here

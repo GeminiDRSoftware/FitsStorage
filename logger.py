@@ -4,7 +4,7 @@ import sys
 import logging
 import logging.handlers
 
-from fits_storage_config import fits_log_dir, email_errors_to
+from fits_storage_config import fits_log_dir, email_errors_to smtp_server
 
 # Create a Logger
 logger = logging.getLogger()
@@ -25,7 +25,7 @@ logfile = os.path.join(fits_log_dir, logname)
 filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount=10, maxBytes=10000000)
 streamhandler = logging.StreamHandler()
 emailsubject = "Messages from FitsStorage on %s" % os.uname()[1]
-smtphandler = logging.handlers.SMTPHandler(mailhost='smtp.gemini.edu', fromaddr='fitsdata@gemini.edu', toaddrs=[email_errors_to], subject=emailsubject)
+smtphandler = logging.handlers.SMTPHandler(mailhost=smtp_server, fromaddr='fitsdata@gemini.edu', toaddrs=[email_errors_to], subject=emailsubject)
 
 # The smtp handler should only do WARNINGSs or worse
 smtphandler.setLevel(logging.WARNING)
