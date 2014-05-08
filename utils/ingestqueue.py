@@ -284,7 +284,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
 
     except:
         logger.error("Exception in ingest_file: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2])))
-        raise
+        #raise
 
 def check_present(session, filename):
     """
