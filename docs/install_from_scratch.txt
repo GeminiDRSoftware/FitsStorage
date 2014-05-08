@@ -173,9 +173,11 @@ sudo chown fitsdata /data/backups
 sudo mkdir /data/upload_staging
 sudo chown fitsdata /data/upload_staging
 sudo chmod oug+rwx /data/upload_staging
+sudo mkdir /data/gz_staging
+such chown fitsdata /data/gz_staging
 # if using s3
-sudo mkdir /data/s3_staging_area
-such chown fitsdata /data/s3_staging_area
+sudo mkdir /data/s3_staging
+such chown fitsdata /data/s3_staging
 
 # Now get a shell as fitsdata
 cd /opt/FitsStorage/
