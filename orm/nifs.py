@@ -31,8 +31,13 @@ class Nifs(Base):
 
     def populate(self):
         # Get an AstroData object on it
+        if(self.header.diskfile.uncompressed_cache_file):
+            fullpath = self.header.diskfile.uncompressed_cache_file
+        else:
+            fullpath = self.header.diskfile.fullpath()
+
         try:
-            ad = AstroData(self.header.diskfile.fullpath(), mode="readonly")
+            ad = AstroData(fullpath, mode="readonly")
             # Populate values
             try:
                 self.disperser = ad.disperser().for_db()

@@ -74,7 +74,11 @@ class Header(Base):
         Populates header table values from the FITS headers of the file.
         Uses the AstroData object to access the file.
         """
-        fullpath = diskfile.fullpath()
+        if(diskfile.uncompressed_cache_file):
+            fullpath = diskfile.uncompressed_cache_file
+        else:
+            fullpath = diskfile.fullpath()
+    
         # Try and open it as a fits file
         ad = None
         try:
@@ -310,7 +314,11 @@ class Header(Base):
             raise
 
     def footprints(self):
-        fullpath = self.diskfile.fullpath()
+        if(diskfile.uncompressed_cache_file):
+            fullpath = uncompressed_cache_file
+        else:
+            fullpath = self.diskfile.fullpath()
+
         # Try and open it as a fits file
         ad = 0
         retary = {}

@@ -197,13 +197,18 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
                     else:
                         break
 
+            # Instantiating the DiskFile object with a gzipped filename will trigger creation of the unzipped cache file too.
             diskfile = DiskFile(file, filename, path)
             session.add(diskfile)
             session.commit()
+
+            # This will use the DiskFile unzipped cache file if it exists
             dfreport = DiskFileReport(diskfile, skip_fv, skip_wmd)
             session.add(dfreport)
             session.commit()
             logger.debug("Adding new Header entry")
+ 
+            # This will use the DiskFile unzipped cache file if it exists
             header = Header(diskfile)
             session.add(header)
             inst = header.instrument
@@ -226,11 +231,13 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
                     logger.debug("Imaging - populating PhotStandardObs")
                     do_std_obs(session, header.id)
             
+            # This will use the DiskFile unzipped cache file if it exists
             logger.debug("Adding FullTextHeader entry")
             ftheader = FullTextHeader(diskfile)
             session.add(ftheader)
             session.commit()
             # Add the instrument specific tables
+            # These will use the DiskFile unzipped cache file if it exists
             if(inst == 'GMOS-N' or inst == 'GMOS-S'):
                 logger.debug("Adding new GMOS entry")
                 gmos = Gmos(header)
@@ -265,6 +272,13 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
             if(using_s3):
                 logger.debug("deleting %s from s3_staging_area" % filename)
                 os.unlink(fullpath)
+            if(diskfile.uncompressed_cache_file):
+                logger.debug("deleting %s from gz_staging_area" % diskfile.uncompressed_cache_file)
+                if(os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK)):
+                    os.unlink(diskfile.uncompressed_cache_file)
+                    diskfile.uncompressed_cache_file = None
+                else:
+                    logger.debug("diskfile claimed to have an diskfile.uncompressed_cache_file, but cannot access it: %s" % diskfile.uncompressed_cache_file)
     
         session.commit()
 

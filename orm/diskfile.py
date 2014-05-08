@@ -4,12 +4,13 @@ from sqlalchemy.orm import relation
 
 import os
 import datetime
+import gzip
 from utils.hashes import md5sum, md5sum_size_gz
 
 from . import Base
 from orm.file import File
 
-from fits_storage_config import storage_root
+from fits_storage_config import storage_root, gz_staging_area
 
 class DiskFile(Base):
     """
@@ -42,6 +43,11 @@ class DiskFile(Base):
     fverrors = Column(Integer)
     wmdready = Column(Boolean)
 
+    # We use this to store an uncompressed Cache of a gzipped file
+    # This is not recorded in the database and is transient for the life
+    # of this diskfile instance.
+    uncompressed_cache_file = None
+
     def __init__(self, given_file, given_filename, path, gzipped=None):
         self.file_id = given_file.id
         self.filename = given_filename
@@ -54,9 +60,20 @@ class DiskFile(Base):
         self.lastmod = self.get_lastmod()
         if(gzipped==True or given_filename.endswith(".gz")):
             self.gzipped = True
-            (u_md5, u_size) = md5sum_size_gz(self.fullpath())
-            self.data_md5 = u_md5
-            self.data_size = u_size
+            # Create the unzipped cache filename and unzip to it
+            if(given_filename.endswith(".gz")):
+                nongzfilename = given_filename[:-3]
+            else:
+                nongzfilename = gived_filename + "_gunzipped"
+            self.uncompressed_cache_file = os.path.join(gz_staging_area, nongzfilename)
+            in_file = gzip.GzipFile(self.fullpath(), mode='rb')
+            out_file = open(self.uncompressed_cache_file, 'w')
+            out_file.write(in_file.read())
+            in_file.close()
+            out_file.close()
+     
+            self.data_md5 = self.get_data_md5()
+            self.data_size = self.get_data_size()
         else:
             self.gzipped = False
             self.data_md5 = self.file_md5
@@ -75,6 +92,26 @@ class DiskFile(Base):
 
     def get_file_md5(self):
         return md5sum(self.fullpath())
+
+    def get_data_md5(self):
+        if(self.gzipped == False):
+            return self.file_md5()
+        else:
+            if(self.uncompressed_cache_file):
+                return md5sum(self.uncompressed_cache_file)
+            else:
+                (u_md5, u_size) = md5sum_size_gz(self.fullpath())
+                return u_md5
+
+    def get_data_size(self):
+        if(self.gzipped == False):
+            return self.file_size()
+        else:
+            if(self.uncompressed_cache_file):
+                return os.path.getsize(self.uncompressed_cache_file)
+            else:
+                (u_md5, u_size) = md5sum_size_gz(self.fullpath())
+                return u_size
 
     def get_lastmod(self):
         return datetime.datetime.fromtimestamp(os.path.getmtime(self.fullpath()))

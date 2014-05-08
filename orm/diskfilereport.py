@@ -1,6 +1,8 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 
+import os
+
 from fits_verify import fitsverify
 
 from fits_storage_config import using_cadc
@@ -31,7 +33,7 @@ class DiskFileReport(Base):
 
     def __init__(self, diskfile, skip_fv, skip_wmd):
         self.diskfile_id = diskfile.id
-        if(skip_fv or not using_cadc):
+        if(skip_fv):
             diskfile.fverrors = 0
         else:
             self.fits_verify(diskfile)
@@ -47,14 +49,26 @@ class DiskFileReport(Base):
           passed in
         - Populates the fvreport in self
         """
-        retlist = fitsverify(diskfile.fullpath())
-        diskfile.isfits = bool(retlist[0])
-        diskfile.fvwarnings = retlist[1]
-        diskfile.fverrors = retlist[2]
-        # If the FITS file has bad strings in it, fitsverify will quote them in 
-        # the report, and the database will object to the bad characters in 
-        # the unicode string - errors=ignore makes it ignore these.
-        self.fvreport = unicode(retlist[3], errors='replace')
+        filename = None
+        if(diskfile.gzipped):
+            if(diskfile.uncompressed_cache_file and os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK)):
+                filename = diskfile.uncompressed_cache_file
+            else:
+                # For now, we do not support fitsverify of compressed files if we are not using the diskfile.uncompressed_cache_file
+                filename = None
+        else:
+            # not gzipped - just use the diskfile filename
+            filename = diskfile.fullpath()
+        
+        if(filename):
+            retlist = fitsverify(filename)
+            diskfile.isfits = bool(retlist[0])
+            diskfile.fvwarnings = retlist[1]
+            diskfile.fverrors = retlist[2]
+            # If the FITS file has bad strings in it, fitsverify will quote them in 
+            # the report, and the database will object to the bad characters in 
+            # the unicode string - errors=ignore makes it ignore these.
+            self.fvreport = unicode(retlist[3], errors='replace')
 
     def wmd(self, diskfile):
         """
@@ -62,6 +76,18 @@ class DiskFileReport(Base):
         - Populates the wmdready flag in the diskfile object passed in
         - Populates the wmdreport text in self
         """
-        retlist = Cadc.cadcWMD(diskfile.fullpath())
-        diskfile.wmdready = bool(retlist[0])
-        self.wmdreport = retlist[1]
+        filename = None
+        if(diskfile.gzipped):
+            if(diskfile.uncompressed_cache_file and os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK)):
+                filename = diskfile.uncompressed_cache_file
+            else:
+                # For now, we do not support fitsverify of compressed files if we are not using the diskfile.uncompressed_cache_file
+                filename = None
+        else:
+            # not gzipped - just use the diskfile filename
+            filename = diskfile.fullpath()
+
+        if(filename):
+            retlist = Cadc.cadcWMD(diskfile.fullpath())
+            diskfile.wmdready = bool(retlist[0])
+            self.wmdreport = retlist[1]
