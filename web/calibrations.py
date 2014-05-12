@@ -1,6 +1,7 @@
 """
 This module contains the calibrations html generator function. 
 """
+import datetime
 from orm import sessionfactory
 from web.selection import sayselection, queryselection, openquery
 from cal import get_cal_object
