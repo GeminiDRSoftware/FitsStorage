@@ -22,7 +22,7 @@ class Header(Base):
     program_id = Column(Text, index=True)
     observation_id = Column(Text, index=True)
     data_label = Column(Text, index=True)
-    telescope = Column(Text)
+    telescope = Column(Text, index=True)
     instrument = Column(Text, index=True)
     ut_datetime = Column(DateTime(timezone=False), index=True)
     local_time = Column(Time(timezone=False))
