@@ -4,7 +4,7 @@ import sys
 import logging
 import logging.handlers
 
-from fits_storage_config import fits_log_dir, email_errors_to smtp_server
+from fits_storage_config import fits_log_dir, email_errors_to, smtp_server
 
 # Create a Logger
 logger = logging.getLogger()
