@@ -9,6 +9,7 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--file", action="store", dest="file", help="Filename to upload")
 parser.add_option("--all", action="store_true", dest="all", help="Upload all files in directory")
+parser.add_option("--sort", action="store_true", dest="sort", help="Sort file list before uploading")
 parser.add_option("--path", action="store", dest="path", default="/net/wikiwiki/dataflow", help="Path to directory where file is")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
@@ -32,6 +33,11 @@ if(options.all):
 else:
     logger.info("Single file mode: %s" % file)
     file_list.append(file)
+
+if(options.sort):
+    # Sort the file list
+    logger.info("Sorting the file list")
+    file_list.sort()
 
 logger.info("Connecting to S3 and getting bucket")
 s3conn = S3Connection(aws_access_key, aws_secret_key)
