@@ -344,7 +344,7 @@ def webhdrsummary(req, type, headers, links=True, download=False):
 def list_headers(session, selection, orderby):
     """
     This function queries the database for a list of header table 
-    entries that satsify the selection criteria.
+    entries that satisfy the selection criteria.
 
     session is an sqlalchemy session on the database
     selection is a dictionary containing fields to select on
