@@ -269,6 +269,7 @@ def content(req):
     req.write('<TH>Telescope&nbsp;</TH>')    
     req.write('<TH>Year&nbsp;</TH>')
     req.write('<TH>Total&nbsp;</TH>')
+    req.write('</TR>')
     
     even = 0
     
@@ -282,7 +283,7 @@ def content(req):
             else:
                 cs = "tr_odd"
         
-                req.write("<TR class=%s>" % (cs))
+            req.write("<TR class=%s>" % (cs))
                 
             if tel[0] and year != None:
                 req.write("<TD>%s</TD>" % str(tel[0]))
@@ -298,6 +299,8 @@ def content(req):
         
             if tel[0] and year and yearnum and yearbytes != None:
                 req.write("<TD>%d (%.02f GB)</TD>" % (yearnum, (yearbytes/1073741824.0)))
+
+            req.write("</TR>")
         
     # Presents total files and filesize
     query = session.query(func.count(), func.sum(DiskFile.file_size)).filter(DiskFile.canonical == True)
