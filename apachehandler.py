@@ -26,6 +26,7 @@ from web.standards import standardobs
 from web.selection import getselection
 from web.fileserver import fileserver, authcookie, mydata
 from web.qastuff import qareport, qametrics, qaforgui
+from web.statistics import content, stats
 
 from orm import sessionfactory
 from orm.file import File
@@ -297,7 +298,7 @@ def handler(req):
         selection = getselection(things)
         if(("date" not in selection) and ("daterange" not in selection)):
             selection["date"] = gemini_date("today")
-        retval =    progsobserved(req, selection)
+        retval = progsobserved(req, selection)
         return retval
         
     # The GMOS twilight flat and bias report
@@ -327,6 +328,11 @@ def handler(req):
         return qaforgui(req, things)
 
     # Database Statistics
+    if(this == "content"):
+        if(this in blocked_urls):
+            return apache.HTTP_FORBIDDEN
+        return content(req)
+
     if(this == "stats"):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
@@ -414,138 +420,3 @@ def debugmessage(req):
     req.write("args: %s\n\n" % (str(req.args)))
     
     return apache.OK
-
-# Send database statistics to browser
-def stats(req):
-    req.content_type = "text/html"
-    req.write("<html>")
-    req.write("<head><title>FITS Storage database statistics</title></head>")
-    req.write("<body>")
-    req.write("<h1>FITS Storage database statistics</h1>")
-
-    session = sessionfactory()
-    try:
-
-        # File table statistics
-        query = session.query(File)
-        req.write("<h2>File Table:</h2>")
-        req.write("<ul>")
-        req.write("<li>Total Rows: %d</li>" % query.count())
-        req.write("</ul>")
-    
-        # DiskFile table statistics
-        req.write("<h2>DiskFile Table:</h2>")
-        req.write("<ul>")
-        # Total rows
-        query = session.query(DiskFile)
-        totalrows = query.count()
-        req.write("<li>Total Rows: %d</li>" % totalrows)
-        # Present rows
-        query = query.filter(DiskFile.present == True)
-        presentrows = query.count()
-        if totalrows != 0:
-            percent = 100.0 * presentrows / totalrows
-            req.write("<li>Present Rows: %d (%.2f %%)</li>" % (presentrows, percent))
-        # Present size
-        tpq = session.query(func.sum(DiskFile.file_size)).filter(DiskFile.present == True)
-        tpsize = tpq.one()[0]
-        if tpsize != None:
-            req.write("<li>Total present size: %d bytes (%.02f GB)</li>" % (tpsize, (tpsize/1073741824.0)))
-        # most recent entry
-        query = session.query(func.max(DiskFile.entrytime))
-        latest = query.one()[0]
-        req.write("<li>Most recent diskfile entry was at: %s</li>" % latest)
-        # Number of entries in last minute / hour / day
-        mbefore = datetime.datetime.now() - datetime.timedelta(minutes=1)
-        hbefore = datetime.datetime.now() - datetime.timedelta(hours=1)
-        dbefore = datetime.datetime.now() - datetime.timedelta(days=1)
-        mcount = session.query(DiskFile).filter(DiskFile.entrytime > mbefore).count()
-        hcount = session.query(DiskFile).filter(DiskFile.entrytime > hbefore).count()
-        dcount = session.query(DiskFile).filter(DiskFile.entrytime > dbefore).count()
-        req.write('<LI>Number of DiskFile rows added in the last minute: %d</LI>' % mcount)
-        req.write('<LI>Number of DiskFile rows added in the last hour: %d</LI>' % hcount)
-        req.write('<LI>Number of DiskFile rows added in the last day: %d</LI>' % dcount)
-        # Last 10 entries
-        query = session.query(DiskFile).order_by(desc(DiskFile.entrytime)).limit(10)
-        list = query.all()
-        req.write('<LI>Last 10 diskfile entries added:<UL>')
-        for i in list:
-            req.write('<LI>%s : %s</LI>' % (i.file.name, i.entrytime))
-        req.write('</UL></LI>')
-    
-        req.write("</ul>")
-    
-        # Header table statistics
-        query = session.query(Header)
-        req.write("<h2>Header Table:</h2>")
-        req.write("<ul>")
-        req.write("<li>Total Rows: %d</li>" % query.count())
-        req.write("</ul>")
-
-        # Ingest Queue Depth
-        query = session.query(IngestQueue)
-        req.write("<h2>Ingest Queue</h2>")
-        req.write("<ul>")
-        req.write("<li>Total Rows: %s</li>" % query.count())
-        query = query.filter(IngestQueue.inprogress == True)
-        req.write("<li>Currently In Progress: %s</li>" % query.count())
-        req.write("</ul>")
-
- 
-        # Data rate statistics
-        req.write("<h2>Data Rates</h2>")
-        today = datetime.datetime.utcnow().date()
-        zerohour = datetime.time(0, 0, 0)
-        ddelta = datetime.timedelta(days=1)
-        wdelta = datetime.timedelta(days=7)
-        mdelta = datetime.timedelta(days=30)
-
-        start = datetime.datetime.combine(today, zerohour)
-        end = start + ddelta
- 
-        req.write("<h3>Last 10 days</h3><ul>")
-        for i in range(10):
-            query = session.query(func.sum(DiskFile.file_size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present == True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
-            bytes, count = query.one()
-            if(not bytes):
-                bytes = 0
-                count = 0
-            req.write("<li>%s: %.2f GB, %d files</li>" % (str(start.date()), bytes/1E9, count))
-            start -= ddelta
-            end -= ddelta
-        req.write("</ul>")
-
-        end = datetime.datetime.combine(today, zerohour)
-        start = end - wdelta
-        req.write("<h3>Last 6 weeks</h3><ul>")
-        for i in range(6):
-            query = session.query(func.sum(DiskFile.file_size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present == True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
-            bytes, count = query.one()
-            if(not bytes):
-                bytes = 0
-                count = 0
-            req.write("<li>%s - %s: %.2f GB, %d files</li>" % (str(start.date()), str(end.date()), bytes/1E9, count))
-            start -= wdelta
-            end -= wdelta
-        req.write("</ul>")
-
-        end = datetime.datetime.combine(today, zerohour)
-        start = end - mdelta
-        req.write("<h3>Last 6 pseudo-months</h3><ul>")
-        for i in range(6):
-            query = session.query(func.sum(DiskFile.file_size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present == True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
-            bytes, count = query.one()
-            if(not bytes):
-                bytes = 0
-                count = 0
-            req.write("<li>%s - %s: %.2f GB, %d files</li>" % (str(start.date()), str(end.date()), bytes/1E9, count))
-            start -= mdelta
-            end -= mdelta
-        req.write("</ul>")
-
-        req.write("</body></html>")
-        return apache.OK
-    except IOError:
-        pass
-    finally:
-        session.close()
