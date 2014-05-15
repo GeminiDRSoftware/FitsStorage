@@ -225,7 +225,7 @@ def content(req):
             classnum = classresult[0]
             classbytes = classresult[1]
             
-            if tel[0] and instrument[0] and instnum and instbytes != None:
+            if tel[0] and instrument[0] and classnum and classbytes != None:
                 req.write("<TD>%d (%.02f GB)</TD>" % (classnum, (classbytes/1073741824.0)))
                                            
             # Calibration row is populated here
@@ -234,7 +234,7 @@ def content(req):
             calnum = calresult[0]
             calbytes = calresult[1]
 
-            if tel[0] and instrument[0] and instnum and instbytes != None:
+            if tel[0] and instrument[0] and calnum and calbytes != None:
                 req.write("<TD>%d (%.02f GB)</TD>" % (calnum, (calbytes/1073741824.0)))
              
             # Object files row is populated here
@@ -243,7 +243,7 @@ def content(req):
             typenum = typeresult[0]
             typebytes = typeresult[1]
 
-            if tel[0] and instrument[0] and instnum and instbytes != None:
+            if tel[0] and instrument[0] and typenum and typebytes != None:
                 req.write("<TD>%d (%.02f GB)</TD>" % (typenum, (typebytes/1073741824.0)))
 
     # Database annual statistics
