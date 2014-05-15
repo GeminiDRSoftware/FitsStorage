@@ -179,8 +179,6 @@ def content(req):
     #Database content statistics
     query = session.query(Header.telescope).group_by(Header.telescope).order_by(Header.telescope)
     tels = query.all()
-    query = session.query(Header.instrument).group_by(Header.instrument).order_by(Header.instrument)    
-    instruments = query.all()
     
     #Populates table headers
     req.write('<TH>Telescope&nbsp;</TH>')
@@ -192,6 +190,8 @@ def content(req):
 
     #Loops through table headers and populates table
     for tel in tels:
+        query = session.query(Header.instrument).group_by(Header.instrument).filter(Header.telescope == tel).order_by(Header.instrument)    
+        instruments = query.all()
         for instrument in instruments:
             even = not even
                        
