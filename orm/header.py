@@ -20,6 +20,7 @@ class Header(Base):
     diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
     diskfile = relation(DiskFile, order_by=id)
     program_id = Column(Text, index=True)
+    engineering = Column(Boolean, index=True)
     observation_id = Column(Text, index=True)
     data_label = Column(Text, index=True)
     telescope = Column(Text, index=True)
@@ -87,6 +88,10 @@ class Header(Base):
             # Basic data identification part
             try:
                 self.program_id = ad.program_id().for_db()
+            except ():
+                pass
+            try:
+                self.engineering = 'ENG' in self.program_id
             except ():
                 pass
             try:
