@@ -67,6 +67,8 @@ class DiskFile(Base):
                 else:
                     nongzfilename = gived_filename + "_gunzipped"
                 self.uncompressed_cache_file = os.path.join(gz_staging_area, nongzfilename)
+                if(os.path.exists(self.uncompressed_cache_file)):
+                    os.unlink(self.uncompressed_cache_file)
                 in_file = gzip.GzipFile(self.fullpath(), mode='rb')
                 out_file = open(self.uncompressed_cache_file, 'w')
                 out_file.write(in_file.read())

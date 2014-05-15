@@ -186,13 +186,24 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
                     try:
                         tries += 1
                         logger.debug("Fetching %s to s3_staging_area, try %d" % (filename, tries))
+                        if(os.path.exists(fullpath)):
+                            logger.warning("File already exists at S3 download location: %s. Will delete it first."  % fullpath)
+                            try:
+                                os.unlink(fullpath)
+                            except:
+                                logger.error("Unable to delete %s which is in the way of the S3 download" % fullpath)
                         key.get_contents_to_filename(fullpath)
                     except socket.error:
                         if(tries < 5):
                             logger.error("Socket Error fetching %s from S3 - will retry, tries=%d" % (filename, tries))
+                            try:
+                                os.unlink(fullpath)
+                            except:
+                                pass
                             time.sleep(10)
                         else:
                             logger.error("Socket Error fetching %s from S3. Giving up." % filename)
+                            # Don't unlink the file here, leave it around for diagnostics.
                             raise
                     else:
                         break
