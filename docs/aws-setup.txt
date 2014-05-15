@@ -1,0 +1,4 @@
+# ssh connection that tunnels svn with it
+# From inside gemini:
+ssh -R 8080:scisoft:80 arcdev
+
