@@ -345,7 +345,7 @@ def content(req):
             # queries for filesize and filenum in year that loop is currently accessing
             dateyearstart = datetime.datetime(year=(year-1), month=12, day=31)
             dateyearend = datetime.datetime(year=(year+1), month=01, day=01)
-            yearquery = session.query(func.sum(DiskFile.file_size), func.count(), func.sum(DiskFile.data_size)).select_from(join(Header, DiskFile)).filter(DiskFile.canonical == True).filter(and_(Header.ut_datetime > dateyearstart, Header.ut_datetime < dateyearend))
+            yearquery = session.query(func.sum(DiskFile.file_size), func.count(), func.sum(DiskFile.data_size)).select_from(join(Header, DiskFile)).filter(DiskFile.canonical == True).filter(Header.telescope == tel).filter(and_(Header.ut_datetime > dateyearstart, Header.ut_datetime < dateyearend))
             yearresult = yearquery.one()
             yearbytes = yearresult[0]
             yearnum = yearresult[1]
