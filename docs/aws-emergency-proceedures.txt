@@ -61,3 +61,15 @@ lvdisplay
 cat /proc/mdstat
 
 
+Using spot instances to accelerate a rebuild (untested)
+* Build primary server
+* Allow remote DB access on primary server
+* Snapshot primary server
+* Launch on demand instance from snapshot
+* clean up unneeded filesystems, raid, lvm etc
+* configure to access remote DB
+* configure to start ingest jobs
+* reboot and check it comes up and processes
+* snapshot on demand server
+* Check spot instance pricing. Bid high so they don't get terminated.
+* launch spot instances from this snapshot.
