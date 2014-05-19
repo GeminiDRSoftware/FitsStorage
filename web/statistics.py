@@ -172,6 +172,25 @@ def content(req):
         req.write('<h1>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h1>')
         
     req.write("<h1>Database content statistics</h1>")
+    
+    # Presents total files and filesize
+    req.write("<p>")
+    query = session.query(func.count(), func.sum(DiskFile.file_size), func.sum(DiskFile.data_size)).filter(DiskFile.canonical == True)
+    filenum = query.one()[0]
+    filesize = query.one()[1]
+    datasize = query.one()[2]
+
+    req.write("<caption align=bottom>")
+    req.write("Total number of files: %d</p>" % filenum)
+
+    if filesize != None:
+        req.write("<p>Total file storage size: %.02f GB</p>" % (filesize/1073741824.0))
+    
+    if datasize != None:
+        req.write("<p>Total FITS data size: %.02f GB</p>" % (datasize/1073741824.0))
+
+    req.write("<p>")
+    req.write("<h3>Data and file volume by telescope/instrument</h3>")
     req.write("<TABLE border=0>")
     req.write("<TR class=tr_head>")
     even = 0
@@ -181,12 +200,20 @@ def content(req):
     tels = query.all()
     
     #Populates table headers
-    req.write('<TH>Telescope&nbsp;</TH>')
-    req.write('<TH>Instrument&nbsp;</TH>')
-    req.write('<TH>Instrument total&nbsp;</TH>')
-    req.write('<TH>Science+Acq&nbsp;</TH>')
-    req.write('<TH>Calibration&nbsp;</TH>')
-    req.write('<TH>Object files&nbsp;</TH>')
+    req.write('<TH rowspan="2">Telescope&nbsp;</TH>')
+    req.write('<TH rowspan="2">Instrument&nbsp;</TH>')
+    req.write('<TH colspan="2">Data Volume (GB)&nbsp;</TH>')
+    req.write('<TH colspan="6">Number of files&nbsp;</TH>')
+    req.write('</TR><TR class=tr_head>')
+    req.write('<TH>Storage size&nbsp;</TH>')
+    req.write('<TH>FITS filesize&nbsp;</TH>')
+    req.write('<TH>Total&nbsp;</TH>')
+    req.write('<TH>Engineering&nbsp;</TH>')
+    req.write('<TH>Science&nbsp;</TH>')
+    req.write('<TH>Science/Acq Obs. Class&nbsp;</TH>')
+    req.write('<TH>Calibration Obs. Class&nbsp;</TH>')
+    req.write('<TH>Object Obs. Type&nbsp;</TH>')
+    req.write('</TR>')
 
     #Loops through table headers and populates table
     for tel in tels:
@@ -203,7 +230,7 @@ def content(req):
             req.write("<TR class=%s>" % (cs))
         
             #this query gives file counts and filesize totals
-            query = session.query(func.count(), func.sum(DiskFile.file_size)).select_from(join(DiskFile, Header)).filter(DiskFile.canonical == True)
+            query = session.query(func.count(), func.sum(DiskFile.file_size), func.sum(DiskFile.data_size)).select_from(join(DiskFile, Header)).filter(DiskFile.canonical == True).filter(Header.telescope == tel).filter(Header.instrument == instrument)
                         
             #Telescope and instrument rows are populated here
             if tel[0] and instrument[0] != None:
@@ -211,42 +238,63 @@ def content(req):
                 req.write("<TD>%s</TD>" % (str(instrument[0])))
             
             #Instrument totals are tallied here
-            instquery = query.filter(Header.telescope == tel).filter(Header.instrument == instrument)
-            instresult = instquery.one()
+            instresult = query.one()
             instnum = instresult[0]
             instbytes = instresult[1]
+            instdata = instresult[2]
 
-            if tel[0] and instrument[0] and instnum and instbytes != None:
-                req.write("<TD>%d (%.02f GB)</TD>" % (instnum, (instbytes/1073741824.0)))
+            if tel[0] and instrument[0] and instdata and instbytes != None:
+                req.write("<TD>%.02f GB</TD>" % (instbytes/1073741824.0))
+                req.write("<TD>%.02f GB</TD>" % (instdata/1073741824.0))
+                req.write("<TD>%d</TD>" % instnum)            
 
+            #Engineering/Science totals are tallied here
+            engquery = query.filter(Header.engineering == True)
+            sciquery = query.filter(Header.engineering == False)
+            engnum = engquery.one()[0]
+            scinum = sciquery.one()[0]
+
+            if engnum == None:
+                req.write("<TD>0</TD>")
+            else:
+                req.write("<TD>%d</TD>" % engnum)
+
+            if scinum == None:
+                req.write("<TD>0</TD>")
+            else:
+                req.write("<TD>%d</TD>" % scinum)
+            
             # Science+Acq row is populated here
-            classquery = query.filter(or_(Header.observation_class == 'science', Header.observation_class=='acq')).filter(Header.telescope == tel).filter(Header.instrument == instrument)
+            classquery = query.filter(or_(Header.observation_class == 'science', Header.observation_class=='acq'))
             classresult = classquery.one()
             classnum = classresult[0]
-            classbytes = classresult[1]
             
-            if tel[0] and instrument[0] and classnum and classbytes != None:
-                req.write("<TD>%d (%.02f GB)</TD>" % (classnum, (classbytes/1073741824.0)))
+            if tel[0] and instrument[0] and classnum != None:
+                req.write("<TD>%d</TD>" % classnum)
                                            
             # Calibration row is populated here
-            calquery = query.filter(or_(Header.observation_class=='progCal', Header.observation_class=='partnerCal', Header.observation_class=='acqCal', Header.observation_class=='dayCal')).filter(Header.telescope == tel).filter(Header.instrument == instrument)
+            calquery = query.filter(or_(Header.observation_class=='progCal', Header.observation_class=='partnerCal', Header.observation_class=='acqCal', Header.observation_class=='dayCal'))
             calresult = calquery.one()
             calnum = calresult[0]
             calbytes = calresult[1]
 
             if tel[0] and instrument[0] and calnum and calbytes != None:
-                req.write("<TD>%d (%.02f GB)</TD>" % (calnum, (calbytes/1073741824.0)))
+                req.write("<TD>%d</TD>" % calnum)
              
             # Object files row is populated here
-            typequery = query.filter(Header.observation_type == 'OBJECT').filter(Header.telescope == tel).filter(Header.instrument == instrument)
+            typequery = query.filter(Header.observation_type == 'OBJECT')
             typeresult = typequery.one()
             typenum = typeresult[0]
             typebytes = typeresult[1]
 
             if tel[0] and instrument[0] and typenum and typebytes != None:
-                req.write("<TD>%d (%.02f GB)</TD>" % (typenum, (typebytes/1073741824.0)))
-
+                req.write("<TD>%d</TD>" % typenum)
+    
+    req.write("</table></p>") 
+   
     # Database annual statistics
+    req.write("<h3>Data and file volume by telescope/year</h3>")
+    req.write("<p>")
     req.write("<TABLE border=0>")
     req.write("<TR class=tr_head>")
     
@@ -266,16 +314,21 @@ def content(req):
             yearof -= 1
             
     #Table headers
-    req.write('<TH>Telescope&nbsp;</TH>')    
-    req.write('<TH>Year&nbsp;</TH>')
-    req.write('<TH>Total&nbsp;</TH>')
+    req.write('<TH rowspan="2">Telescope&nbsp;</TH>')    
+    req.write('<TH rowspan="2">Year&nbsp;</TH>')
+    req.write('<TH colspan="2">Data Volume (GB)&nbsp;</TH>')
+    req.write('<TH rowspan="2">Number of files&nbsp;</TH>')
     req.write('</TR>')
-    
+    req.write('<TR class=tr_head>')
+    req.write('<TH>Storage size&nbsp;</TH>')
+    req.write('<TH>FITS filesize&nbsp;</TH>')    
+    req.write('</TR>')
+
     even = 0
     
     # iterates through datetimes and populates table
-    for tel in tels:
-        for year in years:
+    for year in years:
+        for tel in tels:
             even = not even
                         
             if(even):
@@ -292,29 +345,21 @@ def content(req):
             # queries for filesize and filenum in year that loop is currently accessing
             dateyearstart = datetime.datetime(year=(year-1), month=12, day=31)
             dateyearend = datetime.datetime(year=(year+1), month=01, day=01)
-            yearquery = session.query(func.sum(DiskFile.file_size), func.count()).select_from(join(Header, DiskFile)).filter(DiskFile.canonical == True).filter(and_(Header.ut_datetime > dateyearstart, Header.ut_datetime < dateyearend))
+            yearquery = session.query(func.sum(DiskFile.file_size), func.count(), func.sum(DiskFile.data_size)).select_from(join(Header, DiskFile)).filter(DiskFile.canonical == True).filter(and_(Header.ut_datetime > dateyearstart, Header.ut_datetime < dateyearend))
             yearresult = yearquery.one()
-            yearnum = yearresult[1]
             yearbytes = yearresult[0]
+            yearnum = yearresult[1]
+            yeardata = yearresult[2]
         
             if tel[0] and year and yearnum and yearbytes != None:
-                req.write("<TD>%d (%.02f GB)</TD>" % (yearnum, (yearbytes/1073741824.0)))
+                req.write("<TD>%.02f GB</TD>" % (yearbytes/1073741824.0))
+                req.write("<TD>%.02f GB</TD>" % (yeardata/1073741824.0))
+                req.write("<TD>%d</TD>" % yearnum)
 
             req.write("</TR>")
-        
-    # Presents total files and filesize
-    query = session.query(func.count(), func.sum(DiskFile.file_size)).filter(DiskFile.canonical == True)
-    filenum = query.one()[0]
-    filesize = query.one()[1]
-
-    req.write("<caption align=bottom>")
-    req.write("<ul>Total number of files: %d</ul>" % filenum)
-
-    if filesize != None:
-        req.write("<ul>Total filesize: %.02f GB</ul>" % (filesize/1073741824.0))
-
-    req.write("</caption>")
+    
     req.write("</table>")
+    req.write("</p>")
     req.write("</body>")
     req.write("</html>")
 
