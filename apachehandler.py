@@ -381,7 +381,8 @@ def handler(req):
         return curation_report(req, things)
 
     # Some static files that the server should serve via a redirect.
-    if((this == "robots.txt") or (this == "favicon.ico")):
+    staticfiles = ["robots.txt", "favicon.ico", "jquery-1.11.1.min.js"]
+    if this in staticfiles:
         newurl = "/htmldocs/%s" % this
         util.redirect(req, newurl)
     
