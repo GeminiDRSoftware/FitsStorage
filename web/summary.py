@@ -176,19 +176,6 @@ def webhdrsummary(req, type, headers, links=True, download=False):
         else:
             wmd = ''
 
-        # The gsa! flag
-        gsa = ''
-        #if(h.diskfile.file.gsafile):
-            #gsa_md5 = h.diskfile.file.gsafile.md5
-            #df_md5 = h.diskfile.md5
-            #if(h.diskfile.file.gsafile.md5 is None):
-                #style = " style='color:red'"
-            #else:
-                #style = ""
-            #if ((gsa_md5 == df_md5) or iseng or h.qa_state=='Fail'):
-                #gsa = ''
-            #else:
-                #gsa = "<abbr title='Last GSA poll at %s - Ingested %s, Local lastmod %s'><span%s>-gsa!</span></abbr>" % (h.diskfile.file.gsafile.lastpoll, h.diskfile.file.gsafile.ingestdate, h.diskfile.lastmod, style)
 
         # The [download] link
         fdl = ''
@@ -199,7 +186,7 @@ def webhdrsummary(req, type, headers, links=True, download=False):
                 fdl = '[unavailable]'
 
         if(links):
-            req.write('<TD><A HREF="/fullheader/%d">%s</A> %s %s %s %s</TD>' % (h.diskfile.id, h.diskfile.file.name, fve, wmd, gsa, fdl))
+            req.write('<TD><A HREF="/fullheader/%d">%s</A> %s %s %s</TD>' % (h.diskfile.id, h.diskfile.file.name, fve, wmd, fdl))
         else:
             req.write('<TD>%s %s %s</TD>' % (h.diskfile.file.name, fve, wmd))
 
