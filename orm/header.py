@@ -169,10 +169,7 @@ class Header(Base):
                 pass
 
 
-            try:
-                self.wavefront_sensor = ad.wavefront_sensor().for_db()
-            except ():
-                pass
+            self.wavefront_sensor = ad.wavefront_sensor().for_db()
 
             # And the Spectroscopy header
             self.spectroscopy = False
@@ -180,10 +177,7 @@ class Header(Base):
                 self.spectroscopy = True
 
             # Set the derived QA state and release date
-            try:
-                self.qa_state = ad.qa_state().for_db()
-            except ():
-                pass
+            self.qa_state = ad.qa_state().for_db()
             try:
                 reldatestring = ad.phu_get_key_value('RELEASE')
                 if(reldatestring):

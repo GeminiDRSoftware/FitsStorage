@@ -50,63 +50,21 @@ class Gmos(Base):
         try:
             ad = AstroData(fullpath, mode="readonly")
             # Populate values
-            try:
-                self.disperser = ad.disperser().for_db()
-            except ():
-                pass
-            try:
-                self.filter_name = ad.filter_name().for_db()
-            except ():
-                pass
-            try:
-                self.detector_x_bin = ad.detector_x_bin().for_db()
-            except ():
-                pass
-            try:
-                self.detector_y_bin = ad.detector_y_bin().for_db()
-            except ():
-                pass
-            try:
-                self.amp_read_area = ad.amp_read_area().for_db()
-            except ():
-                pass
-            try:
-                self.read_speed_setting = ad.read_speed_setting().for_db()
-            except ():
-                pass
-            try:
-                self.gain_setting = ad.gain_setting().for_db()
-            except ():
-                pass
-            try:
-                self.focal_plane_mask = ad.focal_plane_mask().for_db()
-            except ():
-                pass
-            try:
-                self.nodandshuffle = ad.is_type('GMOS_NODANDSHUFFLE')
-            except ():
-                pass
+            self.disperser = ad.disperser().for_db()
+            self.filter_name = ad.filter_name().for_db()
+            self.detector_x_bin = ad.detector_x_bin().for_db()
+            self.detector_y_bin = ad.detector_y_bin().for_db()
+            self.amp_read_area = ad.amp_read_area().for_db()
+            self.read_speed_setting = ad.read_speed_setting().for_db()
+            self.gain_setting = ad.gain_setting().for_db()
+            self.focal_plane_mask = ad.focal_plane_mask().for_db()
+            self.nodandshuffle = ad.is_type('GMOS_NODANDSHUFFLE')
             if(self.nodandshuffle):
-                try:
-                    self.nod_count = ad.nod_count().for_db()
-                except ():
-                    pass
-                try:
-                    self.nod_pixels = ad.nod_pixels().for_db()
-                except ():
-                    pass
-            try:
-                self.prepared = ad.is_type('PREPARED')
-            except ():
-                pass
-            try:
-                self.overscan_trimmed = ad.is_type('OVERSCAN_TRIMMED')
-            except ():
-                pass
-            try:
-                self.overscan_subtracted = ad.is_type('OVERSCAN_SUBTRACTED')
-            except ():
-                pass
+                self.nod_count = ad.nod_count().for_db()
+                self.nod_pixels = ad.nod_pixels().for_db()
+            self.prepared = ad.is_type('PREPARED')
+            self.overscan_trimmed = ad.is_type('OVERSCAN_TRIMMED')
+            self.overscan_subtracted = ad.is_type('OVERSCAN_SUBTRACTED')
 
             ad.close()
         except Errors.CorruptDataError:

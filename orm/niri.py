@@ -42,39 +42,15 @@ class Niri(Base):
         try:
             ad = AstroData(fullpath, mode="readonly")
             # Populate values
-            try:
-                self.disperser = ad.disperser().for_db()
-            except ():
-                pass
-            try:
-                self.filter_name = ad.filter_name().for_db()
-            except ():
-                pass
-            try:
-                self.read_mode = ad.read_mode().for_db()
-            except ():
-                pass
-            try:
-                self.well_depth_setting = ad.well_depth_setting().for_db()
-            except ():
-                pass
-            try:
-                # the str() is a temp workaround 20110404 PH
-                self.data_section = str(ad.data_section().for_db())
-            except ():
-                pass
-            try:
-                self.coadds = ad.coadds().for_db()
-            except ():
-                pass
-            try:
-                self.camera = ad.camera().for_db()
-            except ():
-                pass
-            try:
-                self.focal_plane_mask = ad.focal_plane_mask().for_db()
-            except ():
-                pass
+            self.disperser = ad.disperser().for_db()
+            self.filter_name = ad.filter_name().for_db()
+            self.read_mode = ad.read_mode().for_db()
+            self.well_depth_setting = ad.well_depth_setting().for_db()
+            # the str() is a temp workaround 20110404 PH
+            self.data_section = str(ad.data_section().for_db())
+            self.coadds = ad.coadds().for_db()
+            self.camera = ad.camera().for_db()
+            self.focal_plane_mask = ad.focal_plane_mask().for_db()
             ad.close()
         except:
             # Astrodata open failed or there was some other exception

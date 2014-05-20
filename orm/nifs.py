@@ -39,26 +39,11 @@ class Nifs(Base):
         try:
             ad = AstroData(fullpath, mode="readonly")
             # Populate values
-            try:
-                self.disperser = ad.disperser().for_db()
-            except ():
-                pass
-            try:
-                self.filter_name = ad.filter_name().for_db()
-            except ():
-                pass
-            try:
-                self.read_mode = ad.read_mode().for_db()
-            except ():
-                pass
-            try:
-                self.coadds = ad.coadds().for_db()
-            except ():
-                pass
-            try:
-                self.focal_plane_mask = ad.focal_plane_mask().for_db()
-            except ():
-                pass
+            self.disperser = ad.disperser().for_db()
+            self.filter_name = ad.filter_name().for_db()
+            self.read_mode = ad.read_mode().for_db()
+            self.coadds = ad.coadds().for_db()
+            self.focal_plane_mask = ad.focal_plane_mask().for_db()
             ad.close()
         except:
             # Astrodata open failed or there was some other exception
