@@ -214,8 +214,8 @@ class Header(Base):
             raise
 
     def footprints(self):
-        if(diskfile.uncompressed_cache_file):
-            fullpath = uncompressed_cache_file
+        if(self.diskfile.uncompressed_cache_file):
+            fullpath = self.diskfile.uncompressed_cache_file
         else:
             fullpath = self.diskfile.fullpath()
 
