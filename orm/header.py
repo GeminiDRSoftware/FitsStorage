@@ -86,150 +86,54 @@ class Header(Base):
             ad = AstroData(fullpath, mode='readonly')
 
             # Basic data identification part
-            try:
-                self.program_id = ad.program_id().for_db()
-            except ():
-                pass
-            try:
-                self.engineering = 'ENG' in self.program_id
-            except ():
-                pass
-            try:
-                self.observation_id = ad.observation_id().for_db()
-            except ():
-                pass
-            try:
-                self.data_label = ad.data_label().for_db()
-            except ():
-                pass
-            try:
-                self.telescope = ad.telescope().for_db()
-            except ():
-                pass
-            try:
-                self.instrument = ad.instrument().for_db()
-            except ():
-                pass
+            self.program_id = ad.program_id().for_db()
+            if(self.program_id is not None):
+                self.engineering = ('ENG' in self.program_id)
+            self.observation_id = ad.observation_id().for_db()
+            self.data_label = ad.data_label().for_db()
+            self.telescope = ad.telescope().for_db()
+            self.instrument = ad.instrument().for_db()
 
             # Date and times part
-            try:
-                self.ut_datetime = ad.ut_datetime().for_db()
-            except ():
-                pass
-
-            try:
-                self.local_time = ad.local_time().for_db()
-            except ():
-                pass
+            self.ut_datetime = ad.ut_datetime().for_db()
+            self.local_time = ad.local_time().for_db()
 
             # Data Types
-            try:
-                self.observation_type = ad.observation_type().for_db()
-                if('GNIRS_PINHOLE' in ad.types):
-                    self.observation_type = 'PINHOLE'
-                if('NIFS_RONCHI' in ad.types):
-                    self.observation_type = 'RONCHI'
-            except ():
-                pass
-            try:
-                self.observation_class = ad.observation_class().for_db()
-            except ():
-                pass
-            try:
-                self.object = ad.object().for_db()
-            except ():
-                pass
-            try:
-                self.ra = ad.ra().for_db()
-            except ():
-                pass
-            try:
-                self.dec = ad.dec().for_db()
-            except ():
-                pass
-            try:
-                self.azimuth = ad.azimuth().for_db()
-            except ():
-                pass
-            try:
-                self.elevation = ad.elevation().for_db()
-            except ():
-                pass
-            try:
-                self.cass_rotator_pa = ad.cass_rotator_pa().for_db()
-            except ():
-                pass
-            try:
-                self.airmass = ad.airmass().for_db()
-            except ():
-                pass
-            try:
-                self.raw_iq = ad.raw_iq().for_db()
-            except ():
-                pass
-            try:
-                self.raw_cc = ad.raw_cc().for_db()
-            except ():
-                pass
-            try:
-                self.raw_wv = ad.raw_wv().for_db()
-            except ():
-                pass
-            try:
-                self.raw_bg = ad.raw_bg().for_db()
-            except ():
-                pass
-            try:
-                self.requested_iq = ad.requested_iq().for_db()
-            except ():
-                pass
-            try:
-                self.requested_cc = ad.requested_cc().for_db()
-            except ():
-                pass
-            try:
-                self.requested_wv = ad.requested_wv().for_db()
-            except ():
-                pass
-            try:
-                self.requested_bg = ad.requested_bg().for_db()
-            except ():
-                pass
+            self.observation_type = ad.observation_type().for_db()
+            if('GNIRS_PINHOLE' in ad.types):
+                self.observation_type = 'PINHOLE'
+            if('NIFS_RONCHI' in ad.types):
+                self.observation_type = 'RONCHI'
+            self.observation_class = ad.observation_class().for_db()
+            self.object = ad.object().for_db()
+            self.ra = ad.ra().for_db()
+            self.dec = ad.dec().for_db()
+            self.azimuth = ad.azimuth().for_db()
+            self.elevation = ad.elevation().for_db()
+            self.cass_rotator_pa = ad.cass_rotator_pa().for_db()
+            self.airmass = ad.airmass().for_db()
+            self.raw_iq = ad.raw_iq().for_db()
+            self.raw_cc = ad.raw_cc().for_db()
+            self.raw_wv = ad.raw_wv().for_db()
+            self.raw_bg = ad.raw_bg().for_db()
+            self.requested_iq = ad.requested_iq().for_db()
+            self.requested_cc = ad.requested_cc().for_db()
+            self.requested_wv = ad.requested_wv().for_db()
+            self.requested_bg = ad.requested_bg().for_db()
 
-            try:
-                self.filter_name = ad.filter_name(pretty=True).for_db()
-            except ():
-                pass
-            try:
-                # NICI exposure times are a pain, because there's two of them... Not sure how to handle this for now.
-                if(self.instrument != 'NICI'):
-                    self.exposure_time = ad.exposure_time().for_db()
-            except ():
-                pass
-            try:
-                self.disperser = ad.disperser(pretty=True).for_db()
-            except ():
-                pass
+            self.filter_name = ad.filter_name(pretty=True).for_db()
+            # NICI exposure times are a pain, because there's two of them... Not sure how to handle this for now.
+            if(self.instrument != 'NICI'):
+                self.exposure_time = ad.exposure_time().for_db()
+            self.disperser = ad.disperser(pretty=True).for_db()
             if('SPECT' in ad.types):
-                try:
-                    self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
-                except ():
-                    pass
-            try:
-                self.wavelength_band = ad.wavelength_band().for_db()
-            except ():
-                pass
-            try:
-                self.focal_plane_mask = ad.focal_plane_mask(pretty=True).for_db()
-            except ():
-                pass
-            try:
-                dvx = ad.detector_x_bin()
-                dvy = ad.detector_y_bin()
-                if((not dvx.is_none()) and (not dvy.is_none())):
-                    self.detector_binning = "%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
-            except ():
-                pass
+                self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
+            self.wavelength_band = ad.wavelength_band().for_db()
+            self.focal_plane_mask = ad.focal_plane_mask(pretty=True).for_db()
+            dvx = ad.detector_x_bin()
+            dvy = ad.detector_y_bin()
+            if((not dvx.is_none()) and (not dvy.is_none())):
+                self.detector_binning = "%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
 
             try:
                 gainsetting = str(ad.gain_setting())
@@ -242,10 +146,7 @@ class Header(Base):
             nodandshuffle = "NodAndShuffle" if ad.is_type("GMOS_NODANDSHUFFLE") else ""
             self.detector_config = "%s %s %s" % (gainsetting, readspeedsetting, nodandshuffle)
 
-            try:
-                self.detector_roi_setting = ad.detector_roi_setting().for_db()
-            except ():
-                pass
+            self.detector_roi_setting = ad.detector_roi_setting().for_db()
 
 
             # Hack the AO header and LGS for now
