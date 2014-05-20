@@ -31,6 +31,7 @@ from orm.f2 import F2
 from orm.ingestqueue import IngestQueue
 
 from utils.hashes import md5sum
+from utils.aws_s3 import get_s3_md5, fetch_to_staging
 
 if(using_s3):
     from boto.s3.connection import S3Connection
@@ -83,236 +84,195 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
     """
 
     logger.debug("ingest_file %s" % filename)
-    # Wrap everything in a try except to log any exceptions that occur
-    try:
 
-        # First, sanity check if the file actually exists
+    # If we're using S3, get the connection and the bucket
+    if(using_s3):
+        s3conn = S3Connection(aws_access_key, aws_secret_key)
+        bucket = s3conn.get_bucket(s3_bucket_name)
+
+    # First, sanity check if the file actually exists
+    if(using_s3):
+        key = bucket.get_key(os.path.join(path, filename))
+        fullpath = os.path.join(storage_root, filename)
+        if(key is None):
+            logger.error("cannot access %s in S3 bucket", filename)
+            check_present(session, filename)
+            return
+    else:
+        fullpath = os.path.join(storage_root, path, filename)
+        exists = os.access(fullpath, os.F_OK | os.R_OK) and os.path.isfile(fullpath)
+        if(not exists):
+            logger.error("cannot access %s", fullpath)
+            check_present(session, filename)
+            return
+
+    # Make a file instance
+    file = File(filename)
+
+    # Check if there is already a file table entry for this.
+    # filename may have been trimmed by the file object
+    query = session.query(File).filter(File.name==file.name)
+    if(query.first()):
+        logger.debug("Already in file table as %s" % file.name)
+        # This will throw an error if there is more than one entry
+        file = query.one()
+    else:
+        logger.debug("Adding new file table entry")
+        session.add(file)
+        session.commit()
+
+    # At this point, 'file' should by a valid DB object.
+
+    # See if a diskfile for this file already exists and is present
+    query = session.query(DiskFile).filter(DiskFile.file_id==file.id).filter(DiskFile.present==True)
+    if(query.first()):
+        # Yes, it's already there.
+        logger.debug("already present in diskfile table...")
+        # Ensure there's only one and get an instance of it
+        diskfile = query.one()
+
+        # Has the file changed since we last ingested it?
         if(using_s3):
-            s3conn = S3Connection(aws_access_key, aws_secret_key)
-            bucket = s3conn.get_bucket(s3_bucket_name)
-            key = bucket.get_key(os.path.join(path, filename))
-            if(key is None):
-                logger.error("cannot access %s in S3 bucket", filename)
-                check_present(session, filename)
-                return
+            # Check the md5 from s3 first.
+            # Lastmod on s3 is always the upload time, no way to set it manually
+            if(diskfile.file_md5 == get_s3_md5(key)):
+                logger.debug("S3 etag md5 indicates no change")
+                add_diskfile=0
+            else:
+                logger.debug("S3 etag md5 indicates file has changed - reingesting")
+                # We could fetch the file and do a local md5 check here if we want
+                # Set the present and canonical flags on the current one to false and create a new entry
+                diskfile.present = False
+                diskfile.canonical = False
+                session.commit()
+                add_diskfile=1
         else:
-            fullpath = os.path.join(storage_root, path, filename)
-            exists = os.access(fullpath, os.F_OK | os.R_OK) and os.path.isfile(fullpath)
-            if(not exists):
-                logger.error("cannot access %s", fullpath)
-                check_present(session, filename)
-                return
-
-        # Make a file instance
-        file = File(filename)
-
-        # Check if there is already a file table entry for this.
-        # filename may have been trimmed by the file object
-        query = session.query(File).filter(File.name==file.name)
-        if(query.first()):
-            logger.debug("Already in file table as %s" % file.name)
-            # This will throw an error if there is more than one entry
-            file = query.one()
-        else:
-            logger.debug("Adding new file table entry")
-            session.add(file)
-            session.commit()
-
-        # At this point, 'file' should by a valid DB object.
-
-        # See if a diskfile for this file already exists and is present
-        query = session.query(DiskFile).filter(DiskFile.file_id==file.id).filter(DiskFile.present==True)
-        if(query.first()):
-            # Yes, it's already there.
-            logger.debug("already present in diskfile table...")
-            # Ensure there's only one and get an instance of it
-            diskfile = query.one()
-
-            # Has the file changed since we last ingested it?
-            if(using_s3):
-                # Check the md5 from the s3 etag first.
-                # Lastmod on s3 is always the upload time, no way to set it manually
-                s3_md5 = key.etag.replace('"', '')
-                if(diskfile.file_md5 == s3_md5):
-                    logger.debug("S3 etag md5 indicates no change")
-                    add_diskfile=0
+            # By default check lastmod time first
+            # there is a subelty wrt timezones here.
+            if((diskfile.lastmod.replace(tzinfo=None) != diskfile.get_lastmod()) or force_md5 or force):
+                logger.debug("lastmod time or force flags indicates file modification")
+                # Check the md5 to be sure if it's changed
+                if(diskfile.file_md5 == diskfile.get_file_md5() and (force != True)):
+                    logger.debug("md5 indicates no change")
+                    add_diskfile = 0
                 else:
-                    logger.debug("S3 etag md5 indicates file has changed - reingesting")
-                    # We could fetch the file and do a local md5 check here if we want
+                    logger.debug("md5/force flag indicates file has changed - reingesting")
                     # Set the present and canonical flags on the current one to false and create a new entry
                     diskfile.present = False
                     diskfile.canonical = False
                     session.commit()
-                    add_diskfile=1
+                    add_diskfile = 1
             else:
-                # By default check lastmod time first
-                # there is a subelty wrt timezones here.
-                if((diskfile.lastmod.replace(tzinfo=None) != diskfile.get_lastmod()) or force_md5 or force):
-                    logger.debug("lastmod time or force flags indicates file modification")
-                    # Check the md5 to be sure if it's changed
-                    if(diskfile.file_md5 == diskfile.get_file_md5() and (force != True)):
-                        logger.debug("md5 indicates no change")
-                        add_diskfile = 0
-                    else:
-                        logger.debug("md5/force flag indicates file has changed - reingesting")
-                        # Set the present and canonical flags on the current one to false and create a new entry
-                        diskfile.present = False
-                        diskfile.canonical = False
-                        session.commit()
-                        add_diskfile = 1
-                else:
-                    logger.debug("lastmod time indicates file unchanged, not checking further")
-                    add_diskfile = 0
+                logger.debug("lastmod time indicates file unchanged, not checking further")
+                add_diskfile = 0
     
-        else:
-            # No not present, insert into diskfile table
-            logger.debug("No Present DiskFile exists")
-            add_diskfile = 1
+    else:
+        # No not present, insert into diskfile table
+        logger.debug("No Present DiskFile exists")
+        add_diskfile = 1
 
-            # Check to see if there is are older non-present but canonical versions to mark non-canonical
-            query = session.query(DiskFile).filter(DiskFile.file_id == file.id).filter(DiskFile.present == False).filter(DiskFile.canonical == True)
-            list = query.all()
-            for df in list:
-                logger.debug("Marking old diskfile id %d as no longer canonical" % df.id)
-                df.canonical = False
-            session.commit()
+        # Check to see if there is are older non-present but canonical versions to mark non-canonical
+        query = session.query(DiskFile).filter(DiskFile.file_id == file.id).filter(DiskFile.present == False).filter(DiskFile.canonical == True)
+        list = query.all()
+        for df in list:
+            logger.debug("Marking old diskfile id %d as no longer canonical" % df.id)
+            df.canonical = False
+        session.commit()
         
-        if(add_diskfile):
-            logger.debug("Adding new DiskFile entry")
-            if(using_s3):
-                # At this point, we fetch a local copy of the file to the staging area
-                fullpath = os.path.join(storage_root, filename)
-                # Try up to 5 times. Have seen socket.error raised 
-                tries = 0
-                got_it = False
-                while((not got_it) and (tries < 5)):
-                    try:
-                        tries += 1
-                        logger.debug("Fetching %s to s3_staging_area, try %d" % (filename, tries))
-                        if(os.path.exists(fullpath)):
-                            logger.warning("File already exists at S3 download location: %s. Will delete it first."  % fullpath)
-                            try:
-                                os.unlink(fullpath)
-                            except:
-                                logger.error("Unable to delete %s which is in the way of the S3 download" % fullpath)
-                        key.get_contents_to_filename(fullpath)
-                        if(os.path.getsize(fullpath) == key.size):
-                            # We got the right number of bytes at least
-                            if(md5sum(fullpath) == key.etag.replace('"', '')):
-                                # and the md5 matches too
-                                got_it = True
-                            else:
-                                logger.error("Problem fetching %s: size matches but md5 doesnt" % filename)
-                        else:
-                            logger.error("Problem fetching %s: size mismatch" % filename)
-                            
-                    except socket.error:
-                        if(tries < 5):
-                            logger.debug("Socket Error fetching %s from S3 - will retry, tries=%d" % (filename, tries))
-                            logger.debug("Socket Error details: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2])))
-                            time.sleep(10)
-                            # Try re-creating the key object
-                            key = bucket.get_key(os.path.join(path, filename))
-                            if(key is None):
-                                logger.error("Key has dissapeared out of S3 bucket! %s", filename)
-                                raise
-                            try:
-                                os.unlink(fullpath)
-                            except:
-                                pass
-                        else:
-                            logger.error("Socket Error fetching %s from S3. Giving up." % filename)
-                            # Don't unlink the file here, leave it around for diagnostics.
-                            raise
+    if(add_diskfile):
+        logger.debug("Adding new DiskFile entry")
+        if(using_s3):
+            # At this point, we fetch a local copy of the file to the staging area
+            ok = fetch_to_staging(path, filename, key, fullpath)
+            if(not ok):
+                # Failed to fetch the file from S3. Can't do this
+                return
 
-            # Instantiating the DiskFile object with a gzipped filename will trigger creation of the unzipped cache file too.
-            diskfile = DiskFile(file, filename, path)
-            session.add(diskfile)
-            session.commit()
-
-            # This will use the DiskFile unzipped cache file if it exists
-            dfreport = DiskFileReport(diskfile, skip_fv, skip_wmd)
-            session.add(dfreport)
-            session.commit()
-            logger.debug("Adding new Header entry")
- 
-            # This will use the DiskFile unzipped cache file if it exists
-            header = Header(diskfile)
-            session.add(header)
-            inst = header.instrument
-            logger.debug("Instrument is: %s" % inst)
-            session.commit()
-            logger.debug("Adding new Footprint entries")
-            try:
-                fps = header.footprints()
-                for i in fps.keys():
-                    fp = Footprint(header)
-                    fp.populate(i)
-                    session.add(fp)
-                    session.commit()
-                    add_footprint(session, fp.id, fps[i])
-            except:
-                pass
-
-            if (not using_sqlite):
-                if(header.spectroscopy == False):
-                    logger.debug("Imaging - populating PhotStandardObs")
-                    do_std_obs(session, header.id)
-            
-            # This will use the DiskFile unzipped cache file if it exists
-            logger.debug("Adding FullTextHeader entry")
-            ftheader = FullTextHeader(diskfile)
-            session.add(ftheader)
-            session.commit()
-            # Add the instrument specific tables
-            # These will use the DiskFile unzipped cache file if it exists
-            if(inst == 'GMOS-N' or inst == 'GMOS-S'):
-                logger.debug("Adding new GMOS entry")
-                gmos = Gmos(header)
-                session.add(gmos)
-                session.commit()
-            if(inst == 'NIRI'):
-                logger.debug("Adding new NIRI entry")
-                niri = Niri(header)
-                session.add(niri)
-                session.commit()
-            if(inst == 'GNIRS'):
-                logger.debug("Adding new GNIRS entry")
-                gnirs = Gnirs(header)
-                session.add(gnirs)
-                session.commit()
-            if(inst == 'NIFS'):
-                logger.debug("Adding new NIFS entry")
-                nifs = Nifs(header)
-                session.add(nifs)
-                session.commit()
-            if(inst == 'F2'):
-                logger.debug("Assing new F2 entry")
-                f2 = F2(header)
-                session.add(f2)
-                session.commit()
-            if(inst == 'michelle'):
-                logger.debug("Adding new MICHELLE entry")
-                michelle = Michelle(header)
-                session.add(michelle)
-                session.commit()
-
-            if(using_s3):
-                logger.debug("deleting %s from s3_staging_area" % filename)
-                os.unlink(fullpath)
-            if(diskfile.uncompressed_cache_file):
-                logger.debug("deleting %s from gz_staging_area" % diskfile.uncompressed_cache_file)
-                if(os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK)):
-                    os.unlink(diskfile.uncompressed_cache_file)
-                    diskfile.uncompressed_cache_file = None
-                else:
-                    logger.debug("diskfile claimed to have an diskfile.uncompressed_cache_file, but cannot access it: %s" % diskfile.uncompressed_cache_file)
-    
+        # Instantiating the DiskFile object with a gzipped filename will trigger creation of the unzipped cache file too.
+        diskfile = DiskFile(file, filename, path)
+        session.add(diskfile)
         session.commit()
 
-    except:
-        logger.error("Exception in ingest_file with %s: %s : %s... %s" % (filename, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2])))
-        #raise
+        # This will use the DiskFile unzipped cache file if it exists
+        dfreport = DiskFileReport(diskfile, skip_fv, skip_wmd)
+        session.add(dfreport)
+        session.commit()
+        logger.debug("Adding new Header entry")
+
+        # This will use the DiskFile unzipped cache file if it exists
+        header = Header(diskfile)
+        session.add(header)
+        inst = header.instrument
+        logger.debug("Instrument is: %s" % inst)
+        session.commit()
+        logger.debug("Adding new Footprint entries")
+        try:
+            fps = header.footprints()
+            for i in fps.keys():
+                fp = Footprint(header)
+                fp.populate(i)
+                session.add(fp)
+                session.commit()
+                add_footprint(session, fp.id, fps[i])
+        except:
+            pass
+
+        if (not using_sqlite):
+            if(header.spectroscopy == False):
+                logger.debug("Imaging - populating PhotStandardObs")
+                do_std_obs(session, header.id)
+            
+        # This will use the DiskFile unzipped cache file if it exists
+        logger.debug("Adding FullTextHeader entry")
+        ftheader = FullTextHeader(diskfile)
+        session.add(ftheader)
+        session.commit()
+        # Add the instrument specific tables
+        # These will use the DiskFile unzipped cache file if it exists
+        if(inst == 'GMOS-N' or inst == 'GMOS-S'):
+            logger.debug("Adding new GMOS entry")
+            gmos = Gmos(header)
+            session.add(gmos)
+            session.commit()
+        if(inst == 'NIRI'):
+            logger.debug("Adding new NIRI entry")
+            niri = Niri(header)
+            session.add(niri)
+            session.commit()
+        if(inst == 'GNIRS'):
+            logger.debug("Adding new GNIRS entry")
+            gnirs = Gnirs(header)
+            session.add(gnirs)
+            session.commit()
+        if(inst == 'NIFS'):
+            logger.debug("Adding new NIFS entry")
+            nifs = Nifs(header)
+            session.add(nifs)
+            session.commit()
+        if(inst == 'F2'):
+            logger.debug("Assing new F2 entry")
+            f2 = F2(header)
+            session.add(f2)
+            session.commit()
+        if(inst == 'michelle'):
+            logger.debug("Adding new MICHELLE entry")
+            michelle = Michelle(header)
+            session.add(michelle)
+            session.commit()
+
+        if(using_s3):
+            logger.debug("deleting %s from s3_staging_area" % filename)
+            os.unlink(fullpath)
+        if(diskfile.uncompressed_cache_file):
+            logger.debug("deleting %s from gz_staging_area" % diskfile.uncompressed_cache_file)
+            if(os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK)):
+                os.unlink(diskfile.uncompressed_cache_file)
+                diskfile.uncompressed_cache_file = None
+            else:
+                logger.debug("diskfile claimed to have an diskfile.uncompressed_cache_file, but cannot access it: %s" % diskfile.uncompressed_cache_file)
+    
+    session.commit()
+
 
 def check_present(session, filename):
     """
