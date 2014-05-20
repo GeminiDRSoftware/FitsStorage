@@ -15,7 +15,6 @@ class File(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False, unique=True, index=True)
-    #gsafile = relationship("GsaFile", uselist=False, backref='parent')
 
     def __init__(self, filename):
         self.name = self.trim_name(filename)
