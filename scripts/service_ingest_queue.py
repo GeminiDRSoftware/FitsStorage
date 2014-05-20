@@ -151,9 +151,9 @@ while(loop):
                     add_to_exportqueue(session, iq.filename, iq.path, destination)
             except:
                 logger.info("Problem Ingesting File - Rolling back" )
+                logger.error("Exception ingesting file %s: %s : %s... %s" % (iq.filename, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2])))
                 session.rollback()
-                # Originally we set the inprogress flag back to False at the point that we abort. But that can lead to an immediate re-try
-                # and subsequent rapid rate re-failures, and it will never move on to the next file. So lets try leaving it set inprogress to avoid that.
+                # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
                 # iq.inprogress=False
                 session.commit()
                 raise
