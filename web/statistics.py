@@ -244,9 +244,9 @@ def content(req):
             instdata = instresult[2]
 
             if tel[0] and instrument[0] and instdata and instbytes != None:
-                req.write("<TD>%.02f GB</TD>" % (instbytes/1073741824.0))
-                req.write("<TD>%.02f GB</TD>" % (instdata/1073741824.0))
-                req.write("<TD>%d</TD>" % instnum)            
+                req.write("<TD>%.02f</TD>" % (instbytes/1073741824.0))
+                req.write("<TD>%.02f</TD>" % (instdata/1073741824.0))
+                req.write("<TD>%s</TD>" % ("{:,}".format(instnum)))
 
             #Engineering/Science totals are tallied here
             engquery = query.filter(Header.engineering == True)
@@ -257,12 +257,12 @@ def content(req):
             if engnum == None:
                 req.write("<TD>0</TD>")
             else:
-                req.write("<TD>%d</TD>" % engnum)
+                req.write("<TD>%s</TD>" % ("{:,}".format(engnum)))
 
             if scinum == None:
                 req.write("<TD>0</TD>")
             else:
-                req.write("<TD>%d</TD>" % scinum)
+                req.write("<TD>%s</TD>" % ("{:,}".format(scinum)))
             
             # Science+Acq row is populated here
             classquery = query.filter(or_(Header.observation_class == 'science', Header.observation_class=='acq'))
@@ -270,7 +270,7 @@ def content(req):
             classnum = classresult[0]
             
             if tel[0] and instrument[0] and classnum != None:
-                req.write("<TD>%d</TD>" % classnum)
+                req.write("<TD>%s</TD>" % ("{:,}".format(classnum)))
                                            
             # Calibration row is populated here
             calquery = query.filter(or_(Header.observation_class=='progCal', Header.observation_class=='partnerCal', Header.observation_class=='acqCal', Header.observation_class=='dayCal'))
@@ -279,7 +279,7 @@ def content(req):
             calbytes = calresult[1]
 
             if tel[0] and instrument[0] and calnum and calbytes != None:
-                req.write("<TD>%d</TD>" % calnum)
+                req.write("<TD>%s</TD>" % ("{:,}".format(calnum)))
              
             # Object files row is populated here
             typequery = query.filter(Header.observation_type == 'OBJECT')
@@ -288,7 +288,7 @@ def content(req):
             typebytes = typeresult[1]
 
             if tel[0] and instrument[0] and typenum and typebytes != None:
-                req.write("<TD>%d</TD>" % typenum)
+                req.write("<TD>%s</TD>" % ("{:,}".format(typenum)))
     
     req.write("</table></p>") 
    
@@ -352,9 +352,9 @@ def content(req):
             yeardata = yearresult[2]
         
             if tel[0] and year and yearnum and yearbytes != None:
-                req.write("<TD>%.02f GB</TD>" % (yearbytes/1073741824.0))
-                req.write("<TD>%.02f GB</TD>" % (yeardata/1073741824.0))
-                req.write("<TD>%d</TD>" % yearnum)
+                req.write("<TD>%.02f</TD>" % (yearbytes/1073741824.0))
+                req.write("<TD>%.02f</TD>" % (yeardata/1073741824.0))
+                req.write("<TD>%s</TD>" % ("{:,}".format(yearnum)))
 
             req.write("</TR>")
     
