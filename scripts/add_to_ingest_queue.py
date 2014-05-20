@@ -47,6 +47,8 @@ else:
     logger.info("Queueing files for ingest from: %s" % fulldirpath)
     filelist = os.listdir(fulldirpath)
 
+logger.info("Got file list.")
+
 file_re = options.file_re
 # Handle the today and twoday etc options
 now = datetime.datetime.utcnow()
