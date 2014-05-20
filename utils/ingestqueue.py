@@ -30,6 +30,8 @@ from orm.michelle import Michelle
 from orm.f2 import F2
 from orm.ingestqueue import IngestQueue
 
+from utils.hashes import md5sum
+
 if(using_s3):
     from boto.s3.connection import S3Connection
     from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
@@ -182,7 +184,8 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
                 fullpath = os.path.join(storage_root, filename)
                 # Try up to 5 times. Have seen socket.error raised 
                 tries = 0
-                while(tries < 5):
+                got_it = False
+                while((not got_it) and (tries < 5)):
                     try:
                         tries += 1
                         logger.debug("Fetching %s to s3_staging_area, try %d" % (filename, tries))
@@ -193,20 +196,34 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
                             except:
                                 logger.error("Unable to delete %s which is in the way of the S3 download" % fullpath)
                         key.get_contents_to_filename(fullpath)
+                        if(os.path.getsize(fullpath) == key.size):
+                            # We got the right number of bytes at least
+                            if(md5sum(fullpath) == key.etag.replace('"', '')):
+                                # and the md5 matches too
+                                got_it = True
+                            else:
+                                logger.error("Problem fetching %s: size matches but md5 doesnt" % filename)
+                        else:
+                            logger.error("Problem fetching %s: size mismatch" % filename)
+                            
                     except socket.error:
                         if(tries < 5):
-                            logger.error("Socket Error fetching %s from S3 - will retry, tries=%d" % (filename, tries))
+                            logger.debug("Socket Error fetching %s from S3 - will retry, tries=%d" % (filename, tries))
+                            logger.debug("Socket Error details: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2])))
+                            time.sleep(10)
+                            # Try re-creating the key object
+                            key = bucket.get_key(os.path.join(path, filename))
+                            if(key is None):
+                                logger.error("Key has dissapeared out of S3 bucket! %s", filename)
+                                raise
                             try:
                                 os.unlink(fullpath)
                             except:
                                 pass
-                            time.sleep(10)
                         else:
                             logger.error("Socket Error fetching %s from S3. Giving up." % filename)
                             # Don't unlink the file here, leave it around for diagnostics.
                             raise
-                    else:
-                        break
 
             # Instantiating the DiskFile object with a gzipped filename will trigger creation of the unzipped cache file too.
             diskfile = DiskFile(file, filename, path)
@@ -294,7 +311,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         session.commit()
 
     except:
-        logger.error("Exception in ingest_file: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2])))
+        logger.error("Exception in ingest_file with %s: %s : %s... %s" % (filename, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2])))
         #raise
 
 def check_present(session, filename):
