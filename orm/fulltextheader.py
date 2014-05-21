@@ -21,21 +21,29 @@ class FullTextHeader(Base):
         self.populate(diskfile)
 
     def populate(self, diskfile):
-        fullpath = diskfile.fullpath()
-        # Try and open it as a fits file
-        ad = 0
-        try:
+        """
+        Populate the FullTextHeader data items
+        """
+        # The fulltextheader object is unusual in that we directly pass the constructor a diskfile
+        # object which may have an ad_object in it.
+        if(diskfile.ad_object is not None):
+            ad = diskfile.ad_object
+            local_ad = False
+        else:
+            if(diskfile.uncompressed_cache_file):
+                fullpath = diskfile.uncompressed_cache_file
+            else:
+                fullpath = diskfile.fullpath()
             ad = AstroData(fullpath, mode='readonly')
-            self.fulltext = ""
-            self.fulltext += "Filename: " +  diskfile.filename + "\n\n"
-            self.fulltext += "AstroData Types: " +str(ad.types) + "\n\n"
-            for i in range(len(ad.hdulist)):
-                self.fulltext += "\n--- HDU %s ---\n" % i
-                self.fulltext += unicode(str(ad.hdulist[i].header.ascardlist()), errors='replace')
-                self.fulltext += '\n'
-            ad.close()
+            local_ad = True
 
-        except:
-            # Astrodata open failed or there was some other exception
+        self.fulltext = ""
+        self.fulltext += "Filename: " +  diskfile.filename + "\n\n"
+        self.fulltext += "AstroData Types: " +str(ad.types) + "\n\n"
+        for i in range(len(ad.hdulist)):
+            self.fulltext += "\n--- HDU %s ---\n" % i
+            self.fulltext += unicode(str(ad.hdulist[i].header.ascardlist()), errors='replace')
+            self.fulltext += '\n'
+
+        if(local_ad):
             ad.close()
-            raise

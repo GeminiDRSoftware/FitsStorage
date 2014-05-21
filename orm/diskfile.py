@@ -48,6 +48,13 @@ class DiskFile(Base):
     # of this diskfile instance.
     uncompressed_cache_file = None
 
+    # We store an astrodata instance here in the same way
+    # These are expensive to instantiate
+    # We instantiate  and close this externally though. It's stored here as it is
+    # tightly linked to this actual diskfile, but obviously, this will not be set in
+    # any DiskFile object returned by the ORM layer, or pulled in as a relation
+    ad_object = None
+
     def __init__(self, given_file, given_filename, path, gzipped=None):
         self.file_id = given_file.id
         self.filename = given_filename
@@ -60,7 +67,7 @@ class DiskFile(Base):
         self.lastmod = self.get_lastmod()
         if(gzipped==True or given_filename.endswith(".gz")):
             self.gzipped = True
-            # Create the unzipped cache filename and unzip to it
+            # Create the uncompressed cache filename and unzip to it
             try:
                 if(given_filename.endswith(".gz")):
                     nongzfilename = given_filename[:-3]
@@ -77,6 +84,7 @@ class DiskFile(Base):
             except:
                 # Failed to create the unzipped cache file
                 self.uncompressed_cache_file = None
+                raise
      
             self.data_md5 = self.get_data_md5()
             self.data_size = self.get_data_size()

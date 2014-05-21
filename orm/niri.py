@@ -26,35 +26,19 @@ class Niri(Base):
     camera = Column(Text, index=True)
     focal_plane_mask = Column(Text)
 
-    def __init__(self, header):
+    def __init__(self, header, ad):
         self.header = header
 
         # Populate from an astrodata object
-        self.populate()
+        self.populate(ad)
 
-    def populate(self):
-        # Get an AstroData object on it
-        if(self.header.diskfile.uncompressed_cache_file):
-            fullpath = self.header.diskfile.uncompressed_cache_file
-        else:
-            fullpath = self.header.diskfile.fullpath()
-
-        try:
-            ad = AstroData(fullpath, mode="readonly")
-            # Populate values
-            self.disperser = ad.disperser().for_db()
-            self.filter_name = ad.filter_name().for_db()
-            self.read_mode = ad.read_mode().for_db()
-            self.well_depth_setting = ad.well_depth_setting().for_db()
-            # the str() is a temp workaround 20110404 PH
-            self.data_section = str(ad.data_section().for_db())
-            self.coadds = ad.coadds().for_db()
-            self.camera = ad.camera().for_db()
-            self.focal_plane_mask = ad.focal_plane_mask().for_db()
-            ad.close()
-        except:
-            # Astrodata open failed or there was some other exception
-            ad.close()
-            raise
-
-
+    def populate(self, ad):
+        self.disperser = ad.disperser().for_db()
+        self.filter_name = ad.filter_name().for_db()
+        self.read_mode = ad.read_mode().for_db()
+        self.well_depth_setting = ad.well_depth_setting().for_db()
+        # the str() is a temp workaround 20110404 PH
+        self.data_section = str(ad.data_section().for_db())
+        self.coadds = ad.coadds().for_db()
+        self.camera = ad.camera().for_db()
+        self.focal_plane_mask = ad.focal_plane_mask().for_db()

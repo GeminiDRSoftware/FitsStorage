@@ -75,16 +75,21 @@ class Header(Base):
         Populates header table values from the FITS headers of the file.
         Uses the AstroData object to access the file.
         """
-        if(diskfile.uncompressed_cache_file):
-            fullpath = diskfile.uncompressed_cache_file
-        else:
-            fullpath = diskfile.fullpath()
-    
-        # Try and open it as a fits file
-        ad = None
-        try:
-            ad = AstroData(fullpath, mode='readonly')
 
+        # The header object is unusual in that we directly pass the constructor a diskfile
+        # object which may have an ad_object in it.
+        if(diskfile.ad_object is not None):
+            ad = diskfile.ad_object
+            local_ad = False
+        else:
+            if(diskfile.uncompressed_cache_file):
+                fullpath = diskfile.uncompressed_cache_file
+            else:
+                fullpath = diskfile.fullpath()
+            ad = AstroData(fullpath, mode='readonly')
+            local_ad = True
+    
+        try:
             # Basic data identification part
             self.program_id = ad.program_id().for_db()
             if(self.program_id is not None):
@@ -205,56 +210,38 @@ class Header(Base):
             # Get the types list
             self.types = str(ad.types)
 
-            if(ad is not None):
-                ad.close()
         except:
-            # Astrodata open failed or there was some other exception
-            if(ad is not None):
-                ad.close()
+            # Something failed accessing the astrodata 
             raise
 
-    def footprints(self):
-        if(self.diskfile.uncompressed_cache_file):
-            fullpath = self.diskfile.uncompressed_cache_file
-        else:
-            fullpath = self.diskfile.fullpath()
+        finally:
+            if(local_ad):
+                ad.close()
 
-        # Try and open it as a fits file
-        ad = 0
+    def footprints(self, ad):
         retary = {}
-        try:
-            ad = AstroData(fullpath, mode='readonly')
-            # Horrible hack - GNIRS etc has the WCS in the PHU
-            if(('GNIRS' in ad.types) or ('MICHELLE' in ad.types) or ('NIFS' in ad.types)):
-                # If we're not in an RA/Dec TANgent frame, don't even bother
-                if((ad.phu_get_key_value('CTYPE1') == 'RA---TAN') and (ad.phu_get_key_value('CTYPE2') == 'DEC--TAN')):
-                    wcs = pywcs.WCS(ad.phu.header)
+        # Horrible hack - GNIRS etc has the WCS in the PHU
+        if(('GNIRS' in ad.types) or ('MICHELLE' in ad.types) or ('NIFS' in ad.types)):
+            # If we're not in an RA/Dec TANgent frame, don't even bother
+            if((ad.phu_get_key_value('CTYPE1') == 'RA---TAN') and (ad.phu_get_key_value('CTYPE2') == 'DEC--TAN')):
+                wcs = pywcs.WCS(ad.phu.header)
+                try:
+                    fp = wcs.calcFootprint()
+                    retary['PHU'] = fp
+                except pywcs._pywcs.SingularMatrixError:
+                    # WCS was all zeros.
+                    pass
+        else:
+            # If we're not in an RA/Dec TANgent frame, don't even bother
+            for i in range(len(ad)):
+                if((ad[i].get_key_value('CTYPE1') == 'RA---TAN') and (ad[i].get_key_value('CTYPE2') == 'DEC--TAN')):
+                    extension = "%s,%s" % (ad[i].extname(), ad[i].extver())
+                    wcs = pywcs.WCS(ad[i].header)
                     try:
                         fp = wcs.calcFootprint()
-                        retary['PHU'] = fp
+                        retary[extension] = fp
                     except pywcs._pywcs.SingularMatrixError:
                         # WCS was all zeros.
                         pass
-            else:
-                # If we're not in an RA/Dec TANgent frame, don't even bother
-                for i in range(len(ad)):
-                    if((ad[i].get_key_value('CTYPE1') == 'RA---TAN') and (ad[i].get_key_value('CTYPE2') == 'DEC--TAN')):
-                        extension = "%s,%s" % (ad[i].extname(), ad[i].extver())
-                        wcs = pywcs.WCS(ad[i].header)
-                        try:
-                            fp = wcs.calcFootprint()
-                            retary[extension] = fp
-                        except pywcs._pywcs.SingularMatrixError:
-                            # WCS was all zeros.
-                            pass
 
-
-            ad.close()
-            return retary
-
-        except:
-            # Astrodata open failed or there was some other exception
-            ad.close()
-            raise
-
-
+        return retary

@@ -33,6 +33,8 @@ from orm.ingestqueue import IngestQueue
 from utils.hashes import md5sum
 from utils.aws_s3 import get_s3_md5, fetch_to_staging
 
+from astrodata import AstroData
+
 if(using_s3):
     from boto.s3.connection import S3Connection
     from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
@@ -192,14 +194,32 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         diskfile = DiskFile(file, filename, path)
         session.add(diskfile)
         session.commit()
+        logger.debug("diskfile uncompressed cache file = %s, access=%s" % (diskfile.uncompressed_cache_file, os.access(diskfile.uncompressed_cache_file, os.F_OK)))
+        
+
+        # Instantiate an astrodata object here and pass it in to the things that need it
+        # These are expensive to instantiate each time
+        if(diskfile.uncompressed_cache_file):
+            fullpath_for_ad = diskfile.uncompressed_cache_file
+        else:
+            fullpath_for_ad = diskfile.fullpath()
+
+        logger.debug("Instantiating AstroData object on %s" % fullpath_for_ad)
+        try:
+            diskfile.ad_object = AstroData(fullpath_for_ad, mode='readonly')
+        except:
+            logger.error("Failed to open astrodata object on file: %s. Giving up" % fullpath_for_ad)
+            return
 
         # This will use the DiskFile unzipped cache file if it exists
+        logger.debug("Adding new DiskFileReport entry")
         dfreport = DiskFileReport(diskfile, skip_fv, skip_wmd)
         session.add(dfreport)
         session.commit()
-        logger.debug("Adding new Header entry")
 
-        # This will use the DiskFile unzipped cache file if it exists
+        logger.debug("Adding new Header entry")
+        # This will use the diskfile ad_object if it exists, else
+        # it will use the DiskFile unzipped cache file if it exists
         header = Header(diskfile)
         session.add(header)
         inst = header.instrument
@@ -207,7 +227,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         session.commit()
         logger.debug("Adding new Footprint entries")
         try:
-            fps = header.footprints()
+            fps = header.footprints(diskfile.ad_object)
             for i in fps.keys():
                 fp = Footprint(header)
                 fp.populate(i)
@@ -231,34 +251,38 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         # These will use the DiskFile unzipped cache file if it exists
         if(inst == 'GMOS-N' or inst == 'GMOS-S'):
             logger.debug("Adding new GMOS entry")
-            gmos = Gmos(header)
+            gmos = Gmos(header, diskfile.ad_object)
             session.add(gmos)
             session.commit()
         if(inst == 'NIRI'):
             logger.debug("Adding new NIRI entry")
-            niri = Niri(header)
+            niri = Niri(header, diskfile.ad_object)
             session.add(niri)
             session.commit()
         if(inst == 'GNIRS'):
             logger.debug("Adding new GNIRS entry")
-            gnirs = Gnirs(header)
+            gnirs = Gnirs(header, diskfile.ad_object)
             session.add(gnirs)
             session.commit()
         if(inst == 'NIFS'):
             logger.debug("Adding new NIFS entry")
-            nifs = Nifs(header)
+            nifs = Nifs(headeri, diskfile.ad_object)
             session.add(nifs)
             session.commit()
         if(inst == 'F2'):
             logger.debug("Assing new F2 entry")
-            f2 = F2(header)
+            f2 = F2(headeri, diskfile.ad_object)
             session.add(f2)
             session.commit()
         if(inst == 'michelle'):
             logger.debug("Adding new MICHELLE entry")
-            michelle = Michelle(header)
+            michelle = Michelle(header, diskfile.ad_object)
             session.add(michelle)
             session.commit()
+
+        if(diskfile.ad_object):
+            logger.debug("Closing centrally opened astrodata object")
+            diskfile.ad_object.close()
 
         if(using_s3):
             logger.debug("deleting %s from s3_staging_area" % filename)

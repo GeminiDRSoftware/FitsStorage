@@ -34,46 +34,25 @@ class Gmos(Base):
     overscan_subtracted = Column(Boolean, index=True)
     overscan_trimmed = Column(Boolean, index=True)
 
-    def __init__(self, header):
+    def __init__(self, header, ad):
         self.header = header
 
         # Populate from the astrodata object
-        self.populate()
+        self.populate(ad)
 
-    def populate(self):
-        # Get an AstroData object on it
-        if(self.header.diskfile.uncompressed_cache_file):
-            fullpath = self.header.diskfile.uncompressed_cache_file
-        else:
-            fullpath = self.header.diskfile.fullpath()
-
-        try:
-            ad = AstroData(fullpath, mode="readonly")
-            # Populate values
-            self.disperser = ad.disperser().for_db()
-            self.filter_name = ad.filter_name().for_db()
-            self.detector_x_bin = ad.detector_x_bin().for_db()
-            self.detector_y_bin = ad.detector_y_bin().for_db()
-            self.amp_read_area = ad.amp_read_area().for_db()
-            self.read_speed_setting = ad.read_speed_setting().for_db()
-            self.gain_setting = ad.gain_setting().for_db()
-            self.focal_plane_mask = ad.focal_plane_mask().for_db()
-            self.nodandshuffle = ad.is_type('GMOS_NODANDSHUFFLE')
-            if(self.nodandshuffle):
-                self.nod_count = ad.nod_count().for_db()
-                self.nod_pixels = ad.nod_pixels().for_db()
-            self.prepared = ad.is_type('PREPARED')
-            self.overscan_trimmed = ad.is_type('OVERSCAN_TRIMMED')
-            self.overscan_subtracted = ad.is_type('OVERSCAN_SUBTRACTED')
-
-            ad.close()
-        except Errors.CorruptDataError:
-            # Astrodata open failed or there was some other exception that we want to ignore
-            ad.close()
-            pass
-        except:
-            # Astrodata open failed or there was some other exception that we want to report
-            ad.close()
-            raise
-
-
+    def populate(self, ad):
+        self.disperser = ad.disperser().for_db()
+        self.filter_name = ad.filter_name().for_db()
+        self.detector_x_bin = ad.detector_x_bin().for_db()
+        self.detector_y_bin = ad.detector_y_bin().for_db()
+        self.amp_read_area = ad.amp_read_area().for_db()
+        self.read_speed_setting = ad.read_speed_setting().for_db()
+        self.gain_setting = ad.gain_setting().for_db()
+        self.focal_plane_mask = ad.focal_plane_mask().for_db()
+        self.nodandshuffle = ad.is_type('GMOS_NODANDSHUFFLE')
+        if(self.nodandshuffle):
+            self.nod_count = ad.nod_count().for_db()
+            self.nod_pixels = ad.nod_pixels().for_db()
+        self.prepared = ad.is_type('PREPARED')
+        self.overscan_trimmed = ad.is_type('OVERSCAN_TRIMMED')
+        self.overscan_subtracted = ad.is_type('OVERSCAN_SUBTRACTED')
