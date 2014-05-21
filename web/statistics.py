@@ -174,32 +174,30 @@ def content(req):
     req.write("<h1>Database content statistics</h1>")
     
     # Presents total files and filesize
-    req.write("<p>")
     query = session.query(func.count(), func.sum(DiskFile.file_size), func.sum(DiskFile.data_size)).filter(DiskFile.canonical == True)
-    filenum = query.one()[0]
-    filesize = query.one()[1]
-    datasize = query.one()[2]
+    result = query.one()
+    filenum = result[0]
+    filesize = result[1]
+    datasize = result[2]
 
-    req.write("<caption align=bottom>")
-    req.write("Total number of files: %d</p>" % filenum)
+    req.write("<p>Total number of files: %s</p>" % "{:,}".format(filenum))
 
-    if filesize != None:
-        req.write("<p>Total file storage size: %.02f GB</p>" % (filesize/1073741824.0))
+    if filesize is not None:
+        req.write("<p>Total file storage size: %s GB</p>" % '{:,.02f}'.format(filesize/1073741824.0))
     
-    if datasize != None:
-        req.write("<p>Total FITS data size: %.02f GB</p>" % (datasize/1073741824.0))
+    if datasize is not None:
+        req.write("<p>Total FITS data size: %s GB</p>" % '{:,.02f}'.format(datasize/1073741824.0))
 
-    req.write("<p>")
     req.write("<h3>Data and file volume by telescope/instrument</h3>")
     req.write("<TABLE border=0>")
     req.write("<TR class=tr_head>")
     even = 0
     
-    #Database content statistics
+    # Database content statistics
     query = session.query(Header.telescope).group_by(Header.telescope).order_by(Header.telescope)
     tels = query.all()
     
-    #Populates table headers
+    # Populates table headers
     req.write('<TH rowspan="2">Telescope&nbsp;</TH>')
     req.write('<TH rowspan="2">Instrument&nbsp;</TH>')
     req.write('<TH colspan="2">Data Volume (GB)&nbsp;</TH>')
@@ -215,7 +213,7 @@ def content(req):
     req.write('<TH>Object Obs. Type&nbsp;</TH>')
     req.write('</TR>')
 
-    #Loops through table headers and populates table
+    # Loops through table headers and populates table
     for tel in tels:
         query = session.query(Header.instrument).group_by(Header.instrument).filter(Header.telescope == tel).order_by(Header.instrument)    
         instruments = query.all()
@@ -229,15 +227,15 @@ def content(req):
 
             req.write("<TR class=%s>" % (cs))
         
-            #this query gives file counts and filesize totals
+            # this query gives file counts and filesize totals
             query = session.query(func.count(), func.sum(DiskFile.file_size), func.sum(DiskFile.data_size)).select_from(join(DiskFile, Header)).filter(DiskFile.canonical == True).filter(Header.telescope == tel).filter(Header.instrument == instrument)
                         
-            #Telescope and instrument rows are populated here
+            # Telescope and instrument rows are populated here
             if tel[0] and instrument[0] != None:
                 req.write("<TD>%s</TD>" % (str(tel[0])))
                 req.write("<TD>%s</TD>" % (str(instrument[0])))
             
-            #Instrument totals are tallied here
+            # Instrument totals are tallied here
             instresult = query.one()
             instnum = instresult[0]
             instbytes = instresult[1]
@@ -324,7 +322,7 @@ def content(req):
     req.write('<TH>FITS filesize&nbsp;</TH>')    
     req.write('</TR>')
 
-    even = 0
+    even = False
     
     # iterates through datetimes and populates table
     for year in years:
