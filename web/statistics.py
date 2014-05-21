@@ -244,8 +244,8 @@ def content(req):
             instdata = instresult[2]
 
             if tel[0] and instrument[0] and instdata and instbytes != None:
-                req.write("<TD>%.02f</TD>" % (instbytes/1073741824.0))
-                req.write("<TD>%.02f</TD>" % (instdata/1073741824.0))
+                req.write("<TD>%s</TD>" % '{:,.02f}'.format(instbytes/1073741824.0))
+                req.write("<TD>%s</TD>" % '{:,.02f}'.format(instdata/1073741824.0))
                 req.write("<TD>%s</TD>" % ("{:,}".format(instnum)))
 
             #Engineering/Science totals are tallied here
@@ -352,8 +352,8 @@ def content(req):
             yeardata = yearresult[2]
         
             if tel[0] and year and yearnum and yearbytes != None:
-                req.write("<TD>%.02f</TD>" % (yearbytes/1073741824.0))
-                req.write("<TD>%.02f</TD>" % (yeardata/1073741824.0))
+                req.write("<TD>%s</TD>" % '{:,.02f}'.format(yearbytes/1073741824.0))
+                req.write("<TD>%s</TD>" % '{:,.02f}'.format(yeardata/1073741824.0))
                 req.write("<TD>%s</TD>" % ("{:,}".format(yearnum)))
 
             req.write("</TR>")
