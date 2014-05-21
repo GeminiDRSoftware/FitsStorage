@@ -5,7 +5,7 @@
 #   FITSSTORAGECONFIG_LOCALMODE, is true
 
 # AWS S3 info
-using_s3 = False
+using_s3 = True
 s3_bucket_name = 'gemini-archive'
 s3_staging_area = '/data/s3_staging'
 aws_access_key = 'AKIAJ554XPYMJZBPGQAA'
@@ -78,6 +78,9 @@ fits_lockfile_dir = "/data/logs"
 
 # Configure the log directory here
 fits_log_dir = "/data/logs/"
+
+# This logname should be None in the config file. Individual scripts can update it as required for non default values
+fits_logname = None
 
 # Configure the tape scratch directory here
 fits_tape_scratchdir = "/data/tapescratch"
