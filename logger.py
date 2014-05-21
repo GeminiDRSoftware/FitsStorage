@@ -13,14 +13,13 @@ logger = logging.getLogger()
 # This should default to INFO and be setable to debug with a command line argument
 logger.setLevel(logging.INFO)
 
-# Create log message handlers 
-#If logname is already set, use it, otherwise default to script name .log
-try:
-    if(logname):
-        logname = logname
-except (NameError, AttributeError):
-    logname = "%s.log" % (os.path.basename(sys.argv[0]))
+# Create log formatter
+formatter = logging.Formatter("%(asctime)s %(process)d:%(module)s:%(lineno)d %(levelname)s: %(message)s")
 
+# Create log message handlers 
+
+# Set default logname
+logname = "%s.log" % (os.path.basename(sys.argv[0]))
 logfile = os.path.join(fits_log_dir, logname)
 filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount=10, maxBytes=10000000)
 streamhandler = logging.StreamHandler()
@@ -29,9 +28,6 @@ smtphandler = logging.handlers.SMTPHandler(mailhost=smtp_server, fromaddr='fitsd
 
 # The smtp handler should only do WARNINGSs or worse
 smtphandler.setLevel(logging.WARNING)
-
-# Create log formatter
-formatter = logging.Formatter("%(asctime)s %(process)d:%(module)s:%(lineno)d %(levelname)s: %(message)s")
 
 # Add formater to handlers
 filehandler.setFormatter(formatter)
@@ -57,3 +53,10 @@ def setdemon(want):
     else:
         logger.addHandler(streamhandler)
 
+def setlogfilesuffix(suffix):
+    logname = "%s-%s.log" % (os.path.basename(sys.argv[0]), suffix)
+    logfile = os.path.join(fits_log_dir, logname)
+    new_filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount=10, maxBytes=10000000)
+    new_filehandler.setFormatter(formatter)
+    logger.removeHandler(filehandler)
+    logger.addHandler(new_filehandler)

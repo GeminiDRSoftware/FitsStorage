@@ -3,7 +3,7 @@ from orm import sessionfactory
 from fits_storage_config import using_sqlite, using_s3, storage_root, defer_seconds, fits_lockfile_dir, export_destinations
 from utils.ingestqueue import ingest_file, pop_ingestqueue, ingestqueue_length
 from utils.exportqueue import add_to_exportqueue
-from logger import logger, setdebug, setdemon
+from logger import logger, setdebug, setdemon, setlogfilesuffix
 import signal
 import sys
 import os
@@ -19,13 +19,16 @@ parser.add_option("--skip-wmd", action="store_true", dest="skip_wmd", default=Fa
 parser.add_option("--no-defer", action="store_true", dest="no_defer", default=False, help="Do not defer ingestion of recently modified files")
 parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
-parser.add_option("--lockfile", action="store", dest="lockfile", help="Use this as a lockfile to limit instances")
+parser.add_option("--name", action="store", dest="name", help="Name for this process. Used in logfile and lockfile")
+parser.add_option("--lockfile", action="store_true", dest="lockfile", help="Use a lockfile to limit instances")
 parser.add_option("--empty", action="store_true", default=False, dest="empty", help="This flag indicates that service ingest queue should empty the current queue and then exit.")
 (options, args) = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
 setdemon(options.demon)
+if(options.name):
+    setlogfilesuffix(options.name)
 
 # Need to set up the global loop variable before we define the signal handlers
 # This is the loop forever variable later, allowing us to stop cleanly via kill
@@ -60,7 +63,7 @@ logger.info("*********    service_ingest_queue.py - starting up at %s" % now)
 
 if(options.lockfile):
     # Does the Lockfile exist?
-    lockfile = "%s/%s" % (fits_lockfile_dir, options.lockfile)
+    lockfile = "%s/%s.lock" % (fits_lockfile_dir, options.name)
     if(os.path.exists(lockfile)):
         logger.info("Lockfile %s already exists, testing for viability" % lockfile)
         actually_locked = True
