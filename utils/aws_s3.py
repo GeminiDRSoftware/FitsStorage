@@ -88,12 +88,12 @@ def fetch_to_staging(bucket, path, filename, key=None, fullpath=None):
                 else:
                     # Size is OK, but md5 is not
                     gotit = False
-                    logger.error("Problem fetching %s from S3 - size OK, but md5 mismatch - file: %s; key: %s" % (filename, filemd5, get_s3_md5(key)))
+                    logger.debug("Problem fetching %s from S3 - size OK, but md5 mismatch - file: %s; key: %s" % (filename, filemd5, get_s3_md5(key)))
                     sleep(10)
             else:
                 # Didn't get enough bytes
                 gotit = False
-                logger.error("Problem fetching %s from S3 - size mismatch - file: %s; key: %s" % (filename, filesize, key.size))
+                logger.debug("Problem fetching %s from S3 - size mismatch - file: %s; key: %s" % (filename, filesize, key.size))
                 sleep(10)
         else:
            # file is not accessible
