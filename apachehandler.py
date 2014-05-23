@@ -27,6 +27,7 @@ from web.selection import getselection
 from web.fileserver import fileserver, authcookie, mydata
 from web.qastuff import qareport, qametrics, qaforgui
 from web.statistics import content, stats
+from web.user import account_request, password_reset, request_password_reset, login, logout, whoami
 
 from orm import sessionfactory
 from orm.file import File
@@ -35,6 +36,7 @@ from orm.header import Header
 from orm.ingestqueue import IngestQueue
 from orm.diskfilereport import DiskFileReport
 from orm.fulltextheader import FullTextHeader
+
 
 import re
 import datetime
@@ -379,6 +381,42 @@ def handler(req):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
         return curation_report(req, things)
+
+    # new account request
+    if(this == "account_request"):
+        if(this in blocked_urls):
+            return apache.HTTP_FORBIDDEN
+        return account_request(req)
+
+    # account password reset request
+    if(this == "password_reset"):
+        if(this in blocked_urls):
+            return apache.HTTP_FORBIDDEN
+        return password_reset(req, things)
+
+    # request password reset email
+    if(this == "request_password_reset"):
+        if(this in blocked_urls):
+            return apache.HTTP_FORBIDDEN
+        return request_password_reset(req)
+
+    # login form
+    if(this == "login"):
+        if(this in blocked_urls):
+            return apache.HTTP_FORBIDDEN
+        return login(req)
+
+    # logout
+    if(this == "logout"):
+        if(this in blocked_urls):
+            return apache.HTTP_FORBIDDEN
+        return logout(req)
+
+    # whoami
+    if(this == "whoami"):
+        if(this in blocked_urls):
+            return apache.HTTP_FORBIDDEN
+        return whoami(req)
 
     # Some static files that the server should serve via a redirect.
     staticfiles = ["robots.txt", "favicon.ico", "jquery-1.11.1.min.js"]
