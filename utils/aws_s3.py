@@ -4,6 +4,7 @@ This module contains utility functions for interacting with AWS S3
 
 import os
 import sys
+import socket
 import traceback
 from time import sleep
 
