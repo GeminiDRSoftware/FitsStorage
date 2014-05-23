@@ -1,12 +1,11 @@
 from sqlalchemy import Column
-from sqlalchemy import Integer, Text
+from sqlalchemy import Integer, Text, Boolean, DateTime
 
 from . import Base
 
 from hashlib import sha256
 from os import urandom
-from datetime.datetime import now
-from datetime import timedelta
+import datetime
 from base64 import b32encode, standard_b64encode
 
 # Note, password hashing follows the scheme at
@@ -16,7 +15,8 @@ class User(Base):
     """
     This is the ORM class for the user table.
     """
-    __tablename__ = 'user'
+    # Calling the table user makes it awkward in raw sql as that's a reserved name and you have to quote it
+    __tablename__ = 'archiveuser'
 
     id = Column(Integer, primary_key=True)
     username = Column(Text, nullable=False, index=True)
@@ -28,11 +28,17 @@ class User(Base):
     reset_token = Column(Text)
     reset_token_expires = Column(DateTime)
     cookie = Column(Text, index=True)
+    account_created = Column(DateTime)
+    password_changed = Column(DateTime)
 
 
     def __init__(self, username):
         self.username = username
-
+        self.password = None
+        self.gemini_staff = False
+        self.reset_token = None
+        self.cookie = None
+        self.account_created = datetime.datetime.now()
 
     def reset_password(self, password):
         """
@@ -42,11 +48,11 @@ class User(Base):
         Calling code needs to call a session.commit() after calling this.
         """
         hashobj = sha256()
-        self.salt = urandom(256)
-        hashobj.update(salt)
+        self.salt = standard_b64encode(urandom(256))
+        hashobj.update(self.salt)
         hashobj.update(password)
         self.password = hashobj.hexdigest()
-        passwd = None
+        password = None
         hashobj = None
         self.reset_token = None
         self.reset_token_expires = None
@@ -75,7 +81,7 @@ class User(Base):
         Returns the token for convenience
         """
         self.reset_token = b32encode(urandom(32))
-        self.reset_token_expires = now() + timedelta(minutes=15)
+        self.reset_token_expires = datetime.datetime.now() + datetime.timedelta(minutes=15)
         return self.reset_token
 
     def validate_reset_token(self, candidate):
@@ -88,7 +94,7 @@ class User(Base):
         """
         if((self.reset_token is None) or (self.reset_token_expires is None)):
             return False
-        if ((now() < self.reset_token_expires)) and (candidate == self.reset_token)):
+        if ((datetime.datetime.now() < self.reset_token_expires) and (candidate == self.reset_token)):
             self.reset_token = None
             self.reset_token_expires = None
             return True
