@@ -162,7 +162,7 @@ The reset link is only valid for 15 minutes, so please do that promptly.
     finally:
         session.close()
 
-    url = "http://%s.gemini.edu/password_reset/%d/%s" % (fits_servername, userid, token)
+    url = "http://%s/password_reset/%d/%s" % (fits_servername, userid, token)
 
     message = "Hello %s,\n" % fullname
     message += message_text
