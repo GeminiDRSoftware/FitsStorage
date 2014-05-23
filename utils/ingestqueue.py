@@ -184,7 +184,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         logger.debug("Adding new DiskFile entry")
         if(using_s3):
             # At this point, we fetch a local copy of the file to the staging area
-            ok = fetch_to_staging(path, filename, key, fullpath)
+            ok = fetch_to_staging(bucket, path, filename, key, fullpath)
             if(not ok):
                 # Failed to fetch the file from S3. Can't do this
                 return

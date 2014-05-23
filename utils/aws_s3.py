@@ -25,7 +25,7 @@ def get_s3_md5(key):
     return key.etag.replace('"', '')
 
 
-def fetch_to_staging(path, filename, key=None, fullpath=None):
+def fetch_to_staging(bucket, path, filename, key=None, fullpath=None):
     """
     Fetch the file from s3 and put it in the storage_root directory.
     Do some validation, and re-try as appropriate
