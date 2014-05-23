@@ -75,21 +75,29 @@ def fetch_to_staging(path, filename, key=None, fullpath=None):
             except:
                 pass
 
-        # If we get here, it claimed to download ok
-        gotit = True
-        # Check size and md5
-        filesize = os.path.getsize(fullpath)
-        if(filesize != key.size):
-            # Didn't get enough bytes
-            gotit = False
-            logger.error("Problem fetching %s from S3 - size mismatch - file: %s; key: %s" % (filename, filesize, key.size))
-            sleep(10)
-        filemd5 = md5sum(fullpath)
-        if(gotit and (filemd5 != get_s3_md5(key))):
-            # Size is OK, but md5 is not
-            gotit = False
-            logger.error("Problem fetching %s from S3 - size OK, but md5 mismatch - file: %s; key: %s" % (filename, filemd5, get_s3_md5(key)))
-            sleep(10)
+        # Did we get anything?
+        if(os.access(fullpath, os.F_OK)):
+            # Check size and md5
+            filesize = os.path.getsize(fullpath)
+            if(filesize == key.size):
+                # It's the right size, check the md5
+                filemd5 = md5sum(fullpath)
+                if(filemd5 == get_s3_md5(key)):
+                    # md5 matches
+                    gotit = True
+                else:
+                    # Size is OK, but md5 is not
+                    gotit = False
+                    logger.error("Problem fetching %s from S3 - size OK, but md5 mismatch - file: %s; key: %s" % (filename, filemd5, get_s3_md5(key)))
+                    sleep(10)
+            else:
+                # Didn't get enough bytes
+                gotit = False
+                logger.error("Problem fetching %s from S3 - size mismatch - file: %s; key: %s" % (filename, filesize, key.size))
+                sleep(10)
+        else:
+           # file is not accessible
+           gotit = False
 
     if(gotit):
         logger.debug("Downloaded file from S3 sucessfully")
