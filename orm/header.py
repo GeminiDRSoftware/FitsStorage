@@ -21,6 +21,7 @@ class Header(Base):
     diskfile = relation(DiskFile, order_by=id)
     program_id = Column(Text, index=True)
     engineering = Column(Boolean, index=True)
+    science_verification = Column(Boolean, index=True)
     observation_id = Column(Text, index=True)
     data_label = Column(Text, index=True)
     telescope = Column(Text, index=True)
@@ -94,6 +95,7 @@ class Header(Base):
             self.program_id = ad.program_id().for_db()
             if(self.program_id is not None):
                 self.engineering = ('ENG' in self.program_id)
+                self.science_verification = ('SV' in self.program_id)
             self.observation_id = ad.observation_id().for_db()
             self.data_label = ad.data_label().for_db()
             self.telescope = ad.telescope().for_db()
