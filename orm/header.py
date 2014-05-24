@@ -190,7 +190,8 @@ class Header(Base):
                 if(reldatestring):
                     reldts = "%s 00:00:00" % reldatestring
                     self.release = dateutil.parser.parse(reldts).date()
-            except ():
+            except:
+                # This exception will trigger if RELEASE date is missing or malformed.
                 pass
 
 
