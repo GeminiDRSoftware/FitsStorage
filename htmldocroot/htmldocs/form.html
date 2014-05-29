@@ -1,4 +1,4 @@
-<form class="searchform" action="/" method="POST">
+<form class="searchform" action="/searchform" method="POST">
 
 <div class="container right">
     <label><b>Target Name:</b></label><input type="text" placeholder="NGC 5457" name="target_name"><br /><br /> 
@@ -14,7 +14,7 @@
 
 <div class="container left">
 <label><b>Program ID:</b></label> <input type="text" placeholder="GN-2001A-Q-123"><i>(Obs. ID or Data Label also accepted)</i><br /><br />
-    <label><b>Instrument:</b></label><select id="select" class="ddw">
+    <label><b>Instrument:</b></label><select id="select" class="ddw" name="instrument">
         <option value="Instruments">Any</option>
         <option value="GMOS">GMOS</option>
         <option value="GMOS">GMOS-N</option>
