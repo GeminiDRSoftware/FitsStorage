@@ -6,6 +6,7 @@ This is the searchform module
 from mod_python import apache
 from mod_python import util
 
+from web.selection import getselection
 
 # Load the html text into strings
 f = open("/opt/FitsStorage/htmldocroot/htmldocs/titlebar.html")
@@ -21,6 +22,7 @@ def searchform(req, things):
    """
    Generate the searchform html
    """
+   selection = getselection(things)
    formdata = util.FieldStorage(req)
 
    req.content_type = "text/html"
@@ -38,8 +40,14 @@ def searchform(req, things):
    req.write(form_html)
 
    req.write('<div class="searchresults">')
-   req.write('<h1>Search results go here</h1>')
-   req.write('<p>%s</p>' % formdata)
+   if(formdata):
+     # This is where we handle what came back from the form
+     req.write('<h1>Search results go here</h1>')
+     req.write('<p>%s</p>' % formdata)
+   if(selection):
+     req.write('<h1>Selection</h1>')
+     req.write('<p>%s</p>' % selection)
+
    req.write('</div>')
 
    req.write('</div>')
