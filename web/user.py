@@ -52,7 +52,7 @@ def account_request(req):
         elif(len(username) < 5):
             reason_bad = "Username too short. Must be at least 5 characters"
         elif(username_inuse(username)):
-            reason_bad = "Username is already in use, choose a different one. If this is your username, reset your password"
+            reason_bad = 'Username is already in use, choose a different one. If this is your username, you can <a href="/password_reset">reset your password</a>.'
         elif(fullname == ''):
             reason_bad = "No Full name supplied"
         elif(len(fullname) < 5):
@@ -239,6 +239,7 @@ def password_reset(req, things):
         else:
             # Appears to be valid
             req.write("<H1>Gemini Observatory Archive Password Reset</H1>")
+            req.write("<p>You might now want to go <a href="/">back to the homepage</a></p>")
     except:
         # pass
         raise
@@ -307,6 +308,13 @@ def password_reset(req, things):
     req.write('</FORM>')
     req.write("</body></html>")
     return apache.OK
+
+def change_password(req):
+    """
+    Handles a logged in user wanting to change their password
+    """
+    # To be implememted.
+
 
 def request_password_reset(req):
     """
@@ -442,6 +450,7 @@ def login(req):
 
     if(valid_request):
         req.write('<P>Welcome, you are sucessfully logged in to the Gemini Archive.</P>')
+        req.write('<p>You might now want to go to the <a href="/">archive home page</a></p>')
         req.write('</body></html>')
         return apache.OK
 
@@ -493,6 +502,7 @@ def logout(req):
     req.content_type = "text/html"
     req.write("<html><head><title>Gemini Archive log out</title></head><body>")
     req.write('<P>You are sucessfully logged out of the Gemini Archive.</P>')
+    req.write('<p>You might now want to go to the <a href="/">archive home page</a></p>')
     req.write('</body></html>')
     return apache.OK
 
@@ -500,13 +510,19 @@ def whoami(req):
     """
     Tells you who you are logged in as
     """
-    # Do we have a session cookie?
+    req.content_type = "text/html"
+    req.write("<html><head><title>Gemini Archive Who Am I</title>")
+    #req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/whoami.css">')
+    req.write("</head><body>")
+
+    # Get the session cookie if we have one
     cookie = None
     cookies = Cookie.get_cookies(req)
     if(cookies.has_key('gemini_archive_session')):
         cookie = cookies['gemini_archive_session'].value
 
     username = None
+    fullname = None
     if(cookie):
         # Find the user that we are
         try:
@@ -521,12 +537,27 @@ def whoami(req):
                 req.log_error("Whoami - Multiple Users with same session cookie: %s" % cookie)
             else:
                 username = users[0].username
+                fullname = users[0].fullname
         finally:
             session.close()
 
-    req.content_type = "text/html"
-    req.write("<html><head><title>Gemini Archive Who Am I</title></head><body>")
-    req.write('<P>%s</P>' % username)
+    req.write('<span id="whoami">')
+    if(username):
+        req.write('&#x1f464; %s &#9662' % username)
+        req.write('<ul class="whoami">')
+        req.write('<li class="whoami">%s</li>' % fullname)
+        req.write('<li class="whoami"><a href="/logout">Log Out</a></li>')
+        req.write('<li class="whoami"><a href="#">Change Password</a></li>')
+        req.write('<li class="whoami"><a href="#">Show Programs</a></li>')
+        req.write('<li class="whoami"><a href="#">Add program</a></li>')
+    else:
+        req.write('Not logged in')
+        req.write('<ul class="whoami">')
+        req.write('<li class="whoami"><a href="/request_account">Request Account</a></li>')
+        req.write('<li class="whoami"><a href="/login">Login</a></li>')
+        req.write('</ul>')
+
+    req.write('</span>')
     req.write('</body></html>')
     return apache.OK
 
