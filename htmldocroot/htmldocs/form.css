@@ -24,11 +24,18 @@ input {
 }
 
 .container {
-    position: relative;
     width: 50%;
 }
 
 .spacer {
     width: 100%
 }
+.searchform {
+    margin: 10px;
+}
+
+.searchresults {
+    margin: 10px;
+}
+
 

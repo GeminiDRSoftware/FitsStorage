@@ -1,48 +1,7 @@
-<!DOCTYPE html>
-
-<html>
-
-<head>
-<title>Gemini Science Archive</title>
-<h1>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h1>
-<h1>Gemini Science Archive</h1>
-<link rel="stylesheet" href="/htmldocs/webform.css">
-
-<!--
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
--->
-
-<script src="jquery-1.11.1.min.js"></script>
-
-<script>
-$(function() {
-    $('#select').change(function() {
-        if ($(this).val() == "GMOS") {
-            $('#GMOS').slideDown();
-        } else {
-            $('#GMOS').hide();
-        }
-    });
-});
-
-$(function() {
-    $('#Mode').change(function() {
-        if ($(this).val() == "Spec") {
-            $('#Spec').slideDown();
-        } else {
-            $('#Spec').hide();
-        }
-    });
-});
-</script>
-
-</head>
-
-<body bgcolor="#FFFFEB">
-<form>
+<form class="searchform" action="/" method="POST">
 
 <div class="container right">
-    <label><b>Target Name:</b></label><input type="text" placeholder="NGC 5457"><br /><br /> 
+    <label><b>Target Name:</b></label><input type="text" placeholder="NGC 5457" name="target_name"><br /><br /> 
     <label><b>Resolver:</b></label><select class="ddw">
          <option value="None">&lt;none&gt;</option>
          <option value="SIMBAD">SIMBAD</option>
@@ -155,9 +114,7 @@ $(function() {
 </div>
 
 <div class="right">
-<input type="submit">
+<input type="submit" value="Submit">
 </div>
 
 </form>
-</body>
-</html>
