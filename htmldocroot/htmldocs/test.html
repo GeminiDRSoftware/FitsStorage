@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<title>Gemini Science Archive</title>
+<h1>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h1>
+<h1>Gemini Science Archive</h1>
+<link rel="stylesheet" href="/htmldocs/webform.css">
+
+<!--
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+
+<script src="jquery-1.11.1.min.js"></script>
+
+<script>
+$(function() {
+    $('#select').change(function() {
+        if ($(this).val() == "GMOS") {
+            $('#GMOS').slideDown();
+        } else {
+            $('#GMOS').hide();
+        }
+    });
+});
+
+$(function() {
+    $('#Mode').change(function() {
+        if ($(this).val() == "Spec") {
+            $('#Spec').slideDown();
+        } else {
+            $('#Spec').hide();
+        }
+    });
+});
+</script>
+
+</head>
+
+<body bgcolor="#FFFFEB">
+<form>
+
+<div class="container right">
+    <label><b>Target Name:</b></label><input type="text" placeholder="NGC 5457"><br /><br /> 
+    <label><b>Resolver:</b></label><select class="ddw">
+         <option value="None">&lt;none&gt;</option>
+         <option value="SIMBAD">SIMBAD</option>
+         <option value="NED">NED</option>
+    </select><br /><br />
+    <label><b>RA:</b></label><input type="text" placeholder="14:03:12.00"><i> (HH:MM:SS.ss or decimal degrees)</i><br /><br />
+    <label><b>Dec:</b></labeL><input type="text" placeholder="-02:24:19.88"><i> ([+-]DD:MM:SS.ss or decimal degrees)</i><br /><br />
+    <label><b>Search radius:</b></label><input type="text" placeholder="45, 0.013"><i> (arcseconds or decimal degrees)</i>
+</div>
+
+<div class="container left">
+<label><b>Program ID:</b></label> <input type="text" placeholder="GN-2001A-Q-123"><i>(Obs. ID or Data Label also accepted)</i><br /><br />
+    <label><b>Instrument:</b></label><select id="select" class="ddw">
+        <option value="Instruments">Any</option>
+        <option value="GMOS">GMOS</option>
+        <option value="GMOS">GMOS-N</option>
+        <option value="GMOS">GMOS-S</option>
+        <option value="GNIRS">GNIRS</option>
+        <option value="NIRI">NIRI</option>
+        <option value="NIFS">NIFS</option>
+        <option value="Michelle">Michelle</option>
+        <option value="T-ReCs">T-ReCs</option>
+        <option value="F2">F2</option>
+        <option value="GPI">GPI</option>
+        <option value="NICI">NICI</option>
+        <option value="GSAOI">GSAOI</option>
+
+    </select><i> (Select GMOS for GMOS-N and GMOS-S)</i><br />
+
+    <label><b>Obs. Class:</b></label><select class="ddw">
+        <option value="Obs. Class">Any</option>
+        <option value="Science">science</option>
+        <option value="acq">acq</option>
+        <option value="Cal">progCal</option>
+        <option value="Cal">dayCal</option>
+        <option value="Cal">partnerCal</option>
+        <option value="Cal">acqCal</option>
+    </select><br />
+
+    <label><b>Obs. Type:</b></label><select class="ddw">
+        <option value="Obs. Type">Any</option>
+        <option value="Object">OBJECT</option>
+        <option value="Bias">BIAS</option>
+        <option value="Dark">DARK</option>
+        <option value="Flat">FLAT</option>
+        <option value="Arc">ARC</option>
+        <option value="Pinhole">PINHOLE</option>
+        <option value="Ronchi">RONCHI</option>
+        <option value="Cal">CAL</option>
+        <option value="Fringe">FRINGE</option>
+    </select><br />
+
+    <label><b>Mode:</b></label><select id="Mode" class="ddw">
+        <option value="Mode">Any</option>
+        <option value="Img">Imaging</option>
+        <option value="Spec">Long-slit spectroscopy</option>
+        <option value="Spec">Multi-object spectroscopy</option>
+        <option value="Spec">Integral field spectroscopy</option>
+    </select><br />
+    
+    <label><b>Filter:</b></label><select class="ddw">
+        <option value="Filter">Any</option>
+        <option value="1">u'</option>
+        <option value="2">g'</option>
+        <option value="3">r'</option>
+        <option value="4">i'</option>
+        <option value="4">z'</option>
+        <option value="4">H</option>
+        <option value="4">J</option>
+        <option value="4">K</option>
+        <option value="4">L</option>
+        <option value="4">M</option>
+        <option value="4">N</option>
+        <option value="4">Q</option>
+    </select><br /><br />
+
+<div id="Spec" style="display:none">
+    <label><b>Central Wavelength: </b></label><input type="text" placeholder="1.2"><i> (microns)</i><br /><br /><br />
+</div>
+
+    <input type="checkbox">Find associated calibrations</br>
+    <input type="checkbox">Include engineering data<br />
+</div>
+
+<div class="spacer">&nbsp;</div>
+<div class="spacer">&nbsp;</div>
+<div class="spacer">&nbsp;</div>
+<div class="spacer">&nbsp;</div>
+<div class="spacer">&nbsp;</div>
+
+<div id="GMOS" class="spacer" style="display:none">
+    <hr>
+    <h3>GMOS</h3>
+
+    <label><b>Binning:</b></label><select class="ddw">
+        <option value="Binning"></option>
+        <option value="x">x-binning</option>
+        <option value="y">y-binning</option>
+    </select><br />
+
+    <label><b>Disperser:</b></label><select class="ddw">
+        <option value="Disperser"></option>
+        <option value="1">Disperser 1</option>
+    </select><br />
+
+    <label><b>Mask:</b></label><select class="ddw">
+        <option value="Mask"></option>
+        <option value="1">Mask 1</option>
+    </select><br />
+</div>
+
+<div class="right">
+<input type="submit">
+</div>
+
+</form>
+</body>
+</html>
