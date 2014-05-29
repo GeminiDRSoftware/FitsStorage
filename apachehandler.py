@@ -10,7 +10,7 @@ from sqlalchemy import desc, func, join
 from mod_python import apache
 from mod_python import util
 
-from fits_storage_config import blocked_urls
+from fits_storage_config import blocked_urls, use_as_archive
 from web.summary import summary
 from web.file_list import xmlfilelist, jsonfilelist
 from web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead
@@ -28,6 +28,7 @@ from web.fileserver import fileserver, authcookie, mydata
 from web.qastuff import qareport, qametrics, qaforgui
 from web.statistics import content, stats
 from web.user import account_request, password_reset, request_password_reset, login, logout, whoami
+from web.searchform import searchform
 
 from orm import sessionfactory
 from orm.file import File
@@ -69,7 +70,10 @@ def handler(req):
     # Check if it's empty
     if(len(things) == 0):
         # Empty request
-        return usagemessage(req)
+        if(use_as_archive):
+            return searchform(req, things)
+        else:
+            return usagemessage(req)
 
     # Before we process the request, parse any arguments into a list
     args = []

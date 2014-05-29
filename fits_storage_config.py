@@ -4,6 +4,9 @@
 # NOTE: all setting may be overwritten if environment variable,
 #   FITSSTORAGECONFIG_LOCALMODE, is true
 
+# Is this an archive server
+use_as_archive = True
+
 # AWS S3 info
 using_s3 = True
 s3_bucket_name = 'gemini-archive'
@@ -78,9 +81,6 @@ fits_lockfile_dir = "/data/logs"
 
 # Configure the log directory here
 fits_log_dir = "/data/logs/"
-
-# This logname should be None in the config file. Individual scripts can update it as required for non default values
-fits_logname = None
 
 # Configure the tape scratch directory here
 fits_tape_scratchdir = "/data/tapescratch"
