@@ -86,6 +86,12 @@ def handler(req):
 
     this = things.pop(0)
 
+    # Archive searchform
+    if(this == 'searchform'):
+        if(this in blocked_urls):
+            return apache.HTTP_FORBIDDEN
+        return searchform(req, things)
+
     # A debug util
     if(this == 'debug'):
         if(this in blocked_urls):
