@@ -20,8 +20,27 @@ f.close()
 
 def searchform(req, things):
    """
-   Generate the searchform html
+   Generate the searchform html and handle the form submit.
    """
+
+   # How (we think) this (will) all work(s)
+   # User gets/posts the url, may or may not have selection criteria on it
+   # We parse the url, and create an initial selection dictionary (which may or may not be empty)
+   # We parse the formdata and modify the selection dictionary if there was any
+   # If there was formdata:
+   #    Build a URL from the form data
+   #    Clear the formdata from the request object
+   #    Re-direct the user to the new URL (without and formdata)
+   # Pre-populate the form fields with what is now in our selection dictionary
+   #    a: by stuffing hidden input elements in the html which jquery uses to modify
+   #       the values in the actual input fields 
+   # or b: by modifying the form html server side before we send it out
+   # Add a hidden input element telling jquery whether to ajax in search results
+   # Send out the form html
+   # jquery will ajax in results if applicable
+   # User messes with input fields
+   # User hits submit - back to top
+
    selection = getselection(things)
    formdata = util.FieldStorage(req)
 
