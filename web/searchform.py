@@ -8,15 +8,16 @@ from mod_python import util
 
 from web.selection import getselection
 
+from fits_storage_config import fits_aux_datadir
+import os
+
 # Load the html text into strings
-f = open("/opt/FitsStorage/htmldocroot/htmldocs/titlebar.html")
-titlebar_html = f.read()
-f.close()
+with f = open(os.path.join(fits_aux_datadir, "titlebar.html")):
+    titlebar_html = f.read()
 
 # Load the form text into strings
-f = open("/opt/FitsStorage/htmldocroot/htmldocs/form.html")
-form_html = f.read()
-f.close()
+with f = open(os.path.join(fits_aux_datadir, "form.html")):
+    form_html = f.read()
 
 def searchform(req, things):
    """
