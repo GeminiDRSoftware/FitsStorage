@@ -28,6 +28,7 @@ from web.fileserver import fileserver, authcookie, mydata
 from web.qastuff import qareport, qametrics, qaforgui
 from web.statistics import content, stats
 from web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password
+from web.userprogram import my_programs
 from web.searchform import searchform
 
 from orm import sessionfactory
@@ -433,6 +434,12 @@ def handler(req):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
         return change_password(req)
+
+    # my_programs
+    if(this == "my_programs"):
+        if(this in blocked_urls):
+            return apache.HTTP_FORBIDDEN
+        return my_programs(req)
 
 
     # Some static files that the server should serve via a redirect.

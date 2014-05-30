@@ -617,8 +617,7 @@ def whoami(req):
         req.write('<li class="whoami">%s</li>' % fullname)
         req.write('<li class="whoami"><a href="/logout">Log Out</a></li>')
         req.write('<li class="whoami"><a href="/change_password">Change Password</a></li>')
-        req.write('<li class="whoami"><a href="#">Show Programs</a></li>')
-        req.write('<li class="whoami"><a href="#">Add program</a></li>')
+        req.write('<li class="whoami"><a href="/my_programs">My Programs</a></li>')
     else:
         req.write('Not logged in')
         req.write('<ul class="whoami">')
