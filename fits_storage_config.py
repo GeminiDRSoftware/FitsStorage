@@ -73,6 +73,9 @@ fits_database = 'postgresql:///'+fits_dbname
 #To reference database on another machine: 
 #fits_database = 'postgresql://hbffitstape1/'+fits_dbname
 
+# Configure the auxillary data directory here
+fits_aux_datadir = "/opt/FitsStorage/data"
+
 # Configure the Backup Directory here
 fits_db_backup_dir = "/data/backups"
 

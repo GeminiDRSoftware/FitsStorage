@@ -1,22 +1,26 @@
+import os
 from orm import sessionfactory
-from logger import logger, setdebug
+from logger import logger, setdebug, setdemon
 from utils.ingest_standards import ingest_standards
+from fits_storage_config import fits_aux_datadir
 import datetime
 
 # Option Parsing
 from optparse import OptionParser
 parser = OptionParser()
-parser.add_option("--file", action="store", type="string", dest="filename", default="data/standards.txt", help="Standards text filename")
+parser.add_option("--file", action="store", type="string", dest="filename", help="Standards text filename")
 parser.add_option("--clean", action="store_true", dest="clean", help="Delete all rows in the table before adding")
-parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
+parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
+parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run in background mode")
 
 (options, args) = parser.parse_args()
 
 # Logging level to debug?
 setdebug(options.debug)
+setdemon(options.demon)
 
 # Annouce startup
-logger.info("*********  ingest_standards.py - starting up at %s" % datetime.datetime.now)
+logger.info("*********  ingest_standards.py - starting up at %s" % datetime.datetime.now())
 
 session = sessionfactory()
 
@@ -24,8 +28,15 @@ if(options.clean):
     logger.info("Deleting all rows in standards table")
     session.execute("DELETE FROM standards")
 
-ingest_standards(session, options.filename)
+if(options.filename):
+    filename = options.filename
+else:
+    filename = os.path.join(fits_aux_datadir, "standards.txt")
+
+logger.info("Reading from file: %s" % filename)
+
+ingest_standards(session, filename)
 
 session.close()
-logger.info("*** ingest_standards exiting normally at %s" % datetime.datetime.now)
+logger.info("*** ingest_standards exiting normally at %s" % datetime.datetime.now())
 
