@@ -42,9 +42,19 @@ class User(Base):
 
     def reset_password(self, password):
         """
+        Calls change_password to set the password to the given string
+        This function also expires any existing reset_token and session cookie
+        Calling code needs to call a session.commit() after calling this.
+        """
+        self.change_password(password)
+        self.reset_token = None
+        self.reset_token_expires = None
+        self.cookie = None
+
+    def change_password(self, password):
+        """
         Takes an actual password string, generates a random salt, hashes the password with the salt,
         updates the ORM with the new hash and the new salt.
-        This function also expires any existing reset_token and session cookie
         Calling code needs to call a session.commit() after calling this.
         """
         hashobj = sha256()
@@ -54,9 +64,6 @@ class User(Base):
         self.password = hashobj.hexdigest()
         password = None
         hashobj = None
-        self.reset_token = None
-        self.reset_token_expires = None
-        self.cookie = None
 
     def validate_password(self, candidate):
         """

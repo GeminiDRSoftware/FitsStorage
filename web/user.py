@@ -19,7 +19,7 @@ import time
 import smtplib
 from email.mime.text import MIMEText
 
-def account_request(req):
+def request_account(req):
     """
     Generates and handles web form for requesting new user accounts
     """
@@ -108,7 +108,7 @@ def account_request(req):
             req.write("<P>Your request was invalid. %s. Please try again.</P>" % reason_bad)
 
         # Send the new account form
-        req.write('<FORM action="/account_request" method="POST">')
+        req.write('<FORM action="/request_account" method="POST">')
         req.write('<P>Fill out and submit this short form to request a Gemini Archive account. You must provide a valid email address - we will be emailing you a link to activate your account and set a password.</P>')
         req.write('<TABLE>')
 
@@ -239,7 +239,6 @@ def password_reset(req, things):
         else:
             # Appears to be valid
             req.write("<H1>Gemini Observatory Archive Password Reset</H1>")
-            req.write("<p>You might now want to go <a href="/">back to the homepage</a></p>")
     except:
         # pass
         raise
@@ -281,6 +280,7 @@ def password_reset(req, things):
                 user.reset_password(password)
                 session.commit()
                 req.write('<P>Password has been reset.</P>')
+                req.write('<p>You might now want to go <a href="/">back to the homepage</a></p>')
                 return apache.OK
             else:
                 req.write("<P>Link is no longer valid. Please request a new one.</P>")
@@ -311,10 +311,93 @@ def password_reset(req, things):
 
 def change_password(req):
     """
-    Handles a logged in user wanting to change their password
+    Handles a logged in user wanting to change their password.
     """
-    # To be implememted.
+    # Present and process a change password form. User must be logged in,
+    # and know their current password.
 
+    # Process the form data first if there is any
+    formdata = util.FieldStorage(req)
+    request_attempted = False
+    valid_request = None
+    reason_bad = None
+    sucessfull = False
+
+    oldpassword = ''
+    newpassword = ''
+    newagain = ''
+
+    # Parse the form data here
+    if(len(formdata.keys()) > 0):
+        request_attempted = True
+        if('oldpassword' in formdata.keys()):
+            oldpassword = formdata['oldpassword'].value
+        if('newpassword' in formdata.keys()):
+            newpassword = formdata['newpassword'].value
+        if('newagain' in formdata.keys()):
+            newagain = formdata['newagain'].value
+
+        # Validate what came in
+        valid_request = False
+        
+        if(oldpassword == ''):
+            reason_bad = 'No old password supplied'
+        elif(newpassword == ''):
+            reason_bad = 'No new password supplied'
+        elif(newagain == ''):
+            reason_bad = 'No new password again supplied'
+        elif(bad_password(newpassword)):
+            reason_bad = 'Bad password - must be at least 8 characters and contain letters and numbers'
+        elif(newpassword != newagain):
+            reason_bad = 'New Password and New Password Again do not match'
+        else:
+            valid_request = True
+
+    req.content_type = "text/html"
+    req.write("<html><head><title>Gemini Archive Password reset request</title></head><body>")
+
+    if(valid_request):
+        req.write('<H2>Processing your request...</H2>')
+        try:
+            session = sessionfactory()
+            user = userfromcookie(session, req)
+            if(user is None):
+                valid_request = False
+                reason_bad = 'You are not currently logged in'
+            elif(user.validate_password(oldpassword) is False):
+                valid_request = False
+                reason_bad = 'Current password not correct'
+            else:
+                user.change_password(newpassword)
+                session.commit()
+                req.write('<p>Password has been changed</p>')
+                req.write('<p><a href="/searchform">Click here to go to the searchform</p>')
+                sucessfull = True
+        finally:
+            session.close()
+
+    if(request_attempted is True and valid_request is False):
+        req.write('<h2>Request not valid:</h2>')
+        req.write('<p>%s</p>' % reason_bad)
+
+    if(not sucessfull):
+        # Send the password change form
+        req.write('<FORM action="/change_password" method="POST">')
+        req.write('<P>Fill out and submit this form to change your password. Password must be 8 characters or more and must contain at least some letters and numbers.</P>')
+        req.write('<TABLE>')
+        req.write('<TR><TD><LABEL for="oldpassword">Current Password</LABEL></TD>')
+        req.write('<TD><INPUT type="password" size=16 name="oldpassword"</TD></TR>')
+        req.write('<TR><TD><LABEL for="newpassword">New Password</LABEL></TD>')
+        req.write('<TD><INPUT type="password" size=16 name="newpassword"</TD></TR>')
+        req.write('<TR><TD><LABEL for="newagain">New Password Again</LABEL></TD>')
+        req.write('<TD><INPUT type="password" size=16 name="newagain"</TD></TR>')
+        req.write('</TABLE>')
+        req.write('<INPUT type="submit" value="Submit"></INPUT> <INPUT type="reset"></INPUT>')
+        req.write('</FORM>')
+
+
+    req.write("</body></html>")
+    return apache.OK
 
 def request_password_reset(req):
     """
@@ -515,31 +598,17 @@ def whoami(req):
     #req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/whoami.css">')
     req.write("</head><body>")
 
-    # Get the session cookie if we have one
-    cookie = None
-    cookies = Cookie.get_cookies(req)
-    if(cookies.has_key('gemini_archive_session')):
-        cookie = cookies['gemini_archive_session'].value
-
     username = None
-    fullname = None
-    if(cookie):
-        # Find the user that we are
-        try:
-            session = sessionfactory()
-            query = session.query(User).filter(User.cookie == cookie)
-            users = query.all()
-            if(len(users) == 0):
-                # We weren't really logged in. 
-                pass
-            elif(len(users) > 1):
-                username = 'Error: multiple users'
-                req.log_error("Whoami - Multiple Users with same session cookie: %s" % cookie)
-            else:
-                username = users[0].username
-                fullname = users[0].fullname
-        finally:
-            session.close()
+    # Find out who we are if logged in
+    try:
+        session = sessionfactory()
+        user = userfromcookie(session, req)
+    finally:
+        session.close()
+
+    if(user is not None):
+        username = user.username
+        fullname = user.fullname
 
     req.write('<span id="whoami">')
     if(username):
@@ -547,7 +616,7 @@ def whoami(req):
         req.write('<ul class="whoami">')
         req.write('<li class="whoami">%s</li>' % fullname)
         req.write('<li class="whoami"><a href="/logout">Log Out</a></li>')
-        req.write('<li class="whoami"><a href="#">Change Password</a></li>')
+        req.write('<li class="whoami"><a href="/change_password">Change Password</a></li>')
         req.write('<li class="whoami"><a href="#">Show Programs</a></li>')
         req.write('<li class="whoami"><a href="#">Add program</a></li>')
     else:
@@ -613,3 +682,29 @@ def bad_password(candidate):
         return True
     else:
         return False
+
+def userfromcookie(session, req):
+    """
+    Given a database session and request object, get the session cookie
+    from the request object and find and return the user object, 
+    or None if it is not a valid session cookie
+    """
+
+    # Do we have a session cookie?
+    cookie = None
+    cookies = Cookie.get_cookies(req)
+    if(cookies.has_key('gemini_archive_session')):
+        cookie = cookies['gemini_archive_session'].value
+    else:
+        # No session cookie, not logged in
+        return None
+
+    # Find the user that we are
+    query = session.query(User).filter(User.cookie == cookie)
+    user = query.first()
+    if(user is None):
+        # This is not a valid session cookie
+        return None
+    else:
+        return user
+

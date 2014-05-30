@@ -27,7 +27,7 @@ from web.selection import getselection
 from web.fileserver import fileserver, authcookie, mydata
 from web.qastuff import qareport, qametrics, qaforgui
 from web.statistics import content, stats
-from web.user import account_request, password_reset, request_password_reset, login, logout, whoami
+from web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password
 from web.searchform import searchform
 
 from orm import sessionfactory
@@ -393,10 +393,10 @@ def handler(req):
         return curation_report(req, things)
 
     # new account request
-    if(this == "account_request"):
+    if(this == "request_account"):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
-        return account_request(req)
+        return request_account(req)
 
     # account password reset request
     if(this == "password_reset"):
@@ -427,6 +427,13 @@ def handler(req):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
         return whoami(req)
+
+    # change_password
+    if(this == "change_password"):
+        if(this in blocked_urls):
+            return apache.HTTP_FORBIDDEN
+        return change_password(req)
+
 
     # Some static files that the server should serve via a redirect.
     staticfiles = ["robots.txt", "favicon.ico", "jquery-1.11.1.min.js"]
