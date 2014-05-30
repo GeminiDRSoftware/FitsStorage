@@ -12,11 +12,11 @@ from fits_storage_config import fits_aux_datadir
 import os
 
 # Load the html text into strings
-with f = open(os.path.join(fits_aux_datadir, "titlebar.html")):
+with open(os.path.join(fits_aux_datadir, "titlebar.html")) as f:
     titlebar_html = f.read()
 
 # Load the form text into strings
-with f = open(os.path.join(fits_aux_datadir, "form.html")):
+with open(os.path.join(fits_aux_datadir, "form.html")) as f:
     form_html = f.read()
 
 def searchform(req, things):
