@@ -28,7 +28,7 @@ def searchform(req, things):
    # We parse the url, and create an initial selection dictionary (which may or may not be empty)
    # We parse the formdata and modify the selection dictionary if there was any
    # If there was formdata:
-   #    Build a URL from the form data
+   #    Build a URL from the selection dictionary
    #    Clear the formdata from the request object
    #    Re-direct the user to the new URL (without and formdata)
    # Pre-populate the form fields with what is now in our selection dictionary
@@ -43,6 +43,18 @@ def searchform(req, things):
 
    selection = getselection(things)
    formdata = util.FieldStorage(req)
+
+   # Some real dummy code
+
+   #for(thing in formdata):
+      #selection['otherthing']=thing.value
+
+   #if(formdata):
+      #url = makeurl(selection):
+      #req.redirect(url)
+      #return
+
+   #new_html = update_form_values(old_html, selection)
 
    req.content_type = "text/html"
    req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head>')
