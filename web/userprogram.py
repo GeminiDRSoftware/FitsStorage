@@ -16,12 +16,18 @@ from mod_python import Cookie
 from mod_python import util
 
 
-def my_programs(req):
+def my_programs(req, things):
     """
     Generates a page showing the user what programs
     they have registered access to.
     Also generates and processes a form to add new ones.
     """
+
+    # Build the thing_string to link back to the searchform
+    if(things):
+        thing_string = '/' + '/'.join(things)
+    else:
+        thing_string = ''
 
     # First, process the form data if there is any
     formdata = util.FieldStorage(req)
@@ -64,7 +70,6 @@ def my_programs(req):
     if(len(prog_list) == 0):
         req.write('<h1>No programs registered</h1>')
         req.write('<p>There are currently no programs registered to username: %s</p>' % username)
-
     else:
         req.write('<h1>Registered Program list for %s</h1>' % username)
         req.write('<ul>')
@@ -76,10 +81,12 @@ def my_programs(req):
         req.write("<h2>Registering your new program failed</h2>")
         req.write('<p>%s</p>' % reason_bad)
 
+    req.write('<p><a href="/searchform%s">Click here to return to your search form</a></p>' % thing_string)
+
     req.write('<h2>Register a new program</h2>')
     req.write('<p>To register a new program with your account, fill out and submit the form below</p>')
 
-    req.write('<FORM action="/my_programs" method="POST">')
+    req.write('<FORM action="/my_programs%s" method="POST">' % thing_string)
     req.write('<TABLE>')
     req.write('<TR><TD><LABEL for="program_id">Program ID</LABEL><TD>')
     req.write('<TD><INPUT type="text" size=16 name="program_id"></INPUT></TD></TR>' )

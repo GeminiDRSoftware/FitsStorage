@@ -19,7 +19,7 @@ import time
 import smtplib
 from email.mime.text import MIMEText
 
-def request_account(req):
+def request_account(req, things):
     """
     Generates and handles web form for requesting new user accounts
     """
@@ -32,6 +32,12 @@ def request_account(req):
     username = ''
     fullname = ''
     email = ''
+
+    # Contruct the thing_string for the url to link back to their form
+    if(things):
+        thing_string = '/' + '/'.join(things)
+    else:
+        thing_string = ''
 
     # Parse the form data here
     if(len(formdata.keys()) > 0):
@@ -97,6 +103,9 @@ def request_account(req):
         if(emailed):
             req.write('<P>You should shortly receive an email with a link to set your password and activate your account.</P>')
             req.write("<P>If you don't get the email, please contact the Gemini helpdesk.</P>")
+            if(thing_string):
+                req.write('<P>After you set your password and log in using another browser tab, you can ')
+                req.write('<a href="/searchform%s">click here to return to your search.</a></p>' % thing_string)
         else:
             req.write('<P>Sending you a password reset email FAILED. Please contact Gemini Helpdesk. Sorry.</P>')
         req.write('</body></html>')
@@ -108,7 +117,7 @@ def request_account(req):
             req.write("<P>Your request was invalid. %s. Please try again.</P>" % reason_bad)
 
         # Send the new account form
-        req.write('<FORM action="/request_account" method="POST">')
+        req.write('<FORM action="/request_account%s" method="POST">' % thing_string)
         req.write('<P>Fill out and submit this short form to request a Gemini Archive account. You must provide a valid email address - we will be emailing you a link to activate your account and set a password.</P>')
         req.write('<TABLE>')
 
@@ -280,7 +289,7 @@ def password_reset(req, things):
                 user.reset_password(password)
                 session.commit()
                 req.write('<P>Password has been reset.</P>')
-                req.write('<p>You might now want to go <a href="/">back to the homepage</a></p>')
+                req.write('<p><a href="/login">Click here to log in.</a></p>')
                 return apache.OK
             else:
                 req.write("<P>Link is no longer valid. Please request a new one.</P>")
@@ -309,7 +318,7 @@ def password_reset(req, things):
     req.write("</body></html>")
     return apache.OK
 
-def change_password(req):
+def change_password(req, things):
     """
     Handles a logged in user wanting to change their password.
     """
@@ -326,6 +335,12 @@ def change_password(req):
     oldpassword = ''
     newpassword = ''
     newagain = ''
+
+    # Construct the things_string to link back to the current form
+    if(things):
+        thing_string = '/' + '/'.join(things)
+    else:
+        thing_string = ''
 
     # Parse the form data here
     if(len(formdata.keys()) > 0):
@@ -371,7 +386,10 @@ def change_password(req):
                 user.change_password(newpassword)
                 session.commit()
                 req.write('<p>Password has been changed</p>')
-                req.write('<p><a href="/searchform">Click here to go to the searchform</p>')
+                if(things):
+                    req.write('<p><a href="/searchform%s">Click here to go back to your searchform</p>' % thing_string)
+                else:
+                    req.write('<p><a href="/searchform">Click here to go to the searchform</p>')
                 sucessfull = True
         finally:
             session.close()
@@ -382,7 +400,7 @@ def change_password(req):
 
     if(not sucessfull):
         # Send the password change form
-        req.write('<FORM action="/change_password" method="POST">')
+        req.write('<FORM action="/change_password%s" method="POST">' % thing_string)
         req.write('<P>Fill out and submit this form to change your password. Password must be 8 characters or more and must contain at least some letters and numbers.</P>')
         req.write('<TABLE>')
         req.write('<TR><TD><LABEL for="oldpassword">Current Password</LABEL></TD>')
@@ -477,7 +495,7 @@ def request_password_reset(req):
     req.write("</body></html>")
     return apache.OK
 
-def login(req):
+def login(req, things):
     """
     Presents and processes a login form
     Sends session cookie if sucessfull
@@ -491,6 +509,12 @@ def login(req):
     username = ''
     password = ''
     cookie = None
+
+    # Rebuild the thing_string for the url
+    if(things):
+        thing_string = '/' + '/'.join(things)
+    else:
+        thing_string = ''
 
     # Parse the form data here
     if(len(formdata.keys()) > 0):
@@ -527,20 +551,29 @@ def login(req):
     req.content_type = "text/html"
     if(valid_request):
         # Cookie expires in 1 year
-        Cookie.add_cookie(req, 'gemini_archive_session', cookie, expires = time.time()+31536000)
+        cookie_obj = Cookie.Cookie('gemini_archive_session', cookie, expires = time.time()+31536000, path = "/")
+        Cookie.add_cookie(req, cookie_obj)
 
     req.write("<html><head><title>Gemini Archive log in</title></head><body>")
 
     if(valid_request):
         req.write('<P>Welcome, you are sucessfully logged in to the Gemini Archive.</P>')
-        req.write('<p>You might now want to go to the <a href="/">archive home page</a></p>')
+        if(things):
+            url = "/searchform"
+            for thing in things:
+                url += "/%s" % thing
+            req.write('<p><a href="%s">Click here to go back to your search form</a></p>' % url)
+            req.write('<p><a href="/searchform">Click here to go to an empty search form</a></p>')
+        else:
+            req.write('<p><a href="/searchform">Click here to go to the search form</a></p>')
+
         req.write('</body></html>')
         return apache.OK
 
     if(request_attempted):
         req.write('<P>Log-in did not suceed: %s. Please try again.</P>' % reason_bad)
 
-    req.write('<FORM action="/login" method="POST">')
+    req.write('<FORM action="/login%s" method="POST">' % thing_string)
     req.write('<TABLE>')
     req.write('<TR><TD><LABEL for="username">Username</LABEL><TD>')
     req.write('<TD><INPUT type="text" size=16 name="username" value=%s></INPUT></TD></TR>' % username)
@@ -589,9 +622,9 @@ def logout(req):
     req.write('</body></html>')
     return apache.OK
 
-def whoami(req):
+def whoami(req, things):
     """
-    Tells you who you are logged in as
+    Tells you who you are logged in as, and presents the account maintainace links
     """
     req.content_type = "text/html"
     req.write("<html><head><title>Gemini Archive Who Am I</title>")
@@ -610,19 +643,26 @@ def whoami(req):
         username = user.username
         fullname = user.fullname
 
+    # Construct the "things" part of the URL for the link that want to be able to 
+    # take you back to the same form contents
+    if(len(things)):
+        thing_string = '/' + '/'.join(things)
+    else:
+        thing_string = ''
+
     req.write('<span id="whoami">')
     if(username):
         req.write('&#x1f464; %s &#9662' % username)
         req.write('<ul class="whoami">')
         req.write('<li class="whoami">%s</li>' % fullname)
         req.write('<li class="whoami"><a href="/logout">Log Out</a></li>')
-        req.write('<li class="whoami"><a href="/change_password">Change Password</a></li>')
-        req.write('<li class="whoami"><a href="/my_programs">My Programs</a></li>')
+        req.write('<li class="whoami"><a href="/change_password%s">Change Password</a></li>' % thing_string)
+        req.write('<li class="whoami"><a href="/my_programs%s">My Programs</a></li>' % thing_string)
     else:
         req.write('Not logged in')
         req.write('<ul class="whoami">')
-        req.write('<li class="whoami"><a href="/request_account">Request Account</a></li>')
-        req.write('<li class="whoami"><a href="/login">Login</a></li>')
+        req.write('<li class="whoami"><a href="/request_account%s">Request Account</a></li>' % thing_string)
+        req.write('<li class="whoami"><a href="/login%s">Login</a></li>' % thing_string)
         req.write('</ul>')
 
     req.write('</span>')

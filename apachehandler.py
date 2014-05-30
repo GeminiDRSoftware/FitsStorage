@@ -72,7 +72,7 @@ def handler(req):
     if(len(things) == 0):
         # Empty request
         if(use_as_archive):
-            return searchform(req, things)
+            util.redirect(req, "/searchform")
         else:
             return usagemessage(req)
 
@@ -397,7 +397,7 @@ def handler(req):
     if(this == "request_account"):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
-        return request_account(req)
+        return request_account(req, things)
 
     # account password reset request
     if(this == "password_reset"):
@@ -415,7 +415,7 @@ def handler(req):
     if(this == "login"):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
-        return login(req)
+        return login(req, things)
 
     # logout
     if(this == "logout"):
@@ -427,19 +427,19 @@ def handler(req):
     if(this == "whoami"):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
-        return whoami(req)
+        return whoami(req, things)
 
     # change_password
     if(this == "change_password"):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
-        return change_password(req)
+        return change_password(req, things)
 
     # my_programs
     if(this == "my_programs"):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
-        return my_programs(req)
+        return my_programs(req, things)
 
 
     # Some static files that the server should serve via a redirect.

@@ -42,20 +42,10 @@ def searchform(req, things):
    # User messes with input fields
    # User hits submit - back to top
 
+   # grab the string version of things before getselection() as that modifies the list.
+   thing_string = '/' + '/'.join(things)
    selection = getselection(things)
    formdata = util.FieldStorage(req)
-
-   # Some real dummy code
-
-   #for(thing in formdata):
-      #selection['otherthing']=thing.value
-
-   #if(formdata):
-      #url = makeurl(selection):
-      #req.redirect(url)
-      #return
-
-   #new_html = update_form_values(old_html, selection)
 
    req.content_type = "text/html"
    req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head>')
@@ -68,6 +58,7 @@ def searchform(req, things):
    req.write('<title>Gemini Archive Search Form</title></head><body>')
 
    req.write(titlebar_html)
+   req.write('<input type="hidden" id="things" name="things" value="%s">' % thing_string)
    req.write('<div class="page">')
    req.write(form_html)
 
