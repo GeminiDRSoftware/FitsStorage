@@ -25,6 +25,7 @@ class User(Base):
     salt = Column(Text)
     email = Column(Text)
     gemini_staff = Column(Boolean)
+    superuser = Column(Boolean)
     reset_token = Column(Text)
     reset_token_expires = Column(DateTime)
     cookie = Column(Text, index=True)
@@ -36,6 +37,7 @@ class User(Base):
         self.username = username
         self.password = None
         self.gemini_staff = False
+        self.superuser = False
         self.reset_token = None
         self.cookie = None
         self.account_created = datetime.datetime.now()

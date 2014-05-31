@@ -495,6 +495,79 @@ def request_password_reset(req):
     req.write("</body></html>")
     return apache.OK
 
+def staff_access(req, things):
+    """
+    Allows supersusers to set accounts to be or not be gemini staff
+    """
+    # Process the form data first if there is any
+    formdata = util.FieldStorage(req)
+    username = ''
+    action = ''
+
+    # Parse the form data
+    if(len(formdata.keys()) > 0):
+        if('username' in formdata.keys()):
+            username = formdata['username'].value
+        if('action' in formdata.keys()):
+            action = formdata['action'].value
+
+    req.content_type = 'text/html'
+    req.write("<html><head><title>Gemini Archive Staff Access</title>")
+    req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+    req.write("</head><body>")
+    req.write('<h1>Gemini Archive Staff Access</h1>')
+
+    try:
+        session = sessionfactory()
+        me = userfromcookie(session, req)
+        if(me.superuser != True):
+            req.write("<p>You don't appear to be logged in as a superuser. Sorry.</p>")
+            req.write('</body></html>')
+            return apache.OK
+
+        # If we got an action, do it
+        if(username):
+            query = session.query(User).filter(User.username == username)
+            user = query.first()
+            if(user is None):
+                req.write("<p>Could not locate user in database</p>")
+            elif(action == "Grant"):
+                req.write("<p>Granting staff access for username: %s - %s - %s</p>" % (user.username, user.fullname, user.email))
+                user.gemini_staff = True
+                session.commit()
+            elif(action == "Revoke"):
+                req.write("<p>Revoking staff access for username: %s - %s - %s</p>" % (user.username, user.fullname, user.email))
+                user.gemini_staff = False
+                session.commit()
+
+        # Have applied changes, now generate list of staff users
+        query = session.query(User).filter(User.gemini_staff == True).order_by(User.username)
+        staff_users = query.all()
+    finally:
+        session.close()
+
+    even = False
+    req.write('<TABLE>')
+    req.write('<TR class=tr_head><TH>Username</TH><TH>Full Name</TH><TH>Email</TH><TH>Staff Access</TH><TH>Superuser</TH><TR>')
+    for user in staff_users:
+        even = not even
+        if(even):
+            cs = "tr_even"
+        else:
+            cs = "tr_odd"
+        req.write('<TR class=%s><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>' % (cs, user.username, user.fullname, user.email, user.gemini_staff, user.superuser))
+    req.write('</TABLE>')
+
+    req.write('<H2>Grant or Revoke Staff Access</H2>')
+    req.write('<FORM action="/staff_access" method="POST">')
+    req.write('<label for="username">Username:</label><input type="text" name="username">')
+    req.write('<select name="action"><option value="">Action</option><option value="Grant">Grant</option><option value="Revoke">Revoke</option></select>')
+    req.write('<INPUT type="submit" value="Submit"></INPUT> <INPUT type="reset"></INPUT>')
+    req.write('</FORM>')
+    req.write('</body></html>')
+
+    return apache.OK
+
 def login(req, things):
     """
     Presents and processes a login form
