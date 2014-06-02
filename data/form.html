@@ -2,20 +2,20 @@
 
 <div class="container right">
     <label><b>Target Name:</b></label><input type="text" placeholder="NGC 5457" name="target_name"><br /><br /> 
-    <label><b>Resolver:</b></label><select class="ddw">
-         <option value="None">&lt;none&gt;</option>
+    <label><b>Resolver:</b></label><select class="ddw" name="resolver">
+         <option value="">&lt;none&gt;</option>
          <option value="SIMBAD">SIMBAD</option>
          <option value="NED">NED</option>
     </select><br /><br />
-    <label><b>RA:</b></label><input type="text" placeholder="14:03:12.00"><i> (HH:MM:SS.ss or decimal degrees)</i><br /><br />
-    <label><b>Dec:</b></labeL><input type="text" placeholder="-02:24:19.88"><i> ([+-]DD:MM:SS.ss or decimal degrees)</i><br /><br />
-    <label><b>Search radius:</b></label><input type="text" placeholder="45, 0.013"><i> (arcseconds or decimal degrees)</i>
+    <label><b>RA:</b></label><input type="text" placeholder="14:03:12.00" name="ra"><i> (HH:MM:SS.ss or decimal degrees)</i><br /><br />
+    <label><b>Dec:</b></labeL><input type="text" placeholder="-02:24:19.88" name="dec"><i> ([+-]DD:MM:SS.ss or decimal degrees)</i><br /><br />
+    <label><b>Search radius:</b></label><input type="text" placeholder="45, 0.013" name="search_rad"><i> (arcseconds or decimal degrees)</i>
 </div>
 
 <div class="container left">
-<label><b>Program ID:</b></label> <input type="text" placeholder="GN-2001A-Q-123"><i>(Obs. ID or Data Label also accepted)</i><br /><br />
+<label><b>Program ID:</b></label> <input type="text" placeholder="GN-2001A-Q-123" name="program_id"><i>(Obs. ID or Data Label also accepted)</i><br /><br />
     <label><b>Instrument:</b></label><select id="select" class="ddw" name="instrument">
-        <option value="Instruments">Any</option>
+        <option value="">Any</option>
         <option value="GMOS">GMOS</option>
         <option value="GMOS">GMOS-N</option>
         <option value="GMOS">GMOS-S</option>
@@ -31,8 +31,8 @@
 
     </select><i> (Select GMOS for GMOS-N and GMOS-S)</i><br />
 
-    <label><b>Obs. Class:</b></label><select class="ddw">
-        <option value="Obs. Class">Any</option>
+    <label><b>Obs. Class:</b></label><select class="ddw" name="observation_class">
+        <option value="">Any</option>
         <option value="Science">science</option>
         <option value="acq">acq</option>
         <option value="Cal">progCal</option>
@@ -41,8 +41,8 @@
         <option value="Cal">acqCal</option>
     </select><br />
 
-    <label><b>Obs. Type:</b></label><select class="ddw">
-        <option value="Obs. Type">Any</option>
+    <label><b>Obs. Type:</b></label><select class="ddw" name="observation_type">
+        <option value="">Any</option>
         <option value="Object">OBJECT</option>
         <option value="Bias">BIAS</option>
         <option value="Dark">DARK</option>
@@ -54,16 +54,16 @@
         <option value="Fringe">FRINGE</option>
     </select><br />
 
-    <label><b>Mode:</b></label><select id="Mode" class="ddw">
-        <option value="Mode">Any</option>
+    <label><b>Mode:</b></label><select id="Mode" class="ddw" name="Mode">
+        <option value="">Any</option>
         <option value="Img">Imaging</option>
         <option value="Spec">Long-slit spectroscopy</option>
         <option value="Spec">Multi-object spectroscopy</option>
         <option value="Spec">Integral field spectroscopy</option>
     </select><br />
     
-    <label><b>Filter:</b></label><select class="ddw">
-        <option value="Filter">Any</option>
+    <label><b>Filter:</b></label><select class="ddw" name="Filter">
+        <option value="">Any</option>
         <option value="1">u'</option>
         <option value="2">g'</option>
         <option value="3">r'</option>
@@ -79,11 +79,11 @@
     </select><br /><br />
 
 <div id="Spec" style="display:none">
-    <label><b>Central Wavelength: </b></label><input type="text" placeholder="1.2"><i> (microns)</i><br /><br /><br />
+    <label><b>Central Wavelength: </b></label><input type="text" placeholder="1.2" name="cntrl_wvlngth"><i> (microns)</i><br /><br /><br />
 </div>
 
-    <input type="checkbox">Find associated calibrations</br>
-    <input type="checkbox">Include engineering data<br />
+    <input type="checkbox" name="calibrations">Find associated calibrations</br>
+    <input type="checkbox" name="engdata">Include engineering data<br />
 </div>
 
 <div class="spacer">&nbsp;</div>
@@ -96,19 +96,19 @@
     <hr>
     <h3>GMOS</h3>
 
-    <label><b>Binning:</b></label><select class="ddw">
-        <option value="Binning"></option>
+    <label><b>Binning:</b></label><select class="ddw" name="binning">
+        <option value=""></option>
         <option value="x">x-binning</option>
         <option value="y">y-binning</option>
     </select><br />
 
-    <label><b>Disperser:</b></label><select class="ddw">
-        <option value="Disperser"></option>
+    <label><b>Disperser:</b></label><select class="ddw" name="disperser">
+        <option value=""></option>
         <option value="1">Disperser 1</option>
     </select><br />
 
-    <label><b>Mask:</b></label><select class="ddw">
-        <option value="Mask"></option>
+    <label><b>Mask:</b></label><select class="ddw" name="mask">
+        <option value=""></option>
         <option value="1">Mask 1</option>
     </select><br />
 </div>
