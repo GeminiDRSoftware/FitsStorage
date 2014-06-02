@@ -3,8 +3,7 @@ This is the searchform module
 """
 
 # This will only work with apache
-from mod_python import apache
-from mod_python import util
+from mod_python import apache, util
 
 from web.selection import getselection
 
@@ -61,21 +60,21 @@ def searchform(req, things):
    req.write('<input type="hidden" id="things" name="things" value="%s">' % thing_string)
    req.write('<div class="page">')
    req.write(form_html)
-
    req.write('<div class="searchresults">')
-   if(formdata):
-     # This is where we handle what came back from the form
-     req.write('<h1>Search results go here</h1>')
-     req.write('<p>%s</p>' % formdata)
-   if(selection):
-     req.write('<h1>Selection</h1>')
-     req.write('<p>%s</p>' % selection)
-
-   req.write('</div>')
-
-   req.write('</div>')
    
-
+   if(formdata):
+     # Populate selection dictionary with values from form input
+     for key in formdata.keys():
+         if key == 'program_id':
+             selection[key] = 'progid=' + formdata[key].value   
+         else:
+             selection[key] = formdata[key].value
+   
+   req.write('<h1>Search results go here</h1>')
+   req.write('<p>%s</p>' % selection)
+   req.write('<p>%s</p>' % formdata)
+   req.write('</div>')
+   req.write('</div>')
    req.write('</body></html>')
 
    return apache.OK
