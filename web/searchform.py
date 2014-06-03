@@ -5,7 +5,7 @@ This is the searchform module
 # This will only work with apache
 from mod_python import apache, util
 
-from web.selection import getselection
+from web.selection import getselection, formdata_to_URL
 
 from fits_storage_config import fits_aux_datadir
 import os
@@ -46,6 +46,19 @@ def searchform(req, things):
    selection = getselection(things)
    formdata = util.FieldStorage(req)
 
+   if(formdata):
+       # Populate selection dictionary with values from form input
+       for key in formdata.keys():
+           if key == 'program_id':
+               selection[key] = 'progid=' + formdata[key].value
+           else:
+               selection[key] = formdata[key].value
+
+       urlstring = formdata_to_URL(selection)
+       formdata.clear()
+       #req.internal_redirect('/searchform/' + urlstring)
+       util.redirect(req, '/searchform' + urlstring)       
+
    req.content_type = "text/html"
    req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head>')
    req.write('<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>')
@@ -55,24 +68,18 @@ def searchform(req, things):
    req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/titlebar.css">')
    req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/form.css">')
    req.write('<title>Gemini Archive Search Form</title></head><body>')
-
+   
    req.write(titlebar_html)
    req.write('<input type="hidden" id="things" name="things" value="%s">' % thing_string)
    req.write('<div class="page">')
+   req.write('<form class="searchform" action="/searchform" method="POST">')
    req.write(form_html)
+   req.write('</form>')
    req.write('<div class="searchresults">')
    
-   if(formdata):
-     # Populate selection dictionary with values from form input
-     for key in formdata.keys():
-         if key == 'program_id':
-             selection[key] = 'progid=' + formdata[key].value   
-         else:
-             selection[key] = formdata[key].value
-   
    req.write('<h1>Search results go here</h1>')
-   req.write('<p>%s</p>' % selection)
-   req.write('<p>%s</p>' % formdata)
+   req.write('<p>selection: %s</p>' % selection)
+   req.write('<p>formdata: %s</p>' % formdata)
    req.write('</div>')
    req.write('</div>')
    req.write('</body></html>')
