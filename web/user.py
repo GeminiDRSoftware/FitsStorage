@@ -519,8 +519,8 @@ def staff_access(req, things):
 
     try:
         session = sessionfactory()
-        me = userfromcookie(session, req)
-        if(me.superuser != True):
+        thisuser = userfromcookie(session, req)
+        if(thisuser.superuser != True):
             req.write("<p>You don't appear to be logged in as a superuser. Sorry.</p>")
             req.write('</body></html>')
             return apache.OK
@@ -552,10 +552,10 @@ def staff_access(req, things):
     for user in staff_users:
         even = not even
         if(even):
-            cs = "tr_even"
+            row_class = "tr_even"
         else:
-            cs = "tr_odd"
-        req.write('<TR class=%s><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>' % (cs, user.username, user.fullname, user.email, user.gemini_staff, user.superuser))
+            row_class = "tr_odd"
+        req.write('<TR class=%s><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>' % (row_class, user.username, user.fullname, user.email, user.gemini_staff, user.superuser))
     req.write('</TABLE>')
 
     req.write('<H2>Grant or Revoke Staff Access</H2>')
@@ -749,9 +749,9 @@ def email_inuse(email):
     Check the database to see if this email is already in use. Returns True if it is, False otherwise
     """
     try:
-	session = sessionfactory()
-	query = session.query(User).filter(User.email == email)
-	num = query.count()
+        session = sessionfactory()
+        query = session.query(User).filter(User.email == email)
+        num = query.count()
 
         if(num == 0):
             return False
