@@ -13,7 +13,7 @@
 
 <div class="container left">
 <label><b>Program ID:</b></label> <input type="text" placeholder="GN-2001A-Q-123" name="program_id"><i>(Obs. ID or Data Label also accepted)</i><br /><br />
-    <label><b>Instrument:</b></label><select id="select" class="ddw" name="instrument">
+    <label><b>Instrument:</b></label><select id="select" class="ddw" name="inst">
         <option value="">Any</option>
         <option value="GMOS">GMOS</option>
         <option value="GMOS">GMOS-N</option>
@@ -32,28 +32,28 @@
 
     <label><b>Obs. Class:</b></label><select class="ddw" name="observation_class">
         <option value="">Any</option>
-        <option value="Science">science</option>
+        <option value="science">science</option>
         <option value="acq">acq</option>
-        <option value="Cal">progCal</option>
-        <option value="Cal">dayCal</option>
-        <option value="Cal">partnerCal</option>
-        <option value="Cal">acqCal</option>
+        <option value="progCal">progCal</option>
+        <option value="dayCal">dayCal</option>
+        <option value="partnerCal">partnerCal</option>
+        <option value="acqCal">acqCal</option>
     </select><br />
 
     <label><b>Obs. Type:</b></label><select class="ddw" name="observation_type">
         <option value="">Any</option>
-        <option value="Object">OBJECT</option>
-        <option value="Bias">BIAS</option>
-        <option value="Dark">DARK</option>
-        <option value="Flat">FLAT</option>
-        <option value="Arc">ARC</option>
-        <option value="Pinhole">PINHOLE</option>
-        <option value="Ronchi">RONCHI</option>
-        <option value="Cal">CAL</option>
-        <option value="Fringe">FRINGE</option>
+        <option value="OBJECT">OBJECT</option>
+        <option value="BIAS">BIAS</option>
+        <option value="DARK">DARK</option>
+        <option value="FLAT">FLAT</option>
+        <option value="ARC">ARC</option>
+        <option value="PINHOLE">PINHOLE</option>
+        <option value="RONCHI">RONCHI</option>
+        <option value="CAL">CAL</option>
+        <option value="FRINGE">FRINGE</option>
     </select><br />
 
-    <label><b>Mode:</b></label><select id="Mode" class="ddw" name="Mode">
+    <label><b>Mode:</b></label><select id="Mode" class="ddw" name="mode">
         <option value="">Any</option>
         <option value="Img">Imaging</option>
         <option value="Spec">Long-slit spectroscopy</option>
@@ -61,20 +61,20 @@
         <option value="Spec">Integral field spectroscopy</option>
     </select><br />
     
-    <label><b>Filter:</b></label><select class="ddw" name="Filter">
+    <label><b>Filter:</b></label><select class="ddw" name="filter">
         <option value="">Any</option>
-        <option value="1">u'</option>
-        <option value="2">g'</option>
-        <option value="3">r'</option>
-        <option value="4">i'</option>
-        <option value="4">z'</option>
-        <option value="4">H</option>
-        <option value="4">J</option>
-        <option value="4">K</option>
-        <option value="4">L</option>
-        <option value="4">M</option>
-        <option value="4">N</option>
-        <option value="4">Q</option>
+        <option value="u'">u'</option>
+        <option value="g'">g'</option>
+        <option value="r'">r'</option>
+        <option value="i'">i'</option>
+        <option value="z'">z'</option>
+        <option value="H">H</option>
+        <option value="J">J</option>
+        <option value="K">K</option>
+        <option value="L">L</option>
+        <option value="M">M</option>
+        <option value="N">N</option>
+        <option value="Q">Q</option>
     </select><br /><br />
 
 <div id="Spec" style="display:none">
