@@ -2,6 +2,7 @@
 This module provides various utility functions for create_tables.py 
 in the Fits Storage System.
 """
+import sqlalchemy
 
 from fits_storage_config import using_apache, using_sqlite
 from . import pg_db
@@ -65,11 +66,15 @@ def create_tables(session):
 
 
     # Add the geometry types separately. this is postgres specific and referencing these column in local mode isn't going to work
+    # Ignore any errors, commonly from column already exists...
     if (not using_sqlite):
-        session.execute("ALTER TABLE footprint ADD COLUMN area polygon")
-        session.commit()
-        session.execute("ALTER TABLE photstandard ADD COLUMN coords point")
-        session.commit()
+        try:
+            session.execute("ALTER TABLE footprint ADD COLUMN area polygon")
+            session.commit()
+            session.execute("ALTER TABLE photstandard ADD COLUMN coords point")
+            session.commit()
+        except sqlalchemy.exc.ProgrammingError:
+            pass
 
     if (using_apache and not using_sqlite):
         # Now grant the apache user select on them for the www queries
