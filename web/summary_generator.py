@@ -469,15 +469,25 @@ class SummaryGenerator():
 
     def exposure_time(self, header):
         # All we do is format it with 2 decimal places
-        return "%.2f" % header.exposure_time
+        try:
+            return "%.2f" % header.exposure_time
+        except:
+            return ''
 
     def airmass(self, header):
         # All we do is format it with 2 decimal places
-        return "%.2f" % header.airmass
+        try:
+            return "%.2f" % header.airmass
+        except:
+            return ''
 
     def local_time(self, header):
         # All we do is format it without decimal places
-        return header.local_time.strftime("%H:%M:%S")
+        try:
+            return header.local_time.strftime("%H:%M:%S")
+        except:
+            return ''
+
 
     def object(self, header):
         # nb target names sometime contain ampersand characters which should be escaped in the html.
