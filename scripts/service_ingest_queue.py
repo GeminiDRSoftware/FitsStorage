@@ -168,7 +168,6 @@ while(loop):
         loop = False
 
     except:
-        raise
         string = traceback.format_tb(sys.exc_info()[2])
         string = "".join(string)
         if(iq):
