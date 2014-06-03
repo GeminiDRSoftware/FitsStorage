@@ -100,7 +100,7 @@ def handler(req):
         return debugmessage(req)
 
     # This is the header summary handler
-    if((this == 'summary') or (this == 'diskfiles') or (this == 'ssummary') or (this == 'lsummary')):
+    if(this in ['summary', 'diskfiles', 'ssummary', 'lsummary']):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
 
