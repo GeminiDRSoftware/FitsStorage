@@ -428,3 +428,15 @@ def _parse_range(string):
             b = None
 
         return [a, b]
+
+def formdata_to_URL(selection):
+    """
+    Receives a dictionary of formdata field values from searchform submit function
+    Parses values and converts to URL string
+    """
+    urlstring = '/'    
+
+    for key in selection.keys():
+        urlstring = urlstring + selection[key] + '/'
+    
+    return urlstring
