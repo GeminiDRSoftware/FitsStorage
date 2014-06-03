@@ -60,6 +60,7 @@ def searchform(req, things):
        util.redirect(req, '/searchform' + urlstring)       
 
    req.content_type = "text/html"
+
    req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head>')
    req.write('<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>')
    req.write('<script src="/htmldocs/titlebar.js"></script>')
@@ -70,18 +71,32 @@ def searchform(req, things):
    req.write('<title>Gemini Archive Search Form</title></head><body>')
    
    req.write(titlebar_html)
+
    req.write('<input type="hidden" id="things" name="things" value="%s">' % thing_string)
    req.write('<div class="page">')
    req.write('<form class="searchform" action="/searchform" method="POST">')
-   req.write(form_html)
+     
+   form_html_updt = updateform(form_html, selection)
+   req.write(form_html_updt)
+   
    req.write('</form>')
    req.write('<div class="searchresults">')
-   
    req.write('<h1>Search results go here</h1>')
    req.write('<p>selection: %s</p>' % selection)
-   req.write('<p>formdata: %s</p>' % formdata)
    req.write('</div>')
    req.write('</div>')
    req.write('</body></html>')
 
    return apache.OK
+
+def updateform(html, selection):
+    
+    for key in selection.keys():
+        if key in ['program_id', 'target_name', 'ra', 'dec', 'search_rad', 'cntrl_wvlngth']:
+            html = html.replace('name="%s"' % key, 'name=%s value="%s"' % (key, selection[key]))
+        elif key in ['inst', 'observation_class', 'observation_type', 'mode', 'filter', 'resolver', 'binning', 'disperser', 'mask',]:
+            html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
+        else:
+            html = html.replace('value="%s"' % selection[key], 'name="%s" checked' % key)
+    
+    return html
