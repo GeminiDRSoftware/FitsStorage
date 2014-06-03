@@ -8,7 +8,7 @@
 use_as_archive = True
 
 # AWS S3 info
-using_s3 = True
+using_s3 = False
 s3_bucket_name = 'gemini-archive'
 s3_staging_area = '/data/s3_staging'
 aws_access_key = 'AKIAJ554XPYMJZBPGQAA'
@@ -43,6 +43,12 @@ upload_staging_path = "/data/upload_staging"
 # Leave it empty to disable upload authentication
 # The cookie name is 'gemini_fits_upload_auth'
 upload_auth_cookie = None
+
+# This is the magic cookie value needed to allow downloading any files
+# without any other form of authentication
+# The cookie name is 'gemini_fits_authorization'
+# Leave it as None to disable this feature
+magic_download_cookie = None
 
 # This is the list of downstream servers we export files we ingest to
 export_destinations = []
