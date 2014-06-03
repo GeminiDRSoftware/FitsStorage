@@ -732,7 +732,7 @@ def whoami(req, things):
         req.write('<li class="whoami"><a href="/change_password%s">Change Password</a></li>' % thing_string)
         req.write('<li class="whoami"><a href="/my_programs%s">My Programs</a></li>' % thing_string)
     else:
-        req.write('Not logged in')
+        req.write('&#x1f464 Not logged in &#9662')
         req.write('<ul class="whoami">')
         req.write('<li class="whoami"><a href="/request_account%s">Request Account</a></li>' % thing_string)
         req.write('<li class="whoami"><a href="/login%s">Login</a></li>' % thing_string)
