@@ -24,7 +24,7 @@ from web.upload_file import upload_file
 from web.curationreport import curation_report
 from web.standards import standardobs
 from web.selection import getselection
-from web.fileserver import fileserver, authcookie, mydata
+from web.fileserver import fileserver
 from web.qastuff import qareport, qametrics, qaforgui
 from web.statistics import content, stats
 from web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password, staff_access
@@ -285,24 +285,11 @@ def handler(req):
         req.write("Could not understand argument - You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
         return apache.OK
 
-    # This is the download authentication page
-    if(this == 'authentication'):
-        if(this in blocked_urls):
-            return apache.HTTP_FORBIDDEN
-        return authcookie(req)
-
     # This is the fits file server
     if(this == 'file'):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
         return fileserver(req, things)
-
-    # This is the mydata feature
-    if(this == 'mydata'):
-        if(this in blocked_urls):
-            return apache.HTTP_FORBIDDEN
-        selection = getselection(things)
-        return mydata(req, selection)
 
     # This is the projects observed feature
     if(this == "programsobserved"):
