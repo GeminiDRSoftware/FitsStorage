@@ -18,14 +18,18 @@ import time
 import urllib
 import re
 import datetime
+import gzip
 
 if(using_s3):
     from boto.s3.connection import S3Connection
     from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
 
+from utils.userprogram import icanhave
+
 def fileserver(req, things):
     """
-    This is the fileserver funciton. It handles authentication for serving the files too
+    This is the fileserver funciton. It always sends exactly one fits file, uncompressed.
+    It handles authentication for serving the files too
     """
 
     # OK, first find the file they asked for in the database
@@ -52,71 +56,12 @@ def fileserver(req, things):
         query = session.query(Header).filter(Header.diskfile_id == diskfile.id)
         header = query.one()
 
-        # OK, now figure out if the data are public
-        today = datetime.datetime.utcnow().date()
-        canhaveit = False
-
-        # Are we passed the release data?
-        if((header.release) and (today >= header.release)):
-            # Yes, the data are public
-            canhaveit = True
-
-        # Is the data a dayCal or a partnerCal or an acqCal?
-        elif(header.observation_class in ['dayCal', 'partnerCal', 'acqCal']):
-            # Yes, the data are public. These should have a release date too, except that
-            # Cals from the pipeline processed directly off the DHS machine don't
-            canhaveit = True
-
-        else:
-            # No, the data are not public. See if we got the magic cookie
-            cookies = Cookie.get_cookies(req)
-            if(cookies.has_key('gemini_fits_authorization')):
-                auth = cookies['gemini_fits_authorization'].value
-                if(auth == 'good_to_go'):
-                    # OK, we got the magic cookie
-                    canhaveit = True
-
-        # Did we get a program ID authentication cooke?
-        cookie_key = None
-        # Is this program ID in the authentication table? If so, what's the key?
-        program_key = None
-        program_id = header.program_id
-        authquery = session.query(Authentication).filter(Authentication.program_id == program_id)
-        if(authquery.count() == 1):
-            auth = authquery.one()
-            program_key = auth.program_key
-        cookies = Cookie.get_cookies(req)
-        if(cookies.has_key(program_id)):
-            cookie_key = cookies[program_id].value
-        if((program_key is not None) and (program_key == cookie_key)):
-            canhaveit = True
+        # Is the client allowed to get this file?
+        canhaveit = icanhave(session, req, header)
 
         if(canhaveit):
             # Send them the data
-            req.content_type = 'application/fits'
-            req.headers_out['Content-Disposition'] = 'attachment; filename="%s"' % filename
-            if(using_s3):
-                # S3 file server
-                # For now, just serve what we have.
-                # Need to implement gz and non gz requests somehow
-                s3conn = S3Connection(aws_access_key, aws_secret_key)
-                bucket = s3conn.get_bucket(s3_bucket_name)
-                key = bucket.get_key(filename)
-                req.set_content_length(diskfile.file_size)
-                key.get_contents_to_file(req)
-            else:
-                # Serve from regular file
-                if(diskfile.gzipped == True):
-                    # Unzip it on the fly
-                    req.set_content_length(diskfile.data_size)
-                    gzfp = gzip.open(diskfile.fullpath(), 'rb')
-                    try:
-                        req.write(gzfp.read())
-                    finally:
-                        gzfp.close()
-                else:
-                    req.sendfile(diskfile.fullpath())
-
+            sendonefile(req, header)
             return apache.OK
         else:
             # Refuse to send data
@@ -127,3 +72,48 @@ def fileserver(req, things):
     finally:
         session.close()
 
+
+def sendonefile(req, header):
+    """
+    Send the (one) fits file referred to by the header object to the client
+    referred to by the req obect. This always sends unzipped data.
+    """
+
+    try:
+        # Send them the data
+        req.content_type = 'application/fits'
+        req.headers_out['Content-Disposition'] = 'attachment; filename="%s"' % str(header.diskfile.file.name)
+        if(using_s3):
+            # S3 file server
+            s3conn = S3Connection(aws_access_key, aws_secret_key)
+            bucket = s3conn.get_bucket(s3_bucket_name)
+            key = bucket.get_key(filename)
+            req.set_content_length(header.diskfile.data_size)
+            if(header.diskfile.gzipped):
+                buffer = cStringIO.StringIO()
+                key.get_contents_to_file(buffer)
+                buffer.seek(0)
+                gzfp = gzip.GzipFile(mode='rb', fileobj=buffer)
+                try:
+                    req.write(gzfp.read())
+                finally:
+                    gzfp.close()
+                buffer.close()
+
+            else:
+                key.get_contents_to_file(req)
+        else:
+            # Serve from regular file
+            if(header.diskfile.gzipped == True):
+                # Unzip it on the fly
+                req.set_content_length(header.diskfile.data_size)
+                gzfp = gzip.open(header.diskfile.fullpath(), 'rb')
+                try:
+                    req.write(gzfp.read())
+                finally:
+                    gzfp.close()
+            else:
+                req.sendfile(diskfile.fullpath())
+
+    except IOError:
+        pass
