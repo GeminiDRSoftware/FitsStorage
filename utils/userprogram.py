@@ -8,6 +8,17 @@ from mod_python import Cookie
 from fits_storage_config import magic_download_cookie
 
 from web.userprogram import get_program_list
+from web.user import userfromcookie
+
+def icanhave(session, req, header):
+    """
+    Returns a boolean saying whether the requesting client can have
+    access to the given header
+    """
+
+    user=userfromcookie(session, req)
+    return canhave(session, req, user, header)
+
 
 def canhave(session, req, user, header):
     """
