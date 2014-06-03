@@ -132,8 +132,8 @@ class SummaryGenerator():
             'longheading' : 'Imaging Filter or Spectroscopy Disperser and Wavelength',
             'sortarrows' : False,
             'want' : True,
-            'header_attr' : 'wavelength_band',
-            'summary_func' : None
+            'header_attr' : None,
+            'summary_func' : 'waveband'
             }
         self.columns['exposure_time'] = {
             'heading' : 'ExpT',
@@ -164,8 +164,8 @@ class SummaryGenerator():
             'longheading' : 'Filter Name',
             'sortarrows' : True,
             'want' : True,
-            'header_attr' : 'filter_name',
-            'summary_func' : None
+            'header_attr' : None,
+            'summary_func' : 'filter_name'
             }
         self.columns['disperser'] = {
             'heading' : 'Disperser',
@@ -514,6 +514,16 @@ class SummaryGenerator():
 
         return html
 
+    def filter_name(self, header):
+        # Just htmlescape it
+        return htmlescape(header.filter_name)
+
+    def waveband(self, header):
+        # Print filter_name for imaging, disperser and cen_wlen for spec
+        if(header.spectroscopy):
+            return "%s : %.3f" % (htmlescape(header.disperser), header.central_wavelength)
+        else:
+            return htmlescape(header.filter_name)
 
 def htmlescape(string):
     """
