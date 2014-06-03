@@ -11,6 +11,8 @@ from gemini_metadata_utils import GeminiDataLabel, percentilestring
 import apache_return_codes as apache
 from sqlalchemy import desc
 
+from summary_generator import SummaryGenerator
+
 def summary(req, type, selection, orderby, links=True, download=False):
     """
     This is the main summary generator.
@@ -46,7 +48,7 @@ def summary(req, type, selection, orderby, links=True, download=False):
 
     session = sessionfactory()
     try:
-        webhdrsummary(req, type, list_headers(session, selection, orderby), links, download)
+        summary_table(req, type, list_headers(session, selection, orderby), links, download)
     except IOError:
         pass
     finally:
@@ -55,7 +57,7 @@ def summary(req, type, selection, orderby, links=True, download=False):
     req.write("</body></html>")
     return apache.OK
 
-def webhdrsummary(req, type, headers, links=True, download=False):
+def summary_table(req, type, headers, links=True, download=False):
     """
     Generates an HTML header summary table of the specified type from
     the list of header objects provided. Writes that table to an apache
@@ -65,265 +67,29 @@ def webhdrsummary(req, type, headers, links=True, download=False):
     type: the summary type required
     headers: the list of header objects to include in the summary
     """
-    # Get the uri to use for the re-sort links
-    myuri = req.uri
 
-    # A certain amount of parsing the summary type...
-    want = []
-    if(type == 'summary'):
-        want.append('obs')
-        want.append('qa')
-        want.append('expamlt')
-    if(type == 'ssummary'):
-        want.append('obs')
-        want.append('qa')
-    if(type == 'lsummary'):
-        want.append('obs')
-        want.append('expamlt')
-        want.append('details')
-        want.append('qa')
-    if(type == 'diskfiles'):
-        want.append('diskfiles')
+    # Instantiate the Summary Generator object
+    sumgen = SummaryGenerator(type, links, req.uri)
 
-    # Output the start of the table including column headings
-    # First part included in all summary types
     req.write('<TABLE border=0>')
-    req.write('<TR class=tr_head>')
-    if(links):
-        req.write('<TH>Filename <a href="%s?orderby=filename_asc">&uarr;</a><a href="%s?orderby=filename_desc">&darr;</a></TH>' % (myuri, myuri))
-        req.write('<TH>Data Label <a href="%s?orderby=data_label_asc">&uarr;</a><a href="%s?orderby=data_label_desc">&darr;</a></TH>' % (myuri, myuri))
-        req.write('<TH>UT Date Time <a href="%s?orderby=ut_datetime_asc">&uarr;</a><a href="%s?orderby=ut_datetime_desc">&darr;</a></TH>' % (myuri, myuri))
-        req.write('<TH><abbr title="Instrument">Inst</abbr> <a href="%s?orderby=instrument_asc">&uarr;</a><a href="%s?orderby=instrument_desc">&darr;</a></TH>' % (myuri, myuri))
-    else:
-        req.write('<TH>Filename</TH>')
-        req.write('<TH>Data Label</TH>')
-        req.write('<TH>UT Date Time</TH>')
-        req.write('<TH><abbr title="Instrument">Inst</abbr></TH>')
 
-    # Keep the line length below 1000 so can email as text/html
-    req.write('\n')
-
-    # This is the 'obs', 'expamlt' and 'qa' parts
-    # In the 3 element lists below, the first element is the full title, the second is the shortform title, and the third is the order by key
-    wants = ['obs', 'expamlt', 'details', 'qa']
-    for w in wants:
-        if w in want:
-            if(w == 'obs'):
-                vals = [['ObsClass', 'Class', 'observation_class'], ['ObsType', 'Type', 'observation_type'], ['Object Name', 'Object', 'object']]
-            elif(w == 'expamlt'):
-                vals = [['Exposure Time', 'ExpT', 'exposure_time'], ['AirMass', 'AM', 'airmass'], ['Localtime', 'Lcltime', 'local_time']]
-            elif(w == 'details'):
-                vals = [['Filter', 'Filter', 'filter_name'], ['Disperser : Central Wavelength', 'Disperser', 'disperser'], ['Focal Plane Mask', 'FPmask', 'fpmask'], ['Detector ROI', 'ROI', 'detector_roi'], ['Detector Binning', 'Binning', 'detector_binning'], ['Detector Configuration', 'DetConf', 'detctor_config']]
-            elif(w == 'qa'):
-                vals = [['QA State', 'QA', 'qa_state'], ['Raw IQ', 'IQ', 'raw_iq'], ['Raw CC', 'CC', 'raw_cc'], ['Raw WV', 'WV', 'raw_wv'], ['Raw BG', 'BG', 'raw_bg']]
-            if(links):
-                for i in range(len(vals)):
-                    req.write('<TH><abbr title="%s">%s</abbr> <a href="%s?orderby=%s_asc">&uarr;</a><a href="%s?orderby=%s_desc">&darr;</a></TH>' % (vals[i][0], vals[i][1], myuri, vals[i][2], myuri, vals[i][2]))
-            else:
-                for i in range(len(vals)):
-                    req.write('<TH><abbr title="%s">%s</abbr></TH>' % (vals[i][0], vals[i][1]))
-            if(w == 'obs'):
-                req.write('<TH><abbr title="Imaging Filter or Spectroscopy Wavelength and Disperser">WaveBand</abbr></TH>')
-            # Keep the line length down for email attachements
-            req.write('\n')
- 
-    # This is the 'diskfiles' part
-    if('diskfiles' in want):
-        req.write('<TH>Present</TH>')
-        req.write('<TH>Entry</TH>')
-        req.write('<TH>Lastmod</TH>')
-        req.write('<TH>File Size</TH>')
-        req.write('<TH>File md5sum</TH>')
-        req.write('<TH>Gzipped</TH>')
-        req.write('<TH>Data Size</TH>')
-        req.write('<TH>Data md5sum</TH>')
-
-
-    # Last bit included in all summary types
-    req.write('</TR>\n')
+    # Output the table header
+    sumgen.table_header(req)
 
     # Loop through the header list, outputing table rows
-    even = 0
+    even = False
     bytecount = 0
     filecount = 0
-    for h in headers:
+    for header in headers:
         even = not even
         if(even):
-            cs = "tr_even"
+            tr_class = "tr_even"
         else:
-            cs = "tr_odd"
-        # Again, the first part included in all summary types
-        req.write("<TR class=%s>" % (cs))
+            tr_class = "tr_odd"
 
-        # Parse the datalabel first
-        dl = GeminiDataLabel(h.data_label)
+        sumgen.table_row(req, header, tr_class)
 
-        # The filename cell, with the link to the full headers and the optional WMD and FITS error flags, and the optional [download] link
-        if(h.diskfile.fverrors):
-            if(links):
-                fve = '<a href="/fitsverify/%d">- fits!</a>' % (h.diskfile.id)
-            else:
-                fve = '- fits!'
-        else:
-            fve = ''
-        # Do not raise the WMD or GSA flag on ENG data
-        iseng = bool(dl.datalabel) and dl.project.iseng
-        if((not iseng) and (not h.diskfile.wmdready)):
-            if(links):
-                wmd = '<a href="/wmdreport/%d">- md!</a>' % (h.diskfile.id)
-            else:
-                wmd = '-md!'
-        else:
-            wmd = ''
-
-
-        # The [download] link
-        fdl = ''
-        if(download):
-            if(h.diskfile.present):
-                fdl = '<a href = "/file/%s">[download]</a>' % h.diskfile.file.name
-            else:
-                fdl = '[unavailable]'
-
-        if(links):
-            req.write('<TD><A HREF="/fullheader/%d">%s</A> %s %s %s</TD>' % (h.diskfile.id, h.diskfile.file.name, fve, wmd, fdl))
-        else:
-            req.write('<TD>%s %s %s</TD>' % (h.diskfile.file.name, fve, wmd))
-
-
-        # The datalabel, parsed to link to the program_id and observation_id,
-        if(dl.datalabel):
-            if(links):
-                req.write('<TD><a href="/summary/%s">%s</a>-<a href="/summary/%s">%s</a>-<a href="/summary/%s">%s</a></TD>' % (dl.projectid, dl.projectid, dl.observation_id, dl.obsnum, dl.datalabel, dl.dlnum))
-            else:
-                req.write('<TD>%s-%s-%s</TD>' % (dl.projectid, dl.obsnum, dl.dlnum))
-        else:
-            req.write('<TD>%s</TD>' % h.data_label)
-
-        if(h.ut_datetime):
-            req.write("<TD>%s</TD>" % (h.ut_datetime.strftime("%Y-%m-%d %H:%M:%S")))
-        else:
-            req.write("<TD>%s</TD>" % ("None"))
-
-        inst = h.instrument
-        if(h.adaptive_optics):
-            inst += " + AO"
-            if(h.laser_guide_star):
-                inst += " LGS"
-            else:
-                inst += " NGS"
-        req.write("<TD>%s</TD>" % (inst))
-
-        # Now the 'obs' part
-        if('obs' in want):
-            req.write("<TD>%s</TD>" % (h.observation_class))
-            req.write("<TD>%s</TD>" % (h.observation_type))
-
-            stdhtml = ''
-            if(h.phot_standard):
-                if(links):
-                    stdhtml = '<a href="/standardobs/%d">*</a>' % h.id
-                else:
-                    stdhtml = '*'
-            # nb object names sometimes contain ampersand characters which should be escaped in the html
-            # And a targetsymbol to denote AzEl targets, Zenith targets and non sidereal targets
-            targetsymbol = ''
-            if('AZEL_TARGET' in h.types and 'AT_ZENITH' not in h.types):
-                targetsymbol += ' <abbr title="Target is in AzEl co-ordinate frame">&#x2693</abbr>'
-            if('AT_ZENITH' in h.types):
-                targetsymbol += ' <abbr title="Target is Zenith in AzEl co-ordinate frame">&#x2693&#x2191</abbr>'
-            if('NON_SIDEREAL' in h.types):
-                targetsymbol += ' <abbr title="Target is non-sidereal">&#x2604</abbr>'
-
-            if (h.object and len(h.object)>12):
-                req.write('<TD><abbr title="%s">%s%s</abbr>%s</TD>' % (htmlescape(h.object), htmlescape(h.object[0:12]), stdhtml, targetsymbol))
-            else:
-                req.write("<TD>%s%s%s</TD>" % (htmlescape(h.object), stdhtml, targetsymbol))
-
-            if(h.spectroscopy):
-                try:
-                    req.write("<TD>%s : %.3f</TD>" % (htmlescape(h.disperser), h.central_wavelength))
-                except:
-                    req.write("<TD>%s : </TD>" % htmlescape(h.disperser))
-            else:
-                req.write("<TD>%s</TD>" % htmlescape(h.filter_name))
-
-        # Now the 'expamlt' part
-        if ('expamlt' in want):
-            try:
-                req.write("<TD>%.2f</TD>" % h.exposure_time)
-            except:
-                req.write("<TD></TD>")
- 
-            try:
-                req.write("<TD>%.2f</TD>" % h.airmass)
-            except:
-                req.write("<TD></TD>")
-
-            if(h.local_time):
-                req.write("<TD>%s</TD>" % (h.local_time.strftime("%H:%M:%S")))
-            else:
-                req.write("<TD>%s</TD>" % ("None"))
-
-        # the 'details' part
-        if('details' in want):
-            req.write("<TD>%s</TD>" % htmlescape(h.filter_name))
-            try:
-                string = "%.3f" % h.central_wavelength
-            except:
-                string = "%s" % h.central_wavelength
-            req.write("<TD>%s : %s</TD>" % (htmlescape(h.disperser), string))
-            req.write("<TD>%s</TD>" % htmlescape(h.focal_plane_mask))
-            req.write("<TD>%s</TD>" % htmlescape(h.detector_roi_setting))
-            req.write("<TD>%s</TD>" % htmlescape(h.detector_binning))
-            req.write("<TD>%s</TD>" % htmlescape(h.detector_config))
-
-        # Now the 'qa' part
-        # Abreviate the raw XX values to 4 characters
-        if('qa' in want):
-            req.write('<TD>%s</TD>' % (h.qa_state))
-
-            style = ""
-            if(h.requested_iq and h.requested_iq < h.raw_iq):
-                style = " style='color:red'"
-            text = "<span%s>%s</span>" % (style, percentilestring(h.raw_iq, 'IQ'))
-            req.write('<TD><abbr title="Raw: %s, Requested: %s">%s</abbr></TD>' % (percentilestring(h.raw_iq, 'IQ'), percentilestring(h.requested_iq, 'IQ'), text))
-
-            style = ""
-            if(h.requested_cc and h.requested_cc < h.raw_cc):
-                style = " style='color:red'"
-            text = "<span%s>%s</span>" % (style, percentilestring(h.raw_cc, 'CC'))
-            req.write('<TD><abbr title="Raw: %s, Requested: %s">%s</abbr></TD>' % (percentilestring(h.raw_cc, 'CC'), percentilestring(h.requested_cc, 'CC'), text))
-
-            style = ""
-            if(h.requested_wv and h.requested_wv < h.raw_wv):
-                style = " style='color:red'"
-            text = "<span%s>%s</span>" % (style, percentilestring(h.raw_wv, 'WV'))
-            req.write('<TD><abbr title="Raw: %s, Requested: %s">%s</abbr></TD>' % (percentilestring(h.raw_wv, 'WV'), percentilestring(h.requested_wv, 'WV'), text))
-
-            style = ""
-            if(h.requested_bg and h.requested_bg < h.raw_bg):
-                style = " style='color:red'"
-            text = "<span%s>%s</span>" % (style, percentilestring(h.raw_bg, 'BG'))
-            req.write('<TD><abbr title="Raw: %s, Requested: %s">%s</abbr></TD>' % (percentilestring(h.raw_bg, 'BG'), percentilestring(h.requested_bg, 'BG'), text))
-
-
-        # the 'diskfiles' part
-        if('diskfiles' in want):
-            req.write("<TD>%s</TD>" % (h.diskfile.present))
-            req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.diskfile.entrytime, h.diskfile.entrytime.strftime("%Y-%m-%d %H:%M:%S")))
-            req.write('<TD><abbr title="%s">%s</abbr></TD>' % (h.diskfile.lastmod, h.diskfile.lastmod.strftime("%Y-%m-%d %H:%M:%S")))
-            req.write("<TD>%s</TD>" % (h.diskfile.file_size))
-            req.write("<TD>%s</TD>" % (h.diskfile.file_md5))
-            req.write("<TD>%s</TD>" % (h.diskfile.gzipped))
-            req.write("<TD>%s</TD>" % (h.diskfile.data_size))
-            req.write("<TD>%s</TD>" % (h.diskfile.data_md5))
-
-
-        # And again last bit included in all summary types
-        req.write("</TR>\n")
-
-        bytecount += h.diskfile.file_size
+        bytecount += header.diskfile.file_size
         filecount += 1
     req.write("</TABLE>\n")
     req.write("<P>%d files totalling %.2f GB</P>" % (filecount, bytecount/1.0E9))
