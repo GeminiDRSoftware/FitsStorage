@@ -19,6 +19,7 @@ import urllib
 import re
 import datetime
 import gzip
+import cStringIO
 
 if(using_s3):
     from boto.s3.connection import S3Connection
@@ -79,41 +80,36 @@ def sendonefile(req, header):
     referred to by the req obect. This always sends unzipped data.
     """
 
-    try:
-        # Send them the data
-        req.content_type = 'application/fits'
-        req.headers_out['Content-Disposition'] = 'attachment; filename="%s"' % str(header.diskfile.file.name)
-        if(using_s3):
-            # S3 file server
-            s3conn = S3Connection(aws_access_key, aws_secret_key)
-            bucket = s3conn.get_bucket(s3_bucket_name)
-            key = bucket.get_key(filename)
-            req.set_content_length(header.diskfile.data_size)
-            if(header.diskfile.gzipped):
-                buffer = cStringIO.StringIO()
-                key.get_contents_to_file(buffer)
-                buffer.seek(0)
-                gzfp = gzip.GzipFile(mode='rb', fileobj=buffer)
-                try:
-                    req.write(gzfp.read())
-                finally:
-                    gzfp.close()
+    # Send them the data
+    req.content_type = 'application/fits'
+    req.headers_out['Content-Disposition'] = 'attachment; filename="%s"' % str(header.diskfile.file.name)
+    if(using_s3):
+        # S3 file server
+        s3conn = S3Connection(aws_access_key, aws_secret_key)
+        bucket = s3conn.get_bucket(s3_bucket_name)
+        key = bucket.get_key(header.diskfile.filename)
+        req.set_content_length(header.diskfile.data_size)
+        if(header.diskfile.gzipped):
+            buffer = cStringIO.StringIO()
+            key.get_contents_to_file(buffer)
+            buffer.seek(0)
+            gzfp = gzip.GzipFile(mode='rb', fileobj=buffer)
+            try:
+                req.write(gzfp.read())
+            finally:
+                gzfp.close()
                 buffer.close()
-
-            else:
-                key.get_contents_to_file(req)
         else:
-            # Serve from regular file
-            if(header.diskfile.gzipped == True):
-                # Unzip it on the fly
-                req.set_content_length(header.diskfile.data_size)
-                gzfp = gzip.open(header.diskfile.fullpath(), 'rb')
-                try:
-                    req.write(gzfp.read())
-                finally:
-                    gzfp.close()
-            else:
-                req.sendfile(diskfile.fullpath())
-
-    except IOError:
-        pass
+            key.get_contents_to_file(req)
+    else:
+        # Serve from regular file
+        if(header.diskfile.gzipped == True):
+            # Unzip it on the fly
+            req.set_content_length(header.diskfile.data_size)
+            gzfp = gzip.open(header.diskfile.fullpath(), 'rb')
+            try:
+                req.write(gzfp.read())
+            finally:
+                gzfp.close()
+        else:
+            req.sendfile(diskfile.fullpath())

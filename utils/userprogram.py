@@ -32,7 +32,7 @@ def canhave(session, req, user, header):
         return True
 
     # Is the release date in the past?
-    today = datetime.datetime.utcnow().date
+    today = datetime.datetime.utcnow().date()
     if((header.release) and (today >= header.release)):
         return True
 
