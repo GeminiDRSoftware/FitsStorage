@@ -102,7 +102,7 @@ def searchform(req, things):
        req.write('<input type="hidden" id="url" value="%s">' % selectionstring)
    
    req.write('</form>')
-   req.write('<hr>')
+   req.write('<hr noshade>')
    req.write('<div id="searchresults" class="searchresults">')
    # Uncomment this for form processing selection debugging...
    #req.write('<p>selection: %s</p>' % selection)
