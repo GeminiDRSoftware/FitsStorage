@@ -437,6 +437,6 @@ def selection_to_URL(selection):
     urlstring = ''
 
     for key in selection.keys():
-        urlstring = urlstring + '/' + selection[key]
+        urlstring = urlstring + '/' + str(selection[key])
     
     return urlstring

@@ -1,14 +1,14 @@
 
 <div class="container right">
-    <label><b>Target Name:</b></label><input type="text" placeholder="NGC 5457" name="target_name"><br /><br /> 
-    <label><b>Resolver:</b></label><select class="ddw" name="resolver">
+    <label><b>Target Name:</b></label><input type="text" placeholder="NGC 5457" name="target_name" disabled="disabled"><br /><br /> 
+    <label><b>Resolver:</b></label><select class="ddw" name="resolver" disabled="disabled">
          <option value="">&lt;none&gt;</option>
          <option value="SIMBAD">SIMBAD</option>
          <option value="NED">NED</option>
     </select><br /><br />
-    <label><b>RA:</b></label><input type="text" placeholder="14:03:12.00" name="ra"><i> (HH:MM:SS.ss or decimal degrees)</i><br /><br />
-    <label><b>Dec:</b></labeL><input type="text" placeholder="-02:24:19.88" name="dec"><i> ([+-]DD:MM:SS.ss or decimal degrees)</i><br /><br />
-    <label><b>Search radius:</b></label><input type="text" placeholder="45, 0.013" name="search_rad"><i> (arcseconds or decimal degrees)</i>
+    <label><b>RA:</b></label><input type="text" placeholder="14:03:12.00" name="ra" disabled="disabled"><i> (HH:MM:SS.ss or decimal degrees)</i><br /><br />
+    <label><b>Dec:</b></labeL><input type="text" placeholder="-02:24:19.88" name="dec" disabled="disabled"><i> ([+-]DD:MM:SS.ss or decimal degrees)</i><br /><br />
+    <label><b>Search radius:</b></label><input type="text" placeholder="45, 0.013" name="search_rad" disabled="disabled"><i> (arcseconds or decimal degrees)</i>
 </div>
 
 <div class="container left">
@@ -56,13 +56,14 @@
 
     <label><b>Mode:</b></label><select id="Mode" class="ddw" name="mode">
         <option value="">Any</option>
-        <option value="Img">Imaging</option>
-        <option value="Spec">Long-slit spectroscopy</option>
-        <option value="Spec">Multi-object spectroscopy</option>
-        <option value="Spec">Integral field spectroscopy</option>
+        <option value="Imaging">Imaging</option>
+        <option value="Spectroscopy">Spectroscopy</option>
+        <option value="Spec" disabled="disabled">Long-slit spectroscopy</option>
+        <option value="Spec" disabled="disabled">Multi-object spectroscopy</option>
+        <option value="Spec" disabled="disabled">Integral field spectroscopy</option>
     </select><br />
     
-    <label><b>Filter:</b></label><select class="ddw" name="filter">
+    <label><b>Filter:</b></label><select class="ddw" name="filter" disabled="disabled">
         <option value="">Any</option>
         <option value="u'">u'</option>
         <option value="g'">g'</option>
@@ -79,10 +80,10 @@
     </select><br /><br />
 
 <div id="Spec" style="display:none">
-    <label><b>Central Wavelength: </b></label><input type="text" placeholder="1.2" name="cntrl_wvlngth"><i> (microns)</i><br /><br /><br />
+    <label><b>Central Wavelength: </b></label><input type="text" placeholder="1.2" name="cntrl_wvlngth" disabled="disabled"><i> (microns)</i><br /><br /><br />
 </div>
-    <input type="checkbox" name="calibrations">Find associated calibrations</br>
-    <input type="checkbox" name="engdata">Include engineering data<br />
+    <input type="checkbox" name="calibrations" disabled="disabled">Find associated calibrations</br>
+    <input type="checkbox" name="engdata" disabled="disabled">Include engineering data<br />
 </div>
 
 <div class="spacer">&nbsp;</div>
@@ -97,18 +98,18 @@
     <hr>
     <h3>GMOS</h3>
 
-    <label><b>Binning:</b></label><select class="ddw" name="binning">
+    <label><b>Binning:</b></label><select class="ddw" name="binning" disabled="disabled">
         <option value=""></option>
         <option value="x">x-binning</option>
         <option value="y">y-binning</option>
     </select><br />
 
-    <label><b>Disperser:</b></label><select class="ddw" name="disperser">
+    <label><b>Disperser:</b></label><select class="ddw" name="disperser" disabled="disabled">
         <option value=""></option>
         <option value="1">Disperser 1</option>
     </select><br />
 
-    <label><b>Mask:</b></label><select class="ddw" name="mask">
+    <label><b>Mask:</b></label><select class="ddw" name="mask" disabled="disabled">
         <option value=""></option>
         <option value="1">Mask 1</option>
     </select><br />
