@@ -434,9 +434,9 @@ def formdata_to_URL(selection):
     Receives a dictionary of formdata field values from searchform submit function
     Parses values and converts to URL string
     """
-    urlstring = '/'    
+    urlstring = ''
 
     for key in selection.keys():
-        urlstring = urlstring + selection[key] + '/'
+        urlstring = urlstring + '/' + selection[key]
     
     return urlstring
