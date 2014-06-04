@@ -1,5 +1,5 @@
 
-<div class="container right">
+<div class="right">
     <label><b>Target Name:</b></label><input type="text" placeholder="NGC 5457" name="target_name" disabled="disabled"><br /><br /> 
     <label><b>Resolver:</b></label><select class="ddw" name="resolver" disabled="disabled">
          <option value="">&lt;none&gt;</option>
@@ -11,7 +11,7 @@
     <label><b>Search radius:</b></label><input type="text" placeholder="45, 0.013" name="search_rad" disabled="disabled"><i> (arcseconds or decimal degrees)</i>
 </div>
 
-<div class="container left">
+<div class="left">
     <label><b>Program ID:</b></label><input type="text" placeholder="GN-2001A-Q-123" name="program_id"><i>(Obs. ID or Data Label also accepted)</i><br /><br />
     <label><b>Date:</b></label><input type="text" placeholder="20131214" name="date"><i>(YYYYMMDD or range)</i><br /><br />
     <label><b>Instrument:</b></label><select id="select" class="ddw" name="inst">
@@ -82,17 +82,11 @@
 <div id="Spec" style="display:none">
     <label><b>Central Wavelength: </b></label><input type="text" placeholder="1.2" name="cntrl_wvlngth" disabled="disabled"><i> (microns)</i><br /><br /><br />
 </div>
-    <input type="checkbox" name="calibrations" disabled="disabled">Find associated calibrations</br>
-    <input type="checkbox" name="engdata" disabled="disabled">Include engineering data<br />
+Find associated calibrations <input type="checkbox" name="calibrations" disabled="disabled"><br />
+Include engineering data <input type="checkbox" name="engdata" disabled="disabled"><br />
 </div>
 
-<div class="spacer">&nbsp;</div>
-<div class="spacer">&nbsp;</div>
-<div class="spacer">&nbsp;</div>
-<div class="spacer">&nbsp;</div>
-<div class="spacer">&nbsp;</div>
-<div class="spacer">&nbsp;</div>
-<div class="spacer">&nbsp;</div>
+<div class="next"></div>
 
 <div id="GMOS" class="spacer" style="display:none">
     <hr>
@@ -115,7 +109,5 @@
     </select><br />
 </div>
 
-<div class="right">
-<input type="submit" value="Submit">
-</div>
+<center><input type="submit" value="Submit"></center><br />
 

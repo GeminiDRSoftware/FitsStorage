@@ -102,9 +102,10 @@ def searchform(req, things):
        req.write('<input type="hidden" id="url" value="%s">' % selectionstring)
    
    req.write('</form>')
+   req.write('<hr>')
    req.write('<div id="searchresults" class="searchresults">')
-   req.write('<h1>Search results go here</h1>')
-   req.write('<p>selection: %s</p>' % selection)
+   # Uncomment this for form processing selection debugging...
+   #req.write('<p>selection: %s</p>' % selection)
    req.write('</div>')
    req.write('</div>')
    req.write('</body></html>')

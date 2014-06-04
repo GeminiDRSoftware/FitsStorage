@@ -1,34 +1,31 @@
 label {
     display: inline-block;
-    float: left;
-    clear: left;
     width: 100px;
     text-align: left;
 }
 
-input {
-    display: inline-block;
-    float: left;
+.next {
+    clear: both;
 }
 
 .left {
-    float: left
+    height: 100%;
+    float: left;
+    width: 50%;
 }
 
 .right {
-    float: right
+    height: 100%;
+    float: right;
+    width: 50%;
 }
 
 .ddw {
     width:100px;
 }
 
-.container {
-    width: 50%;
-}
-
 .spacer {
-    width: 100%
+    width: 100%;
 }
 .searchform {
     margin: 10px;
