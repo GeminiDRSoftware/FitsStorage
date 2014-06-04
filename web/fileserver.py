@@ -11,6 +11,7 @@ from orm.authentication import Authentication
 
 from web.selection import getselection, openquery, selection_to_URL
 from web.summary import list_headers
+from web.user import userfromcookie
 
 # This will only work with apache
 from mod_python import apache
@@ -48,6 +49,13 @@ def download(req, things):
     # Open a database session
     session = sessionfactory()
     try:
+        # Get our username while we have the database session open
+        user = userfromcookie(session, req)
+        if(user):
+            username = user.username
+        else:
+            username = 'Not Logged In'
+
         # Get the header list
         headers = list_headers(session, selection, None)
 
@@ -61,31 +69,37 @@ def download(req, things):
 
         # We are going to build an md5sum file while we do this
         md5file = ""
+        # And keep a list of any files we were denied
+        denied = []
         # Here goes!
         tar = tarfile.open(name="download.tar", mode="w|", fileobj=req)
         for header in headers:
-            md5file += "%s  %s\n" % (header.diskfile.file_md5, header.diskfile.filename)
-            if(using_s3):
-                # Fetch the file into a cStringIO buffer
-                key = bucket.get_key(header.diskfile.filename)
-                buffer = cStringIO.StringIO()
-                key.get_contents_to_file(buffer)
-                # Write buffer into tarfile
-                buffer.seek(0)
-                # - create a tarinfo object
-                tarinfo = tarfile.TarInfo(header.diskfile.filename)
-                tarinfo.size = header.diskfile.file_size
-                tarinfo.uid = 0
-                tarinfo.gid = 0
-                tarinfo.uname = 'gemini'
-                tarinfo.gname = 'gemini'
-                tarinfo.mtime = time.mktime(header.diskfile.lastmod.timetuple())
-                tarinfo.mode = 0644
-                # - and add it to the tar file
-                tar.addfile(tarinfo, buffer)
-                buffer.close()
+            if(icanhave(session, req, header)):
+                md5file += "%s  %s\n" % (header.diskfile.file_md5, header.diskfile.filename)
+                if(using_s3):
+                    # Fetch the file into a cStringIO buffer
+                    key = bucket.get_key(header.diskfile.filename)
+                    buffer = cStringIO.StringIO()
+                    key.get_contents_to_file(buffer)
+                    # Write buffer into tarfile
+                    buffer.seek(0)
+                    # - create a tarinfo object
+                    tarinfo = tarfile.TarInfo(header.diskfile.filename)
+                    tarinfo.size = header.diskfile.file_size
+                    tarinfo.uid = 0
+                    tarinfo.gid = 0
+                    tarinfo.uname = 'gemini'
+                    tarinfo.gname = 'gemini'
+                    tarinfo.mtime = time.mktime(header.diskfile.lastmod.timetuple())
+                    tarinfo.mode = 0644
+                    # - and add it to the tar file
+                    tar.addfile(tarinfo, buffer)
+                    buffer.close()
+                else:
+                    tar.add(header.diskfile.fullpath(), header.diskfile.filename)
             else:
-                tar.add(header.diskfile.fullpath(), header.diskfile.filename)
+                # Permission denied, add to the denied list
+                denied.append(header.diskfile.filename)
         # OK, that's all the fits files. Add the md5sum file
         # - create a tarinfo object
         tarinfo = tarfile.TarInfo('md5sums.txt')
@@ -104,10 +118,15 @@ def download(req, things):
         # And add the README.TXT file
         readme = "This is a tar file of search results downloaded from the gemini archive.\n\n"
         readme += "The search criteria was: %s\n" % selection_to_URL(selection)
-        readme += "The search was performed at: %s UTC\n\n" % datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        readme += "The search was performed at: %s UTC\n" % datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        readme += "The search was performed by archive user: %s\n\n" % username
         readme += "We have included a file listing the md5sums of the data files in here.\n"
         readme += "If you have the 'md5sum' utility installed (most Linux machines at least),\n"
         readme += "You can verify file integrity by running 'md5sum -c md5sums.txt'.\n\n"
+        if(denied):
+            readme += "The following files in your search results were not included,\n"
+            readme += "because they are proprietary data that you do not have access to:\n"
+            readme += '\n'.join(denied) + '\n'
         # - create a tarinfo object
         tarinfo = tarfile.TarInfo('README.txt')
         tarinfo.size = len(readme)
