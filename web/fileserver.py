@@ -9,7 +9,7 @@ from orm.diskfile import DiskFile
 from orm.header import Header
 from orm.authentication import Authentication
 
-from web.selection import getselection, openquery
+from web.selection import getselection, openquery, selection_to_URL
 from web.summary import list_headers
 
 # This will only work with apache
@@ -59,9 +59,12 @@ def download(req, things):
             s3conn = S3Connection(aws_access_key, aws_secret_key)
             bucket = s3conn.get_bucket(s3_bucket_name)
 
+        # We are going to build an md5sum file while we do this
+        md5file = ""
         # Here goes!
         tar = tarfile.open(name="download.tar", mode="w|", fileobj=req)
         for header in headers:
+            md5file += "%s  %s\n" % (header.diskfile.file_md5, header.diskfile.filename)
             if(using_s3):
                 # Fetch the file into a cStringIO buffer
                 key = bucket.get_key(header.diskfile.filename)
@@ -83,7 +86,43 @@ def download(req, things):
                 buffer.close()
             else:
                 tar.add(header.diskfile.fullpath(), header.diskfile.filename)
-        # OK, should be done
+        # OK, that's all the fits files. Add the md5sum file
+        # - create a tarinfo object
+        tarinfo = tarfile.TarInfo('md5sums.txt')
+        tarinfo.size = len(md5file)
+        tarinfo.uid = 0
+        tarinfo.gid = 0
+        tarinfo.uname = 'gemini'
+        tarinfo.gname = 'gemini'
+        tarinfo.mtime = time.time()
+        tarinfo.mode = 0644
+        # - and add it to the tar file
+        buffer = cStringIO.StringIO(md5file)
+        tar.addfile(tarinfo, buffer)
+        buffer.close()
+
+        # And add the README.TXT file
+        readme = "This is a tar file of search results downloaded from the gemini archive.\n\n"
+        readme += "The search criteria was: %s\n" % selection_to_URL(selection)
+        readme += "The search was performed at: %s UTC\n\n" % datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        readme += "We have included a file listing the md5sums of the data files in here.\n"
+        readme += "If you have the 'md5sum' utility installed (most Linux machines at least),\n"
+        readme += "You can verify file integrity by running 'md5sum -c md5sums.txt'.\n\n"
+        # - create a tarinfo object
+        tarinfo = tarfile.TarInfo('README.txt')
+        tarinfo.size = len(readme)
+        tarinfo.uid = 0
+        tarinfo.gid = 0
+        tarinfo.uname = 'gemini'
+        tarinfo.gname = 'gemini'
+        tarinfo.mtime = time.time()
+        tarinfo.mode = 0644
+        # - and add it to the tar file
+        buffer = cStringIO.StringIO(readme)
+        tar.addfile(tarinfo, buffer)
+        buffer.close()
+
+        # All done
         tar.close()
         req.flush()
 
