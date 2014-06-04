@@ -38,8 +38,9 @@ def summary(req, type, selection, orderby, links=True, download=False):
     req.write("</head>\n")
     req.write("<body>")
     if (fits_system_status == "development"):
-        req.write('<h1>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h1>')
-    req.write("<H1>%s</H1>\n" % htmlescape(title))
+        req.write('<h6>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h6>')
+    if(type != 'searchresults')
+        req.write("<H1>%s</H1>\n" % htmlescape(title))
 
     # If this is a diskfiles summary, select even ones that are not canonical
     if(type != 'diskfiles'):
