@@ -1,6 +1,6 @@
 $(function() {
-    $('#select').change(function() {
-        if ($(this).val() == "GMOS") {
+    $('#instselect').change(function() {
+        if ($(this).val().match("GMOS")) {
             $('#GMOS').slideDown();
         } else {
             $('#GMOS').hide();

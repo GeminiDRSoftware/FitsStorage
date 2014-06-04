@@ -14,11 +14,11 @@
 <div class="left">
     <label><b>Program ID:</b></label><input type="text" placeholder="GN-2001A-Q-123" name="program_id"><i>(Obs. ID or Data Label also accepted)</i><br /><br />
     <label><b>Date:</b></label><input type="text" placeholder="20131214" name="date"><i>(YYYYMMDD or range)</i><br /><br />
-    <label><b>Instrument:</b></label><select id="select" class="ddw" name="inst">
+    <label><b>Instrument:</b></label><select id="instselect" class="ddw" name="inst">
         <option value="">Any</option>
-        <option id="GMOS" value="GMOS">GMOS</option>
-        <option id="GMOS" value="GMOS-N">GMOS-N</option>
-        <option id="GMOS" value="GMOS-S">GMOS-S</option>
+        <option value="GMOS">GMOS</option>
+        <option value="GMOS-N">GMOS-N</option>
+        <option value="GMOS-S">GMOS-S</option>
         <option value="GNIRS">GNIRS</option>
         <option value="NIRI">NIRI</option>
         <option value="NIFS">NIFS</option>
@@ -58,7 +58,7 @@
         <option value="">Any</option>
         <option value="imaging">Imaging</option>
         <option value="spectroscopy">Spectroscopy</option>
-        <option value="Spec" disabled="disabled">Long-slit spectroscopy</option>
+        <option value="Spec">Long-slit spectroscopy</option>
         <option value="Spec" disabled="disabled">Multi-object spectroscopy</option>
         <option value="Spec" disabled="disabled">Integral field spectroscopy</option>
     </select><br />
@@ -89,7 +89,6 @@ Include engineering data <input type="checkbox" name="engdata" disabled="disable
 <div class="next"></div>
 
 <div id="GMOS" class="spacer" style="display:none">
-    <hr>
     <h3>GMOS</h3>
 
     <label><b>Binning:</b></label><select class="ddw" name="binning" disabled="disabled">
