@@ -69,8 +69,16 @@ def download(req, things):
                 key.get_contents_to_file(buffer)
                 # Write buffer into tarfile
                 buffer.seek(0)
-                tarinfo = TarFile.gettarinfo(fileobj=buffer)
-                buffer.seek(0)
+                # - create a tarinfo object
+                tarinfo = tarfile.TarInfo(header.diskfile.filename)
+                tarinfo.size = header.diskfile.file_size
+                tarinfo.uid = 0
+                tarinfo.gid = 0
+                tarinfo.uname = 'gemini'
+                tarinfo.gname = 'gemini'
+                tarinfo.mtime = time.mktime(header.diskfile.lastmod.timetuple())
+                tarinfo.mode = 0644
+                # - and add it to the tar file
                 tar.addfile(tarinfo, buffer)
                 buffer.close()
             else:
