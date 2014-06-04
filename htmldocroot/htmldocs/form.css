@@ -4,6 +4,10 @@ label {
     text-align: left;
 }
 
+input {
+    clear: left;
+}
+
 .next {
     clear: both;
 }
@@ -24,9 +28,6 @@ label {
     width:100px;
 }
 
-.spacer {
-    width: 100%;
-}
 .searchform {
     margin: 10px;
 }
