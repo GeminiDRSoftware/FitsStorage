@@ -5,7 +5,7 @@ This is the searchform module
 # This will only work with apache
 from mod_python import apache, util
 
-from web.selection import getselection, formdata_to_URL
+from web.selection import getselection, selection_to_URL
 
 from fits_storage_config import fits_aux_datadir
 import os
@@ -65,6 +65,9 @@ def searchform(req, things):
                    selection['data_label'] = value
                else: 
                    selection[key] = 'progid=' + value
+           elif key == 'date':
+               value = value.replace(' ', '')
+               selection[key] = value
            else:
                selection[key] = value
        
@@ -114,7 +117,6 @@ def updateform(html, selection):
         if key in ['program_id', 'observation_id', 'data_label']:
             html = html.replace('name="program_id"', 'name="program_id" value="%s"' % selection[key])
         elif key in ['date', 'daterange']:
-            selection[key].replace(' ', '')
             html = html.replace('name="date"', 'name="date" value="%s"' % selection[key])
         elif key in ['target_name', 'ra', 'dec', 'search_rad', 'cntrl_wvlngth']:
             html = html.replace('name="%s"' % key, 'name=%s value="%s"' % (key, selection[key]))
