@@ -53,6 +53,7 @@ def searchform(req, things):
        for key in formdata.keys(): 
            value = formdata[key].value
            if key == 'program_id':
+               #accepts program id along with observation id and data label for program_id input
                gp = GeminiProject(value)
                go = GeminiObservation(value)  
                dl = GeminiDataLabel(value)
@@ -66,11 +67,13 @@ def searchform(req, things):
                else: 
                    selection[key] = 'progid=' + value
            elif key == 'date':
+               #removes spaces from daterange queries
                value = value.replace(' ', '')
                selection[key] = value
            else:
                selection[key] = value
        
+       #builds URL, clears formdata, refreshes page with updated selection from form
        urlstring = selection_to_URL(selection)
        formdata.clear()
        util.redirect(req, '/searchform' + urlstring)       
@@ -110,8 +113,8 @@ def searchform(req, things):
 
 def updateform(html, selection):
     """
-    Receives html page as a string and updates it according to URL selection
-    Pre-populates input fields with selection values
+    Receives html page as a string and updates it according to URL selection values
+    Pre-populates input fields with said selection values
     """
     for key in selection.keys():
         if key in ['program_id', 'observation_id', 'data_label']:
