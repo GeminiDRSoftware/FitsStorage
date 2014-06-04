@@ -74,7 +74,7 @@ def summary_table(req, type, headers, links=True, download=False):
     # hack the uri to make it look like we came from searchform
     # so that the results point back to a form
     uri = req.uri
-    if(ajax(req) and type == 'searchresults'):
+    if(isajax(req) and type == 'searchresults'):
         uri = uri.replace("searchresults", "searchform")
     sumgen = SummaryGenerator(type, links, req.uri)
 
