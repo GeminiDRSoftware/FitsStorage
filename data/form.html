@@ -12,7 +12,8 @@
 </div>
 
 <div class="container left">
-<label><b>Program ID:</b></label> <input type="text" placeholder="GN-2001A-Q-123" name="program_id"><i>(Obs. ID or Data Label also accepted)</i><br /><br />
+    <label><b>Program ID:</b></label><input type="text" placeholder="GN-2001A-Q-123" name="program_id"><i>(Obs. ID or Data Label also accepted)</i><br /><br />
+    <label><b>Date:</b></label><input type="text" placeholder="20131214" name="date"><i>(YYYYMMDD or range)</i><br /><br />
     <label><b>Instrument:</b></label><select id="select" class="ddw" name="inst">
         <option value="">Any</option>
         <option value="GMOS">GMOS</option>
@@ -80,11 +81,12 @@
 <div id="Spec" style="display:none">
     <label><b>Central Wavelength: </b></label><input type="text" placeholder="1.2" name="cntrl_wvlngth"><i> (microns)</i><br /><br /><br />
 </div>
-
     <input type="checkbox" name="calibrations">Find associated calibrations</br>
     <input type="checkbox" name="engdata">Include engineering data<br />
 </div>
 
+<div class="spacer">&nbsp;</div>
+<div class="spacer">&nbsp;</div>
 <div class="spacer">&nbsp;</div>
 <div class="spacer">&nbsp;</div>
 <div class="spacer">&nbsp;</div>
