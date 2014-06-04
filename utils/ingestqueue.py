@@ -193,7 +193,8 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         diskfile = DiskFile(file, filename, path)
         session.add(diskfile)
         session.commit()
-        logger.debug("diskfile uncompressed cache file = %s, access=%s" % (diskfile.uncompressed_cache_file, os.access(diskfile.uncompressed_cache_file, os.F_OK)))
+        if(diskfile.uncompressed_cache_file):
+            logger.debug("diskfile uncompressed cache file = %s, access=%s" % (diskfile.uncompressed_cache_file, os.access(diskfile.uncompressed_cache_file, os.F_OK)))
         
 
         # Instantiate an astrodata object here and pass it in to the things that need it
