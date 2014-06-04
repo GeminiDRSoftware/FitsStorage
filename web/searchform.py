@@ -10,11 +10,13 @@ from web.selection import getselection, formdata_to_URL
 from fits_storage_config import fits_aux_datadir
 import os
 
-# Load the html text into strings
+from gemini_metadata_utils import GeminiDataLabel, GeminiObservation, GeminiProject, gemini_date, gemini_daterange
+
+# Load the titlebar html text into strings
 with open(os.path.join(fits_aux_datadir, "titlebar.html")) as f:
     titlebar_html = f.read()
 
-# Load the form text into strings
+# Load the form html text into strings
 with open(os.path.join(fits_aux_datadir, "form.html")) as f:
     form_html = f.read()
 
@@ -48,19 +50,29 @@ def searchform(req, things):
 
    if(formdata):
        # Populate selection dictionary with values from form input
-       for key in formdata.keys():
+       for key in formdata.keys(): 
+           value = formdata[key].value
            if key == 'program_id':
-               selection[key] = 'progid=' + formdata[key].value
-           else:
-               selection[key] = formdata[key].value
+               gp = GeminiProject(value)
+               go = GeminiObservation(value)  
+               dl = GeminiDataLabel(value)
 
+               if(gp.program_id):
+                   selection['program_id'] = value
+               elif(go.observation_id):
+                   selection['observation_id'] = value
+               elif(dl.datalabel):
+                   selection['data_label'] = value
+               else: 
+                   selection[key] = 'progid=' + value
+           else:
+               selection[key] = value
+       
        urlstring = formdata_to_URL(selection)
        formdata.clear()
-       #req.internal_redirect('/searchform/' + urlstring)
        util.redirect(req, '/searchform' + urlstring)       
 
    req.content_type = "text/html"
-
    req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head>')
    req.write('<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>')
    req.write('<script src="/htmldocs/titlebar.js"></script>')
@@ -75,12 +87,16 @@ def searchform(req, things):
    req.write('<input type="hidden" id="things" name="things" value="%s">' % thing_string)
    req.write('<div class="page">')
    req.write('<form class="searchform" action="/searchform" method="POST">')
-     
+   
    form_html_updt = updateform(form_html, selection)
    req.write(form_html_updt)
+   selectionstring = formdata_to_URL(selection)
+
+   if(selection):
+       req.write('<input type="hidden" id="url" value="%s">' % selectionstring)
    
    req.write('</form>')
-   req.write('<div class="searchresults">')
+   req.write('<div id="searchresults" class="searchresults">')
    req.write('<h1>Search results go here</h1>')
    req.write('<p>selection: %s</p>' % selection)
    req.write('</div>')
@@ -90,9 +106,17 @@ def searchform(req, things):
    return apache.OK
 
 def updateform(html, selection):
-    
+    """
+    Receives html page as a string and updates it according to URL selection
+    Pre-populates input fields with selection values
+    """
     for key in selection.keys():
-        if key in ['program_id', 'target_name', 'ra', 'dec', 'search_rad', 'cntrl_wvlngth']:
+        if key in ['program_id', 'observation_id', 'data_label']:
+            html = html.replace('name="program_id"', 'name="program_id" value="%s"' % selection[key])
+        elif key in ['date', 'daterange']:
+            selection[key].replace(' ', '')
+            html = html.replace('name="date"', 'name="date" value="%s"' % selection[key])
+        elif key in ['target_name', 'ra', 'dec', 'search_rad', 'cntrl_wvlngth']:
             html = html.replace('name="%s"' % key, 'name=%s value="%s"' % (key, selection[key]))
         elif key in ['inst', 'observation_class', 'observation_type', 'mode', 'filter', 'resolver', 'binning', 'disperser', 'mask',]:
             html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
