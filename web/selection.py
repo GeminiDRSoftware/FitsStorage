@@ -429,7 +429,7 @@ def _parse_range(string):
 
         return [a, b]
 
-def formdata_to_URL(selection):
+def selection_to_URL(selection):
     """
     Receives a dictionary of formdata field values from searchform submit function
     Parses values and converts to URL string
