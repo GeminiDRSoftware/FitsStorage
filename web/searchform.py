@@ -123,8 +123,13 @@ def updateform(html, selection):
             html = html.replace('name="date"', 'name="date" value="%s"' % selection[key])
         elif key in ['target_name', 'ra', 'dec', 'search_rad', 'cntrl_wvlngth']:
             html = html.replace('name="%s"' % key, 'name=%s value="%s"' % (key, selection[key]))
-        elif key in ['inst', 'observation_class', 'observation_type', 'mode', 'filter', 'resolver', 'binning', 'disperser', 'mask',]:
+        elif key in ['inst', 'observation_class', 'observation_type', 'filter', 'resolver', 'binning', 'disperser', 'mask',]:
             html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
+        elif key == 'spectroscopy':
+            if (selection[key] is True):
+                html = html.replace('value="spectroscopy"', 'value="spectroscopy" selected')
+            else:
+                html = html.replace('value="imaging"', 'value="imaging" selected')
         else:
             html = html.replace('value="%s"' % selection[key], 'name="%s" checked' % key)
     

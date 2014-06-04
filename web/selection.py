@@ -80,10 +80,10 @@ def getselection(things):
         if(thing == 'warnings' or thing == 'missing' or thing == 'requires' or thing == 'takenow'):
             selection['caloption'] = thing
             recognised = True
-        if(thing == 'imaging' or thing == 'Imaging'):
+        if(thing == 'imaging'):
             selection['spectroscopy'] = False
             recognised = True
-        if(thing == 'spectroscopy' or thing == 'Spectroscopy'):
+        if(thing == 'spectroscopy'):
             selection['spectroscopy'] = True
             recognised = True
         if(thing == 'Pass' or thing == 'Usable' or thing == 'Fail' or thing == 'Win' or thing == 'NotFail' or thing == 'Lucky'):
@@ -437,6 +437,12 @@ def selection_to_URL(selection):
     urlstring = ''
 
     for key in selection.keys():
-        urlstring = urlstring + '/' + str(selection[key])
+        if key == 'spectroscopy':
+            if (selection[key] is True):
+                urlstring += '/spectroscopy'
+            else:
+                urlstring += '/imaging'
+        else:
+            urlstring = urlstring + '/' + str(selection[key])
     
     return urlstring
