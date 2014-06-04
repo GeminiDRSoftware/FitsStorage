@@ -112,7 +112,7 @@ class SummaryGenerator():
             'summary_func' : 'observation_class'
             }
         self.columns['observation_type'] = {
-            'heading' : 'Class',
+            'heading' : 'Type',
             'longheading' : 'Obs Type',
             'sortarrows' : True,
             'want' : True,
@@ -358,8 +358,6 @@ class SummaryGenerator():
                     value = getattr(self, col['summary_func'])(header)
                 elif(col['header_attr']):
                     value = getattr(header, col['header_attr'])
-                elif(col['diskfile_attr']):
-                    value = getattr(header.diskfile, col['diskfile_attr'])
                 else:
                     value = "Error: Not Defined in SummaryGenerator!"
                 req.write(str(value))
