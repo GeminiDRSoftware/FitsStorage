@@ -21,6 +21,7 @@ $(function() {
 $(document).ready(function() {
     var urlresults = "/summary/";
     if ($("#url").length) {
+        $("#loading").slideDown();
         urlresults += $("#url").val();
         $("#searchresults").load(urlresults, function(){
         });
