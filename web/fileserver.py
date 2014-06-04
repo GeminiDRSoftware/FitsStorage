@@ -236,4 +236,4 @@ def sendonefile(req, header):
             finally:
                 gzfp.close()
         else:
-            req.sendfile(diskfile.fullpath())
+            req.sendfile(header.diskfile.fullpath())
