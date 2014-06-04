@@ -9,6 +9,9 @@ from orm.diskfile import DiskFile
 from orm.header import Header
 from orm.authentication import Authentication
 
+from web.selection import getselection, openquery
+from web.summary import list_headers
+
 # This will only work with apache
 from mod_python import apache
 from mod_python import Cookie
@@ -20,12 +23,67 @@ import re
 import datetime
 import gzip
 import cStringIO
+import tarfile
 
 if(using_s3):
     from boto.s3.connection import S3Connection
     from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
 
 from utils.userprogram import icanhave
+
+def download(req, things):
+    """
+    This is the download server. Given a selection, it will send a tarball of the 
+    files from the selection that you have access to to the client. 
+    """
+    # Get the selection
+    selection = getselection(things)
+    if(openquery(selection)):
+        # Open query. Almost certainly too many files
+        req.content_type = "text/plain"
+        req.write("Your selection criteria are such that a very large number of files would be returned. ")
+        req.write("Please refine your selection more before attempting to download")
+        return apache.OK
+
+    # Open a database session
+    session = sessionfactory()
+    try:
+        # Get the header list
+        headers = list_headers(session, selection, None)
+
+        # Set up the http headers
+        req.content_type = "application/tar"
+        req.headers_out['Content-Disposition'] = 'attachment; filename="download.tar"'
+
+        if(using_s3):
+            s3conn = S3Connection(aws_access_key, aws_secret_key)
+            bucket = s3conn.get_bucket(s3_bucket_name)
+
+        # Here goes!
+        tar = tarfile.open(name="download.tar", mode="w|", fileobj=req)
+        for header in headers:
+            if(using_s3):
+                # Fetch the file into a cStringIO buffer
+                key = bucket.get_key(header.diskfile.filename)
+                buffer = cStringIO.StringIO()
+                key.get_contents_to_file(buffer)
+                # Write buffer into tarfile
+                buffer.seek(0)
+                tarinfo = TarFile.gettarinfo(fileobj=buffer)
+                buffer.seek(0)
+                tar.addfile(tarinfo, buffer)
+                buffer.close()
+            else:
+                tar.add(header.diskfile.fullpath(), header.diskfile.filename)
+        # OK, should be done
+        tar.close()
+        req.flush()
+
+    finally:
+        session.close()
+
+    return apache.OK
+
 
 def fileserver(req, things):
     """
