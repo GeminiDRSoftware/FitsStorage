@@ -68,7 +68,7 @@ def searchform(req, things):
            else:
                selection[key] = value
        
-       urlstring = formdata_to_URL(selection)
+       urlstring = selection_to_URL(selection)
        formdata.clear()
        util.redirect(req, '/searchform' + urlstring)       
 
@@ -90,7 +90,7 @@ def searchform(req, things):
    
    form_html_updt = updateform(form_html, selection)
    req.write(form_html_updt)
-   selectionstring = formdata_to_URL(selection)
+   selectionstring = selection_to_URL(selection)
 
    if(selection):
        req.write('<input type="hidden" id="url" value="%s">' % selectionstring)
