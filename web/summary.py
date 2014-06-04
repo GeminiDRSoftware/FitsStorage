@@ -38,8 +38,8 @@ def summary(req, type, selection, orderby, links=True, download=False):
     req.write("</head>\n")
     req.write("<body>")
     if (fits_system_status == "development"):
-        req.write('<h6>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h6>')
-    if(type != 'searchresults')
+        req.write('<h4>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h4>')
+    if(type != 'searchresults'):
         req.write("<H1>%s</H1>\n" % htmlescape(title))
 
     # If this is a diskfiles summary, select even ones that are not canonical
@@ -69,7 +69,13 @@ def summary_table(req, type, headers, links=True, download=False):
     headers: the list of header objects to include in the summary
     """
 
-    # Instantiate the Summary Generator object
+    # Construct the summary generator object.
+    # If this is an ajax request and the type is searchresults, then
+    # hack the uri to make it look like we came from searchform
+    # so that the results point back to a form
+    uri = req.uri
+    if(ajax(req) and type == 'searchresults'):
+        uri = uri.replace("searchresults", "searchform")
     sumgen = SummaryGenerator(type, links, req.uri)
 
     req.write('<TABLE border=0>')
@@ -156,3 +162,14 @@ def htmlescape(string):
         return escape(string)
     else:
         return None
+
+def isajax(req):
+    """
+    Returns a boolean to say if the request came in via ajax
+    """
+    ajax = False
+    if('X-Requested-With' in req.headers_in.keys()):
+        value = req.headers_in['X-Requested-With']
+        if(value == 'XMLHttpRequest'):
+            ajax = True
+    return ajax
