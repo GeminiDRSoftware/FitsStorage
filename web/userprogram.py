@@ -106,10 +106,11 @@ def get_program_list(session, user):
     """
 
     prog_list = []
-    query = session.query(UserProgram).filter(UserProgram.user_id == user.id)
-    results = query.all()
-    for result in results:
-        prog_list.append(result.program_id)
+    if(user is not None):
+        query = session.query(UserProgram).filter(UserProgram.user_id == user.id)
+        results = query.all()
+        for result in results:
+            prog_list.append(result.program_id)
 
     return prog_list
 
