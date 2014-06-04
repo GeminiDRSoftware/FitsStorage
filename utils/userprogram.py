@@ -37,7 +37,7 @@ def canhave(session, req, user, header):
         return True
 
     # Is the user gemini staff?
-    if(user.gemini_staff is True):
+    if(user is not None and user.gemini_staff is True):
         return True
 
     # Is the data engineering?
