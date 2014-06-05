@@ -73,6 +73,10 @@ class User(Base):
         Returns True if it is correct
         Returns False for wrong password
         """
+        # If password hasn't been set yet
+        if(self.salt is None or self.password is None):
+            return False
+
         hashobj = sha256()
         hashobj.update(self.salt)
         hashobj.update(candidate)
