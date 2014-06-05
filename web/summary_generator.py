@@ -435,29 +435,22 @@ class SummaryGenerator():
 
     def instrument(self, header):
         # Add the AO flags to the instrument name
-
         if(self.links):
             html = '<a href="%s/%s">%s</a>' % (self.uri, header.instrument, header.instrument)
-        else:
-            html = str(header.instrument)
-
-        if(header.adaptive_optics):
-            if(self.links):
+            if(header.adaptive_optics):
                 html += ' <a href="%s/AO">+ AO</a>' % self.uri
-            else:
-                html += ' + AO'
-
-            if(header.laser_guide_star):
-                if(self.links):
+                if(header.laser_guide_star):
                     html += ' <a href="%s/LGS"> LGS</a>' % self.uri
                 else:
-                    html += ' LGS'
-            else:
-                if(self.links):
                     html += ' <a href="%s/NGS"> NGS</a>' % self.uri
+        else:
+            html = str(header.instrument)
+            if(header.adaptive_optics):
+                html += ' + AO'
+                if(header.laser_guide_star):
+                    html += ' LGS'
                 else:
                     html += ' NGS'
-
         return html
 
     def observation_class(self, header):
@@ -502,26 +495,28 @@ class SummaryGenerator():
         if(header.object is None):
             html = 'None'
         elif(len(header.object) > 12):
-            html = '<abbr title="%s">%s</abbr>' % (htmlescape(header.object), htmlescape(header.object[:12]))
+            basehtml = '<abbr title="%s">%s</abbr>' % (htmlescape(header.object), htmlescape(header.object[:12]))
         else:
-            html = htmlescape(header.object)
+            basehtml = htmlescape(header.object)
 
         # Now the photometric std star symbol
+        phothtml = ''
         if(header.phot_standard):
             if(self.links):
-                html += ' <a href="/standardobs/%d">*</a>' % header.id
+                phothtml = '<a href="/standardobs/%d">*</a>' % header.id
             else:
-                html += ' *'
+                phothtml = '*'
 
         # Now the target symbol
+        symhtml = ''
         if('AZEL_TARGET' in header.types and 'AT_ZENITH' not in header.types):
-            html += ' <abbr title="Target is in AzEl co-ordinate frame">&#x2693</abbr>'
+            symhtml = '<abbr title="Target is in AzEl co-ordinate frame">&#x2693</abbr>'
         if('AT_ZENITH' in header.types):
-            html += ' <abbr title="Target is Zenith in AzEl co-ordinate frame">&#x2693&#x2191</abbr>'
+            symhtml = '<abbr title="Target is Zenith in AzEl co-ordinate frame">&#x2693&#x2191</abbr>'
         if('NON_SIDEREAL' in header.types):
-            html += ' <abbr title="Target is non-sidereal">&#x2604</abbr>'
+            symhtml = '<abbr title="Target is non-sidereal">&#x2604</abbr>'
 
-        return html
+        return '%s %s %s' % (basehtml, phothtml, symhtml)
 
     def filter_name(self, header):
         # Just htmlescape it
