@@ -499,7 +499,9 @@ class SummaryGenerator():
     def object(self, header):
         # nb target names sometime contain ampersand characters which should be escaped in the html.
         # Also we trim at 12 characters and abbreviate
-        if(header.object and len(header.object) > 12):
+        if(header.object is None):
+            html = 'None'
+        elif(len(header.object) > 12):
             html = '<abbr title="%s">%s</abbr>' % (htmlescape(header.object), htmlescape(header.object[:12]))
         else:
             html = htmlescape(header.object)
