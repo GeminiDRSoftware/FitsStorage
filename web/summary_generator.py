@@ -60,8 +60,9 @@ class SummaryGenerator():
             'summary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
             'lsummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'filter_name', 'fpmask', 'detector_roi', 'detector_binnin', 'detector_config', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
             'ssummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
-            'diskfiles' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'present', 'entrytime', 'lastmod', 'file_size', 'file_md5', 'gzipped', 'data_size', 'data_md5']}
-
+            'diskfiles' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'present', 'entrytime', 'lastmod', 'file_size', 'file_md5', 'gzipped', 'data_size', 'data_md5'],
+            'searchresults' : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state']}
+  
         if(type in sum_type_defs.keys()):
             want = sum_type_defs[type]
             for key in self.columns.keys():
@@ -71,6 +72,14 @@ class SummaryGenerator():
                     self.columns[key]['want'] = False
 
     def init_cols(self):
+        self.columns['download'] = {
+            'heading' : 'Download',
+            'longheading' : None,
+            'sortarrows' : False,
+            'want' : True,
+            'header_attr' : None,
+            'summary_func' : 'download'
+            }
         self.columns['filename'] = {
             'heading' : 'Filename',
             'longheading' : None,
