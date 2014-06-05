@@ -78,7 +78,7 @@ def summary_table(req, type, headers, links=True, download=False):
         uri = uri.replace("searchresults", "searchform")
     sumgen = SummaryGenerator(type, links, req.uri)
 
-    req.write('<TABLE border=0>')
+    req.write('<TABLE class="fullwidth" border=0>')
 
     # Output the table header
     sumgen.table_header(req)

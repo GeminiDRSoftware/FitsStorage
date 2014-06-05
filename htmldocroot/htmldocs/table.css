@@ -1,3 +1,7 @@
+.fullwidth {
+  width: 100%;
+}
+
 .tr_head {
   background-color: #A0A0FF;
   white-space:nowrap;
