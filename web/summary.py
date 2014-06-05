@@ -45,6 +45,8 @@ def summary(req, type, selection, orderby, links=True, download=False):
         # In search results, only warn about undefined stuff
         if('notrecognised' in selection.keys()):
             req.write("<H4>WARNING: I didn't recognize the following search terms: %s</H4>" % selection['notrecognised'])
+        # And tell them about clicking things
+        req.write('<p>Click the filename to see the full header in a new tab. Click anything else to add that to your search criteria</p>')
 
     # If this is a diskfiles summary, select even ones that are not canonical
     if(type != 'diskfiles'):
