@@ -53,6 +53,9 @@ def searchform(req, things):
        for key in formdata.keys(): 
            value = formdata[key].value
            if key == 'program_id':
+               # if the string starts with progid= then trim that off
+               if value[:7]=='progid=':
+                   value = value[7:]
                #accepts program id along with observation id and data label for program_id input
                gp = GeminiProject(value)
                go = GeminiObservation(value)  

@@ -437,7 +437,16 @@ def selection_to_URL(selection):
     urlstring = ''
 
     for key in selection.keys():
-        if key == 'spectroscopy':
+        if key == 'program_id':
+            # See if it is a valid program id, or if we need to add progid=
+            gp = GeminiProject(selection[key])
+            if(gp.program_id):
+                # Regular program id, just stuff it in
+                urlstring += '/%s' % selection[key]
+            else:
+                # It's a non standard one
+                urlstring += '/progid=%s' % selection[key]
+        elif key == 'spectroscopy':
             if (selection[key] is True):
                 urlstring += '/spectroscopy'
             else:
