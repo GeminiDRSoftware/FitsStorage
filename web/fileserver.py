@@ -1,6 +1,6 @@
 from orm import sessionfactory
 
-from fits_storage_config import odbkeypass, using_s3
+from fits_storage_config import odbkeypass, using_s3, fits_result_limit
 
 from gemini_metadata_utils import gemini_fitsfilename
 
@@ -39,12 +39,6 @@ def download(req, things):
     """
     # Get the selection
     selection = getselection(things)
-    if(openquery(selection)):
-        # Open query. Almost certainly too many files
-        req.content_type = "text/plain"
-        req.write("Your selection criteria are such that a very large number of files would be returned. ")
-        req.write("Please refine your selection more before attempting to download")
-        return apache.OK
 
     # Open a database session
     session = sessionfactory()
@@ -58,6 +52,13 @@ def download(req, things):
 
         # Get the header list
         headers = list_headers(session, selection, None)
+
+        if(openquery(selection) and len(headers) > fits_result_limit):
+            # Open query. Almost certainly too many files
+            req.content_type = "text/plain"
+            req.write("Your selection criteria does not restrict the number of results, and more than %d were found. " % fits_result_limit)
+            req.write("Please refine your selection more before attempting to download")
+            return apache.OK
 
         # Set up the http headers
         req.content_type = "application/tar"
