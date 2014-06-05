@@ -386,21 +386,21 @@ class SummaryGenerator():
 
         # The basic filename part, optionally as a link to the header text
         if(self.links):
-            html = '<a href="/fullheader/%d">%s</a>' % (header.diskfile.id, header.diskfile.file.name)
+            html = '<a href="/fullheader/%d" target="_blank">%s</a>' % (header.diskfile.id, header.diskfile.file.name)
         else:
             html = str(header.diskfile.file.name)
 
         # Do we have any fits verify errors to flag?
         if(header.diskfile.fverrors):
             if(self.links):
-                html += ' <a href="/fitsverify/%d">-fits!</a>' % (header.diskfile.id)
+                html += ' <a href="/fitsverify/%d" target="_blank">-fits!</a>' % (header.diskfile.id)
             else:
                 html += ' -fits!' % (header.diskfile.id)
 
         # Do we have metadata errors to flag? (only on non Eng data)
         if((header.engineering is False) and (not header.diskfile.wmdready)):
             if(self.links):
-                html += ' <a href="/wmdreport/%d">-md!</a>' % (header.diskfile.id)
+                html += ' <a href="/wmdreport/%d" target="_blank">-md!</a>' % (header.diskfile.id)
             else:
                 html += ' -md!' % (header.diskfile.id)
 
