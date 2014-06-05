@@ -41,6 +41,10 @@ def summary(req, type, selection, orderby, links=True, download=False):
         req.write('<h4>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h4>')
     if(type != 'searchresults'):
         req.write("<H1>%s</H1>\n" % htmlescape(title))
+    else:
+        # In search results, only warn about undefined stuff
+        if('notrecognised' in selection.keys()):
+            req.write("<H4>WARNING: I didn't recognize the following search terms: %s</H4>" % selection['notrecognised'])
 
     # If this is a diskfiles summary, select even ones that are not canonical
     if(type != 'diskfiles'):
