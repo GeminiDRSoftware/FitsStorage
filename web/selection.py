@@ -442,6 +442,21 @@ def selection_to_URL(selection):
                 urlstring += '/spectroscopy'
             else:
                 urlstring += '/imaging'
+        elif key == 'present':
+            if (selection[key] is True):
+                urlstring += '/present'
+            else:
+                urlstring += '/notpresent'
+        elif key == 'canonical':
+            if (selection[key] is True):
+                urlstring += '/canonical'
+            else:
+                urlstring += '/notcanonical'
+        elif key == 'twilight':
+            if (selection[key] is True):
+                urlstring += '/twilight'
+            else:
+                urlstring += '/nottwilight'
         else:
             urlstring = urlstring + '/' + str(selection[key])
     
