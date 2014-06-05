@@ -18,8 +18,8 @@ aws_secret_key = 'o6J/3yECuT50FM46sEuFM5wcdtW8iPzqx3ur1m7a'
 gz_staging_area = '/data/gz_staging'
 
 # Configure the path to the storage root here 
-storage_root = '/data/dataflow'
-#storage_root = '/net/wikiwiki/dataflow'
+#storage_root = '/data/dataflow'
+storage_root = '/net/wikiwiki/dataflow'
 #storage_root = '/net/hahalua/data/export'
 
 if(using_s3):
@@ -68,6 +68,9 @@ das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
 # Configure the site and other misc stuff here
 fits_servername = "hbffits3"
 fits_system_status = "development"
+
+# Limit on number of results in open searches
+fits_result_limit = 1000
 
 smtp_server = "smtp.gemini.edu"
 email_errors_to = "phirst@gemini.edu"
