@@ -57,18 +57,16 @@ def searchform(req, things):
                if value[:7]=='progid=':
                    value = value[7:]
                #accepts program id along with observation id and data label for program_id input
-               gp = GeminiProject(value)
+               # see if it is an obsid or data label, otherwise treat as program id
                go = GeminiObservation(value)  
                dl = GeminiDataLabel(value)
 
-               if(gp.program_id):
-                   selection['program_id'] = value
-               elif(go.observation_id):
+               if(go.observation_id):
                    selection['observation_id'] = value
                elif(dl.datalabel):
                    selection['data_label'] = value
                else: 
-                   selection[key] = 'progid=' + value
+                   selection['program_id'] = value
            elif key == 'date':
                #removes spaces from daterange queries
                value = value.replace(' ', '')
