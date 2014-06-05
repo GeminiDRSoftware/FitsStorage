@@ -58,7 +58,7 @@ def request_account(req, things):
         elif(len(username) < 5):
             reason_bad = "Username too short. Must be at least 5 characters"
         elif(username_inuse(username)):
-            reason_bad = 'Username is already in use, choose a different one. If this is your username, you can <a href="/password_reset">reset your password</a>.'
+            reason_bad = 'Username is already in use, choose a different one. If this is your username, you can <a href="/request_password_reset">reset your password</a>.'
         elif(fullname == ''):
             reason_bad = "No Full name supplied"
         elif(len(fullname) < 5):
@@ -617,7 +617,7 @@ def login(req, things):
                     valid_request = True
                     session.commit()
                 else:
-                    reason_bad = "Username / password not valid"
+                    reason_bad = 'Username / password not valid. If you need to reset your password, <a href="/request_password_reset">Click Here</a>'
             finally:
                 session.close()
 
