@@ -50,6 +50,7 @@ hqcre = re.compile('^[Hh][Oo][Kk][Uu][Pp]([Aa])+(\+)*[Qq][Uu][Ii][Rr][Cc]$')
 gsaoicre = re.compile('^[Gg][Ss][Aa][Oo][Ii]$')
 oscircre = re.compile('^[Oo][Ss][Cc][Ii][Rr]$')
 f2cre = re.compile('^[Ff]2$')
+gpicre = re.compile('^[Gg][Pp][Ii]$')
 
 def gemini_instrument(string, gmos=False):
     """
@@ -86,6 +87,8 @@ def gemini_instrument(string, gmos=False):
         retary = 'oscir'
     if(f2cre.match(string)):
         retary = 'F2'
+    if(gpicre.match(string)):
+        retary = 'GPI'
     if(gmoscre.match(string)):
         if(gmos):
             retary = 'GMOS'
