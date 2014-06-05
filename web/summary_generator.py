@@ -530,7 +530,11 @@ class SummaryGenerator():
     def waveband(self, header):
         # Print filter_name for imaging, disperser and cen_wlen for spec
         if(header.spectroscopy):
-            return "%s : %.3f" % (htmlescape(header.disperser), header.central_wavelength)
+            try:
+                html = "%s : %.3f" % (htmlescape(header.disperser), header.central_wavelength)
+            except:
+                html = "None"
+            return html
         else:
             return htmlescape(header.filter_name)
 
