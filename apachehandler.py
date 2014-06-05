@@ -100,7 +100,7 @@ def handler(req):
         return debugmessage(req)
 
     # This is the header summary handler
-    if(this in ['summary', 'diskfiles', 'ssummary', 'lsummary']):
+    if(this in ['summary', 'diskfiles', 'ssummary', 'lsummary', 'searchresults']):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
 
@@ -442,7 +442,7 @@ def handler(req):
 
 
     # Some static files that the server should serve via a redirect.
-    staticfiles = ["robots.txt", "favicon.ico", "jquery-1.11.1.min.js"]
+    staticfiles = ["robots.txt", "favicon.ico", "jquery-1.11.1.min.js", "test.html", "test2.html"]
     if this in staticfiles:
         newurl = "/htmldocs/%s" % this
         util.redirect(req, newurl)
@@ -453,7 +453,7 @@ def handler(req):
 
 # End of apache handler() function.
 # Below are various helper functions called from above.
-# The web summary has it's own package
+# The web summary has its own package
 
 # Send usage message to browser
 def usagemessage(req):
