@@ -5,8 +5,8 @@ from orm import sessionfactory
 from orm.file import File
 from orm.diskfile import DiskFile
 from orm.header import Header
-from fits_storage_config import fits_system_status
-from web.selection import sayselection, queryselection, openquery
+from fits_storage_config import fits_system_status, fits_result_limit
+from web.selection import sayselection, queryselection, openquery, selection_to_URL
 from gemini_metadata_utils import GeminiDataLabel, percentilestring
 import apache_return_codes as apache
 from sqlalchemy import desc
@@ -46,10 +46,13 @@ def summary(req, type, selection, orderby, links=True, download=False):
     if(type != 'diskfiles'):
         # Usually, we want to only select headers with diskfiles that are canonical
         selection['canonical'] = True
+    # Archive search results should only show files that are present, so they can be downloaded
+    if(type == 'searchresults'):
+        selection['present'] = True
 
     session = sessionfactory()
     try:
-        summary_table(req, type, list_headers(session, selection, orderby), links, download)
+        summary_table(req, type, list_headers(session, selection, orderby), selection, links)
     except IOError:
         pass
     finally:
@@ -58,7 +61,7 @@ def summary(req, type, selection, orderby, links=True, download=False):
     req.write("</body></html>")
     return apache.OK
 
-def summary_table(req, type, headers, links=True, download=False):
+def summary_table(req, type, headers, selection, links=True):
     """
     Generates an HTML header summary table of the specified type from
     the list of header objects provided. Writes that table to an apache
@@ -76,7 +79,7 @@ def summary_table(req, type, headers, links=True, download=False):
     uri = req.uri
     if(isajax(req) and type == 'searchresults'):
         uri = uri.replace("searchresults", "searchform")
-    sumgen = SummaryGenerator(type, links, req.uri)
+    sumgen = SummaryGenerator(type, links, uri)
 
     req.write('<TABLE class="fullwidth" border=0>')
 
@@ -99,7 +102,11 @@ def summary_table(req, type, headers, links=True, download=False):
         bytecount += header.diskfile.file_size
         filecount += 1
     req.write("</TABLE>\n")
-    req.write("<P>%d files totalling %.2f GB</P>" % (filecount, bytecount/1.0E9))
+    if(openquery(selection) and filecount == fits_result_limit):
+        req.write('<P>WARNING: A search can only display %d results. This search returned more than that and the results have been truncated.</P>' % fits_result_limit) 
+    else:
+        req.write('<P><a href="/download%s">Download</a> all %d files totalling %.2f GB.</P>' % (selection_to_URL(selection), filecount, bytecount/1.0E9))
+    
 
 def list_headers(session, selection, orderby):
     """
@@ -142,7 +149,7 @@ def list_headers(session, selection, orderby):
     # and limit the number of responses
     if(openquery(selection)):
         query = query.order_by(desc(File.name))
-        query = query.limit(1000)
+        query = query.limit(fits_result_limit)
     else:
         # By default we should order by filename
         query = query.order_by(File.name)
