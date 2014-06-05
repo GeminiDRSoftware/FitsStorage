@@ -532,6 +532,9 @@ class SummaryGenerator():
         else:
             return htmlescape(header.filter_name)
 
+    def download(self, header):
+        return '<center><a href="/file/%s">[Download]</a></center>' % header.diskfile.file.name
+
 def htmlescape(string):
     """
     Convenience wrapper to cgi escape, providing type protection
