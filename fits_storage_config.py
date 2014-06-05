@@ -70,7 +70,8 @@ fits_servername = "hbffits3"
 fits_system_status = "development"
 
 # Limit on number of results in open searches
-fits_result_limit = 1000
+fits_open_result_limit = 500
+fits_closed_result_limit = 10000
 
 smtp_server = "smtp.gemini.edu"
 email_errors_to = "phirst@gemini.edu"

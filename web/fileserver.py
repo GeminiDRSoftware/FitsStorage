@@ -1,6 +1,6 @@
 from orm import sessionfactory
 
-from fits_storage_config import odbkeypass, using_s3, fits_result_limit
+from fits_storage_config import odbkeypass, using_s3, fits_open_result_limit, fits_closed_result_limit
 
 from gemini_metadata_utils import gemini_fitsfilename
 
@@ -53,11 +53,18 @@ def download(req, things):
         # Get the header list
         headers = list_headers(session, selection, None)
 
-        if(openquery(selection) and len(headers) > fits_result_limit):
+        if(openquery(selection) and len(headers) > fits_open_result_limit):
             # Open query. Almost certainly too many files
             req.content_type = "text/plain"
-            req.write("Your selection criteria does not restrict the number of results, and more than %d were found. " % fits_result_limit)
-            req.write("Please refine your selection more before attempting to download")
+            req.write("Your selection criteria does not restrict the number of results, and more than %d were found. " % fits_open_result_limit)
+            req.write("Please refine your selection more before attempting to download. Queries that can contain an arbitrary number of results have a lower limit applied than more constrained queries. Including a date range or program id will prevent an arbitrary number of results being found will raise the limit")
+            return apache.OK
+
+        if(len(headers) > fits_closed_result_limit):
+            # Open query. Almost certainly too many files
+            req.content_type = "text/plain"
+            req.write("More than %d results were found. This is beyond the limit we allow" % fits_closed_result_limit)
+            req.write("Please refine your selection more before attempting to download. If you really want all these files, we suggest you break your search into several smaller date range pieces and download one set at a time.")
             return apache.OK
 
         # Set up the http headers

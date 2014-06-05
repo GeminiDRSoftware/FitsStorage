@@ -5,7 +5,7 @@ from orm import sessionfactory
 from orm.file import File
 from orm.diskfile import DiskFile
 from orm.header import Header
-from fits_storage_config import fits_system_status, fits_result_limit
+from fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
 from web.selection import sayselection, queryselection, openquery, selection_to_URL
 from gemini_metadata_utils import GeminiDataLabel, percentilestring
 import apache_return_codes as apache
@@ -87,6 +87,12 @@ def summary_table(req, type, headers, selection, links=True):
         uri = uri.replace("searchresults", "searchform")
     sumgen = SummaryGenerator(type, links, uri)
 
+    if(openquery(selection) and len(headers) == fits_open_result_limit):
+        req.write('<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date, date range, program ID etc. Searches like this are limited to %d results, and this search hit that limit. You may want to constrain your search. Constrained searches have a higher result limit.</P>' % fits_open_result_limit) 
+    elif(len(headers) == fits_closed_result_limit):
+        req.write('<P>WARNING: Your search generated more than the limit of %d results. You might want to constrain your search more.</P>' % fits_closed_result_limit) 
+    else:
+        req.write('<P><a href="/download%s">Download</a> all %d files.</P>' % (selection_to_URL(selection), len(headers)))
     req.write('<TABLE class="fullwidth" border=0>')
 
     # Output the table header
@@ -95,7 +101,6 @@ def summary_table(req, type, headers, selection, links=True):
     # Loop through the header list, outputing table rows
     even = False
     bytecount = 0
-    filecount = 0
     for header in headers:
         even = not even
         if(even):
@@ -106,12 +111,13 @@ def summary_table(req, type, headers, selection, links=True):
         sumgen.table_row(req, header, tr_class)
 
         bytecount += header.diskfile.file_size
-        filecount += 1
     req.write("</TABLE>\n")
-    if(openquery(selection) and filecount == fits_result_limit):
-        req.write('<P>WARNING: A search can only display %d results. This search returned more than that and the results have been truncated.</P>' % fits_result_limit) 
+    if(openquery(selection) and len(headers) == fits_open_result_limit):
+        req.write('<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date, date range, program ID etc. Searches like this are limited to %d results, and this search hit that limit. You may want to constrain your search. Constrained searches have a higher result limit.</P>' % fits_open_result_limit) 
+    elif(len(headers) == fits_closed_result_limit):
+        req.write('<P>WARNING: Your search generated more than the limit of %d results. You might want to constrain your search more.</P>' % fits_closed_result_limit) 
     else:
-        req.write('<P><a href="/download%s">Download</a> all %d files totalling %.2f GB.</P>' % (selection_to_URL(selection), filecount, bytecount/1.0E9))
+        req.write('<P><a href="/download%s">Download</a> all %d files totalling %.2f GB.</P>' % (selection_to_URL(selection), len(headers), bytecount/1.0E9))
     
 
 def list_headers(session, selection, orderby):
@@ -155,10 +161,11 @@ def list_headers(session, selection, orderby):
     # and limit the number of responses
     if(openquery(selection)):
         query = query.order_by(desc(File.name))
-        query = query.limit(fits_result_limit)
+        query = query.limit(fits_open_result_limit)
     else:
         # By default we should order by filename
         query = query.order_by(File.name)
+        query = query.limit(fits_closed_result_limit)
 
     headers = query.all()
     
