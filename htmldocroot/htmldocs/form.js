@@ -19,7 +19,7 @@ $(function() {
 });
 
 $(document).ready(function() {
-    var urlresults = "/searchresults/";
+    var urlresults = "/searchresults";
     if ($("#url").length) {
         $("#loading").slideDown();
         urlresults += $("#url").val();
