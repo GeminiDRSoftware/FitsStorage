@@ -493,7 +493,7 @@ class SummaryGenerator():
         # nb target names sometime contain ampersand characters which should be escaped in the html.
         # Also we trim at 12 characters and abbreviate
         if(header.object is None):
-            html = 'None'
+            basehtml = 'None'
         elif(len(header.object) > 12):
             basehtml = '<abbr title="%s">%s</abbr>' % (htmlescape(header.object), htmlescape(header.object[:12]))
         else:
