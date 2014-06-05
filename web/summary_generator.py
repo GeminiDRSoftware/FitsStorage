@@ -71,6 +71,11 @@ class SummaryGenerator():
                 else:
                     self.columns[key]['want'] = False
 
+        # Hack fix broken arrows in search results
+        if(type == 'searchresults'):
+            for key in self.columns.keys():
+                self.columns[key]['sortarrows'] = False
+
     def init_cols(self):
         self.columns['download'] = {
             'heading' : 'Download',
