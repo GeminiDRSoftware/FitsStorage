@@ -451,6 +451,8 @@ def selection_to_URL(selection):
                 urlstring += '/spectroscopy'
             else:
                 urlstring += '/imaging'
+        elif key == 'filter':
+            urlstring += '/filter=%s' % selection[key]
         elif key == 'present':
             if (selection[key] is True):
                 urlstring += '/present'
