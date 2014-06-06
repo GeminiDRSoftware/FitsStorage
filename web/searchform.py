@@ -56,7 +56,7 @@ def searchform(req, things):
                # if the string starts with progid= then trim that off
                if value[:7]=='progid=':
                    value = value[7:]
-               #accepts program id along with observation id and data label for program_id input
+               # accepts program id along with observation id and data label for program_id input
                # see if it is an obsid or data label, otherwise treat as program id
                go = GeminiObservation(value)  
                dl = GeminiDataLabel(value)
@@ -68,13 +68,13 @@ def searchform(req, things):
                else: 
                    selection['program_id'] = value
            elif key == 'date':
-               #removes spaces from daterange queries
+               # removes spaces from daterange queries
                value = value.replace(' ', '')
                selection[key] = value
            else:
                selection[key] = value
        
-       #builds URL, clears formdata, refreshes page with updated selection from form
+       # builds URL, clears formdata, refreshes page with updated selection from form
        urlstring = selection_to_URL(selection)
        formdata.clear()
        util.redirect(req, '/searchform' + urlstring)       
