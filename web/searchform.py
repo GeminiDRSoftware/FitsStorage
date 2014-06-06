@@ -123,6 +123,9 @@ def updateform(html, selection):
         if key in ['program_id', 'observation_id', 'data_label']:
             html = html.replace('name="program_id"', 'name="program_id" value="%s"' % selection[key])
         elif key in ['date', 'daterange']:
+            # If there is a date and a daterange, only use the date part
+            if('date' in selection.keys() and 'daterange' in selection.keys()):
+                key = 'date'
             html = html.replace('name="date"', 'name="date" value="%s"' % selection[key])
         elif key in ['target_name', 'ra', 'dec', 'search_rad', 'cntrl_wvlngth']:
             html = html.replace('name="%s"' % key, 'name=%s value="%s"' % (key, selection[key]))
