@@ -405,10 +405,10 @@ def openquery(selection):
 
     return openquery
 
-range_cre = re.compile('(-?\d*\.?\d*):(-?\d*\.?\d*)')
+range_cre = re.compile('(-?\d*\.?\d*),(-?\d*\.?\d*)')
 def _parse_range(string):
     """
-    Expects a string in the form '12.345:67.89' as per the co-ordinate searches.
+    Expects a string in the form '12.345, 67.89' as per the co-ordinate searches.
     Returns a list with the two values
     """
 
@@ -453,6 +453,11 @@ def selection_to_URL(selection):
                 urlstring += '/imaging'
         elif key == 'filter':
             urlstring += '/filter=%s' % selection[key]
+        elif key in ['ra', 'dec']:
+            if key == 'ra':
+                urlstring += '/ra=%s' % selection[key]
+            else: 
+                urlstring += '/dec=%s' % selection[key]
         elif key == 'present':
             if (selection[key] is True):
                 urlstring += '/present'
