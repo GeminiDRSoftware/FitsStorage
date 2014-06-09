@@ -50,30 +50,7 @@ def searchform(req, things):
 
    if(formdata):
        # Populate selection dictionary with values from form input
-       for key in formdata.keys(): 
-           value = formdata[key].value
-           if key == 'program_id':
-               # if the string starts with progid= then trim that off
-               if value[:7]=='progid=':
-                   value = value[7:]
-               # accepts program id along with observation id and data label for program_id input
-               # see if it is an obsid or data label, otherwise treat as program id
-               go = GeminiObservation(value)  
-               dl = GeminiDataLabel(value)
-
-               if(go.observation_id):
-                   selection['observation_id'] = value
-               elif(dl.datalabel):
-                   selection['data_label'] = value
-               else: 
-                   selection['program_id'] = value
-           elif key == 'date':
-               # removes spaces from daterange queries
-               value = value.replace(' ', '')
-               selection[key] = value
-           else:
-               selection[key] = value
-       
+       updateselection(formdata, selection)
        # builds URL, clears formdata, refreshes page with updated selection from form
        urlstring = selection_to_URL(selection)
        formdata.clear()
@@ -105,7 +82,7 @@ def searchform(req, things):
    req.write('</form>')
    req.write('<hr noshade>')
    # Uncomment this for form processing selection debugging...
-   # req.write('<p>selection: %s</p>' % selection)
+   req.write('<p>selection: %s</p>' % selection)
    req.write('<div id="searchresults" class="searchresults">')
    req.write('<span id="loading" style="display:none"><p><img src="/htmldocs/ajax-loading.gif">  Loading...</p></span>')
    req.write('</div>')
@@ -140,3 +117,70 @@ def updateform(html, selection):
             html = html.replace('value="%s"' % selection[key], 'name="%s" checked' % key)
     
     return html
+
+def updateselection(formdata, selection):
+    """
+    Updates the selection dictionary with user input values in formdata
+    Handles many different specific cases
+    """
+    # Populate selection dictionary with values from form input
+    for key in formdata.keys():
+        value = formdata[key].value
+        if key == 'program_id':
+            # if the string starts with progid= then trim that off
+            if value[:7]=='progid=':
+                value = value[7:]
+                # accepts program id along with observation id and data label for program_id input
+                # see if it is an obsid or data label, otherwise treat as program id
+                go = GeminiObservation(value)
+                dl = GeminiDataLabel(value)
+
+                if(go.observation_id):
+                    selection['observation_id'] = value
+                elif(dl.datalabel):
+                    selection['data_label'] = value
+                else:
+                    selection['program_id'] = value
+        elif key == 'date':
+            # removes spaces from daterange queries
+            value = value.replace(' ', '')
+            selection[key] = value
+        elif key in ['ra', 'dec']:
+            # formats RA and dec values appropriately, converts to decimal degrees if necessary
+            selection[key] = value
+            value = value.replace(' ', '')
+            rangesplit = str.split(value, ',')
+            selectionstrings = []
+            for stringval in rangesplit:
+                if ':' in stringval:
+                    # converts RA values to decimal degrees
+                    ra_strings = str.split(stringval, ':')
+                    ra_vals = []
+                    for num in ra_strings:
+                        num = float(num)
+                        ra_vals.append(num)
+                    if len(ra_vals) == 3 and key == 'ra':
+                        hrs = (ra_vals[0] / 24) * 360
+                        mins = (ra_vals[1] / 1440) 
+                        sec = (ra_vals[2] / 86400)
+                        degs = hrs + mins + sec
+                        selectionstrings.append(degs)
+                    elif len(ra_vals) == 3 and key == 'dec':
+                        # converts dec values to decimal degrees
+                        degs = ra_vals[0]
+                        mins = (ra_vals[1] / 1440) 
+                        sec = (ra_vals[2] / 86400)
+                        if degs >= 0:
+                            degs +=  mins + sec
+                        else: 
+                            degs -= mins + sec
+                        selectionstrings.append(degs)
+                    else:
+                        for val in ra_strings:
+                            selectionstrings.append(val)
+                else:
+                   selectionstrings.append(stringval)
+            selection[key] = '%s,%s' % ("{0:.3f}".format(selectionstrings[0]), "{0:.3f}".format(selectionstrings[1]))
+        else:
+            selection[key] = value
+
