@@ -55,10 +55,10 @@ def request_account(req, things):
             reason_bad = "No Username supplied"
         elif(not username.isalnum()):
             reason_bad = "Username may only contain alphanumeric characters"
-        elif(len(username) < 5):
-            reason_bad = "Username too short. Must be at least 5 characters"
+        elif(len(username) < 2):
+            reason_bad = "Username too short. Must be at least 2 characters"
         elif(username_inuse(username)):
-            reason_bad = 'Username is already in use, choose a different one. If this is your username, you can <a href="/request_password_reset">reset your password</a>.'
+            reason_bad = 'Username is already in use, choose a different one. If this is your username, you can <a href="/login">log in</a> if you know your password, or <a href="/request_password_reset">reset your password</a> if you have forgotten it.'
         elif(fullname == ''):
             reason_bad = "No Full name supplied"
         elif(len(fullname) < 5):
@@ -103,9 +103,8 @@ def request_account(req, things):
         if(emailed):
             req.write('<P>You should shortly receive an email with a link to set your password and activate your account.</P>')
             req.write("<P>If you don't get the email, please contact the Gemini helpdesk.</P>")
-            if(thing_string):
-                req.write('<P>After you set your password and log in using another browser tab, you can ')
-                req.write('<a href="/searchform%s">click here to return to your search.</a></p>' % thing_string)
+            req.write('<P><a href="/searchform%s">Click here to return to your search.</a> ' % thing_string)
+            req.write('After you set your password and log in using another browser tab, you can just reload or hit the submit button again and it will recognise your login</P>')
         else:
             req.write('<P>Sending you a password reset email FAILED. Please contact Gemini Helpdesk. Sorry.</P>')
         req.write('</body></html>')
@@ -118,7 +117,7 @@ def request_account(req, things):
 
         # Send the new account form
         req.write('<FORM action="/request_account%s" method="POST">' % thing_string)
-        req.write('<P>Fill out and submit this short form to request a Gemini Archive account. You must provide a valid email address - we will be emailing you a link to activate your account and set a password.</P>')
+        req.write('<P>Fill out and submit this short form to request a Gemini Archive account. You must provide a valid email address - we will be emailing you a link to activate your account and set a password. Usernames must be purely alphanumeric characters and must be at least two characters long.</P>')
         req.write('<TABLE>')
 
         # username row
