@@ -10,7 +10,7 @@ $(function() {
 
 $(function() {
     $('#Mode').change(function() {
-        if ($(this).val() == "Spec") {
+        if ($(this).val() == "spectroscopy") {
             $('#Spec').slideDown();
         } else {
             $('#Spec').hide();
