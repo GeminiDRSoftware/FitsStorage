@@ -6,14 +6,14 @@
          <option value="SIMBAD">SIMBAD</option>
          <option value="NED">NED</option>
     </select><br /><br />
-    <label><b>RA:</b></label><input type="text" placeholder="14:03:12.00" name="ra" disabled="disabled"><i> (HH:MM:SS.ss or decimal degrees)</i><br /><br />
-    <label><b>Dec:</b></labeL><input type="text" placeholder="-02:24:19.88" name="dec" disabled="disabled"><i> ([+-]DD:MM:SS.ss or decimal degrees)</i><br /><br />
-    <label><b>Search radius:</b></label><input type="text" placeholder="45, 0.013" name="search_rad" disabled="disabled"><i> (arcseconds or decimal degrees)</i>
+    <label><b>RA:</b></label><input type="text" placeholder="14:03:12.00" name="ra"><font size="2"><i> (HH:MM:SS.ss or decimal degrees)</font></i><br /><br />
+    <label><b>Dec:</b></labeL><input type="text" placeholder="-02:24:19.88" name="dec"><font size="2"><i> ([+-]DD:MM:SS.ss or decimal degrees)</font></i><br /><br />
+    <label><b>Search radius:</b></label><input type="text" placeholder="45, 0.013" name="search_rad" disabled="disabled"><i><font size="2"> (arcseconds or decimal degrees)</font></i>
 </div>
 
 <div class="left">
-    <label><b>Program ID:</b></label><input type="text" placeholder="(leave empty for Any)" name="program_id"><i>(or Obs. ID / Data Label. Exact Match)</i><br /><br />
-    <label><b>Date:</b></label><input type="text" placeholder="(leave empty for Any)" name="date"><i>(YYYYMMDD or yyyymmdd - YYYYMMDD)</i><br /><br />
+    <label><b>Program ID:</b></label><input type="text" placeholder="(leave empty for Any)" name="program_id"><font size="2"><i>(or Obs. ID / Data Label. Exact Match)</font></i><br /><br />
+    <label><b>Date:</b></label><input type="text" placeholder="(leave empty for Any)" name="date"><font size="2"><i>(YYYYMMDD or yyyymmdd - YYYYMMDD)</i></font><br /><br />
     <label><b>Instrument:</b></label><select id="instselect" class="ddw" name="inst">
         <option value="">Any</option>
         <option value="GMOS">GMOS</option>
@@ -29,7 +29,7 @@
         <option value="NICI">NICI</option>
         <option value="GSAOI">GSAOI</option>
 
-    </select><i> (Select GMOS for GMOS-N and GMOS-S)</i><br />
+    </select<font size="2">><i> (Select GMOS for GMOS-N and GMOS-S)</i></font><br />
 
     <label><b>Obs. Class:</b></label><select class="ddw" name="observation_class">
         <option value="">Any</option>
@@ -58,9 +58,9 @@
         <option value="">Any</option>
         <option value="imaging">Imaging</option>
         <option value="spectroscopy">Spectroscopy</option>
-        <option value="Spec" disabled="disabled">Long-slit spectroscopy</option>
-        <option value="Spec" disabled="disabled">Multi-object spectroscopy</option>
-        <option value="Spec" disabled="disabled">Integral field spectroscopy</option>
+        <option value="spectroscopy">Long-slit spectroscopy</option>
+        <option value="spectroscopy">Multi-object spectroscopy</option>
+        <option value="spectroscopy">Integral field spectroscopy</option>
     </select><br />
     
     <label><b>Filter:</b></label><select class="ddw" name="filter">
@@ -80,7 +80,7 @@
     </select><br /><br />
 
 <div id="Spec" style="display:none">
-    <label><b>Central Wavelength: </b></label><input type="text" placeholder="1.2" name="cntrl_wvlngth" disabled="disabled"><i> (microns)</i><br /><br /><br />
+    <label><b>Central Wavelength: </b></label><input type="text" placeholder="1.2" name="cntrl_wvlngth" disabled="disabled"><font size="2"><i> (microns)</font></i><br /><br /><br />
 </div>
 Find associated calibrations <input type="checkbox" name="calibrations" disabled="disabled"><br />
 Include engineering data <input type="checkbox" name="engdata" disabled="disabled"><br />
