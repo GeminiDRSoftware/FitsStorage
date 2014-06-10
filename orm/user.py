@@ -40,7 +40,7 @@ class User(Base):
         self.superuser = False
         self.reset_token = None
         self.cookie = None
-        self.account_created = datetime.datetime.now()
+        self.account_created = datetime.datetime.utcnow()
 
     def reset_password(self, password):
         """
@@ -52,6 +52,7 @@ class User(Base):
         self.reset_token = None
         self.reset_token_expires = None
         self.cookie = None
+        self.password_changed = datetime.datetime.utcnow()
 
     def change_password(self, password):
         """
@@ -94,7 +95,7 @@ class User(Base):
         Returns the token for convenience
         """
         self.reset_token = b32encode(urandom(32))
-        self.reset_token_expires = datetime.datetime.now() + datetime.timedelta(minutes=15)
+        self.reset_token_expires = datetime.datetime.utcnow() + datetime.timedelta(minutes=15)
         return self.reset_token
 
     def validate_reset_token(self, candidate):
@@ -107,7 +108,7 @@ class User(Base):
         """
         if((self.reset_token is None) or (self.reset_token_expires is None)):
             return False
-        if ((datetime.datetime.now() < self.reset_token_expires) and (candidate == self.reset_token)):
+        if ((datetime.datetime.utcnow() < self.reset_token_expires) and (candidate == self.reset_token)):
             self.reset_token = None
             self.reset_token_expires = None
             return True

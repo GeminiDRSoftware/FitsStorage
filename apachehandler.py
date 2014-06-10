@@ -27,7 +27,7 @@ from web.selection import getselection
 from web.fileserver import fileserver, download
 from web.qastuff import qareport, qametrics, qaforgui
 from web.statistics import content, stats
-from web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password, staff_access
+from web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password, staff_access, user_list
 from web.userprogram import my_programs
 from web.searchform import searchform
 
@@ -439,6 +439,12 @@ def handler(req):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
         return staff_access(req, things)
+
+    # user_list
+    if(this == "user_list"):
+        if(this in blocked_urls):
+            return apache.HTTP_FORBIDDEN
+        return user_list(req)
 
 
     # Some static files that the server should serve via a redirect.

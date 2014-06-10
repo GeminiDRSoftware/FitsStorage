@@ -236,7 +236,7 @@ def password_reset(req, things):
             req.write('<P>Invalid request.</P>')
             req.write('</body></html>')
             return apache.OK
-        elif(user.reset_token_expires < datetime.datetime.now()):
+        elif(user.reset_token_expires < datetime.datetime.utcnow()):
             req.write('<P>This reset link has expired. They are only valid for 15 minutes. Sorry. Please request a new one and try again.</P>')
             req.write('</body></html>')
             return apache.OK
@@ -519,7 +519,7 @@ def staff_access(req, things):
     try:
         session = sessionfactory()
         thisuser = userfromcookie(session, req)
-        if(thisuser.superuser != True):
+        if(thisuser is None or thisuser.superuser != True):
             req.write("<p>You don't appear to be logged in as a superuser. Sorry.</p>")
             req.write('</body></html>')
             return apache.OK
@@ -741,6 +741,50 @@ def whoami(req, things):
     req.write('</body></html>')
     return apache.OK
 
+def user_list(req):
+    """
+    Displays a list of archive users. Must be logged in as a gemini_staff user to
+    see this.
+    """
+    req.content_type = 'text/html'
+    req.write("<html><head><title>Gemini Archive User List</title>")
+    req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+    req.write("</head><body>")
+    req.write('<h1>Gemini Archive User List</h1>')
+
+    try:
+        session = sessionfactory()
+        thisuser = userfromcookie(session, req)
+        if(thisuser is None or thisuser.gemini_staff != True):
+            req.write("<p>You don't appear to be logged in as a Gemini Staff user. Sorry.</p>")
+            req.write('</body></html>')
+            return apache.OK
+
+        query = session.query(User).order_by(User.username)
+        users = query.all()
+    finally:
+        session.close()
+
+    even = False
+    req.write('<TABLE>')
+    req.write('<TR class=tr_head><TH>Username</TH><TH>Full Name</TH><TH>Email</TH><TH>Password</TH><TH>Staff Access</TH><TH>Superuser</TH><TH>Reset Requested</TH><TH>Reset Active</TH><TH>Account Create</TH><TH>Last Password Change</TH><TR>')
+    for user in users:
+        even = not even
+        if(even):
+            row_class = "tr_even"
+        else:
+            row_class = "tr_odd"
+        password = user.password is not None
+        reset_requested = user.reset_token is not None
+        reset_active = user.reset_token is not None and user.reset_token_expires < datetime.datetime.utcnow()
+        req.write('<TR class=%s><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>' % (row_class, user.username, user.fullname, user.email, password, user.gemini_staff, user.superuser, reset_requested, reset_active, user.account_created, user.password_changed))
+    req.write('</TABLE>')
+
+    req.write('</body></html>')
+
+    return apache.OK
+
+    
 
 
 def email_inuse(email):
