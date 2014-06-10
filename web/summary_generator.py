@@ -339,19 +339,24 @@ class SummaryGenerator():
         Writes the html table header row to the req object,
         for columns as configured
         """
-        req.write('<TR class=tr_head>')
+        # Turns out to be better performance to string concatenate
+        # than to call req.write() many times, so we build an html 
+        # string and req.write it at the end
+
+        html = '<TR class=tr_head>'
         for colkey in self.columns.keys():
             col = self.columns[colkey]
             if(col['want']):
-                req.write('<TH>')
+                html += '<TH>'
                 if(col['longheading']):
-                    req.write('<abbr title="%s">%s</abbr>' % (col['longheading'], col['heading']))
+                    html += '<abbr title="%s">%s</abbr>' % (col['longheading'], col['heading'])
                 else:
-                    req.write(col['heading'])
+                    html += col['heading']
                 if(col['sortarrows']):
-                    req.write('<a href="%s?orderby=%s_asc">&uarr;</a><a href="%s?orderby=%s_desc">&darr;</a>' % (req.uri, colkey, req.uri, colkey))
-                req.write('</TH>\n')
-        req.write('</TR>')
+                    html += '<a href="%s?orderby=%s_asc">&uarr;</a><a href="%s?orderby=%s_desc">&darr;</a>' % (req.uri, colkey, req.uri, colkey)
+                html += '</TH>'
+        html += '</TR>\n'
+        req.write(html)
 
     def table_row(self, req, header, trclass=None):
         """
@@ -360,23 +365,28 @@ class SummaryGenerator():
         header object given. If trclass is supplied, it is passed as the
         class of the tr tag.
         """
+        # Turns out to be better performance to string concatenate
+        # than to call req.write() many times, so we build an html 
+        # string and req.write it at the end
+
         if(trclass):
-            req.write('<TR class=%s>' % trclass)
+            html = '<TR class=%s>' % trclass
         else:
-            req.write('<TR>')
+            html = '<TR>'
         for colkey in self.columns.keys():
             col = self.columns[colkey]
             if(col['want']):
-                req.write('<TD>')
+                html += '<TD>'
                 if(col['summary_func']):
                     value = getattr(self, col['summary_func'])(header)
                 elif(col['header_attr']):
                     value = getattr(header, col['header_attr'])
                 else:
                     value = "Error: Not Defined in SummaryGenerator!"
-                req.write(str(value))
-                req.write('</TD>\n')
-        req.write('</TR>')
+                html += str(value)
+                html += '</TD>'
+        html += '</TR>\n'
+        req.write(html)
 
 
     def filename(self, header):
