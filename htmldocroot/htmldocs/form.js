@@ -22,6 +22,7 @@ $(document).ready(function() {
     var urlresults = "/searchresults";
     if ($("#url").length) {
         $("#loading").slideDown();
+        $("#notloading").hide();
         urlresults += $("#url").val();
         $("#searchresults").load(urlresults, function(){
         });

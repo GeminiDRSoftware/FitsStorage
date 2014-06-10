@@ -82,8 +82,9 @@ def searchform(req, things):
    req.write('</form>')
    req.write('<hr noshade>')
    # Uncomment this for form processing selection debugging...
-   req.write('<p>selection: %s</p>' % selection)
+   # req.write('<p>selection: %s</p>' % selection)
    req.write('<div id="searchresults" class="searchresults">')
+   req.write('<span id="notloading"><P>Set at least one search criteria above to search for data</P></span>')
    req.write('<span id="loading" style="display:none"><p><img src="/htmldocs/ajax-loading.gif">  Loading...</p></span>')
    req.write('</div>')
    req.write('</div>')
