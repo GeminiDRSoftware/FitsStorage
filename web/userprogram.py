@@ -93,7 +93,7 @@ def my_programs(req, things):
     req.write('<TR><TD><LABEL for="program_key">Program Key</LABEL><TD>')
     req.write('<TD><INPUT type="text" size=8 name="program_key"></INPUT></TD></TR>')
     req.write('</TABLE>')
-    req.write('<INPUT type="submit" value="Submit"></INPUT> <INPUT type="reset"></INPUT>')
+    req.write('<INPUT type="submit" value="Submit"></INPUT>')
     req.write('</FORM>')
     req.write("</body></html>")
     return apache.OK

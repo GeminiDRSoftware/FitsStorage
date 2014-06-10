@@ -79,12 +79,12 @@ def request_account(req, things):
     req.write("<h1>New Account Request</h1>")
 
     if(valid_request):
-        req.write("<h2>Processing your request...</h2>")
         req.write('<TABLE>')
         req.write('<TR><TD>Username:</TD><TD>%s</TD></TR>' % username)
         req.write('<TR><TD>Full Name:</TD><TD>%s</TD></TR>' % fullname)
         req.write('<TR><TD>Email:</TD><TD>%s</TD></TR>' % email)
         req.write('</TABLE>')
+        req.write("<h2>Processing your request...</h2>")
         try:
             session = sessionfactory()
             newuser = User(username)
@@ -135,7 +135,7 @@ def request_account(req, things):
         # Some kind of captcha here.
 
         req.write('</TABLE>')
-        req.write('<INPUT type="submit" value="Submit"></INPUT> <INPUT type="reset"></INPUT>')
+        req.write('<INPUT type="submit" value="Submit"></INPUT>')
         req.write('</FORM>')
         req.write("</body></html>")
         return apache.OK
@@ -274,7 +274,7 @@ def password_reset(req, things):
         elif(password != again):
             reason_bad = 'Password and Password again do not match'
         elif(bad_password(password)):
-            reason_bad = 'Bad password - must be at least 8 characters and contain letters and numbers'
+            reason_bad = 'Bad password - must be at least 8 characters and contain both uppercase and lowercase letters, and numbers'
         else:
             request_valid = True
 
@@ -305,14 +305,14 @@ def password_reset(req, things):
 
     # Send the new account form
     req.write('<FORM action="/password_reset/%d/%s" method="POST">' % (userid, token))
-    req.write('<P>Fill out and submit this form to reset your password. Password must be 8 characters or more and must contain at least some letters and numbers.</P>')
+    req.write('<P>Fill out and submit this form to reset your password. Password must be 8 characters or more and must contain both uppercase and lowercase letters, and numbers.</P>')
     req.write('<TABLE>')
     req.write('<TR><TD><LABEL for="password">New Password</LABEL></TD>')
     req.write('<TD><INPUT type="password" size=16 name="password"</TD></TR>')
     req.write('<TR><TD><LABEL for="again">New Password Again</LABEL></TD>')
     req.write('<TD><INPUT type="password" size=16 name="again"</TD></TR>')
     req.write('</TABLE>')
-    req.write('<INPUT type="submit" value="Submit"></INPUT> <INPUT type="reset"></INPUT>')
+    req.write('<INPUT type="submit" value="Submit"></INPUT>')
     req.write('</FORM>')
     req.write("</body></html>")
     return apache.OK
@@ -361,7 +361,7 @@ def change_password(req, things):
         elif(newagain == ''):
             reason_bad = 'No new password again supplied'
         elif(bad_password(newpassword)):
-            reason_bad = 'Bad password - must be at least 8 characters and contain letters and numbers'
+            reason_bad = 'Bad password - must be at least 8 characters and contain both uppercase and lowercase letters, and numbers'
         elif(newpassword != newagain):
             reason_bad = 'New Password and New Password Again do not match'
         else:
@@ -400,7 +400,7 @@ def change_password(req, things):
     if(not sucessfull):
         # Send the password change form
         req.write('<FORM action="/change_password%s" method="POST">' % thing_string)
-        req.write('<P>Fill out and submit this form to change your password. Password must be 8 characters or more and must contain at least some letters and numbers.</P>')
+        req.write('<P>Fill out and submit this form to change your password. Password must be 8 characters or more and must contain uppercase and lowercase letters, and numbers.</P>')
         req.write('<TABLE>')
         req.write('<TR><TD><LABEL for="oldpassword">Current Password</LABEL></TD>')
         req.write('<TD><INPUT type="password" size=16 name="oldpassword"</TD></TR>')
@@ -409,7 +409,7 @@ def change_password(req, things):
         req.write('<TR><TD><LABEL for="newagain">New Password Again</LABEL></TD>')
         req.write('<TD><INPUT type="password" size=16 name="newagain"</TD></TR>')
         req.write('</TABLE>')
-        req.write('<INPUT type="submit" value="Submit"></INPUT> <INPUT type="reset"></INPUT>')
+        req.write('<INPUT type="submit" value="Submit"></INPUT>')
         req.write('</FORM>')
 
 
@@ -489,7 +489,7 @@ def request_password_reset(req):
 
     # Some kind of captcha here.
 
-    req.write('<INPUT type="submit" value="Submit"></INPUT> <INPUT type="reset"></INPUT>')
+    req.write('<INPUT type="submit" value="Submit"></INPUT>')
     req.write('</FORM>')
     req.write("</body></html>")
     return apache.OK
@@ -561,7 +561,7 @@ def staff_access(req, things):
     req.write('<FORM action="/staff_access" method="POST">')
     req.write('<label for="username">Username:</label><input type="text" name="username">')
     req.write('<select name="action"><option value="">Action</option><option value="Grant">Grant</option><option value="Revoke">Revoke</option></select>')
-    req.write('<INPUT type="submit" value="Submit"></INPUT> <INPUT type="reset"></INPUT>')
+    req.write('<INPUT type="submit" value="Submit"></INPUT>')
     req.write('</FORM>')
     req.write('</body></html>')
 
@@ -652,7 +652,7 @@ def login(req, things):
     req.write('<TR><TD><LABEL for="password">Password</LABEL><TD>')
     req.write('<TD><INPUT type="password" size=16 name="password"></INPUT></TD></TR>')
     req.write('</TABLE>')
-    req.write('<INPUT type="submit" value="Submit"></INPUT> <INPUT type="reset"></INPUT>')
+    req.write('<INPUT type="submit" value="Submit"></INPUT>')
     req.write('</FORM>')
     req.write("</body></html>")
     return apache.OK
