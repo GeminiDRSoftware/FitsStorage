@@ -12,9 +12,21 @@
 </div>
 
 <div class="left">
-    <label><b>Program ID:</b></label><input type="text" placeholder="(leave empty for Any)" name="program_id"><font size="2"><i>(or Obs. ID / Data Label. Exact Match)</font></i><br /><br />
-    <label><b>Date:</b></label><input type="text" placeholder="(leave empty for Any)" name="date"><font size="2"><i>(YYYYMMDD or yyyymmdd - YYYYMMDD)</i></font><br /><br />
-    <label><b>Instrument:</b></label><select id="instselect" class="ddw" name="inst">
+
+    <label>Program ID:</label>
+    <input type="text" placeholder="(leave empty for Any)" name="program_id">
+    <span class="help">(or Obs. ID / Data Label. Exact Match)
+        <p class="help">You can put a program ID, Observation ID or Data Label into this box. The search will be for an exact match to what you put in, substring type matches are not provided. Example: GN-2001A-Q-1</p>
+    </span><br />
+
+    <label>Date:</label>
+    <input type="text" placeholder="(leave empty for Any)" name="date">
+    <span class="help">(YYYYMMDD or start - end)
+        <p class="help">You can specify either an individual date in the form YYYYMMDD, or a date range in the form yyyymmdd - YYYYMMDD. Examples: 20101231 or 20100101 - 20100131</p>
+    </span><br />
+
+    <label>Instrument:</label>
+    <select id="instselect" class="ddw" name="inst">
         <option value="">Any</option>
         <option value="GMOS">GMOS</option>
         <option value="GMOS-N">GMOS-N</option>
@@ -28,10 +40,13 @@
         <option value="GPI">GPI</option>
         <option value="NICI">NICI</option>
         <option value="GSAOI">GSAOI</option>
+    </select>
+    <span class="help">(Select GMOS for GMOS-N and GMOS-S)
+        <p class="help">Instrument help text</p>
+    </span><br />
 
-    </select><font size="2"><i> (Select GMOS for GMOS-N and GMOS-S)</i></font><br />
-
-    <label><b>Obs. Class:</b></label><select class="ddw" name="observation_class">
+    <label>Obs. Class:</label>
+    <select class="ddw" name="observation_class">
         <option value="">Any</option>
         <option value="science">science</option>
         <option value="acq">acq</option>
@@ -39,9 +54,13 @@
         <option value="dayCal">dayCal</option>
         <option value="partnerCal">partnerCal</option>
         <option value="acqCal">acqCal</option>
-    </select><br />
+    </select>
+    <span class="help">(?)
+        <p class="help">Select an Observation Class here, or set it to Any to not search by Observation Class.</p>
+    </span><br />
 
-    <label><b>Obs. Type:</b></label><select class="ddw" name="observation_type">
+    <label>Obs. Type:</label>
+    <select class="ddw" name="observation_type">
         <option value="">Any</option>
         <option value="OBJECT">OBJECT</option>
         <option value="BIAS">BIAS</option>
@@ -52,32 +71,43 @@
         <option value="RONCHI">RONCHI</option>
         <option value="CAL">CAL</option>
         <option value="FRINGE">FRINGE</option>
-    </select><br />
+    </select>
+    <span class="help">(?)
+        <p class="help">Select an Observation Type here, or set it to Any to not search by Observation Type.</p>
+    </span><br />
 
-    <label><b>Mode:</b></label><select id="Mode" class="ddw" name="mode">
+    <label>Mode:</label>
+    <select id="Mode" class="ddw" name="mode">
         <option value="">Any</option>
         <option value="imaging">Imaging</option>
         <option value="spectroscopy">Spectroscopy</option>
         <option value="spectroscopy">Long-slit spectroscopy</option>
         <option value="spectroscopy">Multi-object spectroscopy</option>
         <option value="spectroscopy">Integral field spectroscopy</option>
-    </select><br />
+    </select>
+    <span class="help">(Imaging / Spectroscopy etc)
+        <p class="help">Select Imaging or various Spectroscopy modes here. Spectropscopy implies all spectroscopic modes.</p>
+    </span><br />
     
-    <label><b>Filter:</b></label><select class="ddw" name="filter">
+    <label>Filter:</label>
+    <select class="ddw" name="filter">
         <option value="">Any</option>
         <option value="u">u'</option>
         <option value="g">g'</option>
         <option value="r">r'</option>
         <option value="i">i'</option>
         <option value="z">z'</option>
-        <option value="H">H</option>
         <option value="J">J</option>
+        <option value="H">H</option>
         <option value="K">K</option>
         <option value="L">L</option>
         <option value="M">M</option>
         <option value="N">N</option>
         <option value="Q">Q</option>
-    </select><br /><br />
+    </select>
+    <span class="help">(also inside instrument sections)
+        <p class="help">This is a top level selection of common broad band filters. For instrument specific selections, select the instrument in question above and then select the filter inside the instrument specific section that will appear.</p>
+    </span><br />
 
 <div id="Spec" style="display:none">
     <label><b>Central Wavelength: </b></label><input type="text" placeholder="1.2" name="cntrl_wvlngth" disabled="disabled"><font size="2"><i> (microns)</font></i><br /><br /><br />
