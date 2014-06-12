@@ -776,7 +776,7 @@ def user_list(req):
             row_class = "tr_odd"
         password = user.password is not None
         reset_requested = user.reset_token is not None
-        reset_active = user.reset_token is not None and user.reset_token_expires < datetime.datetime.utcnow()
+        reset_active = (user.reset_token is not None) and (user.reset_token_expires > datetime.datetime.utcnow())
         req.write('<TR class=%s><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>' % (row_class, user.username, user.fullname, user.email, password, user.gemini_staff, user.superuser, reset_requested, reset_active, user.account_created, user.password_changed))
     req.write('</TABLE>')
 
