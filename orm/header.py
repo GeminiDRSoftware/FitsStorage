@@ -95,10 +95,20 @@ class Header(Base):
             # Basic data identification part
             self.program_id = ad.program_id().for_db()
             if(self.program_id is not None):
+                # Ensure upper case
+                self.program_id = self.program_id.upper()
+                # Set eng and sv booleans
                 self.engineering = ('ENG' in self.program_id)
                 self.science_verification = ('SV' in self.program_id)
             self.observation_id = ad.observation_id().for_db()
+            if(self.observation_id is not None):
+                # Ensure upper case
+                self.observation_id = self.observation_id.upper()
             self.data_label = ad.data_label().for_db()
+            if(self.data_label is not None):
+                # Ensure upper case
+                self.data_label = self.data_label.upper()
+
             self.telescope = ad.telescope().for_db()
             self.instrument = ad.instrument().for_db()
 
