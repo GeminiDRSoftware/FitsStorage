@@ -47,6 +47,7 @@ class Header(Base):
     detector_config = Column(Text)
     detector_roi_setting = Column(Text)
     spectroscopy = Column(Boolean, index=True)
+    mode = Column(Text, index=True)
     adaptive_optics = Column(Boolean)
     laser_guide_star = Column(Boolean)
     wavefront_sensor = Column(Text)
@@ -178,10 +179,20 @@ class Header(Base):
 
             self.wavefront_sensor = ad.wavefront_sensor().for_db()
 
-            # And the Spectroscopy header
+            # And the Spectroscopy and mode items
             self.spectroscopy = False
             if('SPECT' in ad.types):
                 self.spectroscopy = True
+                self.mode = 'spectroscopy'
+                if('IFU' in ad.types):
+                    self.mode = 'IFU'
+                if('MOS' in ad.types):
+                    self.mode = 'MOS'
+                if('LS' in ad.types):
+                    self.mode = 'LS'
+            else:
+                self.spectroscopy = False
+                self.mode = 'imaging'
 
             # Set the derived QA state and release date
             self.qa_state = ad.qa_state().for_db()
