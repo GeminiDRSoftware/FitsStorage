@@ -131,17 +131,21 @@ def updateselection(formdata, selection):
             # if the string starts with progid= then trim that off
             if value[:7]=='progid=':
                 value = value[7:]
-                # accepts program id along with observation id and data label for program_id input
-                # see if it is an obsid or data label, otherwise treat as program id
-                go = GeminiObservation(value)
-                dl = GeminiDataLabel(value)
 
-                if(go.observation_id):
-                    selection['observation_id'] = value
-                elif(dl.datalabel):
-                    selection['data_label'] = value
-                else:
-                    selection['program_id'] = value
+            # Ensure it's upper case
+            value = value.upper()
+
+            # accepts program id along with observation id and data label for program_id input
+            # see if it is an obsid or data label, otherwise treat as program id
+            go = GeminiObservation(value)
+            dl = GeminiDataLabel(value)
+
+            if(go.observation_id):
+                selection['observation_id'] = value
+            elif(dl.datalabel):
+                selection['data_label'] = value
+            else:
+                selection['program_id'] = value
         elif key == 'date':
             # removes spaces from daterange queries
             value = value.replace(' ', '')
