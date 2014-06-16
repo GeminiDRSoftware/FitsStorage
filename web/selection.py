@@ -378,7 +378,10 @@ def queryselection(query, selection):
     if('ra' in selection):
         [a, b] = _parse_range(selection['ra'])
         if(a is not None and b is not None):
-            query = query.filter(Header.ra >= a).filter(Header.ra < b)
+            if a > b:
+                query = query.filter(or_(Header.ra >= a, Header.ra < b))
+            else: 
+                query = query.filter(Header.ra >= a).filter(Header.ra < b)
 
     if('dec' in selection):
         [a, b] = _parse_range(selection['dec'])
