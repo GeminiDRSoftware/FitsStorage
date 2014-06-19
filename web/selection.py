@@ -109,6 +109,12 @@ def getselection(things):
         if(thing == 'notcanonical' or thing == 'NotCanonical'):
             selection['canonical'] = False
             recognised = True
+        if(thing == 'engineering'):
+            selection['engineering'] = True
+            recognised = True
+        if(thing == 'notengineering'):
+            selection['engineering'] = False
+            recognised = True
         if(thing[:7] == 'filter=' or thing[:7] == 'Filter='):
             selection['filter'] = thing[7:]
             recognised = True
@@ -184,7 +190,7 @@ def sayselection(selection):
     """
     string = ""
 
-    defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI', 'filepre': 'File Prefix', 'mode': 'Spectroscopy Mode'}
+    defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'engineering': 'Engineering Data', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI', 'filepre': 'File Prefix', 'mode': 'Spectroscopy Mode'}
     for key in defs:
         if key in selection:
             string += "; %s: %s" % (defs[key], selection[key])
@@ -236,6 +242,9 @@ def queryselection(query, selection):
 
     if('canonical' in selection):
         query = query.filter(DiskFile.canonical == selection['canonical'])
+
+    if('engineering' in selection):
+        query = query.filter(Header.engineering == selection['engineering'])
 
     if('program_id' in selection):
         query = query.filter(Header.program_id == selection['program_id'])
@@ -483,6 +492,11 @@ def selection_to_URL(selection):
                 urlstring += '/twilight'
             else:
                 urlstring += '/nottwilight'
+        elif key == 'engineering':
+            if (selection[key] is True):
+                urlstring += '/engineering'
+            else:
+                urlstring += '/notengineering'
         else:
             urlstring = urlstring + '/' + str(selection[key])
     
