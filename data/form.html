@@ -1,14 +1,30 @@
 
 <div class="right">
-    <label><b>Target Name:</b></label><input type="text" placeholder="NGC 5457" name="target_name" disabled="disabled"><br /><br /> 
-    <label><b>Resolver:</b></label><select class="ddw" name="resolver" disabled="disabled">
+
+    <label>Target Name:</label>
+    <input type="text" placeholder="NGC 5457" name="target_name" disabled="disabled"><br /><br />
+ 
+    <label>Resolver:</label>
+    <select class="ddw" name="resolver" disabled="disabled">
          <option value="">&lt;none&gt;</option>
          <option value="SIMBAD">SIMBAD</option>
          <option value="NED">NED</option>
     </select><br /><br />
-    <label><b>RA:</b></label><input type="text" placeholder="14:03:12.00" name="ra"><font size="2"><i> (HH:MM:SS.ss or decimal degrees)</font></i><br /><br />
-    <label><b>Dec:</b></labeL><input type="text" placeholder="-02:24:19.88" name="dec"><font size="2"><i> ([+-]DD:MM:SS.ss or decimal degrees)</font></i><br /><br />
-    <label><b>Search radius:</b></label><input type="text" placeholder="45, 0.013" name="search_rad" disabled="disabled"><i><font size="2"> (arcseconds or decimal degrees)</font></i>
+
+    <label>RA:</label>
+    <input type="text" placeholder="14:03:12.00" name="ra">
+    <span class="help"> (HH:MM:SS.ss or decimal degrees)</span><br /><br />
+
+    <label>Dec:</labeL>
+    <input type="text" placeholder="-02:24:19.88" name="dec">
+    <span class="help"> ([+-]DD:MM:SS.ss or decimal degrees)</span><br /><br />
+
+    <label>Search radius:</label>
+    <input type="text" placeholder="45, 0.013" name="search_rad" disabled="disabled">
+    <span class="help"> (arcseconds or decimal degrees)
+        <p class="help">If a single RA and/or dec value has been chosen, indicate the desired radius around it to be searched.</p>
+    </span>
+
 </div>
 
 <div class="left">
@@ -109,11 +125,26 @@
         <p class="help">This is a top level selection of common broad band filters. For instrument specific selections, select the instrument in question above and then select the filter inside the instrument specific section that will appear.</p>
     </span><br />
 
+    <label>Engineering: </label>
+    <select class="ddw" name="engineering">
+        <option value="notengineering">Exclude</option>
+        <option value="">Include</option>
+        <option value="engineering">Only</option>
+    </select>
+    <span class="help">(?)
+        <p class="help">Choose whether to include or exclude respective engineering data, or choose to display only this data.</p>
+    </span><br /><br />
+
 <div id="Spec" style="display:none">
-    <label><b>Central Wavelength: </b></label><input type="text" placeholder="1.2" name="cntrl_wvlngth" disabled="disabled"><font size="2"><i> (microns)</font></i><br /><br /><br />
+
+    <label>Central Wavelength: </label>
+    <input type="text" placeholder="1.2" name="cntrl_wvlngth" disabled="disabled">
+    <span class="help"> (microns)</span><br /><br /><br />
+
 </div>
-Find associated calibrations <input type="checkbox" name="calibrations" disabled="disabled"><br />
-Include engineering data <input type="checkbox" name="engdata" disabled="disabled"><br />
+
+    Find associated calibrations <input type="checkbox" name="calibrations" disabled="disabled"><br />
+
 </div>
 
 <div class="next"></div>
