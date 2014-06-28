@@ -2,25 +2,28 @@
 <div class="right">
 
     <label>Target Name:</label>
-    <input type="text" placeholder="NGC 5457" name="target_name" disabled="disabled"><br /><br />
+    <input id="object_name" type="text" placeholder="NGC 5457" name="object"><br /><br />
  
     <label>Resolver:</label>
-    <select class="ddw" name="resolver" disabled="disabled">
+    <select id='resolver' class="ddw" name="resolver">
          <option value="">&lt;none&gt;</option>
          <option value="SIMBAD">SIMBAD</option>
          <option value="NED">NED</option>
-    </select><br /><br />
+         <option value="VIZIER">VIZIER</option>
+    </select>
+    <button type='button' class='resolver'>Resolve</button>
+    <br /><br />
 
     <label>RA:</label>
-    <input type="text" placeholder="14:03:12.00" name="ra">
+    <input id="ra" type="text" placeholder="14:03:12.00" name="ra">
     <span class="help"> (HH:MM:SS.ss or decimal degrees)</span><br /><br />
 
     <label>Dec:</labeL>
-    <input type="text" placeholder="-02:24:19.88" name="dec">
+    <input id="dec" type="text" placeholder="-02:24:19.88" name="dec">
     <span class="help"> ([+-]DD:MM:SS.ss or decimal degrees)</span><br /><br />
 
     <label>Search radius:</label>
-    <input type="text" placeholder="45, 0.013" name="search_rad" disabled="disabled">
+    <input type="text" placeholder="45, 0.013" name="search_rad">
     <span class="help"> (arcseconds or decimal degrees)
         <p class="help">If a single RA and/or dec value has been chosen, indicate the desired radius around it to be searched.</p>
     </span>
@@ -132,8 +135,19 @@
         <option value="engineering">Only</option>
     </select>
     <span class="help">(?)
-        <p class="help">Choose whether to include or exclude respective engineering data, or choose to display only this data.</p>
+        <p class="help">Choose whether to include, exclude, or display only respective engineering data.</p>
+    </span><br />
+
+    <label>Verification: </label>
+    <select class="ddw" name="science_verification">
+        <option value="">Include</option>
+        <option value="notverify">Exclude</option>
+        <option value="verify">Only</option>
+    </select>
+    <span class="help">(?)
+        <p class="help">Choose whether to include, exclude, or display only science verification data.</p>
     </span><br /><br />
+
 
 <div id="Spec" style="display:none">
 
