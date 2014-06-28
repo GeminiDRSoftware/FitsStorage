@@ -9,6 +9,8 @@ from web.selection import getselection, selection_to_URL
 
 from fits_storage_config import fits_aux_datadir
 import os
+import re
+import urllib
 
 from gemini_metadata_utils import GeminiDataLabel, GeminiObservation, GeminiProject, gemini_date, gemini_daterange
 
@@ -82,7 +84,7 @@ def searchform(req, things):
    req.write('</form>')
    req.write('<hr noshade>')
    # Uncomment this for form processing selection debugging...
-   # req.write('<p>selection: %s</p>' % selection)
+   req.write('<p>selection: %s</p>' % selection)
    req.write('<div id="searchresults" class="searchresults">')
    req.write('<span id="notloading"><P>Set at least one search criteria above to search for data. Mouse over the (text in brackets) to see more help for each item.</P></span>')
    req.write('<span id="loading" style="display:none"><p><img src="/htmldocs/ajax-loading.gif">  Loading...</p></span>')
@@ -114,11 +116,18 @@ def updateform(html, selection):
                 html = html.replace('value="spectroscopy"', 'value="spectroscopy" selected')
             else:
                 html = html.replace('value="imaging"', 'value="imaging" selected')
+        elif key == 'object':
+            html = html.replace('name="object"', 'name="object" value="%s"' % selection[key])
         elif key == 'engineering':
             if (selection[key] is True):
                 html = html.replace('value="engineering"', 'value="engineering" selected')
             else:
                 html = html.replace('value="notengineering"', 'value="notengineering" selected')
+        elif key == 'science_verification':
+            if (selection[key] is True):
+                html = html.replace('value="verify"', 'value="verify" selected')
+            else:
+                html = html.replace('value="notverify"', 'value="notverify" selected')
         else:
             html = html.replace('value="%s"' % selection[key], 'name="%s" checked' % key)
     
@@ -159,7 +168,7 @@ def updateselection(formdata, selection):
             # formats RA and dec values appropriately, converts to decimal degrees if necessary
             selection[key] = value
             value = value.replace(' ', '')
-            rangesplit = str.split(value, ',')
+            rangesplit = re.split('(?:[0-9]\-)', value)
             selectionstrings = []
             for stringval in rangesplit:
                 if ':' in stringval:
@@ -187,10 +196,12 @@ def updateselection(formdata, selection):
                         selectionstrings.append(degs)
                     else:
                         for val in ra_strings:
-                            selectionstrings.append(val)
+                            num = float(val)
+                            selectionstrings.append(num)
                 else:
-                   selectionstrings.append(stringval)
-            selection[key] = '%s,%s' % ("{0:.3f}".format(selectionstrings[0]), "{0:.3f}".format(selectionstrings[1]))
+                   num = float(stringval) 
+                   selectionstrings.append(num)
+            selection[key] = '%s - %s' % ("{0:.3f}".format(selectionstrings[0]), "{0:.3f}".format(selectionstrings[1]))
         else:
             selection[key] = value
 

@@ -9,6 +9,7 @@ from gemini_metadata_utils import gemini_telescope, gemini_instrument, gemini_da
 import dateutil.parser
 import datetime
 import re
+import urllib
 
 from orm.header import Header
 from orm.diskfile import DiskFile
@@ -115,8 +116,17 @@ def getselection(things):
         if(thing == 'notengineering'):
             selection['engineering'] = False
             recognised = True
+        if(thing == 'verify'):
+            selection['science_verification'] = True
+            recognised = True
+        if(thing == 'notverify'):
+            selection['science_verification'] = False
+            recognised = True
         if(thing[:7] == 'filter=' or thing[:7] == 'Filter='):
             selection['filter'] = thing[7:]
+            recognised = True
+        if(thing[:7] == 'object=' or thing[:7] == 'Object='):
+            selection['object'] = thing[7:]
             recognised = True
         if(gemini_binning(thing)):
             selection['binning'] = gemini_binning(thing)
@@ -190,7 +200,7 @@ def sayselection(selection):
     """
     string = ""
 
-    defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'engineering': 'Engineering Data', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI', 'filepre': 'File Prefix', 'mode': 'Spectroscopy Mode'}
+    defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'object': 'Object Name', 'engineering': 'Engineering Data', 'science_verification': 'Science Verification Data', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI', 'filepre': 'File Prefix', 'mode': 'Spectroscopy Mode'}
     for key in defs:
         if key in selection:
             string += "; %s: %s" % (defs[key], selection[key])
@@ -246,6 +256,9 @@ def queryselection(query, selection):
     if('engineering' in selection):
         query = query.filter(Header.engineering == selection['engineering'])
 
+    if('science_verification' in selection):
+        query = query.filter(Header.science_verification == selection['science_verification'])
+
     if('program_id' in selection):
         query = query.filter(Header.program_id == selection['program_id'])
 
@@ -254,6 +267,9 @@ def queryselection(query, selection):
 
     if('data_label' in selection):
         query = query.filter(Header.data_label == selection['data_label'])
+
+    if('object' in selection):
+        query = query.filter(Header.object == selection['object'])
 
     # Should we query by date?
     if('date' in selection):
@@ -424,10 +440,10 @@ def openquery(selection):
 
     return openquery
 
-range_cre = re.compile('(-?\d*\.?\d*),(-?\d*\.?\d*)')
+range_cre = re.compile('(-?\d*\.?\d*)-(-?\d*\.?\d*)')
 def _parse_range(string):
     """
-    Expects a string in the form '12.345, 67.89' as per the co-ordinate searches.
+    Expects a string in the form '12.345-67.89' as per the co-ordinate searches.
     Returns a list with the two values
     """
 
@@ -465,6 +481,8 @@ def selection_to_URL(selection):
             else:
                 # It's a non standard one
                 urlstring += '/progid=%s' % selection[key]
+        elif key == 'object':
+            urlstring += '/object=%s' % urllib.quote_plus(selection[key])
         elif key == 'spectroscopy':
             if (selection[key] is True):
                 urlstring += '/spectroscopy'
@@ -497,6 +515,11 @@ def selection_to_URL(selection):
                 urlstring += '/engineering'
             else:
                 urlstring += '/notengineering'
+        elif key == 'science_verification':
+            if (selection[key] is True):
+                urlstring += '/verify'
+            else:
+                urlstring += '/notverify'
         else:
             urlstring = urlstring + '/' + str(selection[key])
     
