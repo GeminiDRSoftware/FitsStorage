@@ -59,7 +59,8 @@ def handler(req):
     # This gives everything from the uri below the handler
     # eg if we're handling /python and we're the client requests
     # http://server/python/a/b.fits then we get a/b.fits
-    uri = req.uri
+    # Use the unparsed_uri as there may be encoded slashes in it that get parsed and we dont want to hit those.
+    uri = req.unparsed_uri
     
     # Split this about any /s
     things = uri.split('/')
