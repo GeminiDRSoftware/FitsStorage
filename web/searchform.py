@@ -117,7 +117,7 @@ def updateform(html, selection):
             else:
                 html = html.replace('value="imaging"', 'value="imaging" selected')
         elif key == 'object':
-            html = html.replace('name="object"', 'name="object" value="%s"' % selection[key])
+            html = html.replace('name="object"', 'name="object" value="%s"' % urllib.unquote_plus(selection[key]))
         elif key == 'engineering':
             if (selection[key] is True):
                 html = html.replace('value="engineering"', 'value="engineering" selected')
