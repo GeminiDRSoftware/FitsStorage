@@ -130,7 +130,7 @@ def getselection(things):
             selection['filter'] = thing[7:]
             recognised = True
         if(thing[:7] == 'object=' or thing[:7] == 'Object='):
-            selection['object'] = thing[7:]
+            selection['object'] = urllib.unquote_plus(thing[7:])
             recognised = True
         if(gemini_binning(thing)):
             selection['binning'] = gemini_binning(thing)
@@ -475,8 +475,7 @@ def _parse_range(string):
 
 def selection_to_URL(selection):
     """
-    Receives a dictionary of formdata field values from searchform submit function
-    Parses values and converts to URL string
+    Receives a selection dictionary, parses values and converts to URL string
     """
     urlstring = ''
 

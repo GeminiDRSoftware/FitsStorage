@@ -100,7 +100,7 @@ def searchform(req, things):
 
 def updateform(html, selection):
     """
-    Receives html page as a string and updates it according to URL selection values
+    Receives html page as a string and updates it according to values in the selection dictionary.
     Pre-populates input fields with said selection values
     """
     for key in selection.keys():
@@ -121,7 +121,7 @@ def updateform(html, selection):
             else:
                 html = html.replace('value="imaging"', 'value="imaging" selected')
         elif key == 'object':
-            html = html.replace('name="object"', 'name="object" value="%s"' % urllib.unquote_plus(selection[key]))
+            html = html.replace('name="object"', 'name="object" value="%s"' % selection[key])
         elif key == 'engineering':
             if (selection[key] is True):
                 html = html.replace('value="EngOnly"', 'value="EngOnly" selected')
