@@ -29,8 +29,12 @@ $(document).ready(function() {
     };
 });
 
-$('.resolver').click(function() {
+$('#resolver').click(function() {
+});
+
+$(function resolver() {
     var object_name = $('#object_name').val();
+
     if ($("#resolver").val().match("SIMBAD")) {
         var resolverget = 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/S?' + object_name;
     } else if ($("#resolver").val().match("NED")) {
@@ -43,10 +47,13 @@ $('.resolver').click(function() {
     }
 
     $.ajax({
-        type: 'GET',
+        type: 'POST',
         url: resolverget,
         dataType: 'xml',
-        success: parseXML
+        success: function(xml) {
+		     $('#ra').val($("jradeg", xml).text());
+                     $('#dec').val($("jdecdeg", xml).text());
+                 }
     });
 });
 
