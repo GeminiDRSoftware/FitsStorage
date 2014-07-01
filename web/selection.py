@@ -330,6 +330,9 @@ def queryselection(query, selection):
     if('filename' in selection):
         query = query.filter(File.name == selection['filename'])
 
+    if('filelist' in selection):
+        query = query.filter(File.name.in_(selection['filelist']))
+
     if('gmos_grating' in selection):
         query = query.filter(Header.disperser == selection['gmos_grating'])
 

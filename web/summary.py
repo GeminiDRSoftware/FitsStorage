@@ -46,7 +46,7 @@ def summary(req, type, selection, orderby, links=True, download=False):
         if('notrecognised' in selection.keys()):
             req.write("<H4>WARNING: I didn't recognize the following search terms: %s</H4>" % selection['notrecognised'])
         # And tell them about clicking things
-        req.write('<p>Click [Download] to download that one file. Click the filename to see the full header in a new tab. Click anything else to add that to your search criteria. If available, a download all link is at <a href="#tableend"> the end of the table</a>.</p>')
+        req.write('<p>Click the [D] to download that one file, use the check boxes to select a subset of the results to download, or if available a download all link is at <a href="#tableend"> the end of the table</a>. Click the filename to see the full header in a new tab. Click anything else to add that to your search criteria.</p>')
 
     # If this is a diskfiles summary, select even ones that are not canonical
     if(type != 'diskfiles'):
@@ -91,6 +91,10 @@ def summary_table(req, type, headers, selection, links=True):
         req.write('<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date, date range, program ID etc. Searches like this are limited to %d results, and this search hit that limit. You may want to constrain your search. Constrained searches have a higher result limit.</P>' % fits_open_result_limit) 
     elif(len(headers) == fits_closed_result_limit):
         req.write('<P>WARNING: Your search generated more than the limit of %d results. You might want to constrain your search more.</P>' % fits_closed_result_limit) 
+
+    if(type == 'searchresults' and links == True):
+        req.write("<FORM action='/download' method='POST'>")
+
     req.write('<TABLE class="fullwidth" border=0>')
 
     # Output the table header
@@ -109,7 +113,13 @@ def summary_table(req, type, headers, selection, links=True):
         sumgen.table_row(req, header, tr_class)
 
         bytecount += header.diskfile.file_size
+
     req.write("</TABLE>\n")
+ 
+    if(type == 'searchresults' and links == True):
+        req.write("<INPUT type='submit' value='Download Marked Files'></INPUT>")
+        req.write("</FORM>")
+
     req.write('<a name="tableend">')
     if(openquery(selection) and len(headers) == fits_open_result_limit):
         req.write('<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date, date range, program ID etc. Searches like this are limited to %d results, and this search hit that limit. You may want to constrain your search. Constrained searches have a higher result limit.</P>' % fits_open_result_limit) 

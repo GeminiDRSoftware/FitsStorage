@@ -46,6 +46,7 @@ class SummaryGenerator():
         # Load the column definitions, in order
         self.init_cols()
         # Set the want flags
+        self.type = type
         self.set_type(type)
         self.links = links
         self.uri = uri
@@ -549,7 +550,14 @@ class SummaryGenerator():
             return htmlescape(header.filter_name)
 
     def download(self, header):
-        return '<center><a href="/file/%s">[Download]</a></center>' % header.diskfile.file.name
+        html = '<center><a href="/file/%s">[D]</a>' % header.diskfile.file.name
+
+        if(self.type == 'searchresults'):
+            html += " <input type='checkbox' name='files' value='%s'></input>" % header.diskfile.file.name
+
+        html += '</center>'
+
+        return html
 
 def htmlescape(string):
     """

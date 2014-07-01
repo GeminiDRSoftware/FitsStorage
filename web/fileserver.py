@@ -37,8 +37,20 @@ def download(req, things):
     This is the download server. Given a selection, it will send a tarball of the 
     files from the selection that you have access to to the client. 
     """
-    # Get the selection
-    selection = getselection(things)
+
+    # If we are called via POST, then parse form data rather than selection
+    if(req.method == 'POST'):
+        # Parse form data
+        formdata = util.FieldStorage(req)
+        thelist = []
+        if 'files' in formdata.keys():
+            fields = formdata['files']
+            for field in fields:
+                thelist.append(field.value)
+        selection = {'filelist': thelist}
+    else:
+        # Get the selection
+        selection = getselection(things)
 
     # Open a database session
     session = sessionfactory()
