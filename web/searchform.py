@@ -51,12 +51,16 @@ def searchform(req, things):
    formdata = util.FieldStorage(req)
 
    if(formdata):
-       # Populate selection dictionary with values from form input
-       updateselection(formdata, selection)
-       # builds URL, clears formdata, refreshes page with updated selection from form
-       urlstring = selection_to_URL(selection)
-       formdata.clear()
-       util.redirect(req, '/searchform' + urlstring)       
+       if((len(formdata) == 2) and ('engineering' in formdata.keys()) and ('science_verification' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and (formdata['science_verification'].value == 'SvInclude')):
+           # This is the default form state, someone just hit submit without doing anything.
+           pass
+       else:
+           # Populate selection dictionary with values from form input
+           updateselection(formdata, selection)
+           # builds URL, clears formdata, refreshes page with updated selection from form
+           urlstring = selection_to_URL(selection)
+           formdata.clear()
+           util.redirect(req, '/searchform' + urlstring)       
 
    req.content_type = "text/html"
    req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head>')
