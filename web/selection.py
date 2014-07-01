@@ -116,10 +116,14 @@ def getselection(things):
         if(thing == 'notengineering'):
             selection['engineering'] = False
             recognised = True
-        if(thing == 'verify'):
+        if(thing == 'includeengineering'):
+            # this is basically a dummy value for the search form defaults
+            selection['engineering'] = 'Include'
+            recognised = True
+        if(thing == 'science_verification'):
             selection['science_verification'] = True
             recognised = True
-        if(thing == 'notverify'):
+        if(thing == 'notscience_verification'):
             selection['science_verification'] = False
             recognised = True
         if(thing[:7] == 'filter=' or thing[:7] == 'Filter='):
@@ -254,7 +258,9 @@ def queryselection(query, selection):
         query = query.filter(DiskFile.canonical == selection['canonical'])
 
     if('engineering' in selection):
-        query = query.filter(Header.engineering == selection['engineering'])
+        # Ignore the "Inlcude" dummy value
+        if(selection['engineering'] in [True, False]):
+            query = query.filter(Header.engineering == selection['engineering'])
 
     if('science_verification' in selection):
         query = query.filter(Header.science_verification == selection['science_verification'])
@@ -516,13 +522,16 @@ def selection_to_URL(selection):
         elif key == 'engineering':
             if (selection[key] is True):
                 urlstring += '/engineering'
-            else:
+            elif (selection[key] is False):
                 urlstring += '/notengineering'
+            else:
+                urlstring += '/includeengineering'
+
         elif key == 'science_verification':
             if (selection[key] is True):
-                urlstring += '/verify'
+                urlstring += '/science_verification'
             else:
-                urlstring += '/notverify'
+                urlstring += '/notscience_verification'
         else:
             urlstring = urlstring + '/' + str(selection[key])
     

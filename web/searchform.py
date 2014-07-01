@@ -120,14 +120,19 @@ def updateform(html, selection):
             html = html.replace('name="object"', 'name="object" value="%s"' % urllib.unquote_plus(selection[key]))
         elif key == 'engineering':
             if (selection[key] is True):
-                html = html.replace('value="engineering"', 'value="engineering" selected')
+                html = html.replace('value="EngOnly"', 'value="EngOnly" selected')
+            elif (selection[key] is False):
+                html = html.replace('value="EngExclude"', 'value="EngExclude" selected')
             else:
-                html = html.replace('value="notengineering"', 'value="notengineering" selected')
+                html = html.replace('value="EngInclude"', 'value="EngInclude" selected')
+
         elif key == 'science_verification':
             if (selection[key] is True):
-                html = html.replace('value="verify"', 'value="verify" selected')
+                html = html.replace('value="SvOnly"', 'value="SvOnly" selected')
+            elif (selection[key] is False):
+                html = html.replace('value="SvExclude"', 'value="SvExclude" selected')
             else:
-                html = html.replace('value="notverify"', 'value="notverify" selected')
+                html = html.replace('value="SvInclude"', 'value="SvInclude" selected')
         else:
             html = html.replace('value="%s"' % selection[key], 'name="%s" checked' % key)
     
@@ -202,6 +207,23 @@ def updateselection(formdata, selection):
                    num = float(stringval) 
                    selectionstrings.append(num)
             selection[key] = '%s - %s' % ("{0:.3f}".format(selectionstrings[0]), "{0:.3f}".format(selectionstrings[1]))
+        elif key == 'engineering':
+            if value == 'EngExclude':
+                selection[key] = False
+            elif value == 'EngOnly':
+                selection[key] = True
+            if value == 'EngInclude':
+                # dummy value
+                selection[key] = 'Include'
+        elif key == 'science_verification':
+            if value == 'SvExclude':
+                selection[key] = False
+            elif value == 'SvOnly':
+                selection[key] = True
+            if value == 'SvInclude':
+                if key in selection.keys():
+                    selection.pop(key)
+
         else:
             selection[key] = value
 
