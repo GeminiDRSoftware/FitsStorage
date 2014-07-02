@@ -29,7 +29,7 @@ from web.qastuff import qareport, qametrics, qaforgui
 from web.statistics import content, stats
 from web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password, staff_access, user_list
 from web.userprogram import my_programs
-from web.searchform import searchform
+from web.searchform import searchform, nameresolver
 
 from orm import sessionfactory
 from orm.file import File
@@ -105,6 +105,12 @@ def handler(req):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
         return searchform(req, things, orderby)
+
+    # Name resolver
+    if(this == 'nameresolver'):
+        if(this in blocked_urls):
+            return apache.HTTP_FORBIDDEN
+        return nameresolver(req, things)
 
     # A debug util
     if(this == 'debug'):

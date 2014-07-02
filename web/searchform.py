@@ -220,3 +220,33 @@ def updateselection(formdata, selection):
         else:
             selection[key] = value
 
+
+def nameresolver(req, things):
+    """
+    A name resolver proxy. Pass it the resolver and object name
+    """
+
+    if(len(things) != 2):
+        return apache.HTTP_NOT_ACCEPTABLE
+
+    resolver = things[0]
+    object = things[1]
+
+    urls = {
+        'simbad': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/S?',
+        'ned': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/N?',
+        'vizier': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/V?'
+    }
+
+    if resolver not in urls.keys():
+        return apache.HTTP_NOT_ACCEPTABLE
+
+
+    url = urls[resolver] + object
+
+    u = urllib.urlopen(url)
+    xml = u.read()
+    u.close()
+
+    req.write(xml)
+    return apache.OK
