@@ -4,7 +4,7 @@ Functions in this module are only used within FitsStorageWebSummary.
 """
 from sqlalchemy import or_
 
-from gemini_metadata_utils import gemini_telescope, gemini_instrument, gemini_date, gemini_daterange, gemini_observation_type, gemini_observation_class, gemini_reduction_state, gemini_caltype, gmos_gratingname, gmos_focal_plane_mask, gemini_fitsfilename, gemini_binning, GeminiDataLabel, GeminiObservation, GeminiProject
+from gemini_metadata_utils import gemini_telescope, gemini_instrument, gemini_date, gemini_daterange, gemini_observation_type, gemini_observation_class, gemini_reduction_state, gemini_caltype, gmos_gratingname, gmos_focal_plane_mask, gemini_fitsfilename, gemini_binning, GeminiDataLabel, GeminiObservation, GeminiProject, ratodeg, dectodeg, srtodeg
 
 import dateutil.parser
 import datetime
@@ -175,6 +175,9 @@ def getselection(things):
         if(thing[:4] == 'dec=' or thing[:4] == 'Dec='):
             selection['dec'] = thing[4:]
             recognised = True
+        if(thing[:3] == 'sr=' or thing[:3] == 'SR='):
+            selection['sr'] = thing[3:]
+            recognised = True
         if(thing[:5] == 'crpa=' or thing[:5] == 'CRPA='):
             selection['crpa'] = thing[5:]
             recognised = True
@@ -204,7 +207,7 @@ def sayselection(selection):
     """
     string = ""
 
-    defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'object': 'Object Name', 'engineering': 'Engineering Data', 'science_verification': 'Science Verification Data', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI', 'filepre': 'File Prefix', 'mode': 'Spectroscopy Mode'}
+    defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'object': 'Object Name', 'engineering': 'Engineering Data', 'science_verification': 'Science Verification Data', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'sr': 'Search Radius', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI', 'filepre': 'File Prefix', 'mode': 'Spectroscopy Mode'}
     for key in defs:
         if key in selection:
             string += "; %s: %s" % (defs[key], selection[key])
@@ -410,17 +413,80 @@ def queryselection(query, selection):
             query = query.filter(Header.elevation >= a).filter(Header.elevation < b)
 
     if('ra' in selection):
-        [a, b] = _parse_range(selection['ra'])
-        if(a is not None and b is not None):
-            if a > b:
-                query = query.filter(or_(Header.ra >= a, Header.ra < b))
+        # might be a range or a single value
+        value = selection['ra'].split('-')
+        if (len(value) == 1):
+            # single value
+            degs = ratodeg(value[0])
+            if (degs is None):
+                # Invalid value.
+                selection['notrecognised'] = 'Invalid RA'
+            # valid single value, get search radius
+            if 'sr' in selection.keys():
+                sr = selection['sr']
+                sr = srtodeg(sr)
+                if (sr is None):
+                    selection['notrecognised'] = 'Invalid Search Radius'
+            else:
+                # No search radius specified. Default it for them
+                selection['sr'] = 180
+                sr = srtodeg(180)
+            lower = degs - sr
+            upper = degs + sr
+
+        elif (len(value) == 2):
+            # Got two values
+            lower = ratodeg(value[0])
+            upper = ratodeg(value[1])
+            if((lower is None) or (upper is None)):
+                selection['notrecognised'] = 'Invalid RA'
+
+        else:
+            # Invalid string format for RA
+            selection['notrecognised'] = 'Invalid RA'
+
+        if(lower is not None) and (upper is not None):
+            if upper > lower:
+                query = query.filter(Header.ra >= lower).filter(Header.ra < upper)
             else: 
-                query = query.filter(Header.ra >= a).filter(Header.ra < b)
+                query = query.filter(or_(Header.ra >= lower, Header.ra < upper))
 
     if('dec' in selection):
-        [a, b] = _parse_range(selection['dec'])
-        if(a is not None and b is not None):
-            query = query.filter(Header.dec >= a).filter(Header.dec < b)
+        # might be a range or a single value
+        value = selection['dec'].split('-')
+        if (len(value) == 1):
+            # single value
+            degs = dectodeg(value[0])
+            if (degs is None):
+                # Invalid value.
+                selection['notrecognised'] = 'Invalid Dec'
+            # valid single value, get search radius
+            if 'sr' in selection.keys():
+                sr = selection['sr']
+                sr = srtodeg(sr)
+                if (sr is None):
+                    selection['notrecognised'] = 'Invalid Search Radius'
+            else:
+                # No search radius specified. Default it for them
+                selection['sr'] = 180
+                sr = srtodeg(180)
+            lower = degs - sr
+            upper = degs + sr
+
+        elif (len(value) == 2):
+            # Got two values
+            lower = dectodeg(value[0])
+            upper = dectodeg(value[1])
+            if((lower is None) or (upper is None)):
+                selection['notrecognised'] = 'Invalid Dec'
+
+        else:
+            # Invalid string format for Dec
+            selection['notrecognised'] = 'Invalid Dec'
+
+        if(lower is not None) and (upper is not None):
+            query = query.filter(Header.dec >= lower).filter(Header.dec < upper)
+
 
     if('crpa' in selection):
         [a, b] = _parse_range(selection['crpa'])
@@ -498,11 +564,8 @@ def selection_to_URL(selection):
                 urlstring += '/imaging'
         elif key == 'filter':
             urlstring += '/filter=%s' % selection[key]
-        elif key in ['ra', 'dec']:
-            if key == 'ra':
-                urlstring += '/ra=%s' % selection[key]
-            else: 
-                urlstring += '/dec=%s' % selection[key]
+        elif key in ['ra', 'dec', 'sr']:
+            urlstring += '/%s=%s' % (key, selection[key])
         elif key == 'present':
             if (selection[key] is True):
                 urlstring += '/present'

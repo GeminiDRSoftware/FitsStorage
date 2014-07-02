@@ -105,23 +105,28 @@ def updateform(html, selection):
     """
     for key in selection.keys():
         if key in ['program_id', 'observation_id', 'data_label']:
+            # Program id etc 
             html = html.replace('name="program_id"', 'name="program_id" value="%s"' % selection[key])
+
         elif key in ['date', 'daterange']:
             # If there is a date and a daterange, only use the date part
             if('date' in selection.keys() and 'daterange' in selection.keys()):
                 key = 'date'
             html = html.replace('name="date"', 'name="date" value="%s"' % selection[key])
-        elif key in ['target_name', 'ra', 'dec', 'search_rad', 'cntrl_wvlngth']:
+
+        elif key in ['ra', 'dec', 'sr', 'object']:
+            # These are all the text fields that don't need anything special
             html = html.replace('name="%s"' % key, 'name=%s value="%s"' % (key, selection[key]))
+
         elif key in ['inst', 'observation_class', 'observation_type', 'filter', 'resolver', 'binning', 'disperser', 'mask']:
             html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
+
         elif key == 'spectroscopy':
             if (selection[key] is True):
                 html = html.replace('value="spectroscopy"', 'value="spectroscopy" selected')
             else:
                 html = html.replace('value="imaging"', 'value="imaging" selected')
-        elif key == 'object':
-            html = html.replace('name="object"', 'name="object" value="%s"' % selection[key])
+
         elif key == 'engineering':
             if (selection[key] is True):
                 html = html.replace('value="EngOnly"', 'value="EngOnly" selected')
@@ -173,44 +178,18 @@ def updateselection(formdata, selection):
             # removes spaces from daterange queries
             value = value.replace(' ', '')
             selection[key] = value
-        elif key in ['ra', 'dec']:
-            # formats RA and dec values appropriately, converts to decimal degrees if necessary
-            selection[key] = value
+        elif key in ['ra', 'dec', 'sr']:
+            # Check the formatting of RA, Dec, search radius values. Keep them in same format as given though.
+            
+            # Eliminate any whitespace
             value = value.replace(' ', '')
-            rangesplit = re.split('(?:[0-9]\-)', value)
-            selectionstrings = []
-            for stringval in rangesplit:
-                if ':' in stringval:
-                    # converts RA values to decimal degrees
-                    ra_strings = str.split(stringval, ':')
-                    ra_vals = []
-                    for num in ra_strings:
-                        num = float(num)
-                        ra_vals.append(num)
-                    if len(ra_vals) == 3 and key == 'ra':
-                        hrs = (ra_vals[0] / 24) * 360
-                        mins = (ra_vals[1] / 1440) 
-                        sec = (ra_vals[2] / 86400)
-                        degs = hrs + mins + sec
-                        selectionstrings.append(degs)
-                    elif len(ra_vals) == 3 and key == 'dec':
-                        # converts dec values to decimal degrees
-                        degs = ra_vals[0]
-                        mins = (ra_vals[1] / 1440) 
-                        sec = (ra_vals[2] / 86400)
-                        if degs >= 0:
-                            degs +=  mins + sec
-                        else: 
-                            degs -= mins + sec
-                        selectionstrings.append(degs)
-                    else:
-                        for val in ra_strings:
-                            num = float(val)
-                            selectionstrings.append(num)
-                else:
-                   num = float(stringval) 
-                   selectionstrings.append(num)
-            selection[key] = '%s - %s' % ("{0:.3f}".format(selectionstrings[0]), "{0:.3f}".format(selectionstrings[1]))
+
+            # Should do more format verification here?
+            # but don't try and interpret it here.
+
+            # Put into selection dictionary
+            selection[key] = value
+
         elif key == 'engineering':
             if value == 'EngExclude':
                 selection[key] = False
