@@ -22,7 +22,7 @@ with open(os.path.join(fits_aux_datadir, "titlebar.html")) as f:
 with open(os.path.join(fits_aux_datadir, "form.html")) as f:
     form_html = f.read()
 
-def searchform(req, things):
+def searchform(req, things, orderby):
    """
    Generate the searchform html and handle the form submit.
    """
@@ -50,9 +50,18 @@ def searchform(req, things):
    selection = getselection(things)
    formdata = util.FieldStorage(req)
 
+   # Also args to pass on to results page
+   args_string = ""
+   if (orderby):
+       args_string = '?orderby=%s' % orderby[0]
+   
+
    if(formdata):
        if((len(formdata) == 2) and ('engineering' in formdata.keys()) and ('science_verification' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and (formdata['science_verification'].value == 'SvInclude')):
            # This is the default form state, someone just hit submit without doing anything.
+           pass
+       elif (formdata.keys() == ['orderby']):
+           # All we have is an orderby - don't redirect
            pass
        else:
            # Populate selection dictionary with values from form input
@@ -60,7 +69,7 @@ def searchform(req, things):
            # builds URL, clears formdata, refreshes page with updated selection from form
            urlstring = selection_to_URL(selection)
            formdata.clear()
-           util.redirect(req, '/searchform' + urlstring)       
+           util.redirect(req, '/searchform' + urlstring + args_string)
 
    req.content_type = "text/html"
    req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head>')
@@ -75,6 +84,7 @@ def searchform(req, things):
    req.write(titlebar_html)
 
    req.write('<input type="hidden" id="things" name="things" value="%s">' % thing_string)
+   req.write('<input type="hidden" id="args" name="args" value="%s">' % args_string)
    req.write('<div class="page">')
    req.write('<form class="searchform" action="/searchform" method="POST">')
    
@@ -83,7 +93,7 @@ def searchform(req, things):
    selectionstring = selection_to_URL(selection)
 
    if(selection):
-       req.write('<input type="hidden" id="url" value="%s">' % selectionstring)
+       req.write('<input type="hidden" id="url" value="%s%s">' % (selectionstring, args_string))
    
    req.write('</form>')
    req.write('<hr noshade>')
