@@ -29,37 +29,36 @@ $(document).ready(function() {
     };
 });
 
-$('#resolver').click(function() {
-});
+$('#resbutton').click(function() {
+    var object_name = document.getElementById("object_name");
 
-$(function resolver() {
-    var object_name = $('#object_name').val();
-
-    if ($("#resolver").val().match("SIMBAD")) {
-        var resolverget = 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/S?' + object_name;
-    } else if ($("#resolver").val().match("NED")) {
-        var resolverget = 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/N?' + object_name;
-    } else if ($("#resolver").val().match("VIZIER")) {
-        var resolverget = 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/V?' + object_name;
+    if document.getElementById("resolver").value = "SIMBAD" {
+        var resolverurl = 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/S?' + object_name;
+    } else if document.getElementById("resolver").value = "NED" { 
+        var resolverurl = 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/N?' + object_name;
+    } else if document.getElementById("resolver").value = "VIZIER" {
+        var resolverurl = 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/V?' + object_name;
     } else {
-        resolverget = 'none'
+        resolverurl = 'none'
         alert("Please select a resolver from the dropdown menu")
     }
-
-    $.ajax({
-        type: 'POST',
-        url: resolverget,
-        dataType: 'xml',
-        success: function(xml) {
-		     $('#ra').val($("jradeg", xml).text());
-                     $('#dec').val($("jdecdeg", xml).text());
-                 }
-    });
+        
+    if (window.XMLHttpRequest) {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState==4 && xmlhttp.status==200) {
+                ra = xmlhttp.responseXML.documentElement.getElementsByTagName("jradeg");
+                dec = xmlhttp.responseXML.documentElement.getElementsByTagName("jdecdeg");
+                document.getElementById("ra").innerHTML = ra;
+                document.getElementById("dec").innerHTML = dec;
+            } else {
+                alert("Something went wrong I guess");
+            }
+        alert("Old browser alert");
+        }
+    
+    xmlhttp.open("GET", resolverurl, true);
+    xmlhttp.send();
+    }
 });
 
-function parseXML(xml) {
-    var xmlreadout = $.parseXML(xml),
-    $xml = $( xmlreadout ),
-    $ra = $xml.find( "jradeg" ),
-    $dec = $xml.find( "jdecdeg" )
-}
