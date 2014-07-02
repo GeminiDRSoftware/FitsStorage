@@ -113,6 +113,98 @@ def gemini_date(string):
         return then.date().strftime('%Y%m%d')
     return ''
 
+racre = re.compile('^([012]\d):([012345]\d):([012345]\d)(\.?\d*)$')
+def ratodeg(string):
+    """
+    A utility function that recognises an RA: HH:MM:SS.sss
+    Or a decimal degrees RA value
+    Returns a float in decimal degrees if it is valid, None otherwise
+    """
+    re_match = racre.match(string)
+    if re_match is None:
+        # Not HH:MM:SS. Maybe it's decimal degrees already
+        try:
+            value = float(string)
+            if(value <= 360.0 and value >= 0.0):
+                return value
+        except:
+            return None
+        return None
+    hours = float(re_match.group(1))
+    mins = float(re_match.group(2))
+    secs = float(re_match.group(3))
+    frac = re_match.group(4)
+    if frac:
+        frac = float(frac)
+    else:
+        frac = 0.0
+
+    secs += frac
+    mins += secs/60.0
+    hours += mins / 60.0
+
+    degs = 15.0 * hours
+
+    return degs
+
+deccre = re.compile('^([+-]?)(\d\d):([012345]\d):([012345]\d)(\.?\d*)$')
+def dectodeg(string):
+    """
+    A utility function that recognises a Dec: [+-]DD:MM:SS.sss
+    Returns a float in decimal degrees if it is valid, None otherwise
+    """
+    re_match = deccre.match(string)
+    if re_match is None:
+        # Not DD:MM:SS. Maybe it's decimal degrees already
+        try:
+            value = float(string)
+            if(value >= -90.0 and value <= 90.0):
+                return value
+        except:
+            return None
+        return None
+    sign = 1
+    if(re_match.group(1) == '-'):
+        sign = -1
+
+    degs = float(re_match.group(2))
+    mins = float(re_match.group(3))
+    secs = float(re_match.group(4))
+    frac = re_match.group(5)
+    if frac:
+        frac = float(frac)
+    else:
+        frac = 0.0
+
+    secs += frac
+    mins += secs/60.0
+    degs += mins / 60.0
+
+    return degs
+    
+def srtodeg(string):
+    """
+    Converts a Search Radius to a decimal degrees.
+    If the input is less than 1.0, assume degimal degs already
+    Otherwise assume arcseconds
+    Return None if invalid
+    """
+
+    try:
+        number = float(string)
+    except:
+        return None
+
+    if (number < 0.0):
+        # not valid
+        return None
+    elif (number < 1.0):
+        # In degrees already
+        return number
+    else:
+        # In arcseconds
+        return number / 3600.0
+
 daterangecre = re.compile('^([12][90]\d\d[01]\d[0123]\d)-([12][90]\d\d[01]\d[0123]\d)$')
 def gemini_daterange(string):
     """
