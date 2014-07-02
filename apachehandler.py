@@ -59,8 +59,11 @@ def handler(req):
     # This gives everything from the uri below the handler
     # eg if we're handling /python and we're the client requests
     # http://server/python/a/b.fits then we get a/b.fits
+
     # Use the unparsed_uri as there may be encoded slashes in it that get parsed and we dont want to hit those.
     uri = req.unparsed_uri
+    # But then we need to manually split off ?arguments
+    uri = uri.split('?')[0]
     
     # Split this about any /s
     things = uri.split('/')
@@ -83,6 +86,15 @@ def handler(req):
         args = req.args.split('&')
         while(args.count('')):
             args.remove('')
+        # We should parse the arguments here too
+        # All we have for now are order_by arguments
+        # We form a list of order_by keywords
+        # We should probably do more validation here
+    orderby = []
+    for i in range(len(args)):
+        match = orderbycre.match(args[i])
+        if(match):
+            orderby.append(match.group(1))
  
     # OK, need to parse what we got.
 
@@ -92,7 +104,7 @@ def handler(req):
     if(this == 'searchform'):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
-        return searchform(req, things)
+        return searchform(req, things, orderby)
 
     # A debug util
     if(this == 'debug'):
@@ -121,16 +133,6 @@ def handler(req):
         # Expect some combination of program_id, observation_id, date and instrument name
         # We put the ones we got in a dictionary
         selection = getselection(things)
-
-        # We should parse the arguments here too
-        # All we have for now are order_by arguments
-        # We form a list of order_by keywords
-        # We should probably do more validation here
-        orderby = []
-        for i in range(len(args)):
-            match = orderbycre.match(args[i])
-            if(match):
-                orderby.append(match.group(1))
 
         retval = summary(req, this, selection, orderby, links, download_links)
         return retval
