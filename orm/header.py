@@ -124,8 +124,12 @@ class Header(Base):
                 self.observation_type = 'RONCHI'
             self.observation_class = ad.observation_class().for_db()
             self.object = ad.object().for_db()
-            self.ra = ad.ra().for_db()
-            self.dec = ad.dec().for_db()
+
+            # RA and Dec are not valid for AZEL_TARGET frames
+            if('AZEL_TARGET' not in ad.types):
+                self.ra = ad.ra().for_db()
+                self.dec = ad.dec().for_db()
+
             self.azimuth = ad.azimuth().for_db()
             self.elevation = ad.elevation().for_db()
             self.cass_rotator_pa = ad.cass_rotator_pa().for_db()
