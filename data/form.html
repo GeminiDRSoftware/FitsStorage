@@ -5,13 +5,13 @@
     <input id="object_name" type="text" placeholder="(leave blank for Any)" name="object"><br /><br />
  
     <label>Resolver:</label>
-    <select class="ddw">
+    <select id="resolver" class="ddw">
          <option value="">&lt;none&gt;</option>
          <option value="SIMBAD">SIMBAD</option>
          <option value="NED">NED</option>
          <option value="VIZIER">VIZIER</option>
     </select>
-    <button id="resbutton" type="button" class="resolver">Resolve</button>
+    <button id="resbutton" type="button">Resolve</button>
     <br /><br />
 
     <label>RA:</label>
@@ -128,27 +128,6 @@
         <p class="help">This is a top level selection of common broad band filters. For instrument specific selections, select the instrument in question above and then select the filter inside the instrument specific section that will appear.</p>
     </span><br />
 
-    <label>Engineering: </label>
-    <select class="ddw" name="engineering">
-        <option value="EngExclude">Exclude</option>
-        <option value="EngInclude">Include</option>
-        <option value="EngOnly">Only</option>
-    </select>
-    <span class="help">(?)
-        <p class="help">Choose whether to include, exclude, or display only respective engineering data.</p>
-    </span><br />
-
-    <label>Verification: </label>
-    <select class="ddw" name="science_verification">
-        <option value="SvInclude">Include</option>
-        <option value="SvExclude">Exclude</option>
-        <option value="SvOnly">Only</option>
-    </select>
-    <span class="help">(?)
-        <p class="help">Choose whether to include, exclude, or display only science verification data.</p>
-    </span><br /><br />
-
-
 <div id="Spec" style="display:none">
 
     <label>Central Wavelength: </label>
@@ -156,14 +135,36 @@
     <span class="help"> (microns)</span><br /><br /><br />
 
 </div>
-
     Find associated calibrations <input type="checkbox" name="calibrations" disabled="disabled"><br />
-
 </div>
 
-<div class="next"></div>
+<div class="next" id="advanced">
+    <h3 id="advanced_header">&#9662 Advanced</h3>
+    <div id="advanced_options" style="display:none">
+        <select class="ddw" name="engineering">
+            <option value="EngExclude">Exclude</option>
+            <option value="EngInclude">Include</option>
+            <option value="EngOnly">Find Only</option>
+        </select>
+        Engineering data
+        <span class="help">(?)
+            <p class="help">Choose whether to include, exclude, or display only respective engineering data.</p>
+        </span>
+        <br />
 
-<div id="GMOS" style="display:none">
+        <select class="ddw" name="science_verification">
+            <option value="SvInclude">Include</option>
+            <option value="SvExclude">Exclude</option>
+            <option value="SvOnly">Find Only</option>
+        </select>
+        Science Verification data
+        <span class="help">(?)
+            <p class="help">Choose whether to include, exclude, or display only science verification data.</p>
+        </span><br />
+    </div>
+</div>
+
+<div class="next" id="GMOS" style="display:none">
     <h3>GMOS</h3>
 
     <label><b>Binning:</b></label><select class="ddw" name="binning" disabled="disabled">
