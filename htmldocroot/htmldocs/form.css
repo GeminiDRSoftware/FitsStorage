@@ -9,6 +9,10 @@ input {
     clear: left;
 }
 
+.wide {
+    width: 14em;
+}
+
 .next {
     clear: both;
 }
