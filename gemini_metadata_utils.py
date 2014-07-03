@@ -307,7 +307,7 @@ def gmos_focal_plane_mask(string):
     """
 
     retary = ''
-    facility = ['NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', 'IFU', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec']
+    facility = ['NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec']
 
     retary = None
     if(string in facility):
