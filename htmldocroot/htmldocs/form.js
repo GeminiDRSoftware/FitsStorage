@@ -6,6 +6,11 @@ $(function() {
             $('#GMOS').hide();
         }
     });
+
+    if ($('#instselect').val().match("GMOS")) {
+        $('#GMOS').show();
+    }
+
 });
 
 $(function() {
@@ -16,6 +21,11 @@ $(function() {
             $('#Spec').hide();
         }
     });
+
+    if ($('#Mode').val().match("spectroscopy")) {
+        $('#Spec').show();
+    }
+
 });
 
 $(function() {
