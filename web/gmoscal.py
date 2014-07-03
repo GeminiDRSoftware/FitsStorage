@@ -45,35 +45,37 @@ def gmoscal(req, selection):
         req.write("<P>You should not see this message from facility central servers</P>")
         return apache.HTTP_NOT_IMPLEMENTED
 
-    # If no date or daterange, look on endor or josie to get the last processing date
-    if(('date' not in selection) and ('daterange' not in selection)):
-        base_dir = das_calproc_path
-        checkfile = 'Basecalib/biasall.list'
-        enddate = datetime.datetime.now().date()
-        oneday = datetime.timedelta(days=1)
-        date = enddate
-        found = -1000
-        startdate = None
-        while(found < 0):
-            datestr = date.strftime("%Y%b%d").lower()
-            file = os.path.join(base_dir, datestr, checkfile)
-            if(os.path.exists(file)):
-                found = 1
-                startdate = date
-            date -= oneday
-            found += 1
-
-            if(startdate):
-                # Start the day after the last reduction
-                startdate += oneday
-                selection['daterange'] = "%s-%s" % (startdate.strftime("%Y%m%d"), enddate.strftime("%Y%m%d"))
-                req.write("<H2>Auto-detecting Last Processing Date: %s<H2>" % selection['daterange'])
-
     # Get a database session
     session = sessionfactory()
     try:
         # First the Twilight Flats part
         req.write('<H2>Twilight Flats</H2>')
+
+        # Was a date provided by user?
+        datenotprovided = ('date' not in selection) and ('daterange' not in selection)
+        # If no date or daterange, look on endor or josie to get the last processing date
+        if(datenotprovided):
+            base_dir = das_calproc_path
+            checkfile = 'Basecalib/flatall.list'
+            enddate = datetime.datetime.now().date()
+            oneday = datetime.timedelta(days=1)
+            date = enddate
+            found = -1000
+            startdate = None
+            while(found < 0):
+                datestr = date.strftime("%Y%b%d").lower()
+                file = os.path.join(base_dir, datestr, checkfile)
+                if(os.path.exists(file)):
+                    found = 1
+                    startdate = date
+                date -= oneday
+                found += 1
+    
+                if(startdate):
+                    # Start the day after the last reduction
+                    startdate += oneday
+                    selection['daterange'] = "%s-%s" % (startdate.strftime("%Y%m%d"), enddate.strftime("%Y%m%d"))
+                    req.write("<H2>Auto-detecting Last Processing Date: %s</H2>" % selection['daterange'])
 
         # We do this twice, first for the science data, then for the twilight flat data
         # These are differentiated by being science or dayCal
@@ -186,6 +188,30 @@ def gmoscal(req, selection):
 
         # Now the BIAS report
         req.write('<H2>Biases</H2>')
+
+        # If no date or daterange, look on endor or josie to get the last processing date
+        if(datenotprovided):
+            base_dir = das_calproc_path
+            checkfile = 'Basecalib/biasall.list'
+            enddate = datetime.datetime.now().date()
+            oneday = datetime.timedelta(days=1)
+            date = enddate
+            found = -1000
+            startdate = None
+            while(found < 0):
+                datestr = date.strftime("%Y%b%d").lower()
+                file = os.path.join(base_dir, datestr, checkfile)
+                if(os.path.exists(file)):
+                    found = 1
+                    startdate = date
+                date -= oneday
+                found += 1
+    
+                if(startdate):
+                    # Start the day after the last reduction
+                    startdate += oneday
+                    selection['daterange'] = "%s-%s" % (startdate.strftime("%Y%m%d"), enddate.strftime("%Y%m%d"))
+                    req.write("<H2>Auto-detecting Last Processing Date: %s</H2>" % selection['daterange'])
 
         if(time.daylight):
             tzoffset = datetime.timedelta(seconds=time.altzone)
