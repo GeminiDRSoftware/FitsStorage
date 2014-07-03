@@ -131,11 +131,18 @@ def updateform(html, selection):
         elif key in ['inst', 'observation_class', 'observation_type', 'filter', 'resolver', 'binning', 'disperser', 'mask']:
             html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
 
-        elif key == 'spectroscopy':
-            if (selection[key] is True):
-                html = html.replace('value="spectroscopy"', 'value="spectroscopy" selected')
-            else:
+        elif key in ['spectroscopy', 'mode']:
+            if (selection[key] is False):
                 html = html.replace('value="imaging"', 'value="imaging" selected')
+            else:
+                if ('mode' in selection.keys() and selection['mode'] == 'MOS'):
+                    html = html.replace('value="MOS"', 'value="MOS" selected')
+                elif ('mode' in selection.keys() and selection['mode'] == 'IFU'):
+                    html = html.replace('value="IFU"', 'value="IFU" selected')
+                elif ('mode' in selection.keys() and selection['mode'] == 'LS'):
+                    html = html.replace('value="LS"', 'value="LS" selected')
+                else:
+                    html = html.replace('value="spectroscopy"', 'value="spectroscopy" selected')
 
         elif key == 'engineering':
             if (selection[key] is True):
