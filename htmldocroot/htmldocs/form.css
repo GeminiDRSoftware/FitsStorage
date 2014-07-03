@@ -10,7 +10,7 @@ input {
 }
 
 .wide {
-    width: 14em;
+    width: auto;
 }
 
 .next {
