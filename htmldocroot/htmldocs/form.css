@@ -46,7 +46,7 @@ input {
     font-style: italic;
 }
 
-p.help {
+p.helpleft {
     display: none;
     font-size: 1.2em;
     width: 20em;
@@ -54,6 +54,18 @@ p.help {
     padding: 10px;
     background: #CCA;
     border: double;
+    left: auto;
+}
+
+p.helpright {
+    display: none;
+    font-size: 1.2em;
+    width: 20em;
+    position: absolute;
+    padding: 10px;
+    background: #CCA;
+    border: double;
+    left: 500px;
 }
 
 .help:hover p {

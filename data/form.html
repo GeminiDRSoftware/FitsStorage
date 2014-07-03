@@ -4,7 +4,7 @@
     <label>Target Name:</label>
     <input id="object_name" type="text" placeholder="(leave blank for Any)" name="object">
     <span class="help"> (Name of Target)
-        <p class="help">Enter a target name here. If you leave Reslover at None, then this will do a literal exact match search for data with the target name as specified. If you set a Name Resolver and click resolve, we will replace the target name with its co-ordinates, and do a co-ordinate search.</p>
+        <p class="helpright">Enter a target name here. If you leave Reslover at None, then this will do a literal exact match search for data with the target name as specified. If you set a Name Resolver and click resolve, we will replace the target name with its co-ordinates, and do a co-ordinate search.</p>
     </span><br />
  
     <label>Resolver:</label>
@@ -16,32 +16,32 @@
     </select>
     <button id="resbutton" type="button">Resolve</button>
     <span class="help"> (Name Resolver)
-        <p class="help">Choose a Name Resolver and click the resolve button to attempt to find the co-ordinates of your named source. We erase the target name field because you probably don't want to search by literal object name as well as by co-ordinates.</p>
+        <p class="helpright">Choose a Name Resolver and click the resolve button to attempt to find the co-ordinates of your named source. We erase the target name field because you probably don't want to search by literal object name as well as by co-ordinates.</p>
     </span>
     <br />
 
     <label>RA:</label>
     <input id="ra" type="text" placeholder="(leave blank for Any)" name="ra">
     <span class="help"> (HH:MM:SS.ss or decimal degrees)
-    <p class="help">Right Ascention. You can use HH:MM:SS[.ss...] or decimal degrees. In either case you can specify a single value or a range, eg 11:22:33 - 12:34:56. If you enter a single value, also see the Search Radius field.</p>
+    <p class="helpright">Right Ascension. You can use HH:MM:SS[.ss...] or decimal degrees. In either case you can specify a single value or a range, eg 11:22:33 - 12:34:56. If you enter a single value, also see the Search Radius field.</p>
     </span><br />
 
     <label>Dec:</labeL>
     <input id="dec" type="text" placeholder="(leave blank for Any)" name="dec">
     <span class="help"> ([+-]DD:MM:SS.ss or decimal degrees)
-    <p class="help">Declination. You can use [+|-]DD:MM:SS[.ss...] or decimal degrees. In either case you can specify a single value or a range, eg 11:22:33 - 12:34:56 or -65:43:21 - -12:34:56. If you enter a single value, also see the Search Radius field.</p>
+    <p class="helpright">Declination. You can use [+|-]DD:MM:SS[.ss...] or decimal degrees. In either case you can specify a single value or a range, eg 11:22:33 - 12:34:56 or -65:43:21 - -12:34:56. If you enter a single value, also see the Search Radius field.</p>
     </span><br />
 
     <label>Search radius:</label>
     <input type="text" placeholder="(leave blank for Any)" name="sr">
     <span class="help"> (arcseconds or decimal degrees)
-        <p class="help">If a single RA and/or dec value has been chosen, this specifies the size of the box around it to search. This is actually  a simple search a square box (in the tangent plane), not a true cone search. We simply take the range [ra-sr - ra+sr] or [dec-sr - dec+sr]. Strange things may happen near the poles.</p>
+        <p class="helpright">If a single RA and/or dec value has been chosen, this specifies the size of the box around it to search. This is actually  a simple search a square box (in the tangent plane), not a true cone search. We simply take the range [ra-sr - ra+sr] or [dec-sr - dec+sr]. Strange things may happen near the poles.</p>
     </span>
     <br />
     <label class="wide">Find Associated Calbrations:</label>
     <input type="checkbox" name="calibrations" disabled="disabled">
     <span class="help">(help)
-    <p class="help">Not implemented yet. This will also find calibrations associated with your search results</p>
+    <p class="helpright">Not implemented yet. This will also find calibrations associated with your search results</p>
     </span><br />
     <label class="wide" id="advanced_header">Advanced Options &#9662</label>
     <div id="advanced_options" style="display:none">
@@ -52,7 +52,7 @@
         </select>
         Engineering data
         <span class="help">(help)
-            <p class="help">Choose whether to include, exclude, or display only respective engineering data.</p>
+            <p class="helpright">Choose whether to include, exclude, or display only respective engineering data.</p>
         </span>
         <br />
 
@@ -63,7 +63,7 @@
         </select>
         Science Verification data
         <span class="help">(help)
-            <p class="help">Choose whether to include, exclude, or display only science verification data.</p>
+            <p class="helpright">Choose whether to include, exclude, or display only science verification data.</p>
         </span><br />
         <br />
     </div>
@@ -74,13 +74,13 @@
     <label>Program ID:</label>
     <input type="text" placeholder="(leave empty for Any)" name="program_id">
     <span class="help">(or Obs. ID / Data Label. Exact Match)
-        <p class="help">You can put a program ID, Observation ID or Data Label into this box. The search will be for an exact match to what you put in, substring type matches are not provided. Example: GN-2001A-Q-1</p>
+        <p class="helpleft">You can put a program ID, Observation ID or Data Label into this box. The search will be for an exact match to what you put in, substring type matches are not provided. Example: GN-2001A-Q-1</p>
     </span><br />
 
     <label>Date:</label>
     <input type="text" placeholder="(leave empty for Any)" name="date">
     <span class="help">(YYYYMMDD or start - end)
-        <p class="help">You can specify either an individual date in the form YYYYMMDD, or a date range in the form yyyymmdd - YYYYMMDD. Examples: 20101231 or 20100101 - 20100131</p>
+        <p class="helpleft">You can specify either an individual date in the form YYYYMMDD, or a date range in the form yyyymmdd - YYYYMMDD. Examples: 20101231 or 20100101 - 20100131</p>
     </span><br />
 
     <label>Instrument:</label>
@@ -100,7 +100,7 @@
         <option value="GSAOI">GSAOI</option>
     </select>
     <span class="help">(Select GMOS for GMOS-N and GMOS-S)
-        <p class="help">Select the instrument you are looking for data from. Selecing 'GMOS' will find data from both GMOS-N and GMOS-S</p>
+        <p class="helpleft">Select the instrument you are looking for data from. Selecing 'GMOS' will find data from both GMOS-N and GMOS-S</p>
     </span><br />
 
     <label>Obs. Class:</label>
@@ -114,7 +114,7 @@
         <option value="acqCal">acqCal</option>
     </select>
     <span class="help">(help)
-        <p class="help">Select an Observation Class here, or set it to Any to not search by Observation Class.</p>
+        <p class="helpleft">Select an Observation Class here, or set it to Any to not search by Observation Class.</p>
     </span><br />
 
     <label>Obs. Type:</label>
@@ -131,7 +131,7 @@
         <option value="FRINGE">FRINGE</option>
     </select>
     <span class="help">(help)
-        <p class="help">Select an Observation Type here, or set it to Any to not search by Observation Type.</p>
+        <p class="helpleft">Select an Observation Type here, or set it to Any to not search by Observation Type.</p>
     </span><br />
 
     <label>Mode:</label>
@@ -144,7 +144,7 @@
         <option value="spectroscopy">Integral field spectroscopy</option>
     </select>
     <span class="help">(Imaging / Spectroscopy etc)
-        <p class="help">Select Imaging or various Spectroscopy modes here. Spectropscopy implies all spectroscopic modes.</p>
+        <p class="helpleft">Select Imaging or various Spectroscopy modes here. Spectropscopy implies all spectroscopic modes.</p>
     </span><br />
     
     <label>Filter:</label>
@@ -164,7 +164,7 @@
         <option value="Q">Q</option>
     </select>
     <span class="help">(see also inside instrument sections)
-        <p class="help">This is a top level selection of common broad band filters. For instrument specific selections, select the instrument in question above and then select the filter inside the instrument specific section that will appear.</p>
+        <p class="helpleft">This is a top level selection of common broad band filters. For instrument specific selections, select the instrument in question above and then select the filter inside the instrument specific section that will appear.</p>
     </span><br />
 
     <div id="Spec" style="display:none">
