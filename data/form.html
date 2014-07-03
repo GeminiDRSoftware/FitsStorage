@@ -4,7 +4,7 @@
     <label>Target Name:</label>
     <input id="object_name" type="text" placeholder="(leave blank for Any)" name="object">
     <span class="help"> (Name of Target)
-        <p class="helpright">Enter a target name here. If you leave Reslover at None, then this will do a literal exact match search for data with the target name as specified. If you set a Name Resolver and click resolve, we will replace the target name with its co-ordinates, and do a co-ordinate search.</p>
+        <p class="helpright">Enter a target name here. If you don't <i>Reslove</i> the target name this will do a literal <b>exact match</b> search for data with the target name as specified. Be aware that observers sometimes use a different target name to what you expect - this is only really useful if you set up the Phase-II, or otherwise know exactly what target name was used. If you set a Name Resolver and click resolve, we will replace the target name with its co-ordinates, and do a co-ordinate search. This latter option is probably what you want if you're not sure.</p>
     </span><br />
  
     <label>Resolver:</label>
@@ -44,6 +44,8 @@
     <p class="helpright">Not implemented yet. This will also find calibrations associated with your search results</p>
     </span><br />
     <label class="wide" id="advanced_header">Advanced Options &#9662</label>
+    <span class="help">(click to show / hide)
+    <p class="helpright">Click where it says "Advanced Options" to show or hide the advanced options.</p></span>
     <div id="advanced_options" style="display:none">
         <select class="ddw" name="engineering">
             <option value="EngExclude">Exclude</option>
@@ -170,25 +172,25 @@
     <div id="Spec" style="display:none">
         <label class="wide">Central Wavelength: </label>
         <input type="text" placeholder="1.2" name="cntrl_wvlngth" size="8" disabled="disabled">
-        <span class="help"> (microns)</span><br /><br /><br />
+        <span class="help"> (microns)</span><br />
     </div>
 </div>
 
 <div class="next" id="GMOS" style="display:none">
-    <h3>GMOS</h3>
+    <br /><label>GMOS</label><br />
 
-    <label><b>Binning:</b></label><select class="ddw" name="binning" disabled="disabled">
+    <label>Binning:</label><select class="ddw" name="binning" disabled="disabled">
         <option value=""></option>
         <option value="x">x-binning</option>
         <option value="y">y-binning</option>
     </select><br />
 
-    <label><b>Disperser:</b></label><select class="ddw" name="disperser" disabled="disabled">
+    <label>Disperser:</label><select class="ddw" name="disperser" disabled="disabled">
         <option value=""></option>
         <option value="1">Disperser 1</option>
     </select><br />
 
-    <label><b>Mask:</b></label><select class="ddw" name="mask" disabled="disabled">
+    <label>Mask:</label><select class="ddw" name="mask" disabled="disabled">
         <option value=""></option>
         <option value="1">Mask 1</option>
     </select><br />
