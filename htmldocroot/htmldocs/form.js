@@ -75,7 +75,10 @@ $(function() {
                     document.getElementById("dec").value = dec;
                     document.getElementById("object_name").value = '';
                 }
-            }
+            },
+            error: function(request, status, errorThrown) {
+                alert("Please provide a valid target name to resolve");
+            } 
         });
     });
 });
