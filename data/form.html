@@ -4,7 +4,7 @@
     <label>Target Name:</label>
     <input id="object_name" type="text" placeholder="(leave blank for Any)" name="object">
     <span class="help"> (Name of Target)
-        <p class="helpright">Enter a target name here. If you don't <i>Reslove</i> the target name this will do a literal <b>exact match</b> search for data with the target name as specified. Be aware that observers sometimes use a different target name to what you expect - this is only really useful if you set up the Phase-II, or otherwise know exactly what target name was used. If you set a Name Resolver and click resolve, we will replace the target name with its co-ordinates, and do a co-ordinate search. This latter option is probably what you want if you're not sure.</p>
+        <p class="helpright">Enter a target name here. If you don't <i>Resolve</i> the target name this will do a literal <b>exact match</b> search for data with the target name as specified. Be aware that observers sometimes use a different target name to what you expect - this is only really useful if you set up the Phase-II, or otherwise know exactly what target name was used. If you set a Name Resolver and click resolve, we will replace the target name with its co-ordinates, and do a co-ordinate search. This latter option is probably what you want if you're not sure.</p>
     </span><br />
  
     <label>Resolver:</label>
@@ -35,7 +35,7 @@
     <label>Search radius:</label>
     <input type="text" placeholder="(leave blank for Any)" name="sr">
     <span class="help"> (arcseconds or decimal degrees)
-        <p class="helpright">If a single RA and/or dec value has been chosen, this specifies the size of the box around it to search. This is actually  a simple search a square box (in the tangent plane), not a true cone search. We simply take the range [ra-sr - ra+sr] or [dec-sr - dec+sr]. Strange things may happen near the poles.</p>
+        <p class="helpright">If a single RA and/or dec value has been chosen, this specifies the size of the box around it to search. This is actually a simple search in a square box (in the tangent plane), not a true cone search. We simply take the range [ra-sr - ra+sr] or [dec-sr - dec+sr]. Strange things may happen near the poles.</p>
     </span>
     <br />
     <label class="wide">Find Associated Calbrations:</label>
@@ -146,7 +146,7 @@
         <option value="IFU">Integral field spectroscopy</option>
     </select>
     <span class="help">(Imaging / Spectroscopy etc)
-        <p class="helpleft">Select Imaging or various Spectroscopy modes here. Spectropscopy implies all spectroscopic modes.</p>
+        <p class="helpleft">Select Imaging or various Spectroscopy modes here. Spectroscopy implies all spectroscopic modes.</p>
     </span><br />
     
     <label>Filter:</label>

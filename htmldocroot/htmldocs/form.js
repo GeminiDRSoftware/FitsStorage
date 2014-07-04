@@ -15,14 +15,14 @@ $(function() {
 
 $(function() {
     $('#Mode').change(function() {
-        if ($(this).val() == "spectroscopy") {
+        if (["spectroscopy", "LS", "MOS", "IFU"].indexOf($(this).val()) > -1) {
             $('#Spec').slideDown();
         } else {
             $('#Spec').hide();
         }
     });
 
-    if ($('#Mode').val().match("spectroscopy")) {
+    if (["spectroscopy", "LS", "MOS", "IFU"].indexOf($('#Mode').val()) > -1) {
         $('#Spec').show();
     }
 
