@@ -94,7 +94,7 @@ def request_account(req, things):
             session.commit()
             emailed = send_password_reset_email(newuser.id)
         except:
-            req.write("<P>ERROR: Adding new user failed. Sorry. Please contact helpdesk</P>")
+            req.write("<P>ERROR: Adding new user failed. Sorry. Please contact helpdesk. TODO - add link to helpdesk.</P>")
             req.write('</body></html>')
             return apache.OK
         finally:
@@ -102,7 +102,7 @@ def request_account(req, things):
         req.write('<P>Account request processed.</P>')
         if(emailed):
             req.write('<P>You should shortly receive an email with a link to set your password and activate your account.</P>')
-            req.write("<P>If you don't get the email, please contact the Gemini helpdesk.</P>")
+            req.write("<P>If you don't get the email, please contact the Gemini helpdesk. TODO - add link to helpdesk</P>")
             req.write('<P><a href="/searchform%s">Click here to return to your search.</a> ' % thing_string)
             req.write('After you set your password and log in using another browser tab, you can just reload or hit the submit button again and it will recognise your login</P>')
         else:
@@ -149,10 +149,11 @@ def send_password_reset_email(userid):
   A password reset has been requested for the Gemini Archive account
 registered to this email address. If you did not request a password
 reset, you can safely ignore this email, though if you get several 
-spurious reset request emails, please file a helpdesk ticket to let 
-us know. Assuming that you requested this password reset, please click
-on the link below or paste it into your browser to reset your password.
-The reset link is only valid for 15 minutes, so please do that promptly.
+spurious reset request emails, please file a helpdesk ticket 
+(TODO - add link to helpdesk) to let us know. Assuming that you 
+requested this password reset, please click on the link below or paste 
+it into your browser to reset your password. The reset link is only 
+valid for 15 minutes, so please do that promptly.
 
     """
 
