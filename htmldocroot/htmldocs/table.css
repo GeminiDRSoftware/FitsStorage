@@ -20,6 +20,14 @@
   font-size: small
 }
 
+.tr_odd:hover {
+  background-color: #C0C0FF;
+}
+
+.tr_even:hover {
+  background-color: #C0C0FF;
+}
+
 .tr_warnodd {
   background-color: #FFF0F0;
   white-space:nowrap;
