@@ -129,18 +129,12 @@ def handler(req):
             links = False
             things.remove('nolinks')
 
-        download_links = False
-        # this says whether to include [download] links after the filename
-        if 'download' in things:
-            download_links = True
-            things.remove('download')
-
         # Parse the rest of the uri here while we're at it
         # Expect some combination of program_id, observation_id, date and instrument name
         # We put the ones we got in a dictionary
         selection = getselection(things)
 
-        retval = summary(req, this, selection, orderby, links, download_links)
+        retval = summary(req, this, selection, orderby, links)
         return retval
 
     # This is the standard star in observation server
