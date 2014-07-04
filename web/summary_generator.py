@@ -5,8 +5,7 @@ This module contains the web summary generator class.
 from collections import OrderedDict
 from cgi import escape
 
-from orm.header import Header
-from gemini_metadata_utils import GeminiDataLabel, percentilestring
+from gemini_metadata_utils import GeminiDataLabel
 
 
 class SummaryGenerator():
@@ -37,21 +36,21 @@ class SummaryGenerator():
     links = True
     uri = None
     
-    def __init__(self, type, links=True, uri=None):
+    def __init__(self, sumtype, links=True, uri=None):
         """
         Constructor function for the SummaryGenerator Object.
-        Arguments: type = a string saying the summary type
+        Arguments: sumtype = a string saying the summary type
                    links = a bool saying whether to include html links in output
         """
         # Load the column definitions, in order
         self.init_cols()
         # Set the want flags
-        self.type = type
-        self.set_type(type)
+        self.sumtype = sumtype
+        self.set_type(sumtype)
         self.links = links
         self.uri = uri
 
-    def set_type(self, type):
+    def set_type(self, sumtype):
         """
         Sets the columns to include in the summary, based on pre-defined
         summary types.
@@ -64,8 +63,8 @@ class SummaryGenerator():
             'diskfiles' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'present', 'entrytime', 'lastmod', 'file_size', 'file_md5', 'gzipped', 'data_size', 'data_md5'],
             'searchresults' : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state']}
   
-        if(type in sum_type_defs.keys()):
-            want = sum_type_defs[type]
+        if(sumtype in sum_type_defs.keys()):
+            want = sum_type_defs[sumtype]
             for key in self.columns.keys():
                 if(key in want):
                     self.columns[key]['want'] = True
@@ -73,6 +72,9 @@ class SummaryGenerator():
                     self.columns[key]['want'] = False
 
     def init_cols(self):
+        """
+        Initializes the columns dictionary with default settings
+        """
         self.columns['download'] = {
             'heading' : 'Download',
             'longheading' : None,
@@ -386,6 +388,9 @@ class SummaryGenerator():
 
 
     def filename(self, header):
+        """
+        Generates the filename column html
+        """
         # Generate the filename column contents html
 
         # The html to return
@@ -413,6 +418,9 @@ class SummaryGenerator():
         return html
 
     def datalabel(self, header):
+        """
+        Generates the datalabel column html
+        """
         # Generate the diskfile html
         # We parse the data_label to create links to the project id and obs id
         if(self.links):
@@ -428,6 +436,9 @@ class SummaryGenerator():
         return html
 
     def ut_datetime(self, header):
+        """
+        Generates the UT datetime column html
+        """
         # format withou decimal places on the seconds
         if(self.links):
             if(header.ut_datetime):
@@ -445,6 +456,9 @@ class SummaryGenerator():
 
 
     def instrument(self, header):
+        """
+        Generates the instrument column html
+        """
         # Add the AO flags to the instrument name
         if(self.links):
             html = '<a href="%s/%s">%s</a>' % (self.uri, header.instrument, header.instrument)
@@ -465,6 +479,9 @@ class SummaryGenerator():
         return html
 
     def observation_class(self, header):
+        """
+        Generates the observation_class column html
+        """
         # Can make it a link
         if(self.links):
             return '<a href="%s/%s">%s</a>' % (self.uri, header.observation_class, header.observation_class)
@@ -472,6 +489,9 @@ class SummaryGenerator():
             return header.observation_class
 
     def observation_type(self, header):
+        """
+        Generates the observation_type column html
+        """
         # Can make it a link
         if(self.links):
             return '<a href="%s/%s">%s</a>' % (self.uri, header.observation_type, header.observation_type)
@@ -479,6 +499,9 @@ class SummaryGenerator():
             return header.observation_type
 
     def exposure_time(self, header):
+        """
+        Generates the exposure time column html
+        """
         # All we do is format it with 2 decimal places
         try:
             return "%.2f" % header.exposure_time
@@ -486,6 +509,9 @@ class SummaryGenerator():
             return ''
 
     def airmass(self, header):
+        """
+        Generates the airmass column html
+        """
         # All we do is format it with 2 decimal places
         try:
             return "%.2f" % header.airmass
@@ -493,6 +519,9 @@ class SummaryGenerator():
             return ''
 
     def local_time(self, header):
+        """
+        Generates the local_time column html
+        """
         # All we do is format it without decimal places
         try:
             return header.local_time.strftime("%H:%M:%S")
@@ -501,6 +530,9 @@ class SummaryGenerator():
 
 
     def object(self, header):
+        """
+        Generates the object name column html
+        """
         # nb target names sometime contain ampersand characters which should be escaped in the html.
         # Also we trim at 12 characters and abbreviate
         if(header.object is None):
@@ -530,10 +562,16 @@ class SummaryGenerator():
         return '%s %s %s' % (basehtml, phothtml, symhtml)
 
     def filter_name(self, header):
+        """
+        Generates the filter name column html
+        """
         # Just htmlescape it
         return htmlescape(header.filter_name)
 
     def waveband(self, header):
+        """
+        Generates the waveband column html
+        """
         # Print filter_name for imaging, disperser and cen_wlen for spec
         if(header.spectroscopy):
             try:
@@ -545,9 +583,12 @@ class SummaryGenerator():
             return htmlescape(header.filter_name)
 
     def download(self, header):
+        """
+        Generates the download column html
+        """
         html = '<center><a href="/file/%s">[D]</a>' % header.diskfile.file.name
 
-        if(self.type == 'searchresults'):
+        if(self.sumtype == 'searchresults'):
             html += " <input type='checkbox' name='files' value='%s'></input>" % header.diskfile.file.name
 
         html += '</center>'
