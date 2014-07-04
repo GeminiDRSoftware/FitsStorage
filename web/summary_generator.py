@@ -7,7 +7,6 @@ from cgi import escape
 
 from gemini_metadata_utils import GeminiDataLabel
 
-
 class SummaryGenerator():
     """
     This is the web summary generator class. You instantiate this class and 
@@ -604,3 +603,4 @@ def htmlescape(string):
         return escape(string)
     else:
         return None
+

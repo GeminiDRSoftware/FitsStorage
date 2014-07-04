@@ -7,17 +7,16 @@ from orm.diskfile import DiskFile
 from orm.header import Header
 from fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
 from web.selection import sayselection, queryselection, openquery, selection_to_URL
-from gemini_metadata_utils import GeminiDataLabel, percentilestring
 import apache_return_codes as apache
 from sqlalchemy import desc
 
-from summary_generator import SummaryGenerator
+from web.summary_generator import SummaryGenerator, htmlescape
 
-def summary(req, type, selection, orderby, links=True, download=False):
+def summary(req, sumtype, selection, orderby, links=True):
     """
     This is the main summary generator.
     req is an apache request handler request object
-    type is the summary type required
+    sumtype is the summary type required
     selection is an array of items to select on, simply passed
         through to the webhdrsummary function
     orderby specifies how to order the output table, simply
@@ -31,7 +30,7 @@ def summary(req, type, selection, orderby, links=True, download=False):
     """
     req.content_type = "text/html"
     req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html>')
-    title = "FITS header %s table %s" % (type, sayselection(selection))
+    title = "FITS header %s table %s" % (sumtype, sayselection(selection))
     req.write("<head>")
     req.write("<title>%s</title>" % htmlescape(title))
     req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
@@ -39,7 +38,7 @@ def summary(req, type, selection, orderby, links=True, download=False):
     req.write("<body>")
     if (fits_system_status == "development"):
         req.write('<h4>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h4>')
-    if(type != 'searchresults'):
+    if(sumtype != 'searchresults'):
         req.write("<H1>%s</H1>\n" % htmlescape(title))
     else:
         # In search results, only warn about undefined stuff
@@ -49,16 +48,16 @@ def summary(req, type, selection, orderby, links=True, download=False):
         req.write('<p>Click the [D] to download that one file, use the check boxes to select a subset of the results to download, or if available a download all link is at <a href="#tableend"> the end of the table</a>. Click the filename to see the full header in a new tab. Click anything else to add that to your search criteria.</p>')
 
     # If this is a diskfiles summary, select even ones that are not canonical
-    if(type != 'diskfiles'):
+    if(sumtype != 'diskfiles'):
         # Usually, we want to only select headers with diskfiles that are canonical
         selection['canonical'] = True
     # Archive search results should only show files that are present, so they can be downloaded
-    if(type == 'searchresults'):
+    if(sumtype == 'searchresults'):
         selection['present'] = True
 
     session = sessionfactory()
     try:
-        summary_table(req, type, list_headers(session, selection, orderby), selection, links)
+        summary_table(req, sumtype, list_headers(session, selection, orderby), selection, links)
     except IOError:
         pass
     finally:
@@ -67,14 +66,14 @@ def summary(req, type, selection, orderby, links=True, download=False):
     req.write("</body></html>")
     return apache.OK
 
-def summary_table(req, type, headers, selection, links=True):
+def summary_table(req, sumtype, headers, selection, links=True):
     """
     Generates an HTML header summary table of the specified type from
     the list of header objects provided. Writes that table to an apache
     request object.
 
     req: the apache request object to write the output
-    type: the summary type required
+    sumtype: the summary type required
     headers: the list of header objects to include in the summary
     """
 
@@ -83,16 +82,16 @@ def summary_table(req, type, headers, selection, links=True):
     # hack the uri to make it look like we came from searchform
     # so that the results point back to a form
     uri = req.uri
-    if(isajax(req) and type == 'searchresults'):
+    if(isajax(req) and sumtype == 'searchresults'):
         uri = uri.replace("searchresults", "searchform")
-    sumgen = SummaryGenerator(type, links, uri)
+    sumgen = SummaryGenerator(sumtype, links, uri)
 
     if(openquery(selection) and len(headers) == fits_open_result_limit):
         req.write('<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date, date range, program ID etc. Searches like this are limited to %d results, and this search hit that limit. You may want to constrain your search. Constrained searches have a higher result limit.</P>' % fits_open_result_limit) 
     elif(len(headers) == fits_closed_result_limit):
         req.write('<P>WARNING: Your search generated more than the limit of %d results. You might want to constrain your search more.</P>' % fits_closed_result_limit) 
 
-    if(type == 'searchresults' and links == True):
+    if(sumtype == 'searchresults' and links == True):
         req.write("<FORM action='/download' method='POST'>")
 
     req.write('<TABLE class="fullwidth" border=0>')
@@ -116,7 +115,7 @@ def summary_table(req, type, headers, selection, links=True):
 
     req.write("</TABLE>\n")
  
-    if(type == 'searchresults' and links == True):
+    if(sumtype == 'searchresults' and links == True):
         req.write("<INPUT type='submit' value='Download Marked Files'></INPUT>")
         req.write("</FORM>")
 
@@ -180,17 +179,6 @@ def list_headers(session, selection, orderby):
     
     # Return the list of DiskFile objects
     return headers
-
-from cgi import escape
-def htmlescape(string):
-    """
-    Convenience wrapper to cgi escape, providing type protection
-    """
-
-    if(type(string) in [str, unicode]):
-        return escape(string)
-    else:
-        return None
 
 def isajax(req):
     """
