@@ -726,14 +726,14 @@ def whoami(req, things):
     req.write('<span id="whoami">')
     if(username):
         # Unicode &#x1f464 is preferable to the user icon, if only browsers supported it (mid 2014)
-        req.write('<img src="htmldocs/user1.svg" height="18px"> %s &#9662' % username)
+        req.write('<img src="/htmldocs/user1-64x64.png" height="18px"> %s &#9662' % username)
         req.write('<ul class="whoami">')
         req.write('<li class="whoami">%s</li>' % fullname)
         req.write('<li class="whoami"><a href="/logout">Log Out</a></li>')
         req.write('<li class="whoami"><a href="/change_password%s">Change Password</a></li>' % thing_string)
         req.write('<li class="whoami"><a href="/my_programs%s">My Programs</a></li>' % thing_string)
     else:
-        req.write('<img src="htmldocs/user1.svg" height="18px"> Not logged in &#9662')
+        req.write('<img src="/htmldocs/user1-64x64.png" height="18px"> Not logged in &#9662')
         req.write('<ul class="whoami">')
         req.write('<li class="whoami"><a href="/request_account%s">Request Account</a></li>' % thing_string)
         req.write('<li class="whoami"><a href="/login%s">Login</a></li>' % thing_string)
