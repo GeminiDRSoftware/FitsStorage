@@ -9,10 +9,9 @@ from web.selection import getselection, selection_to_URL
 
 from fits_storage_config import fits_aux_datadir
 import os
-import re
 import urllib
 
-from gemini_metadata_utils import GeminiDataLabel, GeminiObservation, GeminiProject, gemini_date, gemini_daterange
+from gemini_metadata_utils import GeminiDataLabel, GeminiObservation
 
 # Load the titlebar html text into strings
 with open(os.path.join(fits_aux_datadir, "titlebar.html")) as f:
@@ -23,90 +22,90 @@ with open(os.path.join(fits_aux_datadir, "form.html")) as f:
     form_html = f.read()
 
 def searchform(req, things, orderby):
-   """
-   Generate the searchform html and handle the form submit.
-   """
+    """
+    Generate the searchform html and handle the form submit.
+    """
 
-   # How (we think) this (will) all work(s)
-   # User gets/posts the url, may or may not have selection criteria on it
-   # We parse the url, and create an initial selection dictionary (which may or may not be empty)
-   # We parse the formdata and modify the selection dictionary if there was any
-   # If there was formdata:
-   #    Build a URL from the selection dictionary
-   #    Clear the formdata from the request object
-   #    Re-direct the user to the new URL (without and formdata)
-   # Pre-populate the form fields with what is now in our selection dictionary
-   #    a: by stuffing hidden input elements in the html which jquery uses to modify
-   #       the values in the actual input fields 
-   # or b: by modifying the form html server side before we send it out
-   # Add a hidden input element telling jquery whether to ajax in search results
-   # Send out the form html
-   # jquery will ajax in results if applicable
-   # User messes with input fields
-   # User hits submit - back to top
+    # How (we think) this (will) all work(s)
+    # User gets/posts the url, may or may not have selection criteria on it
+    # We parse the url, and create an initial selection dictionary (which may or may not be empty)
+    # We parse the formdata and modify the selection dictionary if there was any
+    # If there was formdata:
+    #    Build a URL from the selection dictionary
+    #    Clear the formdata from the request object
+    #    Re-direct the user to the new URL (without and formdata)
+    # Pre-populate the form fields with what is now in our selection dictionary
+    #    a: by stuffing hidden input elements in the html which jquery uses to modify
+    #       the values in the actual input fields 
+    # or b: by modifying the form html server side before we send it out
+    # Add a hidden input element telling jquery whether to ajax in search results
+    # Send out the form html
+    # jquery will ajax in results if applicable
+    # User messes with input fields
+    # User hits submit - back to top
 
-   # grab the string version of things before getselection() as that modifies the list.
-   thing_string = '/' + '/'.join(things)
-   selection = getselection(things)
-   formdata = util.FieldStorage(req)
+    # grab the string version of things before getselection() as that modifies the list.
+    thing_string = '/' + '/'.join(things)
+    selection = getselection(things)
+    formdata = util.FieldStorage(req)
 
-   # Also args to pass on to results page
-   args_string = ""
-   if (orderby):
-       args_string = '?orderby=%s' % orderby[0]
+    # Also args to pass on to results page
+    args_string = ""
+    if (orderby):
+        args_string = '?orderby=%s' % orderby[0]
    
 
-   if(formdata):
-       if((len(formdata) == 2) and ('engineering' in formdata.keys()) and ('science_verification' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and (formdata['science_verification'].value == 'SvInclude')):
-           # This is the default form state, someone just hit submit without doing anything.
-           pass
-       elif (formdata.keys() == ['orderby']):
-           # All we have is an orderby - don't redirect
-           pass
-       else:
-           # Populate selection dictionary with values from form input
-           updateselection(formdata, selection)
-           # builds URL, clears formdata, refreshes page with updated selection from form
-           urlstring = selection_to_URL(selection)
-           formdata.clear()
-           util.redirect(req, '/searchform' + urlstring + args_string)
+    if(formdata):
+        if((len(formdata) == 2) and ('engineering' in formdata.keys()) and ('science_verification' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and (formdata['science_verification'].value == 'SvInclude')):
+            # This is the default form state, someone just hit submit without doing anything.
+            pass
+        elif (formdata.keys() == ['orderby']):
+            # All we have is an orderby - don't redirect
+            pass
+        else:
+            # Populate selection dictionary with values from form input
+            updateselection(formdata, selection)
+            # builds URL, clears formdata, refreshes page with updated selection from form
+            urlstring = selection_to_URL(selection)
+            formdata.clear()
+            util.redirect(req, '/searchform' + urlstring + args_string)
 
-   req.content_type = "text/html"
-   req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head>')
-   req.write('<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>')
-   req.write('<script src="/htmldocs/titlebar.js"></script>')
-   req.write('<script src="/htmldocs/form.js"></script>')
-   req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/whoami.css">')
-   req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/titlebar.css">')
-   req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/form.css">')
-   req.write('<title>Gemini Archive Search Form</title></head><body>')
+    req.content_type = "text/html"
+    req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head>')
+    req.write('<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>')
+    req.write('<script src="/htmldocs/titlebar.js"></script>')
+    req.write('<script src="/htmldocs/form.js"></script>')
+    req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/whoami.css">')
+    req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/titlebar.css">')
+    req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/form.css">')
+    req.write('<title>Gemini Archive Search Form</title></head><body>')
    
-   req.write(titlebar_html)
+    req.write(titlebar_html)
 
-   req.write('<input type="hidden" id="things" name="things" value="%s">' % thing_string)
-   req.write('<input type="hidden" id="args" name="args" value="%s">' % args_string)
-   req.write('<div class="page">')
-   req.write('<form class="searchform" action="/searchform" method="POST">')
+    req.write('<input type="hidden" id="things" name="things" value="%s">' % thing_string)
+    req.write('<input type="hidden" id="args" name="args" value="%s">' % args_string)
+    req.write('<div class="page">')
+    req.write('<form class="searchform" action="/searchform" method="POST">')
    
-   form_html_updt = updateform(form_html, selection)
-   req.write(form_html_updt)
-   selectionstring = selection_to_URL(selection)
+    form_html_updt = updateform(form_html, selection)
+    req.write(form_html_updt)
+    selectionstring = selection_to_URL(selection)
 
-   if(selection):
-       req.write('<input type="hidden" id="url" value="%s%s">' % (selectionstring, args_string))
+    if(selection):
+        req.write('<input type="hidden" id="url" value="%s%s">' % (selectionstring, args_string))
    
-   req.write('</form>')
-   req.write('<hr noshade>')
-   # Uncomment this for form processing selection debugging...
-   # req.write('<p>selection: %s</p>' % selection)
-   req.write('<div id="searchresults" class="searchresults">')
-   req.write('<span id="notloading"><P>Set at least one search criteria above to search for data. Mouse over the (text in brackets) to see more help for each item.</P></span>')
-   req.write('<span id="loading" style="display:none"><p><img src="/htmldocs/ajax-loading.gif">  Loading...</p></span>')
-   req.write('</div>')
-   req.write('</div>')
-   req.write('</body></html>')
+    req.write('</form>')
+    req.write('<hr noshade>')
+    # Uncomment this for form processing selection debugging...
+    # req.write('<p>selection: %s</p>' % selection)
+    req.write('<div id="searchresults" class="searchresults">')
+    req.write('<span id="notloading"><P>Set at least one search criteria above to search for data. Mouse over the (text in brackets) to see more help for each item.</P></span>')
+    req.write('<span id="loading" style="display:none"><p><img src="/htmldocs/ajax-loading.gif">  Loading...</p></span>')
+    req.write('</div>')
+    req.write('</div>')
+    req.write('</body></html>')
 
-   return apache.OK
+    return apache.OK
 
 def updateform(html, selection):
     """
@@ -174,7 +173,7 @@ def updateselection(formdata, selection):
         value = formdata[key].value
         if key == 'program_id':
             # if the string starts with progid= then trim that off
-            if value[:7]=='progid=':
+            if value[:7] == 'progid=':
                 value = value[7:]
 
             # Ensure it's upper case
@@ -237,7 +236,7 @@ def nameresolver(req, things):
         return apache.HTTP_NOT_ACCEPTABLE
 
     resolver = things[0]
-    object = things[1]
+    target = things[1]
 
     urls = {
         'simbad': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/S?',
@@ -249,11 +248,11 @@ def nameresolver(req, things):
         return apache.HTTP_NOT_ACCEPTABLE
 
 
-    url = urls[resolver] + object
+    url = urls[resolver] + target
 
-    u = urllib.urlopen(url)
-    xml = u.read()
-    u.close()
+    urlfd = urllib.urlopen(url)
+    xml = urlfd.read()
+    urlfd.close()
 
     req.write(xml)
     return apache.OK
