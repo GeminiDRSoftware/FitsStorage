@@ -12,7 +12,6 @@ from web.user import userfromcookie
 
 # This will only work with apache
 from mod_python import apache
-from mod_python import Cookie
 from mod_python import util
 
 import urllib
@@ -154,9 +153,9 @@ def validate_program_key(program_id, program_key):
 
     url = 'https://%s.gemini.edu:8443/auth?id=%s&password=%s' % (host, program_id, program_key)
 
-    u = urllib.urlopen(url)
-    reply = u.read()
-    u.close()
+    ufd = urllib.urlopen(url)
+    reply = ufd.read()
+    ufd.close()
 
     if reply[:3] == 'YES':
         return True
