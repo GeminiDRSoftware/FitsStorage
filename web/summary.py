@@ -44,8 +44,6 @@ def summary(req, sumtype, selection, orderby, links=True):
         # In search results, only warn about undefined stuff
         if('notrecognised' in selection.keys()):
             req.write("<H4>WARNING: I didn't recognize the following search terms: %s</H4>" % selection['notrecognised'])
-        # And tell them about clicking things
-        req.write('<p>Click the [D] to download that one file, use the check boxes to select a subset of the results to download, or if available a download all link is at <a href="#tableend"> the end of the table</a>. Click the filename to see the full header in a new tab. Click anything else to add that to your search criteria.</p>')
 
     # If this is a diskfiles summary, select even ones that are not canonical
     if(sumtype != 'diskfiles'):
@@ -72,10 +70,20 @@ def summary_table(req, sumtype, headers, selection, links=True):
     the list of header objects provided. Writes that table to an apache
     request object.
 
+    If no results were returned, this function outputs a suitbale
+    no results page instead of an empty table.
+
     req: the apache request object to write the output
     sumtype: the summary type required
     headers: the list of header objects to include in the summary
     """
+
+    if(len(headers) == 0):
+        # No results
+        req.write("<H2>Your search returned no results</H2>")
+        req.write("<P>No data in the archive match your search criteria. Note that the program ID and Target Name searches are <b>exact match</b> searches, including only the first part of a program ID for example will not match any data. Also note that many combinations of Obs Class and Obs Type are in effect mutually exclusive - there will be no science BIAS frames for example, nor will there by any Imaging ARCs.</P>")
+        req.write("<P>We suggest re-setting some of your constraints to <i>Any</i> and repeating your search.</P>")
+        return 
 
     # Construct the summary generator object.
     # If this is an ajax request and the type is searchresults, then
@@ -92,6 +100,8 @@ def summary_table(req, sumtype, headers, selection, links=True):
         req.write('<P>WARNING: Your search generated more than the limit of %d results. You might want to constrain your search more.</P>' % fits_closed_result_limit) 
 
     if(sumtype == 'searchresults' and links == True):
+        # And tell them about clicking things
+        req.write('<p>Click the [D] to download that one file, use the check boxes to select a subset of the results to download, or if available a download all link is at <a href="#tableend"> the end of the table</a>. Click the filename to see the full header in a new tab. Click anything else to add that to your search criteria.</p>')
         req.write("<FORM action='/download' method='POST'>")
 
     req.write('<TABLE class="fullwidth" border=0>')
@@ -125,7 +135,7 @@ def summary_table(req, sumtype, headers, selection, links=True):
     elif(len(headers) == fits_closed_result_limit):
         req.write('<P>WARNING: Your search generated more than the limit of %d results. You might want to constrain your search more.</P>' % fits_closed_result_limit) 
     else:
-        req.write('<P><a href="/download%s">Download</a> all %d files totalling %.2f GB.</P>' % (selection_to_URL(selection), len(headers), bytecount/1.0E9))
+        req.write('<P><a href="/download%s">Download all %d files totalling %.2f GB</a>.</P>' % (selection_to_URL(selection), len(headers), bytecount/1.0E9))
     
 
 def list_headers(session, selection, orderby):
