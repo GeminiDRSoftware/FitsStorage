@@ -59,7 +59,6 @@ $(function() {
             url += "/vizier/" + object_name;
         } else {
             url = ''
-            alert("Please select a resolver from the dropdown menu");
         };
 
         $.ajax({
@@ -77,7 +76,7 @@ $(function() {
                 }
             },
             error: function(request, status, errorThrown) {
-                alert("Please provide a valid target name to resolve");
+                alert("Please ensure a resolver is selected and a valid target name is specified");
             } 
         });
     });
