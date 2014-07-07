@@ -430,6 +430,7 @@ def queryselection(query, selection):
             query = query.filter(Header.elevation >= a).filter(Header.elevation < b)
 
     if('ra' in selection):
+        valid = True
         # might be a range or a single value
         value = selection['ra'].split('-')
         if (len(value) == 1):
@@ -437,38 +438,43 @@ def queryselection(query, selection):
             degs = ratodeg(value[0])
             if (degs is None):
                 # Invalid value.
-                selection['notrecognised'] = 'Invalid RA'
+                selection['warning'] = 'Invalid RA format. Ignoring your RA constraint.'
+                valid = False
             # valid single value, get search radius
             if 'sr' in selection.keys():
                 sr = selection['sr']
                 sr = srtodeg(sr)
                 if (sr is None):
-                    selection['notrecognised'] = 'Invalid Search Radius'
+                    selection['warning'] = 'Invalid Search Radius'
             else:
                 # No search radius specified. Default it for them
                 selection['sr'] = 180
                 sr = srtodeg(180)
-            lower = degs - sr
-            upper = degs + sr
+            if (valid):
+                lower = degs - sr
+                upper = degs + sr
 
         elif (len(value) == 2):
             # Got two values
             lower = ratodeg(value[0])
             upper = ratodeg(value[1])
             if((lower is None) or (upper is None)):
-                selection['notrecognised'] = 'Invalid RA'
+                selection['warning'] = 'Invalid RA range format. Ignoring your RA constraint.'
+                valid = False
 
         else:
             # Invalid string format for RA
-            selection['notrecognised'] = 'Invalid RA'
+            selection['warning'] = 'Invalid RA format. Ignoring your RA constraint.'
+            valid = False
 
-        if(lower is not None) and (upper is not None):
+        if valid and (lower is not None) and (upper is not None):
             if upper > lower:
                 query = query.filter(Header.ra >= lower).filter(Header.ra < upper)
             else: 
                 query = query.filter(or_(Header.ra >= lower, Header.ra < upper))
 
     if('dec' in selection):
+        valid = True
         # might be a range or a single value
         value = selection['dec'].split('-')
         if (len(value) == 1):
@@ -476,32 +482,36 @@ def queryselection(query, selection):
             degs = dectodeg(value[0])
             if (degs is None):
                 # Invalid value.
-                selection['notrecognised'] = 'Invalid Dec'
+                selection['warning'] = 'Invalid Dec format. Ignoring your RA constraint.'
+                valid = False
             # valid single value, get search radius
             if 'sr' in selection.keys():
                 sr = selection['sr']
                 sr = srtodeg(sr)
                 if (sr is None):
-                    selection['notrecognised'] = 'Invalid Search Radius'
+                    selection['warning'] = 'Invalid Search Radius'
             else:
                 # No search radius specified. Default it for them
                 selection['sr'] = 180
                 sr = srtodeg(180)
-            lower = degs - sr
-            upper = degs + sr
+            if (valid):
+                lower = degs - sr
+                upper = degs + sr
 
         elif (len(value) == 2):
             # Got two values
             lower = dectodeg(value[0])
             upper = dectodeg(value[1])
             if((lower is None) or (upper is None)):
-                selection['notrecognised'] = 'Invalid Dec'
+                selection['warning'] = 'Invalid Dec range format. Ignoring your RA constraint.'
+                valid = False
 
         else:
             # Invalid string format for Dec
-            selection['notrecognised'] = 'Invalid Dec'
+            selection['warning'] = 'Invalid Dec format. Ignoring your RA constraint.'
+            valid = False
 
-        if(lower is not None) and (upper is not None):
+        if valid and (lower is not None) and (upper is not None):
             query = query.filter(Header.dec >= lower).filter(Header.dec < upper)
 
 
