@@ -55,7 +55,19 @@ def summary(req, sumtype, selection, orderby, links=True):
 
     session = sessionfactory()
     try:
-        summary_table(req, sumtype, list_headers(session, selection, orderby), selection, links)
+        headers = list_headers(session, selection, orderby)
+        # Did we get any selection warnings?
+        if 'warning' in selection.keys():
+            req.write("<h3>WARNING: %s</h3>" % selection['warning'])
+        
+        # Did we get any results?
+        if(len(headers) > 0):
+            summary_table(req, sumtype, headers, selection, links)
+        else:
+            # No results
+            # Could pass selection to this and do some helpful analysis too
+            no_results(req)
+
     except IOError:
         pass
     finally:
@@ -64,26 +76,26 @@ def summary(req, sumtype, selection, orderby, links=True):
     req.write("</body></html>")
     return apache.OK
 
+def no_results(req):
+    """
+    Print a helpful no results message
+    """
+    # We could pass the selection dictionary to this function 
+    # and check for obvious mutually exclusive things
+    req.write("<H2>Your search returned no results</H2>")
+    req.write("<P>No data in the archive match your search criteria. Note that the program ID and Target Name searches are <b>exact match</b> searches, including only the first part of a program ID for example will not match any data. Also note that many combinations of Obs Class and Obs Type are in effect mutually exclusive - there will be no science BIAS frames for example, nor will there by any Imaging ARCs.</P>")
+    req.write("<P>We suggest re-setting some of your constraints to <i>Any</i> and repeating your search.</P>")
+
 def summary_table(req, sumtype, headers, selection, links=True):
     """
     Generates an HTML header summary table of the specified type from
     the list of header objects provided. Writes that table to an apache
     request object.
 
-    If no results were returned, this function outputs a suitbale
-    no results page instead of an empty table.
-
     req: the apache request object to write the output
     sumtype: the summary type required
     headers: the list of header objects to include in the summary
     """
-
-    if(len(headers) == 0):
-        # No results
-        req.write("<H2>Your search returned no results</H2>")
-        req.write("<P>No data in the archive match your search criteria. Note that the program ID and Target Name searches are <b>exact match</b> searches, including only the first part of a program ID for example will not match any data. Also note that many combinations of Obs Class and Obs Type are in effect mutually exclusive - there will be no science BIAS frames for example, nor will there by any Imaging ARCs.</P>")
-        req.write("<P>We suggest re-setting some of your constraints to <i>Any</i> and repeating your search.</P>")
-        return 
 
     # Construct the summary generator object.
     # If this is an ajax request and the type is searchresults, then
