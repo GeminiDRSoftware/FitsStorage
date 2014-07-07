@@ -20,8 +20,10 @@ from orm.photstandard import PhotStandardObs
 from fits_storage_config import use_as_archive
 
 def getselection(things):
-    # this takes a list of things from the URL, and returns a
-    # selection hash that is used by the html generators
+    """
+    this takes a list of things from the URL, and returns a
+    selection hash that is used by the html generators
+    """
     selection = {}
     while(len(things)):
         thing = things.pop(0)
