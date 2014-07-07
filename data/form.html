@@ -171,8 +171,10 @@
 
     <div id="Spec" style="display:none">
         <label class="wide">Central Wavelength: </label>
-        <input type="text" placeholder="1.2" name="cntrl_wvlngth" size="8" disabled="disabled">
-        <span class="help"> (microns)</span><br />
+        <input type="text" placeholder="(Any)" name="cenwlen" size="8">
+        <span class="help"> (microns, eg 1.2 or 2.0-2.4)
+            <p class="helpleft">Central Wavelength in microns. You can supply a single value or a range. If you use a single value, we assume a range of +-0.1. Note this just searches for files where the <b>central wavelength</b> of a spectrum is within the given range, or within 0.1 microns of the given value. It does not currently know the spectral range of the data and check if the value given is within that range.</p>
+        </span><br />
     </div>
 </div>
 

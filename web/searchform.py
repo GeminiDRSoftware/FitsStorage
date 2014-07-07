@@ -123,7 +123,7 @@ def updateform(html, selection):
                 key = 'date'
             html = html.replace('name="date"', 'name="date" value="%s"' % selection[key])
 
-        elif key in ['ra', 'dec', 'sr', 'object']:
+        elif key in ['ra', 'dec', 'sr', 'object', 'cenwlen']:
             # These are all the text fields that don't need anything special
             html = html.replace('name="%s"' % key, 'name=%s value="%s"' % (key, selection[key]))
 
@@ -194,7 +194,7 @@ def updateselection(formdata, selection):
             # removes spaces from daterange queries
             value = value.replace(' ', '')
             selection[key] = value
-        elif key in ['ra', 'dec', 'sr']:
+        elif key in ['ra', 'dec', 'sr', 'cenwlen']:
             # Check the formatting of RA, Dec, search radius values. Keep them in same format as given though.
             
             # Eliminate any whitespace

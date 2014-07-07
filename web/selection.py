@@ -194,6 +194,9 @@ def getselection(things):
             selection['mode'] = thing
             selection['spectroscopy'] = True
             recognised = True
+        if(thing[:8] == 'cenwlen='):
+            selection['cenwlen'] = thing[8:]
+            recognised = True
 
         if(not recognised):
             if('notrecognised' in selection):
@@ -209,7 +212,7 @@ def sayselection(selection):
     """
     string = ""
 
-    defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'object': 'Object Name', 'engineering': 'Engineering Data', 'science_verification': 'Science Verification Data', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'sr': 'Search Radius', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI', 'filepre': 'File Prefix', 'mode': 'Spectroscopy Mode'}
+    defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'object': 'Object Name', 'engineering': 'Engineering Data', 'science_verification': 'Science Verification Data', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'sr': 'Search Radius', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI', 'filepre': 'File Prefix', 'mode': 'Spectroscopy Mode', 'cenwlen': 'Central Wavelength'}
     for key in defs:
         if key in selection:
             string += "; %s: %s" % (defs[key], selection[key])
@@ -528,6 +531,44 @@ def queryselection(query, selection):
         likestr = '%s%%' % selection['filepre']
         query = query.filter(File.name.like(likestr))
 
+    if('cenwlen' in selection):
+        valid = True
+        # Might be a single value or a range
+        value = selection['cenwlen'].split('-')
+        if(len(value) == 1):
+            # single value
+            try:
+                value = float(value[0])
+                lower = value - 0.1
+                upper = value + 0.1
+            except:
+                selection['warning'] = 'Central Wavelength value is invalid and has been ignored'
+                valid = False
+        elif (len(value) == 2):
+            # Range
+            try:
+                lower = float(value[0])
+                upper = float(value[1])
+            except:
+                selection['warning'] = 'Central Wavelength value is invalid and has been ignored'
+                valid = False
+        else:
+            selection['warning'] = 'Central Wavelength value is invalid and has been ignored'
+            valid = False
+
+        if valid and ((lower > 30.0) or (lower < 0.2) or (upper > 30.0) or (upper < 0.2)):
+            selection['warning'] = 'Invalid Central wavelength value. Value should be in microns, >0.2 and <30.0'
+            valid = False
+
+        if valid and (lower > upper):
+            # swap them over
+            tmp = lower
+            lower = upper
+            upper = tmp
+
+        if(valid):
+            query = query.filter(Header.central_wavelength > lower).filter(Header.central_wavelength < upper)
+
     return query
 
 def openquery(selection):
@@ -593,9 +634,7 @@ def selection_to_URL(selection):
                 urlstring += '/spectroscopy'
             else:
                 urlstring += '/imaging'
-        elif key == 'filter':
-            urlstring += '/filter=%s' % selection[key]
-        elif key in ['ra', 'dec', 'sr']:
+        elif key in ['ra', 'dec', 'sr', 'filter', 'cenwlen']:
             urlstring += '/%s=%s' % (key, selection[key])
         elif key == 'present':
             if (selection[key] is True):
