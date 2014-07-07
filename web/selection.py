@@ -442,14 +442,16 @@ def queryselection(query, selection):
                 valid = False
             # valid single value, get search radius
             if 'sr' in selection.keys():
-                sr = selection['sr']
-                sr = srtodeg(sr)
+                sr = srtodeg(selection['sr'])
                 if (sr is None):
-                    selection['warning'] = 'Invalid Search Radius'
+                    selection['warning'] = 'Invalid Search Radius, defaulting to 3 arcmin'
+                    selection['sr'] = 180
+                    sr = srtodeg(selection['sr'])
             else:
                 # No search radius specified. Default it for them
+                selection['warning'] = 'No Search Radius given, defaulting to 3 arcmin'
                 selection['sr'] = 180
-                sr = srtodeg(180)
+                sr = srtodeg(selection['sr'])
             if (valid):
                 lower = degs - sr
                 upper = degs + sr
@@ -486,14 +488,16 @@ def queryselection(query, selection):
                 valid = False
             # valid single value, get search radius
             if 'sr' in selection.keys():
-                sr = selection['sr']
-                sr = srtodeg(sr)
+                sr = srtodeg(selection['sr'])
                 if (sr is None):
-                    selection['warning'] = 'Invalid Search Radius'
+                    selection['warning'] = 'Invalid Search Radius, defaulting to 3 arcmin'
+                    selection['sr'] = 180
+                    sr = srtodeg(selection['sr'])
             else:
                 # No search radius specified. Default it for them
+                selection['warning'] = 'No Search Radius given, defaulting to 3 arcmin'
                 selection['sr'] = 180
-                sr = srtodeg(180)
+                sr = srtodeg(selection['sr'])
             if (valid):
                 lower = degs - sr
                 upper = degs + sr
