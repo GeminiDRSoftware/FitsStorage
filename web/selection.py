@@ -184,7 +184,7 @@ def getselection(things):
             selection['crpa'] = thing[5:]
             recognised = True
         if((thing[:4] in ['N200', 'N201', 'N202', 'S200', 'S201', 'S202']) and (len(thing)<14)):
-            # Good through 2029, don't match fill filenames :-)
+            # Good through 2029, don't match full filenames :-)
             selection['filepre'] = thing
             recognised = True
         if(thing[:8] == 'filepre='):
