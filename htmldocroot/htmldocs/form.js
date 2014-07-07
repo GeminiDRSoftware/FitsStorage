@@ -32,17 +32,6 @@ $(function() {
     $('#advanced_header').click(function() {
         $('#advanced_options').toggle();
     });
-
-    if ($('#engdata').val().match("EngExclude") {
-    } else {
-        $('#advanced_options').show();
-    }
-
-    if ($('#svdata').val().match("SvInclude") {
-    } else {
-        $('#advanced_options').show();
-    }
-
 });
 
 $(document).ready(function() {
