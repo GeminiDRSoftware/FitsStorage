@@ -100,6 +100,9 @@ class Header(Base):
                 # Set eng and sv booleans
                 self.engineering = ('ENG' in self.program_id)
                 self.science_verification = ('SV' in self.program_id)
+            else:
+                # program ID is None - mark as engineering
+                self.engineering = True
             self.observation_id = ad.observation_id().for_db()
             if(self.observation_id is not None):
                 # Ensure upper case
