@@ -362,9 +362,10 @@ def content(req):
             yearnum = yearresult[1]
             yeardata = yearresult[2]
         
-            req.write("<TD>%s</TD>" % '{:,.02f}'.format(yearbytes/1073741824.0))
-            req.write("<TD>%s</TD>" % '{:,.02f}'.format(yeardata/1073741824.0))
-            req.write("<TD>%s</TD>" % "{:,}".format(yearnum))
+            if(yearbytes is not None and yearnum is not None and yeardata is not None):
+                req.write("<TD>%s</TD>" % '{:,.02f}'.format(yearbytes/1073741824.0))
+                req.write("<TD>%s</TD>" % '{:,.02f}'.format(yeardata/1073741824.0))
+                req.write("<TD>%s</TD>" % "{:,}".format(yearnum))
 
             req.write("</TR>")
     
