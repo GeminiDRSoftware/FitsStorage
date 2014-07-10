@@ -17,7 +17,7 @@ parser = OptionParser()
 parser.add_option("--skip-fv", action="store_true", dest="skip_fv", default=False, help="Do not run fitsverify on the files")
 parser.add_option("--skip-wmd", action="store_true", dest="skip_wmd", default=False, help="Do not run a wmd check on the files")
 parser.add_option("--no-defer", action="store_true", dest="no_defer", default=False, help="Do not defer ingestion of recently modified files")
-parser.add_option("--fast_rebuild", action="store_true", dest="fast_rebuild", default=False, help="Fast rebuild mode - skip duplication checking etc")
+parser.add_option("--fast-rebuild", action="store_true", dest="fast_rebuild", default=False, help="Fast rebuild mode - skip duplication checking etc")
 parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
 parser.add_option("--name", action="store", dest="name", help="Name for this process. Used in logfile and lockfile")
@@ -124,7 +124,7 @@ while(loop):
             time.sleep(10)
         else:
             # Don't query queue length in fast_rebuild mode
-            if(options.fast_rebuild)
+            if(options.fast_rebuild):
                 logger.info("Ingesting %s" % iq.filename)
             else:
                 logger.info("Ingesting %s, (%d in queue)" % (iq.filename, ingestqueue_length(session)))

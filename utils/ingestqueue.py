@@ -324,7 +324,7 @@ def check_present(session, filename):
                 logger.info("Marking diskfile id %d as not present" % diskfile.id)
                 diskfile.present = False
 
-def pop_ingestqueue(session fast_rebuild=False):
+def pop_ingestqueue(session, fast_rebuild=False):
     """
     Returns the next thing to ingest off the ingest queue, and sets the
     inprogress flag on that entry.
