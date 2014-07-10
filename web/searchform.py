@@ -127,7 +127,7 @@ def updateform(html, selection):
             # These are all the text fields that don't need anything special
             html = html.replace('name="%s"' % key, 'name=%s value="%s"' % (key, selection[key]))
 
-        elif key in ['inst', 'observation_class', 'observation_type', 'filter', 'resolver', 'binning', 'disperser', 'mask', 'gmos_grating', 'gmos_focal_plane_mask', 'detector_roi']:
+        elif key in ['inst', 'observation_class', 'observation_type', 'filter', 'resolver', 'binning', 'disperser', 'mask', 'gmos_grating', 'gmos_focal_plane_mask', 'detector_roi', 'qa_state']:
             html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
 
         elif key in ['spectroscopy', 'mode']:

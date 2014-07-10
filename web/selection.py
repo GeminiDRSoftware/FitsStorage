@@ -91,7 +91,7 @@ def getselection(things):
         if(thing == 'spectroscopy'):
             selection['spectroscopy'] = True
             recognised = True
-        if(thing == 'Pass' or thing == 'Usable' or thing == 'Fail' or thing == 'Win' or thing == 'NotFail' or thing == 'Lucky'):
+        if(thing in ['Pass', 'Usable', 'Fail', 'Win', 'NotFail', 'Lucky', 'AnyQA']):
             selection['qa_state'] = thing
             recognised = True
         if(thing == 'LGS' or thing == 'NGS'):
@@ -383,6 +383,9 @@ def queryselection(query, selection):
             query = query.filter(Header.qa_state!='Fail')
         elif(selection['qa_state'] == 'Lucky'):
             query = query.filter(or_(Header.qa_state=='Pass', Header.qa_state=='Undefined'))
+        elif(selection['qa_state'] == 'AnyQA'):
+            # Dummy value to enable persistence in the search form
+            pass
         else:
             query = query.filter(Header.qa_state == selection['qa_state'])
 
