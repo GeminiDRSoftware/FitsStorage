@@ -669,6 +669,13 @@ def selection_to_URL(selection):
                 urlstring += '/science_verification'
             else:
                 urlstring += '/notscience_verification'
+        elif key == 'detector_roi':
+            if (selection[key] == 'Full Frame'):
+                urlstring += '/fullframe'
+            if (selection[key] == 'Central Spectrum'):
+                urlstring += '/centralspectrum'
+            if (selection[key] == 'Central Stamp'):
+                urlstring += '/centralstamp'
         else:
             urlstring = urlstring + '/' + str(selection[key])
     
