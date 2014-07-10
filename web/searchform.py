@@ -56,7 +56,7 @@ def searchform(req, things, orderby):
    
 
     if(formdata):
-        if((len(formdata) == 2) and ('engineering' in formdata.keys()) and ('science_verification' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and (formdata['science_verification'].value == 'SvInclude')):
+        if((len(formdata) == 3) and ('engineering' in formdata.keys()) and ('science_verification' in formdata.keys()) and ('qa_state' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and (formdata['science_verification'].value == 'SvInclude') and (formdata['qa_state'].value == 'NotFail')):
             # This is the default form state, someone just hit submit without doing anything.
             pass
         elif (formdata.keys() == ['orderby']):
@@ -97,7 +97,7 @@ def searchform(req, things, orderby):
     req.write('</form>')
     req.write('<hr noshade>')
     # Uncomment this for form processing selection debugging...
-    # req.write('<p>selection: %s</p>' % selection)
+    req.write('<p>selection: %s</p>' % selection)
     req.write('<div id="searchresults" class="searchresults">')
     req.write('<span id="notloading"><P>Set at least one search criteria above to search for data. Mouse over the (text in brackets) to see more help for each item.</P></span>')
     req.write('<span id="loading" style="display:none"><p><img src="/htmldocs/ajax-loading.gif">  Loading...</p></span>')
@@ -127,7 +127,7 @@ def updateform(html, selection):
             # These are all the text fields that don't need anything special
             html = html.replace('name="%s"' % key, 'name=%s value="%s"' % (key, selection[key]))
 
-        elif key in ['inst', 'observation_class', 'observation_type', 'filter', 'resolver', 'binning', 'disperser', 'mask']:
+        elif key in ['inst', 'observation_class', 'observation_type', 'filter', 'resolver', 'binning', 'disperser', 'mask', 'gmos_grating', 'gmos_focal_plane_mask', 'detector_roi']:
             html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
 
         elif key in ['spectroscopy', 'mode']:
