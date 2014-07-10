@@ -324,7 +324,7 @@ def check_present(session, filename):
                 logger.info("Marking diskfile id %d as not present" % diskfile.id)
                 diskfile.present = False
 
-def pop_ingestqueue(session):
+def pop_ingestqueue(session fast_rebuild=False):
     """
     Returns the next thing to ingest off the ingest queue, and sets the
     inprogress flag on that entry.
@@ -351,15 +351,17 @@ def pop_ingestqueue(session):
     else:
         # OK, we got a viable item, set it to inprogress and return it.
         logger.debug("Popped id %d from ingestqueue" % iq.id)
-        # Set this entry to in progres and flush to the DB.
+        # Set this entry to in progres and flush to the DB if we are doig more before the commit.
         iq.inprogress = True
-        session.flush()
 
-        # Find other instances and delete them
-        others = session.query(IngestQueue).filter(IngestQueue.inprogress == False).filter(IngestQueue.filename == iq.filename).all()
-        for o in others:
-            logger.debug("Deleting duplicate file entry at ingestqueue id %d" % o.id)
-            session.delete(o)
+        if(not fast_rebuild):
+            # Flush the DB (see previous step)
+            session.flush()
+            # Find other instances and delete them
+            others = session.query(IngestQueue).filter(IngestQueue.inprogress == False).filter(IngestQueue.filename == iq.filename).all()
+            for o in others:
+                logger.debug("Deleting duplicate file entry at ingestqueue id %d" % o.id)
+                session.delete(o)
 
     # And we're done, commit the transaction and release the update lock
     session.commit()
