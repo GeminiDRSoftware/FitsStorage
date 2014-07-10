@@ -67,7 +67,21 @@
         <span class="help">(help)
             <p class="helpright">Choose whether to include, exclude, or display only science verification data.</p>
         </span><br />
-        <br />
+        
+        <select id="qastate" class="ddw" name="qa_state">
+            <option value="NotFail">Not Fail</option>
+            <option value="">Any</option>
+            <option value="Pass">Pass</option>
+            <option value="Lucky">Pass or Undefined</option>
+            <option value="Win">Pass or Usable</option>
+            <option value="Usable">Usable</option>
+            <option value="Fail">Fail</option>
+        </select>
+        QA State
+        <span class="help">(help)
+            <p class="helpright">Define the quality of results you wish to access - choose Any for all results, including Fail.</p>
+        </span><br />
+        <br /> 
     </div>
 </div>
 
@@ -180,22 +194,90 @@
 
 <div class="next" id="GMOS" style="display:none">
     <br /><label>GMOS</label><br />
-
-    <label>Binning:</label><select class="ddw" name="binning" disabled="disabled">
-        <option value=""></option>
-        <option value="x">x-binning</option>
-        <option value="y">y-binning</option>
+    
+    <div class="left">
+    <label>Binning:</label><select class="ddw" name="binning">
+        <option value="">Any</option>
+        <option value="1x1">1x1</option>
+        <option value="1x2">1x2</option>
+        <option value="1x4">1x4</option>
+        <option value="2x1">2x1</option>
+        <option value="2x2">2x2</option>
+        <option value="2x4">2x4</option>
+        <option value="4x1">4x1</option>
+        <option value="4x2">4x2</option>
+        <option value="4x4">4x4</option>
     </select><br />
 
-    <label>Disperser:</label><select class="ddw" name="disperser" disabled="disabled">
-        <option value=""></option>
-        <option value="1">Disperser 1</option>
+    <label>Disperser:</label><select class="ddw" name="gmos_grating">
+        <option value="">Any</option>
+        <option value="B600">B600</option>
+        <option value="R400">R400</option>
+        <option value="R831">R831</option>
+        <option value="B1200">B1200</option>
+        <option value="R150">R150</option>
+        <option value="MIRROR">MIRROR</option>
     </select><br />
 
-    <label>Mask:</label><select class="ddw" name="mask" disabled="disabled">
-        <option value=""></option>
-        <option value="1">Mask 1</option>
+    <label>Filter:</label><select class="ddw" name="gmos_filter" disabled="disabled">
+        <option value="">Any</option>
+        <option value="u">u'</option>
+        <option value="g">g'</option>
+        <option value="r">r'</option>
+        <option value="i">i'</option>
+        <option value="z">z'</option>
     </select><br />
+        
+
+    <label>Mask:</label><select id="gmos_mask" class="ddw" name="gmos_focal_plane_mask">
+        <option value="">Any</option>
+        <option value="0.5arcsec">0.5 arcsec</option>
+        <option value="0.75arcsec">0.75 arcsec</option>
+        <option value="1.0arcsec">1.0 arcsec</option>
+        <option value="1.5arcsec">1.5 arcsec</option>
+        <option value="2.0arcsec">2.0 arcsec</option>
+        <option value="5.0arcsec">5.0 arcsec</option>
+        <option value="NS0.75arcsec">NS 0.75 arcsec</option>
+        <option value="NS1.0arcsec">NS 1.0 arcsec</option>
+        <option value="NS1.5arcsec">NS 1.5 arcsec</option>
+        <option value="NS2.0arcsec">NS 2.0 arcsec</option>
+        <option value="IFU-R">IFU-R</option>
+        <option value="IFU-2">IFU-2</option>
+        <option value="Imaging">Imaging</option>
+        <option value="focus_array_new">focus array new?</option>
+        <option value="custom">Custom</option>
+    </select>
+    <input id="custom_mask" type="text" placeholder="(custom mask)">
+    <br />
+    </div>
+
+    <div class="right">
+    <label>Nod&amp;Shuffle:</label><select class="ddw" name="nod_and_shuffle" disabled="disabled">
+        <option value="">Any</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+    </select><br />
+    
+    <label>Read Speed:</label><select class="ddw" name="detector_config" disabled="disabled">
+        <option value="">Any</option>
+        <option value="Fast">Fast</option>
+        <option value="Slow">Slow</option>
+    </select><br />
+
+    <label>Readout Gain:</label><select class="ddw" name="detector_config" disabled="disabled">
+        <option value="">Any</option>
+        <option value="low">Low</option>
+        <option value="high">High</option>
+    </select><br />
+    
+    <label>ROI:</label><select class="ddw" name="detector_roi">
+        <option value="">Any</option>
+        <option value="fullframe">Full Frame</option>
+        <option value="centralspectrum">Central Spectrum</option>
+        <option value="centralstamp">Central Stamp</option>
+    </select><br /><br />
+    </div>
+    
 </div>
 
 <div class="next"><center><input type="submit" value="Search"></center><br /></div>
