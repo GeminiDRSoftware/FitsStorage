@@ -127,7 +127,7 @@ def updateform(html, selection):
             # These are all the text fields that don't need anything special
             html = html.replace('name="%s"' % key, 'name=%s value="%s"' % (key, selection[key]))
 
-        elif key in ['inst', 'observation_class', 'observation_type', 'filter', 'resolver', 'binning', 'disperser', 'mask', 'gmos_grating', 'gmos_focal_plane_mask', 'detector_roi', 'qa_state']:
+        elif key in ['inst', 'observation_class', 'observation_type', 'filter', 'resolver', 'binning', 'disperser', 'mask', 'gmos_grating', 'detector_roi', 'qa_state']:
             html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
 
         elif key in ['spectroscopy', 'mode']:
@@ -158,6 +158,13 @@ def updateform(html, selection):
                 html = html.replace('value="SvExclude"', 'value="SvExclude" selected')
             else:
                 html = html.replace('value="SvInclude"', 'value="SvInclude" selected')
+        elif key == 'gmos_focal_plane_mask':
+            if (selection[key] in ['NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec']):
+                html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
+            else:
+                # Custom mask name
+                html = html.replace('value="custom"', 'value="custom" selected')
+                html = html.replace('id="custom_mask"', 'id="custom_mask" value=%s' % selection[key])
         else:
             html = html.replace('value="%s"' % selection[key], 'name="%s" checked' % key)
     
@@ -223,6 +230,14 @@ def updateselection(formdata, selection):
                 if key in selection.keys():
                     selection.pop(key)
 
+        elif key == 'gmos_focal_plane_mask':
+            if value == 'custom':
+                selection[key] = formdata['custom_mask'].value
+            else:
+                selection[key] = value
+        elif key == 'custom_mask':
+            # Ignmore - done in gmos_focal_plane_mask
+            pass
         else:
             selection[key] = value
 

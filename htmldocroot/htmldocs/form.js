@@ -46,7 +46,11 @@ $(document).ready(function() {
 });
 
 $(function() {
-    document.getElementById("custom_mask").disabled = true;
+    if (document.getElementById("gmos_mask").value == "custom") {
+        document.getElementById("custom_mask").disabled = false;
+    } else {
+        document.getElementById("custom_mask").disabled = true;
+    };
     $('#gmos_mask').change(function() {
         if (document.getElementById("gmos_mask").value == "custom") {
             document.getElementById("custom_mask").disabled = false;

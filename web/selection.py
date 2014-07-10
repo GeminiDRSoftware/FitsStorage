@@ -82,6 +82,9 @@ def getselection(things):
         if(gmos_focal_plane_mask(thing)):
             selection['gmos_focal_plane_mask'] = gmos_focal_plane_mask(thing)
             recognised = True
+        if(thing[:5] == 'mask='):
+            selection['gmos_focal_plane_mask'] = thing[5:]
+            recognised = True
         if(thing == 'warnings' or thing == 'missing' or thing == 'requires' or thing == 'takenow'):
             selection['caloption'] = thing
             recognised = True
@@ -676,6 +679,12 @@ def selection_to_URL(selection):
                 urlstring += '/centralspectrum'
             if (selection[key] == 'Central Stamp'):
                 urlstring += '/centralstamp'
+        elif key == 'gmos_focal_plane_mask':
+            if(selection[key] == gmos_focal_plane_mask(selection[key])):
+                urlstring += '/' + str(selection[key])
+            else:
+                urlstring += '/mask=' + str(selection[key])
+            
         else:
             urlstring = urlstring + '/' + str(selection[key])
     
