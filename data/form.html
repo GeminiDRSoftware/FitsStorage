@@ -80,13 +80,12 @@
         </select>
         <span class="help">(help)
             <p class="helpright">Define the quality of results you wish to access - choose Any for all results, including Fail.</p>
-        </span><br />
+        </span>
         <br /> 
     </div>
 </div>
 
 <div class="left">
-
     <label>Program ID:</label>
     <input type="text" placeholder="(leave empty for Any)" name="program_id">
     <span class="help">(or Obs. ID / Data Label. Exact Match)
@@ -207,7 +206,10 @@
         <option value="4x1">4x1</option>
         <option value="4x2">4x2</option>
         <option value="4x4">4x4</option>
-    </select><br />
+    </select>
+    <span class="help">(CCD Binning)
+        <p class="helpleft">Select a CCD binning.</p>
+    </span><br />
 
     <label>Disperser:</label><select class="ddw" name="gmos_grating">
         <option value="">Any</option>
@@ -217,7 +219,10 @@
         <option value="B1200">B1200</option>
         <option value="R150">R150</option>
         <option value="MIRROR">MIRROR</option>
-    </select><br />
+    </select>
+    <span class="help">(GMOS Gratings)
+        <p class="helpleft">Select a GMOS grating. You can select MIRROR to force Imaging mode</p>
+    </span><br />
 
     <label>Filter:</label><select class="ddw" name="gmos_filter" disabled="disabled">
         <option value="">Any</option>
@@ -226,7 +231,10 @@
         <option value="r">r'</option>
         <option value="i">i'</option>
         <option value="z">z'</option>
-    </select><br />
+    </select>
+    <span class="help">(GMOS filters)
+        <p class="helpleft">Select a GMOS filter.</p>
+    </span><br />
         
 
     <label>Mask:</label><select id="gmos_mask" class="ddw" name="gmos_focal_plane_mask">
@@ -248,7 +256,9 @@
         <option value="custom">Custom</option>
     </select>
     <input id="custom_mask" name="custom_mask" type="text" placeholder="(custom mask)">
-    <br />
+    <span class="help">(help)
+        <p class="helpleft">Select a GMOS mask. To select a custom mask name, or one not listed in the pulldown, select "custom" and them put the mask name in the text field. This will do an exact match.</p>
+    </span><br />
     </div>
 
     <div class="right">
@@ -256,29 +266,41 @@
         <option value="">Any</option>
         <option value="Yes">Yes</option>
         <option value="No">No</option>
-    </select><br />
+    </select>
+    <span class="help">(help)
+        <p class="helpright">Select whether you want to search for Nod and Shuffle or Classic readout data. Leave at Any for both</p>
+    </span><br />
     
     <label>Read Speed:</label><select class="ddw" name="detector_config" disabled="disabled">
         <option value="">Any</option>
         <option value="Fast">Fast</option>
         <option value="Slow">Slow</option>
-    </select><br />
+    </select>
+    <span class="help">(help)
+        <p class="helpright">Select between slow and fast read speed. Leave at Any for both.</p>
+    </span><br />
 
     <label>Readout Gain:</label><select class="ddw" name="detector_config" disabled="disabled">
         <option value="">Any</option>
         <option value="low">Low</option>
         <option value="high">High</option>
-    </select><br />
+    </select>
+    <span class="help">(help)
+        <p class="helpright">Search for low or high gain data. Leave at Any for both</p>
+    </span><br />
     
     <label>ROI:</label><select class="ddw" name="detector_roi">
         <option value="">Any</option>
         <option value="Full Frame">Full Frame</option>
         <option value="Central Spectrum">Central Spectrum</option>
         <option value="Central Stamp">Central Stamp</option>
-    </select><br /><br />
+    </select>
+    <span class="help">(Region of Interest)
+        <p class="helpright">Search for various Regions of Interest, otherwise know as readout area. It's not possible to search for custom ROIs here, though they will be included if you leave this at Any to not search by ROI.</p>
+    </span><br />
     </div>
     
 </div>
-
+<br />
 <div class="next"><center><input type="submit" value="Search"></center><br /></div>
 
