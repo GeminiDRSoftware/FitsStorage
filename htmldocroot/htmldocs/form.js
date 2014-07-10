@@ -29,6 +29,9 @@ $(function() {
 });
 
 $(function() {
+    if (document.getElementById("engdata").value != "EngExclude" || document.getElementById("svdata").value != "SvInclude" || document.getElementById("qastate").value != "NotFail") {
+        $('#advanced_options').show();
+    };
     $('#advanced_header').click(function() {
         $('#advanced_options').toggle();
     });
