@@ -684,8 +684,10 @@ def selection_to_URL(selection):
                 urlstring += '/' + str(selection[key])
             else:
                 urlstring += '/mask=' + str(selection[key])
-            
+        elif key == 'detector_config':
+            for config in selection[key]:
+                urlstring += '/%s' % config
         else:
-            urlstring = urlstring + '/' + str(selection[key])
+            urlstring += '/%s' % selection[key]
     
     return urlstring

@@ -97,7 +97,7 @@ def searchform(req, things, orderby):
     req.write('</form>')
     req.write('<hr noshade>')
     # Uncomment this for form processing selection debugging...
-    # req.write('<p>selection: %s</p>' % selection)
+    req.write('<p>selection: %s</p>' % selection)
     req.write('<div id="searchresults" class="searchresults">')
     req.write('<span id="notloading"><P>Set at least one search criteria above to search for data. Mouse over the (text in brackets) to see more help for each item.</P></span>')
     req.write('<span id="loading" style="display:none"><p><img src="/htmldocs/ajax-loading.gif">  Loading...</p></span>')
@@ -165,6 +165,9 @@ def updateform(html, selection):
                 # Custom mask name
                 html = html.replace('value="custom"', 'value="custom" selected')
                 html = html.replace('id="custom_mask"', 'id="custom_mask" value=%s' % selection[key])
+        elif key == 'detector_config':
+            for item in selection[key]:
+                html = html.replace('value="%s"' % item, 'value="%s" selected' % item)
         else:
             html = html.replace('value="%s"' % selection[key], 'name="%s" checked' % key)
     
@@ -243,6 +246,10 @@ def updateselection(formdata, selection):
         elif key == 'custom_mask':
             # Ignmore - done in gmos_focal_plane_mask
             pass
+        elif key in ['gmos_speed', 'gmos_gain']:
+            if 'detector_config' not in selection.keys():
+                 selection['detector_config']=[]
+            selection['detector_config'].append(value)
         else:
             selection[key] = value
 
