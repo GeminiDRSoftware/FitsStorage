@@ -177,7 +177,12 @@ def updateselection(formdata, selection):
     """
     # Populate selection dictionary with values from form input
     for key in formdata.keys():
-        value = formdata[key].value
+        # if we got a list, there are multiple fields with that name. This is true for filter at least
+        # Pick the last one
+        if(type(formdata[key]) is list):
+            value = formdata[key][-1].value
+        else:
+            value = formdata[key].value
         if key == 'program_id':
             # if the string starts with progid= then trim that off
             if value[:7] == 'progid=':
