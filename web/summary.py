@@ -36,14 +36,15 @@ def summary(req, sumtype, selection, orderby, links=True):
     req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
     req.write("</head>\n")
     req.write("<body>")
+
+    # In search results, warn about undefined stuff
+    if('notrecognised' in selection.keys()):
+        req.write("<H4>WARNING: I didn't recognize the following search terms: %s</H4>" % selection['notrecognised'])
+
     if(sumtype != 'searchresults'):
         if (fits_system_status == "development"):
             req.write('<h4>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h4>')
         req.write("<H1>%s</H1>\n" % htmlescape(title))
-    else:
-        # In search results, only warn about undefined stuff
-        if('notrecognised' in selection.keys()):
-            req.write("<H4>WARNING: I didn't recognize the following search terms: %s</H4>" % selection['notrecognised'])
 
     # If this is a diskfiles summary, select even ones that are not canonical
     if(sumtype != 'diskfiles'):
