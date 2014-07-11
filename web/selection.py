@@ -492,13 +492,13 @@ def queryselection(query, selection):
     if('dec' in selection):
         valid = True
         # might be a range or a single value
-        value = selection['dec'].split('-')
-        if (len(value) == 1):
+        match = re.match("(-?[\d:\.]+)-(-?[\d:\.]+)", selection['dec'])
+        if(match is None):
             # single value
-            degs = dectodeg(value[0])
+            degs = dectodeg(selection['dec'])
             if (degs is None):
                 # Invalid value.
-                selection['warning'] = 'Invalid Dec format. Ignoring your RA constraint.'
+                selection['warning'] = 'Invalid Dec format. Ignoring your Dec constraint.'
                 valid = False
             # valid single value, get search radius
             if 'sr' in selection.keys():
@@ -516,18 +516,13 @@ def queryselection(query, selection):
                 lower = degs - sr
                 upper = degs + sr
 
-        elif (len(value) == 2):
-            # Got two values
-            lower = dectodeg(value[0])
-            upper = dectodeg(value[1])
-            if((lower is None) or (upper is None)):
-                selection['warning'] = 'Invalid Dec range format. Ignoring your RA constraint.'
-                valid = False
-
         else:
-            # Invalid string format for Dec
-            selection['warning'] = 'Invalid Dec format. Ignoring your RA constraint.'
-            valid = False
+            # Got two values
+            lower = dectodeg(match.group(1))
+            upper = dectodeg(match.group(2))
+            if((lower is None) or (upper is None)):
+                selection['warning'] = 'Invalid Dec range format. Ignoring your Dec constraint.'
+                valid = False
 
         if valid and (lower is not None) and (upper is not None):
             query = query.filter(Header.dec >= lower).filter(Header.dec < upper)
