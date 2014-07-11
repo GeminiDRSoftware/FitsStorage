@@ -145,7 +145,7 @@ def getselection(things):
         if(thing == 'photstandard'):
             selection['photstandard'] = True
             recognised = True
-        if(thing in ['low', 'high', 'slow', 'fast']):
+        if(thing in ['low', 'high', 'slow', 'fast', 'NodAndShuffle', 'Classic']):
             if(not selection.has_key('detector_config')):
                 selection['detector_config'] = []
             selection['detector_config'].append(thing)
@@ -422,7 +422,10 @@ def queryselection(query, selection):
 
     if('detector_config' in selection):
         for thing in selection['detector_config']:
-            query = query.filter(Header.detector_config.like('%'+thing+'%'))
+            if thing == 'Classic':
+                query = query.filter(~Header.detector_config.contains('NodAndShuffle'))
+            else:
+                query = query.filter(Header.detector_config.contains(thing))
 
     if('twilight' in selection):
         if(selection['twilight'] == True):

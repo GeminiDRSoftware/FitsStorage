@@ -246,7 +246,7 @@ def updateselection(formdata, selection):
         elif key == 'custom_mask':
             # Ignmore - done in gmos_focal_plane_mask
             pass
-        elif key in ['gmos_speed', 'gmos_gain']:
+        elif key in ['gmos_speed', 'gmos_gain', 'nod_and_shuffle']:
             if 'detector_config' not in selection.keys():
                  selection['detector_config']=[]
             selection['detector_config'].append(value)
