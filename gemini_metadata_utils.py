@@ -182,28 +182,27 @@ def dectodeg(string):
 
     return degs
     
+srcre = re.compile("([\d.]+)\s*(d|D|degs|Degs)?")
 def srtodeg(string):
     """
     Converts a Search Radius to a decimal degrees.
-    If the input is less than 1.0, assume degimal degs already
-    Otherwise assume arcseconds
+    Assume arcseconds unless the string ends with 'd' or 'degs'
     Return None if invalid
     """
 
+    match = srcre.match(string)
     try:
-        number = float(string)
+        value = float(match.group(1))
+        degs = match.group(2)
     except:
         return None
 
-    if (number < 0.0):
-        # not valid
-        return None
-    elif (number < 1.0):
-        # In degrees already
-        return number
-    else:
-        # In arcseconds
-        return number / 3600.0
+    if (degs is None):
+        # Value is in arcseconds
+        # convert to degrees
+        value /= 3600.0
+
+    return value
 
 daterangecre = re.compile('^([12][90]\d\d[01]\d[0123]\d)-([12][90]\d\d[01]\d[0123]\d)$')
 def gemini_daterange(string):

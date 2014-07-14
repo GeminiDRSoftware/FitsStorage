@@ -36,7 +36,7 @@
     <label>Search radius:</label>
     <input type="text" placeholder="(leave blank for Any)" name="sr">
     <span class="help"> (arcseconds or decimal degrees)
-        <p class="helpright">If a single RA and/or dec value has been chosen, this specifies the size of the box around it to search. This is actually a simple search in a square box (in the tangent plane), not a true cone search. We simply take the range [ra-sr - ra+sr] or [dec-sr - dec+sr]. Strange things may happen near the poles.</p>
+        <p class="helpright">If RA and/or dec  has been given as a single value (as opposed to a range), this specifies the size of the box around it to search. The value is in arcseconds, unless you specify "d" or "degs" to make it decimal degrees. i.e. <i>180</i> means 180 arcseconds, <i>10degs</i> or <i>10d</i> means 10 degrees. This is actually a simple search in a square box (in the tangent plane), not a true cone search. Strange things may happen near the poles.</p>
     </span>
     <br />
     <label class="wide">Find Associated Calbrations:</label>
