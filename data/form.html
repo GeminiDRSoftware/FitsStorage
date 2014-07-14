@@ -15,6 +15,7 @@
          <option value="VIZIER">VIZIER</option>
     </select>
     <button id="resbutton" type="button">Resolve</button>
+    <span id="resload" style="display:none"><img src="/htmldocs/ajax-loading.gif"></span>
     <span class="help"> (Name Resolver)
         <p class="helpright">Choose a Name Resolver and click the resolve button to attempt to find the co-ordinates of your named source. We erase the target name field because you probably don't want to search by literal object name as well as by co-ordinates.</p>
     </span>
@@ -310,5 +311,18 @@
     
 </div>
 <br />
+
+<div class="next" id="GNIRS" style="display:none">
+    <br /><label>GNIRS</label><br />
+</div>
+
+<div class="next" id="NIRI" style="display:none">
+    <br /><label>NIRI</label><br />
+</div>
+
+<div class="next" id="NIFS" style="display:none">
+    <br /><label>NIFS</label><br />
+</div>
+
 <div class="next"><center><input type="submit" value="Search"></center><br /></div>
 
