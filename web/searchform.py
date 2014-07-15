@@ -92,7 +92,7 @@ def searchform(req, things, orderby):
     req.write('</form>')
     req.write('<hr noshade>')
     # Uncomment this for form processing selection debugging...
-    req.write('<p>selection: %s</p>' % selection)
+    # req.write('<p>selection: %s</p>' % selection)
     req.write('<div id="searchresults" class="searchresults">')
     if(selection):
         req.write('<span id="loading"><p><img src="/htmldocs/ajax-loading.gif">  Loading...</p></span>')
