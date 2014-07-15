@@ -42,7 +42,7 @@ class FullTextHeader(Base):
         self.fulltext += "AstroData Types: " +str(ad.types) + "\n\n"
         for i in range(len(ad.hdulist)):
             self.fulltext += "\n--- HDU %s ---\n" % i
-            self.fulltext += unicode(str(ad.hdulist[i].header.ascardlist()), errors='replace')
+            self.fulltext += unicode(repr(ad.hdulist[i].header), errors='replace')
             self.fulltext += '\n'
 
         if(local_ad):
