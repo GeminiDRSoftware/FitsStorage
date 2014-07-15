@@ -287,7 +287,7 @@ def queryselection(query, selection):
     if('data_label' in selection):
         query = query.filter(Header.data_label == selection['data_label'])
 
-    if('object' in selection):
+    if(('object' in selection) and (('ra' not in selection) and ('dec' not in selection))):
         query = query.filter(Header.object == selection['object'])
 
     # Should we query by date?
