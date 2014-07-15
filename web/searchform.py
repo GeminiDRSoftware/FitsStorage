@@ -157,7 +157,7 @@ def updateform(html, selection):
                 html = html.replace('value="SvExclude"', 'value="SvExclude" selected')
             else:
                 html = html.replace('value="SvInclude"', 'value="SvInclude" selected')
-        elif key == 'gmos_focal_plane_mask':
+        elif key == 'focal_plane_mask':
             if (selection[key] in ['NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec']):
                 html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
             else:
@@ -237,13 +237,13 @@ def updateselection(formdata, selection):
                 if key in selection.keys():
                     selection.pop(key)
 
-        elif key == 'gmos_focal_plane_mask':
+        elif key == 'focal_plane_mask':
             if value == 'custom':
                 selection[key] = formdata['custom_mask'].value
             else:
                 selection[key] = value
         elif key == 'custom_mask':
-            # Ignmore - done in gmos_focal_plane_mask
+            # Ignore - done in focal_plane_mask
             pass
         elif key in ['gmos_speed', 'gmos_gain', 'nod_and_shuffle']:
             if 'detector_config' not in selection.keys():
