@@ -39,10 +39,11 @@ class Header(Base):
     airmass = Column(Numeric(precision=8, scale=6))
     filter_name = Column(Text, index=True)
     exposure_time = Column(Numeric(precision=8, scale=4))
-    disperser = Column(Text)
+    disperser = Column(Text, index=True)
+    camera = Column(Text, index=True)
     central_wavelength = Column(Numeric(precision=8, scale=6), index=True)
     wavelength_band = Column(Text)
-    focal_plane_mask = Column(Text)
+    focal_plane_mask = Column(Text, index=True)
     detector_binning = Column(Text)
     detector_config = Column(Text)
     detector_roi_setting = Column(Text)
@@ -151,6 +152,7 @@ class Header(Base):
             if(self.instrument != 'NICI'):
                 self.exposure_time = ad.exposure_time().for_db()
             self.disperser = ad.disperser(pretty=True).for_db()
+            self.camera = ad.camera(pretty=True).for_db()
             if('SPECT' in ad.types):
                 self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
             self.wavelength_band = ad.wavelength_band().for_db()
@@ -160,16 +162,13 @@ class Header(Base):
             if((not dvx.is_none()) and (not dvy.is_none())):
                 self.detector_binning = "%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
 
-            try:
-                gainsetting = str(ad.gain_setting())
-            except ():
-                gainsetting = "None"
-            try:
-                readspeedsetting = str(ad.read_speed_setting())
-            except ():
-                readspeedsetting = "None"
+            gainsetting = str(ad.gain_setting())
+            readspeedsetting = str(ad.read_speed_setting())
+            welldepthsetting = str(ad.well_depth_setting())
+            readmode = str(ad.read_mode())
+            readmode.replace(' ', '_')
             nodandshuffle = "NodAndShuffle" if ad.is_type("GMOS_NODANDSHUFFLE") else ""
-            self.detector_config = "%s %s %s" % (gainsetting, readspeedsetting, nodandshuffle)
+            self.detector_config = ' '.join([gainsetting, readspeedsetting, nodandshuffle, welldepthsetting, readmode])
 
             self.detector_roi_setting = ad.detector_roi_setting().for_db()
 
