@@ -77,7 +77,7 @@ def getselection(things):
             selection['reduction'] = gemini_reduction_state(thing)
             recognised = True
         if(gmos_gratingname(thing)):
-            selection['gmos_grating'] = gmos_gratingname(thing)
+            selection['disperser'] = gmos_gratingname(thing)
             recognised = True
         if(gmos_focal_plane_mask(thing)):
             selection['gmos_focal_plane_mask'] = gmos_focal_plane_mask(thing)
@@ -217,7 +217,7 @@ def sayselection(selection):
     """
     string = ""
 
-    defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'object': 'Object Name', 'engineering': 'Engineering Data', 'science_verification': 'Science Verification Data', 'gmos_grating': 'GMOS Grating', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'sr': 'Search Radius', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI', 'filepre': 'File Prefix', 'mode': 'Spectroscopy Mode', 'cenwlen': 'Central Wavelength'}
+    defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'object': 'Object Name', 'engineering': 'Engineering Data', 'science_verification': 'Science Verification Data', 'disperser': 'Disperser', 'gmos_focal_plane_mask': 'GMOS FP Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'sr': 'Search Radius', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI', 'filepre': 'File Prefix', 'mode': 'Spectroscopy Mode', 'cenwlen': 'Central Wavelength'}
     for key in defs:
         if key in selection:
             string += "; %s: %s" % (defs[key], selection[key])
@@ -367,8 +367,8 @@ def queryselection(query, selection):
     if('filelist' in selection):
         query = query.filter(File.name.in_(selection['filelist']))
 
-    if('gmos_grating' in selection):
-        query = query.filter(Header.disperser == selection['gmos_grating'])
+    if('disperser' in selection):
+        query = query.filter(Header.disperser == selection['disperser'])
 
     if('gmos_focal_plane_mask' in selection):
         query = query.filter(Header.focal_plane_mask == selection['gmos_focal_plane_mask'])
