@@ -82,6 +82,9 @@ def getselection(things):
         if(thing[:10] == 'disperser='):
             selection['disperser'] = thing[10:]
             recognised = True
+        if(thing[:7] == 'camera='):
+            selection['camera'] = thing[7:]
+            recognised = True
         if(gmos_focal_plane_mask(thing)):
             selection['focal_plane_mask'] = gmos_focal_plane_mask(thing)
             recognised = True
@@ -220,7 +223,7 @@ def sayselection(selection):
     """
     string = ""
 
-    defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'object': 'Object Name', 'engineering': 'Engineering Data', 'science_verification': 'Science Verification Data', 'disperser': 'Disperser', 'focal_plane_mask': 'Focal Plane Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'sr': 'Search Radius', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI', 'filepre': 'File Prefix', 'mode': 'Spectroscopy Mode', 'cenwlen': 'Central Wavelength'}
+    defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'object': 'Object Name', 'engineering': 'Engineering Data', 'science_verification': 'Science Verification Data', 'disperser': 'Disperser', 'focal_plane_mask': 'Focal Plane Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'sr': 'Search Radius', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI', 'filepre': 'File Prefix', 'mode': 'Spectroscopy Mode', 'cenwlen': 'Central Wavelength', 'camera': 'Camera'}
     for key in defs:
         if key in selection:
             string += "; %s: %s" % (defs[key], selection[key])
@@ -372,6 +375,9 @@ def queryselection(query, selection):
 
     if('disperser' in selection):
         query = query.filter(Header.disperser == selection['disperser'])
+
+    if('camera' in selection):
+        query = query.filter(Header.camera == selection['camera'])
 
     if('focal_plane_mask' in selection):
         query = query.filter(Header.focal_plane_mask == selection['focal_plane_mask'])
