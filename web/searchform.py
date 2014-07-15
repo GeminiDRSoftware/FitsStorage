@@ -6,6 +6,7 @@ This is the searchform module
 from mod_python import apache, util
 
 from web.selection import getselection, selection_to_URL
+from web.summary import summary_body
 
 from fits_storage_config import fits_aux_datadir
 import os
@@ -33,14 +34,11 @@ def searchform(req, things, orderby):
     # If there was formdata:
     #    Build a URL from the selection dictionary
     #    Clear the formdata from the request object
-    #    Re-direct the user to the new URL (without and formdata)
+    #    Re-direct the user to the new URL (without any formdata)
     # Pre-populate the form fields with what is now in our selection dictionary
-    #    a: by stuffing hidden input elements in the html which jquery uses to modify
-    #       the values in the actual input fields 
-    # or b: by modifying the form html server side before we send it out
-    # Add a hidden input element telling jquery whether to ajax in search results
+    #  by modifying the form html server side before we send it out
     # Send out the form html
-    # jquery will ajax in results if applicable
+    # Send out the results html in-line with that, no ajax or anything
     # User messes with input fields
     # User hits submit - back to top
 
@@ -78,6 +76,7 @@ def searchform(req, things, orderby):
     req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/whoami.css">')
     req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/titlebar.css">')
     req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/form.css">')
+    req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/table.css">')
     req.write('<title>Gemini Archive Search Form</title></head><body>')
    
     req.write(titlebar_html)
@@ -89,18 +88,18 @@ def searchform(req, things, orderby):
    
     form_html_updt = updateform(form_html, selection)
     req.write(form_html_updt)
-    selectionstring = selection_to_URL(selection)
 
-    if(selection):
-        req.write('<input type="hidden" id="url" value="%s%s">' % (selectionstring, args_string))
-   
     req.write('</form>')
     req.write('<hr noshade>')
     # Uncomment this for form processing selection debugging...
-    # req.write('<p>selection: %s</p>' % selection)
+    req.write('<p>selection: %s</p>' % selection)
     req.write('<div id="searchresults" class="searchresults">')
-    req.write('<span id="notloading"><P>Set at least one search criteria above to search for data. Mouse over the (text in brackets) to see more help for each item.</P></span>')
-    req.write('<span id="loading" style="display:none"><p><img src="/htmldocs/ajax-loading.gif">  Loading...</p></span>')
+    if(selection):
+        req.write('<span id="loading"><p><img src="/htmldocs/ajax-loading.gif">  Loading...</p></span>')
+        summary_body(req, 'searchresults', selection, orderby)
+    else:
+        req.write('<P>Set at least one search criteria above to search for data. Mouse over the (text in brackets) to see more help for each item.</P>')
+
     req.write('</div>')
     req.write('</div>')
     req.write('</body></html>')

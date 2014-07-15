@@ -12,7 +12,29 @@ from sqlalchemy import desc
 
 from web.summary_generator import SummaryGenerator, htmlescape
 
+
 def summary(req, sumtype, selection, orderby, links=True):
+    """
+    This is the main summary generator.
+    The main work is done by the summary_body() funciton.
+    This funciton just wraps that in the relevant html
+    tags to make it a page in it's own right.
+    """
+    req.content_type = "text/html"
+    req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html>')
+    title = "FITS header %s table %s" % (sumtype, sayselection(selection))
+    req.write("<head>")
+    req.write("<title>%s</title>" % htmlescape(title))
+    req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+    req.write("</head>\n")
+    req.write("<body>")
+
+    summary_body(req, sumtype, selection, orderby, links)
+
+    req.write("</body></html>")
+    return apache.OK
+
+def summary_body(req, sumtype, selection, orderby, links=True):
     """
     This is the main summary generator.
     req is an apache request handler request object
@@ -28,15 +50,6 @@ def summary(req, sumtype, selection, orderby, links=True):
     and calls the webhdrsummary function to actually generate
     the html table containing the actual summary information.
     """
-    req.content_type = "text/html"
-    req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html>')
-    title = "FITS header %s table %s" % (sumtype, sayselection(selection))
-    req.write("<head>")
-    req.write("<title>%s</title>" % htmlescape(title))
-    req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
-    req.write("</head>\n")
-    req.write("<body>")
-
     # In search results, warn about undefined stuff
     if('notrecognised' in selection.keys()):
         req.write("<H4>WARNING: I didn't recognize the following search terms: %s</H4>" % selection['notrecognised'])
@@ -74,8 +87,6 @@ def summary(req, sumtype, selection, orderby, links=True):
     finally:
         session.close()
 
-    req.write("</body></html>")
-    return apache.OK
 
 def no_results(req):
     """

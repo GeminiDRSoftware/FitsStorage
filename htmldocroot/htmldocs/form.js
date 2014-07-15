@@ -1,3 +1,7 @@
+$(document).ready(function() {
+        $("#loading").hide();
+});
+
 $(function() {
     $('#instselect').change(function() {
         if ($(this).val().match("GMOS")) {
@@ -64,17 +68,6 @@ $(function() {
     });
 });
 
-$(document).ready(function() {
-    var urlresults = "/searchresults";
-    if ($("#url").length) {
-        $("#loading").slideDown();
-        $("#notloading").hide();
-        urlresults += $("#url").val();
-        $("#searchresults").load(urlresults, function(){
-        });
-    };
-});
-
 $(function() {
     if (document.getElementById("gmos_mask").value == "custom") {
         document.getElementById("custom_mask").disabled = false;
@@ -109,8 +102,8 @@ $(function() {
         $.ajax({
             url: url,
             dataType: "xml",
-            success: function(xml) {
-                if (xml.getElementsByTagName("INFO")[0].childNodes[0].nodeValue == ' *** Nothing found *** ') {
+            success: function(xml, status, jqXHR) {
+                if ((xml.getElementsByTagName("INFO").length > 0) && (xml.getElementsByTagName("INFO")[0].childNodes[0].nodeValue == ' *** Nothing found *** ')) {
                     alert("Object not found");
                     document.getElementById("ra").value = '';
                     document.getElementById("dec").value = '';
@@ -120,7 +113,6 @@ $(function() {
                     dec = xml.getElementsByTagName("jdedeg")[0].childNodes[0].nodeValue;
                     document.getElementById("ra").value = ra;
                     document.getElementById("dec").value = dec;
-                    document.getElementById("object_name").value = '';
                     $('#resload').hide();
                 }
             },
