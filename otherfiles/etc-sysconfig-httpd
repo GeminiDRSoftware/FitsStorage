@@ -21,6 +21,12 @@
 #
 #HTTPD_LANG=C
 
+export UR_DIR=/opt/Ureka/Ureka
+export UR_VARIANT=common
+export UR_OS=linux-rhe6
+export UR_CPU=x86_64
+export UR_BITS=64
+
 export PATH=/opt/Ureka/Ureka/variants/common/bin:/opt/Ureka/Ureka/bin:/opt/Ureka/Ureka/python/bin:/usr/local/bin:/bin:/usr/bin
 
 export PYTHONPATH=/opt/FitsStorage:/opt/python_modules/lib/python2.7/site-packages:/opt/gemini_python
