@@ -151,7 +151,11 @@ class Header(Base):
             # NICI exposure times are a pain, because there's two of them... Not sure how to handle this for now.
             if(self.instrument != 'NICI'):
                 self.exposure_time = ad.exposure_time().for_db()
-            self.disperser = ad.disperser(pretty=True).for_db()
+
+            # Need to remove invalid characters in disperser names, eg gnirs has slashes
+            disperser_string = ad.disperser(pretty=True).for_db()
+            self.disperser = disperser_string.replace('/', '_')
+
             self.camera = ad.camera(pretty=True).for_db()
             if('SPECT' in ad.types):
                 self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
