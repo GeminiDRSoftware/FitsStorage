@@ -94,7 +94,7 @@ $(function() {
     $('#resbutton').click(function() {
         var object_name = document.getElementById("object_name").value;
         var url = "/nameresolver"
-        $('#resload').show();
+        $('#resload').show()
 
         if (document.getElementById("resolver").value == "SIMBAD") {
             url += "/simbad/" + object_name;
@@ -104,7 +104,7 @@ $(function() {
             url += "/vizier/" + object_name;
         } else {
             url = ''
-        };
+        }
 
         $.ajax({
             url: url,
