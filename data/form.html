@@ -163,6 +163,7 @@
         <p class="helpleft">Select Imaging or various Spectroscopy modes here. Spectroscopy implies all spectroscopic modes.</p>
     </span><br />
     
+    <span id="mainfilter">
     <label>Filter:</label>
     <select class="ddw" name="filter">
         <option value="">Any</option>
@@ -181,6 +182,7 @@
     </select>
     <span class="help">(see also inside instrument sections)
         <p class="helpleft">This is a top level selection of common broad band filters. For instrument specific selections, select the instrument in question above and then select the filter inside the instrument specific section that will appear.</p>
+    </span>
     </span><br />
 
     <div id="Spec" style="display:none">
@@ -224,7 +226,7 @@
     <span class="help">(GMOS Gratings)
         <p class="helpleft">Select a GMOS grating. You can select MIRROR to force Imaging mode</p>
     </span><br />
-
+    
     <label>Filter:</label><select class="ddw" name="filter">
         <option value="">Any</option>
         <option value="u">u'</option>
@@ -355,10 +357,84 @@
 
 <div class="next" id="NIRI" style="display:none">
     <br /><label>NIRI</label><br />
+
+    <div class="left">
+        <label>Filter:</label><select class="ddw" name="niri_filter" disabled="disabled">
+            <option value="">Any</option>
+        </select><br />
+        
+        <label>Disperser:</label><select class="ddw" name="niri_grating" disabled="disabled">
+            <option value="">Any</option>
+            <option value="Hgrism">H-grism</option>
+            <option value="Jgrism">J-grism</option>
+            <option value="Kgrism">K-grism</option>
+            <option value="Lgrism">L-grism</option>
+            <option value="Mgrism">M-grism</option>
+        </select><br />
+
+        <label>Mask:</label><select class="ddw" name="niri_mask" disabled="disabled">
+            <option value="">Any</option>
+        </select><br />
+
+        <label>Camera:</label><select class="ddw" name="niricam" disabled="disabled">
+            <option value="">Any</option>
+            <option value="f6">f/6 (0.12 "/pix)</option>
+            <option value="f14">f/14 (0.05 "/pix)</option>
+            <option value="f32">f/32 (0.02 "/pix)</option>
+            <option value="f32p">f/32 + pupil viewer</option>
+        </select><br />
+    </div>
+    
+    <div class="right">
+        <label>Read Mode:</label><select class="ddw" name="niri_readmode" disabled="disabled">
+            <option value="">Any</option>
+            <option value="bright">Bright</option>
+            <option value="medium">Medium</option>
+            <option value="faint">Faint</option>
+        </select><br />
+
+        <label>Subarray:</label><select class="ddw" name="subarray" disabled="disabled">
+            <option value="">Any</option>
+            <option value="nirifullframe">Full Frame</option>
+            <option value="c768">Central 768</option>
+            <option value="c512">Central 512</option>
+            <option value="c256">Central 256</option>
+            <option value="1024x512">Spec 1024x512</option>
+        </select><br />
+    </div>      
 </div>
 
 <div class="next" id="NIFS" style="display:none">
     <br /><label>NIFS</label><br />
+    <label>Disperser:</label><select class="ddw" name="nifs_grating" disabled="disabled">
+        <option value="">Any</option>
+        <option value="Z">Z</option>
+        <option value="J">J</option>
+        <option value="H">H</option>
+        <option value="K">K</option>
+        <option value="K_short">K short</option>
+        <option value="K_long">K long</option>
+        <option value="nirimirror">Mirror</option>
+    </select><br />
+
+    <label>Mask:</label><select class="ddw" name="nifsmask" disabled="disabled">
+        <option value="">Any</option>
+        <option value="clear">Clear</option>
+        <option value="ronche">Ronche</option>
+    </select><br />
+
+    <label>Flip Mirror:</label><select class="ddw" name="flipmirror" disabled="disabled">
+        <option value="">Any</option>
+        <option value="fmIn">In</option>
+        <option value="fmOut">Out</option>
+    </select><br />
+
+    <label>Read Mode:</label><select class="ddw" name="nifs_readmode" disabled="disabled">
+            <option value="">Any</option>
+            <option value="brightnifs">Bright</option>
+            <option value="mediumnifs">Medium</option>
+            <option value="faintnifs">Faint</option>
+    </select><br />
 </div>
 
 <div class="next"><center><input type="submit" value="Search"></center><br /></div>
