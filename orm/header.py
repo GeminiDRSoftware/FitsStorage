@@ -154,7 +154,8 @@ class Header(Base):
 
             # Need to remove invalid characters in disperser names, eg gnirs has slashes
             disperser_string = ad.disperser(pretty=True).for_db()
-            self.disperser = disperser_string.replace('/', '_')
+            if(disperser_string):
+                self.disperser = disperser_string.replace('/', '_')
 
             self.camera = ad.camera(pretty=True).for_db()
             if('SPECT' in ad.types):
