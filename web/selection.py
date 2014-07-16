@@ -687,7 +687,7 @@ def selection_to_URL(selection):
             if (selection[key] == 'Central Stamp'):
                 urlstring += '/centralstamp'
         elif key == 'focal_plane_mask':
-            if(selection[key] == focal_plane_mask(selection[key])):
+            if(selection[key] == gmos_focal_plane_mask(selection[key])):
                 urlstring += '/' + str(selection[key])
             else:
                 urlstring += '/mask=' + str(selection[key])
