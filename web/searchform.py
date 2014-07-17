@@ -126,9 +126,6 @@ def updateform(html, selection):
             # These are all the text fields that don't need anything special
             html = html.replace('name="%s"' % key, 'name=%s value="%s"' % (key, selection[key]))
 
-        elif key in ['inst', 'observation_class', 'observation_type', 'filter', 'resolver', 'binning', 'disperser', 'mask', 'disperser', 'detector_roi', 'qa_state']:
-            html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
-
         elif key in ['spectroscopy', 'mode']:
             if (selection[key] is False):
                 html = html.replace('value="imaging"', 'value="imaging" selected')
@@ -157,7 +154,7 @@ def updateform(html, selection):
                 html = html.replace('value="SvExclude"', 'value="SvExclude" selected')
             else:
                 html = html.replace('value="SvInclude"', 'value="SvInclude" selected')
-        elif key == 'focal_plane_mask':
+        elif 'inst' in selection.keys() and selection['inst'].startswith('GMOS') and key == 'focal_plane_mask':
             if (selection[key] in ['NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec']):
                 html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
             else:
@@ -168,7 +165,8 @@ def updateform(html, selection):
             for item in selection[key]:
                 html = html.replace('value="%s"' % item, 'value="%s" selected' % item)
         else:
-            html = html.replace('value="%s"' % selection[key], 'name="%s" checked' % key)
+            # This does all the generic pulldown menus
+            html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
     
     return html
 

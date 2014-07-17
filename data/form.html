@@ -328,8 +328,8 @@
 
     <label>Camera:</label><select class="ddw" name="camera">
         <option value="">Any</option>
-        <option value="0.15">0.15 "/pix</option>
-        <option value="0.05">0.05 "/pix</option>
+        <option value="GnirsShort">0.15 "/pix</option>
+        <option value="GnirsLong">0.05 "/pix</option>
     </select><br />
 
     <label>Mask:</label><select class="ddw" name="focal_plane_mask">
@@ -372,25 +372,36 @@
             <option value="Mgrism">M-grism</option>
         </select><br />
 
-        <label>Mask:</label><select class="ddw" name="niri_mask" disabled="disabled">
+        <label>Mask:</label><select class="ddw" name="focal_plane_mask">
             <option value="">Any</option>
+            <option value="f6-2pix">f6-2pix</option>
+            <option value="f6-2pixBl">f6-2pix Blue</option>
+            <option value="f6-4pix">f6-4pix</option>
+            <option value="f6-4pixBl">f6-4pix Blue</option>
+            <option value="f6-6pix">f6-6pix</option>
+            <option value="f6-6pixBl">f6-6pix Blue</option>
+            <option value="f32-6pix">f32-6pix</option>
+            <option value="f32-9pix">f32-9pix</option>
+            <option value="f6-cam">f6-cam</option>
+            <option value="f14-cam">f14-cam</option>
+            <option value="f32-cam">f32-cam</option>
+            <option value="pinhole">pinhole</option>
         </select><br />
 
         <label>Camera:</label><select class="ddw" name="camera">
             <option value="">Any</option>
             <option value="f6">f/6 (0.12 "/pix)</option>
-            <option value="f14">f/14 (0.05 "/pix)</option>
+            <option value="f13.9">f/14 (0.05 "/pix)</option>
             <option value="f32">f/32 (0.02 "/pix)</option>
-            <option value="f32p">f/32 + pupil viewer</option>
         </select><br />
     </div>
     
     <div class="right">
         <label>Read Mode:</label><select class="ddw" name="niri_readmode">
             <option value="">Any</option>
-            <option value="Bright">Bright</option>
-            <option value="Medium">Medium</option>
-            <option value="Faint">Faint</option>
+            <option value="High_Background">High Background</option>
+            <option value="Medium_Background">Medium Background</option>
+            <option value="Low_Background">Low Background</option>
         </select><br />
 
         <label>Subarray:</label><select class="ddw" name="detector_roi">
@@ -399,7 +410,7 @@
             <option value="Central 768">Central 768</option>
             <option value="Central 512">Central 512</option>
             <option value="Central 256">Central 256</option>
-            <option value="1024x512">Spec 1024x512</option>
+            <option value="Custom">Custom</option>
         </select><br />
     </div>      
 </div>

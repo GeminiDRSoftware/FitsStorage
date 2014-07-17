@@ -156,13 +156,21 @@ def getselection(things):
                 selection['detector_config'] = []
             selection['detector_config'].append(thing)
             recognised = True
-        if(thing.lower() in ['fullframe', 'centralstamp', 'centralspectrum']):
+        if(thing.lower() in ['fullframe', 'centralstamp', 'centralspectrum', 'central768', 'central512', 'central256', 'custom']):
             if(thing.lower() == 'fullframe'):
                 selection['detector_roi'] = 'Full Frame'
             if(thing.lower() == 'centralstamp'):
                 selection['detector_roi'] = 'Central Stamp'
             if(thing.lower() == 'centralspectrum'):
                 selection['detector_roi'] = 'Central Spectrum'
+            if(thing.lower() == 'central768'):
+                selection['detector_roi'] = 'Central 768'
+            if(thing.lower() == 'central512'):
+                selection['detector_roi'] = 'Central 512'
+            if(thing.lower() == 'central256'):
+                selection['detector_roi'] = 'Central 256'
+            if(thing.lower() == 'custom'):
+                selection['detector_roi'] = 'Custom'
             recognised = True
         if(thing.lower() == 'twilight'):
             selection['twilight'] = True
@@ -377,7 +385,13 @@ def queryselection(query, selection):
         query = query.filter(Header.disperser == selection['disperser'])
 
     if('camera' in selection):
-        query = query.filter(Header.camera == selection['camera'])
+        # Hack for GNIRS camera names - find both the Red and Blue options for each case
+        if(selection['camera'] == 'GnirsLong'):
+            query = query.filter(or_(Header.camera  == 'LongRed', Header.camera  == 'LongBlue'))
+        elif (selection['camera'] == 'GnirsShort'):
+            query = query.filter(or_(Header.camera  == 'ShortRed', Header.camera  == 'ShortBlue'))
+        else:
+            query = query.filter(Header.camera == selection['camera'])
 
     if('focal_plane_mask' in selection):
         query = query.filter(Header.focal_plane_mask == selection['focal_plane_mask'])
@@ -681,10 +695,18 @@ def selection_to_URL(selection):
         elif key == 'detector_roi':
             if (selection[key] == 'Full Frame'):
                 urlstring += '/fullframe'
-            if (selection[key] == 'Central Spectrum'):
+            elif (selection[key] == 'Central Spectrum'):
                 urlstring += '/centralspectrum'
-            if (selection[key] == 'Central Stamp'):
+            elif (selection[key] == 'Central Stamp'):
                 urlstring += '/centralstamp'
+            elif (selection[key] == 'Central 768'):
+                urlstring += '/central768'
+            elif (selection[key] == 'Central 512'):
+                urlstring += '/central512'
+            elif (selection[key] == 'Central 256'):
+                urlstring += '/central256'
+            else:
+                urlstring += '/%s' % selection[key]
         elif key == 'focal_plane_mask':
             if(selection[key] == gmos_focal_plane_mask(selection[key])):
                 urlstring += '/' + str(selection[key])
