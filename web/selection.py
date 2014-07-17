@@ -159,18 +159,20 @@ def getselection(things):
         if(thing.lower() in ['fullframe', 'centralstamp', 'centralspectrum', 'central768', 'central512', 'central256', 'custom']):
             if(thing.lower() == 'fullframe'):
                 selection['detector_roi'] = 'Full Frame'
-            if(thing.lower() == 'centralstamp'):
+            elif(thing.lower() == 'centralstamp'):
                 selection['detector_roi'] = 'Central Stamp'
-            if(thing.lower() == 'centralspectrum'):
+            elif(thing.lower() == 'centralspectrum'):
                 selection['detector_roi'] = 'Central Spectrum'
-            if(thing.lower() == 'central768'):
-                selection['detector_roi'] = 'Central 768'
-            if(thing.lower() == 'central512'):
-                selection['detector_roi'] = 'Central 512'
-            if(thing.lower() == 'central256'):
-                selection['detector_roi'] = 'Central 256'
-            if(thing.lower() == 'custom'):
+            elif(thing.lower() == 'central768'):
+                selection['detector_roi'] = 'Central768'
+            elif(thing.lower() == 'central512'):
+                selection['detector_roi'] = 'Central512'
+            elif(thing.lower() == 'central256'):
+                selection['detector_roi'] = 'Central256'
+            elif(thing.lower() == 'custom'):
                 selection['detector_roi'] = 'Custom'
+            else:
+                selection['detector_roi'] = thing.lower()
             recognised = True
         if(thing.lower() == 'twilight'):
             selection['twilight'] = True
@@ -699,11 +701,11 @@ def selection_to_URL(selection):
                 urlstring += '/centralspectrum'
             elif (selection[key] == 'Central Stamp'):
                 urlstring += '/centralstamp'
-            elif (selection[key] == 'Central 768'):
+            elif (selection[key] == 'Central768'):
                 urlstring += '/central768'
-            elif (selection[key] == 'Central 512'):
+            elif (selection[key] == 'Central512'):
                 urlstring += '/central512'
-            elif (selection[key] == 'Central 256'):
+            elif (selection[key] == 'Central256'):
                 urlstring += '/central256'
             else:
                 urlstring += '/%s' % selection[key]
