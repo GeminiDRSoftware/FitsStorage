@@ -167,11 +167,10 @@ class Header(Base):
             if((not dvx.is_none()) and (not dvy.is_none())):
                 self.detector_binning = "%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
 
-            gainsetting = str(ad.gain_setting())
-            readspeedsetting = str(ad.read_speed_setting())
-            welldepthsetting = str(ad.well_depth_setting())
-            readmode = str(ad.read_mode())
-            readmode.replace(' ', '_')
+            gainsetting = str(ad.gain_setting()).replace(' ', '_')
+            readspeedsetting = str(ad.read_speed_setting()).replace(' ', '_')
+            welldepthsetting = str(ad.well_depth_setting()).replace(' ', '_')
+            readmode = str(ad.read_mode()).replace(' ', '_')
             nodandshuffle = "NodAndShuffle" if ad.is_type("GMOS_NODANDSHUFFLE") else ""
             self.detector_config = ' '.join([gainsetting, readspeedsetting, nodandshuffle, welldepthsetting, readmode])
 
