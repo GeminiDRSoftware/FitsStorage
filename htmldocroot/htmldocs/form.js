@@ -44,6 +44,10 @@ $(function() {
         $('#NIRI').show();
     }
 
+    if ($('#instselect').val().match("NIFS")) {
+        $('#NIFS').show();
+    }
+
 });
 
 $(function() {

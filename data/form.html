@@ -316,42 +316,42 @@
 
 <div class="next" id="GNIRS" style="display:none">
     <br /><label>GNIRS</label><br />
-    <label>Disperser:</label><select class="ddw" name="gnirs_grating" disabled="disabled">
+    <label>Disperser:</label><select class="ddw" name="disperser">
         <option value="">Any</option>
-        <option value="10l">10 l/mm</option>
-        <option value="32l">32 l/mm</option>
-        <option value="111l">111 l/mm</option>
+        <option value="10_mm">10 l/mm</option>
+        <option value="32_mm">32 l/mm</option>
+        <option value="111_mm">111 l/mm</option>
         <option value="10lXD">10 l/mm XD</option>
         <option value="32lXD">32 l/mm XD</option>
         <option value="111lXD">111 l/mm XD</option>
     </select><br />
 
-    <label>Camera:</label><select class="ddw" name="gnirscam" disabled="disabled">
+    <label>Camera:</label><select class="ddw" name="camera">
         <option value="">Any</option>
         <option value="0.15">0.15 "/pix</option>
         <option value="0.05">0.05 "/pix</option>
     </select><br />
 
-    <label>Mask:</label><select class="ddw" name="gnirs_mask" disabled="disabled">
+    <label>Mask:</label><select class="ddw" name="focal_plane_mask">
         <option value="">Any</option>
         <option value="0.10arcsec">0.10 arcsec</option>
         <option value="0.15arcsec">0.15 arcsec</option>
         <option value="0.20arcsec">0.20 arcsec</option>
         <option value="0.30arcsec">0.30 arcsec</option>
         <option value="0.45arcsec">0.45 arcsec</option>
-        <option value="0.675arcsec">0.675 arcsec</option>
+        <option value="0.68arcsec">0.675 arcsec</option>
         <option value="1.0arcsec">1.0 arcsec</option>
         <option value="acq">acquisition</option>
         <option value="pupilview">pupil viewer</option>
-        <option value="ph0.1">pinhole 0.1</option>
-        <option value="ph0.3">pinhol 0.3</option>
+        <option value="SmPinholes">pinhole 0.1</option>
+        <option value="LgPinholes">pinhol 0.3</option>
         <option value="IFU">IFU</option>
     </select><br />
 
-    <label>Well Depth:</label><select class="ddw" name="well_depth" disabled="disabled">
+    <label>Well Depth:</label><select class="ddw" name="well_depth">
         <option value="">Any</option>
-        <option value="deep">deep</option>
-        <option value="shallow">shallow</option>
+        <option value="Deep">Deep</option>
+        <option value="Shallow">Shallow</option>
     </select>
 </div>
 
@@ -363,7 +363,7 @@
             <option value="">Any</option>
         </select><br />
         
-        <label>Disperser:</label><select class="ddw" name="niri_grating" disabled="disabled">
+        <label>Disperser:</label><select class="ddw" name="disperser">
             <option value="">Any</option>
             <option value="Hgrism">H-grism</option>
             <option value="Jgrism">J-grism</option>
@@ -376,7 +376,7 @@
             <option value="">Any</option>
         </select><br />
 
-        <label>Camera:</label><select class="ddw" name="niricam" disabled="disabled">
+        <label>Camera:</label><select class="ddw" name="camera">
             <option value="">Any</option>
             <option value="f6">f/6 (0.12 "/pix)</option>
             <option value="f14">f/14 (0.05 "/pix)</option>
@@ -386,19 +386,19 @@
     </div>
     
     <div class="right">
-        <label>Read Mode:</label><select class="ddw" name="niri_readmode" disabled="disabled">
+        <label>Read Mode:</label><select class="ddw" name="niri_readmode">
             <option value="">Any</option>
-            <option value="bright">Bright</option>
-            <option value="medium">Medium</option>
-            <option value="faint">Faint</option>
+            <option value="Bright">Bright</option>
+            <option value="Medium">Medium</option>
+            <option value="Faint">Faint</option>
         </select><br />
 
-        <label>Subarray:</label><select class="ddw" name="subarray" disabled="disabled">
+        <label>Subarray:</label><select class="ddw" name="detector_roi">
             <option value="">Any</option>
-            <option value="nirifullframe">Full Frame</option>
-            <option value="c768">Central 768</option>
-            <option value="c512">Central 512</option>
-            <option value="c256">Central 256</option>
+            <option value="Full Frame">Full Frame</option>
+            <option value="Central 768">Central 768</option>
+            <option value="Central 512">Central 512</option>
+            <option value="Central 256">Central 256</option>
             <option value="1024x512">Spec 1024x512</option>
         </select><br />
     </div>      
@@ -406,15 +406,15 @@
 
 <div class="next" id="NIFS" style="display:none">
     <br /><label>NIFS</label><br />
-    <label>Disperser:</label><select class="ddw" name="nifs_grating" disabled="disabled">
+    <label>Disperser:</label><select class="ddw" name="disperser">
         <option value="">Any</option>
         <option value="Z">Z</option>
         <option value="J">J</option>
         <option value="H">H</option>
         <option value="K">K</option>
-        <option value="K_short">K short</option>
-        <option value="K_long">K long</option>
-        <option value="nirimirror">Mirror</option>
+        <option value="K_Short">K short</option>
+        <option value="K_Long">K long</option>
+        <option value="Mirror">Mirror</option>
     </select><br />
 
     <label>Mask:</label><select class="ddw" name="nifsmask" disabled="disabled">
@@ -429,11 +429,11 @@
         <option value="fmOut">Out</option>
     </select><br />
 
-    <label>Read Mode:</label><select class="ddw" name="nifs_readmode" disabled="disabled">
+    <label>Read Mode:</label><select class="ddw" name="nifs_readmode">
             <option value="">Any</option>
-            <option value="brightnifs">Bright</option>
-            <option value="mediumnifs">Medium</option>
-            <option value="faintnifs">Faint</option>
+            <option value="Bright">Bright</option>
+            <option value="Medium">Medium</option>
+            <option value="Faint">Faint</option>
     </select><br />
 </div>
 

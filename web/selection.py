@@ -151,7 +151,7 @@ def getselection(things):
         if(thing == 'photstandard'):
             selection['photstandard'] = True
             recognised = True
-        if(thing in ['low', 'high', 'slow', 'fast', 'NodAndShuffle', 'Classic']):
+        if(thing in ['low', 'high', 'slow', 'fast', 'Deep', 'Shallow', 'Bright', 'Medium', 'Faint', 'NodAndShuffle', 'Classic']):
             if(not selection.has_key('detector_config')):
                 selection['detector_config'] = []
             selection['detector_config'].append(thing)
@@ -649,7 +649,7 @@ def selection_to_URL(selection):
                 urlstring += '/spectroscopy'
             else:
                 urlstring += '/imaging'
-        elif key in ['ra', 'dec', 'sr', 'filter', 'cenwlen']:
+        elif key in ['ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera']:
             urlstring += '/%s=%s' % (key, selection[key])
         elif key == 'present':
             if (selection[key] is True):
@@ -673,7 +673,6 @@ def selection_to_URL(selection):
                 urlstring += '/notengineering'
             else:
                 urlstring += '/includeengineering'
-
         elif key == 'science_verification':
             if (selection[key] is True):
                 urlstring += '/science_verification'
