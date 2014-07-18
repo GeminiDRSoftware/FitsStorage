@@ -316,6 +316,7 @@
 
 <div class="next" id="GNIRS" style="display:none">
     <br /><label>GNIRS</label><br />
+    <div class="left">
     <label>Disperser:</label><select class="ddw" name="disperser">
         <option value="">Any</option>
         <option value="10_mm">10 l/mm</option>
@@ -353,14 +354,51 @@
         <option value="Deep">Deep</option>
         <option value="Shallow">Shallow</option>
     </select>
+    </div>
+
+    <div class="right">           
+     <label>Read Mode:</label><select class="ddw" name="niri_readmode">
+        <option value="">Any</option>
+        <option value="Very_Bright_Objects">Very Bright Objects</option>
+        <option value="Bright_Objects">Bright Objects</option>
+        <option value="Faint_Objects">Faint Objects</option>
+        <option value="Very_Faint_Objects">Very Faint Objects</option>
+    </select><br />
+    </div>
+
 </div>
 
 <div class="next" id="NIRI" style="display:none">
     <br /><label>NIRI</label><br />
 
     <div class="left">
-        <label>Filter:</label><select class="ddw" name="niri_filter" disabled="disabled">
+        <label>Filter:</label><select class="ddw" name="filter">
             <option value="">Any</option>
+            <option value="Y">Y</option>
+            <option value="J">J</option>
+            <option value="H">H</option>
+            <option value="K">K</option>
+            <option value="K(prime)">K'</option>
+            <option value="M(prime)">M'</option>
+            <option value="L(prime)">L'</option>
+            <option value="K(short)">K (short)</option>
+            <option value="Br(alpha)">Br-α</option>
+            <option value="Br(alpha)Con">Br-α con</option>
+            <option value="Br(gamma)">Br-γ</option>
+            <option value="H2 1-0 S1">H2</option>
+            <option value="HeI">He I</option>
+            <option value="HeI(2p2s)">He I (2p2s)</option>
+            <option value="FeII">Fe II</option>
+            <option value="CH4(short)">CH4 (short)</option>
+            <option value="CH4(long)">CH4 (long)</option>
+            <option value="H2Oice">H2O ice</option>
+            <option value="H2Oice(2045)">H2O ice (2045)</option>
+            <option value="CH4ice(2275)">CH4 ice (2275)</option>
+            <option value="Jcon(112)">J con (112)</option>
+            <option value="Jcon(121)">J con (121)</option>
+            <option value="H-con(157)">H con (157)</option>
+            <option value="Kcon(209)">K con (209)</option>
+            <option value="hydrocarb">Hydrocarbon</option>
         </select><br />
         
         <label>Disperser:</label><select class="ddw" name="disperser">
@@ -428,16 +466,16 @@
         <option value="Mirror">Mirror</option>
     </select><br />
 
-    <label>Mask:</label><select class="ddw" name="nifsmask" disabled="disabled">
+    <label>Mask:</label><select class="ddw" name="nifsmask">
         <option value="">Any</option>
-        <option value="clear">Clear</option>
-        <option value="ronche">Ronche</option>
-    </select><br />
-
-    <label>Flip Mirror:</label><select class="ddw" name="flipmirror" disabled="disabled">
-        <option value="">Any</option>
-        <option value="fmIn">In</option>
-        <option value="fmOut">Out</option>
+        <option value="Blocked">Blocked</option>
+        <option value="Ronchi_Screen">Ronchi Screen</option>
+        <option value="KG3_ND_Filter">KG3 ND Filter</option>
+        <option value="KG5_ND_Filter">KG5 ND Filter</option>
+        <option value="0.1_Hole">0.1 Hole</option>
+        <option value="0.2_Occ_Disc">0.2 Occ Disc</option>
+        <option value="0.5_Occ_Disc">0.5 Occ Disc</option>
+        <option value="3.0_Mask">3.0 Mask</option>
     </select><br />
 
     <label>Read Mode:</label><select class="ddw" name="nifs_readmode">
