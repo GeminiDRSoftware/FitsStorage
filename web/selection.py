@@ -123,6 +123,9 @@ def getselection(things):
         if(thing == 'notcanonical' or thing == 'NotCanonical'):
             selection['canonical'] = False
             recognised = True
+        if(thing == 'H2'):
+            selection['filter'] = 'H2 1-0 S1'
+            recognised = True
         if(thing == 'engineering'):
             selection['engineering'] = True
             recognised = True
@@ -666,7 +669,13 @@ def selection_to_URL(selection):
             else:
                 urlstring += '/imaging'
         elif key in ['ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera']:
-            urlstring += '/%s=%s' % (key, selection[key])
+            if 'inst' in selection.keys() and selection['inst'] == 'NIRI' and key == 'filter':
+                if selection['filter'] == 'H2 1-0 S1':
+                  urlstring += '/H2'
+                else:
+                    urlstring += '/%s=%s' % (key, selection[key])
+            else:
+                urlstring += '/%s=%s' % (key, selection[key])
         elif key == 'present':
             if (selection[key] is True):
                 urlstring += '/present'
