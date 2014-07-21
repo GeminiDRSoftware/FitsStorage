@@ -164,24 +164,16 @@
     </span><br />
     
     <span id="mainfilter">
-    <label>Filter:</label>
-    <select class="ddw" name="filter">
+    <label>Adaptive Optics:</label>
+    <select class="ddw" name="AO">
         <option value="">Any</option>
-        <option value="u">u'</option>
-        <option value="g">g'</option>
-        <option value="r">r'</option>
-        <option value="i">i'</option>
-        <option value="z">z'</option>
-        <option value="J">J</option>
-        <option value="H">H</option>
-        <option value="K">K</option>
-        <option value="L">L</option>
-        <option value="M">M</option>
-        <option value="N">N</option>
-        <option value="Q">Q</option>
+        <option value="NOTAO">Not AO</option>
+        <option value="AO">AO</option>
+        <option value="NGS">NGS</option>
+        <option value="LGS">LGS</option>
     </select>
-    <span class="help">(see also inside instrument sections)
-        <p class="helpleft">This is a top level selection of common broad band filters. For instrument specific selections, select the instrument in question above and then select the filter inside the instrument specific section that will appear.</p>
+    <span class="help">(help)
+        <p class="helpleft">Choose whether to search for data which used AO systems, or to disclude this data entirely.</p>
     </span>
     </span><br />
 
@@ -342,7 +334,7 @@
         <option value="0.45arcsec">0.45 arcsec</option>
         <option value="0.68arcsec">0.675 arcsec</option>
         <option value="1.0arcsec">1.0 arcsec</option>
-        <option value="acquisition">acquisition</option>
+        <option value="Acq">acquisition</option>
         <option value="pupilview">pupil viewer</option>
         <option value="SmPinholes">pinhole 0.1</option>
         <option value="LgPinholes">pinhol 0.3</option>

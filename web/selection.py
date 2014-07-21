@@ -2,7 +2,7 @@
 This module deals with the 'selection' concept.
 Functions in this module are only used within FitsStorageWebSummary.
 """
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 
 from gemini_metadata_utils import gemini_telescope, gemini_instrument, gemini_date, gemini_daterange, gemini_observation_type, gemini_observation_class, gemini_reduction_state, gemini_caltype, gmos_gratingname, gmos_focal_plane_mask, gemini_fitsfilename, gemini_binning, GeminiDataLabel, GeminiObservation, GeminiProject, ratodeg, dectodeg, srtodeg
 
@@ -387,7 +387,15 @@ def queryselection(query, selection):
         query = query.filter(File.name.in_(selection['filelist']))
 
     if('disperser' in selection):
-        query = query.filter(Header.disperser == selection['disperser'])
+        if 'inst' in selection and selection['inst'] == 'GNIRS':
+           if selection['disperser'] == '10lXD':
+               query = query.filter(and_(Header.disperser.contains('10'), Header.disperser.contains('XD'))) 
+           if selection['disperser'] == '32lXD':
+               query = query.filter(and_(Header.disperser.contains('32'), Header.disperser.contains('XD')))
+           if selection['disperser'] == '111lXD':
+               query = query.filter(and_(Header.disperser.contains('111'), Header.disperser.contains('XD')))
+        else:
+            query = query.filter(Header.disperser == selection['disperser'])
 
     if('camera' in selection):
         # Hack for GNIRS camera names - find both the Red and Blue options for each case
