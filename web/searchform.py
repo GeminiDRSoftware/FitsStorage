@@ -246,7 +246,8 @@ def updateselection(formdata, selection):
 
         elif key == 'focal_plane_mask':
             if value == 'custom':
-                selection[key] = formdata['custom_mask'].value
+                if('custom_mask' in formdata.keys()):
+                    selection[key] = formdata['custom_mask'].value
             else:
                 selection[key] = value
         elif key == 'custom_mask':
