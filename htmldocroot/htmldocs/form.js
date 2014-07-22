@@ -50,14 +50,14 @@ $(function() {
 
 $(function() {
     $('#Mode').change(function() {
-        if (["spectroscopy", "LS", "MOS", "IFU"].indexOf($(this).val()) > -1) {
+        if (["spectroscopy", "LS", "MOS", "IFS"].indexOf($(this).val()) > -1) {
             $('#Spec').slideDown();
         } else {
             $('#Spec').hide();
         }
     });
 
-    if (["spectroscopy", "LS", "MOS", "IFU"].indexOf($('#Mode').val()) > -1) {
+    if (["spectroscopy", "LS", "MOS", "IFS"].indexOf($('#Mode').val()) > -1) {
         $('#Spec').show();
     }
 

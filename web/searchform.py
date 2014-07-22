@@ -128,11 +128,11 @@ def updateform(html, selection):
 
         elif key == 'mode':
             if (selection[key] == 'MOS'):
-                html = html.replace('id="mode_MOS" value="MOS"', 'id="mode_MOS" value="MOS" selected')
-            elif (selection[key] == 'IFU'):
-                html = html.replace('id="mode_IFU" value="IFU"', 'id="mode_IFU" value="IFU" selected')
+                html = html.replace('value="MOS"', 'value="MOS" selected')
+            elif (selection[key] == 'IFS'):
+                html = html.replace('value="IFS"', 'value="IFS" selected')
             elif (selection[key] == 'LS'):
-                html = html.replace('id="mode_LS" value="LS"', 'id="mode_LS" value="LS" selected')
+                html = html.replace('value="LS"', 'value="LS" selected')
 
         elif key == 'spectroscopy' and 'mode' not in selection.keys():
            if(selection[key] is True):
@@ -164,9 +164,6 @@ def updateform(html, selection):
                    # Custom mask name
                    html = html.replace('value="custom"', 'value="custom" selected')
                    html = html.replace('id="custom_mask"', 'id="custom_mask" value=%s' % selection[key])
-            elif (('inst' in selection.keys()) and (selection['inst'] == 'GNIRS') and selection[key] == 'IFU'):
-                # Custom rule becasue value="IFU" is also used in mode
-                html = html.replace('id="GNIRS_IFU" value="IFU"', 'id="GNIRS_IFU" value="IFU" selected')
             else:
                 html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
 

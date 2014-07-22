@@ -205,7 +205,7 @@ class Header(Base):
                 self.spectroscopy = True
                 self.mode = 'spectroscopy'
                 if('IFU' in ad.types):
-                    self.mode = 'IFU'
+                    self.mode = 'IFS'
                 if('MOS' in ad.types):
                     self.mode = 'MOS'
                 if('LS' in ad.types):

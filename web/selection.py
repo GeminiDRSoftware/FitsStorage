@@ -214,7 +214,7 @@ def getselection(things):
         if(thing[:8] == 'filepre='):
             selection['filepre'] = thing[8:]
             recognised = True
-        if(thing in ['LS', 'MOS', 'IFU']):
+        if(thing in ['LS', 'MOS', 'IFS']):
             selection['mode'] = thing
             selection['spectroscopy'] = True
             recognised = True
