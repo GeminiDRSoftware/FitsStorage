@@ -6,10 +6,8 @@ $(function() {
     $('#instselect').change(function() {
         if ($(this).val().match("GMOS")) {
             $('#GMOS').slideDown();
-            $('#mainfilter').hide();
         } else {
             $('#GMOS').hide();
-            $('#mainfilter').show();
         }
 
         if ($(this).val().match("GNIRS")) {
