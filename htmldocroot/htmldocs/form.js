@@ -28,6 +28,35 @@ $(function() {
             $('#NIFS').hide();
         }
 
+        if ($(this).val().match("michelle")) {
+            $('#Michelle').slideDown();
+        } else {
+            $('#Michelle').hide();
+        }
+
+        if ($(this).val().match("TReCS")) {
+            $('#TReCS').slideDown();
+        } else {
+            $('#TReCS').hide();
+        }
+
+        if ($(this).val().match("F2")) {
+            $('#F2').slideDown();
+        } else {
+            $('#F2').hide();
+        }
+
+        if ($(this).val().match("NICI")) {
+            $('#NICI').slideDown();
+        } else {
+            $('#NICI').hide();
+        }
+
+        if ($(this).val().match("GSAOI")) {
+            $('#GSAOI').slideDown();
+        } else {
+            $('#GSAOI').hide();
+        }
     });
 
     if ($('#instselect').val().match("GMOS")) {
@@ -46,6 +75,25 @@ $(function() {
         $('#NIFS').show();
     }
 
+    if ($('#instselect').val().match("michelle")) {
+        $('#Michelle').show();
+    }
+
+    if ($('#instselect').val().match("TReCS")) {
+        $('#TReCS').show();
+    }
+
+    if ($('#instselect').val().match("F2")) {
+        $('#F2').show();
+    }
+
+    if ($('#instselect').val().match("NICI")) {
+        $('#NICI').show();
+    }
+
+    if ($('#instselect').val().match("GSAOI")) {
+        $('#GSAOI').show();
+    }
 });
 
 $(function() {
