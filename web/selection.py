@@ -123,9 +123,6 @@ def getselection(things):
         if(thing == 'notcanonical' or thing == 'NotCanonical'):
             selection['canonical'] = False
             recognised = True
-        if(thing == 'H2'):
-            selection['filter'] = 'H2 1-0 S1'
-            recognised = True
         if(thing == 'engineering'):
             selection['engineering'] = True
             recognised = True
@@ -143,7 +140,11 @@ def getselection(things):
             selection['science_verification'] = False
             recognised = True
         if(thing[:7] == 'filter=' or thing[:7] == 'Filter='):
-            selection['filter'] = thing[7:]
+            # One NIRI filter name with spaces
+            if thing == 'filter=H2':
+                selection['filter'] = 'H2 1-0 S1'
+            else:
+                selection['filter'] = thing[7:]
             recognised = True
         if(thing[:7] == 'object=' or thing[:7] == 'Object='):
             selection['object'] = urllib.unquote_plus(thing[7:])
@@ -681,7 +682,7 @@ def selection_to_URL(selection):
         elif key in ['ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera']:
             if 'inst' in selection.keys() and selection['inst'] == 'NIRI' and key == 'filter':
                 if selection['filter'] == 'H2 1-0 S1':
-                  urlstring += '/H2'
+                  urlstring += '/filter=H2'
                 else:
                     urlstring += '/%s=%s' % (key, selection[key])
             else:
