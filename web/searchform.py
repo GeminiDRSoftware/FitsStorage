@@ -157,6 +157,7 @@ def updateform(html, selection):
                 html = html.replace('value="SvInclude"', 'value="SvInclude" selected')
 
         elif key == 'focal_plane_mask':
+
             if (('inst' in selection.keys()) and (selection['inst'].startswith('GMOS'))):
                 if (selection[key] in ['NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec']):
                     html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
@@ -164,6 +165,9 @@ def updateform(html, selection):
                    # Custom mask name
                    html = html.replace('class="mask" value="custom"', 'class="mask" value="custom" selected')
                    html = html.replace('id="custom_mask"', 'id="custom_mask" value=%s' % selection[key])
+            # replace escaped quotes in mask names from url with html escaped quotes
+            if '"' in urllib.unquote(selection[key]):
+                html = html.replace('value="%s&quot;"' % urllib.unquote(selection[key])[:4], 'value="%s&quot;" selected' % (urllib.unquote(selection[key])[:4]))
             else:
                 html = html.replace('class="mask" value="%s"' % selection[key], 'class="mask" value="%s" selected' % selection[key])
 
