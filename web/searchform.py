@@ -162,14 +162,21 @@ def updateform(html, selection):
                     html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
                 else:
                    # Custom mask name
-                   html = html.replace('value="custom"', 'value="custom" selected')
+                   html = html.replace('class="mask" value="custom"', 'class="mask" value="custom" selected')
                    html = html.replace('id="custom_mask"', 'id="custom_mask" value=%s' % selection[key])
             else:
-                html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
+                html = html.replace('class="mask" value="%s"' % selection[key], 'class="mask" value="%s" selected' % selection[key])
 
         elif key == 'detector_config':
             for item in selection[key]:
                 html = html.replace('value="%s"' % item, 'value="%s" selected' % item)
+        elif key == 'filter':
+            # Generic filter pulldown
+            html = html.replace('class="filter" value="%s"' % selection[key], 'class="filter" value="%s" selected' % selection[key])
+
+        elif key == 'disperser':
+            # Generic disperser pulldown
+            html = html.replace('class="disperser" value="%s"' % selection[key], 'class="disperser" value="%s" selected' % selection[key])
         else:
             # This does all the generic pulldown menus
             html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])

@@ -1,8 +1,7 @@
-
 <div class="right">
 
     <label>Target Name:</label>
-    <input id="object_name" type="text" placeholder="(leave blank for Any)" name="object">
+    <input id="object_name" type="text" placeholder="(leave blank for Any)" name="object" />
     <span class="help"> (Name of Target)
         <p class="helpright">Enter a target name here. If you don't <i>Resolve</i> the target name this will do a literal <b>exact match</b> search for data with the target name as specified. Be aware that observers sometimes use a different target name to what you expect - this is only really useful if you set up the Phase-II, or otherwise know exactly what target name was used. If you set a Name Resolver and click resolve, we will fetch co-ordinates of your target from the resolver specified and then the search will disregard the target name and search only by co-ordinates.</p>
     </span><br />
@@ -15,36 +14,36 @@
          <option value="VIZIER">VIZIER</option>
     </select>
     <button id="resbutton" type="button">Resolve</button>
-    <span id="resload" style="display:none"><img src="/htmldocs/ajax-loading.gif"></span>
+    <span id="resload" style="display:none"><img src="/htmldocs/ajax-loading.gif" /></span>
     <span class="help"> (Name Resolver)
         <p class="helpright">Choose a Name Resolver and click the resolve button to attempt to find the co-ordinates of your named source. If the form has both a target name and co-ordinates, the search will disregard the target name. Note: The name resolvers will only work for objects outside the solar system, there's no capability for meaningful use with moving objects, for example planets.</p>
     </span>
     <br />
 
     <label>RA:</label>
-    <input id="ra" type="text" placeholder="(leave blank for Any)" name="ra">
+    <input id="ra" type="text" placeholder="(leave blank for Any)" name="ra" />
     <span class="help"> (HH:MM:SS.ss or decimal degrees)
     <p class="helpright">Right Ascension. You can use HH:MM:SS[.ss...] or decimal degrees. In either case you can specify a single value or a range, eg 11:22:33 - 12:34:56. If you enter a single value, also see the Search Radius field.</p>
     </span><br />
 
-    <label>Dec:</labeL>
-    <input id="dec" type="text" placeholder="(leave blank for Any)" name="dec">
+    <label>Dec:</label>
+    <input id="dec" type="text" placeholder="(leave blank for Any)" name="dec" />
     <span class="help"> ([+-]DD:MM:SS.ss or decimal degrees)
     <p class="helpright">Declination. You can use [+|-]DD:MM:SS[.ss...] or decimal degrees. In either case you can specify a single value or a range, eg 11:22:33 - 12:34:56 or -65:43:21 - -12:34:56. If you enter a single value, also see the Search Radius field.</p>
     </span><br />
 
     <label>Search radius:</label>
-    <input type="text" placeholder="(leave blank for Any)" name="sr">
+    <input type="text" placeholder="(leave blank for Any)" name="sr" />
     <span class="help"> (arcsecs or decimal degrees)
         <p class="helpright">Search radius in arcseconds, unless you specify "d" or "degs" to make it decimal degrees. i.e. <b>180</b> means 180 arcseconds, <b>10degs</b> or <b>10d</b> means 10 degrees. <br />If RA and/or dec  has been given as a single value (as opposed to a range), this specifies the size of the box around it to search. This is actually a simple search in a square box (in the tangent plane), not a true cone search. Strange things may happen near the poles.</p>
     </span>
     <br />
     <label class="wide">Find Associated Calbrations:</label>
-    <input type="checkbox" name="calibrations" disabled="disabled">
+    <input type="checkbox" name="calibrations" disabled="disabled" />
     <span class="help">(help)
     <p class="helpright">Not implemented yet. This will also find calibrations associated with your search results</p>
     </span><br />
-    <label class="wide" id="advanced_header">Advanced Options &#9662</label>
+    <label class="wide" id="advanced_header">Advanced Options &#9662;</label>
     <span class="help">(click to show / hide)
     <p class="helpright">Click where it says "Advanced Options" to show or hide the advanced options.</p></span>
     <div id="advanced_options" style="display:none">
@@ -85,16 +84,15 @@
         <br /> 
     </div>
 </div>
-
 <div class="left">
     <label>Program ID:</label>
-    <input type="text" placeholder="(leave empty for Any)" name="program_id">
+    <input type="text" placeholder="(leave empty for Any)" name="program_id" />
     <span class="help">(or Obs. ID / Data Label. Exact Match)
         <p class="helpleft">You can put a program ID, Observation ID or Data Label into this box. The search will be for an exact match to what you put in, substring type matches are not provided. Example: GN-2001A-Q-1</p>
     </span><br />
 
     <label>UTC Date:</label>
-    <input type="text" placeholder="(leave empty for Any)" name="date">
+    <input type="text" placeholder="(leave empty for Any)" name="date" />
     <span class="help">(YYYYMMDD or start - end)
         <p class="helpleft">You can specify either an individual date in the form YYYYMMDD, or a date range in the form yyyymmdd - YYYYMMDD. Examples: 20101231 or 20100101 - 20100131. Note that this searches for data taken on the <b>UTC date</b> specified, and that Gemini South observing nights span two UTC dates.</p>
     </span><br />
@@ -177,7 +175,7 @@
 
     <div id="Spec" style="display:none">
         <label class="wide">Central Wavelength: </label>
-        <input type="text" placeholder="(Any)" name="cenwlen" size="8">
+        <input type="text" placeholder="(Any)" name="cenwlen" size="8" />
         <span class="help"> (microns, eg 1.2 or 2.0-2.4)
             <p class="helpleft">Central Wavelength in microns. You can supply a single value or a range. If you use a single value, we assume a range of +-0.1. Note this just searches for files where the <b>central wavelength</b> of a spectrum is within the given range, or within 0.1 microns of the given value. It does not currently know the spectral range of the data and check if the value given is within that range.</p>
         </span><br />
@@ -206,12 +204,12 @@
 
     <label>Disperser:</label><select class="ddw" name="disperser">
         <option value="">Any</option>
-        <option value="B600">B600</option>
-        <option value="R400">R400</option>
-        <option value="R831">R831</option>
-        <option value="B1200">B1200</option>
-        <option value="R150">R150</option>
-        <option value="MIRROR">MIRROR</option>
+        <option class="disperser" value="B600">B600</option>
+        <option class="disperser" value="R400">R400</option>
+        <option class="disperser" value="R831">R831</option>
+        <option class="disperser" value="B1200">B1200</option>
+        <option class="disperser" value="R150">R150</option>
+        <option class="disperser" value="MIRROR">MIRROR</option>
     </select>
     <span class="help">(GMOS Gratings)
         <p class="helpleft">Select a GMOS grating. You can select MIRROR to force Imaging mode</p>
@@ -219,19 +217,19 @@
     
     <label>Filter:</label><select class="ddw" name="filter">
         <option value="">Any</option>
-        <option value="u">u'</option>
-        <option value="g">g'</option>
-        <option value="r">r'</option>
-        <option value="i">i'</option>
-        <option value="z">z'</option>
-        <option value="OIII">OIII</option>
-        <option value="OIIIC">OIIIC</option>
-        <option value="Ha">Ha</option>
-        <option value="HaC">HaC</option>
-        <option value="HeII">HeII</option>
-        <option value="HeIIC">HeIIC</option>
-        <option value="SII">SII</option>
-        <option value="CaT">CaT</option>
+        <option class="filter" value="u">u'</option>
+        <option class="filter" value="g">g'</option>
+        <option class="filter" value="r">r'</option>
+        <option class="filter" value="i">i'</option>
+        <option class="filter" value="z">z'</option>
+        <option class="filter" value="OIII">OIII</option>
+        <option class="filter" value="OIIIC">OIIIC</option>
+        <option class="filter" value="Ha">Ha</option>
+        <option class="filter" value="HaC">HaC</option>
+        <option class="filter" value="HeII">HeII</option>
+        <option class="filter" value="HeIIC">HeIIC</option>
+        <option class="filter" value="SII">SII</option>
+        <option class="filter" value="CaT">CaT</option>
     </select>
     <span class="help">(GMOS filters)
         <p class="helpleft">Select a GMOS filter.</p>
@@ -240,23 +238,23 @@
 
     <label>Mask:</label><select id="gmos_mask" class="ddw" name="focal_plane_mask">
         <option value="">Any</option>
-        <option value="0.5arcsec">0.5 arcsec</option>
-        <option value="0.75arcsec">0.75 arcsec</option>
-        <option value="1.0arcsec">1.0 arcsec</option>
-        <option value="1.5arcsec">1.5 arcsec</option>
-        <option value="2.0arcsec">2.0 arcsec</option>
-        <option value="5.0arcsec">5.0 arcsec</option>
-        <option value="NS0.75arcsec">NS 0.75 arcsec</option>
-        <option value="NS1.0arcsec">NS 1.0 arcsec</option>
-        <option value="NS1.5arcsec">NS 1.5 arcsec</option>
-        <option value="NS2.0arcsec">NS 2.0 arcsec</option>
-        <option value="IFU-R">IFU-R</option>
-        <option value="IFU-2">IFU-2</option>
-        <option value="Imaging">Imaging</option>
-        <option value="focus_array_new">focus array new</option>
-        <option value="custom">Custom</option>
+        <option class="mask" value="0.5arcsec">0.5 arcsec</option>
+        <option class="mask" value="0.75arcsec">0.75 arcsec</option>
+        <option class="mask" value="1.0arcsec">1.0 arcsec</option>
+        <option class="mask" value="1.5arcsec">1.5 arcsec</option>
+        <option class="mask" value="2.0arcsec">2.0 arcsec</option>
+        <option class="mask" value="5.0arcsec">5.0 arcsec</option>
+        <option class="mask" value="NS0.75arcsec">NS 0.75 arcsec</option>
+        <option class="mask" value="NS1.0arcsec">NS 1.0 arcsec</option>
+        <option class="mask" value="NS1.5arcsec">NS 1.5 arcsec</option>
+        <option class="mask" value="NS2.0arcsec">NS 2.0 arcsec</option>
+        <option class="mask" value="IFU-R">IFU-R</option>
+        <option class="mask" value="IFU-2">IFU-2</option>
+        <option class="mask" value="Imaging">Imaging</option>
+        <option class="mask" value="focus_array_new">focus array new</option>
+        <option class="mask" value="custom">Custom</option>
     </select>
-    <input id="custom_mask" name="custom_mask" type="text" placeholder="(custom mask)">
+    <input id="custom_mask" class="mask" name="custom_mask" type="text" placeholder="(custom mask)" />
     <span class="help">(help)
         <p class="helpleft">Select a GMOS mask. To select a custom mask name, or one not listed in the pulldown, select "custom" and them put the mask name in the text field. This will do an exact match.</p>
     </span><br />
@@ -310,12 +308,12 @@
     <div class="left">
     <label>Disperser:</label><select class="ddw" name="disperser">
         <option value="">Any</option>
-        <option value="10_mm">10 l/mm</option>
-        <option value="32_mm">32 l/mm</option>
-        <option value="111_mm">111 l/mm</option>
-        <option value="10lXD">10 l/mm XD</option>
-        <option value="32lXD">32 l/mm XD</option>
-        <option value="111lXD">111 l/mm XD</option>
+        <option class="disperser" value="10_mm">10 l/mm</option>
+        <option class="disperser" value="32_mm">32 l/mm</option>
+        <option class="disperser" value="111_mm">111 l/mm</option>
+        <option class="disperser" value="10lXD">10 l/mm XD</option>
+        <option class="disperser" value="32lXD">32 l/mm XD</option>
+        <option class="disperser" value="111lXD">111 l/mm XD</option>
     </select>
     <span class="help">(help)
         <p class="helpleft">GNIRS grating, and optionally cross-dispersing prism. The XD (cross dispersed) options will select both the LXD and SXD prisms.</p>
@@ -332,18 +330,18 @@
 
     <label>Mask:</label><select class="ddw" name="focal_plane_mask">
         <option value="">Any</option>
-        <option value="0.10arcsec">0.10 arcsec</option>
-        <option value="0.15arcsec">0.15 arcsec</option>
-        <option value="0.20arcsec">0.20 arcsec</option>
-        <option value="0.30arcsec">0.30 arcsec</option>
-        <option value="0.45arcsec">0.45 arcsec</option>
-        <option value="0.68arcsec">0.675 arcsec</option>
-        <option value="1.0arcsec">1.0 arcsec</option>
-        <option value="Acq">acquisition</option>
-        <option value="pupilview">pupil viewer</option>
-        <option value="SmPinholes">pinhole 0.1</option>
-        <option value="LgPinholes">pinhol 0.3</option>
-        <option value="IFU">IFU</option>
+        <option class="mask" value="0.10arcsec">0.10 arcsec</option>
+        <option class="mask" value="0.15arcsec">0.15 arcsec</option>
+        <option class="mask" value="0.20arcsec">0.20 arcsec</option>
+        <option class="mask" value="0.30arcsec">0.30 arcsec</option>
+        <option class="mask" value="0.45arcsec">0.45 arcsec</option>
+        <option class="mask" value="0.68arcsec">0.675 arcsec</option>
+        <option class="mask" value="1.0arcsec">1.0 arcsec</option>
+        <option class="mask" value="Acq">acquisition</option>
+        <option class="mask" value="pupilview">pupil viewer</option>
+        <option class="mask" value="SmPinholes">pinhole 0.1</option>
+        <option class="mask" value="LgPinholes">pinhol 0.3</option>
+        <option class="mask" value="IFU">IFU</option>
     </select>
     <span class="help">(help)
         <p class="helpleft">Note that if you're searching for Cross Dispersed data, you almost certainly want to select the "XD" version of the slit. These are the shorter slits intended for use in cross dispersed mode. The version without XD on the end is the full length longslit.</p>
@@ -380,32 +378,32 @@
 
     <div class="left">
         <label>Filter:</label><select class="ddw" name="filter">
-            <option value="">Any</option>
-            <option value="Y">Y</option>
-            <option value="J">J</option>
-            <option value="H">H</option>
-            <option value="K">K</option>
-            <option value="K(prime)">K'</option>
-            <option value="M(prime)">M'</option>
-            <option value="L(prime)">L'</option>
-            <option value="K(short)">K (short)</option>
-            <option value="Br(alpha)">Br-α</option>
-            <option value="Br(alpha)Con">Br-α con</option>
-            <option value="Br(gamma)">Br-γ</option>
-            <option value="H2 1-0 S1">H2</option>
-            <option value="HeI">He I</option>
-            <option value="HeI(2p2s)">He I (2p2s)</option>
-            <option value="FeII">Fe II</option>
-            <option value="CH4(short)">CH4 (short)</option>
-            <option value="CH4(long)">CH4 (long)</option>
-            <option value="H2Oice">H2O ice</option>
-            <option value="H2Oice(2045)">H2O ice (2045)</option>
-            <option value="CH4ice(2275)">CH4 ice (2275)</option>
-            <option value="Jcon(112)">J con (112)</option>
-            <option value="Jcon(121)">J con (121)</option>
-            <option value="H-con(157)">H con (157)</option>
-            <option value="Kcon(209)">K con (209)</option>
-            <option value="hydrocarb">Hydrocarbon</option>
+            <option class="filter" value="">Any</option>
+            <option class="filter" value="Y">Y</option>
+            <option class="filter" value="J">J</option>
+            <option class="filter" value="H">H</option>
+            <option class="filter" value="K">K</option>
+            <option class="filter" value="K(prime)">K'</option>
+            <option class="filter" value="M(prime)">M'</option>
+            <option class="filter" value="L(prime)">L'</option>
+            <option class="filter" value="K(short)">K (short)</option>
+            <option class="filter" value="Br(alpha)">Br-α</option>
+            <option class="filter" value="Br(alpha)Con">Br-α con</option>
+            <option class="filter" value="Br(gamma)">Br-γ</option>
+            <option class="filter" value="H2 1-0 S1">H2</option>
+            <option class="filter" value="HeI">He I</option>
+            <option class="filter" value="HeI(2p2s)">He I (2p2s)</option>
+            <option class="filter" value="FeII">Fe II</option>
+            <option class="filter" value="CH4(short)">CH4 (short)</option>
+            <option class="filter" value="CH4(long)">CH4 (long)</option>
+            <option class="filter" value="H2Oice">H2O ice</option>
+            <option class="filter" value="H2Oice(2045)">H2O ice (2045)</option>
+            <option class="filter" value="CH4ice(2275)">CH4 ice (2275)</option>
+            <option class="filter" value="Jcon(112)">J con (112)</option>
+            <option class="filter" value="Jcon(121)">J con (121)</option>
+            <option class="filter" value="H-con(157)">H con (157)</option>
+            <option class="filter" value="Kcon(209)">K con (209)</option>
+            <option class="filter" value="hydrocarb">Hydrocarbon</option>
         </select>
         <span class="help">(help)
             <p class="helpleft">Help Text</p>
@@ -413,11 +411,11 @@
         
         <label>Disperser:</label><select class="ddw" name="disperser">
             <option value="">Any</option>
-            <option value="Hgrism">H-grism</option>
-            <option value="Jgrism">J-grism</option>
-            <option value="Kgrism">K-grism</option>
-            <option value="Lgrism">L-grism</option>
-            <option value="Mgrism">M-grism</option>
+            <option class="disperser" value="Hgrism">H-grism</option>
+            <option class="disperser" value="Jgrism">J-grism</option>
+            <option class="disperser" value="Kgrism">K-grism</option>
+            <option class="disperser" value="Lgrism">L-grism</option>
+            <option class="disperser" value="Mgrism">M-grism</option>
         </select>
         <span class="help">(help)
             <p class="helpleft">Help Text</p>
@@ -425,18 +423,18 @@
 
         <label>Mask:</label><select class="ddw" name="focal_plane_mask">
             <option value="">Any</option>
-            <option value="f6-2pix">f6-2pix</option>
-            <option value="f6-2pixBl">f6-2pix Blue</option>
-            <option value="f6-4pix">f6-4pix</option>
-            <option value="f6-4pixBl">f6-4pix Blue</option>
-            <option value="f6-6pix">f6-6pix</option>
-            <option value="f6-6pixBl">f6-6pix Blue</option>
-            <option value="f32-6pix">f32-6pix</option>
-            <option value="f32-9pix">f32-9pix</option>
-            <option value="f6-cam">f6-cam</option>
-            <option value="f14-cam">f14-cam</option>
-            <option value="f32-cam">f32-cam</option>
-            <option value="pinhole">pinhole</option>
+            <option class="mask" value="f6-2pix">f6-2pix</option>
+            <option class="mask" value="f6-2pixBl">f6-2pix Blue</option>
+            <option class="mask" value="f6-4pix">f6-4pix</option>
+            <option class="mask" value="f6-4pixBl">f6-4pix Blue</option>
+            <option class="mask" value="f6-6pix">f6-6pix</option>
+            <option class="mask" value="f6-6pixBl">f6-6pix Blue</option>
+            <option class="mask" value="f32-6pix">f32-6pix</option>
+            <option class="mask" value="f32-9pix">f32-9pix</option>
+            <option class="mask" value="f6-cam">f6-cam</option>
+            <option class="mask" value="f14-cam">f14-cam</option>
+            <option class="mask" value="f32-cam">f32-cam</option>
+            <option class="mask" value="pinhole">pinhole</option>
         </select>
         <span class="help">(help)
             <p class="helpleft">Help Text</p>
@@ -482,13 +480,13 @@
     <br /><label>NIFS</label><br />
     <label>Disperser:</label><select class="ddw" name="disperser">
         <option value="">Any</option>
-        <option value="Z">Z</option>
-        <option value="J">J</option>
-        <option value="H">H</option>
-        <option value="K">K</option>
-        <option value="K_Short">K short</option>
-        <option value="K_Long">K long</option>
-        <option value="Mirror">Mirror</option>
+        <option class="disperser" value="Z">Z</option>
+        <option class="disperser" value="J">J</option>
+        <option class="disperser" value="H">H</option>
+        <option class="disperser" value="K">K</option>
+        <option class="disperser" value="K_Short">K short</option>
+        <option class="disperser" value="K_Long">K long</option>
+        <option class="disperser" value="Mirror">Mirror</option>
     </select>
     <span class="help">(help)
         <p class="helpleft">Help Text</p>
@@ -520,5 +518,5 @@
     </span><br />
 </div>
 
-<div class="next"><center><input type="submit" value="Search"></center><br /></div>
+<div class="next"><center><input type="submit" value="Search" /></center><br /></div>
 
