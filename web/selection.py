@@ -389,11 +389,13 @@ def queryselection(query, selection):
     if('disperser' in selection):
         if 'inst' in selection and selection['inst'] == 'GNIRS':
            if selection['disperser'] == '10lXD':
-               query = query.filter(and_(Header.disperser.contains('10'), Header.disperser.contains('XD'))) 
-           if selection['disperser'] == '32lXD':
-               query = query.filter(and_(Header.disperser.contains('32'), Header.disperser.contains('XD')))
-           if selection['disperser'] == '111lXD':
-               query = query.filter(and_(Header.disperser.contains('111'), Header.disperser.contains('XD')))
+               query = query.filter(or_(Header.disperser == '10_mm&SXD', Header.disperser == '10_mm&LXD'))
+           elif selection['disperser'] == '32lXD':
+               query = query.filter(or_(Header.disperser == '32_mm&SXD', Header.disperser == '32_mm&LXD'))
+           elif selection['disperser'] == '111lXD':
+               query = query.filter(or_(Header.disperser == '111_mm&SXD', Header.disperser == '111_mm&LXD'))
+           else:
+               query = query.filter(Header.disperser == selection['disperser'])
         else:
             query = query.filter(Header.disperser == selection['disperser'])
 
