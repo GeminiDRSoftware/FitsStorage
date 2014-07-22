@@ -308,6 +308,7 @@
 
 <div class="next" id="GNIRS" style="display:none">
     <br /><label>GNIRS</label><br />
+
     <div class="left">
     <label>Disperser:</label><select class="ddw" name="disperser">
         <option value="">Any</option>
@@ -317,13 +318,19 @@
         <option value="10lXD">10 l/mm XD</option>
         <option value="32lXD">32 l/mm XD</option>
         <option value="111lXD">111 l/mm XD</option>
-    </select><br />
+    </select>
+    <span class="help">(help)
+        <p class="helpleft">Help text</p>
+    </span><br />
 
     <label>Camera:</label><select class="ddw" name="camera">
         <option value="">Any</option>
         <option value="GnirsShort">0.15 "/pix</option>
         <option value="GnirsLong">0.05 "/pix</option>
-    </select><br />
+    </select>
+    <span class="help">(help)
+        <p class="helpleft">Help text</p>
+    </span><br />
 
     <label>Mask:</label><select class="ddw" name="focal_plane_mask">
         <option value="">Any</option>
@@ -339,23 +346,33 @@
         <option value="SmPinholes">pinhole 0.1</option>
         <option value="LgPinholes">pinhol 0.3</option>
         <option value="IFU">IFU</option>
-    </select><br />
+    </select>
+    <span class="help">(help)
+        <p class="helpleft">Help text</p>
+    </span><br />
 
+    </div>
+
+    <div class="right">           
     <label>Well Depth:</label><select class="ddw" name="well_depth">
         <option value="">Any</option>
         <option value="Deep">Deep</option>
         <option value="Shallow">Shallow</option>
     </select>
-    </div>
+    <span class="help">(help)
+        <p class="helpright">Help text</p>
+    </span><br />
 
-    <div class="right">           
-     <label>Read Mode:</label><select class="ddw" name="niri_readmode">
+    <label>Read Mode:</label><select class="ddw" name="niri_readmode">
         <option value="">Any</option>
         <option value="Very_Bright_Objects">Very Bright Objects</option>
         <option value="Bright_Objects">Bright Objects</option>
         <option value="Faint_Objects">Faint Objects</option>
         <option value="Very_Faint_Objects">Very Faint Objects</option>
-    </select><br />
+    </select>
+    <span class="help">(help)
+        <p class="helpright">Help text</p>
+    </span><br />
     </div>
 
 </div>
@@ -391,7 +408,10 @@
             <option value="H-con(157)">H con (157)</option>
             <option value="Kcon(209)">K con (209)</option>
             <option value="hydrocarb">Hydrocarbon</option>
-        </select><br />
+        </select>
+        <span class="help">(help)
+            <p class="helpleft">Help Text</p>
+        </span><br />
         
         <label>Disperser:</label><select class="ddw" name="disperser">
             <option value="">Any</option>
@@ -400,7 +420,10 @@
             <option value="Kgrism">K-grism</option>
             <option value="Lgrism">L-grism</option>
             <option value="Mgrism">M-grism</option>
-        </select><br />
+        </select>
+        <span class="help">(help)
+            <p class="helpleft">Help Text</p>
+        </span><br />
 
         <label>Mask:</label><select class="ddw" name="focal_plane_mask">
             <option value="">Any</option>
@@ -416,14 +439,20 @@
             <option value="f14-cam">f14-cam</option>
             <option value="f32-cam">f32-cam</option>
             <option value="pinhole">pinhole</option>
-        </select><br />
+        </select>
+        <span class="help">(help)
+            <p class="helpleft">Help Text</p>
+        </span><br />
 
         <label>Camera:</label><select class="ddw" name="camera">
             <option value="">Any</option>
             <option value="f6">f/6 (0.12 "/pix)</option>
             <option value="f13.9">f/14 (0.05 "/pix)</option>
             <option value="f32">f/32 (0.02 "/pix)</option>
-        </select><br />
+        </select>
+        <span class="help">(help)
+            <p class="helpleft">Help Text</p>
+        </span><br />
     </div>
     
     <div class="right">
@@ -432,7 +461,10 @@
             <option value="High_Background">High Background</option>
             <option value="Medium_Background">Medium Background</option>
             <option value="Low_Background">Low Background</option>
-        </select><br />
+        </select>
+        <span class="help">(help)
+            <p class="helpright">Help Text</p>
+        </span><br />
 
         <label>Subarray:</label><select class="ddw" name="detector_roi">
             <option value="">Any</option>
@@ -441,7 +473,10 @@
             <option value="Central512">Central 512</option>
             <option value="Central256">Central 256</option>
             <option value="Custom">Custom</option>
-        </select><br />
+        </select>
+        <span class="help">(help)
+            <p class="helpright">Help Text</p>
+        </span><br />
     </div>      
 </div>
 
@@ -456,7 +491,10 @@
         <option value="K_Short">K short</option>
         <option value="K_Long">K long</option>
         <option value="Mirror">Mirror</option>
-    </select><br />
+    </select>
+    <span class="help">(help)
+        <p class="helpleft">Help Text</p>
+    </span><br />
 
     <label>Mask:</label><select class="ddw" name="nifsmask">
         <option value="">Any</option>
@@ -468,14 +506,20 @@
         <option value="0.2_Occ_Disc">0.2 Occ Disc</option>
         <option value="0.5_Occ_Disc">0.5 Occ Disc</option>
         <option value="3.0_Mask">3.0 Mask</option>
-    </select><br />
+    </select>        
+    <span class="help">(help)
+        <p class="helpleft">Help Text</p>
+    </span><br />
 
     <label>Read Mode:</label><select class="ddw" name="nifs_readmode">
             <option value="">Any</option>
             <option value="Bright">Bright</option>
             <option value="Medium">Medium</option>
             <option value="Faint">Faint</option>
-    </select><br />
+    </select>        
+    <span class="help">(help)
+        <p class="helpleft">Help Text</p>
+    </span><br />
 </div>
 
 <div class="next"><center><input type="submit" value="Search"></center><br /></div>
