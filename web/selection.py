@@ -410,6 +410,7 @@ def queryselection(query, selection):
             query = query.filter(Header.camera == selection['camera'])
 
     if('focal_plane_mask' in selection):
+        selection['focal_plane_mask'] = urllib.unquote(selection['focal_plane_mask'])
         query = query.filter(Header.focal_plane_mask == selection['focal_plane_mask'])
 
     if('spectroscopy' in selection):
