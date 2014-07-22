@@ -126,18 +126,19 @@ def updateform(html, selection):
             # These are all the text fields that don't need anything special
             html = html.replace('name="%s"' % key, 'name=%s value="%s"' % (key, selection[key]))
 
-        elif key in ['spectroscopy', 'mode']:
-            if (selection[key] is False):
-                html = html.replace('value="imaging"', 'value="imaging" selected')
-            else:
-                if ('mode' in selection.keys() and selection['mode'] == 'MOS'):
-                    html = html.replace('value="MOS"', 'value="MOS" selected')
-                elif ('mode' in selection.keys() and selection['mode'] == 'IFU'):
-                    html = html.replace('value="IFU"', 'value="IFU" selected')
-                elif ('mode' in selection.keys() and selection['mode'] == 'LS'):
-                    html = html.replace('value="LS"', 'value="LS" selected')
-                else:
-                    html = html.replace('value="spectroscopy"', 'value="spectroscopy" selected')
+        elif key == 'mode':
+            if (selection[key] == 'MOS'):
+                html = html.replace('id="mode_MOS" value="MOS"', 'id="mode_MOS" value="MOS" selected')
+            elif (selection[key] == 'IFU'):
+                html = html.replace('id="mode_IFU" value="IFU"', 'id="mode_IFU" value="IFU" selected')
+            elif (selection[key] == 'LS'):
+                html = html.replace('id="mode_LS" value="LS"', 'id="mode_LS" value="LS" selected')
+
+        elif key == 'spectroscopy' and 'mode' not in selection.keys():
+           if(selection[key] is True):
+               html = html.replace('value="spectroscopy"', 'value="spectroscopy" selected')
+           else:
+               html = html.replace('value="imaging"', 'value="imaging" selected')
 
         elif key == 'engineering':
             if (selection[key] is True):
@@ -154,13 +155,21 @@ def updateform(html, selection):
                 html = html.replace('value="SvExclude"', 'value="SvExclude" selected')
             else:
                 html = html.replace('value="SvInclude"', 'value="SvInclude" selected')
-        elif 'inst' in selection.keys() and selection['inst'].startswith('GMOS') and key == 'focal_plane_mask':
-            if (selection[key] in ['NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec']):
-                html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
+
+        elif key == 'focal_plane_mask':
+            if (('inst' in selection.keys()) and (selection['inst'].startswith('GMOS'))):
+                if (selection[key] in ['NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec']):
+                    html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
+                else:
+                   # Custom mask name
+                   html = html.replace('value="custom"', 'value="custom" selected')
+                   html = html.replace('id="custom_mask"', 'id="custom_mask" value=%s' % selection[key])
+            elif (('inst' in selection.keys()) and (selection['inst'] == 'GNIRS') and selection[key] == 'IFU'):
+                # Custom rule becasue value="IFU" is also used in mode
+                html = html.replace('id="GNIRS_IFU" value="IFU"', 'id="GNIRS_IFU" value="IFU" selected')
             else:
-                # Custom mask name
-                html = html.replace('value="custom"', 'value="custom" selected')
-                html = html.replace('id="custom_mask"', 'id="custom_mask" value=%s' % selection[key])
+                html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
+
         elif key == 'detector_config':
             for item in selection[key]:
                 html = html.replace('value="%s"' % item, 'value="%s" selected' % item)
