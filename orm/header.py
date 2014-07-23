@@ -147,7 +147,11 @@ class Header(Base):
             self.requested_wv = ad.requested_wv().for_db()
             self.requested_bg = ad.requested_bg().for_db()
 
-            self.filter_name = ad.filter_name(pretty=True).for_db()
+            # Knock illegal characters out of filter names. eg NICI %s
+            filter_string = ad.filter_name(pretty=True).for_db()
+            if(filter_string):
+                self.filter_name = filter_string.replace('%', '')
+
             # NICI exposure times are a pain, because there's two of them... Not sure how to handle this for now.
             if(self.instrument != 'NICI'):
                 self.exposure_time = ad.exposure_time().for_db()
