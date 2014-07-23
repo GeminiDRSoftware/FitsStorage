@@ -62,12 +62,40 @@ function setModeVisibility() {
     }
 };
 
-function setModeVisibility() {
-    if (["spectroscopy", "LS", "MOS", "IFS"].indexOf($('#Mode').val()) > -1) {
-        $('#Spec').show();
-    } else {
-        $('#Spec').hide();
-    }
+function clearInstrumentForms() {
+    document.getElementById("gmos_binning").value = '';
+    document.getElementById("gmos_disperser").value = '';
+    document.getElementById("gmos_filter").value = '';
+    document.getElementById("gmos_mask").value = '';
+    document.getElementById("NandS").value = '';
+    document.getElementById("gmos_readspeed").value = '';
+    document.getElementById("gmos_gain").value = '';
+    document.getElementById("gmos_roi").value = '';
+    document.getElementById("gnirs_disperser").value = '';
+    document.getElementById("gnirs_cam").value = '';
+    document.getElementById("gnirs_mask").value = '';
+    document.getElementById("gnirs_depth").value = '';
+    document.getElementById("gnirs_readmode").value = '';
+    document.getElementById("niri_filter").value = '';
+    document.getElementById("niri_disperser").value = '';
+    document.getElementById("niri_mask").value = '';
+    document.getElementById("niri_cam").value = '';
+    document.getElementById("niri_readmode").value = '';
+    document.getElementById("niri_roi").value = '';
+    document.getElementById("nifs_disperser").value = '';
+    document.getElementById("nifs_mask").value = '';
+    document.getElementById("nifs_readmode").value = '';
+    document.getElementById("michelle_filter").value = '';
+    document.getElementById("michelle_disperser").value = '';
+    document.getElementById("michelle_mask").value = '';
+    document.getElementById("trecs_filter").value = '';
+    document.getElementById("trecs_disperser").value = '';
+    document.getElementById("trecs_mask").value = '';
+    document.getElementById("F2_filter").value = '';
+    document.getElementById("F2_disperser").value = '';
+    document.getElementById("F2_mask").value = '';
+    document.getElementById("nici_filter").value = '';
+    document.getElementById("gsaoi_filter").value = '';
 };
 
 function setAdvancedVisibility() {
@@ -134,6 +162,7 @@ $(document).ready(function() {
     gmosCustomMaskEnable();
     $('#instselect').change(function() {
         setInstVisibility();
+        clearInstrumentForms();
     });
     $('#Mode').change(function() {
         setModeVisibility();

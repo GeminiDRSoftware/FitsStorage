@@ -186,7 +186,7 @@
     <br /><label>GMOS</label><br />
     
     <div class="left">
-    <label>Binning:</label><select class="ddw" name="binning">
+    <label>Binning:</label><select id="gmos_binning" class="ddw" name="binning">
         <option value="">Any</option>
         <option value="1x1">1x1</option>
         <option value="1x2">1x2</option>
@@ -202,7 +202,7 @@
         <p class="helpleft">Select a CCD binning.</p>
     </span><br />
 
-    <label>Disperser:</label><select class="ddw" name="disperser">
+    <label>Disperser:</label><select id="gmos_disperser" class="ddw" name="disperser">
         <option value="">Any</option>
         <option class="disperser" value="B600">B600</option>
         <option class="disperser" value="R400">R400</option>
@@ -215,7 +215,7 @@
         <p class="helpleft">Select a GMOS grating. You can select MIRROR to force Imaging mode</p>
     </span><br />
     
-    <label>Filter:</label><select class="ddw" name="filter">
+    <label>Filter:</label><select id="gmos_filter" class="ddw" name="filter">
         <option value="">Any</option>
         <option class="filter" value="u">u'</option>
         <option class="filter" value="g">g'</option>
@@ -257,11 +257,11 @@
     <input id="custom_mask" class="mask" name="custom_mask" type="text" placeholder="(custom mask)" />
     <span class="help">(help)
         <p class="helpleft">Select a GMOS mask. To select a custom mask name, or one not listed in the pulldown, select "custom" and them put the mask name in the text field. This will do an exact match.</p>
-    </span><br />
+    </span><br /><br />
     </div>
 
     <div class="right">
-    <label>Nod&amp;Shuffle:</label><select class="ddw" name="nod_and_shuffle">
+    <label>Nod&amp;Shuffle:</label><select id="NandS" class="ddw" name="nod_and_shuffle">
         <option value="">Any</option>
         <option value="NodAndShuffle">Nod &amp; Shuffle</option>
         <option value="Classic">Classic</option>
@@ -270,7 +270,7 @@
         <p class="helpright">Select whether you want to search for Nod and Shuffle or Classic readout data. Leave at Any for both. Classic means <b>not</b> Nod and Shuffle.</p>
     </span><br />
     
-    <label>Read Speed:</label><select class="ddw" name="gmos_speed">
+    <label>Read Speed:</label><select id="gmos_readspeed" class="ddw" name="gmos_speed">
         <option value="">Any</option>
         <option value="fast">Fast</option>
         <option value="slow">Slow</option>
@@ -279,7 +279,7 @@
         <p class="helpright">Select between slow and fast read speed. Leave at Any for both.</p>
     </span><br />
 
-    <label>Readout Gain:</label><select class="ddw" name="gmos_gain">
+    <label>Readout Gain:</label><select id="gmos_gain" class="ddw" name="gmos_gain">
         <option value="">Any</option>
         <option value="low">Low</option>
         <option value="high">High</option>
@@ -288,7 +288,7 @@
         <p class="helpright">Search for low or high gain data. Leave at Any for both</p>
     </span><br />
     
-    <label>ROI:</label><select class="ddw" name="detector_roi">
+    <label>ROI:</label><select id="gmos_roi" class="ddw" name="detector_roi">
         <option value="">Any</option>
         <option value="Full Frame">Full Frame</option>
         <option value="Central Spectrum">Central Spectrum</option>
@@ -296,7 +296,7 @@
     </select>
     <span class="help">(Region of Interest)
         <p class="helpright">Search for various Regions of Interest, otherwise know as readout area. It's not possible to search for custom ROIs here, though they will be included if you leave this at Any to not search by ROI.</p>
-    </span><br />
+    </span><br /><br />
     </div>
     
 </div>
@@ -306,7 +306,7 @@
     <br /><label>GNIRS</label><br />
 
     <div class="left">
-    <label>Disperser:</label><select class="ddw" name="disperser">
+    <label>Disperser:</label><select id="gnirs_disperser" class="ddw" name="disperser">
         <option value="">Any</option>
         <option class="disperser" value="10_mm">10 l/mm</option>
         <option class="disperser" value="32_mm">32 l/mm</option>
@@ -319,7 +319,7 @@
         <p class="helpleft">GNIRS grating, and optionally cross-dispersing prism. The XD (cross dispersed) options will select both the LXD and SXD prisms.</p>
     </span><br />
 
-    <label>Camera:</label><select class="ddw" name="camera">
+    <label>Camera:</label><select id="gnirs_cam" class="ddw" name="camera">
         <option value="">Any</option>
         <option value="GnirsShort">0.15 "/pix</option>
         <option value="GnirsLong">0.05 "/pix</option>
@@ -328,7 +328,7 @@
         <p class="helpleft">GNIRS camera. Note that in either case, both the Blue and Red cameras will be selected (eg 0.05 "/pix will select both the LongBlue and LongRed cameras)</p>
     </span><br />
 
-    <label>Mask:</label><select class="ddw" name="focal_plane_mask">
+    <label>Mask:</label><select id="gnirs_mask" class="ddw" name="focal_plane_mask">
         <option value="">Any</option>
         <option class="mask" value="0.10arcsec">0.10 arcsec</option>
         <option class="mask" value="0.15arcsec">0.15 arcsec</option>
@@ -360,7 +360,7 @@
     </div>
 
     <div class="right">           
-    <label>Well Depth:</label><select class="ddw" name="well_depth">
+    <label>Well Depth:</label><select id="gnirs_depth" class="ddw" name="well_depth">
         <option value="">Any</option>
         <option value="Deep">Deep</option>
         <option value="Shallow">Shallow</option>
@@ -369,7 +369,7 @@
         <p class="helpright">GNIRS well depth setting</p>
     </span><br />
 
-    <label>Read Mode:</label><select class="ddw" name="niri_readmode">
+    <label>Read Mode:</label><select id="gnirs_readmode" class="ddw" name="gnirs_readmode">
         <option value="">Any</option>
         <option value="Very_Bright_Objects">Very Bright Objects</option>
         <option value="Bright_Objects">Bright Objects</option>
@@ -387,7 +387,7 @@
     <br /><label>NIRI</label><br />
 
     <div class="left">
-        <label>Filter:</label><select class="ddw" name="filter">
+        <label>Filter:</label><select id="niri_filter" class="ddw" name="filter">
             <option class="filter" value="">Any</option>
             <option class="filter" value="Y">Y</option>
             <option class="filter" value="J">J</option>
@@ -419,7 +419,7 @@
             <p class="helpleft">Help Text</p>
         </span><br />
         
-        <label>Disperser:</label><select class="ddw" name="disperser">
+        <label>Disperser:</label><select id="niri_disperser" class="ddw" name="disperser">
             <option value="">Any</option>
             <option class="disperser" value="Hgrism">H-grism</option>
             <option class="disperser" value="Jgrism">J-grism</option>
@@ -431,7 +431,7 @@
             <p class="helpleft">Help Text</p>
         </span><br />
 
-        <label>Mask:</label><select class="ddw" name="focal_plane_mask">
+        <label>Mask:</label><select id="niri_mask" class="ddw" name="focal_plane_mask">
             <option value="">Any</option>
             <option class="mask" value="f6-2pix">f6-2pix</option>
             <option class="mask" value="f6-2pixBl">f6-2pix Blue</option>
@@ -450,7 +450,7 @@
             <p class="helpleft">Help Text</p>
         </span><br />
 
-        <label>Camera:</label><select class="ddw" name="camera">
+        <label>Camera:</label><select id="niri_cam" class="ddw" name="camera">
             <option value="">Any</option>
             <option value="f6">f/6 (0.12 "/pix)</option>
             <option value="f13.9">f/14 (0.05 "/pix)</option>
@@ -462,7 +462,7 @@
     </div>
     
     <div class="right">
-        <label>Read Mode:</label><select class="ddw" name="niri_readmode">
+        <label>Read Mode:</label><select id="niri_readmode" class="ddw" name="niri_readmode">
             <option value="">Any</option>
             <option value="High_Background">High Background</option>
             <option value="Medium_Background">Medium Background</option>
@@ -472,7 +472,7 @@
             <p class="helpright">Help Text</p>
         </span><br />
 
-        <label>Subarray:</label><select class="ddw" name="detector_roi">
+        <label>Subarray:</label><select id="niri_roi" class="ddw" name="detector_roi">
             <option value="">Any</option>
             <option value="Full Frame">Full Frame</option>
             <option value="Central768">Central 768</option>
@@ -488,7 +488,7 @@
 
 <div class="next" id="NIFS" style="display:none">
     <br /><label>NIFS</label><br />
-    <label>Disperser:</label><select class="ddw" name="disperser">
+    <label>Disperser:</label><select id="nifs_disperser" class="ddw" name="disperser">
         <option value="">Any</option>
         <option class="disperser" value="Z">Z</option>
         <option class="disperser" value="J">J</option>
@@ -502,7 +502,7 @@
         <p class="helpleft">Help Text</p>
     </span><br />
 
-    <label>Mask:</label><select class="ddw" name="focal_plane_mask">
+    <label>Mask:</label><select id="nifs_mask" class="ddw" name="focal_plane_mask">
         <option value="">Any</option>
         <option value="Blocked">Blocked</option>
         <option class="mask" value="Ronchi_Screen">Ronchi Screen</option>
@@ -517,7 +517,7 @@
         <p class="helpleft">Help Text</p>
     </span><br />
 
-    <label>Read Mode:</label><select class="ddw" name="nifs_readmode">
+    <label>Read Mode:</label><select id="nifs_readmode" class="ddw" name="nifs_readmode">
             <option value="">Any</option>
             <option value="Bright">Bright</option>
             <option value="Medium">Medium</option>
@@ -530,7 +530,7 @@
 
 <div class="next" id="Michelle" style="display:none">
     <br /><label>Michelle</label><br />
-    <label>Filter:</label><select class="ddw" name="filter">
+    <label>Filter:</label><select id="michelle_filter" class="ddw" name="filter">
         <option value="">Any</option>
         <option class="filter" value="F112B21">F112B21</option>
         <option class="filter" value="F116B9">F116B9</option>
@@ -556,7 +556,7 @@
         <p class="helpleft">Select a Michelle filter.</p>
     </span><br />
 
-    <label>Disperser:</label><select class="ddw" name="disperser">
+    <label>Disperser:</label><select id="michelle_disperser" class="ddw" name="disperser">
         <option value="">Any</option>
         <option class="disperser" value="LowN">Low N</option>
         <option class="disperser" value="MedN1">Med N1</option>
@@ -568,7 +568,7 @@
         <p class="helpleft">Select a Michelle disperser</p>
     </span><br />
 
-    <label>Mask:</label><select class="ddw" name="focal_plane_mask">
+    <label>Mask:</label><select id="michelle_mask" class="ddw" name="focal_plane_mask">
         <option value="">Any</option>
         <option class="mask" value="1_pixels">1 pixel</option>
         <option class="mask" value="2_pixels">2 pixels</option>
@@ -585,7 +585,7 @@
 
 <div class="next" id="TReCS" style="display:none">
     <br /><label>TReCS</label><br />
-    <label>Filter:</label><select class="ddw" name="filter">
+    <label>Filter:</label><select id="trecs_filter" class="ddw" name="filter">
         <option value="">Any</option>
         <option class="filter" value="ArIII-9.0um">ArIII 9.0µm</option>
         <option class="filter" value="N">N</option>
@@ -609,7 +609,7 @@
         <p class="helpleft">Select a TReCS filter.</p>
     </span><br />
 
-    <label>Disperser:</label><select class="ddw" name="disperser">
+    <label>Disperser:</label><select id="trecs_disperser" class="ddw" name="disperser">
         <option value="">Any</option>
         <option class="disperser" value="LowRes-10">Low-Res 10</option>
         <option class="disperser" value="LowRes-20">Low-Res 20</option>
@@ -618,7 +618,7 @@
         <p class="helpleft">Select a TReCS disperser</p>
     </span><br />
 
-    <label>Mask:</label><select class="ddw" name="focal_plane_mask">
+    <label>Mask:</label><select id="trecs_mask" class="ddw" name="focal_plane_mask">
         <option value="">Any</option>
         <option class="mask" value="0.21">0.21"</option>
         <option class="mask" value="0.26">0.26"</option>
@@ -635,7 +635,7 @@
 
 <div class="next" id="F2" style="display:none">
     <br /><label>F2</label><br />
-    <label>Filter:</label><select class="ddw" name="filter">
+    <label>Filter:</label><select id="F2_filter" class="ddw" name="filter">
         <option class="filter" value="">Any</option>
         <option class="filter" value="Y">Y</option>
         <option class="filter" value="J">J</option>
@@ -649,7 +649,7 @@
         <p class="helpleft">Select an F2 filter.</p>
     </span><br />
 
-    <label>Disperser:</label><select class="ddw" name="disperser">
+    <label>Disperser:</label><select id="F2_disperser" class="ddw" name="disperser">
         <option value="">Any</option>
         <option class="disperser" value="R3K">R3K</option>
         <option class="disperser" value="JH">JH</option>
@@ -659,7 +659,7 @@
         <p class="helpleft">Select an F2 disperser</p>
     </span><br />
 
-    <label>Mask:</label><select class="ddw" name="focal_plane_mask">
+    <label>Mask:</label><select id="F2_mask" class="ddw" name="focal_plane_mask">
         <option value="">Any</option>
         <option class="mask" value="1pix-slit">1pix-slit</option>
         <option class="mask" value="2pix-slit">2pix-slit</option>
@@ -675,7 +675,7 @@
 
 <div class="next" id="NICI" style="display:none">
     <br /><label>NICI</label><br />
-    <label>Filter:</label><select class="ddw" name="filter" disabled="disabled">
+    <label>Filter:</label><select id="nici_filter" class="ddw" name="filter" disabled="disabled">
         <option value="">Any</option>
     </select>
     <span class="help">(help)
@@ -685,7 +685,7 @@
 
 <div class="next" id="GSAOI" style="display:none">
     <br /><label>GSAOI</label><br />
-    <label>Filter:</label><select class="ddw" name="filter">
+    <label>Filter:</label><select id="gsaoi_filter" class="ddw" name="filter">
         <option value="">Any</option>
         <option class="filter" value="Z">Z</option>
         <option class="filter" value="J">J</option>
