@@ -80,7 +80,7 @@ def summary_body(req, sumtype, selection, orderby, links=True):
         else:
             # No results
             # Could pass selection to this and do some helpful analysis too
-            no_results(req)
+            no_results(req, selection)
 
     except IOError:
         pass
@@ -88,15 +88,33 @@ def summary_body(req, sumtype, selection, orderby, links=True):
         session.close()
 
 
-def no_results(req):
+def no_results(req, selection):
     """
     Print a helpful no results message
     """
-    # We could pass the selection dictionary to this function 
+    # We pass the selection dictionary to this function 
     # and check for obvious mutually exclusive things
     req.write("<H2>Your search returned no results</H2>")
-    req.write("<P>No data in the archive match your search criteria. Note that the program ID and Target Name searches are <b>exact match</b> searches, including only the first part of a program ID for example will not match any data. Also note that many combinations of Obs Class and Obs Type are in effect mutually exclusive - there will be no science BIAS frames for example, nor will there by any Imaging ARCs.</P>")
+    req.write("<P>No data in the archive match your search criteria. Note that the program ID and Target Name searches are <b>exact match</b> searches, including only the first part of a program ID for example will not match any data. Also note that many combinations of search terms are in practice mutually exclusive - there will be no science BIAS frames for example, nor will there by any Imaging ARCs.</P>")
     req.write("<P>We suggest re-setting some of your constraints to <i>Any</i> and repeating your search.</P>")
+
+    # Check for obvious mutually exclusive selections
+    if('observation_class' in selection.keys() and 'observation_type' in selection.keys()):
+        if (selection['observation_class'] == 'science'):
+            if(selection['observation_type'] in ['ARC', 'FLAT', 'DARK', 'BIAS']):
+                req.write("<P>In this case, your combination of observation type and observation class is unlikely to find and data</P>")
+    if('inst' in selection.keys() and 'mode' in selection.keys()):
+        if(selection['mode'] == 'MOS'):
+            if(selection['inst'] not in ['GMOS', 'GMOS-N', 'GMOS-S', 'F2']):
+                req.write("<P>Hint: %s does not support Multi-Object Spectroscopy</P>" % selection['inst'])
+        if(selection['mode'] == 'IFS'):
+            if(selection['inst'] not in ['GMOS', 'GMOS-N', 'GMOS-S', 'GNIRS', 'NIFS', 'GPI']):
+                req.write("<P>Hint: %s does not support Integral Field Spectroscopy</P>" % selection['inst'])
+    if('inst' in selection.keys() and 'spectroscopy' in selection.keys()):
+        if(selection['spectroscopy'] == True):
+            if(selection['inst'] in ['NICI', 'GSAOI']):
+                req.write("<P>Hint: %s is purely an imager - it does not do spectroscopy.</P>" % selection['inst'])
+
 
 def summary_table(req, sumtype, headers, selection, links=True):
     """
