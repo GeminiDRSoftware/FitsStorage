@@ -85,7 +85,7 @@ def request_account(req, things):
         req.write('<TR><TD>Email:</TD><TD>%s</TD></TR>' % email)
         req.write('</TABLE>')
         req.write("<h2>Processing your request...</h2>")
-        if(email.endswith("@gemini.edu"):
+        if(email.endswith("@gemini.edu")):
             req.write("<P>That looks like a Gemini Staff email address. If you would like Gemini Staff Access privelidges adding to your new archive account, please contact the archive scientist to request that.</P>")
         try:
             session = sessionfactory()
