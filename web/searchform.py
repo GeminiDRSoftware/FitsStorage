@@ -171,9 +171,15 @@ def updateform(html, selection):
         elif key == 'detector_config':
             for item in selection[key]:
                 html = html.replace('value="%s"' % item, 'value="%s" selected' % item)
+
         elif key == 'filter':
             # Generic filter pulldown
-            html = html.replace('class="filter" value="%s"' % selection[key], 'class="filter" value="%s" selected' % selection[key])
+            # Only mark filter for the selected instrument. Cannot specify filter with inst = Any anyway
+            if 'inst' in selection.keys():
+                inst = selection['inst']
+                if inst.startswith('GMOS'):
+                    inst = 'GMOS'
+                html = html.replace('class="%sfilter" value="%s"' % (inst, selection[key]), 'class="%sfilter" value="%s" selected' % (inst, selection[key]))
 
         elif key == 'disperser':
             # Generic disperser pulldown
