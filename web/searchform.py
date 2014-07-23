@@ -165,9 +165,6 @@ def updateform(html, selection):
                    # Custom mask name
                    html = html.replace('class="mask" value="custom"', 'class="mask" value="custom" selected')
                    html = html.replace('id="custom_mask"', 'id="custom_mask" value=%s' % selection[key])
-            # replace escaped quotes in mask names from url with html escaped quotes
-            if '"' in urllib.unquote(selection[key]):
-                html = html.replace('value="%s&quot;"' % urllib.unquote(selection[key])[:4], 'value="%s&quot;" selected' % (urllib.unquote(selection[key])[:4]))
             else:
                 html = html.replace('class="mask" value="%s"' % selection[key], 'class="mask" value="%s" selected' % selection[key])
 

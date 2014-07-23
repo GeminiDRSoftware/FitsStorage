@@ -410,8 +410,13 @@ def queryselection(query, selection):
             query = query.filter(Header.camera == selection['camera'])
 
     if('focal_plane_mask' in selection):
-        selection['focal_plane_mask'] = urllib.unquote(selection['focal_plane_mask'])
-        query = query.filter(Header.focal_plane_mask == selection['focal_plane_mask'])
+        if 'inst' in selection.keys() and selection['inst'] == 'TReCS':
+            # this gets round the quotes and options "+ stuff" in the TReCS mask names.
+            # the selection should only contain the "1.23" bit
+            query = query.filter(Header.focal_plane_mask.contains(selection['focal_plane_mask']))
+        else:
+            query = query.filter(Header.focal_plane_mask == selection['focal_plane_mask'])
+
 
     if('spectroscopy' in selection):
         query = query.filter(Header.spectroscopy == selection['spectroscopy'])
