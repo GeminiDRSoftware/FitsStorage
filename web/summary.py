@@ -57,8 +57,6 @@ def summary_body(req, sumtype, selection, orderby, links=True):
     if(sumtype != 'searchresults'):
         if (fits_system_status == "development"):
             req.write('<h4>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h4>')
-        req.write("<H1>%s</H1>\n" % htmlescape(title))
-
     # If this is a diskfiles summary, select even ones that are not canonical
     if(sumtype != 'diskfiles'):
         # Usually, we want to only select headers with diskfiles that are canonical
