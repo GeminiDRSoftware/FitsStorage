@@ -495,13 +495,13 @@
     <label>Mask:</label><select class="ddw" name="focal_plane_mask">
         <option value="">Any</option>
         <option value="Blocked">Blocked</option>
-        <option value="Ronchi_Screen">Ronchi Screen</option>
-        <option value="KG3_ND_Filter">KG3 ND Filter</option>
-        <option value="KG5_ND_Filter">KG5 ND Filter</option>
-        <option value="0.1_Hole">0.1 Hole</option>
-        <option value="0.2_Occ_Disc">0.2 Occ Disc</option>
-        <option value="0.5_Occ_Disc">0.5 Occ Disc</option>
-        <option value="3.0_Mask">3.0 Mask</option>
+        <option class="mask" value="Ronchi_Screen">Ronchi Screen</option>
+        <option class="mask" value="KG3_ND_Filter">KG3 ND Filter</option>
+        <option class="mask" value="KG5_ND_Filter">KG5 ND Filter</option>
+        <option class="mask" value="0.1_Hole">0.1 Hole</option>
+        <option class="mask" value="0.2_Occ_Disc">0.2 Occ Disc</option>
+        <option class="mask" value="0.5_Occ_Disc">0.5 Occ Disc</option>
+        <option class="mask" value="3.0_Mask">3.0 Mask</option>
     </select>        
     <span class="help">(help)
         <p class="helpleft">Help Text</p>
@@ -522,25 +522,25 @@
     <br /><label>Michelle</label><br />
     <label>Filter:</label><select class="ddw" name="filter">
         <option value="">Any</option>
-        <option value="F112B21">F112B21</option>
-        <option value="F116B9">F116B9</option>
-        <option value="F125B9">F125B9</option>
-        <option value="F86B2">F86B2</option>
-        <option value="I103B10">I103B10</option>
-        <option value="I107B4">I107B4</option>
-        <option value="I112B21">I112B21</option>
-        <option value="I116B9">I116B9</option>
-        <option value="I125B9">I125B9</option>
-        <option value="I128B2">I128B2</option>
-        <option value="I185B9">I185B9</option>
-        <option value="I79B10">I79B10</option>
-        <option value="I86B2">I86B2</option>
-        <option value="I88B10">I88B10</option>
-        <option value="I97B10">I97B10</option>
-        <option value="IP116B9">IP116B9</option>
-        <option value="IP125B9">IP125B9</option>
-        <option value="IP97B10">IP97B10</option>
-        <option value="QBlock">QBlock</option>
+        <option class="filter" value="F112B21">F112B21</option>
+        <option class="filter" value="F116B9">F116B9</option>
+        <option class="filter" value="F125B9">F125B9</option>
+        <option class="filter" value="F86B2">F86B2</option>
+        <option class="filter" value="I103B10">I103B10</option>
+        <option class="filter" value="I107B4">I107B4</option>
+        <option class="filter" value="I112B21">I112B21</option>
+        <option class="filter" value="I116B9">I116B9</option>
+        <option class="filter" value="I125B9">I125B9</option>
+        <option class="filter" value="I128B2">I128B2</option>
+        <option class="filter" value="I185B9">I185B9</option>
+        <option class="filter" value="I79B10">I79B10</option>
+        <option class="filter" value="I86B2">I86B2</option>
+        <option class="filter" value="I88B10">I88B10</option>
+        <option class="filter" value="I97B10">I97B10</option>
+        <option class="filter" value="IP116B9">IP116B9</option>
+        <option class="filter" value="IP125B9">IP125B9</option>
+        <option class="filter" value="IP97B10">IP97B10</option>
+        <option class="filter" value="QBlock">QBlock</option>
     </select>
     <span class="help">(help)
         <p class="helpleft">Select a Michelle filter.</p>
@@ -548,11 +548,11 @@
 
     <label>Disperser:</label><select class="ddw" name="disperser">
         <option value="">Any</option>
-        <option value="LowN">Low N</option>
-        <option value="MedN1">Med N1</option>
-        <option value="MedN2">Med N2</option>
-        <option value="LowQ">Low Q</option>
-        <option value="Echelle">Echelle</option>
+        <option class="disperser" value="LowN">Low N</option>
+        <option class="disperser" value="MedN1">Med N1</option>
+        <option class="disperser" value="MedN2">Med N2</option>
+        <option class="disperser" value="LowQ">Low Q</option>
+        <option class="disperser" value="Echelle">Echelle</option>
     </select>
     <span class="help">(help)
         <p class="helpleft">Select a Michelle disperser</p>
@@ -560,13 +560,13 @@
 
     <label>Mask:</label><select class="ddw" name="focal_plane_mask">
         <option value="">Any</option>
-        <option value="1_pixels">1 pixel</option>
-        <option value="2_pixels">2 pixels</option>
-        <option value="3_pixels">3 pixels</option>
-        <option value="4_pixels">4 pixels</option>
-        <option value="6_pixels">6 pixels</option>
-        <option value="8_pixels">8 pixels</option>
-        <option value="16_pixels">16 pixels</option>
+        <option class="mask" value="1_pixels">1 pixel</option>
+        <option class="mask" value="2_pixels">2 pixels</option>
+        <option class="mask" value="3_pixels">3 pixels</option>
+        <option class="mask" value="4_pixels">4 pixels</option>
+        <option class="mask" value="6_pixels">6 pixels</option>
+        <option class="mask" value="8_pixels">8 pixels</option>
+        <option class="mask" value="16_pixels">16 pixels</option>
     </select>
     <span class="help">(help)
         <p class="helpleft">Select a Michelle mask</p>
@@ -577,23 +577,23 @@
     <br /><label>TReCS</label><br />
     <label>Filter:</label><select class="ddw" name="filter">
         <option value="">Any</option>
-        <option value="ArIII-9.0um">ArIII 9.0µm</option>
-        <option value="N">N</option>
-        <option value="Nprime">N'</option>
-        <option value="NeII-12.8um">NeII 12.8µm</option>
-        <option value="NeII_ref2-13.1um">NeII ref2 13.1µm</option>
-        <option value="PAH1-8.6um">PAH1 8.6µm</option>
-        <option value="PAH2-11.3um">PAH2 11.3µm</option>
-        <option value="Qa-18.3um">Qa 18.3µm</option>
-        <option value="Qb-24.5um">Qb 24.5µm</option>
-        <option value="Qw-20.8um">Qw 20.8µm</option>
-        <option value="Si1-7.9um">Si1 7.9µm</option>
-        <option value="Si2-8.8um">Si2 8.8µm</option>
-        <option value="Si3-9.7um">Si4 9.7µm</option>
-        <option value="Si2-10.4um">Si2 10.4µm</option>
-        <option value="Si5-11.7um">Si5 11.7µm</option>
-        <option value="Si6-12.3um">Si6 12.3µm</option>
-        <option value="SIV-10.5um">SIV 10.5µm</option>
+        <option class="filter" value="ArIII-9.0um">ArIII 9.0µm</option>
+        <option class="filter" value="N">N</option>
+        <option class="filter" value="Nprime">N'</option>
+        <option class="filter" value="NeII-12.8um">NeII 12.8µm</option>
+        <option class="filter" value="NeII_ref2-13.1um">NeII ref2 13.1µm</option>
+        <option class="filter" value="PAH1-8.6um">PAH1 8.6µm</option>
+        <option class="filter" value="PAH2-11.3um">PAH2 11.3µm</option>
+        <option class="filter" value="Qa-18.3um">Qa 18.3µm</option>
+        <option class="filter" value="Qb-24.5um">Qb 24.5µm</option>
+        <option class="filter" value="Qw-20.8um">Qw 20.8µm</option>
+        <option class="filter" value="Si1-7.9um">Si1 7.9µm</option>
+        <option class="filter" value="Si2-8.8um">Si2 8.8µm</option>
+        <option class="filter" value="Si3-9.7um">Si4 9.7µm</option>
+        <option class="filter" value="Si2-10.4um">Si2 10.4µm</option>
+        <option class="filter" value="Si5-11.7um">Si5 11.7µm</option>
+        <option class="filter" value="Si6-12.3um">Si6 12.3µm</option>
+        <option class="filter" value="SIV-10.5um">SIV 10.5µm</option>
     </select>
     <span class="help">(help)
         <p class="helpleft">Select a TReCS filter.</p>
@@ -601,8 +601,8 @@
 
     <label>Disperser:</label><select class="ddw" name="disperser">
         <option value="">Any</option>
-        <option value="LowRes-10">Low-Res 10</option>
-        <option value="LowRes-20">Low-Res 20</option>
+        <option class="disperser" value="LowRes-10">Low-Res 10</option>
+        <option class="disperser" value="LowRes-20">Low-Res 20</option>
     </select>
     <span class="help">(help)
         <p class="helpleft">Select a TReCS disperser</p>
@@ -610,13 +610,13 @@
 
     <label>Mask:</label><select class="ddw" name="focal_plane_mask">
         <option value="">Any</option>
-        <option value="0.21&quot;">0.21"</option>
-        <option value="0.26&quot;">0.26"</option>
-        <option value="0.31&quot;">0.31"</option>
-        <option value="0.35&quot;">0.35"</option>
-        <option value="0.65&quot;">0.65"</option>
-        <option value="0.70&quot;">0.70"</option>
-        <option value="1.30&quot;">1.30"</option>
+        <option class="mask" value="0.21">0.21"</option>
+        <option class="mask" value="0.26">0.26"</option>
+        <option class="mask" value="0.31">0.31"</option>
+        <option class="mask" value="0.35">0.35"</option>
+        <option class="mask" value="0.65">0.65"</option>
+        <option class="mask" value="0.70">0.70"</option>
+        <option class="mask" value="1.30">1.30"</option>
     </select>
     <span class="help">(help)
         <p class="helpleft">Select a TReCS mask</p>
@@ -626,14 +626,14 @@
 <div class="next" id="F2" style="display:none">
     <br /><label>F2</label><br />
     <label>Filter:</label><select class="ddw" name="filter">
-        <option value="">Any</option>
-        <option value="Y">Y</option>
-        <option value="J">J</option>
-        <option value="H">H</option>
-        <option value="Ks">Ks</option>
-        <option value="JH">JH</option>
-        <option value="HK">HK</option>
-        <option value="J-lo">J low</option>
+        <option class="filter" value="">Any</option>
+        <option class="filter" value="Y">Y</option>
+        <option class="filter" value="J">J</option>
+        <option class="filter" value="H">H</option>
+        <option class="filter" value="Ks">Ks</option>
+        <option class="filter" value="JH">JH</option>
+        <option class="filter" value="HK">HK</option>
+        <option class="filter" value="J-lo">J low</option>
     </select>
     <span class="help">(help)
         <p class="helpleft">Select an F2 filter.</p>
@@ -641,9 +641,9 @@
 
     <label>Disperser:</label><select class="ddw" name="disperser">
         <option value="">Any</option>
-        <option value="R3K">R3K</option>
-        <option value="JH">JH</option>
-        <option value="HK">HK</option>
+        <option class="disperser" value="R3K">R3K</option>
+        <option class="disperser" value="JH">JH</option>
+        <option class="disperser" value="HK">HK</option>
     </select>
     <span class="help">(help)
         <p class="helpleft">Select an F2 disperser</p>
@@ -651,12 +651,12 @@
 
     <label>Mask:</label><select class="ddw" name="focal_plane_mask">
         <option value="">Any</option>
-        <option value="1pix-slit">1pix-slit</option>
-        <option value="2pix-slit">2pix-slit</option>
-        <option value="3pix-slit">3pix-slit</option>
-        <option value="4pix-slit">4pix-slit</option>
-        <option value="6pix-slit">6pix-slit</option>
-        <option value="8pix-slit">8pix-slit</option>
+        <option class="mask" value="1pix-slit">1pix-slit</option>
+        <option class="mask" value="2pix-slit">2pix-slit</option>
+        <option class="mask" value="3pix-slit">3pix-slit</option>
+        <option class="mask" value="4pix-slit">4pix-slit</option>
+        <option class="mask" value="6pix-slit">6pix-slit</option>
+        <option class="mask" value="8pix-slit">8pix-slit</option>
     </select>
     <span class="help">(help)
         <p class="helpleft">Select an F2 mask</p>
@@ -677,10 +677,10 @@
     <br /><label>GSAOI</label><br />
     <label>Filter:</label><select class="ddw" name="filter">
         <option value="">Any</option>
-        <option value="Z">Z</option>
-        <option value="J">J</option>
-        <option value="H">H</option>
-        <option value="K">K</option>
+        <option class="filter" value="Z">Z</option>
+        <option class="filter" value="J">J</option>
+        <option class="filter" value="H">H</option>
+        <option class="filter" value="K">K</option>
     </select>
     <span class="help">(help)
         <p class="helpleft">Select a GSAOI filter.</p>
