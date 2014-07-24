@@ -109,7 +109,7 @@ def searchform(req, things, orderby):
         req.write('<P>Set at least one search criteria above to search for data. Mouse over the (text in brackets) to see more help for each item.</P>')
     
     req.write('</div>')
-    req.write('<div id="calibration_results">')
+    req.write('<div style="display:none" id="calibration_results">')
     req.write('<h3>Here is a div where we could put some calibrations</h3>')
     if(selection):
         calibrations(req, selection)
