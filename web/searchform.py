@@ -181,6 +181,14 @@ def updateform(html, selection):
                     inst = 'GMOS'
                 html = html.replace('class="%sfilter" value="%s"' % (inst, selection[key]), 'class="%sfilter" value="%s" selected' % (inst, selection[key]))
 
+        elif key == 'exposure_time':
+            # Only update the one for the instrument selected
+            if 'inst' in selection.keys():
+                inst = selection['inst']
+                if inst.startswith('GMOS'):
+                    inst = 'GMOS'
+                html = html.replace('class="%sexpT"' % inst, 'class="%sexpT" value="%s"' % (inst, selection[key]))
+
         elif key == 'disperser':
             # Generic disperser pulldown
             html = html.replace('class="disperser" value="%s"' % selection[key], 'class="disperser" value="%s" selected' % selection[key])

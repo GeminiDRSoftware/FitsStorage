@@ -218,6 +218,9 @@ def getselection(things):
         if(thing[:8] == 'cenwlen='):
             selection['cenwlen'] = thing[8:]
             recognised = True
+        if(thing[:14] == 'exposure_time='):
+            selection['exposure_time'] = thing[14:]
+            recognised = True
 
         if(not recognised):
             if('notrecognised' in selection):
@@ -233,7 +236,40 @@ def sayselection(selection):
     """
     string = ""
 
-    defs = {'program_id': 'Program ID', 'observation_id': 'Observation ID', 'data_label': 'Data Label', 'date': 'Date', 'daterange': 'Daterange', 'inst':'Instrument', 'observation_type':'ObsType', 'observation_class': 'ObsClass', 'filename': 'Filename', 'object': 'Object Name', 'engineering': 'Engineering Data', 'science_verification': 'Science Verification Data', 'disperser': 'Disperser', 'focal_plane_mask': 'Focal Plane Mask', 'binning': 'Binning', 'caltype': 'Calibration Type', 'caloption': 'Calibration Option', 'photstandard': 'Photometric Standard', 'reduction': 'Reduction State', 'twilight': 'Twilight', 'az': 'Azimuth', 'el': 'Elevation', 'ra': 'RA', 'dec': 'Dec', 'sr': 'Search Radius', 'crpa': 'CRPA', 'telescope': 'Telescope', 'detector_roi': 'Detector ROI', 'filepre': 'File Prefix', 'mode': 'Spectroscopy Mode', 'cenwlen': 'Central Wavelength', 'camera': 'Camera'}
+    defs = {'program_id': 'Program ID', 
+            'observation_id': 'Observation ID', 
+            'data_label': 'Data Label', 
+            'date': 'Date', 
+            'daterange': 'Daterange', 
+            'inst':'Instrument', 
+            'observation_type':'ObsType', 
+            'observation_class': 'ObsClass', 
+            'filename': 'Filename', 
+            'object': 'Object Name', 
+            'engineering': 'Engineering Data', 
+            'science_verification': 'Science Verification Data', 
+            'disperser': 'Disperser', 
+            'focal_plane_mask': 'Focal Plane Mask', 
+            'binning': 'Binning', 
+            'caltype': 'Calibration Type', 
+            'caloption': 'Calibration Option', 
+            'photstandard': 'Photometric Standard', 
+            'reduction': 'Reduction State', 
+            'twilight': 'Twilight', 
+            'az': 'Azimuth', 
+            'el': 'Elevation', 
+            'ra': 'RA', 
+            'dec': 'Dec', 
+            'sr': 'Search Radius', 
+            'crpa': 'CRPA', 
+            'telescope': 'Telescope', 
+            'detector_roi': 'Detector ROI', 
+            'filepre': 'File Prefix', 
+            'mode': 'Spectroscopy Mode', 
+            'cenwlen': 'Central Wavelength', 
+            'camera': 'Camera',
+            'exposure_time': 'Exposure Time'}
+
     for key in defs:
         if key in selection:
             string += "; %s: %s" % (defs[key], selection[key])
@@ -569,6 +605,44 @@ def queryselection(query, selection):
             query = query.filter(Header.dec >= lower).filter(Header.dec < upper)
 
 
+    if('exposure_time' in selection):
+        valid = True
+        expt = None
+        lower = None
+        upper = None
+        # might be a range or a single value
+        selection['exposure_time'] = selection['exposure_time'].replace(' ', '')
+        match = re.match("([\d\.]+)-([\d\.]+)", selection['exposure_time'])
+        if (match is None):
+            # single value
+            try:
+                expt = float(selection['exposure_time'])
+            except:
+                pass
+            if(expt is None):
+                # Invalid format
+                selection['warning'] = "Invalid format for exposure time, ignoring it."
+                valid = False
+            else:
+                # Valid single value. Set range
+                lower = expt - 0.5
+                if (lower < 0.0):
+                    lower = 0.0
+                upper = expt + 0.5
+        else:
+            # Got two values
+            try:
+                lower = float(match.group(1))
+                upper = float(match.group(2))
+            except:
+                pass
+            if((lower is None) or (upper is None)):
+                selection['warning'] = 'Invalid format for exposure time range. Ignoring it.'
+                valid = False
+
+        if valid and (lower is not None) and (upper is not None):
+            query = query.filter(Header.exposure_time >= lower).filter(Header.exposure_time <= upper)
+            
     if('crpa' in selection):
         [a, b] = _parse_range(selection['crpa'])
         if(a is not None and b is not None):
@@ -681,7 +755,7 @@ def selection_to_URL(selection):
                 urlstring += '/spectroscopy'
             else:
                 urlstring += '/imaging'
-        elif key in ['ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera']:
+        elif key in ['ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera', 'exposure_time']:
             urlstring += '/%s=%s' % (key, selection[key])
         elif key == 'present':
             if (selection[key] is True):
