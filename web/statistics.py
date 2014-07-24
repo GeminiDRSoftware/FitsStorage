@@ -165,8 +165,8 @@ def content(req):
     req.content_type = "text/html"
     req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html>')
     req.write("<head><title>Database content statistics</title>")
-    req.write('<link rel="stylesheet" href="/htmldocs/table.css"></head>\n')
-    req.write("<body>")
+    req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+    req.write("</head><body>\n")
         
     if (fits_system_status == "development"):
         req.write('<h1>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h1>')
