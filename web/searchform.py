@@ -7,6 +7,7 @@ from mod_python import apache, util
 
 from web.selection import getselection, selection_to_URL
 from web.summary import summary_body
+from web.calibrations import calibrations
 
 from fits_storage_config import fits_aux_datadir
 import os
@@ -110,6 +111,11 @@ def searchform(req, things, orderby):
     req.write('</div>')
     req.write('<div id="calibration_results">')
     req.write('<h3>Here is a div where we could put some calibrations</h3>')
+    if(selection):
+        calibrations(req, selection)
+    else:
+        pass
+
     req.write('</div>')
     req.write('</div>')
     req.write('</body></html>')
