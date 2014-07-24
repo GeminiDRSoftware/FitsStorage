@@ -1,5 +1,5 @@
 """
-This module contains the main summary html generator function. 
+This module contains the main web summary code. 
 """
 from orm import sessionfactory
 from orm.file import File
@@ -11,6 +11,7 @@ import apache_return_codes as apache
 from sqlalchemy import desc
 
 from web.summary_generator import SummaryGenerator, htmlescape
+from cal.associate_calibrations import associate_cals
 
 
 def summary(req, sumtype, selection, orderby, links=True):
@@ -71,20 +72,23 @@ def summary_body(req, sumtype, selection, orderby, links=True):
         # Did we get any selection warnings?
         if 'warning' in selection.keys():
             req.write("<h3>WARNING: %s</h3>" % selection['warning'])
+
+        # If this is assocated_cals, we do the assoication here
+        if(sumtype == 'associated_cals'):
+            headers = associate_cals(session, headers)
         
         # Did we get any results?
         if(len(headers) > 0):
             summary_table(req, sumtype, headers, selection, links)
         else:
             # No results
-            # Could pass selection to this and do some helpful analysis too
+            # Pass selection to this so it can do some helpful analysis of why you got no results
             no_results(req, selection)
 
     except IOError:
         pass
     finally:
         session.close()
-
 
 def no_results(req, selection):
     """

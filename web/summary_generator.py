@@ -60,7 +60,8 @@ class SummaryGenerator():
             'lsummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'filter_name', 'fpmask', 'detector_roi', 'detector_binnin', 'detector_config', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
             'ssummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
             'diskfiles' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'present', 'entrytime', 'lastmod', 'file_size', 'file_md5', 'gzipped', 'data_size', 'data_md5'],
-            'searchresults' : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state']}
+            'searchresults' : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state'],
+            'associated_cals': ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state']}
   
         if(sumtype in sum_type_defs.keys()):
             want = sum_type_defs[sumtype]
@@ -587,7 +588,7 @@ class SummaryGenerator():
         """
         html = '<center><a href="/file/%s">[D]</a>' % header.diskfile.file.name
 
-        if(self.sumtype == 'searchresults'):
+        if(self.sumtype in ['searchresults', 'associated_cals']):
             html += " <input type='checkbox' name='files' value='%s'></input>" % header.diskfile.file.name
 
         html += '</center>'
