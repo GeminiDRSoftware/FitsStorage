@@ -93,13 +93,23 @@ def searchform(req, things, orderby):
     req.write('<hr noshade>')
     # Uncomment this for form processing selection debugging...
     # req.write('<p>selection: %s</p>' % selection)
+
+    # playing around with the idea of 'tabs'
+    if(selection):
+        req.write("<center><button id='results' type='button'>Results</button><button id='calibrations' type='button'>Calibrations</button></center>")
+    else:
+        pass
+
     req.write('<div id="searchresults" class="searchresults">')
     if(selection):
         req.write('<span id="loading"><p><img src="/htmldocs/ajax-loading.gif">  Loading...</p></span>')
         summary_body(req, 'searchresults', selection, orderby)
     else:
         req.write('<P>Set at least one search criteria above to search for data. Mouse over the (text in brackets) to see more help for each item.</P>')
-
+    
+    req.write('</div>')
+    req.write('<div id="calibration_results">')
+    req.write('<h3>Here is a div where we could put some calibrations</h3>')
     req.write('</div>')
     req.write('</div>')
     req.write('</body></html>')

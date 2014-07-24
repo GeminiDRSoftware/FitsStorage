@@ -157,6 +157,7 @@ function nameresolver() {
 
 $(document).ready(function() {
     $("#loading").hide();
+    $('#calibration_results').hide();
     setAdvancedVisibility();
     setInstVisibility();
     gmosCustomMaskEnable();
@@ -175,6 +176,14 @@ $(document).ready(function() {
     });
     $('#resbutton').click(function() {
         nameresolver();
+    });
+    $('#results').click(function() {
+        $('#calibration_results').hide();
+        $('#searchresults').show();
+    });
+    $('#calibrations').click(function() {
+        $('#searchresults').hide();
+        $('#calibration_results').show();
     });
 });
 
