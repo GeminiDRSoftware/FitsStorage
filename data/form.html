@@ -186,7 +186,7 @@
     <br /><label>GMOS</label><br />
     
     <div class="left">
-    <label>Exposure Time:</label><input class="GMOSexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)" />
+    <label>Exposure Time:</label><input id="GMOSexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)" />
     <span class="help">(Exposure Time)
         <p class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</p>
     </span><br />
@@ -361,12 +361,12 @@
     </select>
     <span class="help">(help)
         <p class="helpleft">Note that if you're searching for Cross Dispersed data, you almost certainly want to select the "XD" version of the slit. These are the shorter slits intended for use in cross dispersed mode. The version without XD on the end is the full length longslit.</p>
-    </span><br />
+    </span><br /><br />
 
     </div>
 
     <div class="right">           
-    <label>Exposure Time:</label><input class="GNIRSexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)" />
+    <label>Exposure Time:</label><input id="GNIRSexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)" />
     <span class="help">(Exposure Time)
         <p class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 50 - 80.</p>
     </span><br />
@@ -389,7 +389,7 @@
     </select>
     <span class="help">(help)
         <p class="helpright">GNIRS readmode</p>
-    </span><br />
+    </span><br /><br />
     </div>
 
 </div>
@@ -473,7 +473,7 @@
     </div>
     
     <div class="right">
-        <label>Exposure Time:</label><input class="NIRIexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)" />
+        <label>Exposure Time:</label><input id="NIRIexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)" />
         <span class="help">(Exposure Time)
             <p class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 50 - 80.</p>
         </span><br />
@@ -504,6 +504,7 @@
 
 <div class="next" id="NIFS" style="display:none">
     <br /><label>NIFS</label><br />
+    <div class="left">
     <label>Disperser:</label><select id="nifs_disperser" class="ddw" name="disperser">
         <option value="">Any</option>
         <option class="disperser" value="Z">Z</option>
@@ -532,8 +533,10 @@
     <span class="help">(help)
         <p class="helpleft">Help Text</p>
     </span><br />
+    </div>
 
-    <label>Exposure Time:</label><input class="NIFSexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)" />
+    <div class="right">
+    <label>Exposure Time:</label><input id="NIFSexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)" />
     <span class="help">(Exposure Time)
         <p class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</p>
     </span><br />
@@ -546,7 +549,8 @@
     </select>        
     <span class="help">(help)
         <p class="helpleft">Help Text</p>
-    </span><br />
+    </span><br /><br />
+    </div>
 </div>
 
 <div class="next" id="Michelle" style="display:none">
@@ -656,6 +660,7 @@
 
 <div class="next" id="F2" style="display:none">
     <br /><label>F2</label><br />
+    <div class="left">
     <label>Filter:</label><select id="F2_filter" class="ddw" name="filter">
         <option class="F2filter" value="">Any</option>
         <option class="F2filter" value="Y">Y</option>
@@ -679,7 +684,9 @@
     <span class="help">(help)
         <p class="helpleft">Select an F2 disperser</p>
     </span><br />
+    </div>
 
+    <div class="right">
     <label>Mask:</label><select id="F2_mask" class="ddw" name="focal_plane_mask">
         <option value="">Any</option>
         <option class="mask" value="1pix-slit">1pix-slit</option>
@@ -693,10 +700,11 @@
         <p class="helpleft">Select an F2 mask</p>
     </span><br />
 
-    <label>Exposure Time:</label><input class="F2expT" name="exposure_time" type="text" placeholder="(leave blank for Any)" />
+    <label>Exposure Time:</label><input id="F2expT" name="exposure_time" type="text" placeholder="(leave blank for Any)" />
     <span class="help">(Exposure Time)
         <p class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</p>
-    </span><br />
+    </span><br /><br />
+    </div>
 
 </div>
 
@@ -737,7 +745,7 @@
         <p class="helpleft">Select a GSAOI filter.</p>
     </span><br />
 
-    <label>Exposure Time:</label><input class="GSAOIexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)" />
+    <label>Exposure Time:</label><input id="GSAOIexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)" />
     <span class="help">(Exposure Time)
         <p class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</p>
     </span><br />

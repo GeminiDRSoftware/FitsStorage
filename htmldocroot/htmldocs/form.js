@@ -67,6 +67,7 @@ function clearInstrumentForms() {
     document.getElementById("gmos_disperser").value = '';
     document.getElementById("gmos_filter").value = '';
     document.getElementById("gmos_mask").value = '';
+    document.getElementById("GMOSexpT").value = '';
     document.getElementById("NandS").value = '';
     document.getElementById("gmos_readspeed").value = '';
     document.getElementById("gmos_gain").value = '';
@@ -76,15 +77,18 @@ function clearInstrumentForms() {
     document.getElementById("gnirs_mask").value = '';
     document.getElementById("gnirs_depth").value = '';
     document.getElementById("gnirs_readmode").value = '';
+    document.getElementById("GNIRSexpT").value = '';
     document.getElementById("niri_filter").value = '';
     document.getElementById("niri_disperser").value = '';
     document.getElementById("niri_mask").value = '';
     document.getElementById("niri_cam").value = '';
     document.getElementById("niri_readmode").value = '';
     document.getElementById("niri_roi").value = '';
+    document.getElementById("NIRIexpT").value = '';
     document.getElementById("nifs_disperser").value = '';
     document.getElementById("nifs_mask").value = '';
     document.getElementById("nifs_readmode").value = '';
+    document.getElementById("NIFSexpT").value = '';
     document.getElementById("michelle_filter").value = '';
     document.getElementById("michelle_disperser").value = '';
     document.getElementById("michelle_mask").value = '';
@@ -94,8 +98,10 @@ function clearInstrumentForms() {
     document.getElementById("F2_filter").value = '';
     document.getElementById("F2_disperser").value = '';
     document.getElementById("F2_mask").value = '';
+    document.getElementById("F2expT").value = '';
     document.getElementById("nici_filter").value = '';
     document.getElementById("gsaoi_filter").value = '';
+    document.getElementById("GSAOIexpT").value = '';
 };
 
 function setAdvancedVisibility() {
