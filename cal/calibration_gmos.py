@@ -55,17 +55,17 @@ class CalibrationGMOS(Calibration):
         if(self.descriptors):
             require_bias = True
             # BIASes do not require a bias. 
-            if(self.descriptors['observation_type'] != 'BIAS'):
+            if(self.descriptors['observation_type'] == 'BIAS'):
                 require_bias = False
 
             # Custom ROI acq images (efficient MOS acquisitions) don't require a BIAS.
             # As of Nov-2012, QAP doesn't send this descriptor (QAP Trac # 408), so ignore if not present
             if('detector_roi_setting' in self.descriptors.keys()):
-                if((self.descriptors['detector_roi_setting'] != 'Custom') and (self.descriptors['observation_class'] != 'acq')):
+                if((self.descriptors['detector_roi_setting'] == 'Custom') and (self.descriptors['observation_class'] == 'acq')):
                     require_bias = False
 
                 # Anything that's ROI = Central Stamp does not require a bias
-                if(self.descriptors['detector_roi_setting'] != 'Central Stamp'):
+                if(self.descriptors['detector_roi_setting'] == 'Central Stamp'):
                     require_bias = False
 
             if(require_bias):
