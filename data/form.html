@@ -186,6 +186,12 @@
     <br /><label>GMOS</label><br />
     
     <div class="left">
+    <label>Exposure Time:</label><input class="gmos_ET" name="exposure_time" type="text" placeholder="(leave blank for Any)" disabled="disabled" />
+    <span class="help">(Exposure Time)
+        <p class="helpleft">Specify Exposure Time here. If yu give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</p>
+    </span><br />
+
+
     <label>Binning:</label><select id="gmos_binning" class="ddw" name="binning">
         <option value="">Any</option>
         <option value="1x1">1x1</option>
@@ -400,7 +406,7 @@
             <option class="NIRIfilter" value="Br(alpha)">Br-α</option>
             <option class="NIRIfilter" value="Br(alpha)Con">Br-α con</option>
             <option class="NIRIfilter" value="Br(gamma)">Br-γ</option>
-            <option class="NIRIfilter" value="H2 1-0 S1">H2</option>
+            <option class="NIRIfilter" value="H2_1-0_S1">H2 1-0 S1</option>
             <option class="NIRIfilter" value="HeI">He I</option>
             <option class="NIRIfilter" value="HeI(2p2s)">He I (2p2s)</option>
             <option class="NIRIfilter" value="FeII">Fe II</option>
