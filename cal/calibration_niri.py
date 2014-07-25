@@ -52,7 +52,7 @@ class CalibrationNIRI(Calibration):
 
         return list
 
-    def dark(self, processed=False, List=None):
+    def dark(self, processed=False, many=None):
         query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
         query = query.filter(Header.observation_type == 'DARK')
         if(processed):
@@ -81,14 +81,14 @@ class CalibrationNIRI(Calibration):
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(List):
-            query = query.limit(List)
+        if(many):
+            query = query.limit(many)
             return    query.all()
         else:
             query = query.limit(1)
             return query.first()
 
-    def flat(self, processed=False, List=None):
+    def flat(self, processed=False, many=None):
         query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
         query = query.filter(Header.observation_type == 'FLAT')
         if(processed):
@@ -116,8 +116,8 @@ class CalibrationNIRI(Calibration):
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(List):
-            query = query.limit(List)
+        if(many):
+            query = query.limit(many)
             return    query.all()
         else:
             query = query.limit(1)

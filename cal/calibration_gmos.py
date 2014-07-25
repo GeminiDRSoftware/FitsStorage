@@ -101,7 +101,7 @@ class CalibrationGMOS(Calibration):
 
         return list
 
-    def arc(self, processed=False, sameprog=False, List=None):
+    def arc(self, processed=False, sameprog=False, many=None):
         query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
 
         if(processed):
@@ -147,14 +147,14 @@ class CalibrationGMOS(Calibration):
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(List):
-            query = query.limit(List)
+        if(many):
+            query = query.limit(many)
             return    query.all()
         else:
             query = query.limit(1)
             return query.first()
 
-    def dark(self, List=None):
+    def dark(self, many=None):
         query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
         query = query.filter(Header.observation_type == 'DARK')
 
@@ -189,14 +189,14 @@ class CalibrationGMOS(Calibration):
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(List):
-            query = query.limit(List)
+        if(many):
+            query = query.limit(many)
             return    query.all()
         else:
             query = query.limit(1)
             return query.first()
 
-    def bias(self, processed=False, List=None):
+    def bias(self, processed=False, many=None):
         query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
         query = query.filter(Header.observation_type == 'BIAS')
         if(processed):
@@ -244,14 +244,14 @@ class CalibrationGMOS(Calibration):
             query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(List):
-            query = query.limit(List)
+        if(many):
+            query = query.limit(many)
             return query.all()
         else:
             query = query.limit(1)
             return query.first()
 
-    def flat(self, processed=False, List=None):
+    def flat(self, processed=False, many=None):
         query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
         if(processed):
             query = query.filter(Header.reduction == 'PROCESSED_FLAT')
@@ -294,14 +294,14 @@ class CalibrationGMOS(Calibration):
         query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(List):
-            query = query.limit(List)
+        if(many):
+            query = query.limit(many)
             return    query.all()
         else:
             query = query.limit(1)
             return query.first()
 
-    def processed_fringe(self, List=None):
+    def processed_fringe(self, many=None):
         query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
         query = query.filter(Header.reduction == 'PROCESSED_FRINGE')
 
@@ -327,8 +327,8 @@ class CalibrationGMOS(Calibration):
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(List):
-            query = query.limit(List)
+        if(many):
+            query = query.limit(many)
             return    query.all()
         else:
             query = query.limit(1)

@@ -381,7 +381,7 @@ def gmoscal(req, selection):
 
         for l in list:
             c = get_cal_object(session, None, header=l)
-            darks = c.dark(List=15)
+            darks = c.dark(many=15)
             young = 0
             oldest = 0
             count = 0

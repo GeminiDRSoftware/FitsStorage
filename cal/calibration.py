@@ -27,7 +27,7 @@ class Calibration():
         self.from_descriptors = False
 
         # Populate the descriptors dictionary for header
-        if(self.descriptors == None):
+        if self.descriptors == None:
             self.from_descriptors = True
             self.descriptors = {}
             self.descriptors['header_id'] = self.header.id
@@ -44,33 +44,54 @@ class Calibration():
             self.descriptors['detector_roi_setting'] = self.header.detector_roi_setting
         else:
             # The data_section comes over as a native python array, needs to be a string
-            if(self.descriptors['data_section']):
+            if self.descriptors['data_section']:
                 self.descriptors['data_section'] = str(self.descriptors['data_section'])
 
-    def bias(self, processed=False, List=None):
+    def bias(self, processed=False, many=None):
+        """
+        Null method for instruments that do not provide a method in their subclass
+        """
         # Not defined for this instrument
         return None
 
-    def dark(self, processed=False, List=None):
+    def dark(self, processed=False, many=None):
+        """
+        Null method for instruments that do not provide a method in their subclass
+        """
         # Not defined for this instrument
         return None
 
-    def flat(self, processed=False, List=None):
+    def flat(self, processed=False, many=None):
+        """
+        Null method for instruments that do not provide a method in their subclass
+        """
         # Not defined for this instrument
         return None
 
-    def arc(self, processed=False, List=None):
+    def arc(self, processed=False, many=None):
+        """
+        Null method for instruments that do not provide a method in their subclass
+        """
         # Not defined for this instrument
         return None
 
-    def fringe(self, processed=False, List=None):
+    def fringe(self, processed=False, many=None):
+        """
+        Null method for instruments that do not provide a method in their subclass
+        """
         # Not defined for this instrument
         return None
 
-    def ronchi_mask(self, processed=False, List=None):
+    def ronchi_mask(self, processed=False, many=None):
+        """
+        Null method for instruments that do not provide a method in their subclass
+        """
         # Not defined for this instrument
         return None
 
-    def pinhole_mask(self, processed=False, List=None):
+    def pinhole_mask(self, processed=False, many=None):
+        """
+        Null method for instruments that do not provide a method in their subclass
+        """
         # Not defined for this instrument
         return None

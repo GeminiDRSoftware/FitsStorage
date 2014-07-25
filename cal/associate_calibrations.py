@@ -31,7 +31,7 @@ def associate_cals(session, headers, caltype="all"):
                 calheaders.append(dark)
 
         if('bias' in calobj.required and (caltype=='all' or caltype=='bias')):
-            biases = calobj.bias(List=10)
+            biases = calobj.bias(many=10)
             for bias in biases:
                 calheaders.append(bias)
 

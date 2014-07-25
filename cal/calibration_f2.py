@@ -63,7 +63,7 @@ class CalibrationF2(Calibration):
 
         return list
 
-    def dark(self, List=None):
+    def dark(self, many=None):
         query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
         query = query.filter(Header.observation_type == 'DARK')
 
@@ -84,14 +84,14 @@ class CalibrationF2(Calibration):
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(List):
-            query = query.limit(List)
+        if(many):
+            query = query.limit(many)
             return    query.all()
         else:
             query = query.limit(1)
             return query.first()
 
-    def flat(self, List=None):
+    def flat(self, many=None):
         query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
         query = query.filter(Header.observation_type == 'FLAT')
 
@@ -118,14 +118,14 @@ class CalibrationF2(Calibration):
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(List):
-            query = query.limit(List)
+        if(many):
+            query = query.limit(many)
             return    query.all()
         else:
             query = query.limit(1)
             return query.first()
 
-    def arc(self, sameprog=False, List=None):
+    def arc(self, sameprog=False, many=None):
         query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
         query = query.filter(Header.observation_type == 'ARC')
 
@@ -149,8 +149,8 @@ class CalibrationF2(Calibration):
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(List):
-            query = query.limit(List)
+        if(many):
+            query = query.limit(many)
             return    query.all()
         else:
             query = query.limit(1)
