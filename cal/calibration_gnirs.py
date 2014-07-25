@@ -19,6 +19,9 @@ class CalibrationGNIRS(Calibration):
     gnirs = None
 
     def __init__(self, session, header, descriptors, types):
+        """
+        This is the GNIRS calibration object subclass init method
+        """
         # Init the superclass
         Calibration.__init__(self, session, header, descriptors, types)
 
@@ -27,7 +30,7 @@ class CalibrationGNIRS(Calibration):
         self.gnirs = query.first()
 
         # Populate the descriptors dictionary for GNIRS
-        if(self.from_descriptors):
+        if self.from_descriptors:
             self.descriptors['read_mode'] = self.gnirs.read_mode
             self.descriptors['well_depth_setting'] = self.gnirs.well_depth_setting
             self.descriptors['coadds'] = self.gnirs.coadds
@@ -37,25 +40,40 @@ class CalibrationGNIRS(Calibration):
             self.descriptors['filter_name'] = self.gnirs.filter_name
 
         # Set the list of required calibrations
-        self.required = self.required()
+        self.set_required()
 
-    def required(self):
-        # Return a list of the calibrations required for this GNIRS dataset
-        list = []
+    def set_required(self):
+        """
+        This method determines the list of required calibration types
+        for this GNIRS frame and writes the list into the class
+        required variable.
+        It is called from the subclass init method.
+        """
+        self.required = []
 
         # Science Imaging OBJECTs that are not acq or acqCal require a DARK
-        if((self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['observation_class'] not in ['acq', 'acqCal']) and (self.descriptors['spectroscopy'] == False)):
-            list.append('dark')
-        if((self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == True)):
-            list.append('flat')
-            list.append('arc')
-            #list.append('pinhole_mask')
+        if ((self.descriptors['observation_type'] == 'OBJECT') and
+                (self.descriptors['observation_class'] not in ['acq', 'acqCal']) and
+                (self.descriptors['spectroscopy'] == False)):
+            self.required.append('dark')
 
-        return list
+        # Spectroscopy OBJECT frames require a flat and arc
+        if (self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == True):
+            self.required.append('flat')
+            self.required.append('arc')
+            #self.required.append('pinhole_mask')
 
-    def dark(self, many=None):
+
+    def dark(self, processed=False, many=None):
+        """
+        Find the optimal GNIRS Dark for this target frame
+        """
         query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'DARK')
+
+        if processed:
+            query = query.filter(Header.reduction == 'PROCESSED_DARK')
+        else:
+            query = query.filter(Header.observation_type == 'DARK').filter(Header.reduction == 'RAW')
 
         # Search only canonical entries
         query = query.filter(DiskFile.canonical == True)
@@ -74,18 +92,25 @@ class CalibrationGNIRS(Calibration):
 
         # Order by absolute time separation
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        
+
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(many):
+        if many:
             query = query.limit(many)
-            return    query.all()
+            return query.all()
         else:
             query = query.limit(1)
             return query.first()
 
-    def flat(self, many=None):
+    def flat(self, processed=False, many=None):
+        """
+        Find the optimal GNIRS flat field for this target frame
+        """
         query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'FLAT')
+
+        if processed:
+            query = query.filter(Header.reduction == 'PROCESSED_FLAT')
+        else:
+            query = query.filter(Header.observation_type == 'FLAT').filter(Header.reduction == 'RAW')
 
         # Search only canonical entries
         query = query.filter(DiskFile.canonical == True)
@@ -109,16 +134,23 @@ class CalibrationGNIRS(Calibration):
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(many):
+        if many:
             query = query.limit(many)
-            return    query.all()
+            return query.all()
         else:
             query = query.limit(1)
             return query.first()
 
-    def arc(self, sameprog=False, many=None):
+    def arc(self, processed=False, many=None):
+        """
+        Find the optimal GNIRS ARC for this target frame
+        """
         query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'ARC')
+
+        if processed:
+            query = query.filter(Header.reduction == 'PROCESSED_ARC')
+        else:
+            query = query.filter(Header.observation_type == 'ARC').filter(Header.reduction == 'RAW')
 
         # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)
@@ -140,16 +172,23 @@ class CalibrationGNIRS(Calibration):
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(many):
+        if many:
             query = query.limit(many)
             return    query.all()
         else:
             query = query.limit(1)
             return query.first()
 
-    def pinhole_mask(self, many=None):
+    def pinhole_mask(self, processed=False, many=None):
+        """
+        Find the optimal GNIRS pinhole_mask for this target frame
+        """
         query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'PINHOLE_MASK')
+
+        if processed:
+            query = query.filter(Header.reduction == 'PROCESSED_PINHOLE_MASK')
+        else:
+            query = query.filter(Header.observation_type == 'PINHOLE_MASK').filter(Header.reduction == 'RAW')
 
         # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)
@@ -169,9 +208,9 @@ class CalibrationGNIRS(Calibration):
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(many):
+        if many:
             query = query.limit(many)
-            return    query.all()
+            return query.all()
         else:
             query = query.limit(1)
             return query.first()
