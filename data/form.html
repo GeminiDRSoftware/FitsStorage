@@ -38,11 +38,17 @@
         <p class="helpright">Search radius in arcseconds, unless you specify "d" or "degs" to make it decimal degrees. i.e. <b>180</b> means 180 arcseconds, <b>10degs</b> or <b>10d</b> means 10 degrees. <br />If RA and/or dec  has been given as a single value (as opposed to a range), this specifies the size of the box around it to search. This is actually a simple search in a square box (in the tangent plane), not a true cone search. Strange things may happen near the poles.</p>
     </span>
     <br />
-    <label class="wide">Find Associated Calibrations:</label>
-    <input type="checkbox" name="calibrations" disabled="disabled" />
-    <span class="help">(Not Implemented Yet)
-    <p class="helpright">Not implemented yet. This will also find calibrations associated with your search results</p>
-    </span><br />
+    <label>Raw / Reduced:</label>
+    <select class="ddw" name="reduction_state">
+        <option value="">Any</option>
+        <option value="RAW">Raw Only</option>
+        <option value="REDUCED">Reduced Only</option>
+        <option value="PROCESSED_CAL">Processed Cals Only</option>
+    </select>
+    <span class="help">(Select data by processing state)
+    <p class="helpright">You can select raw data, reduced data, or processed calibrations. We only guarantee the presence of RAW data, reduced data and processed calibrations are mostly on a best efforts basis.</p></span>
+    <br />
+    
     <label class="wide" id="advanced_header">Advanced Options &#9662;</label>
     <span class="help">(click to show / hide)
     <p class="helpright">Click where it says "Advanced Options" to show or hide the advanced options.</p></span>
