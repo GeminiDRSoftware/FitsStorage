@@ -2,7 +2,7 @@
 This module holds the Calibration superclass
 """
 
-class Calibration():
+class Calibration(object):
     """
     This class provides a basic Calibration Manager
     This is the superclass from which the instrument specific variants subclass
