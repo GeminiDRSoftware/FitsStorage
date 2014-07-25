@@ -246,7 +246,7 @@ class CalibrationGMOS(Calibration):
         # For now, we only want one result - the closest in time, unless otherwise indicated
         if(List):
             query = query.limit(List)
-            return    query.all()
+            return query.all()
         else:
             query = query.limit(1)
             return query.first()
