@@ -76,6 +76,9 @@ def summary_body(req, sumtype, selection, orderby, links=True):
         # If this is assocated_cals, we do the assoication here
         if(sumtype == 'associated_cals'):
             headers = associate_cals(session, headers)
+
+            # links are messed up with associated_cals, turn them off
+            links = False
         
         # Did we get any results?
         if(len(headers) > 0):
@@ -143,7 +146,7 @@ def summary_table(req, sumtype, headers, selection, links=True):
     elif(len(headers) == fits_closed_result_limit):
         req.write('<P>WARNING: Your search generated more than the limit of %d results. You might want to constrain your search more.</P>' % fits_closed_result_limit) 
 
-    if(sumtype == 'searchresults' and links == True):
+    if(sumtype in ['searchresults', 'associated_cals']):
         # And tell them about clicking things
         req.write('<p>Click the [D] to download that one file, use the check boxes to select a subset of the results to download, or if available a download all link is at <a href="#tableend"> the end of the table</a>. Click the filename to see the full header in a new tab. Click anything else to add that to your search criteria.</p>')
         req.write("<FORM action='/download' method='POST'>")
@@ -169,7 +172,7 @@ def summary_table(req, sumtype, headers, selection, links=True):
 
     req.write("</TABLE>\n")
  
-    if(sumtype == 'searchresults' and links == True):
+    if(sumtype in ['searchresults', 'associated_cals']):
         req.write("<INPUT type='submit' value='Download Marked Files'></INPUT>")
         req.write("</FORM>")
 

@@ -350,7 +350,7 @@ class SummaryGenerator():
                     html += '<abbr title="%s">%s</abbr>' % (col['longheading'], col['heading'])
                 else:
                     html += col['heading']
-                if(col['sortarrows']):
+                if(self.links and col['sortarrows']):
                     html += '<a href="%s?orderby=%s_asc">&uarr;</a><a href="%s?orderby=%s_desc">&darr;</a>' % (self.uri, colkey, self.uri, colkey)
                 html += '</TH>'
         html += '</TR>\n'
