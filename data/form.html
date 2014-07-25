@@ -39,11 +39,13 @@
     </span>
     <br />
     <label>Raw / Reduced:</label>
-    <select class="ddw" name="reduction_state">
+    <select class="ddwide" name="reduction_state">
         <option value="">Any</option>
         <option value="RAW">Raw Only</option>
-        <option value="REDUCED">Reduced Only</option>
-        <option value="PROCESSED_CAL">Processed Cals Only</option>
+        <option value="REDUCED">Reduced (not Cals)</option>
+        <option value="PROCESSED_BIAS">Processed Biases Only</option>
+        <option value="PROCESSED_FLAT">Processed Flats Only</option>
+        <option value="PROCESSED_FRINGE">Processed Fringe Frames Only</option>
     </select>
     <span class="help">(Select data by processing state)
     <p class="helpright">You can select raw data, reduced data, or processed calibrations. We only guarantee the presence of RAW data, reduced data and processed calibrations are mostly on a best efforts basis.</p></span>

@@ -30,7 +30,10 @@ input {
 }
 
 .ddw {
-    width:100px;
+    width:120px;
+}
+.ddwide {
+    width:160px;
 }
 
 .searchform {
