@@ -50,15 +50,17 @@ def searchform(req, things, orderby):
 
     # Also args to pass on to results page
     args_string = ""
-    if (orderby):
+    if orderby:
         args_string = '?orderby=%s' % orderby[0]
-   
 
-    if(formdata):
-        if((len(formdata) == 3) and ('engineering' in formdata.keys()) and ('science_verification' in formdata.keys()) and ('qa_state' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and (formdata['science_verification'].value == 'SvInclude') and (formdata['qa_state'].value == 'NotFail')):
+    if formdata:
+        if ((len(formdata) == 3) and
+                ('engineering' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and
+                ('science_verification' in formdata.keys()) and (formdata['science_verification'].value == 'SvInclude') and
+                ('qa_state' in formdata.keys()) and (formdata['qa_state'].value == 'NotFail')):
             # This is the default form state, someone just hit submit without doing anything.
             pass
-        elif (formdata.keys() == ['orderby']):
+        elif formdata.keys() == ['orderby']:
             # All we have is an orderby - don't redirect
             pass
         else:
@@ -79,14 +81,14 @@ def searchform(req, things, orderby):
     req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/form.css">')
     req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/table.css">')
     req.write('<title>Gemini Archive Search Form</title></head><body>')
-   
+
     req.write(titlebar_html)
 
     req.write('<input type="hidden" id="things" name="things" value="%s">' % thing_string)
     req.write('<input type="hidden" id="args" name="args" value="%s">' % args_string)
     req.write('<div class="page">')
     req.write('<form class="searchform" action="/searchform" method="POST">')
-   
+
     form_html_updt = updateform(form_html, selection)
     req.write(form_html_updt)
 
@@ -96,25 +98,22 @@ def searchform(req, things, orderby):
     # req.write('<p>selection: %s</p>' % selection)
 
     # playing around with the idea of 'tabs'
-    if(selection):
-        req.write("<center><button id='results' type='button'>Results</button><button id='calibrations' type='button'>Calibrations</button></center>")
-    else:
-        pass
+    if selection:
+        req.write("<center><button id='results' type='button'>Results</button>")
+        req.write("<button id='calibrations' type='button'>Calibrations</button></center>")
 
     req.write('<div id="searchresults" class="searchresults">')
-    if(selection):
+    if selection:
         req.write('<span id="loading"><p><img src="/htmldocs/ajax-loading.gif">  Loading...</p></span>')
         summary_body(req, 'searchresults', selection, orderby)
     else:
         req.write('<P>Set at least one search criteria above to search for data. Mouse over the (text in brackets) to see more help for each item.</P>')
-    
     req.write('</div>')
+
     req.write('<div style="display:none" id="calibration_results">')
     req.write('<h3>Here is a div where we could put some calibrations</h3>')
-    if(selection):
+    if selection:
         calibrations(req, selection)
-    else:
-        pass
 
     req.write('</div>')
     req.write('</div>')
@@ -129,12 +128,12 @@ def updateform(html, selection):
     """
     for key in selection.keys():
         if key in ['program_id', 'observation_id', 'data_label']:
-            # Program id etc 
+            # Program id etc
             html = html.replace('name="program_id"', 'name="program_id" value="%s"' % selection[key])
 
         elif key in ['date', 'daterange']:
             # If there is a date and a daterange, only use the date part
-            if('date' in selection.keys() and 'daterange' in selection.keys()):
+            if 'date' in selection.keys() and 'daterange' in selection.keys():
                 key = 'date'
             html = html.replace('name="date"', 'name="date" value="%s"' % selection[key])
 
@@ -143,44 +142,44 @@ def updateform(html, selection):
             html = html.replace('name="%s"' % key, 'name=%s value="%s"' % (key, selection[key]))
 
         elif key == 'mode':
-            if (selection[key] == 'MOS'):
+            if  selection[key] == 'MOS':
                 html = html.replace('value="MOS"', 'value="MOS" selected')
-            elif (selection[key] == 'IFS'):
+            elif selection[key] == 'IFS':
                 html = html.replace('value="IFS"', 'value="IFS" selected')
-            elif (selection[key] == 'LS'):
+            elif selection[key] == 'LS':
                 html = html.replace('value="LS"', 'value="LS" selected')
 
         elif key == 'spectroscopy' and 'mode' not in selection.keys():
-           if(selection[key] is True):
-               html = html.replace('value="spectroscopy"', 'value="spectroscopy" selected')
-           else:
-               html = html.replace('value="imaging"', 'value="imaging" selected')
+            if selection[key] is True:
+                html = html.replace('value="spectroscopy"', 'value="spectroscopy" selected')
+            else:
+                html = html.replace('value="imaging"', 'value="imaging" selected')
 
         elif key == 'engineering':
-            if (selection[key] is True):
+            if selection[key] is True:
                 html = html.replace('value="EngOnly"', 'value="EngOnly" selected')
-            elif (selection[key] is False):
+            elif selection[key] is False:
                 html = html.replace('value="EngExclude"', 'value="EngExclude" selected')
             else:
                 html = html.replace('value="EngInclude"', 'value="EngInclude" selected')
 
         elif key == 'science_verification':
-            if (selection[key] is True):
+            if selection[key] is True:
                 html = html.replace('value="SvOnly"', 'value="SvOnly" selected')
-            elif (selection[key] is False):
+            elif selection[key] is False:
                 html = html.replace('value="SvExclude"', 'value="SvExclude" selected')
             else:
                 html = html.replace('value="SvInclude"', 'value="SvInclude" selected')
 
         elif key == 'focal_plane_mask':
 
-            if (('inst' in selection.keys()) and (selection['inst'].startswith('GMOS'))):
+            if 'inst' in selection.keys() and selection['inst'].startswith('GMOS'):
                 if (selection[key] in ['NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec']):
                     html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
                 else:
-                   # Custom mask name
-                   html = html.replace('class="mask" value="custom"', 'class="mask" value="custom" selected')
-                   html = html.replace('id="custom_mask"', 'id="custom_mask" value=%s' % selection[key])
+                    # Custom mask name
+                    html = html.replace('class="mask" value="custom"', 'class="mask" value="custom" selected')
+                    html = html.replace('id="custom_mask"', 'id="custom_mask" value=%s' % selection[key])
             else:
                 html = html.replace('class="mask" value="%s"' % selection[key], 'class="mask" value="%s" selected' % selection[key])
 
@@ -211,7 +210,7 @@ def updateform(html, selection):
         else:
             # This does all the generic pulldown menus
             html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
-    
+
     return html
 
 def updateselection(formdata, selection):
@@ -223,7 +222,7 @@ def updateselection(formdata, selection):
     for key in formdata.keys():
         # if we got a list, there are multiple fields with that name. This is true for filter at least
         # Pick the last one
-        if(type(formdata[key]) is list):
+        if type(formdata[key]) is list:
             value = formdata[key][-1].value
         else:
             value = formdata[key].value
@@ -240,9 +239,9 @@ def updateselection(formdata, selection):
             go = GeminiObservation(value)
             dl = GeminiDataLabel(value)
 
-            if(go.observation_id):
+            if go.observation_id:
                 selection['observation_id'] = value
-            elif(dl.datalabel):
+            elif dl.datalabel:
                 selection['data_label'] = value
             else:
                 selection['program_id'] = value
@@ -252,7 +251,7 @@ def updateselection(formdata, selection):
             selection[key] = value
         elif key in ['ra', 'dec', 'sr', 'cenwlen']:
             # Check the formatting of RA, Dec, search radius values. Keep them in same format as given though.
-            
+
             # Eliminate any whitespace
             value = value.replace(' ', '')
 
@@ -281,7 +280,7 @@ def updateselection(formdata, selection):
 
         elif key == 'focal_plane_mask':
             if value == 'custom':
-                if('custom_mask' in formdata.keys()):
+                if 'custom_mask' in formdata.keys():
                     selection[key] = formdata['custom_mask'].value
             else:
                 selection[key] = value
@@ -290,9 +289,11 @@ def updateselection(formdata, selection):
             pass
         elif key in ['gmos_speed', 'gmos_gain', 'nod_and_shuffle', 'niri_readmode', 'well_depth', 'nifs_readmode']:
             if 'detector_config' not in selection.keys():
-                 selection['detector_config']=[]
+                selection['detector_config'] = []
             selection['detector_config'].append(value)
         else:
+            # This covers the generic case where the formdata key is also
+            # the selection key, and the form value is the selection value
             selection[key] = value
 
 
@@ -301,7 +302,7 @@ def nameresolver(req, things):
     A name resolver proxy. Pass it the resolver and object name
     """
 
-    if(len(things) != 2):
+    if len(things) != 2:
         return apache.HTTP_NOT_ACCEPTABLE
 
     resolver = things[0]
