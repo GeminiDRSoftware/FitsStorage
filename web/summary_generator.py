@@ -7,6 +7,8 @@ from cgi import escape
 
 from gemini_metadata_utils import GeminiDataLabel
 
+from utils.userprogram import canhave
+
 class SummaryGenerator():
     """
     This is the web summary generator class. You instantiate this class and 
@@ -34,8 +36,13 @@ class SummaryGenerator():
     my_progids = []
     links = True
     uri = None
+
+    # These are "caches" of values used to figure out whether the user
+    # has access to the file and thus whether to display the download things
+    user = None
+    user_progid_list = None
     
-    def __init__(self, sumtype, links=True, uri=None):
+    def __init__(self, sumtype, links=True, uri=None, user=None, user_progid_list=None):
         """
         Constructor function for the SummaryGenerator Object.
         Arguments: sumtype = a string saying the summary type
@@ -48,6 +55,8 @@ class SummaryGenerator():
         self.set_type(sumtype)
         self.links = links
         self.uri = uri
+        self.user = user
+        self.user_progid_list = user_progid_list
 
     def set_type(self, sumtype):
         """
@@ -586,14 +595,19 @@ class SummaryGenerator():
         """
         Generates the download column html
         """
-        html = '<center><a href="/file/%s">[D]</a>' % header.diskfile.file.name
+        # Determine if this user has access to this file
+        can = canhave(None, self.user, header, False, self.user_progid_list)
+        if can:
+            html = '<center><a href="/file/%s">[D]</a>' % header.diskfile.file.name
 
-        if(self.sumtype in ['searchresults', 'associated_cals']):
-            html += " <input type='checkbox' name='files' value='%s'></input>" % header.diskfile.file.name
+            if(self.sumtype in ['searchresults', 'associated_cals']):
+                html += " <input type='checkbox' name='files' value='%s'></input>" % header.diskfile.file.name
 
-        html += '</center>'
+            html += '</center>'
 
-        return html
+            return html
+        else:
+            return "<center><abbr title='This appears to be proprietary data to which you do not have access'>N/A</abbr></center>"
 
 def htmlescape(string):
     """

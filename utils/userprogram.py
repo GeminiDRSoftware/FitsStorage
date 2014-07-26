@@ -17,13 +17,18 @@ def icanhave(session, req, header):
     """
 
     user=userfromcookie(session, req)
-    return canhave(session, req, user, header)
+    gotmagic = got_magic(req)
+    return canhave(session, user, header, gotmagic=gotmagic)
 
 
-def canhave(session, req, user, header):
+def canhave(session, user, header, gotmagic=False, user_progid_list=None):
     """
     Returns a boolean saying whether or not the given user can have
-    access to the given header
+    access to the given header.
+    You can optionally pass in the users program list directly. If you
+    don't, then this function will look it up, which requires the session
+    to be valid. If you pass in the user program list, you don't actually
+    need to pass a valid session - it can be None
     """
 
     # All calibration data are immediately public
@@ -41,16 +46,20 @@ def canhave(session, req, user, header):
         return True
 
     # Is the data engineering?
-    if (header.engineering is True):
+    if header.engineering is True:
         return True
 
     # Does the client have the magic cookie?
-    if (got_magic(req)):
+    if gotmagic:
         return True
 
     # If none of the above, then it's proprietary data
-    progid_list = get_program_list(session, user)
-    if(header.program_id in progid_list):
+    # If we didn't get passed in the users program list, get it
+    if(user_progid_list is None):
+        user_progid_list = get_program_list(session, user)
+
+    # Is the program in the list?
+    if header.program_id in user_progid_list:
         return True
 
     # If none of the above, then deny access

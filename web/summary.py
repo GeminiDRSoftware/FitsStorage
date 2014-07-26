@@ -13,6 +13,8 @@ from sqlalchemy import desc
 from web.summary_generator import SummaryGenerator, htmlescape
 from cal.associate_calibrations import associate_cals
 
+from web.user import userfromcookie
+from web.userprogram import get_program_list
 
 def summary(req, sumtype, selection, orderby, links=True):
     """
@@ -82,7 +84,11 @@ def summary_body(req, sumtype, selection, orderby, links=True):
         
         # Did we get any results?
         if(len(headers) > 0):
-            summary_table(req, sumtype, headers, selection, links)
+            # We have a session at this point, so get the user and their program list to 
+            # pass down the chain to use figure out whether to display download links
+            user = userfromcookie(session, req)
+            user_progid_list = get_program_list(session, user)
+            summary_table(req, sumtype, headers, selection, links, user, user_progid_list)
         else:
             # No results
             # Pass selection to this so it can do some helpful analysis of why you got no results
@@ -121,7 +127,7 @@ def no_results(req, selection):
                 req.write("<P>Hint: %s is purely an imager - it does not do spectroscopy.</P>" % selection['inst'])
 
 
-def summary_table(req, sumtype, headers, selection, links=True):
+def summary_table(req, sumtype, headers, selection, links=True, user=None, user_progid_list=None):
     """
     Generates an HTML header summary table of the specified type from
     the list of header objects provided. Writes that table to an apache
@@ -139,7 +145,8 @@ def summary_table(req, sumtype, headers, selection, links=True):
     uri = req.uri
     if(isajax(req) and sumtype == 'searchresults'):
         uri = uri.replace("searchresults", "searchform")
-    sumgen = SummaryGenerator(sumtype, links, uri)
+
+    sumgen = SummaryGenerator(sumtype, links, uri, user, user_progid_list)
 
     if(openquery(selection) and len(headers) == fits_open_result_limit):
         req.write('<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date, date range, program ID etc. Searches like this are limited to %d results, and this search hit that limit. You may want to constrain your search. Constrained searches have a higher result limit.</P>' % fits_open_result_limit) 
