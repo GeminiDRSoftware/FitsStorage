@@ -232,6 +232,10 @@ class Header(Base):
 
             # Set the reduction state
             self.reduction = 'RAW'
+
+            # Note - these are in order - a processed_flat will have
+            # both PREPARED and PROCESSED_FLAT in it's types.
+            # Here, ensure "highest" value wins.
             if('PREPARED' in ad.types):
                 self.reduction = 'PREPARED'
             if('PROCESSED_FLAT' in ad.types):
