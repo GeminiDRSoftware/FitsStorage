@@ -49,7 +49,7 @@ input {
     font-style: italic;
 }
 
-p.helpleft {
+.helpleft {
     display: none;
     font-size: 1.2em;
     width: 20em;
@@ -60,7 +60,7 @@ p.helpleft {
     left: auto;
 }
 
-p.helpright {
+.helpright {
     display: none;
     font-size: 1.2em;
     width: 20em;
@@ -71,6 +71,6 @@ p.helpright {
     left: 500px;
 }
 
-.help:hover p {
+.help:hover span {
     display: inline-block;
 }
