@@ -5,7 +5,7 @@ from orm import sessionfactory
 from orm.file import File
 from orm.diskfile import DiskFile
 from orm.header import Header
-from fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
+from fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit, use_as_archive
 from web.selection import sayselection, queryselection, openquery, selection_to_URL
 import apache_return_codes as apache
 from sqlalchemy import desc
@@ -229,14 +229,16 @@ def list_headers(session, selection, orderby):
                     query = query.order_by('Header.%s' % orderby[i])
 
 
-    # If this is an open query, we should reverse sort by filename
-    # and limit the number of responses
+    # By default we should order by filename, except for the archive, we should order by reverse date
+    if use_as_archive:
+        query.order_by(desc(Header.ut_datetime))
+    else:
+        query = query.order_by(File.name)
+
+    # If this is an open query, we should limit the number of responses
     if(openquery(selection)):
-        query = query.order_by(desc(File.name))
         query = query.limit(fits_open_result_limit)
     else:
-        # By default we should order by filename
-        query = query.order_by(File.name)
         query = query.limit(fits_closed_result_limit)
 
     headers = query.all()
