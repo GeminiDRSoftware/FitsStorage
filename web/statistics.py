@@ -23,7 +23,6 @@ def stats(req):
 
     req.content_type = "text/html"
     req.write('<!DOCTYPE html><html><head>')
-    req.write("<html><head>")
     req.write('<meta charset="UTF-8">')
     req.write("<title>FITS Storage database statistics</title></head>")
     req.write("<body>")
@@ -192,7 +191,7 @@ def content(req):
         req.write("<p>Total FITS data size: %s GB</p>" % '{:,.02f}'.format(datasize/1073741824.0))
 
     req.write("<h3>Data and file volume by telescope/instrument</h3>")
-    req.write("<TABLE border=0>")
+    req.write("<TABLE>")
     req.write("<TR class=tr_head>")
     even = 0
     
@@ -303,12 +302,11 @@ def content(req):
 
             req.write("<TD>%s</TD>" % ("{:,}".format(typenum)))
     
-    req.write("</table></p>") 
+    req.write("</table>") 
    
     # Database annual statistics
     req.write("<h3>Data and file volume by telescope/year</h3>")
-    req.write("<p>")
-    req.write("<TABLE border=0>")
+    req.write("<table>")
     req.write("<TR class=tr_head>")
     
     # datetime variables and queries declared here
@@ -373,7 +371,6 @@ def content(req):
             req.write("</TR>")
     
     req.write("</table>")
-    req.write("</p>")
     req.write("</body>")
     req.write("</html>")
 
