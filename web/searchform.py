@@ -94,7 +94,7 @@ def searchform(req, things, orderby):
     req.write(form_html_updt)
 
     req.write('</form>')
-    req.write('<hr noshade>')
+    req.write('<hr>')
     # Uncomment this for form processing selection debugging...
     # req.write('<p>selection: %s</p>' % selection)
 

@@ -74,3 +74,14 @@ input {
 .help:hover span {
     display: inline-block;
 }
+
+hr {
+    height: 2px;
+    border-width: 0;
+    color: grey;
+    background-color: grey;
+}
+
+.center {
+    text-align: center;
+}
