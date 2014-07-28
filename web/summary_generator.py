@@ -449,7 +449,7 @@ class SummaryGenerator():
         Generates the UT datetime column html
         """
         # format withou decimal places on the seconds
-        if(self.links):
+        if(self.links and header.ut_datetime is not None):
             if(header.ut_datetime):
                 date_print = header.ut_datetime.strftime("%Y-%m-%d")
                 time_print = header.ut_datetime.strftime("%H:%M:%S")
@@ -492,7 +492,7 @@ class SummaryGenerator():
         Generates the observation_class column html
         """
         # Can make it a link
-        if(self.links):
+        if(self.links and header.observation_class is not None):
             return '<a href="%s/%s">%s</a>' % (self.uri, header.observation_class, header.observation_class)
         else:
             return header.observation_class
@@ -502,7 +502,7 @@ class SummaryGenerator():
         Generates the observation_type column html
         """
         # Can make it a link
-        if(self.links):
+        if(self.links and header.observation_type is not None):
             return '<a href="%s/%s">%s</a>' % (self.uri, header.observation_type, header.observation_type)
         else:
             return header.observation_type
