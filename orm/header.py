@@ -218,8 +218,14 @@ class Header(Base):
                 self.spectroscopy = False
                 self.mode = 'imaging'
 
-            # Set the derived QA state and release date
-            self.qa_state = ad.qa_state().for_db()
+            # Set the derived QA state
+            # MDF (Mask) files don't have QA state - set to Pass so they show up as expected in search results
+            if self.observation_type == 'MASK':
+                self.qa_state = 'Pass'
+            else:
+                self.qa_state = ad.qa_state().for_db()
+
+            # Set the release date
             try:
                 reldatestring = ad.phu_get_key_value('RELEASE')
                 if(reldatestring):
