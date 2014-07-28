@@ -72,7 +72,8 @@ def searchform(req, things, orderby):
             util.redirect(req, '/searchform' + urlstring + args_string)
 
     req.content_type = "text/html"
-    req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head>')
+    req.write('<!DOCTYPE html><html><head>')
+    req.write('<meta charset="UTF-8">')
     req.write('<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>')
     req.write('<script src="/htmldocs/titlebar.js"></script>')
     req.write('<script src="/htmldocs/form.js"></script>')
