@@ -225,7 +225,7 @@ def gemini_observation_type(string):
     Otherwise return an empty string
     We add the unofficial values PINHOLE for GNIRS pinhole mask observations and RONCHI for NIFS Ronchi mask observations here too
     """
-    list = ['DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI', 'CAL', 'FRINGE']
+    list = ['DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI', 'CAL', 'FRINGE', 'MASK']
     retary = ''
     if(string in list):
         retary = string
