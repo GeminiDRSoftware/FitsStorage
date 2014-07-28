@@ -22,8 +22,10 @@ def stats(req):
     """
 
     req.content_type = "text/html"
-    req.write("<html>")
-    req.write("<head><title>FITS Storage database statistics</title></head>")
+    req.write('<!DOCTYPE html><html><head>')
+    req.write("<html><head>")
+    req.write('<meta charset="UTF-8">')
+    req.write("<title>FITS Storage database statistics</title></head>")
     req.write("<body>")
     req.write("<h1>FITS Storage database statistics</h1>")
 
@@ -163,8 +165,9 @@ def content(req):
     session = sessionfactory()
 
     req.content_type = "text/html"
-    req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html>')
-    req.write("<head><title>Database content statistics</title>")
+    req.write('<!DOCTYPE html><html><head>')
+    req.write('<meta charset="UTF-8">')
+    req.write("<title>Database content statistics</title>")
     req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
     req.write("</head><body>\n")
         
