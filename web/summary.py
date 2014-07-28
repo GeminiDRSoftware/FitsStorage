@@ -158,7 +158,7 @@ def summary_table(req, sumtype, headers, selection, links=True, user=None, user_
         req.write('<p>Click the [D] to download that one file, use the check boxes to select a subset of the results to download, or if available a download all link is at <a href="#tableend"> the end of the table</a>. Click the filename to see the full header in a new tab. Click anything else to add that to your search criteria.</p>')
         req.write("<FORM action='/download' method='POST'>")
 
-    req.write('<TABLE class="fullwidth" border=0>')
+    req.write('<TABLE class="fullwidth">')
 
     # Output the table header
     sumgen.table_header(req)
@@ -180,10 +180,10 @@ def summary_table(req, sumtype, headers, selection, links=True, user=None, user_
     req.write("</TABLE>\n")
  
     if(sumtype in ['searchresults', 'associated_cals']):
-        req.write("<INPUT type='submit' value='Download Marked Files'></INPUT>")
+        req.write("<INPUT type='submit' value='Download Marked Files'>")
         req.write("</FORM>")
 
-    req.write('<a name="tableend">')
+    req.write('<a name="tableend"></a>')
     if(openquery(selection) and len(headers) == fits_open_result_limit):
         req.write('<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date, date range, program ID etc. Searches like this are limited to %d results, and this search hit that limit. You may want to constrain your search. Constrained searches have a higher result limit.</P>' % fits_open_result_limit) 
     elif(len(headers) == fits_closed_result_limit):

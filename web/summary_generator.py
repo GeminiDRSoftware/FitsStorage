@@ -598,16 +598,16 @@ class SummaryGenerator():
         # Determine if this user has access to this file
         can = canhave(None, self.user, header, False, self.user_progid_list)
         if can:
-            html = '<center><a href="/file/%s">[D]</a>' % header.diskfile.file.name
+            html = '<span class="center"><a href="/file/%s">[D]</a>' % header.diskfile.file.name
 
             if(self.sumtype in ['searchresults', 'associated_cals']):
-                html += " <input type='checkbox' name='files' value='%s'></input>" % header.diskfile.file.name
+                html += " <input type='checkbox' name='files' value='%s'>" % header.diskfile.file.name
 
-            html += '</center>'
+            html += '</span>'
 
             return html
         else:
-            return "<center><abbr title='This appears to be proprietary data to which you do not have access'>N/A</abbr></center>"
+            return '<span class="center"><abbr title="This appears to be proprietary data to which you do not have access">N/A</abbr></span>'
 
 def htmlescape(string):
     """
