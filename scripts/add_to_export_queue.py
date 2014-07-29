@@ -2,7 +2,7 @@ from orm import sessionfactory
 from fits_storage_config import storage_root, using_s3
 from logger import logger, setdebug, setdemon
 from utils.exportqueue import add_to_exportqueue
-from web.summary import list_headers
+from web.list_headers import list_headers
 from web.selection import getselection
 import os
 import sys
