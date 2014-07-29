@@ -60,6 +60,12 @@ class CalibrationGMOS(Calibration):
         self.required = []
 
         if self.descriptors:
+
+            # MASK files do not require anything,
+            if self.descriptors['observation_type'] == 'MASK':
+                return
+
+            # Do BIAS
             require_bias = True
             # BIASes do not require a bias.
             if self.descriptors['observation_type'] == 'BIAS':
