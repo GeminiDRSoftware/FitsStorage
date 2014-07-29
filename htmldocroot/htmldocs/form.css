@@ -86,17 +86,6 @@ hr {
     text-align: center;
 }
 
-/*
-.frames div {
-    display:none;
-    padding:15px 10px;
-    border-top:0;
-    height:100px;
-    font-size:14px;
-    background-color:#fff;
-}
-*/
-
 ul.tabs {
     list-style:none;
     margin:0;
@@ -114,7 +103,7 @@ ul.tabs li {
 }
 
 ul.tabs a {
-    background-color: #b0c4de no-repeat -420px 0;
+    background-color: #fff;
     font-size:11px;
     display:block;
     height: 30px;
@@ -125,6 +114,8 @@ ul.tabs a {
     color:#333;
     padding:0px;
     margin:0px;
+    border-style: ridge;
+    border-color: #ddd;
     position:relative;
     top:1px;
 }
@@ -135,7 +126,7 @@ ul.tabs a:active {
 
 ul.tabs a:hover {
     background-position: -420px -31px;
-    color:#fff;
+    color:#A3A3A3;
 }
 
 ul.tabs a.current, ul.tabs a.current:hover, ul.tabs li.current a {
@@ -144,16 +135,3 @@ ul.tabs a.current, ul.tabs a.current:hover, ul.tabs li.current a {
     color:#000;
 }
 
-/*
-ul.tabs a.s { background-position: -553px 0; width:81px; }
-ul.tabs a.s:hover { background-position: -553px -31px; }
-ul.tabs a.s.current  { background-position: -553px -62px; }
-
-ul.tabs a.l { background-position: -248px -0px; width:174px; }
-ul.tabs a.l:hover { background-position: -248px -31px; }
-ul.tabs a.l.current { background-position: -248px -62px; }
-
-ul.tabs a.xl { background-position: 0 -0px; width:248px; }
-ul.tabs a.xl:hover { background-position: 0 -31px; }
-ul.tabs a.xl.current { background-position: 0 -62px; }
-*/
