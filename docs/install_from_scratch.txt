@@ -53,7 +53,7 @@ chmod ug+s invoke
 sudo mkdir /opt/Ureka
 sudo chown phirst /opt/Ureka
 cd /opt/Ureka
-cp /opt/FitsStorate/otherfiles/install_ureka_1.4.1 .
+cp /opt/FitsStorage/otherfiles/install_ureka_1.4.1 .
 sh install_ureka_1.4.1
 #Remove broken ureka pkg-config
 mv /opt/Ureka/Ureka/python/bin/pkg-config /opt/Ureka/Ureka/python/bin/pkg-config-broken
