@@ -607,7 +607,7 @@ class SummaryGenerator():
 
             return html
         else:
-            return '<span class="center"><abbr title="This appears to be proprietary data to which you do not have access">N/A</abbr></span>'
+            return '<div class="center"><abbr title="This appears to be proprietary data to which you do not have access">N/A</abbr></div>'
 
 def htmlescape(string):
     """
