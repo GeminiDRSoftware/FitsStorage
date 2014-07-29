@@ -120,16 +120,15 @@ function gmosCustomMaskEnable() {
 
 function loadCals() {
     var urlstring = document.getElementById("things").value;
-    var calurl = 'associated_cals' + urlstring;
+    var calurl = '/associated_cals' + urlstring;
     alert(calurl);
     
-    /*$('#calibration_results').load(calurl);*/
-    $.ajax({
-        type: 'GET',
-        data: data,
-        url: calurl,
-        success: success;
+    $('#calibration_results').load(calurl, function(){
     });
+    /*$.ajax({
+        type: 'GET',
+        url: calurl,
+    });*/
     alert('ajax done');
     document.getElementById("caltab").innerHTML='View Calibrations';
 }
