@@ -598,12 +598,12 @@ class SummaryGenerator():
         # Determine if this user has access to this file
         can = canhave(None, self.user, header, False, self.user_progid_list)
         if can:
-            html = '<span class="center"><a href="/file/%s">[D]</a>' % header.diskfile.file.name
+            html = '<div class="center"><a href="/file/%s">[D]</a>' % header.diskfile.file.name
 
             if(self.sumtype in ['searchresults', 'associated_cals']):
                 html += " <input type='checkbox' name='files' value='%s'>" % header.diskfile.file.name
 
-            html += '</span>'
+            html += '</div>'
 
             return html
         else:
