@@ -118,6 +118,22 @@ function gmosCustomMaskEnable() {
     }
 };
 
+function loadCals() {
+    var urlstring = document.getElementById("things").value;
+    var calurl = 'associated_cals' + urlstring;
+    alert(calurl);
+    
+    /*$('#calibration_results').load(calurl);*/
+    $.ajax({
+        type: 'GET',
+        data: data,
+        url: calurl,
+        success: success;
+    });
+    alert('ajax done');
+    document.getElementById("caltab").innerHTML='View Calibrations';
+}
+
 // The Name Resolver
 function nameresolver() {
     var object_name = document.getElementById("object_name").value;
@@ -163,7 +179,9 @@ function nameresolver() {
 
 $(document).ready(function() {
     $("#loading").hide();
+    $("#loading_cals").hide();
     $('#calibration_results').hide();
+    $("ul.tabs").tabs("div.frames > div");
     setAdvancedVisibility();
     setInstVisibility();
     gmosCustomMaskEnable();
@@ -183,13 +201,8 @@ $(document).ready(function() {
     $('#resbutton').click(function() {
         nameresolver();
     });
-    $('#results').click(function() {
-        $('#calibration_results').hide();
-        $('#searchresults').show();
-    });
-    $('#calibrations').click(function() {
-        $('#searchresults').hide();
-        $('#calibration_results').show();
+    $('#caltab').click(function() {
+        loadCals();
     });
 });
 
