@@ -75,13 +75,6 @@ input {
     display: inline-block;
 }
 
-hr {
-    height: 2px;
-    border-width: 0;
-    color: grey;
-    background-color: grey;
-}
-
 .center {
     text-align: center;
 }
@@ -90,8 +83,8 @@ ul.tabs {
     list-style:none;
     margin:0;
     padding:0;
-    border-bottom:1px solid #666;
-    height:30px;
+    border-bottom:1px solid #000;
+    height:32px;
 }
 
 ul.tabs li {
@@ -103,8 +96,8 @@ ul.tabs li {
 }
 
 ul.tabs a {
-    background-color: #fff;
-    font-size:11px;
+    background-color: #ddd;
+    font-size:16px;
     display:block;
     height: 30px;
     line-height:30px;
@@ -114,24 +107,25 @@ ul.tabs a {
     color:#333;
     padding:0px;
     margin:0px;
-    border-style: ridge;
-    border-color: #ddd;
+    border: 1px solid #000;
     position:relative;
     top:1px;
 }
 
 ul.tabs a:active {
     outline:none;
+    background-color: #fff;
 }
 
 ul.tabs a:hover {
-    background-position: -420px -31px;
-    color:#A3A3A3;
+    background-color: #448;
+    color: #eee;
 }
 
 ul.tabs a.current, ul.tabs a.current:hover, ul.tabs li.current a {
-    background-position: -420px -62px;
     cursor:default;
+    background-color: #fff;
     color:#000;
+    border-bottom: 3px solid #fff;
 }
 

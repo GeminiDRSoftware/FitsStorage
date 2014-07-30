@@ -95,7 +95,6 @@ def searchform(req, things, orderby):
     req.write(form_html_updt)
 
     req.write('</form>')
-    req.write('<hr>')
     # Uncomment this for form processing selection debugging...
     # req.write('<p>selection: %s</p>' % selection)
 
@@ -107,7 +106,7 @@ def searchform(req, things, orderby):
         req.write('<span id="loading"><img src="/htmldocs/ajax-loading.gif" alt="">  Loading...<br /></span>')
         summary_body(req, 'searchresults', selection, orderby)
         req.write('</div><div id="calibration_results" class="calresults">')
-        req.write('<span id="loading_cals"><p><img src="/htmldocs/ajax-loading.gif">  Loading...</p></span>')
+        req.write('<span id="loading_cals"><br /><img src="/htmldocs/ajax-loading.gif" alt="">  Loading... This can take several seconds depending on the size of your calibration association search.</span>')
         req.write('</div></div>')
     #req.write('<div id="searchresults" class="searchresults">')
     #if selection:
@@ -115,8 +114,6 @@ def searchform(req, things, orderby):
     #    summary_body(req, 'searchresults', selection, orderby)
     else:
         req.write('<P>Set at least one search criteria above to search for data. Mouse over the (text in brackets) to see more help for each item.</P>')
-    req.write('</div>')
-    #req.write('</div>')
     req.write('</div>')
     req.write('</body></html>')
 
