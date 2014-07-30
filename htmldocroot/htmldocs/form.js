@@ -119,13 +119,17 @@ function gmosCustomMaskEnable() {
 };
 
 function loadCals() {
+    var allow = document.getElementById("allow_cals").value;
     var urlstring = document.getElementById("things").value;
     var calurl = '/associated_cals' + urlstring;
-    $("#loading_cals").show();
-    
-    $('#calibration_results').load(calurl, function(){
-        $("#loading_cals").hide();
-    });
+    if (allow == "yes") {
+        $("#loading_cals").show();
+        $('#calibration_results').load(calurl, function(){
+            $("#loading_cals").hide();
+        });
+    } else {
+        $("not_loading_cals").show();
+    }
     document.getElementById("caltab").innerHTML='View Calibrations';
 }
 

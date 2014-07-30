@@ -54,7 +54,7 @@ def summary_body(req, sumtype, selection, orderby, links=True):
     if 'notrecognised' in selection.keys():
         req.write("<H4>WARNING: I didn't recognize the following search terms: %s</H4>" % selection['notrecognised'])
 
-    if sumtype != 'searchresults':
+    if sumtype not in ['searchresults', 'associated_cals']:
         if fits_system_status == "development":
             req.write('<h4>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h4>')
     # If this is a diskfiles summary, select even ones that are not canonical
@@ -145,10 +145,15 @@ def summary_table(req, sumtype, headers, selection, links=True, user=None, user_
 
     sumgen = SummaryGenerator(sumtype, links, uri, user, user_progid_list)
 
+    # If the query was open or truncated, print a message saying so, and dissalow calibration association
     if openquery(selection) and len(headers) == fits_open_result_limit:
-        req.write('<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date, date range, program ID etc. Searches like this are limited to %d results, and this search hit that limit. You may want to constrain your search. Constrained searches have a higher result limit.</P>' % fits_open_result_limit)
+        req.write('<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date, date range, program ID etc. Searches like this are limited to %d results, and this search hit that limit. Calibration association will not be available. You may want to constrain your search. Constrained searches have a higher result limit.</P>' % fits_open_result_limit)
+        req.write('<input type="hidden" id="allow_cals" value="no">')
     elif len(headers) == fits_closed_result_limit:
-        req.write('<P>WARNING: Your search generated more than the limit of %d results. You might want to constrain your search more.</P>' % fits_closed_result_limit)
+        req.write('<P>WARNING: Your search generated more than the limit of %d results. Not all results have been shown, and calibration association will not be available. You might want to constrain your search more.</P>' % fits_closed_result_limit)
+        req.write('<input type="hidden" id="allow_cals" value="no">')
+    else:
+        req.write('<input type="hidden" id="allow_cals" value="yes">')
 
     if sumtype in ['searchresults', 'associated_cals']:
         # And tell them about clicking things

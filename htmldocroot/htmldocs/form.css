@@ -44,6 +44,10 @@ input {
     margin: 10px;
 }
 
+#not_loading_cals {
+    display: none;
+}
+
 .help {
     font-size: 0.85em;
     font-style: italic;
