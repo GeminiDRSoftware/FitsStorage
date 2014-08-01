@@ -4,7 +4,7 @@ Functions in this module are only used within FitsStorageWebSummary.
 """
 from sqlalchemy import or_, and_
 
-from gemini_metadata_utils import gemini_telescope, gemini_instrument, gemini_date, gemini_daterange, gemini_observation_type, gemini_observation_class, gemini_reduction_state, gemini_caltype, gmos_gratingname, gmos_focal_plane_mask, gemini_fitsfilename, gemini_binning, GeminiDataLabel, GeminiObservation, GeminiProject, ratodeg, dectodeg, srtodeg
+from gemini_metadata_utils import gemini_telescope, gemini_instrument, gemini_date, gemini_daterange, gemini_observation_type, gemini_observation_class, gemini_reduction_state, gemini_caltype, gmos_gratingname, gmos_focal_plane_mask, gemini_fitsfilename, gemini_binning, GeminiDataLabel, GeminiObservation, GeminiProgram, ratodeg, dectodeg, srtodeg
 
 import dateutil.parser
 import datetime
@@ -37,8 +37,8 @@ def getselection(things):
         if(gemini_daterange(thing)):
             selection['daterange'] = gemini_daterange(thing)
             recognised = True
-        gp = GeminiProject(thing)
-        if(gp.program_id):
+        gp = GeminiProgram(thing)
+        if(gp.valid):
             selection['program_id'] = thing
             recognised = True
         if(thing[:7] == 'progid='):
@@ -741,8 +741,8 @@ def selection_to_URL(selection):
     for key in selection.keys():
         if key == 'program_id':
             # See if it is a valid program id, or if we need to add progid=
-            gp = GeminiProject(selection[key])
-            if(gp.program_id):
+            gp = GeminiProgram(selection[key])
+            if gp.valid:
                 # Regular program id, just stuff it in
                 urlstring += '/%s' % selection[key]
             else:

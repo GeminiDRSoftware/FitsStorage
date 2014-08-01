@@ -388,7 +388,7 @@ class GeminiDataLabel:
     * observation_id: The Observation ID
     * obsnum: The Observation Number within the project
     * dlnum: The Dataset Number within the observation
-    * project: A GeminiProject object for the project this is part of
+    * project: A GeminiProgram object for the project this is part of
     """
     datalabel = ''
     projectid = ''
@@ -412,14 +412,11 @@ class GeminiDataLabel:
             self.projectid = dlm.group(1)
             self.obsnum = dlm.group(2)
             self.dlnum = dlm.group(3)
-            self.project = GeminiProject(self.projectid)
+            self.project = GeminiProgram(self.projectid)
             self.observation_id = '%s-%s' % (self.projectid, self.obsnum)
         else:
             # Match failed - Null the datalabel field
             self.datalabel = ''
-
-# This matches an observation id
-obscre = re.compile(obsre)
 
 class GeminiObservation:
     """
@@ -431,19 +428,19 @@ class GeminiObservation:
     * observation_id: The observation ID provided. If the class cannot
                      make sense of the string passed in, this field will
                      be empty
-    * project: A GeminiProject object for the project this is part of
+    * project: A GeminiProgram object for the project this is part of
     * obsnum: The observation numer within the project
     """
     observation_id = ''
-    project = ''
+    program = ''
     obsnum = ''
 
     def __init__(self, observation_id):
         if(observation_id):
-            match = obscre.match(observation_id)
+            match = re.match(obsre, observation_id)
             if(match):
                 self.observation_id = observation_id
-                self.project = GeminiProject(match.group(1))
+                self.program = GeminiProgram(match.group(1))
                 self.obsnum = match.group(2)
             else:
                 self.observation_id = ''
@@ -452,42 +449,56 @@ class GeminiObservation:
         else:
             self.observation_id = ''
 
-# This matches a program id
-progcre = re.compile(progre)
 
-# this matches a cal or eng projectid with CAL or ENG and the date as matched groups
-cecre = re.compile('G[NS]-((?:CAL)|(?:ENG))(20\d\d[01]\d[0123]\d)')
-
-class GeminiProject:
+class GeminiProgram:
     """
-    The GeminiProject class parses a Gemini Project ID and provides
+    The GeminiProgram class parses a Gemini Program ID and provides
     various useful information deduced from it.
 
-    Simply instantiate the class with a project ID string, then
-    referernce the following data members:
+    Simply instantiate the class with a program ID string, then
+    reference the following data members:
 
-    * program_id: The program ID passed in. If the class could not 
-                        make sense of the string, this will be empty.
-    * iscal: a Boolean that is true if this is a CAL project
-    * iseng: a Boolean that is true if this is an ENG project
+    * program_id: The program ID passed in.
+    * valid: a Boolean saying whether the program_id is a valid standard format
+    * is_cal: a Boolean that is true if this is a CAL program
+    * is_eng: a Boolean that is true if this is an ENG program
+    * is_q: a Boolean that is true if this is a Queue program
+    * is_c: a Boolean that is true if this is a Classical program
+    * is_sv: a Boolean that is true if this is an SV (Science Verification) program
+    * is_ft: a Boolean that is true if this is an FT (Fast Turnaround) program
+
+    This could be easily expanded to extract semester, hemisphere, program number etc
+    if required.
     """
-    program_id = ''
-    iscal = ''
-    iseng = ''
+    program_id = None
+    valid = None
+    is_cal = False
+    is_eng = False
+    is_q = False
+    is_c = False
+    is_sv = False
+    
 
     def __init__(self, program_id):
-        if(progcre.match(program_id)):
-            self.program_id = program_id
-            self.parse()
+        self.program_id = program_id
+
+        # Check for the CAL / ENG form
+        ec_match = re.match("^(G[NS])-((?:CAL)|(?:ENG))-(20[012]\d[01]\d[0123]\d)$", program_id)
+        sci_match = re.match("^(G[NS])-(20[012]\d[AB])-([A-Z]+)-(\d+)$", program_id)
+        if ec_match:
+            # Valid eng / cal form
+            self.valid = True
+            self.is_eng = ec_match.group(2) == 'ENG'
+            self.is_cal = ec_match.group(2) == 'CAL'
+        elif sci_match:
+            # Valid science form
+            self.valid = True
+            self.is_q = sci_match.group(3) == 'Q'
+            self.is_c = sci_match.group(3) == 'C'
+            self.is_sv = sci_match.group(3) == 'SV'
+            self.is_ft = sci_match.group(3) == 'FT'
         else:
-            self.program_id = ''
-            iscal = False
-            iseng = False
-
-    def parse(self):
-        cem=cecre.match(self.program_id)
-        if(cem):
-            caleng = cem.group(1)
-            self.iseng = (caleng == 'ENG')
-            self.iscal = (caleng == 'CAL')
-
+            # Not a valid format. Probably some kind of engineering test program
+            # that someone just made up.
+            self.valid = False
+            self.is_eng = True

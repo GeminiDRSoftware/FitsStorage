@@ -10,6 +10,8 @@ from orm.diskfile import DiskFile
 from astrodata import AstroData
 import pywcs
 
+from gemini_metadata_utils import GeminiProgram
+
 class Header(Base):
     """
     This is the ORM class for the Header table
@@ -93,21 +95,25 @@ class Header(Base):
             local_ad = True
     
         try:
-            # Basic data identification part
+            # Basic data identification section
+            # Parse Program ID
             self.program_id = ad.program_id().for_db()
             if(self.program_id is not None):
                 # Ensure upper case
                 self.program_id = self.program_id.upper()
                 # Set eng and sv booleans
-                self.engineering = ('ENG' in self.program_id)
-                self.science_verification = ('SV' in self.program_id)
+                gemprog = GeminiProgram(self.program_id)
+                self.engineering = gemprog.is_eng or not gemprog.valid
+                self.science_verification = gemprog.is_sv
             else:
                 # program ID is None - mark as engineering
                 self.engineering = True
+
             self.observation_id = ad.observation_id().for_db()
             if(self.observation_id is not None):
                 # Ensure upper case
                 self.observation_id = self.observation_id.upper()
+
             self.data_label = ad.data_label().for_db()
             if(self.data_label is not None):
                 # Ensure upper case
