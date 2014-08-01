@@ -49,10 +49,10 @@ def add_to_ingestqueue(session, filename, path, force_md5=False, force=False, af
     session.add(iq)
     session.commit()
     try:
-        logger.debug("Added id %d for filename %s to ingestqueue" % (iq.id, iq.filename))
+        logger.debug("Added id %d for filename %s to ingestqueue", iq.id, iq.filename)
         return iq.id
     except ObjectDeletedError:
-        logger.debug("Added filename %s to ingestqueue which was immediately deleted" % filename)
+        logger.debug("Added filename %s to ingestqueue which was immediately deleted", filename)
 
 
 def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
@@ -80,7 +80,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
     skip_wmd: causes the ingest to skip running wmd on the file.
     """
 
-    logger.debug("ingest_file %s" % filename)
+    logger.debug("ingest_file %s", filename)
 
     # If we're using S3, get the connection and the bucket
     if using_s3:
@@ -104,24 +104,24 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
             return
 
     # Make a file instance
-    file = File(filename)
+    fileobj = File(filename)
 
     # Check if there is already a file table entry for this.
     # filename may have been trimmed by the file object
-    query = session.query(File).filter(File.name == file.name)
+    query = session.query(File).filter(File.name == fileobj.name)
     if query.first():
-        logger.debug("Already in file table as %s" % file.name)
+        logger.debug("Already in file table as %s", fileobj.name)
         # This will throw an error if there is more than one entry
-        file = query.one()
+        fileobj = query.one()
     else:
         logger.debug("Adding new file table entry")
-        session.add(file)
+        session.add(fileobj)
         session.commit()
 
-    # At this point, 'file' should by a valid DB object.
+    # At this point, 'fileobj' should by a valid DB object.
 
     # See if a diskfile for this file already exists and is present
-    query = session.query(DiskFile).filter(DiskFile.file_id == file.id).filter(DiskFile.present == True)
+    query = session.query(DiskFile).filter(DiskFile.file_id == fileobj.id).filter(DiskFile.present == True)
     if query.first():
         # Yes, it's already there.
         logger.debug("already present in diskfile table...")
@@ -169,28 +169,31 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         add_diskfile = 1
 
         # Check to see if there is are older non-present but canonical versions to mark non-canonical
-        query = session.query(DiskFile).filter(DiskFile.file_id == file.id).filter(DiskFile.present == False).filter(DiskFile.canonical == True)
-        list = query.all()
-        for df in list:
-            logger.debug("Marking old diskfile id %d as no longer canonical" % df.id)
-            df.canonical = False
+        query = session.query(DiskFile).filter(DiskFile.canonical == True)
+        query = query.filter(DiskFile.file_id == fileobj.id).filter(DiskFile.present == False)
+
+        olddiskfiles = query.all()
+        for olddiskfile in olddiskfiles:
+            logger.debug("Marking old diskfile id %d as no longer canonical", olddiskfile.id)
+            olddiskfile.canonical = False
         session.commit()
 
     if add_diskfile:
         logger.debug("Adding new DiskFile entry")
         if using_s3:
             # At this point, we fetch a local copy of the file to the staging area
-            ok = fetch_to_staging(bucket, path, filename, key, fullpath)
-            if not ok:
+            fetched = fetch_to_staging(bucket, path, filename, key, fullpath)
+            if not fetched:
                 # Failed to fetch the file from S3. Can't do this
                 return
 
         # Instantiating the DiskFile object with a gzipped filename will trigger creation of the unzipped cache file too.
-        diskfile = DiskFile(file, filename, path)
+        diskfile = DiskFile(fileobj, filename, path)
         session.add(diskfile)
         session.commit()
         if diskfile.uncompressed_cache_file:
-            logger.debug("diskfile uncompressed cache file = %s, access=%s" % (diskfile.uncompressed_cache_file, os.access(diskfile.uncompressed_cache_file, os.F_OK)))
+            logger.debug("diskfile uncompressed cache file = %s, access=%s", diskfile.uncompressed_cache_file,
+                            os.access(diskfile.uncompressed_cache_file, os.F_OK))
 
 
         # Instantiate an astrodata object here and pass it in to the things that need it
@@ -200,11 +203,11 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         else:
             fullpath_for_ad = diskfile.fullpath()
 
-        logger.debug("Instantiating AstroData object on %s" % fullpath_for_ad)
+        logger.debug("Instantiating AstroData object on %s", fullpath_for_ad)
         try:
             diskfile.ad_object = AstroData(fullpath_for_ad, mode='readonly')
         except:
-            logger.error("Failed to open astrodata object on file: %s. Giving up" % fullpath_for_ad)
+            logger.error("Failed to open astrodata object on file: %s. Giving up", fullpath_for_ad)
             return
 
         # This will use the DiskFile unzipped cache file if it exists
@@ -219,17 +222,17 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         header = Header(diskfile)
         session.add(header)
         inst = header.instrument
-        logger.debug("Instrument is: %s" % inst)
+        logger.debug("Instrument is: %s", inst)
         session.commit()
         logger.debug("Adding new Footprint entries")
         try:
             fps = header.footprints(diskfile.ad_object)
             for i in fps.keys():
-                fp = Footprint(header)
-                fp.populate(i)
-                session.add(fp)
+                foot = Footprint(header)
+                foot.populate(i)
+                session.add(foot)
                 session.commit()
-                add_footprint(session, fp.id, fps[i])
+                add_footprint(session, foot.id, fps[i])
         except:
             pass
 
@@ -267,8 +270,8 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
             session.commit()
         if inst == 'F2':
             logger.debug("Assing new F2 entry")
-            f2 = F2(header, diskfile.ad_object)
-            session.add(f2)
+            flam2 = F2(header, diskfile.ad_object)
+            session.add(flam2)
             session.commit()
         if inst == 'michelle':
             logger.debug("Adding new MICHELLE entry")
@@ -281,15 +284,16 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
             diskfile.ad_object.close()
 
         if using_s3:
-            logger.debug("deleting %s from s3_staging_area" % filename)
+            logger.debug("deleting %s from s3_staging_area", filename)
             os.unlink(fullpath)
         if diskfile.uncompressed_cache_file:
-            logger.debug("deleting %s from gz_staging_area" % diskfile.uncompressed_cache_file)
+            logger.debug("deleting %s from gz_staging_area", diskfile.uncompressed_cache_file)
             if os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK):
                 os.unlink(diskfile.uncompressed_cache_file)
                 diskfile.uncompressed_cache_file = None
             else:
-                logger.debug("diskfile claimed to have an diskfile.uncompressed_cache_file, but cannot access it: %s" % diskfile.uncompressed_cache_file)
+                logger.debug("diskfile claimed to have an diskfile.uncompressed_cache_file, but cannot access it: %s",
+                                diskfile.uncompressed_cache_file)
 
     session.commit()
 
@@ -302,22 +306,22 @@ def check_present(session, filename):
     marks it as not present in the diskfile table
     """
 
-    # Search for file
+    # Search for file object
     query = session.query(File).filter(File.name == filename)
     if query.first():
         logger.debug("%s is present in file table", filename)
-        file = query.one()
+        fileobj = query.one()
         # OK, is there a diskfile that's present for it
-        query = session.query(DiskFile).filter(DiskFile.file_id == file.id).filter(DiskFile.present == True)
+        query = session.query(DiskFile).filter(DiskFile.file_id == fileobj.id).filter(DiskFile.present == True)
         if query.first():
             diskfile = query.one()
-            logger.debug("%s is present=True in diskfile table at diskfile_id = %s" % (filename, diskfile.id))
+            logger.debug("%s is present=True in diskfile table at diskfile_id = %s", filename, diskfile.id)
             # Is the file actually present on disk?
-            if file.exists():
-                logger.debug("%s is actually present on disk. That's good" % filename)
+            if fileobj.exists():
+                logger.debug("%s is actually present on disk. That's good", filename)
             else:
-                logger.info("%s is present in diskfile table id %d but missing on the disk." % (filename, diskfile.id))
-                logger.info("Marking diskfile id %d as not present" % diskfile.id)
+                logger.info("%s is present in diskfile table id %d but missing on the disk.", filename, diskfile.id)
+                logger.info("Marking diskfile id %d as not present", diskfile.id)
                 diskfile.present = False
 
 def pop_ingestqueue(session, fast_rebuild=False):
@@ -352,7 +356,7 @@ def pop_ingestqueue(session, fast_rebuild=False):
         logger.debug("No item to pop on ingestqueue")
     else:
         # OK, we got a viable item, set it to inprogress and return it.
-        logger.debug("Popped id %d from ingestqueue" % iq.id)
+        logger.debug("Popped id %d from ingestqueue", iq.id)
         # Set this entry to in progres and flush to the DB if we are doig more before the commit.
         iq.inprogress = True
 
@@ -360,9 +364,11 @@ def pop_ingestqueue(session, fast_rebuild=False):
             # Flush the DB (see previous step)
             session.flush()
             # Find other instances and delete them
-            others = session.query(IngestQueue).filter(IngestQueue.inprogress == False).filter(IngestQueue.filename == iq.filename).all()
+            others = session.query(IngestQueue)
+            others = others.filter(IngestQueue.inprogress == False).filter(IngestQueue.filename == iq.filename)
+            others = others.all()
             for other in others:
-                logger.debug("Deleting duplicate file entry at ingestqueue id %d" % other.id)
+                logger.debug("Deleting duplicate file entry at ingestqueue id %d", other.id)
                 session.delete(other)
 
     # And we're done, commit the transaction and release the update lock
