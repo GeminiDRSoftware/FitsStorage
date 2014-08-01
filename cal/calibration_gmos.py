@@ -65,6 +65,10 @@ class CalibrationGMOS(Calibration):
             if self.descriptors['observation_type'] == 'MASK':
                 return
 
+            # For now, only RAW files get calibrations
+            if self.descriptors['reduction'] != 'RAW':
+                return
+
             # Do BIAS
             require_bias = True
             # BIASes do not require a bias.
