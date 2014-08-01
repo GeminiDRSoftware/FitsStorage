@@ -128,7 +128,7 @@ function loadCals() {
             $("#loading_cals").hide();
         });
     } else {
-        $("not_loading_cals").show();
+        $("#not_loading_cals").show();
     }
     document.getElementById("caltab").innerHTML='View Calibrations';
 }
