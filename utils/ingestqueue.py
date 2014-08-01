@@ -3,10 +3,7 @@ This module provides various utility functions to
 manage and service the ingestqueue
 """
 import os
-import sys
 import datetime
-import traceback
-import time
 from logger import logger
 from sqlalchemy import desc
 from sqlalchemy.orm.exc import ObjectDeletedError
@@ -29,12 +26,11 @@ from orm.michelle import Michelle
 from orm.f2 import F2
 from orm.ingestqueue import IngestQueue
 
-from utils.hashes import md5sum
 from utils.aws_s3 import get_s3_md5, fetch_to_staging
 
 from astrodata import AstroData
 
-if(using_s3):
+if using_s3:
     from boto.s3.connection import S3Connection
     from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
 
@@ -43,12 +39,12 @@ def add_to_ingestqueue(session, filename, path, force_md5=False, force=False, af
     Adds a file to the ingest queue
     """
     iq = IngestQueue(filename, path)
-    if(force):
-      iq.force = True
-    if(force_md5):
-      iq.force_md5 = True
-    if(after):
-      iq.after = after
+    if force:
+        iq.force = True
+    if force_md5:
+        iq.force_md5 = True
+    if after:
+        iq.after = after
 
     session.add(iq)
     session.commit()
@@ -87,22 +83,22 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
     logger.debug("ingest_file %s" % filename)
 
     # If we're using S3, get the connection and the bucket
-    if(using_s3):
+    if using_s3:
         s3conn = S3Connection(aws_access_key, aws_secret_key)
         bucket = s3conn.get_bucket(s3_bucket_name)
 
     # First, sanity check if the file actually exists
-    if(using_s3):
+    if using_s3:
         key = bucket.get_key(os.path.join(path, filename))
         fullpath = os.path.join(storage_root, filename)
-        if(key is None):
+        if key is None:
             logger.error("cannot access %s in S3 bucket", filename)
             check_present(session, filename)
             return
     else:
         fullpath = os.path.join(storage_root, path, filename)
         exists = os.access(fullpath, os.F_OK | os.R_OK) and os.path.isfile(fullpath)
-        if(not exists):
+        if not exists:
             logger.error("cannot access %s", fullpath)
             check_present(session, filename)
             return
@@ -112,8 +108,8 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
 
     # Check if there is already a file table entry for this.
     # filename may have been trimmed by the file object
-    query = session.query(File).filter(File.name==file.name)
-    if(query.first()):
+    query = session.query(File).filter(File.name == file.name)
+    if query.first():
         logger.debug("Already in file table as %s" % file.name)
         # This will throw an error if there is more than one entry
         file = query.one()
@@ -125,20 +121,20 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
     # At this point, 'file' should by a valid DB object.
 
     # See if a diskfile for this file already exists and is present
-    query = session.query(DiskFile).filter(DiskFile.file_id==file.id).filter(DiskFile.present==True)
-    if(query.first()):
+    query = session.query(DiskFile).filter(DiskFile.file_id == file.id).filter(DiskFile.present == True)
+    if query.first():
         # Yes, it's already there.
         logger.debug("already present in diskfile table...")
         # Ensure there's only one and get an instance of it
         diskfile = query.one()
 
         # Has the file changed since we last ingested it?
-        if(using_s3):
+        if using_s3:
             # Check the md5 from s3 first.
             # Lastmod on s3 is always the upload time, no way to set it manually
-            if(diskfile.file_md5 == get_s3_md5(key)):
+            if diskfile.file_md5 == get_s3_md5(key):
                 logger.debug("S3 etag md5 indicates no change")
-                add_diskfile=0
+                add_diskfile = 0
             else:
                 logger.debug("S3 etag md5 indicates file has changed - reingesting")
                 # We could fetch the file and do a local md5 check here if we want
@@ -146,14 +142,14 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
                 diskfile.present = False
                 diskfile.canonical = False
                 session.commit()
-                add_diskfile=1
+                add_diskfile = 1
         else:
             # By default check lastmod time first
             # there is a subelty wrt timezones here.
-            if((diskfile.lastmod.replace(tzinfo=None) != diskfile.get_lastmod()) or force_md5 or force):
+            if (diskfile.lastmod.replace(tzinfo=None) != diskfile.get_lastmod()) or force_md5 or force:
                 logger.debug("lastmod time or force flags indicates file modification")
                 # Check the md5 to be sure if it's changed
-                if(diskfile.file_md5 == diskfile.get_file_md5() and (force != True)):
+                if diskfile.file_md5 == diskfile.get_file_md5() and (force != True):
                     logger.debug("md5 indicates no change")
                     add_diskfile = 0
                 else:
@@ -166,7 +162,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
             else:
                 logger.debug("lastmod time indicates file unchanged, not checking further")
                 add_diskfile = 0
-    
+
     else:
         # No not present, insert into diskfile table
         logger.debug("No Present DiskFile exists")
@@ -179,13 +175,13 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
             logger.debug("Marking old diskfile id %d as no longer canonical" % df.id)
             df.canonical = False
         session.commit()
-        
-    if(add_diskfile):
+
+    if add_diskfile:
         logger.debug("Adding new DiskFile entry")
-        if(using_s3):
+        if using_s3:
             # At this point, we fetch a local copy of the file to the staging area
             ok = fetch_to_staging(bucket, path, filename, key, fullpath)
-            if(not ok):
+            if not ok:
                 # Failed to fetch the file from S3. Can't do this
                 return
 
@@ -193,13 +189,13 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         diskfile = DiskFile(file, filename, path)
         session.add(diskfile)
         session.commit()
-        if(diskfile.uncompressed_cache_file):
+        if diskfile.uncompressed_cache_file:
             logger.debug("diskfile uncompressed cache file = %s, access=%s" % (diskfile.uncompressed_cache_file, os.access(diskfile.uncompressed_cache_file, os.F_OK)))
-        
+
 
         # Instantiate an astrodata object here and pass it in to the things that need it
         # These are expensive to instantiate each time
-        if(diskfile.uncompressed_cache_file):
+        if diskfile.uncompressed_cache_file:
             fullpath_for_ad = diskfile.uncompressed_cache_file
         else:
             fullpath_for_ad = diskfile.fullpath()
@@ -237,11 +233,11 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         except:
             pass
 
-        if (not using_sqlite):
-            if(header.spectroscopy == False):
+        if not using_sqlite:
+            if header.spectroscopy == False:
                 logger.debug("Imaging - populating PhotStandardObs")
                 do_std_obs(session, header.id)
-            
+
         # This will use the DiskFile unzipped cache file if it exists
         logger.debug("Adding FullTextHeader entry")
         ftheader = FullTextHeader(diskfile)
@@ -249,52 +245,52 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         session.commit()
         # Add the instrument specific tables
         # These will use the DiskFile unzipped cache file if it exists
-        if(inst == 'GMOS-N' or inst == 'GMOS-S'):
+        if inst == 'GMOS-N' or inst == 'GMOS-S':
             logger.debug("Adding new GMOS entry")
             gmos = Gmos(header, diskfile.ad_object)
             session.add(gmos)
             session.commit()
-        if(inst == 'NIRI'):
+        if inst == 'NIRI':
             logger.debug("Adding new NIRI entry")
             niri = Niri(header, diskfile.ad_object)
             session.add(niri)
             session.commit()
-        if(inst == 'GNIRS'):
+        if inst == 'GNIRS':
             logger.debug("Adding new GNIRS entry")
             gnirs = Gnirs(header, diskfile.ad_object)
             session.add(gnirs)
             session.commit()
-        if(inst == 'NIFS'):
+        if inst == 'NIFS':
             logger.debug("Adding new NIFS entry")
             nifs = Nifs(header, diskfile.ad_object)
             session.add(nifs)
             session.commit()
-        if(inst == 'F2'):
+        if inst == 'F2':
             logger.debug("Assing new F2 entry")
             f2 = F2(header, diskfile.ad_object)
             session.add(f2)
             session.commit()
-        if(inst == 'michelle'):
+        if inst == 'michelle':
             logger.debug("Adding new MICHELLE entry")
             michelle = Michelle(header, diskfile.ad_object)
             session.add(michelle)
             session.commit()
 
-        if(diskfile.ad_object):
+        if diskfile.ad_object:
             logger.debug("Closing centrally opened astrodata object")
             diskfile.ad_object.close()
 
-        if(using_s3):
+        if using_s3:
             logger.debug("deleting %s from s3_staging_area" % filename)
             os.unlink(fullpath)
-        if(diskfile.uncompressed_cache_file):
+        if diskfile.uncompressed_cache_file:
             logger.debug("deleting %s from gz_staging_area" % diskfile.uncompressed_cache_file)
-            if(os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK)):
+            if os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK):
                 os.unlink(diskfile.uncompressed_cache_file)
                 diskfile.uncompressed_cache_file = None
             else:
                 logger.debug("diskfile claimed to have an diskfile.uncompressed_cache_file, but cannot access it: %s" % diskfile.uncompressed_cache_file)
-    
+
     session.commit()
 
 
@@ -308,16 +304,16 @@ def check_present(session, filename):
 
     # Search for file
     query = session.query(File).filter(File.name == filename)
-    if(query.first()):
+    if query.first():
         logger.debug("%s is present in file table", filename)
         file = query.one()
         # OK, is there a diskfile that's present for it
         query = session.query(DiskFile).filter(DiskFile.file_id == file.id).filter(DiskFile.present == True)
-        if(query.first()):
+        if query.first():
             diskfile = query.one()
             logger.debug("%s is present=True in diskfile table at diskfile_id = %s" % (filename, diskfile.id))
             # Is the file actually present on disk?
-            if(file.exists()):
+            if file.exists():
                 logger.debug("%s is actually present on disk. That's good" % filename)
             else:
                 logger.info("%s is present in diskfile table id %d but missing on the disk." % (filename, diskfile.id))
@@ -330,14 +326,14 @@ def pop_ingestqueue(session, fast_rebuild=False):
     inprogress flag on that entry.
 
     The select and update inprogress are done with a transaction lock
-    to avoid race conditions or duplications when there is more than 
+    to avoid race conditions or duplications when there is more than
     one process processing the ingest queue.
 
     Next to ingest is defined by a sort on the sortkey, which is
     the filename with the first character dropped off - so we effectively
     sort by date and frame number for raw data files.
 
-    Also, when we go inprogress on an entry in the queue, we 
+    Also, when we go inprogress on an entry in the queue, we
     delete all other entries for the same filename.
     """
 
@@ -352,7 +348,7 @@ def pop_ingestqueue(session, fast_rebuild=False):
     query = query.order_by(desc(IngestQueue.sortkey))
 
     iq = query.first()
-    if(iq == None):
+    if iq is None:
         logger.debug("No item to pop on ingestqueue")
     else:
         # OK, we got a viable item, set it to inprogress and return it.
@@ -360,14 +356,14 @@ def pop_ingestqueue(session, fast_rebuild=False):
         # Set this entry to in progres and flush to the DB if we are doig more before the commit.
         iq.inprogress = True
 
-        if(not fast_rebuild):
+        if not fast_rebuild:
             # Flush the DB (see previous step)
             session.flush()
             # Find other instances and delete them
             others = session.query(IngestQueue).filter(IngestQueue.inprogress == False).filter(IngestQueue.filename == iq.filename).all()
-            for o in others:
-                logger.debug("Deleting duplicate file entry at ingestqueue id %d" % o.id)
-                session.delete(o)
+            for other in others:
+                logger.debug("Deleting duplicate file entry at ingestqueue id %d" % other.id)
+                session.delete(other)
 
     # And we're done, commit the transaction and release the update lock
     session.commit()
