@@ -333,17 +333,23 @@ def pop_ingestqueue(session, fast_rebuild=False):
     to avoid race conditions or duplications when there is more than 
     one process processing the ingest queue.
 
-    Next to ingest is defined by a sort on the filename to get the
-    newest filename that is not already inprogress.
+    Next to ingest is defined by a sort on the sortkey, which is
+    the filename with the first character dropped off - so we effectively
+    sort by date and frame number for raw data files.
 
     Also, when we go inprogress on an entry in the queue, we 
     delete all other entries for the same filename.
     """
 
+    # We could get a performance boost on fast_rebuild by not doing a full
+    # exclusive lock in that case - we could just do a select for update.
+    # But we need the full lock for non fast_rebuild as we might hit rows that
+    # get culled as duplicates by another transaction.
     session.execute("LOCK TABLE ingestqueue IN ACCESS EXCLUSIVE MODE;")
+
     query = session.query(IngestQueue).filter(IngestQueue.inprogress == False)
     query = query.filter(IngestQueue.after < datetime.datetime.now())
-    query = query.order_by(desc(IngestQueue.filename))
+    query = query.order_by(desc(IngestQueue.sortkey))
 
     iq = query.first()
     if(iq == None):
