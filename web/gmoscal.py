@@ -1,5 +1,5 @@
 """
-This module contains the gmoscal html generator function. 
+This module contains the gmoscal html generator function.
 """
 import sqlalchemy
 from sqlalchemy.sql.expression import cast
@@ -35,11 +35,12 @@ def gmoscal(req, selection):
 
     title = "GMOS Cal (Imaging Twilight Flats and Biases) Report %s" % sayselection(selection)
     req.content_type = "text/html"
-    req.write('<html><head><title>%s</title><link rel="stylesheet" href="/htmldocs/table.css"></head><body><h1>%s</h1>' % (title, title))
-    if(fits_system_status == 'development'):
+    req.write('<html><head><title>%s</title>' % title)
+    req.write('<link rel="stylesheet" href="/htmldocs/table.css"></head><body><h1>%s</h1>' % title)
+    if fits_system_status == 'development':
         req.write("<H1>This is the Development Server, not the operational system. If you're not sure why you're seeing this message, please consult PH</H1>")
- 
-    if(using_sqlite):
+
+    if using_sqlite:
         req.write("<H1>The GMOS Cal page is not implemented with the SQLite database backend as it uses database functionality not supported by SQLite.</H1>")
         req.write("<P>Talk to PH is you have a use case needing this.</P>")
         req.write("<P>You should not see this message from facility central servers</P>")
@@ -54,7 +55,7 @@ def gmoscal(req, selection):
         # Was a date provided by user?
         datenotprovided = ('date' not in selection) and ('daterange' not in selection)
         # If no date or daterange, look on endor or josie to get the last processing date
-        if(datenotprovided):
+        if datenotprovided:
             base_dir = das_calproc_path
             checkfile = 'Basecalib/flatall.list'
             enddate = datetime.datetime.now().date()
@@ -62,16 +63,16 @@ def gmoscal(req, selection):
             date = enddate
             found = -1000
             startdate = None
-            while(found < 0):
+            while found < 0:
                 datestr = date.strftime("%Y%b%d").lower()
                 file = os.path.join(base_dir, datestr, checkfile)
-                if(os.path.exists(file)):
+                if os.path.exists(file):
                     found = 1
                     startdate = date
                 date -= oneday
                 found += 1
-    
-                if(startdate):
+
+                if startdate:
                     # Start the day after the last reduction
                     startdate += oneday
                     selection['daterange'] = "%s-%s" % (startdate.strftime("%Y%m%d"), enddate.strftime("%Y%m%d"))
@@ -95,7 +96,7 @@ def gmoscal(req, selection):
             selection['spectroscopy'] = False
             selection['inst'] = 'GMOS'
             selection['qa_state'] = 'NotFail'
-            if(observation_class == 'dayCal'):
+            if observation_class == 'dayCal':
                 selection['qa_state'] = 'Lucky'
                 # Only select full frame dayCals
                 query = query.filter(Header.detector_roi_setting == 'Full Frame')
@@ -115,7 +116,7 @@ def gmoscal(req, selection):
 
             # Populate the dictionary
             # as {'i-2x2':[10, 'i', '2x2'], ...}    ie [number, filter_name, binning]
-            if(observation_class == 'science'):
+            if observation_class == 'science':
                 dict = sci
             else:
                 dict = tlf
@@ -135,7 +136,7 @@ def gmoscal(req, selection):
             binning = sci[key][2]
             all[key] = [nsci, ntlf, filter_name, binning]
         for key in tlf.keys():
-            if (key in all.keys()):
+            if key in all.keys():
                 all[key][1] = tlf[key][0]
             else:
                 nsci = 0
@@ -153,19 +154,19 @@ def gmoscal(req, selection):
         req.write('<TH>Filter</TH>')
         req.write('<TH>Binning</TH>')
         req.write('</TR>')
-         
+
         even = False
         keys = all.keys()
         keys.sort(reverse=True)
         for key in keys:
             even = not even
-            if(even):
-                if((all[key][0] > 0) and (all[key][1] == 0)):
+            if even:
+                if (all[key][0] > 0) and (all[key][1] == 0):
                     cs = "tr_warneven"
                 else:
                     cs = "tr_even"
             else:
-                if((all[key][0] > 0) and (all[key][1] == 0)):
+                if (all[key][0] > 0) and (all[key][1] == 0):
                     cs = "tr_warnodd"
                 else:
                     cs = "tr_odd"
@@ -178,9 +179,9 @@ def gmoscal(req, selection):
             req.write("</TR>")
         req.write("</TABLE>")
         datething = ''
-        if('date' in selection):
+        if 'date' in selection:
             datething = selection['date']
-        if('daterange' in selection):
+        if 'daterange' in selection:
             datething = selection['daterange']
         req.write('<P><a href="/summary/GMOS/imaging/OBJECT/science/NotFail/%s">Science Frames Summary Table</a></P>' % datething)
         req.write('<P><a href="/summary/GMOS/imaging/OBJECT/dayCal/Lucky/%s">Twilight Flat Summary Table</a></P>' % datething)
@@ -190,7 +191,7 @@ def gmoscal(req, selection):
         req.write('<H2>Biases</H2>')
 
         # If no date or daterange, look on endor or josie to get the last processing date
-        if(datenotprovided):
+        if datenotprovided:
             base_dir = das_calproc_path
             checkfile = 'Basecalib/biasall.list'
             enddate = datetime.datetime.now().date()
@@ -198,26 +199,26 @@ def gmoscal(req, selection):
             date = enddate
             found = -1000
             startdate = None
-            while(found < 0):
+            while found < 0:
                 datestr = date.strftime("%Y%b%d").lower()
                 file = os.path.join(base_dir, datestr, checkfile)
-                if(os.path.exists(file)):
+                if os.path.exists(file):
                     found = 1
                     startdate = date
                 date -= oneday
                 found += 1
-    
-                if(startdate):
+
+                if startdate:
                     # Start the day after the last reduction
                     startdate += oneday
                     selection['daterange'] = "%s-%s" % (startdate.strftime("%Y%m%d"), enddate.strftime("%Y%m%d"))
                     req.write("<H2>Auto-detecting Last Processing Date: %s</H2>" % selection['daterange'])
 
-        if(time.daylight):
+        if time.daylight:
             tzoffset = datetime.timedelta(seconds=time.altzone)
         else:
             tzoffset = datetime.timedelta(seconds=time.timezone)
-        
+
         oneday = datetime.timedelta(days=1)
         offset = sqlalchemy.sql.expression.literal(tzoffset - oneday, sqlalchemy.types.Interval)
         query = session.query(func.count(1), cast((Header.ut_datetime + offset), sqlalchemy.types.DATE).label('utdate'), Header.detector_binning, Header.detector_roi_setting).select_from(join(join(DiskFile, File), Header))
@@ -246,14 +247,14 @@ def gmoscal(req, selection):
             binning = row[2]
             roi = row[3]
 
-            if(utdate not in dict.keys()):
+            if utdate not in dict.keys():
                 dict[utdate] = {}
-            if(binning not in dict[utdate].keys()):
+            if binning not in dict[utdate].keys():
                 dict[utdate][binning] = {}
-            if(roi not in dict[utdate][binning].keys()):
+            if roi not in dict[utdate][binning].keys():
                 dict[utdate][binning][roi] = num
 
-        # Output the HTML table 
+        # Output the HTML table
         # While we do it, add up the totals as a simple column tally
         binlist = ['1x1', '2x2', '2x1', '1x2', '2x4', '4x2', '4x1', '1x4', '4x4']
         roilist = ['Full Frame', 'Central Spectrum']
@@ -278,7 +279,7 @@ def gmoscal(req, selection):
 
         for utdate in utdates:
             even = not even
-            if(even):
+            if even:
                 cs = "tr_even"
             else:
                 cs = "tr_odd"
@@ -307,9 +308,9 @@ def gmoscal(req, selection):
         # OK, find if there were dates for which there were no biases...
         # Can only do this if we got a daterange selection, otherwise it's broken if there's none on the first or last day
         # utdates is a reverse sorted list for which there were biases.
-        if('daterange' in selection):
+        if 'daterange' in selection:
             # Parse the date to start and end datetime objects
-            daterangecre = re.compile('(20\d\d[01]\d[0123]\d)-(20\d\d[01]\d[0123]\d)')
+            daterangecre = re.compile(r'(20\d\d[01]\d[0123]\d)-(20\d\d[01]\d[0123]\d)')
             m = daterangecre.match(selection['daterange'])
             startdate = m.group(1)
             enddate = m.group(2)
@@ -321,7 +322,7 @@ def gmoscal(req, selection):
             enddt = enddt + tzoffset - oneday
             enddt = enddt + oneday
             # Flip them round if reversed
-            if(startdt > enddt):
+            if startdt > enddt:
                 tmp = enddt
                 enddt = startdt
                 startdt = tmp
@@ -330,13 +331,13 @@ def gmoscal(req, selection):
 
             nobiases = []
             date = startdate
-            while(date <= enddate):
-                if(date not in utdates): 
+            while date <= enddate:
+                if date not in utdates:
                     nobiases.append(str(date))
                 date += oneday
 
             req.write('<P>There were %d dates with no biases not set to Fail: ' % len(nobiases))
-            if(len(nobiases)>0):
+            if len(nobiases) > 0:
                 req.write(', '.join(nobiases))
             req.write('</P>')
 
@@ -356,7 +357,7 @@ def gmoscal(req, selection):
         selection['qa_state'] = 'Pass'
 
         query = queryselection(query, selection)
-   
+
         # Only Nod and Shuffle frames
         query = query.filter(Gmos.nodandshuffle == True)
 
@@ -390,9 +391,9 @@ def gmoscal(req, selection):
                 count += 1
                 # For each dark, figure out the time difference
                 age = interval_hours(l, d)
-                if(age<4320):
+                if age < 4320:
                     young += 1
-                if(fabs(age)>fabs(oldest)):
+                if fabs(age) > fabs(oldest):
                     oldest = age
             dict = {}
             dict['observation_id'] = l.observation_id
@@ -419,13 +420,13 @@ def gmoscal(req, selection):
             if nd not in done:
                 done.append(nd)
                 even = not even
-                if(nd['young'] < 15):
-                    if(even):
+                if nd['young'] < 15:
+                    if even:
                         cs = 'tr_warneven'
                     else:
                         cs = 'tr_warnodd'
                 else:
-                    if(even):
+                    if even:
                         cs = 'tr_even'
                     else:
                         cs = 'tr_odd'
@@ -439,7 +440,6 @@ def gmoscal(req, selection):
         req.write("</TABLE>")
         req.write("</body></html>")
         return apache.OK
-
 
     except IOError:
         pass
