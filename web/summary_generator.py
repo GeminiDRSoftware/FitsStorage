@@ -9,14 +9,14 @@ from gemini_metadata_utils import GeminiDataLabel
 
 from utils.userprogram import canhave
 
-class SummaryGenerator():
+class SummaryGenerator(object):
     """
-    This is the web summary generator class. You instantiate this class and 
+    This is the web summary generator class. You instantiate this class and
     configure what columns you want in your web summary, (and optionally
     what program_ids you have pre-release data access to), then the object
     provides methods to generate the header of the html table and generate
     each row of the html table from an ORM header object.
-    For simplicity, there are also methods that configure the object to 
+    For simplicity, there are also methods that configure the object to
     generate the "standard" summary table types.
     It is also possible to configure whether you want links in the output html.
     """
@@ -41,7 +41,7 @@ class SummaryGenerator():
     # has access to the file and thus whether to display the download things
     user = None
     user_progid_list = None
-    
+
     def __init__(self, sumtype, links=True, uri=None, user=None, user_progid_list=None):
         """
         Constructor function for the SummaryGenerator Object.
@@ -65,17 +65,26 @@ class SummaryGenerator():
         Valid types are: summary, ssummary, lsummary, diskfiles
         """
         sum_type_defs = {
-            'summary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
-            'lsummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'filter_name', 'fpmask', 'detector_roi', 'detector_binnin', 'detector_config', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
-            'ssummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
-            'diskfiles' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'present', 'entrytime', 'lastmod', 'file_size', 'file_md5', 'gzipped', 'data_size', 'data_md5'],
-            'searchresults' : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state'],
-            'associated_cals': ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state']}
-  
-        if(sumtype in sum_type_defs.keys()):
+            'summary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
+                            'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'qa_state',
+                            'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
+            'lsummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
+                            'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'filter_name', 'fpmask',
+                            'detector_roi', 'detector_binnin', 'detector_config', 'qa_state',
+                            'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
+            'ssummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
+                            'object', 'waveband', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
+            'diskfiles' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'present', 'entrytime', 'lastmod',
+                            'file_size', 'file_md5', 'gzipped', 'data_size', 'data_md5'],
+            'searchresults' : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
+                            'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state'],
+            'associated_cals': ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
+                            'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state']}
+
+        if sumtype in sum_type_defs.keys():
             want = sum_type_defs[sumtype]
             for key in self.columns.keys():
-                if(key in want):
+                if key in want:
                     self.columns[key]['want'] = True
                 else:
                     self.columns[key]['want'] = False
@@ -347,19 +356,19 @@ class SummaryGenerator():
         for columns as configured
         """
         # Turns out to be better performance to string concatenate
-        # than to call req.write() many times, so we build an html 
+        # than to call req.write() many times, so we build an html
         # string and req.write it at the end
 
         html = '<TR class=tr_head>'
         for colkey in self.columns.keys():
             col = self.columns[colkey]
-            if(col['want']):
+            if col['want']:
                 html += '<TH>'
-                if(col['longheading']):
+                if col['longheading']:
                     html += '<abbr title="%s">%s</abbr>' % (col['longheading'], col['heading'])
                 else:
                     html += col['heading']
-                if(self.links and col['sortarrows']):
+                if self.links and col['sortarrows']:
                     html += '<a href="%s?orderby=%s_asc">&uarr;</a><a href="%s?orderby=%s_desc">&darr;</a>' % (self.uri, colkey, self.uri, colkey)
                 html += '</TH>'
         html += '</TR>\n'
@@ -373,20 +382,20 @@ class SummaryGenerator():
         class of the tr tag.
         """
         # Turns out to be better performance to string concatenate
-        # than to call req.write() many times, so we build an html 
+        # than to call req.write() many times, so we build an html
         # string and req.write it at the end
 
-        if(trclass):
+        if trclass:
             html = '<TR class=%s>' % trclass
         else:
             html = '<TR>'
         for colkey in self.columns.keys():
             col = self.columns[colkey]
-            if(col['want']):
+            if col['want']:
                 html += '<TD>'
-                if(col['summary_func']):
+                if col['summary_func']:
                     value = getattr(self, col['summary_func'])(header)
-                elif(col['header_attr']):
+                elif col['header_attr']:
                     value = getattr(header, col['header_attr'])
                 else:
                     value = "Error: Not Defined in SummaryGenerator!"
@@ -405,21 +414,21 @@ class SummaryGenerator():
         # The html to return
 
         # The basic filename part, optionally as a link to the header text
-        if(self.links):
+        if self.links:
             html = '<a href="/fullheader/%d" target="_blank">%s</a>' % (header.diskfile.id, header.diskfile.file.name)
         else:
             html = str(header.diskfile.file.name)
 
         # Do we have any fits verify errors to flag?
-        if(header.diskfile.fverrors):
-            if(self.links):
+        if header.diskfile.fverrors:
+            if self.links:
                 html += ' <a href="/fitsverify/%d" target="_blank">-fits!</a>' % (header.diskfile.id)
             else:
                 html += ' -fits!' % (header.diskfile.id)
 
         # Do we have metadata errors to flag? (only on non Eng data)
-        if((header.engineering is False) and (not header.diskfile.wmdready)):
-            if(self.links):
+        if (header.engineering is False) and (not header.diskfile.wmdready):
+            if self.links:
                 html += ' <a href="/wmdreport/%d" target="_blank">-md!</a>' % (header.diskfile.id)
             else:
                 html += ' -md!' % (header.diskfile.id)
@@ -432,9 +441,9 @@ class SummaryGenerator():
         """
         # Generate the diskfile html
         # We parse the data_label to create links to the project id and obs id
-        if(self.links):
+        if self.links:
             dl = GeminiDataLabel(header.data_label)
-            if(dl.datalabel):
+            if dl.datalabel:
                 uri = self.uri
                 html = '<a href="%s/%s">%s</a>-<a href="%s/%s">%s</a>-<a href="%s/%s">%s</a>' % (uri, dl.projectid, dl.projectid, uri, dl.observation_id, dl.obsnum, uri, dl.datalabel, dl.dlnum)
             else:
@@ -449,8 +458,8 @@ class SummaryGenerator():
         Generates the UT datetime column html
         """
         # format withou decimal places on the seconds
-        if(self.links and header.ut_datetime is not None):
-            if(header.ut_datetime):
+        if self.links and header.ut_datetime is not None:
+            if header.ut_datetime:
                 date_print = header.ut_datetime.strftime("%Y-%m-%d")
                 time_print = header.ut_datetime.strftime("%H:%M:%S")
                 date_link = header.ut_datetime.strftime("%Y%m%d")
@@ -458,7 +467,7 @@ class SummaryGenerator():
             else:
                 return "None"
         else:
-            if(header.ut_datetime):
+            if header.ut_datetime:
                 return str(header.ut_datetime.strftime("%Y-%m-%d %H:%M:%S"))
             else:
                 return "None"
@@ -469,19 +478,19 @@ class SummaryGenerator():
         Generates the instrument column html
         """
         # Add the AO flags to the instrument name
-        if(self.links):
+        if self.links:
             html = '<a href="%s/%s">%s</a>' % (self.uri, header.instrument, header.instrument)
-            if(header.adaptive_optics):
+            if header.adaptive_optics:
                 html += ' <a href="%s/AO">+ AO</a>' % self.uri
-                if(header.laser_guide_star):
+                if header.laser_guide_star:
                     html += ' <a href="%s/LGS"> LGS</a>' % self.uri
                 else:
                     html += ' <a href="%s/NGS"> NGS</a>' % self.uri
         else:
             html = str(header.instrument)
-            if(header.adaptive_optics):
+            if header.adaptive_optics:
                 html += ' + AO'
-                if(header.laser_guide_star):
+                if header.laser_guide_star:
                     html += ' LGS'
                 else:
                     html += ' NGS'
@@ -492,7 +501,7 @@ class SummaryGenerator():
         Generates the observation_class column html
         """
         # Can make it a link
-        if(self.links and header.observation_class is not None):
+        if self.links and header.observation_class is not None:
             return '<a href="%s/%s">%s</a>' % (self.uri, header.observation_class, header.observation_class)
         else:
             return header.observation_class
@@ -502,7 +511,7 @@ class SummaryGenerator():
         Generates the observation_type column html
         """
         # Can make it a link
-        if(self.links and header.observation_type is not None):
+        if self.links and header.observation_type is not None:
             return '<a href="%s/%s">%s</a>' % (self.uri, header.observation_type, header.observation_type)
         else:
             return header.observation_type
@@ -544,28 +553,28 @@ class SummaryGenerator():
         """
         # nb target names sometime contain ampersand characters which should be escaped in the html.
         # Also we trim at 12 characters and abbreviate
-        if(header.object is None):
+        if header.object is None:
             basehtml = 'None'
-        elif(len(header.object) > 12):
+        elif len(header.object) > 12:
             basehtml = '<abbr title="%s">%s</abbr>' % (htmlescape(header.object), htmlescape(header.object[:12]))
         else:
             basehtml = htmlescape(header.object)
 
         # Now the photometric std star symbol
         phothtml = ''
-        if(header.phot_standard):
-            if(self.links):
+        if header.phot_standard:
+            if self.links:
                 phothtml = '<a href="/standardobs/%d">*</a>' % header.id
             else:
                 phothtml = '*'
 
         # Now the target symbol
         symhtml = ''
-        if('AZEL_TARGET' in header.types and 'AT_ZENITH' not in header.types):
+        if 'AZEL_TARGET' in header.types and 'AT_ZENITH' not in header.types:
             symhtml = '<abbr title="Target is in AzEl co-ordinate frame">&#x2693;</abbr>'
-        if('AT_ZENITH' in header.types):
+        if 'AT_ZENITH' in header.types:
             symhtml = '<abbr title="Target is Zenith in AzEl co-ordinate frame">&#x2693;&#x2191;</abbr>'
-        if('NON_SIDEREAL' in header.types):
+        if 'NON_SIDEREAL' in header.types:
             symhtml = '<abbr title="Target is non-sidereal">&#x2604;</abbr>'
 
         return '%s %s %s' % (basehtml, phothtml, symhtml)
@@ -582,7 +591,7 @@ class SummaryGenerator():
         Generates the waveband column html
         """
         # Print filter_name for imaging, disperser and cen_wlen for spec
-        if(header.spectroscopy):
+        if header.spectroscopy:
             try:
                 html = "%s : %.3f" % (htmlescape(header.disperser), header.central_wavelength)
             except:
@@ -600,7 +609,7 @@ class SummaryGenerator():
         if can:
             html = '<div class="center"><a href="/file/%s">[D]</a>' % header.diskfile.file.name
 
-            if(self.sumtype in ['searchresults', 'associated_cals']):
+            if self.sumtype in ['searchresults', 'associated_cals']:
                 html += " <input type='checkbox' name='files' value='%s'>" % header.diskfile.file.name
 
             html += '</div>'
@@ -614,7 +623,7 @@ def htmlescape(string):
     Convenience wrapper to cgi escape, providing type protection
     """
 
-    if(type(string) in [str, unicode]):
+    if type(string) in [str, unicode]:
         return escape(string)
     else:
         return None
