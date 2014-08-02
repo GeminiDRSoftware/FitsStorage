@@ -375,7 +375,7 @@ def queryselection(query, selection):
     # Should we query by daterange?
     if 'daterange' in selection:
         # Parse the date to start and end datetime objects
-        daterangecre = re.compile('([12][90]\d\d[01]\d[0123]\d)-([12][90]\d\d[01]\d[0123]\d)')
+        daterangecre = re.compile(r'([12][90]\d\d[01]\d[0123]\d)-([12][90]\d\d[01]\d[0123]\d)')
         m = daterangecre.match(selection['daterange'])
         startdate = m.group(1)
         enddate = m.group(2)
@@ -574,7 +574,7 @@ def queryselection(query, selection):
     if 'dec' in selection:
         valid = True
         # might be a range or a single value
-        match = re.match("(-?[\d:\.]+)-(-?[\d:\.]+)", selection['dec'])
+        match = re.match(r"(-?[\d:\.]+)-(-?[\d:\.]+)", selection['dec'])
         if match is None:
             # single value
             degs = dectodeg(selection['dec'])
@@ -617,7 +617,7 @@ def queryselection(query, selection):
         upper = None
         # might be a range or a single value
         selection['exposure_time'] = selection['exposure_time'].replace(' ', '')
-        match = re.match("([\d\.]+)-([\d\.]+)", selection['exposure_time'])
+        match = re.match(r"([\d\.]+)-([\d\.]+)", selection['exposure_time'])
         if match is None:
             # single value
             try:
@@ -713,7 +713,7 @@ def openquery(selection):
 
     return openq
 
-range_cre = re.compile('(-?\d*\.?\d*)-(-?\d*\.?\d*)')
+range_cre = re.compile(r'(-?\d*\.?\d*)-(-?\d*\.?\d*)')
 def _parse_range(string):
     """
     Expects a string in the form '12.345-67.89' as per the co-ordinate searches.
