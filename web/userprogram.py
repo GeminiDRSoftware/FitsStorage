@@ -24,20 +24,19 @@ def my_programs(req, things):
     """
 
     # Build the thing_string to link back to the searchform
-    if(things):
+    thing_string = ''
+    if things:
         thing_string = '/' + '/'.join(things)
-    else:
-        thing_string = ''
 
     # First, process the form data if there is any
     formdata = util.FieldStorage(req)
 
     program_id = ''
     program_key = ''
-    if(len(formdata.keys()) > 0):
-        if('program_id' in formdata.keys()):
+    if len(formdata.keys()) > 0:
+        if 'program_id' in formdata.keys():
             program_id = formdata['program_id'].value
-        if('program_key' in formdata.keys()):
+        if 'program_key' in formdata.keys():
             program_key = formdata['program_key'].value
 
     # Now figure out if we are logged in, who we are, and current prog_list
@@ -49,9 +48,9 @@ def my_programs(req, things):
     try:
         session = sessionfactory()
         user = userfromcookie(session, req)
-        if(user):
+        if user:
             username = user.username
-            if(program_id or program_key):
+            if program_id or program_key:
                 reason_bad = request_user_program(session, user, program_id, program_key)
             prog_list = get_program_list(session, user)
     finally:
@@ -60,14 +59,14 @@ def my_programs(req, things):
 
     req.content_type = "text/html"
     req.write("<html><head><title>Gemini Archive Registered Program List</title></head><body>")
-    if(username == ''):
+    if username == '':
         req.write('<h1>Not logged in</h1>')
         req.write('<p>You need to be logged in to see your registered programs.</p>')
         req.write('<p>You can <a href="/login">log in here</a></p>')
         req.write('</body></html>')
         return apache.OK
 
-    if(len(prog_list) == 0):
+    if len(prog_list) == 0:
         req.write('<h1>No programs registered</h1>')
         req.write('<p>There are currently no programs registered to username: %s</p>' % username)
     else:
@@ -77,7 +76,7 @@ def my_programs(req, things):
             req.write('<li>%s</li>' % prog)
         req.write('</ul>')
 
-    if(reason_bad):
+    if reason_bad:
         req.write("<h2>Registering your new program failed</h2>")
         req.write('<p>%s</p>' % reason_bad)
 
@@ -89,7 +88,7 @@ def my_programs(req, things):
     req.write('<FORM action="/my_programs%s" method="POST">' % thing_string)
     req.write('<TABLE>')
     req.write('<TR><TD><LABEL for="program_id">Program ID</LABEL><TD>')
-    req.write('<TD><INPUT type="text" size=16 name="program_id"></INPUT></TD></TR>' )
+    req.write('<TD><INPUT type="text" size=16 name="program_id"></INPUT></TD></TR>')
     req.write('<TR><TD><LABEL for="program_key">Program Key</LABEL><TD>')
     req.write('<TD><INPUT type="text" size=8 name="program_key"></INPUT></TD></TR>')
     req.write('</TABLE>')
@@ -101,12 +100,12 @@ def my_programs(req, things):
 
 def get_program_list(session, user):
     """
-    Given a database session and a user object, return 
+    Given a database session and a user object, return
     a list of program IDs that the user has registered.
     """
 
     prog_list = []
-    if(user is not None):
+    if user is not None:
         query = session.query(UserProgram).filter(UserProgram.user_id == user.id)
         results = query.all()
         for result in results:
@@ -121,16 +120,16 @@ def request_user_program(session, user, program_id, program_key):
     This function does commit the changes to the database
     """
 
-    if(user is None):
+    if user is None:
         return "Invalid user"
-    if(len(program_id) < 8):
+    if len(program_id) < 8:
         return "Invalid program ID"
-    if(len(program_key) < 5):
+    if len(program_key) < 5:
         return "Invalid program key"
 
     valid = validate_program_key(program_id, program_key)
 
-    if(valid):
+    if valid:
         userprog = UserProgram(user.id, program_id)
         session.add(userprog)
         session.commit()
@@ -144,9 +143,9 @@ def validate_program_key(program_id, program_key):
     combination. Return True if valid, False otherwise
     """
 
-    if(program_id[:2] == 'GN'):
+    if program_id[:2] == 'GN':
         host = 'gnodb'
-    elif(program_id[:2] == 'GS'):
+    elif program_id[:2] == 'GS':
         host = 'gsodb'
     else:
         return False
