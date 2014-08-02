@@ -36,7 +36,7 @@ def xmlfilelist(req, selection):
             req.write("<file_md5>%s</file_md5>" % header.diskfile.file_md5)
             req.write("<data_md5>%s</data_md5>" % header.diskfile.data_md5)
             req.write("<lastmod>%s</lastmod>" % header.diskfile.lastmod)
-            if(header.phot_standard):
+            if header.phot_standard:
                 xmlstandardobs(req, header.id)
             req.write("</file>")
     finally:
@@ -62,9 +62,9 @@ def jsonfilelist(req, selection):
             thedict['filename'] = str(header.diskfile.filename)
             thedict['path'] = str(header.diskfile.path)
             thedict['gzipped'] = str(header.diskfile.gzipped)
-            thedict['size'] =  str(header.diskfile.file_size)
-            thedict['file_size'] =  str(header.diskfile.file_size)
-            thedict['data_size'] =  str(header.diskfile.data_size)
+            thedict['size'] = str(header.diskfile.file_size)
+            thedict['file_size'] = str(header.diskfile.file_size)
+            thedict['data_size'] = str(header.diskfile.data_size)
             thedict['md5'] = str(header.diskfile.file_md5)
             thedict['file_md5'] = str(header.diskfile.file_md5)
             thedict['data_md5'] = str(header.diskfile.data_md5)
