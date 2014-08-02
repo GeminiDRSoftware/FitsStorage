@@ -77,7 +77,6 @@ def searchform(req, things, orderby):
     req.write('<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>')
     req.write('<script src="/htmldocs/titlebar.js"></script>')
     req.write('<script src="/htmldocs/form.js"></script>')
-    req.write('<script src="http://cdn.jquerytools.org/1.2.7/full/jquery.tools.min.js"></script>')
     req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/whoami.css">')
     req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/titlebar.css">')
     req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/form.css">')
@@ -100,7 +99,7 @@ def searchform(req, things, orderby):
 
     # playing around with the idea of 'tabs'
     if selection:
-        req.write('<ul class="tabs"><li><a href="#">Results</a></li><li><a href="#" id="caltab">Load Calibrations</a></li></ul>')
+        req.write('<ul class="tabs"><li><a href="#" id="resultstab">Results</a></li><li><a href="#" id="caltab">Load Calibrations</a></li></ul>')
         req.write('<div class="frames">')
         req.write('<div id="searchresults" class="searchresults">')
         req.write('<span id="loading"><img src="/htmldocs/ajax-loading.gif" alt="">  Loading...<br /></span>')

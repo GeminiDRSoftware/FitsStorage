@@ -118,19 +118,43 @@ function gmosCustomMaskEnable() {
     }
 };
 
-function loadCals() {
-    var allow = document.getElementById("allow_cals").value;
-    var urlstring = document.getElementById("things").value;
-    var calurl = '/associated_cals' + urlstring;
-    if (allow == "yes") {
-        $("#loading_cals").show();
-        $('#calibration_results').load(calurl, function(){
-            $("#loading_cals").hide();
-        });
+function CalsTab() {
+    if (document.getElementById("caltab").innerHTML == 'View Calibrations') {
+        /* already been clicked, switch to it */
+        $("#searchresults").hide();
+        $("#calibration_results").show();
+        /* set the tab classes */
+        document.getElementById("caltab").className += 'current';
+        document.getElementById("resultstab").className = document.getElementById("resultstab").className.replace('current', '')
     } else {
-        $("#not_loading_cals").show();
+        /* First time - initiate loading the associated cals */
+        var allow = document.getElementById("allow_cals").value;
+        var urlstring = document.getElementById("things").value;
+        var calurl = '/associated_cals' + urlstring;
+        if (allow == "yes") {
+            $("#loading_cals").show();
+            $('#calibration_results').load(calurl, function(){
+                $("#loading_cals").hide();
+            });
+        } else {
+            $("#not_loading_cals").show();
+        }
+        document.getElementById("caltab").innerHTML='View Calibrations';
+        $("#searchresults").hide();
+        $("#calibration_results").show();
+        /* set the tab classes */
+        document.getElementById("caltab").className += 'current';
+        document.getElementById("resultstab").className = document.getElementById("resultstab").className.replace('current', '')
     }
-    document.getElementById("caltab").innerHTML='View Calibrations';
+}
+
+function ResultsTab() {
+    /* Just switch the displayed div */
+    $("#calibration_results").hide();
+    $("#searchresults").show();
+    /* set the tab classes */
+    document.getElementById("resultstab").className += 'current';
+    document.getElementById("caltab").className = document.getElementById("caltab").className.replace('current', '')
 }
 
 // The Name Resolver
@@ -180,7 +204,7 @@ $(document).ready(function() {
     $("#loading").hide();
     $("#loading_cals").hide();
     $('#calibration_results').hide();
-    $("ul.tabs").tabs("div.frames > div");
+    document.getElementById("resultstab").className += 'current';
     setAdvancedVisibility();
     setInstVisibility();
     gmosCustomMaskEnable();
@@ -201,7 +225,10 @@ $(document).ready(function() {
         nameresolver();
     });
     $('#caltab').click(function() {
-        loadCals();
+        CalsTab();
+    });
+    $('#resultstab').click(function() {
+        ResultsTab();
     });
 });
 
