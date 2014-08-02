@@ -821,7 +821,7 @@ def username_inuse(username):
     finally:
         session.close()
 
-digits_cre = re.compile('\d')
+digits_cre = re.compile(r'\d')
 lower_cre = re.compile('[a-z]')
 upper_cre = re.compile('[A-Z]')
 def bad_password(candidate):
