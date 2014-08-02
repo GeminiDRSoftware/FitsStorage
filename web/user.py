@@ -34,40 +34,40 @@ def request_account(req, things):
     email = ''
 
     # Contruct the thing_string for the url to link back to their form
-    if(things):
+    if things:
         thing_string = '/' + '/'.join(things)
     else:
         thing_string = ''
 
     # Parse the form data here
-    if(len(formdata.keys()) > 0):
+    if len(formdata.keys()) > 0:
         request_attempted = True
-        if('username' in formdata.keys()):
+        if 'username' in formdata.keys():
             username = formdata['username'].value
-        if('fullname' in formdata.keys()):
+        if 'fullname' in formdata.keys():
             fullname = formdata['fullname'].value
-        if('email' in formdata.keys()):
+        if 'email' in formdata.keys():
             email = formdata['email'].value
 
         # Validate
         valid_request = False
         if username == '':
             reason_bad = "No Username supplied"
-        elif(not username.isalnum()):
+        elif not username.isalnum():
             reason_bad = "Username may only contain alphanumeric characters"
-        elif(len(username) < 2):
+        elif len(username) < 2:
             reason_bad = "Username too short. Must be at least 2 characters"
-        elif(username_inuse(username)):
+        elif username_inuse(username):
             reason_bad = 'Username is already in use, choose a different one. If this is your username, you can <a href="/login">log in</a> if you know your password, or <a href="/request_password_reset">reset your password</a> if you have forgotten it.'
-        elif(fullname == ''):
+        elif fullname == '':
             reason_bad = "No Full name supplied"
-        elif(len(fullname) < 5):
+        elif len(fullname) < 5:
             reason_bad = "Full name must be at least 5 characters"
-        elif(email == ''):
+        elif email == '':
             reason_bad = "No Email address supplied"
-        elif(('@' not in email) or ('.' not in email)):
+        elif ('@' not in email) or ('.' not in email):
             reason_bad = "Not a valid Email address"
-        elif(',' in email):
+        elif ',' in email:
             reason_bad = "Email address cannot contain commas"
         else:
             valid_request = True
@@ -78,14 +78,14 @@ def request_account(req, things):
     # req.write("<P>formdata: %s</P>" % formdata)
     req.write("<h1>New Account Request</h1>")
 
-    if(valid_request):
+    if valid_request:
         req.write('<TABLE>')
         req.write('<TR><TD>Username:</TD><TD>%s</TD></TR>' % username)
         req.write('<TR><TD>Full Name:</TD><TD>%s</TD></TR>' % fullname)
         req.write('<TR><TD>Email:</TD><TD>%s</TD></TR>' % email)
         req.write('</TABLE>')
         req.write("<h2>Processing your request...</h2>")
-        if(email.endswith("@gemini.edu")):
+        if email.endswith("@gemini.edu"):
             req.write("<P>That looks like a Gemini Staff email address. If you would like Gemini Staff Access privelidges adding to your new archive account, please contact the archive scientist to request that.</P>")
         try:
             session = sessionfactory()
@@ -102,7 +102,7 @@ def request_account(req, things):
         finally:
             session.close()
         req.write('<P>Account request processed.</P>')
-        if(emailed):
+        if emailed:
             req.write('<P>You should shortly receive an email with a link to set your password and activate your account.</P>')
             req.write("<P>If you don't get the email, please contact the Gemini helpdesk. TODO - add link to helpdesk</P>")
             req.write('<P><a href="/searchform%s">Click here to return to your search.</a> ' % thing_string)
@@ -114,7 +114,7 @@ def request_account(req, things):
 
     else:
         # New account request was not valid
-        if(request_attempted):
+        if request_attempted:
             req.write("<P>Your request was invalid. %s. Please try again.</P>" % reason_bad)
 
         # Send the new account form
@@ -209,7 +209,7 @@ def password_reset(req, things):
     # debug print
     # req.write('<P>things: %s</P>' % things)
 
-    if(len(things) != 2):
+    if len(things) != 2:
         req.write('<P>Invalid request.</P>')
         req.write('</body></html>')
         return apache.OK
@@ -225,7 +225,7 @@ def password_reset(req, things):
         req.write('</body></html>')
         return apache.OK
 
-    if(len(token) != 56):
+    if len(token) != 56:
         req.write('<P>Invalid request.</P>')
         req.write('</body></html>')
         return apache.OK
@@ -235,15 +235,15 @@ def password_reset(req, things):
         session = sessionfactory()
         query = session.query(User).filter(User.id == userid)
         user = query.first()
-        if(user is None):
+        if user is None:
             req.write('<P>Invalid request.</P>')
             req.write('</body></html>')
             return apache.OK
-        elif(user.reset_token_expires < datetime.datetime.utcnow()):
+        elif user.reset_token_expires < datetime.datetime.utcnow():
             req.write('<P>This reset link has expired. They are only valid for 15 minutes. Sorry. Please request a new one and try again.</P>')
             req.write('</body></html>')
             return apache.OK
-        elif(user.reset_token != token):
+        elif user.reset_token != token:
             req.write("<P>This is not a valid password reset link. Sorry. If you pasted the link, please check it didn't get truncated and try again, or request a new reset.</P>")
             req.write('</body></html>')
             return apache.OK
@@ -264,30 +264,30 @@ def password_reset(req, things):
     formdata = util.FieldStorage(req)
     password = None
     again = None
-    if(len(formdata.keys()) > 0):
+    if len(formdata.keys()) > 0:
         request_attempted = True
-        if('password' in formdata.keys()):
+        if 'password' in formdata.keys():
             password = formdata['password'].value
-        if('again' in formdata.keys()):
+        if 'again' in formdata.keys():
             again = formdata['again'].value
 
         # Validate
-        if(password is None):
+        if password is None:
             reason_bad = 'No new Password supplied'
-        elif(password != again):
+        elif password != again:
             reason_bad = 'Password and Password again do not match'
-        elif(bad_password(password)):
+        elif bad_password(password):
             reason_bad = 'Bad password - must be at least 8 characters and contain both uppercase and lowercase letters, and numbers'
         else:
             request_valid = True
 
-    if(request_valid):
+    if request_valid:
         req.write('<H2>Processing your request...</H2>')
         try:
             session = sessionfactory()
             query = session.query(User).filter(User.id == userid)
             user = query.one()
-            if(user.validate_reset_token(token)):
+            if user.validate_reset_token(token):
                 user.reset_password(password)
                 session.commit()
                 req.write('<P>Password has been reset.</P>')
@@ -303,7 +303,7 @@ def password_reset(req, things):
         finally:
             session.close()
 
-    if(request_attempted):
+    if request_attempted:
         req.write("<P>Your request was invalid. %s. Please try again.</P>" % reason_bad)
 
     # Send the new account form
@@ -339,33 +339,33 @@ def change_password(req, things):
     newagain = ''
 
     # Construct the things_string to link back to the current form
-    if(things):
+    if things:
         thing_string = '/' + '/'.join(things)
     else:
         thing_string = ''
 
     # Parse the form data here
-    if(len(formdata.keys()) > 0):
+    if len(formdata.keys()) > 0:
         request_attempted = True
-        if('oldpassword' in formdata.keys()):
+        if 'oldpassword' in formdata.keys():
             oldpassword = formdata['oldpassword'].value
-        if('newpassword' in formdata.keys()):
+        if 'newpassword' in formdata.keys():
             newpassword = formdata['newpassword'].value
-        if('newagain' in formdata.keys()):
+        if 'newagain' in formdata.keys():
             newagain = formdata['newagain'].value
 
         # Validate what came in
         valid_request = False
-        
-        if(oldpassword == ''):
+
+        if oldpassword == '':
             reason_bad = 'No old password supplied'
-        elif(newpassword == ''):
+        elif newpassword == '':
             reason_bad = 'No new password supplied'
-        elif(newagain == ''):
+        elif newagain == '':
             reason_bad = 'No new password again supplied'
-        elif(bad_password(newpassword)):
+        elif bad_password(newpassword):
             reason_bad = 'Bad password - must be at least 8 characters and contain both uppercase and lowercase letters, and numbers'
-        elif(newpassword != newagain):
+        elif newpassword != newagain:
             reason_bad = 'New Password and New Password Again do not match'
         else:
             valid_request = True
@@ -373,22 +373,22 @@ def change_password(req, things):
     req.content_type = "text/html"
     req.write("<html><head><title>Gemini Archive Password reset request</title></head><body>")
 
-    if(valid_request):
+    if valid_request:
         req.write('<H2>Processing your request...</H2>')
         try:
             session = sessionfactory()
             user = userfromcookie(session, req)
-            if(user is None):
+            if user is None:
                 valid_request = False
                 reason_bad = 'You are not currently logged in'
-            elif(user.validate_password(oldpassword) is False):
+            elif user.validate_password(oldpassword) is False:
                 valid_request = False
                 reason_bad = 'Current password not correct'
             else:
                 user.change_password(newpassword)
                 session.commit()
                 req.write('<p>Password has been changed</p>')
-                if(things):
+                if things:
                     req.write('<p><a href="/searchform%s">Click here to go back to your searchform</p>' % thing_string)
                 else:
                     req.write('<p><a href="/searchform">Click here to go to the searchform</p>')
@@ -396,11 +396,11 @@ def change_password(req, things):
         finally:
             session.close()
 
-    if(request_attempted is True and valid_request is False):
+    if request_attempted is True and valid_request is False:
         req.write('<h2>Request not valid:</h2>')
         req.write('<p>%s</p>' % reason_bad)
 
-    if(not sucessfull):
+    if not sucessfull:
         # Send the password change form
         req.write('<FORM action="/change_password%s" method="POST">' % thing_string)
         req.write('<P>Fill out and submit this form to change your password. Password must be 8 characters or more and must contain uppercase and lowercase letters, and numbers.</P>')
@@ -434,16 +434,16 @@ def request_password_reset(req):
     req.write("<html><head><title>Gemini Archive Password reset request</title></head><body>")
 
     # Parse the form data here
-    if(len(formdata.keys()) > 0):
-        if('thing' in formdata.keys()):
+    if len(formdata.keys()) > 0:
+        if 'thing' in formdata.keys():
             thing = formdata['thing'].value
 
         # Validate
-        if(username_inuse(thing)):
+        if username_inuse(thing):
             # They gave us a valid username
-            username = thing     
+            username = thing
             request_valid = True
-        elif(email_inuse(thing)):
+        elif email_inuse(thing):
             # They gave us a valid email address
             email = thing
             request_valid = True
@@ -451,27 +451,27 @@ def request_password_reset(req):
             request_valid = False
             req.write('<P>That is not a valid username or email address in our system. Maybe you need to create a new account</P>')
 
-    if(request_valid):
+    if request_valid:
         # Try to process it
         req.write('<P>Processing request...</P>')
         try:
             session = sessionfactory()
             query = session.query(User)
-            if(username):
+            if username:
                 query = query.filter(User.username == username)
-            elif(email):
+            elif email:
                 query = query.filter(User.email == email)
             else:
                 # Something is wrong
                 req.write('<P>Error: no valid username or email. This should not happen.</P>')
                 return apache.OK
             users = query.all()
-            if(len(users) > 1):
+            if len(users) > 1:
                 req.write("<P>Multiple usernames are using this email address. We'll send an email for each username. Please contact the Gemini Helpdesk to sort this out.</P>")
             for user in users:
                 req.write("<P>Sending password reset email for username: %s</P>" % user.username)
                 emailed = send_password_reset_email(user.id)
-                if(emailed):
+                if emailed:
                     req.write('<P>You should shortly receive an email with a link to set your password and activate your account.</P>')
                     req.write("<P>If you don't get the email, please contact the Gemini helpdesk.</P>")
                 else:
@@ -507,10 +507,10 @@ def staff_access(req, things):
     action = ''
 
     # Parse the form data
-    if(len(formdata.keys()) > 0):
-        if('username' in formdata.keys()):
+    if len(formdata.keys()) > 0:
+        if 'username' in formdata.keys():
             username = formdata['username'].value
-        if('action' in formdata.keys()):
+        if 'action' in formdata.keys():
             action = formdata['action'].value
 
     req.content_type = 'text/html'
@@ -522,22 +522,22 @@ def staff_access(req, things):
     try:
         session = sessionfactory()
         thisuser = userfromcookie(session, req)
-        if(thisuser is None or thisuser.superuser != True):
+        if thisuser is None or thisuser.superuser != True:
             req.write("<p>You don't appear to be logged in as a superuser. Sorry.</p>")
             req.write('</body></html>')
             return apache.OK
 
         # If we got an action, do it
-        if(username):
+        if username:
             query = session.query(User).filter(User.username == username)
             user = query.first()
-            if(user is None):
+            if user is None:
                 req.write("<p>Could not locate user in database</p>")
-            elif(action == "Grant"):
+            elif action == "Grant":
                 req.write("<p>Granting staff access for username: %s - %s - %s</p>" % (user.username, user.fullname, user.email))
                 user.gemini_staff = True
                 session.commit()
-            elif(action == "Revoke"):
+            elif action == "Revoke":
                 req.write("<p>Revoking staff access for username: %s - %s - %s</p>" % (user.username, user.fullname, user.email))
                 user.gemini_staff = False
                 session.commit()
@@ -553,7 +553,7 @@ def staff_access(req, things):
     req.write('<TR class=tr_head><TH>Username</TH><TH>Full Name</TH><TH>Email</TH><TH>Staff Access</TH><TH>Superuser</TH><TR>')
     for user in staff_users:
         even = not even
-        if(even):
+        if even:
             row_class = "tr_even"
         else:
             row_class = "tr_odd"
@@ -586,17 +586,17 @@ def login(req, things):
     cookie = None
 
     # Rebuild the thing_string for the url
-    if(things):
+    if things:
         thing_string = '/' + '/'.join(things)
     else:
         thing_string = ''
 
     # Parse the form data here
-    if(len(formdata.keys()) > 0):
+    if len(formdata.keys()) > 0:
         request_attempted = True
-        if('username' in formdata.keys()):
+        if 'username' in formdata.keys():
             username = formdata['username'].value
-        if('password' in formdata.keys()):
+        if 'password' in formdata.keys():
             password = formdata['password'].value
 
         # Validate
@@ -605,7 +605,7 @@ def login(req, things):
             reason_bad = "No Username supplied"
         elif password == '':
             reason_bad = "No Password supplied"
-        elif (not username_inuse(username)):
+        elif not username_inuse(username):
             reason_bad = "Username / password not valid"
         else:
             # Find the user and check if the password is valid
@@ -613,7 +613,7 @@ def login(req, things):
                 session = sessionfactory()
                 query = session.query(User).filter(User.username == username)
                 user = query.one()
-                if(user.validate_password(password)):
+                if user.validate_password(password):
                     # Sucessfull login
                     cookie = user.log_in()
                     valid_request = True
@@ -624,16 +624,16 @@ def login(req, things):
                 session.close()
 
     req.content_type = "text/html"
-    if(valid_request):
+    if valid_request:
         # Cookie expires in 1 year
-        cookie_obj = Cookie.Cookie('gemini_archive_session', cookie, expires = time.time()+31536000, path = "/")
+        cookie_obj = Cookie.Cookie('gemini_archive_session', cookie, expires=time.time()+31536000, path="/")
         Cookie.add_cookie(req, cookie_obj)
 
     req.write("<html><head><title>Gemini Archive log in</title></head><body>")
 
-    if(valid_request):
+    if valid_request:
         req.write('<P>Welcome, you are sucessfully logged in to the Gemini Archive.</P>')
-        if(things):
+        if things:
             url = "/searchform"
             for thing in things:
                 url += "/%s" % thing
@@ -645,7 +645,7 @@ def login(req, things):
         req.write('</body></html>')
         return apache.OK
 
-    if(request_attempted):
+    if request_attempted:
         req.write('<P>Log-in did not suceed: %s. Please try again.</P>' % reason_bad)
 
     req.write('<FORM action="/login%s" method="POST">' % thing_string)
@@ -668,28 +668,28 @@ def logout(req):
     # Do we have a session cookie?
     cookie = None
     cookies = Cookie.get_cookies(req)
-    if(cookies.has_key('gemini_archive_session')):
+    if cookies.has_key('gemini_archive_session'):
         cookie = cookies['gemini_archive_session'].value
 
-    if(cookie):
+    if cookie:
         # Find the user that we are
         try:
             session = sessionfactory()
             query = session.query(User).filter(User.cookie == cookie)
             users = query.all()
-            if(len(users) == 0):
-                # We weren't really logged in. 
+            if len(users) == 0:
+                # We weren't really logged in.
                 pass
-            elif(len(users) > 1):
+            elif len(users) > 1:
                 # Eeek, multiple users with the same session cookie!?!?!
                 req.log_error("Logout - Multiple Users with same session cookie: %s" % cookie)
             for user in users:
-                user.log_out_all() 
+                user.log_out_all()
                 session.commit()
         finally:
             session.close()
 
-        Cookie.add_cookie(req, 'gemini_archive_session', '', expires = time.time())
+        Cookie.add_cookie(req, 'gemini_archive_session', '', expires=time.time())
     req.content_type = "text/html"
     req.write("<html><head><title>Gemini Archive log out</title></head><body>")
     req.write('<P>You are sucessfully logged out of the Gemini Archive.</P>')
@@ -714,19 +714,19 @@ def whoami(req, things):
     finally:
         session.close()
 
-    if(user is not None):
+    if user is not None:
         username = user.username
         fullname = user.fullname
 
-    # Construct the "things" part of the URL for the link that want to be able to 
+    # Construct the "things" part of the URL for the link that want to be able to
     # take you back to the same form contents
-    if(len(things)):
+    if len(things):
         thing_string = '/' + '/'.join(things)
     else:
         thing_string = ''
 
     req.write('<span id="whoami">')
-    if(username):
+    if username:
         # Unicode &#x1f464 is preferable to the user icon, if only browsers supported it (mid 2014)
         req.write('<img src="/htmldocs/user1-64x64.png" height="18px"> %s &#9662' % username)
         req.write('<ul class="whoami">')
@@ -759,7 +759,7 @@ def user_list(req):
     try:
         session = sessionfactory()
         thisuser = userfromcookie(session, req)
-        if(thisuser is None or thisuser.gemini_staff != True):
+        if thisuser is None or thisuser.gemini_staff != True:
             req.write("<p>You don't appear to be logged in as a Gemini Staff user. Sorry.</p>")
             req.write('</body></html>')
             return apache.OK
@@ -774,7 +774,7 @@ def user_list(req):
     req.write('<TR class=tr_head><TH>Username</TH><TH>Full Name</TH><TH>Email</TH><TH>Password</TH><TH>Staff Access</TH><TH>Superuser</TH><TH>Reset Requested</TH><TH>Reset Active</TH><TH>Account Create</TH><TH>Last Password Change</TH><TR>')
     for user in users:
         even = not even
-        if(even):
+        if even:
             row_class = "tr_even"
         else:
             row_class = "tr_odd"
@@ -788,8 +788,6 @@ def user_list(req):
 
     return apache.OK
 
-    
-
 
 def email_inuse(email):
     """
@@ -800,7 +798,7 @@ def email_inuse(email):
         query = session.query(User).filter(User.email == email)
         num = query.count()
 
-        if(num == 0):
+        if num == 0:
             return False
         else:
             return True
@@ -816,7 +814,7 @@ def username_inuse(username):
         query = session.query(User).filter(User.username == username)
         num = query.count()
 
-        if(num == 0):
+        if num == 0:
             return False
         else:
             return True
@@ -831,13 +829,13 @@ def bad_password(candidate):
     Checks candidate for compliance with password rules.
     Returns True if it is bad, False if it is good
     """
-    if(len(candidate) < 8):
+    if len(candidate) < 8:
         return True
-    elif(not bool(digits_cre.search(candidate))):
+    elif not bool(digits_cre.search(candidate)):
         return True
-    elif(not bool(lower_cre.search(candidate))):
+    elif not bool(lower_cre.search(candidate)):
         return True
-    elif(not bool(upper_cre.search(candidate))):
+    elif not bool(upper_cre.search(candidate)):
         return True
     else:
         return False
@@ -852,7 +850,7 @@ def userfromcookie(session, req):
     # Do we have a session cookie?
     cookie = None
     cookies = Cookie.get_cookies(req)
-    if(cookies.has_key('gemini_archive_session')):
+    if cookies.has_key('gemini_archive_session'):
         cookie = cookies['gemini_archive_session'].value
     else:
         # No session cookie, not logged in
@@ -861,7 +859,7 @@ def userfromcookie(session, req):
     # Find the user that we are
     query = session.query(User).filter(User.cookie == cookie)
     user = query.first()
-    if(user is None):
+    if user is None:
         # This is not a valid session cookie
         return None
     else:
