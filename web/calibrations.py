@@ -1,5 +1,5 @@
 """
-This module contains the calibrations html generator function. 
+This module contains the calibrations html generator function.
 """
 import datetime
 from orm import sessionfactory
@@ -34,7 +34,7 @@ def calibrations(req, selection):
     req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
     req.write("</head>\n")
     req.write("<body>")
-    if (fits_system_status == "development"):
+    if fits_system_status == "development":
         req.write('<h1>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h1>')
     req.write("<H1>%s</H1>" % (title))
 
@@ -50,7 +50,7 @@ def calibrations(req, selection):
         query = queryselection(query, selection)
 
         # Knock out the FAILs
-        query = query.filter(Header.qa_state!='Fail')
+        query = query.filter(Header.qa_state != 'Fail')
 
         # Knock out ENG programs
         query = query.filter(~Header.program_id.like('%ENG%'))
@@ -62,7 +62,7 @@ def calibrations(req, selection):
         query = query.order_by(desc(Header.ut_datetime))
 
         # If openquery, limit number of responses
-        if(openquery(selection)):
+        if openquery(selection):
             query = query.limit(1000)
 
         # OK, do the query
@@ -73,7 +73,7 @@ def calibrations(req, selection):
 
         # Was the request for only one type of calibration?
         caltype = 'all'
-        if('caltype' in selection):
+        if 'caltype' in selection:
             caltype = selection['caltype']
 
         warnings = 0
@@ -87,23 +87,24 @@ def calibrations(req, selection):
             requires = False
             oldarc = None
 
-            html += '<H3><a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H3>' % (object.diskfile.file.name, object.diskfile.file.name, object.data_label, object.data_label)
+            html += '<H3><a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H3>' % (
+                        object.diskfile.file.name, object.diskfile.file.name, object.data_label, object.data_label)
 
             c = get_cal_object(session, None, header=object)
-            if('arc' in c.required and (caltype == 'all' or caltype == 'arc')):
+            if 'arc' in c.required and (caltype == 'all' or caltype == 'arc'):
                 requires = True
 
                 # Look for an arc in the same program
                 arc = c.arc(sameprog=True)
 
-                if(arc):
-                    html += '<H4>ARC: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (arc.diskfile.file.name, arc.diskfile.file.name, arc.data_label, arc.data_label)
-                    if(arc.ut_datetime and object.ut_datetime):
+                if arc:
+                    html += '<H4>ARC: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
+                                arc.diskfile.file.name, arc.diskfile.file.name, arc.data_label, arc.data_label)
+                    if arc.ut_datetime and object.ut_datetime:
                         html += "<P>arc was taken %s object</P>" % interval_string(arc, object)
-                        if(abs(interval_hours(arc, object)) > 24):
+                        if abs(interval_hours(arc, object)) > 24:
                             html += '<P><FONT COLOR="Red">WARNING - this is more than 1 day different</FONT></P>'
                             warning = True
-                            arc_a = arc.id
                     else:
                         html += '<P><FONT COLOR="Red">Hmmm, could not determine time delta...</FONT></P>'
                         warning = True
@@ -115,47 +116,48 @@ def calibrations(req, selection):
 
                 # If we didn't find one in the same program or we did, but with warnings,
                 # Re-do the search accross all program IDs
-                if(warning):
+                if warning:
                     oldarc = arc
                     arc = c.arc()
                     # If we find a different one
-                    if(arc and oldarc and (arc.id != oldarc.id)):
+                    if arc and oldarc and (arc.id != oldarc.id):
                         missing = False
-                        html += '<H4>ARC: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (arc.diskfile.file.name, arc.diskfile.file.name, arc.data_label, arc.data_label)
-                        if(arc.ut_datetime and object.ut_datetime):
+                        html += '<H4>ARC: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
+                                        arc.diskfile.file.name, arc.diskfile.file.name, arc.data_label, arc.data_label)
+                        if arc.ut_datetime and object.ut_datetime:
                             html += "<P>arc was taken %s object</P>" % interval_string(arc, object)
-                            if(abs(interval_hours(arc, object)) > 24):
+                            if abs(interval_hours(arc, object) > 24):
                                 html += '<P><FONT COLOR="Red">WARNING - this is more than 1 day different</FONT></P>'
                                 warning = True
                         else:
                             html += '<P><FONT COLOR="Red">Hmmm, could not determine time delta...</FONT></P>'
                             warning = True
-                        if(arc.program_id != object.program_id):
+                        if arc.program_id != object.program_id:
                             html += '<P><FONT COLOR="Red">WARNING: ARC and OBJECT come from different project IDs.</FONT></P>'
                             warning = True
 
                 # Handle the 'takenow' flag. This should get set to true if
-                # no arc exists or 
+                # no arc exists or
                 # all the arcs generate warnings, and
-                # the time difference between 'now' and the science frame is 
+                # the time difference between 'now' and the science frame is
                 # less than the time difference between the science frame and the closest
                 # arc to it that we currently have
-                if(missing):
+                if missing:
                     takenow = True
-                if(warning):
+                if warning:
                     # Is it worth re-taking?
                     # Find the smallest interval between a valid arc and the science
                     oldinterval = None
                     newinterval = None
                     smallestinterval = None
-                    if (oldarc):
+                    if oldarc:
                         oldinterval = abs(interval_hours(oldarc, object))
                         smallestinterval = oldinterval
-                    if (arc):
+                    if arc:
                         newinterval = abs(interval_hours(arc, object))
                         smallestinterval = newinterval
-                    if (oldinterval and newinterval):
-                        if (oldinterval > newinterval):
+                    if oldinterval and newinterval:
+                        if oldinterval > newinterval:
                             smallestinterval = newinterval
                         else:
                             smallestinterval = oldinterval
@@ -164,21 +166,22 @@ def calibrations(req, selection):
                     then = object.ut_datetime
                     nowinterval = now - then
                     nowhours = (nowinterval.days * 24.0) + (nowinterval.seconds / 3600.0)
-                    if(smallestinterval > nowhours):
+                    if smallestinterval > nowhours:
                         takenow = True
 
-            if('dark' in c.required and (caltype == 'all' or caltype == 'dark')):
+            if 'dark' in c.required and (caltype == 'all' or caltype == 'dark'):
                 requires = True
                 dark = c.dark()
-                if(dark):
-                    html += '<H4>DARK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (dark.diskfile.file.name, dark.diskfile.file.name, dark.data_label, dark.data_label)
-                    if(dark.ut_datetime and object.ut_datetime):
+                if dark:
+                    html += '<H4>DARK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
+                                dark.diskfile.file.name, dark.diskfile.file.name, dark.data_label, dark.data_label)
+                    if dark.ut_datetime and object.ut_datetime:
                         html += "<P>dark was taken %s object</P>" % interval_string(dark, object)
                         # GMOS darks can be up to 6 months away, others regular 5 day warning
                         hours_warn = 120
-                        if(c.header.instrument in ['GMOS-N', 'GMOS-S']):
+                        if c.header.instrument in ['GMOS-N', 'GMOS-S']:
                             hours_warn = 4320
-                        if(abs(interval_hours(dark, object)) > hours_warn):
+                        if abs(interval_hours(dark, object)) > hours_warn:
                             html += '<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>'
                             warning = True
                 else:
@@ -186,26 +189,28 @@ def calibrations(req, selection):
                     warning = True
                     missing = True
 
-            if('bias' in c.required and (caltype=='all' or caltype=='bias')):
+            if 'bias' in c.required and (caltype == 'all' or caltype == 'bias'):
                 requires = True
                 bias = c.bias()
-                if(bias):
-                    html += '<H4>BIAS: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (bias.diskfile.file.name, bias.diskfile.file.name, bias.data_label, bias.data_label)
+                if bias:
+                    html += '<H4>BIAS: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
+                                bias.diskfile.file.name, bias.diskfile.file.name, bias.data_label, bias.data_label)
                 else:
                     html += '<H3><FONT COLOR="Red">NO BIAS FOUND!</FONT></H3>'
                     warning = True
                     missing = True
 
-            if('flat' in c.required and (caltype=='all' or caltype=='flat')):
+            if 'flat' in c.required and (caltype == 'all' or caltype == 'flat'):
                 requires = True
                 flat = c.flat()
-                if(flat):
-                    html += '<H4>FLAT: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (flat.diskfile.file.name, flat.diskfile.file.name, flat.data_label, flat.data_label)
+                if flat:
+                    html += '<H4>FLAT: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
+                                flat.diskfile.file.name, flat.diskfile.file.name, flat.data_label, flat.data_label)
                 else:
                     html += '<H3><FONT COLOR="Red">NO FLAT FOUND!</FONT></H3>'
                     warning = True
                     missing = True
-            
+
             # For now (March 2013) we don't want the SOS calibrations page to whine about processed cals at all.
             #if('processed_bias' in c.required and (caltype=='all' or caltype=='processed_bias')):
                 #requires=True
@@ -216,7 +221,7 @@ def calibrations(req, selection):
                     #html += '<H3><FONT COLOR="Red">NO PROCESSED_BIAS FOUND!</FONT></H3>'
                     #warning = True
                     #missing = True
-    
+
             #if('processed_flat' in c.required and (caltype=='all' or caltype=='processed_flat')):
                 #requires=True
                 #processed_flat = c.flat(processed=True)
@@ -231,55 +236,60 @@ def calibrations(req, selection):
                 #requires=True
                 #processed_fringe = c.processed_fringe()
                 #if(processed_fringe):
-                    #html += "<H4>PROCESSED_FRINGE: %s - %s</H4>" % (processed_fringe.diskfile.file.name, processed_fringe.data_label)
+                    #html += "<H4>PROCESSED_FRINGE: %s - %s</H4>" % (
+                                #processed_fringe.diskfile.file.name, processed_fringe.data_label)
                 #else:
                     #html += '<H3><FONT COLOR="Red">NO PROCESSED_FRINGE FOUND!</FONT></H3>'
                     #warning = True
                     #missing = True
 
-            if('pinhole_mask' in c.required and (caltype=='all' or caltype=='pinhole_mask')):
+            if 'pinhole_mask' in c.required and (caltype == 'all' or caltype == 'pinhole_mask'):
                 requires = True
                 pinhole_mask = c.pinhole_mask()
-                if(pinhole_mask):
-                    html += '<H4>PINHOLE_MASK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (pinhole_mask.diskfile.file.name, pinhole_mask.diskfile.file.name, pinhole_mask.data_label, pinhole_mask.data_label)
+                if pinhole_mask:
+                    html += '<H4>PINHOLE_MASK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
+                                pinhole_mask.diskfile.file.name, pinhole_mask.diskfile.file.name,
+                                pinhole_mask.data_label, pinhole_mask.data_label)
                 else:
                     html += '<H3><FONT COLOR="Red">NO PINHOLE_MASK FOUND!</FONT></H3>'
                     warning = True
                     missing = True
 
-            if('ronchi_mask' in c.required and (caltype == 'all' or caltype == 'ronchi_mask')):
+            if 'ronchi_mask' in c.required and (caltype == 'all' or caltype == 'ronchi_mask'):
                 requires = True
                 ronchi_mask = c.ronchi_mask()
-                if(ronchi_mask):
-                    html += '<H4>RONCHI_MASK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (ronchi_mask.diskfile.file.name, ronchi_mask.diskfile.file.name, ronchi_mask.data_label, ronchi_mask.data_label)
+                if ronchi_mask:
+                    html += '<H4>RONCHI_MASK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
+                                ronchi_mask.diskfile.file.name, ronchi_mask.diskfile.file.name,
+                                ronchi_mask.data_label, ronchi_mask.data_label)
                 else:
                     html += '<H3><FONT COLOR="Red">NO RONCHI_MASK FOUND!</FONT></H3>'
                     warning = True
                     missing = True
 
             html += "<HR>"
-     
+
             caloption = None
-            if('caloption' in selection):
+            if 'caloption' in selection:
                 caloption = selection['caloption']
 
-            if(caloption == 'warnings'):
-                if(warning):
+            if caloption == 'warnings':
+                if warning:
                     req.write(html)
-            elif(caloption == 'missing'):
-                if(missing):
+            elif caloption == 'missing':
+                if missing:
                     req.write(html)
-            elif(caloption == 'requires'):
-                if(requires):
+            elif caloption == 'requires':
+                if requires:
                     req.write(html)
-            elif(caloption == 'takenow'):
-                if(takenow):
+            elif caloption == 'takenow':
+                if takenow:
                     req.write(html)
             else:
                 req.write(html)
-            if(warning):
+            if warning:
                 warnings += 1
-            if(missing):
+            if missing:
                 missings += 1
 
         req.write("<HR>")
@@ -302,15 +312,15 @@ def interval_string(a, b):
     word = "after"
     unit = "hours"
 
-    if(t < 0.0):
+    if t < 0.0:
         word = "before"
         t *= -1.0
 
-    if(t > 48.0):
+    if t > 48.0:
         t /= 24.0
         unit = "days"
 
-    if(t < 1.0):
+    if t < 1.0:
         t *= 60
         unit = "minutes"
 
