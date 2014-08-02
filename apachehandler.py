@@ -381,7 +381,7 @@ def handler(req):
     if(this == "notification"):
         if(this in blocked_urls):
             return apache.HTTP_FORBIDDEN
-        return notification(req, things)
+        return notification(req)
 
     # curation_report handler
     if(this == "curation"):

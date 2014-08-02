@@ -1,12 +1,12 @@
 """
-This module contains the notification html generator function. 
+This module contains the notification html generator function.
 """
 from orm import sessionfactory
 from orm.notification import Notification
 
 from mod_python import apache, util
 
-def notification(req, things):
+def notification(req):
     """
     This is the email notifications page. It's both to show the current notifcation list and to update it.
     """
@@ -25,32 +25,32 @@ def notification(req, things):
         # req.write(str(formdata))
         for key in formdata.keys():
             field = key.split('-')[0]
-            id = int(key.split('-')[1])
+            nid = int(key.split('-')[1])
             value = formdata[key].value
-            if(id):
+            if nid:
                 #debug print:
                 #req.write("<H1>id=%d, field=%s. value=%s</H1>" % (id, field, value))
-                notif = session.query(Notification).filter(Notification.id == id).first()
-                if(field == 'delete' and value == 'Yes'):
+                notif = session.query(Notification).filter(Notification.id == nid).first()
+                if field == 'delete' and value == 'Yes':
                     session.delete(notif)
                     session.commit()
                     break
                 else:
-                    if(field == 'newlabel'):
+                    if field == 'newlabel':
                         notif.label = value
-                    if(field == 'newsel'):
+                    if field == 'newsel':
                         notif.selection = value
-                    if(field == 'newto'):
+                    if field == 'newto':
                         notif.to = value
-                    if(field == 'newcc'):
+                    if field == 'newcc':
                         notif.cc = value
-                    if(field == 'internal'):
-                        if(value == 'Yes'):
+                    if field == 'internal':
+                        if value == 'Yes':
                             notif.internal = True
-                        if(value == 'No'):
+                        if value == 'No':
                             notif.internal = False
-     
-            if(field == 'newone'):
+
+            if field == 'newone':
                 # Add a new notification to the database
                 notif = Notification(value)
                 session.add(notif)
@@ -59,9 +59,9 @@ def notification(req, things):
 
         # Get a list of the notifications in the table
         query = session.query(Notification).order_by(Notification.id)
-        list = query.all()
+        notifs = query.all()
 
-        for notif in list:
+        for notif in notifs:
             req.write("<H2>Notification ID: %d - %s</H2>" % (notif.id, notif.label))
             req.write("<UL>")
             req.write("<LI>Data Selection: %s</LI>" % notif.selection)
@@ -74,21 +74,26 @@ def notification(req, things):
             req.write('<FORM action="/notification" method="post">')
             req.write('<TABLE>')
 
-            mod_list = [['newlabel', 'Update notification label'], ['newsel', 'Update data selection'], ['newto', 'Update Email To'], ['newcc', 'Update Email Cc'], ['internal', 'Internal Email'], ['delete', 'Delete']]
+            mod_list = [['newlabel', 'Update notification label'],
+                        ['newsel', 'Update data selection'],
+                        ['newto', 'Update Email To'],
+                        ['newcc', 'Update Email Cc'],
+                        ['internal', 'Internal Email'],
+                        ['delete', 'Delete']]
             for key in range(len(mod_list)):
                 user = mod_list[key][0]+"-%d" % notif.id
                 req.write('<TR>')
                 req.write('<TD><LABEL for="%s">%s:</LABEL></TD>' % (user, mod_list[key][1]))
-                if (mod_list[key][0] == 'internal'):
+                if mod_list[key][0] == 'internal':
                     yeschecked = ""
                     nochecked = ""
-                    if (notif.internal):
+                    if notif.internal:
                         yeschecked = "checked"
                     else:
                         nochecked = " checked"
                     req.write('<TD><INPUT type="radio" name="%s" value="Yes" %s>Yes</INPUT> ' % (user, yeschecked))
                     req.write('<INPUT type="radio" name="%s" value="No" %s>No</INPUT></TD>' % (user, nochecked))
-                elif (mod_list[key][0] == 'delete'):
+                elif mod_list[key][0] == 'delete':
                     yeschecked = ""
                     nochecked = "checked"
                     req.write('<TD><INPUT type="radio" name="%s" value="Yes" %s>Yes</INPUT> ' % (user, yeschecked))
@@ -114,5 +119,3 @@ def notification(req, things):
         pass
     finally:
         session.close()
-
-
