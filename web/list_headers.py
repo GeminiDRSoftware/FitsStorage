@@ -29,7 +29,8 @@ def list_headers(session, selection, orderby):
 
     # Do we have any order by arguments?
 
-    whichorderby = ['instrument', 'data_label', 'observation_class', 'airmass', 'ut_datetime', 'local_time', 'raw_iq', 'raw_cc', 'raw_bg', 'raw_wv', 'qa_state', 'filter_name', 'exposure_time', 'object']
+    whichorderby = ['instrument', 'data_label', 'observation_class', 'airmass', 'ut_datetime', 'local_time',
+                        'raw_iq', 'raw_cc', 'raw_bg', 'raw_wv', 'qa_state', 'filter_name', 'exposure_time', 'object']
     if orderby:
         for i in range(len(orderby)):
             if '_desc' in orderby[i]:
