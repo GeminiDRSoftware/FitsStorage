@@ -37,8 +37,10 @@ def add_to_exportqueue(session, filename, path, destination):
     """
     logger.info("Adding file %s to %s to exportqueue" % (filename, destination))
     eq = ExportQueue(filename, path, destination)
+    logger.debug("Instantiated ExportQueue object")
     session.add(eq)
     session.commit()
+    logger.debug("Added to database")
     try:
         logger.debug("Added id %d for filename %s to exportqueue" % (eq.id, eq.filename))
         return eq.id
