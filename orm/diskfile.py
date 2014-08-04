@@ -65,16 +65,16 @@ class DiskFile(Base):
         self.file_size = self.get_file_size()
         self.file_md5 = self.get_file_md5()
         self.lastmod = self.get_lastmod()
-        if(gzipped==True or given_filename.endswith(".gz")):
+        if gzipped == True or given_filename.endswith(".gz"):
             self.gzipped = True
             # Create the uncompressed cache filename and unzip to it
             try:
-                if(given_filename.endswith(".gz")):
+                if given_filename.endswith(".gz"):
                     nongzfilename = given_filename[:-3]
                 else:
-                    nongzfilename = gived_filename + "_gunzipped"
+                    nongzfilename = given_filename + "_gunzipped"
                 self.uncompressed_cache_file = os.path.join(gz_staging_area, nongzfilename)
-                if(os.path.exists(self.uncompressed_cache_file)):
+                if os.path.exists(self.uncompressed_cache_file):
                     os.unlink(self.uncompressed_cache_file)
                 in_file = gzip.GzipFile(self.fullpath(), mode='rb')
                 out_file = open(self.uncompressed_cache_file, 'w')
@@ -85,7 +85,7 @@ class DiskFile(Base):
                 # Failed to create the unzipped cache file
                 self.uncompressed_cache_file = None
                 raise
-     
+
             self.data_md5 = self.get_data_md5()
             self.data_size = self.get_data_size()
         else:
@@ -102,26 +102,26 @@ class DiskFile(Base):
     def exists(self):
         exists = os.access(self.fullpath(), os.F_OK | os.R_OK)
         isfile = os.path.isfile(self.fullpath())
-        return (exists and isfile)
+        return exists and isfile
 
     def get_file_md5(self):
         return md5sum(self.fullpath())
 
     def get_data_md5(self):
-        if(self.gzipped == False):
-            return self.file_md5()
+        if self.gzipped == False:
+            return self.file_md5
         else:
-            if(self.uncompressed_cache_file):
+            if self.uncompressed_cache_file:
                 return md5sum(self.uncompressed_cache_file)
             else:
                 (u_md5, u_size) = md5sum_size_gz(self.fullpath())
                 return u_md5
 
     def get_data_size(self):
-        if(self.gzipped == False):
+        if self.gzipped == False:
             return self.file_size()
         else:
-            if(self.uncompressed_cache_file):
+            if self.uncompressed_cache_file:
                 return os.path.getsize(self.uncompressed_cache_file)
             else:
                 (u_md5, u_size) = md5sum_size_gz(self.fullpath())
