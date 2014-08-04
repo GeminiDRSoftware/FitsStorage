@@ -26,11 +26,11 @@ class FullTextHeader(Base):
         """
         # The fulltextheader object is unusual in that we directly pass the constructor a diskfile
         # object which may have an ad_object in it.
-        if(diskfile.ad_object is not None):
+        if diskfile.ad_object is not None:
             ad = diskfile.ad_object
             local_ad = False
         else:
-            if(diskfile.uncompressed_cache_file):
+            if diskfile.uncompressed_cache_file:
                 fullpath = diskfile.uncompressed_cache_file
             else:
                 fullpath = diskfile.fullpath()
@@ -45,5 +45,5 @@ class FullTextHeader(Base):
             self.fulltext += unicode(repr(ad.hdulist[i].header), errors='replace')
             self.fulltext += '\n'
 
-        if(local_ad):
+        if local_ad:
             ad.close()

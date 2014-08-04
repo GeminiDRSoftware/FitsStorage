@@ -83,22 +83,22 @@ class Header(Base):
 
         # The header object is unusual in that we directly pass the constructor a diskfile
         # object which may have an ad_object in it.
-        if(diskfile.ad_object is not None):
+        if diskfile.ad_object is not None:
             ad = diskfile.ad_object
             local_ad = False
         else:
-            if(diskfile.uncompressed_cache_file):
+            if diskfile.uncompressed_cache_file:
                 fullpath = diskfile.uncompressed_cache_file
             else:
                 fullpath = diskfile.fullpath()
             ad = AstroData(fullpath, mode='readonly')
             local_ad = True
-    
+
         try:
             # Basic data identification section
             # Parse Program ID
             self.program_id = ad.program_id().for_db()
-            if(self.program_id is not None):
+            if self.program_id is not None:
                 # Ensure upper case
                 self.program_id = self.program_id.upper()
                 # Set eng and sv booleans
@@ -110,12 +110,12 @@ class Header(Base):
                 self.engineering = True
 
             self.observation_id = ad.observation_id().for_db()
-            if(self.observation_id is not None):
+            if self.observation_id is not None:
                 # Ensure upper case
                 self.observation_id = self.observation_id.upper()
 
             self.data_label = ad.data_label().for_db()
-            if(self.data_label is not None):
+            if self.data_label is not None:
                 # Ensure upper case
                 self.data_label = self.data_label.upper()
 
@@ -128,15 +128,15 @@ class Header(Base):
 
             # Data Types
             self.observation_type = ad.observation_type().for_db()
-            if('GNIRS_PINHOLE' in ad.types):
+            if 'GNIRS_PINHOLE' in ad.types:
                 self.observation_type = 'PINHOLE'
-            if('NIFS_RONCHI' in ad.types):
+            if 'NIFS_RONCHI' in ad.types:
                 self.observation_type = 'RONCHI'
             self.observation_class = ad.observation_class().for_db()
             self.object = ad.object().for_db()
 
             # RA and Dec are not valid for AZEL_TARGET frames
-            if('AZEL_TARGET' not in ad.types):
+            if 'AZEL_TARGET' not in ad.types:
                 self.ra = ad.ra().for_db()
                 self.dec = ad.dec().for_db()
 
@@ -155,26 +155,26 @@ class Header(Base):
 
             # Knock illegal characters out of filter names. eg NICI %s. Spaces to underscores.
             filter_string = ad.filter_name(pretty=True).for_db()
-            if(filter_string):
+            if filter_string:
                 self.filter_name = filter_string.replace('%', '').replace(' ', '_')
 
             # NICI exposure times are a pain, because there's two of them... Not sure how to handle this for now.
-            if(self.instrument != 'NICI'):
+            if self.instrument != 'NICI':
                 self.exposure_time = ad.exposure_time().for_db()
 
             # Need to remove invalid characters in disperser names, eg gnirs has slashes
             disperser_string = ad.disperser(pretty=True).for_db()
-            if(disperser_string):
+            if disperser_string:
                 self.disperser = disperser_string.replace('/', '_')
 
             self.camera = ad.camera(pretty=True).for_db()
-            if('SPECT' in ad.types):
+            if 'SPECT' in ad.types:
                 self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
             self.wavelength_band = ad.wavelength_band().for_db()
             self.focal_plane_mask = ad.focal_plane_mask(pretty=True).for_db()
             dvx = ad.detector_x_bin()
             dvy = ad.detector_y_bin()
-            if((not dvx.is_none()) and (not dvy.is_none())):
+            if (not dvx.is_none()) and (not dvy.is_none()):
                 self.detector_binning = "%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
 
             gainsetting = str(ad.gain_setting()).replace(' ', '_')
@@ -211,14 +211,14 @@ class Header(Base):
 
             # And the Spectroscopy and mode items
             self.spectroscopy = False
-            if('SPECT' in ad.types):
+            if 'SPECT' in ad.types:
                 self.spectroscopy = True
                 self.mode = 'spectroscopy'
-                if('IFU' in ad.types):
+                if 'IFU' in ad.types:
                     self.mode = 'IFS'
-                if('MOS' in ad.types):
+                if 'MOS' in ad.types:
                     self.mode = 'MOS'
-                if('LS' in ad.types):
+                if 'LS' in ad.types:
                     self.mode = 'LS'
             else:
                 self.spectroscopy = False
@@ -234,7 +234,7 @@ class Header(Base):
             # Set the release date
             try:
                 reldatestring = ad.phu_get_key_value('RELEASE')
-                if(reldatestring):
+                if reldatestring:
                     reldts = "%s 00:00:00" % reldatestring
                     self.release = dateutil.parser.parse(reldts).date()
             except:
@@ -248,36 +248,36 @@ class Header(Base):
             # Note - these are in order - a processed_flat will have
             # both PREPARED and PROCESSED_FLAT in it's types.
             # Here, ensure "highest" value wins.
-            if('PREPARED' in ad.types):
+            if 'PREPARED' in ad.types:
                 self.reduction = 'PREPARED'
-            if('PROCESSED_FLAT' in ad.types):
+            if 'PROCESSED_FLAT' in ad.types:
                 self.reduction = 'PROCESSED_FLAT'
-            if('PROCESSED_BIAS' in ad.types):
+            if 'PROCESSED_BIAS' in ad.types:
                 self.reduction = 'PROCESSED_BIAS'
-            if('PROCESSED_FRINGE' in ad.types):
+            if 'PROCESSED_FRINGE' in ad.types:
                 self.reduction = 'PROCESSED_FRINGE'
-            if('PROCESSED_DARK' in ad.types):
+            if 'PROCESSED_DARK' in ad.types:
                 self.reduction = 'PROCESSED_DARK'
-            if('PROCESSED_ARC' in ad.types):
+            if 'PROCESSED_ARC' in ad.types:
                 self.reduction = 'PROCESSED_ARC'
 
             # Get the types list
             self.types = str(ad.types)
 
         except:
-            # Something failed accessing the astrodata 
+            # Something failed accessing the astrodata
             raise
 
         finally:
-            if(local_ad):
+            if local_ad:
                 ad.close()
 
     def footprints(self, ad):
         retary = {}
-        # Horrible hack - GNIRS etc has the WCS in the PHU
-        if(('GNIRS' in ad.types) or ('MICHELLE' in ad.types) or ('NIFS' in ad.types)):
+        # Horrible hack - GNIRS etc has the WCS for the extension in the PHU!
+        if ('GNIRS' in ad.types) or ('MICHELLE' in ad.types) or ('NIFS' in ad.types):
             # If we're not in an RA/Dec TANgent frame, don't even bother
-            if((ad.phu_get_key_value('CTYPE1') == 'RA---TAN') and (ad.phu_get_key_value('CTYPE2') == 'DEC--TAN')):
+            if (ad.phu_get_key_value('CTYPE1') == 'RA---TAN') and (ad.phu_get_key_value('CTYPE2') == 'DEC--TAN'):
                 wcs = pywcs.WCS(ad.phu.header)
                 try:
                     fp = wcs.calcFootprint()
@@ -288,7 +288,7 @@ class Header(Base):
         else:
             # If we're not in an RA/Dec TANgent frame, don't even bother
             for i in range(len(ad)):
-                if((ad[i].get_key_value('CTYPE1') == 'RA---TAN') and (ad[i].get_key_value('CTYPE2') == 'DEC--TAN')):
+                if (ad[i].get_key_value('CTYPE1') == 'RA---TAN') and (ad[i].get_key_value('CTYPE2') == 'DEC--TAN'):
                     extension = "%s,%s" % (ad[i].extname(), ad[i].extver())
                     wcs = pywcs.WCS(ad[i].header)
                     try:

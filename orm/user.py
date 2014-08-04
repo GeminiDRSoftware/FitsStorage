@@ -75,13 +75,13 @@ class User(Base):
         Returns False for wrong password
         """
         # If password hasn't been set yet
-        if(self.salt is None or self.password is None):
+        if self.salt is None or self.password is None:
             return False
 
         hashobj = sha256()
         hashobj.update(self.salt)
         hashobj.update(candidate)
-        if (hashobj.hexdigest() == self.password):
+        if hashobj.hexdigest() == self.password:
             return True
         else:
             return False
@@ -106,9 +106,9 @@ class User(Base):
         Don't forget to commit the session after calling this so that a
         sucessfull validation will null the token making it one-time-use
         """
-        if((self.reset_token is None) or (self.reset_token_expires is None)):
+        if (self.reset_token is None) or (self.reset_token_expires is None):
             return False
-        if ((datetime.datetime.utcnow() < self.reset_token_expires) and (candidate == self.reset_token)):
+        if (datetime.datetime.utcnow() < self.reset_token_expires) and (candidate == self.reset_token):
             self.reset_token = None
             self.reset_token_expires = None
             return True
@@ -133,10 +133,10 @@ class User(Base):
         self.reset_token_expires = None
         # Generate a new session cookie only if one doesn't exist
         # (don't want to expire existing sessions just becaue we logged in from a new machine)
-        if(self.cookie is None):
+        if self.cookie is None:
             self.generate_cookie()
         return self.cookie
-   
+
     def log_out_all(self):
         """
         Call this function and commit the session to log out all instances

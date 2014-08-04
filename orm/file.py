@@ -27,7 +27,7 @@ class File(Base):
         Trim any trailing .gz off the filename
         """
         name = filename
-        if(filename.endswith(".gz")):
+        if filename.endswith(".gz"):
             name = filename[:-3]
         return name
 

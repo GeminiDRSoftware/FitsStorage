@@ -4,9 +4,6 @@ from sqlalchemy.orm import relation
 
 from orm.header import Header
 
-from astrodata import Errors
-from astrodata import AstroData
-
 from . import Base
 
 class Gmos(Base):
@@ -50,7 +47,7 @@ class Gmos(Base):
         self.gain_setting = ad.gain_setting().for_db()
         self.focal_plane_mask = ad.focal_plane_mask().for_db()
         self.nodandshuffle = ad.is_type('GMOS_NODANDSHUFFLE')
-        if(self.nodandshuffle):
+        if self.nodandshuffle:
             self.nod_count = ad.nod_count().for_db()
             self.nod_pixels = ad.nod_pixels().for_db()
         self.prepared = ad.is_type('PREPARED')

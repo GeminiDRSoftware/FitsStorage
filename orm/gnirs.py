@@ -4,8 +4,6 @@ from sqlalchemy.orm import relation
 
 from orm.header import Header
 
-from astrodata import AstroData
-
 from . import Base
 
 class Gnirs(Base):
