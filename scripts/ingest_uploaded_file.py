@@ -6,7 +6,7 @@ import datetime
 from orm import sessionfactory
 from fits_storage_config import storage_root, upload_staging_path, processed_cals_path, using_s3
 from logger import logger, setdemon, setdebug
-from utils.add_to_ingestqueue import addto_ingestqueue
+from utils.ingestqueue import add_to_ingestqueue
 
 if(using_s3):
     from fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
@@ -81,7 +81,7 @@ else:
 session = sessionfactory()
 
 logger.info("Queueing for Ingest: %s" % dst)
-addto_ingestqueue(session, options.filename, path)
+add_to_ingestqueue(session, options.filename, path)
 
 session.close()
 logger.info("*** ingest_uploaded_file.py exiting normally at %s" % datetime.datetime.now())
