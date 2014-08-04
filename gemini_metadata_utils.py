@@ -10,18 +10,18 @@ import datetime
 # Also these substrings are used directly by the classes
 
 # This re matches a program id like GN-CAL20091020 with no groups
-calengre = 'G[NS]-(?:(?:CAL)|(?:ENG))20\d\d[01]\d[0123]\d'
+calengre = r'G[NS]-(?:(?:CAL)|(?:ENG))20\d\d[01]\d[0123]\d'
 # This re matches a program id like GN-2009A-Q-23 with no groups
-scire = 'G[NS]-20\d\d[AB]-[A-Z]*-\d*'
+scire = r'G[NS]-20\d\d[AB]-[A-Z]*-\d*'
 
 # This matches a program id
-progre = '(?:^%s$)|(?:^%s$)' % (calengre, scire)
+progre = r'(?:^%s$)|(?:^%s$)' % (calengre, scire)
 
 # This matches an observation id with the project id and obsnum as groups
-obsre = '((?:^%s)|(?:^%s))-(\d*)$' % (calengre, scire)
+obsre = r'((?:^%s)|(?:^%s))-(\d*)$' % (calengre, scire)
 
-gemininorthcre = re.compile('^[Gg][Ee][Mm][Ii][Nn][Ii]-[Nn][Oo][Rr][Tt][Hh]$')
-geminisouthcre = re.compile('^[Gg][Ee][Mm][Ii][Nn][Ii]-[Ss][Oo][Uu][Tt][Hh]$')
+gemininorthcre = re.compile(r'^[Gg][Ee][Mm][Ii][Nn][Ii]-[Nn][Oo][Rr][Tt][Hh]$')
+geminisouthcre = re.compile(r'^[Gg][Ee][Mm][Ii][Nn][Ii]-[Ss][Oo][Uu][Tt][Hh]$')
 def gemini_telescope(string):
     """
     If the string argument matches a gemini telescope name,
@@ -29,91 +29,91 @@ def gemini_telescope(string):
     name of the telesope. Otherwise returns an empty string.
     """
     retary = ''
-    if(gemininorthcre.match(string)):
+    if gemininorthcre.match(string):
         retary = 'Gemini-North'
-    if(geminisouthcre.match(string)):
+    if geminisouthcre.match(string):
         retary = 'Gemini-South'
     return retary
 
 # A utility function for matching instrument names
-niricre = re.compile('^[Nn][Ii][Rr][Ii]$')
-nifscre = re.compile('^[Nn][Ii][Ff][Ss]$')
-gmosncre = re.compile('^[Gg][Mm][Oo][Ss]-[Nn]$')
-gmosscre = re.compile('^[Gg][Mm][Oo][Ss]-[Ss]$')
-gmoscre = re.compile('^[Gg][Mm][Oo][Ss]$')
-michellecre = re.compile('^[Mm][Ii][Cc][Hh][Ee][Ll][Ll][Ee]$')
-gnirscre = re.compile('^[Gg][Nn][Ii][Rr][Ss]$')
-phoenixcre = re.compile('^[Pp][Hh][Oo][Ee][Nn][Ii][Xx]$')
-trecscre = re.compile('^[Tt][Rr][Ee][Cc][Ss]$')
-nicicre = re.compile('^[Nn][Ii][Cc][Ii]$')
-hqcre = re.compile('^[Hh][Oo][Kk][Uu][Pp]([Aa])+(\+)*[Qq][Uu][Ii][Rr][Cc]$')
-gsaoicre = re.compile('^[Gg][Ss][Aa][Oo][Ii]$')
-oscircre = re.compile('^[Oo][Ss][Cc][Ii][Rr]$')
-f2cre = re.compile('^[Ff]2$')
-gpicre = re.compile('^[Gg][Pp][Ii]$')
+niricre = re.compile(r'^[Nn][Ii][Rr][Ii]$')
+nifscre = re.compile(r'^[Nn][Ii][Ff][Ss]$')
+gmosncre = re.compile(r'^[Gg][Mm][Oo][Ss]-[Nn]$')
+gmosscre = re.compile(r'^[Gg][Mm][Oo][Ss]-[Ss]$')
+gmoscre = re.compile(r'^[Gg][Mm][Oo][Ss]$')
+michellecre = re.compile(r'^[Mm][Ii][Cc][Hh][Ee][Ll][Ll][Ee]$')
+gnirscre = re.compile(r'^[Gg][Nn][Ii][Rr][Ss]$')
+phoenixcre = re.compile(r'^[Pp][Hh][Oo][Ee][Nn][Ii][Xx]$')
+trecscre = re.compile(r'^[Tt][Rr][Ee][Cc][Ss]$')
+nicicre = re.compile(r'^[Nn][Ii][Cc][Ii]$')
+hqcre = re.compile(r'^[Hh][Oo][Kk][Uu][Pp]([Aa])+(\+)*[Qq][Uu][Ii][Rr][Cc]$')
+gsaoicre = re.compile(r'^[Gg][Ss][Aa][Oo][Ii]$')
+oscircre = re.compile(r'^[Oo][Ss][Cc][Ii][Rr]$')
+f2cre = re.compile(r'^[Ff]2$')
+gpicre = re.compile(r'^[Gg][Pp][Ii]$')
 
 def gemini_instrument(string, gmos=False):
     """
-    If the string argument matches a gemini instrument name, 
-    then returns the "official" (ie same as in the fits headers) 
+    If the string argument matches a gemini instrument name,
+    then returns the "official" (ie same as in the fits headers)
     name of the instrument. Otherwise returns an empty string.
     If the gmos argument is true, this also recognises GMOS as
     a valid instruemnt name.
     """
     retary = ''
-    if(niricre.match(string)):
+    if niricre.match(string):
         retary = 'NIRI'
-    if(nifscre.match(string)):
+    if nifscre.match(string):
         retary = 'NIFS'
-    if(gmosncre.match(string)):
+    if gmosncre.match(string):
         retary = 'GMOS-N'
-    if(gmosscre.match(string)):
+    if gmosscre.match(string):
         retary = 'GMOS-S'
-    if(michellecre.match(string)):
+    if michellecre.match(string):
         retary = 'michelle'
-    if(gnirscre.match(string)):
+    if gnirscre.match(string):
         retary = 'GNIRS'
-    if(phoenixcre.match(string)):
+    if phoenixcre.match(string):
         retary = 'PHOENIX'
-    if(trecscre.match(string)):
+    if trecscre.match(string):
         retary = 'TReCS'
-    if(nicicre.match(string)):
+    if nicicre.match(string):
         retary = 'NICI'
-    if(hqcre.match(string)):
+    if hqcre.match(string):
         retary = 'Hokupaa+QUIRC'
-    if(gsaoicre.match(string)):
+    if gsaoicre.match(string):
         retary = 'GSAOI'
-    if(oscircre.match(string)):
+    if oscircre.match(string):
         retary = 'oscir'
-    if(f2cre.match(string)):
+    if f2cre.match(string):
         retary = 'F2'
-    if(gpicre.match(string)):
+    if gpicre.match(string):
         retary = 'GPI'
-    if(gmoscre.match(string)):
-        if(gmos):
+    if gmoscre.match(string):
+        if gmos:
             retary = 'GMOS'
     return retary
 
-datecre = re.compile('^[12][90]\d\d[01]\d[0123]\d$')
+datecre = re.compile(r'^[12][90]\d\d[01]\d[0123]\d$')
 def gemini_date(string):
     """
     A utility function for matching dates of the form YYYYMMDD
     also supports today/tonight, yesterday/lastnight
     returns the YYYYMMDD string, or '' if not a date
-    May need modification to make today and yesterday work usefully 
+    May need modification to make today and yesterday work usefully
     for Chile
     """
-    if(datecre.match(string)):
+    if datecre.match(string):
         return string
-    if(string in ['today', 'tonight']):
+    if string in ['today', 'tonight']:
         now = datetime.datetime.utcnow().date()
         return now.strftime('%Y%m%d')
-    if(string in ['yesterday', 'lastnight']):
+    if string in ['yesterday', 'lastnight']:
         then = datetime.datetime.utcnow() - datetime.timedelta(days=1)
         return then.date().strftime('%Y%m%d')
     return ''
 
-racre = re.compile('^([012]\d):([012345]\d):([012345]\d)(\.?\d*)$')
+racre = re.compile(r'^([012]\d):([012345]\d):([012345]\d)(\.?\d*)$')
 def ratodeg(string):
     """
     A utility function that recognises an RA: HH:MM:SS.sss
@@ -125,7 +125,7 @@ def ratodeg(string):
         # Not HH:MM:SS. Maybe it's decimal degrees already
         try:
             value = float(string)
-            if(value <= 360.0 and value >= 0.0):
+            if value <= 360.0 and value >= 0.0:
                 return value
         except:
             return None
@@ -147,7 +147,7 @@ def ratodeg(string):
 
     return degs
 
-deccre = re.compile('^([+-]?)(\d\d):([012345]\d):([012345]\d)(\.?\d*)$')
+deccre = re.compile(r'^([+-]?)(\d\d):([012345]\d):([012345]\d)(\.?\d*)$')
 def dectodeg(string):
     """
     A utility function that recognises a Dec: [+-]DD:MM:SS.sss
@@ -158,13 +158,13 @@ def dectodeg(string):
         # Not DD:MM:SS. Maybe it's decimal degrees already
         try:
             value = float(string)
-            if(value >= -90.0 and value <= 90.0):
+            if value >= -90.0 and value <= 90.0:
                 return value
         except:
             return None
         return None
     sign = 1
-    if(re_match.group(1) == '-'):
+    if re_match.group(1) == '-':
         sign = -1
 
     degs = float(re_match.group(2))
@@ -180,9 +180,11 @@ def dectodeg(string):
     mins += secs/60.0
     degs += mins / 60.0
 
+    degs *= sign
+
     return degs
-    
-srcre = re.compile("([\d.]+)\s*(d|D|degs|Degs)?")
+
+srcre = re.compile(r"([\d.]+)\s*(d|D|degs|Degs)?")
 def srtodeg(string):
     """
     Converts a Search Radius to a decimal degrees.
@@ -197,14 +199,14 @@ def srtodeg(string):
     except:
         return None
 
-    if (degs is None):
+    if degs is None:
         # Value is in arcseconds
         # convert to degrees
         value /= 3600.0
 
     return value
 
-daterangecre = re.compile('^([12][90]\d\d[01]\d[0123]\d)-([12][90]\d\d[01]\d[0123]\d)$')
+daterangecre = re.compile(r'^([12][90]\d\d[01]\d[0123]\d)-([12][90]\d\d[01]\d[0123]\d)$')
 def gemini_daterange(string):
     """
     A utility function for matching date ranges of the form YYYYMMDD-YYYYMMDD
@@ -212,7 +214,7 @@ def gemini_daterange(string):
     Also this does not yet check for sensible date ordering
     returns the YYYYMMDD-YYYYMMDD string, or '' if not a daterange
     """
-    if(daterangecre.match(string)):
+    if daterangecre.match(string):
         return string
     else:
         return ''
@@ -220,40 +222,40 @@ def gemini_daterange(string):
 def gemini_observation_type(string):
     """
     A utility function for matching Gemini ObsTypes
-    If the string argument matches a gemini ObsType 
+    If the string argument matches a gemini ObsType
     then we return the observation_type
     Otherwise return an empty string
     We add the unofficial values PINHOLE for GNIRS pinhole mask observations and RONCHI for NIFS Ronchi mask observations here too
     """
     list = ['DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI', 'CAL', 'FRINGE', 'MASK']
     retary = ''
-    if(string in list):
+    if string in list:
         retary = string
     return retary
-    
+
 def gemini_observation_class(string):
     """
     A utility function matching Gemini ObsClasses
-    If the string argument matches a gemini ObsClass then we return 
+    If the string argument matches a gemini ObsClass then we return
     the observation_class
     Otherwise we return an empty string
     """
     list = ['dayCal', 'partnerCal', 'acqCal', 'acq', 'science', 'progCal']
     retary = ''
-    if (string in list):
+    if  string in list:
         retary = string
     return retary
 
 def gemini_reduction_state(string):
     """
     A utility function matching Gemini reduction states
-    If the string argument matches a gemini reduction state then we return 
+    If the string argument matches a gemini reduction state then we return
     the reduction state
     Otherwise we return an empty string
     """
     list = ['RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS', 'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK']
     retary = ''
-    if (string in list):
+    if  string in list:
         retary = string
     return retary
 
@@ -269,17 +271,18 @@ def gemini_caltype(string):
 
     These should all be lower case so as to avoid conflict with gemini_observation_type
     """
-    list = ['bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark', 'processed_flat', 'processed_fringe', 'processed_arc', 'pinhole_mask', 'ronchi_mask']
+    list = ['bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark', 'processed_flat',
+                'processed_fringe', 'processed_arc', 'pinhole_mask', 'ronchi_mask']
     retary = ''
-    if (string in list):
+    if string in list:
         retary = string
     return retary
 
 def gmos_gratingname(string):
     """
     A utility function matching a GMOS Grating name. This could be expanded to
-    other instruments, but for many instruments the grating name is too ambiguous and 
-    could be confused with a filter or band (eg 'H'). Also most of the use cases 
+    other instruments, but for many instruments the grating name is too ambiguous and
+    could be confused with a filter or band (eg 'H'). Also most of the use cases
     for this are where gratings are swapped.
 
     This function doesn't match or return the component ID.
@@ -289,11 +292,11 @@ def gmos_gratingname(string):
     """
     retary = ''
     list = ['MIRROR', 'B600', 'R600', 'R400', 'R831', 'R150', 'B1200']
-    if (string in list):
+    if string in list:
         retary = string
     return retary
 
-gmosfpmaskcre = re.compile('^G[NS](20\d\d)[AB](.)(\d\d\d)-(\d\d)$')
+gmosfpmaskcre = re.compile(r'^G[NS](20\d\d)[AB](.)(\d\d\d)-(\d\d)$')
 def gmos_focal_plane_mask(string):
     """
     A utility function matching gmos focal plane mask names. This could be expanded to
@@ -306,18 +309,19 @@ def gmos_focal_plane_mask(string):
     """
 
     retary = ''
-    facility = ['NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec']
+    facility = ['NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec',
+                    '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec']
 
     retary = None
-    if(string in facility):
+    if string in facility:
         retary = string
-    elif(gmosfpmaskcre.match(string)):
+    elif gmosfpmaskcre.match(string):
         retary = string
 
     return retary
- 
-fitsfilenamecre = re.compile('^([NS])(20\d\d)([01]\d[0123]\d)(S)(\d\d\d\d)([\d-]*)(\w*)(?P<fits>.fits)?$')
-vfitsfilenamecre = re.compile('^(20)?(\d\d)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d\d)_(\d+)(?P<fits>.fits)?$')
+
+fitsfilenamecre = re.compile(r'^([NS])(20\d\d)([01]\d[0123]\d)(S)(\d\d\d\d)([\d-]*)(\w*)(?P<fits>.fits)?$')
+vfitsfilenamecre = re.compile(r'^(20)?(\d\d)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d\d)_(\d+)(?P<fits>.fits)?$')
 def gemini_fitsfilename(string):
     """
     A utility function matching Gemini data fits filenames
@@ -329,15 +333,15 @@ def gemini_fitsfilename(string):
     """
     retval = ''
     m = fitsfilenamecre.match(string) or vfitsfilenamecre.match(string)
-    if(m):
+    if m:
         # Yes, but does it not have a .fits?
-        if(m.group('fits') == None):
+        if m.group('fits') == None:
             retval = "%s.fits" % string
         else:
             retval = string
 
     return retval
-        
+
 binningcre = re.compile('^[124]x[124]$')
 def gemini_binning(string):
     """
@@ -346,7 +350,7 @@ def gemini_binning(string):
     """
     retval = ''
     m = binningcre.match(string)
-    if(m):
+    if m:
         retval = string
 
     return retval
@@ -358,9 +362,9 @@ def percentilestring(num, type):
     eg (20, 'IQ') -> IQ20. Maps 100 onto 'Any' and gives
     'Unknown' if the num is None
     """
-    if(num is None):
+    if num is None:
         retval = 'Undefined'
-    elif(num == 100):
+    elif num == 100:
         retval = type + "Any"
     else:
         retval = "%s%02d" % (type, num)
@@ -371,7 +375,7 @@ def percentilestring(num, type):
 
 # This re matches program_id-obsum-dlnum - ie a datalabel,
 # With 3 groups - program_id, obsnum, dlnum
-dlcre = re.compile('^((?:%s)|(?:%s))-(\d*)-(\d*)$' % (calengre, scire))
+dlcre = re.compile(r'^((?:%s)|(?:%s))-(\d*)-(\d*)$' % (calengre, scire))
 
 class GeminiDataLabel:
     """
@@ -403,12 +407,12 @@ class GeminiDataLabel:
         self.observation_id = ''
         self.obsnum = ''
         self.dlnum = ''
-        if(self.datalabel):
+        if self.datalabel:
             self.parse()
 
     def parse(self):
         dlm = dlcre.match(self.datalabel)
-        if(dlm):
+        if dlm:
             self.projectid = dlm.group(1)
             self.obsnum = dlm.group(2)
             self.dlnum = dlm.group(3)
@@ -436,9 +440,9 @@ class GeminiObservation:
     obsnum = ''
 
     def __init__(self, observation_id):
-        if(observation_id):
+        if observation_id:
             match = re.match(obsre, observation_id)
-            if(match):
+            if match:
                 self.observation_id = observation_id
                 self.program = GeminiProgram(match.group(1))
                 self.obsnum = match.group(2)
@@ -477,14 +481,14 @@ class GeminiProgram:
     is_q = False
     is_c = False
     is_sv = False
-    
+
 
     def __init__(self, program_id):
         self.program_id = program_id
 
         # Check for the CAL / ENG form
-        ec_match = re.match("^(G[NS])-((?:CAL)|(?:ENG))-(20[012]\d[01]\d[0123]\d)$", program_id)
-        sci_match = re.match("^(G[NS])-(20[012]\d[AB])-([A-Z]+)-(\d+)$", program_id)
+        ec_match = re.match(r"^(G[NS])-((?:CAL)|(?:ENG))-(20[012]\d[01]\d[0123]\d)$", program_id)
+        sci_match = re.match(r"^(G[NS])-(20[012]\d[AB])-([A-Z]+)-(\d+)$", program_id)
         if ec_match:
             # Valid eng / cal form
             self.valid = True
