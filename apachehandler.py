@@ -3,9 +3,8 @@
 # When a request comes in, handler(req) gets called by the apache server
 
 import sys
+import re
 from gemini_metadata_utils import gemini_fitsfilename, gemini_date
-
-from sqlalchemy import desc, func, join
 
 from mod_python import apache
 from mod_python import util
@@ -27,25 +26,16 @@ from web.selection import getselection
 from web.fileserver import fileserver, download
 from web.qastuff import qareport, qametrics, qaforgui
 from web.statistics import content, stats
-from web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password, staff_access, user_list
+from web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password
+from web.user import staff_access, user_list
 from web.userprogram import my_programs
 from web.searchform import searchform, nameresolver
 
 from orm import sessionfactory
 from orm.file import File
 from orm.diskfile import DiskFile
-from orm.header import Header
-from orm.ingestqueue import IngestQueue
 from orm.diskfilereport import DiskFileReport
 from orm.fulltextheader import FullTextHeader
-
-
-import re
-import datetime
-
-# Compile regexps here
-
-orderbycre = re.compile('orderby\=(\S*)')
 
 # The top level handler. This essentially calls out to the specific
 # handler function depending on the uri that we're handling
@@ -60,71 +50,70 @@ def handler(req):
     # eg if we're handling /python and we're the client requests
     # http://server/python/a/b.fits then we get a/b.fits
 
-    # Use the unparsed_uri as there may be encoded slashes in it that get parsed and we dont want to hit those.
+    # Use the unparsed_uri as there may be encoded slashes in it that get parsed and we dont want those parsed.
     uri = req.unparsed_uri
+
     # But then we need to manually split off ?arguments
     uri = uri.split('?')[0]
-    
-    # Split this about any /s
+
+    # Split this about any /-es to get the "things" in the URL
     things = uri.split('/')
 
-    # Remove any blanks
-    while(things.count('')):
+    # Remove any blanks- from double slashed in the URL
+    while things.count(''):
         things.remove('')
 
-    # Check if it's empty
-    if(len(things) == 0):
+    # Check if it's empty, redirect as apopriate
+    if len(things) == 0:
         # Empty request
-        if(use_as_archive):
+        if use_as_archive:
             util.redirect(req, "/searchform")
         else:
             return usagemessage(req)
 
     # Before we process the request, parse any arguments into a list
     args = []
-    if(req.args):
+    if req.args:
         args = req.args.split('&')
-        while(args.count('')):
+        while args.count(''):
             args.remove('')
-        # We should parse the arguments here too
-        # All we have for now are order_by arguments
-        # We form a list of order_by keywords
-        # We should probably do more validation here
+    # Parse the arguments here too
+    # All we have for now are order_by arguments - form a list of order_by keywords
     orderby = []
     for i in range(len(args)):
-        match = orderbycre.match(args[i])
-        if(match):
+        match = re.match(r'orderby\=(\S*)', args[i])
+        if match:
             orderby.append(match.group(1))
- 
-    # OK, need to parse what we got.
+
+    # OK, parse and action the main URL things
 
     this = things.pop(0)
 
     # Archive searchform
-    if(this == 'searchform'):
-        if(this in blocked_urls):
+    if this == 'searchform':
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return searchform(req, things, orderby)
 
-    # Name resolver
-    if(this == 'nameresolver'):
-        if(this in blocked_urls):
+    # Name resolver proxy
+    if this == 'nameresolver':
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return nameresolver(req, things)
 
     # A debug util
-    if(this == 'debug'):
-        if(this in blocked_urls):
+    if this == 'debug':
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return debugmessage(req)
 
     # This is the header summary handler
-    if(this in ['summary', 'diskfiles', 'ssummary', 'lsummary', 'searchresults', 'associated_cals']):
-        if(this in blocked_urls):
+    if this in ['summary', 'diskfiles', 'ssummary', 'lsummary', 'searchresults', 'associated_cals']:
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
 
         links = True
-        # the nolinks thing is for the external email notifications
+        # the nolinks feature is used especially in external email notifications
         if 'nolinks' in things:
             links = False
             things.remove('nolinks')
@@ -138,8 +127,8 @@ def handler(req):
         return retval
 
     # This is the standard star in observation server
-    if(this == 'standardobs'):
-        if(this in blocked_urls):
+    if this == 'standardobs':
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         header_id = things.pop(0)
         retval = standardobs(req, header_id)
@@ -147,8 +136,8 @@ def handler(req):
 
 
     # The calibrations handler
-    if(this == 'calibrations'):
-        if(this in blocked_urls):
+    if this == 'calibrations':
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         # Parse the rest of the URL.
         selection = getselection(things)
@@ -160,29 +149,29 @@ def handler(req):
         return retval
 
     # The xml and json file list handlers
-    if(this == 'xmlfilelist'):
-        if(this in blocked_urls):
+    if this == 'xmlfilelist':
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         selection = getselection(things)
         retval = xmlfilelist(req, selection)
         return retval
-    if(this == 'jsonfilelist'):
-        if(this in blocked_urls):
+    if this == 'jsonfilelist':
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         selection = getselection(things)
         retval = jsonfilelist(req, selection)
         return retval
 
     # The fileontape handler
-    if(this == 'fileontape'):
-        if(this in blocked_urls):
+    if this == 'fileontape':
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         retval = fileontape(req, things)
         return retval
 
     # The calmgr handler
-    if(this == 'calmgr'):
-        if(this in blocked_urls):
+    if this == 'calmgr':
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         # Parse the rest of the URL.
         selection = getselection(things)
@@ -194,25 +183,25 @@ def handler(req):
         return retval
 
     # The processed_cal upload server
-    if(this == 'upload_processed_cal'):
-        if(this in blocked_urls):
+    if this == 'upload_processed_cal':
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         retval = upload_file(req, things[0], processed_cal=True)
         return retval
 
     # The generic uploaD_file server
-    if(this == 'upload_file'):
-        if(this in blocked_urls):
+    if this == 'upload_file':
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         retval = upload_file(req, things[0])
         return retval
 
     # This returns the fitsverify, wmdreport or fullheader text from the database
     # you can give it either a diskfile_id or a filename
-    if(this == 'fitsverify' or this == 'wmdreport' or this == 'fullheader'):
-        if(this in blocked_urls):
+    if this in ['fitsverify', 'wmdreport', 'fullheader']:
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
-        if(len(things) == 0):
+        if len(things) == 0:
             req.content_type = "text/plain"
             req.write("You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
             return apache.OK
@@ -220,12 +209,12 @@ def handler(req):
 
         # OK, see if we got a filename
         fnthing = gemini_fitsfilename(thing)
-        if(fnthing):
+        if fnthing:
             # Now construct the query
             session = sessionfactory()
             try:
                 query = session.query(File).filter(File.name == fnthing)
-                if(query.count() == 0):
+                if query.count() == 0:
                     req.content_type = "text/plain"
                     req.write("Cannot find file for: %s\n" % fnthing)
                     return apache.OK
@@ -237,11 +226,11 @@ def handler(req):
                 query = session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == diskfile.id)
                 diskfilereport = query.one()
                 req.content_type = "text/plain"
-                if(this == 'fitsverify'):
+                if this == 'fitsverify':
                     req.write(diskfilereport.fvreport)
-                if(this == 'wmdreport'):
+                if this == 'wmdreport':
                     req.write(diskfilereport.wmdreport)
-                if(this == 'fullheader'):
+                if this == 'fullheader':
                     # Need to find the header associated with this diskfile
                     query = session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == diskfile.id)
                     ftheader = query.one()
@@ -251,14 +240,14 @@ def handler(req):
                 pass
             finally:
                 session.close()
-     
+
         # See if we got a diskfile_id
-        match = re.match('\d+', thing)
-        if(match):
+        match = re.match(r'\d+', thing)
+        if match:
             session = sessionfactory()
             try:
                 query = session.query(DiskFile).filter(DiskFile.id == thing)
-                if(query.count() == 0):
+                if query.count() == 0:
                     req.content_type = "text/plain"
                     req.write("Cannot find diskfile for id: %s\n" % thing)
                     session.close()
@@ -268,11 +257,11 @@ def handler(req):
                 query = session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == diskfile.id)
                 diskfilereport = query.one()
                 req.content_type = "text/plain"
-                if(this == 'fitsverify'):
+                if this == 'fitsverify':
                     req.write(diskfilereport.fvreport)
-                if(this == 'wmdreport'):
+                if this == 'wmdreport':
                     req.write(diskfilereport.wmdreport)
-                if(this == 'fullheader'):
+                if this == 'fullheader':
                     # Need to find the header associated with this diskfile
                     query = session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == diskfile.id)
                     ftheader = query.one()
@@ -289,163 +278,163 @@ def handler(req):
         return apache.OK
 
     # This is the fits file server
-    if(this == 'file'):
-        if(this in blocked_urls):
+    if this == 'file':
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return fileserver(req, things)
 
     # This is the fits file server
-    if(this == 'download'):
-        if(this in blocked_urls):
+    if this == 'download':
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return download(req, things)
 
     # This is the projects observed feature
-    if(this == "programsobserved"):
-        if(this in blocked_urls):
+    if this == "programsobserved":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         selection = getselection(things)
-        if(("date" not in selection) and ("daterange" not in selection)):
+        if ("date" not in selection) and ("daterange" not in selection):
             selection["date"] = gemini_date("today")
         retval = progsobserved(req, selection)
         return retval
-        
+
     # The GMOS twilight flat and bias report
-    if(this == "gmoscal"):
-        if(this in blocked_urls):
+    if this == "gmoscal":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         selection = getselection(things)
         retval = gmoscal(req, selection)
         return retval
 
     # Submit QA metric measurement report
-    if(this == "qareport"):
-        if(this in blocked_urls):
+    if this == "qareport":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return qareport(req)
 
     # Retrieve QA metrics, simple initial version
-    if(this == "qametrics"):
-        if(this in blocked_urls):
+    if this == "qametrics":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return qametrics(req, things)
 
     # Retrieve QA metrics, json version for GUI
-    if(this == "qaforgui"):
-        if(this in blocked_urls):
+    if this == "qaforgui":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return qaforgui(req, things)
 
     # Database Statistics
-    if(this == "content"):
-        if(this in blocked_urls):
+    if this == "content":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return content(req)
 
-    if(this == "stats"):
-        if(this in blocked_urls):
+    if this == "stats":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return stats(req)
 
     # Tape handler
-    if(this == "tape"):
-        if(this in blocked_urls):
+    if this == "tape":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return tape(req, things)
 
     # TapeWrite handler
-    if(this == "tapewrite"):
-        if(this in blocked_urls):
+    if this == "tapewrite":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return tapewrite(req, things)
 
     # TapeFile handler
-    if(this == "tapefile"):
-        if(this in blocked_urls):
+    if this == "tapefile":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return tapefile(req, things)
 
     # TapeRead handler
-    if(this == "taperead"):
-        if(this in blocked_urls):
+    if this == "taperead":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return taperead(req, things)
 
     # XML Tape handler
-    if(this == "xmltape"):
-        if(this in blocked_urls):
+    if this == "xmltape":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return xmltape(req)
 
     # Emailnotification handler
-    if(this == "notification"):
-        if(this in blocked_urls):
+    if this == "notification":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return notification(req)
 
     # curation_report handler
-    if(this == "curation"):
-        if(this in blocked_urls):
+    if this == "curation":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return curation_report(req, things)
 
     # new account request
-    if(this == "request_account"):
-        if(this in blocked_urls):
+    if this == "request_account":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return request_account(req, things)
 
     # account password reset request
-    if(this == "password_reset"):
-        if(this in blocked_urls):
+    if this == "password_reset":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return password_reset(req, things)
 
     # request password reset email
-    if(this == "request_password_reset"):
-        if(this in blocked_urls):
+    if this == "request_password_reset":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return request_password_reset(req)
 
     # login form
-    if(this == "login"):
-        if(this in blocked_urls):
+    if this == "login":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return login(req, things)
 
     # logout
-    if(this == "logout"):
-        if(this in blocked_urls):
+    if this == "logout":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return logout(req)
 
     # whoami
-    if(this == "whoami"):
-        if(this in blocked_urls):
+    if this == "whoami":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return whoami(req, things)
 
     # change_password
-    if(this == "change_password"):
-        if(this in blocked_urls):
+    if this == "change_password":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return change_password(req, things)
 
     # my_programs
-    if(this == "my_programs"):
-        if(this in blocked_urls):
+    if this == "my_programs":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return my_programs(req, things)
 
     # staff_access
-    if(this == "staff_access"):
-        if(this in blocked_urls):
+    if this == "staff_access":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return staff_access(req, things)
 
     # user_list
-    if(this == "user_list"):
-        if(this in blocked_urls):
+    if this == "user_list":
+        if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return user_list(req)
 
@@ -455,7 +444,7 @@ def handler(req):
     if this in staticfiles:
         newurl = "/htmldocs/%s" % this
         util.redirect(req, newurl)
-    
+
     # Last one on the list - if we haven't return(ed) out of this function
     # by one of the methods above, then we should send out the usage message
     return usagemessage(req)
@@ -481,7 +470,7 @@ def debugmessage(req):
     req.write("Pythonpath: %s\n\n" % (str(sys.path)))
     req.write("python path: \n")
     for i in sys.path:
-      req.write("-- %s\n" % i)
+        req.write("-- %s\n" % i)
     req.write("\n")
     req.write("uri: %s\n\n" % (str(req.uri)))
     req.write("unparsed_uri: %s\n\n" % (str(req.unparsed_uri)))
@@ -489,5 +478,5 @@ def debugmessage(req):
     req.write("filename: %s\n\n" % (str(req.filename)))
     req.write("path_info: %s\n\n" % (str(req.path_info)))
     req.write("args: %s\n\n" % (str(req.args)))
-    
+
     return apache.OK
