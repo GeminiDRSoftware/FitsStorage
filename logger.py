@@ -1,3 +1,8 @@
+"""
+This is the fits storage logging module
+It is used by the scripts to configure the python logger
+"""
+
 import os
 import sys
 
@@ -10,21 +15,21 @@ from fits_storage_config import fits_log_dir, email_errors_to, smtp_server
 logger = logging.getLogger()
 
 # This is where we set what level messages we want to log.
-# This should default to INFO and be setable to debug with a command line argument
+# Default to INFO and be setable to debug with a command line argument
 logger.setLevel(logging.INFO)
 
 # Create log formatter
 formatter = logging.Formatter("%(asctime)s %(process)d:%(module)s:%(lineno)d %(levelname)s: %(message)s")
 
-# Create log message handlers 
-
+# Create log message handlers
 # Set default logname
 logname = "%s.log" % (os.path.basename(sys.argv[0]))
 logfile = os.path.join(fits_log_dir, logname)
 filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount=10, maxBytes=10000000)
 streamhandler = logging.StreamHandler()
 emailsubject = "Messages from FitsStorage on %s" % os.uname()[1]
-smtphandler = logging.handlers.SMTPHandler(mailhost=smtp_server, fromaddr='fitsdata@gemini.edu', toaddrs=[email_errors_to], subject=emailsubject)
+smtphandler = logging.handlers.SMTPHandler(mailhost=smtp_server, fromaddr='fitsdata@gemini.edu',
+                    toaddrs=[email_errors_to], subject=emailsubject)
 
 # The smtp handler should only do WARNINGSs or worse
 smtphandler.setLevel(logging.WARNING)
@@ -37,23 +42,23 @@ smtphandler.setFormatter(formatter)
 # Add Handlers to logger
 logger.addHandler(filehandler)
 
-# Do not add this one by default. Applications can do this if they're running online
-#logger.addHandler(streamhandler)
+# Utility functions follow
 
-
-# Utility Functions
 def setdebug(want):
-    if(want):
+    """ Set if we want debug messages """
+    if want:
         logger.setLevel(logging.DEBUG)
 
 def setdemon(want):
-    if(want):
-        if(len(email_errors_to)):
+    """ If running as a demon, don't output to stdout but do activate email handler """
+    if want:
+        if len(email_errors_to):
             logger.addHandler(smtphandler)
     else:
         logger.addHandler(streamhandler)
 
 def setlogfilesuffix(suffix):
+    """ Set a suffix on the log file name """
     logname = "%s-%s.log" % (os.path.basename(sys.argv[0]), suffix)
     logfile = os.path.join(fits_log_dir, logname)
     new_filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount=10, maxBytes=10000000)
