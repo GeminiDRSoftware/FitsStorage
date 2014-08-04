@@ -708,7 +708,7 @@ def openquery(selection):
     things = ['date', 'daterange', 'program_id', 'observation_id', 'data_label', 'filename', 'filepre']
 
     for thing in things:
-        if thing in selection:
+        if thing in selection.keys():
             openq = False
 
     return openq
