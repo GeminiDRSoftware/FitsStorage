@@ -3,7 +3,7 @@ from fits_storage_config import storage_root, using_s3
 from logger import logger, setdebug, setdemon
 from utils.exportqueue import add_to_exportqueue
 from web.list_headers import list_headers
-from web.selection import getselection
+from web.selection import getselection, openquery
 import os
 import sys
 import re
@@ -30,13 +30,15 @@ setdemon(options.demon)
 # Annouce startup
 logger.info("*********    add_to_export_queue.py - starting up at %s" % datetime.datetime.now())
 
-if(not options.selection):
+if not options.selection:
     logger.error("You must specify a file selection")
     sys.exit(1)
 
-if(not options.destination):
+if not options.destination:
     logger.error("You must specify a destination")
     sys.exit(1)
+else:
+    destination = options.destination
 
 session = sessionfactory()
 
@@ -46,15 +48,27 @@ orderby = []
 things = selection.split('/')
 selection = getselection(things)
 logger.info("Selection: %s" % selection)
+logger.info("Selection is open: %s" % openquery(selection))
 
+logger.info("Getting header object list")
 headers = list_headers(session, selection, orderby)
 
-i = 0
-n = len(headers)
+# For some reason, looping through the header list directly for the add
+# is really slow if the list is big.
+logger.info("Building filename and path lists")
+filenames = []
+paths = []
 for header in headers:
-    i += 1
-    logger.info("Queueing for Export: (%d/%d): %s" % (i, n, header.diskfile.filename))
-    add_to_exportqueue(session, header.diskfile.filename, header.diskfile.path, options.destination)
+    filenames.append(header.diskfile.filename)
+    paths.append(header.diskfile.path)
+
+headers = None
+
+i = 0
+n = len(filenames)
+for i in range(n):
+    logger.info("Queueing for Export: (%d/%d): %s" % (i, n, filenames[i]))
+    add_to_exportqueue(session, filenames[i], paths[i], destination)
 
 session.close()
 logger.info("*** add_to_exportqueue.py exiting normally at %s" % datetime.datetime.now())
