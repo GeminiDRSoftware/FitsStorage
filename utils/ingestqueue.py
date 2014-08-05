@@ -132,11 +132,11 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
         if using_s3:
             # Check the md5 from s3 first.
             # Lastmod on s3 is always the upload time, no way to set it manually
-            if diskfile.file_md5 == get_s3_md5(key):
+            if diskfile.file_md5 == get_s3_md5(key) and (force != True):
                 logger.debug("S3 etag md5 indicates no change")
                 add_diskfile = 0
             else:
-                logger.debug("S3 etag md5 indicates file has changed - reingesting")
+                logger.debug("S3 etag md5 or force flag indicates file has changed - reingesting")
                 # We could fetch the file and do a local md5 check here if we want
                 # Set the present and canonical flags on the current one to false and create a new entry
                 diskfile.present = False
