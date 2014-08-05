@@ -8,13 +8,9 @@ import socket
 import traceback
 from time import sleep
 
-from fits_storage_config import using_s3, storage_root
+from fits_storage_config import storage_root
 from logger import logger
 from utils.hashes import md5sum
-
-if(using_s3):
-    from boto.s3.connection import S3Connection
-    from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
 
 
 def get_s3_md5(key):
@@ -33,37 +29,38 @@ def fetch_to_staging(bucket, path, filename, key=None, fullpath=None):
     """
 
     # Make the full path of the destination file if we were not given one
-    if(fullpath is None):
+    if fullpath is None:
         fullpath = os.path.join(storage_root, filename)
 
     # Check if the file already exists in the staging area, remove it if so
-    if(os.path.exists(fullpath)):
-        logger.warning("File already exists at S3 download location: %s. Will delete it first."  % fullpath)
+    if os.path.exists(fullpath):
+        logger.warning("File already exists at S3 download location: %s. Will delete it first.", fullpath)
         try:
             os.unlink(fullpath)
         except:
-            logger.error("Unable to delete %s which is in the way of the S3 download" % fullpath)
+            logger.error("Unable to delete %s which is in the way of the S3 download", fullpath)
 
-    # Try up to 5 times. Have seen socket.error raised 
+    # Try up to 5 times. Have seen socket.error raised
     tries = 0
     gotit = False
-    while((not gotit) and (tries < 5)):
+    while (not gotit) and (tries < 5):
         tries += 1
-        logger.debug("Fetching %s to s3_staging_area, try %d" % (filename, tries))
+        logger.debug("Fetching %s to s3_staging_area, try %d", filename, tries)
 
         # If we do not have a key object, get one
-        if(key is None):
+        if key is None:
             key = bucket.get_key(os.path.join(path, filename))
 
         try:
-            if(key is None):
+            if key is None:
                 logger.error("Key has dissapeared out of S3 bucket! %s", filename)
             else:
                 key.get_contents_to_filename(fullpath)
         except socket.error:
             # OK, we got a socket error.
-            logger.debug("Socket Error fetching %s from S3 - will retry, tries=%d" % (filename, tries))
-            logger.debug("Socket Error details: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2])))
+            logger.debug("Socket Error fetching %s from S3 - will retry, tries=%d", filename, tries)
+            logger.debug("Socket Error details: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
+                                traceback.format_tb(sys.exc_info()[2]))
             sleep(10)
 
             # Nullify the key object - seems like if it fails getting a new key is necessary
@@ -76,32 +73,33 @@ def fetch_to_staging(bucket, path, filename, key=None, fullpath=None):
                 pass
 
         # Did we get anything?
-        if(os.access(fullpath, os.F_OK)):
+        if os.access(fullpath, os.F_OK):
             # Check size and md5
             filesize = os.path.getsize(fullpath)
-            if(filesize == key.size):
+            if filesize == key.size:
                 # It's the right size, check the md5
                 filemd5 = md5sum(fullpath)
-                if(filemd5 == get_s3_md5(key)):
+                if filemd5 == get_s3_md5(key):
                     # md5 matches
                     gotit = True
                 else:
                     # Size is OK, but md5 is not
                     gotit = False
-                    logger.debug("Problem fetching %s from S3 - size OK, but md5 mismatch - file: %s; key: %s" % (filename, filemd5, get_s3_md5(key)))
+                    logger.debug("Problem fetching %s from S3 - size OK, but md5 mismatch - file: %s; key: %s", filename,
+                                    filemd5, get_s3_md5(key))
                     sleep(10)
             else:
                 # Didn't get enough bytes
                 gotit = False
-                logger.debug("Problem fetching %s from S3 - size mismatch - file: %s; key: %s" % (filename, filesize, key.size))
+                logger.debug("Problem fetching %s from S3 - size mismatch - file: %s; key: %s", filename, filesize, key.size)
                 sleep(10)
         else:
-           # file is not accessible
-           gotit = False
+            # file is not accessible
+            gotit = False
 
-    if(gotit):
+    if gotit:
         logger.debug("Downloaded file from S3 sucessfully")
         return True
     else:
-        logger.error("Failed to sucessfully download file %s from S3. Giving up." % filename)
+        logger.error("Failed to sucessfully download file %s from S3. Giving up.", filename)
         return False

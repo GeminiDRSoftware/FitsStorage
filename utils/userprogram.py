@@ -16,7 +16,7 @@ def icanhave(session, req, header):
     access to the given header
     """
 
-    user=userfromcookie(session, req)
+    user = userfromcookie(session, req)
     gotmagic = got_magic(req)
     return canhave(session, user, header, gotmagic=gotmagic)
 
@@ -38,11 +38,11 @@ def canhave(session, user, header, gotmagic=False, user_progid_list=None):
 
     # Is the release date in the past?
     today = datetime.datetime.utcnow().date()
-    if((header.release) and (today >= header.release)):
+    if header.release and today >= header.release:
         return True
 
     # Is the user gemini staff?
-    if(user is not None and user.gemini_staff is True):
+    if user is not None and user.gemini_staff is True:
         return True
 
     # Is the data engineering?
@@ -55,7 +55,7 @@ def canhave(session, user, header, gotmagic=False, user_progid_list=None):
 
     # If none of the above, then it's proprietary data
     # If we didn't get passed in the users program list, get it
-    if(user_progid_list is None):
+    if user_progid_list is None:
         user_progid_list = get_program_list(session, user)
 
     # Is the program in the list?
@@ -72,14 +72,14 @@ def got_magic(req):
     the magic authorization cookie
     """
 
-    if(magic_download_cookie is None):
+    if magic_download_cookie is None:
         return False
 
     cookies = Cookie.get_cookies(req)
     got = False
-    if(cookies.has_key('gemini_fits_authorization')):
+    if cookies.has_key('gemini_fits_authorization'):
         auth = cookies['gemini_fits_authorization'].value
-        if(auth == magic_download_cookie):
+        if auth == magic_download_cookie:
             got = True
 
     return got

@@ -9,7 +9,7 @@ import subprocess
 import tarfile
 import re
 
-class TapeDrive:
+class TapeDrive(object):
     """
     This class provides functions to manipulate a Tape Drive
     for the FitsStorage software
@@ -35,17 +35,17 @@ class TapeDrive:
     def mkworkingdir(self):
         pid = str(os.getpid())
         self.workingdir = os.path.join(self.scratchdir, pid)
-        if(not os.path.exists(self.workingdir)):
+        if not os.path.exists(self.workingdir):
             os.mkdir(self.workingdir)
 
     def cdworkingdir(self):
-        if(len(self.workingdir) == 0):
+        if len(self.workingdir) == 0:
             self.mkworkingdir()
         self.origdir = os.getcwd()
         os.chdir(self.workingdir)
 
     def cdback(self):
-        if(self.origdir):
+        if self.origdir:
             os.chdir(self.origdir)
 
     def cleanup(self):
@@ -62,13 +62,13 @@ class TapeDrive:
         returns [returncode, stdoutstring, stderrstring]
         """
         cmd = ['/bin/mt', '-f', self.dev, mtcmd]
-        if(mtarg):
+        if mtarg:
             cmd.append(mtarg)
         sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdoutstring, stderrstring) = sp.communicate()
         retval = sp.returncode
 
-        if(retval and fail):
+        if retval and fail:
             print '"mt -f %s %s %s" failed with exit value %d:' % (self.dev, mtcmd, mtarg, retval)
             print stdoutstring
             print stderrstring
@@ -82,30 +82,30 @@ class TapeDrive:
         The fail argument determines whether to exit with an error if it fails
         Returns the return code from the mt command
         """
-        [returncode, stdoutstring, stderrstring] = self.mt('rewind', fail=fail) 
+        [returncode, stdoutstring, stderrstring] = self.mt('rewind', fail=fail)
         return returncode
-         
+
     def skipto(self, filenum, fail=True):
         """
         Fast forward the tape to file number filenum
         The fail argument determines whether to exit with an error if it fails
         Returns the return code from the mt command
         """
-        if(filenum == 0):
+        if filenum == 0:
             r = self.rewind(fail=fail)
             return r
 
-        if(self.fileno(fail=fail) > filenum):
+        if self.fileno(fail=fail) > filenum:
             #print "too far on. Rewinding"
             r = self.rewind(fail=fail)
 
         num = filenum - self.fileno(fail=fail)
-        if(num):
+        if num:
             #print "need to move forward %d files" % num
             r = self.fsf(num, fail=fail)
 
-        if(self.fileno(fail=fail) == filenum):
-            if(self.blockno(fail=fail) == 0):
+        if self.fileno(fail=fail) == filenum:
+            if self.blockno(fail=fail) == 0:
                 #print "already there"
                 return 0
             else:
@@ -119,7 +119,7 @@ class TapeDrive:
         Issue fsf command to tape drive
         """
 
-        if(n==0):
+        if n == 0:
             arg = ''
         else:
             arg = "%d" % n
@@ -131,7 +131,7 @@ class TapeDrive:
         Issue bsf command to tape drive
         """
 
-        if(n == 0):
+        if n == 0:
             arg = ''
         else:
             arg = "%d" % n
@@ -163,7 +163,7 @@ class TapeDrive:
         """
         retval = None
         [returncode, stdoutstring, stderrstring] = self.mt('status', fail=fail)
-        if(returncode == 0):
+        if returncode == 0:
             retval = stdoutstring
 
         return retval
@@ -174,11 +174,10 @@ class TapeDrive:
         returns False otherwise
         """
         string = self.status()
-        if(re.search('ONLINE', string)):
-            retval = True
+        if re.search('ONLINE', string):
+            return True
         else:
-            retval = False
-        return retval
+            return False
 
     def eot(self):
         """
@@ -186,7 +185,7 @@ class TapeDrive:
         returns False otherwise
         """
         string = self.status()
-        if(re.search('EOT', string)):
+        if re.search('EOT', string):
             retval = True
         else:
             retval = False
@@ -199,8 +198,8 @@ class TapeDrive:
         """
         retval = None
         string = self.status(fail=fail)
-        match = re.search('(File number=)(\d+)(,)', string)
-        if(match):
+        match = re.search(r'(File number=)(\d+)(,)', string)
+        if match:
             retval = int(match.group(2))
 
         return retval
@@ -212,8 +211,8 @@ class TapeDrive:
         """
         retval = None
         string = self.status(fail=fail)
-        match = re.search('(block number=)(\d+)(,)', string)
-        if(match):
+        match = re.search(r'(block number=)(\d+)(,)', string)
+        if match:
             retval = int(match.group(2))
 
         return retval
@@ -249,7 +248,7 @@ class TapeDrive:
                 self.cleanup()
         except:
             self.rewind()
-            if(fail):
+            if fail:
                 raise
 
         return retval
@@ -271,7 +270,7 @@ class TapeDrive:
             self.rewind()
             self.setblk0()
             self.cdworkingdir()
-            if(os.access('tapelabel', os.F_OK)):
+            if os.access('tapelabel', os.F_OK):
                 os.unlink('tapelabel')
             f = open('tapelabel', 'w')
             f.write(label)
@@ -287,5 +286,5 @@ class TapeDrive:
         except:
             self.rewind()
             self.cleanup()
-            if(fail):
+            if fail:
                 raise

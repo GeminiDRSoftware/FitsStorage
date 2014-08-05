@@ -1,6 +1,5 @@
 """
-This module provides various utility function used to 
-manage the export queue
+This module provides various utility function used to manage the export queue
 """
 import os
 import sys
@@ -25,7 +24,7 @@ from orm.exportqueue import ExportQueue
 
 import apache_return_codes as apache
 
-if(using_s3):
+if using_s3:
     from boto.s3.connection import S3Connection
     from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
     import logging
@@ -35,17 +34,17 @@ def add_to_exportqueue(session, filename, path, destination):
     """
     Adds a file to the export queue
     """
-    logger.info("Adding file %s to %s to exportqueue" % (filename, destination))
+    logger.info("Adding file %s to %s to exportqueue", filename, destination)
     eq = ExportQueue(filename, path, destination)
     logger.debug("Instantiated ExportQueue object")
     session.add(eq)
     session.commit()
     logger.debug("Added to database")
     try:
-        logger.debug("Added id %d for filename %s to exportqueue" % (eq.id, eq.filename))
+        logger.debug("Added id %d for filename %s to exportqueue", eq.id, eq.filename)
         return eq.id
     except ObjectDeletedError:
-        logger.debug("Added filename %s to exportqueue which was immediately deleted" % filename)
+        logger.debug("Added filename %s to exportqueue which was immediately deleted", filename)
 
 
 def export_file(session, filename, path, destination):
@@ -54,19 +53,19 @@ def export_file(session, filename, path, destination):
 
     Returns True if sucessfull, False otherwise
     """
-    logger.debug("export_file %s to %s" % (filename, destination))
+    logger.debug("export_file %s to %s", filename, destination)
 
     # First, lookup the md5 of the file we have, and see if the
     # destination server already has it with that md5
     # This is all done with the data md5 not the file, if the correct data
     # is there at the other end but the gzip state is wrong, we're not going
-    # to re-export it here. 
+    # to re-export it here.
     # To ignore the gzip factor, we match against File.name rather than DiskFile.filename
     # and we strip any .gz from the local filename
 
     # Strip any .gz from local filename
     filename_nogz = filename
-    if(filename_nogz.endswith('.gz')):
+    if filename_nogz.endswith('.gz'):
         filename_nogz = filename_nogz[:-3]
 
     # Search Database
@@ -77,17 +76,17 @@ def export_file(session, filename, path, destination):
 
     dest_md5 = get_destination_data_md5(filename, destination)
 
-    if((dest_md5 is not None) and (dest_md5 == our_md5)):
-        logger.info("Data %s is already at %s with md5 %s" % (filename, destination, dest_md5))
+    if (dest_md5 is not None) and (dest_md5 == our_md5):
+        logger.info("Data %s is already at %s with md5 %s", filename, destination, dest_md5)
         return True
 
     # Read the file into the payload postdata buffer to HTTP POST
-    if(using_s3):
+    if using_s3:
         # Read the file from S3
         s3conn = S3Connection(aws_access_key, aws_secret_key)
         bucket = s3conn.get_bucket(s3_bucket_name)
         key = bucket.get_key(os.path.join(path, filename))
-        if(key is None):
+        if key is None:
             logger.error("cannot access %s in S3 bucket", filename)
             data = None
         else:
@@ -96,7 +95,7 @@ def export_file(session, filename, path, destination):
         # Read the file from disk
         fullpath = os.path.join(storage_root, path, filename)
         exists = os.access(fullpath, os.F_OK | os.R_OK) and os.path.isfile(fullpath)
-        if(not exists):
+        if not exists:
             logger.error("cannot access %s", fullpath)
             data = None
         else:
@@ -109,11 +108,11 @@ def export_file(session, filename, path, destination):
     # even if the new gzip level is higher.
     # Note, gzip contains some header data in addition to the compressed bytes
     # Use the gzip module rather than zlib directly to do this
-    # Otherwise we would have to handle all the headers ourselves or md5s will differ 
+    # Otherwise we would have to handle all the headers ourselves or md5s will differ
     # So use a BytesIO instance to do that. Don't use StringIO with binary data.
     # And don't try to pass a unicode filename.
     filename = filename.encode('ascii', 'ignore')
-    if((export_gzip is not None) and (diskfile.gzipped == False)):
+    if (export_gzip is not None) and (diskfile.gzipped == False):
         # Need to compress it
         logger.debug("gzipping file on the fly")
         # Create an empty bytesIO object, have gzip write data into it
@@ -129,7 +128,7 @@ def export_file(session, filename, path, destination):
         m.update(data)
         our_md5 = m.hexdigest()
 
-    if((export_gzip is None) and (diskfile.gzipped == True)):
+    if (export_gzip is None) and (diskfile.gzipped == True):
         # Need to uncompress it
         logger.debug("gunzipping on the fly")
         # Put the compressed data in the BytesIO object, have gzip read it
@@ -141,15 +140,15 @@ def export_file(session, filename, path, destination):
         # Trim .gz from the filename from here on, update our_md5
         filename = filename[:-3]
         our_md5 = diskfile.data_md5
-        
+
     # Construct upload URL
     url = "http://%s/upload_file/%s" % (destination, filename)
-    
+
     # Connect to the URL and post the data
     # NB need to make the data buffer into a bytearray not a str
     # Otherwise get ascii encoding errors from httplib layer
     try:
-        logger.info("Transferring file %s to destination %s" % (filename, destination))
+        logger.info("Transferring file %s to destination %s", filename, destination)
         postdata = bytearray(data)
         data = None
         request = urllib2.Request(url, data=postdata)
@@ -160,27 +159,27 @@ def export_file(session, filename, path, destination):
         response = u.read()
         u.close()
         http_status = u.getcode()
-        logger.debug("Got status code: %d and response: %s" % (http_status, response))
+        logger.debug("Got status code: %d and response: %s", http_status, response)
 
         # verify that it transfered OK
         ok = True
-        if(http_status == apache.OK):
+        if http_status == apache.OK:
             # response is a short json document
             verification = json.loads(response)[0]
-            if(verification['filename'] != filename):
-                logger.error("Transfer Verification Filename mismatch: %s vs %s" % (verification['filename'], filename))
+            if verification['filename'] != filename:
+                logger.error("Transfer Verification Filename mismatch: %s vs %s", verification['filename'], filename)
                 ok = False
-            if(verification['size'] != len(postdata)):
-                logger.error("Transfer Verification size mismatch: %s vs %s" % (verification['size'], len(postdata)))
+            if verification['size'] != len(postdata):
+                logger.error("Transfer Verification size mismatch: %s vs %s", verification['size'], len(postdata))
                 ok = False
-            if(verification['md5'] != our_md5):
-                logger.error("Transfer Verification md5 mismatch: %s vs %s" % (verification['md5'], our_md5))
+            if verification['md5'] != our_md5:
+                logger.error("Transfer Verification md5 mismatch: %s vs %s", verification['md5'], our_md5)
                 ok = False
         else:
-            logger.error("Bad HTTP status code transferring %s to %s" % (filename, destination))
+            logger.error("Bad HTTP status code transferring %s to %s", filename, destination)
             ok = False
 
-        if(ok):
+        if ok:
             logger.debug("Transfer sucessfull")
             return True
         else:
@@ -188,13 +187,13 @@ def export_file(session, filename, path, destination):
             return False
 
     except urllib2.URLError:
-        logger.error("URLError posting %d bytes of data to destination server at: %s" % (len(postdata), url))
+        logger.error("URLError posting %d bytes of data to destination server at: %s", len(postdata), url)
         string = traceback.format_tb(sys.exc_info()[2])
         string = "".join(string)
-        logger.error("Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
+        logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
         return False
     except:
-        logger.error("Problem posting %d bytes of data to destination server at: %s" % (len(postdata), url))
+        logger.error("Problem posting %d bytes of data to destination server at: %s", len(postdata), url)
         raise
 
 def pop_exportqueue(session):
@@ -203,13 +202,13 @@ def pop_exportqueue(session):
     inprogress flag on that entry.
 
     The select and update inprogress are done with a transaction lock
-    to avoid race conditions or duplications when there is more than 
+    to avoid race conditions or duplications when there is more than
     one process processing the export queue.
 
     Next to export is defined by a sort on the filename to get the
     newest filename that is not already inprogress.
 
-    Also, when we go inprogress on an entry in the queue, we 
+    Also, when we go inprogress on an entry in the queue, we
     delete all other entries for the same filename.
     """
 
@@ -220,27 +219,26 @@ def pop_exportqueue(session):
     query = session.query(ExportQueue).filter(ExportQueue.inprogress == False).order_by(desc(ExportQueue.filename))
 
     eq = query.first()
-    if(eq == None):
+    if eq == None:
         logger.debug("No item to pop on exportqueue")
     else:
         # OK, we got a viable item, set it to inprogress and return it.
-        logger.debug("Popped id %d from exportqueue" % eq.id)
+        logger.debug("Popped id %d from exportqueue", eq.id)
         # Set this entry to in progres and flush to the DB.
         eq.inprogress = True
         session.flush()
 
         # Find other instances and delete them
-        others = session.query(ExportQueue).filter(ExportQueue.inprogress == False).filter(ExportQueue.filename == eq.filename).all()
-        for o in others:
-            logger.debug("Deleting duplicate file entry at exportqueue id %d" % o.id)
-            session.delete(o)
+        query = session.query(ExportQueue)
+        query = query.filter(ExportQueue.inprogress == False).filter(ExportQueue.filename == eq.filename)
+        others = query.all()
+        for other in others:
+            logger.debug("Deleting duplicate file entry at exportqueue id %d", other.id)
+            session.delete(other)
 
     # And we're done, commit the transaction and release the update lock
     session.commit()
     return eq
-
-
-
 
 
 def exportqueue_length(session):
@@ -263,26 +261,26 @@ def get_destination_data_md5(filename, destination):
         u = urllib2.urlopen(url)
         json_data = u.read()
         u.close()
-    except URLError:
-        logger.error("Failed to get json data from destination server at URL: %s" % url)
+    except urllib2.URLError:
+        logger.error("Failed to get json data from destination server at URL: %s", url)
 
     try:
         thelist = json.loads(json_data)
     except ValueError:
-        logger.error("JSON decode failed. JSON data: %s" % json_data)
+        logger.error("JSON decode failed. JSON data: %s", json_data)
 
-    if(len(thelist) == 0):
-        logger.debug("Destination server does not have filename %s" % filename)
+    if len(thelist) == 0:
+        logger.debug("Destination server does not have filename %s", filename)
         return None
-    if(len(thelist) > 1):
+    if len(thelist) > 1:
         logger.error("Got multiple results from destination server")
     else:
         thedict = thelist[0]
-        if('filename' not in thedict.keys()):
+        if 'filename' not in thedict.keys():
             logger.error("No filename in json data")
-        elif(thedict['filename'] not in [filename, filename+'.gz']):
+        elif thedict['filename'] not in [filename, filename+'.gz']:
             logger.error("Wrong filename in json data")
-        elif('data_md5' not in thedict.keys()):
+        elif 'data_md5' not in thedict.keys():
             logger.error("No data_md5 in json data")
         else:
             return thedict['data_md5']
@@ -303,9 +301,9 @@ def retry_failures(session, interval):
     query = query.filter(ExportQueue.lastfailed < before)
 
     retry_list = query.all()
-    logger.info("There are %d failed ExportQueue items to retry" % len(retry_list))
+    logger.info("There are %d failed ExportQueue items to retry", len(retry_list))
 
     for eq in retry_list:
-        eq.inprogress = False;
+        eq.inprogress = False
         session.commit()
-    
+

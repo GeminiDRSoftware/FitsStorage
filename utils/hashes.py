@@ -6,46 +6,46 @@ Currently, the only hash function we use is md5sum
 import hashlib
 import gzip
 
-def md5sum_size_fp(f):
+def md5sum_size_fp(fobj):
     """
-    Generates the md5sum and size of the data returned by the file-like object f, returns 
+    Generates the md5sum and size of the data returned by the file-like object fobj, returns
     a tuple containing the hex string md5 and the size in bytes.
-    f must be open. It will not be closed. We will read from it until we encounter EOF. 
-    No seeks will be done, f will be left at eof
+    f must be open. It will not be closed. We will read from it until we encounter EOF.
+    No seeks will be done, fobj will be left at eof
     """
     # This is the block size by which we read chunks from the file, in bytes
     block = 1000000 # 1 MB
 
-    m = hashlib.md5()
- 
+    hashobj = hashlib.md5()
+
     size = 0
 
-    data = f.read(block)
+    data = fobj.read(block)
     size += len(data)
-    m.update(data)
-    while(data):
-        data = f.read(block)
+    hashobj.update(data)
+    while data:
+        data = fobj.read(block)
         size += len(data)
-        m.update(data)
+        hashobj.update(data)
 
-    return (m.hexdigest(), size)
+    return (hashobj.hexdigest(), size)
 
 def md5sum(filename):
     """
     Generates the md5sum of the data in filename, returns the hex string.
     """
 
-    f = open(filename, 'r')
-    (m, s) = md5sum_size_fp(f)
-    f.close()
-    return m
+    filep = open(filename, 'r')
+    (md5, size) = md5sum_size_fp(filep)
+    filep.close()
+    return md5
 
 def md5sum_size_gz(filename):
     """
     Generates the md5sum and size of the uncompressed data in a gzip file
     """
 
-    f = gzip.open(filename, 'rb')
-    (m, s) = md5sum_size_fp(f)
-    f.close()
-    return (m, s)
+    filep = gzip.open(filename, 'rb')
+    (md5, size) = md5sum_size_fp(filep)
+    filep.close()
+    return (md5, size)
