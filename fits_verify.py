@@ -39,7 +39,7 @@ def fitsverify(filename):
 
         report = stdoutstring + stderrstring
         # Check to see if we got a not a fits file situation
-        if re.search('This does not look like a FITS file.', stdoutstring)
+        if re.search('This does not look like a FITS file.', stdoutstring):
             isfits = False
         else:
             isfits = True
