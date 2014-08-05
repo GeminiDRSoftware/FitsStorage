@@ -119,7 +119,7 @@ function gmosCustomMaskEnable() {
 };
 
 function CalsTab() {
-    if (document.getElementById("caltab").innerHTML == 'View Calibrations') {
+    if (document.getElementById("caltab").innerHTML == 'Associated Calibrations') {
         /* already been clicked, switch to it */
         $("#searchresults").hide();
         $("#calibration_results").show();
