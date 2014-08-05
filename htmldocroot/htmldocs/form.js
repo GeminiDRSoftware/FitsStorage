@@ -204,7 +204,6 @@ $(document).ready(function() {
     $("#loading").hide();
     $("#loading_cals").hide();
     $('#calibration_results').hide();
-    document.getElementById("resultstab").className += 'current';
     setAdvancedVisibility();
     setInstVisibility();
     gmosCustomMaskEnable();
