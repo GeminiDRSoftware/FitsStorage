@@ -476,6 +476,8 @@ def debugmessage(req):
     req.write("unparsed_uri: %s\n\n" % (str(req.unparsed_uri)))
     req.write("the_request: %s\n\n" % (str(req.the_request)))
     req.write("filename: %s\n\n" % (str(req.filename)))
+    req.write("hostname: %s\n\n" % (str(req.hostname)))
+    req.write("canonical_filename: %s\n\n" % (str(req.canonical_filename)))
     req.write("path_info: %s\n\n" % (str(req.path_info)))
     req.write("args: %s\n\n" % (str(req.args)))
 
