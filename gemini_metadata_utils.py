@@ -487,7 +487,7 @@ class GeminiProgram:
         self.program_id = program_id
 
         # Check for the CAL / ENG form
-        ec_match = re.match(r"^(G[NS])-((?:CAL)|(?:ENG))-(20[012]\d[01]\d[0123]\d)$", program_id)
+        ec_match = re.match(r"^(G[NS])-((?:CAL)|(?:ENG))(20[012]\d[01]\d[0123]\d)$", program_id)
         sci_match = re.match(r"^(G[NS])-(20[012]\d[AB])-([A-Z]+)-(\d+)$", program_id)
         if ec_match:
             # Valid eng / cal form
