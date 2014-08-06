@@ -194,17 +194,15 @@ class Header(Base):
             except ():
                 pass
 
+            lgustage = None
+            lgsloop = None
             try:
                 lgustage = ad.phu_get_key_value('LGUSTAGE')
-                self.laser_guide_star = (lgustage == 'IN')
-            except ():
+                lgsloop = ad.phu_get_key_value('LGSLOOP')
+            except:
                 pass
 
-            try:
-                lgsloop = ad.phu_get_key_value('LGSLOOP')
-                self.laser_guide_star = (lgsloop == 'CLOSED')
-            except ():
-                pass
+            self.laser_guide_star = (lgsloop == 'CLOSED') or (lgustage == 'IN')
 
 
             self.wavefront_sensor = ad.wavefront_sensor().for_db()
