@@ -86,7 +86,7 @@ def request_account(req, things):
         req.write('</TABLE>')
         req.write("<h2>Processing your request...</h2>")
         if email.endswith("@gemini.edu"):
-            req.write("<P>That looks like a Gemini Staff email address. If you would like Gemini Staff Access privelidges adding to your new archive account, please contact the archive scientist to request that.</P>")
+            req.write("<P>That looks like a Gemini Staff email address. If you would like Gemini Staff Access privileges adding to your new archive account, please contact the archive scientist to request that.</P>")
         try:
             session = sessionfactory()
             newuser = User(username)
@@ -106,7 +106,7 @@ def request_account(req, things):
             req.write('<P>You should shortly receive an email with a link to set your password and activate your account.</P>')
             req.write("<P>If you don't get the email, please contact the Gemini helpdesk. TODO - add link to helpdesk</P>")
             req.write('<P><a href="/searchform%s">Click here to return to your search.</a> ' % thing_string)
-            req.write('After you set your password and log in using another browser tab, you can just reload or hit the submit button again and it will recognise your login</P>')
+            req.write('After you set your password and log in using another browser tab, you can just reload or hit the submit button again and it will recognize your login</P>')
         else:
             req.write('<P>Sending you a password reset email FAILED. Please contact Gemini Helpdesk. Sorry.</P>')
         req.write('</body></html>')
