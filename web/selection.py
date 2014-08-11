@@ -345,7 +345,14 @@ def queryselection(query, selection):
         query = query.filter(Header.data_label == selection['data_label'])
 
     if ('object' in selection) and (('ra' not in selection) and ('dec' not in selection)):
-        query = query.filter(Header.object == selection['object'])
+        # Handle the "wildcards" allowed on the object name
+        object = selection['object']
+        if object.startswith('*') or object.endswith('*'):
+            # Wildcards are involved, replace with SQL wildcards and use ilike query
+            object = object.replace('*', '%')
+            query = query.filter(Header.object.ilike(object))
+        # ilike is a case insensitive version of like
+        query = query.filter(Header.object.ilike(object))
 
     # Should we query by date?
     if 'date' in selection:

@@ -103,7 +103,7 @@ def no_results(req, selection):
     # We pass the selection dictionary to this function
     # and check for obvious mutually exclusive things
     req.write("<H2>Your search returned no results</H2>")
-    req.write("<P>No data in the archive match your search criteria. Note that the program ID and Target Name searches are <b>exact match</b> searches, including only the first part of a program ID for example will not match any data. Also note that many combinations of search terms are in practice mutually exclusive - there will be no science BIAS frames for example, nor will there by any Imaging ARCs.</P>")
+    req.write("<P>No data in the archive match your search criteria. Note that most searches (including program ID) are <b>exact match</b> searches, including only the first part of a program ID for example will not match any data. Also note that many combinations of search terms are in practice mutually exclusive - there will be no science BIAS frames for example, nor will there by any Imaging ARCs.</P>")
     req.write("<P>We suggest re-setting some of your constraints to <i>Any</i> and repeating your search.</P>")
 
     # Check for obvious mutually exclusive selections
