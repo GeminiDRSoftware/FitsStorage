@@ -45,6 +45,12 @@ def handler(req):
     req.headers_out['Cache-Control'] = 'no-cache'
     req.headers_out['Expired'] = '-1'
 
+    # First check if the request went to an archive machine with an unqualified host name.
+    # We re-direct to the fully qualified version so that cookie names are consistent.
+    if req.hostname == 'arcdev':
+        new_uri = "http://arcdev.gemini.edu%s" % req.unparsed_uri
+        util.redirect(req, new_uri)
+
     # Parse the uri we were given.
     # This gives everything from the uri below the handler
     # eg if we're handling /python and we're the client requests
