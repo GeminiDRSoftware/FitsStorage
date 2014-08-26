@@ -74,11 +74,13 @@ def export_file(session, filename, path, destination):
     diskfile = query.one()
     our_md5 = diskfile.data_md5
 
+    logger.debug("Checking for remote file md5")
     dest_md5 = get_destination_data_md5(filename, destination)
 
     if (dest_md5 is not None) and (dest_md5 == our_md5):
         logger.info("Data %s is already at %s with md5 %s", filename, destination, dest_md5)
         return True
+    logger.debug("Data not present at destination - reading file")
 
     # Read the file into the payload postdata buffer to HTTP POST
     if using_s3:
