@@ -7,7 +7,7 @@ import time
 import traceback
 from orm import sessionfactory
 from utils.exportqueue import export_file, pop_exportqueue, exportqueue_length, retry_failures
-from logger import logger, setdebug, setdemon
+from logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage_config import using_sqlite, fits_lockfile_dir
 
 from optparse import OptionParser
@@ -16,13 +16,16 @@ parser = OptionParser()
 parser.add_option("--retry_mins", action="store", dest="retry_mins", type="float", default=5.0, help="Minimum number of minutes to wait before retries")
 parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
-parser.add_option("--lockfile", action="store", dest="lockfile", help="Use this as a lockfile to limit instances")
+parser.add_option("--name", action="store", dest="name", help="Name for this process. Used in logfile and lockfile")
+parser.add_option("--lockfile", action="store_true", dest="lockfile", help="Use a lockfile to limit instances")
 parser.add_option("--empty", action="store_true", default=False, dest="empty", help="This flag indicates that service ingest queue should empty the current queue and then exit.")
 (options, args) = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
 setdemon(options.demon)
+if options.name:
+    setlogfilesuffix(options.name)
 
 # Need to set up the global loop variable before we define the signal handlers
 # This is the loop forever variable later, allowing us to stop cleanly via kill
@@ -56,7 +59,7 @@ logger.info("*********    service_export_queue.py - starting up at %s" % datetim
 
 if(options.lockfile):
     # Does the Lockfile exist?
-    lockfile = "%s/%s" % (fits_lockfile_dir, options.lockfile)
+    lockfile = "%s/%s.lock" % (fits_lockfile_dir, options.name)
     if(os.path.exists(lockfile)):
         logger.info("Lockfile %s already exists, testing for viability" % lockfile)
         actually_locked = True
