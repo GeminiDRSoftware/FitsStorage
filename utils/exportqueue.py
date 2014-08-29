@@ -233,12 +233,10 @@ def pop_exportqueue(session):
         # Find other instances and delete them
         query = session.query(ExportQueue)
         query = query.filter(ExportQueue.inprogress == False).filter(ExportQueue.filename == eq.filename)
-        others = query.all()
-        for other in others:
-            logger.debug("Deleting duplicate file entry at exportqueue id %d", other.id)
-            session.delete(other)
+        query.delete()
 
     # And we're done, commit the transaction and release the update lock
+    session.commit()
     session.commit()
     return eq
 
