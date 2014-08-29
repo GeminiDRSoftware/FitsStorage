@@ -296,6 +296,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
                                 diskfile.uncompressed_cache_file)
 
     session.commit()
+    return add_diskfile
 
 
 def check_present(session, filename):

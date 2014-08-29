@@ -153,11 +153,12 @@ while(loop):
                     session.commit()
                     continue
             try:
-                ingest_file(session, iq.filename, iq.path, iq.force_md5, iq.force, options.skip_fv, options.skip_wmd)
+                added_diskfile = ingest_file(session, iq.filename, iq.path, iq.force_md5, iq.force, options.skip_fv, options.skip_wmd)
                 session.commit()
-                # Now we also add this file to our export list if we have downstream servers
-                for destination in export_destinations:
-                    add_to_exportqueue(session, iq.filename, iq.path, destination)
+                # Now we also add this file to our export list if we have downstream servers and we did add a diskfile
+                if added_diskfile:
+                    for destination in export_destinations:
+                        add_to_exportqueue(session, iq.filename, iq.path, destination)
             except:
                 logger.info("Problem Ingesting File - Rolling back" )
                 logger.error("Exception ingesting file %s: %s : %s... %s" % (iq.filename, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2])))
