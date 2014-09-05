@@ -6,6 +6,7 @@ import datetime
 import time
 import traceback
 from orm import sessionfactory
+from orm.exportqueue import ExportQueue
 from utils.exportqueue import export_file, pop_exportqueue, exportqueue_length, retry_failures
 from logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage_config import using_sqlite, fits_lockfile_dir
@@ -107,11 +108,9 @@ session = sessionfactory()
 while(loop):
     try:
         # Request a queue entry
+        logger.debug("Requesting an exportqueue entry")
         eq = pop_exportqueue(session)
 
-        if(eq==None):
-            logger.info("Didn't get anything to export, retrying")
-            eq = pop_exportqueue(session)
         if(eq==None):
             logger.info("Nothing on queue.")
             if options.empty:
@@ -126,31 +125,26 @@ while(loop):
 
         else:
             logger.info("Exporting %s, (%d in queue)" % (eq.filename, exportqueue_length(session)))
-            if(using_sqlite):
-                # SQLite doesn't support nested transactions
-                session.begin(subtransactions=True)
-            else:
-                session.begin_nested()
 
             try:
                 sucess=export_file(session, eq.filename, eq.path, eq.destination)
-                session.commit()
             except:
                 logger.info("Problem Exporting File - Rolling back" )
                 session.rollback()
                 # Originally we set the inprogress flag back to False at the point that we abort. 
                 # But that can lead to an immediate re-try and subsequent rapid rate re-failures, 
-                #and it will never move on to the next file. So lets try leaving it set inprogress to avoid that.
-                # iq.inprogress=False
-                session.commit()
+                # and it will never move on to the next file. So leave it set inprogress to avoid that.
                 raise
             if(sucess):
                 logger.debug("Deleteing exportqueue id %d" % eq.id)
-                session.delete(eq)
+                session.query(ExportQueue).filter(ExportQueue.id == eq.id).delete()
                 session.commit()
             else:
                 logger.info("Exportqueue id %d DID NOT TRANSFER" % eq.id)
-                eq.lastfailed = datetime.datetime.now()
+                # The eq instance we have is transient - get one connected to the session
+                dbeq = session.query(ExportQueue).filter(ExportQueue.id == eq.id).one()
+                dbeq.lastfailed = datetime.datetime.now()
+                session.commit()
 
     except KeyboardInterrupt:
         loop = False

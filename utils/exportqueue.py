@@ -13,6 +13,7 @@ from io import BytesIO
 
 from logger import logger
 from sqlalchemy import desc, join
+from sqlalchemy.orm import make_transient
 from sqlalchemy.orm.exc import ObjectDeletedError
 
 
@@ -80,7 +81,7 @@ def export_file(session, filename, path, destination):
     if (dest_md5 is not None) and (dest_md5 == our_md5):
         logger.info("Data %s is already at %s with md5 %s", filename, destination, dest_md5)
         return True
-    logger.debug("Data not present at destination - reading file")
+    logger.debug("Data not present at destination: dest_md5: %s, our_md5: %s - reading file", dest_md5, our_md5)
 
     # Read the file into the payload postdata buffer to HTTP POST
     if using_s3:
@@ -212,6 +213,9 @@ def pop_exportqueue(session):
 
     Also, when we go inprogress on an entry in the queue, we
     delete all other entries for the same filename.
+
+    The instance returned is actually a transient instance not associated
+    with the session. This avoids certain locking problems.
     """
 
     # This is strongly based on pop_ingestqueue, but they're sufficiently
@@ -235,9 +239,12 @@ def pop_exportqueue(session):
         query = query.filter(ExportQueue.inprogress == False).filter(ExportQueue.filename == eq.filename)
         query.delete()
 
+        # Make the eq into a transient instance before we return it
+        make_transient(eq)
+
     # And we're done, commit the transaction and release the update lock
     session.commit()
-    session.commit()
+
     return eq
 
 
@@ -247,6 +254,8 @@ def exportqueue_length(session):
     """
     # Make this generic between the ingest and export queues
     length = session.query(ExportQueue).filter(ExportQueue.inprogress == False).count()
+    # Even though there's nothing to commit, close the transaction
+    session.commit()
     return length
 
 def get_destination_data_md5(filename, destination):
@@ -300,10 +309,14 @@ def retry_failures(session, interval):
     query = session.query(ExportQueue).filter(ExportQueue.inprogress == True)
     query = query.filter(ExportQueue.lastfailed < before)
 
-    retry_list = query.all()
-    logger.info("There are %d failed ExportQueue items to retry", len(retry_list))
+    num = query.update({"inprogress": True})
+    logger.info("There are %d failed ExportQueue items to retry", num)
 
-    for eq in retry_list:
-        eq.inprogress = False
-        session.commit()
+    # Old way - delete if above works ok
+    #retry_list = query.all()
+    #logger.info("There are %d failed ExportQueue items to retry", len(retry_list))
 
+    #for eq in retry_list:
+        #eq.inprogress = False
+
+    session.commit()
