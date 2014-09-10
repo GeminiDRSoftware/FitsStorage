@@ -41,9 +41,17 @@ def download(req, things):
         thelist = []
         if 'files' in formdata.keys():
             fields = formdata['files']
-            for field in fields:
-                thelist.append(field.value)
+            req.log_error("fields: %s: %s" % (type(fields), fields))
+            if isinstance(fields, list):
+                for field in fields:
+                    req.log_error("field: %s: %s" % (type(field), field))
+                    thelist.append(str(field.value))
+            else:
+                req.log_error("single field: %s: %s" % (type(fields), fields))
+                thelist.append(str(fields))
+        req.log_error('thelist: %s' % thelist)
         selection = {'filelist': thelist}
+        selection['present'] = True
     else:
         # Get the selection
         selection = getselection(things)
@@ -60,6 +68,7 @@ def download(req, things):
 
         # Get the header list
         headers = list_headers(session, selection, None)
+        req.log_error("selection: %s, got %d header results" % (selection, len(headers)))
 
         if openquery(selection) and len(headers) > fits_open_result_limit:
             # Open query. Almost certainly too many files
