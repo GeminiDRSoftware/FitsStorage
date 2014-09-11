@@ -190,10 +190,8 @@ def export_file(session, filename, path, destination):
             return False
 
     except urllib2.URLError:
-        logger.error("URLError posting %d bytes of data to destination server at: %s", len(postdata), url)
-        string = traceback.format_tb(sys.exc_info()[2])
-        string = "".join(string)
-        logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
+        logger.info("URLError posting %d bytes of data to destination server at: %s", len(postdata), url)
+        logger.debug("Transfer Failed")
         return False
     except:
         logger.error("Problem posting %d bytes of data to destination server at: %s", len(postdata), url)
@@ -317,14 +315,7 @@ def retry_failures(session, interval):
     query = session.query(ExportQueue).filter(ExportQueue.inprogress == True)
     query = query.filter(ExportQueue.lastfailed < before)
 
-    num = query.update({"inprogress": True})
+    num = query.update({"inprogress": False})
     logger.info("There are %d failed ExportQueue items to retry", num)
-
-    # Old way - delete if above works ok
-    #retry_list = query.all()
-    #logger.info("There are %d failed ExportQueue items to retry", len(retry_list))
-
-    #for eq in retry_list:
-        #eq.inprogress = False
 
     session.commit()
