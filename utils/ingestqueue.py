@@ -381,7 +381,7 @@ def pop_ingestqueue(session, fast_rebuild=False):
         # values (filename, path, etc). The problem is that if it's still attached to the session
         # but expired (because we did a commit) then the next reference to it will initiate a transaction
         # and a SELECT to refresh the values, and that transaction will then hold a FOR ACCESS SHARE lock
-        # on the exportqueue table until we complete the export and do a commit - which will prevent 
+        # on the exportqueue table until we complete the export and do a commit - which will prevent
         # the ACCESS EXCLUSIVE lock in pop_exportqueue from being granted until the transfer completes.
         make_transient(iq)
 

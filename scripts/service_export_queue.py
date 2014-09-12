@@ -9,7 +9,7 @@ from orm import sessionfactory
 from orm.exportqueue import ExportQueue
 from utils.exportqueue import export_file, pop_exportqueue, exportqueue_length, retry_failures
 from logger import logger, setdebug, setdemon, setlogfilesuffix
-from fits_storage_config import using_sqlite, fits_lockfile_dir
+from fits_storage_config import fits_lockfile_dir
 
 from optparse import OptionParser
 
@@ -35,11 +35,11 @@ loop = True
 
 # Define signal handlers. This allows us to bail out neatly if we get a signal
 def handler(signum, frame):
-    logger.error("Received signal: %d. Crashing out. " % signum)
+    logger.error("Received signal: %d. Crashing out. ", signum)
     raise KeyboardInterrupt('Signal', signum)
 
 def nicehandler(signum, frame):
-    logger.error("Received signal: %d. Attempting to stop nicely " % signum)
+    logger.error("Received signal: %d. Attempting to stop nicely ", signum)
     global loop
     loop = False
 
@@ -56,13 +56,13 @@ signal.signal(signal.SIGPIPE, handler)
 signal.signal(signal.SIGTERM, nicehandler)
 
 # Annouce startup
-logger.info("*********    service_export_queue.py - starting up at %s" % datetime.datetime.now())
+logger.info("*********    service_export_queue.py - starting up at %s", datetime.datetime.now())
 
-if(options.lockfile):
+if options.lockfile:
     # Does the Lockfile exist?
     lockfile = "%s/%s.lock" % (fits_lockfile_dir, options.name)
-    if(os.path.exists(lockfile)):
-        logger.info("Lockfile %s already exists, testing for viability" % lockfile)
+    if os.path.exists(lockfile):
+        logger.info("Lockfile %s already exists, testing for viability", lockfile)
         actually_locked = True
         try:
             # Read the pid from the lockfile
@@ -70,48 +70,48 @@ if(options.lockfile):
             oldpid = int(lfd.read())
             lfd.close()
         except:
-            logger.error("Could not read pid from lockfile %s" % lockfile)
+            logger.error("Could not read pid from lockfile %s", lockfile)
             oldpid = 0
         # Try and send a null signal to test if the process is viable.
         try:
-            if(oldpid):
+            if oldpid:
                 os.kill(oldpid, 0)
         except:
             # If this gets called then the lockfile refers to a process which either doesn't exist or is not ours.
-            logger.error("PID in lockfile prefers to a process which either doesn't exist, or is not ours - %d" % oldpid)
+            logger.error("PID in lockfile prefers to a process which either doesn't exist, or is not ours - %d", oldpid)
             actually_locked = False
 
-        if(actually_locked):
-            logger.info("Lockfile %s refers to PID %d which appears to be valid. Exiting" % (lockfile, oldpid))
+        if actually_locked:
+            logger.info("Lockfile %s refers to PID %d which appears to be valid. Exiting", lockfile, oldpid)
             sys.exit()
         else:
-            logger.error("Lockfile %s refers to PID %d which appears to be not us. Deleting lockfile" % (lockfile, oldpid))
+            logger.error("Lockfile %s refers to PID %d which appears to be not us. Deleting lockfile", lockfile, oldpid)
             os.unlink(lockfile)
-            logger.info("Creating replacement lockfile %s" % lockfile)
+            logger.info("Creating replacement lockfile %s", lockfile)
             lfd = open(lockfile, 'w')
             lfd.write("%s\n" % os.getpid())
             lfd.close()
 
     else:
-        logger.info("Lockfile does not exist: %s" % lockfile)
-        logger.info("Creating new lockfile %s" % lockfile)
+        logger.info("Lockfile does not exist: %s", lockfile)
+        logger.info("Creating new lockfile %s", lockfile)
         lfd = open(lockfile, 'w')
         lfd.write("%s\n" % os.getpid())
         lfd.close()
 
 # retry interval option has a default so should always be defined
-interval = datetime.timedelta(minutes = options.retry_mins)
+interval = datetime.timedelta(minutes=options.retry_mins)
 
 session = sessionfactory()
 
 # Loop forever. loop is a global variable defined up top
-while(loop):
+while loop:
     try:
         # Request a queue entry
         logger.debug("Requesting an exportqueue entry")
         eq = pop_exportqueue(session)
 
-        if(eq==None):
+        if eq is None:
             logger.info("Nothing on queue.")
             if options.empty:
                 logger.info("--empty flag set, exiting")
@@ -124,23 +124,23 @@ while(loop):
             retry_failures(session, interval)
 
         else:
-            logger.info("Exporting %s, (%d in queue)" % (eq.filename, exportqueue_length(session)))
+            logger.info("Exporting %s, (%d in queue)", eq.filename, exportqueue_length(session))
 
             try:
-                sucess=export_file(session, eq.filename, eq.path, eq.destination)
+                sucess = export_file(session, eq.filename, eq.path, eq.destination)
             except:
-                logger.info("Problem Exporting File - Rolling back" )
+                logger.info("Problem Exporting File - Rolling back")
                 session.rollback()
-                # Originally we set the inprogress flag back to False at the point that we abort. 
-                # But that can lead to an immediate re-try and subsequent rapid rate re-failures, 
+                # Originally we set the inprogress flag back to False at the point that we abort.
+                # But that can lead to an immediate re-try and subsequent rapid rate re-failures,
                 # and it will never move on to the next file. So leave it set inprogress to avoid that.
                 raise
-            if(sucess):
-                logger.debug("Deleteing exportqueue id %d" % eq.id)
+            if sucess:
+                logger.debug("Deleteing exportqueue id %d", eq.id)
                 session.query(ExportQueue).filter(ExportQueue.id == eq.id).delete()
                 session.commit()
             else:
-                logger.info("Exportqueue id %d DID NOT TRANSFER" % eq.id)
+                logger.info("Exportqueue id %d DID NOT TRANSFER", eq.id)
                 # The eq instance we have is transient - get one connected to the session
                 dbeq = session.query(ExportQueue).filter(ExportQueue.id == eq.id).one()
                 dbeq.lastfailed = datetime.datetime.now()
@@ -150,19 +150,17 @@ while(loop):
         loop = False
 
     except:
-        raise
         string = traceback.format_tb(sys.exc_info()[2])
         string = "".join(string)
-        if(eq):
-            logger.error("File %s - Exception: %s : %s... %s" % (eq.filename, sys.exc_info()[0], sys.exc_info()[1], string))
+        if eq:
+            logger.error("File %s - Exception: %s : %s... %s", eq.filename, sys.exc_info()[0], sys.exc_info()[1], string)
         else:
-            logger.error("Nothing on export queue - Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
+            logger.error("Nothing on export queue - Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
     finally:
         session.close()
 
 session.close()
-if(options.lockfile):
-    logger.info("Deleting Lockfile %s" % lockfile)
+if options.lockfile:
+    logger.info("Deleting Lockfile %s", lockfile)
     os.unlink(lockfile)
-logger.info("*********    service_export_queue.py - exiting at %s" % datetime.datetime.now())
-
+logger.info("*********    service_export_queue.py - exiting at %s", datetime.datetime.now())

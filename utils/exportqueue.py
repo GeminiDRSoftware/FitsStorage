@@ -2,8 +2,6 @@
 This module provides various utility function used to manage the export queue
 """
 import os
-import sys
-import traceback
 import urllib2
 import json
 import datetime
@@ -212,7 +210,7 @@ def pop_exportqueue(session):
     Also, when we go inprogress on an entry in the queue, we
     delete all other entries for the same filename.
 
-    The instance returned is actually a transient instance  - it is 
+    The instance returned is actually a transient instance  - it is
     not associated with the session. Basically treat it as a convenience
     container (like a dictionary) for the values therein, but don't try
     to modify the database using it.
@@ -244,7 +242,7 @@ def pop_exportqueue(session):
         # values (filename, path, etc). The problem is that if it's still attached to the session
         # but expired (because we did a commit) then the next reference to it will initiate a transaction
         # and a SELECT to refresh the values, and that transaction will then hold a FOR ACCESS SHARE lock
-        # on the exportqueue table until we complete the export and do a commit - which will prevent 
+        # on the exportqueue table until we complete the export and do a commit - which will prevent
         # the ACCESS EXCLUSIVE lock in pop_exportqueue from being granted until the transfer completes.
         make_transient(eq)
 

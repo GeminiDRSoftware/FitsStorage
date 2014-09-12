@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 from orm import sessionfactory
 from orm.ingestqueue import IngestQueue
-from fits_storage_config import using_sqlite, using_s3, storage_root, defer_seconds, fits_lockfile_dir, export_destinations
+from fits_storage_config import using_s3, storage_root, defer_seconds, fits_lockfile_dir, export_destinations
 from utils.ingestqueue import ingest_file, pop_ingestqueue, ingestqueue_length
 from utils.exportqueue import add_to_exportqueue
 from logger import logger, setdebug, setdemon, setlogfilesuffix
@@ -29,7 +29,7 @@ parser.add_option("--empty", action="store_true", default=False, dest="empty", h
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
 setdemon(options.demon)
-if(options.name):
+if options.name:
     setlogfilesuffix(options.name)
 
 # Need to set up the global loop variable before we define the signal handlers
@@ -39,11 +39,11 @@ loop = True
 
 # Define signal handlers. This allows us to bail out neatly if we get a signal
 def handler(signum, frame):
-    logger.error("Received signal: %d. Crashing out. " % signum)
+    logger.error("Received signal: %d. Crashing out. ", signum)
     raise KeyboardInterrupt('Signal', signum)
 
 def nicehandler(signum, frame):
-    logger.error("Received signal: %d. Attempting to stop nicely " % signum)
+    logger.error("Received signal: %d. Attempting to stop nicely ", signum)
     global loop
     loop = False
 
@@ -60,14 +60,13 @@ signal.signal(signal.SIGPIPE, handler)
 signal.signal(signal.SIGTERM, nicehandler)
 
 # Annouce startup
-now = datetime.datetime.now()
-logger.info("*********    service_ingest_queue.py - starting up at %s" % now)
+logger.info("*********    service_ingest_queue.py - starting up at %s", datetime.datetime.now())
 
-if(options.lockfile):
+if options.lockfile:
     # Does the Lockfile exist?
     lockfile = "%s/%s.lock" % (fits_lockfile_dir, options.name)
-    if(os.path.exists(lockfile)):
-        logger.info("Lockfile %s already exists, testing for viability" % lockfile)
+    if os.path.exists(lockfile):
+        logger.info("Lockfile %s already exists, testing for viability", lockfile)
         actually_locked = True
         try:
             # Read the pid from the lockfile
@@ -75,31 +74,31 @@ if(options.lockfile):
             oldpid = int(lfd.read())
             lfd.close()
         except:
-            logger.error("Could not read pid from lockfile %s" % lockfile)
+            logger.error("Could not read pid from lockfile %s", lockfile)
             oldpid = 0
         # Try and send a null signal to test if the process is viable.
         try:
-            if(oldpid):
+            if oldpid:
                 os.kill(oldpid, 0)
         except:
             # If this gets called then the lockfile refers to a process which either doesn't exist or is not ours.
-            logger.error("PID in lockfile prefers to a process which either doesn't exist, or is not ours - %d" % oldpid)
+            logger.error("PID in lockfile prefers to a process which either doesn't exist, or is not ours - %d", oldpid)
             actually_locked = False
 
-        if(actually_locked):
-            logger.info("Lockfile %s refers to PID %d which appears to be valid. Exiting" % (lockfile, oldpid))
+        if actually_locked:
+            logger.info("Lockfile %s refers to PID %d which appears to be valid. Exiting", lockfile, oldpid)
             sys.exit()
         else:
-            logger.error("Lockfile %s refers to PID %d which appears to be not us. Deleting lockfile" % (lockfile, oldpid))
+            logger.error("Lockfile %s refers to PID %d which appears to be not us. Deleting lockfile", lockfile, oldpid)
             os.unlink(lockfile)
-            logger.info("Creating replacement lockfile %s" % lockfile)
+            logger.info("Creating replacement lockfile %s", lockfile)
             lfd = open(lockfile, 'w')
             lfd.write("%s\n" % os.getpid())
             lfd.close()
 
     else:
-        logger.info("Lockfile does not exist: %s" % lockfile)
-        logger.info("Creating new lockfile %s" % lockfile)
+        logger.info("Lockfile does not exist: %s", lockfile)
+        logger.info("Creating new lockfile %s", lockfile)
         lfd = open(lockfile, 'w')
         lfd.write("%s\n" % os.getpid())
         lfd.close()
@@ -107,12 +106,12 @@ if(options.lockfile):
 session = sessionfactory()
 
 # Loop forever. loop is a global variable defined up top
-while(loop):
+while loop:
     try:
         # Request a queue entry
         iq = pop_ingestqueue(session, options.fast_rebuild)
 
-        if(iq==None):
+        if iq is None:
             logger.info("Nothing on queue.")
             if options.empty:
                 logger.info("--empty flag set, exiting")
@@ -122,20 +121,20 @@ while(loop):
             time.sleep(10)
         else:
             # Don't query queue length in fast_rebuild mode
-            if(options.fast_rebuild):
-                logger.info("Ingesting %s" % iq.filename)
+            if options.fast_rebuild:
+                logger.info("Ingesting %s", iq.filename)
             else:
-                logger.info("Ingesting %s, (%d in queue)" % (iq.filename, ingestqueue_length(session)))
+                logger.info("Ingesting %s, (%d in queue)", iq.filename, ingestqueue_length(session))
 
             # Check if the file was very recently modified, defer ingestion if it was
-            if((not using_s3) and (options.no_defer == False) and (defer_seconds > 0)):
+            if (not using_s3) and (options.no_defer == False) and (defer_seconds > 0):
                 fullpath = os.path.join(storage_root, iq.path, iq.filename)
                 lastmod = datetime.datetime.fromtimestamp(os.path.getmtime(fullpath))
                 now = datetime.datetime.now()
                 age = now - lastmod
                 defer = datetime.timedelta(seconds=defer_seconds)
-                if(age < defer):
-                    logger.info("Deferring ingestion of file %s" % iq.filename)
+                if age < defer:
+                    logger.info("Deferring ingestion of file %s", iq.filename)
                     # Defer ingestion of this file for defer_secs
                     after = now + defer
                     # iq is a transient ORM object, find it in the db
@@ -151,13 +150,13 @@ while(loop):
                     for destination in export_destinations:
                         add_to_exportqueue(session, iq.filename, iq.path, destination)
             except:
-                logger.info("Problem Ingesting File - Rolling back" )
-                logger.error("Exception ingesting file %s: %s : %s... %s" % (iq.filename, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2])))
+                logger.info("Problem Ingesting File - Rolling back")
+                logger.error("Exception ingesting file %s: %s : %s... %s", iq.filename, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
                 session.rollback()
                 # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
                 # iq.inprogress=False
                 raise
-            logger.debug("Deleteing ingestqueue id %d" % iq.id)
+            logger.debug("Deleteing ingestqueue id %d", iq.id)
             # iq is a transient ORM object, find it in the db
             dbiq = session.query(IngestQueue).filter(IngestQueue.id == iq.id).one()
             session.delete(dbiq)
@@ -167,20 +166,18 @@ while(loop):
         loop = False
 
     except:
-        raise
         string = traceback.format_tb(sys.exc_info()[2])
         string = "".join(string)
         session.rollback()
-        if(iq):
-            logger.error("File %s - Exception: %s : %s... %s" % (iq.filename, sys.exc_info()[0], sys.exc_info()[1], string))
+        if iq:
+            logger.error("File %s - Exception: %s : %s... %s", iq.filename, sys.exc_info()[0], sys.exc_info()[1], string)
         else:
-            logger.error("Nothing on ingest queue - Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
+            logger.error("Nothing on ingest queue - Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
 
     finally:
         session.close()
 
-if(options.lockfile):
-    logger.info("Deleting Lockfile %s" % lockfile)
+if options.lockfile:
+    logger.info("Deleting Lockfile %s", lockfile)
     os.unlink(lockfile)
-logger.info("*********    service_ingest_queue.py - exiting at %s" % datetime.datetime.now())
-
+logger.info("*********    service_ingest_queue.py - exiting at %s", datetime.datetime.now())
