@@ -751,7 +751,10 @@ def selection_to_URL(selection):
     urlstring = ''
 
     for key in selection.keys():
-        if key == 'program_id':
+        if key == 'warning':
+            # Don't put the warning text in the URL
+            pass
+        elif key == 'program_id':
             # See if it is a valid program id, or if we need to add progid=
             gp = GeminiProgram(selection[key])
             if gp.valid:
