@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 from orm import sessionfactory
+from orm.ingestqueue import IngestQueue
 from fits_storage_config import using_sqlite, using_s3, storage_root, defer_seconds, fits_lockfile_dir, export_destinations
 from utils.ingestqueue import ingest_file, pop_ingestqueue, ingestqueue_length
 from utils.exportqueue import add_to_exportqueue
@@ -112,9 +113,6 @@ while(loop):
         iq = pop_ingestqueue(session, options.fast_rebuild)
 
         if(iq==None):
-            logger.info("Didn't get anything to ingest, retrying")
-            iq = pop_ingestqueue(session)
-        if(iq==None):
             logger.info("Nothing on queue.")
             if options.empty:
                 logger.info("--empty flag set, exiting")
@@ -129,12 +127,6 @@ while(loop):
             else:
                 logger.info("Ingesting %s, (%d in queue)" % (iq.filename, ingestqueue_length(session)))
 
-            if(using_sqlite):
-                # SQLite doesn't support nested transactions
-                session.begin(subtransactions=True)
-            else:
-                session.begin_nested()
-
             # Check if the file was very recently modified, defer ingestion if it was
             if((not using_s3) and (options.no_defer == False) and (defer_seconds > 0)):
                 fullpath = os.path.join(storage_root, iq.path, iq.filename)
@@ -146,15 +138,14 @@ while(loop):
                     logger.info("Deferring ingestion of file %s" % iq.filename)
                     # Defer ingestion of this file for defer_secs
                     after = now + defer
-                    iq.after = after
-                    iq.inprogress = False
-                    # Need two commits here, one for each layer of the nested transaction
-                    session.commit()
+                    # iq is a transient ORM object, find it in the db
+                    dbiq = session.query(IngestQueue).filter(IngestQueue.id == iq.id).one()
+                    dbiq.after = after
+                    dbiq.inprogress = False
                     session.commit()
                     continue
             try:
                 added_diskfile = ingest_file(session, iq.filename, iq.path, iq.force_md5, iq.force, options.skip_fv, options.skip_wmd)
-                session.commit()
                 # Now we also add this file to our export list if we have downstream servers and we did add a diskfile
                 if added_diskfile:
                     for destination in export_destinations:
@@ -165,18 +156,21 @@ while(loop):
                 session.rollback()
                 # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
                 # iq.inprogress=False
-                session.commit()
                 raise
             logger.debug("Deleteing ingestqueue id %d" % iq.id)
-            session.delete(iq)
+            # iq is a transient ORM object, find it in the db
+            dbiq = session.query(IngestQueue).filter(IngestQueue.id == iq.id).one()
+            session.delete(dbiq)
             session.commit()
 
     except KeyboardInterrupt:
         loop = False
 
     except:
+        raise
         string = traceback.format_tb(sys.exc_info()[2])
         string = "".join(string)
+        session.rollback()
         if(iq):
             logger.error("File %s - Exception: %s : %s... %s" % (iq.filename, sys.exc_info()[0], sys.exc_info()[1], string))
         else:
@@ -185,7 +179,6 @@ while(loop):
     finally:
         session.close()
 
-session.close()
 if(options.lockfile):
     logger.info("Deleting Lockfile %s" % lockfile)
     os.unlink(lockfile)

@@ -7,6 +7,7 @@ import datetime
 from logger import logger
 from sqlalchemy import desc
 from sqlalchemy.orm.exc import ObjectDeletedError
+from sqlalchemy.orm import make_transient
 
 from orm.geometryhacks import add_footprint, do_std_obs
 
@@ -78,6 +79,8 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
                  modtime.
     skip_fv: causes the ingest to skip running fitsverify on the file
     skip_wmd: causes the ingest to skip running wmd on the file.
+
+    return value is a boolean to say whether we added a new diskfile or not
     """
 
     logger.debug("ingest_file %s", filename)
@@ -330,6 +333,10 @@ def pop_ingestqueue(session, fast_rebuild=False):
     Returns the next thing to ingest off the ingest queue, and sets the
     inprogress flag on that entry.
 
+    The ORM instance returned is detached from the database - it's a transient
+    object not associated with the session. Basicaly treat it as a convenience
+    dictionary for the filename etc, but don't try to modify the database with it.
+
     The select and update inprogress are done with a transaction lock
     to avoid race conditions or duplications when there is more than
     one process processing the ingest queue.
@@ -367,10 +374,16 @@ def pop_ingestqueue(session, fast_rebuild=False):
             # Find other instances and delete them
             others = session.query(IngestQueue)
             others = others.filter(IngestQueue.inprogress == False).filter(IngestQueue.filename == iq.filename)
-            others = others.all()
-            for other in others:
-                logger.debug("Deleting duplicate file entry at ingestqueue id %d", other.id)
-                session.delete(other)
+            others.delete()
+
+        # Make the iq into a transient instance before we return it
+        # This detaches it from the session, basically it becomes a convenience container for the
+        # values (filename, path, etc). The problem is that if it's still attached to the session
+        # but expired (because we did a commit) then the next reference to it will initiate a transaction
+        # and a SELECT to refresh the values, and that transaction will then hold a FOR ACCESS SHARE lock
+        # on the exportqueue table until we complete the export and do a commit - which will prevent 
+        # the ACCESS EXCLUSIVE lock in pop_exportqueue from being granted until the transfer completes.
+        make_transient(iq)
 
     # And we're done, commit the transaction and release the update lock
     session.commit()
@@ -381,5 +394,7 @@ def ingestqueue_length(session):
     return the length of the ingest queue
     """
     length = session.query(IngestQueue).filter(IngestQueue.inprogress == False).count()
+    # Even though there's nothing to commit, close the transaction
+    session.commit()
     return length
 
