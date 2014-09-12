@@ -1,6 +1,7 @@
 """
 This module holds the CalibrationGMOS class
 """
+import datetime
 
 from fits_storage_config import using_sqlite
 from orm.diskfile import DiskFile
@@ -167,7 +168,12 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
 
         # Must Match central_wavelength
-        query = query.filter(func.abs(Header.central_wavelength-self.descriptors['central_wavelength']) < 0.001)
+        #query = query.filter(func.abs(Header.central_wavelength-self.descriptors['central_wavelength']) < 0.001)
+        # This might give better performance
+        cenwlen_lo = float(self.descriptors['central_wavelength']) - 0.001
+        cenwlen_hi = float(self.descriptors['central_wavelength']) + 0.001
+        query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
+
 
         # Must match focal_plane_mask only if it's not the 5.0arcsec slit in the target, otherwise any longslit is OK
         if self.descriptors['focal_plane_mask'] != '5.0arcsec':
@@ -180,14 +186,19 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Gmos.detector_y_bin == self.descriptors['detector_y_bin'])
 
         # The science amp_read_area must be equal or substring of the arc amp_read_area
-        query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
+        query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         # Should we insist on the program ID matching?
         if sameprog:
             query = query.filter(Header.program_id == self.descriptors['program_id'])
 
         # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        # query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        # Try this for performance
+        max_interval = datetime.timedelta(days=365)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -197,7 +208,6 @@ class CalibrationGMOS(Calibration):
             query = query.limit(many)
             return query.all()
         else:
-            query = query.limit(1)
             return query.first()
 
     def dark(self, many=None):
@@ -226,18 +236,25 @@ class CalibrationGMOS(Calibration):
 
         # K.Roth 20110817 told PH just make it the nearest second, as you can't demand non integer times anyway.
         # Yeah, and GMOS-S ones come out a few 10s of *seconds* different - going to choose darks within 50 secs for now...
+        # query = query.filter(func.abs(Header.exposure_time - self.descriptors['exposure_time']) < 50.0)
+        # Better performance from a range than using abs
+        exptime_lo = self.descriptors['exposure_time'] - 50.0
+        exptime_hi = self.descriptors['exposure_time'] + 50.0
+        query = query.filter(Header.exposure_time > exptime_lo).filter(Header.exposure_time < exptime_hi)
 
-        query = query.filter(func.abs(Header.exposure_time - self.descriptors['exposure_time']) < 50.0)
         query = query.filter(Gmos.nodandshuffle == self.descriptors['nodandshuffle'])
         if self.descriptors['nodandshuffle']:
             query = query.filter(Gmos.nod_count == self.descriptors['nod_count'])
             query = query.filter(Gmos.nod_pixels == self.descriptors['nod_pixels'])
 
         # The science amp_read_area must be equal or substring of the dark amp_read_area
-        query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
+        query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        max_interval = datetime.timedelta(days=365)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -247,7 +264,6 @@ class CalibrationGMOS(Calibration):
             query = query.limit(many)
             return query.all()
         else:
-            query = query.limit(1)
             return query.first()
 
     def bias(self, processed=False, many=None):
@@ -273,7 +289,7 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Gmos.gain_setting == self.descriptors['gain_setting'])
 
         # The science amp_read_area must be equal or substring of the bias amp_read_area
-        query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
+        query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
 
         # The Overscan section handling: this only applies to processed biases
@@ -291,8 +307,12 @@ class CalibrationGMOS(Calibration):
                 query.filter(Gmos.overscan_trimmed == True)
                 query.filter(Gmos.overscan_subtracted == True)
 
-        # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        # Absolute time separation must be within ~3 months
+        max_interval = datetime.timedelta(days=90)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
+
 
         # Order by absolute time separation.
         if using_sqlite:
@@ -307,7 +327,6 @@ class CalibrationGMOS(Calibration):
             query = query.limit(many)
             return query.all()
         else:
-            query = query.limit(1)
             return query.first()
 
     def flat(self, processed=False, many=None):
@@ -341,10 +360,19 @@ class CalibrationGMOS(Calibration):
         if self.descriptors['spectroscopy']:
             query = query.filter(Gmos.disperser == self.descriptors['disperser'])
             # Central wavelength is in microns (by definition in the DB table).
-            query = query.filter(func.abs(Header.central_wavelength-self.descriptors['central_wavelength']) < 0.001)
+            cenwlen_lo = float(self.descriptors['central_wavelength']) - 0.001
+            cenwlen_hi = float(self.descriptors['central_wavelength']) + 0.001
+            query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
+
 
         # The science amp_read_area must be equal or substring of the flat amp_read_area
-        query = query.filter(Gmos.amp_read_area.like('%%%s%%' % self.descriptors['amp_read_area']))
+        query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+
+        # Absolute time separation must be within ~ 6 months
+        max_interval = datetime.timedelta(days=180)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         if using_sqlite:
@@ -354,15 +382,11 @@ class CalibrationGMOS(Calibration):
             # Postgres needs the following:
             query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
-        # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
-
         # For now, we only want one result - the closest in time, unless otherwise indicated
         if many:
             query = query.limit(many)
             return query.all()
         else:
-            query = query.limit(1)
             return query.first()
 
     def processed_fringe(self, many=None):
@@ -388,8 +412,11 @@ class CalibrationGMOS(Calibration):
         # The science amp_read_area must be equal or substring of the flat amp_read_area
         query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
 
-        # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        # Absolute time separation must be within 1 year
+        max_interval = datetime.timedelta(days=365)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -399,6 +426,5 @@ class CalibrationGMOS(Calibration):
             query = query.limit(many)
             return query.all()
         else:
-            query = query.limit(1)
             return query.first()
 
