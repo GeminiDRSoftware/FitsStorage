@@ -1,6 +1,7 @@
 """
 This module holds the CalibrationGNIRS class
 """
+import datetime
 
 from orm.diskfile import DiskFile
 from orm.header import Header
@@ -87,8 +88,11 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Header.exposure_time == self.descriptors['exposure_time'])
         query = query.filter(Gnirs.coadds == self.descriptors['coadds'])
 
-        # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        # Absolute time separation must be within 3 months
+        max_interval = datetime.timedelta(days=90)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -98,7 +102,6 @@ class CalibrationGNIRS(Calibration):
             query = query.limit(many)
             return query.all()
         else:
-            query = query.limit(1)
             return query.first()
 
     def flat(self, processed=False, many=None):
@@ -127,8 +130,11 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
         query = query.filter(Gnirs.well_depth_setting == self.descriptors['well_depth_setting'])
 
-        # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        # Absolute time separation must be within 3 months
+        max_interval = datetime.timedelta(days=90)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -138,7 +144,6 @@ class CalibrationGNIRS(Calibration):
             query = query.limit(many)
             return query.all()
         else:
-            query = query.limit(1)
             return query.first()
 
     def arc(self, processed=False, many=None):
@@ -165,8 +170,11 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
         query = query.filter(Gnirs.camera == self.descriptors['camera'])
 
-        # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        # Absolute time separation must be within 1 year
+        max_interval = datetime.timedelta(days=365)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -176,7 +184,6 @@ class CalibrationGNIRS(Calibration):
             query = query.limit(many)
             return    query.all()
         else:
-            query = query.limit(1)
             return query.first()
 
     def pinhole_mask(self, processed=False, many=None):
@@ -201,8 +208,11 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
         query = query.filter(Gnirs.camera == self.descriptors['camera'])
 
-        # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        # Absolute time separation must be within 1 year
+        max_interval = datetime.timedelta(days=365)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -212,6 +222,4 @@ class CalibrationGNIRS(Calibration):
             query = query.limit(many)
             return query.all()
         else:
-            query = query.limit(1)
             return query.first()
-

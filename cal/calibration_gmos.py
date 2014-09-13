@@ -185,8 +185,14 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Gmos.detector_x_bin == self.descriptors['detector_x_bin'])
         query = query.filter(Gmos.detector_y_bin == self.descriptors['detector_y_bin'])
 
-        # The science amp_read_area must be equal or substring of the arc amp_read_area
-        query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+        # The science amp_read_area must be equal or substring of the cal amp_read_area
+        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
+        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match
+        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+            query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+        else:
+            query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         # Should we insist on the program ID matching?
         if sameprog:
@@ -247,8 +253,15 @@ class CalibrationGMOS(Calibration):
             query = query.filter(Gmos.nod_count == self.descriptors['nod_count'])
             query = query.filter(Gmos.nod_pixels == self.descriptors['nod_pixels'])
 
-        # The science amp_read_area must be equal or substring of the dark amp_read_area
-        query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+        # The science amp_read_area must be equal or substring of the cal amp_read_area
+        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
+        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match
+        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+            query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+        else:
+            query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+
 
         # Absolute time separation must be within 1 year (31557600 seconds)
         max_interval = datetime.timedelta(days=365)
@@ -288,9 +301,14 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Gmos.read_speed_setting == self.descriptors['read_speed_setting'])
         query = query.filter(Gmos.gain_setting == self.descriptors['gain_setting'])
 
-        # The science amp_read_area must be equal or substring of the bias amp_read_area
-        query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
-
+        # The science amp_read_area must be equal or substring of the cal amp_read_area
+        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
+        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match
+        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+            query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+        else:
+            query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         # The Overscan section handling: this only applies to processed biases
         # as raw biases will never be overscan trimmed or subtracted, and if they're
@@ -365,8 +383,15 @@ class CalibrationGMOS(Calibration):
             query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
 
 
-        # The science amp_read_area must be equal or substring of the flat amp_read_area
-        query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+        # The science amp_read_area must be equal or substring of the cal amp_read_area
+        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
+        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match
+        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+            query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+        else:
+            query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+
 
         # Absolute time separation must be within ~ 6 months
         max_interval = datetime.timedelta(days=180)
@@ -409,8 +434,14 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Gmos.detector_y_bin == self.descriptors['detector_y_bin'])
         query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
 
-        # The science amp_read_area must be equal or substring of the flat amp_read_area
-        query = query.filter(Gmos.amp_read_area.like('%'+self.descriptors['amp_read_area']+'%'))
+        # The science amp_read_area must be equal or substring of the cal amp_read_area
+        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
+        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match
+        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+            query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+        else:
+            query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         # Absolute time separation must be within 1 year
         max_interval = datetime.timedelta(days=365)

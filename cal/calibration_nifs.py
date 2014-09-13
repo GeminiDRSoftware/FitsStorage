@@ -1,6 +1,7 @@
 """
 This module holds the CalibrationNIFS class
 """
+import datetime
 
 from orm.diskfile import DiskFile
 from orm.header import Header
@@ -69,18 +70,20 @@ class CalibrationNIFS(Calibration):
         query = query.filter(Nifs.coadds == self.descriptors['coadds'])
         query = query.filter(Nifs.disperser == self.descriptors['disperser'])
 
-        # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        # Absolute time separation must be within ~3 months
+        max_interval = datetime.timedelta(days=90)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(many):
+        if many:
             query = query.limit(many)
-            return    query.all()
+            return query.all()
         else:
-            query = query.limit(1)
             return query.first()
 
     def flat(self, many=None):
@@ -100,18 +103,20 @@ class CalibrationNIFS(Calibration):
         query = query.filter(Nifs.focal_plane_mask == self.descriptors['focal_plane_mask'])
         query = query.filter(Nifs.filter_name == self.descriptors['filter_name'])
 
-        # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        # Absolute time separation must be within 6 months
+        max_interval = datetime.timedelta(days=180)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(many):
+        if many:
             query = query.limit(many)
-            return    query.all()
+            return query.all()
         else:
-            query = query.limit(1)
             return query.first()
 
     def arc(self, sameprog=False, many=None):
@@ -130,18 +135,20 @@ class CalibrationNIFS(Calibration):
         query = query.filter(Nifs.focal_plane_mask == self.descriptors['focal_plane_mask'])
         query = query.filter(Nifs.filter_name == self.descriptors['filter_name'])
 
-        # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        # Absolute time separation must be within 1 year
+        max_interval = datetime.timedelta(days=365)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(many):
+        if many:
             query = query.limit(many)
-            return    query.all()
+            return query.all()
         else:
-            query = query.limit(1)
             return query.first()
 
     def ronchi_mask(self, many=None):
@@ -158,17 +165,18 @@ class CalibrationNIFS(Calibration):
         query = query.filter(Nifs.disperser == self.descriptors['disperser'])
         query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
 
-        # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        # Absolute time separation must be within 1 year
+        max_interval = datetime.timedelta(days=365)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(many):
+        if many:
             query = query.limit(many)
-            return    query.all()
+            return query.all()
         else:
-            query = query.limit(1)
             return query.first()
-

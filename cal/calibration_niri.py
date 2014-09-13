@@ -1,6 +1,7 @@
 """
 This module holds the CalibrationNIRI class
 """
+import datetime
 
 from orm.diskfile import DiskFile
 from orm.header import Header
@@ -55,7 +56,7 @@ class CalibrationNIRI(Calibration):
     def dark(self, processed=False, many=None):
         query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
         query = query.filter(Header.observation_type == 'DARK')
-        if(processed):
+        if processed:
             query = query.filter(Header.reduction == 'PROCESSED_DARK')
         else:
             query = query.filter(Header.reduction == 'RAW')
@@ -68,30 +69,36 @@ class CalibrationNIRI(Calibration):
 
         # Must totally match: data_section, read_mode, well_depth_setting, exposure_time, coadds
         query = query.filter(Niri.data_section == self.descriptors['data_section'])
-        query = query.filter(Niri.read_mode == self.descriptors['read_mode']).filter(Niri.well_depth_setting == self.descriptors['well_depth_setting'])
+        query = query.filter(Niri.read_mode == self.descriptors['read_mode'])
+        query = query.filter(Niri.well_depth_setting == self.descriptors['well_depth_setting'])
+
         # Exposure time must match to within 0.01 (nb floating point match). Coadds must also match.
         # nb exposure_time is really exposure_time * coadds, but if we're matching both, that doesn't matter
-        query = query.filter(func.abs(Header.exposure_time - self.descriptors['exposure_time']) < 0.01)
         query = query.filter(Niri.coadds == self.descriptors['coadds'])
+        exptime_lo = float(self.descriptors['exposure_time']) - 0.01
+        exptime_hi = float(self.descriptors['exposure_time']) + 0.01
+        query = query.filter(Header.exposure_time > exptime_lo).filter(Header.exposure_time < exptime_hi)
 
-        # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        # Absolute time separation must be within ~6 months
+        max_interval = datetime.timedelta(days=180)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(many):
+        if many:
             query = query.limit(many)
-            return    query.all()
+            return query.all()
         else:
-            query = query.limit(1)
             return query.first()
 
     def flat(self, processed=False, many=None):
         query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
         query = query.filter(Header.observation_type == 'FLAT')
-        if(processed):
+        if processed:
             query = query.filter(Header.reduction == 'PROCESSED_FLAT')
         else:
             query = query.filter(Header.reduction == 'RAW')
@@ -109,18 +116,18 @@ class CalibrationNIRI(Calibration):
         query = query.filter(Niri.filter_name == self.descriptors['filter_name'])
         query = query.filter(Niri.camera == self.descriptors['camera'])
 
-        # Absolute time separation must be within 1 year (31557600 seconds)
-        query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
+        # Absolute time separation must be within 6 months
+        max_interval = datetime.timedelta(days=180)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
-        if(many):
+        if many:
             query = query.limit(many)
-            return    query.all()
+            return query.all()
         else:
-            query = query.limit(1)
             return query.first()
-
-
