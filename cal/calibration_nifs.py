@@ -28,7 +28,7 @@ class CalibrationNIFS(Calibration):
         self.nifs = query.first()
 
         # Populate the descriptors dictionary for NIFS
-        if(self.from_descriptors):
+        if self.from_descriptors:
             self.descriptors['read_mode'] = self.nifs.read_mode
             self.descriptors['coadds'] = self.nifs.coadds
             self.descriptors['disperser'] = self.nifs.disperser
@@ -36,25 +36,28 @@ class CalibrationNIFS(Calibration):
             self.descriptors['filter_name'] = self.nifs.filter_name
 
         # Set the list of required calibrations
-        self.required = self.required()
+        self.set_required()
 
-    def required(self):
+    def set_required(self):
         # Return a list of the calibrations required for this NIFS dataset
-        list = []
+        self.required = []
 
         # Science Imaging OBJECTs require a DARK
-        if((self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == False) and (self.descriptors['observation_class'] == 'science')):
-            list.append('dark')
+        if (self.descriptors['observation_type'] == 'OBJECT' and
+                self.descriptors['spectroscopy'] == False and
+                self.descriptors['observation_class'] == 'science'):
+            self.required.append('dark')
 
         # Science spectroscopy that is not a progcal or partnercal requires a flat, arc and ronchi_mask
-        if((self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['observation_class'] not in ['partnerCal', 'progCal']) and (self.descriptors['spectroscopy'] == True)):
-            list.append('flat')
-            list.append('arc')
-            list.append('ronchi_mask')
+        if (self.descriptors['observation_type'] == 'OBJECT' and
+                self.descriptors['observation_class'] not in ['partnerCal', 'progCal'] and
+                self.descriptors['spectroscopy'] == True):
+            self.required.append('flat')
+            self.required.append('arc')
+            self.required.append('ronchi_mask')
 
-        return list
 
-    def dark(self, many=None):
+    def dark(self, processed=False, many=None):
         query = self.session.query(Header).select_from(join(join(Nifs, Header), DiskFile))
         query = query.filter(Header.observation_type == 'DARK')
 
@@ -86,7 +89,7 @@ class CalibrationNIFS(Calibration):
         else:
             return query.first()
 
-    def flat(self, many=None):
+    def flat(self, processed=False, many=None):
         query = self.session.query(Header).select_from(join(join(Nifs, Header), DiskFile))
         query = query.filter(Header.observation_type == 'FLAT')
 
@@ -151,7 +154,7 @@ class CalibrationNIFS(Calibration):
         else:
             return query.first()
 
-    def ronchi_mask(self, many=None):
+    def ronchi_mask(self, processed=False, many=None):
         query = self.session.query(Header).select_from(join(join(Nifs, Header), DiskFile))
         query = query.filter(Header.observation_type == 'RONCHI')
 

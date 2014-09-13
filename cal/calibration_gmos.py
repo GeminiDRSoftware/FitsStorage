@@ -216,12 +216,16 @@ class CalibrationGMOS(Calibration):
         else:
             return query.first()
 
-    def dark(self, many=None):
+    def dark(self, processed=False, many=None):
         """
         Method to find best GMOS Dark frame for the target dataset.
         """
         query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'DARK')
+
+        if processed:
+            query = query.filter(Header.reduction == 'PROCESSED_DARK')
+        else:
+            query = query.filter(Header.observation_type == 'DARK').filter(Header.reduction == 'RAW')
 
         # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)

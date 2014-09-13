@@ -29,7 +29,7 @@ class CalibrationF2(Calibration):
         self.f2 = query.first()
 
         # Populate the descriptors dictionary for F2
-        if(self.from_descriptors):
+        if self.from_descriptors:
             self.descriptors['read_mode'] = self.f2.read_mode
             self.descriptors['disperser'] = self.f2.disperser
             self.descriptors['focal_plane_mask'] = self.f2.focal_plane_mask
@@ -37,35 +37,36 @@ class CalibrationF2(Calibration):
             self.descriptors['lyot_stop'] = self.f2.lyot_stop
 
         # Set the list of required calibrations
-        self.required = self.required()
+        self.set_required()
 
-    def required(self):
+    def set_required(self):
         # Return a list of the calibrations required for this dataset
-        list = []
+        self.required = []
 
         # Imaging OBJECTs require a DARK and a flat except acq images
-        if((self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == False) and (self.descriptors['observation_class'] not in ['acq', 'acqCal'])):
-            list.append('dark')
-            list.append('flat')
+        if (self.descriptors['observation_type'] == 'OBJECT' and
+                self.descriptors['spectroscopy'] == False and
+                self.descriptors['observation_class'] not in ['acq', 'acqCal']):
+            self.required.append('dark')
+            self.required.append('flat')
 
         # Spectroscopy OBJECTs require a dark, flat and arc
-        if((self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == True)):
-            list.append('dark')
-            list.append('flat')
-            list.append('arc')
+        if (self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == True):
+            self.required.append('dark')
+            self.required.append('flat')
+            self.required.append('arc')
 
         # FLAT frames require DARKs
-        if(self.descriptors['observation_type'] == 'FLAT'):
-            list.append('dark')
+        if self.descriptors['observation_type'] == 'FLAT':
+            self.required.append('dark')
 
         # ARCs require DARKs and FLATs
-        if(self.descriptors['observation_type'] == 'ARC'):
-            list.append('dark')
-            list.append('flat')
+        if self.descriptors['observation_type'] == 'ARC':
+            self.required.append('dark')
+            self.required.append('flat')
 
-        return list
 
-    def dark(self, many=None):
+    def dark(self, processed=False, many=None):
         query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
         query = query.filter(Header.observation_type == 'DARK')
 
@@ -87,7 +88,7 @@ class CalibrationF2(Calibration):
 
         # Order by absolute time separation
         query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        
+
         # For now, we only want one result - the closest in time, unless otherwise indicated
         if many:
             query = query.limit(many)
@@ -95,7 +96,7 @@ class CalibrationF2(Calibration):
         else:
             return query.first()
 
-    def flat(self, many=None):
+    def flat(self, processed=False, many=None):
         query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
         query = query.filter(Header.observation_type == 'FLAT')
 
@@ -112,7 +113,7 @@ class CalibrationF2(Calibration):
         query = query.filter(F2.lyot_stop == self.descriptors['lyot_stop'])
         query = query.filter(F2.read_mode == self.descriptors['read_mode'])
 
-        if(self.descriptors['spectroscopy']):
+        if self.descriptors['spectroscopy']:
             query = query.filter(func.abs(Header.central_wavelength - self.descriptors['central_wavelength']) < 0.001)
 
         # Absolute time separation must be within 3 months

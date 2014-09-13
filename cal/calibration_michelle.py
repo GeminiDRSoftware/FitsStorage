@@ -28,24 +28,25 @@ class CalibrationMICHELLE(Calibration):
         self.michelle = query.first()
 
         # Populate the descriptors dictionary for MICHELLE
-        if(self.from_descriptors):
+        if self.from_descriptors:
             self.descriptors['read_mode'] = self.michelle.read_mode
             self.descriptors['coadds'] = self.michelle.coadds
 
         # Set the list of required calibrations
-        self.required = self.required()
+        self.set_required()
 
-    def required(self):
+    def set_required(self):
         # Return a list of the calibrations required for this MICHELLE dataset
-        list = []
+        self.required = []
 
         # Science Imaging OBJECTs require a DARK
-        if((self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == False) and (self.descriptors['observation_class'] == 'science')):
-            list.append('dark')
+        if (self.descriptors['observation_type'] == 'OBJECT' and
+                self.descriptors['spectroscopy'] == False and
+                self.descriptors['observation_class'] == 'science'):
+            self.required.append('dark')
 
-        return list
 
-    def dark(self, many=None):
+    def dark(self, processed=False, many=None):
         query = self.session.query(Header).select_from(join(join(Michelle, Header), DiskFile))
         query = query.filter(Header.observation_type == 'DARK')
 

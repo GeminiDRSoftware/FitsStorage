@@ -24,12 +24,12 @@ class CalibrationNIRI(Calibration):
         Calibration.__init__(self, session, header, descriptors, types)
 
         # if header based, Find the niriheader
-        if(header):
+        if header:
             query = session.query(Niri).filter(Niri.header_id == self.descriptors['header_id'])
             self.niri = query.first()
 
         # Populate the descriptors dictionary for NIRI
-        if(self.from_descriptors):
+        if self.from_descriptors:
             self.descriptors['data_section'] = self.niri.data_section
             self.descriptors['read_mode'] = self.niri.read_mode
             self.descriptors['well_depth_setting'] = self.niri.well_depth_setting
@@ -38,20 +38,20 @@ class CalibrationNIRI(Calibration):
             self.descriptors['camera'] = self.niri.camera
 
         # Set the list of required calibrations
-        self.required = self.required()
+        self.set_required()
 
-    def required(self):
+    def set_required(self):
         # Return a list of the calibrations required for this NIRI dataset
-        list = []
+        self.required = []
 
         # Science Imaging OBJECTs require a DARK and FLAT
-        if((self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == False) and (self.descriptors['observation_class'] == 'science')):
-            list.append('dark')
+        if (self.descriptors['observation_type'] == 'OBJECT' and
+                self.descriptors['spectroscopy'] == False and
+                self.descriptors['observation_class'] == 'science'):
+            self.required.append('dark')
             # No flats for L', M' Br(alpha) or Br(alpha) continuum as per AS 20130514
-            if(self.descriptors['filter_name'] not in ['Lprime_G0207', 'Mprime_G0208', 'Bra_G0238', 'Bracont_G0237']):
-                list.append('flat')
-
-        return list
+            if self.descriptors['filter_name'] not in ['Lprime_G0207', 'Mprime_G0208', 'Bra_G0238', 'Bracont_G0237']:
+                self.required.append('flat')
 
     def dark(self, processed=False, many=None):
         query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))

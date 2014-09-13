@@ -23,31 +23,33 @@ def get_cal_object(session, filename, header=None, descriptors=None, types=None)
     """
 
     # Did we get a header?
-    if(header == None and descriptors == None):
+    if header == None and descriptors == None:
         # Get the header object from the filename
-        query = session.query(Header).select_from(join(Header, join(DiskFile, File))).filter(File.name == filename).order_by(desc(DiskFile.lastmod)).limit(1)
+        query = session.query(Header).select_from(join(Header, join(DiskFile, File)))
+        query = query.filter(File.name == filename).order_by(desc(DiskFile.lastmod))
         header = query.first()
 
     # OK, now instantiate the appropriate Calibration object and return it
     cal = None
-    if(header):
+    if header:
         instrument = header.instrument
     else:
         instrument = descriptors['instrument']
-    if('GMOS' in instrument):
+
+
+    if 'GMOS' in instrument:
         cal = CalibrationGMOS(session, header, descriptors, types)
-    if(instrument == 'NIRI'):
+    elif instrument == 'NIRI':
         cal = CalibrationNIRI(session, header, descriptors, types)
-    if(instrument == 'GNIRS'):
+    elif instrument == 'GNIRS':
         cal = CalibrationGNIRS(session, header, descriptors, types)
-    if(instrument == 'NIFS'):
+    elif instrument == 'NIFS':
         cal = CalibrationNIFS(session, header, descriptors, types)
-    if(instrument == 'michelle'):
+    elif instrument == 'michelle':
         cal = CalibrationMICHELLE(session, header, descriptors, types)
-    if(instrument == 'F2'):
+    elif instrument == 'F2':
         cal = CalibrationF2(session, header, descriptors, types)
-    # Add other instruments here
-    if(cal == None):
+    else:
         cal = Calibration(session, header, descriptors, types)
 
     return cal
