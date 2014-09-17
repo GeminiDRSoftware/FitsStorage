@@ -29,7 +29,7 @@ from orm.user import User
 from orm.userprogram import UserProgram
 from orm.usagelog import UsageLog
 from orm.querylog import QueryLog
-
+from orm.downloadlog import DownloadLog
 
 def create_tables(session):
     """
@@ -67,6 +67,7 @@ def create_tables(session):
     UserProgram.metadata.create_all(bind=pg_db)
     UsageLog.metadata.create_all(bind=pg_db)
     QueryLog.metadata.create_all(bind=pg_db)
+    DownloadLog.metadata.create_all(bind=pg_db)
 
 
     # Add the geometry types separately. this is postgres specific and referencing these column in local mode isn't going to work
@@ -82,10 +83,12 @@ def create_tables(session):
 
     if using_apache and not using_sqlite:
         # Now grant the apache user select on them for the www queries
-        session.execute("GRANT SELECT ON file, diskfile, diskfilereport, header, fulltextheader, gmos, niri, michelle, gnirs, nifs, f2, tape, tape_id_seq, tapewrite, taperead, tapefile, notification, photstandard, photstandardobs, footprint, qareport, qametriciq, qametriczp, qametricsb, qametricpe, authentication, ingestqueue, exportqueue, archiveuser, userprogram, usagelog, querylog TO apache")
-        session.execute("GRANT INSERT,UPDATE ON tape, tape_id_seq, notification, notification_id_seq, qareport, qareport_id_seq, qametriciq, qametriciq_id_seq, qametriczp, qametriczp_id_seq, qametricsb, qametricsb_id_seq, qametricpe, qametricpe_id_seq, authentication, authentication_id_seq, archiveuser, archiveuser_id_seq, userprogram, userprogram_id_seq, usagelog, usagelog_id_seq, querylog, querylog_id_seq TO apache")
+        session.execute("GRANT SELECT ON file, diskfile, diskfilereport, header, fulltextheader, gmos, niri, michelle, gnirs, nifs, f2, tape, tape_id_seq, tapewrite, taperead, tapefile, notification, photstandard, photstandardobs, footprint, qareport, qametriciq, qametriczp, qametricsb, qametricpe, authentication, ingestqueue, exportqueue, archiveuser, userprogram, usagelog, querylog, downloadlog TO apache")
+        session.commit()
+        session.execute("GRANT INSERT,UPDATE ON tape, tape_id_seq, notification, notification_id_seq, qareport, qareport_id_seq, qametriciq, qametriciq_id_seq, qametriczp, qametriczp_id_seq, qametricsb, qametricsb_id_seq, qametricpe, qametricpe_id_seq, authentication, authentication_id_seq, archiveuser, archiveuser_id_seq, userprogram, userprogram_id_seq, usagelog, usagelog_id_seq, querylog, querylog_id_seq, downloadlog, downloadlog_id_seq TO apache")
+        session.commit()
         session.execute("GRANT DELETE ON notification TO apache")
-    session.commit()
+        session.commit()
 
 def drop_tables(session):
     """

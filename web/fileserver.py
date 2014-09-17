@@ -7,6 +7,7 @@ from gemini_metadata_utils import gemini_fitsfilename
 from orm.file import File
 from orm.diskfile import DiskFile
 from orm.header import Header
+from orm.downloadlog import DownloadLog
 
 from web.selection import getselection, openquery, selection_to_URL
 from web.summary import list_headers
@@ -33,7 +34,6 @@ def download(req, things):
     This is the download server. Given a selection, it will send a tarball of the
     files from the selection that you have access to to the client.
     """
-
     # If we are called via POST, then parse form data rather than selection
     if req.method == 'POST':
         # Parse form data
@@ -41,15 +41,11 @@ def download(req, things):
         thelist = []
         if 'files' in formdata.keys():
             fields = formdata['files']
-            req.log_error("fields: %s: %s" % (type(fields), fields))
             if isinstance(fields, list):
                 for field in fields:
-                    req.log_error("field: %s: %s" % (type(field), field))
                     thelist.append(str(field.value))
             else:
-                req.log_error("single field: %s: %s" % (type(fields), fields))
                 thelist.append(str(fields))
-        req.log_error('thelist: %s' % thelist)
         selection = {'filelist': thelist}
         selection['present'] = True
     else:
@@ -59,6 +55,12 @@ def download(req, things):
     # Open a database session
     session = sessionfactory()
     try:
+        # Instantiate the download log
+        downloadlog = DownloadLog(req.usagelog)
+        session.add(downloadlog)
+        downloadlog.selection = str(selection)
+        downloadlog.query_started = datetime.datetime.utcnow()
+
         # Get our username while we have the database session open
         user = userfromcookie(session, req)
         if user:
@@ -68,24 +70,32 @@ def download(req, things):
 
         # Get the header list
         headers = list_headers(session, selection, None)
-        req.log_error("selection: %s, got %d header results" % (selection, len(headers)))
+        downloadlog.query_completed = datetime.datetime.utcnow()
+        downloadlog.numresults = len(headers)
 
         if openquery(selection) and len(headers) > fits_open_result_limit:
             # Open query. Almost certainly too many files
+            downloadlog.sending_files = False
+            downloadlog.add_note("Hit Open result Limit, aborted")
             req.content_type = "text/plain"
             req.write("Your selection criteria does not restrict the number of results, and more than %d were found. " %
                         fits_open_result_limit)
             req.write("Please refine your selection more before attempting to download. Queries that can contain an arbitrary number of results have a lower limit applied than more constrained queries. Including a date range or program id will prevent an arbitrary number of results being found will raise the limit")
+            session.commit()
             return apache.OK
 
         if len(headers) > fits_closed_result_limit:
             # Open query. Almost certainly too many files
+            downloadlog.sending_files = False
+            downloadlog.add_note("Hit Closed result limit, aborted")
             req.content_type = "text/plain"
             req.write("More than %d results were found. This is beyond the limit we allow" % fits_closed_result_limit)
             req.write("Please refine your selection more before attempting to download. If you really want all these files, we suggest you break your search into several smaller date range pieces and download one set at a time.")
+            session.commit()
             return apache.OK
 
         # Set up the http headers
+        downloadlog.sending_files = True
         req.content_type = "application/tar"
         req.headers_out['Content-Disposition'] = 'attachment; filename="download.tar"'
 
@@ -126,6 +136,7 @@ def download(req, things):
             else:
                 # Permission denied, add to the denied list
                 denied.append(header.diskfile.filename)
+        downloadlog.numdenied = len(denied)
         # OK, that's all the fits files. Add the md5sum file
         # - create a tarinfo object
         tarinfo = tarfile.TarInfo('md5sums.txt')
@@ -170,8 +181,10 @@ def download(req, things):
         # All done
         tar.close()
         req.flush()
+        downloadlog.download_completed = datetime.datetime.now()
 
     finally:
+        session.commit()
         session.close()
 
     return apache.OK
@@ -195,6 +208,11 @@ def fileserver(req, things):
         filename = filenamegiven
     session = sessionfactory()
     try:
+        # Instantiate the download log
+        downloadlog = DownloadLog(req.usagelog)
+        session.add(downloadlog)
+        downloadlog.query_started = datetime.datetime.utcnow()
+
         query = session.query(File).filter(File.name == filename)
         if query.count() == 0:
             return apache.HTTP_NOT_FOUND
@@ -206,21 +224,27 @@ def fileserver(req, things):
         # And now find the header record...
         query = session.query(Header).filter(Header.diskfile_id == diskfile.id)
         header = query.one()
+        downloadlog.query_completed = datetime.datetime.utcnow()
+        downloadlog.numresults = 1
 
         # Is the client allowed to get this file?
         canhaveit = icanhave(session, req, header)
 
         if canhaveit:
             # Send them the data
+            downloadlog.sending_files = True
             sendonefile(req, header)
+            downloadlog.download_completed = datetime.datetime.utcnow()
             return apache.OK
         else:
             # Refuse to send data
+            downloadlog.numdenied = 1
             return apache.HTTP_FORBIDDEN
 
     except IOError:
         pass
     finally:
+        session.commit()
         session.close()
 
 
