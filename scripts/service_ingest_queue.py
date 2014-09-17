@@ -169,10 +169,8 @@ while loop:
         string = traceback.format_tb(sys.exc_info()[2])
         string = "".join(string)
         session.rollback()
-        if iq:
-            logger.error("File %s - Exception: %s : %s... %s", iq.filename, sys.exc_info()[0], sys.exc_info()[1], string)
-        else:
-            logger.error("Nothing on ingest queue - Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
+        logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
+        raise
 
     finally:
         session.close()
