@@ -10,7 +10,7 @@ from fits_storage_config import magic_download_cookie
 from web.userprogram import get_program_list
 from web.user import userfromcookie
 
-def icanhave(session, req, header):
+def icanhave(session, req, header, filedownloadlog=None):
     """
     Returns a boolean saying whether the requesting client can have
     access to the given header
@@ -18,48 +18,62 @@ def icanhave(session, req, header):
 
     user = userfromcookie(session, req)
     gotmagic = got_magic(req)
-    return canhave(session, user, header, gotmagic=gotmagic)
+    return canhave(session, user, header, filedownloadlog, gotmagic=gotmagic)
 
 
-def canhave(session, user, header, gotmagic=False, user_progid_list=None):
+def canhave(session, user, header, filedownloadlog=None, gotmagic=False, user_progid_list=None):
     """
     Returns a boolean saying whether or not the given user can have
     access to the given header.
     You can optionally pass in the users program list directly. If you
     don't, then this function will look it up, which requires the session
     to be valid. If you pass in the user program list, you don't actually
-    need to pass a valid session - it can be None
+    need to pass a valid session - it can be None.
+    If you pass in a FileDownloadLog object, we will update it to note
+    the file access rules that were used.
     """
-
-    # All calibration data are immediately public
-    # Question - does this include progCal?
-    if(header.observation_class in ['dayCal', 'partnerCal', 'acqCal', 'progCal']):
-        return True
 
     # Is the release date in the past?
     today = datetime.datetime.utcnow().date()
     if header.release and today >= header.release:
+        if filedownloadlog:
+            filedownloadlog.released = True
         return True
 
     # Is the user gemini staff?
     if user is not None and user.gemini_staff is True:
+        if filedownloadlog:
+            filedownloadlog.staff_access = True
         return True
 
     # Is the data engineering?
     if header.engineering is True:
+        if filedownloadlog:
+            filedownloadlog.eng_access = True
         return True
 
     # Does the client have the magic cookie?
     if gotmagic:
+        if filedownloadlog:
+            filedownloadlog.magic_access = True
         return True
 
-    # If none of the above, then it's proprietary data
+    # If none of the above, then user is requesting pi access
+    if filedownloadlog:
+        filedownloadlog.released = False
+        filedownloadlog.staff_access = False
+        filedownloadlog.eng_access = False
+        filedownloadlog.magic_access = False
+        filedownloadlog.pi_access = False
+
     # If we didn't get passed in the users program list, get it
     if user_progid_list is None:
         user_progid_list = get_program_list(session, user)
 
     # Is the program in the list?
     if header.program_id in user_progid_list:
+        if filedownloadlog:
+            filedownloadlog.pi_access = True
         return True
 
     # If none of the above, then deny access

@@ -8,6 +8,7 @@ from orm.file import File
 from orm.diskfile import DiskFile
 from orm.header import Header
 from orm.downloadlog import DownloadLog
+from orm.filedownloadlog import FileDownloadLog
 
 from web.selection import getselection, openquery, selection_to_URL
 from web.summary import list_headers
@@ -110,7 +111,11 @@ def download(req, things):
         # Here goes!
         tar = tarfile.open(name="download.tar", mode="w|", fileobj=req)
         for header in headers:
-            if icanhave(session, req, header):
+            filedownloadlog = FileDownloadLog(req.usagelog)
+            filedownloadlog.diskfile_id = header.diskfile.id
+            session.add(filedownloadlog)
+            if icanhave(session, req, header, filedownloadlog):
+                filedownloadlog.canhaveit = True
                 md5file += "%s  %s\n" % (header.diskfile.file_md5, header.diskfile.filename)
                 if using_s3:
                     # Fetch the file into a cStringIO buffer
@@ -135,6 +140,7 @@ def download(req, things):
                     tar.add(header.diskfile.fullpath(), header.diskfile.filename)
             else:
                 # Permission denied, add to the denied list
+                filedownloadlog.canhaveit = False
                 denied.append(header.diskfile.filename)
         downloadlog.numdenied = len(denied)
         # OK, that's all the fits files. Add the md5sum file
