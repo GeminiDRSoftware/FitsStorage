@@ -27,7 +27,7 @@ from web.fileserver import fileserver, download
 from web.qastuff import qareport, qametrics, qaforgui
 from web.statistics import content, stats
 from web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password
-from web.user import staff_access, user_list
+from web.user import staff_access, user_list, userfromcookie
 from web.userprogram import my_programs
 from web.searchform import searchform, nameresolver
 
@@ -36,10 +36,39 @@ from orm.file import File
 from orm.diskfile import DiskFile
 from orm.diskfilereport import DiskFileReport
 from orm.fulltextheader import FullTextHeader
+from orm.usagelog import UsageLog
+
+# The top top level handler. This simply wraps thehandler with logging funcitons
+def handler(req):
+    # Instantiate the UsageLog instance for this request, populate initial values from req
+    # and stuff it into the request object
+    req.usagelog = UsageLog(req)
+
+    # Add the log to the database
+    # We need to do that here, so there we can reference it in the querylog etc from within the handler call tree
+    try:
+        session = sessionfactory()
+        user = userfromcookie(session, req)
+        if user:
+            req.usagelog.user_id = user.id
+        session.add(req.usagelog)
+        session.commit()
+
+        # Call the actual handler
+        retary = thehandler(req)
+
+        # Grab the final log values
+        req.usagelog.set_finals(req)
+
+        session.commit()
+    finally:
+        session.close()
+
+    return retary
 
 # The top level handler. This essentially calls out to the specific
 # handler function depending on the uri that we're handling
-def handler(req):
+def thehandler(req):
     # Set the no_cache flag on all our output
     # no_cache is not writable, have to set the headers directly
     req.headers_out['Cache-Control'] = 'no-cache'
@@ -94,6 +123,7 @@ def handler(req):
     # OK, parse and action the main URL things
 
     this = things.pop(0)
+    req.usagelog.this = this
 
     # Archive searchform
     if this == 'searchform':

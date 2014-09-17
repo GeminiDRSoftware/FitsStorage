@@ -17,6 +17,7 @@ if using_apache:
     try:
         from mod_python.apache import OK, HTTP_NOT_FOUND, HTTP_FORBIDDEN, HTTP_NOT_ACCEPTABLE
         from mod_python.apache import HTTP_NOT_IMPLEMENTED, HTTP_SERVICE_UNAVAILABLE, HTTP_BAD_REQUEST
+        from mod_python.apache import REMOTE_NOLOOKUP
         define_locally = False
     except ImportError:
         define_locally = True
@@ -32,3 +33,4 @@ if define_locally:
     HTTP_NOT_IMPLEMENTED = 501
     HTTP_SERVICE_UNAVAILABLE = 503
     HTTP_BAD_REQUEST = 400
+    REMOTE_NOLOOKUP = None

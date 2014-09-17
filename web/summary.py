@@ -1,6 +1,8 @@
 """
 This module contains the main web summary code.
 """
+import datetime
+
 from orm import sessionfactory
 from fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
 from web.selection import sayselection, openquery, selection_to_URL
@@ -12,6 +14,8 @@ from cal.associate_calibrations import associate_cals
 
 from web.user import userfromcookie
 from web.userprogram import get_program_list
+
+from orm.querylog import QueryLog
 
 def summary(req, sumtype, selection, orderby, links=True):
     """
@@ -67,14 +71,34 @@ def summary_body(req, sumtype, selection, orderby, links=True):
 
     session = sessionfactory()
     try:
+        # Instantiate querylog, populate initial fields
+        querylog = QueryLog(req.usagelog)
+        querylog.summarytype = sumtype
+        querylog.selection = str(selection)
+        querylog.query_started = datetime.datetime.utcnow()
+
         headers = list_headers(session, selection, orderby)
+        num_headers = len(headers)
+        querylog.query_completed = datetime.datetime.utcnow()
+        querylog.numresults = num_headers
         # Did we get any selection warnings?
         if 'warning' in selection.keys():
             req.write("<h3>WARNING: %s</h3>" % selection['warning'])
+            querylog.add_note("Selection Warning: %s" % selection['warning'])
+        # Note any notrecognised in the querylog
+        if 'notrecognised' in selection.keys():
+            querylog.add_note("Selection NotRecognised: %s" % selection['notrecognised'])
+        # Note in the log if we hit limits
+        if num_headers == fits_open_result_limit:
+            querylog.add_note("Hit Open search result limit")
+        if num_headers == fits_closed_result_limit:
+            querylog.add_note("Hit Closed search result limit")
 
         # If this is assocated_cals, we do the assoication here
         if sumtype == 'associated_cals':
             headers = associate_cals(session, headers)
+            querylog.cals_completed = datetime.datetime.now()
+            querylog.numcalresults = len(headers)
 
             # links are messed up with associated_cals, turn them off
             links = False
@@ -90,6 +114,12 @@ def summary_body(req, sumtype, selection, orderby, links=True):
             # No results
             # Pass selection to this so it can do some helpful analysis of why you got no results
             no_results(req, selection)
+
+        querylog.summary_completed = datetime.datetime.now()
+
+        # Add and commit the querylog
+        session.add(querylog)
+        session.commit()
 
     except IOError:
         pass
