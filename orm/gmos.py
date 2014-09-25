@@ -46,10 +46,10 @@ class Gmos(Base):
         self.read_speed_setting = ad.read_speed_setting().for_db()
         self.gain_setting = ad.gain_setting().for_db()
         self.focal_plane_mask = ad.focal_plane_mask().for_db()
-        self.nodandshuffle = ad.is_type('GMOS_NODANDSHUFFLE')
+        self.nodandshuffle = 'GMOS_NODANDSHUFFLE' in ad.types
         if self.nodandshuffle:
             self.nod_count = ad.nod_count().for_db()
             self.nod_pixels = ad.nod_pixels().for_db()
-        self.prepared = ad.is_type('PREPARED')
-        self.overscan_trimmed = ad.is_type('OVERSCAN_TRIMMED')
-        self.overscan_subtracted = ad.is_type('OVERSCAN_SUBTRACTED')
+        self.prepared = 'PREPARED' in ad.types
+        self.overscan_trimmed = 'OVERSCAN_TRIMMED' in ad.types
+        self.overscan_subtracted = 'OVERSCAN_SUBTRACTED' in ad.types
