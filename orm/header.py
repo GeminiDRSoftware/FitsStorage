@@ -181,7 +181,7 @@ class Header(Base):
             readspeedsetting = str(ad.read_speed_setting()).replace(' ', '_')
             welldepthsetting = str(ad.well_depth_setting()).replace(' ', '_')
             readmode = str(ad.read_mode()).replace(' ', '_')
-            nodandshuffle = "NodAndShuffle" if ad.is_type("GMOS_NODANDSHUFFLE") else ""
+            nodandshuffle = "NodAndShuffle" if "GMOS_NODANDSHUFFLE" in ad.types else ""
             self.detector_config = ' '.join([gainsetting, readspeedsetting, nodandshuffle, welldepthsetting, readmode])
 
             self.detector_roi_setting = ad.detector_roi_setting().for_db()
