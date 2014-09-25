@@ -349,10 +349,11 @@ def pop_ingestqueue(session, fast_rebuild=False):
     delete all other entries for the same filename.
     """
 
-    # We could get a performance boost on fast_rebuild by not doing a full
-    # exclusive lock in that case - we could just do a select for update.
-    # But we need the full lock for non fast_rebuild as we might hit rows that
-    # get culled as duplicates by another transaction.
+    # Is there a way to avoid the ACCESS EXCLUSIVE lock, especially with 
+    # fast_rebuild where we are not changing other columns. Seemed like
+    # SELECT FOR UPDATE ought to be able to do this, but it doesn't quite
+    # do what we want as other threads can still select that row?
+
     session.execute("LOCK TABLE ingestqueue IN ACCESS EXCLUSIVE MODE;")
 
     query = session.query(IngestQueue).filter(IngestQueue.inprogress == False)
@@ -365,12 +366,11 @@ def pop_ingestqueue(session, fast_rebuild=False):
     else:
         # OK, we got a viable item, set it to inprogress and return it.
         logger.debug("Popped id %d from ingestqueue", iq.id)
-        # Set this entry to in progres and flush to the DB if we are doig more before the commit.
+        # Set this entry to in progres and flush to the DB.
         iq.inprogress = True
+        session.flush()
 
         if not fast_rebuild:
-            # Flush the DB (see previous step)
-            session.flush()
             # Find other instances and delete them
             others = session.query(IngestQueue)
             others = others.filter(IngestQueue.inprogress == False).filter(IngestQueue.filename == iq.filename)
