@@ -359,7 +359,8 @@ def qametrics(req, things):
 def qaforgui(req, things):
     """
     This function outputs a JSON dump, aimed at feeding the QA metric GUI display
-    If you pass it a timestamp string in things, it will only list reports submitted after that timestamp
+    You must pass a datestamp. It will only return results for datafiles from that datestamp
+    to 3 days later.
     """
     datestamp = None
     try:
@@ -375,7 +376,8 @@ def qaforgui(req, things):
         window = datetime.timedelta(days=3)
         enddatestamp = datestamp+window
     except (IndexError, ValueError):
-        pass
+        req.write("Error: no datestamp given")
+        return apache.HTTP_NOT_ACCEPTABLE
 
     session = sessionfactory()
     try:
@@ -385,9 +387,15 @@ def qaforgui(req, things):
         # Interested in IQ, ZP, BG
 
         # Get a list of datalabels
-        iqquery = session.query(QAmetricIQ.datalabel)
-        zpquery = session.query(QAmetricZP.datalabel)
-        sbquery = session.query(QAmetricSB.datalabel)
+        iqquery = session.query(QAmetricIQ.datalabel).select_from(QAmetricIQ, Header).filter(QAmetricIQ.datalabel == Header.data_label)
+        iqquery = iqquery.filter(Header.ut_datetime > datestamp).filter(Header.ut_datetime < enddatestamp)
+
+        zpquery = session.query(QAmetricZP.datalabel).select_from(QAmetricZP, Header).filter(QAmetricZP.datalabel == Header.data_label)
+        zpquery = zpquery.filter(Header.ut_datetime > datestamp).filter(Header.ut_datetime < enddatestamp)
+
+        sbquery = session.query(QAmetricSB.datalabel).select_from(QAmetricSB, Header).filter(QAmetricSB.datalabel == Header.data_label)
+        sbquery = sbquery.filter(Header.ut_datetime > datestamp).filter(Header.ut_datetime < enddatestamp)
+
         query = iqquery.union(zpquery).union(sbquery).distinct()
         datalabels = query.all()
 
