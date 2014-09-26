@@ -2,6 +2,8 @@
 This module handles the web 'user' functions - creating user accounts, login / logout, password reset etc
 """
 
+from sqlalchemy import desc
+
 from orm import sessionfactory
 
 from orm.user import User
@@ -764,7 +766,8 @@ def user_list(req):
             req.write('</body></html>')
             return apache.OK
 
-        query = session.query(User).order_by(User.username)
+        query = session.query(User).order_by(desc(User.superuser)).order_by(desc(User.gemini_staff)
+        query = query.order_by(User.username)
         users = query.all()
     finally:
         session.close()

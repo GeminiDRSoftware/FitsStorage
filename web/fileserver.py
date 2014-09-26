@@ -187,7 +187,7 @@ def download(req, things):
         # All done
         tar.close()
         req.flush()
-        downloadlog.download_completed = datetime.datetime.now()
+        downloadlog.download_completed = datetime.datetime.utcnow()
 
     finally:
         session.commit()

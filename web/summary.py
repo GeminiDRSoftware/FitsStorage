@@ -115,7 +115,7 @@ def summary_body(req, sumtype, selection, orderby, links=True):
             # Pass selection to this so it can do some helpful analysis of why you got no results
             no_results(req, selection)
 
-        querylog.summary_completed = datetime.datetime.now()
+        querylog.summary_completed = datetime.datetime.utcnow()
 
         # Add and commit the querylog
         session.add(querylog)
