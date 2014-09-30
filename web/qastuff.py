@@ -555,7 +555,10 @@ def qaforgui(req, things):
                             bg_comment.append(b.comment)
 
                     # Need to combine some of these to a single value
-                    if len(bg_band) and bg_band[0] is not None:
+                    if len(bg_band):
+                        # Be aware of Nones - makes join choke
+                        for i in range(len(bg_band)):
+                            bg_band[i] = str(bg_band[i])
                         bg['band'] = ', '.join(bg_band)
                     if len(bg_mag):
                         bg['brightness'] = sum(bg_mag) / len(bg_mag)
