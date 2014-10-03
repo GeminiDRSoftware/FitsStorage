@@ -3,6 +3,7 @@ from xml.dom.minidom import parseString
 import os
 import re
 import hashlib
+import sys
 
 # Option Parsing
 from optparse import OptionParser
