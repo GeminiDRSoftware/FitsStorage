@@ -7,6 +7,8 @@ import dateutil.parser
 from . import Base
 from orm.diskfile import DiskFile
 
+from gemini_metadata_utils import ratodeg, dectodeg 
+
 from astrodata import AstroData
 import pywcs
 
@@ -139,6 +141,10 @@ class Header(Base):
             if 'AZEL_TARGET' not in ad.types:
                 self.ra = ad.ra().for_db()
                 self.dec = ad.dec().for_db()
+                if type(self.ra) is str:
+                    self.ra = ratodeg(self.ra)
+                if type(self.dec) is str:
+                    self.dec = dectodeg(self.dec)
 
             self.azimuth = ad.azimuth().for_db()
             self.elevation = ad.elevation().for_db()
