@@ -47,16 +47,20 @@ for pe in dom.getElementsByTagName("program"):
     csEmail = ""
     notifyPi = "No"
     nprogs += 1
+    # Sometimes people use ;s for separators in the odb email fields...
     try:
         piEmail = pe.getElementsByTagName("piEmail")[0].childNodes[0].data
+        piEmail = piEmail.replace(';', ',')
     except:
         pass
     try:
         ngoEmail = pe.getElementsByTagName("ngoEmail")[0].childNodes[0].data
+        ngoEmail = ngoEmail.replace(';', ',')
     except:
         pass
     try:
         csEmail = pe.getElementsByTagName("contactScientistEmail")[0].childNodes[0].data
+        csEmail = csEmail.replace(';', ',')
     except:
         pass
     try:
