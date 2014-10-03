@@ -114,17 +114,17 @@ for diskfileid in diskfileids:
 
     diskfile = session.query(DiskFile).filter(DiskFile.id == diskfileid).one()
 
-    fullpath = diskfile.file.fullpath()
-    dbmd5 = diskfile.md5
-    dbfilename = diskfile.file.filename
+    fullpath = diskfile.fullpath()
+    dbmd5 = diskfile.file_md5
+    dbfilename = diskfile.filename
 
     logger.debug("Full path filename: %s" % fullpath)
-    if(not diskfile.file.exists()):
+    if(not diskfile.exists()):
         logger.error("Cannot access file %s" % fullpath)
     else:
 
         if(not options.skipmd5):
-            filemd5 = diskfile.file.calculate_md5()
+            filemd5 = diskfile.get_file_md5()
             logger.debug("Actual File MD5 and canonical database diskfile MD5 are: %s and %s" % (filemd5, dbmd5))
             if(filemd5 != dbmd5):
                 logger.error("File: %s has an md5sum mismatch between the database and the actual file. Skipping" % dbfilename)
@@ -159,7 +159,7 @@ for diskfileid in diskfileids:
                     tapeids.append(tapeid)
 
             if(len(tapeids) >= options.mintapes):
-                sumbytes += diskfile.size
+                sumbytes += diskfile.file_size
                 sumgb = sumbytes / 1.0E9
                 sumfiles += 1
                 if(options.dryrun):
