@@ -170,7 +170,8 @@ while loop:
         string = "".join(string)
         session.rollback()
         logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
-        raise
+        # Press on with the next file, don't raise the esception further.
+        # raise
 
     finally:
         session.close()
