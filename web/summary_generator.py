@@ -618,7 +618,7 @@ class SummaryGenerator(object):
 
             return html
         else:
-            return '<div class="center"><abbr title="This appears to be proprietary data to which you do not have access">N/A</abbr></div>'
+            return '<div class="center"><abbr title="This appears to be proprietary data to which you do not have access. It becomes public on %s">N/A</abbr></div>' % header.release
 
 def htmlescape(string):
     """
