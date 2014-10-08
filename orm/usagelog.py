@@ -20,6 +20,8 @@ class UsageLog(Base):
     utdatetime = Column(DateTime(timezone=False), index=True)
     user_id = Column(Integer, ForeignKey('archiveuser.id'), nullable=True, index=True)
     ip_address = Column(Text, index=True)
+    user_agent = Column(Text)
+    referer = Column(Text)
     method = Column(Text)
     uri = Column(Text)
     this = Column(Text, index=True)
@@ -35,6 +37,10 @@ class UsageLog(Base):
         self.utdatetime = datetime.datetime.utcnow()
         if using_apache:
             self.ip_address = req.get_remote_host(REMOTE_NOLOOKUP)
+            if 'User-Agent' in req.headers_in.keys():
+                self.user_agent = req.headers_in['User-Agent']
+            if 'Referer' in req.headers_in.keys():
+                self.referer = req.headers_in['Referer']
         self.method = req.method
         self.uri = req.unparsed_uri
 
