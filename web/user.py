@@ -766,7 +766,7 @@ def user_list(req):
             req.write('</body></html>')
             return apache.OK
 
-        query = session.query(User).order_by(desc(User.superuser)).order_by(desc(User.gemini_staff)
+        query = session.query(User).order_by(desc(User.superuser)).order_by(desc(User.gemini_staff))
         query = query.order_by(User.username)
         users = query.all()
     finally:
