@@ -10,6 +10,8 @@ from orm import sessionfactory
 from orm.usagelog import UsageLog
 from orm.querylog import QueryLog
 from orm.downloadlog import DownloadLog
+from orm.filedownloadlog import FileDownloadLog
+from orm.fileuploadlog import FileUploadLog
 from orm.user import User
 
 from web.user import userfromcookie
@@ -160,7 +162,7 @@ def usagereport(req):
                     tr_class = "tr_odd"
 
                 req.write('<TR class="%s">' % tr_class)
-                req.write('<TD>%d</TD>' % usagelog.id)
+                req.write('<TD><a href="/usagedetails/%d">%d</a></TD>' % (usagelog.id, usagelog.id))
                 req.write('<TD>%s</TD>' % usagelog.utdatetime.strftime("%Y-%m-%d %H:%M:%S.%f")[:21])
                 html = ""
                 if usagelog.user_id:
@@ -173,16 +175,7 @@ def usagereport(req):
                 req.write('<TD>%s</TD>' % usagelog.method)
                 req.write('<TD>%s</TD>' % usagelog.this)
                 req.write('<TD>%s</TD>' % usagelog.bytes)
-                html = str(usagelog.status)
-                if usagelog.status == 200:
-                    html += " (OK)"
-                if usagelog.status == 403:
-                    html += " (FORBIDDEN)"
-                if usagelog.status == 500:
-                    html += " (SERVER ERROR)"
-                if usagelog.status == 404:
-                    html += " (NOT FOUND)"
-                req.write('<TD>%s</TD>' % html)
+                req.write('<TD>%s</TD>' % usagelog.status_string())
                 req.write('<TD>%s</TD>' % usagelog.notes)
 
                 # Query part
@@ -260,6 +253,216 @@ def usagereport(req):
             req.write('</TABLE>')
         req.write("</body></html>")
 
+    finally:
+        session.close()
+
+    return apache.OK
+
+def usagedetails(req, things):
+    """
+    This is the usage report detail handler
+    things should contain an useagelog ID number
+    """
+
+    session = sessionfactory()
+    try:
+        # Need to be logged in as gemini staff to do this
+        user = userfromcookie(session, req)
+        if user is None or user.gemini_staff is False:
+            return apache.HTTP_FORBIDDEN
+
+
+        if len(things) != 1:
+            return apache.HTTP_NOT_ACCEPTABLE
+        try:
+            id = int(things[0])
+        except:
+            return apache.HTTP_NOT_ACCEPTABLE
+
+        usagelog = session.query(UsageLog).filter(UsageLog.id == id).first()
+        req.content_type = "text/html"
+        req.write('<!DOCTYPE html><html><head>')
+        req.write('<meta charset="UTF-8">')
+        req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/table.css">')
+        req.write('<title>Fits Server Usage Log Detail</title></head>')
+        req.write("<body><h1>Fits Server Usage Log Detail</h1>")
+        req.write("<h2>Usage Log Entry</h2>")
+        req.write("<TABLE>")
+        req.write("<TR><TD>ID:</TD><TD>%s</TD>" % usagelog.id)
+        req.write("<TR><TD>UT DateTime:</TD><TD>%s</TD></TR>" % usagelog.utdatetime)
+        req.write("<TR><TD>User ID:</TD><TD>%s</TD></TR>" % usagelog.user_id)
+        req.write("<TR><TD>IP address:</TD><TD>%s</TD></TR>" % usagelog.ip_address)
+        req.write("<TR><TD>User Agent:</TD><TD>%s</TD></TR>" % usagelog.user_agent)
+        req.write("<TR><TD>Referer:</TD><TD>%s</TD></TR>" % usagelog.referer)
+        req.write("<TR><TD>HTTP method:</TD><TD>%s</TD></TR>" % usagelog.method)
+        req.write("<TR><TD>URI:</TD><TD>%s</TD></TR>" % usagelog.uri)
+        req.write("<TR><TD>This feature:</TD><TD>%s</TD></TR>" % usagelog.this)
+        req.write("<TR><TD>Bytes returned:</TD><TD>%s</TD></TR>" % usagelog.bytes)
+        req.write("<TR><TD>HTTP status:</TD><TD>%s</TD></TR>" % usagelog.status_string())
+        req.write("<TR><TD>Notes:</TD><TD>%s</TD></TR>" % usagelog.notes)
+        req.write("</TABLE>")
+
+        if usagelog.user_id:
+            user = session.query(User).filter(User.id == usagelog.user_id).one()
+            req.write("<h2>User Details</h2>")
+            req.write("<TABLE>")
+            req.write("<TR><TD>Username:</TD><TD>%s</TD></TR>" % user.username)
+            req.write("<TR><TD>Full Name:</TD><TD>%s</TD></TR>" % user.fullname)
+            req.write("<TR><TD>Email:</TD><TD>%s</TD></TR>" % user.email)
+            req.write("<TR><TD>Gemini Staff:</TD><TD>%s</TD></TR>" % user.gemini_staff)
+            req.write("<TR><TD>Superuser:</TD><TD>%s</TD></TR>" % user.superuser)
+            req.write("<TR><TD>Account Created:</TD><TD>%s</TD></TR>" % user.account_created)
+            req.write("<TR><TD>Password Changed:</TD><TD>%s</TD></TR>" % user.password_changed)
+            req.write("</TABLE>")
+
+        querylog = session.query(QueryLog).filter(QueryLog.usagelog_id==usagelog.id).first()
+        if querylog:
+            req.write("<h2>Query Details</h2>")
+            req.write("<TABLE>")
+            req.write("<TR><TD>Summary Type:</TD><TD>%s</TD></TR>" % querylog.summarytype)
+            req.write("<TR><TD>Selection:</TD><TD>%s</TD></TR>" % querylog.selection)
+            req.write("<TR><TD>Number of Results:</TD><TD>%s</TD></TR>" % querylog.numresults)
+            req.write("<TR><TD>Number of Calibration Results:</TD><TD>%s</TD></TR>" % querylog.numcalresults)
+            req.write("<TR><TD>Query Started:</TD><TD>%s</TD></TR>" % querylog.query_started)
+            req.write("<TR><TD>Query Completed:</TD><TD>%s</TD></TR>" % querylog.query_completed)
+            req.write("<TR><TD>Cals Completed:</TD><TD>%s</TD></TR>" % querylog.cals_completed)
+            req.write("<TR><TD>Summary Completed:</TD><TD>%s</TD></TR>" % querylog.summary_completed)
+            if querylog.query_completed and querylog.query_started:
+                td = querylog.query_completed - querylog.query_started
+                req.write("<TR><TD>Query Seconds:</TD><TD>%.2f</TD></TR>" % td.total_seconds())
+            if querylog.cals_completed and querylog.query_started:
+                td = querylog.cals_completed - querylog.query_started
+                req.write("<TR><TD>Cals query Seconds:</TD><TD>%.2f</TD></TR>" % td.total_seconds())
+            if querylog.summary_completed and querylog.query_started:
+                td = querylog.summary_completed - querylog.query_started
+                req.write("<TR><TD>Summary Seconds:</TD><TD>%.2f</TD></TR>" % td.total_seconds())
+            req.write("<TR><TD>Notes:</TD><TD>%s</TD></TR>" % querylog.notes)
+            req.write("</TABLE>")
+
+        downloadlog = session.query(DownloadLog).filter(DownloadLog.usagelog_id==usagelog.id).first()
+        if downloadlog:
+            req.write("<h2>Download Details</h2>")
+            req.write("<TABLE>")
+            req.write("<TR><TD>Selection:</TD><TD>%s</TD></TR>" % downloadlog.selection)
+            req.write("<TR><TD>Num Results:</TD><TD>%s</TD></TR>" % downloadlog.numresults)
+            req.write("<TR><TD>Sending Files:</TD><TD>%s</TD></TR>" % downloadlog.sending_files)
+            req.write("<TR><TD>Num Denied:</TD><TD>%s</TD></TR>" % downloadlog.numdenied)
+            req.write("<TR><TD>Query Started:</TD><TD>%s</TD></TR>" % downloadlog.query_started)
+            req.write("<TR><TD>Query Completed:</TD><TD>%s</TD></TR>" % downloadlog.query_completed)
+            req.write("<TR><TD>Download completed:</TD><TD>%s</TD></TR>" % downloadlog.download_completed)
+            if downloadlog.query_completed and downloadlog.query_started:
+                td = downloadlog.query_completed - downloadlog.query_started
+                req.write("<TR><TD>Query Seconds:</TD><TD>%.2f</TD></TR>" % td.total_seconds())
+            if downloadlog.download_completed and downloadlog.query_completed:
+                td = downloadlog.download_completed - downloadlog.query_completed
+                req.write("<TR><TD>Download Seconds:</TD><TD>%.2f</TD></TR>" % td.total_seconds())
+                req.write("<TR><TD>Download Kbytes / sec:</TD><TD>%.2f</TD></TR>" % (usagelog.bytes / (1000*td.total_seconds())))
+            req.write("<TR><TD>Notes:</TD><TD>%s</TD></TR>" % downloadlog.notes)
+            req.write("</TABLE>")
+
+        filedownloadlogs = session.query(FileDownloadLog).filter(FileDownloadLog.usagelog_id==usagelog.id).all()
+        if len(filedownloadlogs):
+            req.write("<h2>File Download Details</h2>")
+            req.write("<TABLE>")
+            req.write('<TR class="tr_head">')
+            req.write("<TH>DiskFile ID</TH>")
+            req.write("<TH>Filename</TH>")
+            req.write("<TH>File size</TH>")
+            req.write("<TH>File md5sum</TH>")
+            req.write("<TH>UT DateTime</TH>")
+            req.write("<TH>Released</TH>")
+            req.write("<TH>PI Access</TH>")
+            req.write("<TH>Staff Access</TH>")
+            req.write("<TH>Magic Access</TH>")
+            req.write("<TH>Eng Access</TH>")
+            req.write("<TH>Can Have It</TH>")
+            req.write("<TH>Notes</TH>")
+            req.write("</TR>")
+            even = False
+            for filedownloadlog in filedownloadlogs:
+                even = not even
+                if even:
+                    req.write('<TR class="tr_even">')
+                else:
+                    req.write('<TR class="tr_odd">')
+                req.write("<TD>%d</TD>" % filedownloadlog.diskfile_id)
+                req.write("<TD>%s</TD>" % filedownloadlog.diskfile.filename)
+                req.write("<TD>%d</TD>" % filedownloadlog.diskfile.file_size)
+                req.write("<TD>%s</TD>" % filedownloadlog.diskfile.file_md5)
+                req.write("<TD>%s</TD>" % filedownloadlog.ut_datetime)
+                req.write("<TD>%s</TD>" % filedownloadlog.released)
+                req.write("<TD>%s</TD>" % filedownloadlog.pi_access)
+                req.write("<TD>%s</TD>" % filedownloadlog.staff_access)
+                req.write("<TD>%s</TD>" % filedownloadlog.magic_access)
+                req.write("<TD>%s</TD>" % filedownloadlog.eng_access)
+                req.write("<TD>%s</TD>" % filedownloadlog.canhaveit)
+                req.write("<TD>%s</TD>" % filedownloadlog.notes)
+                req.write("</TR>")
+            req.write("</TABLE>")
+
+        fileuploadlogs = session.query(FileUploadLog).filter(FileUploadLog.usagelog_id==usagelog.id).all()
+        if len(fileuploadlogs):
+            req.write("<h2>File Upload Details</h2>")
+            req.write("<TABLE>")
+            req.write('<TR class="tr_head">')
+            req.write("<TH>Transfer UT Start</TH>")
+            req.write("<TH>Transfer UT Complete</TH>")
+            req.write("<TH>Transfer Seconds</TH>")
+            req.write("<TH>Transfer Kbyte/s </TH>")
+            req.write("<TH>Filename</TH>")
+            req.write("<TH>Size</TH>")
+            req.write("<TH>MD5</TH>")
+            req.write("<TH>Processed Cal</TH>")
+            req.write("<TH>Invoke Status</TH>")
+            req.write("<TH>Invoke PID</TH>")
+            req.write("<TH>Destination</TH>")
+            req.write("<TH>S3 UT Start</TH>")
+            req.write("<TH>S3 UT End</TH>")
+            req.write("<TH>S3 Seconds</TH>")
+            req.write("<TH>S3 kbyte/s</TH>")
+            req.write("<TH>S3 OK</TH>")
+            req.write("<TH>File OK</TH>")
+            req.write("<TH>IngestQueue ID</TH>")
+            req.write("<TH>Notes</TH>")
+            req.write("</TR>")
+            even = False
+            for fileuploadlog in fileuploadlogs:
+                even = not even
+                if even:
+                    req.write('<TR class="tr_even">')
+                else:
+                    req.write('<TR class="tr_odd">')
+                req.write("<TD>%s</TD>" % fileuploadlog.ut_transfer_start)
+                req.write("<TD>%s</TD>" % fileuploadlog.ut_transfer_complete)
+                if fileuploadlog.ut_transfer_start and fileuploadlog.ut_transfer_complete:
+                    tdel = fileuploadlog.ut_transfer_complete - fileuploadlog.ut_transfer_start
+                    req.write("<TD>%.2f</TD>" % tdel.total_seconds())
+                    req.write("<TD>%.2f</TD>" % fileuploadlog.size / (1000*tdel.total_seconds()))
+                else:
+                    req.write("<TD></TD><TD></TD>")
+                req.write("<TD>%s</TD>" % fileuploadlog.filename)
+                req.write("<TD>%s</TD>" % fileuploadlog.size)
+                req.write("<TD>%s</TD>" % fileuploadlog.md5)
+                req.write("<TD>%s</TD>" % fileuploadlog.processed_cal)
+                req.write("<TD>%s</TD>" % fileuploadlog.invoke_status)
+                req.write("<TD>%s</TD>" % fileuploadlog.invoke_pid)
+                req.write("<TD>%s</TD>" % fileuploadlog.destination)
+                req.write("<TD>%s</TD>" % fileuploadlog.s3_ut_start)
+                req.write("<TD>%s</TD>" % fileuploadlog.s3_ut_end)
+                if fileuploadlog.s3_ut_start and fileuploadlog.s3_ut_end:
+                    tdel = fileuploadlog.s3_ut_end - fileuploadlog.s3_ut_start
+                    req.write("<TD>%.2f</TD>" % tdel.total_seconds())
+                    req.write("<TD>%.2f</TD>" % fileuploadlog.size / (1000*tdel.total_seconds()))
+                else:
+                    req.write("<TD></TD><TD></TD>")
+                req.write("<TD>%s</TD>" % fileuploadlog.s3_ok)
+                req.write("<TD>%s</TD>" % fileuploadlog.file_ok)
+                req.write("<TD>%s</TD>" % fileuploadlog.ingestqueue_id)
+                req.write("<TD>%s</TD>" % fileuploadlog.notes)
+                req.write("</TR>")
+            req.write("<TABLE>")
+
+        req.write("</body></html>")
     finally:
         session.close()
 
