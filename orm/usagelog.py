@@ -61,3 +61,19 @@ class UsageLog(Base):
             self.notes = note
         else:
             self.notes += "\n" + note
+
+    def status_string(self):
+        """
+        Returns a string with the http status and a human readable translation
+        """
+        html = str(self.status)
+        if self.status == 200:
+            html += " (OK)"
+        if self.status == 403:
+            html += " (FORBIDDEN)"
+        if self.status == 500:
+            html += " (SERVER ERROR)"
+        if self.status == 404:
+            html += " (NOT FOUND)"
+
+        return html
