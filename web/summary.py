@@ -25,11 +25,11 @@ def summary(req, sumtype, selection, orderby, links=True):
     tags to make it a page in it's own right.
     """
     req.content_type = "text/html"
-    req.write('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html>')
-    title = "FITS header %s table %s" % (sumtype, sayselection(selection))
-    req.write("<head>")
-    req.write("<title>%s</title>" % htmlescape(title))
+    req.write('<!DOCTYPE html><html>')
+    req.write('<meta charset="UTF-8">')
     req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+    title = "FITS header %s table %s" % (sumtype, sayselection(selection))
+    req.write("<title>%s</title>" % htmlescape(title))
     req.write("</head>\n")
     req.write("<body>")
 
