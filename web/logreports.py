@@ -33,8 +33,12 @@ def usagereport(req):
 
         # Process the form data if there is any
         # Default all the pre-fill strings
-        start = ''
-        end = ''
+        # Default to last day
+        today = datetime.datetime.utcnow().date()
+        oneday = datetime.timedelta(days=1)
+        yesterday = today - oneday
+        start = today.isoformat()
+        end = yesterday.isoformat()
         username = ''
         ipaddr = ''
         this = ''
@@ -73,6 +77,7 @@ def usagereport(req):
         req.write("<body><h1>Fits Server Log Query</h1>")
         req.write("<FORM action='/usagereport' method='POST'>")
         req.write("<TABLE>")
+
         # Start and End of Query
         req.write('<TR><TD><LABEL for="start">UT Start of Report</LABEL></TD>')
         req.write('<TD><INPUT type="text" size=20 name="start" value=%s></TD></TR>' % start)
