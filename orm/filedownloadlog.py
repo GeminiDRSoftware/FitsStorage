@@ -6,6 +6,8 @@ from sqlalchemy.orm import relation
 from orm.usagelog import UsageLog
 from orm.diskfile import DiskFile
 
+import datetime
+
 from . import Base
 
 class FileDownloadLog(Base):
@@ -36,6 +38,7 @@ class FileDownloadLog(Base):
         Create an initial FileDownloadLog instance from a UsageLog instance
         """
         self.usagelog_id = usagelog.id
+        self.ut_datetime = datetime.datetime.utcnow()
 
     def add_note(self, note):
         """
