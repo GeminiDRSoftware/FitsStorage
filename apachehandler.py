@@ -524,4 +524,6 @@ def debugmessage(req):
     req.write("path_info: %s\n\n" % (str(req.path_info)))
     req.write("args: %s\n\n" % (str(req.args)))
 
+    req.write("User agent: %s\n\n" % str(req.headers_in['User-Agent']))
+    req.write("All Headers in: %s\n\n" % str(req.headers_in))
     return apache.OK
