@@ -15,6 +15,8 @@ from orm.fileuploadlog import FileUploadLog
 from orm.user import User
 
 from web.user import userfromcookie
+from web.selection import getselection, queryselection, sayselection
+from web.list_headers import list_headers
 
 from mod_python import apache
 from mod_python import util
@@ -468,6 +470,97 @@ def usagedetails(req, things):
             req.write("<TABLE>")
 
         req.write("</body></html>")
+    finally:
+        session.close()
+
+    return apache.OK
+
+def downloadlog(req, things):
+    """
+    This accepts a selection and returns a log showing all the downloads of the
+    files that match the selection.
+    """
+    session = sessionfactory()
+
+    try:
+        # Need to be logged in as gemini staff to do this
+        user = userfromcookie(session, req)
+        if user is None or user.gemini_staff is False:
+            return apache.HTTP_FORBIDDEN
+
+
+        selection = getselection(things)
+
+        req.content_type = "text/html"
+        req.write('<!DOCTYPE html><html><head>')
+        req.write('<meta charset="UTF-8">')
+        req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+        req.write("<title>Download Log</title>")
+        req.write("</head>\n")
+        req.write("<body>")
+        req.write("<h1>File Download log</h1>")
+        req.write("<h3>Selection: %s</h3>" % sayselection(selection))
+
+        if 'notrecognised' in selection.keys():
+            req.write("<H4>WARNING: I didn't recognize the following search terms: %s</H4>" % selection['notrecognised'])
+
+        headers = list_headers(session, selection, None)
+
+        if len(headers) == 0:
+            req.write("<h2>No results match selection</h2>")
+            req.write("</body></html>")
+            return apache.OK
+
+        req.write("<TABLE>")
+        req.write('<TR class="tr_head">')
+        req.write("<TH>UsageLog ID</TH>")
+        req.write("<TH>Filename</TH>")
+        req.write("<TH>Data Label</TH>")
+        req.write("<TH>User</TH>")
+        req.write("<TH>Permission</TH>")
+        req.write("<TH>Feature Used</TH>")
+        req.write("<TH>IP addr</TH>")
+        req.write("<TH>UT DateTime</TH>")
+        req.write("<TH>HTTP Status</TH>")
+        req.write("</TR>")
+
+        even = False
+        for header in headers:
+            query = session.query(FileDownloadLog).filter(FileDownloadLog.diskfile_id == header.diskfile.id)
+            fdls = query.all()
+            for fdl in fdls:
+                even = not even
+                if even:
+                    req.write('<TR class="tr_even">')
+                else:
+                    req.write('<TR class="tr_odd">')
+                req.write('<TD><a href="/usagedetails/%d">%d</a></TD>' % (fdl.usagelog_id, fdl.usagelog_id))
+                req.write('<TD>%s</TD>' % header.diskfile.filename)
+                req.write('<TD>%s</TD>' % header.data_label)
+                if fdl.usagelog.user_id:
+                    user = session.query(User).filter(User.id == fdl.usagelog.user_id).one()
+                    html = "%d: %s" % (user.id, user.username)
+                    if user.gemini_staff:
+                        html += " (Staff)"
+                    req.write('<TD>%s</TD>' % html)
+                else:
+                    req.write('<TD>Not Logged In</TD>')
+                permission = ""
+                if fdl.pi_access: permission += 'PI '
+                if fdl.released: permission += 'Released '
+                if fdl.staff_access: permission += 'Staff '
+                if fdl.magic_access: permission += 'Magic '
+                if fdl.eng_access: permission += 'Eng '
+                if not fdl.canhaveit: permission += 'DENIED '
+                req.write('<TD>%s</TD>' % permission)
+                req.write('<TD>%s</TD>' % fdl.usagelog.this)
+                req.write('<TD>%s</TD>' % fdl.usagelog.ip_address)
+                req.write('<TD>%s</TD>' % fdl.ut_datetime)
+                req.write('<TD>%s</TD>' % fdl.usagelog.status_string())
+                req.write('</TR>')
+
+        req.write('</TABLE>')
+
     finally:
         session.close()
 
