@@ -97,7 +97,7 @@ def summary_body(req, sumtype, selection, orderby, links=True):
         # If this is assocated_cals, we do the assoication here
         if sumtype == 'associated_cals':
             headers = associate_cals(session, headers)
-            querylog.cals_completed = datetime.datetime.now()
+            querylog.cals_completed = datetime.datetime.utcnow()
             querylog.numcalresults = len(headers)
 
             # links are messed up with associated_cals, turn them off
