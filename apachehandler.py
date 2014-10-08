@@ -30,7 +30,7 @@ from web.user import request_account, password_reset, request_password_reset, lo
 from web.user import staff_access, user_list, userfromcookie
 from web.userprogram import my_programs
 from web.searchform import searchform, nameresolver
-from web.logreports import usagereport
+from web.logreports import usagereport, usagedetails
 
 from orm import sessionfactory
 from orm.file import File
@@ -378,6 +378,12 @@ def thehandler(req):
         if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return usagereport(req)
+
+    # Usage Statistics and Reports
+    if this == "usagedetails":
+        if this in blocked_urls:
+            return apache.HTTP_FORBIDDEN
+        return usagedetails(req, things)
 
     # Tape handler
     if this == "tape":
