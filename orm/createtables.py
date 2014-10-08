@@ -78,22 +78,20 @@ def create_tables(session):
     # Ignore any errors, commonly from column already exists...
     if not using_sqlite:
         try:
-            session.execute("ALTER TABLE footprint ADD COLUMN area polygon")
-            session.commit()
-            session.execute("ALTER TABLE photstandard ADD COLUMN coords point")
-            session.commit()
+            pg_db.execute("ALTER TABLE footprint ADD COLUMN area polygon; COMMIT;")
+            pg_db.execute("ALTER TABLE photstandard ADD COLUMN coords point; COMMIT;")
         except sqlalchemy.exc.ProgrammingError:
             pass
 
     if using_apache and not using_sqlite:
         # Now grant the apache user select on them for the www queries
-        session.execute("BEGIN;GRANT SELECT ON file, diskfile, diskfilereport, header, fulltextheader, gmos, niri, michelle, gnirs, nifs, f2, tape, tape_id_seq, tapewrite, taperead, tapefile, notification, photstandard, photstandardobs, footprint, qareport, qametriciq, qametriczp, qametricsb, qametricpe, authentication, ingestqueue, exportqueue, archiveuser, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog TO apache; COMMIT;")
-        session.execute("BEGIN;GRANT INSERT,UPDATE ON tape, tape_id_seq, notification, notification_id_seq, qareport, qareport_id_seq, qametriciq, qametriciq_id_seq, qametriczp, qametriczp_id_seq, qametricsb, qametricsb_id_seq, qametricpe, qametricpe_id_seq, authentication, authentication_id_seq, archiveuser, archiveuser_id_seq, userprogram, userprogram_id_seq, usagelog, usagelog_id_seq, querylog, querylog_id_seq, downloadlog, downloadlog_id_seq, filedownloadlog, filedownloadlog_id_seq, fileuploadlog, fileuploadlog_id_seq TO apache;COMMIT;")
-        session.execute("BEGIN;GRANT DELETE ON notification TO apache;COMMIT;")
+        pg_db.execute("GRANT SELECT ON file, diskfile, diskfilereport, header, fulltextheader, gmos, niri, michelle, gnirs, nifs, f2, tape, tape_id_seq, tapewrite, taperead, tapefile, notification, photstandard, photstandardobs, footprint, qareport, qametriciq, qametriczp, qametricsb, qametricpe, authentication, ingestqueue, exportqueue, archiveuser, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog TO apache;COMMIT;")
+        pg_db.execute("GRANT INSERT,UPDATE ON tape, notification, qareport, qametriciq, qametriczp, qametricsb, qametricpe, authentication, archiveuser, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog TO apache;COMMIT;")
+        pg_db.execute("GRANT UPDATE ON tape_id_seq, notification_id_seq, qareport_id_seq, qametriciq_id_seq, qametriczp_id_seq, qametricsb_id_seq, qametricpe_id_seq, authentication_id_seq, archiveuser_id_seq, userprogram_id_seq, usagelog_id_seq, querylog_id_seq, downloadlog_id_seq, filedownloadlog_id_seq, fileuploadlog_id_seq TO apache;COMMIT;")
+        pg_db.execute("GRANT DELETE ON notification TO apache;COMMIT;")
 
 def drop_tables(session):
     """
     Drops all the database tables. Very unsubtle. Use with caution
     """
     File.metadata.drop_all(bind=pg_db)
-    session.commit()
