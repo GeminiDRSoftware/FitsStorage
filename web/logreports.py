@@ -372,7 +372,6 @@ def usagedetails(req, things):
             req.write("<h2>File Download Details</h2>")
             req.write("<TABLE>")
             req.write('<TR class="tr_head">')
-            req.write("<TH>DiskFile ID</TH>")
             req.write("<TH>Filename</TH>")
             req.write("<TH>File size</TH>")
             req.write("<TH>File md5sum</TH>")
@@ -392,10 +391,9 @@ def usagedetails(req, things):
                     req.write('<TR class="tr_even">')
                 else:
                     req.write('<TR class="tr_odd">')
-                req.write("<TD>%d</TD>" % filedownloadlog.diskfile_id)
-                req.write("<TD>%s</TD>" % filedownloadlog.diskfile.filename)
-                req.write("<TD>%d</TD>" % filedownloadlog.diskfile.file_size)
-                req.write("<TD>%s</TD>" % filedownloadlog.diskfile.file_md5)
+                req.write("<TD>%s</TD>" % filedownloadlog.diskfile_filename)
+                req.write("<TD>%d</TD>" % filedownloadlog.diskfile_file_size)
+                req.write("<TD>%s</TD>" % filedownloadlog.diskfile_file_md5)
                 req.write("<TD>%s</TD>" % filedownloadlog.ut_datetime)
                 req.write("<TD>%s</TD>" % filedownloadlog.released)
                 req.write("<TD>%s</TD>" % filedownloadlog.pi_access)
@@ -526,7 +524,7 @@ def downloadlog(req, things):
 
         even = False
         for header in headers:
-            query = session.query(FileDownloadLog).filter(FileDownloadLog.diskfile_id == header.diskfile.id)
+            query = session.query(FileDownloadLog).filter(FileDownloadLog.diskfile_filename == header.diskfile.filename).filter(FileDownloadLog.diskfile_file_md5 == header.diskfile.file_md5)
             fdls = query.all()
             for fdl in fdls:
                 even = not even
@@ -544,7 +542,7 @@ def downloadlog(req, things):
                         html += " (Staff)"
                     req.write('<TD>%s</TD>' % html)
                 else:
-                    req.write('<TD>Not Logged In</TD>')
+                    req.write('<TD>Anonymous</TD>')
                 permission = ""
                 if fdl.pi_access: permission += 'PI '
                 if fdl.released: permission += 'Released '
@@ -654,7 +652,7 @@ def usagestats(req):
         interval = datetime.timedelta(days=90)
         start = end - interval
 
-        req.write('<h3>Most curious Users</h3>')
+        req.write('<h3>Most inquisitive Users</h3>')
         query = session.query(UsageLog.user_id, func.count(1)).filter(UsageLog.this=='searchform')
         query = query.filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
         query = query.group_by(UsageLog.user_id).order_by(desc(func.count(1))).limit(10)
@@ -669,10 +667,13 @@ def usagestats(req):
             even = not even
             tr_class = 'tr_even' if even else 'tr_odd'
             req.write('<TR class="%s">' % tr_class)
-            user = session.query(User).filter(User.id == result[0]).one()
-            name = user.username
-            if user.gemini_staff:
-                name += " (Staff)"
+            if result[0]:
+                user = session.query(User).filter(User.id == result[0]).one()
+                name = user.username
+                if user.gemini_staff:
+                    name += " (Staff)"
+            else:
+                name = "Anonymous"
             req.write('<TD>%s</TD>' % name)
             req.write('<TD>%s</TD>' % result[1])
             req.write('</TR>')
@@ -693,10 +694,13 @@ def usagestats(req):
             even = not even
             tr_class = 'tr_even' if even else 'tr_odd'
             req.write('<TR class="%s">' % tr_class)
-            user = session.query(User).filter(User.id == result[0]).one()
-            name = user.username
-            if user.gemini_staff:
-                name += " (Staff)"
+            if result[0]:
+                user = session.query(User).filter(User.id == result[0]).one()
+                name = user.username
+                if user.gemini_staff:
+                    name += " (Staff)"
+            else:
+                name = "Anonymous"
             req.write('<TD>%s</TD>' % name)
             gb = result[1] / 1.0E9
             req.write('<TD>%.2f</TD>' % gb)

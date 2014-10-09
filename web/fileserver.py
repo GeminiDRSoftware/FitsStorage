@@ -112,7 +112,9 @@ def download(req, things):
         tar = tarfile.open(name="download.tar", mode="w|", fileobj=req)
         for header in headers:
             filedownloadlog = FileDownloadLog(req.usagelog)
-            filedownloadlog.diskfile_id = header.diskfile.id
+            filedownloadlog.diskfile_filename = header.diskfile.filename
+            filedownloadlog.diskfile_file_md5 = header.diskfile.file_md5
+            filedownloadlog.diskfile_file_size = header.diskfile.file_size
             session.add(filedownloadlog)
             if icanhave(session, req, header, filedownloadlog):
                 filedownloadlog.canhaveit = True

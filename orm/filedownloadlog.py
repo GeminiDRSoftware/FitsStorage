@@ -20,8 +20,11 @@ class FileDownloadLog(Base):
     usagelog_id = Column(Integer, ForeignKey('usagelog.id'), nullable=False, index=True)
     usagelog = relation(UsageLog, order_by=id)
 
-    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
-    diskfile = relation(DiskFile, order_by=id)
+    # Don't reference the diskfile_id here - we want to be able to preserve
+    # data over database rebuild. Reference by filename etc instead.
+    diskfile_filename = Column(Text, index=True)
+    diskfile_file_md5 = Column(Text)
+    diskfile_file_size = Column(Integer)
 
     ut_datetime = Column(DateTime(timezone=False), index=True)
     released = Column(Boolean)
