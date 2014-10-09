@@ -147,6 +147,10 @@ class CalibrationGMOS(Calibration):
         dataset. The optional sameprog parameter is a boolean that says
         whether you require the result to be from the same science program.
         """
+        # No arcs for imaging
+        if self.descriptors['spectroscopy'] == False:
+            return None
+
         query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
 
         if processed:
@@ -248,8 +252,8 @@ class CalibrationGMOS(Calibration):
         # Yeah, and GMOS-S ones come out a few 10s of *seconds* different - going to choose darks within 50 secs for now...
         # query = query.filter(func.abs(Header.exposure_time - self.descriptors['exposure_time']) < 50.0)
         # Better performance from a range than using abs
-        exptime_lo = self.descriptors['exposure_time'] - 50.0
-        exptime_hi = self.descriptors['exposure_time'] + 50.0
+        exptime_lo = float(self.descriptors['exposure_time']) - 50.0
+        exptime_hi = float(self.descriptors['exposure_time']) + 50.0
         query = query.filter(Header.exposure_time > exptime_lo).filter(Header.exposure_time < exptime_hi)
 
         query = query.filter(Gmos.nodandshuffle == self.descriptors['nodandshuffle'])
