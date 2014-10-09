@@ -4,7 +4,7 @@ This module handles the web 'logreports' functions - presenting data from the us
 import datetime
 import dateutil.parser
 
-from sqlalchemy import desc
+from sqlalchemy import desc, func, join
 
 from orm import sessionfactory
 from orm.usagelog import UsageLog
@@ -565,3 +565,279 @@ def downloadlog(req, things):
         session.close()
 
     return apache.OK
+
+def usagestats(req):
+    """
+    Usage statistics:
+    Site hits
+    Searches
+    Downloads:
+      Proprietry data
+      Public data logged in
+      Public data not logged in
+    Ingests
+
+    Generate counts per year, per week and per day
+    """
+
+    session = sessionfactory()
+
+    try:
+        # Need to be logged in as gemini staff to do this
+        user = userfromcookie(session, req)
+        if user is None or user.gemini_staff is False:
+            return apache.HTTP_FORBIDDEN
+
+        req.content_type = "text/html"
+        req.write('<!DOCTYPE html><html><head>')
+        req.write('<meta charset="UTF-8">')
+        req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+        req.write("<title>Usage Statistics</title>")
+        req.write("</head>\n")
+        req.write("<body>")
+        req.write("<h1>Usage Statistics</h1>")
+
+        first = session.query(func.min(UsageLog.utdatetime)).first()[0]
+        last = session.query(func.max(UsageLog.utdatetime)).first()[0]
+   
+        req.write("<h2>Per Year</h2>")
+        year = first.year
+        start = datetime.datetime(year, 1, 1, 0, 0, 0)
+        end = datetime.datetime(year+1, 1, 1, 0, 0, 0)
+        req.write('<TABLE>')
+        req.write(render_usagestats_row(session, start, end, header=True, tr_class='tr_head'))
+        req.write(render_usagestats_row(session, start, end, header=False, tr_class='tr_odd'))
+        even = False
+        while end < last:
+            even = not even
+            tr_class = 'tr_even' if even else 'tr_odd'
+            year += 1
+            start = datetime.datetime(year, 1, 1, 0, 0, 0)
+            end = datetime.datetime(year+1, 1, 1, 0, 0, 0)
+            req.write(render_usagestats_row(session, start, end, header=False, tr_class=tr_class))
+        req.write('</TABLE>')
+
+        req.write("<h2>Per Week</h2>")
+        delta = datetime.timedelta(days=7)
+        start = datetime.datetime(first.year, first.month, first.day, 0, 0, 0)
+        end = start + delta
+        req.write('<TABLE>')
+        req.write(render_usagestats_row(session, start, end, header=True, tr_class='tr_head'))
+        req.write(render_usagestats_row(session, start, end, header=False, tr_class='tr_odd'))
+        even = False
+        while end < last:
+            even = not even
+            tr_class = 'tr_even' if even else 'tr_odd'
+            start = start + delta
+            end = end + delta
+            req.write(render_usagestats_row(session, start, end, header=False, tr_class=tr_class))
+        req.write('</TABLE>')
+
+        req.write("<h2>Per Day</h2>")
+        delta = datetime.timedelta(days=1)
+        start = datetime.datetime(first.year, first.month, first.day, 0, 0, 0)
+        end = start + delta
+        req.write('<TABLE>')
+        req.write(render_usagestats_row(session, start, end, header=True, tr_class='tr_head'))
+        req.write(render_usagestats_row(session, start, end, header=False, tr_class='tr_odd'))
+        even = False
+        while end < last:
+            even = not even
+            tr_class = 'tr_even' if even else 'tr_odd'
+            start = start + delta
+            end = end + delta
+            req.write(render_usagestats_row(session, start, end, header=False, tr_class=tr_class))
+        req.write('</TABLE>')
+
+        req.write('<H2>Within the last 90 days...</H2>')
+        end = datetime.datetime.utcnow()
+        interval = datetime.timedelta(days=90)
+        start = end - interval
+
+        req.write('<h3>Most curious Users</h3>')
+        query = session.query(UsageLog.user_id, func.count(1)).filter(UsageLog.this=='searchform')
+        query = query.filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
+        query = query.group_by(UsageLog.user_id).order_by(desc(func.count(1))).limit(10)
+        results = query.all()
+        req.write('<TABLE>')
+        req.write('<TR class="tr_head">')
+        req.write('<TH>User</TH>')
+        req.write('<TH>Searches</TH>')
+        req.write('</TR>')
+        even = False
+        for result in results:
+            even = not even
+            tr_class = 'tr_even' if even else 'tr_odd'
+            req.write('<TR class="%s">' % tr_class)
+            user = session.query(User).filter(User.id == result[0]).one()
+            name = user.username
+            if user.gemini_staff:
+                name += " (Staff)"
+            req.write('<TD>%s</TD>' % name)
+            req.write('<TD>%s</TD>' % result[1])
+            req.write('</TR>')
+        req.write('</TABLE>')
+    
+        req.write('<h3>Most hungry Users</h3>')
+        query = session.query(UsageLog.user_id, func.sum(UsageLog.bytes)).filter(UsageLog.this=='download')
+        query = query.filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
+        query = query.group_by(UsageLog.user_id).order_by(desc(func.sum(UsageLog.bytes))).limit(10)
+        results = query.all()
+        req.write('<TABLE>')
+        req.write('<TR class="tr_head">')
+        req.write('<TH>User</TH>')
+        req.write('<TH>GB</TH>')
+        req.write('</TR>')
+        even = False
+        for result in results:
+            even = not even
+            tr_class = 'tr_even' if even else 'tr_odd'
+            req.write('<TR class="%s">' % tr_class)
+            user = session.query(User).filter(User.id == result[0]).one()
+            name = user.username
+            if user.gemini_staff:
+                name += " (Staff)"
+            req.write('<TD>%s</TD>' % name)
+            gb = result[1] / 1.0E9
+            req.write('<TD>%.2f</TD>' % gb)
+            req.write('</TR>')
+        req.write('</TABLE>')
+    
+    finally:
+        session.close()
+
+    return apache.OK
+
+def render_usagestats_row(session, start, end, header=False, tr_class=''):
+    """
+    Generates an html table row giving the stats
+    if header=true, generates the header row
+    if tr_class, sets that class on the <TR>
+    """
+
+    if tr_class:
+        html = '<TR class=%s>' % tr_class
+    else:
+        html = '<TR>'
+
+    if header:
+        html += '<TH colspan=2>Period</TH>'
+        html += '<TH colspan=2>Site Hits</TH>'
+        html += '<TH colspan=2>Searches</TH>'
+        html += '<TH colspan=2>PI Downloads</TH>'
+        html += '<TH colspan=2>Public Downloads</TH>'
+        html += '<TH colspan=2>Anonymous Downloads</TH>'
+        html += '<TH colspan=2>Staff Downloads</TH>'
+        html += '<TH colspan=2>Total Downloads</TH>'
+        html += '<TH>Failed Downloads</TH>'
+        html += '<TH colspan=2>Uploads</TH>'
+        html += '</TR>'
+        if tr_class:
+            html += '<TR class=%s>' % tr_class
+        else:
+            html += '<TR>'
+        html += '<TH>From</TH><TH>To</TH>'
+        html += '<TH>OK</TH><TH>Fail</TH>'
+        html += '<TH>OK</TH><TH>Fail</TH>'
+        html += '<TH>Files</TH><TH>GB</TH>'
+        html += '<TH>Files</TH><TH>GB</TH>'
+        html += '<TH>Files</TH><TH>GB</TH>'
+        html += '<TH>Files</TH><TH>GB</TH>'
+        html += '<TH>Files</TH><TH>GB</TH>'
+        html += '<TH>Number</TH>'
+        html += '<TH>Files</TH><TH>GB</TH>'
+        html += '</TR>'
+        return html
+
+    usage = calculate_usagestats(session, start, end)
+
+    html += '<TD>%s</TD><TD>%s</TD>' % (start, end)
+
+    html += '<TD>%d</TD><TD>%d</TD>' % (usage['site_hits']['OK'], usage['site_hits']['fail'])
+    html += '<TD>%d</TD><TD>%d</TD>' % (usage['searches']['OK'], usage['searches']['fail'])
+
+    html += '<TD>%d</TD><TD>%.2f</TD>' % (usage['pi_downloads']['files'], usage['pi_downloads']['GB'])
+    html += '<TD>%d</TD><TD>%.2f</TD>' % (usage['public_downloads']['files'], usage['public_downloads']['GB'])
+    html += '<TD>%d</TD><TD>%.2f</TD>' % (usage['anon_downloads']['files'], usage['anon_downloads']['GB'])
+    html += '<TD>%d</TD><TD>%.2f</TD>' % (usage['staff_downloads']['files'], usage['staff_downloads']['GB'])
+    html += '<TD>%d</TD><TD>%.2f</TD>' % (usage['total_downloads']['files'], usage['total_downloads']['GB'])
+
+    html += '<TD>%d</TD>' % usage['failed_downloads']
+
+    html += '<TD>%d</TD><TD>%.2f</TD>' % (usage['uploads']['files'], usage['uploads']['GB'])
+
+    html += '</TR>'
+
+    return html
+
+def calculate_usagestats(session, start, end):
+    """
+    start and end are datetime objects in UTC.
+    Returns a dict containing the stats for that period
+    'site_hits': {'OK': int, 'fail': int}
+    'searches': {'OK': int, 'fail': int}
+    'pi_downloads': {'nfiles': int, 'GB': float}
+    'public_downloads': {'files': int, 'GB': float}
+    'anon_downloads': {'files': int, 'GB': float}
+    'staff_downloads': {'files': int, 'GB': float}
+    'total_downloads': {'files': int, 'GB': float}
+    'failed_downloads': int
+    'uploads': {'files': int, 'GB': float}
+    """
+
+    retary = {}
+    usagequery = session.query(UsageLog).filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
+
+    hitsok = usagequery.filter(UsageLog.status == 200).count()
+    hitsfail = usagequery.filter(UsageLog.status != 200).count()
+    retary['site_hits'] = {'OK': hitsok, 'fail': hitsfail}
+
+    searchok = usagequery.filter(UsageLog.this=="searchform").filter(UsageLog.status == 200).count()
+    searchfail = usagequery.filter(UsageLog.this=="searchform").filter(UsageLog.status != 200).count()
+    retary['searches'] = {'OK': searchok, 'fail': searchfail}
+
+    fdlquery = session.query(FileDownloadLog).select_from(join(FileDownloadLog, UsageLog)).filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
+    retary['failed_downloads'] = fdlquery.filter(UsageLog.status != 200).count()
+
+    fdlquery = session.query(func.count(1), func.sum(UsageLog.bytes)).select_from(join(FileDownloadLog, UsageLog))
+    fdlquery = fdlquery.filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
+    fdlquery = fdlquery.filter(UsageLog.status == 200)
+    
+    total = fdlquery.first()
+    if total:
+        retary['total_downloads'] = {'files': total[0], 'GB' : total[1]/1.0E9 if total[1] else 0}
+    else:
+        retary['total_downloads'] = {'files': 0, 'GB' : 0}
+
+    staff = fdlquery.filter(FileDownloadLog.staff_access == True).first()
+    if staff:
+        retary['staff_downloads'] = {'files': staff[0], 'GB' : staff[1]/1.0E9 if staff[1] else 0}
+    else:
+        retary['staff_downloads'] = {'files': 0, 'GB' : 0}
+
+    pi = fdlquery.filter(FileDownloadLog.pi_access == True).first()
+    if pi:
+        retary['pi_downloads'] = {'files': pi[0], 'GB' : pi[1]/1.0E9 if pi[1] else 0}
+    else:
+        retary['pi_downloads'] = {'files': 0, 'GB' : 0}
+
+    pub = fdlquery.filter(FileDownloadLog.released == True).filter(UsageLog.user_id is not None).first()
+    if pub:
+        retary['public_downloads'] = {'files': pub[0], 'GB' : pub[1]/1.0E9 if pub[1] else 0}
+    else:
+        retary['public_downloads'] = {'files': 0, 'GB' : 0}
+
+    anon = fdlquery.filter(UsageLog.user_id is None).first()
+    if anon:
+        retary['anon_downloads'] = {'files': anon[0], 'GB' : anon[1]/1.0E9 if anon[1] else 0}
+    else:
+        retary['anon_downloads'] = {'files': 0, 'GB' : 0}
+    
+    fulquery = session.query(FileUploadLog).select_from(join(FileUploadLog, UsageLog)).filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
+    uploads = fulquery.first()
+    if uploads:
+        retary['uploads'] = {'files': uploads[0], 'GB': uploads[1]/1.0E9 if uploads[1] else 0}
+    else:
+        retary['uploads'] = {'files': 0, 'GB': 0}
+
+    return retary
