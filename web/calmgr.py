@@ -17,7 +17,8 @@ import urllib
 import re
 import os
 import datetime
-
+import sys
+import traceback
 
 def calmgr(req, selection):
     """
@@ -229,6 +230,9 @@ def calmgr(req, selection):
                                 req.write("<!-- NO CALIBRATION FOUND for caltype %s-->\n" % caltype)
                         except:
                             req.write("<!-- PROBLEM WHILE SEARCHING FOR caltype %s-->\n" % caltype)
+                            string = traceback.format_tb(sys.exc_info()[2])
+                            string = "".join(string)
+                            req.log_error("Exception in cal association: %s: %s %s" % (sys.exc_info()[0], sys.exc_info()[1], string)
 
                     req.write("</dataset>\n")
             else:
