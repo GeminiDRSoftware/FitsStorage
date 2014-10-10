@@ -35,26 +35,26 @@ class CalibrationNIFS(Calibration):
             self.descriptors['focal_plane_mask'] = self.nifs.focal_plane_mask
             self.descriptors['filter_name'] = self.nifs.filter_name
 
-        # Set the list of required calibrations
-        self.set_required()
+        # Set the list of applicable calibrations
+        self.set_applicable()
 
-    def set_required(self):
-        # Return a list of the calibrations required for this NIFS dataset
-        self.required = []
+    def set_applicable(self):
+        # Return a list of the calibrations applicable to this NIFS dataset
+        self.applicable = []
 
         # Science Imaging OBJECTs require a DARK
         if (self.descriptors['observation_type'] == 'OBJECT' and
                 self.descriptors['spectroscopy'] == False and
                 self.descriptors['observation_class'] == 'science'):
-            self.required.append('dark')
+            self.applicable.append('dark')
 
         # Science spectroscopy that is not a progcal or partnercal requires a flat, arc and ronchi_mask
         if (self.descriptors['observation_type'] == 'OBJECT' and
                 self.descriptors['observation_class'] not in ['partnerCal', 'progCal'] and
                 self.descriptors['spectroscopy'] == True):
-            self.required.append('flat')
-            self.required.append('arc')
-            self.required.append('ronchi_mask')
+            self.applicable.append('flat')
+            self.applicable.append('arc')
+            self.applicable.append('ronchi_mask')
 
 
     def dark(self, processed=False, many=None):

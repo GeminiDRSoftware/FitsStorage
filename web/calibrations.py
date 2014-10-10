@@ -91,7 +91,7 @@ def calibrations(req, selection):
                         object.diskfile.file.name, object.diskfile.file.name, object.data_label, object.data_label)
 
             c = get_cal_object(session, None, header=object)
-            if 'arc' in c.required and (caltype == 'all' or caltype == 'arc'):
+            if 'arc' in c.applicable and (caltype == 'all' or caltype == 'arc'):
                 requires = True
 
                 # Look for an arc in the same program
@@ -169,7 +169,7 @@ def calibrations(req, selection):
                     if smallestinterval > nowhours:
                         takenow = True
 
-            if 'dark' in c.required and (caltype == 'all' or caltype == 'dark'):
+            if 'dark' in c.applicable and (caltype == 'all' or caltype == 'dark'):
                 requires = True
                 dark = c.dark()
                 if dark:
@@ -189,7 +189,7 @@ def calibrations(req, selection):
                     warning = True
                     missing = True
 
-            if 'bias' in c.required and (caltype == 'all' or caltype == 'bias'):
+            if 'bias' in c.applicable and (caltype == 'all' or caltype == 'bias'):
                 requires = True
                 bias = c.bias()
                 if bias:
@@ -200,7 +200,7 @@ def calibrations(req, selection):
                     warning = True
                     missing = True
 
-            if 'flat' in c.required and (caltype == 'all' or caltype == 'flat'):
+            if 'flat' in c.applicable and (caltype == 'all' or caltype == 'flat'):
                 requires = True
                 flat = c.flat()
                 if flat:
@@ -212,7 +212,7 @@ def calibrations(req, selection):
                     missing = True
 
             # For now (March 2013) we don't want the SOS calibrations page to whine about processed cals at all.
-            #if('processed_bias' in c.required and (caltype=='all' or caltype=='processed_bias')):
+            #if('processed_bias' in c.applicable and (caltype=='all' or caltype=='processed_bias')):
                 #requires=True
                 #processed_bias = c.bias(processed=True)
                 #if(processed_bias):
@@ -222,7 +222,7 @@ def calibrations(req, selection):
                     #warning = True
                     #missing = True
 
-            #if('processed_flat' in c.required and (caltype=='all' or caltype=='processed_flat')):
+            #if('processed_flat' in c.applicable and (caltype=='all' or caltype=='processed_flat')):
                 #requires=True
                 #processed_flat = c.flat(processed=True)
                 #if(processed_flat):
@@ -232,7 +232,7 @@ def calibrations(req, selection):
                     #warning = True
                     #missing = True
 
-            #if('processed_fringe' in c.required and (caltype=='all' or caltype=='processed_fringe')):
+            #if('processed_fringe' in c.applicable and (caltype=='all' or caltype=='processed_fringe')):
                 #requires=True
                 #processed_fringe = c.processed_fringe()
                 #if(processed_fringe):
@@ -243,7 +243,7 @@ def calibrations(req, selection):
                     #warning = True
                     #missing = True
 
-            if 'pinhole_mask' in c.required and (caltype == 'all' or caltype == 'pinhole_mask'):
+            if 'pinhole_mask' in c.applicable and (caltype == 'all' or caltype == 'pinhole_mask'):
                 requires = True
                 pinhole_mask = c.pinhole_mask()
                 if pinhole_mask:
@@ -255,7 +255,7 @@ def calibrations(req, selection):
                     warning = True
                     missing = True
 
-            if 'ronchi_mask' in c.required and (caltype == 'all' or caltype == 'ronchi_mask'):
+            if 'ronchi_mask' in c.applicable and (caltype == 'all' or caltype == 'ronchi_mask'):
                 requires = True
                 ronchi_mask = c.ronchi_mask()
                 if ronchi_mask:

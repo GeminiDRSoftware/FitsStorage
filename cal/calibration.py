@@ -12,7 +12,7 @@ class Calibration(object):
     header = None
     descriptors = None
     types = None
-    required = []
+    applicable = []
 
     def __init__(self, session, header, descriptors, types):
         """

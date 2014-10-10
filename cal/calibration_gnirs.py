@@ -40,29 +40,29 @@ class CalibrationGNIRS(Calibration):
             self.descriptors['camera'] = self.gnirs.camera
             self.descriptors['filter_name'] = self.gnirs.filter_name
 
-        # Set the list of required calibrations
-        self.set_required()
+        # Set the list of applicable calibrations
+        self.set_applicable()
 
-    def set_required(self):
+    def set_applicable(self):
         """
-        This method determines the list of required calibration types
+        This method determines the list of applicable calibration types
         for this GNIRS frame and writes the list into the class
-        required variable.
+        applicable variable.
         It is called from the subclass init method.
         """
-        self.required = []
+        self.applicable = []
 
         # Science Imaging OBJECTs that are not acq or acqCal require a DARK
         if ((self.descriptors['observation_type'] == 'OBJECT') and
                 (self.descriptors['observation_class'] not in ['acq', 'acqCal']) and
                 (self.descriptors['spectroscopy'] == False)):
-            self.required.append('dark')
+            self.applicable.append('dark')
 
         # Spectroscopy OBJECT frames require a flat and arc
         if (self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == True):
-            self.required.append('flat')
-            self.required.append('arc')
-            #self.required.append('pinhole_mask')
+            self.applicable.append('flat')
+            self.applicable.append('arc')
+            self.applicable.append('pinhole_mask')
 
 
     def dark(self, processed=False, many=None):

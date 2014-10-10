@@ -49,16 +49,16 @@ class CalibrationGMOS(Calibration):
             self.descriptors['overscan_trimmed'] = self.gmos.overscan_trimmed
             self.descriptors['overscan_subtracted'] = self.gmos.overscan_subtracted
 
-        # Set the list of required calibrations
-        self.set_required()
+        # Set the list of applicable calibrations
+        self.set_applicable()
 
-    def set_required(self):
+    def set_applicable(self):
         """
-        This method determines which calibration types are required
-        by the target data set, and records the list of required
-        calibration types in the class required variable.
+        This method determines which calibration types are applicable
+        to the target data set, and records the list of applicable
+        calibration types in the class applicable variable.
         """
-        self.required = []
+        self.applicable = []
 
         if self.descriptors:
 
@@ -66,29 +66,23 @@ class CalibrationGMOS(Calibration):
             if self.descriptors['observation_type'] == 'MASK':
                 return
 
-            # For now, only RAW files get calibrations
-            if self.descriptors['reduction'] != 'RAW':
-                return
-
-            # Do BIAS
+            # Do BIAS. Most things require Biases.
             require_bias = True
-            # BIASes do not require a bias.
             if self.descriptors['observation_type'] == 'BIAS':
+                # BIASes do not require a bias.
                 require_bias = False
 
-            # Custom ROI acq images (efficient MOS acquisitions) don't require a BIAS.
-            # As of Nov-2012, QAP doesn't send this descriptor (QAP Trac # 408), so ignore if not present
-            if 'detector_roi_setting' in self.descriptors.keys():
-                if self.descriptors['detector_roi_setting'] == 'Custom' and self.descriptors['observation_class'] == 'acq':
-                    require_bias = False
+            elif self.descriptors['detector_roi_setting'] == 'Custom' and self.descriptors['observation_class'] == 'acq':
+                # Custom ROI acq images (efficient MOS acquisitions) don't require a BIAS.
+                require_bias = False
 
+            elif self.descriptors['detector_roi_setting'] == 'Central Stamp':
                 # Anything that's ROI = Central Stamp does not require a bias
-                if self.descriptors['detector_roi_setting'] == 'Central Stamp':
-                    require_bias = False
+                require_bias = False
 
             if require_bias:
-                self.required.append('bias')
-                self.required.append('processed_bias')
+                self.applicable.append('bias')
+                self.applicable.append('processed_bias')
 
             # If it (is spectroscopy) and
             # (is an OBJECT) and
@@ -97,29 +91,31 @@ class CalibrationGMOS(Calibration):
             if ((self.descriptors['spectroscopy'] == True) and
                     (self.descriptors['observation_type'] == 'OBJECT') and
                     (self.descriptors['object'] != 'Twilight')):
-                self.required.append('arc')
+                self.applicable.append('arc')
+                self.applicable.append('processed_arc')
 
             # If it (is spectroscopy) and
             # (is an OBJECT) and
             # (is not a Twilight)
-            # then it needs a flat and a processed_flat
+            # then it needs a flat or a processed_flat
             if ((self.descriptors['spectroscopy'] == True) and
                      (self.descriptors['observation_type'] == 'OBJECT') and
                      (self.descriptors['object'] != 'Twilight')):
-                self.required.append('flat')
-                self.required.append('processed_flat')
+                self.applicable.append('flat')
+                self.applicable.append('processed_flat')
 
 
             # If it (is imaging) and
             # (is Imaging focal plane mask) and
             # (is an OBJECT) and (is not a Twilight)
-            # then it needs a processed_flat
+            # then it needs flats or a processed_flat
             if ((self.descriptors['spectroscopy'] == False) and
                      (self.descriptors['focal_plane_mask'] == 'Imaging') and
                      (self.descriptors['observation_type'] == 'OBJECT') and
                      (self.descriptors['object'] != 'Twilight')):
 
-                self.required.append('processed_flat')
+                self.applicable.append('flat')
+                self.applicable.append('processed_flat')
 
             # If it (is imaging) and
             # (is an OBJECT) and
@@ -128,17 +124,14 @@ class CalibrationGMOS(Calibration):
             if ((self.descriptors['spectroscopy'] == False) and
                     (self.descriptors['observation_type'] == 'OBJECT') and
                     (self.descriptors['object'] != 'Twilight')):
-                self.required.append('processed_fringe')
+                self.applicable.append('processed_fringe')
 
             # If it (is nod and shuffle) and
             # (is an OBJECT), then it needs a dark
             if ((self.descriptors['nodandshuffle'] == True) and
                     (self.descriptors['observation_type'] == 'OBJECT')):
-                self.required.append('dark')
-
-            #self.required.append('flat')
-            #self.required.append('processed_flat')
-            #self.required.append('processed_fringe')
+                self.applicable.append('dark')
+                self.applicable.append('processed_dark')
 
 
     def arc(self, processed=False, sameprog=False, many=None):
@@ -346,7 +339,8 @@ class CalibrationGMOS(Calibration):
             query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
         else:
             # Postgres at least seems to need this, as sqlalchemy func.abs(interval) is not defined
-            query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+            #query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+            pass
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
         if many:
@@ -363,7 +357,16 @@ class CalibrationGMOS(Calibration):
         if processed:
             query = query.filter(Header.reduction == 'PROCESSED_FLAT')
         else:
-            query = query.filter(Header.reduction == 'RAW').filter(Header.observation_type == 'FLAT')
+            query = query.filter(Header.reduction == 'RAW')
+
+        # Only spectroscopy flats are actually obstype flat for gmos
+        # Imaging flats are twilight flats
+        if self.descriptors['spectroscopy']:
+            query = query.filter(Header.observation_type == 'FLAT')
+        else:
+            # Twilight flats are dayCal OBJECT frames with target Twilight
+            query = query.filter(Header.observation_class == 'dayCal').filter(Header.observation_type == 'OBJECT')
+            query = query.filter(Header.object == 'Twilight')
 
         # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)
@@ -413,7 +416,8 @@ class CalibrationGMOS(Calibration):
             query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
         else:
             # Postgres needs the following:
-            query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+            #query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+            pass
 
         # For now, we only want one result - the closest in time, unless otherwise indicated
         if many:

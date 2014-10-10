@@ -32,18 +32,18 @@ class CalibrationMICHELLE(Calibration):
             self.descriptors['read_mode'] = self.michelle.read_mode
             self.descriptors['coadds'] = self.michelle.coadds
 
-        # Set the list of required calibrations
-        self.set_required()
+        # Set the list of applicable calibrations
+        self.set_applicable()
 
-    def set_required(self):
-        # Return a list of the calibrations required for this MICHELLE dataset
-        self.required = []
+    def set_applicable(self):
+        # Return a list of the calibrations applicable to this MICHELLE dataset
+        self.applicable = []
 
         # Science Imaging OBJECTs require a DARK
         if (self.descriptors['observation_type'] == 'OBJECT' and
                 self.descriptors['spectroscopy'] == False and
                 self.descriptors['observation_class'] == 'science'):
-            self.required.append('dark')
+            self.applicable.append('dark')
 
 
     def dark(self, processed=False, many=None):

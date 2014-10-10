@@ -36,34 +36,34 @@ class CalibrationF2(Calibration):
             self.descriptors['filter_name'] = self.f2.filter_name
             self.descriptors['lyot_stop'] = self.f2.lyot_stop
 
-        # Set the list of required calibrations
-        self.set_required()
+        # Set the list of applicable calibrations
+        self.set_applicable()
 
-    def set_required(self):
-        # Return a list of the calibrations required for this dataset
-        self.required = []
+    def set_applicable(self):
+        # Return a list of the calibrations applicable to this dataset
+        self.applicable = []
 
         # Imaging OBJECTs require a DARK and a flat except acq images
         if (self.descriptors['observation_type'] == 'OBJECT' and
                 self.descriptors['spectroscopy'] == False and
                 self.descriptors['observation_class'] not in ['acq', 'acqCal']):
-            self.required.append('dark')
-            self.required.append('flat')
+            self.applicable.append('dark')
+            self.applicable.append('flat')
 
         # Spectroscopy OBJECTs require a dark, flat and arc
         if (self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == True):
-            self.required.append('dark')
-            self.required.append('flat')
-            self.required.append('arc')
+            self.applicable.append('dark')
+            self.applicable.append('flat')
+            self.applicable.append('arc')
 
         # FLAT frames require DARKs
         if self.descriptors['observation_type'] == 'FLAT':
-            self.required.append('dark')
+            self.applicable.append('dark')
 
         # ARCs require DARKs and FLATs
         if self.descriptors['observation_type'] == 'ARC':
-            self.required.append('dark')
-            self.required.append('flat')
+            self.applicable.append('dark')
+            self.applicable.append('flat')
 
 
     def dark(self, processed=False, many=None):
