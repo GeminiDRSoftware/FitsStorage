@@ -74,8 +74,10 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
                     qametricsb.comment = ", ".join(sb_dict['comment'])
                     qametricsb.mag = sb_dict['mag']
                     qametricsb.mag_std = sb_dict['mag_std']
-                    qametricsb.electrons = sb_dict['electrons']
-                    qametricsb.electrons_std = sb_dict['electrons_std']
+                    # Sometimes the QAP sends an unreasonable electron rate which exceeds the data type limies
+                    if sb_dict['electrons'] < 100000:
+                        qametricsb.electrons = sb_dict['electrons']
+                        qametricsb.electrons_std = sb_dict['electrons_std']
                     qametricsb.nsamples = sb_dict['nsamples']
                     qametricsb.percentile_band = sb_dict['percentile_band']
                     session.add(qametricsb)
