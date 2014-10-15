@@ -1,8 +1,9 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean, Date, Time
+from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean, Date, Time, BigInteger
 from sqlalchemy.orm import relation
 
 import dateutil.parser
+import datetime
 
 from . import Base
 from orm.diskfile import DiskFile
@@ -31,6 +32,7 @@ class Header(Base):
     telescope = Column(Text, index=True)
     instrument = Column(Text, index=True)
     ut_datetime = Column(DateTime(timezone=False), index=True)
+    ut_datetime_secs = Column(BigInteger, index=True)
     local_time = Column(Time(timezone=False))
     observation_type = Column(Text, index=True)
     observation_class = Column(Text, index=True)
@@ -77,6 +79,7 @@ class Header(Base):
     def __repr__(self):
         return "<Header('%s', '%s')>" % (self.id, self.diskfile_id)
 
+    UT_DATETIME_SECS_EPOCH = datetime.datetime(2000, 1, 1, 0, 0, 0)
     def populate_fits(self, diskfile):
         """
         Populates header table values from the FITS headers of the file.
@@ -126,6 +129,9 @@ class Header(Base):
 
             # Date and times part
             self.ut_datetime = ad.ut_datetime().for_db()
+            if self.ut_datetime:
+                delta = self.ut_datetime - self.UT_DATETIME_SECS_EPOCH
+                self.ut_datetime_secs = int(delta.total_seconds())
             self.local_time = ad.local_time().for_db()
 
             # Data Types
