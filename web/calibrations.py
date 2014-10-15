@@ -17,7 +17,9 @@ from sqlalchemy import join, desc
 
 def calibrations(req, selection):
     """
-    This is the calibrations generator. It implements a human readable calibration association server
+    This is the calibrations generator. It implements a human readable calibration association server.
+    This is mostly used by the Gemini SOSs to detect missing calibrations, and it defaults to the 
+    SOS required calibrations policy.
 
     req is an apache request handler request object
     selection is an array of items to select on, simply passed
