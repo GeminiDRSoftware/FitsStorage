@@ -34,6 +34,10 @@ def calmgr(req, selection):
     and it will use this data as the science target details with which to associate
     the calibration.
 
+    This uses the calibration classes to do the association. It doesn't reference the 
+    "applicable" feature of the calibration classes though, it attempts to find a calibration
+    of the type requested regardless of its applicability.
+
     returns an apache request status code
     """
 
