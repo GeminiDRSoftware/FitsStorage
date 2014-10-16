@@ -204,9 +204,12 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
-        query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # For now, we only want one result - the closest in time, unless otherwise indicated
+        # We only want one result - the closest in time, unless otherwise indicated
         if many:
             query = query.limit(many)
             return query.all()
@@ -271,9 +274,12 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
-        query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # For now, we only want one result - the closest in time, unless otherwise indicated
+        # We only want one result - the closest in time, unless otherwise indicated
         if many:
             query = query.limit(many)
             return query.all()
@@ -334,15 +340,12 @@ class CalibrationGMOS(Calibration):
 
 
         # Order by absolute time separation.
-        if using_sqlite:
-            # Need to check that this simplistic approach actually works
-            query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
-        else:
-            # Postgres at least seems to need this, as sqlalchemy func.abs(interval) is not defined
-            #query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-            pass
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # For now, we only want one result - the closest in time, unless otherwise indicated
+        # We only want one result - the closest in time, unless otherwise indicated
         if many:
             query = query.limit(many)
             return query.all()
@@ -411,15 +414,12 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
-        if using_sqlite:
-            # This doesn't actually work. The difference always comes out as zero
-            query = query.order_by(func.abs(Header.ut_datetime - self.descriptors['ut_datetime']))
-        else:
-            # Postgres needs the following:
-            #query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-            pass
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # For now, we only want one result - the closest in time, unless otherwise indicated
+        # We only want one result - the closest in time, unless otherwise indicated
         if many:
             query = query.limit(many)
             return query.all()
@@ -461,10 +461,13 @@ class CalibrationGMOS(Calibration):
         datetime_hi = self.descriptors['ut_datetime'] + max_interval
         query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
-        # Order by absolute time separation
-        query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Order by absolute time separation.
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # For now, we only want one result - the closest in time, unless otherwise indicated
+        # We only want one result - the closest in time, unless otherwise indicated
         if many:
             query = query.limit(many)
             return query.all()

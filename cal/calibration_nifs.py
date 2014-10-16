@@ -80,9 +80,12 @@ class CalibrationNIFS(Calibration):
         query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
-        query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # For now, we only want one result - the closest in time, unless otherwise indicated
+        # We only want one result - the closest in time, unless otherwise indicated
         if many:
             query = query.limit(many)
             return query.all()
@@ -112,10 +115,13 @@ class CalibrationNIFS(Calibration):
         datetime_hi = self.descriptors['ut_datetime'] + max_interval
         query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
-        # Order by absolute time separation
-        query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Order by absolute time separation.
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # For now, we only want one result - the closest in time, unless otherwise indicated
+        # We only want one result - the closest in time, unless otherwise indicated
         if many:
             query = query.limit(many)
             return query.all()
@@ -144,10 +150,13 @@ class CalibrationNIFS(Calibration):
         datetime_hi = self.descriptors['ut_datetime'] + max_interval
         query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
-        # Order by absolute time separation
-        query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Order by absolute time separation.
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # For now, we only want one result - the closest in time, unless otherwise indicated
+        # We only want one result - the closest in time, unless otherwise indicated
         if many:
             query = query.limit(many)
             return query.all()
@@ -174,10 +183,13 @@ class CalibrationNIFS(Calibration):
         datetime_hi = self.descriptors['ut_datetime'] + max_interval
         query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
-        # Order by absolute time separation
-        query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Order by absolute time separation.
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # For now, we only want one result - the closest in time, unless otherwise indicated
+        # We only want one result - the closest in time, unless otherwise indicated
         if many:
             query = query.limit(many)
             return query.all()
