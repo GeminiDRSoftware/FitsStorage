@@ -439,8 +439,8 @@
             <option class="NIRIfilter" value="Kcon(209)">K con (209)</option>
             <option class="NIRIfilter" value="hydrocarb">Hydrocarbon</option>
         </select>
-        <span class="help">(help)
-            <span class="helpleft">Help Text</span>
+        <span class="help">(NIRI Filters)
+            <span class="helpleft">Select a NIRI filter from the list</span>
         </span><br />
         
         <label>Disperser:</label><select id="niri_disperser" class="ddw" name="disperser">
@@ -451,8 +451,8 @@
             <option class="disperser" value="Lgrism">L-grism</option>
             <option class="disperser" value="Mgrism">M-grism</option>
         </select>
-        <span class="help">(help)
-            <span class="helpleft">Help Text</span>
+        <span class="help">(NIRI grisms)
+            <span class="helpleft">Select a NIRI grism from the list</span>
         </span><br />
 
         <label>Mask:</label><select id="niri_mask" class="ddw" name="focal_plane_mask">
@@ -470,8 +470,8 @@
             <option class="mask" value="f32-cam">f32-cam</option>
             <option class="mask" value="pinhole">pinhole</option>
         </select>
-        <span class="help">(help)
-            <span class="helpleft">Help Text</span>
+        <span class="help">(Focal Plane Mask)
+            <span class="helpleft">Select a NIRI focal plane mask from the list</span>
         </span><br />
 
         <label>Camera:</label><select id="niri_cam" class="ddw" name="camera">
@@ -480,15 +480,15 @@
             <option value="f13.9">f/14 (0.05 "/pix)</option>
             <option value="f32">f/32 (0.02 "/pix)</option>
         </select>
-        <span class="help">(help)
-            <span class="helpleft">Help Text</span>
+        <span class="help">(NIRI Camera / pixel scale)
+            <span class="helpleft">Select a NIRI camera from the list. This is what determines pixel scale.</span>
         </span><br />
     </div>
     
     <div class="right">
         <label>Exposure Time:</label><input id="NIRIexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)" />
         <span class="help">(Exposure Time)
-            <span class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 50 - 80.</span>
+            <span class="helpright">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 50 - 80.</span>
         </span><br />
 
         <label>Read Mode:</label><select id="niri_readmode" class="ddw" name="niri_readmode">
@@ -497,8 +497,8 @@
             <option value="Medium_Background">Medium Background</option>
             <option value="Low_Background">Low Background</option>
         </select>
-        <span class="help">(help)
-            <span class="helpright">Help Text</span>
+        <span class="help">(NIRI Read Mode)
+            <span class="Select a NIRI Read Mode.">Help Text</span>
         </span><br />
 
         <label>Subarray:</label><select id="niri_roi" class="ddw" name="detector_roi">
@@ -509,8 +509,8 @@
             <option value="Central256">Central 256</option>
             <option value="Custom">Custom</option>
         </select>
-        <span class="help">(help)
-            <span class="helpright">Help Text</span>
+        <span class="help">(Subarray)
+            <span class="helpright">Select a NIRI subarray, also known as Region of Interest (ROI)</span>
         </span><br />
     </div>      
 </div>
