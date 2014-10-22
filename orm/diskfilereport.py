@@ -50,14 +50,14 @@ class DiskFileReport(Base):
         - Populates the fvreport in self
         """
         filename = None
-        if diskfile.gzipped:
+        if diskfile.compressed:
             if diskfile.uncompressed_cache_file and os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK):
                 filename = diskfile.uncompressed_cache_file
             else:
                 # For now, we do not support fitsverify of compressed files if we are not using the diskfile.uncompressed_cache_file
                 filename = None
         else:
-            # not gzipped - just use the diskfile filename
+            # not compressed - just use the diskfile filename
             filename = diskfile.fullpath()
 
         if filename:
@@ -77,14 +77,14 @@ class DiskFileReport(Base):
         - Populates the wmdreport text in self
         """
         filename = None
-        if diskfile.gzipped:
+        if diskfile.compressed:
             if diskfile.uncompressed_cache_file and os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK):
                 filename = diskfile.uncompressed_cache_file
             else:
                 # For now, we do not support fitsverify of compressed files if we are not using the diskfile.uncompressed_cache_file
                 filename = None
         else:
-            # not gzipped - just use the diskfile filename
+            # not compressed - just use the diskfile filename
             filename = diskfile.fullpath()
 
         if filename:

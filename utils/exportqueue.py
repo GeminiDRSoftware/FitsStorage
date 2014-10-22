@@ -6,8 +6,7 @@ import urllib2
 import json
 import datetime
 import hashlib
-import gzip
-from io import BytesIO
+import bz2
 
 from logger import logger
 from sqlalchemy import desc, join
@@ -15,7 +14,7 @@ from sqlalchemy.orm import make_transient
 from sqlalchemy.orm.exc import ObjectDeletedError
 
 
-from fits_storage_config import storage_root, using_s3, export_gzip
+from fits_storage_config import storage_root, using_s3, export_bzip
 
 from orm.file import File
 from orm.diskfile import DiskFile
@@ -57,19 +56,19 @@ def export_file(session, filename, path, destination):
     # First, lookup the md5 of the file we have, and see if the
     # destination server already has it with that md5
     # This is all done with the data md5 not the file, if the correct data
-    # is there at the other end but the gzip state is wrong, we're not going
+    # is there at the other end but the compression state is wrong, we're not going
     # to re-export it here.
-    # To ignore the gzip factor, we match against File.name rather than DiskFile.filename
-    # and we strip any .gz from the local filename
+    # To ignore the compression factor, we match against File.name rather than DiskFile.filename
+    # and we strip any .bz2 from the local filename
 
-    # Strip any .gz from local filename
-    filename_nogz = filename
-    if filename_nogz.endswith('.gz'):
-        filename_nogz = filename_nogz[:-3]
+    # Strip any .bz2 from local filename
+    filename_nobz2 = filename
+    if filename_nobz2.endswith('.bz2'):
+        filename_nobz2 = filename_nobz2[:-4]
 
     # Search Database
     query = session.query(DiskFile).select_from(join(File, DiskFile))
-    query = query.filter(DiskFile.present == True).filter(File.name == filename_nogz)
+    query = query.filter(DiskFile.present == True).filter(File.name == filename_nobz2)
     diskfile = query.one()
     our_md5 = diskfile.data_md5
 
@@ -104,42 +103,26 @@ def export_file(session, filename, path, destination):
             data = f.read()
             f.close()
 
-    # Do we need to gzip or ungzip the data?
-    # If the data are already gzipped, we're not going to re-compress it
-    # even if the new gzip level is higher.
-    # Note, gzip contains some header data in addition to the compressed bytes
-    # Use the gzip module rather than zlib directly to do this
-    # Otherwise we would have to handle all the headers ourselves or md5s will differ
-    # So use a BytesIO instance to do that. Don't use StringIO with binary data.
+    # Do we need to compress or uncompress the data?
+    # If the data are already compressed, we're not going to re-compress it
     # And don't try to pass a unicode filename.
     filename = filename.encode('ascii', 'ignore')
-    if (export_gzip is not None) and (diskfile.gzipped == False):
+    if export_bzip and diskfile.compressed == False:
         # Need to compress it
-        logger.debug("gzipping file on the fly")
-        # Create an empty bytesIO object, have gzip write data into it
-        bio = BytesIO()
-        gzip_file = gzip.GzipFile(filename, mode='wb', compresslevel=export_gzip, fileobj=bio)
-        gzip_file.write(data)
-        gzip_file.close()
-        data = bio.getvalue()
-        bio.close()
-        # Add .gz to the filename from here on, update our_md5
-        filename += '.gz'
+        logger.debug("bzip2ing file on the fly")
+        data = bz2.compress(data)
+        # Add .bz2 to the filename from here on, update our_md5
+        filename += '.bz2'
         m = hashlib.md5()
         m.update(data)
         our_md5 = m.hexdigest()
 
-    if (export_gzip is None) and (diskfile.gzipped == True):
+    if (export_bzip is None) and (diskfile.compressed == True):
         # Need to uncompress it
         logger.debug("gunzipping on the fly")
-        # Put the compressed data in the BytesIO object, have gzip read it
-        bio = BytesIO(data)
-        gzip_file = gzip.GzipFile(filename, mode='rb', fileobg=bio)
-        data = gzip_file.read()
-        gzip_file.close()
-        bio.close()
-        # Trim .gz from the filename from here on, update our_md5
-        filename = filename[:-3]
+        data = bz2.decompress(data)
+        # Trim .bz2 from the filename from here on, update our_md5
+        filename = filename[:-4]
         our_md5 = diskfile.data_md5
 
     # Construct upload URL
@@ -291,7 +274,7 @@ def get_destination_data_md5(filename, destination):
         thedict = thelist[0]
         if 'filename' not in thedict.keys():
             logger.error("No filename in json data")
-        elif thedict['filename'] not in [filename, filename+'.gz']:
+        elif thedict['filename'] not in [filename, filename+'.bz2']:
             logger.error("Wrong filename in json data")
         elif 'data_md5' not in thedict.keys():
             logger.error("No data_md5 in json data")

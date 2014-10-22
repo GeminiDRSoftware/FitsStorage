@@ -14,12 +14,12 @@ s3_staging_area = '/data/s3_staging'
 aws_access_key = 'AKIAJ554XPYMJZBPGQAA'
 aws_secret_key = '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'
 
-# Staging area for uncompressed cache of gzipped file being processed
-gz_staging_area = '/data/gz_staging'
+# Staging area for uncompressed cache of compressed file being processed
+z_staging_area = '/data/gz_staging'
 
 # Configure the path to the storage root here 
-#storage_root = '/data/dataflow'
-storage_root = '/net/wikiwiki/dataflow'
+storage_root = '/dataflow'
+#storage_root = '/net/wikiwiki/dataflow'
 #storage_root = '/net/hahalua/data/export'
 
 if(using_s3):
@@ -54,8 +54,8 @@ magic_download_cookie = None
 export_destinations = []
 #export_destinations = ['hbffits2']
 
-# Do we want to gzip files we export on the fly? Set to None or the gzip level
-export_gzip = 6
+# Do we want to bzip2 files we export on the fly?
+export_bzip = True
 
 # This is the subdirectory in dataroot where processed_cals live
 processed_cals_path = "reduced_cals"

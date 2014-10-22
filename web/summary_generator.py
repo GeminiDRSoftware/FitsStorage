@@ -75,7 +75,7 @@ class SummaryGenerator(object):
             'ssummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
                             'object', 'waveband', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
             'diskfiles' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'present', 'entrytime', 'lastmod',
-                            'file_size', 'file_md5', 'gzipped', 'data_size', 'data_md5'],
+                            'file_size', 'file_md5', 'compressed', 'data_size', 'data_md5'],
             'searchresults' : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
                             'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state'],
             'associated_cals': ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
@@ -322,13 +322,13 @@ class SummaryGenerator(object):
             'diskfile_attr' : 'file_md5',
             'summary_func' : None
             }
-        self.columns['gzipped'] = {
-            'heading' : 'Gzipped',
+        self.columns['compressed'] = {
+            'heading' : 'Compressed',
             'longheading' : '',
             'sortarrows' : False,
             'want' : True,
             'header_attr' : None,
-            'diskfile_attr' : 'gzipped',
+            'diskfile_attr' : 'compressed',
             'summary_func' : None
             }
         self.columns['data_size'] = {

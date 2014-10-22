@@ -190,7 +190,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
                 # Failed to fetch the file from S3. Can't do this
                 return
 
-        # Instantiating the DiskFile object with a gzipped filename will trigger creation of the unzipped cache file too.
+        # Instantiating the DiskFile object with a bzip2 filename will trigger creation of the unzipped cache file too.
         diskfile = DiskFile(fileobj, filename, path)
         session.add(diskfile)
         session.commit()

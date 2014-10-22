@@ -4,7 +4,7 @@ Currently, the only hash function we use is md5sum
 
 """
 import hashlib
-import gzip
+import bz2
 
 def md5sum_size_fp(fobj):
     """
@@ -40,12 +40,12 @@ def md5sum(filename):
     filep.close()
     return md5
 
-def md5sum_size_gz(filename):
+def md5sum_size_bz2(filename):
     """
-    Generates the md5sum and size of the uncompressed data in a gzip file
+    Generates the md5sum and size of the uncompressed data in a bzip2 file
     """
 
-    filep = gzip.open(filename, 'rb')
+    filep = bz2.BZ2File(filename, 'r')
     (md5, size) = md5sum_size_fp(filep)
     filep.close()
     return (md5, size)

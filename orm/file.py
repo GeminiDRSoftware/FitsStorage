@@ -9,7 +9,7 @@ class File(Base):
     This is the ORM class for the file table. This is highest level most abstract concept of a 'File'
     It's essentially just a unique label that other things - actual DiskFiles for example can reference.
     The 'name' column here may not be the actual filename - the definitive filename is in the diskfile table,
-    when we have a compressed (gzipped) file, we trim off the .gz here.
+    when we have a compressed (bzip2) file, we trim off the .bz2 here.
     """
     __tablename__ = 'file'
 
@@ -24,10 +24,10 @@ class File(Base):
 
     def trim_name(self, filename):
         """
-        Trim any trailing .gz off the filename
+        Trim any trailing .bz2 off the filename
         """
         name = filename
-        if filename.endswith(".gz"):
-            name = filename[:-3]
+        if filename.endswith(".bz2"):
+            name = filename[:-4]
         return name
 

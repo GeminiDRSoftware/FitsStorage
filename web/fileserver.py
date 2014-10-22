@@ -20,7 +20,7 @@ from mod_python import util
 
 import time
 import datetime
-import gzip
+import bz2
 import cStringIO
 import tarfile
 
@@ -271,27 +271,27 @@ def sendonefile(req, header):
         bucket = s3conn.get_bucket(s3_bucket_name)
         key = bucket.get_key(header.diskfile.filename)
         req.set_content_length(header.diskfile.data_size)
-        if header.diskfile.gzipped:
+        if header.diskfile.compressed:
             buffer = cStringIO.StringIO()
             key.get_contents_to_file(buffer)
             buffer.seek(0)
-            gzfp = gzip.GzipFile(mode='rb', fileobj=buffer)
+            zfp = bz2.BZ2File(mode='r', fileobj=buffer)
             try:
-                req.write(gzfp.read())
+                req.write(zfp.read())
             finally:
-                gzfp.close()
+                zfp.close()
                 buffer.close()
         else:
             key.get_contents_to_file(req)
     else:
         # Serve from regular file
-        if header.diskfile.gzipped == True:
+        if header.diskfile.compressed == True:
             # Unzip it on the fly
             req.set_content_length(header.diskfile.data_size)
-            gzfp = gzip.open(header.diskfile.fullpath(), 'rb')
+            zfp = bz2.BZ2File(header.diskfile.fullpath(), 'r')
             try:
-                req.write(gzfp.read())
+                req.write(zfp.read())
             finally:
-                gzfp.close()
+                zfp.close()
         else:
             req.sendfile(header.diskfile.fullpath())
