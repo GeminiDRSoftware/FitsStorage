@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean, Date, Time, BigInteger
+from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean, Date, Time, BigInteger, Enum
 from sqlalchemy.orm import relation
 
 import dateutil.parser
@@ -15,12 +15,18 @@ import pywcs
 
 from gemini_metadata_utils import GeminiProgram
 
+# Enumerated Column types
+obstype_Enum = Enum('OBJECT', 'BIAS', 'FLAT', 'ARC', 'DARK', 'PINHOLE', 'FRINGE', 'RONCHI', 'CAL', 'MASK', name='obstype')
+obsclass_Enum = Enum('science', 'acq', 'progCal', 'partnerCal', 'dayCal', 'acqCal', name='obsclass')
+telescope_Enum = Enum('Gemini-North', 'Gemini-South', name='telescope')
+
 class Header(Base):
     """
     This is the ORM class for the Header table
     """
     __tablename__ = 'header'
 
+    
     id = Column(Integer, primary_key=True)
     diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
     diskfile = relation(DiskFile, order_by=id)
@@ -29,13 +35,13 @@ class Header(Base):
     science_verification = Column(Boolean, index=True)
     observation_id = Column(Text, index=True)
     data_label = Column(Text, index=True)
-    telescope = Column(Text, index=True)
+    telescope = Column(telescope_Enum, index=True)
     instrument = Column(Text, index=True)
     ut_datetime = Column(DateTime(timezone=False), index=True)
     ut_datetime_secs = Column(BigInteger, index=True)
     local_time = Column(Time(timezone=False))
-    observation_type = Column(Text, index=True)
-    observation_class = Column(Text, index=True)
+    observation_type = Column(obstype_Enum, index=True)
+    observation_class = Column(obsclass_Enum, index=True)
     object = Column(Text, index=True)
     ra = Column(Numeric(precision=16, scale=12), index=True)
     dec = Column(Numeric(precision=16, scale=12), index=True)
