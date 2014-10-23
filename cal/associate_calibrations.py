@@ -4,11 +4,14 @@ to generate a summary table of calibration data associated with the
 results of a search
 """
 from cal import get_cal_object
+from orm.header import Header
+from orm.calcache import CalCache
 
 def associate_cals(session, headers, caltype="all"):
     """
     This function takes a list of headers from a search result and
     generates a list of the associated calibration headers
+    We return a priority ordered (best first) list
     """
 
     calheaders = []
@@ -64,13 +67,55 @@ def associate_cals(session, headers, caltype="all"):
             if ronchi_mask:
                 calheaders.append(ronchi_mask)
 
-    # Now loop through the calheaders list and remove duplicates
-    shortlist = []
-    ids = []
-    for calheader in calheaders:
-        if calheader.id not in ids:
-            ids.append(calheader.id)
-            shortlist.append(calheader)
+    # Now loop through the calheaders list and remove duplicates.
+    # Only necessary if we looked at multiple headers
+    if len(headers) > 1:
+        shortlist = []
+        ids = []
+        for calheader in calheaders:
+            if calheader.id not in ids:
+                ids.append(calheader.id)
+                shortlist.append(calheader)
+    else:
+        shortlist = calheaders
 
     # All done, return the shortlist
     return shortlist
+
+def associate_cals_from_cache(session, headers, caltype="all"):
+    """
+    This function takes a list of headers from a search result and
+    generates a list of the associated calibration headers
+    We return a priority ordered (best first) list
+
+    This is the same interface as associate_cals above, but this version
+    queries the CalCache table rather than actually doing the association
+    """
+
+    calheaders = []
+
+    for header in headers:
+        query = session.query(CalCache.cal_hid).filter(CalCache.obs_hid == header.id)
+        if caltype != 'all':
+            query = query.filter(CalCache.caltype == caltype)
+        query = query.order_by(CalCache.rank)
+
+        for result in query.all():
+            calheader = session.query(Header).filter(Header.id == result[0]).one()
+            calheaders.append(calheader)
+
+    # Now loop through the calheaders list and remove duplicates.
+    # Only necessary if we looked at multiple headers
+    if len(headers) > 1:
+        shortlist = []
+        ids = []
+        for calheader in calheaders:
+            if calheader.id not in ids:
+                ids.append(calheader.id)
+                shortlist.append(calheader)
+    else:
+        shortlist = calheaders
+
+    # All done, return the shortlist
+    return shortlist
+
