@@ -46,9 +46,12 @@ class CalibrationMICHELLE(Calibration):
             self.applicable.append('dark')
 
 
-    def dark(self, processed=False, many=None):
+    def dark(self, processed=False, howmany=None):
         query = self.session.query(Header).select_from(join(join(Michelle, Header), DiskFile))
         query = query.filter(Header.observation_type == 'DARK')
+
+        # Default number to associate
+        howmany = howmany if howmany else 10
 
         # Search only canonical entries
         query = query.filter(DiskFile.canonical == True)
@@ -73,9 +76,5 @@ class CalibrationMICHELLE(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # We only want one result - the closest in time, unless otherwise indicated
-        if many:
-            query = query.limit(many)
-            return query.all()
-        else:
-            return query.first()
+        query = query.limit(howmany)
+        return query.all()

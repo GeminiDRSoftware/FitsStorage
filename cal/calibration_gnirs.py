@@ -65,7 +65,7 @@ class CalibrationGNIRS(Calibration):
             self.applicable.append('pinhole_mask')
 
 
-    def dark(self, processed=False, many=None):
+    def dark(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS Dark for this target frame
         """
@@ -73,8 +73,12 @@ class CalibrationGNIRS(Calibration):
 
         if processed:
             query = query.filter(Header.reduction == 'PROCESSED_DARK')
+            # Default number of processed darks to associate
+            howmany = howmany if howmany else 1
         else:
             query = query.filter(Header.observation_type == 'DARK').filter(Header.reduction == 'RAW')
+            # Default number of raw darks to associate
+            howmany = howmany if howmany else 10
 
         # Search only canonical entries
         query = query.filter(DiskFile.canonical == True)
@@ -100,14 +104,10 @@ class CalibrationGNIRS(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # We only want one result - the closest in time, unless otherwise indicated
-        if many:
-            query = query.limit(many)
-            return query.all()
-        else:
-            return query.first()
+        query = query.limit(howmany)
+        return query.all()
 
-    def flat(self, processed=False, many=None):
+    def flat(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS flat field for this target frame
         """
@@ -115,8 +115,12 @@ class CalibrationGNIRS(Calibration):
 
         if processed:
             query = query.filter(Header.reduction == 'PROCESSED_FLAT')
+            # Default number of processed flats to associate
+            howmany = howmany if howmany else 1
         else:
             query = query.filter(Header.observation_type == 'FLAT').filter(Header.reduction == 'RAW')
+            # Default number of raw flats to associate
+            howmany = howmany if howmany else 10
 
         # Search only canonical entries
         query = query.filter(DiskFile.canonical == True)
@@ -145,14 +149,10 @@ class CalibrationGNIRS(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # We only want one result - the closest in time, unless otherwise indicated
-        if many:
-            query = query.limit(many)
-            return query.all()
-        else:
-            return query.first()
+        query = query.limit(howmany)
+        return query.all()
 
-    def arc(self, processed=False, many=None):
+    def arc(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS ARC for this target frame
         """
@@ -162,6 +162,9 @@ class CalibrationGNIRS(Calibration):
             query = query.filter(Header.reduction == 'PROCESSED_ARC')
         else:
             query = query.filter(Header.observation_type == 'ARC').filter(Header.reduction == 'RAW')
+
+        # Always default to 1 arc
+        howmany = howmany if howmany else 1
 
         # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)
@@ -188,12 +191,8 @@ class CalibrationGNIRS(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # We only want one result - the closest in time, unless otherwise indicated
-        if many:
-            query = query.limit(many)
-            return    query.all()
-        else:
-            return query.first()
+        query = query.limit(howmany)
+        return query.all()
 
     def pinhole_mask(self, processed=False, many=None):
         """
@@ -203,8 +202,12 @@ class CalibrationGNIRS(Calibration):
 
         if processed:
             query = query.filter(Header.reduction == 'PROCESSED_PINHOLE')
+            # Default number of processed pinholes
+            howmany = howmany if howmany else 1
         else:
             query = query.filter(Header.observation_type == 'PINHOLE').filter(Header.reduction == 'RAW')
+            # Default number of raw pinholes
+            howmany = howmany if howmany else 2
 
         # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)
@@ -229,9 +232,5 @@ class CalibrationGNIRS(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # We only want one result - the closest in time, unless otherwise indicated
-        if many:
-            query = query.limit(many)
-            return query.all()
-        else:
-            return query.first()
+        query = query.limit(howmany)
+        return query.all()

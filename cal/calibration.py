@@ -48,49 +48,49 @@ class Calibration(object):
             if self.descriptors['data_section']:
                 self.descriptors['data_section'] = str(self.descriptors['data_section'])
 
-    def bias(self, processed=False, many=None):
+    def bias(self, processed=False, howmany=None):
         """
         Null method for instruments that do not provide a method in their subclass
         """
         # Not defined for this instrument
         return None
 
-    def dark(self, processed=False, many=None):
+    def dark(self, processed=False, howmany=None):
         """
         Null method for instruments that do not provide a method in their subclass
         """
         # Not defined for this instrument
         return None
 
-    def flat(self, processed=False, many=None):
+    def flat(self, processed=False, howmany=None):
         """
         Null method for instruments that do not provide a method in their subclass
         """
         # Not defined for this instrument
         return None
 
-    def arc(self, processed=False, many=None):
+    def arc(self, processed=False, howmany=None):
         """
         Null method for instruments that do not provide a method in their subclass
         """
         # Not defined for this instrument
         return None
 
-    def fringe(self, processed=False, many=None):
+    def fringe(self, processed=False, howmany=None):
         """
         Null method for instruments that do not provide a method in their subclass
         """
         # Not defined for this instrument
         return None
 
-    def ronchi_mask(self, processed=False, many=None):
+    def ronchi_mask(self, processed=False, howmany=None):
         """
         Null method for instruments that do not provide a method in their subclass
         """
         # Not defined for this instrument
         return None
 
-    def pinhole_mask(self, processed=False, many=None):
+    def pinhole_mask(self, processed=False, howmany=None):
         """
         Null method for instruments that do not provide a method in their subclass
         """

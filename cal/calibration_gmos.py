@@ -12,7 +12,6 @@ from cal.calibration import Calibration
 from sqlalchemy.orm import join
 from sqlalchemy import func, extract
 
-
 class CalibrationGMOS(Calibration):
     """
     This class implements a calibration manager for GMOS.
@@ -134,7 +133,7 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('processed_dark')
 
 
-    def arc(self, processed=False, sameprog=False, many=None):
+    def arc(self, processed=False, sameprog=False, howmany=None):
         """
         This method identifies the best GMOS ARC to use for the target
         dataset. The optional sameprog parameter is a boolean that says
@@ -145,6 +144,9 @@ class CalibrationGMOS(Calibration):
             return None
 
         query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
+
+        # Default 1 arc
+        howmany = howmany if howmany else 1
 
         if processed:
             query = query.filter(Header.reduction == 'PROCESSED_ARC')
@@ -165,8 +167,7 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
 
         # Must Match central_wavelength
-        #query = query.filter(func.abs(Header.central_wavelength-self.descriptors['central_wavelength']) < 0.001)
-        # This might give better performance
+        # This gives better performance than abs?
         cenwlen_lo = float(self.descriptors['central_wavelength']) - 0.001
         cenwlen_hi = float(self.descriptors['central_wavelength']) + 0.001
         query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
@@ -195,7 +196,7 @@ class CalibrationGMOS(Calibration):
         if sameprog:
             query = query.filter(Header.program_id == self.descriptors['program_id'])
 
-        # Absolute time separation must be within 1 year (31557600 seconds)
+        # Absolute time separation must be within 1 year
         # query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
         # Try this for performance
         max_interval = datetime.timedelta(days=365)
@@ -209,14 +210,10 @@ class CalibrationGMOS(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # We only want one result - the closest in time, unless otherwise indicated
-        if many:
-            query = query.limit(many)
-            return query.all()
-        else:
-            return query.first()
+        query = query.limit(howmany)
+        return query.all()
 
-    def dark(self, processed=False, many=None):
+    def dark(self, processed=False, howmany=None):
         """
         Method to find best GMOS Dark frame for the target dataset.
         """
@@ -224,8 +221,12 @@ class CalibrationGMOS(Calibration):
 
         if processed:
             query = query.filter(Header.reduction == 'PROCESSED_DARK')
+            # Default number of processed darks
+            if howmany is None: howmany = 1
         else:
             query = query.filter(Header.observation_type == 'DARK').filter(Header.reduction == 'RAW')
+            # Default number of raw darks
+            if howmany is None: howmany = 20
 
         # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)
@@ -279,14 +280,10 @@ class CalibrationGMOS(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # We only want one result - the closest in time, unless otherwise indicated
-        if many:
-            query = query.limit(many)
-            return query.all()
-        else:
-            return query.first()
+        query = query.limit(howmany)
+        return query.all()
 
-    def bias(self, processed=False, many=None):
+    def bias(self, processed=False, howmany=None):
         """
         Method to find the best bias frames for the target dataset
         """
@@ -294,6 +291,12 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Header.observation_type == 'BIAS')
         if processed:
             query = query.filter(Header.reduction == 'PROCESSED_BIAS')
+            # Default number of processed Biases
+            howmany = howmany if howmany else 1
+        else:
+            query = query.filter(Header.reduction == 'RAW')
+            # Default number of raw biases
+            howmany = howmany if howmany else 50
 
          # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)
@@ -345,31 +348,36 @@ class CalibrationGMOS(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # We only want one result - the closest in time, unless otherwise indicated
-        if many:
-            query = query.limit(many)
-            return query.all()
-        else:
-            return query.first()
+        query = query.limit(howmany)
+        return query.all()
 
-    def flat(self, processed=False, many=None):
+    def flat(self, processed=False, howmany=None):
         """
         Method to find the best GMOS FLAT fields for the target dataset
         """
         query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
+
         if processed:
             query = query.filter(Header.reduction == 'PROCESSED_FLAT')
+            # Default number of processed flats
+            howmany = howmany if howmany else 1
         else:
             query = query.filter(Header.reduction == 'RAW')
+            # Set default number of raw flats later depending on if spectroscopy
 
         # Only spectroscopy flats are actually obstype flat for gmos
         # Imaging flats are twilight flats
         if self.descriptors['spectroscopy']:
             query = query.filter(Header.observation_type == 'FLAT')
+            # Default number of spectroscopy flats
+            howmany = howmany if howmany else 2
         else:
             # Twilight flats are dayCal OBJECT frames with target Twilight
             query = query.filter(Header.observation_class == 'dayCal').filter(Header.observation_type == 'OBJECT')
             query = query.filter(Header.object == 'Twilight')
+            # Default number of raw twilight imaging flats
+            howmany = howmany if howmany else 20
+
 
         # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)
@@ -419,20 +427,21 @@ class CalibrationGMOS(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # We only want one result - the closest in time, unless otherwise indicated
-        if many:
-            query = query.limit(many)
-            return query.all()
-        else:
-            return query.first()
+        query = query.limit(howmany)
+        return query.all()
 
-    def processed_fringe(self, many=None):
+    def processed_fringe(self, howmany=None):
         """
         Method to find the best processed_fringe frame for the target dataset.
         Note that the concept of a raw fringe frame is meaningless.
         """
         query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
+
+        # Note that the concept of a raw fringe frame is not valid
         query = query.filter(Header.reduction == 'PROCESSED_FRINGE')
+
+        # Default number to associate
+        howmany = howmany if howmany else 1
 
         # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)
@@ -467,10 +476,5 @@ class CalibrationGMOS(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # We only want one result - the closest in time, unless otherwise indicated
-        if many:
-            query = query.limit(many)
-            return query.all()
-        else:
-            return query.first()
-
+        query = query.limit(howmany)
+        return query.all()

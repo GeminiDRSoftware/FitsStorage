@@ -53,13 +53,18 @@ class CalibrationNIRI(Calibration):
             if self.descriptors['filter_name'] not in ['Lprime_G0207', 'Mprime_G0208', 'Bra_G0238', 'Bracont_G0237']:
                 self.applicable.append('flat')
 
-    def dark(self, processed=False, many=None):
+    def dark(self, processed=False, howmany=None):
         query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
         query = query.filter(Header.observation_type == 'DARK')
+
         if processed:
             query = query.filter(Header.reduction == 'PROCESSED_DARK')
+            # Associate 1 processed dark by default
+            howmany = howmany if howmany else 1
         else:
             query = query.filter(Header.reduction == 'RAW')
+            # Associate 10 raw darks by default
+            howmany = howmany if howmany else 10
 
         # Search only canonical entries
         query = query.filter(DiskFile.canonical == True)
@@ -91,20 +96,21 @@ class CalibrationNIRI(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # We only want one result - the closest in time, unless otherwise indicated
-        if many:
-            query = query.limit(many)
-            return query.all()
-        else:
-            return query.first()
+        query = query.limit(howmany)
+        return query.all()
 
-    def flat(self, processed=False, many=None):
+    def flat(self, processed=False, howmany=None):
         query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
         query = query.filter(Header.observation_type == 'FLAT')
+
         if processed:
             query = query.filter(Header.reduction == 'PROCESSED_FLAT')
+            # Default number to associate
+            howmany = howmany if howmany else 1
         else:
             query = query.filter(Header.reduction == 'RAW')
+            # Default number to associate
+            howmany = howmany if howmany else 10
 
         # Search only canonical entries
         query = query.filter(DiskFile.canonical == True)
@@ -131,9 +137,5 @@ class CalibrationNIRI(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        # We only want one result - the closest in time, unless otherwise indicated
-        if many:
-            query = query.limit(many)
-            return query.all()
-        else:
-            return query.first()
+        query = query.limit(howmany)
+        return query.all()

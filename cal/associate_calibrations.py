@@ -23,49 +23,49 @@ def associate_cals(session, headers, caltype="all"):
         # Go through the calibration types. For now we just look for both
         # raw and processed versions of each.
         if 'arc' in calobj.applicable and (caltype == 'all' or caltype == 'arc'):
-            arc = calobj.arc()
-            if arc:
-                calheaders.append(arc)
+            arcs = calobj.arc()
+            if arcs:
+                calheaders += arcs
 
         if 'dark' in calobj.applicable and (caltype == 'all' or caltype == 'dark'):
-            dark = calobj.dark()
-            if dark:
-                calheaders.append(dark)
+            darks = calobj.dark()
+            if darks:
+                calheaders += darks
 
         if 'bias' in calobj.applicable and (caltype == 'all' or caltype == 'bias'):
-            biases = calobj.bias(many=10)
-            for bias in biases:
-                calheaders.append(bias)
+            biases = calobj.bias()
+            if biases:
+                calheaders += bias
 
         if 'flat' in calobj.applicable and (caltype == 'all' or caltype == 'flat'):
-            flat = calobj.flat()
-            if flat:
-                calheaders.append(flat)
+            flats = calobj.flat()
+            if flats:
+                calheaders += flats
 
         if 'processed_bias' in calobj.applicable and (caltype == 'all' or caltype == 'processed_bias'):
-            processed_bias = calobj.bias(processed=True)
-            if processed_bias:
-                calheaders.append(processed_bias)
+            processed_biases = calobj.bias(processed=True)
+            if processed_biases:
+                calheaders += processed_biases
 
         if 'processed_flat' in calobj.applicable and (caltype == 'all' or caltype == 'processed_flat'):
-            processed_flat = calobj.flat(processed=True)
-            if processed_flat:
-                calheaders.append(processed_flat)
+            processed_flats = calobj.flat(processed=True)
+            if processed_flats:
+                calheaders += processed_flat
 
         if 'processed_fringe' in calobj.applicable and (caltype == 'all' or caltype == 'processed_fringe'):
-            processed_fringe = calobj.processed_fringe()
-            if processed_fringe:
-                calheaders.append(processed_fringe)
+            processed_fringes = calobj.processed_fringe()
+            if processed_fringes:
+                calheaders += processed_fringes
 
         if 'pinhole_mask' in calobj.applicable and (caltype == 'all' or caltype == 'pinhole_mask'):
-            pinhole_mask = calobj.pinhole_mask()
-            if pinhole_mask:
-                calheaders.append(pinhole_mask)
+            pinhole_masks = calobj.pinhole_mask()
+            if pinhole_masks:
+                calheaders += pinhole_masks
 
         if 'ronchi_mask' in calobj.applicable and (caltype == 'all' or caltype == 'ronchi_mask'):
-            ronchi_mask = calobj.ronchi_mask()
-            if ronchi_mask:
-                calheaders.append(ronchi_mask)
+            ronchi_masks = calobj.ronchi_mask()
+            if ronchi_masks:
+                calheaders += ronchi_masks
 
     # Now loop through the calheaders list and remove duplicates.
     # Only necessary if we looked at multiple headers
