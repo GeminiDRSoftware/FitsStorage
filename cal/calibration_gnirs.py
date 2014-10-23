@@ -202,9 +202,9 @@ class CalibrationGNIRS(Calibration):
         query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
 
         if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_PINHOLE_MASK')
+            query = query.filter(Header.reduction == 'PROCESSED_PINHOLE')
         else:
-            query = query.filter(Header.observation_type == 'PINHOLE_MASK').filter(Header.reduction == 'RAW')
+            query = query.filter(Header.observation_type == 'PINHOLE').filter(Header.reduction == 'RAW')
 
         # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)
