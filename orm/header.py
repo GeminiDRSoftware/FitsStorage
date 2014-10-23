@@ -16,9 +16,9 @@ import pywcs
 from gemini_metadata_utils import GeminiProgram
 
 # Enumerated Column types
-obstype_Enum = Enum('OBJECT', 'BIAS', 'FLAT', 'ARC', 'DARK', 'PINHOLE', 'FRINGE', 'RONCHI', 'CAL', 'MASK', name='obstype')
-obsclass_Enum = Enum('science', 'acq', 'progCal', 'partnerCal', 'dayCal', 'acqCal', name='obsclass')
-telescope_Enum = Enum('Gemini-North', 'Gemini-South', name='telescope')
+OBSTYPE_ENUM = Enum('OBJECT', 'BIAS', 'FLAT', 'ARC', 'DARK', 'PINHOLE', 'FRINGE', 'RONCHI', 'CAL', 'MASK', name='obstype')
+OBSCLASS_ENUM = Enum('science', 'acq', 'progCal', 'partnerCal', 'dayCal', 'acqCal', name='obsclass')
+TELESCOPE_ENUM = Enum('Gemini-North', 'Gemini-South', name='telescope')
 
 class Header(Base):
     """
@@ -35,13 +35,13 @@ class Header(Base):
     science_verification = Column(Boolean, index=True)
     observation_id = Column(Text, index=True)
     data_label = Column(Text, index=True)
-    telescope = Column(telescope_Enum, index=True)
+    telescope = Column(TELESCOPE_ENUM, index=True)
     instrument = Column(Text, index=True)
     ut_datetime = Column(DateTime(timezone=False), index=True)
     ut_datetime_secs = Column(BigInteger, index=True)
     local_time = Column(Time(timezone=False))
-    observation_type = Column(obstype_Enum, index=True)
-    observation_class = Column(obsclass_Enum, index=True)
+    observation_type = Column(OBSTYPE_ENUM, index=True)
+    observation_class = Column(OBSCLASS_ENUM, index=True)
     object = Column(Text, index=True)
     ra = Column(Numeric(precision=16, scale=12), index=True)
     dec = Column(Numeric(precision=16, scale=12), index=True)
