@@ -226,7 +226,7 @@ class CalibrationGMOS(Calibration):
         else:
             query = query.filter(Header.observation_type == 'DARK').filter(Header.reduction == 'RAW')
             # Default number of raw darks
-            if howmany is None: howmany = 20
+            if howmany is None: howmany = 15
 
         # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)
