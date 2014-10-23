@@ -53,46 +53,46 @@ class Calibration(object):
         Null method for instruments that do not provide a method in their subclass
         """
         # Not defined for this instrument
-        return None
+        return []
 
     def dark(self, processed=False, howmany=None):
         """
         Null method for instruments that do not provide a method in their subclass
         """
         # Not defined for this instrument
-        return None
+        return []
 
     def flat(self, processed=False, howmany=None):
         """
         Null method for instruments that do not provide a method in their subclass
         """
         # Not defined for this instrument
-        return None
+        return []
 
     def arc(self, processed=False, howmany=None):
         """
         Null method for instruments that do not provide a method in their subclass
         """
         # Not defined for this instrument
-        return None
+        return []
 
     def fringe(self, processed=False, howmany=None):
         """
         Null method for instruments that do not provide a method in their subclass
         """
         # Not defined for this instrument
-        return None
+        return []
 
     def ronchi_mask(self, processed=False, howmany=None):
         """
         Null method for instruments that do not provide a method in their subclass
         """
         # Not defined for this instrument
-        return None
+        return []
 
     def pinhole_mask(self, processed=False, howmany=None):
         """
         Null method for instruments that do not provide a method in their subclass
         """
         # Not defined for this instrument
-        return None
+        return []

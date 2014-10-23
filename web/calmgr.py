@@ -193,31 +193,31 @@ def calmgr(req, selection):
                     for caltype in caltypes:
                         # Call the appropriate method depending what calibration type we want
                         try:
-                            cal = None
+                            cals = None
                             if caltype == 'bias':
-                                cal = c.bias()
+                                cals = c.bias()
                             elif caltype == 'dark':
-                                cal = c.dark()
+                                cals = c.dark()
                             elif caltype == 'flat':
-                                cal = c.flat()
+                                cals = c.flat()
                             elif caltype == 'arc':
-                                cal = c.arc()
+                                cals = c.arc()
                             elif caltype == 'processed_bias':
-                                cal = c.bias(processed=True)
+                                cals = c.bias(processed=True)
                             elif caltype == 'processed_dark':
-                                cal = c.dark(processed=True)
+                                cals = c.dark(processed=True)
                             elif caltype == 'processed_flat':
-                                cal = c.flat(processed=True)
+                                cals = c.flat(processed=True)
                             elif caltype == 'processed_arc':
-                                cal = c.arc(processed=True)
+                                cals = c.arc(processed=True)
                             elif caltype == 'processed_fringe':
-                                cal = c.processed_fringe()
+                                cals = c.processed_fringe()
                             elif caltype == 'pinhole_mask':
-                                cal = c.pinhole_mask()
+                                cals = c.pinhole_mask()
                             elif caltype == 'ronchi_mask':
-                                cal = c.ronchi_mask()
+                                cals = c.ronchi_mask()
 
-                            if cal:
+                            for cal in cals:
                                 # OK, say what we found
                                 req.write("<calibration>\n")
                                 req.write("<caltype>%s</caltype>\n" % caltype)

@@ -141,7 +141,7 @@ class CalibrationGMOS(Calibration):
         """
         # No arcs for imaging
         if self.descriptors['spectroscopy'] == False:
-            return None
+            return []
 
         query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
 
