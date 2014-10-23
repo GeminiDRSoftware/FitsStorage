@@ -207,7 +207,7 @@ class CalibrationGNIRS(Calibration):
         else:
             query = query.filter(Header.observation_type == 'PINHOLE').filter(Header.reduction == 'RAW')
             # Default number of raw pinholes
-            howmany = howmany if howmany else 2
+            howmany = howmany if howmany else 5
 
         # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)
