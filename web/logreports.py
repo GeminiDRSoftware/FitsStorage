@@ -306,7 +306,7 @@ def usagedetails(req, things):
         req.write("<TR><TD>This feature:</TD><TD>%s</TD></TR>" % usagelog.this)
         req.write("<TR><TD>Bytes returned:</TD><TD>%s</TD></TR>" % usagelog.bytes)
         req.write("<TR><TD>HTTP status:</TD><TD>%s</TD></TR>" % usagelog.status_string())
-        req.write("<TR><TD>Notes:</TD><TD>%s</TD></TR>" % usagelog.notes)
+        req.write("<TR><TD>Notes:</TD><TD><PRE>%s</PRE></TD></TR>" % usagelog.notes)
         req.write("</TABLE>")
 
         if usagelog.user_id:

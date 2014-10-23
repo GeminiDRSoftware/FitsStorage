@@ -138,7 +138,8 @@ def calmgr(req, selection):
             req.write("</dataset>\n")
             req.write("</calibration_associations>\n")
 
-
+            # Commit the changes to the usagelog
+            session.commit()
             return apache.OK
 
         else:
@@ -230,8 +231,10 @@ def calmgr(req, selection):
                                     req.write("<url>file://%s</url>\n" % os.path.join(cal.diskfile.file.path,
                                                     cal.diskfile.file.name))
                                 req.write("</calibration>\n")
+                                req.usagelog.add_note("CalMGR GET returning %s %s" % (caltype, cal.diskfile.file.name))
                             else:
                                 req.write("<!-- NO CALIBRATION FOUND for caltype %s-->\n" % caltype)
+                                req.usagelog.add_note("CalMGR GET - no calibration type %s found" % caltype)
                         except:
                             req.write("<!-- PROBLEM WHILE SEARCHING FOR caltype %s-->\n" % caltype)
                             string = traceback.format_tb(sys.exc_info()[2])
@@ -245,6 +248,8 @@ def calmgr(req, selection):
                 req.write("<!-- COULD NOT LOCATE METADATA FOR DATASET -->\n")
 
             req.write("</calibration_associations>\n")
+            # commit the usagelog notes
+            session.commit()
             return apache.OK
     except IOError:
         pass
