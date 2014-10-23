@@ -24,6 +24,13 @@ import bz2
 import cStringIO
 import tarfile
 
+# We assume that servers used as archive use a calibraiton association cache table
+from fits_storage_config import use_as_archive
+if use_as_archive:
+    from cal.associate_calibrations import associate_cals_from_cache as associate_cals
+else:
+    from cal.associate_calibrations import associate_cals
+
 if using_s3:
     from boto.s3.connection import S3Connection
     from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
@@ -35,6 +42,8 @@ def download(req, things):
     This is the download server. Given a selection, it will send a tarball of the
     files from the selection that you have access to to the client.
     """
+    # assume unless set otherwise later that this is not an associated_calibrations download
+    associated_calibrations = False
     # If we are called via POST, then parse form data rather than selection
     if req.method == 'POST':
         # Parse form data
@@ -50,6 +59,10 @@ def download(req, things):
         selection = {'filelist': thelist}
         selection['present'] = True
     else:
+        # First check if this is an associated_calibrations download
+        if 'associated_calibrations' in things:
+            associated_calibrations = True
+            things.remove('associated_calibrations')
         # Get the selection
         selection = getselection(things)
 
@@ -71,6 +84,10 @@ def download(req, things):
 
         # Get the header list
         headers = list_headers(session, selection, None)
+        # If this is an associated_calibrations request, do that now
+        if associated_calibrations:
+            downloadlog.add_note("associated_calibrations download")
+            headers = associate_cals(session, headers)
         downloadlog.query_completed = datetime.datetime.utcnow()
         downloadlog.numresults = len(headers)
 

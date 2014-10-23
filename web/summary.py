@@ -227,7 +227,10 @@ def summary_table(req, sumtype, headers, selection, links=True, user=None, user_
     elif len(headers) == fits_closed_result_limit:
         req.write('<P>WARNING: Your search generated more than the limit of %d results. You might want to constrain your search more.</P>' % fits_closed_result_limit)
     else:
-        req.write('<P><a href="/download%s">Download all %d files totalling %.2f GB</a>.</P>' % (selection_to_URL(selection), len(headers), bytecount/1.0E9))
+        url_prefix = "/download"
+        if sumtype == 'associated_cals':
+            url_prefix += '/associated_calibrations'
+        req.write('<P><a href="%s%s">Download all %d files totalling %.2f GB</a>.</P>' % (url_prefix, selection_to_URL(selection), len(headers), bytecount/1.0E9))
 
 
 def isajax(req):
