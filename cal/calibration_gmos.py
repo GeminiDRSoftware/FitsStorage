@@ -404,6 +404,45 @@ class CalibrationGMOS(Calibration):
             cenwlen_hi = float(self.descriptors['central_wavelength']) + 0.001
             query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
 
+            # Spectroscopy flats also have to somewhat match telescope position for flexure, as follows
+            # this is from FitsStorage TRAC #43 discussion with KR 20130425
+            # QAP might not give us these for now. Remove this 'if' later when it does
+            if 'elevation' in self.descriptors:
+                if self.descriptors['focal_plane_mask'].startswith('IFU'):
+                    # For IFU, elevation must we within 7.5 degrees
+                    el_thresh = 7.5 # degrees
+                    el_hi = self.descriptors['elevation'] + el_thresh
+                    el_lo = self.descriptors['elevation'] - el_thresh
+                    query = query.filter(Header.elevation > el_lo).filter(Header.elevation < el.hi)
+                    # and crpa*cos(el) must be within 7.5 degrees, ie crpa must be within 7.5 / cos(el)
+                    # when el=90, cos(el) = 0 and the range is infinite. Only check at lower elevations
+                    if self.descriptors['elevation'] < 85:
+                        crpa_thresh = 7.5 / math.cos(math.radians(self.descriptors['elevation']))
+                        crpa_hi = self.descriptors['cass_rotator_pa'] + crpa_thresh
+                        crpa_lo = self.descriptors['cass_rotator_pa'] - crpa_thresh
+                        # Should deal with wrap properly here, but need to figure out what we get in the headers round the wrap
+                        # simple case will be fine unless they did an unwrap between the science and the flat
+                        query = query.filter(Header.cass_rotator_pa > crpa_lo).filter(Header.cass_rotator_pa < crpa_hi)
+                else:
+                    # MOS or LS case (spectroscopy byt not IFU)
+                    if self.descriptors['central_wavelength'] > 0.55 or self.descriptors['disperser'].startswith('R150'):
+                        # Elevation must be within 15 degrees
+                        el_thresh = 15.0
+                        el_hi = self.descriptors['elevation'] + el_thresh
+                        el_lo = self.descriptors['elevation'] - el_thresh
+                        query = query.filter(Header.elevation > el_lo).filter(Header.elevation < el.hi)
+                        # And crpa*col(el) must be within 15 degrees
+                        if self.descriptors['elevation'] < 85:
+                            crpa_thresh = 7.5 / math.cos(math.radians(self.descriptors['elevation']))
+                            crpa_hi = self.descriptors['cass_rotator_pa'] + crpa_thresh
+                            crpa_lo = self.descriptors['cass_rotator_pa'] - crpa_thresh
+                            # Should deal with wrap properly here, but need to figure out what we get in the headers round the wrap
+                            # simple case will be fine unless they did an unwrap between the science and the flat
+                            query = query.filter(Header.cass_rotator_pa > crpa_lo).filter(Header.cass_rotator_pa < crpa_hi)
+                    else:
+                        # In this case, no elevation or crpa constraints.
+                        pass
+
 
         # The science amp_read_area must be equal or substring of the cal amp_read_area
         # If the science frame uses all the amps, then they must be a direct match as all amps must be there
