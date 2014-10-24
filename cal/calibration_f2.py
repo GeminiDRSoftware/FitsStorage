@@ -71,11 +71,11 @@ class CalibrationF2(Calibration):
         query = query.filter(Header.observation_type == 'DARK')
 
         if processed:
-            query.filter(Header.reduction_state == 'PROCESSED_DARK')
+            query.filter(Header.reduction == 'PROCESSED_DARK')
             # Default number of processed darks to associate
             howmany = howmany if howmany else 1
         else:
-            query.filter(Header.reduction_state == 'RAW')
+            query.filter(Header.reduction == 'RAW')
             # Default number of raw darks to associate
             howmany = howmany if howmany else 10
 
@@ -109,11 +109,11 @@ class CalibrationF2(Calibration):
         query = query.filter(Header.observation_type == 'FLAT')
 
         if processed:
-            query = query.filter(Header.reduction_state == 'PROCESSED_FLAT')
+            query = query.filter(Header.reduction == 'PROCESSED_FLAT')
             # Default number of processed flats
             howmany = howmany if howmany else 1
         else:
-            query = query.filter(Header.reduction_state == 'RAW')
+            query = query.filter(Header.reduction == 'RAW')
             # Default number of raw flats
             howmany = howmany if howmany else 10
 
@@ -153,9 +153,9 @@ class CalibrationF2(Calibration):
         query = query.filter(Header.observation_type == 'ARC')
 
         if processed:
-            query = query.filter(Header.reduction_state == 'PROCESSED_ARC')
+            query = query.filter(Header.reduction == 'PROCESSED_ARC')
         else:
-            query = query.filter(Header.reduction_state == 'RAW')
+            query = query.filter(Header.reduction == 'RAW')
 
         # Default number to associate is 1
         howmany = howmany if howmany else 1

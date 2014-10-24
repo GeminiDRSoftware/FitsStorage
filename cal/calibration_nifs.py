@@ -62,11 +62,11 @@ class CalibrationNIFS(Calibration):
         query = query.filter(Header.observation_type == 'DARK')
 
         if processed:
-            query = query.filter(Header.reduction_state == 'PROCESSED_DARK')
+            query = query.filter(Header.reduction == 'PROCESSED_DARK')
             # Default number of processed darks to associate
             howmany = howmany if howmany else 1
         else:
-            query = query.filter(Header.reduction_state == 'RAW')
+            query = query.filter(Header.reduction == 'RAW')
             # Default number of processed darks to associate
             howmany = howmany if howmany else 10
 
@@ -102,11 +102,11 @@ class CalibrationNIFS(Calibration):
         query = query.filter(Header.observation_type == 'FLAT')
 
         if processed:
-            query = query.filter(Header.reduction_state == 'PROCESSED_FLAT')
+            query = query.filter(Header.reduction == 'PROCESSED_FLAT')
             # Default number of processed flats to associate
             howmany = howmany if howmany else 1
         else:
-            query = query.filter(Header.reduction_state == 'RAW')
+            query = query.filter(Header.reduction == 'RAW')
             # Default number of processed flats to associate
             howmany = howmany if howmany else 10
 
