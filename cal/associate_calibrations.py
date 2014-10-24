@@ -94,28 +94,22 @@ def associate_cals_from_cache(session, headers, caltype="all"):
 
     calheaders = []
 
+    # We can do this a bit more efficiently than the non-cache version, as we can do one
+    # big 'distinct' query rather than de-duplicating after the fact.
+
+    # Make a list of the obs_hids
+    obs_hids = []
     for header in headers:
-        query = session.query(CalCache.cal_hid).filter(CalCache.obs_hid == header.id)
-        if caltype != 'all':
-            query = query.filter(CalCache.caltype == caltype)
-        query = query.order_by(CalCache.rank)
+        obs_hids.append(header.id)
 
-        for result in query.all():
-            calheader = session.query(Header).filter(Header.id == result[0]).one()
-            calheaders.append(calheader)
+    query = session.query(CalCache.cal_hid).filter(CalCache.obs_hid.in_(obs_hids))
+    if caltype != 'all':
+        query = query.filter(CalCache.caltype == caltype)
+    query = query.distinct().order_by(CalCache.caltype).order_by(CalCache.rank)
 
-    # Now loop through the calheaders list and remove duplicates.
-    # Only necessary if we looked at multiple headers
-    if len(headers) > 1:
-        shortlist = []
-        ids = []
-        for calheader in calheaders:
-            if calheader.id not in ids:
-                ids.append(calheader.id)
-                shortlist.append(calheader)
-    else:
-        shortlist = calheaders
+    for result in query.all():
+        calheader = session.query(Header).filter(Header.id == result[0]).one()
+        calheaders.append(calheader)
 
-    # All done, return the shortlist
-    return shortlist
+    return calheaders
 
