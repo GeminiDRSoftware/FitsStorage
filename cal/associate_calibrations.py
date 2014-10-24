@@ -67,6 +67,11 @@ def associate_cals(session, headers, caltype="all"):
             if ronchi_masks:
                 calheaders += ronchi_masks
 
+        if 'spectwilight' in calobj.applicable and (caltype == 'all' or caltype == 'spectwilight'):
+            spectwilights = calobj.spectwilight()
+            if spectwilights:
+                calheaders += spectwilights
+
     # Now loop through the calheaders list and remove duplicates.
     # Only necessary if we looked at multiple headers
     if len(headers) > 1:

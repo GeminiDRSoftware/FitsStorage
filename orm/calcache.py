@@ -4,7 +4,7 @@ from sqlalchemy import Integer, BigInteger, SmallInteger, Enum, DateTime
 from . import Base
 
 CALTYPE_ENUM = Enum('bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark', 'processed_flat',
-                        'processed_fringe', 'processed_arc', 'pinhole_mask', 'ronchi_mask',
+                        'processed_fringe', 'processed_arc', 'pinhole_mask', 'ronchi_mask', 'spectwilight',
                         name='caltype')
 class CalCache(Base):
     """
