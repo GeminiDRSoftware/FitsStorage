@@ -43,6 +43,8 @@ class Calibration(object):
             self.descriptors['observation_class'] = self.header.observation_class
             self.descriptors['detector_roi_setting'] = self.header.detector_roi_setting
             self.descriptors['reduction'] = self.header.reduction
+            self.descriptors['elevation'] = self.header.elevation
+            self.descriptors['cass_rotator_pa'] = self.header.cass_rotator_pa
         else:
             # The data_section comes over as a native python array, needs to be a string
             if self.descriptors['data_section']:
