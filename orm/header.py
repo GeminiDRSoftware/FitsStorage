@@ -19,6 +19,10 @@ from gemini_metadata_utils import GeminiProgram
 OBSTYPE_ENUM = Enum('OBJECT', 'BIAS', 'FLAT', 'ARC', 'DARK', 'PINHOLE', 'FRINGE', 'RONCHI', 'CAL', 'MASK', name='obstype')
 OBSCLASS_ENUM = Enum('science', 'acq', 'progCal', 'partnerCal', 'dayCal', 'acqCal', name='obsclass')
 TELESCOPE_ENUM = Enum('Gemini-North', 'Gemini-South', name='telescope')
+REDUCTION_STATE_ENUM = Enum('RAW', 'PREPARED', 'PROCESSED_BIAS', 'PROCESSED_FLAT', 'PROCESSED_DARK', 'PROCESSED_FRINGE',
+                            'PROCESSED_ARC', name='reduction_state')
+QASTATE_ENUM = Enum('Fail', 'Check', 'Undefined', 'Usable', 'Pass', name='qa_state')
+MODE_ENUM = Enum('imaging', 'spectroscopy', 'LS', 'MOS', 'IFS', name='mode')
 
 class Header(Base):
     """
@@ -60,7 +64,7 @@ class Header(Base):
     detector_config = Column(Text)
     detector_roi_setting = Column(Text)
     spectroscopy = Column(Boolean, index=True)
-    mode = Column(Text, index=True)
+    mode = Column(MODE_ENUM, index=True)
     adaptive_optics = Column(Boolean)
     laser_guide_star = Column(Boolean)
     wavefront_sensor = Column(Text)
@@ -72,9 +76,9 @@ class Header(Base):
     requested_cc = Column(Integer)
     requested_wv = Column(Integer)
     requested_bg = Column(Integer)
-    qa_state = Column(Text, index=True)
+    qa_state = Column(QASTATE_ENUM, index=True)
     release = Column(Date)
-    reduction = Column(Text, index=True)
+    reduction = Column(REDUCTION_STATE_ENUM, index=True)
     types = Column(Text)
     phot_standard = Column(Boolean)
 
