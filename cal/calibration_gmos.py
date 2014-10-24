@@ -415,7 +415,7 @@ class CalibrationGMOS(Calibration):
                     el_thresh = 7.5 # degrees
                     el_hi = float(self.descriptors['elevation']) + el_thresh
                     el_lo = float(self.descriptors['elevation']) - el_thresh
-                    query = query.filter(Header.elevation > el_lo).filter(Header.elevation < el.hi)
+                    query = query.filter(Header.elevation > el_lo).filter(Header.elevation < el_hi)
                     # and crpa*cos(el) must be within 7.5 degrees, ie crpa must be within 7.5 / cos(el)
                     # when el=90, cos(el) = 0 and the range is infinite. Only check at lower elevations
                     if self.descriptors['elevation'] < 85:
