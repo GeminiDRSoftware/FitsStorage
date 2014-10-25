@@ -533,12 +533,10 @@ class CalibrationGMOS(Calibration):
 
         query = query.filter(Header.reduction == 'RAW')
 
-        # They are OBJECT dayCal frames with target twilight 
-        query = query.filter(Header.observation_type == 'OBJECT').filter(Header.observation_class == 'dayCal')
-        query = query.filter(Header.object == 'Twilight')
-
-        # Must be spectroscopy
+        # They are OBJECT spectroscopy frames with target twilight 
+        query = query.filter(Header.observation_type == 'OBJECT')
         query = query.filter(Header.spectroscopy == True)
+        query = query.filter(Header.object == 'Twilight')
 
         # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)
