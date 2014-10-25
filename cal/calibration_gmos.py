@@ -555,7 +555,7 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
 
         # Must match central wavelength to within some tolerance. We don't do separate ones for dithers in wavelength?
-        tolerance = 0.002 # microns. 20 Angstroms either way, from IJ 20141024
+        tolerance = 0.02 # microns
         cenwlen_lo = float(self.descriptors['central_wavelength']) - tolerance
         cenwlen_hi = float(self.descriptors['central_wavelength']) + tolerance
         query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
