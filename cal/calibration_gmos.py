@@ -163,10 +163,13 @@ class CalibrationGMOS(Calibration):
 
         # Must Match central_wavelength
         # This gives better performance than abs?
-        cenwlen_lo = float(self.descriptors['central_wavelength']) - 0.001
-        cenwlen_hi = float(self.descriptors['central_wavelength']) + 0.001
-        query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
-
+        # Occassionally we get a None, so run this in a try except
+        try:
+            cenwlen_lo = float(self.descriptors['central_wavelength']) - 0.001
+            cenwlen_hi = float(self.descriptors['central_wavelength']) + 0.001
+            query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
+        except TypeError:
+            pass
 
         # Must match focal_plane_mask only if it's not the 5.0arcsec slit in the target, otherwise any longslit is OK
         if self.descriptors['focal_plane_mask'] != '5.0arcsec':
@@ -313,7 +316,9 @@ class CalibrationGMOS(Calibration):
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
             query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         else:
-            query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+            if self.descriptors['amp_read_area']:
+                # Can't do a contains if the value is None...
+                query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         # The Overscan section handling: this only applies to processed biases
         # as raw biases will never be overscan trimmed or subtracted, and if they're
