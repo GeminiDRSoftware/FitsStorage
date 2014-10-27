@@ -272,7 +272,7 @@ def gemini_caltype(string):
     These should all be lower case so as to avoid conflict with gemini_observation_type
     """
     list = ['bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark', 'processed_flat',
-                'processed_fringe', 'processed_arc', 'pinhole_mask', 'ronchi_mask']
+                'processed_fringe', 'processed_arc', 'pinhole_mask', 'ronchi_mask', 'lampoff_flat']
     retary = ''
     if string in list:
         retary = string
