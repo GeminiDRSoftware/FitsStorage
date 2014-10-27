@@ -116,6 +116,8 @@ def calmgr(req, selection):
                 cals = c.ronchi_mask()
             elif caltype == 'spectwilight':
                 cals = c.spectwilight()
+            elif caltype == 'lampoff_flat':
+                cals = c.lampoff_flat()
 
             for cal in cals:
                 req.usagelog.add_note("CalMGR returning: %s" % cal.diskfile.file.name)
@@ -187,7 +189,7 @@ def calmgr(req, selection):
                     # Figure out which caltype(s) we want
                     if caltype == '':
                         caltypes = ['bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark', 'processed_flat',
-                                        'processed_arc', 'processed_fringe', 'pinhole_mask', 'ronchi_mask']
+                                        'processed_arc', 'processed_fringe', 'pinhole_mask', 'ronchi_mask', 'lampoff_flat']
                     else:
                         caltypes = [caltype]
 
@@ -220,6 +222,8 @@ def calmgr(req, selection):
                                 cals = c.ronchi_mask()
                             elif caltype == 'spectwilight':
                                 cals = c.spectwilight()
+                            elif caltype == 'lampoff_flat':
+                                cals = c.lampoff_flat()
 
                             for cal in cals:
                                 # OK, say what we found
