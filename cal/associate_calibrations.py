@@ -7,7 +7,7 @@ from cal import get_cal_object
 from orm.header import Header
 from orm.calcache import CalCache
 
-def associate_cals(session, headers, caltype="all"):
+def associate_cals(session, headers, caltype="all", recurse_level=0):
     """
     This function takes a list of headers from a search result and
     generates a list of the associated calibration headers
@@ -41,6 +41,11 @@ def associate_cals(session, headers, caltype="all"):
             flats = calobj.flat()
             if flats:
                 calheaders += flats
+
+        if 'lampoff_flat' in calobj.applicable and (caltype == 'all' or caltype == 'lampoff_flat'):
+            lampoff_flats = calobj.lampoff_flat()
+            if lampoff_flats:
+                calheaders += lampoff_flats
 
         if 'processed_bias' in calobj.applicable and (caltype == 'all' or caltype == 'processed_bias'):
             processed_biases = calobj.bias(processed=True)
@@ -84,10 +89,21 @@ def associate_cals(session, headers, caltype="all"):
     else:
         shortlist = calheaders
 
+
+    # Now we have to recurse to find the calibrations for the calibrations...
+    # We only do this for caltype all.
+    # Keep digging deeper until we don't find any extras, or we hit too many recurse levels
+
+    if caltype == 'all':
+        recurse_level += 1
+        if recurse_level < 5 and len(shortlist) > 0:
+            cals_cals = associate_cals(session, shortlist, caltype=caltype, recurse_level=recurse_level)
+            shortlist += cals_cals
+
     # All done, return the shortlist
     return shortlist
 
-def associate_cals_from_cache(session, headers, caltype="all"):
+def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
     """
     This function takes a list of headers from a search result and
     generates a list of the associated calibration headers
@@ -115,6 +131,17 @@ def associate_cals_from_cache(session, headers, caltype="all"):
     for result in query.all():
         calheader = session.query(Header).filter(Header.id == result[0]).one()
         calheaders.append(calheader)
+
+    # Now we have to recurse to find the calibrations for the calibrations...
+    # We only do this for caltype all.
+    # Keep digging deeper until we don't find any extras, or we hit too many recurse levels
+
+    if caltype == 'all':
+        recurse_level += 1
+        if recurse_level < 5 and len(calheaders) > 0:
+            cals_cals = associate_cals_from_cache(session, calheaders, caltype=caltype, recurse_level=recurse_level)
+            calheaders += cals_cals
+
 
     return calheaders
 
