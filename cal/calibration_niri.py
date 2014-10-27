@@ -53,6 +53,13 @@ class CalibrationNIRI(Calibration):
             if self.descriptors['filter_name'] not in ['Lprime_G0207', 'Mprime_G0208', 'Bra_G0238', 'Bracont_G0237']:
                 self.applicable.append('flat')
 
+        # Imaging Lamp-on Flat fields require a lampoff_flat
+        if (self.descriptors['observation_type'] == 'FLAT' and
+                self.descriptors['spectroscopy'] == False and
+                self.descriptors['gcal_lamp'] != 'Off'):
+            self.applicable.append('lampoff_flat')
+
+
     def dark(self, processed=False, howmany=None):
         query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
         query = query.filter(Header.observation_type == 'DARK')
@@ -125,6 +132,9 @@ class CalibrationNIRI(Calibration):
         query = query.filter(Niri.filter_name == self.descriptors['filter_name'])
         query = query.filter(Niri.camera == self.descriptors['camera'])
 
+        # GCAL lamp should be on - these flats will then require lamp-off flats to calibrate them
+        query = query.filter(Header.gcal_lamp == 'IRhigh')
+
         # Absolute time separation must be within 6 months
         max_interval = datetime.timedelta(days=180)
         datetime_lo = self.descriptors['ut_datetime'] - max_interval
@@ -139,3 +149,47 @@ class CalibrationNIRI(Calibration):
 
         query = query.limit(howmany)
         return query.all()
+
+    def lampoff_flat(self, processed=False, howmany=None):
+        query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
+        query = query.filter(Header.observation_type == 'FLAT')
+
+        if processed:
+            # Not a valid concept
+            return []
+        else:
+            query = query.filter(Header.reduction == 'RAW')
+            # Default number to associate
+            howmany = howmany if howmany else 10
+
+        # Search only canonical entries
+        query = query.filter(DiskFile.canonical == True)
+
+        # Knock out the FAILs
+        query = query.filter(Header.qa_state != 'Fail')
+
+        # Must totally match: data_section, well_depth_setting, filter_name, camera
+        # Update from AS 20130320 - read mode should not be required to match, but well depth should.
+        query = query.filter(Niri.data_section == self.descriptors['data_section'])
+        query = query.filter(Niri.well_depth_setting == self.descriptors['well_depth_setting'])
+        query = query.filter(Niri.filter_name == self.descriptors['filter_name'])
+        query = query.filter(Niri.camera == self.descriptors['camera'])
+
+        # GCAL lamp should be off
+        query = query.filter(Header.gcal_lamp == 'Off')
+
+        # Absolute time separation must be within 1 hour of the lamp on flats
+        max_interval = datetime.timedelta(seconds=3600)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
+
+        # Order by absolute time separation.
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
+
+        query = query.limit(howmany)
+        return query.all()
+
