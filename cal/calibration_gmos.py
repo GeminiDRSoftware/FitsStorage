@@ -88,7 +88,7 @@ class CalibrationGMOS(Calibration):
             # If it (is spectroscopy) and
             # (is an OBJECT) and
             # (is not a Twilight)
-            # then it needs an arc and flat and spectwilight 
+            # then it needs an arc, flat, spectwilight, specphot
             if ((self.descriptors['spectroscopy'] == True) and
                     (self.descriptors['observation_type'] == 'OBJECT') and
                     (self.descriptors['object'] != 'Twilight')):
@@ -97,12 +97,13 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('flat')
                 self.applicable.append('processed_flat')
                 self.applicable.append('spectwilight')
+                self.applicable.append('specphot')
 
 
             # If it (is imaging) and
             # (is Imaging focal plane mask) and
             # (is an OBJECT) and (is not a Twilight)
-            # then it needs flats or a processed_flat
+            # then it needs flats, processed_fringe
             if ((self.descriptors['spectroscopy'] == False) and
                      (self.descriptors['focal_plane_mask'] == 'Imaging') and
                      (self.descriptors['observation_type'] == 'OBJECT') and
@@ -110,15 +111,11 @@ class CalibrationGMOS(Calibration):
 
                 self.applicable.append('flat')
                 self.applicable.append('processed_flat')
-
-            # If it (is imaging) and
-            # (is an OBJECT) and
-            # (is not a Twilight)
-            # then it maybe needs a processed_fringe
-            if ((self.descriptors['spectroscopy'] == False) and
-                    (self.descriptors['observation_type'] == 'OBJECT') and
-                    (self.descriptors['object'] != 'Twilight')):
                 self.applicable.append('processed_fringe')
+                # If it's all that and obsclass science, then it needs a photstd
+                # need to take care that phot_stds don't require phot_stds for recursion
+                if self.descriptors['observation_class'] == 'science':
+                    self.applicable.append('photometric_standard')
 
             # If it (is nod and shuffle) and
             # (is an OBJECT), then it needs a dark
@@ -587,3 +584,120 @@ class CalibrationGMOS(Calibration):
         query = query.limit(howmany)
         return query.all()
 
+    def specphot(self, processed=False, howmany=None):
+        """
+        Method to find the best specphot observation
+        """
+        # We don't handle processed ones (yet)
+        if processed:
+            return []
+
+        # Not valid for imaging
+        if self.descriptors['spectroscopy'] == False:
+            return []
+
+        # Default number to associate
+        howmany = howmany if howmany else 4
+
+        query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
+
+        query = query.filter(Header.reduction == 'RAW')
+
+        # They are OBJECT partnerCal or progCal spectroscopy frames with target not twilight 
+        query = query.filter(Header.observation_type == 'OBJECT')
+        query = query.filter(Header.observation_class.in_(['partnerCal', 'progCal']))
+        query = query.filter(Header.spectroscopy == True)
+        query = query.filter(Header.object != 'Twilight')
+
+        # Search only the canonical (latest) entries
+        query = query.filter(DiskFile.canonical == True)
+
+        # Knock out the FAILs
+        query = query.filter(Header.qa_state != 'Fail')
+
+        # Must totally match instrument, detector_x_bin, detector_y_bin, filter, disperser, focal plane mask
+        query = query.filter(Header.instrument == self.descriptors['instrument'])
+        query = query.filter(Gmos.detector_x_bin == self.descriptors['detector_x_bin'])
+        query = query.filter(Gmos.detector_y_bin == self.descriptors['detector_y_bin'])
+        query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
+        query = query.filter(Gmos.disperser == self.descriptors['disperser'])
+        query = query.filter(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
+
+        # Must match central wavelength to within some tolerance. We don't do separate ones for dithers in wavelength?
+        tolerance = 0.02 # microns
+        cenwlen_lo = float(self.descriptors['central_wavelength']) - tolerance
+        cenwlen_hi = float(self.descriptors['central_wavelength']) + tolerance
+        query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
+
+        # The science amp_read_area must be equal or substring of the cal amp_read_area
+        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
+        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match
+        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+            query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+        else:
+            query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+
+        # Absolute time separation must be within 1 year
+        max_interval = datetime.timedelta(days=365)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
+
+        # Order by absolute time separation.
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
+
+        query = query.limit(howmany)
+        return query.all()
+
+    def photometric_standard(self, processed=False, howmany=None):
+        """
+        Method to find the best phot_std observation
+        """
+        # We don't handle processed ones (yet)
+        if processed:
+            return []
+
+        # Not valid for spectroscopy
+        if self.descriptors['spectroscopy'] == True:
+            return []
+
+        # Default number to associate
+        howmany = howmany if howmany else 4
+
+        query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
+
+        query = query.filter(Header.reduction == 'RAW')
+
+        # They are OBJECT imaging frames of standard stars
+        query = query.filter(Header.observation_type == 'OBJECT')
+        query = query.filter(Header.spectroscopy == False)
+        query = query.filter(Header.phot_standard == True)
+
+        # Search only the canonical (latest) entries
+        query = query.filter(DiskFile.canonical == True)
+
+        # Knock out the FAILs
+        query = query.filter(Header.qa_state != 'Fail')
+
+        # Must totally match instrument, filter
+        query = query.filter(Header.instrument == self.descriptors['instrument'])
+        query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
+
+        # Absolute time separation must be within 1 year
+        max_interval = datetime.timedelta(days=365)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
+
+        # Order by absolute time separation.
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
+
+        query = query.limit(howmany)
+        return query.all()

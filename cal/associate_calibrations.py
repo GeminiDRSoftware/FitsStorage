@@ -77,6 +77,16 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
             if spectwilights:
                 calheaders += spectwilights
 
+        if 'specphot' in calobj.applicable and (caltype == 'all' or caltype == 'specphot'):
+            specphots = calobj.specphot()
+            if specphots:
+                calheaders += specphots
+
+        if 'photometric_standard' in calobj.applicable and (caltype == 'all' or caltype == 'photometric_standard'):
+            photometric_standards = calobj.photometric_standard()
+            if photometric_standards:
+                calheaders += photometric_standards
+
     # Now loop through the calheaders list and remove duplicates.
     # Only necessary if we looked at multiple headers
     if len(headers) > 1:
@@ -98,7 +108,9 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
         recurse_level += 1
         if recurse_level < 5 and len(shortlist) > 0:
             cals_cals = associate_cals(session, shortlist, caltype=caltype, recurse_level=recurse_level)
-            shortlist += cals_cals
+            for cal in cals_cals:
+                if cal not in shortlist:
+                    shortlist.append(cal)
 
     # All done, return the shortlist
     return shortlist
@@ -140,7 +152,9 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
         recurse_level += 1
         if recurse_level < 5 and len(calheaders) > 0:
             cals_cals = associate_cals_from_cache(session, calheaders, caltype=caltype, recurse_level=recurse_level)
-            calheaders += cals_cals
+            for cal in cals_cals:
+                if cal not in calheaders:
+                    calheaders.append(cal)
 
 
     return calheaders

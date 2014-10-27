@@ -118,6 +118,10 @@ def calmgr(req, selection):
                 cals = c.spectwilight()
             elif caltype == 'lampoff_flat':
                 cals = c.lampoff_flat()
+            elif caltype == 'specphot':
+                cals = c.specphot()
+            elif caltype == 'photometric_standard':
+                cals = c.photometric_standard()
 
             for cal in cals:
                 req.usagelog.add_note("CalMGR returning: %s" % cal.diskfile.file.name)
@@ -189,7 +193,8 @@ def calmgr(req, selection):
                     # Figure out which caltype(s) we want
                     if caltype == '':
                         caltypes = ['bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark', 'processed_flat',
-                                        'processed_arc', 'processed_fringe', 'pinhole_mask', 'ronchi_mask', 'lampoff_flat']
+                                        'processed_arc', 'processed_fringe', 'pinhole_mask', 'ronchi_mask', 'lampoff_flat',
+                                        'specphot', 'photometric_standard']
                     else:
                         caltypes = [caltype]
 
@@ -197,7 +202,6 @@ def calmgr(req, selection):
                     for caltype in caltypes:
                         # Call the appropriate method depending what calibration type we want
                         try:
-                            cals = None
                             if caltype == 'bias':
                                 cals = c.bias()
                             elif caltype == 'dark':
@@ -224,6 +228,12 @@ def calmgr(req, selection):
                                 cals = c.spectwilight()
                             elif caltype == 'lampoff_flat':
                                 cals = c.lampoff_flat()
+                            elif caltype == 'specphot':
+                                cals = c.specphot()
+                            elif caltype == 'photometric_standard':
+                                cals = c.photometric_standard()
+                            else:
+                                cals = []
 
                             for cal in cals:
                                 # OK, say what we found
@@ -240,7 +250,7 @@ def calmgr(req, selection):
                                                     cal.diskfile.file.name))
                                 req.write("</calibration>\n")
                                 req.usagelog.add_note("CalMGR GET returning %s %s" % (caltype, cal.diskfile.file.name))
-                            else:
+                            if len(cals) == 0:
                                 req.write("<!-- NO CALIBRATION FOUND for caltype %s-->\n" % caltype)
                                 req.usagelog.add_note("CalMGR GET - no calibration type %s found" % caltype)
                         except:
