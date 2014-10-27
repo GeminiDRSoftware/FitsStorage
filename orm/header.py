@@ -68,6 +68,7 @@ class Header(Base):
     adaptive_optics = Column(Boolean)
     laser_guide_star = Column(Boolean)
     wavefront_sensor = Column(Text)
+    gcal_lamp = Column(Text)
     raw_iq = Column(Integer)
     raw_cc = Column(Integer)
     raw_wv = Column(Integer)
@@ -260,6 +261,12 @@ class Header(Base):
             except:
                 # This exception will trigger if RELEASE date is missing or malformed.
                 pass
+
+
+            # Set the gcal_lamp state
+            gcal_lamp = ad.gcal_lamp().for_db() 
+            if gcal_lamp != 'None':
+                self.gcal_lamp = gcal_lamp
 
 
             # Set the reduction state
