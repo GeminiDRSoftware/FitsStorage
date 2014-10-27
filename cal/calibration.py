@@ -45,6 +45,7 @@ class Calibration(object):
             self.descriptors['reduction'] = self.header.reduction
             self.descriptors['elevation'] = self.header.elevation
             self.descriptors['cass_rotator_pa'] = self.header.cass_rotator_pa
+            self.descriptors['gcal_lamp'] = self.header.gcal_lamp
         else:
             # The data_section comes over as a native python array, needs to be a string
             if self.descriptors['data_section']:
@@ -105,3 +106,18 @@ class Calibration(object):
         """
         # Not defined for this instrument
         return []
+
+    def lampoff_flat(self, processed=False, howmany=None):
+        """
+        Null method for instruments that do not provide a method in their subclass
+        """
+        # Not defined for this instrument
+        return []
+
+    def processed_fringe(self, howmany=None):
+        """
+        Null method for instruments that do not provide a method in their subclass
+        """
+        # Not defined for this instrument
+        return []
+
