@@ -273,7 +273,7 @@ def gemini_caltype(string):
     """
     list = ['bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark', 'processed_flat',
                 'processed_fringe', 'processed_arc', 'pinhole_mask', 'ronchi_mask', 'lampoff_flat',
-                'specphot', 'phot_std']
+                'specphot', 'photometric_standard']
     retary = ''
     if string in list:
         retary = string
