@@ -615,16 +615,21 @@ class CalibrationGMOS(Calibration):
         # Knock out the FAILs
         query = query.filter(Header.qa_state != 'Fail')
 
-        # Must totally match instrument, detector_x_bin, detector_y_bin, filter, disperser, focal plane mask
+        # Must totally match instrument, detector_x_bin, detector_y_bin, filter, disperser
         query = query.filter(Header.instrument == self.descriptors['instrument'])
         query = query.filter(Gmos.detector_x_bin == self.descriptors['detector_x_bin'])
         query = query.filter(Gmos.detector_y_bin == self.descriptors['detector_y_bin'])
         query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
         query = query.filter(Gmos.disperser == self.descriptors['disperser'])
-        query = query.filter(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
+
+        # Must match the focal plane mask, unless the science is a mos mask in which case the specphot is longslit
+        if 'MOS' in self.types:
+            query = query.filter(Gmos.focal_plane_mask.contains('arcsec'))
+        else:
+            query = query.filter(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
 
         # Must match central wavelength to within some tolerance. We don't do separate ones for dithers in wavelength?
-        tolerance = 0.02 # microns
+        tolerance = 0.05 # microns
         cenwlen_lo = float(self.descriptors['central_wavelength']) - tolerance
         cenwlen_hi = float(self.descriptors['central_wavelength']) + tolerance
         query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
