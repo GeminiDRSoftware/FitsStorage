@@ -29,6 +29,7 @@ class Calibration(object):
         # Populate the descriptors dictionary for header
         if self.descriptors == None:
             self.from_descriptors = True
+            self.types = eval(self.header.types)
             self.descriptors = {}
             self.descriptors['header_id'] = self.header.id
             self.descriptors['observation_type'] = self.header.observation_type
