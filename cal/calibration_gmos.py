@@ -677,10 +677,11 @@ class CalibrationGMOS(Calibration):
 
         query = query.filter(Header.reduction == 'RAW')
 
-        # They are OBJECT imaging frames of standard stars
+        # They are OBJECT imaging partnerCal frames taken from CAL program IDs
         query = query.filter(Header.observation_type == 'OBJECT')
         query = query.filter(Header.spectroscopy == False)
-        query = query.filter(Header.phot_standard == True)
+        query = query.filter(Header.observation_class == 'partnerCal')
+        query = query.filter(Header.program_id.like('G_-CAL%'))
 
         # Search only the canonical (latest) entries
         query = query.filter(DiskFile.canonical == True)
@@ -692,8 +693,8 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Header.instrument == self.descriptors['instrument'])
         query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
 
-        # Absolute time separation must be within 1 year
-        max_interval = datetime.timedelta(days=365)
+        # Absolute time separation must be within 1 days
+        max_interval = datetime.timedelta(days=1)
         datetime_lo = self.descriptors['ut_datetime'] - max_interval
         datetime_hi = self.descriptors['ut_datetime'] + max_interval
         query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
