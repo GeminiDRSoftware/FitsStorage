@@ -52,17 +52,27 @@ class CalibrationGNIRS(Calibration):
         """
         self.applicable = []
 
-        # Science Imaging OBJECTs that are not acq or acqCal require a DARK
+        # Science Imaging OBJECTs that are not acq or acqCal require a DARK and a FLAT
         if ((self.descriptors['observation_type'] == 'OBJECT') and
                 (self.descriptors['observation_class'] not in ['acq', 'acqCal']) and
                 (self.descriptors['spectroscopy'] == False)):
             self.applicable.append('dark')
+            self.applicable.append('flat')
+            self.applicable.append('processed_flat')
 
         # Spectroscopy OBJECT frames require a flat and arc
         if (self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == True):
             self.applicable.append('flat')
             self.applicable.append('arc')
             self.applicable.append('pinhole_mask')
+
+        # Imaging IR lamp-on flats can use lamp-off flats
+        # note that in spectroscopy, some of the flats (eg L band) are lamp off anyway.
+        # so don't try look for lamp-on lamp-off sets for spectroscopy
+        if (self.descriptors['observation_type'] == 'FLAT' and
+                self.descriptors['gcal_lamp'] == 'IRhigh' and
+                self.descriptors['spectroscopy'] == False):
+            self.applicable.append('lampoff_flat')
 
 
     def dark(self, processed=False, howmany=None):
@@ -234,3 +244,54 @@ class CalibrationGNIRS(Calibration):
 
         query = query.limit(howmany)
         return query.all()
+
+    def lampoff_flat(self, processed=False, howmany=None):
+        """
+        Find the optimal lamp-off flats to go with the lamp-on flat
+        """
+
+        query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
+
+        if processed:
+            # No can
+            return []
+
+        # Default number of raw pinholes
+        howmany = howmany if howmany else 10
+
+        # They are RAW flats..
+        query = query.filter(Header.observation_type == 'FLAT').filter(Header.reduction == 'RAW')
+
+        # With the gcal_lamp Off
+        query = query.filter(Header.gcal_lamp == 'Off')
+
+        # Search only canonical entries
+        query = query.filter(DiskFile.canonical == True)
+
+        # Knock out the FAILs
+        query = query.filter(Header.qa_state != 'Fail')
+
+        # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name, well_depth_setting
+        # update from RM 20130321 - read mode should not be required to match, but well depth should.
+        query = query.filter(Gnirs.disperser == self.descriptors['disperser'])
+        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
+        query = query.filter(Gnirs.focal_plane_mask == self.descriptors['focal_plane_mask'])
+        query = query.filter(Gnirs.camera == self.descriptors['camera'])
+        query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
+        query = query.filter(Gnirs.well_depth_setting == self.descriptors['well_depth_setting'])
+
+        # Absolute time separation must be within 1 hour
+        max_interval = datetime.timedelta(seconds=3600)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
+
+        # Order by absolute time separation.
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
+
+        query = query.limit(howmany)
+        return query.all()
+
