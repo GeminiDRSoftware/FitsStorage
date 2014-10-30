@@ -47,6 +47,11 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
             if lampoff_flats:
                 calheaders += lampoff_flats
 
+        if 'qh_flat' in calobj.applicable and (caltype == 'all' or caltype == 'qh_flat'):
+            qh_flats = calobj.lampoff_flat()
+            if qh_flats:
+                calheaders += qh_flats
+
         if 'processed_bias' in calobj.applicable and (caltype == 'all' or caltype == 'processed_bias'):
             processed_biases = calobj.bias(processed=True)
             if processed_biases:

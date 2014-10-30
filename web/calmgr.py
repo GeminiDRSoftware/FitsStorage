@@ -118,6 +118,8 @@ def calmgr(req, selection):
                 cals = c.spectwilight()
             elif caltype == 'lampoff_flat':
                 cals = c.lampoff_flat()
+            elif caltype == 'qh_flat':
+                cals = c.qh_flat()
             elif caltype == 'specphot':
                 cals = c.specphot()
             elif caltype == 'photometric_standard':
@@ -194,7 +196,7 @@ def calmgr(req, selection):
                     if caltype == '':
                         caltypes = ['bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark', 'processed_flat',
                                         'processed_arc', 'processed_fringe', 'pinhole_mask', 'ronchi_mask', 'lampoff_flat',
-                                        'specphot', 'photometric_standard']
+                                        'qh_flat', 'specphot', 'photometric_standard']
                     else:
                         caltypes = [caltype]
 
@@ -228,6 +230,8 @@ def calmgr(req, selection):
                                 cals = c.spectwilight()
                             elif caltype == 'lampoff_flat':
                                 cals = c.lampoff_flat()
+                            elif caltype == 'qh_flat':
+                                cals = c.qh_flat()
                             elif caltype == 'specphot':
                                 cals = c.specphot()
                             elif caltype == 'photometric_standard':
