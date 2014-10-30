@@ -48,7 +48,7 @@ class CalibrationNIFS(Calibration):
                 self.descriptors['observation_class'] == 'science'):
             self.applicable.append('dark')
 
-        # Science spectroscopy that is not a progcal or partnercal requires a flat, arc and ronchi_mask
+        # Science spectroscopy that is not a progcal or partnercal requires a flat, arc, ronchi_mask and telluric_standard
         if (self.descriptors['observation_type'] == 'OBJECT' and
                 self.descriptors['observation_class'] not in ['partnerCal', 'progCal'] and
                 self.descriptors['spectroscopy'] == True):
@@ -56,6 +56,7 @@ class CalibrationNIFS(Calibration):
             self.applicable.append('processed_flat')
             self.applicable.append('arc')
             self.applicable.append('ronchi_mask')
+            self.applicable.append('telluric_standard')
 
         # Flats require lampoff_flats
         if self.descriptors['observation_type'] == 'FLAT' and self.descriptors['gcal_lamp'] != 'Off':
@@ -250,3 +251,42 @@ class CalibrationNIFS(Calibration):
 
         query = query.limit(howmany)
         return query.all()
+
+    def telluric_standard(self, processed=False, howmany=None):
+        query = self.session.query(Header).select_from(join(join(Nifs, Header), DiskFile))
+
+        if processed:
+            howmany = 1
+            query = query.filter(Header.reduction == 'PROCESSED_TELLURIC')
+        else:
+            query = query.filter(Header.observation_type == 'OBJECT').filter(Header.observation_class == 'partnerCal')
+            howmany = 12
+
+
+        # Search only the canonical (latest) entries
+        query = query.filter(DiskFile.canonical == True)
+
+        # Knock out the FAILs
+        query = query.filter(Header.qa_state != 'Fail')
+
+        # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter
+        query = query.filter(Nifs.disperser == self.descriptors['disperser'])
+        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
+        query = query.filter(Nifs.focal_plane_mask == self.descriptors['focal_plane_mask'])
+        query = query.filter(Nifs.filter_name == self.descriptors['filter_name'])
+
+        # Absolute time separation must be within 1 day
+        max_interval = datetime.timedelta(days=1)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
+
+        # Order by absolute time separation.
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
+
+        query = query.limit(howmany)
+        return query.all()
+
