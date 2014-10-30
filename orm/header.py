@@ -21,7 +21,7 @@ OBSCLASS_ENUM = Enum('science', 'acq', 'progCal', 'partnerCal', 'dayCal', 'acqCa
 TELESCOPE_ENUM = Enum('Gemini-North', 'Gemini-South', name='telescope')
 REDUCTION_STATE_ENUM = Enum('RAW', 'PREPARED', 'PROCESSED_BIAS', 'PROCESSED_FLAT', 'PROCESSED_DARK', 'PROCESSED_FRINGE',
                             'PROCESSED_ARC', name='reduction_state')
-QASTATE_ENUM = Enum('Fail', 'Check', 'Undefined', 'Usable', 'Pass', name='qa_state')
+QASTATE_ENUM = Enum('Fail', 'CHECK', 'Undefined', 'Usable', 'Pass', name='qa_state')
 MODE_ENUM = Enum('imaging', 'spectroscopy', 'LS', 'MOS', 'IFS', name='mode')
 
 class Header(Base):
