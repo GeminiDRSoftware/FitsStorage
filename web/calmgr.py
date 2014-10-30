@@ -124,6 +124,8 @@ def calmgr(req, selection):
                 cals = c.specphot()
             elif caltype == 'photometric_standard':
                 cals = c.photometric_standard()
+            elif caltype == 'telluric_standard':
+                cals = c.telluric_standard()
 
             for cal in cals:
                 req.usagelog.add_note("CalMGR returning: %s" % cal.diskfile.file.name)
@@ -196,7 +198,7 @@ def calmgr(req, selection):
                     if caltype == '':
                         caltypes = ['bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark', 'processed_flat',
                                         'processed_arc', 'processed_fringe', 'pinhole_mask', 'ronchi_mask', 'lampoff_flat',
-                                        'qh_flat', 'specphot', 'photometric_standard']
+                                        'qh_flat', 'specphot', 'photometric_standard', 'telluric_standard']
                     else:
                         caltypes = [caltype]
 
@@ -236,6 +238,8 @@ def calmgr(req, selection):
                                 cals = c.specphot()
                             elif caltype == 'photometric_standard':
                                 cals = c.photometric_standard()
+                            elif caltype == 'telluric_standard':
+                                cals = c.telluric_standard()
                             else:
                                 cals = []
 

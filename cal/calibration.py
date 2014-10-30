@@ -142,3 +142,10 @@ class Calibration(object):
         """
         # Not defined for this instrument
         return []
+
+    def telluric_standard(self, processed=False, howmany=None):
+        """
+        Null method for instruments that do not provide a method in their subclass
+        """
+        # Not defined for this instrument
+        return []

@@ -61,7 +61,7 @@ class CalibrationGNIRS(Calibration):
             self.applicable.append('lampoff_flat')
             self.applicable.append('processed_flat')
 
-        # Spectroscopy OBJECT frames require a flat and arc
+        # Spectroscopy OBJECT frames require a flat and arc and telluric_standard
         if (self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == True):
             self.applicable.append('flat')
             self.applicable.append('lampoff_flat')
@@ -70,6 +70,7 @@ class CalibrationGNIRS(Calibration):
             # and if they are XD, they need a Quartz-Halogen flat (qh_flat) too.
             if 'XD' in self.descriptors['disperser']:
                 self.applicable.append('qh_flat')
+            self.applicable.append('telluric_standard')
 
         # IR lamp-on flats can use lamp-off flats
         if self.descriptors['observation_type'] == 'FLAT' and self.descriptors['gcal_lamp'] == 'IRhigh':
@@ -353,6 +354,51 @@ class CalibrationGNIRS(Calibration):
 
         # Absolute time separation must be within 3 months
         max_interval = datetime.timedelta(days=90)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
+
+        # Order by absolute time separation.
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
+
+        query = query.limit(howmany)
+        return query.all()
+
+    def telluric_standard(self, processed=False, howmany=None):
+        """
+        Find the optimal GNIRS telluric observations for this target frame
+        """
+        query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
+
+        if processed:
+            query = query.filter(Header.reduction == 'PROCESSED_TELLURIC')
+            # Default number of processed tellurics to associate
+            howmany = howmany if howmany else 1
+        else:
+            query = query.filter(Header.reduction == 'RAW').filter(Header.spectroscopy == True)
+            query = query.filter(Header.observation_type == 'OBJECT').filter(Header.observation_class == 'partnerCal')
+ 
+            # Default number of raw flats to associate
+            howmany = howmany if howmany else 8
+
+        # Search only canonical entries
+        query = query.filter(DiskFile.canonical == True)
+
+        # Knock out the FAILs
+        query = query.filter(Header.qa_state != 'Fail')
+
+        # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name
+        query = query.filter(Gnirs.disperser == self.descriptors['disperser'])
+        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
+        query = query.filter(Gnirs.focal_plane_mask == self.descriptors['focal_plane_mask'])
+        query = query.filter(Gnirs.camera == self.descriptors['camera'])
+        query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
+
+        # Absolute time separation must be within 1 day
+        max_interval = datetime.timedelta(days=1)
         datetime_lo = self.descriptors['ut_datetime'] - max_interval
         datetime_hi = self.descriptors['ut_datetime'] + max_interval
         query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)

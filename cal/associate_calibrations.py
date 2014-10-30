@@ -92,6 +92,11 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
             if photometric_standards:
                 calheaders += photometric_standards
 
+        if 'telluric_standard' in calobj.applicable and (caltype == 'all' or caltype == 'telluric_standard'):
+            telluric_standards = calobj.telluric_standard()
+            if telluric_standards:
+                calheaders += telluric_standards
+
     # Now loop through the calheaders list and remove duplicates.
     # Only necessary if we looked at multiple headers
     if len(headers) > 1:
