@@ -53,8 +53,13 @@ class CalibrationNIFS(Calibration):
                 self.descriptors['observation_class'] not in ['partnerCal', 'progCal'] and
                 self.descriptors['spectroscopy'] == True):
             self.applicable.append('flat')
+            self.applicable.append('processed_flat')
             self.applicable.append('arc')
             self.applicable.append('ronchi_mask')
+
+        # Flats require lampoff_flats
+        if self.descriptors['observation_type'] == 'FLAT' and self.descriptors['gcal_lamp'] != 'Off':
+            self.applicable.append('lampoff_flat')
 
 
     def dark(self, processed=False, howmany=None):
@@ -123,8 +128,50 @@ class CalibrationNIFS(Calibration):
         query = query.filter(Nifs.focal_plane_mask == self.descriptors['focal_plane_mask'])
         query = query.filter(Nifs.filter_name == self.descriptors['filter_name'])
 
-        # Absolute time separation must be within 6 months
-        max_interval = datetime.timedelta(days=180)
+        # GCAL lamp must be IRhigh or QH
+        query = query.filter(Header.gcal_lamp.in_(['IRhigh', 'QH']))
+
+        # Absolute time separation must be within 10 days
+        max_interval = datetime.timedelta(days=10)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
+
+        # Order by absolute time separation.
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
+
+        query = query.limit(howmany)
+        return query.all()
+
+    def lampoff_flat(self, howmany=None):
+        query = self.session.query(Header).select_from(join(join(Nifs, Header), DiskFile))
+        query = query.filter(Header.observation_type == 'FLAT')
+
+        query = query.filter(Header.reduction == 'RAW')
+        # Default number of processed flats to associate
+        howmany = howmany if howmany else 10
+
+        # Search only canonical entries
+        query = query.filter(DiskFile.canonical == True)
+
+        # Knock out the FAILs
+        query = query.filter(Header.qa_state != 'Fail')
+
+        # Must totally match: disperser, central_wavelength, focal_plane_mask, filter
+        # NIFS flats are always taken in short / high readmode. Don't match against readmode (inst sci Email 2013-03-13)
+        query = query.filter(Nifs.disperser == self.descriptors['disperser'])
+        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
+        query = query.filter(Nifs.focal_plane_mask == self.descriptors['focal_plane_mask'])
+        query = query.filter(Nifs.filter_name == self.descriptors['filter_name'])
+
+        # GCAL lamp must be Off
+        query = query.filter(Header.gcal_lamp == 'Off')
+
+        # Absolute time separation must be within 1 hour
+        max_interval = datetime.timedelta(seconds=3600)
         datetime_lo = self.descriptors['ut_datetime'] - max_interval
         datetime_hi = self.descriptors['ut_datetime'] + max_interval
         query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
