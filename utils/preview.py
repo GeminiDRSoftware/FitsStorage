@@ -2,7 +2,42 @@ from astrodata import AstroData
 import numpy
 import matplotlib.pyplot as plt
 
-def preview(ad, outfile):
+from fits_storage_config import using_s3, storage_root, preview_path
+
+def make_preview(session, diskfile):
+    """
+    Make the preview, given the diskfile.
+    This is called from within service_ingest_queue ingest_file
+    - it will use the pre-fetched / pre-decompressed / pre-opened astrodata object if possible
+    - the diskfile object should contain an ad_object member which is an AstroData instance
+    """
+
+    # Setup the preview file
+    if using_s3:
+        # Create a bytesIO instance for the jpeg data
+        fp = io.BytesIO()
+    else:
+        # Create the preview filename 
+        preview_filename = diskfile.filename + "_preview.jpg"
+        preview_fullpath = os.path.join(storage_root, preview_path, preview_filename)
+        fp = open(preview_fullpath, 'w')
+
+    # render the preview jpg
+    render_preview(diskfile.ad_object, fp)
+
+    # close the file / upload it to s3
+    if using_s3:
+        # TODO
+        pass
+    else:
+        fp.close()
+
+    # Add to preview table
+    preview = Preview(diskfile, preview_filename)
+    session.add(preview)
+
+    
+def render_preview(ad, outfile):
     """
     Pass in an astrodata object and a file-like outfile.
     This function will create a jpeg rendering of the ad object
