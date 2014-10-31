@@ -34,6 +34,8 @@ from orm.filedownloadlog import FileDownloadLog
 from orm.fileuploadlog import FileUploadLog
 from orm.calcache import CalCache
 from orm.calcachequeue import CalCacheQueue
+from orm.preview import Preview
+from orm.resolve_versions import Version
 
 def create_tables(session):
     """
@@ -76,6 +78,9 @@ def create_tables(session):
     FileUploadLog.metadata.create_all(bind=pg_db)
     CalCache.metadata.create_all(bind=pg_db)
     CalCacheQueue.metadata.create_all(bind=pg_db)
+    Preview.metadata.create_all(bind=pg_db)
+    PreviewQueue.metadata.create_all(bind=pg_db)
+    Version.metadata.create_all(bind=pg_db)
 
     # Add the geometry types separately. this is postgres specific and referencing these column in local mode isn't going to work
     # Ignore any errors, commonly from column already exists...
@@ -88,7 +93,7 @@ def create_tables(session):
 
     if using_apache and not using_sqlite:
         # Now grant the apache user select on them for the www queries
-        pg_db.execute("GRANT SELECT ON file, diskfile, diskfilereport, header, fulltextheader, gmos, niri, michelle, gnirs, nifs, f2, tape, tape_id_seq, tapewrite, taperead, tapefile, notification, photstandard, photstandardobs, footprint, qareport, qametriciq, qametriczp, qametricsb, qametricpe, authentication, ingestqueue, exportqueue, archiveuser, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog, calcache TO apache;COMMIT;")
+        pg_db.execute("GRANT SELECT ON file, diskfile, diskfilereport, header, fulltextheader, gmos, niri, michelle, gnirs, nifs, f2, tape, tape_id_seq, tapewrite, taperead, tapefile, notification, photstandard, photstandardobs, footprint, qareport, qametriciq, qametriczp, qametricsb, qametricpe, authentication, ingestqueue, exportqueue, archiveuser, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog, calcache, preview TO apache;COMMIT;")
         pg_db.execute("GRANT INSERT,UPDATE ON tape, notification, qareport, qametriciq, qametriczp, qametricsb, qametricpe, authentication, archiveuser, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog TO apache;COMMIT;")
         pg_db.execute("GRANT UPDATE ON tape_id_seq, notification_id_seq, qareport_id_seq, qametriciq_id_seq, qametriczp_id_seq, qametricsb_id_seq, qametricpe_id_seq, authentication_id_seq, archiveuser_id_seq, userprogram_id_seq, usagelog_id_seq, querylog_id_seq, downloadlog_id_seq, filedownloadlog_id_seq, fileuploadlog_id_seq TO apache;COMMIT;")
         pg_db.execute("GRANT DELETE ON notification TO apache;COMMIT;")
