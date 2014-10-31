@@ -79,7 +79,6 @@ def create_tables(session):
     CalCache.metadata.create_all(bind=pg_db)
     CalCacheQueue.metadata.create_all(bind=pg_db)
     Preview.metadata.create_all(bind=pg_db)
-    PreviewQueue.metadata.create_all(bind=pg_db)
     Version.metadata.create_all(bind=pg_db)
 
     # Add the geometry types separately. this is postgres specific and referencing these column in local mode isn't going to work
