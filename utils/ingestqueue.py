@@ -11,7 +11,10 @@ from sqlalchemy.orm import make_transient
 
 from orm.geometryhacks import add_footprint, do_std_obs
 
-from fits_storage_config import storage_root, using_sqlite, using_s3
+from fits_storage_config import storage_root, using_sqlite, using_s3, using_previews
+
+if using_previews:
+    from utils.preview import make_preview
 
 from orm.file import File
 from orm.diskfile import DiskFile
@@ -280,6 +283,11 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
             logger.debug("Adding new MICHELLE entry")
             michelle = Michelle(header, diskfile.ad_object)
             session.add(michelle)
+            session.commit()
+
+        # Make the preview here
+        if using_previews:
+            make_preview(session, diskfile)
             session.commit()
 
         if diskfile.ad_object:
