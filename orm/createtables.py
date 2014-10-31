@@ -35,6 +35,7 @@ from orm.fileuploadlog import FileUploadLog
 from orm.calcache import CalCache
 from orm.calcachequeue import CalCacheQueue
 from orm.preview import Preview
+from orm.previewqueue import PreviewQueue
 from orm.resolve_versions import Version
 
 def create_tables(session):
@@ -79,6 +80,7 @@ def create_tables(session):
     CalCache.metadata.create_all(bind=pg_db)
     CalCacheQueue.metadata.create_all(bind=pg_db)
     Preview.metadata.create_all(bind=pg_db)
+    PreviewQueue.metadata.create_all(bind=pg_db)
     Version.metadata.create_all(bind=pg_db)
 
     # Add the geometry types separately. this is postgres specific and referencing these column in local mode isn't going to work

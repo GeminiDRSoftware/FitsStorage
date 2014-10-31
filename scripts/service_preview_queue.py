@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 from orm import sessionfactory
-from orm.ingestqueue import IngestQueue
-from fits_storage_config import using_s3, storage_root, defer_seconds, fits_lockfile_dir, export_destinations
-from utils.ingestqueue import ingest_file, pop_ingestqueue, ingestqueue_length
-from utils.exportqueue import add_to_exportqueue
+from orm.previewqueue import PreviewQueue
+from orm.diskfile import DiskFile
+
+from fits_storage_config import fits_lockfile_dir
+from utils.previewqueue import pop_previewqueue, previewqueue_length, make_preview
 from logger import logger, setdebug, setdemon, setlogfilesuffix
 import signal
 import sys
@@ -15,16 +16,11 @@ import traceback
 from optparse import OptionParser
 
 parser = OptionParser()
-parser.add_option("--skip-fv", action="store_true", dest="skip_fv", default=False, help="Do not run fitsverify on the files")
-parser.add_option("--skip-wmd", action="store_true", dest="skip_wmd", default=False, help="Do not run a wmd check on the files")
-parser.add_option("--no-defer", action="store_true", dest="no_defer", default=False, help="Do not defer ingestion of recently modified files")
-parser.add_option("--fast-rebuild", action="store_true", dest="fast_rebuild", default=False, help="Fast rebuild mode - skip duplication checking etc")
-parser.add_option("--make-previews", action="store_true", dest="make_previews", default=False, help="Make previews during ingest rather than queueing for later")
 parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
 parser.add_option("--name", action="store", dest="name", help="Name for this process. Used in logfile and lockfile")
 parser.add_option("--lockfile", action="store_true", dest="lockfile", help="Use a lockfile to limit instances")
-parser.add_option("--empty", action="store_true", default=False, dest="empty", help="This flag indicates that service ingest queue should empty the current queue and then exit.")
+parser.add_option("--empty", action="store_true", default=False, dest="empty", help="This flag indicates that we should empty the current queue and then exit.")
 (options, args) = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
@@ -61,7 +57,7 @@ signal.signal(signal.SIGPIPE, handler)
 signal.signal(signal.SIGTERM, nicehandler)
 
 # Annouce startup
-logger.info("*********    service_ingest_queue.py - starting up at %s", datetime.datetime.now())
+logger.info("*********    service_preview_queue.py - starting up at %s", datetime.datetime.now())
 
 if options.lockfile:
     # Does the Lockfile exist?
@@ -110,9 +106,9 @@ session = sessionfactory()
 while loop:
     try:
         # Request a queue entry
-        iq = pop_ingestqueue(session, options.fast_rebuild)
+        pq = pop_previewqueue(session)
 
-        if iq is None:
+        if pq is None:
             logger.info("Nothing on queue.")
             if options.empty:
                 logger.info("--empty flag set, exiting")
@@ -121,46 +117,25 @@ while loop:
                 logger.info("...Waiting")
             time.sleep(10)
         else:
-            # Don't query queue length in fast_rebuild mode
-            if options.fast_rebuild:
-                logger.info("Ingesting %s", iq.filename)
-            else:
-                logger.info("Ingesting %s, (%d in queue)", iq.filename, ingestqueue_length(session))
+            logger.info("Making preview for %d, (%d in queue)", pq.diskfile_id, previewqueue_length(session))
 
-            # Check if the file was very recently modified, defer ingestion if it was
-            if (not using_s3) and (options.no_defer == False) and (defer_seconds > 0):
-                fullpath = os.path.join(storage_root, iq.path, iq.filename)
-                lastmod = datetime.datetime.fromtimestamp(os.path.getmtime(fullpath))
-                now = datetime.datetime.now()
-                age = now - lastmod
-                defer = datetime.timedelta(seconds=defer_seconds)
-                if age < defer:
-                    logger.info("Deferring ingestion of file %s", iq.filename)
-                    # Defer ingestion of this file for defer_secs
-                    after = now + defer
-                    # iq is a transient ORM object, find it in the db
-                    dbiq = session.query(IngestQueue).filter(IngestQueue.id == iq.id).one()
-                    dbiq.after = after
-                    dbiq.inprogress = False
-                    session.commit()
-                    continue
             try:
-                added_diskfile = ingest_file(session, iq.filename, iq.path, iq.force_md5, iq.force, options.skip_fv, options.skip_wmd, options.make_previews)
-                # Now we also add this file to our export list if we have downstream servers and we did add a diskfile
-                if added_diskfile:
-                    for destination in export_destinations:
-                        add_to_exportqueue(session, iq.filename, iq.path, destination)
+                # Actually make the preview here
+                # Get the diskfile
+                diskfile = session.query(DiskFile).filter(DiskFile.id == pq.diskfile_id).one()
+                # make the preview
+                make_preview(session, diskfile)
             except:
-                logger.info("Problem Ingesting File - Rolling back")
-                logger.error("Exception ingesting file %s: %s : %s... %s", iq.filename, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
+                logger.info("Problem Making Preview - Rolling back")
+                logger.error("Exception making preview %s: %s : %s... %s", pq.diskfile_id, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
                 session.rollback()
                 # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
-                # iq.inprogress=False
+                # pq.inprogress=False
                 raise
-            logger.debug("Deleteing ingestqueue id %d", iq.id)
-            # iq is a transient ORM object, find it in the db
-            dbiq = session.query(IngestQueue).filter(IngestQueue.id == iq.id).one()
-            session.delete(dbiq)
+            logger.debug("Deleteing previewqueue id %d", pq.id)
+            # pq is a transient ORM object, find it in the db
+            dbpq = session.query(PreviewQueue).filter(PreviewQueue.id == pq.id).one()
+            session.delete(dbpq)
             session.commit()
 
     except KeyboardInterrupt:
@@ -180,4 +155,4 @@ while loop:
 if options.lockfile:
     logger.info("Deleting Lockfile %s", lockfile)
     os.unlink(lockfile)
-logger.info("*********    service_ingest_queue.py - exiting at %s", datetime.datetime.now())
+logger.info("*********    service_preview_queue.py - exiting at %s", datetime.datetime.now())

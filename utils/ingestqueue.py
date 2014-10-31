@@ -29,6 +29,7 @@ from orm.nifs import Nifs
 from orm.michelle import Michelle
 from orm.f2 import F2
 from orm.ingestqueue import IngestQueue
+from orm.previewqueue import PreviewQueue
 
 from utils.aws_s3 import get_s3_md5, fetch_to_staging
 
@@ -59,7 +60,7 @@ def add_to_ingestqueue(session, filename, path, force_md5=False, force=False, af
         logger.debug("Added filename %s to ingestqueue which was immediately deleted", filename)
 
 
-def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
+def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, make_previews=False):
     """
     Ingests a file into the database. If the file isn't known to the database
     at all, all three (file, diskfile, header) table entries are created.
@@ -82,6 +83,10 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
                  modtime.
     skip_fv: causes the ingest to skip running fitsverify on the file
     skip_wmd: causes the ingest to skip running wmd on the file.
+    make_preview: If we are doing previews, we usually simply add it to the preview
+                  queue here. However for a rebuild, it's more efficient to just make
+                  the preview at this point while we have the file uncompressed etc.
+                  Set this to true to make the preview at ingest time.
 
     return value is a boolean to say whether we added a new diskfile or not
     """
@@ -285,10 +290,19 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd):
             session.add(michelle)
             session.commit()
 
-        # Make the preview here
+        # Do the preview here. 
         if using_previews:
-            make_preview(session, diskfile)
-            session.commit()
+            if make_previews:
+                # Go ahead and make the preview now
+                logger.debug("Making Preview")
+                make_preview(session, diskfile)
+                session.commit()
+            else:
+                # Add it to the preview queue
+                logger.debug("Adding to preview queue")
+                pq = PreviewQueue(diskfile)
+                session.add(pq)
+                session.commit()
 
         if diskfile.ad_object:
             logger.debug("Closing centrally opened astrodata object")

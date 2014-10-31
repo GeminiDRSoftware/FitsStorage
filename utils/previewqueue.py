@@ -12,12 +12,16 @@ from sqlalchemy.orm import make_transient
 from orm.preview import Preview
 from orm.previewqueue import PreviewQueue
 
-from utils.preview import make_preview
+from fits_storage_config import using_s3, storage_root, preview_path, s3_staging_area, z_staging_area
+import bz2
 
-from fits_storage_config import using_s3, storage_root, preview_path
+from astrodata import AstroData
+import numpy
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
-
-def pop_previewqueue(session, fast_rebuild=False):
+def pop_previewqueue(session):
     """
     Returns the next thing to ingest off the queue, and sets the
     inprogress flag on that entry.
@@ -56,13 +60,6 @@ def pop_previewqueue(session, fast_rebuild=False):
         pq.inprogress = True
         session.flush()
 
-        if not fast_rebuild:
-            # Find other instances and delete them
-            others = session.query(PreviewQueue)
-            others = others.filter(PreviewQueue.inprogress == False)
-            others = others.filter(PreviewQueue.diskfile_id == pq.diskfile_id)
-            others.delete()
-
         # Make the pq into a transient instance before we return it
         # This detaches it from the session, basically it becomes a convenience container for the
         # values (diskfile_id, etc). The problem is that if it's still attached to the session
@@ -86,20 +83,137 @@ def previewqueue_length(session):
     return length
 
 
-def make_preview(session, diskfile_id):
+def make_preview(session, diskfile):
     """
-    Make the preview file and store it, and add the entry to the preview table
+    Make the preview, given the diskfile.
+    This is called from within service_ingest_queue ingest_file
+    - it will use the pre-fetched / pre-decompressed / pre-opened astrodata object if possible
+    - the diskfile object should contain an ad_object member which is an AstroData instance
     """
 
-    # Get the Diskfile object
-    query = session.query(Diskfile).filter(Diskfile.id == diskfile_id)
-    diskfile = query.one()
-
+    # Setup the preview file
+    preview_filename = diskfile.filename + "_preview.jpg"
     if using_s3:
-        # Get the preview data into a buffer, then store it to s3
-        pass
+        # Create the file in s3_staging_area
+        preview_fullpath = os.path.join(s3_staging_area, preview_filename)
     else:
-        # Make the preview filename
-        preview_filename = diskfile.filename + "_preview.jpg"
+        # Create the preview filename 
         preview_fullpath = os.path.join(storage_root, preview_path, preview_filename)
-        fp = open(preview_fullpath, 'w')
+    fp = open(preview_fullpath, 'w')
+
+    # render the preview jpg
+    # OK, for now, we only implement the case where either the diskfile.ad_object exists
+    # or the diskfile represents a local file
+    our_dfado = diskfile.ad_object == None
+    our_dfcc = False
+    if our_dfado:
+        if using_s3:
+            logger.error("This kind of preview build is not yet supported")
+            return
+        else:
+            if diskfile.compressed:
+                # Create the uncompressed cache filename and unzip to it
+                nonzfilename = diskfile.filename[:-4]
+                diskfile.uncompressed_cache_file = os.path.join(z_staging_area, nonzfilename)
+                if os.path.exists(diskfile.uncompressed_cache_file):
+                    os.unlink(diskfile.uncompressed_cache_file)
+                in_file = bz2.BZ2File(diskfile.fullpath(), mode='rb')
+                out_file = open(diskfile.uncompressed_cache_file, 'w')
+                out_file.write(in_file.read())
+                in_file.close()
+                out_file.close()
+                our_dfcc = True
+                ad_fullpath = diskfile.uncompressed_cache_file
+            else:
+                # Just use the diskfile fullpath
+                ad_fullpath = diskfile.fullpath()
+            # Open the astrodata instance
+            diskfile.ad_object = AstroData(ad_fullpath)
+
+    # Now there should be a diskfile.ad_object, either way...
+    render_preview(diskfile.ad_object, fp)
+
+    # Do any cleanup from above
+    if our_dfado:
+        diskfile.ad_object.close()
+        if our_dfcc:
+            os.unlink(ad_fullpath)
+
+    # Now we should have a preview in fp. Close the file-object
+    fp.close()
+
+    # If we're not using S3, that's it, the file is in place.
+    # If we are using s3, need to upload it now.
+    if using_s3:
+        logger.debug("Connecting to S3")
+        s3conn = S3Connection(aws_access_key, aws_secret_key)
+        bucket = s3conn.get_bucket(s3_bucket_name)
+        k = Key(bucket)
+        k.key = preview_filename
+        logger.info("Uploading %s to S3 as %s" % (preview_fullpath, preview_filename))
+        k.set_contents_from_filename(preview_fullpath)
+        os.unlink(src)
+
+
+    # Add to preview table
+    preview = Preview(diskfile, preview_filename)
+    session.add(preview)
+
+    
+def render_preview(ad, outfile):
+    """
+    Pass in an astrodata object and a file-like outfile.
+    This function will create a jpeg rendering of the ad object
+    and write it to the outfile
+    """
+
+
+    if 'GMOS' in str(ad.instrument()):
+        # Find max extent in detector pixels
+        xmax = 0
+        ymax = 0
+        ds = ad.detector_section().as_dict()
+        for i in ds.values():
+            [x1, x2, y1, y2] = i
+            xmax = x2 if x2 > xmax else xmax
+            ymax = y2 if y2 > ymax else ymax
+    
+        # Divide by binning
+        xmax /= int(ad.detector_x_bin())
+        ymax /= int(ad.detector_y_bin())
+    
+        # Make empty array for full image
+        shape = (ymax, xmax)
+        full = numpy.zeros(shape, ad['SCI', 1].data.dtype)
+    
+        # Loop through ads, pasting them in. Do gmos bias hack
+        for add in ad['SCI']:
+            s_xmin, s_xmax, s_ymin, s_ymax = add.data_section().as_pytype()
+            d_xmin, d_xmax, d_ymin, d_ymax = add.detector_section().as_pytype()
+            d_xmin /= int(ad.detector_x_bin())
+            d_xmax /= int(ad.detector_x_bin())
+            d_ymin /= int(ad.detector_y_bin())
+            d_ymax /= int(ad.detector_y_bin())
+            o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section().as_pytype()
+            bias = numpy.median(add.data[o_ymin:o_ymax, o_xmin:o_xmax])
+            full[d_ymin:d_ymax, d_xmin:d_xmax] = add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias
+    else:
+        full = ad['SCI', 1].data
+    
+    # Normalize onto range 0:1 using percentiles
+    plow = numpy.percentile(full, 0.3)
+    phigh = numpy.percentile(full, 99.7)
+    full = numpy.clip(full, plow, phigh)
+    full -= plow
+    full /= (phigh - plow)
+    
+    # plot without axes or frame
+    fig = plt.figure(frameon=False)
+    ax = plt.Axes(fig, [0, 0, 1, 1])
+    ax.set_axis_off()
+    fig.add_axes(ax)
+    ax.imshow(full, cmap=plt.cm.gray)
+    
+    fig.savefig(outfile, format='jpg')
+
+    plt.close()
