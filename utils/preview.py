@@ -97,3 +97,5 @@ def render_preview(ad, outfile):
     ax.imshow(full, cmap=plt.cm.gray)
     
     fig.savefig(outfile, format='jpg')
+
+    plt.close()
