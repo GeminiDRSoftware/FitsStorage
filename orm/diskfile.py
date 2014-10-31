@@ -70,7 +70,7 @@ class DiskFile(Base):
             # Create the uncompressed cache filename and unzip to it
             try:
                 if given_filename.endswith(".bz2"):
-                    nonzfilename = given_filename[:-3]
+                    nonzfilename = given_filename[:-4]
                 else:
                     nonzfilename = given_filename + "_bz2unzipped"
                 self.uncompressed_cache_file = os.path.join(z_staging_area, nonzfilename)
