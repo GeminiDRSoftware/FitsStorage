@@ -14,7 +14,7 @@ from orm.geometryhacks import add_footprint, do_std_obs
 from fits_storage_config import storage_root, using_sqlite, using_s3, using_previews
 
 if using_previews:
-    from utils.preview import make_preview
+    from utils.previewqueue import make_preview
 
 from orm.file import File
 from orm.diskfile import DiskFile
@@ -291,18 +291,21 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, ma
             session.commit()
 
         # Do the preview here. 
-        if using_previews:
-            if make_previews:
-                # Go ahead and make the preview now
-                logger.debug("Making Preview")
-                make_preview(session, diskfile)
-                session.commit()
-            else:
-                # Add it to the preview queue
-                logger.debug("Adding to preview queue")
-                pq = PreviewQueue(diskfile)
-                session.add(pq)
-                session.commit()
+        try:
+            if using_previews:
+                if make_previews:
+                    # Go ahead and make the preview now
+                    logger.debug("Making Preview")
+                    make_preview(session, diskfile)
+                    session.commit()
+                else:
+                    # Add it to the preview queue
+                    logger.debug("Adding to preview queue")
+                    pq = PreviewQueue(diskfile)
+                    session.add(pq)
+                    session.commit()
+        except:
+            logger.error("Error making preview for %s", diskfile.filename)
 
         if diskfile.ad_object:
             logger.debug("Closing centrally opened astrodata object")
