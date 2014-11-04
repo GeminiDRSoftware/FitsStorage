@@ -170,33 +170,47 @@ def render_preview(ad, outfile):
 
     if 'GMOS' in str(ad.instrument()):
         # Find max extent in detector pixels
+        xmin = 10000
+        ymin = 10000
         xmax = 0
         ymax = 0
         ds = ad.detector_section().as_dict()
         for i in ds.values():
             [x1, x2, y1, y2] = i
+            xmin = x1 if x1 < xmin else xmin
+            ymin = y1 if y1 < ymin else ymin
             xmax = x2 if x2 > xmax else xmax
             ymax = y2 if y2 > ymax else ymax
     
         # Divide by binning
+        xmin /= int(ad.detector_x_bin())
+        ymin /= int(ad.detector_y_bin())
         xmax /= int(ad.detector_x_bin())
         ymax /= int(ad.detector_y_bin())
     
+        logger.debug("Full Image extent is: %d:%d, %d:%d", xmin, xmax, ymin, ymax)
+
         # Make empty array for full image
-        shape = (ymax, xmax)
+        shape = (ymax-ymin, xmax-xmin)
         full = numpy.zeros(shape, ad['SCI', 1].data.dtype)
     
         # Loop through ads, pasting them in. Do gmos bias hack
         for add in ad['SCI']:
             s_xmin, s_xmax, s_ymin, s_ymax = add.data_section().as_pytype()
+            logger.debug("Source Image extent is: %d:%d, %d:%d", s_xmin, s_xmax, s_ymin, s_ymax)
             d_xmin, d_xmax, d_ymin, d_ymax = add.detector_section().as_pytype()
             d_xmin /= int(ad.detector_x_bin())
             d_xmax /= int(ad.detector_x_bin())
             d_ymin /= int(ad.detector_y_bin())
             d_ymax /= int(ad.detector_y_bin())
+            d_xmin -= xmin
+            d_xmax -= xmin
+            d_ymin -= ymin
+            d_ymax -= ymin
             o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section().as_pytype()
             bias = numpy.median(add.data[o_ymin:o_ymax, o_xmin:o_xmax])
             gain = float(add.gain())
+            logger.debug("Pasting: %d:%d,%d:%d -> %d:%d,%d:%d", s_xmin, s_xmax, s_ymin, s_ymax, d_xmin, d_xmax, d_ymin, d_ymax)
             full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
     else:
         full = ad['SCI', 1].data
