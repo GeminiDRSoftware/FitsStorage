@@ -31,6 +31,7 @@ from web.user import staff_access, user_list, userfromcookie
 from web.userprogram import my_programs
 from web.searchform import searchform, nameresolver
 from web.logreports import usagereport, usagedetails, downloadlog, usagestats
+from web.preview import preview
 
 from orm import sessionfactory
 from orm.file import File
@@ -38,6 +39,7 @@ from orm.diskfile import DiskFile
 from orm.diskfilereport import DiskFileReport
 from orm.fulltextheader import FullTextHeader
 from orm.usagelog import UsageLog
+
 
 # The top top level handler. This simply wraps thehandler with logging funcitons
 def handler(req):
@@ -226,7 +228,7 @@ def thehandler(req):
         retval = upload_file(req, things[0], processed_cal=True)
         return retval
 
-    # The generic uploaD_file server
+    # The generic upload_file server
     if this == 'upload_file':
         if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
@@ -498,6 +500,12 @@ def thehandler(req):
         if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return user_list(req)
+
+    # previews
+    if this == "preview":
+        if this in blocked_urls:
+            return apache.HTTP_FORBIDDEN
+        return preview(req, things)
 
 
     # Some static files that the server should serve via a redirect.

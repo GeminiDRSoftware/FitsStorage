@@ -9,6 +9,8 @@ from gemini_metadata_utils import GeminiDataLabel
 
 from utils.userprogram import canhave
 
+from fits_storage_config import using_previews
+
 class SummaryGenerator(object):
     """
     This is the web summary generator class. You instantiate this class and
@@ -609,8 +611,16 @@ class SummaryGenerator(object):
         # Determine if this user has access to this file
         can = canhave(None, self.user, header, False, self.user_progid_list)
         if can:
-            html = '<div class="center"><a href="/file/%s">[D]</a>' % header.diskfile.file.name
+            html = '<div class="center">'
 
+            # Preview link
+            if using_previews:
+                html += '<a href="/preview/%s">[P] </a>' % header.diskfile.file.name
+
+            # Download link
+            html += '<a href="/file/%s">[D]</a>' % header.diskfile.file.name
+
+            # Download select button
             if self.sumtype in ['searchresults', 'associated_cals']:
                 html += " <input type='checkbox' name='files' value='%s'>" % header.diskfile.file.name
 
