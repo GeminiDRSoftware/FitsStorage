@@ -99,7 +99,6 @@ def make_preview(session, diskfile):
     else:
         # Create the preview filename 
         preview_fullpath = os.path.join(storage_root, preview_path, preview_filename)
-    fp = open(preview_fullpath, 'w')
 
     # render the preview jpg
     # OK, for now, we only implement the case where either the diskfile.ad_object exists
@@ -131,7 +130,13 @@ def make_preview(session, diskfile):
             diskfile.ad_object = AstroData(ad_fullpath)
 
     # Now there should be a diskfile.ad_object, either way...
-    render_preview(diskfile.ad_object, fp)
+    fp = open(preview_fullpath, 'w')
+    try:
+        render_preview(diskfile.ad_object, fp)
+        fp.close()
+    except:
+        os.unlink(preview_fullpath)
+        raise
 
     # Do any cleanup from above
     if our_dfado:
@@ -140,7 +145,6 @@ def make_preview(session, diskfile):
             os.unlink(ad_fullpath)
 
     # Now we should have a preview in fp. Close the file-object
-    fp.close()
 
     # If we're not using S3, that's it, the file is in place.
     # If we are using s3, need to upload it now.
@@ -194,7 +198,7 @@ def render_preview(ad, outfile):
         shape = (ymax-ymin, xmax-xmin)
         full = numpy.zeros(shape, ad['SCI', 1].data.dtype)
     
-        # Loop through ads, pasting them in. Do gmos bias hack
+        # Loop through ads, pasting them in. Do gmos bias and gain hack
         for add in ad['SCI']:
             s_xmin, s_xmax, s_ymin, s_ymax = add.data_section().as_pytype()
             logger.debug("Source Image extent is: %d:%d, %d:%d", s_xmin, s_xmax, s_ymin, s_ymax)
@@ -214,6 +218,9 @@ def render_preview(ad, outfile):
             full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
     else:
         full = ad['SCI', 1].data
+
+        # Do a numpy squeeze on it - this collapses any axis with 1-pixel extent
+        full = numpy.squeeze(full)
     
     # Normalize onto range 0:1 using percentiles
     plow = numpy.percentile(full, 0.3)
