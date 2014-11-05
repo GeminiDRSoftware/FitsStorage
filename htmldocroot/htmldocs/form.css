@@ -82,12 +82,15 @@ input {
 #previewbox {
     display: none;
     position: fixed;
-    top: 100px;
-    right: 100px;
+    box-shadow: 10px 10px 5px #888888;
+    top: 50px;
+    right: 50px;
     width: 840px;
     height: 640px;
     background: #DDF;
-    border: double;
+    border: 2px solid;
+    border-radius: 5px;
+    text-align: center;
 }
 
 #previewimage {
