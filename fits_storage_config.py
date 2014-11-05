@@ -5,20 +5,21 @@
 #   FITSSTORAGECONFIG_LOCALMODE, is true
 
 # Is this an archive server
-use_as_archive = True
+#use_as_archive = True
+use_as_archive = False
 
 # AWS S3 info
 using_s3 = False
 s3_bucket_name = 'gemini-archive'
-s3_staging_area = '/data/s3_staging'
+s3_staging_area = '/data/FitsStorage/s3_staging'
 aws_access_key = 'AKIAJ554XPYMJZBPGQAA'
 aws_secret_key = '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'
 
 # Staging area for uncompressed cache of compressed file being processed
-z_staging_area = '/data/gz_staging'
+z_staging_area = '/data/FitsStorage/z_staging'
 
 # Configure the path to the storage root here 
-storage_root = '/dataflow'
+storage_root = '/data/FitsStorage/dataflow'
 #storage_root = '/net/wikiwiki/dataflow'
 #storage_root = '/net/hahalua/data/export'
 
@@ -60,6 +61,10 @@ export_bzip = True
 # This is the subdirectory in dataroot where processed_cals live
 processed_cals_path = "reduced_cals"
 
+# This is the subdirectory in dataroot where preview files live
+using_previews = True
+preview_path = "previews"
+
 # The DAS calibration reduction path is used to find the last processing
 # date for the gmoscal page's autodetect daterange feature
 das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
@@ -67,7 +72,7 @@ das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
 
 # Configure the site and other misc stuff here
 # Especially for archive systems, make the servername a fully qualified domain name.
-fits_servername = "hbffits3"
+fits_servername = "hahalua"
 fits_system_status = "development"
 
 # Limit on number of results in open searches
@@ -88,13 +93,13 @@ fits_database = 'postgresql:///'+fits_dbname
 fits_aux_datadir = "/opt/FitsStorage/data"
 
 # Configure the Backup Directory here
-fits_db_backup_dir = "/data/backups"
+fits_db_backup_dir = "/data/FitsStorage/backups"
 
 # Configure the LockFile Directory here
-fits_lockfile_dir = "/data/logs"
+fits_lockfile_dir = "/data/FitsStorage/logs"
 
 # Configure the log directory here
-fits_log_dir = "/data/logs/"
+fits_log_dir = "/data/FitsStorage/logs/"
 
 # Configure the tape scratch directory here
 fits_tape_scratchdir = "/data/tapescratch"

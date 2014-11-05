@@ -199,6 +199,24 @@ function nameresolver() {
     });
 };
 
+function setPreviewVisibility() {
+    $('#previewbox').hide();
+    $('.preview').click(function(e) {
+        e.preventDefault();
+        // Set the image to the loading swirlything
+        $('#previewbox').children('img').attr('src', "/htmldocs/ajax-loading.gif");
+        $('#previewbox').show();
+        // Get the URL from the a href link
+        var url = ($(this).children('a').attr('href'));
+        // Set the URL of the img element to the preview url
+        $('#previewbox').children('img').attr('src', url);
+        // Hide it on click anywhere
+        $('#previewbox').click(function() {
+            $('#previewbox').hide();
+        });
+    });
+};
+
 
 $(document).ready(function() {
     $("#loading").hide();
@@ -229,5 +247,6 @@ $(document).ready(function() {
     $('#resultstab').click(function() {
         ResultsTab();
     });
+    setPreviewVisibility();
 });
 

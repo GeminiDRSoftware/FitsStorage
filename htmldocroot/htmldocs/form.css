@@ -79,6 +79,27 @@ input {
     display: inline-block;
 }
 
+#previewbox {
+    display: none;
+    position: fixed;
+    top: 100px;
+    right: 100px;
+    width: 840px;
+    height: 640px;
+    background: #DDF;
+    border: double;
+}
+
+#previewimage {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
 .center {
     text-align: center;
 }
