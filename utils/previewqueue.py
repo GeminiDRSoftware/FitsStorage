@@ -216,6 +216,22 @@ def render_preview(ad, outfile):
             gain = float(add.gain())
             logger.debug("Pasting: %d:%d,%d:%d -> %d:%d,%d:%d", s_xmin, s_xmax, s_ymin, s_ymax, d_xmin, d_xmax, d_ymin, d_ymax)
             full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
+
+    elif str(ad.instrument()) == 'GSAOI':
+        gap = 125
+        size = 4096 + gap
+        shape = (size, size)
+        full = numpy.zeros(shape, ad['SCI', 1].data.dtype)
+        # Loop though ads, paste them in
+        for add in ad['SCI']:
+            [x1, x2, y1, y2] = add.detector_section().as_pytype()
+            xoffset = 0 if x1 == 0 else gap
+            yoffset = 0 if y1 == 0 else gap
+            logger.debug("x1 x2 y1 y2: %d %d %d %d", x1, x2, y1, y2)
+            logger.debug("xoffset yoffset", xoffset, yoffset)
+            logger.debug("full shape: %s", full[y1+yoffset:y2+yoffset, x1+xoffset:x2+xoffset].shape)
+            logger.debug("data shape: %s", add.data.shape)
+            full[y1+yoffset:y2+yoffset, x1+xoffset:x2+xoffset] = add.data
     else:
         full = ad['SCI', 1].data
 
