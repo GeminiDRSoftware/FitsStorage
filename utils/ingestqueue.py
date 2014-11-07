@@ -28,6 +28,7 @@ from orm.niri import Niri
 from orm.nifs import Nifs
 from orm.michelle import Michelle
 from orm.f2 import F2
+from orm.gsaoi import Gsaoi
 from orm.ingestqueue import IngestQueue
 from orm.previewqueue import PreviewQueue
 
@@ -264,30 +265,35 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, ma
             gmos = Gmos(header, diskfile.ad_object)
             session.add(gmos)
             session.commit()
-        if inst == 'NIRI':
+        elif inst == 'NIRI':
             logger.debug("Adding new NIRI entry")
             niri = Niri(header, diskfile.ad_object)
             session.add(niri)
             session.commit()
-        if inst == 'GNIRS':
+        elif inst == 'GNIRS':
             logger.debug("Adding new GNIRS entry")
             gnirs = Gnirs(header, diskfile.ad_object)
             session.add(gnirs)
             session.commit()
-        if inst == 'NIFS':
+        elif inst == 'NIFS':
             logger.debug("Adding new NIFS entry")
             nifs = Nifs(header, diskfile.ad_object)
             session.add(nifs)
             session.commit()
-        if inst == 'F2':
+        elif inst == 'F2':
             logger.debug("Assing new F2 entry")
             flam2 = F2(header, diskfile.ad_object)
             session.add(flam2)
             session.commit()
-        if inst == 'michelle':
+        elif inst == 'michelle':
             logger.debug("Adding new MICHELLE entry")
             michelle = Michelle(header, diskfile.ad_object)
             session.add(michelle)
+            session.commit()
+        elif inst == 'GSAOI':
+            logger.debug("Adding new GSAOI entry")
+            gsaoi = Gsaoi(header, diskfile.ad_object)
+            session.add(gsaoi)
             session.commit()
 
         # Do the preview here. 

@@ -17,6 +17,7 @@ from orm.niri import Niri
 from orm.gnirs import Gnirs
 from orm.nifs import Nifs
 from orm.f2 import F2
+from orm.gsaoi import Gsaoi
 from orm.michelle import Michelle
 from orm.ingestqueue import IngestQueue
 from orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
@@ -55,6 +56,7 @@ def create_tables(session):
     Nifs.metadata.create_all(bind=pg_db)
     Gnirs.metadata.create_all(bind=pg_db)
     F2.metadata.create_all(bind=pg_db)
+    Gsaoi.metadata.create_all(bind=pg_db)
     IngestQueue.metadata.create_all(bind=pg_db)
     Michelle.metadata.create_all(bind=pg_db)
     Tape.metadata.create_all(bind=pg_db)
@@ -94,7 +96,7 @@ def create_tables(session):
 
     if using_apache and not using_sqlite:
         # Now grant the apache user select on them for the www queries
-        pg_db.execute("GRANT SELECT ON file, diskfile, diskfilereport, header, fulltextheader, gmos, niri, michelle, gnirs, nifs, f2, tape, tape_id_seq, tapewrite, taperead, tapefile, notification, photstandard, photstandardobs, footprint, qareport, qametriciq, qametriczp, qametricsb, qametricpe, authentication, ingestqueue, exportqueue, archiveuser, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog, calcache, preview TO apache;COMMIT;")
+        pg_db.execute("GRANT SELECT ON file, diskfile, diskfilereport, header, fulltextheader, gmos, niri, michelle, gnirs, nifs, f2, gsaoi, tape, tape_id_seq, tapewrite, taperead, tapefile, notification, photstandard, photstandardobs, footprint, qareport, qametriciq, qametriczp, qametricsb, qametricpe, authentication, ingestqueue, exportqueue, archiveuser, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog, calcache, preview TO apache;COMMIT;")
         pg_db.execute("GRANT INSERT,UPDATE ON tape, notification, qareport, qametriciq, qametriczp, qametricsb, qametricpe, authentication, archiveuser, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog TO apache;COMMIT;")
         pg_db.execute("GRANT UPDATE ON tape_id_seq, notification_id_seq, qareport_id_seq, qametriciq_id_seq, qametriczp_id_seq, qametricsb_id_seq, qametricpe_id_seq, authentication_id_seq, archiveuser_id_seq, userprogram_id_seq, usagelog_id_seq, querylog_id_seq, downloadlog_id_seq, filedownloadlog_id_seq, fileuploadlog_id_seq TO apache;COMMIT;")
         pg_db.execute("GRANT DELETE ON notification TO apache;COMMIT;")
