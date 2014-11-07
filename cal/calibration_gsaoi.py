@@ -39,9 +39,10 @@ class CalibrationGSAOI(Calibration):
         # Return a list of the calibrations applicable to this GSAOI dataset
         self.applicable = []
 
-        # Science OBJECTs require DomeFlats
+        # Science OBJECTs require DomeFlats and photometric_standards
         if self.descriptors['observation_type'] == 'OBJECT' and self.descriptors['observation_class'] == 'science':
             self.applicable.append('domeflat')
+            self.applicable.append('photometric_standard')
 
 
     def domeflat(self, processed=False, howmany=None):
@@ -82,3 +83,43 @@ class CalibrationGSAOI(Calibration):
 
         query = query.limit(howmany)
         return query.all()
+
+    def photometric_standard(self, processed=False, howmany=None):
+        query = self.session.query(Header).select_from(join(join(Gsaoi, Header), DiskFile))
+
+        if processed:
+            # Not implemented
+            return []
+        else:
+            # Default number to associate
+            howmany = howmany if howmany else 8
+
+        # They are partnerCal OBJECT frames
+        query = query.filter(Header.reduction == 'RAW')
+        query = query.filter(Header.observation_type == 'OBJECT')
+        query = query.filter(Header.observation_class == 'partnerCal')
+ 
+        # Search only canonical entries
+        query = query.filter(DiskFile.canonical == True)
+
+        # Knock out the FAILs
+        query = query.filter(Header.qa_state != 'Fail')
+
+        # Must totally match: filter_name
+        query = query.filter(Gsaoi.filter_name == self.descriptors['filter_name'])
+
+        # Absolute time separation must be within 1 month
+        max_interval = datetime.timedelta(days=30)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
+
+        # Order by absolute time separation.
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
+
+        query = query.limit(howmany)
+        return query.all()
+
