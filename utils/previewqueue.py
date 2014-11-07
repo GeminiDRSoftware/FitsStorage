@@ -171,7 +171,6 @@ def render_preview(ad, outfile):
     and write it to the outfile
     """
 
-
     if 'GMOS' in str(ad.instrument()):
         # Find max extent in detector pixels
         xmin = 10000
@@ -185,7 +184,7 @@ def render_preview(ad, outfile):
             ymin = y1 if y1 < ymin else ymin
             xmax = x2 if x2 > xmax else xmax
             ymax = y2 if y2 > ymax else ymax
-    
+
         # Divide by binning
         xmin /= int(ad.detector_x_bin())
         ymin /= int(ad.detector_y_bin())
@@ -195,7 +194,8 @@ def render_preview(ad, outfile):
         logger.debug("Full Image extent is: %d:%d, %d:%d", xmin, xmax, ymin, ymax)
 
         # Make empty array for full image
-        shape = (ymax-ymin, xmax-xmin)
+        gap = 40 # approx chip gap in pixels
+        shape = (ymax-ymin, (xmax-xmin)+2*gap)
         full = numpy.zeros(shape, ad['SCI', 1].data.dtype)
     
         # Loop through ads, pasting them in. Do gmos bias and gain hack
@@ -203,6 +203,17 @@ def render_preview(ad, outfile):
             s_xmin, s_xmax, s_ymin, s_ymax = add.data_section().as_pytype()
             logger.debug("Source Image extent is: %d:%d, %d:%d", s_xmin, s_xmax, s_ymin, s_ymax)
             d_xmin, d_xmax, d_ymin, d_ymax = add.detector_section().as_pytype()
+            # Figure out which chip we are and add gap padding
+            # All the gmos chips ever have been 2048 pixels in X.
+            if d_xmin == 4096 or d_xmin == 5120:
+                pad = 2*gap
+            elif d_xmin == 2048 or d_xmin == 3072:
+                pad = gap
+            else:
+                pad = 0
+            
+            d_xmin += pad
+            d_xmax += pad
             d_xmin /= int(ad.detector_x_bin())
             d_xmax /= int(ad.detector_x_bin())
             d_ymin /= int(ad.detector_y_bin())
