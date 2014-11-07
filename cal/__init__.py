@@ -9,6 +9,7 @@ from cal.calibration_gnirs import CalibrationGNIRS
 from cal.calibration_nifs import CalibrationNIFS
 from cal.calibration_michelle import CalibrationMICHELLE
 from cal.calibration_f2 import CalibrationF2
+from cal.calibration_gsaoi import CalibrationGSAOI
 
 from orm.file import File
 from orm.diskfile import DiskFile
@@ -49,6 +50,8 @@ def get_cal_object(session, filename, header=None, descriptors=None, types=None)
         cal = CalibrationMICHELLE(session, header, descriptors, types)
     elif instrument == 'F2':
         cal = CalibrationF2(session, header, descriptors, types)
+    elif instrument == 'GSAOI':
+        cal = CalibrationGSAOI(session, header, descriptors, types)
     else:
         cal = Calibration(session, header, descriptors, types)
 

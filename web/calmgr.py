@@ -120,6 +120,8 @@ def calmgr(req, selection):
                 cals = c.lampoff_flat()
             elif caltype == 'qh_flat':
                 cals = c.qh_flat()
+            elif caltype == 'domeflat':
+                cals = c.domeflat()
             elif caltype == 'specphot':
                 cals = c.specphot()
             elif caltype == 'photometric_standard':
@@ -234,6 +236,8 @@ def calmgr(req, selection):
                                 cals = c.lampoff_flat()
                             elif caltype == 'qh_flat':
                                 cals = c.qh_flat()
+                            elif caltype == 'domeflat':
+                                cals = c.domeflat()
                             elif caltype == 'specphot':
                                 cals = c.specphot()
                             elif caltype == 'photometric_standard':

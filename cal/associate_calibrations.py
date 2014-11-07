@@ -42,6 +42,11 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
             if flats:
                 calheaders += flats
 
+        if 'domeflat' in calobj.applicable and (caltype == 'all' or caltype == 'domeflat'):
+            domeflats = calobj.domeflat()
+            if domeflats:
+                calheaders += domeflats
+
         if 'lampoff_flat' in calobj.applicable and (caltype == 'all' or caltype == 'lampoff_flat'):
             lampoff_flats = calobj.lampoff_flat()
             if lampoff_flats:
