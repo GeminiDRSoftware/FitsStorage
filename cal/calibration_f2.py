@@ -49,12 +49,18 @@ class CalibrationF2(Calibration):
                 self.descriptors['observation_class'] not in ['acq', 'acqCal']):
             self.applicable.append('dark')
             self.applicable.append('flat')
+            # And if they're science frames, they require a photometric_standard
+            if self.descriptors['observation_class'] == 'science':
+                self.applicable.append('photometric_standard')
 
         # Spectroscopy OBJECTs require a dark, flat and arc
         if (self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == True):
             self.applicable.append('dark')
             self.applicable.append('flat')
             self.applicable.append('arc')
+            # And if they're science frames, they require a telluric_standard
+            if self.descriptors['observation_class'] == 'science':
+                self.applicable.append('telluric_standard')
 
         # FLAT frames require DARKs
         if self.descriptors['observation_type'] == 'FLAT':
@@ -148,7 +154,7 @@ class CalibrationF2(Calibration):
         query = query.limit(howmany)
         return query.all()
 
-    def arc(self, sameprog=False, howmany=None):
+    def arc(self, processed=False, howmany=None):
         query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
         query = query.filter(Header.observation_type == 'ARC')
 
@@ -187,3 +193,94 @@ class CalibrationF2(Calibration):
 
         query = query.limit(howmany)
         return query.all()
+
+    def photometric_standard(self, processed=False, howmany=None):
+        query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
+
+        if processed:
+            # Not a valid concept
+            return []
+        else:
+            query = query.filter(Header.reduction == 'RAW')
+            # Default number to associate
+            howmany = howmany if howmany else 10
+
+        # Search only canonical entries
+        query = query.filter(DiskFile.canonical == True)
+
+        # Knock out the FAILs
+        query = query.filter(Header.qa_state != 'Fail')
+
+        # Phot standards are OBJECT imaging frames
+        query = query.filter(Header.observation_type == 'OBJECT')
+        query = query.filter(Header.spectroscopy == False)
+
+        # Phot standards are partnerCals
+        query = query.filter(Header.observation_class == 'partnerCal')
+
+        # Must match filter and lyot stop
+        query = query.filter(F2.filter_name == self.descriptors['filter_name'])
+        query = query.filter(F2.lyot_stop == self.descriptors['lyot_stop'])
+
+        # Absolute time separation must be within 24 hours of the science
+        max_interval = datetime.timedelta(days=1)
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
+
+        # Order by absolute time separation.
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
+
+        query = query.limit(howmany)
+        return query.all()
+
+
+    def telluric_standard(self, processed=False, howmany=None):
+        query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
+
+        if processed:
+            # Not a valid concept
+            return []
+        else:
+            query = query.filter(Header.reduction == 'RAW')
+            # Default number to associate
+            howmany = howmany if howmany else 10
+
+        # Search only canonical entries
+        query = query.filter(DiskFile.canonical == True)
+
+        # Knock out the FAILs
+        query = query.filter(Header.qa_state != 'Fail')
+
+        # Telluric standards are OBJECT spectroscopy partnerCal frames
+        query = query.filter(Header.observation_type == 'OBJECT')
+        query = query.filter(Header.spectroscopy == True)
+        query = query.filter(Header.observation_class == 'partnerCal')
+
+        # Must match filter, lyot_stop, focal_plane_mask, disperser
+        query = query.filter(F2.filter_name == self.descriptors['filter_name'])
+        query = query.filter(F2.lyot_stop == self.descriptors['lyot_stop'])
+        query = query.filter(F2.focal_plane_mask == self.descriptors['focal_plane_mask'])
+        query = query.filter(F2.disperser == self.descriptors['disperser'])
+
+        # Central Wavelength must match within tollerance
+        # Occassionally we get a None, so run this in a try except
+        try:
+            cenwlen_lo = float(self.descriptors['central_wavelength']) - 0.001
+            cenwlen_hi = float(self.descriptors['central_wavelength']) + 0.001
+            query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
+        except TypeError:
+            pass
+
+        # Order by absolute time separation.
+        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
+        # Use the ut_datetime_secs column for faster and more portable ordering
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
+
+        query = query.limit(howmany)
+        return query.all()
+
