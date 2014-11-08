@@ -197,8 +197,9 @@ def summary_table(req, sumtype, headers, selection, links=True, user=None, user_
         req.write('<p>Click the [P] to preview an image of the data in your browser. Click the [D] to download that one file, use the check boxes to select a subset of the results to download, or if available a download all link is at <a href="#tableend"> the end of the table</a>. Click the filename to see the full header in a new tab. Click anything else to add that to your search criteria.</p>')
         req.write("<FORM action='/download' method='POST'>")
 
-    # Insert the preview box into the html
-    req.write('<span id="previewbox">Click this box to close it. Click [P] links to switch image.<br /><img id="previewimage" src="/htmldocs/ajax-loading.gif" alt=""></span>')
+    if sumtype == 'searchresults':
+        # Insert the preview box into the html
+        req.write('<span id="previewbox">Click this box to close it. Click [P] links to switch image.<br /><img id="previewimage" src="/htmldocs/ajax-loading.gif" alt=""></span>')
 
     req.write('<TABLE class="fullwidth">')
 
