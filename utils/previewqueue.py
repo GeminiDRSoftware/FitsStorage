@@ -297,7 +297,7 @@ def render_preview(ad, outfile):
     ax = plt.Axes(fig, [0, 0, 1, 1])
     ax.set_axis_off()
     fig.add_axes(ax)
-    ax.imshow(full, cmap=plt.cm.hot)
+    ax.imshow(full, cmap=plt.cm.gray)
     
     fig.savefig(outfile, format='jpg')
 
