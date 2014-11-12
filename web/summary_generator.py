@@ -615,7 +615,8 @@ class SummaryGenerator(object):
 
             # Preview link
             if using_previews:
-                html += '<span class="preview"><a href="/preview/%s">[P] </a></span>' % header.diskfile.file.name
+                if header.diskfile.previews:
+                    html += '<span class="preview"><a href="/preview/%s">[P] </a></span>' % header.diskfile.file.name
 
             # Download link
             html += '<a href="/file/%s">[D]</a>' % header.diskfile.file.name
