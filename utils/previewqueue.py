@@ -228,6 +228,9 @@ def render_preview(ad, outfile):
             logger.debug("Pasting: %d:%d,%d:%d -> %d:%d,%d:%d", s_xmin, s_xmax, s_ymin, s_ymax, d_xmin, d_xmax, d_ymin, d_ymax)
             full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
 
+        full = norm(full)
+           
+
     elif str(ad.instrument()) == 'GSAOI':
         gap = 125
         size = 4096 + gap
@@ -243,18 +246,47 @@ def render_preview(ad, outfile):
             logger.debug("full shape: %s", full[y1+yoffset:y2+yoffset, x1+xoffset:x2+xoffset].shape)
             logger.debug("data shape: %s", add.data.shape)
             full[y1+yoffset:y2+yoffset, x1+xoffset:x2+xoffset] = add.data
+
+        full = norm(full)
+
+    elif str(ad.instrument()) == 'TReCS':
+        # We just preview the first extension for now.
+        sciext = 1
+        # Just sum up along the 4th axis. Ahem, this is the 0th axis in numpy land
+        data = ad['SCI', sciext].data
+        data = numpy.sum(data, axis=0)
+        # Now the new 0th axis is the chop position
+        # If it's two long, subtract the two, otherwise just go with first plane
+        chop_a = None
+        chop_b = None
+        if data.shape[0] == 2:
+            chop_a = data[0,:,:]
+            chop_b = data[1,:,:]
+            data = chop_a - chop_b
+        else:
+            data = data[0,:,:]
+
+        data = norm(data)
+        if chop_a is not None and chop_b is not None:
+            # Make a tile version
+            chop_a = norm(chop_a)
+            chop_b = norm(chop_b)
+            full_shape = (500, 660)
+            full = numpy.zeros(full_shape, data.dtype)
+            full[260:500, 0:320] = chop_a
+            full[260:500, 340:660] = chop_b
+            full[0:240, 180:500] = data
+        else:
+            # Just paste in the data
+            full = data
     else:
+        # Generic plot the first extention case
         full = ad['SCI', 1].data
 
         # Do a numpy squeeze on it - this collapses any axis with 1-pixel extent
         full = numpy.squeeze(full)
-    
-    # Normalize onto range 0:1 using percentiles
-    plow = numpy.percentile(full, 0.3)
-    phigh = numpy.percentile(full, 99.7)
-    full = numpy.clip(full, plow, phigh)
-    full -= plow
-    full /= (phigh - plow)
+
+        full = norm(full)
     
     # plot without axes or frame
     fig = plt.figure(frameon=False)
@@ -266,3 +298,16 @@ def render_preview(ad, outfile):
     fig.savefig(outfile, format='jpg')
 
     plt.close()
+
+def norm(data, percentile=0.3):
+    """
+    Normalize the data onto 0:1 using percentiles
+    """
+    lower = percentile
+    upper = 100.0 - percentile
+    plow = numpy.percentile(data, lower)
+    phigh = numpy.percentile(data, upper)
+    data = numpy.clip(data, plow, phigh)
+    data -= plow
+    data /= (phigh - plow)
+    return data 
