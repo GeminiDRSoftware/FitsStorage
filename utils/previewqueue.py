@@ -249,7 +249,7 @@ def render_preview(ad, outfile):
 
         full = norm(full)
 
-    elif str(ad.instrument()) == 'TReCS':
+    elif str(ad.instrument()) in ['TReCS', 'michelle']:
         # We just preview the first extension for now.
         sciext = 1
         # Just sum up along the 4th axis. Ahem, this is the 0th axis in numpy land
@@ -263,6 +263,10 @@ def render_preview(ad, outfile):
             chop_a = data[0,:,:]
             chop_b = data[1,:,:]
             data = chop_a - chop_b
+        elif data.shape[0] == 3:
+            chop_a = data[1,:,:]
+            chop_b = data[2,:,:]
+            data = data[0,:,:]
         else:
             data = data[0,:,:]
 
@@ -293,7 +297,7 @@ def render_preview(ad, outfile):
     ax = plt.Axes(fig, [0, 0, 1, 1])
     ax.set_axis_off()
     fig.add_axes(ax)
-    ax.imshow(full, cmap=plt.cm.gray)
+    ax.imshow(full, cmap=plt.cm.hot)
     
     fig.savefig(outfile, format='jpg')
 
