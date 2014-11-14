@@ -224,7 +224,12 @@ def render_preview(ad, outfile):
             d_ymax -= ymin
             o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section().as_pytype()
             bias = numpy.median(add.data[o_ymin:o_ymax, o_xmin:o_xmax])
-            gain = float(add.gain())
+            gain = 1.0
+            try:
+                # This throws an exception sometimes if some of the values are None?
+                gain = float(add.gain())
+            except:
+                pass
             logger.debug("Pasting: %d:%d,%d:%d -> %d:%d,%d:%d", s_xmin, s_xmax, s_ymin, s_ymax, d_xmin, d_xmax, d_ymin, d_ymax)
             full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
 
