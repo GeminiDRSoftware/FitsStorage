@@ -4,7 +4,7 @@ from orm.previewqueue import PreviewQueue
 from orm.diskfile import DiskFile
 
 from fits_storage_config import fits_lockfile_dir
-from utils.previewqueue import pop_previewqueue, previewqueue_length, make_preview
+from utils.previewqueue import pop_previewqueue, make_preview
 from logger import logger, setdebug, setdemon, setlogfilesuffix
 import signal
 import sys
