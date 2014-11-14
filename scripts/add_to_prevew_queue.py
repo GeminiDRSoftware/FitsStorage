@@ -1,6 +1,7 @@
 from orm import sessionfactory
 from orm.previewqueue import PreviewQueue
 from orm.diskfile import DiskFile
+from orm.header import Header
 from logger import logger, setdebug, setdemon
 import datetime
 import sys
@@ -9,6 +10,7 @@ import sys
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--file-pre", action="store", type="string", dest="file_pre", help="filename iprefix to select files to queue by")
+parser.add_option("--instrument", action="store", type="string", dest="instrument", help="add files from this instrument only")
 parser.add_option("--all", action="store_true", dest="all", help="queue all observations in database. Use with Caution")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
@@ -30,6 +32,11 @@ session = sessionfactory()
 try:
     # Get a list of diskfile IDs to queue.
     query = session.query(DiskFile)
+
+    if options.instrument:
+        query = query.select_from(DiskFile, Header).filter(Header.diskfile_id == DiskFile.id)
+        query = query.filter(Header.instrument == options.instrument)
+
     query = query.filter(DiskFile.canonical == True)
 
     if options.file_pre:
