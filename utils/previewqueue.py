@@ -245,70 +245,73 @@ def render_preview(ad, outfile):
         full = norm(full)
 
     elif str(ad.instrument()) in ['TReCS', 'michelle']:
-        # If there is just one extension, it's probably not chopped
-        if len(ad['SCI']) == 1:
-            full = numpy.squeeze(ad['SCI', 1].data)
-        else:
-            full_shape = (500, 660)
-            full = numpy.zeros(full_shape, numpy.float32)
-            stack_shape = (240, 320)
-            stack = numpy.zeros(stack_shape, numpy.float32)
-            # For michelle, look up the nod-chop cycle
-            cycle = ad.phu_get_key_value('CYCLE')
-            if cycle is None:
-                cycle = 'ABBA'
-            # Loop through the extensions and stack them according to nod position
-            for add in ad['SCI']:
-                # Just sum up along the 4th axis. Ahem, this is the 0th axis in numpy land
-                data = add.data
-                data = numpy.sum(data, axis=0)
-                # Now the new 0th axis is the chop position
-                # If it's two long, subtract the two, otherwise just go with first plane
-                chop_a = None
-                chop_b = None
-                if data.shape[0] == 2:
-                    # Trecs
-                    chop_a = data[0,:,:]
-                    chop_b = data[1,:,:]
-                    data = chop_a - chop_b
-                elif data.shape[0] == 3:
-                    # Michelle
-                    chop_a = data[1,:,:]
-                    chop_b = data[2,:,:]
-                    data = data[0,:,:]
-                else:
-                    data = data[0,:,:]
+        chopping = False
+        full_shape = (500, 660)
+        full = numpy.zeros(full_shape, numpy.float32)
+        stack_shape = (240, 320)
+        stack = numpy.zeros(stack_shape, numpy.float32)
+        # For michelle, look up the nod-chop cycle
+        cycle = ad.phu_get_key_value('CYCLE')
+        if cycle is None:
+            cycle = 'ABBA'
+        # Loop through the extensions and stack them according to nod position
+        for add in ad['SCI']:
+            # Just sum up along the 4th axis. Ahem, this is the 0th axis in numpy land
+            data = add.data
+            data = numpy.sum(data, axis=0)
+            # Now the new 0th axis is the chop position
+            # If it's two long, subtract the two, otherwise just go with first plane
+            chop_a = None
+            chop_b = None
+            if data.shape[0] == 2:
+                # Trecs
+                chopping = True
+                chop_a = data[0,:,:]
+                chop_b = data[1,:,:]
+                data = chop_a - chop_b
+            elif data.shape[0] == 3:
+                # Michelle
+                chopping = True
+                chop_a = data[1,:,:]
+                chop_b = data[2,:,:]
+                data = data[0,:,:]
+            else:
+                data = data[0,:,:]
 
-                # For the first frame, paste the two raw chop images into the full image
-                if chop_a is not None and chop_b is not None:
-                    if add.extver() == 1:
-                        chop_a = norm(chop_a)
-                        chop_b = norm(chop_b)
-                        full[260:500, 0:320] = chop_a
-                        full[260:500, 340:660] = chop_b
-                else:
-                    # Not chopping, but still nodding?
+            # For the first frame, paste the two raw chop images into the full image
+            if chopping:
+                if add.extver() == 1:
+                    chop_a = norm(chop_a)
+                    chop_b = norm(chop_b)
+                    full[260:500, 0:320] = chop_a
+                    full[260:500, 340:660] = chop_b
+            else:
+                # Not chopping, but still nodding?
+                if len(ad['SCI']) > 1:
                     if add.extver() == 1:
                         full[260:500, 0:320] = norm(data)
                     if add.extver() == 2:
                         full[260:500, 340:660] = norm(data)
 
-                # Figure out if we're nod A or B
-                # TReCS has this header in each extention
-                if 'NOD' in add.header.keys():
-                    nod = add.header['NOD']
-                else:
-                    i = add.extver() - 1
-                    j = i % len(cycle)
-                    nod = cycle[j]
-                #print "Extver: %d, nod: %s" % (add.extver(), nod)
-                if nod == 'A':
-                    stack += data
-                else:
-                    stack -= data
+            # Figure out if we're nod A or B
+            # TReCS has this header in each extention
+            if 'NOD' in add.header.keys():
+                nod = add.header['NOD']
+            else:
+                i = add.extver() - 1
+                j = i % len(cycle)
+                nod = cycle[j]
+            #print "Extver: %d, nod: %s" % (add.extver(), nod)
+            if nod == 'A':
+                stack += data
+            else:
+                stack -= data
 
-            # Normalise the stack and paste it into the image
-            stack = norm(stack)
+        # Normalise the stack and paste it into the image
+        stack = norm(stack)
+        if not chopping and len(ad['SCI']) == 1:
+            full = stack
+        else:
             full[0:240, 180:500] = stack
 
     else:
