@@ -73,16 +73,6 @@ def pop_previewqueue(session):
     session.commit()
     return pq
 
-def previewqueue_length(session):
-    """
-    return the length of the preview queue
-    """
-    length = session.query(PreviewQueue).filter(PreviewQueue.inprogress == False).count()
-    # Even though there's nothing to commit, close the transaction
-    session.commit()
-    return length
-
-
 def make_preview(session, diskfile):
     """
     Make the preview, given the diskfile.

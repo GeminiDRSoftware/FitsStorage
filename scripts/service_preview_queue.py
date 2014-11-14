@@ -117,13 +117,13 @@ while loop:
                 logger.info("...Waiting")
             time.sleep(10)
         else:
-            logger.info("Making preview for %d, (%d in queue)", pq.diskfile_id, previewqueue_length(session))
 
             try:
                 # Actually make the preview here
                 # Get the diskfile
                 diskfile = session.query(DiskFile).filter(DiskFile.id == pq.diskfile_id).one()
                 # make the preview
+                logger.info("Making preview for %d: %s", pq.diskfile_id, diskfile.filename)
                 make_preview(session, diskfile)
             except:
                 logger.info("Problem Making Preview - Rolling back")
