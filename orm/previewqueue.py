@@ -17,5 +17,5 @@ class PreviewQueue(Base):
 
     def __init__(self, diskfile):
         self.diskfile_id = diskfile.id
-        self.sortkey = diskfile.filename
+        self.sortkey = diskfile.filename[1:]
         self.inprogress = False
