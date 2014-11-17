@@ -12,8 +12,13 @@ from sqlalchemy.orm import make_transient
 from orm.preview import Preview
 from orm.previewqueue import PreviewQueue
 
-from fits_storage_config import using_s3, storage_root, preview_path, s3_staging_area, z_staging_area
+from fits_storage_config import using_s3, storage_root, preview_path, z_staging_area
 import bz2
+
+if using_s3:
+    from fits_storage_config import s3_staging_area, s3_bucket_name, aws_access_key, aws_secret_key
+    from boto.s3.connection import S3Connection
+    from boto.s3.key import Key
 
 from astrodata import AstroData
 import numpy
@@ -142,11 +147,12 @@ def make_preview(session, diskfile):
         logger.debug("Connecting to S3")
         s3conn = S3Connection(aws_access_key, aws_secret_key)
         bucket = s3conn.get_bucket(s3_bucket_name)
+        logger.debug("Creating key: %s", preview_filename)
         k = Key(bucket)
         k.key = preview_filename
         logger.info("Uploading %s to S3 as %s" % (preview_fullpath, preview_filename))
         k.set_contents_from_filename(preview_fullpath)
-        os.unlink(src)
+        os.unlink(preview_fullpath)
 
 
     # Add to preview table
