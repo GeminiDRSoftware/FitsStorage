@@ -240,8 +240,8 @@ def render_preview(ad, outfile):
         # Loop though ads, paste them in
         for add in ad['SCI']:
             [x1, x2, y1, y2] = add.detector_section().as_pytype()
-            xoffset = 0 if x1 == 0 else gap
-            yoffset = 0 if y1 == 0 else gap
+            xoffset = 0 if x1 < 2000 else gap
+            yoffset = 0 if y1 < 2000 else gap
             logger.debug("x1 x2 y1 y2: %d %d %d %d", x1, x2, y1, y2)
             logger.debug("xoffset yoffset", xoffset, yoffset)
             logger.debug("full shape: %s", full[y1+yoffset:y2+yoffset, x1+xoffset:x2+xoffset].shape)
