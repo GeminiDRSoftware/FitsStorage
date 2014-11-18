@@ -65,7 +65,7 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
         if 'processed_flat' in calobj.applicable and (caltype == 'all' or caltype == 'processed_flat'):
             processed_flats = calobj.flat(processed=True)
             if processed_flats:
-                calheaders += processed_flat
+                calheaders += processed_flats
 
         if 'processed_fringe' in calobj.applicable and (caltype == 'all' or caltype == 'processed_fringe'):
             processed_fringes = calobj.processed_fringe()
