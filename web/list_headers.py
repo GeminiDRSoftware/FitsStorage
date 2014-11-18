@@ -50,7 +50,11 @@ def list_headers(session, selection, orderby):
 
     # By default we should order by filename, except for the archive, we should order by reverse date
     if use_as_archive:
-        query = query.order_by(desc(Header.ut_datetime))
+        if openquery(selection):
+            query = query.order_by(desc(Header.ut_datetime))
+        else:
+            query = query.order_by(Header.ut_datetime)
+
     else:
         query = query.order_by(File.name)
 
