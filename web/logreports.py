@@ -240,6 +240,7 @@ def usagereport(req):
                     req.write('<TD>%s</TD>' % html)
 
                     html = ''
+                    bytespersec = 0
                     if dllog.query_completed and dllog.download_completed:
                         tdl = dllog.download_completed - dllog.query_completed
                         tdlsecs = tdl.total_seconds()
