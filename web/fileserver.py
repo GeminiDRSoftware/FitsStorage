@@ -240,6 +240,7 @@ def fileserver(req, things):
 
         query = session.query(File).filter(File.name == filename)
         if query.count() == 0:
+            downloadlog.add_note("Not found in File table")
             return apache.HTTP_NOT_FOUND
         file = query.one()
         # OK, we should have the file record now.
@@ -288,15 +289,14 @@ def sendonefile(req, header):
         bucket = s3conn.get_bucket(s3_bucket_name)
         key = bucket.get_key(header.diskfile.filename)
         req.set_content_length(header.diskfile.data_size)
+        req.log_error("Here")
         if header.diskfile.compressed:
             buffer = cStringIO.StringIO()
             key.get_contents_to_file(buffer)
             buffer.seek(0)
-            zfp = bz2.BZ2File(mode='r', fileobj=buffer)
             try:
-                req.write(zfp.read())
+                req.write(bz2.decompress(buffer.getvalue()))
             finally:
-                zfp.close()
                 buffer.close()
         else:
             key.get_contents_to_file(req)
