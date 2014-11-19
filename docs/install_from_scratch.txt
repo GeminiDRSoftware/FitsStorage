@@ -88,9 +88,6 @@ python setup.py install --prefix=/opt/python_modules
 cd ..
 # Make sure using /astro python, and have DPD pythonpath
 # add /opt/sqlalchemy to python path
-sudo mkdir /var/www/python-egg-cache
-sudo chown apache /var/www/python-egg-cache
-
 
 cd /opt/python_modules
 tar xvf /opt/FitsStorage/otherfiles/pyinotify-0.8.8.tar.gz
@@ -173,8 +170,8 @@ sudo chown fitsdata /data/backups
 sudo mkdir /data/upload_staging
 sudo chown fitsdata /data/upload_staging
 sudo chmod oug+rwx /data/upload_staging
-sudo mkdir /data/gz_staging
-such chown fitsdata /data/gz_staging
+sudo mkdir /data/z_staging
+sudo chown fitsdata /data/z_staging
 # if using s3
 sudo mkdir /data/s3_staging
 sudo chown fitsdata /data/s3_staging
