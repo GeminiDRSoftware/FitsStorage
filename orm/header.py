@@ -291,6 +291,10 @@ class Header(Base):
             # Get the types list
             self.types = str(ad.types)
 
+        except astrodata.Errors.DescriptorInfrastructureError:
+            # This happens anytime an eng file does not get identified as gemini data
+            pass
+
         except:
             # Something failed accessing the astrodata
             raise
