@@ -346,6 +346,14 @@ def thehandler(req):
         retval = gmoscal(req, selection)
         return retval
 
+    # The GMOS twilight flat and bias report
+    if this == "gmoscaljson":
+        if this in blocked_urls:
+            return apache.HTTP_FORBIDDEN
+        selection = getselection(things)
+        retval = gmoscal(req, selection, do_json=True)
+        return retval
+
     # Submit QA metric measurement report
     if this == "qareport":
         if this in blocked_urls:
