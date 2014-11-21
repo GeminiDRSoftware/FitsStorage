@@ -18,6 +18,7 @@ from orm.gnirs import Gnirs
 from orm.nifs import Nifs
 from orm.f2 import F2
 from orm.gsaoi import Gsaoi
+from orm.nici import Nici
 from orm.michelle import Michelle
 from orm.ingestqueue import IngestQueue
 from orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
@@ -59,6 +60,7 @@ def create_tables(session):
     Gsaoi.metadata.create_all(bind=pg_db)
     IngestQueue.metadata.create_all(bind=pg_db)
     Michelle.metadata.create_all(bind=pg_db)
+    Nici.metadata.create_all(bind=pg_db)
     Tape.metadata.create_all(bind=pg_db)
     TapeWrite.metadata.create_all(bind=pg_db)
     TapeFile.metadata.create_all(bind=pg_db)

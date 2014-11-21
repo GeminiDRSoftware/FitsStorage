@@ -29,6 +29,7 @@ from orm.nifs import Nifs
 from orm.michelle import Michelle
 from orm.f2 import F2
 from orm.gsaoi import Gsaoi
+from orm.nici import Nici
 from orm.ingestqueue import IngestQueue
 from orm.previewqueue import PreviewQueue
 
@@ -294,6 +295,11 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, ma
             logger.debug("Adding new GSAOI entry")
             gsaoi = Gsaoi(header, diskfile.ad_object)
             session.add(gsaoi)
+            session.commit()
+        elif inst == 'NICI':
+            logger.debug("Adding new NICI entry")
+            nici = Nici(header, diskfile.ad_object)
+            session.add(nici)
             session.commit()
 
         # Do the preview here. 
