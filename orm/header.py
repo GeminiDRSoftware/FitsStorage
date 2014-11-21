@@ -15,6 +15,8 @@ import pywcs
 
 from gemini_metadata_utils import GeminiProgram
 
+import astrodata # For astrodata.Errors
+
 # Enumerated Column types
 OBSTYPE_ENUM = Enum('OBJECT', 'BIAS', 'FLAT', 'ARC', 'DARK', 'PINHOLE', 'FRINGE', 'RONCHI', 'CAL', 'MASK', name='obstype')
 OBSCLASS_ENUM = Enum('science', 'acq', 'progCal', 'partnerCal', 'dayCal', 'acqCal', name='obsclass')
@@ -181,9 +183,15 @@ class Header(Base):
             if filter_string:
                 self.filter_name = filter_string.replace('%', '').replace(' ', '_')
 
-            # NICI exposure times are a pain, because there's two of them... Not sure how to handle this for now.
+            # NICI exposure times are a pain, because there's two of them... Except they're always the same
             if self.instrument != 'NICI':
                 self.exposure_time = ad.exposure_time().for_db()
+            else:
+                # NICI exposure_time descriptor is broken
+                et_b = ad.phu_get_key_value('ITIME_B')
+                et_r = ad.phu_get_key_value('ITIME_R')
+                self.exposure_time = et_b if et_b else et_r
+            
 
             # Need to remove invalid characters in disperser names, eg gnirs has slashes
             disperser_string = ad.disperser(pretty=True).for_db()
