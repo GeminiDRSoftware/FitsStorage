@@ -105,7 +105,7 @@ def searchform(req, things, orderby):
         req.write('<span id="loading"><img src="/htmldocs/ajax-loading.gif" alt="">  Loading...<br /></span>')
         summary_body(req, 'searchresults', selection, orderby)
         req.write('</div><div id="calibration_results" class="searchresults">')
-        req.write('<span id="loading_cals"><br /><img src="/htmldocs/ajax-loading.gif" alt="">  Finding Associated Calibrations... This can take a minute or two depending on the size of your calibration association search. You can flip back to the Search Results Tab while you wait if you like.</span>')
+        req.write('<span id="loading_cals"><br /><img src="/htmldocs/ajax-loading.gif" alt="">  Finding Associated Calibrations... This can take several seconds depending on the size of your calibration association search...</span>')
         req.write('<span id="not_loading_cals"><br />You cannot do calibration association on an unconstrained search, or one that hits the search limit. Please revise your original search so that this is not the case.</span>')
         req.write('</div></div>')
     #req.write('<div id="searchresults" class="searchresults">')
