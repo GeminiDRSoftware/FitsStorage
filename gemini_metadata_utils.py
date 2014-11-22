@@ -52,6 +52,7 @@ oscircre = re.compile(r'^[Oo][Ss][Cc][Ii][Rr]$')
 f2cre = re.compile(r'^[Ff]2$')
 gpicre = re.compile(r'^[Gg][Pp][Ii]$')
 bhroscre = re.compile(r'^[Bb][Hh][Rr][Oo][Ss]$')
+hrwfscre = re.compile(r'^[Hh][Rr][Ww][Ff][Ss]$|^[Aa][Cc][Qq][Cc][Aa][Mm]$')
 
 def gemini_instrument(string, gmos=False):
     """
@@ -92,6 +93,8 @@ def gemini_instrument(string, gmos=False):
         retary = 'GPI'
     if bhroscre.match(string):
         retary = 'bHROS'
+    if hrwfscre.match(string):
+        retary = 'hrwfs'
     if gmoscre.match(string):
         if gmos:
             retary = 'GMOS'
