@@ -574,12 +574,13 @@ class SummaryGenerator(object):
 
         # Now the target symbol
         symhtml = ''
-        if 'AZEL_TARGET' in header.types and 'AT_ZENITH' not in header.types:
-            symhtml = '<abbr title="Target is in AzEl co-ordinate frame">&#x2693;</abbr>'
-        if 'AT_ZENITH' in header.types:
-            symhtml = '<abbr title="Target is Zenith in AzEl co-ordinate frame">&#x2693;&#x2191;</abbr>'
-        if 'NON_SIDEREAL' in header.types:
-            symhtml = '<abbr title="Target is non-sidereal">&#x2604;</abbr>'
+        if header.types is not None:
+            if 'AZEL_TARGET' in header.types and 'AT_ZENITH' not in header.types:
+                symhtml = '<abbr title="Target is in AzEl co-ordinate frame">&#x2693;</abbr>'
+            if 'AT_ZENITH' in header.types:
+                symhtml = '<abbr title="Target is Zenith in AzEl co-ordinate frame">&#x2693;&#x2191;</abbr>'
+            if 'NON_SIDEREAL' in header.types:
+                symhtml = '<abbr title="Target is non-sidereal">&#x2604;</abbr>'
 
         return '%s %s %s' % (basehtml, phothtml, symhtml)
 
