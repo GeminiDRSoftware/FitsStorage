@@ -231,7 +231,7 @@ def gmoscal(req, selection, do_json=False):
                     startdate += oneday
                     selection['daterange'] = "%s-%s" % (startdate.strftime("%Y%m%d"), enddate.strftime("%Y%m%d"))
                     if do_json:
-                        json_dict['Bias_AutodetectDates'] = selection['daterange']
+                        json_dict['Bias_AutoDetectedDates'] = selection['daterange']
                     else:
                         req.write("<H2>Auto-detecting Last Processing Date: %s</H2>" % selection['daterange'])
 
