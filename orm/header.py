@@ -4,11 +4,12 @@ from sqlalchemy.orm import relation
 
 import dateutil.parser
 import datetime
+import types
 
 from . import Base
 from orm.diskfile import DiskFile
 
-from gemini_metadata_utils import ratodeg, dectodeg 
+from gemini_metadata_utils import ratodeg, dectodeg, dmstodeg, gemini_observation_type, gemini_telescope, gemini_observation_class
 
 from astrodata import AstroData
 import pywcs
@@ -137,7 +138,7 @@ class Header(Base):
                 # Ensure upper case
                 self.data_label = self.data_label.upper()
 
-            self.telescope = ad.telescope().for_db()
+            self.telescope = gemini_telescope(ad.telescope().for_db())
             self.instrument = ad.instrument().for_db()
 
             # Date and times part
@@ -148,12 +149,13 @@ class Header(Base):
             self.local_time = ad.local_time().for_db()
 
             # Data Types
-            self.observation_type = ad.observation_type().for_db()
+            self.observation_type = gemini_observation_type(ad.observation_type().for_db())
+
             if 'GNIRS_PINHOLE' in ad.types:
                 self.observation_type = 'PINHOLE'
             if 'NIFS_RONCHI' in ad.types:
                 self.observation_type = 'RONCHI'
-            self.observation_class = ad.observation_class().for_db()
+            self.observation_class = gemini_observation_class(ad.observation_class().for_db())
             self.object = ad.object().for_db()
 
             # RA and Dec are not valid for AZEL_TARGET frames
@@ -165,8 +167,16 @@ class Header(Base):
                 if type(self.dec) is str:
                     self.dec = dectodeg(self.dec)
 
-            self.azimuth = ad.azimuth().for_db()
-            self.elevation = ad.elevation().for_db()
+            # These should be in the descriptor function really.
+            azimuth = ad.azimuth().for_db()
+            if type(azimuth) is types.StringType:
+                azimuth = dmstodeg(azimuth)
+            self.azimuth = azimuth
+            elevation = ad.elevation().for_db()
+            if type(elevation) is types.StringType:
+                elevation = dmstodeg(elevation)
+            self.elevation = elevation
+
             self.cass_rotator_pa = ad.cass_rotator_pa().for_db()
             self.airmass = ad.airmass().for_db()
             self.raw_iq = ad.raw_iq().for_db()
@@ -258,7 +268,9 @@ class Header(Base):
             if self.observation_type == 'MASK':
                 self.qa_state = 'Pass'
             else:
-                self.qa_state = ad.qa_state().for_db()
+                qa_state = ad.qa_state().for_db()
+                if qa_state in ['Fail', 'CHECK', 'Undefined', 'Usable', 'Pass']:
+                    self.qa_state = qa_state
 
             # Set the release date
             try:
