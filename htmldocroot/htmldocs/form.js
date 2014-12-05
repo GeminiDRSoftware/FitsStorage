@@ -122,9 +122,11 @@ function CalsTab() {
     if (document.getElementById("caltab").innerHTML == 'Associated Calibrations') {
         /* already been clicked, switch to it */
         $("#searchresults").hide();
+        $("#obslog_results").hide();
         $("#calibration_results").show();
         /* set the tab classes */
         document.getElementById("caltab").className += 'current';
+        document.getElementById("obslogstab").className = document.getElementById("obslogstab").className.replace('current', '')
         document.getElementById("resultstab").className = document.getElementById("resultstab").className.replace('current', '')
     } else {
         /* First time - initiate loading the associated cals */
@@ -145,15 +147,29 @@ function CalsTab() {
         /* set the tab classes */
         document.getElementById("caltab").className += 'current';
         document.getElementById("resultstab").className = document.getElementById("resultstab").className.replace('current', '')
+        document.getElementById("obslogstab").className = document.getElementById("obslogstab").className.replace('current', '')
     }
 }
 
 function ResultsTab() {
     /* Just switch the displayed div */
     $("#calibration_results").hide();
+    $("#obslog_results").hide();
     $("#searchresults").show();
     /* set the tab classes */
     document.getElementById("resultstab").className += 'current';
+    document.getElementById("caltab").className = document.getElementById("caltab").className.replace('current', '')
+    document.getElementById("obslogstab").className = document.getElementById("obslogstab").className.replace('current', '')
+}
+
+function ObslogsTab() {
+    /* Just switch the displayed div */
+    $("#calibration_results").hide();
+    $("#searchresults").hide();
+    $("#obslog_results").show();
+    /* set the tab classes */
+    document.getElementById("obslogstab").className += 'current';
+    document.getElementById("resultstab").className = document.getElementById("resultstab").className.replace('current', '')
     document.getElementById("caltab").className = document.getElementById("caltab").className.replace('current', '')
 }
 
@@ -243,6 +259,9 @@ $(document).ready(function() {
     });
     $('#caltab').click(function() {
         CalsTab();
+    });
+    $('#obslogstab').click(function() {
+        ObslogsTab();
     });
     $('#resultstab').click(function() {
         ResultsTab();
