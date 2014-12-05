@@ -26,13 +26,14 @@ def gemini_telescope(string):
     """
     If the string argument matches a gemini telescope name,
     then returns the "official" (ie same as in the fits headers)
-    name of the telesope. Otherwise returns an empty string.
+    name of the telesope. Otherwise returns None.
     """
-    retary = ''
-    if gemininorthcre.match(string):
-        retary = 'Gemini-North'
-    if geminisouthcre.match(string):
-        retary = 'Gemini-South'
+    retary = None
+    if string:
+        if gemininorthcre.match(string):
+            retary = 'Gemini-North'
+        elif geminisouthcre.match(string):
+            retary = 'Gemini-South'
     return retary
 
 # A utility function for matching instrument names
@@ -52,52 +53,56 @@ oscircre = re.compile(r'^[Oo][Ss][Cc][Ii][Rr]$')
 f2cre = re.compile(r'^[Ff]2$')
 gpicre = re.compile(r'^[Gg][Pp][Ii]$')
 bhroscre = re.compile(r'^[Bb][Hh][Rr][Oo][Ss]$')
+flamingoscre = re.compile(r'^[Ff][Ll][Aa][Mm][Ii][Nn][Gg][Oo][Ss]$')
 hrwfscre = re.compile(r'^[Hh][Rr][Ww][Ff][Ss]$|^[Aa][Cc][Qq][Cc][Aa][Mm]$')
 
 def gemini_instrument(string, gmos=False):
     """
     If the string argument matches a gemini instrument name,
     then returns the "official" (ie same as in the fits headers)
-    name of the instrument. Otherwise returns an empty string.
+    name of the instrument. Otherwise returns None.
     If the gmos argument is true, this also recognises GMOS as
     a valid instruemnt name.
     """
-    retary = ''
-    if niricre.match(string):
-        retary = 'NIRI'
-    if nifscre.match(string):
-        retary = 'NIFS'
-    if gmosncre.match(string):
-        retary = 'GMOS-N'
-    if gmosscre.match(string):
-        retary = 'GMOS-S'
-    if michellecre.match(string):
-        retary = 'michelle'
-    if gnirscre.match(string):
-        retary = 'GNIRS'
-    if phoenixcre.match(string):
-        retary = 'PHOENIX'
-    if trecscre.match(string):
-        retary = 'TReCS'
-    if nicicre.match(string):
-        retary = 'NICI'
-    if hqcre.match(string):
-        retary = 'Hokupaa+QUIRC'
-    if gsaoicre.match(string):
-        retary = 'GSAOI'
-    if oscircre.match(string):
-        retary = 'oscir'
-    if f2cre.match(string):
-        retary = 'F2'
-    if gpicre.match(string):
-        retary = 'GPI'
-    if bhroscre.match(string):
-        retary = 'bHROS'
-    if hrwfscre.match(string):
-        retary = 'hrwfs'
-    if gmoscre.match(string):
-        if gmos:
-            retary = 'GMOS'
+    retary = None
+    if string:
+        if niricre.match(string):
+            retary = 'NIRI'
+        elif nifscre.match(string):
+            retary = 'NIFS'
+        elif gmosncre.match(string):
+            retary = 'GMOS-N'
+        elif gmosscre.match(string):
+            retary = 'GMOS-S'
+        elif michellecre.match(string):
+            retary = 'michelle'
+        elif gnirscre.match(string):
+            retary = 'GNIRS'
+        elif phoenixcre.match(string):
+            retary = 'PHOENIX'
+        elif trecscre.match(string):
+            retary = 'TReCS'
+        elif nicicre.match(string):
+            retary = 'NICI'
+        elif hqcre.match(string):
+            retary = 'Hokupaa+QUIRC'
+        elif gsaoicre.match(string):
+            retary = 'GSAOI'
+        elif oscircre.match(string):
+            retary = 'oscir'
+        elif f2cre.match(string):
+            retary = 'F2'
+        elif gpicre.match(string):
+            retary = 'GPI'
+        elif bhroscre.match(string):
+            retary = 'bHROS'
+        elif hrwfscre.match(string):
+            retary = 'hrwfs'
+        elif flamingoscre.match(string):
+            retary = 'FLAMINGOS'
+        elif gmoscre.match(string):
+            if gmos:
+                retary = 'GMOS'
     return retary
 
 datecre = re.compile(r'^[12][90]\d\d[01]\d[0123]\d$')
@@ -190,6 +195,42 @@ def dectodeg(string):
 
     return degs
 
+dmscre = re.compile(r'^([+-]?)(\d*):([012345]\d):([012345]\d)(\.?\d*)$')
+def dmstodeg(string):
+    """
+    A utility function that recognises a generic [+-]DD:MM:SS.sss
+    Returns a float in decimal degrees if it is valid, None otherwise
+    """
+    string = string.replace(' ', '')
+    re_match = dmscre.match(string)
+    if re_match is None:
+        # Not DD:MM:SS. Maybe it's decimal degrees already
+        try:
+            value = float(string)
+            return value
+        except:
+            return None
+        return None
+    sign = 1
+    if re_match.group(1) == '-':
+        sign = -1
+    degs = float(re_match.group(2))
+    mins = float(re_match.group(3))
+    secs = float(re_match.group(4))
+    frac = re_match.group(5)
+    if frac:
+        frac = float(frac)
+    else:
+        frac = 0.0
+
+    secs += frac
+    mins += secs/60.0
+    degs += mins / 60.0
+
+    degs *= sign
+
+    return degs
+
 srcre = re.compile(r"([\d.]+)\s*(d|D|degs|Degs)?")
 def srtodeg(string):
     """
@@ -230,11 +271,11 @@ def gemini_observation_type(string):
     A utility function for matching Gemini ObsTypes
     If the string argument matches a gemini ObsType
     then we return the observation_type
-    Otherwise return an empty string
+    Otherwise return None
     We add the unofficial values PINHOLE for GNIRS pinhole mask observations and RONCHI for NIFS Ronchi mask observations here too
     """
     list = ['DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI', 'CAL', 'FRINGE', 'MASK']
-    retary = ''
+    retary = None
     if string in list:
         retary = string
     return retary
@@ -244,10 +285,10 @@ def gemini_observation_class(string):
     A utility function matching Gemini ObsClasses
     If the string argument matches a gemini ObsClass then we return
     the observation_class
-    Otherwise we return an empty string
+    Otherwise we return None
     """
     list = ['dayCal', 'partnerCal', 'acqCal', 'acq', 'science', 'progCal']
-    retary = ''
+    retary = None
     if  string in list:
         retary = string
     return retary
@@ -257,10 +298,10 @@ def gemini_reduction_state(string):
     A utility function matching Gemini reduction states
     If the string argument matches a gemini reduction state then we return
     the reduction state
-    Otherwise we return an empty string
+    Otherwise we return None
     """
     list = ['RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS', 'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK']
-    retary = ''
+    retary = None
     if  string in list:
         retary = string
     return retary
@@ -270,7 +311,7 @@ def gemini_caltype(string):
     """
     A utility function matching Gemini calibration types.
     If the string argument matches a gemini calibration type then we return
-    the calibration type, otherwise we return an empty string
+    the calibration type, otherwise we return None
 
     The list of calibration types is somewhat arbitrary, it's not coupled
     to the DHS or ODB, it's more or less defined by the Fits Storage project
@@ -280,7 +321,7 @@ def gemini_caltype(string):
     list = ['bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark', 'processed_flat',
                 'processed_fringe', 'processed_arc', 'pinhole_mask', 'ronchi_mask', 'lampoff_flat',
                 'specphot', 'photometric_standard']
-    retary = ''
+    retary = None
     if string in list:
         retary = string
     return retary
