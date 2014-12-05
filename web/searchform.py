@@ -99,7 +99,7 @@ def searchform(req, things, orderby):
 
     # playing around with the idea of 'tabs'
     if selection:
-        req.write('<ul class="tabs"><li><a href="#" id="resultstab" class="current">Search Results</a></li><li><a href="#" id="caltab">Load Associated Calibrations</a></li><li><a href="#" id="obslogstab">View Observation Logs</li></ul>')
+        req.write('<ul class="tabs"><li><a href="#" id="resultstab" class="current">Search Results</a></li><li><a href="#" id="caltab">Load Associated Calibrations</a></li><li><a href="#" id="obslogstab">View Observation Logs</a></li></ul>')
         req.write('<div class="frames">')
         req.write('<div id="searchresults" class="searchresults">')
         req.write('<span id="loading"><img src="/htmldocs/ajax-loading.gif" alt="">  Loading...<br /></span>')
