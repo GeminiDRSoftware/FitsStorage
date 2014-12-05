@@ -32,6 +32,7 @@ from orm.gsaoi import Gsaoi
 from orm.nici import Nici
 from orm.ingestqueue import IngestQueue
 from orm.previewqueue import PreviewQueue
+from orm.obslog import Obslog
 
 from utils.aws_s3 import get_s3_md5, fetch_to_staging
 
@@ -209,115 +210,123 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, ma
                             os.access(diskfile.uncompressed_cache_file, os.F_OK))
 
 
-        # Instantiate an astrodata object here and pass it in to the things that need it
-        # These are expensive to instantiate each time
-        if diskfile.uncompressed_cache_file:
-            fullpath_for_ad = diskfile.uncompressed_cache_file
+        # If it's an obslog file, process it as such 
+        if 'obslog' in filename:
+            obslog = Obslog(diskfile)
+            session.add(obslog)
+            session.commit()
         else:
-            fullpath_for_ad = diskfile.fullpath()
+            # Proceed with normal fits file ingestion
 
-        logger.debug("Instantiating AstroData object on %s", fullpath_for_ad)
-        try:
-            diskfile.ad_object = AstroData(fullpath_for_ad, mode='readonly')
-        except:
-            logger.error("Failed to open astrodata object on file: %s. Giving up", fullpath_for_ad)
-            return
+            # Instantiate an astrodata object here and pass it in to the things that need it
+            # These are expensive to instantiate each time
+            if diskfile.uncompressed_cache_file:
+                fullpath_for_ad = diskfile.uncompressed_cache_file
+            else:
+                fullpath_for_ad = diskfile.fullpath()
+    
+            logger.debug("Instantiating AstroData object on %s", fullpath_for_ad)
+            try:
+                diskfile.ad_object = AstroData(fullpath_for_ad, mode='readonly')
+            except:
+                logger.error("Failed to open astrodata object on file: %s. Giving up", fullpath_for_ad)
+                return
+    
+            # This will use the DiskFile unzipped cache file if it exists
+            logger.debug("Adding new DiskFileReport entry")
+            dfreport = DiskFileReport(diskfile, skip_fv, skip_wmd)
+            session.add(dfreport)
+            session.commit()
 
-        # This will use the DiskFile unzipped cache file if it exists
-        logger.debug("Adding new DiskFileReport entry")
-        dfreport = DiskFileReport(diskfile, skip_fv, skip_wmd)
-        session.add(dfreport)
-        session.commit()
+            logger.debug("Adding new Header entry")
+            # This will use the diskfile ad_object if it exists, else
+            # it will use the DiskFile unzipped cache file if it exists
+            header = Header(diskfile)
+            session.add(header)
+            inst = header.instrument
+            logger.debug("Instrument is: %s", inst)
+            session.commit()
+            logger.debug("Adding new Footprint entries")
+            try:
+                fps = header.footprints(diskfile.ad_object)
+                for i in fps.keys():
+                    foot = Footprint(header)
+                    foot.populate(i)
+                    session.add(foot)
+                    session.commit()
+                    add_footprint(session, foot.id, fps[i])
+            except:
+                pass
 
-        logger.debug("Adding new Header entry")
-        # This will use the diskfile ad_object if it exists, else
-        # it will use the DiskFile unzipped cache file if it exists
-        header = Header(diskfile)
-        session.add(header)
-        inst = header.instrument
-        logger.debug("Instrument is: %s", inst)
-        session.commit()
-        logger.debug("Adding new Footprint entries")
-        try:
-            fps = header.footprints(diskfile.ad_object)
-            for i in fps.keys():
-                foot = Footprint(header)
-                foot.populate(i)
-                session.add(foot)
+            if not using_sqlite:
+                if header.spectroscopy == False:
+                    logger.debug("Imaging - populating PhotStandardObs")
+                    do_std_obs(session, header.id)
+
+            # This will use the DiskFile unzipped cache file if it exists
+            logger.debug("Adding FullTextHeader entry")
+            ftheader = FullTextHeader(diskfile)
+            session.add(ftheader)
+            session.commit()
+            # Add the instrument specific tables
+            # These will use the DiskFile unzipped cache file if it exists
+            if inst == 'GMOS-N' or inst == 'GMOS-S':
+                logger.debug("Adding new GMOS entry")
+                gmos = Gmos(header, diskfile.ad_object)
+                session.add(gmos)
                 session.commit()
-                add_footprint(session, foot.id, fps[i])
-        except:
-            pass
+            elif inst == 'NIRI':
+                logger.debug("Adding new NIRI entry")
+                niri = Niri(header, diskfile.ad_object)
+                session.add(niri)
+                session.commit()
+            elif inst == 'GNIRS':
+                logger.debug("Adding new GNIRS entry")
+                gnirs = Gnirs(header, diskfile.ad_object)
+                session.add(gnirs)
+                session.commit()
+            elif inst == 'NIFS':
+                logger.debug("Adding new NIFS entry")
+                nifs = Nifs(header, diskfile.ad_object)
+                session.add(nifs)
+                session.commit()
+            elif inst == 'F2':
+                logger.debug("Assing new F2 entry")
+                flam2 = F2(header, diskfile.ad_object)
+                session.add(flam2)
+                session.commit()
+            elif inst == 'michelle':
+                logger.debug("Adding new MICHELLE entry")
+                michelle = Michelle(header, diskfile.ad_object)
+                session.add(michelle)
+                session.commit()
+            elif inst == 'GSAOI':
+                logger.debug("Adding new GSAOI entry")
+                gsaoi = Gsaoi(header, diskfile.ad_object)
+                session.add(gsaoi)
+                session.commit()
+            elif inst == 'NICI':
+                logger.debug("Adding new NICI entry")
+                nici = Nici(header, diskfile.ad_object)
+                session.add(nici)
+                session.commit()
 
-        if not using_sqlite:
-            if header.spectroscopy == False:
-                logger.debug("Imaging - populating PhotStandardObs")
-                do_std_obs(session, header.id)
-
-        # This will use the DiskFile unzipped cache file if it exists
-        logger.debug("Adding FullTextHeader entry")
-        ftheader = FullTextHeader(diskfile)
-        session.add(ftheader)
-        session.commit()
-        # Add the instrument specific tables
-        # These will use the DiskFile unzipped cache file if it exists
-        if inst == 'GMOS-N' or inst == 'GMOS-S':
-            logger.debug("Adding new GMOS entry")
-            gmos = Gmos(header, diskfile.ad_object)
-            session.add(gmos)
-            session.commit()
-        elif inst == 'NIRI':
-            logger.debug("Adding new NIRI entry")
-            niri = Niri(header, diskfile.ad_object)
-            session.add(niri)
-            session.commit()
-        elif inst == 'GNIRS':
-            logger.debug("Adding new GNIRS entry")
-            gnirs = Gnirs(header, diskfile.ad_object)
-            session.add(gnirs)
-            session.commit()
-        elif inst == 'NIFS':
-            logger.debug("Adding new NIFS entry")
-            nifs = Nifs(header, diskfile.ad_object)
-            session.add(nifs)
-            session.commit()
-        elif inst == 'F2':
-            logger.debug("Assing new F2 entry")
-            flam2 = F2(header, diskfile.ad_object)
-            session.add(flam2)
-            session.commit()
-        elif inst == 'michelle':
-            logger.debug("Adding new MICHELLE entry")
-            michelle = Michelle(header, diskfile.ad_object)
-            session.add(michelle)
-            session.commit()
-        elif inst == 'GSAOI':
-            logger.debug("Adding new GSAOI entry")
-            gsaoi = Gsaoi(header, diskfile.ad_object)
-            session.add(gsaoi)
-            session.commit()
-        elif inst == 'NICI':
-            logger.debug("Adding new NICI entry")
-            nici = Nici(header, diskfile.ad_object)
-            session.add(nici)
-            session.commit()
-
-        # Do the preview here. 
-        try:
-            if using_previews:
-                if make_previews:
-                    # Go ahead and make the preview now
-                    logger.debug("Making Preview")
-                    make_preview(session, diskfile)
-                    session.commit()
-                else:
-                    # Add it to the preview queue
-                    logger.debug("Adding to preview queue")
-                    pq = PreviewQueue(diskfile)
-                    session.add(pq)
-                    session.commit()
-        except:
-            logger.error("Error making preview for %s", diskfile.filename)
+            # Do the preview here. 
+            try:
+                if using_previews:
+                    if make_previews:
+                        # Go ahead and make the preview now
+                        logger.debug("Making Preview")
+                        make_preview(session, diskfile)
+                        session.commit()
+                    else:
+                        # Add it to the preview queue
+                        logger.debug("Adding to preview queue")
+                        pq = PreviewQueue(diskfile)
+                        session.add(pq)
+                        session.commit()
+            except:
+                logger.error("Error making preview for %s", diskfile.filename)
 
         if diskfile.ad_object:
             logger.debug("Closing centrally opened astrodata object")
