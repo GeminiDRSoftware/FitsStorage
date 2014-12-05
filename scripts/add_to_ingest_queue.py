@@ -105,10 +105,11 @@ else:
 thefiles = []
 tmpcre = re.compile("(tmp)|(tiled)")
 fitscre = re.compile(".fits")
+obslogcre = re.compile("_obslog.txt")
 previewcre = re.compile("_preview.jpg")
 logger.info("Checking for tmp files")
 for filename in files:
-    if(tmpcre.search(filename) or previewcre.match(filename) or not fitscre.search(filename)):
+    if(tmpcre.search(filename) or previewcre.match(filename) or not (fitscre.search(filename) or obslogcre.search(filename))):
         logger.info("skipping tmp file: %s" % filename)
     else:
         thefiles.append(filename)
