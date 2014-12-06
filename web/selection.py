@@ -154,7 +154,7 @@ def getselection(things):
         if thing == 'photstandard':
             selection['photstandard'] = True
             recognised = True
-        if thing in ['low', 'high', 'slow', 'fast', 'Deep', 'Shallow', 'Bright', 'Medium', 'Faint', 'NodAndShuffle', 'Classic']:
+        if thing in ['low', 'high', 'slow', 'fast', 'Deep', 'Shallow', 'Bright', 'Medium', 'Faint', 'NodAndShuffle', 'Classic', 'Very_Bright_Objects', 'Bright_Objects', 'Faint_Objects', 'Very_Faint_Objects']:
             if not selection.has_key('detector_config'):
                 selection['detector_config'] = []
             selection['detector_config'].append(thing)
