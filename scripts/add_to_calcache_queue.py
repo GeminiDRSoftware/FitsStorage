@@ -48,10 +48,15 @@ try:
 
     logger.info("Got %d header items to queue" % len(hids))
     
+    num = 0
     for hid in hids:
         logger.debug("Adding CalCacheQueue with obs_hid %s", hid[0])
         cq = CalCacheQueue(hid[0], sortkey=hid[1])
         session.add(cq)
+        num += 1
+        if num % 1000 == 0:
+            logger.info("Committing batch %d", num)
+            session.commit()
 
     session.commit()
 
