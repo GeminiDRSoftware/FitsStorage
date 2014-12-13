@@ -376,8 +376,32 @@
     </select>
     <span class="help">(GNIRS focal plane mask)
         <span class="helpleft">Note that if you're searching for Cross Dispersed data, you almost certainly want to select the "XD" version of the slit. These are the shorter slits intended for use in cross dispersed mode. The version without XD on the end is the full length longslit.</span>
-    </span><br /><br />
+    </span><br />
 
+    <label>Filter:</label><select id="gnirs_filter" class="ddw" name="filter">
+        <option value="">Any</option>
+        <option class="GNIRSfilter" value="XD">XD</option>
+        <option class="GNIRSfilter" value="H2">H2</option>
+        <option class="GNIRSfilter" value="X">X</option>
+        <option class="GNIRSfilter" value="J">J</option>
+        <option class="GNIRSfilter" value="H">H</option>
+        <option class="GNIRSfilter" value="K">K</option>
+        <option class="GNIRSfilter" value="L">L</option>
+        <option class="GNIRSfilter" value="M">M</option>
+        <option class="GNIRSfilter" value="PAH">PAH</option>
+        <option class="GNIRSfilter" value="YPHOT">YPHOT</option>
+        <option class="GNIRSfilter" value="JPHOT">JPHOT</option>
+        <option class="GNIRSfilter" value="KPHOT">KPHOT</option>
+        <option class="GNIRSfilter" value="X_(order_6)">X_(order_6)</option>
+        <option class="GNIRSfilter" value="J_(order_5)">J_(order_5)</option>
+        <option class="GNIRSfilter" value="H_(order_4)">H_(order_4)</option>
+        <option class="GNIRSfilter" value="K_(order_3)">K_(order_3)</option>
+        <option class="GNIRSfilter" value="L_(order_2)">L_(order_2)</option>
+        <option class="GNIRSfilter" value="M_(order_1)">M_(order_1)</option>
+    </select>
+    <span class="help">(GNIRS filter)
+        <span class="helpleft">For Imaging, this selects the filter as normal. For spectroscopy, you can specify the blocking filters here. Leave this set to Any for spectroscopy data unless you only want data that used a specific blocking filter.</span>
+    </span><br \><br />
     </div>
 
     <div class="right">           
