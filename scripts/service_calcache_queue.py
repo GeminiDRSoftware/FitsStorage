@@ -131,7 +131,6 @@ while loop:
                 session.rollback()
                 # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
                 # iq.inprogress=False
-                raise
             logger.debug("Deleteing calcachequeue id %d", ccq.id)
             # ccq is a transient ORM object, find it in the db
             dbccq = session.query(CalCacheQueue).filter(CalCacheQueue.id == ccq.id).one()
