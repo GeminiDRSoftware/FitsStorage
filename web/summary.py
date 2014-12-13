@@ -159,6 +159,10 @@ def no_results(req, selection):
         if selection['spectroscopy'] == True:
             if selection['inst'] in ['NICI', 'GSAOI']:
                 req.write("<P>Hint: %s is purely an imager - it does not do spectroscopy.</P>" % selection['inst'])
+    # GNIRS XD central wavelength is not so useful
+    if 'inst' in selection.keys() and 'disperser' in selection.keys() and 'central_wavelength' in selection.keys():
+        if selection['inst'] == 'GNIRS' and 'XD' in selection['disperser']:
+            req.write("<P>Hint - The central wavelength setting is not so useful with GNIRS cross-dispersed data because the spectral range is so big. Different central wavelength settings in the OT will come through in the headers and be respected by searches here, but in some cases it makes almost no difference to the actual light falling on the array. We suggest not setting central wavelength when you are searching for GNIRS XD data.</P>")
 
 
 def summary_table(req, sumtype, headers, selection, links=True, user=None, user_progid_list=None):
