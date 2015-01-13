@@ -62,6 +62,7 @@ input {
     background: #CCA;
     border: double;
     left: auto;
+    z-index: 100;
 }
 
 .helpright {
@@ -73,6 +74,7 @@ input {
     background: #CCA;
     border: double;
     left: 500px;
+    z-index: 100;
 }
 
 .help:hover span {
