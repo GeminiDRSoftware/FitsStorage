@@ -12,18 +12,17 @@ sudo yum -y install postgresql
 sudo yum -y install postgresql-server
 sudo yum -y install postgresql-devel
 
-# might not need with Ureka
 # needed to get mod_python to build as /astro python links against X11
 sudo yum -y install libX11-devel
-
-# needed with Ureka if not already present:
 sudo yum -y install libXft
+sudo yum -y install libXft-devel
 
 # On RHEL6 also need these if they're not already there:
 sudo yum -y install libtool
-# Not sure if we really need these:
-sudo yum -y install tk
-sudo yum -y install tk-devel
+
+# Dont need these anymore
+#sudo yum -y install tk
+#sudo yum -y install tk-devel
 
 # Need these if you're going to run 32bit java from /astro
 sudo yum install glibc-devel.i686
@@ -53,8 +52,8 @@ chmod ug+s invoke
 sudo mkdir /opt/Ureka
 sudo chown phirst /opt/Ureka
 cd /opt/Ureka
-cp /opt/FitsStorage/otherfiles/install_ureka_1.4.1 .
-sh install_ureka_1.4.1
+cp /opt/FitsStorage/otherfiles/install_ureka_1.4.1.2 .
+sh install_ureka_1.4.1.2
 #Remove broken ureka pkg-config
 mv /opt/Ureka/Ureka/python/bin/pkg-config /opt/Ureka/Ureka/python/bin/pkg-config-broken
 
@@ -62,7 +61,7 @@ mv /opt/Ureka/Ureka/python/bin/pkg-config /opt/Ureka/Ureka/python/bin/pkg-config
 cd /opt/python_modules
 tar xvzf /opt/FitsStorage/otherfiles/mod_python-3.3.1-1.tar.gz
 cd mod_python-3.3.1
-which python # should be on /astro
+which python # should be Ureka one
 whereis apxs # probably /usr/sbin/apxs
 ./configure --with-apxs=/usr/sbin/apxs --prefix=/opt/python_modules
 make
@@ -71,8 +70,8 @@ cd dist
 python setup.py install --prefix=/opt/python_modules
 
 cd /opt/python_modules
-tar xvzf /opt/FitsStorage/otherfiles/psycopg2-2.5.2.tar.gz
-cd psycopg2-2.5.2
+tar xvzf /opt/FitsStorage/otherfiles/psycopg2-2.5.4.tar.gz
+cd psycopg2-2.5.4
 which pg_config
 # should be /usr/bin/pg_config - else:
 # vi setup.cfg 
@@ -80,8 +79,8 @@ which pg_config
 python setup.py build
 python setup.py install --prefix=/opt/python_modules
 cd /opt/python_modules
-tar xvzf /opt/FitsStorage/otherfiles/SQLAlchemy-0.9.3.tar.gz
-cd SQLAlchemy-0.9.3
+tar xvzf /opt/FitsStorage/otherfiles/SQLAlchemy-0.9.8.tar.gz
+cd SQLAlchemy-0.9.8
 setenv PYTHONPATH /opt/python_modules/lib/python2.7/site-packages
 python setup.py build
 python setup.py install --prefix=/opt/python_modules
@@ -178,8 +177,9 @@ sudo chown fitsdata /data/s3_staging
 
 # Now get a shell as fitsdata
 cd /opt/FitsStorage/
-vi FitsStorageConfig # Set things up as appropriate
+vi fits_storage_config.py
+# Set things up as appropriate
 /usr/bin/createdb fitsdata
-python create_tables.py
+python scripts/create_tables.py
 
 # OK, should now be good to go.
