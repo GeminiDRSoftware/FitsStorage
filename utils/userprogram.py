@@ -34,10 +34,10 @@ def icanhave(session, req, item, filedownloadlog=None):
         return True
 
     if isinstance(item, Header):
-        return canhave_header(session, user, header, filedownloadlog, gotmagic=gotmagic)
+        return canhave_header(session, user, item, filedownloadlog, gotmagic=gotmagic)
 
     if isinstance(item, Obslog):
-        return canhave_obslog(session, user, obslog, filedownloadlog, gotmagic=gotmagic)
+        return canhave_obslog(session, user, item, filedownloadlog, gotmagic=gotmagic)
 
 
 def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False, user_progid_list=None):
