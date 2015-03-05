@@ -7,7 +7,7 @@ from cgi import escape
 
 from gemini_metadata_utils import GeminiDataLabel
 
-from utils.userprogram import canhave
+from utils.userprogram import canhave_header
 
 from fits_storage_config import using_previews
 
@@ -610,7 +610,7 @@ class SummaryGenerator(object):
         Generates the download column html
         """
         # Determine if this user has access to this file
-        can = canhave(None, self.user, header, False, self.user_progid_list)
+        can = canhave_header(None, self.user, header, user_progid_list=self.user_progid_list)
         if can:
             html = '<div class="center">'
 
