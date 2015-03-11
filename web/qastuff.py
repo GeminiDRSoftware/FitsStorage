@@ -37,6 +37,8 @@ def qareport(req):
         else:
             return apache.HTTP_BAD_REQUEST
 
+        req.log_error("thelist: %s" % thelist)
+
         return qareport_ingest(thelist, submit_host=req.get_remote_host(), submit_time=datetime.datetime.now())
 
 def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now()):
@@ -101,6 +103,10 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
                     qametriciq.nsamples = iq_dict['nsamples']
                     qametriciq.percentile_band = iq_dict['percentile_band']
                     qametriciq.comment = ", ".join(iq_dict['comment'])
+                    if 'ao_seeing' in iq_dict.keys():
+                        qametriciq.ao_seeing = iq_dict['ao_seeing']
+                    if 'adaptive_optics' in iq_dict.keys():
+                        qametriciq.adaptive_optics = iq_dict['adaptive_optics']
                     session.add(qametriciq)
 
                 if 'zp' in qametric_dict.keys():
@@ -192,6 +198,8 @@ def parse_xml(clientdata):
                 qametriciq['nsamples'] = get_value(iq.getElementsByTagName("nsamples"))
                 qametriciq['percentile_band'] = get_value(iq.getElementsByTagName("percentile_band"))
                 qametriciq['comment'] = get_value(iq.getElementsByTagName("comment"))
+                qametriciq['adaptive_optics'] = get_value(iq.getElementsByTagName("adaptive_optics"))
+                qametriciq['ao_seeing'] = get_value(iq.getElementsByTagName("ao_seeing"))
                 qametric['iq'].append(qametriciq)
 
             qametric['zp'] = []
@@ -475,6 +483,9 @@ def qaforgui(req, things):
                     if requestd_iq is not None:
                         iq['requested'] = int(requested_iq)
                     submit_time_kludge = qaiq.qareport.submit_time
+                    iq['adaptive_optics'] = bool(qaiq.adaptive_optics)
+                    if qaiq.ao_seeing is not None:
+                        iq['ao_seeing'] = float(qaiq.ao_seeing)
 
                 # Look for CC metrics to report. The DB has the different detectors in different entries, have to do some merging.
                 # Find the qareport id of the most recent zp report for this datalabel

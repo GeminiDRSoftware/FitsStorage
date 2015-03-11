@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, DateTime, Numeric
+from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean
 from sqlalchemy.orm import relation
 
 from . import Base
@@ -44,6 +44,8 @@ class QAmetricIQ(Base):
     elip_std = Column(Numeric(precision=5, scale=3))
     pa = Column(Numeric(precision=6, scale=3))
     pa_std = Column(Numeric(precision=6, scale=3))
+    adaptive_optics = Column(Boolean)
+    ao_seeing = Column(Numeric(precision=6, scale=3))
     strehl = Column(Numeric(precision=6, scale=3))
     strehl_std = Column(Numeric(precision=6, scale=3))
     nsamples = Column(Integer)
