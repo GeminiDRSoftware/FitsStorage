@@ -5,6 +5,9 @@ This module contains utility functions for user matters such as access control
 import datetime
 from mod_python import Cookie
 
+from sqlalchemy import func
+from orm.diskfile import DiskFile
+
 from fits_storage_config import magic_download_cookie
 
 from web.userprogram import get_program_list
@@ -126,7 +129,7 @@ def canhave_obslog(session, user, obslog, filedownloadlog=None, gotmagic=False, 
     end = start + oneday
     maxrel_query = maxrel_query.filter(Header.ut_datetime >= start).filter(Header.ut_datetime < end)
 
-    maxrel = query.first()
+    maxrel = maxrel_query.first()[0]
 
     # did we get a release date (ie does any data exist and have release dates?)
     if maxrel:
