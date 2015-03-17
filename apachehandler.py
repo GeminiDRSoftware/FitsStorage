@@ -32,6 +32,7 @@ from web.userprogram import my_programs
 from web.searchform import searchform, nameresolver
 from web.logreports import usagereport, usagedetails, downloadlog, usagestats
 from web.preview import preview
+from web.obslogs import obslogs
 
 from orm import sessionfactory
 from orm.file import File
@@ -164,6 +165,20 @@ def thehandler(req):
 
         retval = summary(req, this, selection, orderby, links)
         return retval
+
+    # Obslogs get their own summary-like handler
+    if this in ['obslogs', 'associated_obslogs']:
+        if this in blocked_urls:
+            return apache.HTTP_FORBIDDEN
+
+        # Only some of the selection is relevant, but that's fine, we can still parse it.
+        selection = getselection(things)
+
+        retval = obslogs(req, this, selection)
+
+        return retval
+
+
 
     # This is the standard star in observation server
     if this == 'standardobs':
