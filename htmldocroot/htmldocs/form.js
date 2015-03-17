@@ -143,6 +143,7 @@ function CalsTab() {
         }
         document.getElementById("caltab").innerHTML='View Calibrations';
         $("#searchresults").hide();
+        $("#obslog_results").hide();
         $("#calibration_results").show();
         /* set the tab classes */
         document.getElementById("caltab").className += 'current';
@@ -163,14 +164,32 @@ function ResultsTab() {
 }
 
 function ObslogsTab() {
-    /* Just switch the displayed div */
-    $("#calibration_results").hide();
-    $("#searchresults").hide();
-    $("#obslog_results").show();
-    /* set the tab classes */
-    document.getElementById("obslogstab").className += 'current';
-    document.getElementById("resultstab").className = document.getElementById("resultstab").className.replace('current', '')
-    document.getElementById("caltab").className = document.getElementById("caltab").className.replace('current', '')
+    if (document.getElementById("obslogstab").innerHTML == 'Associated Observation Logs') {
+        /* already been loaded, just switch to it */
+        $("#calibration_results").hide();
+        $("#searchresults").hide();
+        $("#obslog_results").show();
+        /* set the tab classes */
+        document.getElementById("obslogstab").className += 'current';
+        document.getElementById("resultstab").className = document.getElementById("resultstab").className.replace('current', '')
+        document.getElementById("caltab").className = document.getElementById("caltab").className.replace('current', '')
+    } else {
+        /* First time - initiate loading the associated obslogs */
+        var urlstring = document.getElementById("things").value;
+        var obsurl = '/associated_obslogs' + urlstring;
+            /* $("#loading_obslogs").show(); */
+            $('#obslog_results').load(obsurl, function(){
+                /* $("#loading_obslogs").hide(); */
+            });
+        document.getElementById("obslogstab").innerHTML='View Obslogs';
+        $("#searchresults").hide();
+        $("#calibration_results").hide();
+        $("#obslog_results").show();
+        /* set the tab classes */
+        document.getElementById("obslogstab").className += 'current';
+        document.getElementById("resultstab").className = document.getElementById("resultstab").className.replace('current', '')
+        document.getElementById("caltab").className = document.getElementById("obslogstab").className.replace('current', '')
+    }
 }
 
 // The Name Resolver
