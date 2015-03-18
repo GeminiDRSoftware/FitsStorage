@@ -7,6 +7,7 @@ from gemini_metadata_utils import gemini_fitsfilename
 from orm.file import File
 from orm.diskfile import DiskFile
 from orm.header import Header
+from orm.obslog import Obslog
 from orm.downloadlog import DownloadLog
 from orm.filedownloadlog import FileDownloadLog
 
@@ -247,25 +248,46 @@ def fileserver(req, things):
         # Next, find the canonical diskfile for it
         query = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.file_id == file.id)
         diskfile = query.one()
+
         # And now find the header record...
         query = session.query(Header).filter(Header.diskfile_id == diskfile.id)
-        header = query.one()
+        headers = query.all()
+        if len(headers) > 1:
+            downloadlog.add_note("WARNING: Multiple files found!")
+        if len(headers) > 0:
+            item = headers[0]
+            content_type = 'application/fits'
+        else:
+            # Didn't find a header - is it an obslog file
+            query = session.query(Obslog).filter(Obslog.diskfile_id == diskfile.id)
+            obslogs = query.all()
+            if len(obslogs) > 1:
+                downloadlog.add_note("WARNING: Multiple obslogs found!")
+            if len(obslogs) > 0:
+                item = obslogs[0]
+                content_type = 'text/plain'
+            else:
+                # Not an obslog either
+                item = None
+ 
         downloadlog.query_completed = datetime.datetime.utcnow()
         downloadlog.numresults = 1
-
-        # Is the client allowed to get this file?
-        canhaveit = icanhave(session, req, header)
-
-        if canhaveit:
-            # Send them the data
-            downloadlog.sending_files = True
-            sendonefile(req, header)
-            downloadlog.download_completed = datetime.datetime.utcnow()
-            return apache.OK
+        if item is None:
+            downloadlog.numresults = 0
         else:
-            # Refuse to send data
-            downloadlog.numdenied = 1
-            return apache.HTTP_FORBIDDEN
+            # Is the client allowed to get this file?
+            canhaveit = icanhave(session, req, item)
+
+            if canhaveit:
+                # Send them the data
+                downloadlog.sending_files = True
+                sendonefile(req, item.diskfile, content_type=content_type)
+                downloadlog.download_completed = datetime.datetime.utcnow()
+                return apache.OK
+            else:
+                # Refuse to send data
+                downloadlog.numdenied = 1
+                return apache.HTTP_FORBIDDEN
 
     except IOError:
         pass
@@ -274,23 +296,27 @@ def fileserver(req, things):
         session.close()
 
 
-def sendonefile(req, header):
+def sendonefile(req, diskfile, content_type=None):
     """
-    Send the (one) fits file referred to by the header object to the client
+    Send the (one) fits file referred to by the diskfile object to the client
     referred to by the req obect. This always sends unzipped data.
     """
 
     # Send them the data
-    req.content_type = 'application/fits'
-    req.headers_out['Content-Disposition'] = 'attachment; filename="%s"' % str(header.diskfile.file.name)
+    if content_type is not None:
+        req.content_type = content_type
+
+    if content_type == 'application/fits':
+        req.headers_out['Content-Disposition'] = 'attachment; filename="%s"' % str(diskfile.file.name)
+
     if using_s3:
         # S3 file server
         s3conn = S3Connection(aws_access_key, aws_secret_key)
         bucket = s3conn.get_bucket(s3_bucket_name)
-        key = bucket.get_key(header.diskfile.filename)
-        req.set_content_length(header.diskfile.data_size)
+        key = bucket.get_key(diskfile.filename)
+        req.set_content_length(diskfile.data_size)
         req.log_error("Here")
-        if header.diskfile.compressed:
+        if diskfile.compressed:
             buffer = cStringIO.StringIO()
             key.get_contents_to_file(buffer)
             buffer.seek(0)
@@ -302,13 +328,13 @@ def sendonefile(req, header):
             key.get_contents_to_file(req)
     else:
         # Serve from regular file
-        if header.diskfile.compressed == True:
+        if diskfile.compressed == True:
             # Unzip it on the fly
-            req.set_content_length(header.diskfile.data_size)
-            zfp = bz2.BZ2File(header.diskfile.fullpath(), 'r')
+            req.set_content_length(diskfile.data_size)
+            zfp = bz2.BZ2File(diskfile.fullpath(), 'r')
             try:
                 req.write(zfp.read())
             finally:
                 zfp.close()
         else:
-            req.sendfile(header.diskfile.fullpath())
+            req.sendfile(diskfile.fullpath())
