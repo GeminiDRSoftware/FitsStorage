@@ -98,13 +98,12 @@ def obslog_table(req, obslogs, selection, session):
         req.write('<P>WARNING: Your search generated more than the limit of %d results. Not all results have been shown. You might want to constrain your search more.</P>' % fits_closed_result_limit)
 
     # And tell them about clicking things
-    req.write('<p>Click the filename to open the obslog in your browser. Click the [D] to download that one file.</p>')
+    req.write('<p>Click the filename to open the obslog in your browser. Right-click the filename or use your browser Save-Link-As function to download to a file. If the filename is not a link, you do not have access to that observation log - they follow the same proprietary period as the data they refer to.</p>')
 
     req.write('<TABLE class="fullwidth">')
 
     # Output the table header
     req.write('<TR class=tr_head>')
-    req.write('<TH>Download</TH>')
     req.write('<TH>Filename</TH>')
     req.write('<TH>UT Date</TH>')
     req.write('<TH>Program ID</TH>')
@@ -116,16 +115,13 @@ def obslog_table(req, obslogs, selection, session):
         even = not even
         tr_class = "tr_even" if even else "tr_odd"
 
-        # Do we have access to it?
-        canhave = icanhave(session, req, obslog)
-
         req.write('<TR class=%s>' % tr_class)
-        if canhave:
-            req.write('<TD><a href="/file/%s">[D]</a></TD>' % obslog.diskfile.file.name)
+
+        if icanhave(session, req, obslog):
             req.write('<TD><a href="/file/%s" target="_blank">%s</a></TD>' % (obslog.diskfile.file.name, obslog.diskfile.file.name))
         else:
-            req.write('<TD>N/A</TD>')
             req.write('<TD>%s</TD>' % obslog.diskfile.file.name)
+
         req.write('<TD>%s</TD>' % obslog.date)
         req.write('<TD>%s</TD>' % obslog.program_id)
         req.write('</TR>')
