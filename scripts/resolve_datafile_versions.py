@@ -36,12 +36,16 @@ if options.scan:
     # Recurse through the directory structure, finding files, add to db.
     for root, dirs, files in os.walk(options.srcdir):
         logger.debug("Walking root %s, found %d dirs and %d files", root, len(dirs), len(files))
+        logger.info("Walking root %s...", root)
         for file in files:
             fullpath = os.path.join(root, file)
-            logger.info("Found %s at %s", file, fullpath)
-            if 'fits' in file:
-                version = Version(file, fullpath)
-                session.add(version)
+            if ('fits' in file) and (not file.startswith('.')):
+                # This operation should be idempotent. If we can find the full path in the database,
+                # then skip it!
+                if session.query(Version.id).filter(Version.fullpath == fullpath).count() == 0:
+                    logger.info("Found %s at %s", file, fullpath)
+                    version = Version(file, fullpath)
+                    session.add(version)
             else:
                 logger.info("Ignoring non fits file %s", file)
         session.commit()
