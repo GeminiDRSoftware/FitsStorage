@@ -2,6 +2,7 @@ import os
 import sys
 import traceback
 import datetime
+import shutil
 
 from orm import sessionfactory
 from orm.fileuploadlog import FileUploadLog
@@ -53,7 +54,7 @@ try:
     else:
         fileuploadlog = None
 
-    # Move the file to it's appropriate loaction in storage_root/path or S3
+    # Move the file to its appropriate loaction in storage_root/path or S3
     # Construct the full path names and move the file into place
     src = os.path.join(upload_staging_path, options.filename)
     dst = os.path.join(path, options.filename)
@@ -87,14 +88,8 @@ try:
         dst = os.path.join(storage_root, dst)
         logger.debug("Moving %s to %s" % (src, dst))
         # We can't use os.rename as that keeps the old permissions and ownership, which we specifically want to avoid
-        fin = open(src, 'r')
-        fout = open(dst, 'w')
-        # this is a bit brute force
-        buf = fin.read()
-        fout.write(buf)
-        buf = None
-        fin.close()
-        fout.close()
+        # Instead, we copy the file and the remove it
+        shutil.copy(src, dst)
         os.unlink(src)
         if fileuploadlog:
             fileuploadlog.file_ok = True
