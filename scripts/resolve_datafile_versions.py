@@ -4,7 +4,7 @@ from optparse import OptionParser
 import os
 import sys
 
-from orm import sessionfactory
+from orm import sessionfactory, func
 from orm.resolve_versions import Version
 
 from logger import logger, setdebug, setdemon
@@ -53,44 +53,35 @@ if options.able:
     session.execute("UPDATE versions SET unable=False")
     session.commit()
 
-# Itterate through the entries. First pass
-done = False
-while not done:
-    query = session.query(Version).filter(Version.unable == False)
-    reference = query.first()
-    if reference is None:
-        done = True
-        break
+# First pass: look for filenames that appear just once in the
+#             database. Move them away and remove from the table
+query = session.query(func.min(Version.id).label('mid'),
+                      Version.filename).\
+                filter(Version.unable == False).\
+                group_by(Version.filename).\
+                having(func.count(Version.filename) == 1).\
+                yield_per(10000)
 
-    # Is it a purely unique filename?
-    query = session.query(Version).filter(Version.unable == False)
-    query = query.filter(Version.id != reference.id)
-    query = query.filter(Version.filename == reference.filename)
-    others = query.all()
+print options.dryrun
+logger.info("Looking for purely unique filenames...")
+for obj in query:
+    logger.info("{} is unique filename".format(obj.filename))
+    if not options.dryrun:
+        vers = session.query(Version).filter(Version.id == obj.mid).one()
+        vers.moveto(options.destdir)
+        session.delete(vers)
+else:
+    session.commit()
 
-    if len(others) == 0:
-        # Yes, it's a purely unique filename. Get it out of the way.
-        logger.info("%s is a unique filename", reference.filename)
-        if not options.dryrun:
-            reference.moveto(options.destdir)
-            session.delete(reference)
-            session.commit()
-        break
-    else:
-        logger.debug("%s is not unique: %d more versions", reference.filename, len(others))
 
 # Now go through what's left and fill in md5s.
 logger.info("Calculating md5s")
-done = False
-while not done:
-    query = session.query(Version).filter(Version.unable == False).filter(Version.data_md5 == None)
-    reference = query.first()
-    if reference:
-        logger.info("Calculating MD5 for %s", reference.fullpath)
-        reference.calc_md5()
-        session.commit()
-    else:
-        done = True
+query = session.query(Version).filter(Version.unable == False).filter(Version.data_md5 == None)
+for reference in query:
+    logger.info("Calculating MD5 for %s", reference.fullpath)
+    reference.calc_md5()
+else:
+    session.commit()
 
 # Now look for duplicates
 logger.info("De-duplicating.")
