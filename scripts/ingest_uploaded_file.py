@@ -103,7 +103,8 @@ try:
     logger.info("Queueing for Ingest: %s" % dst)
     iq_id = add_to_ingestqueue(session, options.filename, path)
 
-    fileuploadlog.ingestqueue_id = iq_id
+    if fileuploadlog:
+        fileuploadlog.ingestqueue_id = iq_id
 
 except:
     string = traceback.format_tb(sys.exc_info()[2])
