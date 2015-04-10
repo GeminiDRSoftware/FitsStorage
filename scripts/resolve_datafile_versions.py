@@ -1,11 +1,14 @@
 import bz2
 import pyfits
+from operator import attrgetter
 from optparse import OptionParser
 import os
 import sys
 
 import orm
 from orm.resolve_versions import Version
+
+from utils import image_validity
 
 from logger import logger, setdebug, setdemon
 import datetime
@@ -57,6 +60,7 @@ if options.able:
     session.execute("UPDATE versions SET unable=False")
     session.commit()
 
+################################################################################
 # First pass: look for filenames that appear just once in the
 #             database. Move them away and remove from the table
 
@@ -81,19 +85,10 @@ if rc:
 else:
     logger.info("- No unique, non-accepted files found")
 session.commit()
+sq = None    # Just destroying these two...
+stmt = None
 
-# for n, obj in enumerate(query, 1):
-#     logger.info("{} is unique filename".format(obj.filename))
-#     if not options.dryrun:
-#         vers = session.query(Version).filter(Version.id == obj.mid).one()
-#         vers.accepted = True
-#         vers.score = 1
-#         # Batch the commits. Arbitrary number
-#         if not (n % 10000):
-#             session.commit()
-# else:
-#     session.commit()
-
+################################################################################
 # Now go through what's left and fill in md5s.
 logger.info("Calculating md5s")
 query = session.query(Version).\
@@ -110,6 +105,7 @@ for n, reference in enumerate(query, 1):
 else:
     session.commit()
 
+################################################################################
 # De-duplicating rules
 #
 # First of all, we're going to look for exact duplicates, using the MD5 that we
@@ -130,10 +126,9 @@ else:
 # In a second iteration we should refine this process to make sure that no
 # accepted version fails a test that others pass, just as an extra safety
 # measure.
-
-# Rules:
-# 1) RAWGEMQA header - pick the file where != 'UNKNOWN'
-# 2) RAWIQ, RAWCC, RAWWV, RAWBG headers - again, pick the one where != 'UNKNOWN'
+#
+# To see the set of rules, look into ../utils/image_validity.py and look for
+# functions decorated with @register_rule
 
 # Now look for duplicates
 # The method is simple: we group the files by filename and data_md5, and look
@@ -179,45 +174,49 @@ for filename, md5sum in query:
 else:
     session.commit()
 
-#while not done:
-#    query = session.query(Version).filter(Version.unable == False)
-#    reference = query.first()
-#    if reference is None:
-#        done = True
-#        break
+# Now we iterate over the non-evaluated images using the following procedure:
 #
-#    # find any identical others - ie duplicate files, and get rid of them.
-#    query = session.query(Version).filter(Version.unable == False)
-#    query = query.filter(Version.id != reference.id)
-#    query = query.filter(Version.filename == reference.filename)
-#    query = query.filter(Version.data_md5 == reference.data_md5)
-#    others = query.all()
+#  1) We grab one filename
+#  2) We query for all the non-evaluated instances of that filename
+#  3) We score those instances using the image_validity scorer
+#  4) Use those scores to declare a winner, update the database values and
+#     commit
 #
-#    for other in others:
-#        # This one is identical to the reference, delete it
-#        logger.info("%s is identical to %s", other.fullpath, reference.fullpath)
-#        if not options.dryrun:
-#            os.unlink(other.fullpath)
-#        session.delete(other)
-#    session.commit()
-#
-#    # Find any others
-#    query = session.query(Version).filter(Version.unable == False)
-#    query = query.filter(Version.filename == reference.filename)
-#    others = query.all()
-#
-#    # Is it (now) a purely unique filename?
-#    if len(others) == 0:
-#        # Yes, it's a purely unique filename
-#        logger.info("%s is a unique filename", reference.filename)
-#        if not options.dryrun:
-#            reference.moveto(options.destdir)
-#            session.delete(reference)
-#            session.commit()
-#        break
-#    else:
-#        # We're unable to resolve this 
-#        reference.unable = True
-#        session.commit()
+# Note that:
+#  - If there's a tie, we simply tag all of them as "unable" and go on to
+#    the next
+#  - This process CAN'T tag that "is_clear" as True, because we haven't at
+#    this point come up with an extensive set of rules
+logger.info("De-duplicating: scoring...")
+
+query = session.query(Version.filename).\
+                filter(Version.unable == False).\
+                filter(Version.is_clear == None).\
+                filter(Version.accepted == None).\
+                group_by(Version.filename).\
+                yield_per(10000)
+
+for (fname,) in query:
+    subq = session.query(Version).\
+                   filter(Version.filename == fname).\
+                   filter(Version.is_clear == None).\
+                   filter(Version.accepted == None)
+
+    for vers in subq:
+        vers.score = image_validity.score_file(vers.fullpath).value
+
+    subq = sorted(subq, key = attrgetter('score'), reverse = True)
+    max_val = subq[0].score
+    if any(x.score == max_val for x in subq[1:]):
+        logger.info("{0}: Found more than one max score".format(fname))
+        for vers in subq:
+            vers.unable = True
+    else:
+        logger.info("{0}: Found a winner with score {1}".format(fname, max_val))
+        for vers in subq:
+            vers.accepted = (False if vers.score != max_val else True)
+            vers.is_clear = False
+
+    session.commit()
 
 session.close()
