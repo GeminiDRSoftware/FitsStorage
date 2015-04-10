@@ -15,13 +15,15 @@ class Version(Base):
     __tablename__ = 'versions'
 
     id = Column(Integer, primary_key=True)
-    filename = Column(Text, nullable=False, index=True)
-    fullpath = Column(Text)
-    data_md5 = Column(Text)
+    filename  = Column(Text, nullable=False, index=True)
+    fullpath  = Column(Text)
+    data_md5  = Column(Text)
     data_size = Column(Integer)
-    unable = Column(Boolean)
-    score = Column(Integer, default = -1)
-    accepted = Column(Boolean)
+    unable    = Column(Boolean)
+    score     = Column(Integer, default = -1)
+    accepted  = Column(Boolean)
+    is_clear  = Column(Boolean,
+                       doc = "If this attribute is True, it means we're 100% sure of the choice")
 
     def __init__(self, filename, fullpath):
         self.filename = filename
