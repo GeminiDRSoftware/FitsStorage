@@ -5,6 +5,7 @@ database.
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.dialects import postgresql
 from sqlalchemy import func
 
 from fits_storage_config import fits_database
@@ -21,3 +22,9 @@ Base = declarative_base()
 # and an sqlalchemy session to go with it
 pg_db = create_engine(fits_database, echo = False)
 sessionfactory = sessionmaker(pg_db)
+
+def compiled_query(query):
+    """Returns a compiled query using the PostgreSQL dialect. Useful for
+       example to print the real query, when debugging"""
+    return query.statement.compile(dialect = postgresql.dialect())
+
