@@ -31,11 +31,12 @@ class Version(Base):
         self.unable = False
 
     def __repr__(self):
-        return "<Version({fn}, {md5}, acc={acc}, un={un})>".format(
+        return "<Version({fn}, {md5}, score={sc}, acc={acc}, un={un})>".format(
                     fn =  self.filename,
                     md5 = self.data_md5,
                     acc = self.accepted,
-                    un  = self.unable)
+                    un  = self.unable,
+                    sc  = self.score)
 
     def calc_md5(self):
         (md5, size) = md5sum_size_bz2(self.fullpath)
