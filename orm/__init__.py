@@ -23,8 +23,8 @@ Base = declarative_base()
 pg_db = create_engine(fits_database, echo = False)
 sessionfactory = sessionmaker(pg_db)
 
-def compiled_query(query):
+def compiled_statement(stmt):
     """Returns a compiled query using the PostgreSQL dialect. Useful for
        example to print the real query, when debugging"""
-    return query.statement.compile(dialect = postgresql.dialect())
+    return stmt.compile(dialect = postgresql.dialect())
 
