@@ -20,6 +20,8 @@ class Version(Base):
     data_md5 = Column(Text)
     data_size = Column(Integer)
     unable = Column(Boolean)
+    score = Column(Integer, default = -1)
+    accepted = Column(Boolean)
 
     def __init__(self, filename, fullpath):
         self.filename = filename
