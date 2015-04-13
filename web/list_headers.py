@@ -10,6 +10,7 @@ from orm.obslog import Obslog
 from fits_storage_config import fits_open_result_limit, fits_closed_result_limit, use_as_archive
 from web.selection import queryselection, openquery
 from sqlalchemy import desc
+import dateutil.parser
 
 def list_headers(session, selection, orderby):
     """
