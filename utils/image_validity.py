@@ -53,6 +53,8 @@ class Scorer(object):
                 score += rule(headers)
             except ScoringViolation as sv:
                 score.add(str(sv), sv.value)
+            except pyfits.verify.VerifyError as ve:
+                score.add(str(ve), -100)
 
         return score
 
