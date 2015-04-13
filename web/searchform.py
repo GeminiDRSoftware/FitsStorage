@@ -66,10 +66,16 @@ def searchform(req, things, orderby):
         else:
             # Populate selection dictionary with values from form input
             updateselection(formdata, selection)
-            # builds URL, clears formdata, refreshes page with updated selection from form
+            # build URL
             urlstring = selection_to_URL(selection)
-            formdata.clear()
-            util.redirect(req, '/searchform' + urlstring + args_string)
+            if 'ObsLogsOnly' in formdata.keys():
+                # ObsLogs Only search
+                util.redirect(req, '/obslogs' + urlstring)
+            else:
+                # Regular data search
+                # clears formdata, refreshes page with updated selection from form
+                formdata.clear()
+                util.redirect(req, '/searchform' + urlstring + args_string)
 
     req.content_type = "text/html"
     req.write('<!DOCTYPE html><html><head>')
