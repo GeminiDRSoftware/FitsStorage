@@ -2,7 +2,7 @@ from sqlalchemy import Column
 from sqlalchemy import Integer, Text, Boolean
 import os
 
-from utils.hashes import md5sum_size_bz2
+from utils.hashes import md5sum_size_fp, md5sum_size_bz2
 
 from . import Base
 
@@ -38,8 +38,11 @@ class Version(Base):
                     un  = self.unable,
                     sc  = self.score)
 
-    def calc_md5(self):
-        (md5, size) = md5sum_size_bz2(self.fullpath)
+    def calc_md5(self, fobj = None):
+        if fobj is not None:
+            (md5, size) = md5sum_size_fp(fobj)
+        else:
+            (md5, size) = md5sum_size_bz2(self.fullpath)
         self.data_md5 = md5
         self.data_size = size
 
