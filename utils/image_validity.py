@@ -5,6 +5,7 @@ for other purposes.
 """
 
 import bz2
+import pyfits
 from pyfits import open as pfopen
 
 __all__ = ['score_file']
