@@ -12,7 +12,7 @@ __all__ = ['score_file']
 class ScoringViolation(Exception):
     def __init__(self, message, score = 0):
         super(Exception, self).__init__(message)
-        self.score = score
+        self.value = score
 
 class ScoringResult(object):
     def __init__(self):
