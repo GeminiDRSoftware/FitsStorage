@@ -71,7 +71,7 @@ for fname in unable:
 
             pprint.pprint(compare_headers(*headers), stream = logfile)
             session.commit()
-        except pyfits.verify.VerifyError as e:
+        except (pyfits.verify.VerifyError, IOError) as e:
             print(e, file=logfile)
         finally:
             sys.stderr = sys.__stderr__
