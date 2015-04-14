@@ -52,10 +52,10 @@ chmod ug+s invoke
 sudo mkdir /opt/Ureka
 sudo chown phirst /opt/Ureka
 cd /opt/Ureka
-cp /opt/FitsStorage/otherfiles/install_ureka_1.4.1.2 .
-sh install_ureka_1.4.1.2
-#Remove broken ureka pkg-config
-mv /opt/Ureka/Ureka/python/bin/pkg-config /opt/Ureka/Ureka/python/bin/pkg-config-broken
+cp /opt/FitsStorage/otherfiles/install_ureka_1.5.1 .
+# To do download from stsci, or use local GN / GS versions
+sh install_ureka_1.5.1
+sh install_ureka_1.5.1 -t /net/endor/Gemini/astro/iraf/downloads/Ureka_linux-rhe5_64_1.5.1.tar.gz
 
 
 cd /opt/python_modules
@@ -70,8 +70,8 @@ cd dist
 python setup.py install --prefix=/opt/python_modules
 
 cd /opt/python_modules
-tar xvzf /opt/FitsStorage/otherfiles/psycopg2-2.5.4.tar.gz
-cd psycopg2-2.5.4
+tar xvzf /opt/FitsStorage/otherfiles/psycopg2-2.6.tar.gz
+cd psycopg2-2.6
 which pg_config
 # should be /usr/bin/pg_config - else:
 # vi setup.cfg 
@@ -79,8 +79,8 @@ which pg_config
 python setup.py build
 python setup.py install --prefix=/opt/python_modules
 cd /opt/python_modules
-tar xvzf /opt/FitsStorage/otherfiles/SQLAlchemy-0.9.8.tar.gz
-cd SQLAlchemy-0.9.8
+tar xvzf /opt/FitsStorage/otherfiles/SQLAlchemy-0.9.9.tar.gz
+cd SQLAlchemy-0.9.9
 setenv PYTHONPATH /opt/python_modules/lib/python2.7/site-packages
 python setup.py build
 python setup.py install --prefix=/opt/python_modules
@@ -96,8 +96,8 @@ python setup.py install --prefix=/opt/python_modules
 
 # if using s3
 cd /opt/python_modules
-tar xvf /opt/FitsStorage/otherfiles/boto-2.23.0.tar.gz
-cd boto-2.23.0
+tar xvf /opt/FitsStorage/otherfiles/boto-2.38.0.tar.gz
+cd boto-2.38.0
 python setup.py build
 python setup.py install --prefix=/opt/python_modules
 
