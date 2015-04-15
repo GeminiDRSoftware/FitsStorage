@@ -1,7 +1,6 @@
-import bz2
-import pyfits
 from operator import attrgetter
 from optparse import OptionParser
+import itertools
 import os
 import sys
 
@@ -89,31 +88,10 @@ sq = None    # Just destroying these two...
 stmt = None
 
 ################################################################################
-# Now go through what's left and fill in md5s.
-logger.info("Calculating md5s")
-query = session.query(Version).\
-                filter(Version.unable == False).\
-                filter(Version.accepted == None).\
-                filter(Version.data_md5 == None)
-for n, reference in enumerate(query, 1):
-    logger.info("Calculating MD5 for %s", reference.fullpath)
-    if not options.dryrun:
-        reference.calc_md5()
-        # Batch the commits. Arbitrary number
-        if not (n % 300):
-            session.commit()
-else:
-    session.commit()
-
-################################################################################
 # De-duplicating rules
 #
-# First of all, we're going to look for exact duplicates, using the MD5 that we
-# just calculted in the previous step. In those cases, we'll mark as accepted an
-# arbitrary version.
-
-# After the first, easy one, we'll go through a number or rules to "score" our
-# files. The first approach will be naive: set the competing entries' scores to
+# We'll start by going through a number or rules to "score" our files.
+# The first approach will be naive: set the competing entries' scores to
 # 0, and submit each one to a set of rules; the rule functions return a score,
 # typically "0" for "not passed" or "1" for "passed", but the rules may award
 # more than one point.
@@ -130,90 +108,74 @@ else:
 # To see the set of rules, look into ../utils/image_validity.py and look for
 # functions decorated with @register_rule
 
-# Now look for duplicates
-# The method is simple: we group the files by filename and data_md5, and look
-# for instances where there are more thank 1 of those. Then, for each filename
-# that fits that condition, we query Version for all the instances of that filename.
-# If all of them have the same MD5sum, we select a random one as the winner, and
-# tag the others as rejected.
-#
-# In the case where some of the instances are exact duplicates, but not all of them,
-# we choose one of the duplicates as partial winner, but WE DON'T MARK IT. We tag
-# the others as rejected. Doing it like that, the "winner" will go into the next
-# step, where it will compete with the non matching versions.
-logger.info("De-duplicating: looking for exact duplicates")
-
-query = session.query(Version.filename, Version.data_md5).\
-                filter(Version.unable == False).\
-                filter(Version.accepted == None).\
-                filter(Version.data_md5 != None).\
-                group_by(Version.filename).\
-                group_by(Version.data_md5).\
-                having(orm.func.count(Version.filename) > 1).\
-                yield_per(10000)
-
-for filename, md5sum in query:
-    # We're taking here the reasonable assumption that all the instances share the
-    # 'unable = False' feature
-    res = session.query(Version).\
-                  filter(Version.filename == filename).\
-                  all()
-    matching = [x for x in res if x.data_md5 == md5sum]
-    if not options.dryrun:
-        for inst in matching[1:]:
-            inst.accepted = False
-            inst.is_clear = True
-
-    if res == matching:
-        logger.info("Found exact duplicates for {0}. All accounted for".format(filename))
-        if not options.dryrun:
-            matching[0].accepted = True
-            matching[0].is_clear = True
-    else:
-        logger.info("Found exact duplicates for {0}. Leaving one for next round".format(filename))
-else:
-    session.commit()
-
 # Now we iterate over the non-evaluated images using the following procedure:
 #
 #  1) We grab one filename
 #  2) We query for all the non-evaluated instances of that filename
-#  3) We score those instances using the image_validity scorer
-#  4) Use those scores to declare a winner, update the database values and
-#     commit
+#  3) We score each instance using the image_validity scorer
+#  4) We check if only one instance has the higher score.
+#  4.1) If that's the case, we mark the instance as accepted and the others as
+#       not, but always as not-clear
+#  4.2) Otherwise, we calculate MD5sums on the high-scorers. If there are coincidences,
+#       we mark all equal MD5sums (except for one) as "not-accepted, clear".
+#  4.2.1) If there's only one instance left, we mark it as the winner.
+#  4.2.2) Otherwise, we mark ALL instances as "unable"
 #
-# Note that:
-#  - If there's a tie, we simply tag all of them as "unable" and go on to
-#    the next
-#  - This process CAN'T tag that "is_clear" as True, because we haven't at
-#    this point come up with an extensive set of rules
-logger.info("De-duplicating: scoring...")
+# Note that this process CAN'T tag that "is_clear" as True, except in the case of
+# exact duplicates, because we haven't at this point come up with an extensive set
+# of rules
+#
+# If we can't declare a winner, we mark all the instances as "unable"
+logger.info("De-duplicating: scoring + MD5")
 
 query = session.query(Version.filename).\
                 filter(Version.unable == False).\
                 filter(Version.is_clear == None).\
                 filter(Version.accepted == None).\
-                group_by(Version.filename).\
-                yield_per(10000)
+                group_by(Version.filename)
 
 for (fname,) in query:
-    subq = session.query(Version).\
-                   filter(Version.filename == fname).\
-                   filter(Version.is_clear == None).\
-                   filter(Version.accepted == None)
+    versions = list(session.query(Version).\
+                            filter(Version.filename == fname).\
+                            filter(Version.is_clear == None).\
+                            filter(Version.accepted == None))
 
-    for vers in subq:
-        vers.score = image_validity.score_file(vers.fullpath).value
-
-    subq = sorted(subq, key = attrgetter('score'), reverse = True)
-    max_val = subq[0].score
-    if any(x.score == max_val for x in subq[1:]):
-        logger.info("{0}: Found more than one max score".format(fname))
-        for vers in subq:
+    # Calculate MD5 sums and scoring
+    try:
+        for vers in versions:
+            vers.score = image_validity.score_file(vers.fullpath).value
+    except IOError: # Something bad with one of the files.
+        for vers in versions:
             vers.unable = True
+            vers.score = -100
+        session.commit()
+        continue
+
+    versions = sorted(versions, key=attrgetter('score'), reverse = True)
+    max_val = versions[0].score
+    if any(x.score == max_val for x in versions[1:]):
+        logger.info("{0}: Found more than one max score. Trying MD5".format(fname))
+
+        candidates = filter(lambda x: x.score == max_val, versions)
+        for vers in candidates:
+            vers.calc_md5()
+        for (md5, group) in itertools.groupby(candidates, attrgetter('data_md5')):
+            for inst in list(group)[1:]:
+                inst.accepted = False
+                inst.is_clear = True
+
+        winners = filter(lambda x: x.accepted != False, candidates)
+        if len(winners) > 1:
+            logger.info("  - Still undecided. Marking the potential winners as unable")
+            for vers in winners:
+                vers.unable = True
+        else:
+            winner = winners[0]
+            winner.accepted = True
+            winner.is_clear = (True if len(candidates) == len(versions) else False)
     else:
         logger.info("{0}: Found a winner with score {1}".format(fname, max_val))
-        for vers in subq:
+        for vers in versions:
             vers.accepted = (False if vers.score != max_val else True)
             vers.is_clear = False
 
