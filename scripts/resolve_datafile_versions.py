@@ -140,14 +140,20 @@ for (fname,) in query:
                             filter(Version.is_clear == None).\
                             filter(Version.accepted == None))
 
-    # Calculate MD5 sums and scoring
-    try:
-        for vers in versions:
-            vers.score = image_validity.score_file(vers.fullpath).value
-    except IOError: # Something bad with one of the files.
-        for vers in versions:
+    # Calculate scoring
+    versdict = {}
+    for vers in versions:
+        versdict[vers.fullpath] = vers
+    for path, score in image_validity.score_files(*versdict.keys()):
+        vers = versdict[path]
+        vers.score = score.value
+        # Something really bad happened here...
+        if score.value < -9000:
             vers.unable = True
-            vers.score = -100
+    # Cleanup...
+    versdict = None
+    if all(x.unable for x in versions):
+        # No valid version left
         session.commit()
         continue
 
