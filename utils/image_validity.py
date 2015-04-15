@@ -44,6 +44,10 @@ class KeywordSet(object):
     def __init__(self):
         self.hdus = defaultdict(set)
 
+    @property
+    def set_list(self):
+        return [self.hdus[x] for x in sorted(self.hdus)]
+
     def add_keywords_from_headers(self, *headers):
         for n, header in enumerate(headers):
             self.hdus[n].update(set(k for k in header.keys() if k))
@@ -54,7 +58,7 @@ class KeywordSet(object):
     def __sub__(self, other):
         "Returns the keys present in this set, but not in the passed HDUList"
         result = []
-        for this, theother in ((header_to_keyword_set(x), header_to_keyword_set(y)) for (x, y) in zip(self.hdus, other)):
+        for this, theother in ((x, header_to_keyword_set(y)) for (x, y) in zip(self.set_list, other)):
             result.append(this - theother)
 
         return result
@@ -62,7 +66,7 @@ class KeywordSet(object):
     def __rsub__(self, other):
         "Returns the keys present in the passed HDUList but not in this set"
         result = []
-        for this, theother in ((header_to_keyword_set(x), header_to_keyword_set(y)) for (x, y) in zip(self.hdus, other)):
+        for this, theother in ((x, header_to_keyword_set(y)) for (x, y) in zip(self.set_list, other)):
             result.append(theother - this)
 
         return result
@@ -146,6 +150,31 @@ def score_conditions_assessment(headers, *args, **kw):
 
     if missing:
         raise ScoringViolation("Headers {0} not present in the main HDU".format(', '.join(missing)))
+
+    return score
+
+# TODO: Have a GOOD look at this. This is pure hunch-driven heuristic. It may be that
+#       missing keywords punish the correct version of a given file.
+@register_rule
+def score_missing_keywords(headers, keywords, *args, **kw):
+    "Takes the global keyword set and awards negative points for missing cards"
+    return -5 * sum([len(x) for x in keywords - headers])
+
+@register_rule
+def score_existing_favorable_keywords(headers, *args, **kw):
+    "Score extra points if certain keywords are there"
+    score = 0
+    if 'RELEASE' in headers[0]:
+        score += 20
+
+    return score
+
+@register_rule
+def score_standard_correct_keywords(headers, *args, **kw):
+    "Look for certain keywords and award points if they follow the FITS standard"
+    score = 0
+    if type(headers[0].get('EQUINOX')) is float:
+        score += 10
 
     return score
 
