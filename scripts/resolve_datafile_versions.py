@@ -159,12 +159,19 @@ for (fname,) in query:
 
     versions = sorted(versions, key=attrgetter('score'), reverse = True)
     max_val = versions[0].score
-    if any(x.score == max_val for x in versions[1:]):
+    for vers in versions[1:]:
+        if vers.score < max_val:
+            vers.accepted = False
+            vers.is_clear = False
+
+    candidates = filter(lambda x: x.score == max_val, versions)
+
+    if len(candidates) > 1:
         logger.info("{0}: Found more than one max score. Trying MD5".format(fname))
 
-        candidates = filter(lambda x: x.score == max_val, versions)
         for vers in candidates:
             vers.calc_md5()
+        # MD5 matching. Rejects all exact copies except for one
         for (md5, group) in itertools.groupby(candidates, attrgetter('data_md5')):
             for inst in list(group)[1:]:
                 inst.accepted = False
@@ -181,9 +188,9 @@ for (fname,) in query:
             winner.is_clear = (True if len(candidates) == len(versions) else False)
     else:
         logger.info("{0}: Found a winner with score {1}".format(fname, max_val))
-        for vers in versions:
-            vers.accepted = (False if vers.score != max_val else True)
-            vers.is_clear = False
+        winner = candidates[0]
+        winner.accepted = True
+        winner.is_clear = False
 
     session.commit()
 
