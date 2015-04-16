@@ -13,16 +13,17 @@ from logger import logger, setdebug, setdemon
 import datetime
 
 parser = OptionParser()
-parser.add_option("--dryrun",  action="store_true", dest="dryrun", default=False, help="Don't actually do anything, just say what would be done")
-parser.add_option("--srcdir",  action="store", dest="srcdir", default="/sdata/all_gemini_data/from_tape", help="Source directory to pull files from")
-parser.add_option("--destdir", action="store", dest="destdir", default="/sdata/all_gemini_data/canonical", help="Destination directory to put files in")
-parser.add_option("--scan",    action="store_true", default=False, dest="scan", help="Scan directories to DB")
-parser.add_option("--noidemp", action="store_true", default=False, dest="noidemp", help="When scanning, assume that we start with a blank database and don't worry about inserting duplicates")
-parser.add_option("--able",    action="store_true", default=False, dest="able", help="Reset all unable flags to False")
-parser.add_option("--debug",   action="store_true", dest="debug", help="Increase log level to debug")
-parser.add_option("--uniques", action="store_true", default=False, dest="uniq", help="Look for truly, unique files and mark them as accepted")
-parser.add_option("--demon",   action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
-
+parser.add_option("--dryrun",   action="store_true", dest="dryrun", default=False, help="Don't actually do anything, just say what would be done")
+parser.add_option("--srcdir",   action="store", dest="srcdir", default="/sdata/all_gemini_data/from_tape", help="Source directory to pull files from")
+parser.add_option("--destdir",  action="store", dest="destdir", default="/sdata/all_gemini_data/canonical", help="Destination directory to put files in")
+parser.add_option("--scan",     action="store_true", default=False, dest="scan", help="Scan directories to DB")
+parser.add_option("--noidemp",  action="store_true", default=False, dest="noidemp", help="When scanning, assume that we start with a blank database and don't worry about inserting duplicates")
+parser.add_option("--able",     action="store_true", default=False, dest="able", help="Reset all unable flags to False")
+parser.add_option("--debug",    action="store_true", dest="debug", help="Increase log level to debug")
+parser.add_option("--uniques",  action="store_true", default=False, dest="uniq", help="Look for truly, unique files and mark them as accepted")
+parser.add_option("--demon",    action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
+parser.add_option("--parallel", action="store_true", dest="parallel", help="Run just the de-duplicating, taking the names from a redis server")
+parser.add_option("--server",   action="store", dest="server", default='localhost', help="Server network address for --parallel")
 
 (options, args) = parser.parse_args()
 
@@ -194,13 +195,24 @@ if options.uniq:
 #
 # If we can't declare a winner, we mark all the instances as "unable"
 logger.info("De-duplicating: scoring + MD5")
-query = session.query(Version.filename).\
-                filter(Version.unable == False).\
-                filter(Version.is_clear == None).\
-                filter(Version.accepted == None).\
-                group_by(Version.filename)
+if not options.parallel:
+    logger.info("Starting sequential process: will query the database for files")
+    query = session.query(Version.filename).\
+                    filter(Version.unable == False).\
+                    filter(Version.is_clear == None).\
+                    filter(Version.accepted == None).\
+                    group_by(Version.filename)
 
-for (fname,) in query:
-    deduplicate(session, fname)
+    for (fname,) in query:
+        deduplicate(session, fname)
+else:
+    logger.info("Starting a parallel process: will query Redis for files")
+    from redis import Redis
+    r = Redis(options.server)
+
+    fname = r.rpop('pending')
+    while fname is not None:
+        deduplicate(session, fname)
+        fname = r.rpop('pending')
 
 session.close()
