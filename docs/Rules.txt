@@ -2,11 +2,9 @@
 2) Are RAWIQ, RAWCC, RAWWV, RAWBG defined and different of 'UNKNOWN'?
 4) EQUINOX/EPOCH are floating point (Standard) vs something else
 5) If RELEASE is there give points
+6) If IRAF-TLM is there and it's the most recent, give points
 n) Are there missing headers in one of the files?
 
 Think about the following:
 
  * Give extra points to the most recent RELEASE
- * If IRAF-TLM is there, give points
-   - If IRAF-TLM is in more than one file, then the more recent
-     one(s) should get extra points

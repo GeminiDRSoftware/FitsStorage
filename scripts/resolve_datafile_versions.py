@@ -236,7 +236,6 @@ else:
     r = Redis(options.server)
 
     fname = r.lpop('pending')
-    print(fname)
     while fname is not None:
         deduplicate(session, fname)
         fname = r.lpop('pending')

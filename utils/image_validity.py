@@ -8,6 +8,10 @@ import bz2
 import pyfits
 from pyfits import open as pfopen
 from collections import defaultdict
+from time import strptime
+from datetime import datetime
+
+NULL_DATETIME = datetime(1, 1, 1, 0, 0, 0)
 
 __all__ = ['score_file']
 
@@ -37,12 +41,34 @@ class ScoringResult(object):
 
         return self
 
+def tlm_to_datetime(value):
+    try:
+        dt = datetime(*strptime(value, '%H:%M:%S (%d/%m/%Y)')[:6])
+
+        return dt
+    except ValueError:
+        # Not a properly formatted IRAF-TLM value
+        return NULL_DATETIME
+
 def header_to_keyword_set(h):
     return set(h.keys() if h is not None else [])
 
 class KeywordSet(object):
     def __init__(self):
         self.hdus = defaultdict(set)
+        self._iraftlm = NULL_DATETIME
+
+    @property
+    def tlm(self):
+        if self._iraftlm is NULL_DATETIME:
+            return None
+        return self._iraftlm
+
+    @tlm.setter
+    def tlm(self, value):
+        dt = tlm_to_datetime(value)
+        if dt > self._iraftlm:
+            self._iraftlm = dt
 
     @property
     def set_list(self):
@@ -51,6 +77,10 @@ class KeywordSet(object):
     def add_keywords_from_headers(self, *headers):
         for n, header in enumerate(headers):
             self.hdus[n].update(set(k for k in header.keys() if k))
+            try:
+                self.tlm = header['IRAF-TLM']
+            except KeyError:
+                pass
 
     def __repr__(self):
         return '<KeywordSet {0}>'.format(self.hdus)
@@ -100,7 +130,6 @@ class Scorer(object):
             self.paths[path] = headers
             self.keywords.add_keywords_from_headers(*headers)
         except (IOError, pyfits.verify.VerifyError) as e:
-            print e
             sr = ScoringResult(path)
             sr.add(str(e), -10000)
             self.broken.append((path, sr))
@@ -175,6 +204,20 @@ def score_standard_correct_keywords(headers, *args, **kw):
     score = 0
     if type(headers[0].get('EQUINOX')) is float:
         score += 10
+
+    return score
+
+@register_rule
+def score_most_recent_iraf_tlm(headers, keywords, *args, **kw):
+    "If IRAF-TLM is present, use it as a hint"
+    score = 0
+    try:
+        tlm = tlm_to_datetime(headers[0]['IRAF-TLM'])
+        if tlm >= keywords.tlm:
+            score = 5
+    except KeyError:
+        # It was not there
+        pass
 
     return score
 
