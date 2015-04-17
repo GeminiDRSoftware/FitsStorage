@@ -1,4 +1,4 @@
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 from optparse import OptionParser
 import itertools
 import os
@@ -6,6 +6,7 @@ import sys
 
 import orm
 from orm.resolve_versions import Version
+from orm.tapestuff import Tape, TapeWrite, TapeFile
 
 from utils import image_validity
 
@@ -74,9 +75,8 @@ def resolve_uniques(sess):
     else:
         logger.info("- No unique, non-accepted files found")
 
-
 # De-duplicate...
-def deduplicate(sess, name):
+def deduplicate(sess, fname):
     versions = list(sess.query(Version).\
                          filter(Version.filename == fname).\
                          filter(Version.is_clear == None).\
@@ -119,13 +119,37 @@ def deduplicate(sess, name):
                 inst.accepted = False
                 inst.is_clear = True
 
-        winners = filter(lambda x: x.accepted != False, candidates)
-        if len(winners) > 1:
-            logger.info("  - Still undecided. Marking the potential winners as unable")
-            for vers in winners:
-                vers.unable = True
+        best = filter(lambda x: x.accepted != False, candidates)
+        if len(best) > 1:
+            # Last chance. Let's check the modification date
+            # Assume that fname ends with .bz2
+
+            # Log the case...
+            open('/data/differences/last_resort.log', 'a').write('{0}\n'.format(fname))
+
+            valid_paths = tuple(x.fullpath[x.fullpath.find('Gemini_FITS'):] for x in best)
+            nobz2 = os.path.splitext(fname)[0]
+            stamps = session.query(Tape.label, TapeWrite.filenum, TapeFile.filename, TapeFile.lastmod).\
+                             join(TapeWrite, TapeFile).\
+                             filter(TapeFile.filename == nobz2)
+            interesting = filter(lambda xx: xx[1] in valid_paths,
+                                 ((x[-1], x[0] + '-' + str(x[1]) + '/' + x[2] + '.bz2') for x in stamps))
+            if interesting:
+                by_most_recent = sorted(interesting, key = itemgetter(0), reverse = True)
+                path_to_winner = by_most_recent[0][1]
+
+                logger.info("  - Had to resort to last modification")
+                for inst in best:
+                    inst.accepted = (True if inst.fullpath.endswith(path_to_winner) else False)
+                    inst.is_clear = False
+                    inst.used_date = True
+            else:
+                logger.info("  - Still undecided. Marking the potential winners as unable")
+                for vers in best:
+                    vers.unable = True
+
         else:
-            winner = winners[0]
+            winner = best[0]
             winner.accepted = True
             winner.is_clear = (True if len(candidates) == len(versions) else False)
     else:
@@ -210,9 +234,10 @@ else:
     from redis import Redis
     r = Redis(options.server)
 
-    fname = r.rpop('pending')
+    fname = r.lpop('pending')
+    print(fname)
     while fname is not None:
         deduplicate(session, fname)
-        fname = r.rpop('pending')
+        fname = r.lpop('pending')
 
 session.close()
