@@ -24,6 +24,8 @@ class Version(Base):
     accepted  = Column(Boolean)
     is_clear  = Column(Boolean,
                        doc = "If this attribute is True, it means we're 100% sure of the choice")
+    used_date = Column(Boolean,
+                       doc = "If this attribute is True, it means we had to resort to lastmod to sort this out")
 
     def __init__(self, filename, fullpath):
         self.filename = filename

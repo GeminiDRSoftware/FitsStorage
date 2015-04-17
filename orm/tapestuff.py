@@ -1,7 +1,7 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, Boolean, BigInteger
 
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relation, relationship
 
 from . import Base
 
@@ -23,6 +23,8 @@ class Tape(Base):
     full = Column(Boolean, index=True)
     set = Column(Integer, index=True)
     fate = Column(Text)
+
+    tapewrites = relationship('TapeWrite')
 
     def __init__(self, label):
         self.label = label
@@ -51,6 +53,8 @@ class TapeWrite(Base):
     hostname = Column(Text)
     tapedrive = Column(Text)
     notes = Column(Text)
+
+    tapefiles = relationship('TapeFile')
 
 
 class TapeFile(Base):
