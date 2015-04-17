@@ -92,6 +92,7 @@ def deduplicate(sess, fname):
         # Something really bad happened here...
         if score.value < -9000:
             vers.unable = True
+            vers.is_clear = True
     # Cleanup...
     versdict = None
     if all(x.unable for x in versions):
