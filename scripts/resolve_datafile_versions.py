@@ -236,8 +236,11 @@ else:
     r = Redis(options.server)
 
     fname = r.lpop('pending')
-    while fname is not None:
-        deduplicate(session, fname)
-        fname = r.lpop('pending')
+    try:
+        while fname is not None:
+            deduplicate(session, fname)
+            fname = r.lpop('pending')
+    finally:
+        r.lpush('pending', fname)
 
 session.close()
