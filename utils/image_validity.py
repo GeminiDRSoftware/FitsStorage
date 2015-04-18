@@ -60,8 +60,6 @@ class KeywordSet(object):
 
     @property
     def tlm(self):
-        if self._iraftlm is NULL_DATETIME:
-            return None
         return self._iraftlm
 
     @tlm.setter
@@ -213,6 +211,7 @@ def score_most_recent_iraf_tlm(headers, keywords, *args, **kw):
     score = 0
     try:
         tlm = tlm_to_datetime(headers[0]['IRAF-TLM'])
+        print tlm, keywords.tlm
         if tlm >= keywords.tlm:
             score = 5
     except KeyError:
