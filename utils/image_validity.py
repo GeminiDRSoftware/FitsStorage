@@ -126,7 +126,7 @@ class Scorer(object):
 
         try:
             img = pfopen(fits)
-            img.verify()
+            img.verify('silentfix+exception')
             headers = [x.header for x in img]
             self.paths[path] = headers
             self.keywords.add_keywords_from_headers(*headers)
