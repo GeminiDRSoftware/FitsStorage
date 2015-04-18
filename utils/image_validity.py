@@ -116,8 +116,11 @@ class Scorer(object):
 
     def add_path(self, path):
         # Note: (str, unicode) is valid for Python 2; There's no "unicode" type in Python3
-        if isinstance(path, (str, unicode)) and ('.bz2' in path):
-            fits = bz2.BZ2File(path)
+        if isinstance(path, (str, unicode)):
+            if '.bz2' in path:
+                fits = bz2.BZ2File(path)
+            else:
+                fits = open(path)
         else:
             raise ValueError('{0} is not a string object'.format(path))
 
@@ -132,15 +135,19 @@ class Scorer(object):
             sr.add(str(e), -10000)
             self.broken.append((path, sr))
 
-    def compute_scores(self):
-        # TODO: Redo this thing...
+    def compute_scores(self, verbose = False):
         scores = []
         for path, headers in self.paths.items():
+            if verbose:
+                print("Scoring: {0}".format(path))
             score = ScoringResult(path)
 
             for rule in self.__registry:
                 try:
-                    score += rule(headers, keywords = self.keywords)
+                    sc = rule(headers, keywords = self.keywords)
+                    if verbose:
+                        print('{0}: {1}'.format(rule.func_name, sc))
+                    score += sc
                 except ScoringViolation as sv:
                     score.add(str(sv), sv.value)
                 except pyfits.verify.VerifyError as ve:
@@ -211,7 +218,6 @@ def score_most_recent_iraf_tlm(headers, keywords, *args, **kw):
     score = 0
     try:
         tlm = tlm_to_datetime(headers[0]['IRAF-TLM'])
-        print tlm, keywords.tlm
         if tlm >= keywords.tlm:
             score = 5
     except KeyError:
@@ -220,16 +226,18 @@ def score_most_recent_iraf_tlm(headers, keywords, *args, **kw):
 
     return score
 
-def score_files(*paths):
+def score_files(*paths, **kw):
     """Takes the path to a FITS file, or a file-like object, and returns a
        ScoringResult object that describes its validity in terms of the
        registered rules"""
+
+    verbose = (kw['verbose'] if 'verbose' in kw else False)
 
     scorer = Scorer()
     for p in paths:
         scorer.add_path(p)
 
-    return scorer.compute_scores()
+    return scorer.compute_scores(verbose)
 
 # Informal testing suite
 if __name__ == '__main__':
