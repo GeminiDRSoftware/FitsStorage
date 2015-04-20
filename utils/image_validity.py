@@ -130,7 +130,7 @@ class Scorer(object):
             headers = [x.header for x in img]
             self.paths[path] = headers
             self.keywords.add_keywords_from_headers(*headers)
-        except (IOError, pyfits.verify.VerifyError) as e:
+        except (IOError, ValueError, pyfits.verify.VerifyError) as e:
             sr = ScoringResult(path)
             sr.add(str(e), -10000)
             self.broken.append((path, sr))
