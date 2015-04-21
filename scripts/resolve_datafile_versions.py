@@ -162,7 +162,7 @@ def deduplicate(sess, fname):
             nobz2 = os.path.splitext(fname)[0]
             stamps = session.query(Tape.label, TapeWrite.filenum, TapeFile.filename, TapeFile.lastmod).\
                              join(TapeWrite, TapeFile).\
-                             filter(TapeFile.filename == nobz2)
+                             filter(orm.func.lower(TapeFile.filename) == nobz2.lower())
             interesting = filter(lambda xx: xx[1] in valid_paths,
                                  ((x[-1], x[0] + '-' + str(x[1]) + '/' + x[2] + '.bz2') for x in stamps))
             if interesting:
