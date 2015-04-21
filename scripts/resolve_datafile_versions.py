@@ -7,16 +7,18 @@ Usage:
   resolve_datafile_versions.py parallel [--server=ADDR] [--dryrun] [--debug] [--demon]
   resolve_datafile_versions.py scan <directory>... [--noidemp] [--dryrun] [--debug] [--demon]
   resolve_datafile_versions.py reset (able | <filename>... [--server=ADDR]) [--dryrun] [--debug]
+  resolve_datafile_versions.py rename [--threshold=THR] [--dryrun] [--debug] [--demon]
   resolve_datafile_versions.py (-h | --help)
   resolve_datafile_versions.py --version
 
 Options:
-  -h --help               Show this screen.
-  -D, --debug             Increase log level to debug.
-  -d, --demon             Run as a background demon, do not generate stdout
-  -r, --dryrun            Don't actually do anything, just say what would be done.
-  -s ADDR, --server=ADDR  Server network address of the redis server [default: localhost].
-  -u, --uniques           Look for truly, unique files and mark them as accepted. May take long time.
+  -h --help                Show this screen.
+  -D, --debug              Increase log level to debug.
+  -d, --demon              Run as a background demon, do not generate stdout
+  -r, --dryrun             Don't actually do anything, just say what would be done.
+  -s ADDR, --server=ADDR   Server network address of the redis server [default: localhost].
+  -t THR, --threshold=THR  We'll check if files with score THR or less need renaming [default: -100]
+  -u, --uniques            Look for truly, unique files and mark them as accepted. May take long time.
 """
 
 from operator import attrgetter, itemgetter
@@ -26,6 +28,8 @@ from docopt import docopt
 import itertools
 import os
 import sys
+import bz2
+import pyfits as pf
 
 import orm
 from orm.resolve_versions import Version
@@ -193,6 +197,13 @@ if arguments['scan']:
     logger.info("Exiting after scan")
     sys.exit(0)
 
+def reset_version(vers):
+    vers.unable = False
+    vers.score = -1
+    vers.accepted = None
+    vers.is_clear = None
+    vers.used_date = None
+
 if arguments['reset']:
     if arguments['able']:
         logger.info("Setting unable=False on all entries")
@@ -203,16 +214,53 @@ if arguments['reset']:
         found = set()
         for vers in session.query(Version).filter(Version.filename.in_(arguments['<filename>'])):
             found.add(vers.filename)
-            vers.unable = False
-            vers.score = -1
-            vers.accepted = None
-            vers.is_clear = None
-            vers.used_date = None
+            reset_version(vers)
         session.commit()
 
         r = Redis(arguments['--server'])
         for fname in found:
             r.lpush('pending', fname)
+    sys.exit(0)
+
+def fix_header(value):
+    try:
+        if value.startswith('='):
+            return value.split("'")[1].strip()
+    except AttributeError:
+        value = 'UNKNOWN'
+
+    return value
+
+if arguments['rename']:
+    thr = arguments['--threshold']
+    query = session.query(Version.filename).\
+                    filter(Version.accepted == True).\
+                    filter(Version.score <= thr).\
+                    group_by(Version.filename)
+
+    for (fname,) in query:
+        logger.info("Looking up {0}".format(fname))
+        versions = list(session.query(Version).filter(Version.filename == fname))
+        headers = []
+        passed = []
+        instrs = []
+        for v in versions:
+            try:
+                fits = pf.open(bz2.BZ2File(v.fullpath))
+                fits.verify('silentfix+exception')
+                passed.append(v)
+                headers.append(fits[0].header)
+            except pf.verify.VerifyError:
+                pass
+        instrs = [fix_header(x.get('INSTRUME')) for x in headers]
+        if len(set(instrs)) > 1:
+            logger.info(" - Renaming")
+            for v, instr in zip(passed, instrs):
+                reset_version(v)
+                exploded = v.filename.split('.')
+                new_fname = '.'.join([exploded[0], instr] + exploded[1:])
+                v.filename = new_fname
+            session.commit()
     sys.exit(0)
 
 ################################################################################
