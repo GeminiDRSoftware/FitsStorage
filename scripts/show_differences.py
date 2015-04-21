@@ -42,7 +42,13 @@ with orm.sessionfactory().no_autoflush as sess:
     for path in paths:
         logger.info(" - {0}".format(path))
 
-    p_and_f = [(x, pf.open(bz2.BZ2File(x))) for x in paths]
+    p_and_f = []
+    for p in paths:
+        try:
+            p_and_f.append((p, pf.open(bz2.BZ2File(p))))
+        except IOError as e:
+            print p
+            print e
     for ((afp, aobj), (bfp, bobj)) in zip(p_and_f[:-1], p_and_f[1:]):
         logger.info("-------------------------------------------------------------------------")
         logger.info("Differences between:")
