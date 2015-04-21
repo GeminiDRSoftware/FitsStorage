@@ -42,13 +42,15 @@ class ScoringResult(object):
         return self
 
 def tlm_to_datetime(value):
-    try:
-        dt = datetime(*strptime(value, '%H:%M:%S (%d/%m/%Y)')[:6])
+    for pattern in ('%H:%M:%S (%d/%m/%Y)', '%Y-%m-%dT%H:%M:%S'):
+        try:
+            dt = datetime(*strptime(value, pattern)[:6])
 
-        return dt
-    except ValueError:
-        # Not a properly formatted IRAF-TLM value
-        return NULL_DATETIME
+            return dt
+        except ValueError: # Not recognized as a properly formatted IRAF-TLM value
+            pass
+
+    return NULL_DATETIME
 
 def header_to_keyword_set(h):
     return set(h.keys() if h is not None else [])
