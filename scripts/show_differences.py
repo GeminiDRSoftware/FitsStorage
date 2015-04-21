@@ -59,4 +59,4 @@ with orm.sessionfactory().no_autoflush as sess:
         logger.info("  - {0}".format(bfp))
 
         for (ha, hb) in zip(aobj, bobj):
-            print (pf.HDUDiff(ha, hb).report())
+            print (pf.HeaderDiff(ha.header, hb.header).report())
