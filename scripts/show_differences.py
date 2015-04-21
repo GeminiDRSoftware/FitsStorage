@@ -20,6 +20,7 @@ import orm
 from orm.resolve_versions import Version
 import pyfits as pf
 import bz2
+from itertools import combinations
 
 from logger import logger, setdebug, setdemon
 
@@ -45,11 +46,13 @@ with orm.sessionfactory().no_autoflush as sess:
     p_and_f = []
     for p in paths:
         try:
-            p_and_f.append((p, pf.open(bz2.BZ2File(p))))
+            print ("Opening {0}".format(p))
+            fits = pf.open(bz2.BZ2File(p))
+            fits.verify('silentfix+exception')
+            p_and_f.append((p, fits))
         except IOError as e:
-            print p
-            print e
-    for ((afp, aobj), (bfp, bobj)) in zip(p_and_f[:-1], p_and_f[1:]):
+            print (e)
+    for ((afp, aobj), (bfp, bobj)) in combinations(p_and_f, 2):
         logger.info("-------------------------------------------------------------------------")
         logger.info("Differences between:")
         logger.info("  - {0}".format(afp))
