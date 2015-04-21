@@ -337,6 +337,7 @@ elif arguments['parallel']:
             deduplicate(session, fname)
             fname = r.lpop('pending')
     finally:
-        r.lpush('pending', fname)
+        if fname is not None:
+            r.lpush('pending', fname)
 
 session.close()
