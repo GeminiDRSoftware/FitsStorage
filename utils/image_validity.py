@@ -228,6 +228,19 @@ def score_most_recent_iraf_tlm(headers, keywords, *args, **kw):
 
     return score
 
+@register_rule
+def penalize_handmade_cards(headers, *args, **kw):
+    """Some old images have screwed up cards without the mandatory space
+       after the name and before =
+
+       This rule penalizes such behaviour..."""
+
+    score = 0
+    for head in headers:
+        score -= 5 * len(filter(lambda (x,y): isinstance(y, (str, unicode)) and y.startswith("='"), head.iteritems()))
+
+    return score
+
 def score_files(*paths, **kw):
     """Takes the path to a FITS file, or a file-like object, and returns a
        ScoringResult object that describes its validity in terms of the
