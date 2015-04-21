@@ -1,5 +1,28 @@
+#!/usr/bin/env python
+
+"""Versions Resolver
+
+Usage:
+  resolve_datafile_versions.py process [--uniques] [--dryrun] [--debug] [--demon]
+  resolve_datafile_versions.py parallel [--server=ADDR] [--dryrun] [--debug] [--demon]
+  resolve_datafile_versions.py scan <directory>... [--noidemp] [--dryrun] [--debug] [--demon]
+  resolve_datafile_versions.py reset (able | <filename>... [--server=ADDR]) [--dryrun] [--debug]
+  resolve_datafile_versions.py (-h | --help)
+  resolve_datafile_versions.py --version
+
+Options:
+  -h --help               Show this screen.
+  -D, --debug             Increase log level to debug.
+  -d, --demon             Run as a background demon, do not generate stdout
+  -r, --dryrun            Don't actually do anything, just say what would be done.
+  -s ADDR, --server=ADDR  Server network address of the redis server [default: localhost].
+  -u, --uniques           Look for truly, unique files and mark them as accepted. May take long time.
+"""
+
 from operator import attrgetter, itemgetter
-from optparse import OptionParser
+# from optparse import OptionParser
+from docopt import docopt
+
 import itertools
 import os
 import sys
@@ -13,24 +36,26 @@ from utils import image_validity
 from logger import logger, setdebug, setdemon
 import datetime
 
-parser = OptionParser()
-parser.add_option("--dryrun",   action="store_true", dest="dryrun", default=False, help="Don't actually do anything, just say what would be done")
-parser.add_option("--srcdir",   action="store", dest="srcdir", default="/sdata/all_gemini_data/from_tape", help="Source directory to pull files from")
-parser.add_option("--destdir",  action="store", dest="destdir", default="/sdata/all_gemini_data/canonical", help="Destination directory to put files in")
-parser.add_option("--scan",     action="store_true", default=False, dest="scan", help="Scan directories to DB")
-parser.add_option("--noidemp",  action="store_true", default=False, dest="noidemp", help="When scanning, assume that we start with a blank database and don't worry about inserting duplicates")
-parser.add_option("--able",     action="store_true", default=False, dest="able", help="Reset all unable flags to False")
-parser.add_option("--debug",    action="store_true", dest="debug", help="Increase log level to debug")
-parser.add_option("--uniques",  action="store_true", default=False, dest="uniq", help="Look for truly, unique files and mark them as accepted")
-parser.add_option("--demon",    action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
-parser.add_option("--parallel", action="store_true", dest="parallel", help="Run just the de-duplicating, taking the names from a redis server")
-parser.add_option("--server",   action="store", dest="server", default='localhost', help="Server network address for --parallel")
+# parser = OptionParser()
+# parser.add_option("--dryrun",   action="store_true", dest="dryrun", default=False, help="Don't actually do anything, just say what would be done")
+# parser.add_option("--srcdir",   action="store", dest="srcdir", default="/sdata/all_gemini_data/from_tape", help="Source directory to pull files from")
+# parser.add_option("--destdir",  action="store", dest="destdir", default="/sdata/all_gemini_data/canonical", help="Destination directory to put files in")
+# parser.add_option("--scan",     action="store_true", default=False, dest="scan", help="Scan directories to DB")
+# parser.add_option("--noidemp",  action="store_true", default=False, dest="noidemp", help="When scanning, assume that we start with a blank database and don't worry about inserting duplicates")
+# parser.add_option("--able",     action="store_true", default=False, dest="able", help="Reset all unable flags to False")
+# parser.add_option("--debug",    action="store_true", dest="debug", help="Increase log level to debug")
+# parser.add_option("--uniques",  action="store_true", default=False, dest="uniq", help="Look for truly, unique files and mark them as accepted")
+# parser.add_option("--demon",    action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
+# parser.add_option("--parallel", action="store_true", dest="parallel", help="Run just the de-duplicating, taking the names from a redis server")
+# parser.add_option("--server",   action="store", dest="server", default='localhost', help="Server network address for --parallel")
 
-(options, args) = parser.parse_args()
+arguments = docopt(__doc__, version='Versions Resolver 2.0')
+# print(arguments)
+# sys.exit(0)
 
 # Logging level to debug? Include stdio log?
-setdebug(options.debug)
-setdemon(options.demon)
+setdebug(arguments['--debug'])
+setdemon(arguments['--demon'])
 
 # Annouce startup
 logger.info("*********    resolve_datafile_versions.py - starting up at %s" % datetime.datetime.now())
@@ -161,24 +186,34 @@ def deduplicate(sess, fname):
 
     sess.commit()
 
-if options.scan:
-    scan_directory(session, options.srcdir, not options.noidemp)
+if arguments['scan']:
+    idemp = not arguments['--noidemp']
+    for srcdir in arguments['<directory>']:
+        scan_directory(session, srcdir, idemp)
     logger.info("Exiting after scan")
     sys.exit(0)
 
-if options.able:
-    logger.info("Setting unale=False on all entries")
-    session.execute("UPDATE versions SET unable=False")
-    session.commit()
+if arguments['reset']:
+    if arguments['able']:
+        logger.info("Setting unable=False on all entries")
+        session.execute("UPDATE versions SET unable=False")
+        session.commit()
+    else:
+        from redis import Redis
+        found = set()
+        for vers in session.query(Version).filter(Version.filename.in_(arguments['<filename>'])):
+            found.add(vers.filename)
+            vers.unable = False
+            vers.score = -1
+            vers.accepted = None
+            vers.is_clear = None
+            vers.used_date = None
+        session.commit()
 
-################################################################################
-# Look for filenames that appear just once in the database and mark them as
-# accepted (and clear).
-
-if options.uniq:
-    logger.info("Looking for purely unique filenames...")
-    resolve_uniq(session)
-    session.commit()
+        r = Redis(arguments['--server'])
+        for fname in found:
+            r.lpush('pending', fname)
+    sys.exit(0)
 
 ################################################################################
 # De-duplicating rules
@@ -219,8 +254,17 @@ if options.uniq:
 # of rules
 #
 # If we can't declare a winner, we mark all the instances as "unable"
-logger.info("De-duplicating: scoring + MD5")
-if not options.parallel:
+if arguments['process']:
+    ################################################################################
+    # Look for filenames that appear just once in the database and mark them as
+    # accepted (and clear).
+
+    if arguments['--uniques']:
+        logger.info("Looking for purely unique filenames...")
+        resolve_uniq(session)
+        session.commit()
+
+    logger.info("De-duplicating: scoring + MD5")
     logger.info("Starting sequential process: will query the database for files")
     query = session.query(Version.filename).\
                     filter(Version.unable == False).\
@@ -230,10 +274,11 @@ if not options.parallel:
 
     for (fname,) in query:
         deduplicate(session, fname)
-else:
+elif arguments['parallel']:
+    logger.info("De-duplicating: scoring + MD5")
     logger.info("Starting a parallel process: will query Redis for files")
     from redis import Redis
-    r = Redis(options.server)
+    r = Redis(arguments['--server'])
 
     fname = r.lpop('pending')
     try:
