@@ -216,13 +216,15 @@ def score_standard_correct_keywords(headers, *args, **kw):
 def score_most_recent_iraf_tlm(headers, keywords, *args, **kw):
     "If IRAF-TLM is present, use it as a hint"
     score = 0
-    try:
-        tlm = tlm_to_datetime(headers[0]['IRAF-TLM'])
-        if tlm >= keywords.tlm:
-            score = 5
-    except KeyError:
-        # It was not there
-        pass
+    for head in headers:
+        try:
+            tlm = tlm_to_datetime(head['IRAF-TLM'])
+            if tlm >= keywords.tlm:
+                score = 5
+                break
+        except KeyError:
+            # It was not there
+            pass
 
     return score
 
