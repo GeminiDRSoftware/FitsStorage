@@ -3,8 +3,8 @@
 """Versions Resolver
 
 Usage:
-  resolve_datafile_versions.py process [--uniques] [--dryrun] [--debug] [--demon]
-  resolve_datafile_versions.py parallel [--server=ADDR] [--dryrun] [--debug] [--demon]
+  resolve_datafile_versions.py process [--uniques] [--verbose] [--dryrun] [--debug] [--demon]
+  resolve_datafile_versions.py parallel [--server=ADDR] [--verbose] [--dryrun] [--debug] [--demon]
   resolve_datafile_versions.py scan <directory>... [--noidemp] [--dryrun] [--debug] [--demon]
   resolve_datafile_versions.py reset (able | <filename>... [--server=ADDR]) [--dryrun] [--debug]
   resolve_datafile_versions.py rename [--threshold=THR] [--dryrun] [--debug] [--demon]
@@ -19,6 +19,7 @@ Options:
   -s ADDR, --server=ADDR   Server network address of the redis server [default: localhost].
   -t THR, --threshold=THR  We'll check if files with score THR or less need renaming [default: -100]
   -u, --uniques            Look for truly, unique files and mark them as accepted. May take long time.
+  -v, --verbose            Display messages explaining the scoring decision
 """
 
 from operator import attrgetter, itemgetter
@@ -115,7 +116,7 @@ def deduplicate(sess, fname):
     versdict = {}
     for vers in versions:
         versdict[vers.fullpath] = vers
-    for path, score in image_validity.score_files(*versdict.keys()):
+    for path, score in image_validity.score_files(*versdict.keys(), verbose = verb):
         vers = versdict[path]
         vers.score = score.value
         # Something really bad happened here...
@@ -326,6 +327,8 @@ elif arguments['parallel']:
     logger.info("De-duplicating: scoring + MD5")
     logger.info("Starting a parallel process: will query Redis for files")
     from redis import Redis
+
+    verb = arguments['--verbose']
     r = Redis(arguments['--server'])
 
     fname = r.lpop('pending')
