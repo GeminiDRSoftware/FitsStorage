@@ -17,6 +17,7 @@ from orm.niri import Niri
 from orm.gnirs import Gnirs
 from orm.nifs import Nifs
 from orm.f2 import F2
+from orm.gpi import Gpi
 from orm.gsaoi import Gsaoi
 from orm.nici import Nici
 from orm.michelle import Michelle
@@ -58,6 +59,7 @@ def create_tables(session):
     Nifs.metadata.create_all(bind=pg_db)
     Gnirs.metadata.create_all(bind=pg_db)
     F2.metadata.create_all(bind=pg_db)
+    Gpi.metadata.create_all(bind=pg_db)
     Gsaoi.metadata.create_all(bind=pg_db)
     IngestQueue.metadata.create_all(bind=pg_db)
     Michelle.metadata.create_all(bind=pg_db)

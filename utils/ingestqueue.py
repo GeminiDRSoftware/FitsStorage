@@ -30,6 +30,7 @@ from orm.michelle import Michelle
 from orm.f2 import F2
 from orm.gsaoi import Gsaoi
 from orm.nici import Nici
+from orm.gpi import Gpi
 from orm.ingestqueue import IngestQueue
 from orm.previewqueue import PreviewQueue
 from orm.obslog import Obslog
@@ -309,6 +310,11 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, ma
                 logger.debug("Adding new NICI entry")
                 nici = Nici(header, diskfile.ad_object)
                 session.add(nici)
+                session.commit()
+            elif inst == 'GPI':
+                logger.debug("Adding new GPI entry")
+                gpi = Gpi(header, diskfile.ad_object)
+                session.add(gpi)
                 session.commit()
 
             # Do the preview here. 
