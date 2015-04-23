@@ -19,7 +19,7 @@ class Gpi(Base):
     filter_name = Column(Text, index=True)
     disperser = Column(Text, index=True)
     focal_plane_mask = Column(Text)
-    astrometic_standard = Column(Boolean)
+    astrometric_standard = Column(Boolean)
 
     def __init__(self, header, ad):
         self.header = header
@@ -32,11 +32,4 @@ class Gpi(Base):
         self.filter_name = ad.filter_name().for_db()
         self.disperser = ad.disperser().for_db()
         self.focal_plane_mask = ad.focal_plane_mask().for_db()
-        self.astrometric_standard = self.get_astrometric_standard(ad)
-
-    def get_astrometric_standard(self, ad):
-        """
-        It's the value of the ASTROMTC header from the first extension.
-        """
-        value = ad[1].get_key_value("ASTROMTC")
-        return value
+        self.astrometric_standard = ad.phu_get_key_value("ASTROMTC")
