@@ -3,13 +3,14 @@
 """Populates Redis with files to be processed by the parallel resolver
 
 Usage:
-  show_differences.py <filename>
+  show_differences.py [-p] <filename>
   show_differences.py (-h | --help)
   show_differences.py --version
 
 Options:
-  -h --help               Show this screen.
-  --version               Shows the program version and quits
+  -p, --permissive  Don't panic on horrible headers
+  -h --help         Show this screen.
+  --version         Shows the program version and quits
 """
 
 from docopt import docopt
@@ -33,6 +34,7 @@ setdemon(False)
 logger.info("*********    show_differences.py - starting up")
 
 fname = arguments['<filename>']
+verifyopt = ("silentfix+warn" if arguments['--permissive'] else "silentfix+exception")
 with orm.sessionfactory().no_autoflush as sess:
     paths = [x[0] for x in sess.query(Version.fullpath).filter(Version.filename == fname)]
     if not paths:
@@ -48,9 +50,9 @@ with orm.sessionfactory().no_autoflush as sess:
         try:
             print ("Opening {0}".format(p))
             fits = pf.open(bz2.BZ2File(p))
-            fits.verify('silentfix+exception')
+            fits.verify(verifyopt)
             p_and_f.append((p, fits))
-        except IOError as e:
+        except (pf.verify.VerifyError, IOError) as e:
             print (e)
     for ((afp, aobj), (bfp, bobj)) in combinations(p_and_f, 2):
         logger.info("-------------------------------------------------------------------------")
