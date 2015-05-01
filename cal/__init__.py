@@ -11,6 +11,7 @@ from cal.calibration_michelle import CalibrationMICHELLE
 from cal.calibration_f2 import CalibrationF2
 from cal.calibration_gsaoi import CalibrationGSAOI
 from cal.calibration_nici import CalibrationNICI
+from cal.calibration_gpi import CalibrationGPI
 
 from orm.file import File
 from orm.diskfile import DiskFile
@@ -55,6 +56,8 @@ def get_cal_object(session, filename, header=None, descriptors=None, types=None)
         cal = CalibrationGSAOI(session, header, descriptors, types)
     elif instrument == 'NICI':
         cal = CalibrationNICI(session, header, descriptors, types)
+    elif instrument == 'GPI':
+        cal = CalibrationGPI(session, header, descriptors, types)
     else:
         cal = Calibration(session, header, descriptors, types)
 

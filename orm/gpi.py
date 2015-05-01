@@ -18,8 +18,10 @@ class Gpi(Base):
     coadds = Column(Integer, index=True)
     filter_name = Column(Text, index=True)
     disperser = Column(Text, index=True)
-    focal_plane_mask = Column(Text)
-    astrometric_standard = Column(Boolean)
+    focal_plane_mask = Column(Text, index=True)
+    astrometric_standard = Column(Boolean, index=True)
+    wollaston = Column(Boolean, index=True)
+    prism = Column(Boolean, index=True)
 
     def __init__(self, header, ad):
         self.header = header
@@ -33,3 +35,6 @@ class Gpi(Base):
         self.disperser = ad.disperser().for_db()
         self.focal_plane_mask = ad.focal_plane_mask().for_db()
         self.astrometric_standard = ad.phu_get_key_value("ASTROMTC")
+        if self.disperser is not None:
+            self.wollaston = 'WOLLASTON' in self.disperser
+            self.prism = 'PRISM' in self.disperser 

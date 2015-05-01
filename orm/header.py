@@ -25,7 +25,7 @@ TELESCOPE_ENUM = Enum('Gemini-North', 'Gemini-South', name='telescope')
 REDUCTION_STATE_ENUM = Enum('RAW', 'PREPARED', 'PROCESSED_BIAS', 'PROCESSED_FLAT', 'PROCESSED_DARK', 'PROCESSED_FRINGE',
                             'PROCESSED_ARC', 'PROCESSED_TELLURIC', name='reduction_state')
 QASTATE_ENUM = Enum('Fail', 'CHECK', 'Undefined', 'Usable', 'Pass', name='qa_state')
-MODE_ENUM = Enum('imaging', 'spectroscopy', 'LS', 'MOS', 'IFS', name='mode')
+MODE_ENUM = Enum('imaging', 'spectroscopy', 'LS', 'MOS', 'IFS', 'IFP', name='mode')
 
 class Header(Base):
     """
@@ -40,6 +40,7 @@ class Header(Base):
     program_id = Column(Text, index=True)
     engineering = Column(Boolean, index=True)
     science_verification = Column(Boolean, index=True)
+    calibration_program = Column(Boolean, index=True)
     observation_id = Column(Text, index=True)
     data_label = Column(Text, index=True)
     telescope = Column(TELESCOPE_ENUM, index=True)
@@ -124,6 +125,7 @@ class Header(Base):
                 gemprog = GeminiProgram(self.program_id)
                 self.engineering = gemprog.is_eng or not gemprog.valid
                 self.science_verification = gemprog.is_sv
+                self.calibration_program = gemprog.is_cal
             else:
                 # program ID is None - mark as engineering
                 self.engineering = True
@@ -209,7 +211,7 @@ class Header(Base):
                 self.disperser = disperser_string.replace('/', '_')
 
             self.camera = ad.camera(pretty=True).for_db()
-            if 'SPECT' in ad.types:
+            if 'SPECT' in ad.types and 'GPI' not in ad.types:
                 self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
             self.wavelength_band = ad.wavelength_band().for_db()
             self.focal_plane_mask = ad.focal_plane_mask(pretty=True).for_db()
@@ -250,6 +252,7 @@ class Header(Base):
 
             # And the Spectroscopy and mode items
             self.spectroscopy = False
+            self.mode = 'imaging'
             if 'SPECT' in ad.types:
                 self.spectroscopy = True
                 self.mode = 'spectroscopy'
@@ -259,9 +262,8 @@ class Header(Base):
                     self.mode = 'MOS'
                 if 'LS' in ad.types:
                     self.mode = 'LS'
-            else:
-                self.spectroscopy = False
-                self.mode = 'imaging'
+            if 'GPI' in ad.types and 'POL' in ad.types:
+                self.mode = 'IFP'
 
             # Set the derived QA state
             # MDF (Mask) files don't have QA state - set to Pass so they show up as expected in search results

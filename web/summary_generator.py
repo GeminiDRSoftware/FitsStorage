@@ -596,7 +596,7 @@ class SummaryGenerator(object):
         Generates the waveband column html
         """
         # Print filter_name for imaging, disperser and cen_wlen for spec
-        if header.spectroscopy:
+        if header.spectroscopy and header.instrument != 'GPI':
             try:
                 html = "%s : %.3f" % (htmlescape(header.disperser), header.central_wavelength)
             except:
