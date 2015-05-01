@@ -36,7 +36,7 @@ import orm
 from orm.resolve_versions import Version
 from orm.tapestuff import Tape, TapeWrite, TapeFile
 
-from utils import image_validity
+from utils import resolve_scoring
 
 from logger import logger, setdebug, setdemon
 import datetime
