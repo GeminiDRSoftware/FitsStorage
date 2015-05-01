@@ -52,6 +52,12 @@ function setInstVisibility() {
     } else {
         $('#GSAOI').hide();
     }
+
+    if ($('#instselect').val().match("GPI")) {
+        $('#GPI').show();
+    } else {
+        $('#GPI').hide();
+    }
 };
 
 function setModeVisibility() {

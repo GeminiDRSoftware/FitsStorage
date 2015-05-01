@@ -788,8 +788,33 @@
     <span class="help">(Exposure Time)
         <span class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</span>
     </span><br />
+</div>
+
+<div class="next" id="GPI" style="display:none">
+    <br /><label>GPI</label><br />
+    <label>Filter:</label><select id="gpi_filter" class="ddw" name="filter">
+        <option value="">Any</option>
+        <option class="GPIfilter" value="Y">Y</option>
+        <option class="GPIfilter" value="J">J</option>
+        <option class="GPIfilter" value="H">H</option>
+        <option class="GPIfilter" value="K1">K1</option>
+        <option class="GPIfilter" value="K2">K2</option>
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select a GPI filter.</span>
+    </span><br />
+
+    <label>Disperser:</label><select id="gpi_disperser" class="ddw" name="disperser">
+        <option value="">Any</option>
+        <option class="GPIdisperser" value="DISP_PRISM">PRISM</option>
+        <option class="GPIdisperser" value="DISP_WOLLASTON">WOLLASTON</option>
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select a GPI disperser.</span>
+    </span><br />
 
 </div>
+
 
 <div class="next center">
 <input type="submit" name="Search" value="Search" />

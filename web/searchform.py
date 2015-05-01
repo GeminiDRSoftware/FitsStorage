@@ -214,8 +214,14 @@ def updateform(html, selection):
                 html = html.replace('class="%sexpT"' % inst, 'class="%sexpT" value="%s"' % (inst, selection[key]))
 
         elif key == 'disperser':
-            # Generic disperser pulldown
-            html = html.replace('class="disperser" value="%s"' % selection[key], 'class="disperser" value="%s" selected' % selection[key])
+            # GPI has custom values
+            if 'inst' in selection.keys():
+                inst = selection['inst']
+                if inst == 'GPI':
+                    html = html.replace('class="GPIdisperser" value="%s"' % selection[key], 'class="GPIdisperser" value="%s" selected' % selection[key])
+            else:
+                # Generic disperser pulldown
+                html = html.replace('class="disperser" value="%s"' % selection[key], 'class="disperser" value="%s" selected' % selection[key])
         else:
             # This does all the generic pulldown menus
             html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
