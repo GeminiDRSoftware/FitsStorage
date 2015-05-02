@@ -73,15 +73,15 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
                     qametricsb.datalabel = qametric_dict['datalabel']
                     qametricsb.detector = qametric_dict['detector']
                     sb_dict = qametric_dict['sb']
-                    qametricsb.comment = ", ".join(sb_dict['comment'])
-                    qametricsb.mag = sb_dict['mag']
-                    qametricsb.mag_std = sb_dict['mag_std']
+                    qametricsb.comment = ", ".join(sb_dict.get('comment'))
+                    qametricsb.mag = sb_dict.get('mag')
+                    qametricsb.mag_std = sb_dict.get('mag_std')
                     # Sometimes the QAP sends an unreasonable electron rate which exceeds the data type limies
                     if sb_dict['electrons'] < 100000:
-                        qametricsb.electrons = sb_dict['electrons']
-                        qametricsb.electrons_std = sb_dict['electrons_std']
-                    qametricsb.nsamples = sb_dict['nsamples']
-                    qametricsb.percentile_band = sb_dict['percentile_band']
+                        qametricsb.electrons = sb_dict.get('electrons')
+                        qametricsb.electrons_std = sb_dict.get('electrons_std')
+                    qametricsb.nsamples = sb_dict.get('nsamples')
+                    qametricsb.percentile_band = sb_dict.get('percentile_band')
                     session.add(qametricsb)
 
                 if 'iq' in qametric_dict.keys():
@@ -90,23 +90,21 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
                     qametriciq.datalabel = qametric_dict['datalabel']
                     qametriciq.detector = qametric_dict['detector']
                     iq_dict = qametric_dict['iq']
-                    qametriciq.fwhm = iq_dict['fwhm']
-                    qametriciq.fwhm_std = iq_dict['fwhm_std']
-                    qametriciq.isofwhm = iq_dict['isofwhm']
-                    qametriciq.isofwhm_std = iq_dict['isofwhm_std']
-                    qametriciq.ee50d = iq_dict['ee50d']
-                    qametriciq.ee50d_std = iq_dict['ee50d_std']
-                    qametriciq.elip = iq_dict['elip']
-                    qametriciq.elip_std = iq_dict['elip_std']
-                    qametriciq.pa = iq_dict['pa']
-                    qametriciq.pa_std = iq_dict['pa_std']
-                    qametriciq.nsamples = iq_dict['nsamples']
-                    qametriciq.percentile_band = iq_dict['percentile_band']
-                    qametriciq.comment = ", ".join(iq_dict['comment'])
-                    if 'ao_seeing' in iq_dict.keys():
-                        qametriciq.ao_seeing = iq_dict['ao_seeing']
-                    if 'adaptive_optics' in iq_dict.keys():
-                        qametriciq.adaptive_optics = iq_dict['adaptive_optics']
+                    qametriciq.fwhm = iq_dict.get('fwhm')
+                    qametriciq.fwhm_std = iq_dict.get('fwhm_std')
+                    qametriciq.isofwhm = iq_dict.get('isofwhm')
+                    qametriciq.isofwhm_std = iq_dict.get('isofwhm_std')
+                    qametriciq.ee50d = iq_dict.get('ee50d')
+                    qametriciq.ee50d_std = iq_dict.get('ee50d_std')
+                    qametriciq.elip = iq_dict.get('elip')
+                    qametriciq.elip_std = iq_dict.get('elip_std')
+                    qametriciq.pa = iq_dict.get('pa')
+                    qametriciq.pa_std = iq_dict.get('pa_std')
+                    qametriciq.nsamples = iq_dict.get('nsamples')
+                    qametriciq.percentile_band = iq_dict.get('percentile_band')
+                    qametriciq.comment = ", ".join(iq_dict.get('comment'))
+                    qametriciq.ao_seeing = iq_dict.get('ao_seeing')
+                    qametriciq.adaptive_optics = iq_dict.get('adaptive_optics')
                     session.add(qametriciq)
 
                 if 'zp' in qametric_dict.keys():
@@ -115,14 +113,14 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
                     qametriczp.datalabel = qametric_dict['datalabel']
                     qametriczp.detector = qametric_dict['detector']
                     zp_dict = qametric_dict['zp']
-                    qametriczp.mag = zp_dict['mag']
-                    qametriczp.mag_std = zp_dict['mag_std']
-                    qametriczp.cloud = zp_dict['cloud']
-                    qametriczp.cloud_std = zp_dict['cloud_std']
-                    qametriczp.nsamples = zp_dict['nsamples']
-                    qametriczp.photref = zp_dict['photref']
-                    qametriczp.percentile_band = zp_dict['percentile_band']
-                    qametriczp.comment = ", ".join(zp_dict['comment'])
+                    qametriczp.mag = zp_dict.get('mag')
+                    qametriczp.mag_std = zp_dict.get('mag_std')
+                    qametriczp.cloud = zp_dict.get('cloud')
+                    qametriczp.cloud_std = zp_dict.get('cloud_std')
+                    qametriczp.nsamples = zp_dict.get('nsamples')
+                    qametriczp.photref = zp_dict.get('photref')
+                    qametriczp.percentile_band = zp_dict.get('percentile_band')
+                    qametriczp.comment = ", ".join(zp_dict.get('comment'))
                     session.add(qametriczp)
 
                 if 'pe' in qametric_dict.keys():
@@ -131,12 +129,12 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
                     qametricpe.datalabel = qametric_dict['datalabel']
                     qametricpe.detector = qametric_dict['detector']
                     pe_dict = qametric_dict['pe']
-                    qametricpe.astref = pe_dict['astref']
-                    qametricpe.dra = pe_dict['dra']
-                    qametricpe.dra_std = pe_dict['dra_std']
-                    qametricpe.ddec = pe_dict['ddec']
-                    qametricpe.ddec_std = pe_dict['ddec_std']
-                    qametricpe.nsamples = pe_dict['nsamples']
+                    qametricpe.astref = pe_dict.get('astref')
+                    qametricpe.dra = pe_dict.get('dra')
+                    qametricpe.dra_std = pe_dict.get('dra_std')
+                    qametricpe.ddec = pe_dict.get('ddec')
+                    qametricpe.ddec_std = pe_dict.get('ddec_std')
+                    qametricpe.nsamples = pe_dict.get('nsamples')
                     session.add(qametricpe)
 
 
@@ -470,22 +468,31 @@ def qaforgui(req, things):
                 # If we got anything, populate the iq dict
                 if qaiq:
                     iq['band'] = qaiq.percentile_band
-                    iq['delivered'] = float(qaiq.fwhm)
-                    iq['delivered_error'] = float(qaiq.fwhm_std)
-                    if airmass is not None:
+                    iq['delivered'] = float(qaiq.fwhm) if qaiq.fwhm is not None else None
+                    iq['delivered_error'] = float(qaiq.fwhm_std) if qaiq.fwhm_std is not None else None
+                    if airmass is not None and qaiq.fwhm is not None:
                         iq['zenith'] = float(qaiq.fwhm) * airmass**(-0.6)
                         iq['zenith_error'] = float(qaiq.fwhm_std) * airmass**(-0.6)
-                    iq['ellipticity'] = float(qaiq.elip)
-                    iq['ellip_error'] = float(qaiq.elip_std)
+                    else:
+                        # Keep the gui happy by keeping the dictionary entries present
+                        iq['zenith'] = None
+                        iq['zenith_error'] = None
+                    iq['ellipticity'] = float(qaiq.elip) if qaiq.elip is not None else None
+                    iq['ellip_error'] = float(qaiq.elip_std) if qaiq.elip_std is not None else None
                     iq['comment'] = []
                     if len(qaiq.comment):
                         iq['comment'] = [qaiq.comment]
-                    if requestd_iq is not None:
-                        iq['requested'] = int(requested_iq)
+                    if requested_iq is not None:
+                        iq['requested'] = int(requested_iq) 
                     submit_time_kludge = qaiq.qareport.submit_time
                     iq['adaptive_optics'] = bool(qaiq.adaptive_optics)
-                    if qaiq.ao_seeing is not None:
-                        iq['ao_seeing'] = float(qaiq.ao_seeing)
+                    if iq['adaptive_optics']:
+                        iq['ao_seeing'] = None
+                        iq['ao_seeing_zenith'] = None
+                        if qaiq.ao_seeing is not None:
+                            iq['ao_seeing'] = float(qaiq.ao_seeing)
+                            if airmass is not None:
+                                iq['ao_seeing_zenith'] = float(qaiq.ao_seeing) * airmass**(-0.6)
 
                 # Look for CC metrics to report. The DB has the different detectors in different entries, have to do some merging.
                 # Find the qareport id of the most recent zp report for this datalabel
