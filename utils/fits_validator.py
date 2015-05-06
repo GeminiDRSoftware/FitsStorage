@@ -8,6 +8,7 @@ import sys
 from collections import namedtuple
 from datetime import datetime
 from time import strptime
+from types import FunctionType
 
 from fits_storage_config import validation_def_path
 
@@ -37,8 +38,10 @@ typeCoercion = (
 class EngineeringImage(Exception):
     pass
 
+DEBUG = False
+
 def log(text):
-    if __debug__:
+    if DEBUG:
         print(text)
 
 Function = namedtuple('Function', ['code', 'exception'])
@@ -156,25 +159,66 @@ class KeywordDescriptor(object):
     def test(self, value):
         return value in self.range
 
-def test_inclusion(v1, v2):
+def test_inclusion(v1, v2, *args, **kw):
     if isinstance(v2, (str, unicode)):
         return v1 == v2
     return v1 in v2
 
-def run_function(func, header):
-    res = func.code(header)
+def run_function(func, header, env):
+    res = func.code(header, env)
     if res and func.exception is not None:
         raise func.exception()
 
     return res
 
 valid_entries = {
-    'key',
     'conditions',
+    'keywords',
     'include files',
     'range limits',
-    'keywords'
+    'provides'
     }
+
+class Environment(dict):
+    def __getattr__(self, attr):
+        try:
+            return self[attr]
+        except KeyError:
+            raise AttributeError("'{0}' object has no attribute '{1}'".format(self.__class__.__name__, attr))
+
+    def __setattr__(self, attr, value):
+        self[attr] = value
+
+        return value
+
+# Extra functions to help RuleSet conditions
+def hdu_in(hdus, h, env):
+    return env.hduNum in hdus
+def in_environment(val, h, env, negate = False):
+    r = val in env.features
+
+    if negate:
+        return not r
+
+    return r
+
+def callback_factory(attr, value = None, *args, **kw):
+    if isinstance(attr, Function):
+        l = lambda header, env: run_function(attr, header, env)
+    elif isinstance(attr, FunctionType):
+        if value is not None:
+            l = lambda header, env: attr(value, header, env, *args, **kw)
+        else:
+            l = lambda header, env: attr(header, env, *args, **kw)
+    elif isinstance(attr, (str, unicode)):
+        if value is not None:
+            l = lambda header, env: test_inclusion(header.get(attr), value, env)
+        else:
+            l = lambda header, env: attr in header
+    else:
+        raise RuntimeError("Don't know how to define a callback for [{0}, {1}]".format(attr, value))
+
+    return l
 
 class RuleSet(list):
     """RuleSet is a representation of one of the rule files. It contains
@@ -205,8 +249,7 @@ class RuleSet(list):
         # conditions for inclusion are met
         self.inclusionTests = { True: [], False: [] }
         self.rangeRestrictions = {}
-        self.onlyOnHdus = set()
-        self.isKey = True
+        self.features = []
         self.__initalize(filename)
 
     def __initalize(self, filename):
@@ -215,25 +258,17 @@ class RuleSet(list):
             for entry in data:
                 if entry not in valid_entries:
                     raise RuntimeError("Syntax Error: {0!r} (on {1})".format(entry, self.fn))
+            for feat in iter_list(data.get('provides')):
+                self.features.append(feat)
             for inc in iter_list(data.get('include files')):
                 self.append(RuleSet(inc))
             self.keywordDescr = dict((key, KeywordDescriptor(value))
                                         for (key, value)
                                          in iter_pairs(data.get('keywords')))
             self.rangeRestrictions = dict(iter_pairs(data.get('range limits'), Range.from_string))
-            self.isKey = data.get('key', True)
             self.__initialize_conditions(data.get('conditions', []))
 
     def __initialize_conditions(self, data):
-        def callback_factory(kw, value = None):
-            if isinstance(kw, Function):
-                return lambda header: run_function(kw, header)
-            elif isinstance(kw, (str, unicode)):
-                if value is not None:
-                    return lambda header: test_inclusion(header.get(kw), value)
-                return lambda header: kw in header
-
-            raise RuntimeError("Don't know how to define a callback for [{0}, {1}]".format(kw, value))
 
         for entry in data:
             if isinstance(entry, (str, unicode)):
@@ -244,7 +279,9 @@ class RuleSet(list):
                 raise RuntimeError("Syntax Error: Invalid entry, {0!r} (on {1})".format(entry, self.fn))
 
             if element == 'on hdus':
-                self.onlyOnHdus = set(iter_list(content))
+                self.inclusionTests[False].append(callback_factory(hdu_in, set(iter_list(content))))
+            if element.startswith('is '):
+                self.inclusionTests[False].append(callback_factory(in_environment, ' '.join(element.split()[1:]), negate = True))
             else:
                 if element.startswith('not '):
                     inclusive = False
@@ -264,11 +301,7 @@ class RuleSet(list):
                 else:
                     raise RuntimeError("Syntax Error: unrecognized condition {0!r}".format(element))
 
-    def test(self, header, hduNum):
-        ohdu = self.onlyOnHdus
-        if ohdu and hduNum not in ohdu:
-            return []
-
+    def test(self, header, env):
         messages = []
         for kw, descr in self.keywordDescr.items():
             try:
@@ -285,16 +318,13 @@ class RuleSet(list):
                 pass
         return messages
 
-    def applies_to(self, header, hduNum):
-        if self.onlyOnHdus and hduNum not in self.onlyOnHdus:
-            return False
-
+    def applies_to(self, header, env):
         incTests, excTests = self.inclusionTests[True], self.inclusionTests[False]
 
-        include = (any(test(header) for test in incTests)
+        include = (any(test(header, env) for test in incTests)
                    if incTests
                    else True)
-        exclude = any(test(header) for test in excTests)
+        exclude = any(test(header, env) for test in excTests)
 
         return not exclude and include
 
@@ -311,51 +341,61 @@ class RuleStack(object):
     def initialize(self, mainFileName):
         self.entryPoint = RuleSet(mainFileName)
 
-    def test(self, header, hduNum):
+    def test(self, header, env):
         stack = [self.entryPoint]
         passed = []
 
         while stack:
             ruleSet = stack.pop()
-            mess = ruleSet.test(header, hduNum)
+            mess = ruleSet.test(header, env)
             if len(mess) > 0:
                 return (False, mess)
 
-            if ruleSet.isKey:
-                passed.append(ruleSet)
+            passed.append(ruleSet)
+            env.features.update(ruleSet.features)
 
             for candidate in ruleSet:
-                if candidate.applies_to(header, hduNum):
+                if candidate.applies_to(header, env):
                     log("  - Expanding {0}".format(candidate.fn))
                     stack.append(candidate)
+
+        try:
+            env.features.remove('valid')
+        except KeyError:
+            mess.append("Could not find a validating set of rules")
+            return (False, mess)
 
         return (True, passed)
 
 # Here, custom functions
 
 @RuleSet.register_function("engineering", EngineeringImage)
-def engineering_image(header):
+def engineering_image(header, env):
     "Naive engineering image detection"
     prgid = header.get('GEMPRGID', '')
     return prgid.startswith('GN-ENG') or prgid.startswith('GS-ENG')
 
 @RuleSet.register_function("calibration")
-def calibration_image(header):
+def calibration_image(header, env):
     "Naive calib image detection"
     prgid = header.get('GEMPRGID', '')
     fromId = prgid.startswith('GN-CAL') or prgid.startswith('GS-CAL')
     return fromId or (header.get('OBSCLASS') == 'dayCal')
 
 if __name__ == '__main__':
+    DEBUG = True
     try:
+        env = Environment()
+        env.features = set()
         rs = RuleStack()
         rs.initialize('fits')
         fits = pf.open(sys.argv[1])
         fits.verify('fix+exception')
         err = 0
         for n, hdu in enumerate(fits):
+            env.hduNum = n
             log("* Testing HDU {0}".format(n))
-            res, args = rs.test(hdu.header, n)
+            res, args = rs.test(hdu.header, env)
             if not res:
                 err += 1
                 for message in args:
@@ -363,6 +403,7 @@ if __name__ == '__main__':
             elif not args:
                 err += 1
                 log("  No key ruleset found for this HDU")
+
     except EngineeringImage:
         log("Its an engineering image")
         err = 1
