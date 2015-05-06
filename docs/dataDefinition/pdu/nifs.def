@@ -1,0 +1,20 @@
+# Primary HDU for NIFS
+provides:       [ valid, nifs ]
+conditions:
+  - matching:
+    - INSTRUME:   NIFS
+
+range limits:
+  - DATEIMAG:     2006-7-1 .. *
+
+include files:    radec
+
+keywords:
+  - APERTURE
+  - EXPMODE
+  - FILTER
+  - FLIP
+  - GRATING
+  - OBSMODE
+  - RADECSYS
+  - UT

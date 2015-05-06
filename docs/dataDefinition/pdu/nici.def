@@ -1,0 +1,25 @@
+# Primary HDU for NICI
+provides:       [ valid, nici ]
+conditions:
+  - matching:
+    - INSTRUME:   NICI
+
+include files:    radec
+
+keywords:
+  - BIAS_B
+  - BIAS_R
+  - DICHROIC
+  - FILTER_B
+  - FILTER_R
+  - FOCS
+  - FPMW
+  - MODE_B
+  - MODE_R
+  - NDFW
+  - PI
+  - PMW
+  - TIME-OBS
+  - TTSM
+  - UT
+  - UTEND

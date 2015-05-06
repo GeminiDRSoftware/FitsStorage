@@ -1,0 +1,11 @@
+provides:         valid
+conditions:
+  - is gmos
+
+keywords:
+  - BIASSEC
+  - CCDSEC
+  - CCDSIZE
+  - CCDSUM
+  - DATASEC
+  - DETSEC

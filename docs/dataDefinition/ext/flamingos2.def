@@ -1,0 +1,9 @@
+provides:         valid
+conditions:
+  - is f2
+  - matching:
+    - XTENSION:   IMAGE
+
+keywords:
+  - DATATYP
+  - RADECSYS

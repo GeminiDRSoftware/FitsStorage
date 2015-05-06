@@ -1,0 +1,14 @@
+conditions:
+  - exists:
+    - XTENSION
+
+include files:
+# hrwfs?
+  - ext/flamingos
+  - ext/flamingos2
+  - ext/gmos
+  - ext/gnirs
+  - ext/nici-blue
+  - ext/nici-red
+  - ext/nifs
+  - ext/niri

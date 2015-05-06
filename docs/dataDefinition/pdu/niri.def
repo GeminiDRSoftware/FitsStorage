@@ -1,0 +1,24 @@
+# Primary HDU for NIRI
+provides:       [ valid, niri ]
+conditions:
+  - matching:
+    - INSTRUME:   NIRI
+
+include files:    radec
+
+keywords:
+#  - CTYPE1
+  - BEAMSPLT
+  - CAMERA
+  - FILTER1
+  - FILTER2
+  - FILTER3
+  - FOCUSNAM
+  - FPMASK
+  - MODE
+  - PVIEW
+  - TIME-OBS
+  - TRKEQUIN:
+    - float:      1950.0 .. 2000.0
+  - UT
+  - UTEND

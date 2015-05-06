@@ -1,0 +1,11 @@
+provides:       [ valid, flamingos ]
+conditions:
+  - matching:
+    - INSTRUME:   FLAMINGOS
+
+include files:    radec
+
+keywords:
+  - DECKER
+  - OBS_TYPE
+  - UTC

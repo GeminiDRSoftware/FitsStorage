@@ -1,0 +1,11 @@
+provides:         valid
+conditions:
+  - is nici
+  - matching:
+    - XTENSION:   IMAGE
+    - CHANNEL:    BLUE
+
+keywords:
+  - BIAS_B
+  - FILTER_B
+  - MODE_B

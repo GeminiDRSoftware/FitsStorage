@@ -1,0 +1,8 @@
+conditions:
+  - not engineering
+
+range limits:
+  - RELEASE:     2000-1-1 .. *
+  - DATEIMAG:    2000-1-1 .. *
+
+include files: [ phdu, extensions ]

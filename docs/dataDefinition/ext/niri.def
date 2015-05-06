@@ -1,0 +1,9 @@
+provides:         valid
+conditions:
+  - is niri
+  - matching:
+    - XTENSION:   IMAGE
+
+#keywords:
+#  - CTYPE1
+#  - CTYPE2

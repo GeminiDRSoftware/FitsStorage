@@ -1,0 +1,24 @@
+# Primary HDU for GNIRS
+provides:       [ valid, gnirs ]
+conditions:
+  - matching:
+    - INSTRUME:   GNIRS
+
+range limits:
+  - DATEIMAG:     2003-6-1 .. *
+
+include files:    radec
+
+keywords:
+#  - CTYPE1
+#  - CTYPE2
+  - CAMERA
+  - DECKER
+  - FILTER1
+  - FILTER2
+  - GRATING
+  - SLIT
+  - TIME-OBS
+  - TRKEQUIN
+  - UT
+  - UTSTART
