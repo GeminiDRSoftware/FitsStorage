@@ -1,5 +1,9 @@
-# These are config parameters that are imported into the FitsStorage namespace
-# We put them in a separate file to ease install issues
+"""
+These are config parameters that are imported into the FitsStorage namespace
+We put them in a separate file to ease install issues
+"""
+
+import os, sys
 
 # NOTE: all setting may be overwritten if environment variable,
 #   FITSSTORAGECONFIG_LOCALMODE, is true
@@ -120,9 +124,10 @@ blocked_urls = []
 
 # the following implements allows astrodata to set local versions of 
 # setting in this module
-import os, sys
 if "FITSSTORAGECONFIG_LOCALMODE" in os.environ:
     fsc_lm = os.environ["FITSSTORAGECONFIG_LOCALMODE"].strip().lower()
     if fsc_lm == "true":
         from astrodata import fscpatch
         fscpatch.local_fsc_patch(sys.modules[__name__])
+
+validation_def_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'docs/dataDefinition')
