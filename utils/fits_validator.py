@@ -146,7 +146,7 @@ class KeywordDescriptor(object):
         for restriction in info:
             if isinstance(restriction, (str, unicode)):
                 if restriction in fitsTypes:
-                    self.range = Range.fromType(fitsTypes[restriction])
+                    self.range = Range.from_type(fitsTypes[restriction])
                 else:
                     raise ValueError("Unknown descriptor {0}".format(restriction))
             if isinstance(restriction, dict):
