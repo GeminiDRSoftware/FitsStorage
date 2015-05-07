@@ -231,6 +231,22 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, ma
                 diskfile.ad_object = AstroData(fullpath_for_ad, mode='readonly')
             except:
                 logger.error("Failed to open astrodata object on file: %s. Giving up", fullpath_for_ad)
+                if diskfile.ad_object:
+                    logger.debug("Closing centrally opened astrodata object")
+                    diskfile.ad_object.close()
+
+                if using_s3:
+                    logger.debug("deleting %s from s3_staging_area", filename)
+                    os.unlink(fullpath)
+                if diskfile.uncompressed_cache_file:
+                    logger.debug("deleting %s from gz_staging_area", diskfile.uncompressed_cache_file)
+                    if os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK):
+                        os.unlink(diskfile.uncompressed_cache_file)
+                        diskfile.uncompressed_cache_file = None
+                    else:
+                        logger.debug("diskfile claimed to have an diskfile.uncompressed_cache_file, but cannot access it: %s",
+                                        diskfile.uncompressed_cache_file)
+
                 return
     
             # This will use the DiskFile unzipped cache file if it exists
