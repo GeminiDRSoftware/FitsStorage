@@ -20,6 +20,7 @@ fitsTypes = {
     'float': float,
     'int': int,
     'bool': bool,
+    'date': datetime
     }
 
 rangePatterns = (
@@ -152,11 +153,16 @@ class KeywordDescriptor(object):
             if isinstance(restriction, dict):
                 kw, value = restriction.items()[0]
                 if kw in fitsTypes:
-                    self.range = Range.from_string(value, forceType = fitsTypes[kw])
+                    if kw == 'char':
+                        self.range = set(iter_list(value))
+                    else:
+                        self.range = Range.from_string(value, forceType = fitsTypes[kw])
                 else:
                     raise ValueError("Unknown descriptor {0}".format(restriction))
 
     def test(self, value):
+        if value not in self.range:
+            print("{0} not in {1}".format(value, self.range))
         return value in self.range
 
 def test_inclusion(v1, v2, *args, **kw):
@@ -262,9 +268,13 @@ class RuleSet(list):
                 self.features.append(feat)
             for inc in iter_list(data.get('include files')):
                 self.append(RuleSet(inc))
-            self.keywordDescr = dict((key, KeywordDescriptor(value))
-                                        for (key, value)
-                                         in iter_pairs(data.get('keywords')))
+            try:
+                self.keywordDescr = dict((key, KeywordDescriptor(value))
+                                            for (key, value)
+                                             in iter_pairs(data.get('keywords')))
+            except ValueError as e:
+                s = str(e)
+                raise ValueError('{0}: {1}'.format(self.fn, s))
             self.rangeRestrictions = dict(iter_pairs(data.get('range limits'), Range.from_string))
             self.__initialize_conditions(data.get('conditions', []))
 
@@ -306,7 +316,7 @@ class RuleSet(list):
         for kw, descr in self.keywordDescr.items():
             try:
                 if not descr.test(header[kw]):
-                    messages.append('Invalid {0}'.format(kw))
+                    messages.append('Invalid {0}({1})'.format(kw, header[kw]))
             except KeyError:
                 messages.append('Missing {0}'.format(kw))
         for kw, range in self.rangeRestrictions.items():
