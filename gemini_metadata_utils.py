@@ -57,15 +57,19 @@ flamingoscre = re.compile(r'^[Ff][Ll][Aa][Mm][Ii][Nn][Gg][Oo][Ss]$')
 hrwfscre = re.compile(r'^[Hh][Rr][Ww][Ff][Ss]$|^[Aa][Cc][Qq][Cc][Aa][Mm]$')
 abucre = re.compile(r'^[Aa][Bb][Uu]$')
 
-def gemini_instrument(string, gmos=False):
+def gemini_instrument(string, gmos=False, other=False):
     """
     If the string argument matches a gemini instrument name,
     then returns the "official" (ie same as in the fits headers)
     name of the instrument. Otherwise returns None.
     If the gmos argument is true, this also recognises GMOS as
     a valid instruemnt name.
+    If the other argument is true, it will pass through unknown instrument
+    names that don't look like an official instrument rather than return None
     """
     retary = None
+    if other:
+        retary = string
     if string:
         if niricre.match(string):
             retary = 'NIRI'
