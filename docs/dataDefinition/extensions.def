@@ -3,7 +3,7 @@ conditions:
     - XTENSION
 
 include files:
-# hrwfs?
+  - wcs
   - ext/flamingos
   - ext/flamingos2
   - ext/gmos

@@ -1,0 +1,60 @@
+conditions:
+# Checks GEMPRGID, OBSID, AND DATALAB
+# - valid_observation_info
+# They have to be "Any" or "NN-percentile"
+# - valid_rawXX
+  - not exists:
+    - XTENSION
+  - matching:
+    - TELESCOP: Gemini-South
+    - TELESCOP: Gemini-North
+
+include files:
+  - radec
+  - pdu/flamingos2
+  - pdu/gmos
+  - pdu/gnirs
+  - pdu/nici
+  - pdu/nifs
+  - pdu/niri
+
+keywords:
+# Next three are float
+  - AZIMUTH:
+    - float
+  - ELEVATIO:
+    - float
+  - CRPA:
+    - float
+  - TRKFRAME
+  - DECTRACK
+  - TRKEPOCH
+  - RATRACK
+  - PMDEC
+  - PMRA
+  - DATE
+  - DATE-OBS
+# Remove this when valid_observation_info is implemented
+  - GEMPRGID
+  - OBSID
+  - DATALAB
+  - FRAME
+  - OBJECT
+  - OBSCLASS:
+    - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
+  - OBSTYPE:
+    - char:   [ DARK, ARC, FLAT, BIAS, OBJECT, PINHOLE, RONCHI, CAL, FRINGE, MASK ]
+  - RAWGEMQA:
+    - char:   [ USABLE, FAIL, CHECK ]
+  - RAWPIREQ:
+    - char:   [ 'YES', 'NO' ]   # Using quotes to prevent YAML to turn this into booleans
+  - RAWBG
+  - RAWCC
+  - RAWIQ
+  - RAWWV
+  - RELEASE:
+    - date:     2000-1-1 .. *
+  - SSA
+  - UT
+  - PA
+  - IAA

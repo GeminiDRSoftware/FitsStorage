@@ -1,0 +1,26 @@
+conditions:
+# Checks GEMPRGID, OBSID, AND DATALAB
+# - valid_observation_info
+# They have to be "Any" or "NN-percentile"
+# - valid_rawXX
+  - not exists:
+    - XTENSION
+  - matching:
+    - TELESCOP: Gemini-South
+    - TELESCOP: Gemini-North
+
+include files:
+  - pdu/flamingos
+
+keywords:
+  - DATE
+  - DATE-OBS
+# Remove this when valid_observation_info is implemented
+  - GEMPRGID:
+    - char
+  - OBSID
+  - DATALAB
+  - FRAME
+  - OBJECT
+  - RELEASE:
+    - date:     2000-1-1 .. *

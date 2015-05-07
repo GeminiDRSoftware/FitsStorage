@@ -4,10 +4,7 @@ conditions:
   - matching:
     - INSTRUME:   NIRI
 
-include files:    radec
-
 keywords:
-#  - CTYPE1
   - BEAMSPLT
   - CAMERA
   - FILTER1
@@ -18,7 +15,4 @@ keywords:
   - MODE
   - PVIEW
   - TIME-OBS
-  - TRKEQUIN:
-    - float:      1950.0 .. 2000.0
-  - UT
   - UTEND

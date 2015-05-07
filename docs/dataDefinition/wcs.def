@@ -1,0 +1,27 @@
+conditions:
+  - matching:
+    - XTENSION: IMAGE
+
+keywords:
+  - CTYPE1:
+    - char:     RA---TAN
+  - CRPIX1:
+    - float
+  - CRVAL1:
+    - float
+  - CTYPE2:
+    - char:     DEC--TAN
+  - CRPIX2:
+    - float
+  - CRVAL2:
+    - float
+  - CD1_1:
+    - float
+  - CD1_2:
+    - float
+  - CD2_1:
+    - float
+  - CD2_2:
+    - float
+  - RADECSYS:
+    - char:   [ FK4, FK5, ICRS ]

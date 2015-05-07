@@ -4,17 +4,10 @@ conditions:
   - matching:
     - INSTRUME: [ GMOS-N, GMOS-S ]
 
-include files:    radec
-
 keywords:
-# DEC
-# RA
   - FILTER1
   - FILTER2
   - GRATING
   - MASKNAME
   - TIME-OBS
-  - TRKEQUIN:
-    - float:      1950.0 .. 2000.0
-  - UT
   - UTSTART

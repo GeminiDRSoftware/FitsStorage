@@ -4,14 +4,7 @@ conditions:
   - matching:
     - INSTRUME:   GNIRS
 
-range limits:
-  - DATEIMAG:     2003-6-1 .. *
-
-include files:    radec
-
 keywords:
-#  - CTYPE1
-#  - CTYPE2
   - CAMERA
   - DECKER
   - FILTER1
@@ -19,6 +12,4 @@ keywords:
   - GRATING
   - SLIT
   - TIME-OBS
-  - TRKEQUIN
-  - UT
   - UTSTART
