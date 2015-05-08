@@ -161,8 +161,6 @@ class KeywordDescriptor(object):
                     raise ValueError("Unknown descriptor {0}".format(restriction))
 
     def test(self, value):
-        if value not in self.range:
-            print("{0} not in {1}".format(value, self.range))
         return value in self.range
 
 def test_inclusion(v1, v2, *args, **kw):
