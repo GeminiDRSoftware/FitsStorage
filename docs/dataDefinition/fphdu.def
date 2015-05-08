@@ -42,8 +42,10 @@ keywords:
     - char:   [ DARK, ARC, FLAT, BIAS, OBJECT, PINHOLE, RONCHI, CAL, FRINGE, MASK ]
   - RAWGEMQA:
     - char:   [ UNKNOWN, USABLE, BAD, CHECK ]
+    - upper
   - RAWPIREQ:
-    - char:   [ UNKNOWN, 'YES', 'NO' ]   # Using quotes to prevent YAML to turn this into booleans
+    - char:   [ UNKNOWN, 'YES', 'NO', CHECK ]   # Using quotes to prevent YAML to turn this into booleans
+    - upper
   - RAWBG
   - RAWCC
   - RAWIQ
@@ -60,3 +62,4 @@ tests:
   - valid-rawXX
 # Checks GEMPRGID, OBSID, AND DATALAB
   - valid-observation-info
+  - wcs-after-pdu

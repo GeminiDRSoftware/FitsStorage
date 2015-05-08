@@ -1,7 +1,5 @@
 conditions:
   - should-test-wcs
-  - not matching:
-    - FRAME:    AZEL_TOPO
 
 keywords:
   - CTYPE1:

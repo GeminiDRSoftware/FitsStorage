@@ -144,11 +144,16 @@ def iter_pairs(lst, coercion = lambda x: x):
 class KeywordDescriptor(object):
     def __init__(self, info):
         self.range = EmptyRange
+        self.fn = lambda x: x
 
         for restriction in info:
             if isinstance(restriction, (str, unicode)):
                 if restriction in fitsTypes:
                     self.range = Range.from_type(fitsTypes[restriction])
+                elif restriction == 'upper':
+                    self.fn = str.upper
+                elif restriction == 'lower':
+                    self.fn = str.lower
                 else:
                     raise ValueError("Unknown descriptor {0}".format(restriction))
             if isinstance(restriction, dict):
@@ -162,7 +167,7 @@ class KeywordDescriptor(object):
                     raise ValueError("Unknown descriptor {0}".format(restriction))
 
     def test(self, value):
-        return value in self.range
+        return self.fn(value) in self.range
 
 def test_inclusion(v1, v2, *args, **kw):
     if isinstance(v2, (str, unicode)):
@@ -413,17 +418,25 @@ def calibration_image(header, env):
     fromId = prgid.startswith('GN-CAL') or prgid.startswith('GS-CAL')
     return fromId or (header.get('OBSCLASS') == 'dayCal')
 
+@RuleSet.register_function("wcs-after-pdu")
+def wcs_in_extensions(header, env):
+    if header.get('FRAME') == 'AZEL_TOPO':
+        env.features.add('no-wcs-test')
+
+    return True
+
 @RuleSet.register_function("should-test-wcs")
 def wcs_or_not(header, env):
     feat = env.features
-    return (   ('wcs-in-pdu' in feat and 'XTENSION' not in header)
-            or ('wcs-in-pdu' not in feat and header.get('XTENSION') == 'IMAGE'))
+    return (    ('no-wcs-test' not in feat)
+            and (   ('wcs-in-pdu' in feat and 'XTENSION' not in header)
+                 or ('wcs-in-pdu' not in feat and header.get('XTENSION') == 'IMAGE')))
 
-rawxx_pattern = re.compile(r'UNKNOWN|Any|\d{2}-percentile')
+rawxx_pattern = re.compile(r'Any|\d{2}-percentile')
 
 @RuleSet.register_function("valid-rawXX")
 def check_rawXX_contents(header, env):
-    return all((rawxx_pattern.match(header[x]) is not None)
+    return all((header[x].upper() == 'UNKNOWN' or rawxx_pattern.match(header[x]) is not None)
                 for x in ('RAWBG', 'RAWCC', 'RAWIQ', 'RAWWV'))
 
 @RuleSet.register_function("valid-observation-info", excIfFalse = EngineeringImage)
