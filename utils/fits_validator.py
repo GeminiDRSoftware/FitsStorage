@@ -11,6 +11,7 @@ from time import strptime
 from types import FunctionType
 
 from fits_storage_config import validation_def_path
+import gemini_metadata_utils as gmu
 
 import yaml
 import pyfits as pf
@@ -45,7 +46,7 @@ def log(text):
     if DEBUG:
         print(text)
 
-Function = namedtuple('Function', ['code', 'exception'])
+Function = namedtuple('Function', ['name', 'code', 'exceptionIfTrue', 'exceptionIfFalse'])
 
 class Range(object):
     def __init__(self, low, high, type):
@@ -170,17 +171,20 @@ def test_inclusion(v1, v2, *args, **kw):
 
 def run_function(func, header, env):
     res = func.code(header, env)
-    if res and func.exception is not None:
-        raise func.exception()
+    if res and func.exceptionIfTrue is not None:
+        raise func.exceptionIfTrue()
+    elif not res and func.exceptionIfFalse is not None:
+        raise func.exceptionIfFalse()
 
     return res
 
 valid_entries = {
     'conditions',
-    'keywords',
     'include files',
+    'keywords',
+    'provides',
     'range limits',
-    'provides'
+    'tests',
     }
 
 class Environment(dict):
@@ -206,7 +210,7 @@ def in_environment(val, h, env, negate = False):
 
     return r
 
-def callback_factory(attr, value = None, *args, **kw):
+def callback_factory(attr, value = None, name = 'Unknown test name', *args, **kw):
     if isinstance(attr, Function):
         l = lambda header, env: run_function(attr, header, env)
     elif isinstance(attr, FunctionType):
@@ -222,6 +226,7 @@ def callback_factory(attr, value = None, *args, **kw):
     else:
         raise RuntimeError("Don't know how to define a callback for [{0}, {1}]".format(attr, value))
 
+    l.name = name
     return l
 
 class RuleSet(list):
@@ -235,9 +240,11 @@ class RuleSet(list):
     __registry = {}
 
     @classmethod
-    def register_function(cls, name, exception = None):
+    def register_function(cls, name, excIfTrue = None, excIfFalse = None):
         def reg(fn):
-            cls.__registry[name] = Function(code = fn, exception = exception)
+            cls.__registry[name] = Function(name = name, code = fn,
+                                            exceptionIfTrue = excIfTrue,
+                                            exceptionIfFalse = excIfFalse)
 
             return fn
         return reg
@@ -245,15 +252,6 @@ class RuleSet(list):
     def __init__(self, filename):
         self.fn = filename
 
-        self.keywordDescr = {}
-        # inclusionTests keeps lists of tests that will be performed on the
-        # header to figure out if this ruleset applies or not. A hit on
-        # any of the "False" ones will exclude the ruleset. If no excluding
-        # conditions are met, then the "True" ones are used to figure if it
-        # conditions for inclusion are met
-        self.inclusionTests = { True: [], False: [] }
-        self.rangeRestrictions = {}
-        self.features = []
         self.__initalize(filename)
 
     def __initalize(self, filename):
@@ -262,10 +260,7 @@ class RuleSet(list):
             for entry in data:
                 if entry not in valid_entries:
                     raise RuntimeError("Syntax Error: {0!r} (on {1})".format(entry, self.fn))
-            for feat in iter_list(data.get('provides')):
-                self.features.append(feat)
-            for inc in iter_list(data.get('include files')):
-                self.append(RuleSet(inc))
+            self.features = list(iter_list(data.get('provides')))
             try:
                 self.keywordDescr = dict((key, KeywordDescriptor(value))
                                             for (key, value)
@@ -274,9 +269,24 @@ class RuleSet(list):
                 s = str(e)
                 raise ValueError('{0}: {1}'.format(self.fn, s))
             self.rangeRestrictions = dict(iter_pairs(data.get('range limits'), Range.from_string))
-            self.__initialize_conditions(data.get('conditions', []))
+            # conditions keeps lists of tests that will be performed on the
+            # header to figure out if this ruleset applies or not. A hit on
+            # any of the "False" ones will exclude the ruleset. If no excluding
+            # conditions are met, then the "True" ones are used to figure if it
+            # conditions for inclusion are met
+            self.conditions = self.__parse_tests(data.get('conditions', []))
+            # postConditions is similar to conditions in that it holds tests to be
+            # performed over the header contents, and accept the same syntax, but they're run
+            # once we know that the ruleset is actually applies to the current HDU and that
+            # the mandatory keywords are all there. It's used mostly for complex logic and
+            # ALL of them have to pass
+            r = self.__parse_tests(data.get('tests', []))
+            self.postConditions = r[True] + r[False]
+            for inc in iter_list(data.get('include files')):
+                self.append(RuleSet(inc))
 
-    def __initialize_conditions(self, data):
+    def __parse_tests(self, data):
+        result = { True: [], False: [] }
 
         for entry in data:
             if isinstance(entry, (str, unicode)):
@@ -287,9 +297,15 @@ class RuleSet(list):
                 raise RuntimeError("Syntax Error: Invalid entry, {0!r} (on {1})".format(entry, self.fn))
 
             if element == 'on hdus':
-                self.inclusionTests[False].append(callback_factory(hdu_in, set(iter_list(content))))
+                result[False].append(callback_factory(hdu_in, set(iter_list(content)), name = 'on hdus'))
             if element.startswith('is '):
-                self.inclusionTests[False].append(callback_factory(in_environment, ' '.join(element.split()[1:]), negate = True))
+                if element.startswith('is not '):
+                    ng = False
+                    elem = ' '.join(element.split()[2:])
+                else:
+                    ng = True
+                    elem = ' '.join(element.split()[1:])
+                result[False].append(callback_factory(in_environment, elem, negate = ng, name = element))
             else:
                 if element.startswith('not '):
                     inclusive = False
@@ -300,14 +316,17 @@ class RuleSet(list):
 
                 if _element == 'exists':
                     for kw in iter_list(content):
-                        self.inclusionTests[inclusive].append(callback_factory(kw))
+                        result[inclusive].append(callback_factory(kw, name = element))
                 elif _element == 'matching':
                     for kw, val in iter_pairs(content):
-                        self.inclusionTests[inclusive].append(callback_factory(kw, val))
+                        result[inclusive].append(callback_factory(kw, val, name = element))
                 elif _element in RuleSet.__registry:
-                    self.inclusionTests[inclusive].append(callback_factory(RuleSet.__registry[_element]))
+                    result[inclusive].append(callback_factory(RuleSet.__registry[_element], name = element))
                 else:
+                    print(element)
                     raise RuntimeError("Syntax Error: unrecognized condition {0!r}".format(element))
+
+        return result
 
     def test(self, header, env):
         messages = []
@@ -324,10 +343,14 @@ class RuleSet(list):
             except KeyError:
                 # A missing keyword when checking for ranges is not relevant
                 pass
+
+        for test in self.postConditions:
+            if not test(header, env):
+                messages.append('Failed {0}'.format(test.name))
         return messages
 
     def applies_to(self, header, env):
-        incTests, excTests = self.inclusionTests[True], self.inclusionTests[False]
+        incTests, excTests = self.conditions[True], self.conditions[False]
 
         include = (any(test(header, env) for test in incTests)
                    if incTests
@@ -377,7 +400,7 @@ class RuleStack(object):
 
 # Here, custom functions
 
-@RuleSet.register_function("engineering", EngineeringImage)
+@RuleSet.register_function("engineering", excIfTrue = EngineeringImage)
 def engineering_image(header, env):
     "Naive engineering image detection"
     prgid = header.get('GEMPRGID', '')
@@ -389,6 +412,29 @@ def calibration_image(header, env):
     prgid = header.get('GEMPRGID', '')
     fromId = prgid.startswith('GN-CAL') or prgid.startswith('GS-CAL')
     return fromId or (header.get('OBSCLASS') == 'dayCal')
+
+@RuleSet.register_function("should-test-wcs")
+def wcs_or_not(header, env):
+    feat = env.features
+    return (   ('wcs-in-pdu' in feat and 'XTENSION' not in header)
+            or ('wcs-in-pdu' not in feat and header.get('XTENSION') == 'IMAGE'))
+
+rawxx_pattern = re.compile(r'UNKNOWN|Any|\d{2}-percentile')
+
+@RuleSet.register_function("valid-rawXX")
+def check_rawXX_contents(header, env):
+    return all((rawxx_pattern.match(header[x]) is not None)
+                for x in ('RAWBG', 'RAWCC', 'RAWIQ', 'RAWWV'))
+
+@RuleSet.register_function("valid-observation-info", excIfFalse = EngineeringImage)
+def check_observation_related_fields(header, env):
+    prg = gmu.GeminiProgram(header['GEMPRGID'])
+    obs = gmu.GeminiObservation(header['OBSID'])
+    dl  = gmu.GeminiDataLabel(header['DATALAB'])
+
+    return (prg.valid and obs.obsnum != '' and dl.dlnum != ''
+                      and obs.obsnum == dl.obsnum
+                      and prg.program_id == obs.program.program_id == dl.projectid)
 
 if __name__ == '__main__':
     DEBUG = True

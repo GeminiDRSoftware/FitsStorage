@@ -1,16 +1,17 @@
 conditions:
-  - matching:
-    - XTENSION: IMAGE
+  - should-test-wcs
+  - not matching:
+    - FRAME:    AZEL_TOPO
 
 keywords:
   - CTYPE1:
-    - char:     RA---TAN
+    - char:   [ PIXEL, RA---TAN ]
   - CRPIX1:
     - float
   - CRVAL1:
     - float
   - CTYPE2:
-    - char:     DEC--TAN
+    - char:   [ PIXEL, DEC--TAN ]
   - CRPIX2:
     - float
   - CRVAL2:
@@ -23,5 +24,6 @@ keywords:
     - float
   - CD2_2:
     - float
-  - RADECSYS:
-    - char:   [ FK4, FK5, ICRS ]
+# No RADECSYS on GNIRS/NIRI...
+#  - RADECSYS:
+#    - char:   [ FK4, FK5, ICRS ]

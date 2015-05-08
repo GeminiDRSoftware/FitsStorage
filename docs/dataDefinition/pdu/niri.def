@@ -1,8 +1,10 @@
 # Primary HDU for NIRI
-provides:       [ valid, niri ]
+provides:       [ valid, niri, wcs-in-pdu ]
 conditions:
   - matching:
     - INSTRUME:   NIRI
+
+include files:    wcs
 
 keywords:
   - BEAMSPLT

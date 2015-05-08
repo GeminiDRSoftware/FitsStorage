@@ -1,5 +1,5 @@
 # Primary HDU for NIFS
-provides:       [ valid, nifs ]
+provides:       [ valid, nifs, wcs-in-pdu ]
 conditions:
   - matching:
     - INSTRUME:   NIFS
@@ -7,7 +7,7 @@ conditions:
 range limits:
   - DATEIMAG:     2006-7-1 .. *
 
-include files:    radec
+include files:  [ radec, wcs ]
 
 keywords:
   - APERTURE

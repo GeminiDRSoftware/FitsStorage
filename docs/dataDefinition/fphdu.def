@@ -1,8 +1,4 @@
 conditions:
-# Checks GEMPRGID, OBSID, AND DATALAB
-# - valid_observation_info
-# They have to be "Any" or "NN-percentile"
-# - valid_rawXX
   - not exists:
     - XTENSION
   - matching:
@@ -45,9 +41,9 @@ keywords:
   - OBSTYPE:
     - char:   [ DARK, ARC, FLAT, BIAS, OBJECT, PINHOLE, RONCHI, CAL, FRINGE, MASK ]
   - RAWGEMQA:
-    - char:   [ USABLE, FAIL, CHECK ]
+    - char:   [ UNKNOWN, USABLE, BAD, CHECK ]
   - RAWPIREQ:
-    - char:   [ 'YES', 'NO' ]   # Using quotes to prevent YAML to turn this into booleans
+    - char:   [ UNKNOWN, 'YES', 'NO' ]   # Using quotes to prevent YAML to turn this into booleans
   - RAWBG
   - RAWCC
   - RAWIQ
@@ -58,3 +54,9 @@ keywords:
   - UT
   - PA
   - IAA
+
+tests:
+# They have to be "Any" or "NN-percentile"
+  - valid-rawXX
+# Checks GEMPRGID, OBSID, AND DATALAB
+  - valid-observation-info

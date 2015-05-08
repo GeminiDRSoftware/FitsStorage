@@ -1,8 +1,10 @@
 # Primary HDU for GNIRS
-provides:       [ valid, gnirs ]
+provides:       [ valid, gnirs, wcs-in-pdu ]
 conditions:
   - matching:
     - INSTRUME:   GNIRS
+
+include files:    wcs
 
 keywords:
   - CAMERA
