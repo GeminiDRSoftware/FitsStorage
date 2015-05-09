@@ -5,7 +5,8 @@
 Fixes a FITS header by replacing each instance of OV in KW with NV
 
 Usage:
-  header_fixer [-inSZ] [-s SRCDIR] [-d DESTDIR] (-r KW OV NV)... <filename>...
+  header_fixer [-inSZ] [-s SRCDIR] [-d DESTDIR]                (-r KW OV NV)... <filename>...
+  header_fixer [-inSZ] [-s SRCDIR] [-d DESTDIR] [-f FILELIST ] (-r KW OV NV)...
   header_fixer -h | --help
   header_fixer --version
 
@@ -14,6 +15,8 @@ Options:
   --version      Show version.
   -d DESTDIR     Directory to write the modified file into. If none is specified, the
                  script will create a temporary one and print the path to it.
+  -f FILELIST    FILELIST is a file with paths to images, one per line. -s/-S apply to
+                 the file paths as usual.
   -i             Case insentive match for each OV
   -n             Don't validate the output headers
   -r KW OV NV    Replace OV with NV on keyword KW
@@ -24,6 +27,7 @@ Options:
 
 from __future__ import print_function
 
+import functools
 import os
 import pyfits as pf
 import sys
@@ -53,13 +57,20 @@ class Tester(object):
         return all(res), mess
 
 def should_modify(header):
-    return any((header[kw] == ov and keader[kw] != nv) for (kw, ov, nv) in matches if kw in header)
+    return any((header[kw] == ov and header[kw] != nv) for (kw, ov, nv) in matches if kw in header)
 
 # Main program
 conv_func  = (str.upper if arguments['-i'] else lambda x: x)
 matches    = tuple((kw, conv_func(ov), nv) for (kw, ov, nv) in zip(arguments['-r'], arguments['OV'], arguments['NV']))
 source_dir = arguments['-s']
 validate   = not arguments['-i']
+pathfn     = ((lambda x: x) if arguments['-S'] else functools.partial(os.path.join, source_dir))
+
+try:
+    filelist = (arguments['<filename>'] or open(arguments['-f']))
+except IOError as e:
+    print(e)
+    sys.exit(1)
 
 dd = arguments['-d']
 if dd is not None:
@@ -71,9 +82,9 @@ else:
 if validate:
     validator = Tester()
 
-for fn in arguments['<filename>']:
+for fn, path in ((os.path.basename(x), pathfn(x)) for x in filelist):
     try:
-        fits = pf.open(os.path.join(source_dir, fn), do_not_scale_image_data = True)
+        fits = pf.open(path, do_not_scale_image_data = True)
         fits.verify('exception')
         to_modify = [x.header for x in fits if should_modify(x.header)]
         if not to_modify:
