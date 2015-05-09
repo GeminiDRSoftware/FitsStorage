@@ -2,26 +2,24 @@
 
 """Header Fixer
 
-Fixes a FITS header by replacing the value of <keyword> with <new_value>.
+Fixes a FITS header by replacing each instance of OV in KW with NV
 
 Usage:
-  header_fixer <keyword> <new_value> <filename>... [-in] [-w MATCH ...] [-s SRCDIR] [-d DESTDIR]
+  header_fixer [-inSZ] [-s SRCDIR] [-d DESTDIR] (-r KW OV NV)... <filename>...
   header_fixer -h | --help
   header_fixer --version
 
 Options:
-  -h --help   Show this screen.
-  --version   Show version.
-  -d DESTDIR  Directory to write the modified file into. If none is specified, the
-              script will create a temporary one and print the path to it.
-  -i          Case insentive comparison for MATCHes (if specified). Meaningful only
-              for string values... The change will be skipped if the original value
-              is *exactly* the new one, though.
-  -n          Don't validate the output headers
-  -s SRCDIR   Source directory for FITS files [default: /net/wikiwiki/dataflow].
-  -w MATCH    Only fix the files where the <keyword>'s value matches the specified
-              value. Can be passed multiple times. If no match is specified, the
-              header will be changed for every file.
+  -h --help      Show this screen.
+  --version      Show version.
+  -d DESTDIR     Directory to write the modified file into. If none is specified, the
+                 script will create a temporary one and print the path to it.
+  -i             Case insentive match for each OV
+  -n             Don't validate the output headers
+  -r KW OV NV    Replace OV with NV on keyword KW
+  -s SRCDIR      Source directory for FITS files [default: /net/wikiwiki/dataflow].
+  -S             Don't prepend SRCDIR to the file names
+  -Z             BZip2-ed output files
 """
 
 from __future__ import print_function
@@ -33,7 +31,7 @@ from docopt import docopt
 from pyfits.verify import VerifyError
 from tempfile import mkdtemp
 
-from utils.fits_validator import RuleStack
+from utils.fits_validator import RuleStack, Environment
 
 arguments = docopt(__doc__, version='Header Fixer 1.0')
 
@@ -42,7 +40,7 @@ class Tester(object):
         self.rs = RuleStack()
         self.rs.initialize('fits')
 
-    def valid(fits):
+    def valid(self, fits):
         env = Environment()
         env.features = set()
         res = []
@@ -55,19 +53,14 @@ class Tester(object):
         return all(res), mess
 
 def should_modify(header):
-    try:
-        val = header[keyword]
-        return val != new_value and (matches and conv_func(val) in matches)
-    except KeyError:
-        return False
+    return any(header[kw] == ov for (kw, ov, _) in matches if kw in header)
 
 # Main program
 conv_func  = (str.upper if arguments['-i'] else lambda x: x)
-matches    = set(conv_func(x) for x in arguments['-w'])
+matches    = tuple((kw, conv_func(ov), nv) for (kw, ov, nv) in zip(arguments['-r'], arguments['OV'], arguments['NV']))
 source_dir = arguments['-s']
-keyword    = arguments['<keyword>']
-new_value  = arguments['<new_value>']
 validate   = not arguments['-i']
+
 dd = arguments['-d']
 if dd is not None:
     dest_dir = dd
@@ -87,7 +80,10 @@ for fn in arguments['<filename>']:
             print("Skipping {0}".format(fn))
             continue
         for header in to_modify:
-            header[keyword] = new_value
+            for kw, _, nv in matches:
+                if kw not in header:
+                    continue
+                header[kw] = nv
         if validate and not validator.valid(fits):
             print("The resulting {0} is not valid".format(fn))
             continue
