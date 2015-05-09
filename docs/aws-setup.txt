@@ -2,3 +2,83 @@
 # From inside gemini:
 ssh -R 8080:scisoft:80 arcdev
 
+
+# Setup from scratch:
+Lauch Instance
+AWS Marketplace -> search for centos
+CentOS 6 (x86_64) with updates # don't select a specific version eg 6.4 - just get generic latest
+m3.xlarge
+configure details
+subnet for 2a
+protect against termination
+add storage
+root to 16 GB General purpose SSD
+add 2 instance stores
+add 2 38GB Gen purpose SSD EBS for raid mirrors
+add 120GB magnetic for initial backup and setup
+tag instance
+config security group
+select existing secuirty group and select it
+review and launch
+launch
+label it as archive in instance list
+
+ssh -i arcdev.pem root@ip-address
+fdisk /dev/xvde
+make partition 1 full size (delete and recreate carefully)
+shutdown -r now  # to pick up new partition table properly
+ssh back in
+resize2fs /dev/xvde1 
+yum update  # This will take a while
+shutdown -r now  # to pick up new kernel etc from update
+ssh back in
+useradd -u 5151 phirst
+useradd -u 5179 fitsdata
+passwd phirst
+passwd fitsdata
+
+yum install -y lvm2 mdadm ntp tcsh wget
+vi /etc/ntp.conf
+server x.amazon.pool.ntp.org iburst   (for all servers)
+/etc/init.d/ntpd start
+chkconfig ntpd on
+ntpstat  # to check status
+vi /etc/sysconfig/network
+HOSTNAME=arcdev.gemini.edu
+
+# Create RAID MIRRORS
+lsblk # to see block devices
+# in this case xvdf xvdg are instance volumes, xvdi xvdh are corresponding EBS
+mdadm --create /dev/md0 -v --raid-devices=2 --level=mirror --bitmap=internal /dev/xvdf --write-mostly --write-behind /dev/xvdi
+mdadm --create /dev/md1 -v --raid-devices=2 --level=mirror --bitmap=internal /dev/xvdg --write-mostly --write-behind /dev/xvdh
+
+# LVM layer
+pvcreate /dev/md0 /dev/md1
+vgcreate ssd_ebs /dev/md0 /dev/md1
+lvcreate --size=68GB -n data ssd_ebs
+mke2fs -t ext4 -L data /dev/ssd_ebs/data
+
+# And the backup filesystem
+mke2fs -t ext4 -L backup /dev/xvdj
+mkdir /data
+mkdir /backup
+vi /etc/fstab
+mount /data
+mount /backup
+
+# Other system things to install
+yum install -y dump sysstat subversion
+
+# SELINUX permissive
+vi /etc/selinux/config 
+SELINUX=permissive
+
+
+
+
+# postfix for email
+yum install postfix
+vi /etc/postfix/main.cf
+set hostname to arcdev.gemini.edu
+AWS webform to request reverse DNS entry for elastic IP and EIP whitelisting
+
