@@ -53,7 +53,7 @@ class Tester(object):
         return all(res), mess
 
 def should_modify(header):
-    return any(header[kw] == ov for (kw, ov, _) in matches if kw in header)
+    return any((header[kw] == ov and keader[kw] != nv) for (kw, ov, nv) in matches if kw in header)
 
 # Main program
 conv_func  = (str.upper if arguments['-i'] else lambda x: x)
