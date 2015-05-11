@@ -2,28 +2,28 @@
 
 """Header Fixer
 
-Fixes a FITS header by replacing each instance of OV in KW with NV
+Fixes a FITS header by replacing each instance of <old-value> in <keyword> with <new-value>
 
 Usage:
-  header_fixer [-inSj] [-s SRCDIR] [-d DESTDIR]                (-r KW OV NV)... <filename>...
-  header_fixer [-inSj] [-s SRCDIR] [-d DESTDIR] [-f FILELIST ] (-r KW OV NV)...
+  header_fixer [-inSj] [-s SRCDIR] [-d DESTDIR] <keyword> <old-value> <new-value> (-f FILELIST | <filename>...)
+  header_fixer [-inSj] [-s SRCDIR] [-d DESTDIR] -k SUBSTLIST (-f FILELIST | <filename>...)
   header_fixer -h | --help
   header_fixer --version
 
 Options:
-  -h --help    Show this screen.
-  --version    Show version.
-  -d DESTDIR   Directory to write the modified file into. If none is specified, the
-               script will create a temporary one and print the path to it.
-  -f FILELIST  FILELIST is a file with paths to images, one per line. -s/-S apply to
-               the file paths as usual.
-  -i           Case insentive match for each OV.
-  -j           BZip2-ed output files.
-  -n           Don't validate the output headers.
-  -r KW OV NV  Replace OV with NV on keyword KW.
-  -s SRCDIR    Source directory for FITS files that are not specified with an
-               absolute path [default: /net/wikiwiki/dataflow].
-  -S           Don't prepend SRCDIR to the file names.
+  -h --help     Show this screen.
+  --version     Show version.
+  -d DESTDIR    Directory to write the modified file into. If none is specified, the
+                script will create a temporary one and print the path to it.
+  -f FILELIST   FILELIST is a file with paths to images, one per line. -s/-S apply to
+                the file paths as usual.
+  -i            Case insentive match for each <old-value>.
+  -j            BZip2-ed output files.
+  -k SUBSTLIST  A CSV file with each row describing a <keyword>, <old-value> and <new-value>
+  -n            Don't validate the output headers.
+  -s SRCDIR     Source directory for FITS files that are not specified with an
+                absolute path [default: /net/wikiwiki/dataflow].
+  -S            Don't prepend SRCDIR to the file names.
 """
 
 from __future__ import print_function
@@ -32,14 +32,15 @@ import functools
 import os
 import pyfits as pf
 import sys
+from csv import reader
+from bz2 import BZ2File
 from docopt import docopt
 from pyfits.verify import VerifyError
 from tempfile import mkdtemp
-from bz2 import BZ2File
 
 from utils.fits_validator import RuleStack, Environment
 
-arguments = docopt(__doc__, version='Header Fixer 1.0')
+args = docopt(__doc__, version='Header Fixer 1.0')
 
 class Tester(object):
     def __init__(self):
@@ -77,20 +78,27 @@ def output_file(path):
     return open(path, 'w')
 
 # Main program
-conv_func  = (str.upper if arguments['-i'] else lambda x: x)
-matches    = tuple((kw, conv_func(ov), nv) for (kw, ov, nv) in zip(arguments['-r'], arguments['OV'], arguments['NV']))
-source_dir = arguments['-s']
-validate   = not arguments['-i']
-pathfn     = ((lambda x: x) if arguments['-S'] else functools.partial(os.path.join, source_dir))
-bzipoutput = arguments['-j']
+conv_func  = (str.upper if args['-i'] else lambda x: x)
+try:
+    if args['-k']:
+        matches = tuple(reader(open(args['-k'])))
+    else:
+        matches = ((args['<keyword>'], args['<old-value>'], args['<new-value>']),)
+except IOError as e:
+    print(e)
+    sys.exit(1)
+source_dir = args['-s']
+validate   = not args['-i']
+pathfn     = ((lambda x: x) if args['-S'] else functools.partial(os.path.join, source_dir))
+bzipoutput = args['-j']
 
 try:
-    filelist = (arguments['<filename>'] or open(arguments['-f']))
+    filelist = (args['<filename>'] or (x.strip() for x in open(args['-f'])))
 except IOError as e:
     print(e)
     sys.exit(1)
 
-dd = arguments['-d']
+dd = args['-d']
 if dd is not None:
     dest_dir = dd
 else:
