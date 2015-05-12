@@ -45,6 +45,7 @@ gmoscre = re.compile(r'^[Gg][Mm][Oo][Ss]$')
 michellecre = re.compile(r'^[Mm][Ii][Cc][Hh][Ee][Ll][Ll][Ee]$')
 gnirscre = re.compile(r'^[Gg][Nn][Ii][Rr][Ss]$')
 phoenixcre = re.compile(r'^[Pp][Hh][Oo][Ee][Nn][Ii][Xx]$')
+texescre = re.compile(r'^[Tt][Ee][Xx][Es][Ss]$')
 trecscre = re.compile(r'^[Tt][Rr][Ee][Cc][Ss]$')
 nicicre = re.compile(r'^[Nn][Ii][Cc][Ii]$')
 hqcre = re.compile(r'^[Hh][Oo][Kk][Uu][Pp]([Aa])+(\+)*[Qq][Uu][Ii][Rr][Cc]$')
@@ -85,6 +86,8 @@ def gemini_instrument(string, gmos=False, other=False):
             retary = 'GNIRS'
         elif phoenixcre.match(string):
             retary = 'PHOENIX'
+        elif texescre.match(string):
+            retary = 'TEXES'
         elif trecscre.match(string):
             retary = 'TReCS'
         elif nicicre.match(string):
