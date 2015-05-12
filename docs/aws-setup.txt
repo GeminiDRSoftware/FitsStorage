@@ -73,6 +73,11 @@ yum install -y dump sysstat subversion
 vi /etc/selinux/config 
 SELINUX=permissive
 
+# Firewall
+yum install system-config-firewall
+# might need to reboot
+system-config-firewall 
+# disable it
 
 
 
