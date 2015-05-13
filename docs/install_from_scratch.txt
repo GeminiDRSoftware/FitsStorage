@@ -5,17 +5,12 @@ clean RHEL6 machine standard ISG install.
 
 - log in and change your password.
 
-sudo yum -y install httpd
-sudo yum -y install httpd-devel
+sudo yum -y install httpd httpd-devel mod_ssl openssl
 sudo chmod oug+rx /var/log/httpd
-sudo yum -y install postgresql 
-sudo yum -y install postgresql-server
-sudo yum -y install postgresql-devel
+sudo yum -y install postgresql postgresql-server postgresql-devel
 
 # needed to get mod_python to build as /astro python links against X11
-sudo yum -y install libX11-devel
-sudo yum -y install libXft
-sudo yum -y install libXft-devel
+sudo yum -y install libX11-devel libXft libXft-devel
 
 # On RHEL6 also need these if they're not already there:
 sudo yum -y install libtool
