@@ -9,7 +9,7 @@ import types
 from . import Base
 from orm.diskfile import DiskFile
 
-from gemini_metadata_utils import ratodeg, dectodeg, dmstodeg, gemini_observation_type, gemini_telescope, gemini_observation_class
+from gemini_metadata_utils import ratodeg, dectodeg, dmstodeg, gemini_observation_type, gemini_telescope, gemini_observation_class, gemini_instrument
 
 from astrodata import AstroData
 import pywcs
@@ -141,7 +141,7 @@ class Header(Base):
                 self.data_label = self.data_label.upper()
 
             self.telescope = gemini_telescope(ad.telescope().for_db())
-            self.instrument = ad.instrument().for_db()
+            self.instrument = gemini_instrument(ad.instrument().for_db(), other=True)
 
             # Date and times part
             self.ut_datetime = ad.ut_datetime().for_db()
