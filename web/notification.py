@@ -3,6 +3,8 @@ This module contains the notification html generator function.
 """
 from orm import sessionfactory
 from orm.notification import Notification
+from fits_storage_config import use_as_archive
+from web.user import userfromcookie
 
 from mod_python import apache, util
 
@@ -20,6 +22,12 @@ def notification(req):
 
     session = sessionfactory()
     try:
+        # On archive systems, need to be logged in as gemini staff to do this
+        if use_as_archive:
+            user = userfromcookie(session, req)
+            if user is None or user.gemini_staff is False:
+                return apache.HTTP_FORBIDDEN
+
         # Process form data first
         formdata = util.FieldStorage(req)
         # req.write(str(formdata))
