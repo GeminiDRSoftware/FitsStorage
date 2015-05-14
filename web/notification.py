@@ -1,10 +1,12 @@
 """
-This module contains the notification html generator function.
+This module contains the notification html generator function, and odb import via web function
 """
 from orm import sessionfactory
 from orm.notification import Notification
 from fits_storage_config import use_as_archive
 from web.user import userfromcookie
+from utils.userprogram import got_magic
+from utils.notifications import ingest_odb_xml
 
 from mod_python import apache, util
 
@@ -127,3 +129,39 @@ def notification(req):
         pass
     finally:
         session.close()
+
+def import_odb_notifications(req):
+    """
+    This takes xml from the ODB posted to it and imports it as notifications
+    """
+
+    # Only accept http posts
+    if req.method != 'POST':
+        return apache.HTTP_NOT_ACCEPTABLE
+
+    # Must have secret cookie
+    if not got_magic(req):
+        return apache.HTTP_NOT_ACCEPTABLE
+
+    # OK, get the payload from the POST data
+    xml = req.read()
+
+    session = sessionfactory()
+    try:
+        # Process it
+        report = ingest_odb_xml(session, xml)
+
+        # Write back the report
+        req.content_type = "text/plain"
+        for l in report:
+            req.write(l)
+            req.write('\n')
+
+    except IOError:
+        pass
+    finally:
+        session.close()
+
+
+    return apache.OK
+

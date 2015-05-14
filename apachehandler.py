@@ -16,7 +16,7 @@ from web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead
 from web.xml_tape import xmltape
 from web.progsobserved import progsobserved
 from web.gmoscal import gmoscal
-from web.notification import notification
+from web.notification import notification, import_odb_notifications
 from web.calmgr import calmgr
 from web.calibrations import calibrations
 from web.upload_file import upload_file
@@ -457,6 +457,12 @@ def thehandler(req):
         if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         return notification(req)
+
+    # Notification update from odb handler
+    if this == "import_odb_notifications":
+        if this in blocked_urls:
+            return apache.HTTP_FORBIDDEN
+        return import_odb_notifications(req)
 
     # curation_report handler
     if this == "curation":
