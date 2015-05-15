@@ -279,7 +279,7 @@ def password_reset(req, things):
         elif password != again:
             reason_bad = 'Password and Password again do not match'
         elif bad_password(password):
-            reason_bad = 'Bad password - must be at least 8 characters and contain both uppercase and lowercase letters, and numbers'
+            reason_bad = 'Bad password - must be at least 14 characters long, and contain at least one lower case letter, upper case letter, decimal digit and non-alphanumeric character (e.g. !, #, %, * etc)'
         else:
             request_valid = True
 
@@ -310,7 +310,7 @@ def password_reset(req, things):
 
     # Send the new account form
     req.write('<FORM action="/password_reset/%d/%s" method="POST">' % (userid, token))
-    req.write('<P>Fill out and submit this form to reset your password. Password must be 8 characters or more and must contain both uppercase and lowercase letters, and numbers.</P>')
+    req.write('<P>Fill out and submit this form to reset your password. Password must be at least 14 characters long, and contain at least one lower case letter, upper case letter, decimal digit and non-alphanumeric character (e.g. !, #, %, * etc)</P>')
     req.write('<TABLE>')
     req.write('<TR><TD><LABEL for="password">New Password</LABEL></TD>')
     req.write('<TD><INPUT type="password" size=16 name="password"</TD></TR>')
