@@ -97,19 +97,20 @@ def calibrations(req, selection):
                 requires = True
 
                 # Look for an arc in the same program
-                arc = c.arc(sameprog=True)
+                arcs = c.arc(sameprog=True)
 
-                if arc:
-                    html += '<H4>ARC: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
+                if arcs:
+                    for arc in arcs:
+                        html += '<H4>ARC: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
                                 arc.diskfile.file.name, arc.diskfile.file.name, arc.data_label, arc.data_label)
-                    if arc.ut_datetime and object.ut_datetime:
-                        html += "<P>arc was taken %s object</P>" % interval_string(arc, object)
-                        if abs(interval_hours(arc, object)) > 24:
-                            html += '<P><FONT COLOR="Red">WARNING - this is more than 1 day different</FONT></P>'
+                        if arc.ut_datetime and object.ut_datetime:
+                            html += "<P>arc was taken %s object</P>" % interval_string(arc, object)
+                            if abs(interval_hours(arc, object)) > 24:
+                                html += '<P><FONT COLOR="Red">WARNING - this is more than 1 day different</FONT></P>'
+                                warning = True
+                        else:
+                            html += '<P><FONT COLOR="Red">Hmmm, could not determine time delta...</FONT></P>'
                             warning = True
-                    else:
-                        html += '<P><FONT COLOR="Red">Hmmm, could not determine time delta...</FONT></P>'
-                        warning = True
 
                 else:
                     html += '<H3><FONT COLOR="Red">NO ARC FOUND!</FONT></H3>'
@@ -173,19 +174,20 @@ def calibrations(req, selection):
 
             if 'dark' in c.applicable and (caltype == 'all' or caltype == 'dark'):
                 requires = True
-                dark = c.dark()
-                if dark:
-                    html += '<H4>DARK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
-                                dark.diskfile.file.name, dark.diskfile.file.name, dark.data_label, dark.data_label)
-                    if dark.ut_datetime and object.ut_datetime:
-                        html += "<P>dark was taken %s object</P>" % interval_string(dark, object)
-                        # GMOS darks can be up to 6 months away, others regular 5 day warning
-                        hours_warn = 120
-                        if c.header.instrument in ['GMOS-N', 'GMOS-S']:
-                            hours_warn = 4320
-                        if abs(interval_hours(dark, object)) > hours_warn:
-                            html += '<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>'
-                            warning = True
+                darks = c.dark()
+                if darks:
+                    for dark in darks:
+                        html += '<H4>DARK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
+                                    dark.diskfile.file.name, dark.diskfile.file.name, dark.data_label, dark.data_label)
+                        if dark.ut_datetime and object.ut_datetime:
+                            html += "<P>dark was taken %s object</P>" % interval_string(dark, object)
+                            # GMOS darks can be up to 6 months away, others regular 5 day warning
+                            hours_warn = 120
+                            if c.header.instrument in ['GMOS-N', 'GMOS-S']:
+                                hours_warn = 4320
+                            if abs(interval_hours(dark, object)) > hours_warn:
+                                html += '<P><FONT COLOR="Red">WARNING - this is more than 5 days different</FONT></P>'
+                                warning = True
                 else:
                     html += '<H3><FONT COLOR="Red">NO DARK FOUND!</FONT></H3>'
                     warning = True
@@ -193,9 +195,10 @@ def calibrations(req, selection):
 
             if 'bias' in c.applicable and (caltype == 'all' or caltype == 'bias'):
                 requires = True
-                bias = c.bias()
-                if bias:
-                    html += '<H4>BIAS: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
+                biases = c.bias()
+                if biases:
+                    for bias in biases:
+                        html += '<H4>BIAS: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
                                 bias.diskfile.file.name, bias.diskfile.file.name, bias.data_label, bias.data_label)
                 else:
                     html += '<H3><FONT COLOR="Red">NO BIAS FOUND!</FONT></H3>'
@@ -204,9 +207,10 @@ def calibrations(req, selection):
 
             if 'flat' in c.applicable and (caltype == 'all' or caltype == 'flat'):
                 requires = True
-                flat = c.flat()
-                if flat:
-                    html += '<H4>FLAT: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
+                flats = c.flat()
+                if flats:
+                    for flat in flats:
+                        html += '<H4>FLAT: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
                                 flat.diskfile.file.name, flat.diskfile.file.name, flat.data_label, flat.data_label)
                 else:
                     html += '<H3><FONT COLOR="Red">NO FLAT FOUND!</FONT></H3>'
