@@ -827,18 +827,21 @@ def username_inuse(username):
 digits_cre = re.compile(r'\d')
 lower_cre = re.compile('[a-z]')
 upper_cre = re.compile('[A-Z]')
+nonalpha_cre = re.compile('[^a-zA-Z0-9]')
 def bad_password(candidate):
     """
     Checks candidate for compliance with password rules.
     Returns True if it is bad, False if it is good
     """
-    if len(candidate) < 8:
+    if len(candidate) < 14:
         return True
     elif not bool(digits_cre.search(candidate)):
         return True
     elif not bool(lower_cre.search(candidate)):
         return True
     elif not bool(upper_cre.search(candidate)):
+        return True
+    elif not bool(nonalpha_cre.search(candidate)):
         return True
     else:
         return False
