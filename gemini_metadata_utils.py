@@ -527,6 +527,9 @@ class GeminiProgram:
     * is_q: a Boolean that is true if this is a Queue program
     * is_c: a Boolean that is true if this is a Classical program
     * is_sv: a Boolean that is true if this is an SV (Science Verification) program
+    * is_qs: a Boolean that is true if this is an QS (Quick Start) program
+    * is_dd: a Boolean that is true if this is an DD (Directors Discretion) program
+    * is_lp: a Boolean that is true if this is an LP (Large Program) program
     * is_ft: a Boolean that is true if this is an FT (Fast Turnaround) program
 
     This could be easily expanded to extract semester, hemisphere, program number etc
@@ -539,6 +542,10 @@ class GeminiProgram:
     is_q = False
     is_c = False
     is_sv = False
+    is_qs = False
+    is_dd = False
+    is_lp = False
+    is_ft = False
 
 
     def __init__(self, program_id):
@@ -546,7 +553,7 @@ class GeminiProgram:
 
         # Check for the CAL / ENG form
         ec_match = re.match(r"^(G[NS])-((?:CAL)|(?:ENG))(20[012]\d[01]\d[0123]\d)$", program_id)
-        sci_match = re.match(r"^(G[NS])-(20[012]\d[AB])-([A-Z]+)-(\d+)$", program_id)
+        sci_match = re.match(r"^(G[NS])-(20[012]\d[AB])-(Q|C|SV|QS|DD|LP|FT)-(\d+)$", program_id)
         if ec_match:
             # Valid eng / cal form
             self.valid = True
