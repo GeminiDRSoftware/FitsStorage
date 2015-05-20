@@ -125,11 +125,10 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('processed_dark')
 
 
-    def arc(self, processed=False, sameprog=False, howmany=None):
+    def arc(self, processed=False, howmany=None):
         """
         This method identifies the best GMOS ARC to use for the target
-        dataset. The optional sameprog parameter is a boolean that says
-        whether you require the result to be from the same science program.
+        dataset. 
         """
         # No arcs for imaging
         if self.descriptors['spectroscopy'] == False:
@@ -186,10 +185,6 @@ class CalibrationGMOS(Calibration):
             query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         else:
             query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
-
-        # Should we insist on the program ID matching?
-        if sameprog:
-            query = query.filter(Header.program_id == self.descriptors['program_id'])
 
         # Absolute time separation must be within 1 year
         # query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)

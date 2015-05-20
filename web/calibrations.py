@@ -87,7 +87,6 @@ def calibrations(req, selection):
             warning = False
             missing = False
             requires = False
-            oldarc = None
 
             html += '<H3><a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H3>' % (
                         object.diskfile.file.name, object.diskfile.file.name, object.data_label, object.data_label)
@@ -96,8 +95,8 @@ def calibrations(req, selection):
             if 'arc' in c.applicable and (caltype == 'all' or caltype == 'arc'):
                 requires = True
 
-                # Look for an arc in the same program
-                arcs = c.arc(sameprog=True)
+                # Look for an arc. Note no longer any requirement to support "sameprog" with the new archive
+                arcs = c.arc()
 
                 if arcs:
                     for arc in arcs:
@@ -117,28 +116,6 @@ def calibrations(req, selection):
                     warning = True
                     missing = True
 
-                # If we didn't find one in the same program or we did, but with warnings,
-                # Re-do the search accross all program IDs
-                if warning:
-                    oldarc = arc
-                    arc = c.arc()
-                    # If we find a different one
-                    if arc and oldarc and (arc.id != oldarc.id):
-                        missing = False
-                        html += '<H4>ARC: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
-                                        arc.diskfile.file.name, arc.diskfile.file.name, arc.data_label, arc.data_label)
-                        if arc.ut_datetime and object.ut_datetime:
-                            html += "<P>arc was taken %s object</P>" % interval_string(arc, object)
-                            if abs(interval_hours(arc, object) > 24):
-                                html += '<P><FONT COLOR="Red">WARNING - this is more than 1 day different</FONT></P>'
-                                warning = True
-                        else:
-                            html += '<P><FONT COLOR="Red">Hmmm, could not determine time delta...</FONT></P>'
-                            warning = True
-                        if arc.program_id != object.program_id:
-                            html += '<P><FONT COLOR="Red">WARNING: ARC and OBJECT come from different project IDs.</FONT></P>'
-                            warning = True
-
                 # Handle the 'takenow' flag. This should get set to true if
                 # no arc exists or
                 # all the arcs generate warnings, and
@@ -150,20 +127,8 @@ def calibrations(req, selection):
                 if warning:
                     # Is it worth re-taking?
                     # Find the smallest interval between a valid arc and the science
-                    oldinterval = None
-                    newinterval = None
-                    smallestinterval = None
-                    if oldarc:
-                        oldinterval = abs(interval_hours(oldarc, object))
-                        smallestinterval = oldinterval
-                    if arc:
-                        newinterval = abs(interval_hours(arc, object))
-                        smallestinterval = newinterval
-                    if oldinterval and newinterval:
-                        if oldinterval > newinterval:
-                            smallestinterval = newinterval
-                        else:
-                            smallestinterval = oldinterval
+                    newinterval = abs(interval_hours(arc, object))
+                    smallestinterval = newinterval
                     # Is the smallest interval larger than the interval between now and the science?
                     now = datetime.datetime.utcnow()
                     then = object.ut_datetime
