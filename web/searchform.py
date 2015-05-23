@@ -80,7 +80,7 @@ def searchform(req, things, orderby):
     req.content_type = "text/html"
     req.write('<!DOCTYPE html><html><head>')
     req.write('<meta charset="UTF-8">')
-    req.write('<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>')
+    req.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>')
     req.write('<script src="/htmldocs/titlebar.js"></script>')
     req.write('<script src="/htmldocs/form.js"></script>')
     req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/whoami.css">')
