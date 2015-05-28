@@ -1,0 +1,32 @@
+GMOS specific metadata validation rules
+
+In PHU:
+
+EXPTIME exist and be floating point >= 0
+DARKTIME exist and be floating point >= 0
+MASKID exist and be integer
+MAKSNAME exist and be string
+MASKTYP exist and be integer(-1|0|1)
+MASKLOC exist and be integer(-1|0|1)
+
+FILTER1 exist and be non null string
+FILTER2 exist and be non null string
+FILTID1 exist and be ingteger
+FILTID2 exist and be ingteger
+
+GRATING exist and be not null string
+GRATID exist and be int
+
+
+In every extension:
+
+CCDSUM exist and be string of form "x y" where x and y are [124]
+CCDSIZE exist and be string of form "[a:b,c:d]" where a,b,c,d all integers
+CCDSEC, DETSEC, DATASEC, BIASSEC exist and be strings same form as CCDSIZE
+
+CCDNAME and AMPNAME exist and be non-emtpy strings
+GAIN exist and be floating point
+RDNOISE exist and be floating point
+
+
+
