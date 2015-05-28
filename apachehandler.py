@@ -11,7 +11,7 @@ from mod_python import util
 
 from fits_storage_config import blocked_urls, use_as_archive
 from web.summary import summary
-from web.file_list import xmlfilelist, jsonfilelist
+from web.file_list import xmlfilelist, jsonfilelist, jsonsummary
 from web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead
 from web.xml_tape import xmltape
 from web.progsobserved import progsobserved
@@ -214,6 +214,12 @@ def thehandler(req):
             return apache.HTTP_FORBIDDEN
         selection = getselection(things)
         retval = jsonfilelist(req, selection)
+        return retval
+    if this == 'jsonsummary':
+        if this in blocked_urls:
+            return apache.HTTP_FORBIDDEN
+        selection = getselection(things)
+        retval = jsonsummary(req, selection)
         return retval
 
     # The fileontape handler
