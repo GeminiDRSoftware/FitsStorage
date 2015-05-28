@@ -39,8 +39,8 @@ def usagereport(req):
         today = datetime.datetime.utcnow().date()
         oneday = datetime.timedelta(days=1)
         yesterday = today - oneday
-        start = today.isoformat()
-        end = yesterday.isoformat()
+        end = today.isoformat()
+        start = yesterday.isoformat()
         username = ''
         ipaddr = ''
         this = ''
@@ -106,9 +106,9 @@ def usagereport(req):
             req.write("<h1>Usage Report</h1>")
             query = session.query(UsageLog)
             if start:
-                query.filter(UsageLog.utdatetime >= start)
+                query = query.filter(UsageLog.utdatetime >= start)
             if end:
-                query.filter(UsageLog.utdatetime <= end)
+                query = query.filter(UsageLog.utdatetime <= end)
             if username:
                 user = session.query(User).filter(User.username == username).first()
                 if user:
