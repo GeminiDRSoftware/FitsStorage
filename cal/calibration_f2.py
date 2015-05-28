@@ -22,11 +22,17 @@ class CalibrationF2(Calibration):
 
     def __init__(self, session, header, descriptors, types):
         # Init the superclass
+        """
+        This is the init method for the F2 calibration subclass.
+        """
+
+        # Init the superclass
         Calibration.__init__(self, session, header, descriptors, types)
 
-        # Find the f2header
-        query = session.query(F2).filter(F2.header_id == self.descriptors['header_id'])
-        self.f2 = query.first()
+        # if header based, Find the f2header
+        if header:
+            query = session.query(F2).filter(F2.header_id == self.descriptors['header_id'])
+            self.f2 = query.first()
 
         # Populate the descriptors dictionary for F2
         if self.from_descriptors:

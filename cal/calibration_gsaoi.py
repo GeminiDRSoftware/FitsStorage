@@ -23,9 +23,10 @@ class CalibrationGSAOI(Calibration):
         # Init the superclass
         Calibration.__init__(self, session, header, descriptors, types)
 
-        # Find the gsaoiheader
-        query = session.query(Gsaoi).filter(Gsaoi.header_id == self.descriptors['header_id'])
-        self.gsaoi = query.first()
+        # If header based, find the gsaoiheader
+        if header:
+            query = session.query(Gsaoi).filter(Gsaoi.header_id == self.descriptors['header_id'])
+            self.gsaoi = query.first()
 
         # Populate the descriptors dictionary for GSAOI
         if self.from_descriptors:

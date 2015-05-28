@@ -23,9 +23,10 @@ class CalibrationNIFS(Calibration):
         # Init the superclass
         Calibration.__init__(self, session, header, descriptors, types)
 
-        # Find the nifsheader
-        query = session.query(Nifs).filter(Nifs.header_id == self.descriptors['header_id'])
-        self.nifs = query.first()
+        # If header based, find the nifsheader
+        if header:
+            query = session.query(Nifs).filter(Nifs.header_id == self.descriptors['header_id'])
+            self.nifs = query.first()
 
         # Populate the descriptors dictionary for NIFS
         if self.from_descriptors:

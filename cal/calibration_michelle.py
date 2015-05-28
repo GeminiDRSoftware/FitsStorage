@@ -23,9 +23,10 @@ class CalibrationMICHELLE(Calibration):
         # Init the superclass
         Calibration.__init__(self, session, header, descriptors, types)
 
-        # Find the michelleheader
-        query = session.query(Michelle).filter(Michelle.header_id == self.descriptors['header_id'])
-        self.michelle = query.first()
+        # If header based, find the michelleheader
+        if header:
+            query = session.query(Michelle).filter(Michelle.header_id == self.descriptors['header_id'])
+            self.michelle = query.first()
 
         # Populate the descriptors dictionary for MICHELLE
         if self.from_descriptors:

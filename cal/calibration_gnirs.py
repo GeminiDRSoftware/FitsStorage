@@ -26,9 +26,10 @@ class CalibrationGNIRS(Calibration):
         # Init the superclass
         Calibration.__init__(self, session, header, descriptors, types)
 
-        # Find the gnirsheader
-        query = session.query(Gnirs).filter(Gnirs.header_id == self.descriptors['header_id'])
-        self.gnirs = query.first()
+        # If header based, find the gnirsheader
+        if header:
+            query = session.query(Gnirs).filter(Gnirs.header_id == self.descriptors['header_id'])
+            self.gnirs = query.first()
 
         # Populate the descriptors dictionary for GNIRS
         if self.from_descriptors:

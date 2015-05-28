@@ -26,9 +26,10 @@ class CalibrationGPI(Calibration):
         # Init the superclass
         Calibration.__init__(self, session, header, descriptors, types)
 
-        # Find the gpiheader
-        query = session.query(Gpi).filter(Gpi.header_id == self.descriptors['header_id'])
-        self.gpi = query.first()
+        # if header based, find the gpiheader
+        if header:
+            query = session.query(Gpi).filter(Gpi.header_id == self.descriptors['header_id'])
+            self.gpi = query.first()
 
         # Populate the descriptors dictionary for GPI
         if self.from_descriptors:
