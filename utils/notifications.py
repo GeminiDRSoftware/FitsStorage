@@ -20,6 +20,7 @@ def ingest_odb_xml(session, xml):
         piEmail = ""
         ngoEmail = ""
         csEmail = ""
+        # Default notifications off. Should be turned on by xml for valid programs.
         notifyPi = "No"
         nprogs += 1
         # Sometimes people use ;s for separators in the odb email fields...
@@ -48,20 +49,25 @@ def ingest_odb_xml(session, xml):
             label = "Auto - %s" % progid
             query = session.query(Notification).filter(Notification.label == label)
             if query.count() == 0:
-                n = Notification(label)
-                n.selection = "%s/science" % progid
-                n.to = piEmail
-                if len(ngoEmail) == 0:
-                    n.cc = csEmail
-                elif len(csEmail) == 0:
-                    n.cc = ngoEmail
+                # This notification doesn't exist in DB yet.
+                # Only add it if notifyPi is Yes
+                if notifyPi == 'Yes':
+                    n = Notification(label)
+                    n.selection = "%s/science" % progid
+                    n.to = piEmail
+                    if len(ngoEmail) == 0:
+                        n.cc = csEmail
+                    elif len(csEmail) == 0:
+                        n.cc = ngoEmail
+                    else:
+                        n.cc = "%s,%s" % (ngoEmail, csEmail)
+                    report.append("Adding notification %s" % label)
+                    session.add(n)
+                    session.commit()
                 else:
-                    n.cc = "%s,%s" % (ngoEmail, csEmail)
-    
-                report.append("Adding notification %s" % label)
-                session.add(n)
-                session.commit()
+                    report.append("Did not add %s as notifyPi is No" % label)
             else:
+                # Already exists in DB, check for updates.
                 report.append("%s is already present, check for updates" % label)
                 n = query.first()
                 if n.to != piEmail:
@@ -71,6 +77,11 @@ def ingest_odb_xml(session, xml):
                 if n.cc != "%s,%s" % (ngoEmail, csEmail):
                     report.append("Updating cc for %s" % label)
                     n.cc = "%s,%s" % (ngoEmail, csEmail)
+                    session.commit()
+                # If notifyPi is No, delete it from the noficiation table
+                if notifyPi == 'No':
+                    report.append("Deleting %s: notifyPi set to No")
+                    session.delete(n)
                     session.commit()
             
     report.append("Processed %s programs" % nprogs)

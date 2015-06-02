@@ -52,6 +52,8 @@ if options.to_remote_server:
 else:
     # Get a database session
     session = sessionfactory()
+
+    # Do the actual ingest
     report = ingest_odb_xml(session, xml)
 
 # Replay the report into the log files
