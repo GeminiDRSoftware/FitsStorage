@@ -5,6 +5,7 @@ Notifications utils - add / update notification table entries from ODB XML
 from xml.dom.minidom import parseString
 from orm.notification import Notification
 
+from gemini_metadata_utils import GeminiProgram
 
 def ingest_odb_xml(session, xml):
     report = []
@@ -50,8 +51,9 @@ def ingest_odb_xml(session, xml):
             query = session.query(Notification).filter(Notification.label == label)
             if query.count() == 0:
                 # This notification doesn't exist in DB yet.
-                # Only add it if notifyPi is Yes
-                if notifyPi == 'Yes':
+                # Only add it if notifyPi is Yes and it's a valid program ID
+                gp = GeminiProgram(progid)
+                if notifyPi == 'Yes' and gp.valid:
                     n = Notification(label)
                     n.selection = "%s/science" % progid
                     n.to = piEmail
@@ -65,7 +67,10 @@ def ingest_odb_xml(session, xml):
                     session.add(n)
                     session.commit()
                 else:
-                    report.append("Did not add %s as notifyPi is No" % label)
+                    if gp.valid != True:
+                        report.append("Did not add %s as %s is not a valid program ID" % (label, progid))
+                    if notifyPi != 'Yes':
+                        report.append("Did not add %s as notifyPi is No" % label)
             else:
                 # Already exists in DB, check for updates.
                 report.append("%s is already present, check for updates" % label)
