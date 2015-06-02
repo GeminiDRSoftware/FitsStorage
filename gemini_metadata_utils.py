@@ -531,6 +531,7 @@ class GeminiProgram:
     * is_dd: a Boolean that is true if this is an DD (Directors Discretion) program
     * is_lp: a Boolean that is true if this is an LP (Large Program) program
     * is_ft: a Boolean that is true if this is an FT (Fast Turnaround) program
+    * is_ds: a Boolean that is true if this is an DS (Demo Science) program
 
     This could be easily expanded to extract semester, hemisphere, program number etc
     if required.
