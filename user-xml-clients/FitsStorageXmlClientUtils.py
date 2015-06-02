@@ -73,6 +73,7 @@ def get_cal_list(selection, caltype, server='fits'):
     url = "http://%s/calmgr" % server
 
     url+="/"+selection
+    url+="/"+caltype
 
     u = urllib2.urlopen(url)
     xml = u.read()
