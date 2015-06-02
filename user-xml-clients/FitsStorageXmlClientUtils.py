@@ -65,3 +65,29 @@ def fetch_files(files, server='fits'):
     else:
       print "md5 did not match, problem with file %s" % file['filename']
 
+def get_cal_list(selection, caltype, server='fits'):
+    """
+    Fetches a list of calibraitons from the calibration manager
+    on the fits server
+    """
+    url = "http://%s/calmgr" % server
+
+    url+="/"+selection
+
+    u = urllib2.urlopen(url)
+    xml = u.read()
+    u.close()
+
+    dom = parseString(xml)
+    cals = []
+    for fe in dom.getElementsByTagName("calibration"):
+      dict = {}
+      dict['filename']=fe.getElementsByTagName("filename")[0].childNodes[0].data
+      dict['datalabel']=fe.getElementsByTagName("datalabel")[0].childNodes[0].data
+      dict['caltype']=fe.getElementsByTagName("caltype")[0].childNodes[0].data
+      dict['md5']=fe.getElementsByTagName("md5")[0].childNodes[0].data
+      dict['url']=fe.getElementsByTagName("url")[0].childNodes[0].data
+      cals.append(dict)
+
+    return cals
+
