@@ -546,6 +546,7 @@ class GeminiProgram:
     is_dd = False
     is_lp = False
     is_ft = False
+    is_ds = False
 
 
     def __init__(self, program_id):
@@ -553,7 +554,7 @@ class GeminiProgram:
 
         # Check for the CAL / ENG form
         ec_match = re.match(r"^(G[NS])-((?:CAL)|(?:ENG))(20[012]\d[01]\d[0123]\d)$", program_id)
-        sci_match = re.match(r"^(G[NS])-(20[012]\d[AB])-(Q|C|SV|QS|DD|LP|FT)-(\d+)$", program_id)
+        sci_match = re.match(r"^(G[NS])-(20[012]\d[AB])-(Q|C|SV|QS|DD|LP|FT|DS|ENG)-(\d+)$", program_id)
         if ec_match:
             # Valid eng / cal form
             self.valid = True
@@ -566,6 +567,8 @@ class GeminiProgram:
             self.is_c = sci_match.group(3) == 'C'
             self.is_sv = sci_match.group(3) == 'SV'
             self.is_ft = sci_match.group(3) == 'FT'
+            self.is_ds = sci_match.group(3) == 'DS'
+            self.is_eng = sci_match.group(3) == 'ENG'
         else:
             # Not a valid format. Probably some kind of engineering test program
             # that someone just made up.
