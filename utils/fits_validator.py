@@ -25,6 +25,9 @@ class NotGeminiData(Exception):
 class EngineeringImage(Exception):
     pass
 
+class NoDateError(Exception):
+    pass
+
 # Constants
 
 # This is used to determine things like if we test for IAA or OBSCLASS
@@ -166,8 +169,20 @@ def iter_pairs(lst, coercion = lambda x: x):
         elif k is not None:
             yield (k, ())
 
+def getEnvDate(env):
+    for feat in env.features:
+        if feat.startswith('date:'):
+            return coerceValue(feat[5:])
+
+    raise NoDateError()
+
+def buildSinceFn(value):
+    return lambda h, e: getEnvDate(e) < value
+
 class KeywordDescriptor(object):
     def __init__(self, info):
+        self.reqs = []
+        self.transforms = []
         self.range = EmptyRange
         self.fn = lambda x: x
 
@@ -176,9 +191,9 @@ class KeywordDescriptor(object):
                 if restriction in fitsTypes:
                     self.range = Range.from_type(fitsTypes[restriction])
                 elif restriction == 'upper':
-                    self.fn = str.upper
+                    self.transforms.append(str.upper)
                 elif restriction == 'lower':
-                    self.fn = str.lower
+                    self.transforms.append(str.lower)
                 else:
                     raise ValueError("Unknown descriptor {0}".format(restriction))
             if isinstance(restriction, dict):
@@ -188,11 +203,22 @@ class KeywordDescriptor(object):
                         self.range = set(iter_list(value))
                     else:
                         self.range = Range.from_string(value, forceType = fitsTypes[kw])
+                elif kw == 'since':
+                    coerced = coerceValue(value)
+                    if not isinstance(coerced, datetime):
+                        raise ValueError("Wrong value for 'since': {0}".format(value))
+                    self.reqs.append(buildSinceFn(coerced))
                 else:
                     raise ValueError("Unknown descriptor {0}".format(restriction))
 
+    def skip(self, header, env):
+        return all(fn(header, env) for fn in self.reqs)
+
     def test(self, value):
-        return self.fn(value) in self.range
+        for fn in self.transforms:
+            value = fn(value)
+
+        return value in self.range
 
 def test_inclusion(v1, v2, *args, **kw):
     if isinstance(v2, (str, unicode)):
@@ -379,8 +405,11 @@ class RuleSet(list):
     def test(self, header, env):
         messages = []
         for kw, descr in self.keywordDescr.items():
+            if descr.skip(header, env):
+                continue
+
             try:
-                if not descr.test(header[kw]):
+                if not descr.test(header[kw], hader, env):
                     messages.append('Invalid {0}({1})'.format(kw, header[kw]))
             except KeyError:
                 messages.append('Missing {0}'.format(kw))
@@ -562,15 +591,13 @@ def check_observation_related_fields(header, env):
 
     return True
 
-@RuleSet.register_function('valid-iaa-and-obsclass')
-def check_iaa_and_obsclass_in_recent_images(header, env):
-    if coerceValue(header['DATE-OBS']) < OLDIMAGE:
-        return True
-
+@RuleSet.register_function('set-date')
+def set_date(header, env):
     try:
-        return (header['OBSCLASS'] in OBSCLASS_VALUES) and ('IAA' in header)
+        env.features.add('date:' + header['DATE-OBS'])
+        return True
     except KeyError:
-        return False
+        return False, "Can't find DATE-OBS to set the date"
 
 if __name__ == '__main__':
     DEBUG = True

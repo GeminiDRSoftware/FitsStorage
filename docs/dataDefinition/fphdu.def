@@ -1,7 +1,8 @@
 conditions:
-  - is facility
   - not exists:
     - XTENSION
+  - is facility
+  - set-date
   - matching:
     - TELESCOP: Gemini-South
     - TELESCOP: Gemini-North
@@ -37,8 +38,9 @@ keywords:
   - DATALAB
   - FRAME
   - OBJECT
-#  - OBSCLASS:
-#    - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
+  - OBSCLASS:
+    - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
+    - since:    2007-6-28
   - OBSTYPE:
     - char:   [ DARK, ARC, FLAT, BIAS, OBJECT, PINHOLE, RONCHI, CAL, FRINGE, MASK ]
   - RAWGEMQA:
@@ -53,13 +55,15 @@ keywords:
     - date:     2000-1-1 .. *
   - SSA
   - UT
-  - PA
-#  - IAA
+  - PA:
+    - since:    2004-1-1
+  - IAA:
+    - since:    2007-6-28
 
 tests:
 # Old images (previous to ~2005) miss IAA and OBSCLASS, which complicates
 # testing. We move those to this instead
-  - valid-iaa-and-obsclass
+#  - valid-iaa-and-obsclass
 # They have to be "Any" or "NN-percentile"
   - valid-rawXX
 # Checks GEMPRGID, OBSID, AND DATALAB
