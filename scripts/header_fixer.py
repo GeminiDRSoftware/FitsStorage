@@ -34,6 +34,7 @@ import pyfits as pf
 import sys
 from csv import reader
 from bz2 import BZ2File
+from collections import namedtuple
 from docopt import docopt
 from pyfits.verify import VerifyError
 from tempfile import mkdtemp
@@ -41,6 +42,8 @@ from tempfile import mkdtemp
 from utils.fits_validator import RuleStack, Environment
 
 args = docopt(__doc__, version='Header Fixer 1.0')
+
+Match = namedtuple('Match', ('key', 'old', 'new'))
 
 class Tester(object):
     def __init__(self):
@@ -59,8 +62,14 @@ class Tester(object):
             mess.extend(t[1])
         return all(res), mess
 
-def should_modify(header):
-    return any((header[kw] == ov and header[kw] != nv) for (kw, ov, nv) in matches if kw in header)
+def needs_change(header, kw, ov, nv):
+    try:
+        return header[kw] == ov and header[kw] != nv
+    except KeyError:
+        return False
+
+def change_set(header):
+    return ((match.key, match.new) for match in matches if needs_change(header, *match))
 
 def normalized_fn(fn):
     return os.path.basename(fn if not fn.endswith('.bz2') else fn[:-4])
@@ -81,9 +90,9 @@ def output_file(path):
 conv_func  = (str.upper if args['-i'] else lambda x: x)
 try:
     if args['-k']:
-        matches = tuple(reader(open(args['-k'])))
+        matches = tuple(Match(*vals) for vals in reader(open(args['-k'])))
     else:
-        matches = ((args['<keyword>'], args['<old-value>'], args['<new-value>']),)
+        matches = (Match(args['<keyword>'], args['<old-value>'], args['<new-value>']),)
 except IOError as e:
     print(e)
     sys.exit(1)
@@ -112,14 +121,12 @@ for fn, path in ((normalized_fn(x), pathfn(x)) for x in filelist):
     try:
         fits = pf.open(open_image(path), do_not_scale_image_data = True)
         fits.verify('exception')
-        to_modify = [x.header for x in fits if should_modify(x.header)]
-        if not to_modify:
+        change_sets = filter(lambda x: x[1], [(h.header, change_set(h.header)) for h in fits])
+        if not change_sets:
             print("Skipping {0}".format(fn))
             continue
-        for header in to_modify:
-            for kw, _, nv in matches:
-                if kw not in header:
-                    continue
+        for header, cset in change_sets:
+            for kw, nv in cset:
                 header[kw] = nv
         if validate and not validator.valid(fits):
             print("The resulting {0} is not valid".format(fn))
