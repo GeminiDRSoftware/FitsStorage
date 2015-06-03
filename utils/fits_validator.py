@@ -200,10 +200,14 @@ def test_inclusion(v1, v2, *args, **kw):
 
 def run_function(func, header, env):
     res = func.code(header, env)
+    if isinstance(res, tuple):
+        res, message = res
+    else:
+        message = ''
     if res and func.exceptionIfTrue is not None:
-        raise func.exceptionIfTrue()
+        raise func.exceptionIfTrue(message)
     elif not res and func.exceptionIfFalse is not None:
-        raise func.exceptionIfFalse()
+        raise func.exceptionIfFalse(message)
 
     return res
 
@@ -494,8 +498,11 @@ def test_for_non_gemini_data(header, env):
 @RuleSet.register_function("engineering", excIfTrue = EngineeringImage)
 def engineering_image(header, env):
     "Naive engineering image detection"
-    prgid = header.get('GEMPRGID', '')
-    return prgid.startswith('GN-ENG') or prgid.startswith('GS-ENG')
+    try:
+        prgid = header['GEMPRGID']
+        return prgid.startswith('GN-ENG') or prgid.startswith('GS-ENG')
+    except KeyError:
+        return True, "Missing GEMPRGID"
 
 @RuleSet.register_function("calibration")
 def calibration_image(header, env):
@@ -532,9 +539,14 @@ def check_observation_related_fields(header, env):
     obs = gmu.GeminiObservation(header['OBSID'])
     dl  = gmu.GeminiDataLabel(header['DATALAB'])
 
-    return (prg.valid and obs.obsnum != '' and dl.dlnum != ''
-                      and obs.obsnum == dl.obsnum
-                      and prg.program_id == obs.program.program_id == dl.projectid)
+    valid = (prg.valid and obs.obsnum != '' and dl.dlnum != ''
+                       and obs.obsnum == dl.obsnum
+                       and prg.program_id == obs.program.program_id == dl.projectid)
+
+    if not valid:
+        return False, "Not a valid Observation ID"
+
+    return True
 
 @RuleSet.register_function('valid-iaa-and-obsclass')
 def check_iaa_and_obsclass_in_recent_images(header, env):
@@ -571,8 +583,12 @@ if __name__ == '__main__':
                 err += 1
                 log("  No key ruleset found for this HDU")
 
-    except EngineeringImage:
-        log("Its an engineering image")
+    except EngineeringImage as exc:
+        s = str(exc)
+        if not s:
+            log("Its an engineering image")
+        else:
+            log("Its an engineering image: {0}".format(s))
         err = 1
     except NotGeminiData:
         log("This doesn't look like Gemini data")
