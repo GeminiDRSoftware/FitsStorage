@@ -1,5 +1,5 @@
-provides:       facility
 conditions:
+  - is facility
   - not exists:
     - XTENSION
   - matching:

@@ -33,6 +33,7 @@ class EngineeringImage(Exception):
 OLDIMAGE = datetime(2007, 06, 28)
 OBSCLASS_VALUES = {'dayCal',  'partnerCal',  'acqCal',  'acq',  'science',  'progCal'}
 DEBUG = False
+FACILITY_INSTRUME = {'F2', 'GMOS-N', 'GMOS-S', 'GNIRS', 'NICI', 'NIFS', 'NIRI'}
 
 fitsTypes = {
     'char': str,
@@ -489,15 +490,28 @@ class RuleStack(object):
 # TODO: We should be able to provide a reason for not passing a test
 
 @RuleSet.register_function("is-gemini-data", excIfFalse = NotGeminiData)
-def test_for_non_gemini_data(header, env):
+def test_for_gemini_data(header, env):
+    if 'XTENSION' in header:
+        return True
     try:
-        return ('XTENSION' in header) or (gmu.gemini_instrument(header['INSTRUME'], gmos=True) is not None)
+        if gmu.gemini_instrument(header['INSTRUME'], gmos=True) is None:
+            return False
+
+        if header['INSTRUME'] in FACILITY_INSTRUME:
+            env.features.add('facility')
+        else:
+            env.features.add('non-facility')
+
+        return True
+
     except KeyError:
         return False
 
 @RuleSet.register_function("engineering", excIfTrue = EngineeringImage)
 def engineering_image(header, env):
     "Naive engineering image detection"
+    if 'XTENSION' in header:
+        return False
     try:
         prgid = header['GEMPRGID']
         return prgid.startswith('GN-ENG') or prgid.startswith('GS-ENG')
