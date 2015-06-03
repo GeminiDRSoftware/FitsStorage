@@ -13,16 +13,17 @@ conditions:
 
 include files:
   - pdu/flamingos
+  - pdu/phoenix
 
 keywords:
   - DATE
-  - DATE-OBS
+#  - DATE-OBS
 # Remove this when valid_observation_info is implemented
   - GEMPRGID:
     - char
   - OBSID
   - DATALAB
-  - FRAME
+#  - FRAME
   - OBJECT
   - RELEASE:
     - date:     2000-1-1 .. *
