@@ -294,6 +294,8 @@ class RuleSet(list):
     def __initalize(self, filename):
         with open(get_full_path(filename)) as source:
             data = yaml.load(source)
+            if not data:
+                return
             for entry in data:
                 if entry not in valid_entries:
                     raise RuntimeError("Syntax Error: {0!r} (on {1})".format(entry, self.fn))
@@ -381,9 +383,10 @@ class RuleSet(list):
                 # A missing keyword when checking for ranges is not relevant
                 pass
 
-        for test in self.postConditions:
-            if not test(header, env):
-                messages.append('Failed {0}'.format(test.name))
+        if not messages:
+            for test in self.postConditions:
+                if not test(header, env):
+                    messages.append('Failed {0}'.format(test.name))
         return messages
 
     def applies_to(self, header, env):
