@@ -27,7 +27,7 @@ class EngineeringImage(Exception):
 # This is used to determine things like if we test for IAA or OBSCLASS
 # This is an initial estimate using empirical data. The value must
 # be corrected at a later point.
-OLDIMAGE = datetime(2004, 10, 20)
+OLDIMAGE = datetime(2007, 06, 28)
 OBSCLASS_VALUES = {'dayCal',  'partnerCal',  'acqCal',  'acq',  'science',  'progCal'}
 DEBUG = False
 
