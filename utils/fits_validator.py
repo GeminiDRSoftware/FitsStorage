@@ -255,6 +255,7 @@ def callback_factory(attr, value = None, name = 'Unknown test name', *args, **kw
     return l
 
 def ruleFactory(text):
+    "Returns a RuleSet or a group of them, depending on the input"
     # We don't want to write complicated parsers, but if we would want to generalize
     # the syntax, we could use the following EBNF:
     #
@@ -399,6 +400,9 @@ class RuleSet(list):
         return "<RuleSet '{0}' [{1}]>".format(self.fn, ', '.join(x.fn for x in self), ', '.join(self.keywordDescr))
 
 class AlternateRuleSets(object):
+    """This class is an interface to a number RuleSets. It chooses among a number of alternate
+       rulesets and offers the same behaviour as the first one that matches the current
+       environment and headers"""
     def __init__(self, alternatives):
         self.alts = alternatives
         self.winner = None
@@ -421,7 +425,7 @@ class AlternateRuleSets(object):
     def test(self, header, env):
         collect = []
 
-        for k in self.alts:
+        for k in (x for x in self.alts if x.applies_to(header, env)):
             messages = k.test(header, env)
             if not messages:
                 self.winner = k
