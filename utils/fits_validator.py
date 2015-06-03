@@ -16,11 +16,19 @@ import gemini_metadata_utils as gmu
 import yaml
 import pyfits as pf
 
+# Exceptions
+
+class EngineeringImage(Exception):
+    pass
+
+# Constants
+
 # This is used to determine things like if we test for IAA or OBSCLASS
 # This is an initial estimate using empirical data. The value must
 # be corrected at a later point.
 OLDIMAGE = datetime(2004, 10, 20)
 OBSCLASS_VALUES = {'dayCal',  'partnerCal',  'acqCal',  'acq',  'science',  'progCal'}
+DEBUG = False
 
 fitsTypes = {
     'char': str,
@@ -43,10 +51,7 @@ typeCoercion = (
     lambda x: datetime(*strptime(x, "%Y-%m-%dT%H:%M:%S")[:6]),
     )
 
-class EngineeringImage(Exception):
-    pass
-
-DEBUG = False
+###################################################################################
 
 def coerceValue(val):
     for fn in typeCoercion:
@@ -249,6 +254,17 @@ def callback_factory(attr, value = None, name = 'Unknown test name', *args, **kw
     l.name = name
     return l
 
+def ruleFactory(text):
+    # We don't want to write complicated parsers, but if we would want to generalize
+    # the syntax, we could use the following EBNF:
+    #
+    #   list = ( group "," )* group
+    #  group = ( word "|")* word | "(" list ")"
+    if "|" in text:
+        return AlternateRuleSets([RuleSet(x.strip()) for x in text.split('|')])
+
+    return RuleSet(text)
+
 class RuleSet(list):
     """RuleSet is a representation of one of the rule files. It contains
        restrictions for some keywords (mandatory or not, type, format...)
@@ -303,7 +319,7 @@ class RuleSet(list):
             r = self.__parse_tests(data.get('tests', []))
             self.postConditions = r[True] + r[False]
             for inc in iter_list(data.get('include files')):
-                self.append(RuleSet(inc))
+                self.append(ruleFactory(inc))
 
     def __parse_tests(self, data):
         result = { True: [], False: [] }
@@ -380,7 +396,39 @@ class RuleSet(list):
         return not exclude and include
 
     def __repr__(self):
-        return "<RuleSet '{0}' [{1}] ({2})>".format(self.fn, ', '.join(x.fn for x in self), ', '.join(self.keywordDescr))
+        return "<RuleSet '{0}' [{1}]>".format(self.fn, ', '.join(x.fn for x in self), ', '.join(self.keywordDescr))
+
+class AlternateRuleSets(object):
+    def __init__(self, alternatives):
+        self.alts = alternatives
+        self.winner = None
+
+    @property
+    def fn(self):
+        return " | ".join(x.fn for x in self.alts)
+
+    @property
+    def features(self):
+        return list(self.winner.features)
+
+    def __iter__(self):
+        for k in self.winner:
+            yield k
+
+    def applies_to(self, header, env):
+        return any(x.applies_to(header, env) for x in self.alts)
+
+    def test(self, header, env):
+        collect = []
+
+        for k in self.alts:
+            messages = k.test(header, env)
+            if not messages:
+                self.winner = k
+                return []
+            collect.extend(messages)
+
+        return collect
 
 class RuleStack(object):
     """Used to "stack up" RuleSet objects as they're activated by headers.

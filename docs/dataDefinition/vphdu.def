@@ -1,3 +1,5 @@
+provides:       non-facility
+
 conditions:
 # Checks GEMPRGID, OBSID, AND DATALAB
 # - valid_observation_info

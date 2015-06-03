@@ -1,4 +1,4 @@
 conditions:
   - not engineering
 
-include files: [ fphdu, vphdu, extensions ]
+include files: [ fphdu | vphdu, extensions ]
