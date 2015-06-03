@@ -16,6 +16,12 @@ import gemini_metadata_utils as gmu
 import yaml
 import pyfits as pf
 
+# This is used to determine things like if we test for IAA or OBSCLASS
+# This is an initial estimate using empirical data. The value must
+# be corrected at a later point.
+OLDIMAGE = datetime(2004, 10, 20)
+OBSCLASS_VALUES = {'dayCal',  'partnerCal',  'acqCal',  'acq',  'science',  'progCal'}
+
 fitsTypes = {
     'char': str,
     'float': float,
@@ -41,6 +47,15 @@ class EngineeringImage(Exception):
     pass
 
 DEBUG = False
+
+def coerceValue(val):
+    for fn in typeCoercion:
+        try:
+            return fn(val)
+        except ValueError:
+            pass
+
+    raise ValueError('{0} not a known FITS value'.format(val))
 
 def log(text):
     if DEBUG:
@@ -420,7 +435,7 @@ def calibration_image(header, env):
 
 @RuleSet.register_function("wcs-after-pdu")
 def wcs_in_extensions(header, env):
-    if header.get('FRAME') == 'AZEL_TOPO':
+    if header.get('FRAME').upper() in ('AZEL_TOPO', 'NO VALUE'):
         env.features.add('no-wcs-test')
 
     return True
@@ -448,6 +463,16 @@ def check_observation_related_fields(header, env):
     return (prg.valid and obs.obsnum != '' and dl.dlnum != ''
                       and obs.obsnum == dl.obsnum
                       and prg.program_id == obs.program.program_id == dl.projectid)
+
+@RuleSet.register_function('valid-iaa-and-obsclass')
+def check_iaa_and_obsclass_in_recent_images(header, env):
+    if coerceValue(header['DATE-OBS']) < OLDIMAGE:
+        return True
+
+    try:
+        return (header['OBSCLASS'] in OBSCLASS_VALUES) and ('IAA' in header)
+    except KeyError:
+        return False
 
 if __name__ == '__main__':
     DEBUG = True

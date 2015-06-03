@@ -36,16 +36,14 @@ keywords:
   - DATALAB
   - FRAME
   - OBJECT
-  - OBSCLASS:
-    - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
+#  - OBSCLASS:
+#    - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
   - OBSTYPE:
     - char:   [ DARK, ARC, FLAT, BIAS, OBJECT, PINHOLE, RONCHI, CAL, FRINGE, MASK ]
   - RAWGEMQA:
     - char:   [ UNKNOWN, USABLE, BAD, CHECK ]
-    - upper
   - RAWPIREQ:
     - char:   [ UNKNOWN, 'YES', 'NO', CHECK ]   # Using quotes to prevent YAML to turn this into booleans
-    - upper
   - RAWBG
   - RAWCC
   - RAWIQ
@@ -55,9 +53,12 @@ keywords:
   - SSA
   - UT
   - PA
-  - IAA
+#  - IAA
 
 tests:
+# Old images (previous to ~2005) miss IAA and OBSCLASS, which complicates
+# testing. We move those to this instead
+  - valid-iaa-and-obsclass
 # They have to be "Any" or "NN-percentile"
   - valid-rawXX
 # Checks GEMPRGID, OBSID, AND DATALAB
