@@ -9,6 +9,7 @@ from collections import namedtuple
 from datetime import datetime
 from time import strptime
 from types import FunctionType
+from StringIO import StringIO
 
 from fits_storage_config import validation_def_path
 import gemini_metadata_utils as gmu
@@ -536,7 +537,10 @@ if __name__ == '__main__':
         env.features = set()
         rs = RuleStack()
         rs.initialize('fits')
-        fits = pf.open(sys.argv[1])
+        try:
+            fits = pf.open(sys.argv[1])
+        except IndexError:
+            fits = pf.open(StringIO(sys.stdin.read()))
         fits.verify('fix+exception')
         err = 0
         for n, hdu in enumerate(fits):
