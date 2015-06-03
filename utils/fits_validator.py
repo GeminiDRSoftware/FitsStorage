@@ -19,6 +19,9 @@ import pyfits as pf
 
 # Exceptions
 
+class NotGeminiData(Exception):
+    pass
+
 class EngineeringImage(Exception):
     pass
 
@@ -433,7 +436,11 @@ class AlternateRuleSets(object):
             messages = k.test(header, env)
             if not messages:
                 self.winner = k
+                log("   - Choosing {0}".format(k.fn))
                 return []
+            else:
+                for m in messages:
+                    log("   - {0}".format(m))
             collect.extend(messages)
 
         return collect
@@ -475,6 +482,14 @@ class RuleStack(object):
         return (True, passed)
 
 # Here, custom functions
+# TODO: We should be able to provide a reason for not passing a test
+
+@RuleSet.register_function("is-gemini-data", excIfFalse = NotGeminiData)
+def test_for_non_gemini_data(header, env):
+    try:
+        return ('XTENSION' in header) or (gmu.gemini_instrument(header['INSTRUME'], gmos=True) is not None)
+    except KeyError:
+        return False
 
 @RuleSet.register_function("engineering", excIfTrue = EngineeringImage)
 def engineering_image(header, env):
@@ -499,7 +514,8 @@ def wcs_in_extensions(header, env):
 @RuleSet.register_function("should-test-wcs")
 def wcs_or_not(header, env):
     feat = env.features
-    return (    ('no-wcs-test' not in feat)
+    return (    ('facility' in feat or 'non-facility' in feat)
+            and ('no-wcs-test' not in feat)
             and (   ('wcs-in-pdu' in feat and 'XTENSION' not in header)
                  or ('wcs-in-pdu' not in feat and header.get('XTENSION') == 'IMAGE')))
 
@@ -557,6 +573,9 @@ if __name__ == '__main__':
 
     except EngineeringImage:
         log("Its an engineering image")
+        err = 1
+    except NotGeminiData:
+        log("This doesn't look like Gemini data")
         err = 1
     except RuntimeError as e:
         log(str(e))
