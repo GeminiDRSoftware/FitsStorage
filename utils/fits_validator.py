@@ -515,6 +515,9 @@ class RuleStack(object):
             passed.append(ruleSet)
             env.features.update(ruleSet.features)
 
+            if 'failed' in env.features:
+                return (True, [])
+
             for candidate in ruleSet:
                 if candidate.applies_to(header, env):
                     log("  - Expanding {0}".format(candidate.fn))
@@ -552,25 +555,44 @@ def test_for_gemini_data(header, env):
 @RuleSet.register_function("engineering", excIfTrue = EngineeringImage)
 def engineering_image(header, env):
     "Naive engineering image detection"
+    if header.get('GEMENG') is True:
+        return True
+
     if 'XTENSION' in header:
         return False
     try:
         prgid = header['GEMPRGID']
-        return prgid.startswith('GN-ENG') or prgid.startswith('GS-ENG')
+        if prgid[:2] in ('GN', 'GS') and ('ENG' in prgid.upper()):
+            return True
+
+        if check_observation_related_fields(header, env) is not True:
+            return True, "Does not look like a valid program ID"
     except KeyError:
         return True, "Missing GEMPRGID"
+
+    return False
+# Retest to figure out this one
+#    except AttributeError as e:
+#        return GeneralError("Testing GEMPRGID: " + str(e))
 
 @RuleSet.register_function("calibration")
 def calibration_image(header, env):
     "Naive calib image detection"
     prgid = header.get('GEMPRGID', '')
-    fromId = prgid.startswith('GN-CAL') or prgid.startswith('GS-CAL')
+    try:
+        fromId = prgid.startswith('GN-CAL') or prgid.startswith('GS-CAL')
+    except AttributeError as e:
+        return GeneralError("Testing GEMPRGID: " + str(e))
     return fromId or (header.get('OBSCLASS') == 'dayCal')
 
 @RuleSet.register_function("wcs-after-pdu")
 def wcs_in_extensions(header, env):
-    if header.get('FRAME').upper() in ('AZEL_TOPO', 'NO VALUE'):
-        env.features.add('no-wcs-test')
+    try:
+        if header.get('FRAME', '').upper() in ('AZEL_TOPO', 'NO VALUE'):
+            env.features.add('no-wcs-test')
+    except AttributeError:
+        # In some cases FRAME is not a string...
+        pass
 
     return True
 
@@ -606,11 +628,30 @@ def check_observation_related_fields(header, env):
 
 @RuleSet.register_function('set-date')
 def set_date(header, env):
-    try:
-        env.features.add('date:' + header['DATE-OBS'])
+    bogus = False
+    for kw in ('DATE-OBS', 'DATE'):
+        try:
+            coerceValue(header[kw])
+            env.features.add('date:' + header[kw])
+            return True
+        except KeyError:
+            pass
+        except ValueError:
+            bogus = True
+
+    if 'MJD_OBS' in header and header['MJD_OBS'] != 0.:
+        d = Time(header['MJD_OBS'], format='mjd').datetime.strftime('%Y-%m-%d')
+        env.features.add('date:' + d)
         return True
-    except KeyError:
-        return False, "Can't find DATE-OBS to set the date"
+
+    if not bogus:
+        return False, "Can't find DATE/DATE-OBS to set the date"
+    else:
+        return False, "DATE/DATE-OBS contains bogus info"
+
+@RuleSet.register_function('failed-data', excIfTrue=BadData)
+def check_for_bad_RAWGEMWA(header, env):
+    return header.get('RAWGEMQA', '') == 'BAD'
 
 if __name__ == '__main__':
     DEBUG = True
@@ -633,6 +674,9 @@ if __name__ == '__main__':
                 err += 1
                 for message in args:
                     log("   - {0}".format(message))
+            elif 'failed' in env.features:
+                log("  Failed data")
+                break
             elif not args:
                 err += 1
                 log("  No key ruleset found for this HDU")
