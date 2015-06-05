@@ -46,7 +46,7 @@ class NoDateError(Exception):
 OLDIMAGE = datetime(2007, 06, 28)
 OBSCLASS_VALUES = {'dayCal',  'partnerCal',  'acqCal',  'acq',  'science',  'progCal'}
 DEBUG = False
-FACILITY_INSTRUME = {'F2', 'GMOS-N', 'GMOS-S', 'GNIRS', 'NICI', 'NIFS', 'NIRI'}
+FACILITY_INSTRUME = {'bHROS', 'F2', 'GMOS-N', 'GMOS-S', 'GNIRS', 'NICI', 'NIFS', 'NIRI'}
 
 fitsTypes = {
     'char': str,
