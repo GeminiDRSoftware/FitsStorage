@@ -222,6 +222,9 @@ class KeywordDescriptor(object):
                     raise ValueError("Unknown descriptor {0}".format(restriction))
 
     def skip(self, header, env):
+        if not self.reqs:
+            return False
+
         return all(fn(header, env) for fn in self.reqs)
 
     def test(self, value):
@@ -419,7 +422,7 @@ class RuleSet(list):
                 continue
 
             try:
-                if not descr.test(header[kw], hader, env):
+                if not descr.test(header[kw]):
                     messages.append('Invalid {0}({1})'.format(kw, header[kw]))
             except KeyError:
                 messages.append('Missing {0}'.format(kw))
