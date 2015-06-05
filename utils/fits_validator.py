@@ -15,14 +15,24 @@ from fits_storage_config import validation_def_path
 import gemini_metadata_utils as gmu
 
 import yaml
-import pyfits as pf
+import astropy.io.fits as pf
+from astropy.time import Time
 
 # Exceptions
 
-class NotGeminiData(Exception):
+class ValidationError(Exception):
     pass
 
-class EngineeringImage(Exception):
+class NotGeminiData(ValidationError):
+    pass
+
+class BadData(ValidationError):
+    pass
+
+class EngineeringImage(ValidationError):
+    pass
+
+class GeneralError(ValidationError):
     pass
 
 class NoDateError(Exception):
@@ -630,10 +640,16 @@ if __name__ == '__main__':
             log("Its an engineering image")
         else:
             log("Its an engineering image: {0}".format(s))
+        err = 0
+    except NoDateError:
+        log("This image has no recognizable date")
         err = 1
     except NotGeminiData:
         log("This doesn't look like Gemini data")
-        err = 1
+        err = 0
+    except BadData:
+        log("Failed data")
+        err = 0
     except RuntimeError as e:
         log(str(e))
         err = 1
