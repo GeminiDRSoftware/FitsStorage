@@ -1,0 +1,19 @@
+# Restrictions for Category hrwfs
+provides:        [ valid, hrwfs ]
+
+conditions:
+  - matching:
+    - INSTRUME:    hrwfs
+
+include files:   [ radec ]
+
+keywords:
+  - OBJECT
+  - UTSTART
+  - UTEND
+  - TIME-OBS
+  - FILTER1
+  - FILTER2
+  - OBSTYPE
+  - CCDSIZE
+  - CCDSEC

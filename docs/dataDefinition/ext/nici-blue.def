@@ -5,7 +5,11 @@ conditions:
     - XTENSION:   IMAGE
     - CHANNEL:    BLUE
 
-keywords:
-  - BIAS_B
-  - FILTER_B
-  - MODE_B
+# These may be in the PDU...
+# keywords:
+#  - BIAS_B
+#  - FILTER_B
+#  - MODE_B
+
+# test:
+#   - check-nici-extension

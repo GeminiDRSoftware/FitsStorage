@@ -1,8 +1,4 @@
 conditions:
-# Checks GEMPRGID, OBSID, AND DATALAB
-# - valid_observation_info
-# They have to be "Any" or "NN-percentile"
-# - valid_rawXX
   - is non-facility
   - not exists:
     - XTENSION
@@ -12,17 +8,30 @@ conditions:
 
 include files:
   - pdu/flamingos
+  - pdu/gsaoi
+  - pdu/hokupaa
+  - pdu/hrwfs
+  - pdu/michelle
+  - pdu/oscir
   - pdu/phoenix
+  - pdu/trecs
 
 keywords:
   - DATE
 #  - DATE-OBS
-# Remove this when valid_observation_info is implemented
-  - GEMPRGID:
-    - char
   - OBSID
   - DATALAB
 #  - FRAME
   - OBJECT
   - RELEASE:
     - date:     2000-1-1 .. *
+
+tests:
+# Old images (previous to ~2005) miss IAA and OBSCLASS, which complicates
+# testing. We move those to this instead
+  - valid-iaa-and-obsclass
+# They have to be "Any" or "NN-percentile"
+  - valid-rawXX
+# Checks GEMPRGID, OBSID, AND DATALAB
+  - valid-observation-info
+  - wcs-after-pdu

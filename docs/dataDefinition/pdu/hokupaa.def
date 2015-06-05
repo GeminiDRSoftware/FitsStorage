@@ -1,0 +1,16 @@
+# Restrictions for Category Hokupaa
+provides:        [ valid, hokupaa ]
+
+conditions:
+  - matching:
+    - INSTRUME:    Hokupaa+QUIRC
+
+include files:   [ radec ]
+
+keywords:
+  - OBJECT
+  - IMAGETYP
+  - TIME-OBS
+  - UT
+  - FILTER
+  - DATASEC

@@ -1,0 +1,10 @@
+provides:          valid
+conditions:
+  - is michelle
+  - matching:
+    - XTENSION:    IMAGE
+keywords:
+  - AXISLAB1
+  - AXISLAB2
+  - AXISLAB3
+  - AXISLAB4

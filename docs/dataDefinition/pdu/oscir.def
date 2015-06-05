@@ -1,0 +1,22 @@
+# Restrictions for Category OSCIR
+provides:        [ valid, oscir ]
+conditions:
+  - matching:
+    - INSTRUME:    OSCIR
+include files:     radec
+keywords:
+  - OBJECT
+  - FRMTIME
+  - SAVEFREQ
+  - OBJTIME
+  - CHPFREQ
+  - FRMCOADD
+  - SAVESETS
+  - EXPTIME
+  - TOTFRMS
+  - TOTBYTE
+  - AIRMASS1
+  - CHPPA
+  - CHPTHROW
+  - RA_BASE
+  - DEC_BASE

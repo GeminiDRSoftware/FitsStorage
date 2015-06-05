@@ -7,4 +7,4 @@ keywords:
   - DEC:
     - float:       -90.0 .. 90.0
 # This must be float
-  - EQUINOX
+#  - EQUINOX

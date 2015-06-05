@@ -4,8 +4,6 @@ conditions:
   - matching:
     - INSTRUME:   NICI
 
-include files:    radec
-
 keywords:
   - BIAS_B
   - BIAS_R
@@ -17,9 +15,7 @@ keywords:
   - MODE_B
   - MODE_R
   - NDFW
-  - PI
   - PMW
   - TIME-OBS
   - TTSM
-  - UT
   - UTEND

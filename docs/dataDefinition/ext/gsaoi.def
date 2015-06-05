@@ -1,0 +1,16 @@
+provides:         valid
+conditions:
+  - is gsaoi
+  - matching:
+    - XTENSION:   IMAGE
+
+keywords:
+  - CTYPE1
+  - CTYPE2
+  - DATATYP
+  - RADECSYS
+  - CCDSEC
+  - CCDSIZE
+  - DETSEC
+  - DATASEC
+  - CCDSUM

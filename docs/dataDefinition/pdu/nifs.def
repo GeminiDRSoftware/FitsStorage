@@ -7,7 +7,7 @@ conditions:
 range limits:
   - DATEIMAG:     2006-7-1 .. *
 
-include files:  [ radec, wcs ]
+include files:    wcs
 
 keywords:
   - APERTURE

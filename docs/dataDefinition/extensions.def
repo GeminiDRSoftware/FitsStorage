@@ -4,11 +4,16 @@ conditions:
 
 include files:
   - wcs
+  - ext/bhros
   - ext/flamingos
   - ext/flamingos2
+  - ext/hrwfs
   - ext/gmos
   - ext/gnirs
+  - ext/gsaoi
   - ext/nici-blue
   - ext/nici-red
   - ext/nifs
   - ext/niri
+  - ext/michelle
+  - ext/trecs

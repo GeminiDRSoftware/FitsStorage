@@ -1,0 +1,13 @@
+provides:         valid
+conditions:
+  - is bhros
+  - matching:
+    - XTENSION:   IMAGE
+
+keywords:
+  - CCDSUM
+  - CCDSIZE
+  - DETSEC
+  - DATASEC
+  - BIASSEC
+  - CCDSEC

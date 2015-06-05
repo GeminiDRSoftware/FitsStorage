@@ -3,13 +3,13 @@ conditions:
 
 keywords:
   - CTYPE1:
-    - char:   [ PIXEL, RA---TAN ]
+    - char:   [ LINEAR, PIXEL, RA---TAN, AZ---TAN ]
   - CRPIX1:
     - float
   - CRVAL1:
     - float
   - CTYPE2:
-    - char:   [ PIXEL, DEC--TAN ]
+    - char:   [ LINEAR, PIXEL, DEC--TAN, EL---TAN ]
   - CRPIX2:
     - float
   - CRVAL2:

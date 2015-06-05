@@ -1,0 +1,5 @@
+provides:         valid
+conditions:
+  - is hrwfs
+  - matching:
+    - XTENSION:   IMAGE

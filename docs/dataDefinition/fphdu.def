@@ -10,6 +10,7 @@ conditions:
 
 include files:
   - radec
+  - pdu/bhros
   - pdu/flamingos2
   - pdu/gmos
   - pdu/gnirs

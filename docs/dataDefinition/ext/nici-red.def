@@ -5,7 +5,11 @@ conditions:
     - XTENSION:   IMAGE
     - CHANNEL:    RED
 
-keywords:
-  - BIAS_R
-  - FILTER_R
-  - MODE_R
+# These may be in the PDU...
+# keywords:
+#  - BIAS_R
+#  - FILTER_R
+#  - MODE_R
+
+# test:
+#   - check-nici-extension

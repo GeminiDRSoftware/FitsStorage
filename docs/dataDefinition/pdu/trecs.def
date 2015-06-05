@@ -1,0 +1,23 @@
+# Primary HDU for T-ReCS
+provides:       [ valid, trecs, wcs-in-pdu ]
+conditions:
+  - matching:
+    - INSTRUME:   TReCS
+
+range limits:
+  - DATEIMAG:      2003-6-1 .. *
+
+include files:    wcs
+keywords:
+  - OBJECT
+  - OBSTYPE
+  - TRKEQUIN:
+    - float:       1950.0 .. 2000.0
+  - UT
+  - TIME-OBS
+  - UTSTART
+  - UTEND
+  - FILTER1
+  - FILTER2
+  - GRATING
+  - PUPILIMA

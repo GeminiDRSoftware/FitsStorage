@@ -1,0 +1,26 @@
+# Restrictions for Michelle
+provides:        [ valid, michelle, wcs-in-pdu ]
+conditions:
+  - matching:
+    - INSTRUME:    michelle
+range limits:
+  - DATEIMAG:      2003-10-01 .. *
+include files:     radec
+keywords:
+  - OBSTYPE
+  - UTDATE
+  - TRKEQUIN:
+    - float:       1950.0 .. 2000.0
+  - UT
+  - FILTER
+  - FILTERA
+  - FILTERB
+  - CYCLE
+  - CAMERA
+  - GRATNAME
+  - SLITNAME
+  - FOCNAME
+  - CALSELN
+  - SAMPLING
+  - WAVEFORM
+  - OBSSTART
