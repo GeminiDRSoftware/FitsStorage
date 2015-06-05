@@ -2,6 +2,7 @@ conditions:
   - is non-facility
   - not exists:
     - XTENSION
+  - set-date
   - matching:
     - TELESCOP: Gemini-South
     - TELESCOP: Gemini-North
@@ -23,13 +24,18 @@ keywords:
   - DATALAB
 #  - FRAME
   - OBJECT
+  - OBSCLASS:
+    - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
+    - since:    2007-6-28
   - RELEASE:
     - date:     2000-1-1 .. *
+  - IAA:
+    - since:    2007-6-28
 
 tests:
 # Old images (previous to ~2005) miss IAA and OBSCLASS, which complicates
 # testing. We move those to this instead
-  - valid-iaa-and-obsclass
+#  - valid-iaa-and-obsclass
 # They have to be "Any" or "NN-percentile"
   - valid-rawXX
 # Checks GEMPRGID, OBSID, AND DATALAB
