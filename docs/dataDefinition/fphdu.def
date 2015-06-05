@@ -1,4 +1,5 @@
 conditions:
+  - is facility
   - not exists:
     - XTENSION
   - is facility
