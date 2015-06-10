@@ -1,5 +1,5 @@
 # Primary HDU for NIFS
-provides:       [ valid, nifs, wcs-in-pdu ]
+provides:       [ valid, nifs ]
 conditions:
   - matching:
     - INSTRUME:   NIFS
@@ -14,6 +14,7 @@ keywords:
   - EXPMODE
   - FILTER
   - FLIP
+  - FRAME
   - GRATING
   - OBSMODE
   - RADECSYS

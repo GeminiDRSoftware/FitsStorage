@@ -1,0 +1,36 @@
+# Primary HDU for GPI
+provides:       [ valid, gpi ]
+conditions:
+  - matching:
+    - INSTRUME:   GPI
+
+keywords:
+  - UTSTART
+  - UTEND
+  - AOFILTER
+  - ADC
+  - APODIZER
+  - CALEXSH
+  - CALREFSH
+  - CALSCISH
+  - CALENSH
+  - IFSFILT
+  - GPIHEALT
+  - LYOTMASK
+  - LYOTHLTH
+  - OCCULTER
+  - OCCHLTH
+  - OMSSENT
+  - ARRAYID
+  - CCDNAME
+  - CCDSIZE
+  - AOFLHLTH
+  - ADCHLTH
+  - APODHLTH
+  - DISPHLTH
+  - DISPERSR
+  - OBSMODE
+  - PUPVIEWR
+  - WPANGHLT
+  - WPSTATE
+  - SIMLEVEL

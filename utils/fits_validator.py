@@ -46,7 +46,7 @@ class NoDateError(Exception):
 OLDIMAGE = datetime(2007, 06, 28)
 OBSCLASS_VALUES = {'dayCal',  'partnerCal',  'acqCal',  'acq',  'science',  'progCal'}
 DEBUG = False
-FACILITY_INSTRUME = {'bHROS', 'F2', 'GMOS-N', 'GMOS-S', 'GNIRS', 'NICI', 'NIFS', 'NIRI'}
+FACILITY_INSTRUME = {'bHROS', 'F2', 'GMOS-N', 'GMOS-S', 'GNIRS', 'GPI', 'GSAOI', 'NICI', 'NIFS', 'NIRI'}
 
 fitsTypes = {
     'char': str,
@@ -64,6 +64,7 @@ typeCoercion = (
     int,
     float,
     lambda x: datetime(*strptime(x, "%Y-%m-%d")[:6]),
+    lambda x: datetime(*strptime(x, "%Y-%b-%d")[:6]),
     lambda x: datetime(*strptime(x, "%Y-%m-%d %H:%M:%S")[:6]),
     lambda x: datetime(*strptime(x, "%Y-%m-%d (%H:%M:%S)")[:6]),
     lambda x: datetime(*strptime(x, "%Y-%m-%dT%H:%M:%S")[:6]),

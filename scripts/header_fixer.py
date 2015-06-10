@@ -2,11 +2,14 @@
 
 """Header Fixer
 
-Fixes a FITS header by replacing each instance of <old-value> in <keyword> with <new-value>
+Fixes a FITS header by replacing each instance of <old-value> in <keyword> with <new-value>.
+The "just-rewrite" does no substitution; it will open the file and try to write it down again,
+fixing anything that PyFITS can fix on its own.
 
 Usage:
   header_fixer [-inSj] [-s SRCDIR] [-d DESTDIR] <keyword> <old-value> <new-value> (-f FILELIST | <filename>...)
   header_fixer [-inSj] [-s SRCDIR] [-d DESTDIR] -k SUBSTLIST (-f FILELIST | <filename>...)
+  header_fixer [-nSj]  [-s SRCDIR] [-d DESTDIR] just-rewrite (-f FILELIST | <filename>...)
   header_fixer -h | --help
   header_fixer --version
 
@@ -30,16 +33,16 @@ from __future__ import print_function
 
 import functools
 import os
-import pyfits as pf
+import astropy.io.fits as pf
 import sys
 from csv import reader
 from bz2 import BZ2File
 from collections import namedtuple
 from docopt import docopt
-from pyfits.verify import VerifyError
+from astropy.io.fits.verify import VerifyError
 from tempfile import mkdtemp
 
-from utils.fits_validator import RuleStack, Environment
+from utils.fits_validator import RuleStack, Environment, EngineeringImage, BadData, NotGeminiData, NoDateError
 
 args = docopt(__doc__, version='Header Fixer 1.0')
 
@@ -97,9 +100,10 @@ except IOError as e:
     print(e)
     sys.exit(1)
 source_dir = args['-s']
-validate   = not args['-i']
+validate   = not args['-n']
 pathfn     = ((lambda x: x) if args['-S'] else functools.partial(os.path.join, source_dir))
 bzipoutput = args['-j']
+justrw     = args['just-rewrite']
 
 try:
     filelist = (args['<filename>'] or (x.strip() for x in open(args['-f'])))
@@ -118,21 +122,33 @@ if validate:
     validator = Tester()
 
 for fn, path in ((normalized_fn(x), pathfn(x)) for x in filelist):
+    df = os.path.join(dest_dir, fn)
     try:
         fits = pf.open(open_image(path), do_not_scale_image_data = True)
-        fits.verify('exception')
-        change_sets = filter(lambda x: x[1], [(h.header, change_set(h.header)) for h in fits])
-        if not change_sets:
-            print("Skipping {0}".format(fn))
-            continue
-        for header, cset in change_sets:
-            for kw, nv in cset:
-                header[kw] = nv
-        if validate and not validator.valid(fits):
-            print("The resulting {0} is not valid".format(fn))
-            continue
-        fits.writeto(output_file(os.path.join(dest_dir, fn)), output_verify='exception')
-    except (IOError, VerifyError) as e:
-        print(e)
-    except VerifyError as e:
+        if not justrw:
+            fits.verify('exception')
+            change_sets = filter(lambda x: x[1], [(h.header, change_set(h.header)) for h in fits])
+            if not change_sets:
+                print("Skipping {0}".format(fn))
+                continue
+            for header, cset in change_sets:
+                changes = []
+                for kw, nv in cset:
+                    header[kw] = nv
+                    changes.append(kw)
+                if changes:
+                    header['HISTORY'] = 'Corrected metadata: {0}'.format(', '.join(changes))
+        else:
+            fits.verify('silentfix+ignore')
+            fits[0].header['HISTORY'] = 'Corrected metadata: automated fixes from PyFITS'
+        try:
+            if validate and not validator.valid(fits):
+                print("The resulting {0} is not valid".format(fn))
+                continue
+        except (EngineeringImage, BadData, NotGeminiData):
+            pass
+        fits.writeto(output_file(df), output_verify='silentfix+exception')
+    except (IOError, VerifyError, ValueError, NoDateError) as e:
         print('{0} >> {1}'.format(fn, e))
+        if os.path.exists(df):
+            os.unlink(df)

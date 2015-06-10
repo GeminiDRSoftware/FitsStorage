@@ -1,15 +1,15 @@
 provides:         valid
 conditions:
-  - is bhros
+  - is gpi
   - matching:
-    - XTENSION:   IMAGE
+    - EXTNAME:    SCI
 
 include files:    wcs
 
 keywords:
-  - CCDSUM
-  - CCDSIZE
-  - DETSEC
   - DATASEC
-  - BIASSEC
-  - CCDSEC
+  - CTYPE1
+  - CTYPE2
+  - CUNIT1
+  - CUNIT2
+  - RADESYS

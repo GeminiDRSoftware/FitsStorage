@@ -2,6 +2,8 @@ provides:         valid
 conditions:
   - is gmos
 
+include files:    wcs
+
 keywords:
   - BIASSEC
   - CCDSEC

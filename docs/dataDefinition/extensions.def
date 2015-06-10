@@ -3,13 +3,15 @@ conditions:
     - XTENSION
 
 include files:
-  - wcs
+#  - wcs
   - ext/bhros
   - ext/flamingos
   - ext/flamingos2
   - ext/hrwfs
   - ext/gmos
   - ext/gnirs
+  - ext/gpi
+  - ext/gpi-sci
   - ext/gsaoi
   - ext/nici-blue
   - ext/nici-red

@@ -5,6 +5,8 @@ conditions:
     - XTENSION:   IMAGE
     - CHANNEL:    RED
 
+include files:    wcs
+
 # These may be in the PDU...
 # keywords:
 #  - BIAS_R

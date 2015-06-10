@@ -2,7 +2,7 @@
 provides:        [ valid, oscir ]
 conditions:
   - matching:
-    - INSTRUME:    OSCIR
+    - INSTRUME:  [ OSCIR, oscir ]
 include files:     radec
 keywords:
   - OBJECT

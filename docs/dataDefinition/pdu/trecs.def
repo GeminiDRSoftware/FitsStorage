@@ -1,5 +1,5 @@
 # Primary HDU for T-ReCS
-provides:       [ valid, trecs, wcs-in-pdu ]
+provides:       [ valid, trecs ]
 conditions:
   - matching:
     - INSTRUME:   TReCS

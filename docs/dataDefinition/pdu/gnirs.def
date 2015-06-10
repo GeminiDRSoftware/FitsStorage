@@ -1,5 +1,5 @@
 # Primary HDU for GNIRS
-provides:       [ valid, gnirs, wcs-in-pdu ]
+provides:       [ valid, gnirs ]
 conditions:
   - matching:
     - INSTRUME:   GNIRS
@@ -11,6 +11,7 @@ keywords:
   - DECKER
   - FILTER1
   - FILTER2
+  - FRAME
   - GRATING
   - SLIT
   - TIME-OBS

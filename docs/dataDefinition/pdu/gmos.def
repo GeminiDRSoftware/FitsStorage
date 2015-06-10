@@ -7,6 +7,7 @@ conditions:
 keywords:
   - FILTER1
   - FILTER2
+  - FRAME
   - GRATING
   - MASKNAME
   - TIME-OBS

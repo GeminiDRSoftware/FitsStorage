@@ -3,3 +3,5 @@ conditions:
   - is hrwfs
   - matching:
     - XTENSION:   IMAGE
+
+include files:    wcs

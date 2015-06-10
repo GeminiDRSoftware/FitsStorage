@@ -1,5 +1,5 @@
 # Primary HDU for NIRI
-provides:       [ valid, niri, wcs-in-pdu ]
+provides:       [ valid, niri ]
 conditions:
   - matching:
     - INSTRUME:   NIRI
@@ -14,6 +14,7 @@ keywords:
   - FILTER3
   - FOCUSNAM
   - FPMASK
+  - FRAME
   - MODE
   - PVIEW
   - TIME-OBS

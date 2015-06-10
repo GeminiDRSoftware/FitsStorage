@@ -1,11 +1,13 @@
 # Restrictions for Michelle
-provides:        [ valid, michelle, wcs-in-pdu ]
+provides:        [ valid, michelle ]
 conditions:
   - matching:
     - INSTRUME:    michelle
 range limits:
   - DATEIMAG:      2003-10-01 .. *
-include files:     radec
+
+include files:   [ radec, wcs ]
+
 keywords:
   - OBSTYPE
   - UTDATE

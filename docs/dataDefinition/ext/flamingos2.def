@@ -4,6 +4,8 @@ conditions:
   - matching:
     - XTENSION:   IMAGE
 
+include files:    wcs
+
 keywords:
   - DATATYP
   - RADECSYS
