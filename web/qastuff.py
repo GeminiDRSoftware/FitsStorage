@@ -74,11 +74,15 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
                     qametricsb.detector = qametric_dict['detector']
                     sb_dict = qametric_dict['sb']
                     qametricsb.comment = ", ".join(sb_dict.get('comment'))
-                    qametricsb.mag = sb_dict.get('mag')
-                    qametricsb.mag_std = sb_dict.get('mag_std')
-                    # Sometimes the QAP sends an unreasonable electron rate which exceeds the data type limies
-                    if sb_dict['electrons'] < 100000:
+                    # Sometimes the QAP sends unreasonable values which 
+                    # exceed the data type definition acceptable ranges
+                    if sb_dict.get('mag') < 100:
+                        qametricsb.mag = sb_dict.get('mag')
+                    if sb_dict.get('mag_std') < 100;
+                        qametricsb.mag_std = sb_dict.get('mag_std')
+                    if sb_dict.get('electrons') < 100000:
                         qametricsb.electrons = sb_dict.get('electrons')
+                    if sb_dict.get('electrons_std') < 100000:
                         qametricsb.electrons_std = sb_dict.get('electrons_std')
                     qametricsb.nsamples = sb_dict.get('nsamples')
                     qametricsb.percentile_band = sb_dict.get('percentile_band')
