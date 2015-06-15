@@ -78,7 +78,7 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
                     # exceed the data type definition acceptable ranges
                     if sb_dict.get('mag') < 100:
                         qametricsb.mag = sb_dict.get('mag')
-                    if sb_dict.get('mag_std') < 100;
+                    if sb_dict.get('mag_std') < 100:
                         qametricsb.mag_std = sb_dict.get('mag_std')
                     if sb_dict.get('electrons') < 100000:
                         qametricsb.electrons = sb_dict.get('electrons')
