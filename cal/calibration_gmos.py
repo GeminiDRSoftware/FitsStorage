@@ -58,6 +58,9 @@ class CalibrationGMOS(Calibration):
         This method determines which calibration types are applicable
         to the target data set, and records the list of applicable
         calibration types in the class applicable variable.
+        All this really does is determine whether what calibrations the
+        /calibrations feature will look for. Just because a caltype isn't
+        applicable doesn't mean you can't ask the calmgr for one.
         """
         self.applicable = []
 
@@ -102,12 +105,14 @@ class CalibrationGMOS(Calibration):
 
             # If it (is imaging) and
             # (is Imaging focal plane mask) and
-            # (is an OBJECT) and (is not a Twilight)
+            # (is an OBJECT) and (is not a Twilight) and
+            # is not acq or acqcal
             # then it needs flats, processed_fringe
             if ((self.descriptors['spectroscopy'] == False) and
                      (self.descriptors['focal_plane_mask'] == 'Imaging') and
                      (self.descriptors['observation_type'] == 'OBJECT') and
-                     (self.descriptors['object'] != 'Twilight')):
+                     (self.descriptors['object'] != 'Twilight') and
+                     (self.descriptors['observation_class'] not in ['acq', 'acqCal'])):
 
                 self.applicable.append('flat')
                 self.applicable.append('processed_flat')
