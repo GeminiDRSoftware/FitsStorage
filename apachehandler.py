@@ -80,8 +80,8 @@ def thehandler(req):
 
     # First check if the request went to an archive machine with an unqualified host name.
     # We re-direct to the fully qualified version so that cookie names are consistent.
-    if req.hostname == 'arcdev':
-        new_uri = "http://arcdev.gemini.edu%s" % req.unparsed_uri
+    if req.hostname == 'archive':
+        new_uri = "http://archive.gemini.edu%s" % req.unparsed_uri
         util.redirect(req, new_uri)
 
     # Parse the uri we were given.
