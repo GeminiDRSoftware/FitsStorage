@@ -26,6 +26,9 @@ def getselection(things):
     """
     this takes a list of things from the URL, and returns a
     selection hash that is used by the html generators
+    The list of things is ordered. We disregard all but the 
+    last occurence of a project id, observation id or
+    datalabel.
     """
     selection = {}
     while len(things):
@@ -43,20 +46,30 @@ def getselection(things):
         gp = GeminiProgram(thing)
         if gp.valid:
             selection['program_id'] = thing
+            selection.pop('observation_id', None)
+            selection.pop('data_label', None)
             recognised = True
         if thing[:7] == 'progid=':
             selection['program_id'] = thing[7:]
+            selection.pop('observation_id', None)
+            selection.pop('data_label', None)
             recognised = True
         go = GeminiObservation(thing)
         if go.observation_id:
             selection['observation_id'] = thing
+            selection.pop('program_id', None)
+            selection.pop('data_label', None)
             recognised = True
         if thing[:6] == 'obsid=':
             selection['observation_id'] = thing[6:]
+            selection.pop('program_id', None)
+            selection.pop('data_label', None)
             recognised = True
         gdl = GeminiDataLabel(thing)
         if gdl.datalabel:
             selection['data_label'] = thing
+            selection.pop('observation_id', None)
+            selection.pop('program_id', None)
             recognised = True
         if gemini_instrument(thing, gmos=True):
             selection['inst'] = gemini_instrument(thing, gmos=True)
