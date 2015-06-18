@@ -5,9 +5,21 @@ conditions:
 include files:    wcs
 
 keywords:
-  - BIASSEC
-  - CCDSEC
-  - CCDSIZE
-  - CCDSUM
-  - DATASEC
-  - DETSEC
+  - CCDSUM:
+    - char:     [ '1 1', '1 2', '1 4', '2 1', '2 2', '2 4', '4 1', '4 2', '4 4' ]
+  - CCDSIZE:
+    - pattern:    '\[\d+:\d+,\d+:\d+]'
+  - CCDSEC:
+    - pattern:    '\[\d+:\d+,\d+:\d+]'
+  - DATASEC:
+    - pattern:    '\[\d+:\d+,\d+:\d+]'
+  - DETSEC:
+    - pattern:    '\[\d+:\d+,\d+:\d+]'
+  - BIASSEC:
+    - pattern:    '\[\d+:\d+,\d+:\d+]'
+  - CCDNAME:
+    - char:       not null
+  - GAIN:
+    - float
+  - RDNOISE:
+    - float
