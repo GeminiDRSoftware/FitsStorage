@@ -574,7 +574,7 @@ def engineering_image(header, env):
     if 'XTENSION' in header:
         return False
     try:
-        prgid = header['GEMPRGID']
+        prgid = str(header['GEMPRGID'])
         if prgid[:2] in ('GN', 'GS') and ('ENG' in prgid.upper()):
             return True
 
@@ -626,9 +626,9 @@ def check_rawXX_contents(header, env):
 
 @RuleSet.register_function("valid-observation-info", excIfFalse = EngineeringImage)
 def check_observation_related_fields(header, env):
-    prg = gmu.GeminiProgram(header['GEMPRGID'])
-    obs = gmu.GeminiObservation(header['OBSID'])
-    dl  = gmu.GeminiDataLabel(header['DATALAB'])
+    prg = gmu.GeminiProgram(str(header['GEMPRGID']))
+    obs = gmu.GeminiObservation(str(header['OBSID']))
+    dl  = gmu.GeminiDataLabel(str(header['DATALAB']))
 
     valid = (prg.valid and obs.obsnum != '' and dl.dlnum != ''
                        and obs.obsnum == dl.obsnum
