@@ -1,0 +1,23 @@
+LOWROW
+HIROW
+LOWCOL
+HICOL
+  - These 4 must all be present in the extension with an interger 
+value in the range 0 < x< 1024
+
+LNRS - present in PHU with integer value
+NDAVGS - present in PHU with integer value
+
+A_VDDUC - present in PHU with floating point value
+A_VDET - present in PHU with floating point value
+
+FILTER1
+FILTER2
+FILTER3
+  - these 3 must all be present in the phu with string values that are
+either 'open', 'blank' or of the form '.*_G\d\d\d\d'
+
+EXPTIME - present in PHU with floating point or integer value
+COADDS - present in PHU with integer value
+CAMERA - present in PHU with string value in ['f6', 'f14', 'f32']
+FPMASK - present in PHU with string value of the form '.*_G\d\d\d\d'
