@@ -87,6 +87,24 @@ def log(text):
 
 Function = namedtuple('Function', ['name', 'code', 'exceptionIfTrue', 'exceptionIfFalse'])
 
+compatible_types = {
+    float: (float, int),
+    }
+
+class Pattern(object):
+    def __init__(self, pattern):
+        self.cpat = re.compile(pattern)
+
+    def __contains__(self, x):
+        return self.cpat.match(x) is not None
+
+class ArbitraryRangeTest(object):
+    def __init__(self, test):
+        self.test = test
+
+    def __contains__(self, x):
+        return self.test(x)
+
 class Range(object):
     def __init__(self, low, high, type):
         self.low, self.high, self.type = low, high, type
@@ -112,7 +130,7 @@ class Range(object):
                         tp = type(val)
                         if args['type'] is None:
                             args['type'] = tp
-                        elif args['type'] != tp:
+                        elif tp not in compatible_types.get(args['type'], (args['type'],)):
                             raise TypeError("Two types for a range: {0}".format(string))
                         break
                     except ValueError:
@@ -144,6 +162,10 @@ class Range(object):
                 except ValueError:
                     pass
 
+        # Special case: not null strings
+        if self.low == '' and self.high == '':
+            return x not in (None, '')
+
         return ((type(x) == self.type) and
                 ((self.low is None) or (self.low <= x)) and
                 ((self.high is None) or (self.high >= x)))
@@ -153,6 +175,7 @@ class Range(object):
                                    (str(self.high) if self.high else '*'))
 
 EmptyRange = Range.from_type(None)
+NotNull = ArbitraryRangeTest(lambda x: isinstance(x, (str, unicode)) and x != '')
 
 def not_implemented(fn):
     def wrapper(self, *args, **kw):
@@ -197,30 +220,39 @@ class KeywordDescriptor(object):
         self.range = EmptyRange
         self.fn = lambda x: x
 
-        for restriction in info:
-            if isinstance(restriction, (str, unicode)):
-                if restriction in fitsTypes:
-                    self.range = Range.from_type(fitsTypes[restriction])
-                elif restriction == 'upper':
-                    self.transforms.append(str.upper)
-                elif restriction == 'lower':
-                    self.transforms.append(str.lower)
-                else:
-                    raise ValueError("Unknown descriptor {0}".format(restriction))
-            if isinstance(restriction, dict):
-                kw, value = restriction.items()[0]
-                if kw in fitsTypes:
-                    if kw == 'char':
-                        self.range = set(iter_list(value))
+        # Maybe we should warn when this is None...
+        if info is not None:
+            for restriction in info:
+                if isinstance(restriction, (str, unicode)):
+                    if restriction in fitsTypes:
+                        self.range = Range.from_type(fitsTypes[restriction])
+                    elif restriction == 'upper':
+                        self.transforms.append(str.upper)
+                    elif restriction == 'lower':
+                        self.transforms.append(str.lower)
                     else:
-                        self.range = Range.from_string(value, forceType = fitsTypes[kw])
-                elif kw == 'since':
-                    coerced = coerceValue(value)
-                    if not isinstance(coerced, datetime):
-                        raise ValueError("Wrong value for 'since': {0}".format(value))
-                    self.reqs.append(buildSinceFn(coerced))
-                else:
-                    raise ValueError("Unknown descriptor {0}".format(restriction))
+                        raise ValueError("Unknown descriptor {0}".format(restriction))
+                if isinstance(restriction, dict):
+                    kw, value = restriction.items()[0]
+                    if kw in fitsTypes:
+                        if kw == 'char':
+                            if isinstance(value, str) and ' '.join(value.lower().split()) == 'not null':
+                                self.range = NotNull
+                            else:
+                                self.range = set(iter_list(value))
+                        elif ' .. ' in value:
+                            self.range = Range.from_string(value, forceType = fitsTypes[kw])
+                        else:
+                            self.range = set(iter_list(value))
+                    elif kw == 'since':
+                        coerced = coerceValue(value)
+                        if not isinstance(coerced, datetime):
+                            raise ValueError("Wrong value for 'since': {0}".format(value))
+                        self.reqs.append(buildSinceFn(coerced))
+                    elif kw == 'pattern':
+                        self.range = Pattern(value)
+                    else:
+                        raise ValueError("Unknown descriptor {0}".format(restriction))
 
     def skip(self, header, env):
         if not self.reqs:
