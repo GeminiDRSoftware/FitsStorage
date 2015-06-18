@@ -303,7 +303,7 @@ def callback_factory(attr, value = None, name = 'Unknown test name', *args, **kw
     l.name = name
     return l
 
-def ruleFactory(text):
+def ruleFactory(text, ruleSetClass):
     "Returns a RuleSet or a group of them, depending on the input"
     # We don't want to write complicated parsers, but if we would want to generalize
     # the syntax, we could use the following EBNF:
@@ -311,9 +311,9 @@ def ruleFactory(text):
     #   list = ( group "," )* group
     #  group = ( word "|")* word | "(" list ")"
     if "|" in text:
-        return AlternateRuleSets([RuleSet(x.strip()) for x in text.split('|')])
+        return AlternateRuleSets([ruleSetClass(x.strip()) for x in text.split('|')])
 
-    return RuleSet(text)
+    return ruleSetClass(text)
 
 class RuleSet(list):
     """RuleSet is a representation of one of the rule files. It contains
@@ -336,8 +336,9 @@ class RuleSet(list):
         return reg
 
     def __init__(self, filename):
-        self.fn = filename
+        super(RuleSet, self).__init__()
 
+        self.fn = filename
         self.__initalize(filename)
 
     def __initalize(self, filename):
@@ -371,7 +372,7 @@ class RuleSet(list):
             r = self.__parse_tests(data.get('tests', []))
             self.postConditions = r[True] + r[False]
             for inc in iter_list(data.get('include files')):
-                self.append(ruleFactory(inc))
+                self.append(ruleFactory(inc, self.__class__))
 
     def __parse_tests(self, data):
         result = { True: [], False: [] }
@@ -452,7 +453,7 @@ class RuleSet(list):
         return not exclude and include
 
     def __repr__(self):
-        return "<RuleSet '{0}' [{1}]>".format(self.fn, ', '.join(x.fn for x in self), ', '.join(self.keywordDescr))
+        return "<{0} '{1}' [{2}]>".format(self.__class__.__name__, self.fn, ', '.join(x.fn for x in self), ', '.join(self.keywordDescr))
 
 class AlternateRuleSets(object):
     """This class is an interface to a number RuleSets. It chooses among a number of alternate
@@ -497,11 +498,12 @@ class RuleStack(object):
     """Used to "stack up" RuleSet objects as they're activated by headers.
        It offers an interface to check the validity of a header."""
 
-    def __init__(self):
+    def __init__(self, ruleSetClass = RuleSet):
         self.entryPoint = None
+        self._ruleSetClass = ruleSetClass
 
     def initialize(self, mainFileName):
-        self.entryPoint = RuleSet(mainFileName)
+        self.entryPoint = self._ruleSetClass(mainFileName)
 
     def test(self, header, env):
         stack = [self.entryPoint]
