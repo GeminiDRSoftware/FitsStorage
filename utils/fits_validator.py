@@ -335,14 +335,24 @@ class RuleSet(list):
             return fn
         return reg
 
+    @classmethod
+    def _open(cls, filename):
+        return open(get_full_path(filename))
+
     def __init__(self, filename):
         super(RuleSet, self).__init__()
 
         self.fn = filename
+        self.keywordDescr = {}
+        self.rangeRestrictions = {}
+        self.conditions = []
+        self.postConditions = []
+        self.features = []
+
         self.__initalize(filename)
 
     def __initalize(self, filename):
-        with open(get_full_path(filename)) as source:
+        with self._open(filename) as source:
             data = yaml.load(source)
             if not data:
                 return
