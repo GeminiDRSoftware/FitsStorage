@@ -390,8 +390,8 @@ def gmoscal(req, selection, do_json=False):
             # Only Nod and Shuffle frames
             query = query.filter(Gmos.nodandshuffle == True)
 
-            # Knock out ENG programs
-            query = query.filter(~Header.program_id.like('%ENG%'))
+            # Knock out ENG programs and SV programs
+            query = query.filter(Header.engineering == False).filter(Header.science_verification == False)
 
             # Limit to things within 1 year
             now = datetime.datetime.now()
