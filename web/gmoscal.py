@@ -116,7 +116,7 @@ def gmoscal(req, selection, do_json=False):
             query = queryselection(query, selection)
 
             # Knock out ENG programs
-            query = query.filter(~Header.program_id.like('%ENG%'))
+            query = query.filter(Header.engineering == False).filter(Header.science_verification == False)
 
             # Group by clause
             query = query.group_by(Header.filter_name, Header.detector_binning).order_by(Header.detector_binning, Header.filter_name)
@@ -201,7 +201,7 @@ def gmoscal(req, selection, do_json=False):
                 datething = selection['daterange']
             req.write('<P><a href="/summary/GMOS/imaging/OBJECT/science/NotFail/%s">Science Frames Summary Table</a></P>' % datething)
             req.write('<P><a href="/summary/GMOS/imaging/OBJECT/dayCal/Lucky/%s">Twilight Flat Summary Table</a></P>' % datething)
-            req.write('<P>NB. Summary tables will show ENG program data not reflected in the counts above.</P>')
+            req.write('<P>NB. Summary table links above will show ENG and SV program data not reflected in the counts above.</P>')
 
         # Now the BIAS report
        
