@@ -55,7 +55,7 @@ def calibrations(req, selection):
         query = query.filter(Header.qa_state != 'Fail')
 
         # Knock out ENG programs
-        query = query.filter(~Header.program_id.like('%ENG%'))
+        query = query.filter(Header.engineering != True)
 
         # Disregard SV-101. This is an undesirable hardwire
         query = query.filter(~Header.program_id.like('%SV-101%'))
