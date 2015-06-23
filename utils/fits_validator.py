@@ -91,12 +91,29 @@ compatible_types = {
     float: (float, int),
     }
 
+class CompositeRange(object):
+    def __init__(self):
+        self.tests = []
+
+    def __contains__(self, value):
+        if not self.tests:
+            # No ranges defined
+            return True
+
+        return any((value in test) for test in self.tests)
+
+    def append(self, test):
+        self.tests.append(test)
+
 class Pattern(object):
     def __init__(self, pattern):
         self.cpat = re.compile(pattern)
 
     def __contains__(self, x):
         return self.cpat.match(x) is not None
+
+    def __repr__(self):
+        return '<pattern({0!r})>'.format(self.cpat.pattern)
 
 class ArbitraryRangeTest(object):
     def __init__(self, test):
@@ -174,7 +191,6 @@ class Range(object):
         return "{0} .. {1}".format((str(self.low) if self.low else '*'),
                                    (str(self.high) if self.high else '*'))
 
-EmptyRange = Range.from_type(None)
 NotNull = ArbitraryRangeTest(lambda x: isinstance(x, (str, unicode)) and x != '')
 
 def not_implemented(fn):
@@ -217,7 +233,7 @@ class KeywordDescriptor(object):
     def __init__(self, info):
         self.reqs = []
         self.transforms = []
-        self.range = EmptyRange
+        self.range = CompositeRange()
         self.fn = lambda x: x
 
         # Maybe we should warn when this is None...
@@ -225,7 +241,7 @@ class KeywordDescriptor(object):
             for restriction in info:
                 if isinstance(restriction, (str, unicode)):
                     if restriction in fitsTypes:
-                        self.range = Range.from_type(fitsTypes[restriction])
+                        self.range.append(Range.from_type(fitsTypes[restriction]))
                     elif restriction == 'upper':
                         self.transforms.append(str.upper)
                     elif restriction == 'lower':
@@ -237,20 +253,20 @@ class KeywordDescriptor(object):
                     if kw in fitsTypes:
                         if kw == 'char':
                             if isinstance(value, str) and ' '.join(value.lower().split()) == 'not null':
-                                self.range = NotNull
+                                self.range.append(NotNull)
                             else:
-                                self.range = set(iter_list(value))
+                                self.range.append(set(iter_list(value)))
                         elif ' .. ' in value:
-                            self.range = Range.from_string(value, forceType = fitsTypes[kw])
+                            self.range.append(Range.from_string(value, forceType = fitsTypes[kw]))
                         else:
-                            self.range = set(iter_list(value))
+                            self.range.append(set(iter_list(value)))
                     elif kw == 'since':
                         coerced = coerceValue(value)
                         if not isinstance(coerced, datetime):
                             raise ValueError("Wrong value for 'since': {0}".format(value))
                         self.reqs.append(buildSinceFn(coerced))
                     elif kw == 'pattern':
-                        self.range = Pattern(value)
+                        self.range.append(Pattern(value))
                     else:
                         raise ValueError("Unknown descriptor {0}".format(restriction))
 
@@ -454,7 +470,6 @@ class RuleSet(list):
                 elif _element in RuleSet.__registry:
                     result[inclusive].append(callback_factory(RuleSet.__registry[_element], name = element))
                 else:
-                    print(element)
                     raise RuntimeError("Syntax Error: unrecognized condition {0!r}".format(element))
 
         return result
