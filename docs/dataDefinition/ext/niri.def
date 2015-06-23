@@ -3,3 +3,13 @@ conditions:
   - is niri
   - matching:
     - XTENSION:   IMAGE
+
+keywords:
+  - LOWROW:
+    - int:        0 .. 1023
+  - HIROW:
+    - int:        0 .. 1023
+  - LOWCOL:
+    - int:        0 .. 1023
+  - HICOL:
+    - int:        0 .. 1023

@@ -8,14 +8,36 @@ include files:    wcs
 
 keywords:
   - BEAMSPLT
-  - CAMERA
-  - FILTER1
-  - FILTER2
-  - FILTER3
+  - CAMERA:
+    - char:     [ 'f6', 'f14', 'f32' ]
+  - FILTER1:
+    - char:     [ 'open', 'blank' ]
+    - pattern:  '.*_G\d{4}'
+  - FILTER2:
+    - char:     [ 'open', 'blank' ]
+    - pattern:  '.*_G\d{4}'
+  - FILTER3:
+    - char:     [ 'open', 'blank' ]
+    - pattern:  '.*_G\d{4}'
+  - EXPTIME:
+    - float:      0 .. 1000
+  - COADDS:
+    - int:        1 .. 999
   - FOCUSNAM
-  - FPMASK
+  - FPMASK:
+    - pattern:    '.*_G\d{4}'
   - FRAME
   - MODE
   - PVIEW
   - TIME-OBS
   - UTEND
+
+  - LNRS:
+    - int:        1 .. 99
+  - NDAVGS:
+    - int:        1 .. 99
+
+  - A_VDDUC:
+    - float:      -10 .. 0
+  - A_VDET:
+    - float:      -10 .. 0
