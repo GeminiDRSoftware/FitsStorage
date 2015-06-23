@@ -8,35 +8,41 @@ include files:    wcs
 
 keywords:
   - ACQMIR:
-    - char:     [ 'In', 'Out' ]
+    - char:     [ In, Out, Moving ]
   - CAMERA:
+    - char:       Moving
     - pattern:    '.*G\d{4}'
   - COADDS:
-    - int:        1 .. 999
+    - int:        0 .. 999
   - DECKER:
+    - char:     [ Acquisition, IFU, LC_Long, LC_XD, Moving,
+                  PupilViewer, SC_Long, SC_XD, 'SC_XD/IFU', Wollaston ]
     - pattern:    '.*G\d{4}'
   - DETBIAS:
     - float:      -5 .. 0
   - EXPTIME:
-    - float:      0 .. 1000
+    - float:      0 .. 2000
   - FILTER1:
-    - char:       'Open'
+    - char:     [ Open, Dark, PupilViewer ]
     - pattern:    '.*G\d{4}'
   - FILTER2:
-    - char:       'Open'
+    - char:       Open
     - pattern:    '.*G\d{4}'
+    - pattern:    '[LHJKx]_\(order_\d\)'
   - FRAME
   - GRATING:
     - pattern:    '.*G\d{4}'
   - GRATWAVE:
-    - float:      0.5 .. 6.0
+    - float:      0.0 .. 6.0
   - LNRS:
-    - int:        1 .. 99
+    - int:        0 .. 99
   - NDAVGS:
-    - int:        1 .. 99
+    - int:        0 .. 99
   - PRISM:
     - pattern:    '.*G\d{4}'
   - SLIT:
+    - char:     [ Acquisition, IFU, LgPinholes, Moving, 'pupil viewer', SmPinholes ]
+    - pattern:    '[^ ]+ arcsec'
     - pattern:    '.*G\d{4}'
   - TIME-OBS
   - UTSTART

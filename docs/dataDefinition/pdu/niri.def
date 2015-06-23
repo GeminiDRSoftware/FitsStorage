@@ -9,7 +9,7 @@ include files:    wcs
 keywords:
   - BEAMSPLT
   - CAMERA:
-    - char:     [ 'f6', 'f14', 'f32' ]
+    - char:     [ 'f6', 'f13.9', 'f14', 'f32' ]
   - FILTER1:
     - char:     [ 'open', 'blank' ]
     - pattern:  '.*_G\d{4}'
@@ -22,7 +22,7 @@ keywords:
   - EXPTIME:
     - float:      0 .. 1000
   - COADDS:
-    - int:        1 .. 999
+    - int:        0 .. 999
   - FOCUSNAM
   - FPMASK:
     - pattern:    '.*_G\d{4}'
@@ -33,9 +33,9 @@ keywords:
   - UTEND
 
   - LNRS:
-    - int:        1 .. 99
+    - int:        0 .. 99
   - NDAVGS:
-    - int:        1 .. 99
+    - int:        0 .. 99
 
   - A_VDDUC:
     - float:      -10 .. 0
