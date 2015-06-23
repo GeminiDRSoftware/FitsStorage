@@ -7,12 +7,36 @@ conditions:
 include files:    wcs
 
 keywords:
-  - CAMERA
-  - DECKER
-  - FILTER1
-  - FILTER2
+  - ACQMIR:
+    - char:     [ 'In', 'Out' ]
+  - CAMERA:
+    - pattern:    '.*G\d{4}'
+  - COADDS:
+    - int:        1 .. 999
+  - DECKER:
+    - pattern:    '.*G\d{4}'
+  - DETBIAS:
+    - float:      -5 .. 0
+  - EXPTIME:
+    - float:      0 .. 1000
+  - FILTER1:
+    - char:       'Open'
+    - pattern:    '.*G\d{4}'
+  - FILTER2:
+    - char:       'Open'
+    - pattern:    '.*G\d{4}'
   - FRAME
-  - GRATING
-  - SLIT
+  - GRATING:
+    - pattern:    '.*G\d{4}'
+  - GRATWAVE:
+    - float:      0.5 .. 6.0
+  - LNRS:
+    - int:        1 .. 99
+  - NDAVGS:
+    - int:        1 .. 99
+  - PRISM:
+    - pattern:    '.*G\d{4}'
+  - SLIT:
+    - pattern:    '.*G\d{4}'
   - TIME-OBS
   - UTSTART
