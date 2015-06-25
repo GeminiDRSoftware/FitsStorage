@@ -1,0 +1,10 @@
+LNRS: present and integer 1 .. 16
+BIASPWR: present and float 0 .. 5
+COADDS: present and integer 1 .. 100
+GRATING: present and string of form .*_G/d/d/d/d
+APERTURE: present and string of form .*_G/d/d/d/d
+FILTER: present and string of form .*_G/d/d/d/d
+FLIP: present and string ['In', 'Out']
+EXPTIME: present and float 0 .. 2000
+GRATWAVE: present and float 0.8 .. 3.0
+
