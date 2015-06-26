@@ -3,12 +3,17 @@
 """Header Fixer
 
 Fixes a FITS header by replacing each instance of <old-value> in <keyword> with <new-value>.
+
+"fix-release" is will check for absence of the 'RELEASE' keyword and, if not there, it will try
+to calculate the proper RELEASE date.
+
 The "just-rewrite" does no substitution; it will open the file and try to write it down again,
 fixing anything that PyFITS can fix on its own.
 
 Usage:
   header_fixer [-inSj] [-s SRCDIR] [-d DESTDIR] <keyword> <old-value> <new-value> (-f FILELIST | <filename>...)
   header_fixer [-inSj] [-s SRCDIR] [-d DESTDIR] -k SUBSTLIST (-f FILELIST | <filename>...)
+  header_fixer [-nSj]  [-s SRCDIR] [-d DESTDIR] fix-release (-f FILELIST | <filename>...)
   header_fixer [-nSj]  [-s SRCDIR] [-d DESTDIR] just-rewrite (-f FILELIST | <filename>...)
   header_fixer -h | --help
   header_fixer --version
@@ -38,15 +43,36 @@ import sys
 from csv import reader
 from bz2 import BZ2File
 from collections import namedtuple
+from datetime import datetime, timedelta
+from time import strptime
 from docopt import docopt
 from astropy.io.fits.verify import VerifyError
 from tempfile import mkdtemp
 
 from utils.fits_validator import RuleStack, Environment, EngineeringImage, BadData, NotGeminiData, NoDateError
+from gemini_metadata_utils import GeminiProgram
 
-args = docopt(__doc__, version='Header Fixer 1.0')
+args = docopt(__doc__, version='Header Fixer 1.1')
 
 Match = namedtuple('Match', ('key', 'old', 'new'))
+
+dateCoercion = (
+    lambda x: datetime(*strptime(x, "%Y-%m-%d")[:6]),
+    lambda x: datetime(*strptime(x, "%Y-%b-%d")[:6]),
+    lambda x: datetime(*strptime(x, "%Y-%m-%d %H:%M:%S")[:6]),
+    lambda x: datetime(*strptime(x, "%Y-%m-%d (%H:%M:%S)")[:6]),
+    lambda x: datetime(*strptime(x, "%Y-%m-%dT%H:%M:%S")[:6]),
+    )
+
+def coerceDate(val):
+    for fn in dateCoercion:
+        try:
+            return fn(val)
+        except ValueError:
+            pass
+
+    raise ValueError('{0} not a known FITS date value'.format(val))
+
 
 class Tester(object):
     def __init__(self):
@@ -64,6 +90,36 @@ class Tester(object):
             res.append(t[0])
             mess.extend(t[1])
         return all(res), mess
+
+def fix_release(fits):
+    pheader = fits[0].header
+    if 'RELEASE' in pheader:
+        return False
+
+    try:
+        if not 'DATE' in pheader:
+            print('Missing DATE')
+            return False
+
+        date = coerceDate(pheader['DATE'])
+
+        if pheader['OBSCLASS'] in ('partnerCal', 'dayCal', 'acqCal'):
+            pheader['RELEASE'] = date.strftime('%Y-%m-%d')
+        else:
+            gp = GeminiProgram('GEMPRGID')
+            if gp.is_cal or gp.is_eng:
+                pheader['RELEASE'] = date.strftime('%Y-%m-%d')
+            elif gp.is_sv:
+                # DATE + 3 months
+                pheader['RELEASE'] = (date + timedelta(90)).strftime('%Y-%m-%d')
+            else:
+                # DATE + 18 months
+                pheader['RELEASE'] = (date + timedelta(540)).strftime('%Y-%m-%d')
+
+        return True
+    except KeyError as e:
+        print('Missing keyword: {0}'.format(e))
+        return False
 
 def needs_change(header, kw, ov, nv):
     try:
@@ -104,6 +160,7 @@ validate   = not args['-n']
 pathfn     = ((lambda x: x) if args['-S'] else functools.partial(os.path.join, source_dir))
 bzipoutput = args['-j']
 justrw     = args['just-rewrite']
+fixrele    = args['fix-release']
 
 try:
     filelist = (args['<filename>'] or (x.strip() for x in open(args['-f'])))
@@ -125,7 +182,11 @@ for fn, path in ((normalized_fn(x), pathfn(x)) for x in filelist):
     df = os.path.join(dest_dir, fn)
     try:
         fits = pf.open(open_image(path), do_not_scale_image_data = True)
-        if not justrw:
+        if fixrele:
+            if not fix_release(fits):
+                continue
+            fits[0].header['HISTORY'] = 'Corrected metadata: RELEASE (proper)'
+        elif not justrw:
             fits.verify('exception')
             change_sets = filter(lambda x: x[1], [(h.header, change_set(h.header)) for h in fits])
             if not change_sets:

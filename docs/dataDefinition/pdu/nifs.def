@@ -10,12 +10,28 @@ range limits:
 include files:    wcs
 
 keywords:
-  - APERTURE
+  - APERTURE:
+    - pattern:    '.*_G\d{4}'
+  - BIASPWR:
+    - float:      0 .. 5
+  - COADDS:
+    - int:        1 .. 100
   - EXPMODE
-  - FILTER
-  - FLIP
+  - EXPTIME:
+    - float:      0 .. 2000
+    - int:        0 .. 2000
+  - FILTER:
+    - pattern:    '.*_G\d{4}'
+  - FLIP:
+    - char:     [ In, Out ]
   - FRAME
-  - GRATING
+  - GRATING:
+    - pattern:    '.*_G\d{4}'
+    - pattern:    '[HJK]\d{3}'
+  - GRATWAVE:
+    - float:      0.8 .. 3
+  - LNRS:
+    - int:        1 .. 16
   - OBSMODE
   - RADECSYS
   - UT

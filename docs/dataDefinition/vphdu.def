@@ -9,7 +9,6 @@ conditions:
 
 include files:
   - pdu/flamingos
-  - pdu/gsaoi
   - pdu/hokupaa
   - pdu/hrwfs
   - pdu/michelle
@@ -26,11 +25,11 @@ keywords:
   - OBJECT
   - OBSCLASS:
     - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
-    - since:    2007-6-28
+    - since:    2011-1-6
   - RELEASE:
     - date:     2000-1-1 .. *
   - IAA:
-    - since:    2007-6-28
+    - since:    2011-1-6
 
 tests:
 # Old images (previous to ~2005) miss IAA and OBSCLASS, which complicates

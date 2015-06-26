@@ -15,6 +15,7 @@ include files:
   - pdu/gmos
   - pdu/gnirs
   - pdu/gpi
+  - pdu/gsaoi
   - pdu/nici
   - pdu/nifs
   - pdu/niri
