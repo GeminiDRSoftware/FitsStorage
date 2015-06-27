@@ -39,14 +39,15 @@ class NoDateError(Exception):
     pass
 
 # Constants
+DEBUG = False
+NOT_FOUND_MESSAGE = "Could not find a validating set of rules"
+FACILITY_INSTRUME = {'bHROS', 'F2', 'GMOS-N', 'GMOS-S', 'GNIRS', 'GPI', 'GSAOI', 'NICI', 'NIFS', 'NIRI'}
 
 # This is used to determine things like if we test for IAA or OBSCLASS
 # This is an initial estimate using empirical data. The value must
 # be corrected at a later point.
 OLDIMAGE = datetime(2007, 06, 28)
 OBSCLASS_VALUES = {'dayCal',  'partnerCal',  'acqCal',  'acq',  'science',  'progCal'}
-DEBUG = False
-FACILITY_INSTRUME = {'bHROS', 'F2', 'GMOS-N', 'GMOS-S', 'GNIRS', 'GPI', 'GSAOI', 'NICI', 'NIFS', 'NIRI'}
 
 fitsTypes = {
     'char': str,
@@ -562,6 +563,10 @@ class RuleStack(object):
     def initialize(self, mainFileName):
         self.entryPoint = self._ruleSetClass(mainFileName)
 
+    @property
+    def initialized(self):
+        return self.entryPoint is not None
+
     def test(self, header, env):
         stack = [self.entryPoint]
         passed = []
@@ -586,7 +591,7 @@ class RuleStack(object):
         try:
             env.features.remove('valid')
         except KeyError:
-            mess.append("Could not find a validating set of rules")
+            mess.append(NOT_FOUND_MESSAGE)
             return (False, mess)
 
         return (True, passed)
@@ -713,53 +718,126 @@ def set_date(header, env):
 def check_for_bad_RAWGEMWA(header, env):
     return header.get('RAWGEMQA', '') == 'BAD'
 
-if __name__ == '__main__':
-    DEBUG = True
-    try:
+Result = namedtuple('Result', ['passes', 'code', 'messages'])
+
+class Evaluator(object):
+    def __init__(self, ruleSetClass=RuleSet):
+        self.rq = RuleStack(ruleSetClass)
+
+    def init(self, root_file='fits'):
+        self.rq.initialize(root_file)
+
+    def valid_header(self, fits):
+        if not self.rq.initialized:
+            self.init()
+
+        fits.verify('exception')
         env = Environment()
         env.features = set()
-        rs = RuleStack()
-        rs.initialize('fits')
-        try:
-            fits = pf.open(sys.argv[1])
-        except IndexError:
-            fits = pf.open(StringIO(sys.stdin.read()))
-        fits.verify('fix+exception')
-        err = 0
+        res = []
+        mess = []
         for n, hdu in enumerate(fits):
-            env.hduNum = n
-            log("* Testing HDU {0}".format(n))
-            res, args = rs.test(hdu.header, env)
-            if not res:
-                err += 1
-                for message in args:
-                    log("   - {0}".format(message))
-            elif 'failed' in env.features:
-                log("  Failed data")
-                break
-            elif not args:
-                err += 1
-                log("  No key ruleset found for this HDU")
+            env.numHdu = n
+            t = self.rq.test(hdu.header, env)
+            res.append(t[0])
+            mess.extend(t[1])
 
-    except EngineeringImage as exc:
-        s = str(exc)
-        if not s:
-            log("Its an engineering image")
-        else:
-            log("Its an engineering image: {0}".format(s))
-        err = 0
-    except NoDateError:
-        log("This image has no recognizable date")
-        err = 1
-    except NotGeminiData:
-        log("This doesn't look like Gemini data")
-        err = 0
-    except BadData:
-        log("Failed data")
-        err = 0
-    except RuntimeError as e:
-        log(str(e))
-        err = 1
-    if err > 0:
-        sys.exit(-1)
+        return all(res), mess
+
+    def evaluate(self, fits):
+
+        try:
+            valid, msg = self.valid_header(fits)
+            if valid:
+                return Result(True, 'CORRECT', None)
+            else:
+                return Result(False, 'NOPASS', msg)
+        except NoDateError:
+            # NoDateError was used to simplify grouping certain common errors
+            # when evaluating old data. It's a subset of the invalid headers,
+            # and thus 'NOPASS'
+            return Result(False, 'NOPASS', None)
+        except NotGeminiData:
+            return Result(False, 'NOTGEMINI', None)
+        except BadData:
+            return Result(False,  'BAD', None)
+        except EngineeringImage:
+            return Result(True, 'ENG', None)
+
+    def __call__(self, filename):
+        return self.evaluate(filename)
+
+if __name__ == '__main__':
+    argv = sys.argv[1:]
+    verbose = False
+    try:
+        if argv[0] == '-v':
+            verbose = True
+            argv = argv[1:]
+    except IndexError:
+        pass
+
+    try:
+        fits = pf.open(argv[0])
+    except IndexError:
+        fits = pf.open(StringIO(sys.stdin.read()))
+    fits.verify('fix+exception')
+
+    if verbose:
+        DEBUG = True
+        try:
+            env = Environment()
+            env.features = set()
+            rs = RuleStack()
+            rs.initialize('fits')
+            err = 0
+            for n, hdu in enumerate(fits):
+                env.hduNum = n
+                log("* Testing HDU {0}".format(n))
+                res, args = rs.test(hdu.header, env)
+                if not res:
+                    err += 1
+                    for message in args:
+                        log("   - {0}".format(message))
+                elif 'failed' in env.features:
+                    log("  Failed data")
+                    break
+                elif not args:
+                    err += 1
+                    log("  No key ruleset found for this HDU")
+
+        except EngineeringImage as exc:
+            s = str(exc)
+            if not s:
+                log("Its an engineering image")
+            else:
+                log("Its an engineering image: {0}".format(s))
+            err = 0
+        except NoDateError:
+            log("This image has no recognizable date")
+            err = 1
+        except NotGeminiData:
+            log("This doesn't look like Gemini data")
+            err = 0
+        except BadData:
+            log("Failed data")
+            err = 0
+        except RuntimeError as e:
+            log(str(e))
+            err = 1
+        if err > 0:
+            sys.exit(-1)
+    else:
+        evaluate = Evaluator()
+        result = evaluate(fits)
+        if not result.passes:
+            if result.messages is not None:
+                mset = set(result.messages)
+                if set([NOT_FOUND_MESSAGE]) == mset:
+                    print(NOT_FOUND_MESSAGE)
+                else:
+                    for msg in result.messages:
+                        if msg == NOT_FOUND_MESSAGE:
+                            continue
+                        print(" - {0}".format(msg))
     sys.exit(0)
