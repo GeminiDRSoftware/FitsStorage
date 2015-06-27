@@ -64,7 +64,7 @@ def add_to_ingestqueue(session, filename, path, force_md5=False, force=False, af
         logger.debug("Added filename %s to ingestqueue which was immediately deleted", filename)
 
 
-def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, make_previews=False):
+def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_md, make_previews=False):
     """
     Ingests a file into the database. If the file isn't known to the database
     at all, all three (file, diskfile, header) table entries are created.
@@ -86,7 +86,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, ma
     force: causes this function to ingest the file regardless of md5 and
                  modtime.
     skip_fv: causes the ingest to skip running fitsverify on the file
-    skip_wmd: causes the ingest to skip running wmd on the file.
+    skip_md: causes the ingest to skip running md on the file.
     make_preview: If we are doing previews, we usually simply add it to the preview
                   queue here. However for a rebuild, it's more efficient to just make
                   the preview at this point while we have the file uncompressed etc.
@@ -251,7 +251,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_wmd, ma
     
             # This will use the DiskFile unzipped cache file if it exists
             logger.debug("Adding new DiskFileReport entry")
-            dfreport = DiskFileReport(diskfile, skip_fv, skip_wmd)
+            dfreport = DiskFileReport(diskfile, skip_fv, skip_md)
             session.add(dfreport)
             session.commit()
 

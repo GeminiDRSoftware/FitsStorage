@@ -431,9 +431,9 @@ class SummaryGenerator(object):
                 html += ' -fits!' % (header.diskfile.id)
 
         # Do we have metadata errors to flag? (only on non Eng data)
-        if (header.engineering is False) and (not header.diskfile.wmdready):
+        if (header.engineering is False) and (not header.diskfile.mdready):
             if self.links:
-                html += ' <a href="/wmdreport/%d" target="_blank">-md!</a>' % (header.diskfile.id)
+                html += ' <a href="/mdreport/%d" target="_blank">-md!</a>' % (header.diskfile.id)
             else:
                 html += ' -md!' % (header.diskfile.id)
 

@@ -43,7 +43,7 @@ class DiskFile(Base):
     isfits = Column(Boolean)
     fvwarnings = Column(Integer)
     fverrors = Column(Integer)
-    wmdready = Column(Boolean)
+    mdready = Column(Boolean)
 
     # We use this to store an uncompressed Cache of a compressed file
     # This is not recorded in the database and is transient for the life

@@ -43,6 +43,8 @@ DEBUG = False
 NOT_FOUND_MESSAGE = "Could not find a validating set of rules"
 FACILITY_INSTRUME = {'bHROS', 'F2', 'GMOS-N', 'GMOS-S', 'GNIRS', 'GPI', 'GSAOI', 'NICI', 'NIFS', 'NIRI'}
 
+STATUSES = ('CORRECT', 'NOPASS', 'NODATE', 'NOTGEMINI', 'BAD', 'ENG', 'EXCEPTION')
+
 # This is used to determine things like if we test for IAA or OBSCLASS
 # This is an initial estimate using empirical data. The value must
 # be corrected at a later point.

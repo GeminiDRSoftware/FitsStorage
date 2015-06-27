@@ -1,16 +1,17 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text
+from sqlalchemy import Integer, Text, Enum
 
 import os
 
 from fits_verify import fitsverify
 
-from fits_storage_config import using_cadc
-
-if using_cadc:
-    import Cadc
-
 from . import Base
+
+from utils.fits_validator import Evaluator, STATUSES
+
+evaluate = Evaluator()
+
+STATUS_ENUM = Enum(*STATUSES, name='mdstatus')
 
 class DiskFileReport(Base):
     """
@@ -20,7 +21,7 @@ class DiskFileReport(Base):
     out from the DiskFile table for DB performance reasons
 
     When we instantiate this class, we pass it the diskfile object.
-    This class will update that diskfile object with the fverrors and wmdready
+    This class will update that diskfile object with the fverrors and mdready
     values, but will not commit the changes.
     """
     __tablename__ = 'diskfilereport'
@@ -28,19 +29,19 @@ class DiskFileReport(Base):
     id = Column(Integer, primary_key=True)
     diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
     fvreport = Column(Text)
-    wmdreport = Column(Text)
+    mdreport = Column(Text)
+    mdstatus = Column(STATUS_ENUM, index=True)
 
-
-    def __init__(self, diskfile, skip_fv, skip_wmd):
+    def __init__(self, diskfile, skip_fv, skip_md):
         self.diskfile_id = diskfile.id
         if skip_fv:
             diskfile.fverrors = 0
         else:
             self.fits_verify(diskfile)
-        if skip_wmd or not using_cadc:
-            diskfile.wmdready = True
+        if skip_md:
+            diskfile.mdready = True
         else:
-            self.wmd(diskfile)
+            self.md(diskfile)
 
     def fits_verify(self, diskfile):
         """
@@ -70,11 +71,12 @@ class DiskFileReport(Base):
             # the unicode string - errors=ignore makes it ignore these.
             self.fvreport = unicode(retlist[3], errors='replace')
 
-    def wmd(self, diskfile):
+    def md(self, diskfile):
         """
-        Calls the Cadc module and records the wmd results
-        - Populates the wmdready flag in the diskfile object passed in
-        - Populates the wmdreport text in self
+        Evaluates the headers and records the md results
+        - Populates the mdready flag in the diskfile object passed in
+        - Populates the mdreport text in self
+        - Populates the mdstatus enum in self
         """
         filename = None
         if diskfile.compressed:
@@ -88,6 +90,8 @@ class DiskFileReport(Base):
             filename = diskfile.fullpath()
 
         if filename:
-            retlist = Cadc.cadcWMD(diskfile.fullpath())
-            diskfile.wmdready = bool(retlist[0])
-            self.wmdreport = retlist[1]
+            result = evaluate(diskfile.ad_object.hdulist)
+            diskfile.mdready = result.passes
+            self.mdstatus = result.code
+            if result.messages is not None:
+                self.mdreport = '\n'.join(result.messages)

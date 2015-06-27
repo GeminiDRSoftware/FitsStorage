@@ -256,9 +256,9 @@ def thehandler(req):
         retval = upload_file(req, things[0])
         return retval
 
-    # This returns the fitsverify, wmdreport or fullheader text from the database
+    # This returns the fitsverify, mdreport or fullheader text from the database
     # you can give it either a diskfile_id or a filename
-    if this in ['fitsverify', 'wmdreport', 'fullheader']:
+    if this in ['fitsverify', 'mdreport', 'fullheader']:
         if this in blocked_urls:
             return apache.HTTP_FORBIDDEN
         if len(things) == 0:
@@ -288,8 +288,8 @@ def thehandler(req):
                 req.content_type = "text/plain"
                 if this == 'fitsverify':
                     req.write(diskfilereport.fvreport)
-                if this == 'wmdreport':
-                    req.write(diskfilereport.wmdreport)
+                if this == 'mdreport':
+                    req.write(diskfilereport.mdreport)
                 if this == 'fullheader':
                     # Need to find the header associated with this diskfile
                     query = session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == diskfile.id)
@@ -319,8 +319,8 @@ def thehandler(req):
                 req.content_type = "text/plain"
                 if this == 'fitsverify':
                     req.write(diskfilereport.fvreport)
-                if this == 'wmdreport':
-                    req.write(diskfilereport.wmdreport)
+                if this == 'mdreport':
+                    req.write(diskfilereport.mdreport)
                 if this == 'fullheader':
                     # Need to find the header associated with this diskfile
                     query = session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == diskfile.id)
