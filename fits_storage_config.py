@@ -5,9 +5,6 @@ We put them in a separate file to ease install issues
 
 import os, sys
 
-# NOTE: all setting may be overwritten if environment variable,
-#   FITSSTORAGECONFIG_LOCALMODE, is true
-
 # Is this an archive server
 #use_as_archive = True
 use_as_archive = False
@@ -120,13 +117,5 @@ odbkeypass = "dontputtheactualkeyinthesvn"
 # By default, all URLs on the server are active. List in blocked_urls any that you want to disable
 blocked_urls = []
 #blocked_urls=['debug', 'summary', 'diskfiles', 'ssummary', 'lsummary', 'standardobs', 'calibrations', 'xmlfilelist', 'fileontape', 'calmgr', 'upload_processed_cal', 'fitsverify', 'mdreport', 'fullheader', 'file', 'programsobserved', 'gmoscal', 'qareport', 'qametrics', 'qaforgui', 'stats', 'tape', 'tapewrite', 'tapefile', 'taperead', 'xmltape', 'notification', 'curation', 'observing_statistics', 'authentication']
-
-# the following implements allows astrodata to set local versions of 
-# setting in this module
-if "FITSSTORAGECONFIG_LOCALMODE" in os.environ:
-    fsc_lm = os.environ["FITSSTORAGECONFIG_LOCALMODE"].strip().lower()
-    if fsc_lm == "true":
-        from astrodata import fscpatch
-        fscpatch.local_fsc_patch(sys.modules[__name__])
 
 validation_def_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'docs/dataDefinition')
