@@ -753,7 +753,12 @@ class Evaluator(object):
             if valid:
                 return Result(True, 'CORRECT', None)
             else:
-                return Result(False, 'NOPASS', msg)
+                mset = set(msg)
+                if set([NOT_FOUND_MESSAGE]) == mset:
+                    rmsg = [NOT_FOUND_MESSAGE]
+                else:
+                    rmsg = [m for m in msg if m != NOT_FOUND_MESSAGE]
+                return Result(False, 'NOPASS', rmsg)
         except NoDateError:
             # NoDateError was used to simplify grouping certain common errors
             # when evaluating old data. It's a subset of the invalid headers,
@@ -832,14 +837,7 @@ if __name__ == '__main__':
     else:
         evaluate = Evaluator()
         result = evaluate(fits)
-        if not result.passes:
-            if result.messages is not None:
-                mset = set(result.messages)
-                if set([NOT_FOUND_MESSAGE]) == mset:
-                    print(NOT_FOUND_MESSAGE)
-                else:
-                    for msg in result.messages:
-                        if msg == NOT_FOUND_MESSAGE:
-                            continue
-                        print(" - {0}".format(msg))
+        if not result.passes and result.messages is not None:
+            for msg in result.messages:
+                print(" - {0}".format(msg))
     sys.exit(0)
