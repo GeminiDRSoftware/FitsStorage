@@ -722,7 +722,7 @@ def set_date(header, env):
 def check_for_bad_RAWGEMWA(header, env):
     return header.get('RAWGEMQA', '') == 'BAD'
 
-Result = namedtuple('Result', ['passes', 'code', 'messages'])
+Result = namedtuple('Result', ['passes', 'code', 'message'])
 
 class Evaluator(object):
     def __init__(self, ruleSetClass=RuleSet):
@@ -744,34 +744,51 @@ class Evaluator(object):
             env.numHdu = n
             t = self.rq.test(hdu.header, env)
             res.append(t[0])
-            mess.extend(t[1])
+            mess.append(t[1])
 
-        return all(res), mess
+        return all(res), mess, env
 
     def evaluate(self, fits):
 
         try:
-            valid, msg = self.valid_header(fits)
+            valid, msg, env = self.valid_header(fits)
+            # Skim non-strings from msg
+            msg = [[x for x in m if not isinstance(x, RuleSet)] for m in msg]
             if valid:
-                return Result(True, 'CORRECT', None)
+                return Result(True, 'CORRECT', ["This looks like a valid file"])
             else:
-                mset = set(msg)
-                if set([NOT_FOUND_MESSAGE]) == mset:
-                    rmsg = [NOT_FOUND_MESSAGE]
+                # First, focus on the PHDU messages
+                if len(msg[0]) > 0:
+                    # Errors in the PHDU - we won't consider the rest
+                    rmsg = ['--- HDU 0 ---']
+                    mset = set(msg[0])
+                    if set([NOT_FOUND_MESSAGE]) == mset:
+                        rmsg.extend([NOT_FOUND_MESSAGE])
+                    else:
+                        rmsg.extend([m for m in msg[0] if m != NOT_FOUND_MESSAGE])
+                    if len(msg) > 1:
+                        rmsg.extend(['-------------', 'Other HDUs not considered to avoid bogus error messages'])
                 else:
-                    rmsg = [m for m in msg if m != NOT_FOUND_MESSAGE]
-                return Result(False, 'NOPASS', rmsg)
+                    rmsg = []
+                    for hdu, hdumsg in enumerate(msg[1:], 1):
+                        rmsg.append('--- HDU {0} ---'.format(hdu))
+                        mset = set(hdumsg)
+                        if set([NOT_FOUND_MESSAGE]) == mset:
+                            rmsg.extend([NOT_FOUND_MESSAGE])
+                        else:
+                            rmsg.extend([m for m in hdumsg if m != NOT_FOUND_MESSAGE])
+                return Result(False, 'NOPASS', '\n'.join(rmsg))
         except NoDateError:
             # NoDateError was used to simplify grouping certain common errors
             # when evaluating old data. It's a subset of the invalid headers,
             # and thus 'NOPASS'
-            return Result(False, 'NOPASS', None)
+            return Result(False, 'NOPASS', "No observing date could be recovered from the image headers")
         except NotGeminiData:
-            return Result(False, 'NOTGEMINI', None)
+            return Result(False, 'NOTGEMINI', "This doesn't look at all like data produced at Gemini")
         except BadData:
-            return Result(False,  'BAD', None)
+            return Result(False,  'BAD', "Bad data (RAWGEMQA = BAD)")
         except EngineeringImage:
-            return Result(True, 'ENG', None)
+            return Result(True, 'ENG', "This looks like an engineering image. No further checks")
 
     def __call__(self, filename):
         return self.evaluate(filename)
@@ -839,7 +856,6 @@ if __name__ == '__main__':
     else:
         evaluate = Evaluator()
         result = evaluate(fits)
-        if not result.passes and result.messages is not None:
-            for msg in result.messages:
-                print(" - {0}".format(msg))
+        if result.message is not None:
+            print(result.message)
     sys.exit(0)

@@ -93,5 +93,5 @@ class DiskFileReport(Base):
             result = evaluate(diskfile.ad_object.hdulist)
             diskfile.mdready = result.passes
             self.mdstatus = result.code
-            if result.messages is not None:
-                self.mdreport = '\n'.join(result.messages)
+            if result.message is not None:
+                self.mdreport = result.message
