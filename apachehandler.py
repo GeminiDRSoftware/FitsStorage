@@ -320,7 +320,10 @@ def thehandler(req):
                 if this == 'fitsverify':
                     req.write(diskfilereport.fvreport)
                 if this == 'mdreport':
-                    req.write(diskfilereport.mdreport)
+                    try:
+                        req.write(diskfilereport.mdreport)
+                    except TypeError:
+                        req.write('No report was generated\n')
                 if this == 'fullheader':
                     # Need to find the header associated with this diskfile
                     query = session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == diskfile.id)
