@@ -6,7 +6,7 @@ import os
 import re
 import sys
 from collections import namedtuple
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import strptime
 from types import FunctionType
 from StringIO import StringIO
@@ -15,8 +15,7 @@ from fits_storage_config import validation_def_path
 import gemini_metadata_utils as gmu
 
 import yaml
-import astropy.io.fits as pf
-from astropy.time import Time
+import pyfits as pf
 
 # Exceptions
 
@@ -707,7 +706,10 @@ def set_date(header, env):
             bogus = True
 
     if 'MJD_OBS' in header and header['MJD_OBS'] != 0.:
-        d = Time(header['MJD_OBS'], format='mjd').datetime.strftime('%Y-%m-%d')
+        mjdzero = datetime(1858, 11, 17, 0, 0, 0, 0, None)
+        mjddelta = timedelta(header['MJD_OBS'])
+        mjddt = mjdzero + mjddelta
+        d = mjddt.strftime('%Y-%m-%d')
         env.features.add('date:' + d)
         return True
 
