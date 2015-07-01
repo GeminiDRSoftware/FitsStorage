@@ -2,6 +2,22 @@
 
 from __future__ import print_function
 
+"""
+This module contains all the machinery for metadata testing. The easiest way to
+use it is to import Evaluator, instanciate it and then pass call the evaluator
+object passing an HDUList.
+
+  >>> evaluate = Evaluator()
+  >>> evaluate(fits)
+
+The result is a named tuple with elements:
+
+  `passes`:  boolean, passes the test or not
+  `code`:    a finer grain veredict on the test; CORRECT, ENG, BAD for valid
+             files and NOPASS, NOTGEMINI for invalid data.
+  `message`: human readable message explaining the analysis
+"""
+
 import os
 import re
 import sys
@@ -75,6 +91,8 @@ typeCoercion = (
 ###################################################################################
 
 def coerceValue(val):
+    """Takes a string and tries to convert it to some known value type using the
+       functions provided by typeCoercion"""
     for fn in typeCoercion:
         try:
             return fn(val)
@@ -94,10 +112,13 @@ compatible_types = {
     }
 
 class CompositeRange(object):
+    """This class is used to compose a number of range tests together"""
     def __init__(self):
         self.tests = []
 
     def __contains__(self, value):
+        """Returns True if the passed value falls within any of the ranges
+           contained by this composite"""
         if not self.tests:
             # No ranges defined
             return True
@@ -108,6 +129,7 @@ class CompositeRange(object):
         self.tests.append(test)
 
 class Pattern(object):
+    "Range test class that tries matching strings against a regex"
     def __init__(self, pattern):
         self.cpat = re.compile(pattern)
 
@@ -118,6 +140,8 @@ class Pattern(object):
         return '<pattern({0!r})>'.format(self.cpat.pattern)
 
 class ArbitraryRangeTest(object):
+    """Range test class that will test values against an arbitrary function
+       passed by the user"""
     def __init__(self, test):
         self.test = test
 
@@ -125,11 +149,15 @@ class ArbitraryRangeTest(object):
         return self.test(x)
 
 class Range(object):
+    """Range testing class. Instances of this class check if a certain value is
+       within the limits of a float (or integer) range"""
     def __init__(self, low, high, type):
         self.low, self.high, self.type = low, high, type
 
     @staticmethod
     def from_string(string, forceType = None):
+        """Factory method: takes a string of format 'm .. n' and returns an instance
+           of Range that tests if a value belongs to the closed interval [m, n]"""
         for ptrn in rangePatterns:
             try:
                 l, h = ptrn.match(string).groups()
@@ -168,7 +196,7 @@ class Range(object):
         return Range(low = None, high = None, type = type)
 
     def __contains__(self, x):
-        "Implements the membership test operator, allowing <x in range>"
+        "Implements the membership test operator, allowing `x in range`"
         if self.type is None:
             return True
 
@@ -196,12 +224,14 @@ class Range(object):
 NotNull = ArbitraryRangeTest(lambda x: isinstance(x, (str, unicode)) and x != '')
 
 def not_implemented(fn):
+    "Decorator for not implemented tests"
     def wrapper(self, *args, **kw):
         raise NotImplementedError("{0}.{1}".format(self.__class__.__name__,
                                                                     fn.func_name))
     return wrapper
 
 def get_full_path(filename):
+    "Returns the full path to a rules file"
     return os.path.join(validation_def_path, filename + '.def')
 
 def iter_list(lst):
@@ -232,7 +262,40 @@ def buildSinceFn(value):
     return lambda h, e: getEnvDate(e) < value
 
 class KeywordDescriptor(object):
+    """Instances of this class are representations of a keyword descriptor from a
+       rules file, like:
+
+         - EXPTIME:
+           - float:      0 .. *
+
+         - FILTER2:
+           - char:       Open
+           - pattern:    '.*G\d{4}'
+           - pattern:    '[LHJKx]_\(order_\d\)'
+    """
+
     def __init__(self, info):
+        """Takes a list of restrictions or modifiers that apply to a keyword,
+           interprets them, and stores them as tests that will be applied to
+           the keyword's value.
+
+           Valid restrictions are:
+
+             - the type for the keyword (`bool`, `char`, `date`, `int`, `float`)
+               and, optionally, it's range (where it applies)
+             - `pattern`: regex patterns to be matched against char values
+
+           There can be multiple restrictions, and same types can be repeated
+           for different ranges. The restrictions will be treated as mutually
+           exclusive, ie. if one of them passes the whole test passes.
+
+           Modifiers:
+
+             - `upper`: converts the whole input to uppercase before comparing
+             - `lower`: comverts the whole input to lowercase before comparing
+             - `since`: if the image is older than this date, the restriction
+                        test will be skipped completely
+        """
         self.reqs = []
         self.transforms = []
         self.range = CompositeRange()
@@ -273,12 +336,14 @@ class KeywordDescriptor(object):
                         raise ValueError("Unknown descriptor {0}".format(restriction))
 
     def skip(self, header, env):
+        "Returns True if this descriptor applies to the given header in the current environment"
         if not self.reqs:
             return False
 
         return all(fn(header, env) for fn in self.reqs)
 
     def test(self, value):
+        "Returns True if the passed value matches the descriptor"
         for fn in self.transforms:
             value = fn(value)
 
