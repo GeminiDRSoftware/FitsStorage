@@ -786,7 +786,7 @@ class Evaluator(object):
         except NotGeminiData:
             return Result(False, 'NOTGEMINI', "This doesn't look at all like data produced at Gemini")
         except BadData:
-            return Result(False,  'BAD', "Bad data (RAWGEMQA = BAD)")
+            return Result(True,  'BAD', "Bad data (RAWGEMQA = BAD)")
         except EngineeringImage:
             return Result(True, 'ENG', "This looks like an engineering image. No further checks")
 
