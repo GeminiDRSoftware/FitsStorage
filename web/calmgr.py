@@ -25,6 +25,7 @@ no_func = lambda x: None
 
 args_for_cals = {
     # cal_type      : (method_name, {arg_name: value, ...})
+    'processed_arc':  ('arc', {'processed': True}),
     'processed_bias': ('bias', {'processed': True}),
     'processed_dark': ('dark', {'processed': True}),
     'processed_flat': ('flat', {'processed': True})
