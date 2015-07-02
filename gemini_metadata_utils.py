@@ -276,6 +276,7 @@ def gemini_daterange(string):
     else:
         return ''
 
+obs_types = ('DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI', 'CAL', 'FRINGE', 'MASK')
 def gemini_observation_type(string):
     """
     A utility function for matching Gemini ObsTypes
@@ -284,12 +285,12 @@ def gemini_observation_type(string):
     Otherwise return None
     We add the unofficial values PINHOLE for GNIRS pinhole mask observations and RONCHI for NIFS Ronchi mask observations here too
     """
-    list = ['DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI', 'CAL', 'FRINGE', 'MASK']
     retary = None
-    if string in list:
+    if string in obs_types:
         retary = string
     return retary
 
+obs_classes = ('dayCal', 'partnerCal', 'acqCal', 'acq', 'science', 'progCal')
 def gemini_observation_class(string):
     """
     A utility function matching Gemini ObsClasses
@@ -297,12 +298,12 @@ def gemini_observation_class(string):
     the observation_class
     Otherwise we return None
     """
-    list = ['dayCal', 'partnerCal', 'acqCal', 'acq', 'science', 'progCal']
     retary = None
-    if  string in list:
+    if  string in obs_classes:
         retary = string
     return retary
 
+reduction_states = ('RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS', 'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK')
 def gemini_reduction_state(string):
     """
     A utility function matching Gemini reduction states
@@ -310,13 +311,17 @@ def gemini_reduction_state(string):
     the reduction state
     Otherwise we return None
     """
-    list = ['RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS', 'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK']
     retary = None
-    if  string in list:
+    if  string in reduction_states:
         retary = string
     return retary
 
-
+cal_types = (
+    'bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark',
+    'processed_flat', 'processed_arc', 'processed_fringe', 'pinhole_mask',
+    'ronchi_mask', 'lampoff_flat', 'qh_flat', 'specphot', 'photometric_standard',
+    'telluric_standard'
+    )
 def gemini_caltype(string):
     """
     A utility function matching Gemini calibration types.
@@ -328,14 +333,13 @@ def gemini_caltype(string):
 
     These should all be lower case so as to avoid conflict with gemini_observation_type
     """
-    list = ['bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark', 'processed_flat',
-                'processed_fringe', 'processed_arc', 'pinhole_mask', 'ronchi_mask', 'lampoff_flat',
-                'specphot', 'photometric_standard']
+
     retary = None
-    if string in list:
+    if string in cal_types:
         retary = string
     return retary
 
+gmos_gratings = ('MIRROR', 'B600', 'R600', 'R400', 'R831', 'R150', 'B1200')
 def gmos_gratingname(string):
     """
     A utility function matching a GMOS Grating name. This could be expanded to
@@ -349,12 +353,16 @@ def gmos_gratingname(string):
     that grating.
     """
     retary = ''
-    list = ['MIRROR', 'B600', 'R600', 'R400', 'R831', 'R150', 'B1200']
-    if string in list:
+    if string in gmos_gratings:
         retary = string
     return retary
 
 gmosfpmaskcre = re.compile(r'^G[NS](20\d\d)[AB](.)(\d\d\d)-(\d\d)$')
+gmos_facility_plane_masks = (
+    'NS2.0arcsec', 'IFU-R', 'IFU-B', 'focus_array_new', 'Imaging', '2.0arcsec',
+    'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec',
+    '0.75arcsec', '1.0arcsec', '0.5arcsec'
+    )
 def gmos_focal_plane_mask(string):
     """
     A utility function matching gmos focal plane mask names. This could be expanded to
@@ -366,12 +374,8 @@ def gmos_focal_plane_mask(string):
     If the string matches an focal_plane_mask, we return the focal_plane_mask.
     """
 
-    retary = ''
-    facility = ['NS2.0arcsec', 'IFU-R', 'IFU-B', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec',
-                    '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec']
-
     retary = None
-    if string in facility:
+    if string in gmos_facility_plane_masks:
         retary = string
     elif gmosfpmaskcre.match(string):
         retary = string

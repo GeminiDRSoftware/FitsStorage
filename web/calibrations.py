@@ -52,16 +52,13 @@ def calibrations(req, selection):
         query = queryselection(query, selection)
 
         # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Knock out ENG programs
-        query = query.filter(Header.engineering != True)
-
         # Disregard SV-101. This is an undesirable hardwire
-        query = query.filter(~Header.program_id.like('%SV-101%'))
-
         # Order by date, most recent first
-        query = query.order_by(desc(Header.ut_datetime))
+        query = query.filter(Header.qa_state != 'Fail')\
+                     .filter(Header.engineering != True)\
+                     .filter(~Header.program_id.like('%SV-101%'))\
+                     .order_by(desc(Header.ut_datetime))
 
         # If openquery, limit number of responses
         if openquery(selection):
@@ -124,7 +121,7 @@ def calibrations(req, selection):
                 # arc to it that we currently have
                 if missing:
                     takenow = True
-                if warning:
+                elif warning:
                     # Is it worth re-taking?
                     # Find the smallest interval between a valid arc and the science
                     newinterval = abs(interval_hours(arc, object))
@@ -137,7 +134,7 @@ def calibrations(req, selection):
                     if smallestinterval > nowhours:
                         takenow = True
 
-            if 'dark' in c.applicable and (caltype == 'all' or caltype == 'dark'):
+            if 'dark' in c.applicable and caltype in ('all', 'dark'):
                 requires = True
                 darks = c.dark()
                 if darks:
@@ -158,7 +155,7 @@ def calibrations(req, selection):
                     warning = True
                     missing = True
 
-            if 'bias' in c.applicable and (caltype == 'all' or caltype == 'bias'):
+            if 'bias' in c.applicable and caltype in ('all', 'bias'):
                 requires = True
                 biases = c.bias()
                 if biases:
@@ -170,7 +167,7 @@ def calibrations(req, selection):
                     warning = True
                     missing = True
 
-            if 'flat' in c.applicable and (caltype == 'all' or caltype == 'flat'):
+            if 'flat' in c.applicable and caltype in ('all', 'flat'):
                 requires = True
                 flats = c.flat()
                 if flats:
@@ -214,7 +211,7 @@ def calibrations(req, selection):
                     #warning = True
                     #missing = True
 
-            if 'pinhole_mask' in c.applicable and (caltype == 'all' or caltype == 'pinhole_mask'):
+            if 'pinhole_mask' in c.applicable and caltype in ('all', 'pinhole_mask'):
                 requires = True
                 pinhole_mask = c.pinhole_mask()
                 if pinhole_mask:
@@ -226,7 +223,7 @@ def calibrations(req, selection):
                     warning = True
                     missing = True
 
-            if 'ronchi_mask' in c.applicable and (caltype == 'all' or caltype == 'ronchi_mask'):
+            if 'ronchi_mask' in c.applicable and caltype in ('all', 'ronchi_mask'):
                 requires = True
                 ronchi_mask = c.ronchi_mask()
                 if ronchi_mask:
