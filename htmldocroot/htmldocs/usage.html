@@ -155,3 +155,26 @@ you from this, it simply returns no results.</P>
 </UL>
 </body></html>
 
+<H2>APIs</H2>
+<P>Several APIs are provided:</P>
+<H3>File Lists</H3>
+<UL>
+<LI><a href="/jsonfilelist/today">/jsonfilelist/today</a> - JSON file listing.</LI>
+<LI><a href="/xmlfilelist/today">/jsonfilelist/today</a> - XML file listing.</LI>
+</UL>
+<P>Replace "today" in the example URLs with selection criteria (see above). These return you JSON or XML document listing the files in the archive that match
+the selection given. The following fields are given for each file:
+<UL>
+<LI><B>name</B>- The canonical name of the file</LI>
+<LI><B>filename</B>- The actual filename of the file</LI>
+<LI><B>path</B>- The path to this file within the datastore</LI>
+<LI><B>compressed</B>- Boolean to say if the file is compressed</LI>
+<LI><B>size</B>- File size. Better to use file_size or data_size - see below</LI>
+<LI><B>file_size</B>- The size of the file in the datastore</LI>
+<LI><B>data_size</B>- The size of the uncompressed file data. Will be equal to file_size for uncompressed files</LI>
+<LI><B>md5</B>- md5sum - Better to use file_md5 or data_md5 - see below</LI>
+<LI><B>file_md5</B>- The md5sum of the file in the datastore</LI>
+<LI><B>data_md5</B>- The md5sum of the uncompressed file data. Will be equal to file_md5 for uncompressed files</LI>
+<LI><B>lastmod</B>- Last modification timestamp of the file that was ingested</LI>
+<LI><B>mdready</B>- Boolean to say if the metadata is valid</LI>
+</UL></P>
