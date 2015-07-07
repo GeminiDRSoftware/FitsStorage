@@ -36,6 +36,7 @@ def xmlfilelist(req, selection):
             req.write("<file_md5>%s</file_md5>" % header.diskfile.file_md5)
             req.write("<data_md5>%s</data_md5>" % header.diskfile.data_md5)
             req.write("<lastmod>%s</lastmod>" % header.diskfile.lastmod)
+            req.write("<mdready>%s</mdready>" % header.diskfile.mdready)
             if header.phot_standard:
                 xmlstandardobs(req, header.id)
             req.write("</file>")
@@ -69,6 +70,7 @@ def jsonfilelist(req, selection):
             thedict['file_md5'] = _for_json(header.diskfile.file_md5)
             thedict['data_md5'] = _for_json(header.diskfile.data_md5)
             thedict['lastmod'] = _for_json(header.diskfile.lastmod)
+            thedict['mdready'] = _for_json(header.diskfile.mdready)
             thelist.append(thedict)
     finally:
         session.close()
