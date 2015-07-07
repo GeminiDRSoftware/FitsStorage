@@ -148,6 +148,14 @@ class ArbitraryRangeTest(object):
     def __contains__(self, x):
         return self.test(x)
 
+class TransformedStringRangeTest(object):
+    def __init__(self, testfn, range):
+        self.testfn = testfn
+        self.range = range
+
+    def __contains__(self, x):
+        return isinstance(x, (str, unicode)) and self.testfn(x) in self.range
+
 class Range(object):
     """Range testing class. Instances of this class check if a certain value is
        within the limits of a float (or integer) range"""
@@ -272,6 +280,11 @@ class KeywordDescriptor(object):
            - char:       Open
            - pattern:    '.*G\d{4}'
            - pattern:    '[LHJKx]_\(order_\d\)'
+
+         - RAWCC:
+           - char:       Any
+           - upper:      UNKNOWN
+           - pattern:    '\d{2}-percentile'
     """
 
     def __init__(self, info):
@@ -284,6 +297,9 @@ class KeywordDescriptor(object):
              - the type for the keyword (`bool`, `char`, `date`, `int`, `float`)
                and, optionally, it's range (where it applies)
              - `pattern`: regex patterns to be matched against char values
+             - `upper`: same as `char`, but converts the whole input to uppercase
+                        before comparing
+             - `lower`: same as `upper`, but converting to lowercase
 
            There can be multiple restrictions, and same types can be repeated
            for different ranges. The restrictions will be treated as mutually
@@ -291,14 +307,16 @@ class KeywordDescriptor(object):
 
            Modifiers:
 
-             - `upper`: converts the whole input to uppercase before comparing
-             - `lower`: comverts the whole input to lowercase before comparing
+             - `optional: the keyword is not mandatory; if it's missing there will
+                          be no error, but if it's present, it has to follow the
+                          rules
              - `since`: if the image is older than this date, the restriction
                         test will be skipped completely
         """
         self.reqs = []
         self.transforms = []
         self.range = CompositeRange()
+        self.optional = False
         self.fn = lambda x: x
 
         # Maybe we should warn when this is None...
@@ -307,10 +325,8 @@ class KeywordDescriptor(object):
                 if isinstance(restriction, (str, unicode)):
                     if restriction in fitsTypes:
                         self.range.append(Range.from_type(fitsTypes[restriction]))
-                    elif restriction == 'upper':
-                        self.transforms.append(str.upper)
-                    elif restriction == 'lower':
-                        self.transforms.append(str.lower)
+                    elif restriction == 'optional':
+                        self.optional = True
                     else:
                         raise ValueError("Unknown descriptor {0}".format(restriction))
                 if isinstance(restriction, dict):
@@ -325,6 +341,10 @@ class KeywordDescriptor(object):
                             self.range.append(Range.from_string(value, forceType = fitsTypes[kw]))
                         else:
                             self.range.append(set(iter_list(value)))
+                    elif kw == 'upper':
+                        self.range.append(TransformedStringRangeTest(str.upper, set(iter_list(value))))
+                    elif kw == 'lower':
+                        self.range.append(TransformedStringRangeTest(str.lower, set(iter_list(value))))
                     elif kw == 'since':
                         coerced = coerceValue(value)
                         if not isinstance(coerced, datetime):
@@ -334,6 +354,10 @@ class KeywordDescriptor(object):
                         self.range.append(Pattern(value))
                     else:
                         raise ValueError("Unknown descriptor {0}".format(restriction))
+
+    @property
+    def mandatory(self):
+        return not self.optional
 
     def skip(self, header, env):
         "Returns True if this descriptor applies to the given header in the current environment"
@@ -551,7 +575,8 @@ class RuleSet(list):
                 if not descr.test(header[kw]):
                     messages.append('Invalid {0}({1})'.format(kw, header[kw]))
             except KeyError:
-                messages.append('Missing {0}'.format(kw))
+                if descr.mandatory:
+                    messages.append('Missing {0}'.format(kw))
         for kw, range in self.rangeRestrictions.items():
             try:
                 if header[kw] not in range:
@@ -735,12 +760,10 @@ def wcs_or_not(header, env):
             and (   ('wcs-in-pdu' in feat and 'XTENSION' not in header)
                  or ('wcs-in-pdu' not in feat and header.get('XTENSION') == 'IMAGE')))
 
-rawxx_pattern = re.compile(r'Any|\d{2}-percentile')
-
-@RuleSet.register_function("valid-rawXX")
-def check_rawXX_contents(header, env):
-    return all((header[x].upper() == 'UNKNOWN' or rawxx_pattern.match(header[x]) is not None)
-                for x in ('RAWBG', 'RAWCC', 'RAWIQ', 'RAWWV'))
+#@RuleSet.register_function("valid-rawXX")
+#def check_rawXX_contents(header, env):
+#    return all((header[x].upper() == 'UNKNOWN' or rawxx_pattern.match(header[x]) is not None)
+#                for x in ('RAWBG', 'RAWCC', 'RAWIQ', 'RAWWV'))
 
 @RuleSet.register_function("valid-observation-info", excIfFalse = EngineeringImage)
 def check_observation_related_fields(header, env):
