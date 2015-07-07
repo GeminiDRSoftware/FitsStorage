@@ -14,37 +14,42 @@ from orm.fulltextheader import FullTextHeader
 def report(req, thing):
     this = req.usagelog.this
 
-    fnthing = gemini_fitsfilename(thing)
-    match = re.match(r'\d+', thing)
 
-    if not (fnthing or match):
-        # OK, they must have fed us garbage
-        req.content_type = "text/plain"
-        req.write("Could not understand argument - You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
-
-        return apache.OK
+#    if not (fnthing or match):
+#        # OK, they must have fed us garbage
+#        req.content_type = "text/plain"
+#        req.write("Could not understand argument - You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
+#
+#        return apache.OK
 
     session = sessionfactory()
 
     try:
-        # Now construct the query
-        if fnthing:
-            # We got a filename
-            query = session.query(File).filter(File.name == fnthing)
-            if query.count() == 0:
-                req.content_type = "text/plain"
-                req.write("Cannot find file for: %s\n" % fnthing)
-                return apache.OK
-            file = query.one()
-            # Query diskfiles to find the diskfile for file that is canonical
-            query = session.query(DiskFile).filter(DiskFile.canonical == True).filter(DiskFile.file_id == file.id)
-        else:
+        if thing.isdigit():
             # We got a diskfile_id
             query = session.query(DiskFile).filter(DiskFile.id == thing)
             if query.count() == 0:
                 req.content_type = "text/plain"
                 req.write("Cannot find diskfile for id: %s\n" % thing)
                 return apache.OK
+        # Now construct the query
+        else:
+            fnthing = gemini_fitsfilename(thing)
+            # We got a filename
+            if fnthing:
+                error_message = "Cannot find file for: %s\n" % fnthing
+                query = session.query(File).filter(File.name == fnthing)
+            else:
+                error_message = "Cannot find (non-standard named) file for: %s\n" % thing
+                query = session.query(File).filter(File.name == thing)
+
+            if query.count() == 0:
+                req.content_type = "text/plain"
+                req.write(error_message)
+                return apache.OK
+            file = query.one()
+            # Query diskfiles to find the diskfile for file that is canonical
+            query = session.query(DiskFile).filter(DiskFile.canonical == True).filter(DiskFile.file_id == file.id)
 
         diskfile = query.one()
         # Find the diskfilereport
