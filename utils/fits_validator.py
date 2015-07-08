@@ -661,14 +661,17 @@ class RuleStack(object):
     def test(self, header, env):
         stack = [self.entryPoint]
         passed = []
+        mess = []
 
         while stack:
             ruleSet = stack.pop()
-            mess = ruleSet.test(header, env)
-            if len(mess) > 0:
-                return (False, mess)
+            tmess = ruleSet.test(header, env)
 
-            passed.append(ruleSet)
+            if not tmess:
+                passed.append(ruleSet)
+            else:
+                mess.extend(tmess)
+
             env.features.update(ruleSet.features)
 
             if 'failed' in env.features:
@@ -683,6 +686,8 @@ class RuleStack(object):
             env.features.remove('valid')
         except KeyError:
             mess.append(NOT_FOUND_MESSAGE)
+
+        if mess:
             return (False, mess)
 
         return (True, passed)
@@ -843,7 +848,7 @@ class Evaluator(object):
             # Skim non-strings from msg
             msg = [[x for x in m if not isinstance(x, RuleSet)] for m in msg]
             if valid:
-                return Result(True, 'CORRECT', ["This looks like a valid file"])
+                return Result(True, 'CORRECT', "This looks like a valid file")
             else:
                 # First, focus on the PHDU messages
                 if len(msg[0]) > 0:
