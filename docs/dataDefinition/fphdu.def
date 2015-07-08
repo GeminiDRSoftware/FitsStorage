@@ -24,10 +24,13 @@ keywords:
 # Next three are float
   - AZIMUTH:
     - float
+    - since:    2001-7-1
   - ELEVATIO:
     - float
+    - since:    2001-7-1
   - CRPA:
     - float
+    - since:    2001-7-1
   - TRKFRAME
   - DECTRACK
   - TRKEPOCH
