@@ -8,16 +8,20 @@ If <version> is not provided, the latest available will be used to perform
 the tests.
 
 Usage:
-  parallel-test [-W WORKERS] [-I INSTRUMENT] [-V VEREDICT [-v VERSION]] [<version>]
+  parallel-test [-N] [-W WORKERS] [-I INSTRUMENT] [-V VEREDICT [-v VERSION]] [-f FILELIST] [-M TEXT] [-m TEXT] [<version>]
   parallel-test (-h | --help)
 
 Options:
   -h --help      Show this message
+  -N             Don't skip files that have been tested already
   -W WORKERS     Number of parallel instances working on the data [default: 10]
   -I INSTRUMENT  Select only files for this instrument. Valid values are:
                     bhros, flamingos, f2, gmos, gnirs, gpi, gsaoi, hokuppa,
                     hrwfs, michelle, nici, nifs, niri, oscir, phoenix,
                     quirc, texes, trecs
+  -f FILELIST    Test files only from the filelist
+  -M TEXT        Select cases where the 'cause' contains the indicated text
+  -m TEXT        Select cases where the 'cause' DOES NOT contain the indicated text
   -V VEREDICT    Select only files which have been tested before and which came
                  up with this veredict in the last attempt. Valid values are:
                     bad, correct, eng, invalid, nodate, notgemini, exception
@@ -30,7 +34,8 @@ from bz2 import BZ2File
 from csv import reader
 from docopt import docopt
 from functools import partial
-from pathos.multiprocessing import Pool
+#from pathos.multiprocessing import Pool
+from multiprocessing import Pool, Value, Array
 from collections import namedtuple
 from os.path import join as opjoin, exists
 from pyfits import open as pfopen
@@ -72,31 +77,40 @@ SELECT path, rulefile.id
 
 get_document_query = "SELECT content FROM rulefile WHERE rulefile.id = %s"
 
+_version = Array('c', 5)
+
 class SqlRuleSet(RuleSet):
-    __conn = None
-    __version = None
-    __file_ids = {}
+    def __init__(self, filename):
+        self.__conn = None
+        self.__file_ids = None
+        print("New SqlRuleSet")
 
-    @classmethod
-    def initializeSql(cls, conn, ver):
-        cls.__conn = conn
-        cls.__version = ver
-        curs = conn.cursor()
-        curs.execute(get_ids_query, (ver,))
-        cls.__file_ids = dict(curs.fetchall())
+        super(SqlRuleSet, self).__init__(filename)
 
-    @classmethod
-    def _open(cls, filename):
+    @property
+    def connection(self):
+        if self.__conn is None:
+            self.__conn = psycopg2.connect(**DSN)
+
+        return self.__conn
+
+    @property
+    def file_ids(self):
+        if self.__file_ids is None:
+            curs = self.connection.cursor()
+            curs.execute(get_ids_query, (_version.value,))
+            self.__file_ids = dict(curs.fetchall())
+
+        return self.__file_ids
+
+    def _open(self, filename):
         try:
-            curs = cls.__conn.cursor()
-            curs.execute(get_document_query, (cls.__file_ids[filename],))
+            curs = self.connection.cursor()
+            curs.execute(get_document_query, (self.file_ids[filename],))
 
             return BytesIO(curs.fetchone()[0])
         except (KeyError, TypeError):
-            raise IOError("Can't find file '{0}' in database for ruleset version {1}".format(filename, cls.__version))
-
-    def __init__(self, filename):
-        super(SqlRuleSet, self).__init__(filename)
+            raise IOError("Can't find file '{0}' in database for ruleset version {1}".format(filename, _version.value))
 
 def valid_header(rs, fits):
     fits.verify('exception')
@@ -131,7 +145,11 @@ class Evaluator(AstroDataEvaluator):
             nobz2 = filename
         origpath = opjoin(BASEPATH, bz2n)
         fixedpath = opjoin(FIXEDBASEPATH, nobz2)
-        if exists(fixedpath):
+        fixedpathbz2 = opjoin(FIXEDBASEPATH, bz2n)
+        if exists(fixedpathbz2):
+            origpath = fixedpathbz2
+            filename = bz2n
+        elif exists(fixedpath):
             origpath = fixedpath
             filename = nobz2
         try:
@@ -168,6 +186,9 @@ skip_query = """
 instrument_filter = "tf.instrument = %(inst)s"
 instrument_filter_in = "tf.instrument IN %(inst)s"
 veredict_filter = "ti.veredict = %(vered)s AND ti.test_version = %(vered_vers)s"
+cause_filter = "ti.causes LIKE %(causes)s"
+notcause_filter = "ti.causes NOT LIKE %(notcauses)s"
+file_filter = "tf.filename IN %(filelist)s"
 
 insert_test_query = """
 INSERT INTO testing_info (tested_file, test_version, acceptable, veredict, causes)
@@ -205,11 +226,20 @@ class SqlFiles(object):
                 else:
                     extra_where.append(instrument_filter)
                 arguments['inst'] = inst
+            if 'filelist' in self.filter:
+                extra_where.append(file_filter)
+                arguments['filelist'] = tuple("{0}".format(x.strip()) for x in self.filter['filelist'])
             if 'veredict' in self.filter:
                 build_query.append(filelist_join)
                 extra_where.append(veredict_filter)
                 arguments['vered'] = self.filter['veredict']
                 arguments['vered_vers'] = self.filter.get('veredict-version', self.versid)
+            if 'causes' in self.filter:
+                extra_where.append(cause_filter)
+                arguments['causes'] = '%{0}%'.format(self.filter['causes'])
+            if 'notcauses' in self.filter:
+                extra_where.append(notcause_filter)
+                arguments['notcauses'] = '%{0}%'.format(self.filter['notcauses'])
 
         if self.skipping:
             build_query.append(skip_query)
@@ -221,6 +251,8 @@ class SqlFiles(object):
                 query = ' AND '.join((query, filter_string))
             else:
                 query = ' WHERE '.join((query, filter_string))
+
+        # print(formatted_statement(query))
 
         return query, arguments
 
@@ -301,22 +333,35 @@ def getFilter(curs, args):
                 filt['veredict-version'] = getDatabaseRulesetId(curs, args['-v'])[0]
         except KeyError:
             raise RuntimeError("'{0}' is not a valid veredict choice".format(args['-V']))
+    if args['-M']:
+        filt['causes'] = args['-M']
+
+    if args['-m']:
+        filt['notcauses'] = args['-m']
+
+    if args['-f']:
+        try:
+            filt['filelist'] = open(args['-f'])
+        except IOError:
+            raise RuntimeError("Can't open file '{0}'".format(args['-f']))
 
     return filt
 
 if __name__ == '__main__':
     args = docopt(__doc__, version='Parallel Test v0.1')
     p = Pool(int(args['-W']))
+    skip = not args['-N']
 
     try:
         with psycopg2.connect(**DSN) as conn:
             versid, vers = getDatabaseRulesetId(conn.cursor(), args['<version>'])
+            _version.value = vers
             print("Collecting rule set version {0}".format(vers), file=sys.stderr)
-            SqlRuleSet.initializeSql(conn, vers)
-            evaluator = Evaluator(SqlRuleSet)
-            sqlFiles = SqlFiles(conn, versid, filter=getFilter(conn.cursor(), args))
 
-            for result in p.imap_unordered(evaluator, sqlFiles, chunksize = 10):
+            evaluator = Evaluator(SqlRuleSet)
+            sqlFiles = SqlFiles(conn, versid, skipping=skip, filter=getFilter(conn.cursor(), args))
+
+            for result in p.imap_unordered(evaluator, sqlFiles, chunksize = 64):
                 print("{0:40} - {1}/{2}".format(result.filename, result.passes, result.code))
                 sqlFiles.upsert(result)
     except RuntimeError as e:

@@ -484,8 +484,7 @@ class RuleSet(list):
             return fn
         return reg
 
-    @classmethod
-    def _open(cls, filename):
+    def _open(self, filename):
         return open(get_full_path(filename))
 
     def __init__(self, filename):
@@ -830,6 +829,7 @@ class Evaluator(object):
         self.rq = RuleStack(ruleSetClass)
 
     def init(self, root_file='fits'):
+        print("Initializing the ruleset")
         self.rq.initialize(root_file)
 
     def set_initial_features(self, fits, tags):
