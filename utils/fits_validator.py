@@ -262,7 +262,17 @@ def iter_pairs(lst, coercion = lambda x: x):
 
 def iter_keywords(lst):
     for (key, value) in iter_pairs(lst):
-        if ',' in key:
+        if key.startswith('if '):
+            if not value:
+                raise ValueError('Found "{0}" with no keywords associated'.format(key))
+
+            for k, descriptor in iter_keywords(value):
+                descriptor.addRestriction(key)
+
+                yield k, descriptor
+            continue
+
+        elif ',' in key:
             splitkey = [x.strip() for x in key.split(',')]
         else:
             splitkey = [key]
@@ -277,8 +287,28 @@ def getEnvDate(env):
 
     raise NoDateError()
 
+### Functions for skip test
+# The functions in this section return are meant to test if the conditions are
+# met so that we can test for the existence and validity of a certain keyword.
+#
+# The must return False if this is NOT the case. Have this in mind when reading
+# the code, because you may expect different results
+
 def buildSinceFn(value):
     return lambda h, e: getEnvDate(e) < value
+
+def buildEnvConditionFn(value):
+    if value.startswith('not '):
+        negated = True
+        value = value[4:].strip()
+    else:
+        negated = False
+
+    if negated:
+        return lambda h, env: value in env.features
+    return lambda h, env: value not in env.features
+
+### End functions for skip test
 
 class KeywordDescriptor(object):
     """Instances of this class are representations of a keyword descriptor from a
@@ -341,6 +371,8 @@ class KeywordDescriptor(object):
                 self.range.append(Range.from_type(fitsTypes[restriction]))
             elif restriction == 'optional':
                 self.optional = True
+            elif restriction.startswith('if '):
+                self.reqs.append(buildEnvConditionFn(restriction[3:].strip()))
             else:
                 raise ValueError("Unknown descriptor {0}".format(restriction))
         if isinstance(restriction, dict):
