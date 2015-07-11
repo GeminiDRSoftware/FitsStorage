@@ -259,6 +259,16 @@ def iter_pairs(lst, coercion = lambda x: x):
         elif k is not None:
             yield (k, ())
 
+def iter_keywords(lst):
+    for (key, value) in iter_pairs(lst):
+        if ',' in key:
+            splitkey = [x.strip() for x in key.split(',')]
+        else:
+            splitkey = [key]
+
+        for k in splitkey:
+            yield k, KeywordDescriptor(value)
+
 def getEnvDate(env):
     for feat in env.features:
         if feat.startswith('date:'):
@@ -500,9 +510,7 @@ class RuleSet(list):
                     raise RuntimeError("Syntax Error: {0!r} (on {1})".format(entry, self.fn))
             self.features = list(iter_list(data.get('provides')))
             try:
-                self.keywordDescr = dict((key, KeywordDescriptor(value))
-                                            for (key, value)
-                                             in iter_pairs(data.get('keywords')))
+                self.keywordDescr = dict(iter_keywords(data.get('keywords')))
             except ValueError as e:
                 s = str(e)
                 raise ValueError('{0}: {1}'.format(self.fn, s))
