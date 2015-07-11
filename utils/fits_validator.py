@@ -829,7 +829,6 @@ class Evaluator(object):
         self.rq = RuleStack(ruleSetClass)
 
     def init(self, root_file='fits'):
-        print("Initializing the ruleset")
         self.rq.initialize(root_file)
 
     def set_initial_features(self, fits, tags):

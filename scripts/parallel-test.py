@@ -35,7 +35,8 @@ from csv import reader
 from docopt import docopt
 from functools import partial
 #from pathos.multiprocessing import Pool
-from multiprocessing import Pool, Value, Array
+from multiprocessing import Pool, Value
+from ctypes import py_object
 from collections import namedtuple
 from os.path import join as opjoin, exists
 from pyfits import open as pfopen
@@ -68,47 +69,16 @@ def getDatabaseRulesetId(curs, version):
     except TypeError:
         return None
 
-get_ids_query = """
-SELECT path, rulefile.id
-  FROM ruleset INNER JOIN ruleset_rulefile ON ruleset.id = ruleset_rulefile.set_id
-               INNER JOIN rulefile ON ruleset_rulefile.file_id = rulefile.id
- WHERE ruleset.version = %s
-"""
-
-get_document_query = "SELECT content FROM rulefile WHERE rulefile.id = %s"
-
-_version = Array('c', 5)
+_version = Value(py_object)
+_file_info = Value(py_object)
 
 class SqlRuleSet(RuleSet):
     def __init__(self, filename):
-        self.__conn = None
-        self.__file_ids = None
-        print("New SqlRuleSet")
-
         super(SqlRuleSet, self).__init__(filename)
-
-    @property
-    def connection(self):
-        if self.__conn is None:
-            self.__conn = psycopg2.connect(**DSN)
-
-        return self.__conn
-
-    @property
-    def file_ids(self):
-        if self.__file_ids is None:
-            curs = self.connection.cursor()
-            curs.execute(get_ids_query, (_version.value,))
-            self.__file_ids = dict(curs.fetchall())
-
-        return self.__file_ids
 
     def _open(self, filename):
         try:
-            curs = self.connection.cursor()
-            curs.execute(get_document_query, (self.file_ids[filename],))
-
-            return BytesIO(curs.fetchone()[0])
+            return BytesIO(_file_info.value[filename])
         except (KeyError, TypeError):
             raise IOError("Can't find file '{0}' in database for ruleset version {1}".format(filename, _version.value))
 
@@ -347,6 +317,18 @@ def getFilter(curs, args):
 
     return filt
 
+get_fileinfo_query = """
+SELECT path, content
+  FROM ruleset INNER JOIN ruleset_rulefile ON ruleset.id = ruleset_rulefile.set_id
+               INNER JOIN rulefile ON ruleset_rulefile.file_id = rulefile.id
+ WHERE ruleset.version = %s
+"""
+
+def getFileInfo(curs, vers):
+    curs.execute(get_fileinfo_query, (vers,))
+
+    return dict(curs)
+
 if __name__ == '__main__':
     args = docopt(__doc__, version='Parallel Test v0.1')
     p = Pool(int(args['-W']))
@@ -356,6 +338,7 @@ if __name__ == '__main__':
         with psycopg2.connect(**DSN) as conn:
             versid, vers = getDatabaseRulesetId(conn.cursor(), args['<version>'])
             _version.value = vers
+            _file_info.value = getFileInfo(conn.cursor(), vers)
             print("Collecting rule set version {0}".format(vers), file=sys.stderr)
 
             evaluator = Evaluator(SqlRuleSet)
