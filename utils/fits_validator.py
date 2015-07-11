@@ -832,13 +832,21 @@ class Evaluator(object):
     def init(self, root_file='fits'):
         self.rq.initialize(root_file)
 
-    def valid_header(self, fits):
+    def set_initial_features(self, fits, tags):
+        # This is Gemini-centric and should be abstracted later
+        s = set()
+        if 'PREPARED' in tags:
+            s.add('prepared')
+
+        return s
+
+    def valid_header(self, fits, tags):
         if not self.rq.initialized:
             self.init()
 
         fits.verify('exception')
         env = Environment()
-        env.features = set()
+        env.features = self.set_initial_features(fits, tags)
         res = []
         mess = []
         for n, hdu in enumerate(fits):
@@ -849,10 +857,9 @@ class Evaluator(object):
 
         return all(res), mess, env
 
-    def evaluate(self, fits):
-
+    def evaluate(self, fits, tags=set()):
         try:
-            valid, msg, env = self.valid_header(fits)
+            valid, msg, env = self.valid_header(fits, tags)
             # Skim non-strings from msg
             msg = [[x for x in m if not isinstance(x, RuleSet)] for m in msg]
             if valid:
