@@ -32,6 +32,7 @@ import gemini_metadata_utils as gmu
 
 import yaml
 import pyfits as pf
+from astrodata import AstroData
 
 # Exceptions
 
@@ -612,9 +613,9 @@ class RuleSet(list):
         return "<{0} '{1}' [{2}]>".format(self.__class__.__name__, self.fn, ', '.join(x.fn for x in self), ', '.join(self.keywordDescr))
 
 class AlternateRuleSets(object):
-    """This class is an interface to a number RuleSets. It chooses among a number of alternate
-       rulesets and offers the same behaviour as the first one that matches the current
-       environment and headers"""
+    """This class is an interface to multiple RuleSets. It chooses among a number of
+       alternate rulesets and offers the same behaviour as the first one that matches the
+       current environment and headers"""
     def __init__(self, alternatives):
         self.alts = alternatives
         self.winner = None
@@ -831,7 +832,7 @@ class Evaluator(object):
     def init(self, root_file='fits'):
         self.rq.initialize(root_file)
 
-    def set_initial_features(self, fits, tags):
+    def _set_initial_features(self, fits, tags):
         return set()
 
     def valid_header(self, fits, tags):
@@ -840,7 +841,7 @@ class Evaluator(object):
 
         fits.verify('exception')
         env = Environment()
-        env.features = self.set_initial_features(fits, tags)
+        env.features = self._set_initial_features(fits, tags)
         res = []
         mess = []
         for n, hdu in enumerate(fits):
@@ -899,7 +900,7 @@ class AstroDataEvaluator(Evaluator):
     def __init__(self, *args, **kw):
         super(AstroDataEvaluator, self).__init__(*args, **kw)
 
-    def set_initial_features(self, fits, tags):
+    def _set_initial_features(self, fits, tags):
         # This is Gemini-centric. Maybe move it to a separate files later with other Geminisms?
         s = set()
         if 'PREPARED' in tags:
@@ -910,15 +911,17 @@ class AstroDataEvaluator(Evaluator):
     def evaluate(self, ad_object):
         return super(AstroDataEvaluator, self).evaluate(ad_object.hdulist, ad_object.types)
 
+def process_argument(argv, argument):
+    try:
+        argv.remove(argument)
+        return True
+    except ValueError:
+        return False
+
 if __name__ == '__main__':
     argv = sys.argv[1:]
-    verbose = False
-    try:
-        if argv[0] == '-v':
-            verbose = True
-            argv = argv[1:]
-    except IndexError:
-        pass
+    verbose = process_argument(argv, '-v')
+    use_ad  = process_argument(argv, '-a')
 
     try:
         fits = pf.open(argv[0])
@@ -971,8 +974,12 @@ if __name__ == '__main__':
         if err > 0:
             sys.exit(-1)
     else:
-        evaluate = Evaluator()
-        result = evaluate(fits)
+        if use_ad:
+            evaluate = AstroDataEvaluator()
+            result = evaluate(AstroData(fits))
+        else:
+            evaluate = Evaluator()
+            result = evaluate(fits)
         if result.message is not None:
             print(result.message)
     sys.exit(0)
