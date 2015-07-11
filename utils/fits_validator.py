@@ -333,38 +333,44 @@ class KeywordDescriptor(object):
         # Maybe we should warn when this is None...
         if info is not None:
             for restriction in info:
-                if isinstance(restriction, (str, unicode)):
-                    if restriction in fitsTypes:
-                        self.range.append(Range.from_type(fitsTypes[restriction]))
-                    elif restriction == 'optional':
-                        self.optional = True
+                self.addRestriction(restriction)
+
+    def addRestriction(self, restriction):
+        if isinstance(restriction, (str, unicode)):
+            if restriction in fitsTypes:
+                self.range.append(Range.from_type(fitsTypes[restriction]))
+            elif restriction == 'optional':
+                self.optional = True
+            else:
+                raise ValueError("Unknown descriptor {0}".format(restriction))
+        if isinstance(restriction, dict):
+            kw, value = restriction.items()[0]
+            if kw in fitsTypes:
+                if kw == 'char':
+                    if isinstance(value, str) and ' '.join(value.lower().split()) == 'not null':
+                        self.range.append(NotNull)
                     else:
-                        raise ValueError("Unknown descriptor {0}".format(restriction))
-                if isinstance(restriction, dict):
-                    kw, value = restriction.items()[0]
-                    if kw in fitsTypes:
-                        if kw == 'char':
-                            if isinstance(value, str) and ' '.join(value.lower().split()) == 'not null':
-                                self.range.append(NotNull)
-                            else:
-                                self.range.append(set(iter_list(value)))
-                        elif ' .. ' in value:
-                            self.range.append(Range.from_string(value, forceType = fitsTypes[kw]))
-                        else:
-                            self.range.append(set(iter_list(value)))
-                    elif kw == 'upper':
-                        self.range.append(TransformedStringRangeTest(str.upper, set(iter_list(value))))
-                    elif kw == 'lower':
-                        self.range.append(TransformedStringRangeTest(str.lower, set(iter_list(value))))
-                    elif kw == 'since':
-                        coerced = coerceValue(value)
-                        if not isinstance(coerced, datetime):
-                            raise ValueError("Wrong value for 'since': {0}".format(value))
-                        self.reqs.append(buildSinceFn(coerced))
-                    elif kw == 'pattern':
-                        self.range.append(Pattern(value))
-                    else:
-                        raise ValueError("Unknown descriptor {0}".format(restriction))
+                        self.range.append(set(iter_list(value)))
+                elif ' .. ' in value:
+                    self.range.append(Range.from_string(value, forceType = fitsTypes[kw]))
+                else:
+                    self.range.append(set(iter_list(value)))
+            elif kw == 'upper':
+                self.addTransformedStringRangeTest(str.upper, value)
+            elif kw == 'lower':
+                self.addTransformedStringRangeTest(str.lower, value)
+            elif kw == 'since':
+                coerced = coerceValue(value)
+                if not isinstance(coerced, datetime):
+                    raise ValueError("Wrong value for 'since': {0}".format(value))
+                self.reqs.append(buildSinceFn(coerced))
+            elif kw == 'pattern':
+                self.range.append(Pattern(value))
+            else:
+                raise ValueError("Unknown descriptor {0}".format(restriction))
+
+    def addTransformedStringRangeTest(self, fn, value):
+        self.range.append(TransformedStringRangeTest(fn, set(iter_list(value))))
 
     @property
     def mandatory(self):
