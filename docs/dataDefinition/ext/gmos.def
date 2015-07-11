@@ -5,13 +5,14 @@ conditions:
 include files:    wcs
 
 keywords:
-  - CCDSUM:
-    - char:     [ '1 1', '1 2', '1 4', '2 1', '2 2', '2 4', '4 1', '4 2', '4 4' ]
-  - CCDSIZE,CCDSEC,DATASEC,DETSEC,BIASSEC:
-    - pattern:    '\[\d+:\d+,\d+:\d+]'
-  - CCDNAME:
-    - char:       not null
-  - GAIN:
-    - float
-  - RDNOISE:
-    - float
+  - if not prepared:
+    - GAIN:
+      - float
+    - RDNOISE:
+      - float
+    - CCDSUM:
+      - char:     [ '1 1', '1 2', '1 4', '2 1', '2 2', '2 4', '4 1', '4 2', '4 4' ]
+    - CCDNAME:
+      - char:       not null
+    - CCDSIZE,CCDSEC,DATASEC,DETSEC,BIASSEC:
+      - pattern:    '\[\d+:\d+,\d+:\d+]'
