@@ -126,20 +126,6 @@ class Evaluator(AstroDataEvaluator):
             result = partial(Result, nobz2)
             ad_object = AstroData(open_file(origpath))
             return result(*super(Evaluator, self).evaluate(ad_object))
-#            try:
-#                valid, msg = valid_header(self.rs, open_file(origpath))
-#                if valid:
-#                    return result(True, 'CORRECT', None)
-#                else:
-#                    return result(False, 'NOPASS', msg)
-#            except NoDateError:
-#                return result(False, 'NODATE', None)
-#            except NotGeminiData:
-#                return result(False, 'NOTGEMINI', None)
-#            except BadData:
-#                return result(False,  'BAD', None)
-#            except EngineeringImage:
-#                return result(True, 'ENG', None)
         except (GeneralError, IOError, VerifyError) as e:
             return result(False, 'EXCEPTION', e)
 
