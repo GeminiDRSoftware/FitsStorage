@@ -36,31 +36,13 @@ keywords:
   - RAWPIREQ:
     - optional
     - char:   [ UNKNOWN, 'YES', 'NO', CHECK ]   # Using quotes to prevent YAML to turn this into booleans
-  - RAWBG:
-    - optional
-    - char:     Any
-    - upper:    UNKNOWN
-    - pattern:  '\d{2}-percentile'
-  - RAWCC:
-    - optional
-    - char:     Any
-    - upper:    UNKNOWN
-    - pattern:  '\d{2}-percentile'
-  - RAWIQ:
-    - optional
-    - char:     Any
-    - upper:    UNKNOWN
-    - pattern:  '\d{2}-percentile'
-  - RAWWV:
+  - RAWBG,RAWCC,RAWIQ,RAWWV:
     - optional
     - char:     Any
     - upper:    UNKNOWN
     - pattern:  '\d{2}-percentile'
 
 tests:
-# Old images (previous to ~2005) miss IAA and OBSCLASS, which complicates
-# testing. We move those to this instead
-#  - valid-iaa-and-obsclass
 # Checks GEMPRGID, OBSID, AND DATALAB
   - valid-observation-info
   - wcs-after-pdu

@@ -5,11 +5,5 @@ conditions:
     - XTENSION:   IMAGE
 
 keywords:
-  - LOWROW:
-    - int:        0 .. 1023
-  - HIROW:
-    - int:        0 .. 1023
-  - LOWCOL:
-    - int:        0 .. 1023
-  - HICOL:
+  - HIROW,HICOL,LOWROW,LOWCOL:
     - int:        0 .. 1023

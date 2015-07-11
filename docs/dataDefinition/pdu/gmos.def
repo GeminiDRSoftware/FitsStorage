@@ -5,27 +5,19 @@ conditions:
     - INSTRUME: [ GMOS-N, GMOS-S ]
 
 keywords:
-  - EXPTIME:
-    - float:      0 .. *
-  - DARKTIME:
+  - DARKTIME,EXPTIME:
     - float:      0 .. *
 
   - MASKID:
     - int
   - MASKNAME:
     - char
-  - MASKTYP:
-    - int:      [ -1, 0, 1 ]
-  - MASKLOC:
+  - MASKTYP,MASKLOC:
     - int:      [ -1, 0, 1 ]
 
-  - FILTER1:
+  - FILTER1,FILTER2:
     - char:      not null
-  - FILTID1:
-    - int
-  - FILTER2:
-    - char:      not null
-  - FILTID2:
+  - FILTID1,FILTID2:
     - int
 
   - GRATING:
