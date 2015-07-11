@@ -833,12 +833,7 @@ class Evaluator(object):
         self.rq.initialize(root_file)
 
     def set_initial_features(self, fits, tags):
-        # This is Gemini-centric and should be abstracted later
-        s = set()
-        if 'PREPARED' in tags:
-            s.add('prepared')
-
-        return s
+        return set()
 
     def valid_header(self, fits, tags):
         if not self.rq.initialized:
@@ -900,6 +895,21 @@ class Evaluator(object):
 
     def __call__(self, filename):
         return self.evaluate(filename)
+
+class AstroDataEvaluator(Evaluator):
+    def __init__(self, *args, **kw):
+        super(AstroDataEvaluator, self).__init__(*args, **kw)
+
+    def set_initial_features(self, fits, tags):
+        # This is Gemini-centric. Maybe move it to a separate files later with other Geminisms?
+        s = set()
+        if 'PREPARED' in tags:
+            s.add('prepared')
+
+        return s
+
+    def evaluate(self, ad_object):
+        return super(AstroDataEvaluator, self).evaluate(ad_object.hdulist, ad_object.types)
 
 if __name__ == '__main__':
     argv = sys.argv[1:]

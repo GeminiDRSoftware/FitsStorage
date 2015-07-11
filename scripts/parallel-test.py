@@ -35,7 +35,8 @@ from collections import namedtuple
 from os.path import join as opjoin, exists
 from pyfits import open as pfopen
 from pyfits.verify import VerifyError
-from utils.fits_validator import RuleStack, RuleSet, Environment
+from astrodata import AstroData
+from utils.fits_validator import RuleStack, RuleSet, Environment, AstroDataEvaluator
 from utils.fits_validator import EngineeringImage, GeneralError, BadData, NotGeminiData, NoDateError
 from io import BytesIO
 
@@ -43,11 +44,14 @@ import psycopg2
 import sys
 
 # DSN and paths when running from hahalua
-DSN = dict(host  ='rcardene-ld1',
-           dbname='fitsdata')
+#DSN = dict(host  ='rcardene-ld1',
+#           dbname='fitsdata')
+DSN={'dbname': 'fitsdata'}
 
-BASEPATH='/data/gemini_data'
-FIXEDBASEPATH='/data/gemini_data/fixed/fixed_files'
+#BASEPATH='/data/gemini_data'
+#FIXEDBASEPATH='/data/gemini_data/fixed/fixed_files'
+BASEPATH='/mnt/hahalua'
+FIXEDBASEPATH='/mng/hahalua/fixed/fixed_files'
 
 def getDatabaseRulesetId(curs, version):
     if version is None:
@@ -114,9 +118,9 @@ def open_file(path):
 
 Result = namedtuple('Result', ['filename', 'passes', 'code', 'messages'])
 
-class Evaluator(object):
-    def __init__(self, rs):
-        self.rs = rs
+class Evaluator(AstroDataEvaluator):
+    def __init__(self, *args, **kw):
+        super(Evaluator, self).__init__(*args, **kw)
 
     def evaluate(self, filename):
         if filename.endswith('.bz2'):
@@ -132,20 +136,22 @@ class Evaluator(object):
             filename = nobz2
         try:
             result = partial(Result, nobz2)
-            try:
-                valid, msg = valid_header(self.rs, open_file(origpath))
-                if valid:
-                    return result(True, 'CORRECT', None)
-                else:
-                    return result(False, 'NOPASS', msg)
-            except NoDateError:
-                return result(False, 'NODATE', None)
-            except NotGeminiData:
-                return result(False, 'NOTGEMINI', None)
-            except BadData:
-                return result(False,  'BAD', None)
-            except EngineeringImage:
-                return result(True, 'ENG', None)
+            ad_object = AstroData(open_file(origpath))
+            return result(*super(Evaluator, self).evaluate(ad_object))
+#            try:
+#                valid, msg = valid_header(self.rs, open_file(origpath))
+#                if valid:
+#                    return result(True, 'CORRECT', None)
+#                else:
+#                    return result(False, 'NOPASS', msg)
+#            except NoDateError:
+#                return result(False, 'NODATE', None)
+#            except NotGeminiData:
+#                return result(False, 'NOTGEMINI', None)
+#            except BadData:
+#                return result(False,  'BAD', None)
+#            except EngineeringImage:
+#                return result(True, 'ENG', None)
         except (GeneralError, IOError, VerifyError) as e:
             return result(False, 'EXCEPTION', e)
 
@@ -307,10 +313,7 @@ if __name__ == '__main__':
             versid, vers = getDatabaseRulesetId(conn.cursor(), args['<version>'])
             print("Collecting rule set version {0}".format(vers), file=sys.stderr)
             SqlRuleSet.initializeSql(conn, vers)
-            rs = RuleStack(SqlRuleSet)
-            rs.initialize('fits')
-
-            evaluator = Evaluator(rs)
+            evaluator = Evaluator(SqlRuleSet)
             sqlFiles = SqlFiles(conn, versid, filter=getFilter(conn.cursor(), args))
 
             for result in p.imap_unordered(evaluator, sqlFiles, chunksize = 10):

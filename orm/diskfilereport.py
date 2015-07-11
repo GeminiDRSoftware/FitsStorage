@@ -7,9 +7,9 @@ from fits_verify import fitsverify
 
 from . import Base
 
-from utils.fits_validator import Evaluator, STATUSES
+from utils.fits_validator import AstroDataEvaluator, STATUSES
 
-evaluate = Evaluator()
+evaluate = AstroDataEvaluator()
 
 STATUS_ENUM = Enum(*STATUSES, name='mdstatus')
 
@@ -90,7 +90,7 @@ class DiskFileReport(Base):
             filename = diskfile.fullpath()
 
         if filename:
-            result = evaluate(diskfile.ad_object.hdulist)
+            result = evaluate(diskfile.ad_object)
             diskfile.mdready = result.passes
             self.mdstatus = result.code
             if result.message is not None:
