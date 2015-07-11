@@ -50,14 +50,14 @@ import psycopg2
 import sys
 
 # DSN and paths when running from hahalua
-#DSN = dict(host  ='rcardene-ld1',
-#           dbname='fitsdata')
-DSN={'dbname': 'fitsdata'}
+DSN = dict(host  ='rcardene-ld1',
+           dbname='fitsdata')
 
-#BASEPATH='/data/gemini_data'
-#FIXEDBASEPATH='/data/gemini_data/fixed/fixed_files'
-BASEPATH='/mnt/hahalua'
-FIXEDBASEPATH='/mng/hahalua/fixed/fixed_files'
+BASEPATH='/data/gemini_data'
+FIXEDBASEPATH='/data/gemini_data/fixed/fixed_files'
+
+def getConnection():
+    return psycopg2.connect(**DSN)
 
 def getDatabaseRulesetId(curs, version):
     if version is None:
@@ -162,12 +162,18 @@ def formatted_statement(statement, reindent=True):
     return sqlparse.format(statement, reindent=reindent)
 
 class SqlFiles(object):
-    def __init__(self, conn, versid, skipping = True, filter=None):
-        self.conn = conn
+    def __init__(self, versid, skipping = True, filter=None):
+        self.__conn = None
         self.versid = versid
         self.skipping = skipping
         self.collected = {}
         self.filter = filter
+
+    @property
+    def conn(self):
+        if self.__conn is None:
+            self.__conn = getConnection()
+        return self.__conn
 
     @property
     def query(self):
@@ -216,7 +222,7 @@ class SqlFiles(object):
         curs = self.conn.cursor()
         curs.execute(*self.query)
 
-        for fid, fname in curs:
+        for n, (fid, fname) in enumerate(curs, 1):
             self.collected[fname] = fid
             yield fname.strip()
 
@@ -321,14 +327,14 @@ if __name__ == '__main__':
     skip = not args['-N']
 
     try:
-        with psycopg2.connect(**DSN) as conn:
+        with getConnection() as conn:
             versid, vers = getDatabaseRulesetId(conn.cursor(), args['<version>'])
             _version.value = vers
             _file_info.value = getFileInfo(conn.cursor(), vers)
             print("Collecting rule set version {0}".format(vers), file=sys.stderr)
 
             evaluator = Evaluator(SqlRuleSet)
-            sqlFiles = SqlFiles(conn, versid, skipping=skip, filter=getFilter(conn.cursor(), args))
+            sqlFiles = SqlFiles(versid, skipping=skip, filter=getFilter(conn.cursor(), args))
 
             for result in p.imap_unordered(evaluator, sqlFiles, chunksize = 64):
                 print("{0:40} - {1}/{2}".format(result.filename, result.passes, result.code))
