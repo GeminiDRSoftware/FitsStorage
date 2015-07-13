@@ -3,8 +3,6 @@ import sys
 
 from sqlalchemy import join, desc
 
-from orm import sessionfactory
-from orm.preview import Preview
 from fits_storage_config import using_s3, aws_access_key, aws_secret_key, s3_bucket_name
 from logger import logger, setdebug, setdemon
 from boto.s3.connection import S3Connection
@@ -49,7 +47,6 @@ filelist = []
 for key in bucket.list():
     filelist.append(key.name)
 
-#session = sessionfactory()
 
 for filename in filelist:
     if filename.endswith("_preview.jpg"):
