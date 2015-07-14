@@ -83,7 +83,7 @@ if options.lockfile:
                 os.kill(oldpid, 0)
         except:
             # If this gets called then the lockfile refers to a process which either doesn't exist or is not ours.
-            logger.error("PID in lockfile prefers to a process which either doesn't exist, or is not ours - %d", oldpid)
+            logger.info("PID in lockfile prefers to a process which either doesn't exist, or is not ours - %d", oldpid)
             actually_locked = False
 
         if actually_locked:
