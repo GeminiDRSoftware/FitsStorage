@@ -930,6 +930,8 @@ class Evaluator(object):
             return Result(True,  'BAD', "Bad data (RAWGEMQA = BAD)")
         except EngineeringImage:
             return Result(True, 'ENG', "This looks like an engineering image. No further checks")
+        except pf.VerifyError as e:
+            return Result(False, 'EXCEPTION', str(e))
 
     def __call__(self, filename):
         return self.evaluate(filename)
