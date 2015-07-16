@@ -140,6 +140,9 @@ sudo su - postgres
 vi /data/pgsql_data/postgresql.conf
 #shared_buffers = 256MB
 # 25% of memory if memory > 1GB
+
+effective_cache_size = 8000MB
+
 #
 # If there will be remote access to this database (eg for eavedropping)
 # set listen_addresses = '*' in postgresql.conf, also:
