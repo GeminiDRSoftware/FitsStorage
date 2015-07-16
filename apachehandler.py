@@ -184,6 +184,8 @@ def handler(req):
         session.commit()
         session.close()
 
+    if retary in (apache.OK, apache.HTTP_OK):
+        return apache.OK
     return retary
 
 # The top level handler. This essentially calls out to the specific
