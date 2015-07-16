@@ -13,12 +13,13 @@ from orm.ingestqueue import IngestQueue
 
 import apache_return_codes as apache
 
-import datetime
+from datetime import datetime, timedelta, time as dt_time, date as dt_date
+from collections import defaultdict, namedtuple
 
 def stats(req):
     """
     Provides live statistics on fits database: total filesize, ingest queue status, and datarate for various date ranges is queried. Information is
-    presented in html in the browser in a list format. 
+    presented in html in the browser in a list format.
     """
 
     req.content_type = "text/html"
@@ -61,20 +62,20 @@ def stats(req):
         latest = query.one()[0]
         req.write("<li>Most recent diskfile entry was at: %s</li>" % latest)
         # Number of entries in last minute / hour / day
-        mbefore = datetime.datetime.now() - datetime.timedelta(minutes=1)
-        hbefore = datetime.datetime.now() - datetime.timedelta(hours=1)
-        dbefore = datetime.datetime.now() - datetime.timedelta(days=1)
-        mcount = session.query(DiskFile).filter(DiskFile.entrytime > mbefore).count()
-        hcount = session.query(DiskFile).filter(DiskFile.entrytime > hbefore).count()
-        dcount = session.query(DiskFile).filter(DiskFile.entrytime > dbefore).count()
-        req.write('<LI>Number of DiskFile rows added in the last minute: %d</LI>' % mcount)
-        req.write('<LI>Number of DiskFile rows added in the last hour: %d</LI>' % hcount)
-        req.write('<LI>Number of DiskFile rows added in the last day: %d</LI>' % dcount)
+        periods = (('minute', timedelta(minutes=1)),
+                   ('hour', timedelta(hours=1)),
+                   ('day', timedelta(days=1)))
+        for name, delta in periods:
+            cnt = session.query(DiskFile)\
+                            .filter(DiskFile.entrytime > (datetime.now() - delta))\
+                            .count()
+            req.write('<LI>Number of DiskFile rows added in the last %s: %d</LI>' % (name, cnt))
         # Last 10 entries
-        query = session.query(DiskFile).order_by(desc(DiskFile.entrytime)).limit(10)
-        list = query.all()
+        query = session.query(DiskFile)\
+                        .order_by(desc(DiskFile.entrytime))\
+                        .limit(10)
         req.write('<LI>Last 10 diskfile entries added:<UL>')
-        for i in list:
+        for i in query:
             req.write('<LI>%s : %s</LI>' % (i.file.name, i.entrytime))
         req.write('</UL></LI>')
         req.write("</ul>")
@@ -97,57 +98,42 @@ def stats(req):
 
         # Data rate statistics
         req.write("<h2>Data Rates</h2>")
-        today = datetime.datetime.utcnow().date()
-        zerohour = datetime.time(0, 0, 0)
-        ddelta = datetime.timedelta(days=1)
-        wdelta = datetime.timedelta(days=7)
-        mdelta = datetime.timedelta(days=30)
+        today = datetime.utcnow().date()
+        zerohour = dt_time(0, 0, 0)
+        comb = datetime.combine(today, zerohour)
 
-        start = datetime.datetime.combine(today, zerohour)
-        end = start + ddelta
+        def print_stats(title, end, times, delta, short_message = False):
+            start=end - delta
+            req.write("<h3>%s</h3><ul>" % title)
+            for i in range(times):
+                query = session.query(func.sum(DiskFile.file_size), func.count(1))\
+                                .select_from(join(Header, DiskFile))\
+                                .filter(DiskFile.present == True)\
+                                .filter(Header.ut_datetime >= start)\
+                                .filter(Header.ut_datetime < end)
+                bytes, count = query.one()
+                if(not bytes):
+                    bytes = 0
+                    count = 0
+                if short_message:
+                    req.write("<li>%s: %.2f GB, %d files</li>" % (str(start.date()), bytes/1E9, count))
+                else:
+                    req.write("<li>%s - %s: %.2f GB, %d files</li>" % (str(start.date()), str(end.date()), bytes/1E9, count))
+                start -= delta
+                end -= delta
+            req.write("</ul>")
 
-        req.write("<h3>Last 10 days</h3><ul>")
-        for i in range(10):
-            query = session.query(func.sum(DiskFile.file_size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present == True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
-            bytes, count = query.one()
-            if(not bytes):
-                bytes = 0
-                count = 0
-            req.write("<li>%s: %.2f GB, %d files</li>" % (str(start.date()), bytes/1E9, count))
-            start -= ddelta
-            end -= ddelta
-        req.write("</ul>")
+        print_stats("Last 10 days", end=comb + timedelta(days=1),
+                                    times=10,
+                                    delta=timedelta(days=1),
+                                    short_message = True)
 
-        end = datetime.datetime.combine(today, zerohour)
-        start = end - wdelta
-        req.write("<h3>Last 6 weeks</h3><ul>")
-        for i in range(6):
-            query = session.query(func.sum(DiskFile.file_size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present == True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
-            bytes, count = query.one()
-            if(not bytes):
-                bytes = 0
-                count = 0
-            req.write("<li>%s - %s: %.2f GB, %d files</li>" % (str(start.date()), str(end.date()), bytes/1E9, count))
-            start -= wdelta
-            end -= wdelta
-        req.write("</ul>")
+        print_stats("Last 6 weeks", end=comb, times=6, delta=timedelta(days=7))
+        print_stats("Last 6 pseudo-months", end=comb, times=6, delta=timedelta(days=30))
 
-        end = datetime.datetime.combine(today, zerohour)
-        start = end - mdelta
-        req.write("<h3>Last 6 pseudo-months</h3><ul>")
-        for i in range(6):
-            query = session.query(func.sum(DiskFile.file_size), func.count(1)).select_from(join(Header, DiskFile)).filter(DiskFile.present == True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
-            bytes, count = query.one()
-            if(not bytes):
-                bytes = 0
-                count = 0
-            req.write("<li>%s - %s: %.2f GB, %d files</li>" % (str(start.date()), str(end.date()), bytes/1E9, count))
-            start -= mdelta
-            end -= mdelta
-        req.write("</ul>")
         req.write("</body></html>")
 
-        return apache.OK
+        return apache.HTTP_OK
 
     except IOError:
         pass
@@ -160,7 +146,7 @@ def content(req):
     Queries database for information concerning the total number and filesize of all stored files. Produces tables presenting the results, sorted by
     various properties such as instrument, observation class/type, and year of observation.
     """
-    
+
     session = sessionfactory()
 
     req.content_type = "text/html"
@@ -169,44 +155,35 @@ def content(req):
     req.write("<title>Database content statistics</title>")
     req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
     req.write("</head><body>\n")
-        
+
     if (fits_system_status == "development"):
         req.write('<h1>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h1>')
-        
+
     req.write("<h1>Database content statistics</h1>")
-    
+
     # Presents total files and filesize
     query = session.query(func.count(), func.sum(DiskFile.file_size), func.sum(DiskFile.data_size)).filter(DiskFile.canonical == True)
-    result = query.one()
-    filenum = result[0]
-    filesize = result[1]
-    datasize = result[2]
+    filenum, filesize, datasize = query.one()
 
     req.write("<p>Total number of files: %s</p>" % "{:,}".format(filenum))
 
     if filesize is not None:
         req.write("<p>Total file storage size: %s GB</p>" % '{:,.02f}'.format(filesize/1073741824.0))
-    
+
     if datasize is not None:
         req.write("<p>Total FITS data size: %s GB</p>" % '{:,.02f}'.format(datasize/1073741824.0))
 
     req.write("<h3>Data and file volume by telescope/instrument</h3>")
     req.write("<TABLE>")
     req.write("<TR class=tr_head>")
-    even = 0
-    
-    # Database content statistics
 
     # build the telescope list
     query = session.query(Header.telescope).group_by(Header.telescope).order_by(Header.telescope)
-    results = query.all()
     # results comes back as a list of one element tuples - clean up to a simple list
-    tels = []
-    for result in results:
-        if (result[0] is not None):
-            tels.append(result[0])
+    tels = [tel for (tel,) in query if tel is not None]
     # tels is now a simple list with no None values.
-    
+
+    # Database content statistics
     # Populates table headers
     req.write('<TH rowspan="2">Telescope&nbsp;</TH>')
     req.write('<TH rowspan="2">Instrument&nbsp;</TH>')
@@ -223,155 +200,131 @@ def content(req):
     req.write('<TH>Object Obs. Type&nbsp;</TH>')
     req.write('</TR>')
 
-    # Loops through table headers and populates table
-    for tel in tels:
-        # Build the instrument list
-        query = session.query(Header.instrument).group_by(Header.instrument).filter(Header.telescope == tel).order_by(Header.instrument)    
-        results = query.all()
-        # results comes back as a list of one element tuples - clean up to a simple list
-        instruments = []
-        for result in results:
-            if (result[0] is not None):
-                instruments.append(result[0])
-        # instruments is now a simple list with no None values
+    # This query takes canonical files for the grouped by telescope and instrument, and counts the
+    # total files. This is the general query that we'll specialize to extract all the stats
+    general_query = session.query(Header.telescope, Header.instrument, func.count()).select_from(join(DiskFile, Header))\
+                                               .filter(DiskFile.canonical == True)\
+                                               .filter(Header.telescope != None)\
+                                               .filter(Header.instrument != None)\
+                                               .group_by(Header.telescope, Header.instrument)
 
-        for instrument in instruments:
-            even = not even
-                       
-            if(even):
-                cs = "tr_even"
-            else:
-                cs = "tr_odd"
+    # Specialized queries. Query objects are 'lazy', meaning that they will only be performed when we try to
+    # extract rows from them
+    filesizesq = general_query.add_columns(func.sum(DiskFile.file_size), func.sum(DiskFile.data_size))
+    engq = general_query.filter(Header.engineering == True)
+    sciq = general_query.filter(Header.engineering == False)
+    classq = general_query.filter(or_(Header.observation_class == 'science',
+                                          Header.observation_class=='acq'))
+    calq = general_query.filter(or_(Header.observation_class=='progCal',
+                                        Header.observation_class=='partnerCal',
+                                        Header.observation_class=='acqCal',
+                                        Header.observation_class=='dayCal'))
+    typeq = general_query.filter(Header.observation_type == 'OBJECT')
 
-            req.write("<TR class=%s>" % (cs))
-        
-            # this query gives file counts and filesize totals
-            query = session.query(func.count(), func.sum(DiskFile.file_size), func.sum(DiskFile.data_size)).select_from(join(DiskFile, Header)).filter(DiskFile.canonical == True).filter(Header.telescope == tel).filter(Header.instrument == instrument)
-                        
-            # Telescope and instrument rows are populated here
-            req.write("<TD>%s</TD>" % tel)
-            req.write("<TD>%s</TD>" % instrument)
-            
-            # Instrument totals are tallied here
-            instresult = query.one()
-            instnum = instresult[0]
-            instbytes = instresult[1]
-            instdata = instresult[2]
+    # Build up the results
+    class Result(object):
+        def __init__(self):
+            self.instnum = 0
+            self.instbytes = 0
+            self.instdata = 0
+            self.engnum = 0
+            self.scinum = 0
+            self.sciacqnum = 0
+            self.calacqnum = 0
+            self.objnum = 0
 
-            req.write("<TD>%s</TD>" % '{:,.02f}'.format(instbytes/1073741824.0))
-            req.write("<TD>%s</TD>" % '{:,.02f}'.format(instdata/1073741824.0))
-            req.write("<TD>%s</TD>" % '{:,}'.format(instnum))
+    results = defaultdict(Result)
 
-            # this query gives only file counts
-            query = session.query(func.count()).select_from(join(DiskFile, Header)).filter(DiskFile.canonical == True).filter(Header.telescope == tel).filter(Header.instrument == instrument)
+    for tel, instr, cnt, fs, ds in filesizesq:
+        obj = results[(tel, instr)]
+        obj.instnum = cnt
+        obj.instbytes = fs
+        obj.instdata = ds
 
-            # Engineering/Science totals are tallied here
-            engquery = query.filter(Header.engineering == True)
-            sciquery = query.filter(Header.engineering == False)
-            engnum = engquery.one()[0]
-            scinum = sciquery.one()[0]
+    pairs = ((engq, 'engnum'),
+             (sciq, 'scinum'),
+             (classq, 'sciacqnum'),
+             (calq, 'calacqnum'),
+             (typeq, 'objnum'))
+    for qry, field in pairs:
+        for tel, instr, cnt in qry:
+            obj = results[(tel, instr)]
+            setattr(obj, field, cnt)
 
-            if engnum == None:
-                req.write("<TD>0</TD>")
-            else:
-                req.write("<TD>%s</TD>" % ("{:,}".format(engnum)))
+    # Print out the results
+    file_volume = "<TD>{}</TD><TD>{}</TD><TD>{:,.02f}</TD><TD>{:,.02f}</TD><TD>{:,}</TD><TD>{:,}</TD><TD>{:,}</TD><TD>{:,}</TD><TD>{:,}</TD><TD>{:,}</TD>"
+    even = False
+    for ((tel, instrument), values) in sorted(results.items()):
+        even = not even
+        req.write("<TR class=%s>" % ('tr_even' if even else 'tr_odd'))
+        req.write(file_volume.format(tel, instrument, values.instbytes/1073741824.0,
+                                                      values.instdata/1073741824.0,
+                                                      values.instnum,
+                                                      values.engnum,
+                                                      values.scinum,
+                                                      values.sciacqnum,
+                                                      values.calacqnum,
+                                                      values.objnum))
 
-            if scinum == None:
-                req.write("<TD>0</TD>")
-            else:
-                req.write("<TD>%s</TD>" % ("{:,}".format(scinum)))
-            
-            # Science+Acq row is populated here
-            classquery = query.filter(or_(Header.observation_class == 'science', Header.observation_class=='acq'))
-            classresult = classquery.one()
-            classnum = classresult[0]
-            
-            req.write("<TD>%s</TD>" % ("{:,}".format(classnum)))
-                                           
-            # Calibration row is populated here
-            calquery = query.filter(or_(Header.observation_class=='progCal', Header.observation_class=='partnerCal', Header.observation_class=='acqCal', Header.observation_class=='dayCal'))
-            calresult = calquery.one()
-            calnum = calresult[0]
+    req.write("</table>")
 
-            req.write("<TD>%s</TD>" % ("{:,}".format(calnum)))
-             
-            # Object files row is populated here
-            typequery = query.filter(Header.observation_type == 'OBJECT')
-            typeresult = typequery.one()
-            typenum = typeresult[0]
-
-            req.write("<TD>%s</TD>" % ("{:,}".format(typenum)))
-    
-    req.write("</table>") 
-   
     # Database annual statistics
     req.write("<h3>Data and file volume by telescope/year</h3>")
     req.write("<table>")
     req.write("<TR class=tr_head>")
-    
+
     # datetime variables and queries declared here
     # reject invalid 1969 type years by selecting post 1990
-    firstyear = datetime.date(1990, 01, 01)
+    firstyear = dt_date(1990, 01, 01)
     start = session.query(func.min(Header.ut_datetime)).filter(Header.ut_datetime > firstyear).first()[0]
     end = session.query(func.max(Header.ut_datetime)).first()[0]
-    
-    startyear = start.year
-    endyear = end.year
-    yearof = endyear
 
-    # Build a list of years to show
-    years = []
-    while yearof >= startyear:
-        years.append(yearof)
-        yearof -= 1
-            
     # Table headers
-    req.write('<TH rowspan="2">Telescope&nbsp;</TH>')    
+    req.write('<TH rowspan="2">Telescope&nbsp;</TH>')
     req.write('<TH rowspan="2">Year&nbsp;</TH>')
     req.write('<TH colspan="2">Data Volume (GB)&nbsp;</TH>')
     req.write('<TH rowspan="2">Number of files&nbsp;</TH>')
     req.write('</TR>')
     req.write('<TR class=tr_head>')
     req.write('<TH>Storage size&nbsp;</TH>')
-    req.write('<TH>FITS filesize&nbsp;</TH>')    
+    req.write('<TH>FITS filesize&nbsp;</TH>')
     req.write('</TR>')
 
+    # Build the query (file size and num grouped by telescope and year)
+    extract_year = func.extract('YEAR', Header.ut_datetime)
+    yearquery = session.query(Header.telescope, extract_year, func.sum(DiskFile.file_size), func.count(), func.sum(DiskFile.data_size))\
+                            .select_from(join(Header, DiskFile))\
+                            .filter(DiskFile.canonical == True)\
+                            .filter(Header.ut_datetime >= firstyear)\
+                            .group_by(Header.telescope, extract_year)\
+                            .order_by(desc(extract_year), Header.telescope)
+
+    # Extract data
+    results = defaultdict(dict)
+
+    for tel, year, yearbytes, yearnum, yeardata in yearquery:
+        if tel is None:
+            continue
+        results[year][tel] = (yearbytes, yearnum, yeardata)
+
+    # Print out the data
     even = False
-    
-    # iterates through datetimes and populates table
-    for year in years:
+    for year, data in sorted(results.items(), reverse=True):
         for tel in tels:
             even = not even
-                        
-            if(even):
-                cs = "tr_even"
-            else:
-                cs = "tr_odd"
-        
-            req.write("<TR class=%s>" % cs)
-                
-            req.write("<TD>%s</TD>" % tel)
-            req.write("<TD>%d</TD>" % year)
-
-            # queries for filesize and filenum in year that loop is currently accessing
-            # make start and end of year datetime objects to compare against
-            dateyearstart = datetime.datetime(year=year, month=01, day=01)
-            dateyearend = datetime.datetime(year=(year+1), month=01, day=01)
-            yearquery = session.query(func.sum(DiskFile.file_size), func.count(), func.sum(DiskFile.data_size)).select_from(join(Header, DiskFile)).filter(DiskFile.canonical == True).filter(Header.telescope == tel).filter(and_(Header.ut_datetime >= dateyearstart, Header.ut_datetime < dateyearend))
-            yearresult = yearquery.one()
-            yearbytes = yearresult[0]
-            yearnum = yearresult[1]
-            yeardata = yearresult[2]
-        
+            req.write("<TR class=%s>" % ('tr_even' if even else 'tr_odd'))
+            req.write("<TD>%s</TD><TD>%d</TD>" % (tel, year))
+            try:
+                yearbytes, yearnum, yeardata = data[tel]
+            except KeyError:
+                continue
             if(yearbytes is not None and yearnum is not None and yeardata is not None):
-                req.write("<TD>%s</TD>" % '{:,.02f}'.format(yearbytes/1073741824.0))
-                req.write("<TD>%s</TD>" % '{:,.02f}'.format(yeardata/1073741824.0))
-                req.write("<TD>%s</TD>" % "{:,}".format(yearnum))
+                req.write("<TD>{:,.02f}</TD><TD>{:,.02f}</TD><TD>{:,}</TD>".format(yearbytes/1073741824.0,
+                                                                                   yeardata/1073741824.0,
+                                                                                   yearnum))
 
-            req.write("</TR>")
-    
     req.write("</table>")
     req.write("</body>")
     req.write("</html>")
 
-    return apache.OK
+    return apache.HTTP_OK

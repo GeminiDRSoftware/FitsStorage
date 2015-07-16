@@ -14,7 +14,7 @@ from utils.userprogram import icanhave
 
 from orm.querylog import QueryLog
 
-def obslogs(req, sumtype, selection):
+def obslogs(req, selection, sumtype):
     """
     This is the obslogs summary generator
     """
@@ -82,7 +82,7 @@ def obslogs(req, sumtype, selection):
         session.close()
 
     req.write("</body></html>")
-    return apache.OK
+    return apache.HTTP_OK
 
 def obslog_table(req, obslogs, selection, session):
     """

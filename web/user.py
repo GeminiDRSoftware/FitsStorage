@@ -100,7 +100,7 @@ def request_account(req, things):
         except:
             req.write("<P>ERROR: Adding new user failed. Sorry. Please contact helpdesk. TODO - add link to helpdesk.</P>")
             req.write('</body></html>')
-            return apache.OK
+            return apache.HTTP_OK
         finally:
             session.close()
         req.write('<P>Account request processed.</P>')
@@ -112,7 +112,7 @@ def request_account(req, things):
         else:
             req.write('<P>Sending you a password reset email FAILED. Please contact Gemini Helpdesk. Sorry.</P>')
         req.write('</body></html>')
-        return apache.OK
+        return apache.HTTP_OK
 
     else:
         # New account request was not valid
@@ -142,7 +142,7 @@ def request_account(req, things):
         req.write('<INPUT type="submit" value="Submit"></INPUT>')
         req.write('</FORM>')
         req.write("</body></html>")
-        return apache.OK
+        return apache.HTTP_OK
 
 def send_password_reset_email(userid):
     """
@@ -214,7 +214,7 @@ def password_reset(req, things):
     if len(things) != 2:
         req.write('<P>Invalid request.</P>')
         req.write('</body></html>')
-        return apache.OK
+        return apache.HTTP_OK
 
     # Extract and validate the things from the URL
     userid = things[0]
@@ -225,12 +225,12 @@ def password_reset(req, things):
     except:
         req.write('<P>Invalid request.</P>')
         req.write('</body></html>')
-        return apache.OK
+        return apache.HTTP_OK
 
     if len(token) != 56:
         req.write('<P>Invalid request.</P>')
         req.write('</body></html>')
-        return apache.OK
+        return apache.HTTP_OK
 
     # OK, seems possibly legit. Check with database
     try:
@@ -240,15 +240,15 @@ def password_reset(req, things):
         if user is None:
             req.write('<P>Invalid request.</P>')
             req.write('</body></html>')
-            return apache.OK
+            return apache.HTTP_OK
         elif user.reset_token_expires < datetime.datetime.utcnow():
             req.write('<P>This reset link has expired. They are only valid for 15 minutes. Sorry. Please request a new one and try again.</P>')
             req.write('</body></html>')
-            return apache.OK
+            return apache.HTTP_OK
         elif user.reset_token != token:
             req.write("<P>This is not a valid password reset link. Sorry. If you pasted the link, please check it didn't get truncated and try again, or request a new reset.</P>")
             req.write('</body></html>')
-            return apache.OK
+            return apache.HTTP_OK
         else:
             # Appears to be valid
             req.write("<H1>Gemini Observatory Archive Password Reset</H1>")
@@ -294,11 +294,11 @@ def password_reset(req, things):
                 session.commit()
                 req.write('<P>Password has been reset.</P>')
                 req.write('<p><a href="/login">Click here to log in.</a></p>')
-                return apache.OK
+                return apache.HTTP_OK
             else:
                 req.write("<P>Link is no longer valid. Please request a new one.</P>")
                 req.write('</body></html>')
-                return apache.OK
+                return apache.HTTP_OK
         except:
             # pass
             raise
@@ -320,7 +320,7 @@ def password_reset(req, things):
     req.write('<INPUT type="submit" value="Submit"></INPUT>')
     req.write('</FORM>')
     req.write("</body></html>")
-    return apache.OK
+    return apache.HTTP_OK
 
 def change_password(req, things):
     """
@@ -419,7 +419,7 @@ def change_password(req, things):
 
 
     req.write("</body></html>")
-    return apache.OK
+    return apache.HTTP_OK
 
 def request_password_reset(req):
     """
@@ -466,7 +466,7 @@ def request_password_reset(req):
             else:
                 # Something is wrong
                 req.write('<P>Error: no valid username or email. This should not happen.</P>')
-                return apache.OK
+                return apache.HTTP_OK
             users = query.all()
             if len(users) > 1:
                 req.write("<P>Multiple usernames are using this email address. We'll send an email for each username. Please contact the Gemini Helpdesk to sort this out.</P>")
@@ -485,7 +485,7 @@ def request_password_reset(req):
             session.close()
 
         req.write('</body></html>')
-        return apache.OK
+        return apache.HTTP_OK
 
     # Send the reset form
     req.write('<FORM action="/request_password_reset" method="POST">')
@@ -497,7 +497,7 @@ def request_password_reset(req):
     req.write('<INPUT type="submit" value="Submit"></INPUT>')
     req.write('</FORM>')
     req.write("</body></html>")
-    return apache.OK
+    return apache.HTTP_OK
 
 def staff_access(req, things):
     """
@@ -527,7 +527,7 @@ def staff_access(req, things):
         if thisuser is None or thisuser.superuser != True:
             req.write("<p>You don't appear to be logged in as a superuser. Sorry.</p>")
             req.write('</body></html>')
-            return apache.OK
+            return apache.HTTP_OK
 
         # If we got an action, do it
         if username:
@@ -570,7 +570,7 @@ def staff_access(req, things):
     req.write('</FORM>')
     req.write('</body></html>')
 
-    return apache.OK
+    return apache.HTTP_OK
 
 def login(req, things):
     """
@@ -645,7 +645,7 @@ def login(req, things):
             req.write('<p><a href="/searchform">Click here to go to the search form</a></p>')
 
         req.write('</body></html>')
-        return apache.OK
+        return apache.HTTP_OK
 
     if request_attempted:
         req.write('<P>Log-in did not suceed: %s. Please try again.</P>' % reason_bad)
@@ -660,7 +660,7 @@ def login(req, things):
     req.write('<INPUT type="submit" value="Submit"></INPUT>')
     req.write('</FORM>')
     req.write("</body></html>")
-    return apache.OK
+    return apache.HTTP_OK
 
 
 def logout(req):
@@ -697,7 +697,7 @@ def logout(req):
     req.write('<P>You are sucessfully logged out of the Gemini Archive.</P>')
     req.write('<p>You might now want to go to the <a href="/">archive home page</a></p>')
     req.write('</body></html>')
-    return apache.OK
+    return apache.HTTP_OK
 
 def whoami(req, things):
     """
@@ -745,7 +745,7 @@ def whoami(req, things):
 
     req.write('</span>')
     req.write('</body></html>')
-    return apache.OK
+    return apache.HTTP_OK
 
 def user_list(req):
     """
@@ -764,7 +764,7 @@ def user_list(req):
         if thisuser is None or thisuser.gemini_staff != True:
             req.write("<p>You don't appear to be logged in as a Gemini Staff user. Sorry.</p>")
             req.write('</body></html>')
-            return apache.OK
+            return apache.HTTP_OK
 
         query = session.query(User).order_by(desc(User.superuser)).order_by(desc(User.gemini_staff))
         query = query.order_by(User.username)
@@ -789,7 +789,7 @@ def user_list(req):
 
     req.write('</body></html>')
 
-    return apache.OK
+    return apache.HTTP_OK
 
 
 def email_inuse(email):

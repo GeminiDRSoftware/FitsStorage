@@ -68,5 +68,5 @@ def xmltape(req):
         session.close()
 
     req.write("</on_tape>")
-    return apache.OK
+    return apache.HTTP_OK
 

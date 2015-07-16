@@ -99,7 +99,7 @@ def upload_file(req, filename, processed_cal="False"):
         if(ret != 0):
             return apache.HTTP_SERVICE_UNAVAILABLE
         else:
-            return apache.OK
+            return apache.HTTP_OK
 
     finally:
         session.commit()

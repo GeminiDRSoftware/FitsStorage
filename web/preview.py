@@ -63,7 +63,7 @@ def preview(req, things):
         if canhaveit:
             # Send them the data if we can
             if sendpreview(session, req, diskfile.id):
-                return apache.OK
+                return apache.HTTP_OK
             else:
                 return apache.HTTP_NOT_FOUND
         else:

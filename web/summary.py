@@ -11,7 +11,7 @@ import apache_return_codes as apache
 
 from web.summary_generator import SummaryGenerator, htmlescape
 
-# We assume that servers used as archive use a calibraiton association cache table
+# We assume that servers used as archive use a calibration association cache table
 from fits_storage_config import use_as_archive
 if use_as_archive:
     from cal.associate_calibrations import associate_cals_from_cache as associate_cals
@@ -26,8 +26,8 @@ from orm.querylog import QueryLog
 def summary(req, sumtype, selection, orderby, links=True):
     """
     This is the main summary generator.
-    The main work is done by the summary_body() funciton.
-    This funciton just wraps that in the relevant html
+    The main work is done by the summary_body() function.
+    This function just wraps that in the relevant html
     tags to make it a page in it's own right.
     """
     req.content_type = "text/html"
@@ -42,7 +42,7 @@ def summary(req, sumtype, selection, orderby, links=True):
     summary_body(req, sumtype, selection, orderby, links)
 
     req.write("</body></html>")
-    return apache.OK
+    return apache.HTTP_OK
 
 def summary_body(req, sumtype, selection, orderby, links=True):
     """
@@ -100,7 +100,7 @@ def summary_body(req, sumtype, selection, orderby, links=True):
         if num_headers == fits_closed_result_limit:
             querylog.add_note("Hit Closed search result limit")
 
-        # If this is assocated_cals, we do the assoication here
+        # If this is associated_cals, we do the association here
         if sumtype == 'associated_cals':
             querylog.add_note("Associated Cals")
             headers = associate_cals(session, headers)
@@ -186,7 +186,7 @@ def summary_table(req, sumtype, headers, selection, links=True, user=None, user_
 
     sumgen = SummaryGenerator(sumtype, links, uri, user, user_progid_list)
 
-    # If the query was open or truncated, print a message saying so, and dissalow calibration association
+    # If the query was open or truncated, print a message saying so, and disallow calibration association
     if openquery(selection) and len(headers) == fits_open_result_limit:
         req.write('<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date, date range, program ID etc. Searches like this are limited to %d results, and this search hit that limit. Calibration association will not be available. You may want to constrain your search. Constrained searches have a higher result limit.</P>' % fits_open_result_limit)
         req.write('<input type="hidden" id="allow_cals" value="no">')
@@ -215,10 +215,7 @@ def summary_table(req, sumtype, headers, selection, links=True, user=None, user_
     bytecount = 0
     for header in headers:
         even = not even
-        if even:
-            tr_class = "tr_even"
-        else:
-            tr_class = "tr_odd"
+        tr_class = ('tr_even' if even else 'tr_odd')
 
         sumgen.table_row(req, header, tr_class)
 
@@ -226,7 +223,7 @@ def summary_table(req, sumtype, headers, selection, links=True, user=None, user_
 
     req.write("</TABLE>\n")
 
-    if sumtype in ['searchresults', 'associated_cals']:
+    if sumtype in ('searchresults', 'associated_cals'):
         req.write("<INPUT type='submit' value='Download Marked Files'>")
         req.write("</FORM>")
 

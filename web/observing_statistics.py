@@ -100,7 +100,7 @@ def observing_statistics(req, selection):
 
         
 
-        return apache.OK
+        return apache.HTTP_OK
 
     except IOError:
         pass

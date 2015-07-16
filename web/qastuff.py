@@ -148,7 +148,7 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
     finally:
         session.close()
 
-    return apache.OK
+    return apache.HTTP_OK
 
 def parse_json(clientdata):
     """
@@ -366,7 +366,7 @@ def qametrics(req, things):
     finally:
         session.close()
 
-    return apache.OK
+    return apache.HTTP_OK
 
 def qaforgui(req, things):
     """
@@ -630,5 +630,5 @@ def qaforgui(req, things):
     finally:
         session.close()
 
-    return apache.OK
+    return apache.HTTP_OK
 

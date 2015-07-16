@@ -264,7 +264,7 @@ def calibrations(req, selection):
         req.write("<H2>Counted %d potential missing Calibrations</H2>" % missings)
         req.write("<H2>Query generated %d warnings</H2>" % warnings)
         req.write("</body></html>")
-        return apache.OK
+        return apache.HTTP_OK
 
     except IOError:
         pass

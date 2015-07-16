@@ -42,7 +42,7 @@ def fileontape(req, things):
         session.close()
 
     req.write("</file_list>")
-    return apache.OK
+    return apache.HTTP_OK
 
 def tape(req, things):
     """
@@ -201,7 +201,7 @@ def tape(req, things):
         req.write('</FORM>')
 
         req.write("</body></html>")
-        return apache.OK
+        return apache.HTTP_OK
     except IOError:
         pass
     finally:
@@ -240,11 +240,11 @@ def tapewrite(req, things):
                     req.write("<P>Could not find tape by label search</P>")
                     req.write("</body></html>")
                     session.close()
-                    return apache.OK
+                    return apache.HTTP_OK
                 if(tapequery.count() > 1):
                     req.write("<P>Found multiple tapes by label search. Please give the ID instead</P>")
                     req.write("</body></html>")
-                    return apache.OK
+                    return apache.HTTP_OK
                 tape = query.one()
                 query = query.filter(TapeWrite.tape_id == tape.id)
 
@@ -268,7 +268,7 @@ def tapewrite(req, things):
             req.write("</UL>")
     
         req.write("</BODY></HTML>")
-        return apache.OK
+        return apache.HTTP_OK
     except IOError:
         pass
     finally:
@@ -290,7 +290,7 @@ def tapefile(req, things):
     if(len(things) != 1):
         req.write("<P>Must supply one argument - tapewrite_id</P>")
         req.write("</body></html>")
-        return apache.OK
+        return apache.HTTP_OK
 
     tapewrite_id = things[0]
 
@@ -336,7 +336,7 @@ def tapefile(req, things):
             req.write("</TR>")
 
         req.write("</TABLE></BODY></HTML>")
-        return apache.OK
+        return apache.HTTP_OK
     except IOError:
         pass
     finally:
@@ -388,7 +388,7 @@ def taperead(req, things):
             req.write("</TR>")
 
         req.write("</TABLE></BODY></HTML>")
-        return apache.OK
+        return apache.HTTP_OK
     except IOError:
         pass
     finally:

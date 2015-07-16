@@ -40,7 +40,7 @@ if options.to_remote_server:
     u = opener.open(url, xml)
     report = u.read()
     u.close()
-    if u.getcode() != apache.OK:
+    if u.getcode() != apache.HTTP_OK:
         logger.error("Got not-OK return code from remote server: %s", u.getcode())
 
     # Make the report into a list of lines for the log

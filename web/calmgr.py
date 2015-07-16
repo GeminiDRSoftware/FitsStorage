@@ -171,7 +171,7 @@ def calmgr(req, selection):
 
             # Commit the changes to the usagelog
             session.commit()
-            return apache.OK
+            return apache.HTTP_OK
 
         else:
             # OK, we got called via a GET - find the science datasets in the database
@@ -221,7 +221,7 @@ def calmgr(req, selection):
             req.write("</calibration_associations>\n")
             # commit the usagelog notes
             session.commit()
-            return apache.OK
+            return apache.HTTP_OK
     except IOError:
         pass
     finally:

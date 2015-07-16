@@ -124,7 +124,7 @@ def notification(req):
         req.write('</FORM>')
 
         req.write("</body></html>")
-        return apache.OK
+        return apache.HTTP_OK
     except IOError:
         pass
     finally:
@@ -163,5 +163,5 @@ def import_odb_notifications(req):
         session.close()
 
 
-    return apache.OK
+    return apache.HTTP_OK
 

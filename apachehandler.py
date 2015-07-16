@@ -38,6 +38,122 @@ from web.reporting import report
 from orm import sessionfactory
 from orm.usagelog import UsageLog
 
+from functools import partial
+
+####### HELPER FUNCTIONS #######
+# Send usage message to browser
+def usagemessage(req):
+    fp = open("/opt/FitsStorage/htmldocroot/htmldocs/usage.html", "r")
+    stuff = fp.read()
+    fp.close()
+    req.content_type = "text/html"
+    req.write(stuff)
+    return apache.HTTP_OK
+
+# Send debugging info to browser
+def debugmessage(req):
+    req.content_type = "text/plain"
+    req.write("Debug info\n\n")
+    req.write("python interpreter name: %s\n\n" % (str(req.interpreter)))
+    req.write("Pythonpath: %s\n\n" % (str(sys.path)))
+    req.write("python path: \n")
+    for i in sys.path:
+        req.write("-- %s\n" % i)
+    req.write("\n")
+    req.write("uri: %s\n\n" % (str(req.uri)))
+    req.write("unparsed_uri: %s\n\n" % (str(req.unparsed_uri)))
+    req.write("the_request: %s\n\n" % (str(req.the_request)))
+    req.write("filename: %s\n\n" % (str(req.filename)))
+    req.write("hostname: %s\n\n" % (str(req.hostname)))
+    req.write("canonical_filename: %s\n\n" % (str(req.canonical_filename)))
+    req.write("path_info: %s\n\n" % (str(req.path_info)))
+    req.write("args: %s\n\n" % (str(req.args)))
+
+    req.write("User agent: %s\n\n" % str(req.headers_in['User-Agent']))
+    req.write("All Headers in: %s\n\n" % str(req.headers_in))
+    return apache.HTTP_OK
+####### END HELPER FUNCTIONS #######
+
+
+#### STANDARD ROUTING ####
+
+# The following mappings connect actions with the functions that will produce the
+# content. They're simple function calls, like
+#
+#   'debug'        -> debugmessage(req)
+#   'nameresolver' -> nameresolver(req, things)
+#   'calibrations' -> calibrations(req, selections)
+#
+# These three patterns are the most common for the archive web actions, which makes
+# detecting and invoking them a task for boilerplate code. Moving everything up here,
+# instead, simplifies the handler, which is left with calls that require more
+# preprocessing, or invocations with more specific arguments.
+
+# Functions invoked with (req)
+mapping_simple = {
+    'debug': debugmessage,                                  # A debug util
+    'content': content,                                     # Database Statistics
+    'stats': stats,
+    'qareport': qareport,                                   # Submit QA metric measurement report
+    'usagereport': usagereport,                             # Usage Statistics and Reports
+    'usagestats': usagestats,                               # Usage Stats
+    'xmltape': xmltape,                                     # XML Tape handler
+    'notification': notification,                           # Emailnotification handler
+    'import_odb_notifications': import_odb_notifications,   # Notification update from odb handler
+    'request_password_reset': request_password_reset,       # request password reset email
+    'logout': logout,                                       # logout
+    'user_list': user_list,                                 # user_list
+    }
+
+# Functions invoked with (req, things)
+mapping_things = {
+    'nameresolver': nameresolver,       # Name resolver proxy
+    'fileontape': fileontape,           # The fileontape handler
+    'file': fileserver,                 # This is the fits file server
+    'download': download,
+    'qametrics': qametrics,             # Retrieve QA metrics, simple initial version
+    'qaforgui': qaforgui,               # Retrieve QA metrics, json version for GUI
+    'usagedetails': usagedetails,       # Usage Reports
+    'downloadlog': downloadlog,         # Download log
+    'tape': tape,                       # Tape handler
+    'tapewrite': tapewrite,             # TapeWrite handler
+    'tapefile': tapefile,               # TapeFile handler
+    'taperead': taperead,               # TapeRead handler
+    'curation': curation_report,        # curation_report handler
+    'request_account': request_account, # new account request
+    'password_reset': password_reset,   # account password reset request
+    'login': login,                     # login form
+    'whoami': whoami,                   # whoami
+    'change_password': change_password, # change_password
+    'my_programs': my_programs,         # my_programs
+    'staff_access': staff_access,       # staff_access
+    'preview': preview,                 # previews
+}
+
+# Functions invoked with (req, selections)
+mapping_selection = {
+    'calibrations': calibrations,   # The calibrations handler
+    'xmlfilelist': xmlfilelist,     # The xml and json file list handlers
+    'jsonfilelist': jsonfilelist,
+    'jsonsummary': jsonsummary,
+    'calmgr': calmgr,               # The calmgr handler
+    'gmoscal': gmoscal,             # The GMOS twilight flat and bias report
+
+
+    # Obslogs get their own summary-like handler
+    # Both actions use the same function, with 'sumtype' specifiying which
+    # one of them, but aside from that, it's just a regular (req, selections)
+    # We're using functools.partial here to pin sumtype's value
+    'obslogs': partial(obslogs, sumtype='obslogs'),
+    'associated_obslogs': partial(obslogs, sumtype='obslogs'),
+
+    # The GMOS twilight flat and bias report (JSON result)
+    # The function here is the same as for 'gmoscal'. We're using partial for
+    # the same reason as with obslogs (see above)
+    'gmoscaljson': partial(gmoscal, do_json=True),
+}
+
+#### END STANDARD ROUTING ####
 
 # The top top level handler. This simply wraps thehandler with logging funcitons
 def handler(req):
@@ -57,12 +173,15 @@ def handler(req):
 
         # Call the actual handler
         retary = thehandler(req)
+        req.status = retary
 
+    except Exception:
+        req.status = apache.HTTP_INTERNAL_SERVER_ERROR
+        raise
+    finally:
         # Grab the final log values
         req.usagelog.set_finals(req)
-
         session.commit()
-    finally:
         session.close()
 
     return retary
@@ -107,6 +226,21 @@ def thehandler(req):
         else:
             return usagemessage(req)
 
+    # Extract the main action
+    this = things.pop(0)
+    req.usagelog.this = this
+
+    if this in blocked_urls:
+        return apache.HTTP_FORBIDDEN
+
+    # At this point we can route the easier actions
+    if this in mapping_simple:
+        return mapping_simple[this](req)
+    if this in mapping_things:
+        return mapping_things[this](req, things)
+    if this in mapping_selection:
+        return mapping_selection[this](req, getselection(things))
+
     # Before we process the request, parse any arguments into a list
     args = []
     if req.args:
@@ -121,28 +255,14 @@ def thehandler(req):
         if match:
             orderby.append(match.group(1))
 
-    # OK, parse and action the main URL things
-
-    this = things.pop(0)
-    req.usagelog.this = this
-
-    if this in blocked_urls:
-        return apache.HTTP_FORBIDDEN
+    # OK, parse and action the rest main URL things
 
     # Archive searchform
     if this == 'searchform':
         return searchform(req, things, orderby)
 
-    # Name resolver proxy
-    if this == 'nameresolver':
-        return nameresolver(req, things)
-
-    # A debug util
-    if this == 'debug':
-        return debugmessage(req)
-
     # This is the header summary handler
-    if this in ['summary', 'diskfiles', 'ssummary', 'lsummary', 'searchresults', 'associated_cals']:
+    if this in {'summary', 'diskfiles', 'ssummary', 'lsummary', 'searchresults', 'associated_cals'}:
         links = True
         # the nolinks feature is used especially in external email notifications
         if 'nolinks' in things:
@@ -157,63 +277,10 @@ def thehandler(req):
         retval = summary(req, this, selection, orderby, links)
         return retval
 
-    # Obslogs get their own summary-like handler
-    if this in ['obslogs', 'associated_obslogs']:
-        # Only some of the selection is relevant, but that's fine, we can still parse it.
-        selection = getselection(things)
-
-        retval = obslogs(req, this, selection)
-
-        return retval
-
-
-
     # This is the standard star in observation server
     if this == 'standardobs':
         header_id = things.pop(0)
         retval = standardobs(req, header_id)
-        return retval
-
-
-    # The calibrations handler
-    if this == 'calibrations':
-        # Parse the rest of the URL.
-        selection = getselection(things)
-
-        # If we want other arguments like order by
-        # we should parse them here
-
-        retval = calibrations(req, selection)
-        return retval
-
-    # The xml and json file list handlers
-    if this == 'xmlfilelist':
-        selection = getselection(things)
-        retval = xmlfilelist(req, selection)
-        return retval
-    if this == 'jsonfilelist':
-        selection = getselection(things)
-        retval = jsonfilelist(req, selection)
-        return retval
-    if this == 'jsonsummary':
-        selection = getselection(things)
-        retval = jsonsummary(req, selection)
-        return retval
-
-    # The fileontape handler
-    if this == 'fileontape':
-        retval = fileontape(req, things)
-        return retval
-
-    # The calmgr handler
-    if this == 'calmgr':
-        # Parse the rest of the URL.
-        selection = getselection(things)
-
-        # If we want other arguments like order by
-        # we should parse them here
-
-        retval = calmgr(req, selection)
         return retval
 
     # The processed_cal upload server
@@ -234,15 +301,7 @@ def thehandler(req):
         except IndexError:
             req.content_type = "text/plain"
             req.write("You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
-            return apache.OK
-
-    # This is the fits file server
-    if this == 'file':
-        return fileserver(req, things)
-
-    # This is the fits file server
-    if this == 'download':
-        return download(req, things)
+            return apache.HTTP_OK
 
     # This is the projects observed feature
     if this == "programsobserved":
@@ -251,129 +310,6 @@ def thehandler(req):
             selection["date"] = gemini_date("today")
         retval = progsobserved(req, selection)
         return retval
-
-    # The GMOS twilight flat and bias report
-    if this == "gmoscal":
-        selection = getselection(things)
-        retval = gmoscal(req, selection)
-        return retval
-
-    # The GMOS twilight flat and bias report
-    if this == "gmoscaljson":
-        selection = getselection(things)
-        retval = gmoscal(req, selection, do_json=True)
-        return retval
-
-    # Submit QA metric measurement report
-    if this == "qareport":
-        return qareport(req)
-
-    # Retrieve QA metrics, simple initial version
-    if this == "qametrics":
-        return qametrics(req, things)
-
-    # Retrieve QA metrics, json version for GUI
-    if this == "qaforgui":
-        return qaforgui(req, things)
-
-    # Database Statistics
-    if this == "content":
-        return content(req)
-
-    if this == "stats":
-        return stats(req)
-
-    # Usage Statistics and Reports
-    if this == "usagereport":
-        return usagereport(req)
-
-    # Usage Reports
-    if this == "usagedetails":
-        return usagedetails(req, things)
-
-    # Download log 
-    if this == "downloadlog":
-        return downloadlog(req, things)
-
-    # Usage Stats 
-    if this == "usagestats":
-        return usagestats(req)
-
-    # Tape handler
-    if this == "tape":
-        return tape(req, things)
-
-    # TapeWrite handler
-    if this == "tapewrite":
-        return tapewrite(req, things)
-
-    # TapeFile handler
-    if this == "tapefile":
-        return tapefile(req, things)
-
-    # TapeRead handler
-    if this == "taperead":
-        return taperead(req, things)
-
-    # XML Tape handler
-    if this == "xmltape":
-        return xmltape(req)
-
-    # Emailnotification handler
-    if this == "notification":
-        return notification(req)
-
-    # Notification update from odb handler
-    if this == "import_odb_notifications":
-        return import_odb_notifications(req)
-
-    # curation_report handler
-    if this == "curation":
-        return curation_report(req, things)
-
-    # new account request
-    if this == "request_account":
-        return request_account(req, things)
-
-    # account password reset request
-    if this == "password_reset":
-        return password_reset(req, things)
-
-    # request password reset email
-    if this == "request_password_reset":
-        return request_password_reset(req)
-
-    # login form
-    if this == "login":
-        return login(req, things)
-
-    # logout
-    if this == "logout":
-        return logout(req)
-
-    # whoami
-    if this == "whoami":
-        return whoami(req, things)
-
-    # change_password
-    if this == "change_password":
-        return change_password(req, things)
-
-    # my_programs
-    if this == "my_programs":
-        return my_programs(req, things)
-
-    # staff_access
-    if this == "staff_access":
-        return staff_access(req, things)
-
-    # user_list
-    if this == "user_list":
-        return user_list(req)
-
-    # previews
-    if this == "preview":
-        return preview(req, things)
 
     # Some static files that the server should serve via a redirect.
     staticfiles = ["robots.txt", "favicon.ico", "jquery-1.11.1.min.js", "test.html", "test2.html"]
@@ -386,37 +322,3 @@ def thehandler(req):
     return usagemessage(req)
 
 # End of apache handler() function.
-# Below are various helper functions called from above.
-# The web summary has its own package
-
-# Send usage message to browser
-def usagemessage(req):
-    fp = open("/opt/FitsStorage/htmldocroot/htmldocs/usage.html", "r")
-    stuff = fp.read()
-    fp.close()
-    req.content_type = "text/html"
-    req.write(stuff)
-    return apache.OK
-
-# Send debugging info to browser
-def debugmessage(req):
-    req.content_type = "text/plain"
-    req.write("Debug info\n\n")
-    req.write("python interpreter name: %s\n\n" % (str(req.interpreter)))
-    req.write("Pythonpath: %s\n\n" % (str(sys.path)))
-    req.write("python path: \n")
-    for i in sys.path:
-        req.write("-- %s\n" % i)
-    req.write("\n")
-    req.write("uri: %s\n\n" % (str(req.uri)))
-    req.write("unparsed_uri: %s\n\n" % (str(req.unparsed_uri)))
-    req.write("the_request: %s\n\n" % (str(req.the_request)))
-    req.write("filename: %s\n\n" % (str(req.filename)))
-    req.write("hostname: %s\n\n" % (str(req.hostname)))
-    req.write("canonical_filename: %s\n\n" % (str(req.canonical_filename)))
-    req.write("path_info: %s\n\n" % (str(req.path_info)))
-    req.write("args: %s\n\n" % (str(req.args)))
-
-    req.write("User agent: %s\n\n" % str(req.headers_in['User-Agent']))
-    req.write("All Headers in: %s\n\n" % str(req.headers_in))
-    return apache.OK

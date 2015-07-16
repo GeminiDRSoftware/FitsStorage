@@ -20,7 +20,7 @@ def report(req, thing):
 #        req.content_type = "text/plain"
 #        req.write("Could not understand argument - You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
 #
-#        return apache.OK
+#        return apache.HTTP_OK
 
     session = sessionfactory()
 
@@ -45,11 +45,18 @@ def report(req, thing):
 
             if query.count() == 0:
                 req.content_type = "text/plain"
-                req.write(error_message)
-                return apache.OK
+                req.write("Cannot find file for: %s\n" % fnthing)
+                return apache.HTTP_OK
             file = query.one()
             # Query diskfiles to find the diskfile for file that is canonical
             query = session.query(DiskFile).filter(DiskFile.canonical == True).filter(DiskFile.file_id == file.id)
+        else:
+            # We got a diskfile_id
+            query = session.query(DiskFile).filter(DiskFile.id == thing)
+            if query.count() == 0:
+                req.content_type = "text/plain"
+                req.write("Cannot find diskfile for id: %s\n" % thing)
+                return apache.HTTP_OK
 
         diskfile = query.one()
         # Find the diskfilereport
@@ -73,4 +80,4 @@ def report(req, thing):
     finally:
         session.close()
 
-    return apache.OK
+    return apache.HTTP_OK

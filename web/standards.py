@@ -18,9 +18,10 @@ def list_phot_std_obs(session, header_id):
     query = query.filter(PhotStandardObs.footprint_id == Footprint.id)
     query = query.filter(Footprint.header_id == header_id)
 
-    list = query.all()
+    for q in query:
+        yield q
 
-    return list
+bands = ('u', 'v', 'g', 'r', 'i', 'z', 'y', 'j', 'h', 'k', 'lprime', 'm')
 
 def standardobs(req, header_id):
     """
@@ -38,96 +39,38 @@ def standardobs(req, header_id):
         req.write("</head>\n")
         req.write("<body>")
         req.write("<H1>%s</H1>" % (title))
-    
+
         req.write('<TABLE border=0>')
-    
+
         req.write('<TR class=tr_head>')
         req.write('<TH>Name</TH>')
         req.write('<TH>Field</TH>')
         req.write('<TH>RA</TH>')
         req.write('<TH>Dec</TH>')
-        req.write('<TH>u_mag</TH>')
-        req.write('<TH>v_mag</TH>')
-        req.write('<TH>g_mag</TH>')
-        req.write('<TH>r_mag</TH>')
-        req.write('<TH>i_mag</TH>')
-        req.write('<TH>z_mag</TH>')
-        req.write('<TH>y_mag</TH>')
-        req.write('<TH>j_mag</TH>')
-        req.write('<TH>h_mag</TH>')
-        req.write('<TH>k_mag</TH>')
-        req.write('<TH>l_prime_mag</TH>')
-        req.write('<TH>m_mag</TH>')
-    
-        list = list_phot_std_obs(session, header_id)
-    
-        even = 0
-        for std_id in list:
+        for band in bands:
+            req.write('<TH>%s_mag</TH>' % (band if band != 'lprime' else 'l_prime'))
+
+        lst = list_phot_std_obs(session, header_id)
+        even = False
+        for std_id in list_phot_std_obs(session, header_id):
             std = session.query(PhotStandard).filter(PhotStandard.id == std_id).one()
             even = not even
-            if(even):
-                cs = "tr_even"
-            else:
-                cs = "tr_odd"
-            req.write("<TR class=%s>" % (cs))
+            req.write("<TR class=%s>" % ('tr_even' if even else 'tr_odd'))
             req.write("<TD>%s</TD>" % std.name)
             req.write("<TD>%s</TD>" % std.field)
             req.write("<TD>%f</TD>" % std.ra)
             req.write("<TD>%f</TD>" % std.dec)
-            try:
-                req.write("<TD>%f</TD>" % std.u_mag)
-            except TypeError:
-                req.write("<TD></TD>")
-            try:
-                req.write("<TD>%f</TD>" % std.v_mag)
-            except TypeError:
-                req.write("<TD></TD>")
-            try:
-                req.write("<TD>%f</TD>" % std.g_mag)
-            except TypeError:
-                req.write("<TD></TD>")
-            try:
-                req.write("<TD>%f</TD>" % std.r_mag)
-            except TypeError:
-                req.write("<TD></TD>")
-            try:
-                req.write("<TD>%f</TD>" % std.i_mag)
-            except TypeError:
-                req.write("<TD></TD>")
-            try:
-                req.write("<TD>%f</TD>" % std.z_mag)
-            except TypeError:
-                req.write("<TD></TD>")
-            try:
-                req.write("<TD>%f</TD>" % std.y_mag)
-            except TypeError:
-                req.write("<TD></TD>")
-            try:
-                req.write("<TD>%f</TD>" % std.j_mag)
-            except TypeError:
-                req.write("<TD></TD>")
-            try:
-                req.write("<TD>%f</TD>" % std.h_mag)
-            except TypeError:
-                req.write("<TD></TD>")
-            try:
-                req.write("<TD>%f</TD>" % std.k_mag)
-            except TypeError:
-                req.write("<TD></TD>")
-            try:
-                req.write("<TD>%f</TD>" % std.lprime_mag)
-            except TypeError:
-                req.write("<TD></TD>")
-            try:
-                req.write("<TD>%f</TD>" % std.m_mag)
-            except TypeError:
-                req.write("<TD></TD>")
+            for band in bands:
+                try:
+                    req.write("<TD>%f</TD>" % getattr(std, band + '_mag'))
+                except TypeError:
+                    req.write("<TD></TD>")
             req.write("</TR>")
-    
+
         req.write("</TABLE>")
         req.write("</body></html>")
-    
-        return apache.OK
+
+        return apache.HTTP_OK
 
     finally:
         session.close()
@@ -139,38 +82,18 @@ def xmlstandardobs(req, header_id):
 
     session = sessionfactory()
     try:
-        list = list_phot_std_obs(session, header_id)
-        for std_id in list:
+        lst = list_phot_std_obs(session, header_id)
+        for std_id in lst:
             std = session.query(PhotStandard).filter(PhotStandard.id == std_id).one()
             req.write("<photstandard>")
             req.write("<name>%s</name>" % std.name)
             req.write("<field>%s</field>" % std.field)
             req.write("<ra>%f</ra>" % std.ra)
             req.write("<dec>%f</dec>" % std.dec)
-            if(std.u_mag):
-                req.write("<u_mag>%f</u_mag>" % std.u_mag)
-            if(std.v_mag):
-                req.write("<v_mag>%f</v_mag>" % std.v_mag)
-            if(std.g_mag):
-                req.write("<g_mag>%f</g_mag>" % std.g_mag)
-            if(std.r_mag):
-                req.write("<r_mag>%f</r_mag>" % std.r_mag)
-            if(std.i_mag):
-                req.write("<i_mag>%f</i_mag>" % std.i_mag)
-            if(std.z_mag):
-                req.write("<z_mag>%f</z_mag>" % std.z_mag)
-            if(std.y_mag):
-                req.write("<y_mag>%f</y_mag>" % std.y_mag)
-            if(std.j_mag):
-                req.write("<j_mag>%f</j_mag>" % std.j_mag)
-            if(std.h_mag):
-                req.write("<h_mag>%f</h_mag>" % std.h_mag)
-            if(std.k_mag):
-                req.write("<k_mag>%f</k_mag>" % std.k_mag)
-            if(std.lprime_mag):
-                req.write("<lprime_mag>%f</lprime_mag>" % std.lprime_mag)
-            if(std.m_mag):
-                req.write("<m_mag>%f</m_mag>" % std.m_mag)
+            for bandmag in (band + '_mag' for band in bands):
+                value = getattr(std, bandmag)
+                if value:
+                    req.write("<%(bm)s>%(value)f</%(bm)s>" % {'bm': bandmag, 'value': value})
             req.write("</photstandard>")
 
 

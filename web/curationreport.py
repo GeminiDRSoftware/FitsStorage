@@ -162,7 +162,7 @@ def curation_report(req, things):
 
         req.write('</body>')
         req.write('</html>')
-        return apache.OK
+        return apache.HTTP_OK
     except IOError:
         pass
     finally:

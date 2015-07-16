@@ -49,7 +49,7 @@ def progsobserved(req, selection):
                 req.write('<LI><a href="/summary/%s/%s">%s</a></LI> ' % (prog, '/'.join(selection.values()), prog))
         req.write('</UL>')
         req.write('</body></html>')
-        return apache.OK
+        return apache.HTTP_OK
 
 
     except IOError:

@@ -10,6 +10,9 @@ from web.summary import list_headers
 from web.standards import xmlstandardobs
 import apache_return_codes as apache
 
+diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
+                   'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready')
+
 def xmlfilelist(req, selection):
     """
     This generates an xml list of the files that met the selection
@@ -43,8 +46,20 @@ def xmlfilelist(req, selection):
     finally:
         session.close()
     req.write("</file_list>")
-    return apache.OK
+    return apache.HTTP_OK
 
+def diskfile_dicts(headers, return_header=False):
+    for header in headers:
+        thedict = {}
+        thedict['name'] = _for_json(header.diskfile.file.name)
+        for field in diskfile_fields:
+            thedict[field] = _for_json(getattr(header.diskfile, field))
+        thedict['size'] = thedict['file_size']
+        thedict['md5'] = thedict['file_md5']
+        if not return_header:
+            yield thedict
+        else:
+            yield thedict, header
 
 def jsonfilelist(req, selection):
     """
@@ -56,26 +71,26 @@ def jsonfilelist(req, selection):
     orderby = ['filename_asc']
     try:
         headers = list_headers(session, selection, orderby)
-        thelist = []
-        for header in headers:
-            thedict = {}
-            thedict['name'] = _for_json(header.diskfile.file.name)
-            thedict['filename'] = _for_json(header.diskfile.filename)
-            thedict['path'] = _for_json(header.diskfile.path)
-            thedict['compressed'] = _for_json(header.diskfile.compressed)
-            thedict['size'] = _for_json(header.diskfile.file_size)
-            thedict['file_size'] = _for_json(header.diskfile.file_size)
-            thedict['data_size'] = _for_json(header.diskfile.data_size)
-            thedict['md5'] = _for_json(header.diskfile.file_md5)
-            thedict['file_md5'] = _for_json(header.diskfile.file_md5)
-            thedict['data_md5'] = _for_json(header.diskfile.data_md5)
-            thedict['lastmod'] = _for_json(header.diskfile.lastmod)
-            thedict['mdready'] = _for_json(header.diskfile.mdready)
-            thelist.append(thedict)
+        thelist = list(diskfile_dicts(headers))
     finally:
         session.close()
     json.dump(thelist, req, indent=4)
-    return apache.OK
+    return apache.HTTP_OK
+
+header_fields = ('program_id', 'engineering', 'science_verification',
+                 'calibration_program', 'observation_id', 'data_label',
+                 'telescope', 'instrument', 'ut_datetime', 'local_time',
+                 'observation_type', 'observation_class', 'object', 'ra',
+                 'dec', 'azimuth', 'elevation', 'cass_rotator_pa',
+                 'airmass', 'filter_name', 'exposure_time', 'disperser',
+                 'camera', 'central_wavelength', 'wavelength_band',
+                 'focal_plane_mask', 'detector_binning', 'detector_config',
+                 'detector_roi_setting', 'spectroscopy', 'mode',
+                 'adaptive_optics', 'laser_guide_star', 'wavefront_sensor',
+                 'gcal_lamp', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg',
+                 'requested_iq', 'requested_cc', 'requested_wv',
+                 'requested_bg', 'qa_state', 'release', 'reduction',
+                 'types', 'phot_standard')
 
 def jsonsummary(req, selection):
     """
@@ -93,73 +108,15 @@ def jsonsummary(req, selection):
     try:
         headers = list_headers(session, selection, orderby)
         thelist = []
-        for header in headers:
-            thedict = {}
-            thedict['name'] = _for_json(header.diskfile.file.name)
-            thedict['filename'] = _for_json(header.diskfile.filename)
-            thedict['path'] = _for_json(header.diskfile.path)
-            thedict['compressed'] = _for_json(header.diskfile.compressed)
-            thedict['size'] = _for_json(header.diskfile.file_size)
-            thedict['file_size'] = _for_json(header.diskfile.file_size)
-            thedict['data_size'] = _for_json(header.diskfile.data_size)
-            thedict['md5'] = _for_json(header.diskfile.file_md5)
-            thedict['file_md5'] = _for_json(header.diskfile.file_md5)
-            thedict['data_md5'] = _for_json(header.diskfile.data_md5)
-            thedict['lastmod'] = _for_json(header.diskfile.lastmod)
-            thedict['program_id'] = _for_json(header.program_id)
-            thedict['engineering'] = _for_json(header.engineering)
-            thedict['science_verification'] = _for_json(header.science_verification)
-            thedict['calibration_program'] = _for_json(header.calibration_program)
-            thedict['observation_id'] = _for_json(header.observation_id)
-            thedict['data_label'] = _for_json(header.data_label)
-            thedict['telescope'] = _for_json(header.telescope)
-            thedict['instrument'] = _for_json(header.instrument)
-            thedict['ut_datetime'] = _for_json(header.ut_datetime)
-            thedict['local_time'] = _for_json(header.local_time)
-            thedict['observation_type'] = _for_json(header.observation_type)
-            thedict['observation_class'] = _for_json(header.observation_class)
-            thedict['object'] = _for_json(header.object)
-            thedict['ra'] = _for_json(header.ra)
-            thedict['dec'] = _for_json(header.dec)
-            thedict['azimuth'] = _for_json(header.azimuth)
-            thedict['elevation'] = _for_json(header.elevation)
-            thedict['cass_rotator_pa'] = _for_json(header.cass_rotator_pa)
-            thedict['airmass'] = _for_json(header.airmass)
-            thedict['filter_name'] = _for_json(header.filter_name)
-            thedict['exposure_time'] = _for_json(header.exposure_time)
-            thedict['disperser'] = _for_json(header.disperser)
-            thedict['camera'] = _for_json(header.camera)
-            thedict['central_wavelength'] = _for_json(header.central_wavelength)
-            thedict['wavelength_band'] = _for_json(header.wavelength_band)
-            thedict['focal_plane_mask'] = _for_json(header.focal_plane_mask)
-            thedict['detector_binning'] = _for_json(header.detector_binning)
-            thedict['detector_config'] = _for_json(header.detector_config)
-            thedict['detector_roi_setting'] = _for_json(header.detector_roi_setting)
-            thedict['spectroscopy'] = _for_json(header.spectroscopy)
-            thedict['mode'] = _for_json(header.mode)
-            thedict['adaptive_optics'] = _for_json(header.adaptive_optics)
-            thedict['laser_guide_star'] = _for_json(header.laser_guide_star)
-            thedict['wavefront_sensor'] = _for_json(header.wavefront_sensor)
-            thedict['gcal_lamp'] = _for_json(header.gcal_lamp)
-            thedict['raw_iq'] = _for_json(header.raw_iq)
-            thedict['raw_cc'] = _for_json(header.raw_cc)
-            thedict['raw_wv'] = _for_json(header.raw_wv)
-            thedict['raw_bg'] = _for_json(header.raw_bg)
-            thedict['requested_iq'] = _for_json(header.requested_iq)
-            thedict['requested_cc'] = _for_json(header.requested_cc)
-            thedict['requested_wv'] = _for_json(header.requested_wv)
-            thedict['requested_bg'] = _for_json(header.requested_bg)
-            thedict['qa_state'] = _for_json(header.qa_state)
-            thedict['release'] = _for_json(header.release)
-            thedict['reduction'] = _for_json(header.reduction)
-            thedict['types'] = _for_json(header.types)
-            thedict['phot_standard'] = _for_json(header.phot_standard)
-            
+        for thedict, header in diskfile_dicts(headers, return_header=True):
+            for field in header_fields:
+                thedict[field] = _for_json(getattr(header, field))
+
             thelist.append(thedict)
     finally:
         session.close()
     json.dump(thelist, req, indent=4)
-    return apache.OK
+    return apache.HTTP_OK
 
 
 from decimal import Decimal
@@ -169,11 +126,11 @@ def _for_json(thing):
     """
     JSON can't serialize some types, this does best representation we can
     """
-    if isinstance(thing, Text) or isinstance(thing, datetime) or isinstance(thing, date) or isinstance(thing, time) or isinstance(thing, DateTime) or isinstance(thing, Date) or isinstance(thing, Time):
+    if isinstance(thing, (Text, datetime, date, time, DateTime, Date, Time)):
         return str(thing)
-    if isinstance(thing, Integer) or isinstance(thing, BigInteger):
+    if isinstance(thing, (Integer, BigInteger)):
         return int(thing)
-    if isinstance(thing, Numeric) or isinstance(thing, Decimal):
+    if isinstance(thing, (Numeric, Decimal)):
         return float(thing)
     if isinstance(thing, Enum):
         return str(thing)

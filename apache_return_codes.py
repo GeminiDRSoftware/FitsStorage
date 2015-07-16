@@ -15,7 +15,7 @@ from fits_storage_config import using_apache
 
 if using_apache:
     try:
-        from mod_python.apache import OK, HTTP_NOT_FOUND, HTTP_FORBIDDEN, HTTP_NOT_ACCEPTABLE
+        from mod_python.apache import OK, HTTP_OK, HTTP_NOT_FOUND, HTTP_FORBIDDEN, HTTP_NOT_ACCEPTABLE
         from mod_python.apache import HTTP_NOT_IMPLEMENTED, HTTP_SERVICE_UNAVAILABLE, HTTP_BAD_REQUEST
         from mod_python.apache import REMOTE_NOLOOKUP
         define_locally = False
@@ -27,6 +27,7 @@ else:
 
 if define_locally:
     OK = 200
+    HTTP_OK = 200
     HTTP_NOT_FOUND = 404
     HTTP_FORBIDDEN = 403
     HTTP_NOT_ACCEPTABLE = 406

@@ -124,7 +124,7 @@ def searchform(req, things, orderby):
     req.write('</div>')
     req.write('</body></html>')
 
-    return apache.OK
+    return apache.HTTP_OK
 
 def updateform(html, selection):
     """
@@ -340,4 +340,4 @@ def nameresolver(req, things):
     urlfd.close()
 
     req.write(xml)
-    return apache.OK
+    return apache.HTTP_OK

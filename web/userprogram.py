@@ -64,7 +64,7 @@ def my_programs(req, things):
         req.write('<p>You need to be logged in to see your registered programs.</p>')
         req.write('<p>You can <a href="/login">log in here</a></p>')
         req.write('</body></html>')
-        return apache.OK
+        return apache.HTTP_OK
 
     if len(prog_list) == 0:
         req.write('<h1>No programs registered</h1>')
@@ -95,7 +95,7 @@ def my_programs(req, things):
     req.write('<INPUT type="submit" value="Submit"></INPUT>')
     req.write('</FORM>')
     req.write("</body></html>")
-    return apache.OK
+    return apache.HTTP_OK
 
 
 def get_program_list(session, user):

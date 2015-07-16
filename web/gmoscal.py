@@ -472,7 +472,7 @@ def gmoscal(req, selection, do_json=False):
         if do_json:
             json.dump([json_dict], req, indent=4)
 
-        return apache.OK
+        return apache.HTTP_OK
 
     except IOError:
         pass

@@ -147,7 +147,7 @@ def export_file(session, filename, path, destination):
 
         # verify that it transfered OK
         ok = True
-        if http_status == apache.OK:
+        if http_status == apache.HTTP_OK:
             # response is a short json document
             verification = json.loads(response)[0]
             if verification['filename'] != filename:

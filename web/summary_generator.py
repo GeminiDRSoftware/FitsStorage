@@ -11,6 +11,24 @@ from utils.userprogram import canhave_header
 
 from fits_storage_config import using_previews
 
+sum_type_defs = {
+    'summary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
+                    'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'qa_state',
+                    'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
+    'lsummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
+                    'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'filter_name', 'fpmask',
+                    'detector_roi', 'detector_binnin', 'detector_config', 'qa_state',
+                    'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
+    'ssummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
+                    'object', 'waveband', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
+    'diskfiles' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'present', 'entrytime', 'lastmod',
+                    'file_size', 'file_md5', 'compressed', 'data_size', 'data_md5'],
+    'searchresults' : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
+                    'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state'],
+    'associated_cals': ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
+                    'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state']
+    }
+
 class SummaryGenerator(object):
     """
     This is the web summary generator class. You instantiate this class and
@@ -66,30 +84,13 @@ class SummaryGenerator(object):
         summary types.
         Valid types are: summary, ssummary, lsummary, diskfiles
         """
-        sum_type_defs = {
-            'summary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
-                            'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'qa_state',
-                            'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
-            'lsummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
-                            'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'filter_name', 'fpmask',
-                            'detector_roi', 'detector_binnin', 'detector_config', 'qa_state',
-                            'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
-            'ssummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
-                            'object', 'waveband', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
-            'diskfiles' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'present', 'entrytime', 'lastmod',
-                            'file_size', 'file_md5', 'compressed', 'data_size', 'data_md5'],
-            'searchresults' : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
-                            'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state'],
-            'associated_cals': ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
-                            'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state']}
 
-        if sumtype in sum_type_defs.keys():
+        try:
             want = sum_type_defs[sumtype]
-            for key in self.columns.keys():
-                if key in want:
-                    self.columns[key]['want'] = True
-                else:
-                    self.columns[key]['want'] = False
+            for key in self.columns:
+                self.columns[key]['want'] = key in want
+        except KeyError:
+            pass
 
     def init_cols(self):
         """
@@ -362,8 +363,7 @@ class SummaryGenerator(object):
         # string and req.write it at the end
 
         html = '<TR class=tr_head>'
-        for colkey in self.columns.keys():
-            col = self.columns[colkey]
+        for colkey, col in self.columns.items():
             if col['want']:
                 html += '<TH>'
                 if col['longheading']:
@@ -391,8 +391,7 @@ class SummaryGenerator(object):
             html = '<TR class=%s>' % trclass
         else:
             html = '<TR>'
-        for colkey in self.columns.keys():
-            col = self.columns[colkey]
+        for colkey, col in self.columns.items():
             if col['want']:
                 html += '<TD>'
                 if col['summary_func']:
@@ -461,20 +460,17 @@ class SummaryGenerator(object):
         """
         Generates the UT datetime column html
         """
-        # format withou decimal places on the seconds
+        # format without decimal places on the seconds
         if self.links and header.ut_datetime is not None:
             if header.ut_datetime:
                 date_print = header.ut_datetime.strftime("%Y-%m-%d")
                 time_print = header.ut_datetime.strftime("%H:%M:%S")
                 date_link = header.ut_datetime.strftime("%Y%m%d")
                 return '<a href="%s/%s">%s</a> %s' % (self.uri, date_link, date_print, time_print)
-            else:
-                return "None"
-        else:
-            if header.ut_datetime:
-                return str(header.ut_datetime.strftime("%Y-%m-%d %H:%M:%S"))
-            else:
-                return "None"
+        elif header.ut_datetime:
+            return str(header.ut_datetime.strftime("%Y-%m-%d %H:%M:%S"))
+
+        return "None"
 
 
     def instrument(self, header):
@@ -527,7 +523,7 @@ class SummaryGenerator(object):
         # All we do is format it with 2 decimal places
         try:
             return "%.2f" % header.exposure_time
-        except:
+        except (TypeError, AttributeError):
             return ''
 
     def airmass(self, header):
@@ -537,7 +533,7 @@ class SummaryGenerator(object):
         # All we do is format it with 2 decimal places
         try:
             return "%.2f" % header.airmass
-        except:
+        except (TypeError, AttributeError):
             return ''
 
     def local_time(self, header):
@@ -547,7 +543,7 @@ class SummaryGenerator(object):
         # All we do is format it without decimal places
         try:
             return header.local_time.strftime("%H:%M:%S")
-        except:
+        except (TypeError, AttributeError):
             return ''
 
 
@@ -575,11 +571,11 @@ class SummaryGenerator(object):
         # Now the target symbol
         symhtml = ''
         if header.types is not None:
-            if 'AZEL_TARGET' in header.types and 'AT_ZENITH' not in header.types:
-                symhtml = '<abbr title="Target is in AzEl co-ordinate frame">&#x2693;</abbr>'
             if 'AT_ZENITH' in header.types:
                 symhtml = '<abbr title="Target is Zenith in AzEl co-ordinate frame">&#x2693;&#x2191;</abbr>'
-            if 'NON_SIDEREAL' in header.types:
+            elif 'AZEL_TARGET' in header.types:
+                symhtml = '<abbr title="Target is in AzEl co-ordinate frame">&#x2693;</abbr>'
+            elif 'NON_SIDEREAL' in header.types:
                 symhtml = '<abbr title="Target is non-sidereal">&#x2604;</abbr>'
 
         return '%s %s %s' % (basehtml, phothtml, symhtml)

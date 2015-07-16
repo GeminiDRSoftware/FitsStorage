@@ -9,7 +9,7 @@ from orm.header import Header
 from orm.obslog import Obslog
 from fits_storage_config import fits_open_result_limit, fits_closed_result_limit, use_as_archive
 from web.selection import queryselection, openquery
-from sqlalchemy import desc
+from sqlalchemy import asc, desc
 import dateutil.parser
 
 def list_headers(session, selection, orderby):
@@ -33,43 +33,39 @@ def list_headers(session, selection, orderby):
 
     whichorderby = ['instrument', 'data_label', 'observation_class', 'airmass', 'ut_datetime', 'local_time',
                         'raw_iq', 'raw_cc', 'raw_bg', 'raw_wv', 'qa_state', 'filter_name', 'exposure_time', 'object']
+
     if orderby:
-        for i in range(len(orderby)):
-            if '_desc' in orderby[i]:
-                orderby[i] = orderby[i].replace('_desc', '')
-                if orderby[i] == 'filename':
-                    query = query.order_by(desc('DiskFile.%s' % orderby[i]))
-                if orderby[i] in whichorderby:
-                    query = query.order_by(desc('Header.%s' % orderby[i]))
-            else:
-                if '_asc' in orderby[i]:
-                    orderby[i] = orderby[i].replace('_asc', '')
-                if orderby[i] == 'filename':
-                    query = query.order_by('DiskFile.%s' % orderby[i])
-                if orderby[i] in whichorderby:
-                    query = query.order_by('Header.%s' % orderby[i])
+        for value in orderby:
+            sortingfunc = asc
+            if '_desc' in value:
+                value = value.replace('_desc', '')
+                sortingfunc = desc
+            if '_asc' in value:
+                value = value.replace('_asc', '')
+
+            if value == 'filename':
+                query = query.order_by(sortingfunc('DiskFile.%s' % value))
+            elif value in whichorderby:
+                query = query.order_by(sortingfunc('Header.%s' % value))
+
+    is_openquery = openquery(selection)
 
 
     # By default we should order by filename, except for the archive, we should order by reverse date
     if use_as_archive:
-        if openquery(selection):
-            query = query.order_by(desc(Header.ut_datetime))
-        else:
-            query = query.order_by(Header.ut_datetime)
-
+        fn = (desc if is_openquery else asc)
+        query = query.order_by(fn(Header.ut_datetime))
     else:
         query = query.order_by(File.name)
 
     # If this is an open query, we should limit the number of responses
-    if openquery(selection):
+    if is_openquery:
         query = query.limit(fits_open_result_limit)
     else:
         query = query.limit(fits_closed_result_limit)
 
-    headers = query.all()
-
     # Return the list of DiskFile objects
-    return headers
+    return query.all()
 
 
 def list_obslogs(session, selection, orderby):
@@ -87,8 +83,8 @@ def list_obslogs(session, selection, orderby):
     """
 
     # The basic query
-    query = session.query(Obslog).select_from(Obslog, DiskFile)
-    query = query.filter(Obslog.diskfile_id == DiskFile.id)
+    query = session.query(Obslog).select_from(Obslog, DiskFile)\
+                    .filter(Obslog.diskfile_id == DiskFile.id)
 
     # Cant use queryselection as that assumes it's a header object.
     # Just do it here.
@@ -101,18 +97,15 @@ def list_obslogs(session, selection, orderby):
         # Parse the date to start and end datetime objects
         daterangecre = re.compile(r'([12][90]\d\d[01]\d[0123]\d)-([12][90]\d\d[01]\d[0123]\d)')
         m = daterangecre.match(selection['daterange'])
-        startdate = m.group(1)
-        enddate = m.group(2)
         # same as for date regarding archive server
-        start = dateutil.parser.parse("%s 00:00:00" % startdate).date()
-        end = dateutil.parser.parse("%s 00:00:00" % enddate).date()
+        # start = dateutil.parser.parse("%s 00:00:00" % startdate).date()
+        # end = dateutil.parser.parse("%s 00:00:00" % enddate).date()
+        start, end = [dateutil.parser.parse("%s 00:00:00" % group).date() for group in m.groups()]
         # Flip them round if reversed
         if start > end:
-            tmp = end
-            end = start
-            start = tmp
+            start, end = end, start
         # check it's between these two
-        query = query.filter(Obslog.date >= startdt).filter(Obslog.date <= enddt)
+        query = query.filter(Obslog.date >= start).filter(Obslog.date <= end)
 
     if 'program_id' in selection:
         query = query.filter(Obslog.program_id == selection['program_id'])
@@ -125,8 +118,7 @@ def list_obslogs(session, selection, orderby):
     query = query.limit(1000)
 
     # Get the list and return it
-    obslogs = query.all()
 
-    return obslogs
+    return query.all()
 
 

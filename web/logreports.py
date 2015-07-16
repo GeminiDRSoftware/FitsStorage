@@ -3,8 +3,11 @@ This module handles the web 'logreports' functions - presenting data from the us
 """
 import datetime
 import dateutil.parser
+from collections import namedtuple
 
-from sqlalchemy import desc, func, join
+from sqlalchemy import and_, between, cast, desc, extract, func, join
+from sqlalchemy import Date, Integer, Interval, String
+from sqlalchemy.orm import aliased
 
 from orm import sessionfactory
 from orm.usagelog import UsageLog
@@ -47,28 +50,26 @@ def usagereport(req):
         status = ''
 
         formdata = util.FieldStorage(req)
-        if len(formdata.keys()) > 0:
-            # We got a form submitted, process values
-            for key in formdata.keys():
-                if key == 'start' and len(formdata[key]):
-                    start = dateutil.parser.parse(formdata[key])
-                elif key == 'end' and len(formdata[key]):
-                    end = dateutil.parser.parse(formdata[key])
-                elif key == 'username' and len(formdata[key]):
-                    user = session.query(User).filter(User.username == formdata[key]).first()
-                    if user:
-                        username = user.username
-                        user_id = user.id
-                elif key == 'ipaddr' and len(formdata[key]):
-                    ipaddr = str(formdata[key])
-                elif key == 'this' and len(formdata[key]):
-                    this = str(formdata[key])
-                elif key == 'status' and len(formdata[key]):
-                    try:
-                        status = int(formdata[key])
-                    except:
-                        pass
-                    
+        for key, value in formdata.items():
+            if key == 'start' and len(value):
+                start = dateutil.parser.parse(value)
+            elif key == 'end' and len(value):
+                end = dateutil.parser.parse(value)
+            elif key == 'username' and len(value):
+                user = session.query(User).filter(User.username == formdata[key]).first()
+                if user:
+                    username = user.username
+                    user_id = user.id
+            elif key == 'ipaddr' and len(value):
+                ipaddr = str(value)
+            elif key == 'this' and len(value):
+                this = str(value)
+            elif key == 'status' and len(value):
+                try:
+                    status = int(value)
+                except:
+                    pass
+
         # send them the form, pre-populate if have values
         req.content_type = "text/html"
 
@@ -85,7 +86,7 @@ def usagereport(req):
         req.write('<TD><INPUT type="text" size=20 name="start" value=%s></TD></TR>' % start)
         req.write('<TR><TD><LABEL for="end">UT End of Report</LABEL></TD>')
         req.write('<TD><INPUT type="text" size=20 name="end" value=%s></TD></TR>' % end)
-        
+
         req.write('<TR><TD><LABEL for="username">Username</LABEL></TD>')
         req.write('<TD><INPUT type="text" size=20 name="username" value=%s></TD></TR>' % username)
 
@@ -123,8 +124,7 @@ def usagereport(req):
                 except:
                     pass
 
-            query = query.order_by(desc(UsageLog.utdatetime))
-            usagelogs = query.all()
+            usagelogs = query.order_by(desc(UsageLog.utdatetime))
 
             req.write('<TABLE>')
             req.write('<TR class="tr_head">')
@@ -158,17 +158,13 @@ def usagereport(req):
             req.write('<TH>MB/sec</TH>')
             req.write('<TH>Notes</TH>')
             req.write('</TR>\n')
- 
+
             even = False
             for usagelog in usagelogs:
 
                 even = not even
-                if even:
-                    tr_class = "tr_even"
-                else:
-                    tr_class = "tr_odd"
 
-                req.write('<TR class="%s">' % tr_class)
+                req.write('<TR class="%s">' % ('tr_even' if even else 'tr_odd'))
                 req.write('<TD><a href="/usagedetails/%d">%d</a></TD>' % (usagelog.id, usagelog.id))
                 req.write('<TD>%s</TD>' % usagelog.utdatetime.strftime("%Y-%m-%d %H:%M:%S.%f")[:21])
                 html = ""
@@ -264,7 +260,7 @@ def usagereport(req):
     finally:
         session.close()
 
-    return apache.OK
+    return apache.HTTP_OK
 
 def usagedetails(req, things):
     """
@@ -472,7 +468,7 @@ def usagedetails(req, things):
     finally:
         session.close()
 
-    return apache.OK
+    return apache.HTTP_OK
 
 def downloadlog(req, things):
     """
@@ -508,7 +504,7 @@ def downloadlog(req, things):
         if len(headers) == 0:
             req.write("<h2>No results match selection</h2>")
             req.write("</body></html>")
-            return apache.OK
+            return apache.HTTP_OK
 
         req.write("<TABLE>")
         req.write('<TR class="tr_head">')
@@ -525,14 +521,12 @@ def downloadlog(req, things):
 
         even = False
         for header in headers:
-            query = session.query(FileDownloadLog).filter(FileDownloadLog.diskfile_filename == header.diskfile.filename).filter(FileDownloadLog.diskfile_file_md5 == header.diskfile.file_md5)
-            fdls = query.all()
-            for fdl in fdls:
+            query = session.query(FileDownloadLog)\
+                            .filter(FileDownloadLog.diskfile_filename == header.diskfile.filename)\
+                            .filter(FileDownloadLog.diskfile_file_md5 == header.diskfile.file_md5)
+            for fdl in query:
                 even = not even
-                if even:
-                    req.write('<TR class="tr_even">')
-                else:
-                    req.write('<TR class="tr_odd">')
+                req.write('<TR class="%s">' % ('tr_even' if even else 'tr_odd'))
                 req.write('<TD><a href="/usagedetails/%d">%d</a></TD>' % (fdl.usagelog_id, fdl.usagelog_id))
                 req.write('<TD>%s</TD>' % header.diskfile.filename)
                 req.write('<TD>%s</TD>' % header.data_label)
@@ -563,7 +557,34 @@ def downloadlog(req, things):
     finally:
         session.close()
 
-    return apache.OK
+    return apache.HTTP_OK
+
+usagestats_header = """
+<tr class='tr_head'>
+<th></th>
+<th colspan=2>Site Hits</th>
+<th colspan=2>Searches</th>
+<th colspan=2>PI Downloads</th>
+<th colspan=2>Public Downloads</th>
+<th colspan=2>Anonymous Downloads</th>
+<th colspan=2>Staff Downloads</th>
+<th colspan=2>Total Downloads</th>
+<th>Failed Downloads</th>
+<th colspan=2>Uploads</th>
+</tr>
+<tr class='tr_head'>
+<th>Period</th>
+<th>ok</th><th>fail</th>
+<th>ok</th><th>fail</th>
+<th>files</th><th>gb</th>
+<th>files</th><th>gb</th>
+<th>files</th><th>gb</th>
+<th>files</th><th>gb</th>
+<th>files</th><th>gb</th>
+<th>number</th>
+<th>files</th><th>gb</th>
+</tr>
+"""
 
 def usagestats(req):
     """
@@ -596,57 +617,23 @@ def usagestats(req):
         req.write("<body>")
         req.write("<h1>Usage Statistics</h1>")
 
-        first = session.query(func.min(UsageLog.utdatetime)).first()[0]
-        last = session.query(func.max(UsageLog.utdatetime)).first()[0]
-   
-        req.write("<h2>Per Year</h2>")
-        year = first.year
-        start = datetime.datetime(year, 1, 1, 0, 0, 0)
-        end = datetime.datetime(year+1, 1, 1, 0, 0, 0)
-        req.write('<TABLE>')
-        req.write(render_usagestats_row(session, start, end, header=True, tr_class='tr_head'))
-        req.write(render_usagestats_row(session, start, end, header=False, tr_class='tr_odd'))
-        even = False
-        while end < last:
-            even = not even
-            tr_class = 'tr_even' if even else 'tr_odd'
-            year += 1
-            start = datetime.datetime(year, 1, 1, 0, 0, 0)
-            end = datetime.datetime(year+1, 1, 1, 0, 0, 0)
-            req.write(render_usagestats_row(session, start, end, header=False, tr_class=tr_class))
-        req.write('</TABLE>')
+        first, last = session.query(func.min(UsageLog.utdatetime),
+                                    func.max(UsageLog.utdatetime)).first()
 
-        req.write("<h2>Per Week</h2>")
-        delta = datetime.timedelta(days=7)
-        start = datetime.datetime(first.year, first.month, first.day, 0, 0, 0)
-        end = start + delta
-        req.write('<TABLE>')
-        req.write(render_usagestats_row(session, start, end, header=True, tr_class='tr_head'))
-        req.write(render_usagestats_row(session, start, end, header=False, tr_class='tr_odd'))
-        even = False
-        while end < last:
-            even = not even
-            tr_class = 'tr_even' if even else 'tr_odd'
-            start = start + delta
-            end = end + delta
-            req.write(render_usagestats_row(session, start, end, header=False, tr_class=tr_class))
-        req.write('</TABLE>')
+        groups = (('Per Year', build_query(session, 'year')),
+                  ('Per Week', build_query(session, 'week', first)),
+                  ('Per Day',  build_query(session, 'day', first)))
 
-        req.write("<h2>Per Day</h2>")
-        delta = datetime.timedelta(days=1)
-        start = datetime.datetime(first.year, first.month, first.day, 0, 0, 0)
-        end = start + delta
-        req.write('<TABLE>')
-        req.write(render_usagestats_row(session, start, end, header=True, tr_class='tr_head'))
-        req.write(render_usagestats_row(session, start, end, header=False, tr_class='tr_odd'))
-        even = False
-        while end < last:
-            even = not even
-            tr_class = 'tr_even' if even else 'tr_odd'
-            start = start + delta
-            end = end + delta
-            req.write(render_usagestats_row(session, start, end, header=False, tr_class=tr_class))
-        req.write('</TABLE>')
+        for header, query in groups:
+            req.write("<h2>%s</h2>" % header)
+            req.write('<TABLE>')
+            req.write(usagestats_header)
+            even = True
+            header = True
+            for result in query:
+                even = not even
+                req.write(render_usagestats_row(result, tr_class=('tr_even' if even else 'tr_odd')))
+            req.write('</TABLE>')
 
         req.write('<H2>Within the last 90 days...</H2>')
         end = datetime.datetime.utcnow()
@@ -679,7 +666,7 @@ def usagestats(req):
             req.write('<TD>%s</TD>' % result[1])
             req.write('</TR>')
         req.write('</TABLE>')
-    
+
         req.write('<h3>Most hungry Users</h3>')
         query = session.query(UsageLog.user_id, func.sum(UsageLog.bytes)).filter(UsageLog.this=='download')
         query = query.filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
@@ -707,142 +694,351 @@ def usagestats(req):
             req.write('<TD>%.2f</TD>' % gb)
             req.write('</TR>')
         req.write('</TABLE>')
-    
+
     finally:
         session.close()
 
-    return apache.OK
+    return apache.HTTP_OK
 
-def render_usagestats_row(session, start, end, header=False, tr_class=''):
+def render_usagestats_row(result, tr_class=''):
     """
     Generates an html table row giving the stats
     if header=true, generates the header row
     if tr_class, sets that class on the <TR>
     """
 
+    def bytes_to_GB(bytes):
+        return bytes / 1.0E9
+
     if tr_class:
         html = '<TR class=%s>' % tr_class
     else:
         html = '<TR>'
 
-    if header:
-        html += '<TH colspan=2>Period</TH>'
-        html += '<TH colspan=2>Site Hits</TH>'
-        html += '<TH colspan=2>Searches</TH>'
-        html += '<TH colspan=2>PI Downloads</TH>'
-        html += '<TH colspan=2>Public Downloads</TH>'
-        html += '<TH colspan=2>Anonymous Downloads</TH>'
-        html += '<TH colspan=2>Staff Downloads</TH>'
-        html += '<TH colspan=2>Total Downloads</TH>'
-        html += '<TH>Failed Downloads</TH>'
-        html += '<TH colspan=2>Uploads</TH>'
-        html += '</TR>'
-        if tr_class:
-            html += '<TR class=%s>' % tr_class
-        else:
-            html += '<TR>'
-        html += '<TH>From</TH><TH>To</TH>'
-        html += '<TH>OK</TH><TH>Fail</TH>'
-        html += '<TH>OK</TH><TH>Fail</TH>'
-        html += '<TH>Files</TH><TH>GB</TH>'
-        html += '<TH>Files</TH><TH>GB</TH>'
-        html += '<TH>Files</TH><TH>GB</TH>'
-        html += '<TH>Files</TH><TH>GB</TH>'
-        html += '<TH>Files</TH><TH>GB</TH>'
-        html += '<TH>Number</TH>'
-        html += '<TH>Files</TH><TH>GB</TH>'
-        html += '</TR>'
-        return html
+    html += '<TD>%s</TD>' % (result.date)
 
-    usage = calculate_usagestats(session, start, end)
-
-    html += '<TD>%s</TD><TD>%s</TD>' % (start, end)
-
-    html += '<TD>%d</TD><TD>%d</TD>' % (usage['site_hits']['OK'], usage['site_hits']['fail'])
-    html += '<TD>%d</TD><TD>%d</TD>' % (usage['searches']['OK'], usage['searches']['fail'])
-
-    html += '<TD>%d</TD><TD>%.2f</TD>' % (usage['pi_downloads']['files'], usage['pi_downloads']['GB'])
-    html += '<TD>%d</TD><TD>%.2f</TD>' % (usage['public_downloads']['files'], usage['public_downloads']['GB'])
-    html += '<TD>%d</TD><TD>%.2f</TD>' % (usage['anon_downloads']['files'], usage['anon_downloads']['GB'])
-    html += '<TD>%d</TD><TD>%.2f</TD>' % (usage['staff_downloads']['files'], usage['staff_downloads']['GB'])
-    html += '<TD>%d</TD><TD>%.2f</TD>' % (usage['total_downloads']['files'], usage['total_downloads']['GB'])
-
-    html += '<TD>%d</TD>' % usage['failed_downloads']
-
-    html += '<TD>%d</TD><TD>%.2f</TD>' % (usage['uploads']['files'], usage['uploads']['GB'])
+    html += '<TD>%d</TD><TD>%d</TD>' % (result.hit_ok, result.hit_fail)
+    html += '<TD>%d</TD><TD>%d</TD>' % (result.search_ok, result.search_fail)
+    html += '<TD>%s</TD><TD>%.2f</TD>' % (result.pi_down, bytes_to_GB(result.pi_bytes))
+    html += '<TD>%s</TD><TD>%.2f</TD>' % (result.public_down, bytes_to_GB(result.public_bytes))
+    html += '<TD>%s</TD><TD>%.2f</TD>' % (result.anon_down, bytes_to_GB(result.anon_bytes))
+    html += '<TD>%s</TD><TD>%.2f</TD>' % (result.staff_down, bytes_to_GB(result.staff_bytes))
+    html += '<TD>%s</TD><TD>%.2f</TD>' % (result.total_down, bytes_to_GB(result.total_bytes))
+    html += '<TD>%s</TD>' % result.failed_down
+    html += '<TD>%d</TD><TD>%.2f</TD>' % (result.up, bytes_to_GB(result.up_bytes))
 
     html += '</TR>'
 
     return html
 
-def calculate_usagestats(session, start, end):
-    """
-    start and end are datetime objects in UTC.
-    Returns a dict containing the stats for that period
-    'site_hits': {'OK': int, 'fail': int}
-    'searches': {'OK': int, 'fail': int}
-    'pi_downloads': {'nfiles': int, 'GB': float}
-    'public_downloads': {'files': int, 'GB': float}
-    'anon_downloads': {'files': int, 'GB': float}
-    'staff_downloads': {'files': int, 'GB': float}
-    'total_downloads': {'files': int, 'GB': float}
-    'failed_downloads': int
-    'uploads': {'files': int, 'GB': float}
-    """
+############################################################################################################
 
-    retary = {}
-    usagequery = session.query(UsageLog).filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
+##     ##                            #                 #######
+##     ##                           #                  ##     ##
+##     ##  #####  # ###   #####     # ####   #####     ##     ## # ###   ####   ####   #####  # ###   #####
+######### #     # ##   # #     #    ##    # #     #    ##     ## ##   #      # #    # #     # ##   # #
+##     ## ######  #      ######     #     # ######     ##     ## #      #### # #    # #     # #    #  #####
+##     ## #       #      #          #     # #          ##     ## #     #    ## #   ## #     # #    #       #
+##     ##  #####  #       #####      #####   #####     #######   #      ######  ### #  #####  #    #  #####
+                                                                                    #
+                                                                                ####
 
-    hitsok = usagequery.filter(UsageLog.status == 200).count()
-    hitsfail = usagequery.filter(UsageLog.status != 200).count()
-    retary['site_hits'] = {'OK': hitsok, 'fail': hitsfail}
+############################################################################################################
 
-    searchok = usagequery.filter(UsageLog.this=="searchform").filter(UsageLog.status == 200).count()
-    searchfail = usagequery.filter(UsageLog.this=="searchform").filter(UsageLog.status != 200).count()
-    retary['searches'] = {'OK': searchok, 'fail': searchfail}
+# What follows is a function that bulds a rather complicated SQL query, written to optimize the call to
+# usagestats, and as a testbed for other optimizations. This optimization is not really that needed, because
+# usagestats is not called often, but the original function triggered multiple database queries per rendered
+# row, and I (Ricardo) wanted to remove that behaviour.
+#
+# Understanding it SEEMS not to easy, but that's just because of the size. We'll be providing plenty of
+# documentation to let future maintainers know # what to touch, and where.
 
-    fdlquery = session.query(FileDownloadLog).select_from(join(FileDownloadLog, UsageLog)).filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
-    retary['failed_downloads'] = fdlquery.filter(UsageLog.status != 200).count()
+UsageResult = namedtuple('UsageResult',
+                (
+                 'date',         # String representation of the summarized period
+                 'hit_ok',       # Number of successful queries (HTTP Status 200)
+                 'hit_fail',     # Number of non-successful queries
+                 'search_ok',    # Number of successful queries involving /searchform
+                 'search_fail',  # Number of non-successful queries involving /searchform
+                 'total_down',   # Total downloaded files
+                 'total_bytes',  # Total downloaded bytes
+                 'up',           # Total uploaded files
+                 'up_bytes',     # Total uploaded bytes
+                 'pi_down',      # Total files downloaded by a PI user
+                 'pi_bytes',     # Total bytes downloaded by a PI user
+                 'staff_down',   # Total files downloaded by Gemini staff
+                 'staff_bytes',  # Total bytes downloaded by Gemini staff
+                 'public_down',  # Total released files downloaded by non-anonymous users
+                 'public_bytes', # Total released-image bytes downloaded by non-anonymous users
+                 'anon_down',    # Total files downloaded by an anonymous user
+                 'anon_bytes',   # Total bytes downloaded by an anonymous user
+                 'failed_down'   # Total failed downloads
+                 ))
 
-    fdlquery = session.query(func.count(1), func.sum(UsageLog.bytes)).select_from(join(FileDownloadLog, UsageLog))
-    fdlquery = fdlquery.filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
-    fdlquery = fdlquery.filter(UsageLog.status == 200)
-    
-    total = fdlquery.first()
-    if total:
-        retary['total_downloads'] = {'files': total[0], 'GB' : total[1]/1.0E9 if total[1] else 0}
+def build_query(session, period, since=None):
+    '''This generator creates a query to tally usage stats, grouped by `period` (which can be
+       'year', 'week', or 'day'. The objective is to return a collection of UsageResult, one
+       per period, sumarizing the corresponding statistics. The definition of the UsageResult
+       namedtuple explains each field.
+
+       Both 'week' and 'day' must speficy `since`, to limit the amount of returned data. 'year'
+       will work over all the data set.'''
+
+    # This little function we'll use later to cast many of the results into integers. This is mainly
+    # to translate booleans (True, False) into numbers, because often a True means '1 of this'. Thus,
+    # we can use the result later in sums and products.
+    def to_int(expr):
+        return cast(expr, Integer)
+
+    # Note that we're using 'IS TRUE' here. This is a common theme across the whole query. The reason
+    # for using 'IS' (identity) instead of '=' (equality) is that NULL values ARE NOT taken into account
+    # for equality tests: we'd get a NULL out of it, and we want a boolean.
+    #
+    # Our database contains NULL in plenty of places where you'd expect to find False, so it makes sense
+    # to use this test and be sure.
+    RELEASED_FILE=to_int(FileDownloadLog.released.is_(True))
+
+    # Subquery that summarizes downloads and bytes. This is needed because the relation between usagelog
+    # and filedownloadlog is of one-to-many: filedownloadlog details the files (one per entry) for a
+    # download query which shows only once in usagelog. If we wouldn't perform this subquery, when joining
+    # usagelog on the left (we'll do it later), the final query would show more rows than expected,
+    # resulting in bogus statistics.
+    #
+    # The subquery is rather simple, otherwise. The following code is roughly equivalent to:
+    #
+    #   (
+    #    SELECT   ul.id AS ulid, pi_access, staff_access, COUNT(1) AS `count`, SUM(diskfile_file_size) AS bytes,
+    #             SUM(released_file) AS released,
+    #             SUM(released_file * diskfile_file_size) AS released_bytes
+    #    FROM     filedownloadlog AS fdl JOIN usagelog AS ul ON fdl.usagelog_id = ul.id
+    #    GROUP BY ul.id, fdl.pi_access, fdl.staff_access
+    #   ) AS donwload_stats
+    #
+    # Note that 'released_file' is not a field in filedownloadlog. It's the operation represented by
+    # RELEASED_FILE (see above), which is translated as:
+    #
+    #   CAST(filedownloadlog.released IS true AS integer)
+    #
+    # Which, as explained before, gets us a number, useful in sums and products. At the end of the day, this
+    # query is giving us the following info:
+    #
+    #  - there was a petition for download                       (ul.id)
+    #  - was it performed by a PI or Gemini staff?               (pi_access, staff_access - these are booleans)
+    #  - how many files were downloaded in total?                (count)
+    #  - how many bytes in total?                                (bytes)
+    #  - how many of those files are out of proprietary period?  (released)
+    #  - and how many bytes do those represent, you said?        (released_bytes)
+    download_query = session.query(UsageLog.id.label('ulid'),
+                                   FileDownloadLog.pi_access.label('pi_access'),
+                                   FileDownloadLog.staff_access.label('staff_access'),
+                                   func.count(FileDownloadLog.id).label('count'),
+                                   func.sum(FileDownloadLog.diskfile_file_size).label('bytes'),
+                                   func.sum(RELEASED_FILE).label('released'),
+                                   func.sum(RELEASED_FILE * FileDownloadLog.diskfile_file_size).label('released_bytes'))\
+                            .select_from(join(FileDownloadLog, UsageLog))\
+                            .group_by(UsageLog.id, FileDownloadLog.pi_access,
+                                                   FileDownloadLog.staff_access)\
+                            .cte(name='download_stats')
+
+    # Subquery that summarizes uploads and bytes. The rationale for this subquery would be the same as
+    # for download_query, as the relationship between usagelog and fileuploadlog is technically a
+    # one-to-many. In reality, though, the current implementation accepts only single files per upload,
+    # so there's only one entry per upload. It doesn't hurt to generalize, though, and gives us an
+    # appropriate target for the big fat JOIN that will be performed later. Plus, if we ever implement
+    # uploading tarballs, we get that for free (aren't we smart?)
+    #
+    # This is basically equivalent to:
+    #
+    #   (
+    #    SELECT   ul.id AS ulid, COUNT(1) as `count`, SUM(ful.bytes) AS bytes
+    #    FROM     fileuploadlog AS ful JOIN usagelog AS ul ON ful.usagelog_id = ul.id
+    #    GROUP BY ul.id
+    #   ) AS upload_stats
+    #
+    # The name for the fields are equivalent to those of the download query; just substitute
+    # 'downloaded' for 'uploaded'.
+    upload_query = session.query(UsageLog.id.label('ulid'),
+                                 func.count(FileUploadLog.id).label('count'),
+                                 func.sum(FileUploadLog.size).label('bytes'))\
+                          .select_from(join(FileUploadLog, UsageLog))\
+                          .group_by(UsageLog.id)\
+                          .cte(name='upload_stats')
+
+    # Now, THIS unassuming query fragment is the core join that relates all the usage statistics.
+    # It's equivalent to:
+    #
+    #    ...
+    #    FROM (usagelog AS ul LEFT JOIN download_stats AS ds ON ul.id = ds.ulid)
+    #                         LEFT JOIN upload_stats AS us ON ul.id = us.ulid
+    #    ...
+    #
+    # Notice that we're doing Left Outer Joins here. This is VERY IMPORTANT. Doing a regular
+    # Inner (natural) Join would return rows ONLY where a usagelog entry has a corresponding
+    # download entry (or entries)... AND a corresponding upload entry.
+    #
+    # Which is impossible
+    #
+    # It would be bad enough even if we had only downloads, because we'de be limited to only
+    # download queries, and we want all of them. In any case, what we get out of this join
+    # operation is one row per usagelog entry, with (potentally) extra data if there was a
+    # download or an upload. Otherwise, all those extra columns will be NULL, which is OK.
+    the_join = join(join(UsageLog, download_query, UsageLog.id == download_query.c.ulid,
+                         isouter=True),
+                    upload_query, UsageLog.id == upload_query.c.ulid,
+                    isouter=True)
+
+    # Now comes the (potentially) most confusing part. We want to group the entries of the
+    # join we just defined. And the grouping will be done according to one out of three
+    # criteria:
+    #
+    #  - per year
+    #  - per week (with the first day of the first week starting in the day passed in 'since',
+    #              may not necessarily be Sunday - or Monday, for those of you in countries with
+    #              a non-Sunday first day of the week)
+    #  - per day
+    #
+    # To do this, in the following piece of code we create a master query that incorporates
+    # the_join. Notice, though, that we're only querying for one column (the one that defines
+    # the period for the row). That's OK. All the other columns are common to the different
+    # queries, and we'll add them later using the `add_columns` method of the SQLAlchemy
+    # query object.
+    if period == 'year':
+        # Simple enough. We extract the year component out of the usagelog.utdatetime, and
+        # use that information to group the rows. Nothing complicated here.
+        #
+        # The equivalent query here would be then:
+        #
+        #    SELECT   EXTRACT(YEAR FROM utdatetime)
+        #    FROM     (usagelog AS ul LEFT JOIN download_stats AS ds ON ul.id = ds.ulid)
+        #                            LEFT JOIN upload_stats AS us ON ul.id = us.ulid)
+        #    ORDER BY 1  -- Using the column position to avoid repeating the whole
+        #    GROUP BY 1  -- EXTRACT(....)
+        #
+        ULYEAR = extract('YEAR', UsageLog.utdatetime)
+        query = session.query(to_int(ULYEAR)).select_from(the_join).order_by(ULYEAR).group_by(ULYEAR)
+    elif period in ('week', 'day'):
+        # These two are a bit more complicated. It's easy to group by year, because it's
+        # the slowest changing member of the date component... and never repeats (within
+        # a specified calendar convention, that is)
+        #
+        # Week and day numbers, though, repeat rather often, meaning that we CANNOT use
+        # them straight. Instead, we'll define an auxiliary 'period' table, with entries
+        # defining the beginning and end of one. That will let us use the 'BETWEEN' operator
+        # as grouping criterion.
+
+        since = cast(since, Date) # Just to make sure that we have a date, not a timestamp
+
+        # oneinterval is the only variable thing here. It depends on the input arguments
+        # and can be one of:
+        #
+        #   - INTERVAL '1 week'
+        #   - INTERVAL '1 day'
+        oneinterval = cast('1 {0}'.format(period), Interval)
+        onemsecond = cast('1 microsecond', Interval)
+
+        # The following describes an aliased table (in SQLAlchemy terminology; for
+        # PostgreSQL we would be talking about a CTE - Common Table Expression).
+        # Also known as 'WITH query' Very useful to break down complicated queries
+        # into simple ones.
+        #
+        # This one will prepare a temporary table of periods for us:
+        #
+        #    SELECT generate_series(first_date, last_date, INTERVAL '...') as start
+        #
+        # `start` is the name of the column in this subquery. `timeperiod` (the name
+        # of the "aliased" table) will be used in the final query.
+        intervals = func.generate_series(since, func.now(), oneinterval).label('start')
+        aliased_intervals = aliased(session.query(intervals).subquery(), 'timeperiod')
+
+        # Here we define the starting and ending points of a period. `start` comes
+        # from the `start` column from timeperiod.
+        # `end` is equivalent to (start + INTERVAL '...' - INTERVAL '1 microsecond').
+        # We substract one microsecond because the operator 'BETWEEN' works on
+        # closed ranges, meaning that it will include both ends. Substracting that
+        # microsecond will get us a period like:
+        #
+        #  2015-02-14 00:00:00 - 2015-02-20 23:59:59.999999
+        #
+        # which should be more than enough precision for our needs. This won't work
+        # if a query was placed during a leap second, but tough luck...
+        start = aliased_intervals.c.start
+        end = (start + oneinterval) - onemsecond
+
+        # One more LEFT join! This one is to incorporate the whole list of periods
+        # to the query. Again, we use a LEFT join to allow the retrieval of periods
+        # with no activity whatsoever (an inner join would skip them). Equivalent to:
+        #
+        #   ... FROM timeperiod AS tp LEFT JOIN the_main_join AS tmj ON ul.utdatetime BETWEEN start AND end ...
+        #
+        # Here `ul` comes from the core JOIN that we defined befure, and `start` and `end`
+        # are the expressions we just defined.
+        more_join = join(aliased_intervals, the_join,
+                         between(UsageLog.utdatetime, start, end),
+                         isouter=True)
+
+        # Finally, the query. This translates to:
+        #
+        #    WITH     (SELECT generate_series(first_date, last_date, INTERVAL '...') as start)
+        #             AS timeperiod
+        #    SELECT   (start || ' - ' || end)
+        #    FROM     timeperiod AS tp LEFT JOIN
+        #             ((usagelog AS ul LEFT JOIN download_stats AS ds ON ul.id = ds.ulid)
+        #                              LEFT JOIN upload_stats AS us ON ul.id = us.ulid))
+        #             ON ul.utdatetime BETWEEN start AND end
+        #    ORDER BY start
+        #    GROUP BY start
+        #
+        if period == 'week':
+            period_element = cast(cast(start, Date), String) + ' - ' + cast(cast(end, Date), String)
+        else:
+            period_element = cast(start, Date)
+        query = session.query(period_element)\
+                       .select_from(more_join)\
+                       .order_by(start)\
+                       .group_by(start)
     else:
-        retary['total_downloads'] = {'files': 0, 'GB' : 0}
+        raise RuntimeException('No valid period specified')
 
-    staff = fdlquery.filter(FileDownloadLog.staff_access == True).first()
-    if staff:
-        retary['staff_downloads'] = {'files': staff[0], 'GB' : staff[1]/1.0E9 if staff[1] else 0}
-    else:
-        retary['staff_downloads'] = {'files': 0, 'GB' : 0}
+    # The rest of the the function defines some auxiliary terms that we'll use to build
+    # the summarizing columns, which is what WE REALLY WANT to extract. They're not
+    # complex and add nothing to the logic of the query. They're simply added to the
+    # retrieved columns. All the information to figure out what info are we working with
+    # has been described before.
+    STATUS_200 = (UsageLog.status == 200)
+    THIS_SEARCH = (UsageLog.this == "searchform")
+    HIT_OK = to_int(STATUS_200.is_(True))
+    HIT_FAIL = to_int(STATUS_200.is_(False))
+    SEARCH_OK = to_int(and_(STATUS_200, THIS_SEARCH).is_(True))
+    SEARCH_FAIL = to_int(and_(STATUS_200.is_(True), THIS_SEARCH.is_(False)))
 
-    pi = fdlquery.filter(FileDownloadLog.pi_access == True).first()
-    if pi:
-        retary['pi_downloads'] = {'files': pi[0], 'GB' : pi[1]/1.0E9 if pi[1] else 0}
-    else:
-        retary['pi_downloads'] = {'files': 0, 'GB' : 0}
+    DOWNLOAD_PERFORMED = and_(STATUS_200.is_(True), download_query.c.ulid.isnot(None)).is_(True)
+    DOWNLOAD_FAILED    = and_(STATUS_200.is_(False), download_query.c.ulid.isnot(None)).is_(True)
+    UPLOAD_PERFORMED   = and_(STATUS_200.is_(True), upload_query.c.ulid.isnot(None)).is_(True)
 
-    pub = fdlquery.filter(FileDownloadLog.released == True).filter(UsageLog.user_id is not None).first()
-    if pub:
-        retary['public_downloads'] = {'files': pub[0], 'GB' : pub[1]/1.0E9 if pub[1] else 0}
-    else:
-        retary['public_downloads'] = {'files': 0, 'GB' : 0}
+    FILE_COUNT = to_int(func.coalesce(download_query.c.count, 0))
+    PUBFILE_COUNT = to_int(func.coalesce(download_query.c.released, 0))
+    DOWNBYTE_COUNT = to_int(func.coalesce(download_query.c.bytes, 0))
+    UPBYTE_COUNT = to_int(func.coalesce(upload_query.c.bytes, 0))
 
-    anon = fdlquery.filter(UsageLog.user_id is None).first()
-    if anon:
-        retary['anon_downloads'] = {'files': anon[0], 'GB' : anon[1]/1.0E9 if anon[1] else 0}
-    else:
-        retary['anon_downloads'] = {'files': 0, 'GB' : 0}
-    
-    fulquery = session.query(FileUploadLog).select_from(join(FileUploadLog, UsageLog)).filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
-    uploads = fulquery.first()
-    if uploads:
-        retary['uploads'] = {'files': uploads[0], 'GB': uploads[1]/1.0E9 if uploads[1] else 0}
-    else:
-        retary['uploads'] = {'files': 0, 'GB': 0}
+    COUNT_DOWNLOAD = to_int(DOWNLOAD_PERFORMED) * FILE_COUNT
+    COUNT_FAILED = to_int(DOWNLOAD_FAILED)
+    COUNT_UPLOAD = to_int(UPLOAD_PERFORMED)
+    PI_DOWNLOAD = to_int(and_(DOWNLOAD_PERFORMED, download_query.c.pi_access.is_(True)))
+    STAFF_DOWNLOAD = to_int(and_(DOWNLOAD_PERFORMED, download_query.c.staff_access.is_(True)))
+    ANON_DOWNLOAD = to_int(and_(DOWNLOAD_PERFORMED, UsageLog.user_id.is_(None)))
 
-    return retary
+    TOTAL_BYTES = COUNT_DOWNLOAD * func.coalesce(UsageLog.bytes, 0)
+    PUBFILE_BYTES = to_int(func.coalesce(download_query.c.released_bytes, 0))
+
+    q = query.add_columns(func.sum(HIT_OK), func.sum(HIT_FAIL), func.sum(SEARCH_OK), func.sum(SEARCH_FAIL),
+                          func.sum(COUNT_DOWNLOAD), func.sum(TOTAL_BYTES),
+                          func.sum(COUNT_UPLOAD), func.sum(COUNT_UPLOAD * UPBYTE_COUNT),
+                          func.sum(PI_DOWNLOAD * FILE_COUNT), func.sum(PI_DOWNLOAD * DOWNBYTE_COUNT),
+                          func.sum(STAFF_DOWNLOAD * FILE_COUNT), func.sum(STAFF_DOWNLOAD * DOWNBYTE_COUNT),
+                          func.sum(PUBFILE_COUNT), func.sum(PUBFILE_BYTES),
+                          func.sum(ANON_DOWNLOAD * FILE_COUNT), func.sum(ANON_DOWNLOAD * DOWNBYTE_COUNT),
+                          func.sum(COUNT_FAILED))
+
+    # Yield the results. Yay! This function is a generator ;-)
+    for result in q:
+        yield UsageResult(*result)
