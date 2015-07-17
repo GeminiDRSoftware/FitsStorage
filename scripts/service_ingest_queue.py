@@ -11,6 +11,7 @@ import os
 import datetime
 import time
 import traceback
+from sqlalchemy.exc import OperationalError
 
 from optparse import OptionParser
 
@@ -164,6 +165,13 @@ while loop:
             session.commit()
 
     except KeyboardInterrupt:
+        loop = False
+
+    except OperationalError:
+        string = traceback.format_tb(sys.exc_info()[2])
+        string = "".join(string)
+        session.rollback()
+        logger.error("Operational Error. Stopping. Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
         loop = False
 
     except:
