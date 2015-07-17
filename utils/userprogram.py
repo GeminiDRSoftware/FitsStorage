@@ -22,13 +22,6 @@ def icanhave(session, req, item, filedownloadlog=None):
     access to the given item. The item is either a header object or an obslog object
     """
 
-    # Is the user gemini staff?
-    user = userfromcookie(session, req)
-    if user is not None and user.gemini_staff is True:
-        if filedownloadlog:
-            filedownloadlog.staff_access = True
-        return True
-
     # Does the client have the magic cookie?
     gotmagic = got_magic(req)
     if gotmagic:
@@ -54,6 +47,12 @@ def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False, 
     If you pass in a FileDownloadLog object, we will update it to note
     the file access rules that were used.
     """
+
+    # Is the user gemini staff?
+    if user is not None and user.gemini_staff is True:
+        if filedownloadlog:
+            filedownloadlog.staff_access = True
+        return True
 
     # Is the release date in the past?
     today = datetime.datetime.utcnow().date()
@@ -100,6 +99,12 @@ def canhave_obslog(session, user, obslog, filedownloadlog=None, gotmagic=False, 
     If you pass in a FileDownloadLog object, we will update it to note
     the file access rules that were used.
     """
+
+    # Is the user gemini staff?
+    if user is not None and user.gemini_staff is True:
+        if filedownloadlog:
+            filedownloadlog.staff_access = True
+        return True
 
     # Is this a PI requesting their obslogs
 
