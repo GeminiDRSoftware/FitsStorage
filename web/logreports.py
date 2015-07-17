@@ -6,7 +6,7 @@ import dateutil.parser
 from collections import namedtuple
 
 from sqlalchemy import and_, between, cast, desc, extract, func, join
-from sqlalchemy import Date, Integer, Interval, String
+from sqlalchemy import BigInteger, Date, Integer, Interval, String
 from sqlalchemy.orm import aliased
 
 from orm import sessionfactory
@@ -708,7 +708,7 @@ def render_usagestats_row(result, tr_class=''):
     """
 
     def bytes_to_GB(bytes):
-        return bytes / 1.0E9
+        return int(bytes) / 1.0E9
 
     if tr_class:
         html = '<TR class=%s>' % tr_class
@@ -787,8 +787,8 @@ def build_query(session, period, since=None):
     # This little function we'll use later to cast many of the results into integers. This is mainly
     # to translate booleans (True, False) into numbers, because often a True means '1 of this'. Thus,
     # we can use the result later in sums and products.
-    def to_int(expr):
-        return cast(expr, Integer)
+    def to_int(expr, big=False):
+        return cast(expr, Integer if not big else BigInteger)
 
     # Note that we're using 'IS TRUE' here. This is a common theme across the whole query. The reason
     # for using 'IS' (identity) instead of '=' (equality) is that NULL values ARE NOT taken into account
@@ -1017,8 +1017,8 @@ def build_query(session, period, since=None):
 
     FILE_COUNT = to_int(func.coalesce(download_query.c.count, 0))
     PUBFILE_COUNT = to_int(func.coalesce(download_query.c.released, 0))
-    DOWNBYTE_COUNT = to_int(func.coalesce(download_query.c.bytes, 0))
-    UPBYTE_COUNT = to_int(func.coalesce(upload_query.c.bytes, 0))
+    DOWNBYTE_COUNT = to_int(func.coalesce(download_query.c.bytes, 0), big=True)
+    UPBYTE_COUNT = to_int(func.coalesce(upload_query.c.bytes, 0), big=True)
 
     COUNT_DOWNLOAD = to_int(DOWNLOAD_PERFORMED) * FILE_COUNT
     COUNT_FAILED = to_int(DOWNLOAD_FAILED)
@@ -1027,17 +1027,18 @@ def build_query(session, period, since=None):
     STAFF_DOWNLOAD = to_int(and_(DOWNLOAD_PERFORMED, download_query.c.staff_access.is_(True)))
     ANON_DOWNLOAD = to_int(and_(DOWNLOAD_PERFORMED, UsageLog.user_id.is_(None)))
 
-    TOTAL_BYTES = COUNT_DOWNLOAD * func.coalesce(UsageLog.bytes, 0)
-    PUBFILE_BYTES = to_int(func.coalesce(download_query.c.released_bytes, 0))
+    TOTAL_BYTES = COUNT_DOWNLOAD * to_int(func.coalesce(UsageLog.bytes, 0), big=True)
+    PUBFILE_BYTES = to_int(func.coalesce(download_query.c.released_bytes, 0), big=True)
 
-    q = query.add_columns(func.sum(HIT_OK), func.sum(HIT_FAIL), func.sum(SEARCH_OK), func.sum(SEARCH_FAIL),
-                          func.sum(COUNT_DOWNLOAD), func.sum(TOTAL_BYTES),
-                          func.sum(COUNT_UPLOAD), func.sum(COUNT_UPLOAD * UPBYTE_COUNT),
-                          func.sum(PI_DOWNLOAD * FILE_COUNT), func.sum(PI_DOWNLOAD * DOWNBYTE_COUNT),
-                          func.sum(STAFF_DOWNLOAD * FILE_COUNT), func.sum(STAFF_DOWNLOAD * DOWNBYTE_COUNT),
-                          func.sum(PUBFILE_COUNT), func.sum(PUBFILE_BYTES),
-                          func.sum(ANON_DOWNLOAD * FILE_COUNT), func.sum(ANON_DOWNLOAD * DOWNBYTE_COUNT),
-                          func.sum(COUNT_FAILED))
+    q = query.add_columns(func.sum(HIT_OK).label('hits_ok'), func.sum(HIT_FAIL).label('hits_fail'),
+                          func.sum(SEARCH_OK).label('search_ok'), func.sum(SEARCH_FAIL).label('search_fail'),
+                          func.sum(COUNT_DOWNLOAD).label('downloads_total'), func.sum(TOTAL_BYTES).label('bytes_total'),
+                          func.sum(COUNT_UPLOAD).label('uploads_total'), func.sum(COUNT_UPLOAD * UPBYTE_COUNT).label('ul_bytes_total'),
+                          func.sum(PI_DOWNLOAD * FILE_COUNT).label('pi_downloads'), func.sum(PI_DOWNLOAD * DOWNBYTE_COUNT).label('pi_dl_bytes'),
+                          func.sum(STAFF_DOWNLOAD * FILE_COUNT).label('staff_downloads'), func.sum(STAFF_DOWNLOAD * DOWNBYTE_COUNT).label('staff_dl_bytes'),
+                          func.sum(PUBFILE_COUNT).label('public_downloads'), func.sum(PUBFILE_BYTES).label('public_dl_bytes'),
+                          func.sum(ANON_DOWNLOAD * FILE_COUNT).label('anon_downloads'), func.sum(ANON_DOWNLOAD * DOWNBYTE_COUNT).label('anon_dl_bytes'),
+                          func.sum(COUNT_FAILED).label('failed'))
 
     # Yield the results. Yay! This function is a generator ;-)
     for result in q:
