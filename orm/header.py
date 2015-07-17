@@ -197,12 +197,17 @@ class Header(Base):
 
             # NICI exposure times are a pain, because there's two of them... Except they're always the same
             if self.instrument != 'NICI':
-                self.exposure_time = ad.exposure_time().for_db()
+                exposure_time = ad.exposure_time().for_db()
             else:
                 # NICI exposure_time descriptor is broken
                 et_b = ad.phu_get_key_value('ITIME_B')
                 et_r = ad.phu_get_key_value('ITIME_R')
-                self.exposure_time = et_b if et_b else et_r
+                exposure_time = et_b if et_b else et_r
+
+            # Protect the database from field overflow from junk.
+            # The datatype is precision=8, scale=4
+            if exposure_time < 10000:
+                self.exposure_time = exposure_time
             
 
             # Need to remove invalid characters in disperser names, eg gnirs has slashes
