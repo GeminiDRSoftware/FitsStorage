@@ -95,6 +95,9 @@ def cache_associations(session, obs_hid):
     query = session.query(Header).filter(Header.id == obs_hid)
     header = query.one()
 
+    if None in [header.instrument, header.ut_datetime]:
+        return
+
     # Get a cal object for it
     cal = get_cal_object(session, None, header)
 
