@@ -143,8 +143,9 @@ def stats(req):
 
 def content(req):
     """
-    Queries database for information concerning the total number and filesize of all stored files. Produces tables presenting the results, sorted by
-    various properties such as instrument, observation class/type, and year of observation.
+    Queries database for information concerning the total number and filesize of all stored files. 
+    Produces tables presenting the results, sorted by various properties such as instrument, 
+    observation class/type, and year of observation.
     """
 
     session = sessionfactory()
@@ -277,7 +278,7 @@ def content(req):
     # reject invalid 1969 type years by selecting post 1990
     firstyear = dt_date(1990, 01, 01)
     start = session.query(func.min(Header.ut_datetime)).filter(Header.ut_datetime > firstyear).first()[0]
-    end = session.query(func.max(Header.ut_datetime)).first()[0]
+    end = session.query(func.max(Header.ut_datetime)).select_from(join(Header, DiskFile)).filter(DiskFile.canonical == True).first()[0]
 
     # Table headers
     req.write('<TH rowspan="2">Telescope&nbsp;</TH>')
