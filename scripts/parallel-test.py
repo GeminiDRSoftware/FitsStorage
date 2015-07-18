@@ -34,27 +34,31 @@ from bz2 import BZ2File
 from csv import reader
 from docopt import docopt
 from functools import partial
-#from pathos.multiprocessing import Pool
-from multiprocessing import Pool, Value
+from multiprocessing import Process, Queue, JoinableQueue
+from Queue import Empty as EmptyQueue
 from ctypes import py_object
 from collections import namedtuple
 from os.path import join as opjoin, exists
+from os import getpid
 from pyfits import open as pfopen
 from pyfits.verify import VerifyError
 from astrodata import AstroData
 from utils.fits_validator import RuleStack, RuleSet, Environment, AstroDataEvaluator
 from utils.fits_validator import EngineeringImage, GeneralError, BadData, NotGeminiData, NoDateError
 from io import BytesIO
+from time import sleep
 
 import psycopg2
 import sys
 
 # DSN and paths when running from hahalua
-DSN = dict(host  ='rcardene-ld1',
-           dbname='fitsdata')
-
-BASEPATH='/data/gemini_data'
-FIXEDBASEPATH='/data/gemini_data/fixed/fixed_files'
+DSN = dict(dbname='fitsdata')
+BASEPATH='/mnt/hahalua'
+FIXEDBASEPATH='/mnt/hahalua/fixed/fixed_files'
+#DSN = dict(host  ='rcardene-ld1',
+#           dbname='fitsdata')
+#BASEPATH='/data/gemini_data'
+#FIXEDBASEPATH='/data/gemini_data/fixed/fixed_files'
 
 def getConnection():
     return psycopg2.connect(**DSN)
@@ -69,16 +73,14 @@ def getDatabaseRulesetId(curs, version):
     except TypeError:
         return None
 
-_version = Value(py_object)
-_file_info = Value(py_object)
-
 class SqlRuleSet(RuleSet):
+    file_info = {}
     def __init__(self, filename):
         super(SqlRuleSet, self).__init__(filename)
 
     def _open(self, filename):
         try:
-            return BytesIO(_file_info.value[filename])
+            return BytesIO(self.__class__.file_info[filename])
         except (KeyError, TypeError):
             raise IOError("Can't find file '{0}' in database for ruleset version {1}".format(filename, _version.value))
 
@@ -166,7 +168,6 @@ class SqlFiles(object):
         self.__conn = None
         self.versid = versid
         self.skipping = skipping
-        self.collected = {}
         self.filter = filter
 
     @property
@@ -223,14 +224,23 @@ class SqlFiles(object):
         curs.execute(*self.query)
 
         for n, (fid, fname) in enumerate(curs, 1):
-            self.collected[fname] = fid
-            yield fname.strip()
+            yield fid, fname.strip()
 
-    def upsert(self, result):
+    def __call__(self, output_queue):
+        try:
+            for candidate in self:
+                output_queue.put(candidate)
+            output_queue.join()
+        except KeyboardInterrupt:
+            output_queue.close()
+
+class Upserter(object):
+    def __init__(self, conn, versid):
+        self.conn = conn
+        self.versid = versid
+
+    def __call__(self, fileid, result):
         curs = self.conn.cursor()
-
-        fileid = self.collected[result.filename]
-        del self.collected[result.filename]
 
         data = dict(tf = fileid,
                     tv = self.versid,
@@ -321,24 +331,71 @@ def getFileInfo(curs, vers):
 
     return dict(curs)
 
+def evaluatorProcess((versid, version), input_queue, output_queue):
+    try:
+        with getConnection() as conn:
+            upsert = Upserter(conn, versid)
+            SqlRuleSet.file_info = getFileInfo(conn.cursor(), version)
+            evaluator = Evaluator(SqlRuleSet)
+            while True:
+                try:
+                    (fileid, fname) = input_queue.get(timeout=0.5)
+                except EmptyQueue:
+                    continue
+                input_queue.task_done()
+                result = evaluator(fname)
+                upsert(fileid, result)
+                output_queue.put(result)
+    except KeyboardInterrupt:
+        output_queue.close()
+
+class Pool(object):
+    def __init__(self, num_processes):
+        self.nprocs = num_processes
+
+    def map(self, eval_func, args, sentinel):
+        result_queue = JoinableQueue(CHUNK_SIZE)
+        procs = [Process(target=eval_func, args=args + (result_queue,)) for n in range(self.nprocs)]
+        for p in procs:
+            p.start()
+
+        while True:
+            try:
+                yield result_queue.get(timeout=0.5)
+                result_queue.task_done()
+            except EmptyQueue:
+                if not sentinel.is_alive():
+                    break
+
+        result_queue.join()
+        for p in procs:
+            p.terminate()
+            p.join()
+
 if __name__ == '__main__':
     args = docopt(__doc__, version='Parallel Test v0.1')
     p = Pool(int(args['-W']))
     skip = not args['-N']
+    CHUNK_SIZE = 64
+    source_queue = JoinableQueue(CHUNK_SIZE)
 
+    fileGen = None
     try:
         with getConnection() as conn:
             versid, vers = getDatabaseRulesetId(conn.cursor(), args['<version>'])
-            _version.value = vers
-            _file_info.value = getFileInfo(conn.cursor(), vers)
+            # _version.value = vers
             print("Collecting rule set version {0}".format(vers), file=sys.stderr)
-
-            evaluator = Evaluator(SqlRuleSet)
             sqlFiles = SqlFiles(versid, skipping=skip, filter=getFilter(conn.cursor(), args))
+            fileGen = Process(target=sqlFiles, args=(source_queue,))
+            fileGen.start()
 
-            for result in p.imap_unordered(evaluator, sqlFiles, chunksize = 64):
+            for result in p.map(evaluatorProcess, ((versid, vers), source_queue), sentinel = fileGen):
                 print("{0:40} - {1}/{2}".format(result.filename, result.passes, result.code))
-                sqlFiles.upsert(result)
+
+            fileGen.join()
     except RuntimeError as e:
         print(e, file=sys.stderr)
         sys.exit(-1)
+    except KeyboardInterrupt:
+        print("\nInterrupted - leaving children some time to die")
+        sleep(4)
