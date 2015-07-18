@@ -57,6 +57,7 @@ bhroscre = re.compile(r'^[Bb][Hh][Rr][Oo][Ss]$')
 flamingoscre = re.compile(r'^[Ff][Ll][Aa][Mm][Ii][Nn][Gg][Oo][Ss]$')
 hrwfscre = re.compile(r'^[Hh][Rr][Ww][Ff][Ss]$|^[Aa][Cc][Qq][Cc][Aa][Mm]$')
 abucre = re.compile(r'^[Aa][Bb][Uu]$')
+cirpasscre = re.compile(r'^[Cc][Ii][Rr][Pp][Aa][Ss][Ss]$')
 
 def gemini_instrument(string, gmos=False, other=False):
     """
@@ -110,6 +111,8 @@ def gemini_instrument(string, gmos=False, other=False):
             retary = 'hrwfs'
         elif flamingoscre.match(string):
             retary = 'FLAMINGOS'
+        elif cirpasscre.match(string):
+            retary = 'CIRPASS'
         elif gmoscre.match(string):
             if gmos:
                 retary = 'GMOS'
