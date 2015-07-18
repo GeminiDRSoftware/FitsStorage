@@ -29,6 +29,9 @@ def icanhave(session, req, item, filedownloadlog=None):
             filedownloadlog.magic_access = True
         return True
 
+    # Get the user from the request
+    user = userfromcookie(session, req)
+
     if isinstance(item, Header):
         return canhave_header(session, user, item, filedownloadlog, gotmagic=gotmagic)
 
