@@ -9,7 +9,7 @@ from orm.niri import Niri
 from cal.calibration import Calibration
 
 from sqlalchemy.orm import join
-from sqlalchemy import func, extract
+from sqlalchemy import func, extract, or_
 
 
 class CalibrationNIRI(Calibration):
@@ -157,7 +157,7 @@ class CalibrationNIRI(Calibration):
                 pass
 
         # GCAL lamp should be on - these flats will then require lamp-off flats to calibrate them
-        query = query.filter(Header.gcal_lamp == 'IRhigh')
+        query = query.filter(or_(Header.gcal_lamp == 'IRhigh', Header.gcal_lamp == 'IRlow'))
 
         # Absolute time separation must be within 6 months
         max_interval = datetime.timedelta(days=180)
