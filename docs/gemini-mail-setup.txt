@@ -1,0 +1,17 @@
+From Chris Stark:
+
+Hi Paul,
+
+I actually do recommend Postfix, as it’s got a pretty small footprint, an easy config, and you get the benefits of a full SMTP implementation (most important being retries if the relay is ever down). The important settings are really just:
+
+/etc/postfix/main.cf:
+
+inet_protocols = ipv4
+relayhost = [smtp.hi.gemini.edu]:25
+
+And of course, substitute ‘cl’ for GS hosts. Then I’ll just need to whitelist the hosts, so just let me know the hostnames — takes mere seconds, so I don’t really need a ticket.
+
+And of course, I’m more than happy to install and configure postfix, but the above is exactly what I’d do to configure it, so you’re welcome to do so if you prefer. Just say the word, and I’ll take care of it. :-)
+
+Cheers,
+Chris
