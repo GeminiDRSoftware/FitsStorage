@@ -2,14 +2,14 @@
 
 import re
 
-from gemini_metadata_utils import gemini_fitsfilename
+from ..gemini_metadata_utils import gemini_fitsfilename
 from mod_python import apache
 
-from orm import sessionfactory
-from orm.file import File
-from orm.diskfile import DiskFile
-from orm.diskfilereport import DiskFileReport
-from orm.fulltextheader import FullTextHeader
+from ..orm import sessionfactory
+from ..orm.file import File
+from ..orm.diskfile import DiskFile
+from ..orm.diskfilereport import DiskFileReport
+from ..orm.fulltextheader import FullTextHeader
 
 def report(req, thing):
     this = req.usagelog.this

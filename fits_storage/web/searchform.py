@@ -5,15 +5,15 @@ This is the searchform module
 # This will only work with apache
 from mod_python import apache, util
 
-from web.selection import getselection, selection_to_URL
-from web.summary import summary_body
-from web.calibrations import calibrations
+from .selection import getselection, selection_to_URL
+from .summary import summary_body
+from .calibrations import calibrations
 
-from fits_storage_config import fits_aux_datadir
+from ..fits_storage_config import fits_aux_datadir
 import os
 import urllib
 
-from gemini_metadata_utils import GeminiDataLabel, GeminiObservation
+from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
 
 # Load the titlebar html text into strings
 with open(os.path.join(fits_aux_datadir, "titlebar.html")) as f:

@@ -4,15 +4,15 @@ import traceback
 import datetime
 import shutil
 
-from orm import sessionfactory
-from orm.fileuploadlog import FileUploadLog
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.fileuploadlog import FileUploadLog
 
-from fits_storage_config import storage_root, upload_staging_path, processed_cals_path, using_s3
-from logger import logger, setdemon, setdebug
-from utils.ingestqueue import add_to_ingestqueue
+from fits_storage.fits_storage_config import storage_root, upload_staging_path, processed_cals_path, using_s3
+from fits_storage.logger import logger, setdemon, setdebug
+from fits_storage.utils.ingestqueue import add_to_ingestqueue
 
 if(using_s3):
-    from fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
+    from fits_storage.fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
     from boto.s3.connection import S3Connection
     from boto.s3.key import Key
 

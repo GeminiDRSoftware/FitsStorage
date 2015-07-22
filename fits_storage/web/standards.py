@@ -3,11 +3,11 @@ This is the Fits Storage Web Summary module. It provides the functions
 which query the database and generate html for the web header
 summaries.
 """
-from orm import sessionfactory
+from ..orm import sessionfactory
 from mod_python import apache
 
-from orm.photstandard import PhotStandard, PhotStandardObs
-from orm.footprint import Footprint
+from ..orm.photstandard import PhotStandard, PhotStandardObs
+from ..orm.footprint import Footprint
 
 def list_phot_std_obs(session, header_id):
     """

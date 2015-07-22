@@ -1,7 +1,7 @@
 from boto.s3.connection import S3Connection
 
-from fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
-from logger import logger, setdebug, setdemon
+from fits_storage.fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
+from fits_storage.logger import logger, setdebug, setdemon
 import os
 
 from optparse import OptionParser

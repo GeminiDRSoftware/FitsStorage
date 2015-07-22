@@ -1,19 +1,18 @@
-from orm import sessionfactory
+from ..orm import sessionfactory
 
-from fits_storage_config import using_s3, fits_open_result_limit, fits_closed_result_limit
+from ..fits_storage_config import using_s3, fits_open_result_limit, fits_closed_result_limit
 
-from gemini_metadata_utils import gemini_fitsfilename
+from ..gemini_metadata_utils import gemini_fitsfilename
+from ..orm.file import File
+from ..orm.diskfile import DiskFile
+from ..orm.header import Header
+from ..orm.obslog import Obslog
+from ..orm.downloadlog import DownloadLog
+from ..orm.filedownloadlog import FileDownloadLog
 
-from orm.file import File
-from orm.diskfile import DiskFile
-from orm.header import Header
-from orm.obslog import Obslog
-from orm.downloadlog import DownloadLog
-from orm.filedownloadlog import FileDownloadLog
-
-from web.selection import getselection, openquery, selection_to_URL
-from web.summary import list_headers
-from web.user import userfromcookie
+from .selection import getselection, openquery, selection_to_URL
+from .summary import list_headers
+from .user import userfromcookie
 
 # This will only work with apache
 from mod_python import apache
@@ -26,17 +25,17 @@ import cStringIO
 import tarfile
 
 # We assume that servers used as archive use a calibraiton association cache table
-from fits_storage_config import use_as_archive
+from ..fits_storage_config import use_as_archive
 if use_as_archive:
-    from cal.associate_calibrations import associate_cals_from_cache as associate_cals
+    from ..cal.associate_calibrations import associate_cals_from_cache as associate_cals
 else:
-    from cal.associate_calibrations import associate_cals
+    from ..cal.associate_calibrations import associate_cals
 
 if using_s3:
     from boto.s3.connection import S3Connection
-    from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
+    from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
 
-from utils.userprogram import icanhave
+from ..utils.userprogram import icanhave
 
 def download(req, things):
     """

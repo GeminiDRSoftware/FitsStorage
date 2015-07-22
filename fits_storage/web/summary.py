@@ -3,25 +3,25 @@ This module contains the main web summary code.
 """
 import datetime
 
-from orm import sessionfactory
-from fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
-from web.selection import sayselection, openquery, selection_to_URL
-from web.list_headers import list_headers
-import apache_return_codes as apache
+from ..orm import sessionfactory
+from ..fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
+from .selection import sayselection, openquery, selection_to_URL
+from .list_headers import list_headers
+from ..apache_return_codes as apache
 
 from web.summary_generator import SummaryGenerator, htmlescape
 
 # We assume that servers used as archive use a calibration association cache table
-from fits_storage_config import use_as_archive
+from ..fits_storage_config import use_as_archive
 if use_as_archive:
-    from cal.associate_calibrations import associate_cals_from_cache as associate_cals
+    from ..cal.associate_calibrations import associate_cals_from_cache as associate_cals
 else:
-    from cal.associate_calibrations import associate_cals
+    from ..cal.associate_calibrations import associate_cals
 
-from web.user import userfromcookie
-from web.userprogram import get_program_list
+from .user import userfromcookie
+from .userprogram import get_program_list
 
-from orm.querylog import QueryLog
+from ..orm.querylog import QueryLog
 
 def summary(req, sumtype, selection, orderby, links=True):
     """
@@ -42,7 +42,7 @@ def summary(req, sumtype, selection, orderby, links=True):
     summary_body(req, sumtype, selection, orderby, links)
 
     req.write("</body></html>")
-    return apache.HTTP_OK
+    return HTTP_OK
 
 def summary_body(req, sumtype, selection, orderby, links=True):
     """

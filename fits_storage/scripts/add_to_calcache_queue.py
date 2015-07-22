@@ -1,8 +1,8 @@
-from orm import sessionfactory
-from orm.calcachequeue import CalCacheQueue
-from orm.header import Header
-from orm.diskfile import DiskFile
-from logger import logger, setdebug, setdemon
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.calcachequeue import CalCacheQueue
+from fits_storage.orm.header import Header
+from fits_storage.orm.diskfile import DiskFile
+from fits_storage.logger import logger, setdebug, setdemon
 import datetime
 import sys
 

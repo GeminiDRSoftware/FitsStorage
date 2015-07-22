@@ -3,9 +3,8 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy.orm import relation
 
-from orm.usagelog import UsageLog
-
 from . import Base
+from .usagelog import UsageLog
 
 class QueryLog(Base):
     """

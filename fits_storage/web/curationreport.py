@@ -1,13 +1,11 @@
 """
 This module contains the curation_report html generator function.
 """
-from orm import sessionfactory
+from ..orm import sessionfactory
+from ..orm.header import Header
+from ..orm.curation import duplicate_datalabels, duplicate_canonicals, duplicate_present, present_not_canonical
 
-from orm.header import Header
-
-from orm.curation import duplicate_datalabels, duplicate_canonicals, duplicate_present, present_not_canonical
-
-import apache_return_codes as apache
+from ..apache_return_codes import HTTP_OK
 
 def curation_report(req, things):
     """
@@ -162,7 +160,7 @@ def curation_report(req, things):
 
         req.write('</body>')
         req.write('</html>')
-        return apache.HTTP_OK
+        return HTTP_OK
     except IOError:
         pass
     finally:

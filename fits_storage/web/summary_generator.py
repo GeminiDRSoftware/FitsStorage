@@ -5,11 +5,11 @@ This module contains the web summary generator class.
 from collections import OrderedDict
 from cgi import escape
 
-from gemini_metadata_utils import GeminiDataLabel
+from ..gemini_metadata_utils import GeminiDataLabel
 
-from utils.userprogram import canhave_header
+from ..utils.userprogram import canhave_header
 
-from fits_storage_config import using_previews
+from ..fits_storage_config import using_previews
 
 sum_type_defs = {
     'summary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',

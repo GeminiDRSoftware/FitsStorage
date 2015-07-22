@@ -1,11 +1,9 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Numeric
-
 from sqlalchemy.orm import relation
 
-from orm.footprint import Footprint
-
 from . import Base
+from .footprint import Footprint
 
 class PhotStandard(Base):
     """

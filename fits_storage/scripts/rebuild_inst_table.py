@@ -5,16 +5,16 @@ import datetime
 import traceback
 from sqlalchemy import join, or_, desc
 
-from orm import sessionfactory
-from orm.diskfile import DiskFile
-from orm.header import Header
-from orm.gmos import Gmos
-from orm.niri import Niri
-from orm.gnirs import Gnirs
-from orm.nifs import Nifs
-from orm.michelle import Michelle
-from orm.f2 import F2
-from logger import logger, setdebug, setdemon
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.diskfile import DiskFile
+from fits_storage.orm.header import Header
+from fits_storage.orm.gmos import Gmos
+from fits_storage.orm.niri import Niri
+from fits_storage.orm.gnirs import Gnirs
+from fits_storage.orm.nifs import Nifs
+from fits_storage.orm.michelle import Michelle
+from fits_storage.orm.f2 import F2
+from fits_storage.logger import logger, setdebug, setdemon
 from optparse import OptionParser
 
 parser = OptionParser()

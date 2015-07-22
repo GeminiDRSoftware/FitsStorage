@@ -1,12 +1,12 @@
 """
 This module contains the notification html generator function, and odb import via web function
 """
-from orm import sessionfactory
-from orm.notification import Notification
-from fits_storage_config import use_as_archive
-from web.user import userfromcookie
-from utils.userprogram import got_magic
-from utils.notifications import ingest_odb_xml
+from ..orm import sessionfactory
+from ..orm.notification import Notification
+from ..fits_storage_config import use_as_archive
+from .user import userfromcookie
+from ..utils.userprogram import got_magic
+from ..utils.notifications import ingest_odb_xml
 
 from mod_python import apache, util
 

@@ -4,11 +4,10 @@ This module handles the web 'user' functions - creating user accounts, login / l
 
 from sqlalchemy import desc
 
-from orm import sessionfactory
+from ..orm import sessionfactory
+from ..orm.user import User
 
-from orm.user import User
-
-from fits_storage_config import fits_servername, smtp_server
+from ..fits_storage_config import fits_servername, smtp_server
 
 # This will only work with apache
 from mod_python import apache

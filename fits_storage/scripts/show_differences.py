@@ -18,12 +18,12 @@ from docopt import docopt
 import sys
 
 import orm
-from orm.resolve_versions import Version
+from fits_storage.orm.resolve_versions import Version
 import pyfits as pf
 import bz2
 from itertools import combinations
 
-from logger import logger, setdebug, setdemon
+from fits_storage.logger import logger, setdebug, setdemon
 
 arguments = docopt(__doc__, version='Populat Redis 0.1')
 

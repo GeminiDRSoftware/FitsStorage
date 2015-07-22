@@ -1,8 +1,8 @@
-from orm import sessionfactory
-from orm.previewqueue import PreviewQueue
-from orm.diskfile import DiskFile
-from orm.header import Header
-from logger import logger, setdebug, setdemon
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.previewqueue import PreviewQueue
+from fits_storage.orm.diskfile import DiskFile
+from fits_storage.orm.header import Header
+from fits_storage.logger import logger, setdebug, setdemon
 import datetime
 import sys
 

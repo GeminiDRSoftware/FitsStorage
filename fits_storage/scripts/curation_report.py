@@ -3,9 +3,9 @@ This module retrieves and prints out the desired values from the list created in
 orm.curation.py
 """
 
-from orm import sessionfactory
-from orm.header import Header
-from orm.curation import duplicate_datalabels, duplicate_canonicals, duplicate_present, present_not_canonical
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.header import Header
+from fits_storage.orm.curation import duplicate_datalabels, duplicate_canonicals, duplicate_present, present_not_canonical
 from optparse import OptionParser
 
 parser = OptionParser()

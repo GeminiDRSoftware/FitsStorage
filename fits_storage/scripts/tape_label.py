@@ -1,7 +1,7 @@
 import sys
 
-from fits_storage_config import fits_tape_scratchdir
-from utils.tape import TapeDrive
+from fits_storage.fits_storage_config import fits_tape_scratchdir
+from fits_storage.utils.tape import TapeDrive
 
 # Option Parsing
 from optparse import OptionParser

@@ -8,9 +8,9 @@ import socket
 import traceback
 from time import sleep
 
-from fits_storage_config import storage_root
-from logger import logger
-from utils.hashes import md5sum
+from ..fits_storage_config import storage_root
+from ..logger import logger
+from .hashes import md5sum
 
 
 def get_s3_md5(key):

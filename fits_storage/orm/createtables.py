@@ -4,43 +4,43 @@ in the Fits Storage System.
 """
 import sqlalchemy
 
-from fits_storage_config import using_apache, using_sqlite
+from ..fits_storage_config import using_apache, using_sqlite
 from . import pg_db
-from orm.file import File
-from orm.diskfile import DiskFile
-from orm.diskfilereport import DiskFileReport
-from orm.fulltextheader import FullTextHeader
-from orm.header import Header
-from orm.footprint import Footprint
-from orm.gmos import Gmos
-from orm.niri import Niri
-from orm.gnirs import Gnirs
-from orm.nifs import Nifs
-from orm.f2 import F2
-from orm.gpi import Gpi
-from orm.gsaoi import Gsaoi
-from orm.nici import Nici
-from orm.michelle import Michelle
-from orm.ingestqueue import IngestQueue
-from orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
-from orm.notification import Notification
-from orm.photstandard import PhotStandard
-from orm.qastuff import QAreport, QAmetricIQ, QAmetricZP, QAmetricSB, QAmetricPE
-from orm.authentication import Authentication
-from orm.exportqueue import ExportQueue
-from orm.user import User
-from orm.userprogram import UserProgram
-from orm.usagelog import UsageLog
-from orm.querylog import QueryLog
-from orm.downloadlog import DownloadLog
-from orm.filedownloadlog import FileDownloadLog
-from orm.fileuploadlog import FileUploadLog
-from orm.calcache import CalCache
-from orm.calcachequeue import CalCacheQueue
-from orm.preview import Preview
-from orm.previewqueue import PreviewQueue
-from orm.obslog import Obslog
-#from orm.resolve_versions import Version
+from .file import File
+from .diskfile import DiskFile
+from .diskfilereport import DiskFileReport
+from .fulltextheader import FullTextHeader
+from .header import Header
+from .footprint import Footprint
+from .gmos import Gmos
+from .niri import Niri
+from .gnirs import Gnirs
+from .nifs import Nifs
+from .f2 import F2
+from .gpi import Gpi
+from .gsaoi import Gsaoi
+from .nici import Nici
+from .michelle import Michelle
+from .ingestqueue import IngestQueue
+from .tapestuff import Tape, TapeWrite, TapeFile, TapeRead
+from .notification import Notification
+from .photstandard import PhotStandard
+from .qastuff import QAreport, QAmetricIQ, QAmetricZP, QAmetricSB, QAmetricPE
+from .authentication import Authentication
+from .exportqueue import ExportQueue
+from .user import User
+from .userprogram import UserProgram
+from .usagelog import UsageLog
+from .querylog import QueryLog
+from .downloadlog import DownloadLog
+from .filedownloadlog import FileDownloadLog
+from .fileuploadlog import FileUploadLog
+from .calcache import CalCache
+from .calcachequeue import CalCacheQueue
+from .preview import Preview
+from .previewqueue import PreviewQueue
+from .obslog import Obslog
+#from .resolve_versions import Version
 
 def create_tables(session):
     """

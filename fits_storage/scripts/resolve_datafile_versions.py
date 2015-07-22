@@ -33,12 +33,12 @@ import bz2
 import pyfits as pf
 
 import orm
-from orm.resolve_versions import Version
-from orm.tapestuff import Tape, TapeWrite, TapeFile
+from fits_storage.orm.resolve_versions import Version
+from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile
 
-from utils import resolve_scoring
+from fits_storage.utils import resolve_scoring
 
-from logger import logger, setdebug, setdemon
+from fits_storage.logger import logger, setdebug, setdemon
 import datetime
 
 # parser = OptionParser()

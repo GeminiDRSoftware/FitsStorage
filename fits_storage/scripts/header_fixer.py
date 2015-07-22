@@ -49,8 +49,8 @@ from docopt import docopt
 from astropy.io.fits.verify import VerifyError
 from tempfile import mkdtemp
 
-from utils.fits_validator import RuleStack, Environment, EngineeringImage, BadData, NotGeminiData, NoDateError
-from gemini_metadata_utils import GeminiProgram
+from fits_storage.utils.fits_validator import RuleStack, Environment, EngineeringImage, BadData, NotGeminiData, NoDateError
+from fits_storage.gemini_metadata_utils import GeminiProgram
 
 args = docopt(__doc__, version='Header Fixer 1.1')
 

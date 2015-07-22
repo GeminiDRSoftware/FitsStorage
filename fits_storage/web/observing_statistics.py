@@ -2,9 +2,9 @@
 This module generates the Observing Statistics - ie "Open Shutter" Statistic reports for Inger
 """
 
-from orm import sessionfactory
-from web.summary import list_headers
-import apache_return_codes as apache
+from ..orm import sessionfactory
+from .summary import list_headers
+from ..apache_return_codes import HTTP_OK
 
 import ephem
 import dateutil.parser
@@ -100,7 +100,7 @@ def observing_statistics(req, selection):
 
         
 
-        return apache.HTTP_OK
+        return HTTP_OK
 
     except IOError:
         pass

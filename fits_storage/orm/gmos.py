@@ -2,7 +2,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean
 from sqlalchemy.orm import relation
 
-from orm.header import Header
+from .header import Header
 
 from . import Base
 

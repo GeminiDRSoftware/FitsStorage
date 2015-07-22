@@ -2,9 +2,8 @@ from sqlalchemy import Column
 from sqlalchemy import Integer, Text, Boolean
 import os
 
-from utils.hashes import md5sum_size_fp, md5sum_size_bz2
-
 from . import Base
+from .hashes import md5sum_size_fp, md5sum_size_bz2
 
 class Version(Base):
     """

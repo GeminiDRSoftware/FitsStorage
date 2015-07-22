@@ -3,11 +3,11 @@ from sqlalchemy import Integer, Text, Enum
 
 import os
 
-from fits_verify import fitsverify
+from ..fits_verify import fitsverify
 
 from . import Base
 
-from utils.fits_validator import AstroDataEvaluator, STATUSES
+from ..utils.fits_validator import AstroDataEvaluator, STATUSES
 
 evaluate = AstroDataEvaluator()
 

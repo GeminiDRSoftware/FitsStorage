@@ -3,12 +3,12 @@ This is the Fits Storage Web Summary module. It provides the functions
 which query the database and generate html for the web header
 summaries.
 """
-from orm import sessionfactory
-from orm.header import Header
-from orm.diskfile import DiskFile
-from orm.file import File
-from web.selection import sayselection, queryselection
-import apache_return_codes as apache
+from ..orm import sessionfactory
+from ..orm.header import Header
+from ..orm.diskfile import DiskFile
+from ..orm.file import File
+from .selection import sayselection, queryselection
+from ..apache_return_codes import HTTP_OK
 from sqlalchemy import join
 
 
@@ -49,7 +49,7 @@ def progsobserved(req, selection):
                 req.write('<LI><a href="/summary/%s/%s">%s</a></LI> ' % (prog, '/'.join(selection.values()), prog))
         req.write('</UL>')
         req.write('</body></html>')
-        return apache.HTTP_OK
+        return HTTP_OK
 
 
     except IOError:

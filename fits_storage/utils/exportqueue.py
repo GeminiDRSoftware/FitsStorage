@@ -8,23 +8,22 @@ import datetime
 import hashlib
 import bz2
 
-from logger import logger
 from sqlalchemy import desc, join
 from sqlalchemy.orm import make_transient
 from sqlalchemy.orm.exc import ObjectDeletedError
 
+from ..fits_storage_config import storage_root, using_s3, export_bzip
+from ..logger import logger
 
-from fits_storage_config import storage_root, using_s3, export_bzip
+from ..orm.file import File
+from ..orm.diskfile import DiskFile
+from ..orm.exportqueue import ExportQueue
 
-from orm.file import File
-from orm.diskfile import DiskFile
-from orm.exportqueue import ExportQueue
-
-import apache_return_codes as apache
+import ..apache_return_codes as apache
 
 if using_s3:
     from boto.s3.connection import S3Connection
-    from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
+    from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
     import logging
     logging.getLogger('boto').setLevel(logging.CRITICAL)
 

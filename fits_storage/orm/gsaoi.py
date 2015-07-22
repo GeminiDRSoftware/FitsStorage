@@ -2,9 +2,8 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 from sqlalchemy.orm import relation
 
-from orm.header import Header
-
 from . import Base
+from .header import Header
 
 class Gsaoi(Base):
     """

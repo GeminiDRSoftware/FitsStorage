@@ -1,8 +1,8 @@
 """
 This module contains the tape related html generator functions. 
 """
-from orm import sessionfactory
-from orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
+from ..orm import sessionfactory
+from ..orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 from mod_python import apache, util
 
 from sqlalchemy import join, desc, func

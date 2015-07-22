@@ -3,12 +3,12 @@ This module contains the main list_headers function which is used for the web
 summaries and a few other places to convert a selection dictionary into a
 header object list by executing the query.
 """
-from orm.file import File
-from orm.diskfile import DiskFile
-from orm.header import Header
-from orm.obslog import Obslog
-from fits_storage_config import fits_open_result_limit, fits_closed_result_limit, use_as_archive
-from web.selection import queryselection, openquery
+from ..orm.file import File
+from ..orm.diskfile import DiskFile
+from ..orm.header import Header
+from ..orm.obslog import Obslog
+from ..fits_storage_config import fits_open_result_limit, fits_closed_result_limit, use_as_archive
+from .selection import queryselection, openquery
 from sqlalchemy import asc, desc
 import dateutil.parser
 

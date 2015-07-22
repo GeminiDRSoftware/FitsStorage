@@ -2,10 +2,10 @@ import sys
 import datetime
 from sqlalchemy import desc
 
-from orm import sessionfactory
-from orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
-#from fits_storage_config import *
-from logger import logger, setdebug, setdemon
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
+#from fits_storage.fits_storage_config import *
+from fits_storage.logger import logger, setdebug, setdemon
 
 # Option Parsing
 from optparse import OptionParser

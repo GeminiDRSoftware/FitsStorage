@@ -4,12 +4,12 @@ import urllib2
 from xml.dom.minidom import parseString
 from optparse import OptionParser
 
-from orm import sessionfactory
-from logger import logger, setdebug, setdemon
+from fits_storage.orm import sessionfactory
+from fits_storage.logger import logger, setdebug, setdemon
 
-from utils.notifications import ingest_odb_xml
-from fits_storage_config import magic_download_cookie
-import apache_return_codes as apache
+from fits_storage.utils.notifications import ingest_odb_xml
+from fits_storage.fits_storage_config import magic_download_cookie
+from fits_storage.apache_return_codes import HTTP_OK
 
 parser = OptionParser()
 parser.add_option("--odb", action="store", dest="odb", help="ODB server to query. Probably gnodb or gsodb")
@@ -40,7 +40,7 @@ if options.to_remote_server:
     u = opener.open(url, xml)
     report = u.read()
     u.close()
-    if u.getcode() != apache.HTTP_OK:
+    if u.getcode() != HTTP_OK:
         logger.error("Got not-OK return code from remote server: %s", u.getcode())
 
     # Make the report into a list of lines for the log

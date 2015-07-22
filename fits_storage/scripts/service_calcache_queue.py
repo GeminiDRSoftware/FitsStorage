@@ -1,9 +1,9 @@
 #! /usr/bin/env python
-from orm import sessionfactory
-from orm.calcachequeue import CalCacheQueue
-from utils.calcachequeue import pop_calcachequeue, calcachequeue_length, cache_associations
-from fits_storage_config import fits_lockfile_dir
-from logger import logger, setdebug, setdemon, setlogfilesuffix
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.calcachequeue import CalCacheQueue
+from fits_storage.utils.calcachequeue import pop_calcachequeue, calcachequeue_length, cache_associations
+from fits_storage.fits_storage_config import fits_lockfile_dir
+from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 import signal
 import sys
 import os

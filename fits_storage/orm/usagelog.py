@@ -3,8 +3,8 @@ import datetime
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime
 
-from fits_storage_config import using_apache
-from apache_return_codes import REMOTE_NOLOOKUP
+from ..fits_storage_config import using_apache
+from ..apache_return_codes import REMOTE_NOLOOKUP
 
 from . import Base
 

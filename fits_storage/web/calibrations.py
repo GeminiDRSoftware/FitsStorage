@@ -2,15 +2,15 @@
 This module contains the calibrations html generator function.
 """
 import datetime
-from orm import sessionfactory
-from web.selection import sayselection, queryselection, openquery
-from cal import get_cal_object
-import apache_return_codes as apache
-from fits_storage_config import fits_system_status
+from ..orm import sessionfactory
+from .selection import sayselection, queryselection, openquery
+from ..cal import get_cal_object
+from ..apache_return_codes import HTTP_OK
+from ..fits_storage_config import fits_system_status
 
-from orm.header import Header
-from orm.diskfile import DiskFile
-from orm.file import File
+from ..orm.header import Header
+from ..orm.diskfile import DiskFile
+from ..orm.file import File
 
 from sqlalchemy import join, desc
 
@@ -264,7 +264,7 @@ def calibrations(req, selection):
         req.write("<H2>Counted %d potential missing Calibrations</H2>" % missings)
         req.write("<H2>Query generated %d warnings</H2>" % warnings)
         req.write("</body></html>")
-        return apache.HTTP_OK
+        return HTTP_OK
 
     except IOError:
         pass

@@ -2,10 +2,10 @@ import pyinotify
 import re
 import datetime
 
-from orm import sessionfactory
-from fits_storage_config import storage_root
-from logger import logger, setdemon, setdebug
-from utils.ingestqueue import add_to_ingestqueue
+from fits_storage.orm import sessionfactory
+from fits_storage.fits_storage_config import storage_root
+from fits_storage.logger import logger, setdemon, setdebug
+from fits_storage.utils.ingestqueue import add_to_ingestqueue
 
 
 # Option Parsing

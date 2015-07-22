@@ -2,7 +2,7 @@
 This module contains the functions for curation_report.py that compare items in the tables
 Header and DiskFile.
 """
-from orm.diskfile import DiskFile
+from .diskfile import DiskFile
 
 from sqlalchemy import text
 from sqlalchemy.orm import aliased

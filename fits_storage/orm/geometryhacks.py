@@ -5,7 +5,7 @@ This could be replaced with a more accuate sysyem using postGIS to do the
 co-ordinate transforms properly in the future
 """
 
-from orm.header import Header
+from .header import Header
 
 def add_footprint(session, id, fp):
     """

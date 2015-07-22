@@ -6,11 +6,11 @@ import os
 import smtplib
 from sqlalchemy import join, desc
 
-from orm import sessionfactory
-from orm.diskfile import DiskFile
-from orm.file import File
-from fits_storage_config import storage_root, target_max_files, target_gb_free
-from logger import logger, setdebug, setdemon
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.diskfile import DiskFile
+from fits_storage.orm.file import File
+from fits_storage.fits_storage_config import storage_root, target_max_files, target_gb_free
+from fits_storage.logger import logger, setdebug, setdemon
 
 
 # Option Parsing

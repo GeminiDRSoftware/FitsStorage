@@ -3,10 +3,10 @@ import datetime
 import urllib
 from xml.dom.minidom import parseString
 from sqlalchemy import join
-from orm import sessionfactory
-from orm.file import File
-from orm.diskfile import DiskFile
-from logger import logger, setdebug, setdemon
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.file import File
+from fits_storage.orm.diskfile import DiskFile
+from fits_storage.logger import logger, setdebug, setdemon
 
 
 # Option Parsing

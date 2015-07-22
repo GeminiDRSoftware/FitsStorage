@@ -9,12 +9,12 @@ import traceback
 from xml.dom.minidom import parseString
 from sqlalchemy import join
 
-from orm import sessionfactory
-from orm.tapestuff import Tape, TapeWrite, TapeFile
-from fits_storage_config import fits_tape_scratchdir
-from logger import logger, setdebug, setdemon
-from utils.hashes import md5sum
-from utils.tape import TapeDrive
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile
+from fits_storage.fits_storage_config import fits_tape_scratchdir
+from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.utils.hashes import md5sum
+from fits_storage.utils.tape import TapeDrive
 
 
 # Option Parsing

@@ -2,7 +2,7 @@
 This module contains the QA metric database interface
 """
 
-from orm import sessionfactory
+from ..orm import sessionfactory
 from sqlalchemy import desc
 import urllib
 import datetime
@@ -11,18 +11,18 @@ from xml.dom.minidom import parseString
 import json
 import math
 import dateutil.parser
-import apache_return_codes as apache
+from ..apache_return_codes import HTTP_OK, HTTP_BAD_REQUEST, HTTP_NOT_ACCEPTABLE
 
-from orm.qastuff import QAreport, QAmetricSB, QAmetricIQ, QAmetricZP, QAmetricPE
-from orm.diskfile import DiskFile
-from orm.header import Header
+from ..orm.qastuff import QAreport, QAmetricSB, QAmetricIQ, QAmetricZP, QAmetricPE
+from ..orm.diskfile import DiskFile
+from ..orm.header import Header
 
 def qareport(req):
     """
     This function handles submission of QA metric reports via xml and json
     """
     if req.method == 'GET':
-        return apache.HTTP_NOT_ACCEPTABLE
+        return HTTP_NOT_ACCEPTABLE
 
     if req.method == 'POST':
         clientdata = req.read()
@@ -35,7 +35,7 @@ def qareport(req):
             thelist = parse_json(clientdata)
 
         else:
-            return apache.HTTP_BAD_REQUEST
+            return HTTP_BAD_REQUEST
 
         req.log_error("thelist: %s" % thelist)
 
@@ -148,7 +148,7 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
     finally:
         session.close()
 
-    return apache.HTTP_OK
+    return HTTP_OK
 
 def parse_json(clientdata):
     """
@@ -366,7 +366,7 @@ def qametrics(req, things):
     finally:
         session.close()
 
-    return apache.HTTP_OK
+    return HTTP_OK
 
 def qaforgui(req, things):
     """
@@ -389,7 +389,7 @@ def qaforgui(req, things):
         enddatestamp = datestamp+window
     except (IndexError, ValueError):
         req.write("Error: no datestamp given")
-        return apache.HTTP_NOT_ACCEPTABLE
+        return HTTP_NOT_ACCEPTABLE
 
     session = sessionfactory()
     try:
@@ -630,5 +630,5 @@ def qaforgui(req, things):
     finally:
         session.close()
 
-    return apache.HTTP_OK
+    return HTTP_OK
 

@@ -8,10 +8,10 @@ import tarfile
 import urllib
 from xml.dom.minidom import parseString
 
-from orm import sessionfactory
-#from fits_storage_config import *
-from logger import logger, setdebug, setdemon
-from utils.tape import TapeDrive
+from fits_storage.orm import sessionfactory
+#from fits_storage.fits_storage_config import *
+from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.utils.tape import TapeDrive
 
 
 # Option Parsing

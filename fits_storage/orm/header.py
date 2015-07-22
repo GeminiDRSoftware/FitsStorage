@@ -7,14 +7,12 @@ import datetime
 import types
 
 from . import Base
-from orm.diskfile import DiskFile
-
-from gemini_metadata_utils import ratodeg, dectodeg, dmstodeg, gemini_observation_type, gemini_telescope, gemini_observation_class, gemini_instrument
+from .diskfile import DiskFile
+from ..gemini_metadata_utils import ratodeg, dectodeg, dmstodeg, gemini_observation_type, gemini_telescope, gemini_observation_class, gemini_instrument
+from ..gemini_metadata_utils import GeminiProgram
 
 from astrodata import AstroData
 import pywcs
-
-from gemini_metadata_utils import GeminiProgram
 
 import astrodata # For astrodata.Errors
 

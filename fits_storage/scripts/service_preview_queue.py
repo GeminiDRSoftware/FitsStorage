@@ -1,11 +1,11 @@
 #! /usr/bin/env python
-from orm import sessionfactory
-from orm.previewqueue import PreviewQueue
-from orm.diskfile import DiskFile
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.previewqueue import PreviewQueue
+from fits_storage.orm.diskfile import DiskFile
 
-from fits_storage_config import fits_lockfile_dir
-from utils.previewqueue import pop_previewqueue, make_preview
-from logger import logger, setdebug, setdemon, setlogfilesuffix
+from fits_storage.fits_storage_config import fits_lockfile_dir
+from fits_storage.utils.previewqueue import pop_previewqueue, make_preview
+from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 import signal
 import sys
 import os

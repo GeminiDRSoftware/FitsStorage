@@ -1,13 +1,13 @@
-from orm import sessionfactory
-from fits_storage_config import storage_root, using_s3
-from logger import logger, setdebug, setdemon
-from utils.ingestqueue import add_to_ingestqueue
+from fits_storage.orm import sessionfactory
+from fits_storage.fits_storage_config import storage_root, using_s3
+from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.utils.ingestqueue import add_to_ingestqueue
 import os
 import re
 import datetime
 import time
 if (using_s3):
-    from fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
+    from fits_storage.fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
     from boto.s3.connection import S3Connection
 
 # Option Parsing

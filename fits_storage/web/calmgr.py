@@ -1,18 +1,17 @@
 """
 This module contains the calmgr html generator function.
 """
-from orm import sessionfactory
-from orm.file import File
-from orm.diskfile import DiskFile
-from orm.header import Header
-from web.selection import queryselection, openquery
-from cal import get_cal_object
-from fits_storage_config import using_apache, storage_root, fits_servername
-from gemini_metadata_utils import cal_types
+from ..orm import sessionfactory
+from ..orm.file import File
+from ..orm.diskfile import DiskFile
+from ..orm.header import Header
+from ..web.selection import queryselection, openquery
+from ..cal import get_cal_object
+from ..fits_storage_config import using_apache, storage_root, fits_servername
+from ..gemini_metadata_utils import cal_types
+from ..apache_return_codes import HTTP_OK, HTTP_NOT_ACCEPTABLE
 
 from sqlalchemy import join, desc
-
-import apache_return_codes as apache
 
 import urllib
 import re
@@ -120,7 +119,7 @@ def calmgr(req, selection):
         elif req.method == 'POST':
             req.content_type = "text/plain"
             req.write("<!-- Error: No calibration type specified-->\n")
-            return apache.HTTP_NOT_ACCEPTABLE
+            return HTTP_NOT_ACCEPTABLE
 
         # Did we get called via an HTTP POST or HTTP GET?
         if req.method == 'POST':
@@ -171,7 +170,7 @@ def calmgr(req, selection):
 
             # Commit the changes to the usagelog
             session.commit()
-            return apache.HTTP_OK
+            return HTTP_OK
 
         else:
             # OK, we got called via a GET - find the science datasets in the database
@@ -221,7 +220,7 @@ def calmgr(req, selection):
             req.write("</calibration_associations>\n")
             # commit the usagelog notes
             session.commit()
-            return apache.HTTP_OK
+            return HTTP_OK
     except IOError:
         pass
     finally:

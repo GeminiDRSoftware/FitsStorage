@@ -4,12 +4,13 @@ import hashlib
 import subprocess
 import datetime
 
-from fits_storage_config import upload_staging_path, upload_auth_cookie
+from ..fits_storage_config import upload_staging_path, upload_auth_cookie
 
-import apache_return_codes as apache
+from ..apache_return_codes import HTTP_OK, HTTP_NOT_ACCEPTABLE, HTTP_FORBIDDEN
+from ..apache_return_codes import HTTP_SERVICE_UNAVAILABLE
 
-from orm import sessionfactory
-from orm.fileuploadlog import FileUploadLog
+from ..orm import sessionfactory
+from ..orm.fileuploadlog import FileUploadLog
 
 
 if upload_auth_cookie:
@@ -38,7 +39,7 @@ def upload_file(req, filename, processed_cal="False"):
 
         if(req.method != 'POST'):
             fileuploadlog.add_note("Aborted - not HTTP POST")
-            return apache.HTTP_NOT_ACCEPTABLE
+            return HTTP_NOT_ACCEPTABLE
 
         authenticated = True
         if upload_auth_cookie:
@@ -51,7 +52,7 @@ def upload_file(req, filename, processed_cal="False"):
 
         if not authenticated:
             fileuploadlog.add_note("Not Authenticated for Upload")
-            return apache.HTTP_FORBIDDEN
+            return HTTP_FORBIDDEN
 
         # It's a bit brute force to read all the data in one chunk,
         # but that's fine, files are never more than a few hundred MB...
@@ -97,9 +98,9 @@ def upload_file(req, filename, processed_cal="False"):
         # python running ingest_uploaded_calibration.py, the return value we get acutally comes from that script, not invoke
 
         if(ret != 0):
-            return apache.HTTP_SERVICE_UNAVAILABLE
+            return HTTP_SERVICE_UNAVAILABLE
         else:
-            return apache.HTTP_OK
+            return HTTP_OK
 
     finally:
         session.commit()

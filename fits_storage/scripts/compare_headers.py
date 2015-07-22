@@ -8,10 +8,10 @@ import pprint
 import pyfits
 import sys
 
-from logger import logger, setdebug, setdemon
+from fits_storage.logger import logger, setdebug, setdemon
 
 import orm
-from orm.resolve_versions import Version
+from fits_storage.orm.resolve_versions import Version
 
 setdebug(False)
 setdemon(False)

@@ -9,17 +9,17 @@ from sqlalchemy import and_, between, cast, desc, extract, func, join
 from sqlalchemy import BigInteger, Date, Integer, Interval, String
 from sqlalchemy.orm import aliased
 
-from orm import sessionfactory
-from orm.usagelog import UsageLog
-from orm.querylog import QueryLog
-from orm.downloadlog import DownloadLog
-from orm.filedownloadlog import FileDownloadLog
-from orm.fileuploadlog import FileUploadLog
-from orm.user import User
+from ..orm import sessionfactory
+from ..orm.usagelog import UsageLog
+from ..orm.querylog import QueryLog
+from ..orm.downloadlog import DownloadLog
+from ..orm.filedownloadlog import FileDownloadLog
+from ..orm.fileuploadlog import FileUploadLog
+from ..orm.user import User
 
-from web.user import userfromcookie
-from web.selection import getselection, queryselection, sayselection
-from web.list_headers import list_headers
+from .user import userfromcookie
+from .selection import getselection, queryselection, sayselection
+from .list_headers import list_headers
 
 from mod_python import apache
 from mod_python import util

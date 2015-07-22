@@ -4,19 +4,19 @@ manage and service the preview queue
 """
 import os
 import datetime
-from logger import logger
+from ..logger import logger
 from sqlalchemy import desc
 from sqlalchemy.orm.exc import ObjectDeletedError
 from sqlalchemy.orm import make_transient
 
-from orm.preview import Preview
-from orm.previewqueue import PreviewQueue
+from ..orm.preview import Preview
+from ..orm.previewqueue import PreviewQueue
 
-from fits_storage_config import using_s3, storage_root, preview_path, z_staging_area
+from ..fits_storage_config import using_s3, storage_root, preview_path, z_staging_area
 import bz2
 
 if using_s3:
-    from fits_storage_config import s3_staging_area, s3_bucket_name, aws_access_key, aws_secret_key
+    from ..fits_storage_config import s3_staging_area, s3_bucket_name, aws_access_key, aws_secret_key
     from boto.s3.connection import S3Connection
     from boto.s3.key import Key
 

@@ -8,7 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects import postgresql
 from sqlalchemy import func, update
 
-from fits_storage_config import fits_database
+from ..fits_storage_config import fits_database
 
 # This was to debug the number of open database sessions.
 #import logging

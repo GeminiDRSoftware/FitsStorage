@@ -1,8 +1,8 @@
 import os
-from orm import sessionfactory
-from logger import logger, setdebug, setdemon
-from utils.ingest_standards import ingest_standards
-from fits_storage_config import fits_aux_datadir
+from fits_storage.orm import sessionfactory
+from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.utils.ingest_standards import ingest_standards
+from fits_storage.fits_storage_config import fits_aux_datadir
 import datetime
 
 # Option Parsing

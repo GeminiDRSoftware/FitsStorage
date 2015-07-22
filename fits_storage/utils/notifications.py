@@ -3,9 +3,9 @@ Notifications utils - add / update notification table entries from ODB XML
 """
 
 from xml.dom.minidom import parseString
-from orm.notification import Notification
+from ..orm.notification import Notification
 
-from gemini_metadata_utils import GeminiProgram
+from ..gemini_metadata_utils import GeminiProgram
 
 def ingest_odb_xml(session, xml):
     report = []

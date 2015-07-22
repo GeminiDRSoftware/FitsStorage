@@ -1,18 +1,18 @@
-from orm import sessionfactory
-from orm.file import File
-from orm.diskfile import DiskFile
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.file import File
+from fits_storage.orm.diskfile import DiskFile
 
-from logger import logger, setdebug, setdemon
+from fits_storage.logger import logger, setdebug, setdemon
 
 from sqlalchemy import join
 import datetime
 from optparse import OptionParser
 
-from fits_storage_config import using_s3
+from fits_storage.fits_storage_config import using_s3
 
 if(using_s3):
     from boto.s3.connection import S3Connection
-    from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
+    from fits_storage.fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
 
 
 parser = OptionParser()

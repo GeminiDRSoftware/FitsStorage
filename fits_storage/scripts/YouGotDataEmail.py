@@ -6,9 +6,9 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from optparse import OptionParser
 
-from orm import sessionfactory
-from orm.notification import Notification
-from logger import logger, setdebug, setdemon
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.notification import Notification
+from fits_storage.logger import logger, setdebug, setdemon
 
 
 parser = OptionParser()

@@ -5,11 +5,11 @@ import os
 import datetime
 import time
 import traceback
-from orm import sessionfactory
-from orm.exportqueue import ExportQueue
-from utils.exportqueue import export_file, pop_exportqueue, exportqueue_length, retry_failures
-from logger import logger, setdebug, setdemon, setlogfilesuffix
-from fits_storage_config import fits_lockfile_dir
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.exportqueue import ExportQueue
+from fits_storage.utils.exportqueue import export_file, pop_exportqueue, exportqueue_length, retry_failures
+from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
+from fits_storage.fits_storage_config import fits_lockfile_dir
 
 from optparse import OptionParser
 

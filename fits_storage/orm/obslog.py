@@ -2,13 +2,12 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Date
 from sqlalchemy.orm import relation
 
+import re
 import datetime
+import dateutil.parser
 
 from . import Base
-from orm.diskfile import DiskFile
-
-import re
-import dateutil.parser
+from .diskfile import DiskFile
 
 OBSLOG_CRE = re.compile(r'^(20\d\d\d\d\d\d)_(.*)_obslog.txt')
 

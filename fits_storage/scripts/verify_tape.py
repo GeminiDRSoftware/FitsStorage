@@ -5,12 +5,12 @@ import tarfile
 from sqlalchemy import join
 from sqlalchemy.orm.exc import NoResultFound
 
-from orm import sessionfactory
-from orm.tapestuff import Tape, TapeWrite, TapeFile
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile
 
-import fits_storage_config
-from utils.tape import TapeDrive
-from utils.hashes import md5sum_size_fp
+from fits_storage. import fits_storage_config
+from fits_storage.utils.tape import TapeDrive
+from fits_storage.utils.hashes import md5sum_size_fp
 
 # Option Parsing
 from optparse import OptionParser
@@ -24,7 +24,7 @@ parser.add_option("--demon", action="store_true", dest="demon", help="Run as a b
 
 fits_storage_config.logname = "%s-%s.log" % (os.path.basename(sys.argv[0]), options.tapedrive.split('/')[-1])
 
-from logger import logger, setdebug, setdemon
+from fits_storage.logger import logger, setdebug, setdemon
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
 setdemon(options.demon)

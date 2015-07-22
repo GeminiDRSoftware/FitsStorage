@@ -4,18 +4,18 @@ This module contains the gmoscal html generator function.
 import sqlalchemy
 from sqlalchemy.sql.expression import cast
 from sqlalchemy import func, join, desc
-from orm import sessionfactory
-from orm.gmos import Gmos
-from orm.header import Header
-from orm.diskfile import DiskFile
-from orm.file import File
+from ..orm import sessionfactory
+from ..orm.gmos import Gmos
+from ..orm.header import Header
+from ..orm.diskfile import DiskFile
+from ..orm.file import File
 
-from web.selection import sayselection, queryselection
-from web.calibrations import interval_hours
-from cal import get_cal_object
-from fits_storage_config import using_sqlite, fits_system_status, das_calproc_path
+from .selection import sayselection, queryselection
+from .calibrations import interval_hours
+from ..cal import get_cal_object
+from ..fits_storage_config import using_sqlite, fits_system_status, das_calproc_path
 
-import apache_return_codes as apache
+from ..apache_return_codes import HTTP_OK, HTTP_NOT_IMPLEMENTED
 
 from math import fabs
 
@@ -50,7 +50,7 @@ def gmoscal(req, selection, do_json=False):
         req.write("<H1>The GMOS Cal page is not implemented with the SQLite database backend as it uses database functionality not supported by SQLite.</H1>")
         req.write("<P>Talk to PH is you have a use case needing this.</P>")
         req.write("<P>You should not see this message from facility central servers</P>")
-        return apache.HTTP_NOT_IMPLEMENTED
+        return HTTP_NOT_IMPLEMENTED
 
     # Get a database session
     session = sessionfactory()
@@ -472,7 +472,7 @@ def gmoscal(req, selection, do_json=False):
         if do_json:
             json.dump([json_dict], req, indent=4)
 
-        return apache.HTTP_OK
+        return HTTP_OK
 
     except IOError:
         pass

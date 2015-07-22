@@ -3,16 +3,16 @@ This module contains the obslogs web summary code.
 """
 import datetime
 
-from orm import sessionfactory
-from orm.obslog import Obslog
-from fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
-from web.list_headers import list_obslogs, list_headers
-from web.selection import sayselection, openquery
-import apache_return_codes as apache
+from ..orm import sessionfactory
+from ..orm.obslog import Obslog
+from ..fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
+from .list_headers import list_obslogs, list_headers
+from .selection import sayselection, openquery
+from ..apache_return_codes import HTTP_OK
 
-from utils.userprogram import icanhave
+from ..utils.userprogram import icanhave
 
-from orm.querylog import QueryLog
+from ..orm.querylog import QueryLog
 
 def obslogs(req, selection, sumtype):
     """
@@ -82,7 +82,7 @@ def obslogs(req, selection, sumtype):
         session.close()
 
     req.write("</body></html>")
-    return apache.HTTP_OK
+    return HTTP_OK
 
 def obslog_table(req, obslogs, selection, session):
     """

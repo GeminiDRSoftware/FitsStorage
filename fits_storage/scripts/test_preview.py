@@ -1,8 +1,8 @@
 import sys
 
 from astrodata import AstroData
-from utils.previewqueue import render_preview
-from logger import logger, setdebug, setdemon
+from fits_storage.utils.previewqueue import render_preview
+from fits_storage.logger import logger, setdebug, setdemon
 
 
 # Option Parsing

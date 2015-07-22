@@ -1,11 +1,10 @@
 """
 This module contains the tape related xml generator functions. 
 """
-from orm import sessionfactory
+from ..orm import sessionfactory
+from ..orm.tapestuff import Tape, TapeWrite, TapeFile
 
-from orm.tapestuff import Tape, TapeWrite, TapeFile
-
-import apache_return_codes as apache
+from ..apache_return_codes import HTTP_OK
 
 def xmltape(req):
     """
@@ -68,5 +67,5 @@ def xmltape(req):
         session.close()
 
     req.write("</on_tape>")
-    return apache.HTTP_OK
+    return HTTP_OK
 

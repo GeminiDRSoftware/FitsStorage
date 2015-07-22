@@ -2,8 +2,8 @@
 This module provides various utility functions for ingest_standards.py
 in the Fits Storage System.
 """
-from orm.photstandard import PhotStandard
-from orm.geometryhacks import add_point
+from ..orm.photstandard import PhotStandard
+from ..orm.geometryhacks import add_point
 
 def ingest_standards(session, filename):
     """

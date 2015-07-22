@@ -4,44 +4,44 @@ manage and service the ingestqueue
 """
 import os
 import datetime
-from logger import logger
 from sqlalchemy import desc
 from sqlalchemy.orm.exc import ObjectDeletedError
 from sqlalchemy.orm import make_transient
 
-from orm.geometryhacks import add_footprint, do_std_obs
+from ..orm.geometryhacks import add_footprint, do_std_obs
 
-from fits_storage_config import storage_root, using_sqlite, using_s3, using_previews
+from ..logger import logger
+from ..fits_storage_config import storage_root, using_sqlite, using_s3, using_previews
 
 if using_previews:
-    from utils.previewqueue import make_preview
+    from .previewqueue import make_preview
 
-from orm.file import File
-from orm.diskfile import DiskFile
-from orm.diskfilereport import DiskFileReport
-from orm.fulltextheader import FullTextHeader
-from orm.header import Header
-from orm.footprint import Footprint
-from orm.gmos import Gmos
-from orm.gnirs import Gnirs
-from orm.niri import Niri
-from orm.nifs import Nifs
-from orm.michelle import Michelle
-from orm.f2 import F2
-from orm.gsaoi import Gsaoi
-from orm.nici import Nici
-from orm.gpi import Gpi
-from orm.ingestqueue import IngestQueue
-from orm.previewqueue import PreviewQueue
-from orm.obslog import Obslog
+from ..orm.file import File
+from ..orm.diskfile import DiskFile
+from ..orm.diskfilereport import DiskFileReport
+from ..orm.fulltextheader import FullTextHeader
+from ..orm.header import Header
+from ..orm.footprint import Footprint
+from ..orm.gmos import Gmos
+from ..orm.gnirs import Gnirs
+from ..orm.niri import Niri
+from ..orm.nifs import Nifs
+from ..orm.michelle import Michelle
+from ..orm.f2 import F2
+from ..orm.gsaoi import Gsaoi
+from ..orm.nici import Nici
+from ..orm.gpi import Gpi
+from ..orm.ingestqueue import IngestQueue
+from ..orm.previewqueue import PreviewQueue
+from ..orm.obslog import Obslog
 
-from utils.aws_s3 import get_s3_md5, fetch_to_staging
+from .aws_s3 import get_s3_md5, fetch_to_staging
 
 from astrodata import AstroData
 
 if using_s3:
     from boto.s3.connection import S3Connection
-    from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
+    from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
 
 def add_to_ingestqueue(session, filename, path, force_md5=False, force=False, after=None):
     """

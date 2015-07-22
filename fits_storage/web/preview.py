@@ -1,17 +1,17 @@
-from orm import sessionfactory
+from ..orm import sessionfactory
 
-from fits_storage_config import using_s3, storage_root, preview_path
+from ..fits_storage_config import using_s3, storage_root, preview_path
 
-from gemini_metadata_utils import gemini_fitsfilename
+from ..gemini_metadata_utils import gemini_fitsfilename
 
-from orm.file import File
-from orm.diskfile import DiskFile
-from orm.header import Header
-from orm.preview import Preview
+from ..orm.file import File
+from ..orm.diskfile import DiskFile
+from ..orm.header import Header
+from ..orm.preview import Preview
 
-from web.selection import getselection, openquery, selection_to_URL
-from web.summary import list_headers
-from web.user import userfromcookie
+from .selection import getselection, openquery, selection_to_URL
+from .summary import list_headers
+from .user import userfromcookie
 
 # This will only work with apache
 from mod_python import apache
@@ -22,9 +22,9 @@ import cStringIO
 
 if using_s3:
     from boto.s3.connection import S3Connection
-    from fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
+    from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
 
-from utils.userprogram import icanhave
+from ..utils.userprogram import icanhave
 
 def preview(req, things):
     """

@@ -1,15 +1,15 @@
 import sys
 import datetime
 
-from orm import sessionfactory
-from orm.file import File
-from orm.diskfile import DiskFile
-from orm.header import Header
-from orm.gmos import Gmos
-from orm.niri import Niri
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.file import File
+from fits_storage.orm.diskfile import DiskFile
+from fits_storage.orm.header import Header
+from fits_storage.orm.gmos import Gmos
+from fits_storage.orm.niri import Niri
 
 #from fits_storage_config import *
-from logger import logger, setdebug, setdemon
+from fits_storage.logger import logger, setdebug, setdemon
 
 # Option Parsing
 from optparse import OptionParser

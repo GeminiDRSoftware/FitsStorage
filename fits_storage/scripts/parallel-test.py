@@ -43,8 +43,8 @@ from os import getpid
 from pyfits import open as pfopen
 from pyfits.verify import VerifyError
 from astrodata import AstroData
-from utils.fits_validator import RuleStack, RuleSet, Environment, AstroDataEvaluator
-from utils.fits_validator import EngineeringImage, GeneralError, BadData, NotGeminiData, NoDateError
+from fits_storage.utils.fits_validator import RuleStack, RuleSet, Environment, AstroDataEvaluator
+from fits_storage.utils.fits_validator import EngineeringImage, GeneralError, BadData, NotGeminiData, NoDateError
 from io import BytesIO
 from time import sleep
 

@@ -6,15 +6,15 @@ import datetime
 from mod_python import Cookie
 
 from sqlalchemy import func
-from orm.diskfile import DiskFile
 
-from fits_storage_config import magic_download_cookie
+from ..fits_storage_config import magic_download_cookie
 
-from web.userprogram import get_program_list
-from web.user import userfromcookie
+from ..web.userprogram import get_program_list
+from ..web.user import userfromcookie
 
-from orm.header import Header
-from orm.obslog import Obslog
+from ..orm.diskfile import DiskFile
+from ..orm.header import Header
+from ..orm.obslog import Obslog
 
 def icanhave(session, req, item, filedownloadlog=None):
     """

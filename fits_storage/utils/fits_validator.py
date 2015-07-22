@@ -27,8 +27,9 @@ from time import strptime
 from types import FunctionType
 from StringIO import StringIO
 
-from fits_storage_config import validation_def_path
-import gemini_metadata_utils as gmu
+from ..fits_storage_config import validation_def_path
+from ..gemini_metadata_utils import gemini_instrument
+from ..gemini_metadata_utils import GeminiProgram, GeminiObservation, GeminiDataLabel
 
 import yaml
 import pyfits as pf
@@ -746,7 +747,7 @@ def test_for_gemini_data(header, env):
     if 'XTENSION' in header:
         return True
     try:
-        if gmu.gemini_instrument(header['INSTRUME'], gmos=True) is None:
+        if gemini_instrument(header['INSTRUME'], gmos=True) is None:
             return False
 
         if header['INSTRUME'] in FACILITY_INSTRUME:
@@ -818,9 +819,9 @@ def wcs_or_not(header, env):
 
 @RuleSet.register_function("valid-observation-info", excIfFalse = EngineeringImage)
 def check_observation_related_fields(header, env):
-    prg = gmu.GeminiProgram(str(header['GEMPRGID']))
-    obs = gmu.GeminiObservation(str(header['OBSID']))
-    dl  = gmu.GeminiDataLabel(str(header['DATALAB']))
+    prg = GeminiProgram(str(header['GEMPRGID']))
+    obs = GeminiObservation(str(header['OBSID']))
+    dl  = GeminiDataLabel(str(header['DATALAB']))
 
     valid = (prg.valid and obs.obsnum != '' and dl.dlnum != ''
                        and obs.obsnum == dl.obsnum

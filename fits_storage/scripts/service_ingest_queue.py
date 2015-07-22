@@ -1,10 +1,10 @@
 #! /usr/bin/env python
-from orm import sessionfactory
-from orm.ingestqueue import IngestQueue
-from fits_storage_config import using_s3, storage_root, defer_seconds, fits_lockfile_dir, export_destinations
-from utils.ingestqueue import ingest_file, pop_ingestqueue, ingestqueue_length
-from utils.exportqueue import add_to_exportqueue
-from logger import logger, setdebug, setdemon, setlogfilesuffix
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.ingestqueue import IngestQueue
+from fits_storage.fits_storage_config import using_s3, storage_root, defer_seconds, fits_lockfile_dir, export_destinations
+from fits_storage.utils.ingestqueue import ingest_file, pop_ingestqueue, ingestqueue_length
+from fits_storage.utils.exportqueue import add_to_exportqueue
+from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 import signal
 import sys
 import os

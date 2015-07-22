@@ -4,10 +4,10 @@ import re
 import datetime
 import time
 
-from orm import sessionfactory
-from fits_storage_config import storage_root
-from logger import logger, setdebug, setdemon
-from utils.ingestqueue import add_to_ingestqueue
+from fits_storage.orm import sessionfactory
+from fits_storage.fits_storage_config import storage_root
+from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.utils.ingestqueue import add_to_ingestqueue
 
 # Option Parsing
 from optparse import OptionParser

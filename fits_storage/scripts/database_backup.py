@@ -3,8 +3,8 @@ import re
 import datetime
 import subprocess
 
-from fits_storage_config import fits_db_backup_dir, fits_dbname
-from logger import logger, setdebug, setdemon
+from fits_storage.fits_storage_config import fits_db_backup_dir, fits_dbname
+from fits_storage.logger import logger, setdebug, setdemon
 
 datestring = datetime.datetime.now().isoformat()
 

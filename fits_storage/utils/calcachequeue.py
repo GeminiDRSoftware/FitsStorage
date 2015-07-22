@@ -4,17 +4,18 @@ manage and service the calcache queue
 """
 import os
 import datetime
-from logger import logger
 from sqlalchemy import desc
 from sqlalchemy.orm.exc import ObjectDeletedError
 from sqlalchemy.orm import make_transient
 
-from orm.header import Header
-from orm.calcache import CalCache
-from orm.calcachequeue import CalCacheQueue
+from ..logger import logger
 
-from cal import get_cal_object
-from cal.associate_calibrations import associate_cals
+from ..orm.header import Header
+from ..orm.calcache import CalCache
+from ..orm.calcachequeue import CalCacheQueue
+
+from ..cal import get_cal_object
+from ..cal.associate_calibrations import associate_cals
 
 def pop_calcachequeue(session, fast_rebuild=False):
     """

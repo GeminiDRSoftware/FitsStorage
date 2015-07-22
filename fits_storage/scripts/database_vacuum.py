@@ -1,8 +1,8 @@
 import datetime
 import subprocess
 
-from fits_storage_config import fits_dbname
-from logger import logger, setdebug, setdemon
+from fits_storage.fits_storage_config import fits_dbname
+from fits_storage.logger import logger, setdebug, setdemon
 
 from optparse import OptionParser
 parser = OptionParser()

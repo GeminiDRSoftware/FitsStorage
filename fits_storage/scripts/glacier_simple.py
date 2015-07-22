@@ -2,11 +2,11 @@ import datetime
 import os
 import sys
 
-from fits_storage_config import aws_access_key, aws_secret_key
+from fits_storage.fits_storage_config import aws_access_key, aws_secret_key
 import boto.glacier
 
-from logger import logger, setdebug, setdemon
-#from orm import sessionfactory
+from fits_storage.logger import logger, setdebug, setdemon
+#from fits_storage.orm import sessionfactory
 
 # Option Parsing
 from optparse import OptionParser

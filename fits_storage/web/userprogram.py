@@ -4,11 +4,11 @@ This is how users register programs against their userids,
 find out what programs they have access to etc
 """
 
-from orm import sessionfactory
+from ..orm import sessionfactory
 
-from orm.userprogram import UserProgram
+from ..orm.userprogram import UserProgram
 
-from web.user import userfromcookie
+from .user import userfromcookie
 
 # This will only work with apache
 from mod_python import apache

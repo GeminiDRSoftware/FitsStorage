@@ -4,23 +4,23 @@ Functions in this module are only used within FitsStorageWebSummary.
 """
 from sqlalchemy import or_
 
-from gemini_metadata_utils import gemini_telescope, gemini_instrument, gemini_date, gemini_daterange
-from gemini_metadata_utils import gemini_observation_type, gemini_observation_class, gemini_reduction_state
-from gemini_metadata_utils import gemini_caltype, gmos_gratingname, gmos_focal_plane_mask, gemini_fitsfilename
-from gemini_metadata_utils import gemini_binning, GeminiDataLabel, GeminiObservation, GeminiProgram, ratodeg, dectodeg, srtodeg
+from ..gemini_metadata_utils import gemini_telescope, gemini_instrument, gemini_date, gemini_daterange
+from ..gemini_metadata_utils import gemini_observation_type, gemini_observation_class, gemini_reduction_state
+from ..gemini_metadata_utils import gemini_caltype, gmos_gratingname, gmos_focal_plane_mask, gemini_fitsfilename
+from ..gemini_metadata_utils import gemini_binning, GeminiDataLabel, GeminiObservation, GeminiProgram, ratodeg, dectodeg, srtodeg
 
 import dateutil.parser
 import datetime
 import re
 import urllib
 
-from orm.header import Header
-from orm.diskfile import DiskFile
-from orm.file import File
-from orm.footprint import Footprint
-from orm.photstandard import PhotStandardObs
+from ..orm.header import Header
+from ..orm.diskfile import DiskFile
+from ..orm.file import File
+from ..orm.footprint import Footprint
+from ..orm.photstandard import PhotStandardObs
 
-from fits_storage_config import use_as_archive
+from ..fits_storage_config import use_as_archive
 
 def getselection(things):
     """

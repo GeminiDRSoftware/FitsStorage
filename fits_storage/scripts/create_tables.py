@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 from optparse import OptionParser
-from orm import sessionfactory
-from orm.createtables import create_tables, drop_tables
+from fits_storage.orm import sessionfactory
+from fits_storage.orm.createtables import create_tables, drop_tables
 
 # Option Parsing
 parser = OptionParser()

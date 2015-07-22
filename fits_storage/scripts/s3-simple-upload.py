@@ -1,13 +1,12 @@
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 
-from fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
-from logger import logger, setdebug, setdemon
+from fits_storage.fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
+from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.utils.aws_s3 import get_s3_md5
+from fits_storage.utils.hashes import md5sum
+
 import os
-
-from utils.aws_s3 import get_s3_md5
-from utils.hashes import md5sum
-
 from multiprocessing import Pool
 
 from optparse import OptionParser

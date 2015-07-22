@@ -5,10 +5,10 @@ summaries.
 """
 import json
 
-from orm import sessionfactory
-from web.summary import list_headers
-from web.standards import xmlstandardobs
-import apache_return_codes as apache
+from ..orm import sessionfactory
+from .summary import list_headers
+from .standards import xmlstandardobs
+from apache_return_codes import HTTP_OK
 
 diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
                    'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready')
@@ -46,7 +46,7 @@ def xmlfilelist(req, selection):
     finally:
         session.close()
     req.write("</file_list>")
-    return apache.HTTP_OK
+    return HTTP_OK
 
 def diskfile_dicts(headers, return_header=False):
     for header in headers:
@@ -75,7 +75,7 @@ def jsonfilelist(req, selection):
     finally:
         session.close()
     json.dump(thelist, req, indent=4)
-    return apache.HTTP_OK
+    return HTTP_OK
 
 header_fields = ('program_id', 'engineering', 'science_verification',
                  'calibration_program', 'observation_id', 'data_label',
@@ -116,7 +116,7 @@ def jsonsummary(req, selection):
     finally:
         session.close()
     json.dump(thelist, req, indent=4)
-    return apache.HTTP_OK
+    return HTTP_OK
 
 
 from decimal import Decimal
