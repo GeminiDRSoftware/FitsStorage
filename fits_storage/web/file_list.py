@@ -8,7 +8,7 @@ import json
 from ..orm import sessionfactory
 from .summary import list_headers
 from .standards import xmlstandardobs
-from apache_return_codes import HTTP_OK
+from ..apache_return_codes import HTTP_OK
 
 diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
                    'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready')

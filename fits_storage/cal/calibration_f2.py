@@ -4,10 +4,10 @@ This module holds the CalibrationF2 class
 
 import datetime
 
-from orm.diskfile import DiskFile
-from orm.header import Header
-from orm.f2 import F2
-from cal.calibration import Calibration
+from ..orm.diskfile import DiskFile
+from ..orm.header import Header
+from ..orm.f2 import F2
+from .calibration import Calibration
 
 from sqlalchemy.orm import join
 from sqlalchemy import func, extract

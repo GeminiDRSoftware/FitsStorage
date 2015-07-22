@@ -3,11 +3,11 @@ This module holds the CalibrationGMOS class
 """
 import datetime
 
-from fits_storage_config import using_sqlite
-from orm.diskfile import DiskFile
-from orm.header import Header
-from orm.gmos import Gmos
-from cal.calibration import Calibration
+from ..fits_storage_config import using_sqlite
+from ..orm.diskfile import DiskFile
+from ..orm.header import Header
+from ..orm.gmos import Gmos
+from .calibration import Calibration
 
 from sqlalchemy.orm import join
 from sqlalchemy import func, extract

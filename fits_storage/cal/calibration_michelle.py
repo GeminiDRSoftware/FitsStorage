@@ -3,10 +3,10 @@ This module holds the CalibrationMICHELLE class
 """
 import datetime
 
-from orm.diskfile import DiskFile
-from orm.header import Header
-from orm.michelle import Michelle
-from cal.calibration import Calibration
+from ..orm.diskfile import DiskFile
+from ..orm.header import Header
+from ..orm.michelle import Michelle
+from .calibration import Calibration
 
 from sqlalchemy.orm import join
 from sqlalchemy import func, extract

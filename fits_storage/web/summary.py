@@ -7,9 +7,9 @@ from ..orm import sessionfactory
 from ..fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
 from .selection import sayselection, openquery, selection_to_URL
 from .list_headers import list_headers
-from ..apache_return_codes as apache
+from .. import apache_return_codes as apache
 
-from web.summary_generator import SummaryGenerator, htmlescape
+from .summary_generator import SummaryGenerator, htmlescape
 
 # We assume that servers used as archive use a calibration association cache table
 from ..fits_storage_config import use_as_archive

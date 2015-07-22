@@ -3,10 +3,10 @@ This module holds the CalibrationNICI class
 """
 import datetime
 
-from orm.diskfile import DiskFile
-from orm.header import Header
-from orm.nici import Nici
-from cal.calibration import Calibration
+from ..orm.diskfile import DiskFile
+from ..orm.header import Header
+from ..orm.nici import Nici
+from .calibration import Calibration
 
 from sqlalchemy.orm import join
 from sqlalchemy import func, extract

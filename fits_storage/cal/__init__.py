@@ -2,20 +2,20 @@
 
 from sqlalchemy import join, desc
 
-from cal.calibration import Calibration
-from cal.calibration_gmos import CalibrationGMOS
-from cal.calibration_niri import CalibrationNIRI
-from cal.calibration_gnirs import CalibrationGNIRS
-from cal.calibration_nifs import CalibrationNIFS
-from cal.calibration_michelle import CalibrationMICHELLE
-from cal.calibration_f2 import CalibrationF2
-from cal.calibration_gsaoi import CalibrationGSAOI
-from cal.calibration_nici import CalibrationNICI
-from cal.calibration_gpi import CalibrationGPI
+from .calibration import Calibration
+from .calibration_gmos import CalibrationGMOS
+from .calibration_niri import CalibrationNIRI
+from .calibration_gnirs import CalibrationGNIRS
+from .calibration_nifs import CalibrationNIFS
+from .calibration_michelle import CalibrationMICHELLE
+from .calibration_f2 import CalibrationF2
+from .calibration_gsaoi import CalibrationGSAOI
+from .calibration_nici import CalibrationNICI
+from .calibration_gpi import CalibrationGPI
 
-from orm.file import File
-from orm.diskfile import DiskFile
-from orm.header import Header
+from ..orm.file import File
+from ..orm.diskfile import DiskFile
+from ..orm.header import Header
 
 
 def get_cal_object(session, filename, header=None, descriptors=None, types=None):
