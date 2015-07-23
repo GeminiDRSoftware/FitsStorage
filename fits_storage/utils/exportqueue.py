@@ -19,7 +19,7 @@ from ..orm.file import File
 from ..orm.diskfile import DiskFile
 from ..orm.exportqueue import ExportQueue
 
-import ..apache_return_codes as apache
+from .. import apache_return_codes as apache
 
 if using_s3:
     from boto.s3.connection import S3Connection
