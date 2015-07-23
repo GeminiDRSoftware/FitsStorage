@@ -42,6 +42,10 @@ class User(Base):
         self.cookie = None
         self.account_created = datetime.datetime.utcnow()
 
+    def _clear_reset_token(self):
+        self.reset_token = None
+        self.reset_token_expires = None
+
     def reset_password(self, password):
         """
         Calls change_password to set the password to the given string
@@ -49,10 +53,8 @@ class User(Base):
         Calling code needs to call a session.commit() after calling this.
         """
         self.change_password(password)
-        self.reset_token = None
-        self.reset_token_expires = None
+        self._clear_reset_token()
         self.cookie = None
-        self.password_changed = datetime.datetime.utcnow()
 
     def change_password(self, password):
         """
@@ -67,6 +69,7 @@ class User(Base):
         self.password = hashobj.hexdigest()
         password = None
         hashobj = None
+        self.password_changed = datetime.datetime.utcnow()
 
     def validate_password(self, candidate):
         """
@@ -109,8 +112,7 @@ class User(Base):
         if (self.reset_token is None) or (self.reset_token_expires is None):
             return False
         if (datetime.datetime.utcnow() < self.reset_token_expires) and (candidate == self.reset_token):
-            self.reset_token = None
-            self.reset_token_expires = None
+            self._clear_reset_token()
             return True
         else:
             return False
@@ -129,8 +131,7 @@ class User(Base):
         Don't forget to commit the session afterwards
         """
         # Void any outstanding password reset tokens
-        self.reset_token = None
-        self.reset_token_expires = None
+        self._clear_reset_token()
         # Generate a new session cookie only if one doesn't exist
         # (don't want to expire existing sessions just becaue we logged in from a new machine)
         if self.cookie is None:
