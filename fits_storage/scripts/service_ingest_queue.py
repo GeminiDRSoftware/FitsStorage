@@ -120,7 +120,7 @@ while loop:
                 break
             else:
                 logger.info("...Waiting")
-            time.sleep(10)
+            time.sleep(2)
         else:
             # Don't query queue length in fast_rebuild mode
             if options.fast_rebuild:
@@ -149,12 +149,12 @@ while loop:
                 else:
                     # Check if it is locked
                     locked = False
-                    fp = open(fullpath, "r+")
+                    fd = open(fullpath, "r+")
                     try:
                         fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     except IOError:
                         locked = True
-                    fp.close()
+                    fd.close()
                     if locked:
                         logger.info("Deferring ingestion of locked file %s", iq.filename)
                         # Defer ingestion of this file for 15 secs
