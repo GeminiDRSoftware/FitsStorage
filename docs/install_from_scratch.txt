@@ -19,6 +19,10 @@ sudo /usr/sbin/groupadd -g 5179 fitsdata
 sudo /usr/sbin/useradd -c 'FITS data' -u 5179 -g 5179 fitsdata
 sudo passwd fitsdata
 
+# If this is a gemini fits server
+sudo vi /etc/group
+geminidata:x:502:fitsdata
+
 sudo mkdir /opt/FitsStorage
 sudo chown fitsdata:fitsdata /opt/FitsStorage/
 
