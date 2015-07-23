@@ -15,15 +15,6 @@ sudo yum -y install libX11-devel libXft libXft-devel
 # On RHEL6 also need these if they're not already there:
 sudo yum -y install libtool
 
-# Dont need these anymore
-#sudo yum -y install tk
-#sudo yum -y install tk-devel
-
-# Need these if you're going to run 32bit java from /astro
-sudo yum install glibc-devel.i686
-sudo yum install libstdc++-devel.i686
-sudo yum install compat-glibc
-
 sudo /usr/sbin/groupadd -g 5179 fitsdata
 sudo /usr/sbin/useradd -c 'FITS data' -u 5179 -g 5179 fitsdata
 sudo passwd fitsdata
