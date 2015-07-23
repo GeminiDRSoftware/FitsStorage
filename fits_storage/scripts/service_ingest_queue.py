@@ -11,13 +11,13 @@ import os
 import datetime
 import time
 import traceback
-from sqlalchemy.exc import OperationalError
+import fcntl
 
 from optparse import OptionParser
 
 parser = OptionParser()
 parser.add_option("--skip-fv", action="store_true", dest="skip_fv", default=False, help="Do not run fitsverify on the files")
-parser.add_option("--skip-md", action="store_true", dest="skip_md", default=False, help="Do not run a md check on the files")
+parser.add_option("--skip-wmd", action="store_true", dest="skip_wmd", default=False, help="Do not run a wmd check on the files")
 parser.add_option("--no-defer", action="store_true", dest="no_defer", default=False, help="Do not defer ingestion of recently modified files")
 parser.add_option("--fast-rebuild", action="store_true", dest="fast_rebuild", default=False, help="Fast rebuild mode - skip duplication checking etc")
 parser.add_option("--make-previews", action="store_true", dest="make_previews", default=False, help="Make previews during ingest rather than queueing for later")
@@ -84,7 +84,7 @@ if options.lockfile:
                 os.kill(oldpid, 0)
         except:
             # If this gets called then the lockfile refers to a process which either doesn't exist or is not ours.
-            logger.info("PID in lockfile prefers to a process which either doesn't exist, or is not ours - %d", oldpid)
+            logger.error("PID in lockfile prefers to a process which either doesn't exist, or is not ours - %d", oldpid)
             actually_locked = False
 
         if actually_locked:
@@ -128,25 +128,48 @@ while loop:
             else:
                 logger.info("Ingesting %s, (%d in queue)", iq.filename, ingestqueue_length(session))
 
-            # Check if the file was very recently modified, defer ingestion if it was
-            if (not using_s3) and (options.no_defer == False) and (defer_seconds > 0):
+            # Check if the file was very recently modified or is locked, defer ingestion if it was
+            if (not using_s3) and (options.no_defer == False):
                 fullpath = os.path.join(storage_root, iq.path, iq.filename)
-                lastmod = datetime.datetime.fromtimestamp(os.path.getmtime(fullpath))
-                now = datetime.datetime.now()
-                age = now - lastmod
-                defer = datetime.timedelta(seconds=defer_seconds)
-                if age < defer:
-                    logger.info("Deferring ingestion of file %s", iq.filename)
-                    # Defer ingestion of this file for defer_secs
-                    after = now + defer
-                    # iq is a transient ORM object, find it in the db
-                    dbiq = session.query(IngestQueue).filter(IngestQueue.id == iq.id).one()
-                    dbiq.after = after
-                    dbiq.inprogress = False
-                    session.commit()
-                    continue
+                if defer_seconds > 0:
+                    lastmod = datetime.datetime.fromtimestamp(os.path.getmtime(fullpath))
+                    now = datetime.datetime.now()
+                    age = now - lastmod
+                    defer = datetime.timedelta(seconds=defer_seconds)
+                    if age < defer:
+                        logger.info("Deferring ingestion of recently modified file %s", iq.filename)
+                        # Defer ingestion of this file for defer_secs
+                        after = now + defer
+                        # iq is a transient ORM object, find it in the db
+                        dbiq = session.query(IngestQueue).filter(IngestQueue.id == iq.id).one()
+                        dbiq.after = after
+                        dbiq.inprogress = False
+                        session.commit()
+                        continue
+                else:
+                    # Check if it is locked
+                    locked = False
+                    fp = open(fullpath, "r+")
+                    try:
+                        fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    except IOError:
+                        locked = True
+                    fp.close()
+                    if locked:
+                        logger.info("Deferring ingestion of locked file %s", iq.filename)
+                        # Defer ingestion of this file for 15 secs
+                        after = datetime.datetime.now() + datetime.timedelta(seconds=15)
+                        # iq is a transient ORM object, find it in the db
+                        dbiq = session.query(IngestQueue).filter(IngestQueue.id == iq.id).one()
+                        dbiq.after = after
+                        dbiq.inprogress = False
+                        session.commit()
+                        continue
+
+
+
             try:
-                added_diskfile = ingest_file(session, iq.filename, iq.path, iq.force_md5, iq.force, options.skip_fv, options.skip_md, options.make_previews)
+                added_diskfile = ingest_file(session, iq.filename, iq.path, iq.force_md5, iq.force, options.skip_fv, options.skip_wmd, options.make_previews)
                 # Now we also add this file to our export list if we have downstream servers and we did add a diskfile
                 if added_diskfile:
                     for destination in export_destinations:
@@ -165,13 +188,6 @@ while loop:
             session.commit()
 
     except KeyboardInterrupt:
-        loop = False
-
-    except OperationalError:
-        string = traceback.format_tb(sys.exc_info()[2])
-        string = "".join(string)
-        session.rollback()
-        logger.error("Operational Error. Stopping. Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
         loop = False
 
     except:
