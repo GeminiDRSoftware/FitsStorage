@@ -11,7 +11,7 @@ class PreviewQueue(Base):
     __tablename__ = 'previewqueue'
 
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer, nullable=False, index=True)
+    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
     inprogress = Column(Boolean, index=True)
     sortkey = Column(Text, index=True)
 
