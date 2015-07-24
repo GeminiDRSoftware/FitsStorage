@@ -42,7 +42,7 @@ def summary(req, sumtype, selection, orderby, links=True):
     summary_body(req, sumtype, selection, orderby, links)
 
     req.write("</body></html>")
-    return HTTP_OK
+    return apache.HTTP_OK
 
 def summary_body(req, sumtype, selection, orderby, links=True):
     """
