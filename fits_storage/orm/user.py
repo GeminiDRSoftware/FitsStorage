@@ -5,7 +5,7 @@ from . import Base
 
 from hashlib import sha256
 from os import urandom
-import datetime
+from datetime import datetime, timedelta
 from base64 import b32encode, standard_b64encode
 
 # Note, password hashing follows the scheme at
@@ -40,7 +40,7 @@ class User(Base):
         self.superuser = False
         self.reset_token = None
         self.cookie = None
-        self.account_created = datetime.datetime.utcnow()
+        self.account_created = datetime.utcnow()
 
     def _clear_reset_token(self):
         self.reset_token = None
@@ -69,7 +69,7 @@ class User(Base):
         self.password = hashobj.hexdigest()
         password = None
         hashobj = None
-        self.password_changed = datetime.datetime.utcnow()
+        self.password_changed = datetime.utcnow()
 
     def validate_password(self, candidate):
         """
@@ -98,7 +98,7 @@ class User(Base):
         Returns the token for convenience
         """
         self.reset_token = b32encode(urandom(32))
-        self.reset_token_expires = datetime.datetime.utcnow() + datetime.timedelta(minutes=15)
+        self.reset_token_expires = datetime.utcnow() + timedelta(minutes=15)
         return self.reset_token
 
     def validate_reset_token(self, candidate):
@@ -109,13 +109,14 @@ class User(Base):
         Don't forget to commit the session after calling this so that a
         sucessfull validation will null the token making it one-time-use
         """
-        if (self.reset_token is None) or (self.reset_token_expires is None):
-            return False
-        if (datetime.datetime.utcnow() < self.reset_token_expires) and (candidate == self.reset_token):
-            self._clear_reset_token()
-            return True
-        else:
-            return False
+        try:
+            if (candidate is not None) and (datetime.utcnow() < self.reset_token_expires) and (candidate == self.reset_token):
+                self._clear_reset_token()
+                return True
+        except TypeError: # If this happens, selt.reset_token_expires was None
+            pass
+
+        return False
 
     def generate_cookie(self):
         """
