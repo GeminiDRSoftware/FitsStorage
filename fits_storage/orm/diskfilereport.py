@@ -7,7 +7,7 @@ from ..fits_verify import fitsverify
 
 from . import Base
 
-from ..utils.fits_validator import AstroDataEvaluator, STATUSES
+from ..utils.gemini_fits_validator import AstroDataEvaluator, STATUSES
 
 evaluate = AstroDataEvaluator()
 

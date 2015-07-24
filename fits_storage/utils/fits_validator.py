@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+__all__ = ['RuleSet', 'RuleStack', 'Environment', 'ValidationError', 'BadData',
+           'EngineeringImage', 'GeneralError', 'NoDateError', 'Evaluator',
+           'STATUSES', 'Result']
 
 """
 This module contains all the machinery for metadata testing. The easiest way to
@@ -13,8 +16,9 @@ object passing an HDUList.
 The result is a named tuple with elements:
 
   `passes`:  boolean, passes the test or not
-  `code`:    a finer grain veredict on the test; CORRECT, ENG, BAD for valid
-             files and NOPASS, NOTGEMINI for invalid data.
+  `code`:    a finer grain veredict on the test: CORRECT, ENG, BAD for data
+             that can be ingested to the archive; and  NOPASS, EXCEPTION
+             for data that should be reviewed
   `message`: human readable message explaining the analysis
 """
 
@@ -22,26 +26,21 @@ import os
 import re
 import sys
 from collections import namedtuple
-from datetime import datetime, timedelta
+from datetime import datetime
 from time import strptime
 from types import FunctionType
-from StringIO import StringIO
 
 from ..fits_storage_config import validation_def_path
-from ..gemini_metadata_utils import gemini_instrument
-from ..gemini_metadata_utils import GeminiProgram, GeminiObservation, GeminiDataLabel
 
 import yaml
 import pyfits as pf
-from astrodata import AstroData
 
-# Exceptions
+# General Exceptions
 
 class ValidationError(Exception):
     pass
 
-class NotGeminiData(ValidationError):
-    pass
+# TODO: Explain the use for these exceptions
 
 class BadData(ValidationError):
     pass
@@ -58,15 +57,7 @@ class NoDateError(Exception):
 # Constants
 DEBUG = False
 NOT_FOUND_MESSAGE = "Could not find a validating set of rules"
-FACILITY_INSTRUME = {'bHROS', 'F2', 'GMOS-N', 'GMOS-S', 'GNIRS', 'GPI', 'GSAOI', 'NICI', 'NIFS', 'NIRI'}
-
-STATUSES = ('CORRECT', 'NOPASS', 'NODATE', 'NOTGEMINI', 'BAD', 'ENG', 'EXCEPTION')
-
-# This is used to determine things like if we test for IAA or OBSCLASS
-# This is an initial estimate using empirical data. The value must
-# be corrected at a later point.
-OLDIMAGE = datetime(2007, 06, 28)
-OBSCLASS_VALUES = {'dayCal',  'partnerCal',  'acqCal',  'acq',  'science',  'progCal'}
+STATUSES = ['CORRECT', 'NOPASS', 'NODATE', 'BAD', 'ENG', 'EXCEPTION']
 
 fitsTypes = {
     'char': str,
@@ -289,10 +280,10 @@ def getEnvDate(env):
     raise NoDateError()
 
 ### Functions for skip test
-# The functions in this section return are meant to test if the conditions are
+# The functions in this section are meant to test if the conditions are
 # met so that we can test for the existence and validity of a certain keyword.
 #
-# The must return False if this is NOT the case. Have this in mind when reading
+# They must return False if this is NOT the case. Have this in mind when reading
 # the code, because you may expect different results
 
 def buildSinceFn(value):
@@ -739,129 +730,6 @@ class RuleStack(object):
 
         return (True, passed)
 
-# Here, custom functions
-# TODO: We should be able to provide a reason for not passing a test
-
-@RuleSet.register_function("is-gemini-data", excIfFalse = NotGeminiData)
-def test_for_gemini_data(header, env):
-    if 'XTENSION' in header:
-        return True
-    try:
-        if gemini_instrument(header['INSTRUME'], gmos=True) is None:
-            return False
-
-        if header['INSTRUME'] in FACILITY_INSTRUME:
-            env.features.add('facility')
-        else:
-            env.features.add('non-facility')
-
-        return True
-
-    except KeyError:
-        return False
-
-@RuleSet.register_function("engineering", excIfTrue = EngineeringImage)
-def engineering_image(header, env):
-    "Naive engineering image detection"
-    if header.get('GEMENG') is True:
-        return True
-
-    if 'XTENSION' in header:
-        return False
-    try:
-        prgid = str(header['GEMPRGID'])
-        if prgid[:2] in ('GN', 'GS') and ('ENG' in prgid.upper()):
-            return True
-
-        if check_observation_related_fields(header, env) is not True:
-            return True, "Does not look like a valid program ID"
-    except KeyError:
-        return True, "Missing GEMPRGID"
-
-    return False
-# Retest to figure out this one
-#    except AttributeError as e:
-#        return GeneralError("Testing GEMPRGID: " + str(e))
-
-@RuleSet.register_function("calibration")
-def calibration_image(header, env):
-    "Naive calib image detection"
-    prgid = header.get('GEMPRGID', '')
-    try:
-        fromId = prgid.startswith('GN-CAL') or prgid.startswith('GS-CAL')
-    except AttributeError as e:
-        return GeneralError("Testing GEMPRGID: " + str(e))
-    return fromId or (header.get('OBSCLASS') == 'dayCal')
-
-@RuleSet.register_function("wcs-after-pdu")
-def wcs_in_extensions(header, env):
-    try:
-        if header.get('FRAME', '').upper() in ('AZEL_TOPO', 'NO VALUE'):
-            env.features.add('no-wcs-test')
-    except AttributeError:
-        # In some cases FRAME is not a string...
-        pass
-
-    return True
-
-@RuleSet.register_function("should-test-wcs")
-def wcs_or_not(header, env):
-    feat = env.features
-    return (    ('facility' in feat or 'non-facility' in feat)
-            and ('no-wcs-test' not in feat)
-            and (   ('wcs-in-pdu' in feat and 'XTENSION' not in header)
-                 or ('wcs-in-pdu' not in feat and header.get('XTENSION') == 'IMAGE')))
-
-#@RuleSet.register_function("valid-rawXX")
-#def check_rawXX_contents(header, env):
-#    return all((header[x].upper() == 'UNKNOWN' or rawxx_pattern.match(header[x]) is not None)
-#                for x in ('RAWBG', 'RAWCC', 'RAWIQ', 'RAWWV'))
-
-@RuleSet.register_function("valid-observation-info", excIfFalse = EngineeringImage)
-def check_observation_related_fields(header, env):
-    prg = GeminiProgram(str(header['GEMPRGID']))
-    obs = GeminiObservation(str(header['OBSID']))
-    dl  = GeminiDataLabel(str(header['DATALAB']))
-
-    valid = (prg.valid and obs.obsnum != '' and dl.dlnum != ''
-                       and obs.obsnum == dl.obsnum
-                       and prg.program_id == obs.program.program_id == dl.projectid)
-
-    if not valid:
-        return False, "Not a valid Observation ID"
-
-    return True
-
-@RuleSet.register_function('set-date')
-def set_date(header, env):
-    bogus = False
-    for kw in ('DATE-OBS', 'DATE'):
-        try:
-            coerceValue(header[kw])
-            env.features.add('date:' + header[kw])
-            return True
-        except KeyError:
-            pass
-        except ValueError:
-            bogus = True
-
-    if 'MJD_OBS' in header and header['MJD_OBS'] != 0.:
-        mjdzero = datetime(1858, 11, 17, 0, 0, 0, 0, None)
-        mjddelta = timedelta(header['MJD_OBS'])
-        mjddt = mjdzero + mjddelta
-        d = mjddt.strftime('%Y-%m-%d')
-        env.features.add('date:' + d)
-        return True
-
-    if not bogus:
-        return False, "Can't find DATE/DATE-OBS to set the date"
-    else:
-        return False, "DATE/DATE-OBS contains bogus info"
-
-@RuleSet.register_function('failed-data', excIfTrue=BadData)
-def check_for_bad_RAWGEMWA(header, env):
-    return header.get('RAWGEMQA', '') == 'BAD'
-
 Result = namedtuple('Result', ['passes', 'code', 'message'])
 
 class Evaluator(object):
@@ -925,10 +793,6 @@ class Evaluator(object):
             # when evaluating old data. It's a subset of the invalid headers,
             # and thus 'NOPASS'
             return Result(False, 'NOPASS', "No observing date could be recovered from the image headers")
-        except NotGeminiData:
-            return Result(False, 'NOTGEMINI', "This doesn't look at all like data produced at Gemini")
-        except BadData:
-            return Result(True,  'BAD', "Bad data (RAWGEMQA = BAD)")
         except EngineeringImage:
             return Result(True, 'ENG', "This looks like an engineering image. No further checks")
         except pf.VerifyError as e:
@@ -936,91 +800,3 @@ class Evaluator(object):
 
     def __call__(self, filename):
         return self.evaluate(filename)
-
-class AstroDataEvaluator(Evaluator):
-    def __init__(self, *args, **kw):
-        super(AstroDataEvaluator, self).__init__(*args, **kw)
-
-    def _set_initial_features(self, fits, tags):
-        # This is Gemini-centric. Maybe move it to a separate files later with other Geminisms?
-        s = set()
-        if 'PREPARED' in tags:
-            s.add('prepared')
-
-        return s
-
-    def evaluate(self, ad_object):
-        return super(AstroDataEvaluator, self).evaluate(ad_object.hdulist, ad_object.types)
-
-def process_argument(argv, argument):
-    try:
-        argv.remove(argument)
-        return True
-    except ValueError:
-        return False
-
-if __name__ == '__main__':
-    argv = sys.argv[1:]
-    verbose = process_argument(argv, '-v')
-    use_ad  = process_argument(argv, '-a')
-
-    try:
-        fits = pf.open(argv[0])
-    except IndexError:
-        fits = pf.open(StringIO(sys.stdin.read()))
-    fits.verify('fix+exception')
-
-    if verbose:
-        DEBUG = True
-        try:
-            env = Environment()
-            env.features = set()
-            rs = RuleStack()
-            rs.initialize('fits')
-            err = 0
-            for n, hdu in enumerate(fits):
-                env.hduNum = n
-                log("* Testing HDU {0}".format(n))
-                res, args = rs.test(hdu.header, env)
-                if not res:
-                    err += 1
-                    for message in args:
-                        log("   - {0}".format(message))
-                elif 'failed' in env.features:
-                    log("  Failed data")
-                    break
-                elif not args:
-                    err += 1
-                    log("  No key ruleset found for this HDU")
-
-        except EngineeringImage as exc:
-            s = str(exc)
-            if not s:
-                log("Its an engineering image")
-            else:
-                log("Its an engineering image: {0}".format(s))
-            err = 0
-        except NoDateError:
-            log("This image has no recognizable date")
-            err = 1
-        except NotGeminiData:
-            log("This doesn't look like Gemini data")
-            err = 0
-        except BadData:
-            log("Failed data")
-            err = 0
-        except RuntimeError as e:
-            log(str(e))
-            err = 1
-        if err > 0:
-            sys.exit(-1)
-    else:
-        if use_ad:
-            evaluate = AstroDataEvaluator()
-            result = evaluate(AstroData(fits))
-        else:
-            evaluate = Evaluator()
-            result = evaluate(fits)
-        if result.message is not None:
-            print(result.message)
-    sys.exit(0)
