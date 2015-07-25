@@ -31,148 +31,101 @@ def getselection(things):
     datalabel.
     """
     selection = {}
-    while len(things):
-        thing = things.pop(0)
-        recognised = False
+    for thing in things:
+        key, sep, value = thing.partition('=')
+        withKey = (sep == '=')
+        if not withKey:
+            value = thing
+
+        recognised = True
         if gemini_telescope(thing):
             selection['telescope'] = gemini_telescope(thing)
-            recognised = True
-        if gemini_date(thing):
+        elif gemini_date(thing):
             selection['date'] = gemini_date(thing)
-            recognised = True
-        if gemini_daterange(thing):
+        elif gemini_daterange(thing):
             selection['daterange'] = gemini_daterange(thing)
-            recognised = True
-        gp = GeminiProgram(thing)
-        if gp.valid:
-            selection['program_id'] = thing
+        elif GeminiProgram(thing).valid or (withKey and key == 'progid'):
+            selection['program_id'] = value
             selection.pop('observation_id', None)
             selection.pop('data_label', None)
-            recognised = True
-        if thing[:7] == 'progid=':
-            selection['program_id'] = thing[7:]
-            selection.pop('observation_id', None)
-            selection.pop('data_label', None)
-            recognised = True
-        go = GeminiObservation(thing)
-        if go.observation_id:
-            selection['observation_id'] = thing
+        elif GeminiObservation(thing).observation_id or (withKey and key == 'obsid'):
+            selection['observation_id'] = value
             selection.pop('program_id', None)
             selection.pop('data_label', None)
-            recognised = True
-        if thing[:6] == 'obsid=':
-            selection['observation_id'] = thing[6:]
-            selection.pop('program_id', None)
-            selection.pop('data_label', None)
-            recognised = True
-        gdl = GeminiDataLabel(thing)
-        if gdl.datalabel:
+        elif GeminiDataLabel(thing).datalabel:
             selection['data_label'] = thing
             selection.pop('observation_id', None)
             selection.pop('program_id', None)
-            recognised = True
-        if gemini_instrument(thing, gmos=True):
+        elif gemini_instrument(thing, gmos=True):
             selection['inst'] = gemini_instrument(thing, gmos=True)
-            recognised = True
-        if gemini_fitsfilename(thing):
+        elif gemini_fitsfilename(thing):
             selection['filename'] = gemini_fitsfilename(thing)
-            recognised = True
-        if thing[:9] == 'filename=':
-            selection['filename'] = thing[9:]
-            recognised = True
-        if gemini_observation_type(thing):
+        elif withKey and key == 'filename':
+            selection['filename'] = value
+        elif gemini_observation_type(thing):
             selection['observation_type'] = gemini_observation_type(thing)
-            recognised = True
-        if gemini_observation_class(thing):
+        elif gemini_observation_class(thing):
             selection['observation_class'] = gemini_observation_class(thing)
-            recognised = True
-        if gemini_caltype(thing):
+        elif gemini_caltype(thing):
             selection['caltype'] = gemini_caltype(thing)
-            recognised = True
-        if gemini_reduction_state(thing):
+        elif gemini_reduction_state(thing):
             selection['reduction'] = gemini_reduction_state(thing)
-            recognised = True
-        if gmos_gratingname(thing):
+        elif gmos_gratingname(thing):
             selection['disperser'] = gmos_gratingname(thing)
-            recognised = True
-        if thing[:10] == 'disperser=':
-            selection['disperser'] = thing[10:]
-            recognised = True
-        if thing[:7] == 'camera=':
-            selection['camera'] = thing[7:]
-            recognised = True
-        if gmos_focal_plane_mask(thing):
+        elif withKey and key=='disperser':
+            selection['disperser'] = value
+        elif withKey and key=='camera':
+            selection['camera'] = value
+        elif gmos_focal_plane_mask(thing):
             selection['focal_plane_mask'] = gmos_focal_plane_mask(thing)
-            recognised = True
-        if thing[:5] == 'mask=':
-            selection['focal_plane_mask'] = thing[5:]
-            recognised = True
-        if thing == 'warnings' or thing == 'missing' or thing == 'requires' or thing == 'takenow':
+        elif withKey and key == 'mask':
+            selection['focal_plane_mask'] = value
+        elif thing in {'warnings', 'missing', 'requires', 'takenow'}:
             selection['caloption'] = thing
-            recognised = True
-        if thing == 'imaging':
+        elif thing == 'imaging':
             selection['spectroscopy'] = False
-            recognised = True
-        if thing == 'spectroscopy':
+        elif thing == 'spectroscopy':
             selection['spectroscopy'] = True
-            recognised = True
-        if thing in ['Pass', 'Usable', 'Fail', 'Win', 'NotFail', 'Lucky', 'AnyQA']:
+        elif thing in {'Pass', 'Usable', 'Fail', 'Win', 'NotFail', 'Lucky', 'AnyQA'}:
             selection['qa_state'] = thing
-            recognised = True
-        if thing == 'LGS' or thing == 'NGS':
+        elif thing in {'LGS', 'NGS'}:
             selection['lgs'] = thing
             # Make LGS / NGS selection imply AO selection
             selection['ao'] = 'AO'
-            recognised = True
-        if thing == 'AO' or thing == 'NOTAO':
+        elif thing in {'AO', 'NOTAO'}:
             selection['ao'] = thing
-            recognised = True
-        if thing == 'present' or thing == 'Present':
+        elif thing in {'present', 'Present'}:
             selection['present'] = True
-            recognised = True
-        if thing == 'notpresent' or thing == 'NotPresent':
+        elif thing in {'notpresent', 'NotPresent'}:
             selection['present'] = False
-            recognised = True
-        if thing == 'canonical' or thing == 'Canonical':
+        elif thing in {'canonical', 'Canonical'}:
             selection['canonical'] = True
-            recognised = True
-        if thing == 'notcanonical' or thing == 'NotCanonical':
+        elif thing in {'notcanonical', 'NotCanonical'}:
             selection['canonical'] = False
-            recognised = True
-        if thing == 'engineering':
+        elif thing == 'engineering':
             selection['engineering'] = True
-            recognised = True
-        if thing == 'notengineering':
+        elif thing == 'notengineering':
             selection['engineering'] = False
-            recognised = True
-        if thing == 'includeengineering':
+        elif thing == 'includeengineering':
             # this is basically a dummy value for the search form defaults
             selection['engineering'] = 'Include'
-            recognised = True
-        if thing == 'science_verification':
+        elif thing == 'science_verification':
             selection['science_verification'] = True
-            recognised = True
-        if thing == 'notscience_verification':
+        elif thing == 'notscience_verification':
             selection['science_verification'] = False
-            recognised = True
-        if thing[:7] == 'filter=' or thing[:7] == 'Filter=':
-            selection['filter'] = thing[7:]
-            recognised = True
-        if thing[:7] == 'object=' or thing[:7] == 'Object=':
-            selection['object'] = urllib.unquote_plus(thing[7:])
-            recognised = True
-        if gemini_binning(thing):
+        elif withKey and key in {'filter', 'Filter'}:
+            selection['filter'] = value
+        elif withKey and key in {'object', 'Object'}:
+            selection['object'] = urllib.unquote_plus(value)
+        elif gemini_binning(thing):
             selection['binning'] = gemini_binning(thing)
-            recognised = True
-        if thing == 'photstandard':
+        elif thing == 'photstandard':
             selection['photstandard'] = True
-            recognised = True
-        if thing in ['low', 'high', 'slow', 'fast', 'Deep', 'Shallow', 'Bright', 'Medium', 'Faint', 'NodAndShuffle', 'Classic', 'Very_Bright_Objects', 'Bright_Objects', 'Faint_Objects', 'Very_Faint_Objects', 'Low_Background', 'Medium_Background', 'High_Background']:
+        elif thing in ['low', 'high', 'slow', 'fast', 'Deep', 'Shallow', 'Bright', 'Medium', 'Faint', 'NodAndShuffle', 'Classic', 'Very_Bright_Objects', 'Bright_Objects', 'Faint_Objects', 'Very_Faint_Objects', 'Low_Background', 'Medium_Background', 'High_Background']:
             if not selection.has_key('detector_config'):
                 selection['detector_config'] = []
             selection['detector_config'].append(thing)
-            recognised = True
-        if thing.lower() in ['fullframe', 'centralstamp', 'centralspectrum', 'central768', 'central512', 'central256', 'custom']:
+        elif thing.lower() in ['fullframe', 'centralstamp', 'centralspectrum', 'central768', 'central512', 'central256', 'custom']:
             if thing.lower() == 'fullframe':
                 selection['detector_roi'] = 'Full Frame'
             elif thing.lower() == 'centralstamp':
@@ -189,60 +142,44 @@ def getselection(things):
                 selection['detector_roi'] = 'Custom'
             else:
                 selection['detector_roi'] = thing.lower()
-            recognised = True
-        if thing.lower() == 'twilight':
+        elif thing.lower() == 'twilight':
             selection['twilight'] = True
-            recognised = True
-        if thing.lower() == 'nottwilight':
+        elif thing.lower() == 'nottwilight':
             selection['twilight'] = False
-            recognised = True
-        if thing[:3] == 'az=' or thing[:3] == 'Az=':
-            selection['az'] = thing[3:]
-            recognised = True
-        if thing[:8] == 'azimuth=' or thing[:8] == 'Azimuth=':
-            selection['az'] = thing[8:]
-            recognised = True
-        if thing[:3] == 'el=' or thing[:3] == 'El=':
-            selection['el'] = thing[3:]
-            recognised = True
-        if thing[:10] == 'elevation=' or thing[:10] == 'Elevation=':
-            selection['el'] = thing[10:]
-            recognised = True
-        if thing[:3] == 'ra=' or thing[:3] == 'RA=':
-            selection['ra'] = thing[3:]
-            recognised = True
-        if thing[:4] == 'dec=' or thing[:4] == 'Dec=':
-            selection['dec'] = thing[4:]
-            recognised = True
-        if thing[:3] == 'sr=' or thing[:3] == 'SR=':
-            selection['sr'] = thing[3:]
-            recognised = True
-        if thing[:5] == 'crpa=' or thing[:5] == 'CRPA=':
-            selection['crpa'] = thing[5:]
-            recognised = True
-        if (thing[:4] in ['N200', 'N201', 'N202', 'S200', 'S201', 'S202']) and (len(thing) < 14):
+        elif withKey and key in ('az', 'Az'):
+            selection['az'] = value
+        elif withKey and key in ('azimuth', 'Azimuth'):
+            selection['az'] = value
+        elif withKey and key in ('el', 'El'):
+            selection['el'] = value
+        elif withKey and key in ('elevation', 'Elevation'):
+            selection['el'] = value
+        elif withKey and key in ('ra', 'RA'):
+            selection['ra'] = value
+        elif withKey and key in ('dec', 'Dec'):
+            selection['dec'] = value
+        elif withKey and key in ('sr', 'SR'):
+            selection['sr'] = value
+        elif withKey and key in ('crpa', 'CRPA'):
+            selection['crpa'] = value
+        elif (thing[:4] in ['N200', 'N201', 'N202', 'S200', 'S201', 'S202']) and (len(thing) < 14):
             # Good through 2029, don't match full filenames :-)
             selection['filepre'] = thing
-            recognised = True
-        if thing[:8] == 'filepre=':
-            selection['filepre'] = thing[8:]
-            recognised = True
-        if thing in ['LS', 'MOS', 'IFS']:
+        elif withKey and key == 'filepre':
+            selection['filepre'] = value
+        elif thing in {'LS', 'MOS', 'IFS'}:
             selection['mode'] = thing
             selection['spectroscopy'] = True
-            recognised = True
-        if thing[:8] == 'cenwlen=':
-            selection['cenwlen'] = thing[8:]
-            recognised = True
-        if thing[:14] == 'exposure_time=':
+        elif withKey and key == 'cenwlen':
+            selection['cenwlen'] = value
+        elif withKey and key == 'exposure_time':
             selection['exposure_time'] = thing[14:]
-            recognised = True
-
-        if not recognised:
+        else:
             if 'notrecognised' in selection:
                 selection['notrecognised'] += " "+thing
             else:
                 selection['notrecognised'] = thing
+
     return selection
 
 def sayselection(selection):
@@ -250,8 +187,6 @@ def sayselection(selection):
     returns a string that describes the selection dictionary passed in
     suitable for pasting into html
     """
-    string = ""
-
     defs = {'program_id': 'Program ID',
             'observation_id': 'Observation ID',
             'data_label': 'Data Label',
@@ -286,46 +221,45 @@ def sayselection(selection):
             'camera': 'Camera',
             'exposure_time': 'Exposure Time'}
 
-    for key in defs:
-        if key in selection:
-            string += "; %s: %s" % (defs[key], selection[key])
+    parts = ["%s: %s" % (defs[key], selection[key]) for key in defs
+                                                    if key in selection]
 
     if 'spectroscopy' in selection:
-        if selection['spectroscopy']:
-            string += "; Spectroscopy"
-        else:
-            string += "; Imaging"
+        parts.append('Spectroscopy' if selection['spectroscopy'] else 'Imaging')
 
     if 'qa_state' in selection:
-        if selection['qa_state'] == 'Win':
-            string += "; QA State: Win (Pass or Usable)"
-        elif selection['qa_state'] == 'NotFail':
-            string += "; QA State: Not Fail"
-        elif selection['qa_state'] == 'Lucky':
-            string += "; QA State: Lucky (Pass or Undefined)"
-        else:
-            string += "; QA State: %s" % selection['qa_state']
+        qa_state_dict = {
+            'Win': "Win (Pass or Usable)",
+            'NotFail': "Not Fail",
+            'Lucky': "Lucky (Pass or Undefined)"
+            }
+
+        sel = selection['qa_state']
+        parts.append('QA State: ' + qa_state_dict.get(sel, sel))
 
     if 'ao' in selection:
-        if selection['ao'] == 'AO':
-            string += "; Adaptive Optics in beam"
-        else:
-            string += "; No Adaptive Optics in beam"
+        parts.append("Adaptive Optics in beam" if selection['ao'] == 'AO'
+                                               else "No Adaptive Optics in beam")
+
     if 'lgs' in selection:
-        if selection['lgs'] == 'LGS':
-            string += "; LGS"
-        else:
-            string += "; NGS"
+        parts.append("LGS" if selection['lgs'] == 'LGS' else "NGS")
+
     if 'detector_config' in selection:
-        string += "; Detector Config: " + '+'.join(selection['detector_config'])
+        parts.append("Detector Config: " + '+'.join(selection['detector_config']))
+
+    if parts:
+        string = '; '.join([''] + parts)
+    else:
+        string = ''
 
     if 'notrecognised' in selection:
-        string += ". WARNING: I didn't understand these (case-sensitive) words: %s" % selection['notrecognised']
+        return string + ". WARNING: I didn't understand these (case-sensitive) words: %s" % selection['notrecognised']
 
     return string
 
 # import time module to get local timezone
 import time
+from types import MethodType
 def queryselection(query, selection):
     """
     Given an sqlalchemy query object and a selection dictionary,
@@ -333,29 +267,35 @@ def queryselection(query, selection):
     and return the query object
     """
 
-    # Do want to select Header object for which diskfile.present is true?
-    if 'present' in selection:
-        query = query.filter(DiskFile.present == selection['present'])
+    filters = (
+        ('present',        DiskFile.present), # Do want to select Header object for which diskfile.present is true?
+        ('canonical',      DiskFile.canonical),
+        ('science_verification', Header.science_verification),
+        ('program_id',     Header.program_id),
+        ('observation_id', Header.observation_id),
+        ('data_label',     Header.data_label),
+        ('observation_type',     Header.observation_type),
+        ('observation_class',     Header.observation_class),
+        ('reduction',     Header.reduction),
+        ('telescope',     Header.telescope),
+        ('filename',      File.name),
+        ('filelist',      File.name.in_),
+        ('binning',       Header.detector_binning),
+        ('filter',        Header.filter_name),
+        ('spectroscopy',  Header.spectroscopy),
+        ('mode',          Header.mode),
+        )
 
-    if 'canonical' in selection:
-        query = query.filter(DiskFile.canonical == selection['canonical'])
+    for key, field in filters:
+        if key in selection:
+            if isinstance(field, MethodType):
+                query = query.filter(field(selection[key]))
+            else:
+                query = query.filter(field == selection[key])
 
-    if 'engineering' in selection:
-        # Ignore the "Inlcude" dummy value
-        if selection['engineering'] in [True, False]:
-            query = query.filter(Header.engineering == selection['engineering'])
-
-    if 'science_verification' in selection:
-        query = query.filter(Header.science_verification == selection['science_verification'])
-
-    if 'program_id' in selection:
-        query = query.filter(Header.program_id == selection['program_id'])
-
-    if 'observation_id' in selection:
-        query = query.filter(Header.observation_id == selection['observation_id'])
-
-    if 'data_label' in selection:
-        query = query.filter(Header.data_label == selection['data_label'])
+    # Ignore the "Include" dummy value
+    if selection.get('engineering') in (True, False):
+        query = query.filter(Header.engineering == selection['engineering'])
 
     if ('object' in selection) and (('ra' not in selection) and ('dec' not in selection)):
         # Handle the "wildcards" allowed on the object name
@@ -420,29 +360,11 @@ def queryselection(query, selection):
         # check it's between these two
         query = query.filter(Header.ut_datetime >= startdt).filter(Header.ut_datetime <= enddt)
 
-    if 'observation_type' in selection:
-        query = query.filter(Header.observation_type == selection['observation_type'])
-
-    if 'observation_class' in selection:
-        query = query.filter(Header.observation_class == selection['observation_class'])
-
-    if 'reduction' in selection:
-        query = query.filter(Header.reduction == selection['reduction'])
-
-    if 'telescope' in selection:
-        query = query.filter(Header.telescope == selection['telescope'])
-
     if 'inst' in selection:
         if selection['inst'] == 'GMOS':
             query = query.filter(or_(Header.instrument == 'GMOS-N', Header.instrument == 'GMOS-S'))
         else:
             query = query.filter(Header.instrument == selection['inst'])
-
-    if 'filename' in selection:
-        query = query.filter(File.name == selection['filename'])
-
-    if 'filelist' in selection:
-        query = query.filter(File.name.in_(selection['filelist']))
 
     if 'disperser' in selection:
         if 'inst' in selection and selection['inst'] == 'GNIRS':
@@ -474,13 +396,6 @@ def queryselection(query, selection):
         else:
             query = query.filter(Header.focal_plane_mask == selection['focal_plane_mask'])
 
-
-    if 'spectroscopy' in selection:
-        query = query.filter(Header.spectroscopy == selection['spectroscopy'])
-
-    if 'mode' in selection:
-        query = query.filter(Header.mode == selection['mode'])
-
     if 'qa_state' in selection:
         if selection['qa_state'] == 'Win':
             query = query.filter(or_(Header.qa_state == 'Pass', Header.qa_state == 'Usable'))
@@ -506,17 +421,11 @@ def queryselection(query, selection):
         else:
             query = query.filter(Header.laser_guide_star == False)
 
-    if 'binning' in selection:
-        query = query.filter(Header.detector_binning == selection['binning'])
-
     if 'detector_roi' in selection:
         if selection['detector_roi'] == 'Full Frame':
             query = query.filter(or_(Header.detector_roi_setting == 'Fixed', Header.detector_roi_setting == 'Full Frame'))
         else:
             query = query.filter(Header.detector_roi_setting == selection['detector_roi'])
-
-    if 'filter' in selection:
-        query = query.filter(Header.filter_name == selection['filter'])
 
     if 'photstandard' in selection:
         query = query.filter(Footprint.header_id == Header.id)
@@ -723,15 +632,12 @@ def openquery(selection):
     results - ie does it contain a date, daterange, prog_id, obs_id etc
     returns True if this selection will likely return a large number of results
     """
-    openq = True
 
-    things = ['date', 'daterange', 'program_id', 'observation_id', 'data_label', 'filename', 'filepre']
+    things = {'date', 'daterange', 'program_id', 'observation_id', 'data_label', 'filename', 'filepre'}
+    selection_keys = set(selection) # Makes a set out of selection.keys()
 
-    for thing in things:
-        if thing in selection.keys():
-            openq = False
-
-    return openq
+    # Are the previous two sets disjoint?
+    return len(things & selection_keys) == 0
 
 range_cre = re.compile(r'(-?\d*\.?\d*)-(-?\d*\.?\d*)')
 def _parse_range(string):

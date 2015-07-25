@@ -1,5 +1,22 @@
 import pytest
-from fits_storage.web.selection import getselection
+from fits_storage.web.selection import getselection, sayselection, queryselection
+from collections import OrderedDict
+from sqlalchemy import Column, Integer, or_, and_
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm.query import Query
+from sqlalchemy.sql.elements import AsBoolean, BooleanClauseList
+from types import MethodType
+
+Base = declarative_base()
+class Dummy(Base):
+    __tablename__ = 'dummy'
+    id = Column(Integer, primary_key = True)
+
+@pytest.fixture(scope='session')
+def query(request):
+    'Creates a dummy query for tests depending on ORM'
+
+    return Query(Dummy)
 
 getselection_pairs = [
     (['12345'], {'notrecognised': '12345'}),
@@ -125,3 +142,76 @@ getselection_pairs = [
 @pytest.mark.parametrize("input,expected", getselection_pairs)
 def test_getselection(input, expected):
     assert getselection(input) == expected
+
+sayselection_pairs = [
+    ({'program_id': 'GN-CAL20150623', 'cenwlen': 'blahblah', 'exposure_time': 'blahblah'},
+     {' Exposure Time: blahblah', ' Program ID: GN-CAL20150623', ' Central Wavelength: blahblah'}),
+    ({'inst': 'GMOS-N', 'telescope': 'Gemini-North', 'date': '20991231'},
+     {' Instrument: GMOS-N', ' Date: 20991231', ' Telescope: Gemini-North'}),
+    ({'spectroscopy': True, 'qa_state': 'Win', 'ao': 'NOTAO', 'lgs': 'NGS'},
+     '; Spectroscopy; QA State: Win (Pass or Usable); No Adaptive Optics in beam; NGS'),
+    ({'spectroscopy': False, 'qa_state': 'Something', 'detector_config': ['Bright', 'low']},
+     '; Imaging; QA State: Something; Detector Config: Bright+low'),
+    ({'notrecognised': 'Foobar'},
+     ". WARNING: I didn't understand these (case-sensitive) words: Foobar"),
+    ({'program_id': 'GN-CAL20150623', 'notrecognised': 'Foobar'},
+     "; Program ID: GN-CAL20150623. WARNING: I didn't understand these (case-sensitive) words: Foobar"),
+    ]
+
+@pytest.mark.parametrize("input,expected", sayselection_pairs)
+def test_sayselection(input, expected):
+    if isinstance(expected, set):
+        split = set(x for x in sayselection(input).split(';') if x)
+        assert split == expected
+    else:
+        assert sayselection(input) == expected
+
+from fits_storage.orm.diskfile import DiskFile
+from fits_storage.orm.file import File
+from fits_storage.orm.footprint import Footprint
+from fits_storage.orm.header import Header
+from fits_storage.orm.photstandard import PhotStandardObs
+
+queryselection_pair_source = (
+    ('present', DiskFile.present),
+    ('canonical', DiskFile.canonical),
+    ('science_verification', Header.science_verification),
+    ('engineering', Header.engineering),
+    (('program_id', 'foobar'), Header.program_id),
+    (('observation_id', 'foobar'), Header.observation_id),
+    (('data_label', 'foobar'), Header.data_label),
+    (('observation_type', 'foobar'), Header.observation_type),
+    (('observation_class', 'foobar'), Header.observation_class),
+    (('reduction', 'foobar'), Header.reduction),
+    (('telescope', 'foobar'), Header.telescope),
+    (('inst', 'NIRI'), Header.instrument),
+    (('inst', 'GMOS'), or_(Header.instrument == 'GMOS-N', Header.instrument == 'GMOS-S')),
+    (('filename', 'foobar'), File.name),
+    (('filelist', ('foo', 'bar', 'baz')), File.name.in_),
+    ('spectroscopy', Header.spectroscopy),
+    (('mode', 'foobar'), Header.mode),
+    (('binning', '1x1'), Header.detector_binning),
+    (('filter', 'foobar'), Header.filter_name),
+    ('photstandard', and_(Footprint.header_id == Header.id, PhotStandardObs.footprint_id == Footprint.id))
+    )
+
+def generate_queryselection_pairs():
+    for (key, ormfield) in queryselection_pair_source:
+        if isinstance(key, tuple):
+            fieldname, value = key
+        else:
+            fieldname = key
+            value = True
+
+        if isinstance(ormfield, (AsBoolean, BooleanClauseList)):
+            q = query(None).filter(ormfield)
+        elif isinstance(ormfield, MethodType):
+            q = query(None).filter(ormfield(value))
+        else:
+            q = query(None).filter(ormfield == value)
+
+        yield {fieldname: value}, str(q)
+
+@pytest.mark.parametrize("input,expected", generate_queryselection_pairs())
+def test_queryselection(query, input, expected):
+    assert str(queryselection(query, input)) == expected
