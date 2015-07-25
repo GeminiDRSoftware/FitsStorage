@@ -279,11 +279,11 @@ def gemini_daterange(string):
     Also this does not yet check for sensible date ordering
     returns the YYYYMMDD-YYYYMMDD string, or '' if not a daterange
     """
-    match = daterangecre.match(string):
+    match = daterangecre.match(string)
     if match:
         try:
-            dateutil.parser.parse("%s 00:00:00" % match.group(1)
-            dateutil.parser.parse("%s 00:00:00" % match.group(2)
+            dateutil.parser.parse("%s 00:00:00" % match.group(1))
+            dateutil.parser.parse("%s 00:00:00" % match.group(2))
         except ValueError:
             return ''
         return string
