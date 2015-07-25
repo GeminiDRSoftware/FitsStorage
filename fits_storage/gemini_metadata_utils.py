@@ -4,6 +4,7 @@ classes and functions for parsing the metadata in Gemini FITS files.
 """
 import re
 import datetime
+import dateutil.parser
 
 # Compile some regular expressions here. This is fairly complex, so I've
 # split it up in substrings to make it easier to follow.
@@ -128,6 +129,10 @@ def gemini_date(string):
     for Chile
     """
     if datecre.match(string):
+        try:
+            dateutil.parser.parse("%s 00:00:00" % string)
+        except ValueError:
+            return ''
         return string
     if string in ['today', 'tonight']:
         now = datetime.datetime.utcnow().date()
@@ -274,7 +279,13 @@ def gemini_daterange(string):
     Also this does not yet check for sensible date ordering
     returns the YYYYMMDD-YYYYMMDD string, or '' if not a daterange
     """
-    if daterangecre.match(string):
+    match = daterangecre.match(string):
+    if match:
+        try:
+            dateutil.parser.parse("%s 00:00:00" % match.group(1)
+            dateutil.parser.parse("%s 00:00:00" % match.group(2)
+        except ValueError:
+            return ''
         return string
     else:
         return ''
