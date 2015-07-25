@@ -544,7 +544,7 @@ def staff_access(req, things):
                 session.commit()
 
         # Have applied changes, now generate list of staff users
-        query = session.query(User).filter(User.gemini_staff == True).order_by(User.username)
+        query = session.query(User).order_by(User.gemini_staff, User.username)
         staff_users = query.all()
     finally:
         session.close()
