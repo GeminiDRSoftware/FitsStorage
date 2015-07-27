@@ -573,8 +573,9 @@ def qaforgui(req, things):
                     for b in sbmetrics:
                         if b.percentile_band not in bg_band:
                             bg_band.append(b.percentile_band)
-                        bg_mag.append(float(b.mag))
-                        bg_mag_std.append(float(b.mag_std))
+                        if b.mag is not None and b.mag_std is not None:
+                            bg_mag.append(float(b.mag))
+                            bg_mag_std.append(float(b.mag_std))
                         if (b.comment not in bg_comment) and (len(b.comment)):
                             bg_comment.append(b.comment)
 
