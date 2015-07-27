@@ -167,9 +167,6 @@ logger.info("Starting looking from: %s", gemfilename(site, ut_date, num))
 # Done with this
 dirlist = None
 
-# Get a database session
-session = sessionfactory()
-
 # Enter main loop
 loop = True
 lastfound = datetime.datetime.now()
@@ -181,9 +178,16 @@ while loop:
         filename = gemfilename(site, ut_date, num+i)
         fullpath = os.path.join(fulldirpath, filename)
         if os.path.exists(fullpath):
-            logger.info("Found new file, Queueing for Inges: %s", filename)
-            add_to_ingestqueue(session, filename, path, force=options.force, force_md5=options.force_md5)
-
+            logger.info("Found new file, Queueing for Ingest: %s", filename)
+            # Get a database session
+            logger.debug("Getting Session")
+            session = sessionfactory()
+            logger.debug("Adding file")
+            add_to_ingestqueue(session, logger, filename, path, force=options.force, force_md5=options.force_md5)
+            session.commit()
+            logger.debug("Committed")
+            session.close()
+            logger.debug("Closed Session")
             num += i + 1
             found = True
             break
@@ -208,11 +212,10 @@ while loop:
             loop = False
         else:
             # Wait 5 secs
-            logger.debug("Didn't find anything. Sleeping 5 seconds")
-            time.sleep(5)
+            logger.debug("Didn't find anything. Sleeping 4 seconds")
+            time.sleep(4)
     else:
         lastfound = datetime.datetime.now()
 
-session.close()
 logger.info("*** feed_ingestqueue.py exiting normally at %s", datetime.datetime.now())
 
