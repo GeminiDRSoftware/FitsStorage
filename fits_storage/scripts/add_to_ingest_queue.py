@@ -127,7 +127,7 @@ session = sessionfactory()
 for filename in thefiles:
     i += 1
     logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
-    add_to_ingestqueue(session, filename, path, force=options.force, force_md5=options.force_md5, after=options.after)
+    add_to_ingestqueue(session, logger, filename, path, force=options.force, force_md5=options.force_md5, after=options.after)
 
 session.close()
 logger.info("*** add_to_ingestqueue.py exiting normally at %s" % datetime.datetime.now())
