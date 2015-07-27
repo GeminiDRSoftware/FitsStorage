@@ -10,7 +10,6 @@ from sqlalchemy.orm import make_transient
 
 from ..orm.geometryhacks import add_footprint, do_std_obs
 
-from ..logger import logger
 from ..fits_storage_config import storage_root, using_sqlite, using_s3, using_previews
 
 if using_previews:
@@ -43,7 +42,7 @@ if using_s3:
     from boto.s3.connection import S3Connection
     from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
 
-def add_to_ingestqueue(session, filename, path, force_md5=False, force=False, after=None):
+def add_to_ingestqueue(session, logger, filename, path, force_md5=False, force=False, after=None):
     """
     Adds a file to the ingest queue
     """
@@ -57,14 +56,17 @@ def add_to_ingestqueue(session, filename, path, force_md5=False, force=False, af
 
     session.add(iq)
     session.commit()
-    try:
-        logger.debug("Added id %d for filename %s to ingestqueue", iq.id, iq.filename)
-        return iq.id
-    except ObjectDeletedError:
-        logger.debug("Added filename %s to ingestqueue which was immediately deleted", filename)
+    make_transient(iq)
+    logger.debug("Added id %d for filename %s to ingestqueue", iq.id, iq.filename)
+
+    # Now that it's a transient object, it should not do a lookup so this should never fail
+    #try:
+        #logger.debug("Added id %d for filename %s to ingestqueue", iq.id, iq.filename)
+    #except ObjectDeletedError:
+        #logger.debug("Added filename %s to ingestqueue which was immediately deleted", filename)
 
 
-def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_md, make_previews=False):
+def ingest_file(session, logger, filename, path, force_md5, force, skip_fv, skip_md, make_previews=False):
     """
     Ingests a file into the database. If the file isn't known to the database
     at all, all three (file, diskfile, header) table entries are created.
@@ -370,7 +372,7 @@ def ingest_file(session, filename, path, force_md5, force, skip_fv, skip_md, mak
     return add_diskfile
 
 
-def check_present(session, filename):
+def check_present(session, logger, filename):
     """
     Check to see if the named file is present in the database and
     marked as present in the diskfile table.
@@ -396,7 +398,7 @@ def check_present(session, filename):
                 logger.info("Marking diskfile id %d as not present", diskfile.id)
                 diskfile.present = False
 
-def pop_ingestqueue(session, fast_rebuild=False):
+def pop_ingestqueue(session, logger, fast_rebuild=False):
     """
     Returns the next thing to ingest off the ingest queue, and sets the
     inprogress flag on that entry.
