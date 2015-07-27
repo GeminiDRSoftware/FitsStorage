@@ -111,15 +111,14 @@ session = sessionfactory()
 while loop:
     try:
         # Request a queue entry
-        iq = pop_ingestqueue(session, options.fast_rebuild)
+        iq = pop_ingestqueue(session, logger, options.fast_rebuild)
 
         if iq is None:
-            logger.info("Nothing on queue.")
             if options.empty:
-                logger.info("--empty flag set, exiting")
+                logger.info("Nothing on queue and --empty flag set, exiting")
                 break
             else:
-                logger.info("...Waiting")
+                logger.info("Nothing on queue... Waiting")
             time.sleep(2)
         else:
             # Don't query queue length in fast_rebuild mode
@@ -169,7 +168,7 @@ while loop:
 
 
             try:
-                added_diskfile = ingest_file(session, iq.filename, iq.path, iq.force_md5, iq.force, options.skip_fv, options.skip_wmd, options.make_previews)
+                added_diskfile = ingest_file(session, logger, iq.filename, iq.path, iq.force_md5, iq.force, options.skip_fv, options.skip_wmd, options.make_previews)
                 # Now we also add this file to our export list if we have downstream servers and we did add a diskfile
                 if added_diskfile:
                     for destination in export_destinations:
