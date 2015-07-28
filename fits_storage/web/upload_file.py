@@ -84,7 +84,7 @@ def upload_file(req, filename, processed_cal="False"):
         req.write(verif_json)
 
         # Now invoke the setuid ingest program
-        command = ["/opt/FitsStorage/scripts/invoke", "/opt/FitsStorage/scripts/ingest_uploaded_file.py", "--filename=%s" % filename, "--demon", "--processed_cal=%s" % processed_cal, "--fileuploadlog_id=%d" % fileuploadlog.id]
+        command = ["/opt/FitsStorage/fits_storage/scripts/invoke", "/opt/FitsStorage/fits_storage/scripts/ingest_uploaded_file.py", "--filename=%s" % filename, "--demon", "--processed_cal=%s" % processed_cal, "--fileuploadlog_id=%d" % fileuploadlog.id]
 
         #ret = subprocess.call(command)
         subp_p = subprocess.Popen(command)
