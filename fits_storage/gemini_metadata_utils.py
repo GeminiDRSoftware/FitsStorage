@@ -6,6 +6,9 @@ import re
 import datetime
 import dateutil.parser
 
+DATE_LIMIT_LOW = dateutil.parser.parse('19900101')
+DATE_LIMIT_HIGH = dateutil.parser.parse('20500101')
+
 # Compile some regular expressions here. This is fairly complex, so I've
 # split it up in substrings to make it easier to follow.
 # Also these substrings are used directly by the classes
@@ -102,7 +105,8 @@ def gemini_date(string, as_datetime=False):
     if len(string) == 8 and string.isdigit():
         try:
             dt = dateutil.parser.parse(string)
-            return string if not as_datetime else dt
+            if DATE_LIMIT_LOW < dt < DATE_LIMIT_HIGH:
+                return string if not as_datetime else dt
         except ValueError:
             pass
 
