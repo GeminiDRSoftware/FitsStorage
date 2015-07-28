@@ -1,6 +1,7 @@
 import pytest
 import itertools
 import fits_storage.gemini_metadata_utils as gmu
+from datetime import datetime, timedelta
 
 gemini_telescope_pairs = (
     ('gEmInI-NoRtH', 'Gemini-North'),
@@ -65,6 +66,28 @@ def good_binning():
     for a, b in itertools.product("124", "124"):
         yield a + 'x' + b
 gemini_binning_bad           = ('1x6', '1x', 'blah')
+good_dateranges = (
+    '20050101-20061231',
+    '20080228-20120229',
+    '19900101-20390101',
+    '10000101-20000101',
+    '19990101-29000101',
+    )
+bad_dateranges = (
+    'blah',
+    ''
+    )
+
+good_dates = ('20050101', '20080228', '20120229', '20390101', '10000101', '29000101')
+bad_dates = ('00000000', '20110229', '12345678', 'blah', '')
+now = datetime.utcnow()
+a_day_ago = now - timedelta(days = 1)
+more_good_dates = (
+    ('today'  ,   '{0:%Y%m%d}'.format(now)),
+    ('tonight',   '{0:%Y%m%d}'.format(now)),
+    ('yesterday', '{0:%Y%m%d}'.format(a_day_ago)),
+    ('lastnight', '{0:%Y%m%d}'.format(a_day_ago)),
+    )
 
 @pytest.mark.parametrize("input,expected",
         generate_same_pairs_plus_garbage(gmu.obs_types,
@@ -100,3 +123,14 @@ def test_gmos_gratingname(input, expected):
         generate_same_pairs_plus_garbage(good_binning(), gemini_binning_bad, ''))
 def test_gemini_binning(input, expected):
     assert gmu.gemini_binning(input) == expected
+
+@pytest.mark.parametrize("input,expected",
+        itertools.chain(generate_same_pairs_plus_garbage(good_dates, bad_dates, ''),
+                        more_good_dates))
+def test_gemini_date(input, expected):
+    assert gmu.gemini_date(input) == expected
+
+@pytest.mark.parametrize("input,expected",
+        generate_same_pairs_plus_garbage(good_dateranges, bad_dateranges, ''))
+def test_gemini_daterange(input, expected):
+    assert gmu.gemini_daterange(input) == expected

@@ -84,7 +84,6 @@ def gemini_instrument(string, gmos=False, other=False):
 
     return retary
 
-datecre = re.compile(r'^[12][90]\d\d[01]\d[0123]\d$')
 def gemini_date(string):
     """
     A utility function for matching dates of the form YYYYMMDD
@@ -93,18 +92,19 @@ def gemini_date(string):
     May need modification to make today and yesterday work usefully
     for Chile
     """
-    if datecre.match(string):
-        try:
-            dateutil.parser.parse("%s 00:00:00" % string)
-        except ValueError:
-            return ''
-        return string
-    if string in ['today', 'tonight']:
-        now = datetime.datetime.utcnow().date()
-        return now.strftime('%Y%m%d')
-    if string in ['yesterday', 'lastnight']:
+
+    if string in {'today', 'tonight'}:
+        return datetime.datetime.utcnow().date().strftime('%Y%m%d')
+    elif string in {'yesterday', 'lastnight'}:
         then = datetime.datetime.utcnow() - datetime.timedelta(days=1)
         return then.date().strftime('%Y%m%d')
+    elif len(string) == 8 and string.isdigit():
+        try:
+            dateutil.parser.parse(string)
+            return string
+        except ValueError:
+            pass
+
     return ''
 
 racre = re.compile(r'^([012]\d):([012345]\d):([012345]\d)(\.?\d*)$')
@@ -236,7 +236,6 @@ def srtodeg(string):
 
     return value
 
-daterangecre = re.compile(r'^([12][90]\d\d[01]\d[0123]\d)-([12][90]\d\d[01]\d[0123]\d)$')
 def gemini_daterange(string):
     """
     A utility function for matching date ranges of the form YYYYMMDD-YYYYMMDD
@@ -244,16 +243,17 @@ def gemini_daterange(string):
     Also this does not yet check for sensible date ordering
     returns the YYYYMMDD-YYYYMMDD string, or '' if not a daterange
     """
-    match = daterangecre.match(string)
-    if match:
+
+    datea, sep, dateb = string.partition('-')
+    if len(datea) == 8 and len(dateb) == 8:
         try:
-            dateutil.parser.parse("%s 00:00:00" % match.group(1))
-            dateutil.parser.parse("%s 00:00:00" % match.group(2))
+            dateutil.parser.parse(datea)
+            dateutil.parser.parse(dateb)
+            return string
         except ValueError:
-            return ''
-        return string
-    else:
-        return ''
+            pass
+
+    return ''
 
 obs_types = ('DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI', 'CAL', 'FRINGE', 'MASK')
 def gemini_observation_type(string):
@@ -392,10 +392,10 @@ def percentilestring(num, type):
     """
 
     if num is None:
-        return = 'Undefined'
+        return 'Undefined'
 
     if num == 100:
-        return = type + "Any"
+        return type + "Any"
 
     return "%s%02d" % (type, num)
 
