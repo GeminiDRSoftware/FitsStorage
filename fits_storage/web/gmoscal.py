@@ -14,6 +14,7 @@ from .selection import sayselection, queryselection
 from .calibrations import interval_hours
 from ..cal import get_cal_object
 from ..fits_storage_config import using_sqlite, fits_system_status, das_calproc_path
+from ..gemini_metadata_utils import ONEDAY_OFFSET
 
 from ..apache_return_codes import HTTP_OK, HTTP_NOT_IMPLEMENTED
 
@@ -66,7 +67,6 @@ def gmoscal(req, selection, do_json=False):
             base_dir = das_calproc_path
             checkfile = 'Basecalib/flatall.list'
             enddate = datetime.datetime.now().date()
-            oneday = datetime.timedelta(days=1)
             date = enddate
             found = -1000
             startdate = None
@@ -76,12 +76,12 @@ def gmoscal(req, selection, do_json=False):
                 if os.path.exists(file):
                     found = 1
                     startdate = date
-                date -= oneday
+                date -= ONEDAY_OFFSET
                 found += 1
 
                 if startdate:
                     # Start the day after the last reduction
-                    startdate += oneday
+                    startdate += ONEDAY_OFFSET
                     selection['daterange'] = "%s-%s" % (startdate.strftime("%Y%m%d"), enddate.strftime("%Y%m%d"))
                     if do_json:
                         json_dict['Twilight_AutoDetectedDates'] = selection['daterange']
@@ -213,7 +213,6 @@ def gmoscal(req, selection, do_json=False):
             base_dir = das_calproc_path
             checkfile = 'Basecalib/biasall.list'
             enddate = datetime.datetime.now().date()
-            oneday = datetime.timedelta(days=1)
             date = enddate
             found = -1000
             startdate = None
@@ -223,12 +222,12 @@ def gmoscal(req, selection, do_json=False):
                 if os.path.exists(file):
                     found = 1
                     startdate = date
-                date -= oneday
+                date -= ONEDAY_OFFSET
                 found += 1
 
                 if startdate:
                     # Start the day after the last reduction
-                    startdate += oneday
+                    startdate += ONEDAY_OFFSET
                     selection['daterange'] = "%s-%s" % (startdate.strftime("%Y%m%d"), enddate.strftime("%Y%m%d"))
                     if do_json:
                         json_dict['Bias_AutoDetectedDates'] = selection['daterange']
@@ -240,8 +239,7 @@ def gmoscal(req, selection, do_json=False):
         else:
             tzoffset = datetime.timedelta(seconds=time.timezone)
 
-        oneday = datetime.timedelta(days=1)
-        offset = sqlalchemy.sql.expression.literal(tzoffset - oneday, sqlalchemy.types.Interval)
+        offset = sqlalchemy.sql.expression.literal(tzoffset - ONEDAY_OFFSET, sqlalchemy.types.Interval)
         query = session.query(func.count(1), cast((Header.ut_datetime + offset), sqlalchemy.types.DATE).label('utdate'), Header.detector_binning, Header.detector_roi_setting).select_from(join(join(DiskFile, File), Header))
 
         query = query.filter(DiskFile.canonical == True)
@@ -343,12 +341,11 @@ def gmoscal(req, selection, do_json=False):
                 startdate = m.group(1)
                 enddate = m.group(2)
                 tzoffset = datetime.timedelta(seconds=time.timezone)
-                oneday = datetime.timedelta(days=1)
                 startdt = dateutil.parser.parse("%s 14:00:00" % startdate)
-                startdt = startdt + tzoffset - oneday
+                startdt = startdt + tzoffset - ONEDAY_OFFSET
                 enddt = dateutil.parser.parse("%s 14:00:00" % enddate)
-                enddt = enddt + tzoffset - oneday
-                enddt = enddt + oneday
+                enddt = enddt + tzoffset - ONEDAY_OFFSET
+                enddt = enddt + ONEDAY_OFFSET
                 # Flip them round if reversed
                 if startdt > enddt:
                     tmp = enddt
@@ -362,7 +359,7 @@ def gmoscal(req, selection, do_json=False):
                 while date <= enddate:
                     if date not in utdates:
                         nobiases.append(str(date))
-                    date += oneday
+                    date += ONEDAY_OFFSET
     
                 req.write('<P>There were %d dates with no biases not set to Fail: ' % len(nobiases))
                 if len(nobiases) > 0:

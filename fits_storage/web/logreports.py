@@ -17,6 +17,8 @@ from ..orm.filedownloadlog import FileDownloadLog
 from ..orm.fileuploadlog import FileUploadLog
 from ..orm.user import User
 
+from ..gemini_metadata_utils import ONEDAY_OFFSET
+
 from .user import userfromcookie
 from .selection import getselection, queryselection, sayselection
 from .list_headers import list_headers
@@ -39,9 +41,8 @@ def usagereport(req):
         # Process the form data if there is any
         # Default all the pre-fill strings
         # Default to last day
-        oneday = datetime.timedelta(days=1)
         today = datetime.datetime.utcnow().date()
-        tomorrow = today + oneday
+        tomorrow = today + ONEDAY_OFFSET
         start = today.isoformat()
         end = tomorrow.isoformat()
         username = ''

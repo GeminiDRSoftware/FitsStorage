@@ -12,6 +12,7 @@ import json
 import math
 import dateutil.parser
 from ..apache_return_codes import HTTP_OK, HTTP_BAD_REQUEST, HTTP_NOT_ACCEPTABLE
+from ..gemini_metadata_utils import ONEDAY_OFFSET
 
 from ..orm.qastuff import QAreport, QAmetricSB, QAmetricIQ, QAmetricZP, QAmetricPE
 from ..orm.diskfile import DiskFile
@@ -382,8 +383,7 @@ def qaforgui(req, things):
             tzoffset = datetime.timedelta(seconds=time.altzone)
         else:
             tzoffset = datetime.timedelta(seconds=time.timezone)
-        oneday = datetime.timedelta(days=1)
-        datestamp = datestamp + tzoffset - oneday
+        datestamp = datestamp + tzoffset - ONEDAY_OFFSET
         # Default 3 days worth for the gui, to stop the return getting huge over time
         window = datetime.timedelta(days=3)
         enddatestamp = datestamp+window

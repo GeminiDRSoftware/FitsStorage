@@ -8,6 +8,7 @@ from mod_python import Cookie
 from sqlalchemy import func
 
 from ..fits_storage_config import magic_download_cookie
+from ..gemini_metadata_utils import ONEDAY_OFFSET
 
 from ..web.userprogram import get_program_list
 from ..web.user import userfromcookie
@@ -131,10 +132,9 @@ def canhave_obslog(session, user, obslog, filedownloadlog=None, gotmagic=False, 
     maxrel_query = maxrel_query.filter(DiskFile.canonical == True)
     maxrel_query = maxrel_query.filter(Header.program_id == obslog.program_id)
 
-    oneday = datetime.timedelta(days=1)
     zerohour = datetime.time(0, 0, 0)
     start = datetime.datetime.combine(obslog.date, zerohour)
-    end = start + oneday
+    end = start + ONEDAY_OFFSET
     maxrel_query = maxrel_query.filter(Header.ut_datetime >= start).filter(Header.ut_datetime < end)
 
     maxrel = maxrel_query.first()[0]

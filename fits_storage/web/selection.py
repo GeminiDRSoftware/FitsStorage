@@ -4,10 +4,11 @@ Functions in this module are only used within FitsStorageWebSummary.
 """
 from sqlalchemy import or_
 
-from ..gemini_metadata_utils import gemini_telescope, gemini_instrument, gemini_date, gemini_daterange
+from ..gemini_metadata_utils import gemini_telescope, gemini_instrument
 from ..gemini_metadata_utils import gemini_observation_type, gemini_observation_class, gemini_reduction_state
 from ..gemini_metadata_utils import gemini_caltype, gmos_gratingname, gmos_focal_plane_mask, gemini_fitsfilename
 from ..gemini_metadata_utils import gemini_binning, GeminiDataLabel, GeminiObservation, GeminiProgram, ratodeg, dectodeg, srtodeg
+from ..gemini_metadata_utils import gemini_date, gemini_daterange, ONEDAY_OFFSET
 
 import dateutil.parser
 import datetime
@@ -329,11 +330,9 @@ def queryselection(query, selection):
         # If this is an archive server, take the date very literally.
         # For the local fits servers, we do some manipulation to treat
         # it as an observing night...
-        oneday = datetime.timedelta(days=1)
-
         if use_as_archive:
             startdt = dateutil.parser.parse("%s 00:00:00" % (selection['date']))
-            enddt = startdt + oneday
+            enddt = startdt + ONEDAY_OFFSET
         else:
             # Parse the date to start and end datetime objects
             # We consider the night boundary to be 14:00 local time
@@ -343,8 +342,8 @@ def queryselection(query, selection):
                 tzoffset = datetime.timedelta(seconds=time.altzone)
             else:
                 tzoffset = datetime.timedelta(seconds=time.timezone)
-            startdt = startdt + tzoffset - oneday
-            enddt = startdt + oneday
+            startdt = startdt + tzoffset - ONEDAY_OFFSET
+            enddt = startdt + ONEDAY_OFFSET
 
         # check it's between these two
         query = query.filter(Header.ut_datetime >= startdt).filter(Header.ut_datetime < enddt)
@@ -357,18 +356,17 @@ def queryselection(query, selection):
         startdate = m.group(1)
         enddate = m.group(2)
         tzoffset = datetime.timedelta(seconds=time.timezone)
-        oneday = datetime.timedelta(days=1)
         # same as for date regarding archive server
         if use_as_archive:
             startdt = dateutil.parser.parse("%s 00:00:00" % startdate)
             enddt = dateutil.parser.parse("%s 00:00:00" % enddate)
-            enddt = enddt + oneday
+            enddt = enddt + ONEDAY_OFFSET
         else:
             startdt = dateutil.parser.parse("%s 14:00:00" % startdate)
-            startdt = startdt + tzoffset - oneday
+            startdt = startdt + tzoffset - ONEDAY_OFFSET
             enddt = dateutil.parser.parse("%s 14:00:00" % enddate)
-            enddt = enddt + tzoffset - oneday
-            enddt = enddt + oneday
+            enddt = enddt + tzoffset - ONEDAY_OFFSET
+            enddt = enddt + ONEDAY_OFFSET
         # Flip them round if reversed
         if startdt > enddt:
             tmp = enddt

@@ -8,6 +8,8 @@ import dateutil.parser
 
 DATE_LIMIT_LOW = dateutil.parser.parse('19900101')
 DATE_LIMIT_HIGH = dateutil.parser.parse('20500101')
+ZERO_OFFSET = datetime.timedelta()
+ONEDAY_OFFSET = datetime.timedelta(days=1)
 
 # Compile some regular expressions here. This is fairly complex, so I've
 # split it up in substrings to make it easier to follow.
@@ -87,7 +89,7 @@ def gemini_instrument(string, gmos=False, other=False):
 
     return retary
 
-def gemini_date(string, as_datetime=False):
+def gemini_date(string, as_datetime=False, offset=ZERO_OFFSET):
     """
     A utility function for matching dates of the form YYYYMMDD
     also supports today/tonight, yesterday/lastnight
@@ -96,17 +98,18 @@ def gemini_date(string, as_datetime=False):
     for Chile
     """
 
+    dt_to_text = lambda x: x.date().strftime('%Y%m%d')
+
     if string in {'today', 'tonight'}:
-        string = datetime.datetime.utcnow().date().strftime('%Y%m%d')
+        string = dt_to_text(datetime.datetime.utcnow())
     elif string in {'yesterday', 'lastnight'}:
-        then = datetime.datetime.utcnow() - datetime.timedelta(days=1)
-        string = then.date().strftime('%Y%m%d')
+        string = dt_to_text(datetime.datetime.utcnow() - ONEDAY_OFFSET)
 
     if len(string) == 8 and string.isdigit():
         try:
-            dt = dateutil.parser.parse(string)
+            dt = dateutil.parser.parse(string) + offset
             if DATE_LIMIT_LOW < dt < DATE_LIMIT_HIGH:
-                return string if not as_datetime else dt
+                return dt_to_text(dt) if not as_datetime else dt
         except ValueError:
             pass
 
@@ -241,7 +244,7 @@ def srtodeg(string):
 
     return value
 
-def gemini_daterange(string, as_datetime=False):
+def gemini_daterange(string, as_datetime=False, offset=ZERO_OFFSET):
     """
     A utility function for matching date ranges of the form YYYYMMDD-YYYYMMDD
     Could make this support today and yesterday, but right now it doesn't
@@ -254,8 +257,8 @@ def gemini_daterange(string, as_datetime=False):
     """
 
     datea, sep, dateb = string.partition('-')
-    da = gemini_date(datea, as_datetime=True)
-    db = gemini_date(dateb, as_datetime=True)
+    da = gemini_date(datea, as_datetime=True, offset=offset)
+    db = gemini_date(dateb, as_datetime=True, offset=offset)
     if da and db:
         if as_datetime:
             return da, db
