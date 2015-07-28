@@ -4,14 +4,14 @@
 #include <sys/types.h>
 
 #define PYTHON "/opt/Ureka/Ureka/variants/common/bin/python"
-#define PYTHONPATH "PYTHONPATH=/opt/FitsStorage:/opt/python_modules/lib/python2.7/site-packages:/opt/gemini_python"
+#define PYTHONPATH "PYTHONPATH=/opt/FitsStorage/fits_storage:/opt/python_modules/lib/python2.7/site-packages:/opt/gemini_python"
 #define UR_DIR "UR_DIR=/opt/Ureka/Ureka"
 #define UR_VARIANT "UR_VARIANT=common"
 #define UR_OS "UR_OS=linux-rhe6"
 #define UR_CPU "UR_CPU=x86_64"
 #define UR_BITS "UR_BITS=64"
 
-#define SCRIPT "/opt/FitsStorage/scripts/ingest_uploaded_file.py"
+#define SCRIPT "/opt/FitsStorage/fits_storage/scripts/ingest_uploaded_file.py"
 
 int main(int argc, char **argv) {
   extern char **environ;
