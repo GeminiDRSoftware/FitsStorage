@@ -250,16 +250,13 @@ def gemini_daterange(string, as_datetime=False):
     """
 
     datea, sep, dateb = string.partition('-')
-    if len(datea) == 8 and len(dateb) == 8:
-        try:
-            da = dateutil.parser.parse(datea)
-            db = dateutil.parser.parse(dateb)
-            if as_datetime:
-                return da, db
+    da = gemini_date(datea, as_datetime=True)
+    db = gemini_date(dateb, as_datetime=True)
+    if da and db:
+        if as_datetime:
+            return da, db
 
-            return string
-        except ValueError:
-            pass
+        return string
 
     return '' if not as_datetime else None
 
