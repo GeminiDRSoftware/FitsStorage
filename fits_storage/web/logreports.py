@@ -39,11 +39,11 @@ def usagereport(req):
         # Process the form data if there is any
         # Default all the pre-fill strings
         # Default to last day
-        today = datetime.datetime.utcnow().date()
         oneday = datetime.timedelta(days=1)
+        today = datetime.datetime.utcnow().date()
         tomorrow = today + oneday
-        today = today.isoformat()
-        tomorrow = tomorrow.isoformat()
+        start = today.isoformat()
+        end = tomorrow.isoformat()
         username = ''
         ipaddr = ''
         this = ''
