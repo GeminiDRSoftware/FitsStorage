@@ -71,11 +71,13 @@ def searchform(req, things, orderby):
             if 'ObsLogsOnly' in formdata.keys():
                 # ObsLogs Only search
                 util.redirect(req, '/obslogs' + urlstring)
+                # util.redirect raises apache.SERVER_RETURN, so we're out of this code path now
             else:
                 # Regular data search
                 # clears formdata, refreshes page with updated selection from form
                 formdata.clear()
                 util.redirect(req, '/searchform' + urlstring + args_string)
+                # util.redirect raises apache.SERVER_RETURN, so we're out of this code path now
 
     req.content_type = "text/html"
     req.write('<!DOCTYPE html><html><head>')

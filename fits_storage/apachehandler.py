@@ -175,6 +175,12 @@ def handler(req):
         retary = thehandler(req)
         req.status = retary
 
+    # util.redirect raises this exception.
+    # Log it as a redirect (303)
+    except apache.SERVER_RETURN:
+        req.status = 303
+        raise
+
     except Exception:
         req.status = apache.HTTP_INTERNAL_SERVER_ERROR
         raise
