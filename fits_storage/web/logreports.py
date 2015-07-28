@@ -42,8 +42,8 @@ def usagereport(req):
         today = datetime.datetime.utcnow().date()
         oneday = datetime.timedelta(days=1)
         tomorrow = today + oneday
-        tomorrow = today.isoformat()
-        today = yesterday.isoformat()
+        today = today.isoformat()
+        tomorrow = tomorrow.isoformat()
         username = ''
         ipaddr = ''
         this = ''
