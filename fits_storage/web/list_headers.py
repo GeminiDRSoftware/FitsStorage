@@ -98,7 +98,7 @@ def list_obslogs(session, selection, orderby):
         # Get parsed start and end datetime objects
         daterange = selection['daterange']
         try:
-            start, end = gemini_datetime(daterange, as_datetime=True)
+            start, end = gemini_daterange(daterange, as_datetime=True)
         except (TypeError, ValueError):
             raise ValueError('Not a valid daterange: {0}'.format(daterange))
 
