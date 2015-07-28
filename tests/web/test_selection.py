@@ -5,6 +5,9 @@ from sqlalchemy import Column, Integer, or_, and_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.query import Query
 from sqlalchemy.sql.elements import AsBoolean, BooleanClauseList
+from fits_storage.orm import compiled_statement
+from fits_storage.gemini_metadata_utils import gemini_date
+from datetime import timedelta
 from types import MethodType
 
 Base = declarative_base()
@@ -25,8 +28,10 @@ getselection_pairs = [
     (['GEMINI-SOUTH'], {'telescope': 'Gemini-South'}),
     (['19990101'], {'date': '19990101'}),
     (['20491231'], {'date': '20491231'}),
+    (['today'], {'date': gemini_date('today')}),
     (['21000101'], {'notrecognised': '21000101'}),
     (['20140101-20150101'], {'daterange': '20140101-20150101'}),
+    (['20140101-today'], {'daterange': '20140101-today'}),
     (['GN-CAL20150623'], {'program_id': 'GN-CAL20150623'}),
     (['GN-CAL20150623-21', 'GN-CAL20150623'], {'program_id': 'GN-CAL20150623'}),
     (['GN-CAL20150623-21-001', 'GN-CAL20150623'], {'program_id': 'GN-CAL20150623'}),
