@@ -321,7 +321,6 @@ def queryselection(query, selection):
         if object.startswith('*') or object.endswith('*'):
             # Wildcards are involved, replace with SQL wildcards and use ilike query
             object = object.replace('*', '%')
-            query = query.filter(Header.object.ilike(object))
         # ilike is a case insensitive version of like
         query = query.filter(Header.object.ilike(object))
 
