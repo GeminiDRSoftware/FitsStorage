@@ -350,11 +350,8 @@ def gmos_focal_plane_mask(string):
     If the string matches an focal_plane_mask, we return the focal_plane_mask.
     """
 
-    retary = None
-    if string in gmos_facility_plane_masks:
-        retary = string
-    elif gmosfpmaskcre.match(string):
-        retary = string
+    if (string in gmos_facility_plane_masks) or gmosfpmaskcre.match(string):
+        return string
 
     return None
 
