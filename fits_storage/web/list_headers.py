@@ -9,6 +9,7 @@ from ..orm.header import Header
 from ..orm.obslog import Obslog
 from ..fits_storage_config import fits_open_result_limit, fits_closed_result_limit, use_as_archive
 from .selection import queryselection, openquery
+from ..gemini_metadata_utils import gemini_daterange
 from sqlalchemy import asc, desc
 import dateutil.parser
 
@@ -94,13 +95,13 @@ def list_obslogs(session, selection, orderby):
         query = query.filter(Obslog.date == date)
 
     if 'daterange' in selection:
-        # Parse the date to start and end datetime objects
-        daterangecre = re.compile(r'([12][90]\d\d[01]\d[0123]\d)-([12][90]\d\d[01]\d[0123]\d)')
-        m = daterangecre.match(selection['daterange'])
-        # same as for date regarding archive server
-        # start = dateutil.parser.parse("%s 00:00:00" % startdate).date()
-        # end = dateutil.parser.parse("%s 00:00:00" % enddate).date()
-        start, end = [dateutil.parser.parse("%s 00:00:00" % group).date() for group in m.groups()]
+        # Get parsed start and end datetime objects
+        daterange = selection['daterange']
+        try:
+            start, end = gemini_datetime(daterange, as_datetime=True)
+        except (TypeError, ValueError):
+            raise ValueError('Not a valid daterange: {0}'.format(daterange))
+
         # Flip them round if reversed
         if start > end:
             start, end = end, start
