@@ -8,10 +8,11 @@ from ..gemini_metadata_utils import gemini_telescope, gemini_instrument
 from ..gemini_metadata_utils import gemini_observation_type, gemini_observation_class, gemini_reduction_state
 from ..gemini_metadata_utils import gemini_caltype, gmos_gratingname, gmos_focal_plane_mask, gemini_fitsfilename
 from ..gemini_metadata_utils import gemini_binning, GeminiDataLabel, GeminiObservation, GeminiProgram, ratodeg, dectodeg, srtodeg
-from ..gemini_metadata_utils import gemini_date, gemini_daterange, ONEDAY_OFFSET
+from ..gemini_metadata_utils import gemini_date, gemini_daterange, ZERO_OFFSET, ONEDAY_OFFSET
 
 import dateutil.parser
 import datetime
+from datetime import timedelta
 import re
 import urllib
 
@@ -298,6 +299,16 @@ queryselection_filters = (
     ('mode',          Header.mode),
     )
 
+def get_date_offset():
+    if use_as_archive:
+        return ZERO_OFFSET
+
+    # Calculate the proper offset to add to the date
+    # We consider the night boundary to be 14:00 local time
+    # This is midnight UTC in Hawaii, completely arbitrary in Chile
+    zone = time.altzone if time.daylight else time.timezone
+    return timedelta(hours=14) + timedelta(seconds=zone) - ONEDAY_OFFSET
+
 def queryselection(query, selection):
     """
     Given an sqlalchemy query object and a selection dictionary,
@@ -330,20 +341,9 @@ def queryselection(query, selection):
         # If this is an archive server, take the date very literally.
         # For the local fits servers, we do some manipulation to treat
         # it as an observing night...
-        if use_as_archive:
-            startdt = dateutil.parser.parse("%s 00:00:00" % (selection['date']))
-            enddt = startdt + ONEDAY_OFFSET
-        else:
-            # Parse the date to start and end datetime objects
-            # We consider the night boundary to be 14:00 local time
-            # This is midnight UTC in Hawaii, completely arbitrary in Chile
-            startdt = dateutil.parser.parse("%s 14:00:00" % (selection['date']))
-            if time.daylight:
-                tzoffset = datetime.timedelta(seconds=time.altzone)
-            else:
-                tzoffset = datetime.timedelta(seconds=time.timezone)
-            startdt = startdt + tzoffset - ONEDAY_OFFSET
-            enddt = startdt + ONEDAY_OFFSET
+
+        startdt =  gemini_date(selection['date'], offset=get_date_offset(), as_datetime=True)
+        enddt = startdt + ONEDAY_OFFSET
 
         # check it's between these two
         query = query.filter(Header.ut_datetime >= startdt).filter(Header.ut_datetime < enddt)
@@ -351,29 +351,15 @@ def queryselection(query, selection):
     # Should we query by daterange?
     if 'daterange' in selection:
         # Parse the date to start and end datetime objects
-        daterangecre = re.compile(r'([12][90]\d\d[01]\d[0123]\d)-([12][90]\d\d[01]\d[0123]\d)')
-        m = daterangecre.match(selection['daterange'])
-        startdate = m.group(1)
-        enddate = m.group(2)
-        tzoffset = datetime.timedelta(seconds=time.timezone)
-        # same as for date regarding archive server
-        if use_as_archive:
-            startdt = dateutil.parser.parse("%s 00:00:00" % startdate)
-            enddt = dateutil.parser.parse("%s 00:00:00" % enddate)
-            enddt = enddt + ONEDAY_OFFSET
-        else:
-            startdt = dateutil.parser.parse("%s 14:00:00" % startdate)
-            startdt = startdt + tzoffset - ONEDAY_OFFSET
-            enddt = dateutil.parser.parse("%s 14:00:00" % enddate)
-            enddt = enddt + tzoffset - ONEDAY_OFFSET
-            enddt = enddt + ONEDAY_OFFSET
+        startdt, enddt = gemini_daterange(selection['daterange'], offset=get_date_offset(), as_datetime=True)
         # Flip them round if reversed
         if startdt > enddt:
             tmp = enddt
             enddt = startdt
             startdt = tmp
+        enddt += ONEDAY_OFFSET
         # check it's between these two
-        query = query.filter(Header.ut_datetime >= startdt).filter(Header.ut_datetime <= enddt)
+        query = query.filter(Header.ut_datetime >= startdt).filter(Header.ut_datetime < enddt)
 
     if 'inst' in selection:
         if selection['inst'] == 'GMOS':

@@ -1,13 +1,15 @@
 import pytest
 from fits_storage.web.selection import getselection, sayselection, queryselection
+from fits_storage.orm import compiled_statement
+from fits_storage.gemini_metadata_utils import gemini_date, ONEDAY_OFFSET
+from fits_storage.fits_storage_config import use_as_archive
+
 from collections import OrderedDict
 from sqlalchemy import Column, Integer, or_, and_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.query import Query
 from sqlalchemy.sql.elements import AsBoolean, BooleanClauseList
-from fits_storage.orm import compiled_statement
-from fits_storage.gemini_metadata_utils import gemini_date
-from datetime import timedelta
+from datetime import datetime, timedelta
 from types import MethodType
 
 Base = declarative_base()
@@ -32,6 +34,7 @@ getselection_pairs = [
     (['21000101'], {'notrecognised': '21000101'}),
     (['20140101-20150101'], {'daterange': '20140101-20150101'}),
     (['20140101-today'], {'daterange': '20140101-today'}),
+    (['20140101-tomorrow'], {'notrecognised': '20140101-tomorrow'}),
     (['GN-CAL20150623'], {'program_id': 'GN-CAL20150623'}),
     (['GN-CAL20150623-21', 'GN-CAL20150623'], {'program_id': 'GN-CAL20150623'}),
     (['GN-CAL20150623-21-001', 'GN-CAL20150623'], {'program_id': 'GN-CAL20150623'}),
@@ -197,7 +200,10 @@ queryselection_pair_source = (
     (('mode', 'foobar'), Header.mode),
     (('binning', '1x1'), Header.detector_binning),
     (('filter', 'foobar'), Header.filter_name),
-    ('photstandard', and_(Footprint.header_id == Header.id, PhotStandardObs.footprint_id == Footprint.id))
+    ('photstandard', and_(Footprint.header_id == Header.id, PhotStandardObs.footprint_id == Footprint.id)),
+    # The following are a bit special and the query conditions will be constructed in the query generator
+    ('date', None),
+    ('daterange', None),
     )
 
 def generate_queryselection_pairs():
@@ -208,15 +214,28 @@ def generate_queryselection_pairs():
             fieldname = key
             value = True
 
-        if isinstance(ormfield, (AsBoolean, BooleanClauseList)):
-            q = query(None).filter(ormfield)
+        q = query(None)
+        if key == 'date':
+            value = '20140506'
+            # This works for UTC and Hawaii, at least
+            startdt = datetime(2014, 5, 6)
+            q = q.filter(Header.ut_datetime >= startdt).filter(Header.ut_datetime < (startdt + ONEDAY_OFFSET))
+        elif key == 'daterange':
+            value = '20110101-20150101'
+            startdt = datetime(2011, 1, 1)
+            enddt = datetime(2015, 1, 2)
+            q = q.filter(Header.ut_datetime >= startdt).filter(Header.ut_datetime < enddt)
+        elif isinstance(ormfield, (AsBoolean, BooleanClauseList)):
+            q = q.filter(ormfield)
         elif isinstance(ormfield, MethodType):
-            q = query(None).filter(ormfield(value))
+            q = q.filter(ormfield(value))
         else:
-            q = query(None).filter(ormfield == value)
+            q = q.filter(ormfield == value)
 
-        yield {fieldname: value}, str(q)
+        yield {fieldname: value}, str(compiled_statement(q.statement))
 
 @pytest.mark.parametrize("input,expected", generate_queryselection_pairs())
 def test_queryselection(query, input, expected):
-    assert str(queryselection(query, input)) == expected
+    q = queryselection(query, input)
+    print (q)
+    assert str(compiled_statement(queryselection(query, input).statement)) == expected
