@@ -21,44 +21,42 @@ progre = r'(?:^%s$)|(?:^%s$)' % (calengre, scire)
 # This matches an observation id with the project id and obsnum as groups
 obsre = r'((?:^%s)|(?:^%s))-(\d*)$' % (calengre, scire)
 
-gemininorthcre = re.compile(r'^[Gg][Ee][Mm][Ii][Nn][Ii]-[Nn][Oo][Rr][Tt][Hh]$')
-geminisouthcre = re.compile(r'^[Gg][Ee][Mm][Ii][Nn][Ii]-[Ss][Oo][Uu][Tt][Hh]$')
+gemini_telescopes = {
+    'gemini-north': 'Gemini-North',
+    'gemini-south': 'Gemini-South'
+    }
 def gemini_telescope(string):
     """
     If the string argument matches a gemini telescope name,
     then returns the "official" (ie same as in the fits headers)
     name of the telesope. Otherwise returns None.
     """
-    retary = None
-    if string:
-        if gemininorthcre.match(string):
-            retary = 'Gemini-North'
-        elif geminisouthcre.match(string):
-            retary = 'Gemini-South'
-    return retary
+
+    return gemini_telescopes.get(string.lower())
 
 # A utility function for matching instrument names
-niricre = re.compile(r'^[Nn][Ii][Rr][Ii]$')
-nifscre = re.compile(r'^[Nn][Ii][Ff][Ss]$')
-gmosncre = re.compile(r'^[Gg][Mm][Oo][Ss]-[Nn]$')
-gmosscre = re.compile(r'^[Gg][Mm][Oo][Ss]-[Ss]$')
-gmoscre = re.compile(r'^[Gg][Mm][Oo][Ss]$')
-michellecre = re.compile(r'^[Mm][Ii][Cc][Hh][Ee][Ll][Ll][Ee]$')
-gnirscre = re.compile(r'^[Gg][Nn][Ii][Rr][Ss]$')
-phoenixcre = re.compile(r'^[Pp][Hh][Oo][Ee][Nn][Ii][Xx]$')
-texescre = re.compile(r'^[Tt][Ee][Xx][Es][Ss]$')
-trecscre = re.compile(r'^[Tt][Rr][Ee][Cc][Ss]$')
-nicicre = re.compile(r'^[Nn][Ii][Cc][Ii]$')
 hqcre = re.compile(r'^[Hh][Oo][Kk][Uu][Pp]([Aa])+(\+)*[Qq][Uu][Ii][Rr][Cc]$')
-gsaoicre = re.compile(r'^[Gg][Ss][Aa][Oo][Ii]$')
-oscircre = re.compile(r'^[Oo][Ss][Cc][Ii][Rr]$')
-f2cre = re.compile(r'^[Ff]2$')
-gpicre = re.compile(r'^[Gg][Pp][Ii]$')
-bhroscre = re.compile(r'^[Bb][Hh][Rr][Oo][Ss]$')
-flamingoscre = re.compile(r'^[Ff][Ll][Aa][Mm][Ii][Nn][Gg][Oo][Ss]$')
-hrwfscre = re.compile(r'^[Hh][Rr][Ww][Ff][Ss]$|^[Aa][Cc][Qq][Cc][Aa][Mm]$')
-abucre = re.compile(r'^[Aa][Bb][Uu]$')
-cirpasscre = re.compile(r'^[Cc][Ii][Rr][Pp][Aa][Ss][Ss]$')
+gemini_instrument_dict = {
+    'niri':       'NIRI',
+    'nifs':       'NIFS',
+    'gmos-n':     'GMOS-N',
+    'gmos-s':     'GMOS-S',
+    'michelle':   'michelle',
+    'gnirs':      'GNIRS',
+    'phoenix':    'PHOENIX',
+    'texes':      'TEXES',
+    'trecs':      'TReCS',
+    'nici':       'NICI',
+    'gsaoi':      'GSAOI',
+    'oscir':      'OSCIR',
+    'f2':         'F2',
+    'gpi':        'GPI',
+    'abu':        'ABU',
+    'bhros':      'bHROS',
+    'hrwfs':      'hrwfs',
+    'flamingos':  'FLAMINGOS',
+    'cirpass':    'CIRPASS'
+    }
 
 def gemini_instrument(string, gmos=False, other=False):
     """
@@ -71,52 +69,19 @@ def gemini_instrument(string, gmos=False, other=False):
     names that don't look like an official instrument rather than return None
     """
     retary = None
+
     if other:
         retary = string
-    if string:
-        if niricre.match(string):
-            retary = 'NIRI'
-        elif nifscre.match(string):
-            retary = 'NIFS'
-        elif gmosncre.match(string):
-            retary = 'GMOS-N'
-        elif gmosscre.match(string):
-            retary = 'GMOS-S'
-        elif michellecre.match(string):
-            retary = 'michelle'
-        elif gnirscre.match(string):
-            retary = 'GNIRS'
-        elif phoenixcre.match(string):
-            retary = 'PHOENIX'
-        elif texescre.match(string):
-            retary = 'TEXES'
-        elif trecscre.match(string):
-            retary = 'TReCS'
-        elif nicicre.match(string):
-            retary = 'NICI'
-        elif hqcre.match(string):
-            retary = 'Hokupaa+QUIRC'
-        elif gsaoicre.match(string):
-            retary = 'GSAOI'
-        elif oscircre.match(string):
-            retary = 'OSCIR'
-        elif f2cre.match(string):
-            retary = 'F2'
-        elif gpicre.match(string):
-            retary = 'GPI'
-        elif abucre.match(string):
-            retary = 'ABU'
-        elif bhroscre.match(string):
-            retary = 'bHROS'
-        elif hrwfscre.match(string):
-            retary = 'hrwfs'
-        elif flamingoscre.match(string):
-            retary = 'FLAMINGOS'
-        elif cirpasscre.match(string):
-            retary = 'CIRPASS'
-        elif gmoscre.match(string):
-            if gmos:
+
+    try:
+        retary = gemini_instrument_dict[string.lower()]
+    except KeyError:
+        if string:
+            if hqcre.match(string):
+                retary = 'Hokupaa+QUIRC'
+            elif gmos and string.lower() == 'gmos':
                 retary = 'GMOS'
+
     return retary
 
 datecre = re.compile(r'^[12][90]\d\d[01]\d[0123]\d$')
@@ -299,10 +264,8 @@ def gemini_observation_type(string):
     Otherwise return None
     We add the unofficial values PINHOLE for GNIRS pinhole mask observations and RONCHI for NIFS Ronchi mask observations here too
     """
-    retary = None
-    if string in obs_types:
-        retary = string
-    return retary
+
+    return string if string in obs_types else None
 
 obs_classes = ('dayCal', 'partnerCal', 'acqCal', 'acq', 'science', 'progCal')
 def gemini_observation_class(string):
@@ -312,10 +275,8 @@ def gemini_observation_class(string):
     the observation_class
     Otherwise we return None
     """
-    retary = None
-    if  string in obs_classes:
-        retary = string
-    return retary
+
+    return string if string in obs_classes else None
 
 reduction_states = ('RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS', 'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK')
 def gemini_reduction_state(string):
@@ -325,10 +286,8 @@ def gemini_reduction_state(string):
     the reduction state
     Otherwise we return None
     """
-    retary = None
-    if  string in reduction_states:
-        retary = string
-    return retary
+
+    return string if string in reduction_states else None
 
 cal_types = (
     'bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark',
@@ -348,10 +307,7 @@ def gemini_caltype(string):
     These should all be lower case so as to avoid conflict with gemini_observation_type
     """
 
-    retary = None
-    if string in cal_types:
-        retary = string
-    return retary
+    return string if string in cal_types else None
 
 gmos_gratings = ('MIRROR', 'B600', 'R600', 'R400', 'R831', 'R150', 'B1200')
 def gmos_gratingname(string):
@@ -366,10 +322,8 @@ def gmos_gratingname(string):
     If the string argument matches a grating, we return the official name for
     that grating.
     """
-    retary = ''
-    if string in gmos_gratings:
-        retary = string
-    return retary
+
+    return string if string in gmos_gratings else ''
 
 gmosfpmaskcre = re.compile(r'^G[NS](20\d\d)[AB](.)(\d\d\d)-(\d\d)$')
 gmos_facility_plane_masks = (
@@ -394,7 +348,7 @@ def gmos_focal_plane_mask(string):
     elif gmosfpmaskcre.match(string):
         retary = string
 
-    return retary
+    return None
 
 fitsfilenamecre = re.compile(r'^([NS])(20\d\d)([01]\d[0123]\d)(S)(\d\d\d\d)([\d-]*)(\w*)(?P<fits>.fits)?$')
 vfitsfilenamecre = re.compile(r'^(20)?(\d\d)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d\d)_(\d+)(?P<fits>.fits)?$')
@@ -418,18 +372,16 @@ def gemini_fitsfilename(string):
 
     return retval
 
-binningcre = re.compile('^[124]x[124]$')
 def gemini_binning(string):
     """
     A utility function that matches a binning string -
     for example 1x1, 2x2, 1x4
     """
-    retval = ''
-    m = binningcre.match(string)
-    if m:
-        retval = string
 
-    return retval
+    valid = '124'
+    a, sep, b = string.partition('x')
+
+    return string if (a and b and (a in valid) and (b in valid)) else ''
 
 def percentilestring(num, type):
     """
@@ -438,14 +390,14 @@ def percentilestring(num, type):
     eg (20, 'IQ') -> IQ20. Maps 100 onto 'Any' and gives
     'Unknown' if the num is None
     """
-    if num is None:
-        retval = 'Undefined'
-    elif num == 100:
-        retval = type + "Any"
-    else:
-        retval = "%s%02d" % (type, num)
 
-    return retval
+    if num is None:
+        return = 'Undefined'
+
+    if num == 100:
+        return = type + "Any"
+
+    return "%s%02d" % (type, num)
 
 # The Gemini Data Label Class
 
