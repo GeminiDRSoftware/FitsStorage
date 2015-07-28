@@ -96,6 +96,14 @@ more_good_dates = (
     ('lastnight', '{0:%Y%m%d}'.format(a_day_ago)),
     )
 
+def date_as_datetime_pairs():
+    for d in good_dates:
+        yield (d, parsedate(d))
+    for d in bad_dates:
+        yield (d, None)
+    for f, d in more_good_dates:
+        yield (f, parsedate(d))
+
 @pytest.mark.parametrize("input,expected",
         generate_same_pairs_plus_garbage(gmu.obs_types,
                                          gemini_observation_type_bad))
@@ -136,6 +144,10 @@ def test_gemini_binning(input, expected):
                         more_good_dates))
 def test_gemini_date(input, expected):
     assert gmu.gemini_date(input) == expected
+
+@pytest.mark.parametrize("input,expected", date_as_datetime_pairs())
+def test_gemini_date_as_datetime(input, expected):
+    assert gmu.gemini_date(input, as_datetime=True) == expected
 
 @pytest.mark.parametrize("input,expected",
         generate_same_pairs_plus_garbage(good_dateranges, bad_dateranges, ''))

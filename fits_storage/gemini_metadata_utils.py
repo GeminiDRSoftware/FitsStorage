@@ -84,7 +84,7 @@ def gemini_instrument(string, gmos=False, other=False):
 
     return retary
 
-def gemini_date(string):
+def gemini_date(string, as_datetime=False):
     """
     A utility function for matching dates of the form YYYYMMDD
     also supports today/tonight, yesterday/lastnight
@@ -94,18 +94,19 @@ def gemini_date(string):
     """
 
     if string in {'today', 'tonight'}:
-        return datetime.datetime.utcnow().date().strftime('%Y%m%d')
+        string = datetime.datetime.utcnow().date().strftime('%Y%m%d')
     elif string in {'yesterday', 'lastnight'}:
         then = datetime.datetime.utcnow() - datetime.timedelta(days=1)
-        return then.date().strftime('%Y%m%d')
-    elif len(string) == 8 and string.isdigit():
+        string = then.date().strftime('%Y%m%d')
+
+    if len(string) == 8 and string.isdigit():
         try:
-            dateutil.parser.parse(string)
-            return string
+            dt = dateutil.parser.parse(string)
+            return string if not as_datetime else dt
         except ValueError:
             pass
 
-    return ''
+    return '' if not as_datetime else None
 
 racre = re.compile(r'^([012]\d):([012345]\d):([012345]\d)(\.?\d*)$')
 def ratodeg(string):
