@@ -14,7 +14,7 @@ from .selection import sayselection, queryselection
 from .calibrations import interval_hours
 from ..cal import get_cal_object
 from ..fits_storage_config import using_sqlite, fits_system_status, das_calproc_path
-from ..gemini_metadata_utils import ONEDAY_OFFSET
+from ..gemini_metadata_utils import gemini_daterange, ONEDAY_OFFSET
 
 from ..apache_return_codes import HTTP_OK, HTTP_NOT_IMPLEMENTED
 
@@ -23,6 +23,7 @@ from math import fabs
 import os
 import copy
 import datetime
+from datetime import timedelta
 import time
 import re
 import dateutil.parser
@@ -235,9 +236,9 @@ def gmoscal(req, selection, do_json=False):
                         req.write("<H2>Auto-detecting Last Processing Date: %s</H2>" % selection['daterange'])
 
         if time.daylight:
-            tzoffset = datetime.timedelta(seconds=time.altzone)
+            tzoffset = timedelta(seconds=time.altzone)
         else:
-            tzoffset = datetime.timedelta(seconds=time.timezone)
+            tzoffset = timedelta(seconds=time.timezone)
 
         offset = sqlalchemy.sql.expression.literal(tzoffset - ONEDAY_OFFSET, sqlalchemy.types.Interval)
         query = session.query(func.count(1), cast((Header.ut_datetime + offset), sqlalchemy.types.DATE).label('utdate'), Header.detector_binning, Header.detector_roi_setting).select_from(join(join(DiskFile, File), Header))
@@ -336,16 +337,11 @@ def gmoscal(req, selection, do_json=False):
             # utdates is a reverse sorted list for which there were biases.
             if 'daterange' in selection:
                 # Parse the date to start and end datetime objects
-                daterangecre = re.compile(r'(20\d\d[01]\d[0123]\d)-(20\d\d[01]\d[0123]\d)')
-                m = daterangecre.match(selection['daterange'])
-                startdate = m.group(1)
-                enddate = m.group(2)
-                tzoffset = datetime.timedelta(seconds=time.timezone)
-                startdt = dateutil.parser.parse("%s 14:00:00" % startdate)
-                startdt = startdt + tzoffset - ONEDAY_OFFSET
-                enddt = dateutil.parser.parse("%s 14:00:00" % enddate)
-                enddt = enddt + tzoffset - ONEDAY_OFFSET
-                enddt = enddt + ONEDAY_OFFSET
+                offset = timedelta(hours=14) + timedelta(seconds=time.timezone)
+                startdt, enddt = gemini_daterange(selection['daterange'], offset=offset, as_datetime=True)
+
+                startdt = startdt - ONEDAY_OFFSET
+                enddt = enddt
                 # Flip them round if reversed
                 if startdt > enddt:
                     tmp = enddt
@@ -392,7 +388,7 @@ def gmoscal(req, selection, do_json=False):
 
             # Limit to things within 1 year
             now = datetime.datetime.now()
-            year = datetime.timedelta(days=366)
+            year = timedelta(days=366)
             then = now - year
             query = query.filter(Header.ut_datetime > then)
 

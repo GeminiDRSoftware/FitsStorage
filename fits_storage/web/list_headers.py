@@ -9,7 +9,7 @@ from ..orm.header import Header
 from ..orm.obslog import Obslog
 from ..fits_storage_config import fits_open_result_limit, fits_closed_result_limit, use_as_archive
 from .selection import queryselection, openquery
-from ..gemini_metadata_utils import gemini_daterange
+from ..gemini_metadata_utils import gemini_date, gemini_daterange
 from sqlalchemy import asc, desc
 import dateutil.parser
 
@@ -91,7 +91,7 @@ def list_obslogs(session, selection, orderby):
     # Just do it here.
 
     if 'date' in selection:
-        date = dateutil.parser.parse("%s 00:00:00" % selection['date']).date()
+        date = gemini_date(selection['date'], as_datetime=True).date()
         query = query.filter(Obslog.date == date)
 
     if 'daterange' in selection:
