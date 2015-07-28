@@ -236,24 +236,31 @@ def srtodeg(string):
 
     return value
 
-def gemini_daterange(string):
+def gemini_daterange(string, as_datetime=False):
     """
     A utility function for matching date ranges of the form YYYYMMDD-YYYYMMDD
     Could make this support today and yesterday, but right now it doesn't
     Also this does not yet check for sensible date ordering
     returns the YYYYMMDD-YYYYMMDD string, or '' if not a daterange
+
+    If the function is called with as_datetime=True, it will return a
+    recognized daterange as a pair of datetime objects, and None if it's
+    nto a daterange
     """
 
     datea, sep, dateb = string.partition('-')
     if len(datea) == 8 and len(dateb) == 8:
         try:
-            dateutil.parser.parse(datea)
-            dateutil.parser.parse(dateb)
+            da = dateutil.parser.parse(datea)
+            db = dateutil.parser.parse(dateb)
+            if as_datetime:
+                return da, db
+
             return string
         except ValueError:
             pass
 
-    return ''
+    return '' if not as_datetime else None
 
 obs_types = ('DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI', 'CAL', 'FRINGE', 'MASK')
 def gemini_observation_type(string):

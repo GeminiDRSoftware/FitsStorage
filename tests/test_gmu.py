@@ -2,6 +2,8 @@ import pytest
 import itertools
 import fits_storage.gemini_metadata_utils as gmu
 from datetime import datetime, timedelta
+from dateutil import parser as dateparser
+parsedate = dateparser.parse
 
 gemini_telescope_pairs = (
     ('gEmInI-NoRtH', 'Gemini-North'),
@@ -77,6 +79,11 @@ bad_dateranges = (
     'blah',
     ''
     )
+daterange_as_datetime_pairs = (
+    ('20050101-20061231', (parsedate('20050101'), parsedate('20061231'))),
+    ('20080228-20120229', (parsedate('20080228'), parsedate('20120229'))),
+    ('blah', None)
+    )
 
 good_dates = ('20050101', '20080228', '20120229', '20390101', '10000101', '29000101')
 bad_dates = ('00000000', '20110229', '12345678', 'blah', '')
@@ -134,3 +141,7 @@ def test_gemini_date(input, expected):
         generate_same_pairs_plus_garbage(good_dateranges, bad_dateranges, ''))
 def test_gemini_daterange(input, expected):
     assert gmu.gemini_daterange(input) == expected
+
+@pytest.mark.parametrize("input,expected", daterange_as_datetime_pairs)
+def test_gemini_daterange_as_datetime(input, expected):
+    assert gmu.gemini_daterange(input, as_datetime=True) == expected
