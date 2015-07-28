@@ -7,6 +7,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects import postgresql
 from sqlalchemy import func, update
+from sqlalchemy.sql.sqltypes import String, DateTime, NullType
+from datetime import datetime
 
 from ..fits_storage_config import fits_database
 
@@ -23,8 +25,23 @@ Base = declarative_base()
 pg_db = create_engine(fits_database, echo = False)
 sessionfactory = sessionmaker(pg_db)
 
+class StringLiteral(String):
+    def literal_processor(self, dialect):
+        super_processor = super(StringLiteral, self).literal_processor(dialect)
+        def process(value):
+            if isinstance(value, datetime) or value is None:
+                return str(value)
+            return super_processor(value)
+        return process
+
+class LiteralDialect(postgresql.dialect):
+    colspecs = {
+        DateTime: StringLiteral,
+        NullType: StringLiteral
+    }
+
 def compiled_statement(stmt):
     """Returns a compiled query using the PostgreSQL dialect. Useful for
        example to print the real query, when debugging"""
-    return stmt.compile(dialect = postgresql.dialect())
+    return stmt.compile(dialect = LiteralDialect(), compile_kwargs={'literal_binds': True})
 
