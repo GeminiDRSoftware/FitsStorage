@@ -69,11 +69,13 @@ class UsageLog(Base):
         html = str(self.status)
         if self.status == 200:
             html += " (OK)"
-        if self.status == 403:
+        elif self.status == 303:
+            html += " (REDIRECT)"
+        elif self.status == 403:
             html += " (FORBIDDEN)"
-        if self.status == 500:
+        elif self.status == 500:
             html += " (SERVER ERROR)"
-        if self.status == 404:
+        elif self.status == 404:
             html += " (NOT FOUND)"
 
         return html
