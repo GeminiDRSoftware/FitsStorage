@@ -341,7 +341,7 @@ def ingest_file(session, logger, filename, path, force_md5, force, skip_fv, skip
                     if make_previews:
                         # Go ahead and make the preview now
                         logger.debug("Making Preview")
-                        make_preview(session, diskfile)
+                        make_preview(session, logger, diskfile)
                         session.commit()
                     else:
                         # Add it to the preview queue

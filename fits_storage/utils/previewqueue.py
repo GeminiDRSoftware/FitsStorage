@@ -4,7 +4,6 @@ manage and service the preview queue
 """
 import os
 import datetime
-from ..logger import logger
 from sqlalchemy import desc
 from sqlalchemy.orm.exc import ObjectDeletedError
 from sqlalchemy.orm import make_transient
@@ -26,7 +25,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-def pop_previewqueue(session):
+def pop_previewqueue(session, logger):
     """
     Returns the next thing to ingest off the queue, and sets the
     inprogress flag on that entry.
@@ -78,7 +77,7 @@ def pop_previewqueue(session):
     session.commit()
     return pq
 
-def make_preview(session, diskfile):
+def make_preview(session, logger, diskfile):
     """
     Make the preview, given the diskfile.
     This is called from within service_ingest_queue ingest_file
@@ -127,7 +126,7 @@ def make_preview(session, diskfile):
     # Now there should be a diskfile.ad_object, either way...
     fp = open(preview_fullpath, 'w')
     try:
-        render_preview(diskfile.ad_object, fp)
+        render_preview(diskfile.ad_object, fp, logger)
         fp.close()
     except:
         os.unlink(preview_fullpath)
@@ -160,7 +159,7 @@ def make_preview(session, diskfile):
     session.add(preview)
 
     
-def render_preview(ad, outfile):
+def render_preview(ad, outfile, logger):
     """
     Pass in an astrodata object and a file-like outfile.
     This function will create a jpeg rendering of the ad object
