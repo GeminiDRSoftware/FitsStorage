@@ -292,6 +292,9 @@ def retry_failures(session, logger, interval):
     query = query.filter(ExportQueue.lastfailed < before)
 
     num = query.update({"inprogress": False})
-    logger.info("There are %d failed ExportQueue items to retry", num)
+    if num > 0:
+        logger.info("There are %d failed ExportQueue items to retry", num)
+    else:
+        logger.debug("There are %d failed ExportQueue items to retry", num)
 
     session.commit()
