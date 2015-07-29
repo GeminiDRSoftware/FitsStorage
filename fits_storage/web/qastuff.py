@@ -7,7 +7,6 @@ from sqlalchemy import desc
 import urllib
 import datetime
 import time
-from xml.dom.minidom import parseString
 import json
 import math
 import dateutil.parser
@@ -20,7 +19,7 @@ from ..orm.header import Header
 
 def qareport(req):
     """
-    This function handles submission of QA metric reports via xml and json
+    This function handles submission of QA metric reports via json
     """
 
     if req.method == 'POST':
@@ -28,9 +27,7 @@ def qareport(req):
         req.log_error("QAreport clientdata: %s" % clientdata)
 
         # We make here some reasonable assumptions about the input format
-        if clientdata.startswith('<xml'):
-            thelist = parse_xml(clientdata)
-        elif clientdata.startswith('['):
+        if clientdata.startswith('['):
             thelist = parse_json(clientdata)
         else:
             return HTTP_BAD_REQUEST
@@ -75,53 +72,6 @@ def parse_json(clientdata):
     makes it into a list of dictionaries.
     """
     return json.loads(clientdata)
-
-qareport_fields = (
-    'hostname', 'userid', 'processid', 'executable', 'sofware',
-    'software_version', 'context'
-    )
-
-def parse_xml(clientdata):
-    """
-    This function takes a string containing an xml document with qareports and makes it
-    into a list of dictionaries
-    """
-    thelist = []
-    clientstr = urllib.unquote(clientdata)
-    dom = parseString(clientstr)
-    for qr in dom.getElementsByTagName("qareport"):
-        qareport = {
-            'submit_time': datetime.datetime.now(),
-            'qametric':    []
-            }
-        for field in qareport_fields:
-            qareport[field] = get_value(qr.getElementsByTagName(field))
-
-        for qam in qr.getElementsByTagName("qametric"):
-            qametric = { 'iq': [], 'zp': [], 'sb': [], 'pe': [] }
-
-            for field in ('datalabel', 'filename', 'detector'):
-                qametric[field] = get_value(qam.getElementsByTagName(field))
-            for iq in qam.getElementsByTagName("iq"):
-                qametric['iq'].append(QAmetricIQ.dict_from_xml_node(iq))
-            for zp in qam.getElementsByTagName("zp"):
-                qametric['zp'].append(QAmetricZP.dict_from_xml_node(zp))
-            for sb in qam.getElementsByTagName("sb"):
-                qametric['sb'].append(QAmetricSB.dict_from_xml_node(sb))
-            for pe in qam.getElementsByTagName("pe"):
-                qametric['pe'].append(QAmetricPE.dict_from_xml_node(pe))
-
-            qareport['qametric'].append(qametric)
-
-        thelist.append(qareport)
-
-    return thelist
-
-def get_value(element):
-    try:
-        return element[0].childNodes[0].data
-    except:
-        return None
 
 def qametrics(req, things):
     """

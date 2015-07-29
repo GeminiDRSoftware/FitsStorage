@@ -96,29 +96,6 @@ class QAmetricIQ(Base):
 
         return iq
 
-    @staticmethod
-    def dict_from_xml_node(node):
-        iq = {}
-        iq['fwhm'] = get_value(iq.getElementsByTagName("fwhm"))
-        iq['fwhm_std'] = get_value(iq.getElementsByTagName("fwhm_std"))
-        iq['isofwhm'] = get_value(iq.getElementsByTagName("isofwhm"))
-        iq['isofwhm_std'] = get_value(iq.getElementsByTagName("isofwhm_std"))
-        iq['ee50d'] = get_value(iq.getElementsByTagName("ee50d"))
-        iq['ee50d_std'] = get_value(iq.getElementsByTagName("ee50d_std"))
-        iq['elip'] = get_value(iq.getElementsByTagName("elip"))
-        iq['elip_std'] = get_value(iq.getElementsByTagName("elip_std"))
-        iq['pa'] = get_value(iq.getElementsByTagName("pa"))
-        iq['pa_std'] = get_value(iq.getElementsByTagName("pa_std"))
-        iq['strehl'] = get_value(iq.getElementsByTagName("strehl"))
-        iq['strehl_std'] = get_value(iq.getElementsByTagName("strehl_std"))
-        iq['nsamples'] = get_value(iq.getElementsByTagName("nsamples"))
-        iq['percentile_band'] = get_value(iq.getElementsByTagName("percentile_band"))
-        iq['comment'] = get_value(iq.getElementsByTagName("comment"))
-        iq['adaptive_optics'] = get_value(iq.getElementsByTagName("adaptive_optics"))
-        iq['ao_seeing'] = get_value(iq.getElementsByTagName("ao_seeing"))
-
-        return iq
-
 class QAmetricZP(Base):
     """
     This is the ORM class for a QA ZP metric measurement
@@ -160,20 +137,6 @@ class QAmetricZP(Base):
         zp.photref = zp_dict.get('photref')
         zp.percentile_band = zp_dict.get('percentile_band')
         zp.comment = ", ".join(zp_dict.get('comment'))
-
-        return zp
-
-    @staticmethod
-    def dict_from_xml_node(node):
-        zp = {}
-        zp['mag'] = get_value(zp.getElementsByTagName("mag"))
-        zp['mag_std'] = get_value(zp.getElementsByTagName("mag_std"))
-        zp['cloud'] = get_value(zp.getElementsByTagName("cloud"))
-        zp['cloud_std'] = get_value(zp.getElementsByTagName("cloud_std"))
-        zp['photref'] = get_value(zp.getElementsByTagName("photref"))
-        zp['nsamples'] = get_value(zp.getElementsByTagName("nsamples"))
-        zp['percentile_band'] = get_value(zp.getElementsByTagName("percentile_band"))
-        zp['comment'] = get_value(zp.getElementsByTagName("comment"))
 
         return zp
 
@@ -226,19 +189,6 @@ class QAmetricSB(Base):
 
         return sb
 
-    @staticmethod
-    def dict_from_xml_node(node):
-        sb = {}
-        sb['mag'] = get_value(sb.getElementsByTagName("mag"))
-        sb['mag_std'] = get_value(sb.getElementsByTagName("mag_std"))
-        sb['electrons'] = get_value(sb.getElementsByTagName("elecrons"))
-        sb['electrons_std'] = get_value(sb.getElementsByTagName("elecrons_std"))
-        sb['nsamples'] = get_value(sb.getElementsByTagName("nsamples"))
-        sb['comment'] = get_value(sb.getElementsByTagName("comment"))
-        sb['percentile_band'] = get_value(sb.getElementsByTagName("percentile_band"))
-
-        return sb
-
 class QAmetricPE(Base):
     """
     This is the ORM class for a QA PE (Astrometric Pointing Error) metric measurement
@@ -276,18 +226,5 @@ class QAmetricPE(Base):
         pe.ddec = pe_dict.get('ddec')
         pe.ddec_std = pe_dict.get('ddec_std')
         pe.nsamples = pe_dict.get('nsamples')
-
-        return pe
-
-    @staticmethod
-    def dict_from_xml_node(node):
-        pe = {}
-        pe['dra'] = get_value(pe.getElementsByTagName("dra"))
-        pe['dra_std'] = get_value(pe.getElementsByTagName("dra_std"))
-        pe['ddec'] = get_value(pe.getElementsByTagName("ddec"))
-        pe['ddec_std'] = get_value(pe.getElementsByTagName("ddec_std"))
-        pe['astref'] = get_value(pe.getElementsByTagName("astref"))
-        pe['nsamples'] = get_value(pe.getElementsByTagName("nsamples"))
-        pe['comment'] = get_value(pe.getElementsByTagName("comment"))
 
         return pe
