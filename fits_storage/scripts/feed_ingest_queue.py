@@ -123,8 +123,7 @@ if site not in ['N', 'S']:
     logger.error("Invalid Gemini Site")
     sys.exit(0)
 
-#fulldirpath = os.path.join(storage_root, path)
-fulldirpath = "/net/wikiwiki/dataflow"
+fulldirpath = os.path.join(storage_root, path)
 logger.info("Feeding files for ingest from: %s", fulldirpath)
 
 # Find "latest" file that already exists.
