@@ -22,25 +22,24 @@ def qareport(req):
     """
     This function handles submission of QA metric reports via xml and json
     """
-    if req.method == 'GET':
-        return HTTP_NOT_ACCEPTABLE
 
     if req.method == 'POST':
         clientdata = req.read()
         req.log_error("QAreport clientdata: %s" % clientdata)
 
-        if clientdata[0:4] == '<xml':
+        # We make here some reasonable assumptions about the input format
+        if clientdata.startswith('<xml'):
             thelist = parse_xml(clientdata)
-
-        elif clientdata[0] == '[':
+        elif clientdata.startswith('['):
             thelist = parse_json(clientdata)
-
         else:
             return HTTP_BAD_REQUEST
 
         req.log_error("thelist: %s" % thelist)
 
         return qareport_ingest(thelist, submit_host=req.get_remote_host(), submit_time=datetime.datetime.now())
+    else:
+        return HTTP_NOT_ACCEPTABLE
 
 def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now()):
     """
@@ -48,104 +47,23 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
     """
     session = sessionfactory()
     try:
-
         for qa_dict in thelist:
             # Get a new QAreport ORM object
-            qareport = QAreport()
-
-            qareport.hostname = qa_dict['hostname']
-            qareport.userid = qa_dict['userid']
-            qareport.processid = qa_dict['processid']
-            qareport.executable = qa_dict['executable']
-            qareport.software = qa_dict['software']
-            qareport.software_version = qa_dict['software_version']
-            qareport.context = qa_dict['context']
-            qareport.submit_host = submit_host
-            qareport.submit_time = submit_time
+            qareport = QAreport.from_dict(qa_dict, submit_host, submit_time)
 
             session.add(qareport)
             session.commit()
 
             for qametric_dict in qa_dict['qametric']:
-
-                if 'sb' in qametric_dict.keys():
-                    qametricsb = QAmetricSB(qareport)
-                    qametricsb.filename = qametric_dict['filename']
-                    qametricsb.datalabel = qametric_dict['datalabel']
-                    qametricsb.detector = qametric_dict['detector']
-                    sb_dict = qametric_dict['sb']
-                    qametricsb.comment = ", ".join(sb_dict.get('comment'))
-                    # Sometimes the QAP sends unreasonable values which 
-                    # exceed the data type definition acceptable ranges
-                    if sb_dict.get('mag') < 100:
-                        qametricsb.mag = sb_dict.get('mag')
-                    if sb_dict.get('mag_std') < 100:
-                        qametricsb.mag_std = sb_dict.get('mag_std')
-                    if sb_dict.get('electrons') < 100000:
-                        qametricsb.electrons = sb_dict.get('electrons')
-                    if sb_dict.get('electrons_std') < 100000:
-                        qametricsb.electrons_std = sb_dict.get('electrons_std')
-                    qametricsb.nsamples = sb_dict.get('nsamples')
-                    qametricsb.percentile_band = sb_dict.get('percentile_band')
-                    session.add(qametricsb)
-
-                if 'iq' in qametric_dict.keys():
-                    qametriciq = QAmetricIQ(qareport)
-                    qametriciq.filename = qametric_dict['filename']
-                    qametriciq.datalabel = qametric_dict['datalabel']
-                    qametriciq.detector = qametric_dict['detector']
-                    iq_dict = qametric_dict['iq']
-                    qametriciq.fwhm = iq_dict.get('fwhm')
-                    qametriciq.fwhm_std = iq_dict.get('fwhm_std')
-                    qametriciq.isofwhm = iq_dict.get('isofwhm')
-                    qametriciq.isofwhm_std = iq_dict.get('isofwhm_std')
-                    qametriciq.ee50d = iq_dict.get('ee50d')
-                    qametriciq.ee50d_std = iq_dict.get('ee50d_std')
-                    qametriciq.elip = iq_dict.get('elip')
-                    qametriciq.elip_std = iq_dict.get('elip_std')
-                    qametriciq.pa = iq_dict.get('pa')
-                    qametriciq.pa_std = iq_dict.get('pa_std')
-                    qametriciq.nsamples = iq_dict.get('nsamples')
-                    qametriciq.percentile_band = iq_dict.get('percentile_band')
-                    qametriciq.comment = ", ".join(iq_dict.get('comment'))
-                    qametriciq.ao_seeing = iq_dict.get('ao_seeing')
-                    qametriciq.adaptive_optics = iq_dict.get('adaptive_optics')
-                    session.add(qametriciq)
-
-                if 'zp' in qametric_dict.keys():
-                    qametriczp = QAmetricZP(qareport)
-                    qametriczp.filename = qametric_dict['filename']
-                    qametriczp.datalabel = qametric_dict['datalabel']
-                    qametriczp.detector = qametric_dict['detector']
-                    zp_dict = qametric_dict['zp']
-                    qametriczp.mag = zp_dict.get('mag')
-                    qametriczp.mag_std = zp_dict.get('mag_std')
-                    qametriczp.cloud = zp_dict.get('cloud')
-                    qametriczp.cloud_std = zp_dict.get('cloud_std')
-                    qametriczp.nsamples = zp_dict.get('nsamples')
-                    qametriczp.photref = zp_dict.get('photref')
-                    qametriczp.percentile_band = zp_dict.get('percentile_band')
-                    qametriczp.comment = ", ".join(zp_dict.get('comment'))
-                    session.add(qametriczp)
-
-                if 'pe' in qametric_dict.keys():
-                    qametricpe = QAmetricPE(qareport)
-                    qametricpe.filename = qametric_dict['filename']
-                    qametricpe.datalabel = qametric_dict['datalabel']
-                    qametricpe.detector = qametric_dict['detector']
-                    pe_dict = qametric_dict['pe']
-                    qametricpe.astref = pe_dict.get('astref')
-                    qametricpe.dra = pe_dict.get('dra')
-                    qametricpe.dra_std = pe_dict.get('dra_std')
-                    qametricpe.ddec = pe_dict.get('ddec')
-                    qametricpe.ddec_std = pe_dict.get('ddec_std')
-                    qametricpe.nsamples = pe_dict.get('nsamples')
-                    session.add(qametricpe)
-
-
-        session.commit()
-
-
+                if 'sb' in qametric_dict:
+                    session.add(QAmetricSB.from_metrics(qareport, qametric_dict))
+                if 'iq' in qametric_dict:
+                    session.add(QAmetricIQ.from_metrics(qareport, qametric_dict))
+                if 'zp' in qametric_dict:
+                    session.add(QAmetricZP.from_metrics(qareport, qametric_dict))
+                if 'pe' in qametric_dict:
+                    session.add(QAmetricPE.from_metrics(qareport, qametric_dict))
+            session.commit()
     finally:
         session.close()
 
@@ -158,6 +76,10 @@ def parse_json(clientdata):
     """
     return json.loads(clientdata)
 
+qareport_fields = (
+    'hostname', 'userid', 'processid', 'executable', 'sofware',
+    'software_version', 'context'
+    )
 
 def parse_xml(clientdata):
     """
@@ -168,79 +90,26 @@ def parse_xml(clientdata):
     clientstr = urllib.unquote(clientdata)
     dom = parseString(clientstr)
     for qr in dom.getElementsByTagName("qareport"):
-        qareport = {}
-        qareport['hostname'] = get_value(qr.getElementsByTagName("hostname"))
-        qareport['userid'] = get_value(qr.getElementsByTagName("userid"))
-        qareport['processid'] = get_value(qr.getElementsByTagName("processid"))
-        qareport['executable'] = get_value(qr.getElementsByTagName("executable"))
-        qareport['software'] = get_value(qr.getElementsByTagName("software"))
-        qareport['software_version'] = get_value(qr.getElementsByTagName("software_version"))
-        qareport['context'] = get_value(qr.getElementsByTagName("context"))
-        qareport['submit_time'] = datetime.datetime.now()
-        qareport['qametric'] = []
+        qareport = {
+            'submit_time': datetime.datetime.now(),
+            'qametric':    []
+            }
+        for field in qareport_fields:
+            qareport[field] = get_value(qr.getElementsByTagName(field))
+
         for qam in qr.getElementsByTagName("qametric"):
-            qametric = {}
-            qametric['datalabel'] = get_value(qam.getElementsByTagName("datalabel"))
-            qametric['filename'] = get_value(qam.getElementsByTagName("filename"))
-            qametric['detector'] = get_value(qam.getElementsByTagName("detector"))
-            qametric['iq'] = []
+            qametric = { 'iq': [], 'zp': [], 'sb': [], 'pe': [] }
+
+            for field in ('datalabel', 'filename', 'detector'):
+                qametric[field] = get_value(qam.getElementsByTagName(field))
             for iq in qam.getElementsByTagName("iq"):
-                qametriciq = {}
-                qametriciq['fwhm'] = get_value(iq.getElementsByTagName("fwhm"))
-                qametriciq['fwhm_std'] = get_value(iq.getElementsByTagName("fwhm_std"))
-                qametriciq['isofwhm'] = get_value(iq.getElementsByTagName("isofwhm"))
-                qametriciq['isofwhm_std'] = get_value(iq.getElementsByTagName("isofwhm_std"))
-                qametriciq['ee50d'] = get_value(iq.getElementsByTagName("ee50d"))
-                qametriciq['ee50d_std'] = get_value(iq.getElementsByTagName("ee50d_std"))
-                qametriciq['elip'] = get_value(iq.getElementsByTagName("elip"))
-                qametriciq['elip_std'] = get_value(iq.getElementsByTagName("elip_std"))
-                qametriciq['pa'] = get_value(iq.getElementsByTagName("pa"))
-                qametriciq['pa_std'] = get_value(iq.getElementsByTagName("pa_std"))
-                qametriciq['strehl'] = get_value(iq.getElementsByTagName("strehl"))
-                qametriciq['strehl_std'] = get_value(iq.getElementsByTagName("strehl_std"))
-                qametriciq['nsamples'] = get_value(iq.getElementsByTagName("nsamples"))
-                qametriciq['percentile_band'] = get_value(iq.getElementsByTagName("percentile_band"))
-                qametriciq['comment'] = get_value(iq.getElementsByTagName("comment"))
-                qametriciq['adaptive_optics'] = get_value(iq.getElementsByTagName("adaptive_optics"))
-                qametriciq['ao_seeing'] = get_value(iq.getElementsByTagName("ao_seeing"))
-                qametric['iq'].append(qametriciq)
-
-            qametric['zp'] = []
+                qametric['iq'].append(QAmetricIQ.dict_from_xml_node(iq))
             for zp in qam.getElementsByTagName("zp"):
-                qametriczp = {}
-                qametriczp['mag'] = get_value(zp.getElementsByTagName("mag"))
-                qametriczp['mag_std'] = get_value(zp.getElementsByTagName("mag_std"))
-                qametriczp['cloud'] = get_value(zp.getElementsByTagName("cloud"))
-                qametriczp['cloud_std'] = get_value(zp.getElementsByTagName("cloud_std"))
-                qametriczp['photref'] = get_value(zp.getElementsByTagName("photref"))
-                qametriczp['nsamples'] = get_value(zp.getElementsByTagName("nsamples"))
-                qametriczp['percentile_band'] = get_value(zp.getElementsByTagName("percentile_band"))
-                qametriczp['comment'] = get_value(zp.getElementsByTagName("comment"))
-                qametric['zp'].append(qametriczp)
-
-            qametric['sb'] = []
+                qametric['zp'].append(QAmetricZP.dict_from_xml_node(zp))
             for sb in qam.getElementsByTagName("sb"):
-                qametricsb = {}
-                qametricsb['mag'] = get_value(sb.getElementsByTagName("mag"))
-                qametricsb['mag_std'] = get_value(sb.getElementsByTagName("mag_std"))
-                qametricsb['electrons'] = get_value(sb.getElementsByTagName("elecrons"))
-                qametricsb['electrons_std'] = get_value(sb.getElementsByTagName("elecrons_std"))
-                qametricsb['nsamples'] = get_value(sb.getElementsByTagName("nsamples"))
-                qametricsb['comment'] = get_value(sb.getElementsByTagName("comment"))
-                qametricsb['percentile_band'] = get_value(sb.getElementsByTagName("percentile_band"))
-                qametric['sb'].append(qametricsb)
-
-            qametric['pe'] = []
+                qametric['sb'].append(QAmetricSB.dict_from_xml_node(sb))
             for pe in qam.getElementsByTagName("pe"):
-                qametricpe = {}
-                qametricpe['dra'] = get_value(pe.getElementsByTagName("dra"))
-                qametricpe['dra_std'] = get_value(pe.getElementsByTagName("dra_std"))
-                qametricpe['ddec'] = get_value(pe.getElementsByTagName("ddec"))
-                qametricpe['ddec_std'] = get_value(pe.getElementsByTagName("ddec_std"))
-                qametricpe['astref'] = get_value(pe.getElementsByTagName("astref"))
-                qametricpe['nsamples'] = get_value(pe.getElementsByTagName("nsamples"))
-                qametricpe['comment'] = get_value(pe.getElementsByTagName("comment"))
-                qametric['pe'].append(qametricpe)
+                qametric['pe'].append(QAmetricPE.dict_from_xml_node(pe))
 
             qareport['qametric'].append(qametric)
 
