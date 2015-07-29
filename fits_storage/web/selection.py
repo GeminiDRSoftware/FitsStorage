@@ -378,30 +378,23 @@ def queryselection(query, selection):
         else:
             query = query.filter(Header.focal_plane_mask == selection['focal_plane_mask'])
 
-    if 'qa_state' in selection:
+    if 'qa_state' in selection and selection['qa_state'] != 'AnyQA':
         if selection['qa_state'] == 'Win':
             query = query.filter(or_(Header.qa_state == 'Pass', Header.qa_state == 'Usable'))
         elif selection['qa_state'] == 'NotFail':
             query = query.filter(Header.qa_state != 'Fail')
         elif selection['qa_state'] == 'Lucky':
             query = query.filter(or_(Header.qa_state == 'Pass', Header.qa_state == 'Undefined'))
-        elif selection['qa_state'] == 'AnyQA':
-            # Dummy value to enable persistence in the search form
-            pass
         else:
             query = query.filter(Header.qa_state == selection['qa_state'])
 
     if 'ao' in selection:
-        if selection['ao'] == 'AO':
-            query = query.filter(Header.adaptive_optics == True)
-        else:
-            query = query.filter(Header.adaptive_optics == False)
+        isAO = (selection['ao'] == 'AO')
+        query = query.filter(Header.adaptive_optics == isAO)
 
     if 'lgs' in selection:
-        if selection['lgs'] == 'LGS':
-            query = query.filter(Header.laser_guide_star == True)
-        else:
-            query = query.filter(Header.laser_guide_star == False)
+        isLGS = (selection['lgs'] == 'LGS')
+        query = query.filter(Header.laser_guide_star == isLGS)
 
     if 'detector_roi' in selection:
         if selection['detector_roi'] == 'Full Frame':
@@ -421,18 +414,18 @@ def queryselection(query, selection):
                 query = query.filter(Header.detector_config.contains(thing))
 
     if 'twilight' in selection:
-        if selection['twilight'] == True:
+        if selection['twilight']:
             query = query.filter(Header.object == 'Twilight')
-        if selection['twilight'] == False:
+        else:
             query = query.filter(Header.object != 'Twilight')
 
     if 'az' in selection:
-        [a, b] = _parse_range(selection['az'])
+        a, b = _parse_range(selection['az'])
         if a is not None and b is not None:
             query = query.filter(Header.azimuth >= a).filter(Header.azimuth < b)
 
     if 'el' in selection:
-        [a, b] = _parse_range(selection['el'])
+        a, b = _parse_range(selection['el'])
         if a is not None and b is not None:
             query = query.filter(Header.elevation >= a).filter(Header.elevation < b)
 
@@ -447,19 +440,19 @@ def queryselection(query, selection):
                 # Invalid value.
                 selection['warning'] = 'Invalid RA format. Ignoring your RA constraint.'
                 valid = False
-            # valid single value, get search radius
-            if 'sr' in selection.keys():
-                sr = srtodeg(selection['sr'])
-                if sr is None:
-                    selection['warning'] = 'Invalid Search Radius, defaulting to 3 arcmin'
+            else:
+                # valid single value, get search radius
+                if 'sr' in selection.keys():
+                    sr = srtodeg(selection['sr'])
+                    if sr is None:
+                        selection['warning'] = 'Invalid Search Radius, defaulting to 3 arcmin'
+                        selection['sr'] = '180'
+                        sr = srtodeg(selection['sr'])
+                else:
+                    # No search radius specified. Default it for them
+                    selection['warning'] = 'No Search Radius given, defaulting to 3 arcmin'
                     selection['sr'] = '180'
                     sr = srtodeg(selection['sr'])
-            else:
-                # No search radius specified. Default it for them
-                selection['warning'] = 'No Search Radius given, defaulting to 3 arcmin'
-                selection['sr'] = '180'
-                sr = srtodeg(selection['sr'])
-            if valid:
                 lower = degs - sr
                 upper = degs + sr
 
@@ -493,19 +486,19 @@ def queryselection(query, selection):
                 # Invalid value.
                 selection['warning'] = 'Invalid Dec format. Ignoring your Dec constraint.'
                 valid = False
-            # valid single value, get search radius
-            if 'sr' in selection.keys():
-                sr = srtodeg(selection['sr'])
-                if sr is None:
-                    selection['warning'] = 'Invalid Search Radius, defaulting to 3 arcmin'
+            else:
+                # valid single value, get search radius
+                if 'sr' in selection.keys():
+                    sr = srtodeg(selection['sr'])
+                    if sr is None:
+                        selection['warning'] = 'Invalid Search Radius, defaulting to 3 arcmin'
+                        selection['sr'] = '180'
+                        sr = srtodeg(selection['sr'])
+                else:
+                    # No search radius specified. Default it for them
+                    selection['warning'] = 'No Search Radius given, defaulting to 3 arcmin'
                     selection['sr'] = '180'
                     sr = srtodeg(selection['sr'])
-            else:
-                # No search radius specified. Default it for them
-                selection['warning'] = 'No Search Radius given, defaulting to 3 arcmin'
-                selection['sr'] = '180'
-                sr = srtodeg(selection['sr'])
-            if valid:
                 lower = degs - sr
                 upper = degs + sr
 
@@ -550,17 +543,15 @@ def queryselection(query, selection):
             try:
                 lower = float(match.group(1))
                 upper = float(match.group(2))
-            except:
-                pass
-            if (lower is None) or (upper is None):
+            except (ValueError, TypeError):
                 selection['warning'] = 'Invalid format for exposure time range. Ignoring it.'
                 valid = False
 
-        if valid and (lower is not None) and (upper is not None):
+        if valid:
             query = query.filter(Header.exposure_time >= lower).filter(Header.exposure_time <= upper)
 
     if 'crpa' in selection:
-        [a, b] = _parse_range(selection['crpa'])
+        a, b = _parse_range(selection['crpa'])
         if a is not None and b is not None:
             query = query.filter(Header.cass_rotator_pa >= a).filter(Header.cass_rotator_pa < b)
 
@@ -593,15 +584,12 @@ def queryselection(query, selection):
             selection['warning'] = 'Central Wavelength value is invalid and has been ignored'
             valid = False
 
-        if valid and ((lower > 30.0) or (lower < 0.2) or (upper > 30.0) or (upper < 0.2)):
+        if valid and not ((0.2 < lower < 30) and (0.2 < upper < 30)):
             selection['warning'] = 'Invalid Central wavelength value. Value should be in microns, >0.2 and <30.0'
             valid = False
 
         if valid and (lower > upper):
-            # swap them over
-            tmp = lower
-            lower = upper
-            upper = tmp
+            lower, upper = upper, lower
 
         if valid:
             query = query.filter(Header.central_wavelength > lower).filter(Header.central_wavelength < upper)
@@ -629,21 +617,18 @@ def _parse_range(string):
     """
 
     match = range_cre.match(string)
-    a = None
-    b = None
+    a, b = None, None
     if match and len(match.groups()) == 2:
-        a = match.group(1)
-        b = match.group(2)
+        m1, m2 = match.group(1), match.group(2)
 
         # Check that we can convert them to floats, but don't actually do so
         try:
-            aa = float(a)
-            bb = float(b)
+            aa, bb = float(m1), float(m2)
+            a, b = m1, m2
         except (ValueError, TypeError):
-            a = None
-            b = None
+            pass
 
-        return [a, b]
+    return a, b
 
 def selection_to_URL(selection):
     """
@@ -651,8 +636,8 @@ def selection_to_URL(selection):
     """
     urlstring = ''
 
-    for key in selection.keys():
-        if key in ['warning', 'Search', 'ObsLogsOnly']:
+    for key in selection:
+        if key in {'warning', 'Search', 'ObsLogsOnly'}:
             # Don't put the warning text or search buttons in the URL
             pass
         elif key == 'program_id':
@@ -671,7 +656,7 @@ def selection_to_URL(selection):
                 urlstring += '/spectroscopy'
             else:
                 urlstring += '/imaging'
-        elif key in ['ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera', 'exposure_time']:
+        elif key in {'ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera', 'exposure_time'}:
             urlstring += '/%s=%s' % (key, selection[key])
         elif key == 'present':
             if selection[key] is True:
