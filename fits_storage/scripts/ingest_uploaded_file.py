@@ -96,7 +96,7 @@ try:
 
 
     logger.info("Queueing for Ingest: %s" % dst)
-    iq_id = add_to_ingestqueue(session, options.filename, path)
+    iq_id = add_to_ingestqueue(session, logger, options.filename, path)
 
     if fileuploadlog:
         fileuploadlog.ingestqueue_id = iq_id
