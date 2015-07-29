@@ -440,7 +440,7 @@ def usagedetails(req, things):
                 if fileuploadlog.ut_transfer_start and fileuploadlog.ut_transfer_complete:
                     tdel = fileuploadlog.ut_transfer_complete - fileuploadlog.ut_transfer_start
                     req.write("<TD>%.2f</TD>" % tdel.total_seconds())
-                    req.write("<TD>%.2f</TD>" % fileuploadlog.size / (1000*tdel.total_seconds()))
+                    req.write("<TD>%.2f</TD>" % (fileuploadlog.size / (1000*tdel.total_seconds())))
                 else:
                     req.write("<TD></TD><TD></TD>")
                 req.write("<TD>%s</TD>" % fileuploadlog.filename)
@@ -455,7 +455,7 @@ def usagedetails(req, things):
                 if fileuploadlog.s3_ut_start and fileuploadlog.s3_ut_end:
                     tdel = fileuploadlog.s3_ut_end - fileuploadlog.s3_ut_start
                     req.write("<TD>%.2f</TD>" % tdel.total_seconds())
-                    req.write("<TD>%.2f</TD>" % fileuploadlog.size / (1000*tdel.total_seconds()))
+                    req.write("<TD>%.2f</TD>" % (fileuploadlog.size / (1000*tdel.total_seconds())))
                 else:
                     req.write("<TD></TD><TD></TD>")
                 req.write("<TD>%s</TD>" % fileuploadlog.s3_ok)
