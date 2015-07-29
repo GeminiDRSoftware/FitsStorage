@@ -1,12 +1,24 @@
-PYTHONPATH=/opt/sqlalchemy/lib/python2.6/site-packages:/opt/FitsStorage:/opt/gemini_python:/astro/iraf/rhux-x86_64-glibc2.5/gempylocal/lib/stsci_python/lib/python2.6/site-packages:/astro/iraf/rhux-x86_64-glibc2.5/gempylocal/gemaux_python_internal/lib/python2.6/site-packages:/astro/iraf/rhux-x86_64-glibc2.5/gempylocal/gemaux_python_internal/lib/python2.6/site-packages
+UR_DIR=/opt/Ureka/Ureka
+UR_VARIANT=common
+UR_OS=linux-rhe6
+UR_CPU=x86_64
+UR_BITS=64
+PATH=/opt/Ureka/Ureka/variants/common/bin:/opt/Ureka/Ureka/bin:/opt/Ureka/Ureka/python/bin:/usr/local/bin:/bin:/usr/bin
+MAILTO=fitsadmin@gemini.edu
+PYTHON_EGG_CACHE=/var/cache/python_egg_cache
+PYTHONPATH=/opt/FitsStorage:/opt/python_modules/lib/python2.7/site-packages:/opt/gemini_python
 0 9 * * * /home/fitsdata/diskspace.py
-5 8 * * * /astro/iraf/rhux-x86_64-glibc2.5/gempylocal/bin/python /opt/FitsStorage/delete_files.py --auto --yesimsure --demon --emailto='phirst@gemini.edu'
-0 * * * * /astro/iraf/rhux-x86_64-glibc2.5/gempylocal/bin/python /opt/FitsStorage/service_ingest_queue.py --demon --lockfile=siq_lock.1
-*/6 * * * * /astro/iraf/rhux-x86_64-glibc2.5/gempylocal/bin/python /opt/FitsStorage/add_to_ingest_queue.py --file-re=today --demon
-50 13 * * * /astro/iraf/rhux-x86_64-glibc2.5/gempylocal/bin/python /opt/FitsStorage/add_to_ingest_queue.py --file-re=tenday --demon
-15 * * * * /astro/iraf/rhux-x86_64-glibc2.5/gempylocal/bin/python /opt/FitsStorage/add_to_ingest_queue.py --file-re=fourday --demon
-1 * * * * /astro/iraf/rhux-x86_64-glibc2.5/gempylocal/bin/python /opt/FitsStorage/rollcall.py --limit 25000 --demon
-0 7 * * * /astro/iraf/rhux-x86_64-glibc2.5/gempylocal/bin/python /opt/FitsStorage/database_vacuum.py --demon
-30 7 * * * /astro/iraf/rhux-x86_64-glibc2.5/gempylocal/bin/python /opt/FitsStorage/database_backup.py --demon
-0 8 * * * /astro/iraf/rhux-x86_64-glibc2.5/gempylocal/bin/python /opt/FitsStorage/YouGotDataEmail.py
-0 8 * * Tue /astro/iraf/rhux-x86_64-glibc2.5/gempylocal/bin/python /opt/FitsStorage/MissingCalibrationEmail.py
+5 8 * * * python /opt/FitsStorage/scripts/delete_files.py --auto --yesimsure --demon --emailto='fitsadmin@gemini.edu'
+0 * * * * python /opt/FitsStorage/scripts/feed_ingest_queue.py --demon --site=N --lockfile
+*/5 * * * * python /opt/FitsStorage/scripts/service_ingest_queue.py --demon --lockfile --name=siq_1
+*/4 * * * * python /opt/FitsStorage/scripts/add_to_ingest_queue.py --file-re=today --demon
+15 * * * * python /opt/FitsStorage/scripts/add_to_ingest_queue.py --file-re=fourday --demon
+50 13 * * * python /opt/FitsStorage/scripts/add_to_ingest_queue.py --file-re=twentyday --demon
+1 * * * * python /opt/FitsStorage/scripts/rollcall.py --limit 25000 --demon
+0 7 * * * python /opt/FitsStorage/scripts/database_vacuum.py --demon
+30 7 * * * python /opt/FitsStorage/scripts/database_backup.py --demon
+50 7 * * * python /opt/FitsStorage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015A
+55 7 * * * python /opt/FitsStorage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015B
+0 8 * * *  python /opt/FitsStorage/scripts/YouGotDataEmail.py --demon
+0 8 * * Tue python /opt/FitsStorage/scripts/MissingCalibrationEmail.py
+
