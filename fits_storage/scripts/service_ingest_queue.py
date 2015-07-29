@@ -148,12 +148,17 @@ while loop:
                 else:
                     # Check if it is locked
                     locked = False
-                    fd = open(fullpath, "r+")
                     try:
-                        fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                        fd = open(fullpath, "r+")
+                        try:
+                            fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                        except IOError:
+                            locked = True
+                        fd.close()
                     except IOError:
-                        locked = True
-                    fd.close()
+                        # Probably don't have write permission to the file
+                        logger.warning("Could not open %s for update to test lock", fullpath)
+
                     if locked:
                         logger.info("Deferring ingestion of locked file %s", iq.filename)
                         # Defer ingestion of this file for 15 secs
@@ -172,7 +177,7 @@ while loop:
                 # Now we also add this file to our export list if we have downstream servers and we did add a diskfile
                 if added_diskfile:
                     for destination in export_destinations:
-                        add_to_exportqueue(session, iq.filename, iq.path, destination)
+                        add_to_exportqueue(session, logger, iq.filename, iq.path, destination)
             except:
                 logger.info("Problem Ingesting File - Rolling back")
                 logger.error("Exception ingesting file %s: %s : %s... %s", iq.filename, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
