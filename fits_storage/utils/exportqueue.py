@@ -12,8 +12,7 @@ from sqlalchemy import desc, join
 from sqlalchemy.orm import make_transient
 from sqlalchemy.orm.exc import ObjectDeletedError
 
-from ..fits_storage_config import storage_root, using_s3, export_bzip
-from ..logger import logger
+from ..fits_storage_config import storage_root, using_s3, export_bzip, upload_auth_cookie
 
 from ..orm.file import File
 from ..orm.diskfile import DiskFile
@@ -27,7 +26,7 @@ if using_s3:
     import logging
     logging.getLogger('boto').setLevel(logging.CRITICAL)
 
-def add_to_exportqueue(session, filename, path, destination):
+def add_to_exportqueue(session, logger, filename, path, destination):
     """
     Adds a file to the export queue
     """
@@ -36,15 +35,11 @@ def add_to_exportqueue(session, filename, path, destination):
     logger.debug("Instantiated ExportQueue object")
     session.add(eq)
     session.commit()
-    logger.debug("Added to database")
-    try:
-        logger.debug("Added id %d for filename %s to exportqueue", eq.id, eq.filename)
-        return eq.id
-    except ObjectDeletedError:
-        logger.debug("Added filename %s to exportqueue which was immediately deleted", filename)
+    make_transient(eq)
+    logger.debug("Added id %d for filename %s to exportqueue", eq.id, eq.filename)
 
 
-def export_file(session, filename, path, destination):
+def export_file(session, logger, filename, path, destination):
     """
     Exports a file to a downstream server.
 
@@ -72,7 +67,7 @@ def export_file(session, filename, path, destination):
     our_md5 = diskfile.data_md5
 
     logger.debug("Checking for remote file md5")
-    dest_md5 = get_destination_data_md5(filename, destination)
+    dest_md5 = get_destination_data_md5(filename, logger, destination)
 
     if (dest_md5 is not None) and (dest_md5 == our_md5):
         logger.info("Data %s is already at %s with md5 %s", filename, destination, dest_md5)
@@ -125,7 +120,7 @@ def export_file(session, filename, path, destination):
         our_md5 = diskfile.data_md5
 
     # Construct upload URL
-    url = "http://%s/upload_file/%s" % (destination, filename)
+    url = "%s/upload_file/%s" % (destination, filename)
 
     # Connect to the URL and post the data
     # NB need to make the data buffer into a bytearray not a str
@@ -138,6 +133,7 @@ def export_file(session, filename, path, destination):
         request.add_header('Cache-Control', 'no-cache')
         request.add_header('Content-Length', '%d' % len(postdata))
         request.add_header('Content-Type', 'application/octet-stream')
+        request.add_header('Cookie', 'gemini_fits_upload_auth=%s' % upload_auth_cookie)
         u = urllib2.urlopen(request)
         response = u.read()
         u.close()
@@ -146,7 +142,7 @@ def export_file(session, filename, path, destination):
 
         # verify that it transfered OK
         ok = True
-        if http_status == apache.HTTP_OK:
+        if http_status == apache.OK:
             # response is a short json document
             verification = json.loads(response)[0]
             if verification['filename'] != filename:
@@ -177,7 +173,7 @@ def export_file(session, filename, path, destination):
         logger.error("Problem posting %d bytes of data to destination server at: %s", len(postdata), url)
         raise
 
-def pop_exportqueue(session):
+def pop_exportqueue(session, logger):
     """
     Returns the next thing to export off the export queue, and sets the
     inprogress flag on that entry.
@@ -244,7 +240,7 @@ def exportqueue_length(session):
     session.commit()
     return length
 
-def get_destination_data_md5(filename, destination):
+def get_destination_data_md5(filename, logger, destination):
     """
     Queries the jsonfilelist url at the destination to get the md5 of the file
     at the destination.
@@ -252,7 +248,7 @@ def get_destination_data_md5(filename, destination):
 
     # Construct and retrieve the URL
     try:
-        url = "http://%s/jsonfilelist/present/filename=%s" % (destination, filename)
+        url = "%s/jsonfilelist/present/filename=%s" % (destination, filename)
         u = urllib2.urlopen(url)
         json_data = u.read()
         u.close()
@@ -283,7 +279,7 @@ def get_destination_data_md5(filename, destination):
     # Should never get here
     return None
 
-def retry_failures(session, interval):
+def retry_failures(session, logger, interval):
     """
     This function looks for failed transfers in the export queue, where
     the failure is more than <interval> ago, and flags them for re-try

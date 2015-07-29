@@ -109,7 +109,7 @@ while loop:
     try:
         # Request a queue entry
         logger.debug("Requesting an exportqueue entry")
-        eq = pop_exportqueue(session)
+        eq = pop_exportqueue(session, logger)
 
         if eq is None:
             logger.info("Nothing on queue.")
@@ -121,13 +121,13 @@ while loop:
             time.sleep(10)
 
             # Mark any old failures for retry
-            retry_failures(session, interval)
+            retry_failures(session, logger, interval)
 
         else:
             logger.info("Exporting %s, (%d in queue)", eq.filename, exportqueue_length(session))
 
             try:
-                sucess = export_file(session, eq.filename, eq.path, eq.destination)
+                sucess = export_file(session, logger, eq.filename, eq.path, eq.destination)
             except:
                 logger.info("Problem Exporting File - Rolling back")
                 session.rollback()

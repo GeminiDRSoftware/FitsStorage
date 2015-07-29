@@ -68,7 +68,7 @@ i = 0
 n = len(filenames)
 for i in range(n):
     logger.info("Queueing for Export: (%d/%d): %s" % (i, n, filenames[i]))
-    add_to_exportqueue(session, filenames[i], paths[i], destination)
+    add_to_exportqueue(session, logger, filenames[i], paths[i], destination)
 
 session.close()
 logger.info("*** add_to_exportqueue.py exiting normally at %s" % datetime.datetime.now())
