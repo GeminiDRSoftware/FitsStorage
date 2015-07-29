@@ -8,7 +8,7 @@ from ..gemini_metadata_utils import gemini_telescope, gemini_instrument
 from ..gemini_metadata_utils import gemini_observation_type, gemini_observation_class, gemini_reduction_state
 from ..gemini_metadata_utils import gemini_caltype, gmos_gratingname, gmos_focal_plane_mask, gemini_fitsfilename
 from ..gemini_metadata_utils import gemini_binning, GeminiDataLabel, GeminiObservation, GeminiProgram, ratodeg, dectodeg, srtodeg
-from ..gemini_metadata_utils import gemini_date, gemini_daterange, ZERO_OFFSET, ONEDAY_OFFSET
+from ..gemini_metadata_utils import gemini_date, gemini_daterange, get_time_period, gemini_time_period_from_range
 
 import dateutil.parser
 import datetime
@@ -21,8 +21,6 @@ from ..orm.diskfile import DiskFile
 from ..orm.file import File
 from ..orm.footprint import Footprint
 from ..orm.photstandard import PhotStandardObs
-
-from ..fits_storage_config import use_as_archive
 
 # A number of the choices in the getselection inner loop are just simple checks
 # that can be represented by a data structure. It's better to keep it like that
@@ -299,16 +297,6 @@ queryselection_filters = (
     ('mode',          Header.mode),
     )
 
-def get_date_offset():
-    if use_as_archive:
-        return ZERO_OFFSET
-
-    # Calculate the proper offset to add to the date
-    # We consider the night boundary to be 14:00 local time
-    # This is midnight UTC in Hawaii, completely arbitrary in Chile
-    zone = time.altzone if time.daylight else time.timezone
-    return timedelta(hours=14) + timedelta(seconds=zone) - ONEDAY_OFFSET
-
 def queryselection(query, selection):
     """
     Given an sqlalchemy query object and a selection dictionary,
@@ -342,8 +330,7 @@ def queryselection(query, selection):
         # For the local fits servers, we do some manipulation to treat
         # it as an observing night...
 
-        startdt =  gemini_date(selection['date'], offset=get_date_offset(), as_datetime=True)
-        enddt = startdt + ONEDAY_OFFSET
+        startdt, enddt = get_time_period(selection['date'])
 
         # check it's between these two
         query = query.filter(Header.ut_datetime >= startdt).filter(Header.ut_datetime < enddt)
@@ -351,13 +338,7 @@ def queryselection(query, selection):
     # Should we query by daterange?
     if 'daterange' in selection:
         # Parse the date to start and end datetime objects
-        startdt, enddt = gemini_daterange(selection['daterange'], offset=get_date_offset(), as_datetime=True)
-        # Flip them round if reversed
-        if startdt > enddt:
-            tmp = enddt
-            enddt = startdt
-            startdt = tmp
-        enddt += ONEDAY_OFFSET
+        startdt, enddt = gemini_time_period_from_range(selection['daterange'])
         # check it's between these two
         query = query.filter(Header.ut_datetime >= startdt).filter(Header.ut_datetime < enddt)
 

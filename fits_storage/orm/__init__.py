@@ -7,8 +7,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects import postgresql
 from sqlalchemy import func, update
-from sqlalchemy.sql.sqltypes import String, DateTime, NullType
-from datetime import datetime
+from sqlalchemy.sql.sqltypes import String, Date, DateTime, NullType
+from datetime import datetime, date
 
 from ..fits_storage_config import fits_database
 
@@ -29,13 +29,14 @@ class StringLiteral(String):
     def literal_processor(self, dialect):
         super_processor = super(StringLiteral, self).literal_processor(dialect)
         def process(value):
-            if isinstance(value, datetime) or value is None:
+            if isinstance(value, (date, datetime)) or value is None:
                 return str(value)
             return super_processor(value)
         return process
 
 class LiteralDialect(postgresql.dialect):
     colspecs = {
+        Date: StringLiteral,
         DateTime: StringLiteral,
         NullType: StringLiteral
     }

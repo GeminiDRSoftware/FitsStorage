@@ -14,7 +14,7 @@ from .selection import sayselection, queryselection
 from .calibrations import interval_hours
 from ..cal import get_cal_object
 from ..fits_storage_config import using_sqlite, fits_system_status, das_calproc_path
-from ..gemini_metadata_utils import gemini_daterange, ONEDAY_OFFSET
+from ..gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
 
 from ..apache_return_codes import HTTP_OK, HTTP_NOT_IMPLEMENTED
 
@@ -337,21 +337,9 @@ def gmoscal(req, selection, do_json=False):
             # utdates is a reverse sorted list for which there were biases.
             if 'daterange' in selection:
                 # Parse the date to start and end datetime objects
-                offset = timedelta(hours=14) + timedelta(seconds=time.timezone)
-                startdt, enddt = gemini_daterange(selection['daterange'], offset=offset, as_datetime=True)
-
-                startdt = startdt - ONEDAY_OFFSET
-                enddt = enddt
-                # Flip them round if reversed
-                if startdt > enddt:
-                    tmp = enddt
-                    enddt = startdt
-                    startdt = tmp
-                startdate = startdt.date()
-                enddate = enddt.date()
+                date, enddate = gemini_time_period_from_range(selection['daterange'], as_date=True)
     
                 nobiases = []
-                date = startdate
                 while date <= enddate:
                     if date not in utdates:
                         nobiases.append(str(date))

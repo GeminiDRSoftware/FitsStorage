@@ -9,7 +9,7 @@ from ..orm.header import Header
 from ..orm.obslog import Obslog
 from ..fits_storage_config import fits_open_result_limit, fits_closed_result_limit, use_as_archive
 from .selection import queryselection, openquery
-from ..gemini_metadata_utils import gemini_date, gemini_daterange
+from ..gemini_metadata_utils import gemini_date, gemini_time_period_from_range
 from sqlalchemy import asc, desc
 import dateutil.parser
 
@@ -98,15 +98,12 @@ def list_obslogs(session, selection, orderby):
         # Get parsed start and end datetime objects
         daterange = selection['daterange']
         try:
-            start, end = gemini_daterange(daterange, as_datetime=True)
+            start, end = gemini_time_period_from_range(daterange)
         except (TypeError, ValueError):
             raise ValueError('Not a valid daterange: {0}'.format(daterange))
 
-        # Flip them round if reversed
-        if start > end:
-            start, end = end, start
         # check it's between these two
-        query = query.filter(Obslog.date >= start).filter(Obslog.date <= end)
+        query = query.filter(Obslog.date >= start).filter(Obslog.date < end)
 
     if 'program_id' in selection:
         query = query.filter(Obslog.program_id == selection['program_id'])

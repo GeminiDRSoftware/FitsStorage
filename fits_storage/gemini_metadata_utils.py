@@ -5,6 +5,7 @@ classes and functions for parsing the metadata in Gemini FITS files.
 import re
 import datetime
 import dateutil.parser
+from .fits_storage_config import use_as_archive
 
 DATE_LIMIT_LOW = dateutil.parser.parse('19900101')
 DATE_LIMIT_HIGH = dateutil.parser.parse('20500101')
@@ -554,3 +555,37 @@ class GeminiProgram:
             # that someone just made up.
             self.valid = False
             self.is_eng = True
+
+def get_date_offset():
+    '''This function is used to add set offsets to the dates. The aim is to
+       get the "current date" adjusting for the local time, taking into
+       account the different sites where Gemini is based'''
+
+    if use_as_archive:
+        return ZERO_OFFSET
+
+    # Calculate the proper offset to add to the date
+    # We consider the night boundary to be 14:00 local time
+    # This is midnight UTC in Hawaii, completely arbitrary in Chile
+    zone = time.altzone if time.daylight else time.timezone
+    return timedelta(hours=14) + timedelta(seconds=zone) - ONEDAY_OFFSET
+
+def get_time_period(start, end=None, as_date=False):
+    startdt =  gemini_date(start, offset=get_date_offset(), as_datetime=True)
+    if end is None:
+        enddt = startdt
+    else:
+        enddt = gemini_date(end, offset=get_date_offset(), as_datetime=True)
+        # Flip them round if reversed
+        if startdt > enddt:
+            startdt, enddt = enddt, startdt
+    enddt += ONEDAY_OFFSET
+
+    if as_date:
+        return startdt.date(), enddt.date()
+
+    return startdt, enddt
+
+def gemini_time_period_from_range(rng, as_date=False):
+    a, _, b = gemini_daterange(rng).partition('-')
+    return get_time_period(a, b, as_date)

@@ -12,7 +12,7 @@ import json
 import math
 import dateutil.parser
 from ..apache_return_codes import HTTP_OK, HTTP_BAD_REQUEST, HTTP_NOT_ACCEPTABLE
-from ..gemini_metadata_utils import ONEDAY_OFFSET
+from ..gemini_metadata_utils import gemini_date, get_date_offset
 
 from ..orm.qastuff import QAreport, QAmetricSB, QAmetricIQ, QAmetricZP, QAmetricPE
 from ..orm.diskfile import DiskFile
@@ -377,13 +377,7 @@ def qaforgui(req, things):
     """
     datestamp = None
     try:
-        datestampstr = "%s 14:00:00" % things[0]
-        datestamp = dateutil.parser.parse(datestampstr)
-        if time.daylight:
-            tzoffset = datetime.timedelta(seconds=time.altzone)
-        else:
-            tzoffset = datetime.timedelta(seconds=time.timezone)
-        datestamp = datestamp + tzoffset - ONEDAY_OFFSET
+        datestamp = gemini_date(things[0], offset=get_date_offset(), as_datetime=True)
         # Default 3 days worth for the gui, to stop the return getting huge over time
         window = datetime.timedelta(days=3)
         enddatestamp = datestamp+window
