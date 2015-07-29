@@ -112,13 +112,12 @@ while loop:
         eq = pop_exportqueue(session, logger)
 
         if eq is None:
-            logger.info("Nothing on queue.")
             if options.empty:
-                logger.info("--empty flag set, exiting")
+                logger.info("Nothing on queue and --empty flag set, exiting")
                 break
             else:
-                logger.info("...Waiting")
-            time.sleep(10)
+                logger.info("Nothing on Queue... Waiting")
+            time.sleep(2)
 
             # Mark any old failures for retry
             retry_failures(session, logger, interval)
