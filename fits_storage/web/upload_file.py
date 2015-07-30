@@ -58,6 +58,7 @@ def upload_file(req, filename, processed_cal="False"):
         # but that's fine, files are never more than a few hundred MB...
         fileuploadlog.ut_transfer_start = datetime.datetime.utcnow()
         clientdata = req.read()
+
         fileuploadlog.ut_transfer_complete = datetime.datetime.utcnow()
         fullfilename = os.path.join(upload_staging_path, filename)
     
@@ -102,6 +103,11 @@ def upload_file(req, filename, processed_cal="False"):
         else:
             return HTTP_OK
 
+    except IOError:
+        # Probably a network timeout
+        fileuploadlog.add_note("IOError")
+        return HTTP_OK
+ 
     finally:
         session.commit()
         session.close()
