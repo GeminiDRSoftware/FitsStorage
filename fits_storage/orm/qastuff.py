@@ -4,6 +4,13 @@ from sqlalchemy.orm import relation, relationship
 
 from . import Base
 
+import json
+
+report_fields = (
+    'hostname', 'userid', 'processid', 'executable', 'software',
+    'software_version', 'context', 'submit_time', 'submit_host'
+    )
+
 class QAreport(Base):
     """
     This is the ORM class for a QA metric report.
@@ -52,6 +59,23 @@ class QAreport(Base):
                 qa.pe_metrics.append(QAmetricPE.from_metrics(qa, qametric_dict))
 
         return qa
+
+    def __getitem__(self, key):
+        try:
+            return getattr(self, key)
+        except (AttributeError, TypeError):
+            raise KeyError(key)
+
+    def to_dict(self):
+        return dict((key, self[key]) for key in report_fields)
+
+iq_fields = (
+    'datalabel', 'filename', 'detector',
+    'fwhm', 'fwhm_std', 'isofwhm', 'isofwhm_std', 'ee50d', 'ee50d_std',
+    'elip', 'elip_std', 'pa', 'pa_std', 'adaptive_optics', 'ao_seeing',
+    'strehl', 'strehl_std', 'nsamples', 'percentile_band',
+    'comment'
+    )
 
 class QAmetricIQ(Base):
     """
@@ -113,6 +137,24 @@ class QAmetricIQ(Base):
 
         return iq
 
+    def __getitem__(self, key):
+        try:
+            return getattr(self, key)
+        except (AttributeError, TypeError):
+            raise KeyError(key)
+
+    def to_dict(self):
+        return dict((key, self[key]) for key in iq_fields)
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
+zp_fields = (
+    'datalabel', 'filename', 'detector',
+    'mag', 'mag_std', 'cloud', 'cloud_std', 'photref', 'nsamples', 'percentile_band',
+    'comment'
+    )
+
 class QAmetricZP(Base):
     """
     This is the ORM class for a QA ZP metric measurement
@@ -156,6 +198,24 @@ class QAmetricZP(Base):
         zp.comment = ", ".join(zp_dict.get('comment'))
 
         return zp
+
+    def __getitem__(self, key):
+        try:
+            return getattr(self, key)
+        except (AttributeError, TypeError):
+            raise KeyError(key)
+
+    def to_dict(self):
+        return dict((key, self[key]) for key in zp_fields)
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
+sb_fields = (
+    'datalabel', 'filename', 'detector',
+    'mag', 'mag_std', 'electrons', 'electrons_std', 'nsamples', 'percentile_band',
+    'comment'
+    )
 
 class QAmetricSB(Base):
     """
@@ -206,6 +266,24 @@ class QAmetricSB(Base):
 
         return sb
 
+    def __getitem__(self, key):
+        try:
+            return getattr(self, key)
+        except (AttributeError, TypeError):
+            raise KeyError(key)
+
+    def to_dict(self):
+        return dict((key, self[key]) for key in sb_fields)
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
+pe_fields = (
+    'datalabel', 'filename', 'detector',
+    'dra', 'dra_std', 'ddec', 'ddec_std', 'astref', 'nsamples',
+    'comment'
+    )
+
 class QAmetricPE(Base):
     """
     This is the ORM class for a QA PE (Astrometric Pointing Error) metric measurement
@@ -245,3 +323,15 @@ class QAmetricPE(Base):
         pe.nsamples = pe_dict.get('nsamples')
 
         return pe
+
+    def __getitem__(self, key):
+        try:
+            return getattr(self, key)
+        except (AttributeError, TypeError):
+            raise KeyError(key)
+
+    def to_dict(self):
+        return dict((key, self[key]) for key in pe_fields)
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
