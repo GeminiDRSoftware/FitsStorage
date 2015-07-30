@@ -3,12 +3,10 @@ from sqlalchemy import Integer, BigInteger, SmallInteger, Enum, DateTime
 
 from . import Base
 
-CALTYPE_ENUM = Enum('bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark', 'processed_flat',
-                        'processed_fringe', 'processed_arc', 'pinhole_mask', 'ronchi_mask', 'spectwilight',
-                        'lampoff_flat', 'qh_flat', 'domeflat', 'specphot', 'photometric_standard',
-                        'telluric_standard', 'polarization_standard', 'astrometric_standard',
-                        'polarization_flat',
-                        name='caltype')
+from ..gemini_metadata_utils import cal_types
+
+CALTYPE_ENUM = Enum(*cal_types, name='caltype')
+
 class CalCache(Base):
     """
     This is the ORM class for the calibration Association Cache. It's too slow to do all the calibration

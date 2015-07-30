@@ -16,12 +16,13 @@ import pywcs
 
 import astrodata # For astrodata.Errors
 
+from ..gemini_metadata_utils import obs_types, obs_classes, reduction_states
+
 # Enumerated Column types
-OBSTYPE_ENUM = Enum('OBJECT', 'BIAS', 'FLAT', 'ARC', 'DARK', 'PINHOLE', 'FRINGE', 'RONCHI', 'CAL', 'MASK', name='obstype')
-OBSCLASS_ENUM = Enum('science', 'acq', 'progCal', 'partnerCal', 'dayCal', 'acqCal', name='obsclass')
+OBSTYPE_ENUM = Enum(*obs_types, name='obstype')
+OBSCLASS_ENUM = Enum(*obs_classes, name='obsclass')
+REDUCTION_STATE_ENUM = Enum(*reduction_states, name='reduction_state')
 TELESCOPE_ENUM = Enum('Gemini-North', 'Gemini-South', name='telescope')
-REDUCTION_STATE_ENUM = Enum('RAW', 'PREPARED', 'PROCESSED_BIAS', 'PROCESSED_FLAT', 'PROCESSED_DARK', 'PROCESSED_FRINGE',
-                            'PROCESSED_ARC', 'PROCESSED_TELLURIC', name='reduction_state')
 QASTATE_ENUM = Enum('Fail', 'CHECK', 'Undefined', 'Usable', 'Pass', name='qa_state')
 MODE_ENUM = Enum('imaging', 'spectroscopy', 'LS', 'MOS', 'IFS', 'IFP', name='mode')
 
