@@ -105,7 +105,7 @@ session = sessionfactory()
 while loop:
     try:
         # Request a queue entry
-        ccq = pop_calcachequeue(session, options.fast_rebuild)
+        ccq = pop_calcachequeue(session, logger, options.fast_rebuild)
 
         if ccq is None:
             logger.info("Nothing on queue.")
