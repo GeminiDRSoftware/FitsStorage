@@ -305,8 +305,9 @@ def gemini_reduction_state(string):
 cal_types = (
     'bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark',
     'processed_flat', 'processed_arc', 'processed_fringe', 'pinhole_mask',
-    'ronchi_mask', 'lampoff_flat', 'qh_flat', 'specphot', 'photometric_standard',
-    'telluric_standard'
+    'ronchi_mask', 'spectwilight', 'lampoff_flat', 'qh_flat', 'specphot', 
+    'photometric_standard', 'telluric_standard', 'domeflat',
+    'polarization_standard', 'astrometric_standard', 'polarization_flat'
     )
 def gemini_caltype(string):
     """
