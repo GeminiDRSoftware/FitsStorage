@@ -16,6 +16,7 @@ import bz2
 
 if using_s3:
     from ..fits_storage_config import s3_staging_area, s3_bucket_name, aws_access_key, aws_secret_key
+    from aws_s3 import fetch_to_staging, upload_file
     from boto.s3.connection import S3Connection
     from boto.s3.key import Key
 
@@ -80,9 +81,11 @@ def pop_previewqueue(session, logger):
 def make_preview(session, logger, diskfile):
     """
     Make the preview, given the diskfile.
-    This is called from within service_ingest_queue ingest_file
+    This can be called from within service_ingest_queue ingest_file, in which case
     - it will use the pre-fetched / pre-decompressed / pre-opened astrodata object if possible
     - the diskfile object should contain an ad_object member which is an AstroData instance
+    It can also be called by service_preview_queue in which case we won't have that so it will
+    then either open the file or fetch it from S3 as appropriate etc.
     """
 
     # Setup the preview file
@@ -94,34 +97,39 @@ def make_preview(session, logger, diskfile):
         # Create the preview filename 
         preview_fullpath = os.path.join(storage_root, preview_path, preview_filename)
 
+    # Connect to S3?
+    if using_s3:
+        logger.debug("Connecting to S3")
+        s3conn = S3Connection(aws_access_key, aws_secret_key)
+        bucket = s3conn.get_bucket(s3_bucket_name)
+
     # render the preview jpg
-    # OK, for now, we only implement the case where either the diskfile.ad_object exists
-    # or the diskfile represents a local file
+    # Are we responsible for creating an AstroData instance, or is there one for us?
     our_dfado = diskfile.ad_object == None
     our_dfcc = False
     if our_dfado:
         if using_s3:
-            logger.error("This kind of preview build is not yet supported")
-            return
+            # Fetch from S3 to staging area
+            fetch_to_staging(bucket, diskfile.path, diskfile.filename)
+
+        if diskfile.compressed:
+            # Create the uncompressed cache filename and unzip to it
+            nonzfilename = diskfile.filename[:-4]
+            diskfile.uncompressed_cache_file = os.path.join(z_staging_area, nonzfilename)
+            if os.path.exists(diskfile.uncompressed_cache_file):
+                os.unlink(diskfile.uncompressed_cache_file)
+            in_file = bz2.BZ2File(diskfile.fullpath(), mode='rb')
+            out_file = open(diskfile.uncompressed_cache_file, 'w')
+            out_file.write(in_file.read())
+            in_file.close()
+            out_file.close()
+            our_dfcc = True
+            ad_fullpath = diskfile.uncompressed_cache_file
         else:
-            if diskfile.compressed:
-                # Create the uncompressed cache filename and unzip to it
-                nonzfilename = diskfile.filename[:-4]
-                diskfile.uncompressed_cache_file = os.path.join(z_staging_area, nonzfilename)
-                if os.path.exists(diskfile.uncompressed_cache_file):
-                    os.unlink(diskfile.uncompressed_cache_file)
-                in_file = bz2.BZ2File(diskfile.fullpath(), mode='rb')
-                out_file = open(diskfile.uncompressed_cache_file, 'w')
-                out_file.write(in_file.read())
-                in_file.close()
-                out_file.close()
-                our_dfcc = True
-                ad_fullpath = diskfile.uncompressed_cache_file
-            else:
-                # Just use the diskfile fullpath
-                ad_fullpath = diskfile.fullpath()
-            # Open the astrodata instance
-            diskfile.ad_object = AstroData(ad_fullpath)
+            # Just use the diskfile fullpath
+            ad_fullpath = diskfile.fullpath()
+        # Open the astrodata instance
+        diskfile.ad_object = AstroData(ad_fullpath)
 
     # Now there should be a diskfile.ad_object, either way...
     fp = open(preview_fullpath, 'w')
@@ -135,6 +143,8 @@ def make_preview(session, logger, diskfile):
     # Do any cleanup from above
     if our_dfado:
         diskfile.ad_object.close()
+        if using_s3:
+            os.unlink(diskfile.fullpath())
         if our_dfcc:
             os.unlink(ad_fullpath)
 
@@ -143,16 +153,8 @@ def make_preview(session, logger, diskfile):
     # If we're not using S3, that's it, the file is in place.
     # If we are using s3, need to upload it now.
     if using_s3:
-        logger.debug("Connecting to S3")
-        s3conn = S3Connection(aws_access_key, aws_secret_key)
-        bucket = s3conn.get_bucket(s3_bucket_name)
-        logger.debug("Creating key: %s", preview_filename)
-        k = Key(bucket)
-        k.key = preview_filename
-        logger.info("Uploading %s to S3 as %s" % (preview_fullpath, preview_filename))
-        k.set_contents_from_filename(preview_fullpath)
+        upload_file(bucket, preview_filename, preview_fullpath, logger)
         os.unlink(preview_fullpath)
-
 
     # Add to preview table
     preview = Preview(diskfile, preview_filename)
