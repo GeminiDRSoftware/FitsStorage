@@ -291,7 +291,7 @@ def gemini_observation_class(string):
 
     return string if string in obs_classes else None
 
-reduction_states = ('RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS', 'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK')
+reduction_states = ('RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS', 'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK', 'PROCESSED_TELLURIC')
 def gemini_reduction_state(string):
     """
     A utility function matching Gemini reduction states
