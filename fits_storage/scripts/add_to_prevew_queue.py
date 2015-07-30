@@ -47,7 +47,7 @@ try:
     logger.info("Got %d diskfileitems to queue" % len(dfs))
     
     for df in dfs:
-        logger.debug("Adding PreviewQueue with diskfile_id %s", df.id)
+        logger.info("Adding PreviewQueue with diskfile_id %s", df.id)
         pq = PreviewQueue(df)
         session.add(pq)
 
