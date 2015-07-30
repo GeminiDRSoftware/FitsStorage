@@ -124,7 +124,7 @@ while loop:
                 diskfile = session.query(DiskFile).filter(DiskFile.id == pq.diskfile_id).one()
                 # make the preview
                 logger.info("Making preview for %d: %s", pq.diskfile_id, diskfile.filename)
-                make_preview(session, diskfile, logger)
+                make_preview(session, logger, diskfile)
             except:
                 logger.info("Problem Making Preview - Rolling back")
                 logger.error("Exception making preview %s: %s : %s... %s", pq.diskfile_id, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
