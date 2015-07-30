@@ -6,7 +6,7 @@ from . import Base
 CALTYPE_ENUM = Enum('bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark', 'processed_flat',
                         'processed_fringe', 'processed_arc', 'pinhole_mask', 'ronchi_mask', 'spectwilight',
                         'lampoff_flat', 'qh_flat', 'domeflat', 'specphot', 'photometric_standard',
-                        'telluric_standard', 
+                        'telluric_standard', 'astrometric_standard'
                         name='caltype')
 class CalCache(Base):
     """
