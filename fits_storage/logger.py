@@ -42,6 +42,9 @@ smtphandler.setFormatter(formatter)
 # Add Handlers to logger
 logger.addHandler(filehandler)
 
+# Turn off boto debug logging
+logging.getLogger('boto').setLevel(logging.WARNING)
+
 # Utility functions follow
 
 def setdebug(want):
