@@ -15,6 +15,7 @@ if(using_s3):
     from fits_storage.fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
     from boto.s3.connection import S3Connection
     from boto.s3.key import Key
+    from fits_storage.utils.aws_s3 import upload_file
 
 
 # Option Parsing
@@ -68,15 +69,13 @@ try:
             logger.debug("Connecting to S3")
             s3conn = S3Connection(aws_access_key, aws_secret_key)
             bucket = s3conn.get_bucket(s3_bucket_name)
-            k = Key(bucket)
-            k.key = dst
             logger.info("Uploading %s to S3 as %s" % (src, dst))
             if fileuploadlog:
                 fileuploadlog.s3_ut_start = datetime.datetime.utcnow()
-            k.set_contents_from_filename(src)
+            ok = upload_file(bucket, dst, src, logger)
             if fileuploadlog:
                 fileuploadlog.s3_ut_end = datetime.datetime.utcnow()
-                fileuploadlog.s3_ok = True
+                fileuploadlog.s3_ok = ok
             os.unlink(src)
         except:
             string = traceback.format_tb(sys.exc_info()[2])
