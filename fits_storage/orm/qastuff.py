@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean
-from sqlalchemy.orm import relation
+from sqlalchemy.orm import relation, relationship
 
 from . import Base
 
@@ -21,6 +21,11 @@ class QAreport(Base):
     submit_time = Column(DateTime)
     submit_host = Column(Text)
 
+    iq_metrics = relationship("QAmetricIQ")
+    sb_metrics = relationship("QAmetricSB")
+    zp_metrics = relationship("QAmetricZP")
+    pe_metrics = relationship("QAmetricPE")
+
     @staticmethod
     def from_dict(qa_dict, host, time):
         qa = QAreport()
@@ -33,6 +38,18 @@ class QAreport(Base):
         qa.context = qa_dict['context']
         qa.submit_host = host
         qa.submit_time = time
+
+        for qametric_dict in qa_dict['qametric']:
+            # TODO: Check this with test data, because the previous XML ingesting
+            #       code suggest that the qametric_dict contains *lists* of metrics
+            if 'sb' in qametric_dict:
+                qa.sb_metrics.append(QAmetricSB.from_metrics(qa, qametric_dict))
+            if 'iq' in qametric_dict:
+                qa.iq_metrics.append(QAmetricIQ.from_metrics(qa, qametric_dict))
+            if 'zp' in qametric_dict:
+                qa.zp_metrics.append(QAmetricZP.from_metrics(qa, qametric_dict))
+            if 'pe' in qametric_dict:
+                qa.pe_metrics.append(QAmetricPE.from_metrics(qa, qametric_dict))
 
         return qa
 

@@ -50,17 +50,6 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
 
             session.add(qareport)
             session.commit()
-
-            for qametric_dict in qa_dict['qametric']:
-                if 'sb' in qametric_dict:
-                    session.add(QAmetricSB.from_metrics(qareport, qametric_dict))
-                if 'iq' in qametric_dict:
-                    session.add(QAmetricIQ.from_metrics(qareport, qametric_dict))
-                if 'zp' in qametric_dict:
-                    session.add(QAmetricZP.from_metrics(qareport, qametric_dict))
-                if 'pe' in qametric_dict:
-                    session.add(QAmetricPE.from_metrics(qareport, qametric_dict))
-            session.commit()
     finally:
         session.close()
 
