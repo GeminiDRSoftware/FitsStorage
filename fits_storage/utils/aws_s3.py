@@ -12,6 +12,7 @@ from ..fits_storage_config import storage_root
 from ..logger import logger
 from .hashes import md5sum
 
+from boto.s3.key import Key
 
 def get_s3_md5(key):
     """
@@ -103,3 +104,26 @@ def fetch_to_staging(bucket, path, filename, key=None, fullpath=None):
     else:
         logger.error("Failed to sucessfully download file %s from S3. Giving up.", filename)
         return False
+
+def upload_file(bucket, keyname, filename, logger):
+    """
+    Upload the file at filename to the S3 bucket, calling it keyname
+    """
+    logger.debug("Creating key: %s", keyname)
+    k = Key(bucket)
+    k.key = keyname
+    logger.info("Uploading %s to S3 as %s", filename, keyname )
+    num = 0
+    ok = False
+    while num < 5 and not ok:
+        num += 1
+        try:
+            k.set_contents_from_filename(filename)
+            logger.info("Uploaded %s OK on try %d", filename, num)
+            ok = True
+        except:
+            logger.debug("Upload try %d appeared to fail", num)
+            logger.debug("Exception is: %s %s %s", sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
+    if num == 5 and not ok:
+        logger.error("Gave up trying to upload %s to S3", filename)
+    return ok
