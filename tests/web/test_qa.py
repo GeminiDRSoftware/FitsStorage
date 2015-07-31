@@ -14,11 +14,11 @@ def test_ingest_json(session, input, expected):
     assert wqa.qareport_ingest(json.loads(input), submit_host='localhost', submit_time=qa_samples.st) == 200
     reports = list(session.query(qa.QAreport))
     assert len(reports) == 1
-    assert reports[0].to_dict() == expected['rep']
+    assert dict(reports[0]) == expected['rep']
     for key, cls in zip(metric_types, metric_classes):
         sample_metrics = expected[key]
         metrics = list(session.query(cls))
-        assert sorted(sample_metrics) == sorted(metric.to_dict() for metric in metrics)
+        assert sorted(sample_metrics) == sorted(dict(metric) for metric in metrics)
         for metric in metrics:
             session.delete(metric)
 

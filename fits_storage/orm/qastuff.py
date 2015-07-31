@@ -6,12 +6,17 @@ from . import Base
 
 import json
 
-report_fields = (
-    'hostname', 'userid', 'processid', 'executable', 'software',
-    'software_version', 'context', 'submit_time', 'submit_host'
-    )
+class MetricDictMixin(object):
+    def __getitem__(self, key):
+        try:
+            return getattr(self, key)
+        except (AttributeError, TypeError):
+            raise KeyError(key)
 
-class QAreport(Base):
+    def keys(self):
+        return self.__class__._dct_fields
+
+class QAreport(Base, MetricDictMixin):
     """
     This is the ORM class for a QA metric report.
     """
@@ -32,6 +37,11 @@ class QAreport(Base):
     sb_metrics = relationship("QAmetricSB")
     zp_metrics = relationship("QAmetricZP")
     pe_metrics = relationship("QAmetricPE")
+
+    _dct_fields = (
+        'hostname', 'userid', 'processid', 'executable', 'software',
+        'software_version', 'context', 'submit_time', 'submit_host'
+        )
 
     @staticmethod
     def from_dict(qa_dict, host, time):
@@ -60,24 +70,7 @@ class QAreport(Base):
 
         return qa
 
-    def __getitem__(self, key):
-        try:
-            return getattr(self, key)
-        except (AttributeError, TypeError):
-            raise KeyError(key)
-
-    def to_dict(self):
-        return dict((key, self[key]) for key in report_fields)
-
-iq_fields = (
-    'datalabel', 'filename', 'detector',
-    'fwhm', 'fwhm_std', 'isofwhm', 'isofwhm_std', 'ee50d', 'ee50d_std',
-    'elip', 'elip_std', 'pa', 'pa_std', 'adaptive_optics', 'ao_seeing',
-    'strehl', 'strehl_std', 'nsamples', 'percentile_band',
-    'comment'
-    )
-
-class QAmetricIQ(Base):
+class QAmetricIQ(Base, MetricDictMixin):
     """
     This is the ORM class for a QA IQ metric measurement
     """
@@ -108,6 +101,14 @@ class QAmetricIQ(Base):
     percentile_band = Column(Text)
     comment = Column(Text)
 
+    _dct_fields = (
+        'datalabel', 'filename', 'detector',
+        'fwhm', 'fwhm_std', 'isofwhm', 'isofwhm_std', 'ee50d', 'ee50d_std',
+        'elip', 'elip_std', 'pa', 'pa_std', 'adaptive_optics', 'ao_seeing',
+        'strehl', 'strehl_std', 'nsamples', 'percentile_band',
+        'comment'
+        )
+
     def __init__(self, qareport):
         self.qareport_id = qareport.id
 
@@ -137,28 +138,10 @@ class QAmetricIQ(Base):
 
         return iq
 
-    def __getitem__(self, key):
-        try:
-            return getattr(self, key)
-        except (AttributeError, TypeError):
-            raise KeyError(key)
-
-    def keys(self):
-        return iq_fields
-
-    def to_dict(self):
-        return dict((key, self[key]) for key in iq_fields)
-
     def to_json(self):
-        return json.dumps(self.to_dict())
+        return json.dumps(dict(self))
 
-zp_fields = (
-    'datalabel', 'filename', 'detector',
-    'mag', 'mag_std', 'cloud', 'cloud_std', 'photref', 'nsamples', 'percentile_band',
-    'comment'
-    )
-
-class QAmetricZP(Base):
+class QAmetricZP(Base, MetricDictMixin):
     """
     This is the ORM class for a QA ZP metric measurement
     """
@@ -179,6 +162,12 @@ class QAmetricZP(Base):
     nsamples = Column(Integer)
     percentile_band = Column(Text)
     comment = Column(Text)
+
+    _dct_fields = (
+        'datalabel', 'filename', 'detector',
+        'mag', 'mag_std', 'cloud', 'cloud_std', 'photref', 'nsamples', 'percentile_band',
+        'comment'
+        )
 
     def __init__(self, qareport):
         self.qareport_id = qareport.id
@@ -202,28 +191,10 @@ class QAmetricZP(Base):
 
         return zp
 
-    def __getitem__(self, key):
-        try:
-            return getattr(self, key)
-        except (AttributeError, TypeError):
-            raise KeyError(key)
-
-    def keys(self):
-        return zp_fields
-
-    def to_dict(self):
-        return dict((key, self[key]) for key in zp_fields)
-
     def to_json(self):
-        return json.dumps(self.to_dict())
+        return json.dumps(dict(self))
 
-sb_fields = (
-    'datalabel', 'filename', 'detector',
-    'mag', 'mag_std', 'electrons', 'electrons_std', 'nsamples', 'percentile_band',
-    'comment'
-    )
-
-class QAmetricSB(Base):
+class QAmetricSB(Base, MetricDictMixin):
     """
     This is the ORM class for a QA SB metric measurement
     """
@@ -243,6 +214,12 @@ class QAmetricSB(Base):
     nsamples = Column(Integer)
     percentile_band = Column(Text)
     comment = Column(Text)
+
+    _dct_fields = (
+        'datalabel', 'filename', 'detector',
+        'mag', 'mag_std', 'electrons', 'electrons_std', 'nsamples', 'percentile_band',
+        'comment'
+        )
 
     def __init__(self, qareport):
         self.qareport_id = qareport.id
@@ -272,28 +249,10 @@ class QAmetricSB(Base):
 
         return sb
 
-    def __getitem__(self, key):
-        try:
-            return getattr(self, key)
-        except (AttributeError, TypeError):
-            raise KeyError(key)
-
-    def keys(self):
-        return sb_fields
-
-    def to_dict(self):
-        return dict((key, self[key]) for key in sb_fields)
-
     def to_json(self):
-        return json.dumps(self.to_dict())
+        return json.dumps(dict(self))
 
-pe_fields = (
-    'datalabel', 'filename', 'detector',
-    'dra', 'dra_std', 'ddec', 'ddec_std', 'astref', 'nsamples',
-    'comment'
-    )
-
-class QAmetricPE(Base):
+class QAmetricPE(Base, MetricDictMixin):
     """
     This is the ORM class for a QA PE (Astrometric Pointing Error) metric measurement
     """
@@ -314,6 +273,12 @@ class QAmetricPE(Base):
     nsamples = Column(Integer)
     comment = Column(Text)
 
+    _dct_fields = (
+        'datalabel', 'filename', 'detector',
+        'dra', 'dra_std', 'ddec', 'ddec_std', 'astref', 'nsamples',
+        'comment'
+        )
+
     def __init__(self, qareport):
         self.qareport_id = qareport.id
 
@@ -333,17 +298,5 @@ class QAmetricPE(Base):
 
         return pe
 
-    def __getitem__(self, key):
-        try:
-            return getattr(self, key)
-        except (AttributeError, TypeError):
-            raise KeyError(key)
-
-    def keys(self):
-        return pe_fields
-
-    def to_dict(self):
-        return dict((key, self[key]) for key in pe_fields)
-
     def to_json(self):
-        return json.dumps(self.to_dict())
+        return json.dumps(dict(self))
