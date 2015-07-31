@@ -5,6 +5,7 @@ This module generates the Observing Statistics - ie "Open Shutter" Statistic rep
 from ..orm import sessionfactory
 from .summary import list_headers
 from ..apache_return_codes import HTTP_OK
+from ..gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
 
 import ephem
 import dateutil.parser
@@ -22,34 +23,32 @@ def observing_statistics(req, selection):
     session = sessionfactory()
     try:
 
-        list = []
+        lst = []
         if('date' in selection.keys()):
-            list.append(calculate_observing_statistics(session, selection, req, debug=False))
+            lst.append(calculate_observing_statistics(session, selection, req, debug=False))
 
         # Parse daterange, kludge selection
         if('daterange' in selection.keys()):
-            m = re.match('(20\d\d[01]\d[0123]\d)-(20\d\d[01]\d[0123]\d)', selection['daterange'])
-            startdate = dateutil.parser.parse(m.group(1)).date()
-            enddate = dateutil.parser.parse(m.group(2)).date()
-            selection.pop('daterange')
-            day = datetime.timedelta(days=1)
-            date = startdate
+            date, enddate = gemini_time_period_from_range(selection.pop('daterange'))
         # Loop over ut nights, calling
-            while (date <= enddate):
-                selection['date'] = date.strftime("%Y%m%d")
-                list.append(calculate_observing_statistics(session, selection, req, debug=False))
-                date += day
+            copysel = dict(selection)
+            while (date < enddate):
+                copysel['date'] = date.strftime("%Y%m%d")
+                lst.append(calculate_observing_statistics(session, copysel, req, debug=False))
+                date += ONEDAY_OFFSET
 
         # First get a list of instruments so that we can unroll the inst dicts
-        insts = []
-        for l in list:
-            for i in l['T_open_instdict'].keys():
-                if (i not in insts):
-                    insts.append(i)
-        insts.sort()
+        insts = set()
+        for l in lst:
+            for i in l['T_open_instdict']:
+                insts.add(i)
+        insts = sorted(insts)
 
         # the column headings
-        cols = ['UTdate', 'T_night', 'T_science', 'T_eng', 'T_fr', 'T_weather', 'Observer', 'Operator', 'N_inst', 'Q', 'T_open', 'E_open', 'T_science_instdict', 'T_open_instdict', 'E_open_instdict', 'T_open_lgs', 'T_all', 'T_all_instdict', 'T_all_conddict']
+        cols = ['UTdate', 'T_night', 'T_science', 'T_eng', 'T_fr', 'T_weather',
+                'Observer', 'Operator', 'N_inst', 'Q', 'T_open', 'E_open',
+                'T_science_instdict', 'T_open_instdict', 'E_open_instdict',
+                'T_open_lgs', 'T_all', 'T_all_instdict', 'T_all_conddict']
 
         # Print the header line, unrolling inst and cond
         req.write('# ')
@@ -58,24 +57,21 @@ def observing_statistics(req, selection):
             # Is it an instdict?
             if(c.find("instdict") > 0):
                 for i in insts:
-                    req.write(c.replace('instdict', i))
-                    req.write(', ')
+                    req.write(c.replace('instdict', i) + ', ')
 
             # Is it a conddict?
             elif(c.find("conddict") > 0):
                 for i in range(7):
-                    req.write(c.replace('conddict', 'cond%d' % i))
-                    req.write(', ')
+                    req.write(c.replace('conddict', 'cond%d' % i) + ', ')
 
             # OK, it's just normal, print it
             else:
-                req.write(c)
-                req.write(', ')
+                req.write(c + ', ')
         req.write('\n')
 
 
         # OK, now spool it out the list of dicts, untolling inst and cond as we go
-        for l in list:
+        for l in lst:
             for c in cols:
 
                 # Is it an instdict?
@@ -96,9 +92,6 @@ def observing_statistics(req, selection):
                     req.write(l[c])
                     req.write(', ')
             req.write('\n')
-
-
-        
 
         return HTTP_OK
 
@@ -430,7 +423,7 @@ def nightlog_numbers(utdate, telescope):
 
     if(telescope == 'Gemini-North'):
         telescope = 'North'
-    if(telescope == 'Gemini-South'):
+    elif(telescope == 'Gemini-South'):
         telescope = 'South'
 
     querystr = "(('UT Date'=\"%d\") AND ('Telescope'=\"%s\"))" % (t, telescope)
