@@ -69,101 +69,54 @@ def qametrics(req, things):
     session = sessionfactory()
     try:
 
+        def print_metrics(cls, header, pattern):
+            query = session.query(cls).select_from(cls, QAreport).filter(cls.qareport_id == QAreport.id)
+
+            req.write(header + '\n')
+
+            for qa in query:
+                hquery = session.query(Header).select_from(Header, DiskFile)\
+                                    .filter(Header.diskfile_id == DiskFile.id)\
+                                    .filter(DiskFile.canonical == True)\
+                                    .filter(Header.data_label == qa.datalabel)
+                header = hquery.first()
+                if header:
+                    filternm = header.filter_name
+                    utdt = header.ut_datetime
+                else:
+                    filternm = None
+                    utdt = None
+
+                req.write(pattern.format(filternm=filternm, utdt=utdt, **qa) + '\n')
+
+            req.write("#---------")
+
         req.content_type = "text/plain"
         if 'iq' in things:
-            query = session.query(QAmetricIQ).select_from(QAmetricIQ, QAreport).filter(QAmetricIQ.qareport_id == QAreport.id)
-
-            req.write("#Datalabel, filename, detector, filter, utdatetime, Nsamples, FWHM, FWHM_std, isoFWHM, isoFWHM_std, "
-                        "EE50d, EE50d_std, elip, elip_std, pa, pa_std, strehl, strehl_std, percentile_band, comments\n")
-
-            for qa in query:
-                hquery = session.query(Header).select_from(Header, DiskFile)
-                hquery = hquery.filter(Header.diskfile_id == DiskFile.id).filter(DiskFile.canonical == True)
-                hquery = hquery.filter(Header.data_label == qa.datalabel)
-                header = hquery.first()
-                if header:
-                    filter = header.filter_name
-                    utdt = header.ut_datetime
-                else:
-                    filter = None
-                    utdt = None
-
-                line = ("{datalabel}, {filename}, {detector}, {filternm}, {utdt}, {nsamples}, {fwhm}, {fwhm_std}, "
-                        "{isofwhm}, {isofwhm_std}, {ee50d}, {ee50d_std}, {elip}, {elip_std}, {pa}, {pa_std}, "
-                        "{strehl}, {strehl_std}, {percentile_band}, {comment}\n")
-                req.write(line.format(filternm=filter, utdt=utdt, **qa))
-
-            req.write("#---------")
+            header = ("#Datalabel, filename, detector, filter, utdatetime, Nsamples, FWHM, FWHM_std, isoFWHM, isoFWHM_std, "
+                      "EE50d, EE50d_std, elip, elip_std, pa, pa_std, strehl, strehl_std, percentile_band, comments")
+            pattern = ("{datalabel}, {filename}, {detector}, {filternm}, {utdt}, {nsamples}, {fwhm}, {fwhm_std}, "
+                       "{isofwhm}, {isofwhm_std}, {ee50d}, {ee50d_std}, {elip}, {elip_std}, {pa}, {pa_std}, "
+                       "{strehl}, {strehl_std}, {percentile_band}, {comment}")
+            print_metrics(QAmetricIQ, header, pattern)
 
         if 'zp' in things:
-            query = session.query(QAmetricZP).select_from(QAmetricZP, QAreport).filter(QAmetricZP.qareport_id == QAreport.id)
-
-            req.write("#Datalabel, filename, detector, filter, utdatetime, Nsamples, zp_mag, zp_mag_std, cloud, cloud_std, photref, percentile_band, comment\n")
-
-            for qa in query:
-                hquery = session.query(Header).select_from(Header, DiskFile)
-                hquery = hquery.filter(Header.diskfile_id == DiskFile.id).filter(DiskFile.canonical == True)
-                hquery = hquery.filter(Header.data_label == qa.datalabel)
-                header = hquery.first()
-                if header:
-                    filter = header.filter_name
-                    utdt = header.ut_datetime
-                else:
-                    filter = None
-                    utdt = None
-
-                line = ("{datalabel}, {filename}, {detector}, {filternm}, {utdt}, {nsamples}, {mag}, {mag_std}, "
-                        "{cloud}, {cloud_std}, {photref}, {percentile_band}, {comment}\n")
-                req.write(line.format(filternm=filter, utdt=utdt, **qa))
-
-            req.write("#---------")
-
+            header = ("#Datalabel, filename, detector, filter, utdatetime, Nsamples, zp_mag, zp_mag_std, cloud, cloud_std, photref, percentile_band, comment")
+            pattern = ("{datalabel}, {filename}, {detector}, {filternm}, {utdt}, {nsamples}, {mag}, {mag_std}, "
+                       "{cloud}, {cloud_std}, {photref}, {percentile_band}, {comment}")
+            print_metrics(QAmetricZP, header, pattern)
 
         if 'sb' in things:
-            query = session.query(QAmetricSB).select_from(QAmetricSB, QAreport).filter(QAmetricSB.qareport_id == QAreport.id)
-
-            req.write("#Datalabel, filename, detector, filter, utdatetime, Nsamples, sb_mag, sb_mag_std, sb_electrons, sb_electrons_std, percentile_band, comment\n")
-
-            for qa in query:
-                hquery = session.query(Header).select_from(Header, DiskFile)
-                hquery = hquery.filter(Header.diskfile_id == DiskFile.id).filter(DiskFile.canonical == True)
-                hquery = hquery.filter(Header.data_label == qa.datalabel)
-                header = hquery.first()
-                if header:
-                    filter = header.filter_name
-                    utdt = header.ut_datetime
-                else:
-                    filter = None
-                    utdt = None
-
-                line = ("{datalabel}, {filename}, {detector}, {filternm}, {utdt}, {nsamples}, {mag}, {mag_std}, "
-                        "{electrons}, {electrons_std}, {percentile_band}, {comment}\n")
-                req.write(line.format(filternm=filter, utdt=utdt, **qa))
-
-            req.write("#---------")
+            header = "#Datalabel, filename, detector, filter, utdatetime, Nsamples, sb_mag, sb_mag_std, sb_electrons, sb_electrons_std, percentile_band, comment"
+            pattern = ("{datalabel}, {filename}, {detector}, {filternm}, {utdt}, {nsamples}, {mag}, {mag_std}, "
+                       "{electrons}, {electrons_std}, {percentile_band}, {comment}")
+            print_metrics(QAmetricSB, header, pattern)
 
         if 'pe' in things:
-            query = session.query(QAmetricPE).select_from(QAmetricPE, QAreport).filter(QAmetricPE.qareport_id == QAreport.id)
-
-            req.write("#Datalabel, filename, detector, filter, utdatetime, Nsamples, dra, dra_std, ddec, ddec_std, astref, comment\n")
-
-            for qa in query:
-                hquery = session.query(Header).select_from(Header, DiskFile)
-                hquery = hquery.filter(Header.diskfile_id == DiskFile.id).filter(DiskFile.canonical == True)
-                hquery = hquery.filter(Header.data_label == qa.datalabel)
-                header = hquery.first()
-                if header:
-                    filter = header.filter_name
-                    utdt = header.ut_datetime
-                else:
-                    filter = None
-                    utdt = None
-
-                line = ("{datalabel}, {filename}, {detector}, {filternm}, {utdt}, {nsamples}, {dra}, {dra_std}, "
-                        "{ddec}, {ddec_std}, {astref}, {comment}\n")
-                req.write(line.format(filternm=filter, utdt=utdt, **qa))
-
-            req.write("#---------")
+            header = "#Datalabel, filename, detector, filter, utdatetime, Nsamples, dra, dra_std, ddec, ddec_std, astref, comment"
+            pattern = ("{datalabel}, {filename}, {detector}, {filternm}, {utdt}, {nsamples}, {dra}, {dra_std}, "
+                       "{ddec}, {ddec_std}, {astref}, {comment}")
+            print_metrics(QAmetricPE, header, pattern)
 
 
     except IOError:
