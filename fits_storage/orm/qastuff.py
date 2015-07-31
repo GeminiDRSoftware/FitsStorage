@@ -1,10 +1,17 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean
 from sqlalchemy.orm import relation, relationship
+import math
 
 from . import Base
 
 import json
+
+def float_or_None(val):
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return None
 
 class MetricDictMixin(object):
     def __getitem__(self, key):
@@ -141,6 +148,33 @@ class QAmetricIQ(Base, MetricDictMixin):
     def to_json(self):
         return json.dumps(dict(self))
 
+    def to_evaluated_dict(self, airmass=None):
+        iq = {
+            'band': self.percentile_band,
+            'delivered': float_or_None(self.fwhm),
+            'delivered_error': float_or_None(self.fwhm_std),
+            'ellipticity': float_or_None(self.elip),
+            'ellip_error': float_or_None(self.elip_std),
+            'adaptive_optics': bool(self.adaptive_optics),
+            'zenith': None,
+            'zenith_error': None,
+            'comment': []
+            }
+        if airmass is not None and self.fwhm is not None:
+            iq['zenith'] = float(self.fwhm) * airmass**(-0.6)
+            iq['zenith_error'] = float(self.fwhm_std) * airmass**(-0.6)
+        if len(self.comment):
+            iq['comment'] = [self.comment]
+        if iq['adaptive_optics']:
+            iq['ao_seeing'] = None
+            iq['ao_seeing_zenith'] = None
+            if self.ao_seeing is not None:
+                iq['ao_seeing'] = float(self.ao_seeing)
+                if airmass is not None:
+                    iq['ao_seeing_zenith'] = float(self.ao_seeing) * airmass**(-0.6)
+
+        return iq
+
 class QAmetricZP(Base, MetricDictMixin):
     """
     This is the ORM class for a QA ZP metric measurement
@@ -193,6 +227,39 @@ class QAmetricZP(Base, MetricDictMixin):
 
     def to_json(self):
         return json.dumps(dict(self))
+
+def evaluate_cc_from_metrics(metrics):
+    # Now go through those and merge them into the form required
+    # This is a bit tediouos, given that we may have a result that is split by amp,
+    # or we may have one from a mosaiced full frame image.
+    cc_band = []
+    cc_zeropoint = {}
+    cc_extinction = []
+    cc_extinction_error = []
+    cc_comment = []
+    for z in metrics:
+        if z.percentile_band not in cc_band:
+            cc_band.append(z.percentile_band)
+        cc_extinction.append(float(z.cloud))
+        cc_extinction_error.append(float(z.cloud_std))
+        cc_zeropoint[z.detector] = {'value':float(z.mag), 'error':float(z.mag_std)}
+        if (z.comment not in cc_comment) and (len(z.comment)):
+            cc_comment.append(z.comment)
+
+    # Need to combine some of these to a single value to populate the cc dict
+    cc = {
+            'band': ', '.join(cc_band),
+            'zeropoint': cc_zeropoint,
+            'comment': cc_comment
+         }
+    if cc_extinction:
+        cc['extinction'] = sum(cc_extinction) / len(cc_extinction)
+
+        # Quick variance calculation, we could load numpy instead..
+        s = sum(e*e for e in cc_extinction_error) / len(cc_extinction_error)
+        cc['extinction_error'] = math.sqrt(s)
+
+    return cc
 
 class QAmetricSB(Base, MetricDictMixin):
     """
@@ -251,6 +318,40 @@ class QAmetricSB(Base, MetricDictMixin):
 
     def to_json(self):
         return json.dumps(dict(self))
+
+def evaluate_bg_from_metrics(metrics):
+    # Now go through those and merge them into the form required
+    # This is a bit tediouos, given that we may have a result that is split by amp,
+    # or we may have one from a mosaiced full frame image.
+    bg = {}
+
+    bg_band = set()
+    bg_mag = []
+    bg_mag_std = []
+    bg_comment = []
+    for b in metrics:
+        bg_band.add(b.percentile_band)
+        if b.mag is not None and b.mag_std is not None:
+            bg_mag.append(float(b.mag))
+            bg_mag_std.append(float(b.mag_std))
+        if (b.comment not in bg_comment) and (len(b.comment)):
+            bg_comment.append(b.comment)
+
+    # Need to combine some of these to a single value
+    if bg_band:
+        # Be aware of Nones - makes join choke
+        bg['band'] = ', '.join(str(band) for band in bg_band)
+
+    if bg_mag:
+        bg['brightness'] = sum(bg_mag) / len(bg_mag)
+
+        # Quick variance calculation, we could load numpy instead..
+        s = sum(e*e for e in bg_mag_std) / len(bg_mag_std)
+        bg['brightness_error'] = math.sqrt(s)
+
+    bg['comment'] = bg_comment
+
+    return bg
 
 class QAmetricPE(Base, MetricDictMixin):
     """

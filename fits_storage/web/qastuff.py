@@ -14,6 +14,7 @@ from ..apache_return_codes import HTTP_OK, HTTP_BAD_REQUEST, HTTP_NOT_ACCEPTABLE
 from ..gemini_metadata_utils import gemini_date, get_date_offset
 
 from ..orm.qastuff import QAreport, QAmetricSB, QAmetricIQ, QAmetricZP, QAmetricPE
+from ..orm.qastuff import evaluate_bg_from_metrics, evaluate_cc_from_metrics
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 
@@ -150,37 +151,32 @@ def qaforgui(req, things):
         # Interested in IQ, ZP, BG
 
         # Get a list of datalabels
-        iqquery = session.query(QAmetricIQ.datalabel).select_from(QAmetricIQ, Header).filter(QAmetricIQ.datalabel == Header.data_label)
-        iqquery = iqquery.filter(Header.ut_datetime > datestamp).filter(Header.ut_datetime < enddatestamp)
+        def mquery(cls):
+            return session.query(cls.datalabel).select_from(cls, Header)\
+                        .filter(cls.datalabel == Header.data_label)\
+                        .filter(Header.ut_datetime > datestamp)\
+                        .filter(Header.ut_datetime < enddatestamp)
 
-        zpquery = session.query(QAmetricZP.datalabel).select_from(QAmetricZP, Header).filter(QAmetricZP.datalabel == Header.data_label)
-        zpquery = zpquery.filter(Header.ut_datetime > datestamp).filter(Header.ut_datetime < enddatestamp)
-
-        sbquery = session.query(QAmetricSB.datalabel).select_from(QAmetricSB, Header).filter(QAmetricSB.datalabel == Header.data_label)
-        sbquery = sbquery.filter(Header.ut_datetime > datestamp).filter(Header.ut_datetime < enddatestamp)
-
-        query = iqquery.union(zpquery).union(sbquery).distinct()
-        datalabels = query.all()
+        datalabel_query = mquery(QAmetricIQ)\
+                            .union(mquery(QAmetricZP))\
+                            .union(mquery(QAmetricSB))\
+                            .distinct()
 
         # Now loop through the datalabels.
         # For each datalabel, get the most recent QA measurement of each type. Only ones reported after the datestamp and before enddatestamp
         # Add the QA measurements to a list that we then dump out with json
         list_for_json = []
-        for datalabel in datalabels:
-
-            # Comes back as a 1 element list
-            datalabel = datalabel[0]
-
-            metadata = {}
-            iq = {}
-            cc = {}
-            bg = {}
-            metadata['datalabel'] = datalabel
+        # Comes back as a 1 element list, capture as such
+        for (datalabel,) in datalabel_query:
+            metadata = {'datalabel': datalabel}
+            iq, cc, bg = {}, {}, {}
             submit_time_kludge = None
 
             # First try and find the header entry for this datalabel, and populate what comes from that
-            query = session.query(Header).select_from(Header, DiskFile).filter(Header.diskfile_id == DiskFile.id)
-            query = query.filter(DiskFile.canonical == True).filter(Header.data_label == datalabel)
+            query = session.query(Header).select_from(Header, DiskFile)\
+                        .filter(Header.diskfile_id == DiskFile.id)\
+                        .filter(DiskFile.canonical == True)\
+                        .filter(Header.data_label == datalabel)
             header = query.first()
             # We can only populate the header info if it is in the header table
             # These items are used later in the code if available from the header, init to None here
@@ -191,190 +187,110 @@ def qaforgui(req, things):
 
             if header:
                 # These are not directly used as metadata items, but are used later if available from the header
-                if header.airmass is not None:
+                try:
                     airmass = float(header.airmass)
-                if header.requested_iq is not None:
-                    requested_iq = header.requested_iq
-                if header.requested_cc is not None:
-                    requested_cc = header.requested_cc
-                if header.requested_bg is not None:
-                    requested_bg = header.requested_bg
+                except TypeError:
+                    # Will happen if header.airmass is None
+                    pass
+                requested_iq = header.requested_iq
+                requested_cc = header.requested_cc
+                requested_bg = header.requested_bg
 
                 # These are the metadata items we forward
-                metadata['raw_filename'] = header.diskfile.file.name
-                metadata['ut_time'] = str(header.ut_datetime)
-                metadata['local_time'] = str(header.local_time)
-                metadata['wavelength'] = header.central_wavelength
-                metadata['waveband'] = header.wavelength_band
-                metadata['airmass'] = airmass
-                metadata['filter'] = header.filter_name
-                metadata['instrument'] = header.instrument
-                metadata['object'] = header.object
-                # Parse the types string back into a list using a locked-down eval
-                metadata['types'] = eval(header.types, {"__builtins__":None}, {})
+                metadata.update({
+                    'raw_filename': header.diskfile.file.name,
+                    'ut_time': str(header.ut_datetime),
+                    'local_time': str(header.local_time),
+                    'wavelength': header.central_wavelength,
+                    'waveband': header.wavelength_band,
+                    'airmass': airmass,
+                    'filter': header.filter_name,
+                    'instrument': header.instrument,
+                    'object': header.object,
+                    # Parse the types string back into a list using a locked-down eval
+                    'types': eval(header.types, {"__builtins__":None}, {})
+                    })
 
-            if (datestamp is None) or (header and (header.ut_datetime > datestamp) and (header.ut_datetime < enddatestamp)):
+            if (datestamp is None) or (header and (datestamp < header.ut_datetime < enddatestamp)):
                 # Look for IQ metrics to report. Going to need to do the same merging trick here
-                query = session.query(QAmetricIQ).select_from(QAmetricIQ, QAreport).filter(QAmetricIQ.qareport_id == QAreport.id)
-                query = query.filter(QAmetricIQ.datalabel == datalabel)
-                query = query.order_by(desc(QAreport.submit_time))
+                query = session.query(QAmetricIQ).select_from(QAmetricIQ, QAreport)\
+                            .filter(QAmetricIQ.qareport_id == QAreport.id)\
+                            .filter(QAmetricIQ.datalabel == datalabel)\
+                            .order_by(desc(QAreport.submit_time))
                 qaiq = query.first()
 
                 # If we got anything, populate the iq dict
                 if qaiq:
-                    iq['band'] = qaiq.percentile_band
-                    iq['delivered'] = float(qaiq.fwhm) if qaiq.fwhm is not None else None
-                    iq['delivered_error'] = float(qaiq.fwhm_std) if qaiq.fwhm_std is not None else None
-                    if airmass is not None and qaiq.fwhm is not None:
-                        iq['zenith'] = float(qaiq.fwhm) * airmass**(-0.6)
-                        iq['zenith_error'] = float(qaiq.fwhm_std) * airmass**(-0.6)
-                    else:
-                        # Keep the gui happy by keeping the dictionary entries present
-                        iq['zenith'] = None
-                        iq['zenith_error'] = None
-                    iq['ellipticity'] = float(qaiq.elip) if qaiq.elip is not None else None
-                    iq['ellip_error'] = float(qaiq.elip_std) if qaiq.elip_std is not None else None
-                    iq['comment'] = []
-                    if len(qaiq.comment):
-                        iq['comment'] = [qaiq.comment]
-                    if requested_iq is not None:
-                        iq['requested'] = int(requested_iq) 
                     submit_time_kludge = qaiq.qareport.submit_time
-                    iq['adaptive_optics'] = bool(qaiq.adaptive_optics)
-                    if iq['adaptive_optics']:
-                        iq['ao_seeing'] = None
-                        iq['ao_seeing_zenith'] = None
-                        if qaiq.ao_seeing is not None:
-                            iq['ao_seeing'] = float(qaiq.ao_seeing)
-                            if airmass is not None:
-                                iq['ao_seeing_zenith'] = float(qaiq.ao_seeing) * airmass**(-0.6)
+                    iq = qaiq.to_evaluated_dict(airmass)
+                    try:
+                        iq['requested'] = int(requested_iq)
+                    except TypeError:
+                        pass
 
                 # Look for CC metrics to report. The DB has the different detectors in different entries, have to do some merging.
                 # Find the qareport id of the most recent zp report for this datalabel
-                query = session.query(QAreport).select_from(QAmetricZP, QAreport).filter(QAmetricZP.qareport_id == QAreport.id)
-                query = query.filter(QAmetricZP.datalabel == datalabel)
-                query = query.order_by(desc(QAreport.submit_time))
+                query = session.query(QAreport).select_from(QAmetricZP, QAreport)\
+                            .filter(QAmetricZP.qareport_id == QAreport.id)\
+                            .filter(QAmetricZP.datalabel == datalabel)\
+                            .order_by(desc(QAreport.submit_time))
                 qarep = query.first()
 
                 # Now find all the ZPmetrics for this qareport_id
                 # By definition, it must be after the timestamp etc.
-                zpmetrics = []
                 if qarep:
-                    query = session.query(QAmetricZP).filter(QAmetricZP.qareport_id == qarep.id)
-                    zpmetrics = query.all()
-
-                    # Now go through those and merge them into the form required
-                    # This is a bit tediouos, given that we may have a result that is split by amp,
-                    # or we may have one from a mosaiced full frame image.
-                    cc_band = []
-                    cc_zeropoint = {}
-                    cc_extinction = []
-                    cc_extinction_error = []
-                    cc_comment = []
-                    for z in zpmetrics:
-                        if z.percentile_band not in cc_band:
-                            cc_band.append(z.percentile_band)
-                        cc_extinction.append(float(z.cloud))
-                        cc_extinction_error.append(float(z.cloud_std))
-                        cc_zeropoint[z.detector] = {'value':float(z.mag), 'error':float(z.mag_std)}
-                        if (z.comment not in cc_comment) and (len(z.comment)):
-                            cc_comment.append(z.comment)
-
-                    # Need to combine some of these to a single value to populate the cc dict
-                    cc['band'] = ', '.join(cc_band)
-                    cc['zeropoint'] = cc_zeropoint
-                    if len(cc_extinction):
-                        cc['extinction'] = sum(cc_extinction) / len(cc_extinction)
-
-                        # Quick variance calculation, we could load numpy instead..
-                        s = 0
-                        for e in cc_extinction_error:
-                            s += e*e
-                        s /= len(cc_extinction_error)
-                        cc['extinction_error'] = math.sqrt(s)
-
-                    cc['comment'] = cc_comment
-                    if requested_cc is not None:
+                    cc = evaluate_cc_from_metrics(qarep.zp_metrics)
+                    try:
                         cc['requested'] = int(requested_cc)
+                    except TypeError:
+                        pass
 
                     submit_time_kludge = qarep.submit_time
 
 
                 # Look for BG metrics to report. The DB has the different detectors in different entries, have to do some merging.
                 # Find the qareport id of the most recent zp report for this datalabel
-                query = session.query(QAreport).select_from(QAmetricSB, QAreport).filter(QAmetricSB.qareport_id == QAreport.id)
-                query = query.filter(QAmetricSB.datalabel == datalabel)
-                query = query.order_by(desc(QAreport.submit_time))
+                query = session.query(QAreport).select_from(QAmetricSB, QAreport)\
+                            .filter(QAmetricSB.qareport_id == QAreport.id)\
+                            .filter(QAmetricSB.datalabel == datalabel)\
+                            .order_by(desc(QAreport.submit_time))
                 qarep = query.first()
 
                 # Now find all the SBmetrics for this qareport_id
                 # By definition, it must be after the timestamp etc.
-                sbmetrics = []
                 if qarep:
-                    query = session.query(QAmetricSB).filter(QAmetricSB.qareport_id == qarep.id)
-                    sbmetrics = query.all()
+                    bg = evaluate_bg_from_metrics(qarep.sb_metrics)
 
-                    # Now go through those and merge them into the form required
-                    # This is a bit tediouos, given that we may have a result that is split by amp,
-                    # or we may have one from a mosaiced full frame image.
-                    bg_band = []
-                    bg_mag = []
-                    bg_mag_std = []
-                    bg_comment = []
-                    for b in sbmetrics:
-                        if b.percentile_band not in bg_band:
-                            bg_band.append(b.percentile_band)
-                        if b.mag is not None and b.mag_std is not None:
-                            bg_mag.append(float(b.mag))
-                            bg_mag_std.append(float(b.mag_std))
-                        if (b.comment not in bg_comment) and (len(b.comment)):
-                            bg_comment.append(b.comment)
-
-                    # Need to combine some of these to a single value
-                    if len(bg_band):
-                        # Be aware of Nones - makes join choke
-                        for i in range(len(bg_band)):
-                            bg_band[i] = str(bg_band[i])
-                        bg['band'] = ', '.join(bg_band)
-                    if len(bg_mag):
-                        bg['brightness'] = sum(bg_mag) / len(bg_mag)
-
-                        # Quick variance calculation, we could load numpy instead..
-                        s = 0
-                        for e in bg_mag_std:
-                            s += e*e
-                        s /= len(bg_mag_std)
-                        bg['brightness_error'] = math.sqrt(s)
-
-                    bg['comment'] = bg_comment
-                    if requested_bg is not None:
+                    try:
                         bg['requested'] = int(requested_bg)
+                    except TypeError:
+                        pass
 
                     submit_time_kludge = qarep.submit_time
 
                 # Now, put the stuff we built into a dict that we can push out to json
-                dict = {}
-                if len(metadata):
-                    dict['metadata'] = metadata
-                if len(iq):
-                    dict['iq'] = iq
-                if len(cc):
-                    dict['cc'] = cc
-                if len(bg):
-                    dict['bg'] = bg
+                dct = {}
+                if metadata:
+                    dct['metadata'] = metadata
+                if iq:
+                    dct['iq'] = iq
+                if cc:
+                    dct['cc'] = cc
+                if bg:
+                    dct['bg'] = bg
 
                 # Stuff in the extra stuff to keep adcc happy...
-                dict['msgtype'] = 'qametric'
+                dct['msgtype'] = 'qametric'
                 try:
-                    dict['timestamp'] = float(submit_time_kludge.strftime("%s.%f"))
+                    dct['timestamp'] = float(submit_time_kludge.strftime("%s.%f"))
                 except:
-                    dict['timestamp'] = 0.0
+                    dct['timestamp'] = 0.0
 
                 # Add it to the json list, if there is anything
-                if len(iq) or len(cc) or len(bg):
-                    list_for_json.append(dict)
+                if iq or cc or bg:
+                    list_for_json.append(dct)
 
-        # Serialze it out via json to the request object
+        # Serialize it out via json to the request object
         json.dump(list_for_json, req, indent=4)
 
     except IOError:
