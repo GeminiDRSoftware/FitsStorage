@@ -143,6 +143,9 @@ class QAmetricIQ(Base):
         except (AttributeError, TypeError):
             raise KeyError(key)
 
+    def keys(self):
+        return iq_fields
+
     def to_dict(self):
         return dict((key, self[key]) for key in iq_fields)
 
@@ -204,6 +207,9 @@ class QAmetricZP(Base):
             return getattr(self, key)
         except (AttributeError, TypeError):
             raise KeyError(key)
+
+    def keys(self):
+        return zp_fields
 
     def to_dict(self):
         return dict((key, self[key]) for key in zp_fields)
@@ -272,6 +278,9 @@ class QAmetricSB(Base):
         except (AttributeError, TypeError):
             raise KeyError(key)
 
+    def keys(self):
+        return sb_fields
+
     def to_dict(self):
         return dict((key, self[key]) for key in sb_fields)
 
@@ -329,6 +338,9 @@ class QAmetricPE(Base):
             return getattr(self, key)
         except (AttributeError, TypeError):
             raise KeyError(key)
+
+    def keys(self):
+        return pe_fields
 
     def to_dict(self):
         return dict((key, self[key]) for key in pe_fields)
