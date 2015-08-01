@@ -1,5 +1,6 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean
+from sqlalchemy import desc
 
 from . import Base
 
@@ -19,3 +20,14 @@ class PreviewQueue(Base):
         self.diskfile_id = diskfile.id
         self.sortkey = diskfile.filename[1:]
         self.inprogress = False
+
+    @staticmethod
+    def find_not_in_progress(session):
+        return session.query(PreviewQueue)\
+                    .filter(PreviewQueue.inprogress == False)\
+                    .order_by(desc(PreviewQueue.sortkey))
+
+    @staticmethod
+    def rebuild(session, element):
+        # Dummy method; no need for this with the preview queue
+        pass

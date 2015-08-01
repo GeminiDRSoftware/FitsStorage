@@ -7,10 +7,12 @@ import datetime
 from sqlalchemy import desc
 from sqlalchemy.orm.exc import ObjectDeletedError
 from sqlalchemy.orm import make_transient
+import functools
 
 from ..orm.geometryhacks import add_footprint, do_std_obs
 
 from ..fits_storage_config import storage_root, using_sqlite, using_s3, using_previews
+from . import queue
 
 if using_previews:
     from .previewqueue import make_preview
@@ -34,12 +36,11 @@ from ..orm.ingestqueue import IngestQueue
 from ..orm.previewqueue import PreviewQueue
 from ..orm.obslog import Obslog
 
-from .aws_s3 import get_s3_md5, fetch_to_staging
-
 from astrodata import AstroData
 
 if using_s3:
     from boto.s3.connection import S3Connection
+    from .aws_s3 import get_s3_md5, fetch_to_staging
     from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
 
 def add_to_ingestqueue(session, logger, filename, path, force_md5=False, force=False, after=None):
@@ -110,14 +111,14 @@ def ingest_file(session, logger, filename, path, force_md5, force, skip_fv, skip
         fullpath = os.path.join(storage_root, filename)
         if key is None:
             logger.error("cannot access %s in S3 bucket", filename)
-            check_present(session, filename)
+            check_present(session, logger, filename)
             return
     else:
         fullpath = os.path.join(storage_root, path, filename)
         exists = os.access(fullpath, os.F_OK | os.R_OK) and os.path.isfile(fullpath)
         if not exists:
             logger.error("cannot access %s", fullpath)
-            check_present(session, filename)
+            check_present(session, logger, filename)
             return
 
     # Make a file instance
@@ -398,73 +399,6 @@ def check_present(session, logger, filename):
                 logger.info("Marking diskfile id %d as not present", diskfile.id)
                 diskfile.present = False
 
-def pop_ingestqueue(session, logger, fast_rebuild=False):
-    """
-    Returns the next thing to ingest off the ingest queue, and sets the
-    inprogress flag on that entry.
+pop_ingestqueue = functools.partial(queue.pop_queue, IngestQueue)
 
-    The ORM instance returned is detached from the database - it's a transient
-    object not associated with the session. Basicaly treat it as a convenience
-    dictionary for the filename etc, but don't try to modify the database with it.
-
-    The select and update inprogress are done with a transaction lock
-    to avoid race conditions or duplications when there is more than
-    one process processing the ingest queue.
-
-    Next to ingest is defined by a sort on the sortkey, which is
-    the filename with the first character dropped off - so we effectively
-    sort by date and frame number for raw data files.
-
-    Also, when we go inprogress on an entry in the queue, we
-    delete all other entries for the same filename.
-    """
-
-    # Is there a way to avoid the ACCESS EXCLUSIVE lock, especially with 
-    # fast_rebuild where we are not changing other columns. Seemed like
-    # SELECT FOR UPDATE ought to be able to do this, but it doesn't quite
-    # do what we want as other threads can still select that row?
-
-    session.execute("LOCK TABLE ingestqueue IN ACCESS EXCLUSIVE MODE;")
-
-    query = session.query(IngestQueue).filter(IngestQueue.inprogress == False)
-    query = query.filter(IngestQueue.after < datetime.datetime.now())
-    query = query.order_by(desc(IngestQueue.sortkey))
-
-    iq = query.first()
-    if iq is None:
-        logger.debug("No item to pop on ingestqueue")
-    else:
-        # OK, we got a viable item, set it to inprogress and return it.
-        logger.debug("Popped id %d from ingestqueue", iq.id)
-        # Set this entry to in progres and flush to the DB.
-        iq.inprogress = True
-        session.flush()
-
-        if not fast_rebuild:
-            # Find other instances and delete them
-            others = session.query(IngestQueue)
-            others = others.filter(IngestQueue.inprogress == False).filter(IngestQueue.filename == iq.filename)
-            others.delete()
-
-        # Make the iq into a transient instance before we return it
-        # This detaches it from the session, basically it becomes a convenience container for the
-        # values (filename, path, etc). The problem is that if it's still attached to the session
-        # but expired (because we did a commit) then the next reference to it will initiate a transaction
-        # and a SELECT to refresh the values, and that transaction will then hold a FOR ACCESS SHARE lock
-        # on the exportqueue table until we complete the export and do a commit - which will prevent
-        # the ACCESS EXCLUSIVE lock in pop_exportqueue from being granted until the transfer completes.
-        make_transient(iq)
-
-    # And we're done, commit the transaction and release the update lock
-    session.commit()
-    return iq
-
-def ingestqueue_length(session):
-    """
-    return the length of the ingest queue
-    """
-    length = session.query(IngestQueue).filter(IngestQueue.inprogress == False).count()
-    # Even though there's nothing to commit, close the transaction
-    session.commit()
-    return length
-
+ingestqueue_length = functools.partial(queue.queue_length, IngestQueue)

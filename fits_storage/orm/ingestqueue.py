@@ -4,6 +4,7 @@ This is the ingesqueue ORM class
 import datetime
 from sqlalchemy import Column
 from sqlalchemy import Integer, Boolean, Text, DateTime
+from sqlalchemy import desc
 
 from . import Base
 
@@ -38,6 +39,20 @@ class IngestQueue(Base):
         # We just trim the first letter off the filename, so ignore the N or S
         # and essentially sort by date and frame number.
         self.sortkey = filename[1:]
+
+    @staticmethod
+    def find_not_in_progress(session):
+        return session.query(IngestQueue)\
+                    .filter(IngestQueue.inprogress == False)\
+                    .filter(IngestQueue.after < datetime.datetime.now())\
+                    .order_by(desc(IngestQueue.sortkey))
+
+    @staticmethod
+    def rebuild(session, element):
+        session.query(IngestQueue)\
+            .filter(IngestQueue.inprogress == False)\
+            .filter(IngestQueue.filename == element.filename)\
+            .delete()
 
     def __repr__(self):
         return "<IngestQueue('%s', '%s')>" % (self.id, self.filename)
