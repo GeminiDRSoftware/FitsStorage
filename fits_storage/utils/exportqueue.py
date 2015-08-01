@@ -7,12 +7,14 @@ import json
 import datetime
 import hashlib
 import bz2
+import functools
 
 from sqlalchemy import desc, join
 from sqlalchemy.orm import make_transient
 from sqlalchemy.orm.exc import ObjectDeletedError
 
 from ..fits_storage_config import storage_root, using_s3, export_bzip, upload_auth_cookie
+from . import queue
 
 from ..orm.file import File
 from ..orm.diskfile import DiskFile
@@ -173,72 +175,8 @@ def export_file(session, logger, filename, path, destination):
         logger.error("Problem posting %d bytes of data to destination server at: %s", len(postdata), url)
         raise
 
-def pop_exportqueue(session, logger):
-    """
-    Returns the next thing to export off the export queue, and sets the
-    inprogress flag on that entry.
-
-    The select and update inprogress are done with a transaction lock
-    to avoid race conditions or duplications when there is more than
-    one process processing the export queue.
-
-    Next to export is defined by a sort on the filename to get the
-    newest filename that is not already inprogress.
-
-    Also, when we go inprogress on an entry in the queue, we
-    delete all other entries for the same filename.
-
-    The instance returned is actually a transient instance  - it is
-    not associated with the session. Basically treat it as a convenience
-    container (like a dictionary) for the values therein, but don't try
-    to modify the database using it.
-    """
-
-    # This is strongly based on pop_ingestqueue, but they're sufficiently
-    # different it would be annoying to make a common function
-
-    session.execute("LOCK TABLE exportqueue IN ACCESS EXCLUSIVE MODE;")
-    query = session.query(ExportQueue).filter(ExportQueue.inprogress == False).order_by(desc(ExportQueue.filename))
-
-    eq = query.first()
-    if eq == None:
-        logger.debug("No item to pop on exportqueue")
-    else:
-        # OK, we got a viable item, set it to inprogress and return it.
-        logger.debug("Popped id %d from exportqueue", eq.id)
-        # Set this entry to in progres and flush to the DB.
-        eq.inprogress = True
-        session.flush()
-
-        # Find other instances and delete them
-        query = session.query(ExportQueue)
-        query = query.filter(ExportQueue.inprogress == False).filter(ExportQueue.filename == eq.filename)
-        query.delete()
-
-        # Make the eq into a transient instance before we return it
-        # This detaches it from the session, basically it becomes a convenience container for the
-        # values (filename, path, etc). The problem is that if it's still attached to the session
-        # but expired (because we did a commit) then the next reference to it will initiate a transaction
-        # and a SELECT to refresh the values, and that transaction will then hold a FOR ACCESS SHARE lock
-        # on the exportqueue table until we complete the export and do a commit - which will prevent
-        # the ACCESS EXCLUSIVE lock in pop_exportqueue from being granted until the transfer completes.
-        make_transient(eq)
-
-    # And we're done, commit the transaction and release the update lock
-    session.commit()
-
-    return eq
-
-
-def exportqueue_length(session):
-    """
-    return the length of the export queue
-    """
-    # Make this generic between the ingest and export queues
-    length = session.query(ExportQueue).filter(ExportQueue.inprogress == False).count()
-    # Even though there's nothing to commit, close the transaction
-    session.commit()
-    return length
+pop_exportqueue = functools.partial(queue.pop_queue, ExportQueue, fast_rebuild = False)
+exportqueue_length = functools.partial(queue.queue_length, ExportQueue)
 
 def get_destination_data_md5(filename, logger, destination):
     """

@@ -28,6 +28,19 @@ class ExportQueue(Base):
         self.added = datetime.datetime.now()
         self.inprogress = False
 
+    @staticmethod
+    def find_not_in_progress(session):
+        return session.query(ExportQueue)\
+                    .filter(ExportQueue.inprogress == False)\
+                    .order_by(desc(ExportQueue.filename))
+
+    @staticmethod
+    def rebuild(session, element):
+        session.query(ExportQueue)\
+            .filter(ExportQueue.inprogress == False)\
+            .filter(ExportQueue.filename == eq.filename)\
+            .delete()
+
     def __repr__(self):
         return "<ExportQueue('%s', '%s')>" % (self.id, self.filename)
 
