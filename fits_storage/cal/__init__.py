@@ -17,6 +17,18 @@ from ..orm.file import File
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 
+inst_class = {
+    'F2':       CalibrationF2,
+    'GMOS':     CalibrationGMOS,
+    'GMOS-S':   CalibrationGMOS,
+    'GMOS-N':   CalibrationGMOS,
+    'GNIRS':    CalibrationGNIRS,
+    'GPI':      CalibrationGPI,
+    'GSAOI':    CalibrationGSAOI,
+    'michelle': CalibrationMICHELLE,
+    'NICI':     CalibrationNICI,
+    'NIFS':     CalibrationNIFS,
+    'NIRI':     CalibrationNIRI,
 
 def get_cal_object(session, filename, header=None, descriptors=None, types=None):
     """
@@ -39,26 +51,7 @@ def get_cal_object(session, filename, header=None, descriptors=None, types=None)
     else:
         instrument = descriptors['instrument']
 
-
-    if 'GMOS' in instrument:
-        cal = CalibrationGMOS(session, header, descriptors, types)
-    elif instrument == 'NIRI':
-        cal = CalibrationNIRI(session, header, descriptors, types)
-    elif instrument == 'GNIRS':
-        cal = CalibrationGNIRS(session, header, descriptors, types)
-    elif instrument == 'NIFS':
-        cal = CalibrationNIFS(session, header, descriptors, types)
-    elif instrument == 'michelle':
-        cal = CalibrationMICHELLE(session, header, descriptors, types)
-    elif instrument == 'F2':
-        cal = CalibrationF2(session, header, descriptors, types)
-    elif instrument == 'GSAOI':
-        cal = CalibrationGSAOI(session, header, descriptors, types)
-    elif instrument == 'NICI':
-        cal = CalibrationNICI(session, header, descriptors, types)
-    elif instrument == 'GPI':
-        cal = CalibrationGPI(session, header, descriptors, types)
-    else:
-        cal = Calibration(session, header, descriptors, types)
+    calClass = inst_class.get(instrument, Calibration)
+    cal = calClass(session, header, descriptors, types)
 
     return cal

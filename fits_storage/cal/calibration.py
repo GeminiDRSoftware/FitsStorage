@@ -27,26 +27,27 @@ class Calibration(object):
         self.from_descriptors = False
 
         # Populate the descriptors dictionary for header
-        if self.descriptors == None:
+        if self.descriptors is None:
             self.from_descriptors = True
             self.types = eval(self.header.types)
-            self.descriptors = {}
-            self.descriptors['header_id'] = self.header.id
-            self.descriptors['observation_type'] = self.header.observation_type
-            self.descriptors['observation_class'] = self.header.observation_class
-            self.descriptors['spectroscopy'] = self.header.spectroscopy
-            self.descriptors['object'] = self.header.object
-            self.descriptors['instrument'] = self.header.instrument
-            self.descriptors['central_wavelength'] = self.header.central_wavelength
-            self.descriptors['program_id'] = self.header.program_id
-            self.descriptors['ut_datetime'] = self.header.ut_datetime
-            self.descriptors['exposure_time'] = self.header.exposure_time
-            self.descriptors['observation_class'] = self.header.observation_class
-            self.descriptors['detector_roi_setting'] = self.header.detector_roi_setting
-            self.descriptors['reduction'] = self.header.reduction
-            self.descriptors['elevation'] = self.header.elevation
-            self.descriptors['cass_rotator_pa'] = self.header.cass_rotator_pa
-            self.descriptors['gcal_lamp'] = self.header.gcal_lamp
+            self.descriptors = {
+                'header_id':            self.header.id,
+                'observation_type':     self.header.observation_type,
+                'observation_class':    self.header.observation_class,
+                'spectroscopy':         self.header.spectroscopy,
+                'object':               self.header.object,
+                'instrument':           self.header.instrument,
+                'central_wavelength':   self.header.central_wavelength,
+                'program_id':           self.header.program_id,
+                'ut_datetime':          self.header.ut_datetime,
+                'exposure_time':        self.header.exposure_time,
+                'observation_class':    self.header.observation_class,
+                'detector_roi_setting': self.header.detector_roi_setting,
+                'reduction':            self.header.reduction,
+                'elevation':            self.header.elevation,
+                'cass_rotator_pa':      self.header.cass_rotator_pa,
+                'gcal_lamp':            self.header.gcal_lamp
+                }
         else:
             # The data_section comes over as a native python array, needs to be a string
             if self.descriptors['data_section']:
