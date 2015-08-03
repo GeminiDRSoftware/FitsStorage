@@ -20,11 +20,10 @@ def md5sum_size_fp(fobj):
 
     size = 0
 
-    data = fobj.read(block)
-    size += len(data)
-    hashobj.update(data)
-    while data:
+    while True:
         data = fobj.read(block)
+        if not data:
+            break
         size += len(data)
         hashobj.update(data)
 
@@ -35,17 +34,14 @@ def md5sum(filename):
     Generates the md5sum of the data in filename, returns the hex string.
     """
 
-    filep = open(filename, 'r')
-    (md5, size) = md5sum_size_fp(filep)
-    filep.close()
-    return md5
+    with open(filename, 'r') as filep:
+        (md5, size) = md5sum_size_fp(filep)
+        return md5
 
 def md5sum_size_bz2(filename):
     """
     Generates the md5sum and size of the uncompressed data in a bzip2 file
     """
 
-    filep = bz2.BZ2File(filename, 'r')
-    (md5, size) = md5sum_size_fp(filep)
-    filep.close()
-    return (md5, size)
+    with bz2.BZ2File(filename, 'r') as filep:
+        return md5sum_size_fp(filep)
