@@ -265,6 +265,7 @@ $(document).ready(function() {
     $('#calibration_results').hide();
     setAdvancedVisibility();
     setInstVisibility();
+    setModeVisibility();
     gmosCustomMaskEnable();
     $('#instselect').change(function() {
         setInstVisibility();
