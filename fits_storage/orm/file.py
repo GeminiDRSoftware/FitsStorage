@@ -31,4 +31,4 @@ class File(Base):
         if filename.endswith(".bz2"):
             return filename[:-4]
 
-        retrurn filename
+        return filename
