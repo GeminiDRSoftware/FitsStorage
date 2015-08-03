@@ -28,8 +28,9 @@ def cache_associations(session, obs_hid):
     """
 
     # Get the Header object
-    query = session.query(Header).filter(Header.id == obs_hid)
-    header = query.one()
+    header = session.query(Header)\
+                .filter(Header.id == obs_hid)\
+                .one()
 
     if None in [header.instrument, header.ut_datetime]:
         return
@@ -37,18 +38,17 @@ def cache_associations(session, obs_hid):
     # Get a cal object for it
     cal = get_cal_object(session, None, header)
 
-    # Loop through the applicable calibraiton types
+    # Loop through the applicable calibration types
     for caltype in cal.applicable:
         # Blow away old associations of this caltype
-        query = session.query(CalCache).filter(CalCache.obs_hid == header.id)
-        query = query.filter(CalCache.caltype == caltype)
-        query.delete()
+        session.query(CalCache)\
+            .filter(CalCache.obs_hid == header.id)\
+            query.filter(CalCache.caltype == caltype)\
+            .delete()
 
         # Get the associations for this caltype
         cal_headers = associate_cals(session, [header], caltype=caltype)
-        rank = 0
-        for cal_header in cal_headers:
+        for rank, cal_header in enumerate(cal_headers):
             cc = CalCache(obs_hid, cal_header.id, caltype, rank)
             session.add(cc)
-            rank += 1
         session.commit()
