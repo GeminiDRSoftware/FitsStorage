@@ -27,8 +27,8 @@ class File(Base):
         """
         Trim any trailing .bz2 off the filename
         """
-        name = filename
-        if filename.endswith(".bz2"):
-            name = filename[:-4]
-        return name
 
+        if filename.endswith(".bz2"):
+            return filename[:-4]
+
+        retrurn filename

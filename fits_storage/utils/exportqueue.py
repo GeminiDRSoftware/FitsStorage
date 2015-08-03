@@ -58,13 +58,12 @@ def export_file(session, logger, filename, path, destination):
     # and we strip any .bz2 from the local filename
 
     # Strip any .bz2 from local filename
-    filename_nobz2 = filename
-    if filename_nobz2.endswith('.bz2'):
-        filename_nobz2 = filename_nobz2[:-4]
+    filename_nobz2 = File.trim_name(filename)
 
     # Search Database
-    query = session.query(DiskFile).select_from(join(File, DiskFile))
-    query = query.filter(DiskFile.present == True).filter(File.name == filename_nobz2)
+    query = session.query(DiskFile).select_from(join(File, DiskFile))\
+                .filter(DiskFile.present == True)\
+                .filter(File.name == filename_nobz2)
     diskfile = query.one()
     our_md5 = diskfile.data_md5
 
@@ -77,6 +76,7 @@ def export_file(session, logger, filename, path, destination):
     logger.debug("Data not present at destination: dest_md5: %s, our_md5: %s - reading file", dest_md5, our_md5)
 
     # Read the file into the payload postdata buffer to HTTP POST
+    data = None
     if using_s3:
         # Read the file from S3
         s3conn = S3Connection(aws_access_key, aws_secret_key)
@@ -84,20 +84,15 @@ def export_file(session, logger, filename, path, destination):
         key = bucket.get_key(os.path.join(path, filename))
         if key is None:
             logger.error("cannot access %s in S3 bucket", filename)
-            data = None
         else:
             data = key.get_contents_as_string()
     else:
         # Read the file from disk
         fullpath = os.path.join(storage_root, path, filename)
-        exists = os.access(fullpath, os.F_OK | os.R_OK) and os.path.isfile(fullpath)
-        if not exists:
+        try:
+            data = open(fullpath, 'r').read()
+        except IOError:
             logger.error("cannot access %s", fullpath)
-            data = None
-        else:
-            f = open(fullpath, 'r')
-            data = f.read()
-            f.close()
 
     # Do we need to compress or uncompress the data?
     # If the data are already compressed, we're not going to re-compress it
@@ -118,7 +113,7 @@ def export_file(session, logger, filename, path, destination):
         logger.debug("gunzipping on the fly")
         data = bz2.decompress(data)
         # Trim .bz2 from the filename from here on, update our_md5
-        filename = filename[:-4]
+        filename = File.trime_name(filename)
         our_md5 = diskfile.data_md5
 
     # Construct upload URL
@@ -164,7 +159,7 @@ def export_file(session, logger, filename, path, destination):
             logger.debug("Transfer sucessfull")
             return True
         else:
-            logger.debug("Transfer not sucesfull")
+            logger.debug("Transfer not successful")
             return False
 
     except urllib2.URLError:
@@ -226,8 +221,9 @@ def retry_failures(session, logger, interval):
     before = datetime.datetime.now()
     before -= interval
 
-    query = session.query(ExportQueue).filter(ExportQueue.inprogress == True)
-    query = query.filter(ExportQueue.lastfailed < before)
+    query = session.query(ExportQueue)\
+                .filter(ExportQueue.inprogress == True)\
+                .filter(ExportQueue.lastfailed < before)
 
     num = query.update({"inprogress": False})
     if num > 0:
