@@ -17,12 +17,13 @@ class File(Base):
     name = Column(Text, nullable=False, unique=True, index=True)
 
     def __init__(self, filename):
-        self.name = self.trim_name(filename)
+        self.name = File.trim_name(filename)
 
     def __repr__(self):
         return "<File('%s', '%s')>" % (self.id, self.name)
 
-    def trim_name(self, filename):
+    @staticmethod
+    def trim_name(filename):
         """
         Trim any trailing .bz2 off the filename
         """

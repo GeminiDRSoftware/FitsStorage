@@ -5,7 +5,7 @@ manage and service the ingestqueue
 import os
 import datetime
 from sqlalchemy import desc
-from sqlalchemy.orm.exc import ObjectDeletedError
+from sqlalchemy.orm.exc import ObjectDeletedError, NoResultFound
 from sqlalchemy.orm import make_transient
 import functools
 
@@ -66,6 +66,19 @@ def add_to_ingestqueue(session, logger, filename, path, force_md5=False, force=F
     #except ObjectDeletedError:
         #logger.debug("Added filename %s to ingestqueue which was immediately deleted", filename)
 
+instrument_table = {
+    # Instrument: (Name for debugging, Class)
+    'F2':       ("F2", F2),
+    'GMOS-N':   ("GMOS", Gmos),
+    'GMOS-S':   ("GMOS", Gmos),
+    'GNIRS':    ("GNIRS", Gnirs),
+    'GPI':      ("GPI", Gpi),
+    'GSAOI':    ("GSAOI", Gsaoi),
+    'michelle': ("MICHELLE", Michelle),
+    'NICI':     ("NIFS", Nifs),
+    'NIFS':     ("NIFS", Nifs),
+    'NIRI':     ("NIRI", Niri),
+    }
 
 def ingest_file(session, logger, filename, path, force_md5, force, skip_fv, skip_md, make_previews=False):
     """
@@ -100,13 +113,12 @@ def ingest_file(session, logger, filename, path, force_md5, force, skip_fv, skip
 
     logger.debug("ingest_file %s", filename)
 
-    # If we're using S3, get the connection and the bucket
+    # First, sanity check if the file actually exists
     if using_s3:
+        # If we're using S3, get the connection and the bucket
         s3conn = S3Connection(aws_access_key, aws_secret_key)
         bucket = s3conn.get_bucket(s3_bucket_name)
 
-    # First, sanity check if the file actually exists
-    if using_s3:
         key = bucket.get_key(os.path.join(path, filename))
         fullpath = os.path.join(storage_root, filename)
         if key is None:
@@ -121,17 +133,14 @@ def ingest_file(session, logger, filename, path, force_md5, force, skip_fv, skip
             check_present(session, logger, filename)
             return
 
-    # Make a file instance
-    fileobj = File(filename)
-
-    # Check if there is already a file table entry for this.
-    # filename may have been trimmed by the file object
-    query = session.query(File).filter(File.name == fileobj.name)
-    if query.first():
-        logger.debug("Already in file table as %s", fileobj.name)
-        # This will throw an error if there is more than one entry
-        fileobj = query.one()
-    else:
+    try:
+        # Assume that there exists a file table entry for this
+        trimmed_name = File.trim_name(filename)
+        fileobj = session.query(File).filter(File.name == trimmed_name).one()
+        logger.debug("Already in file table as %s", trimmed_name)
+    except NoResultFound:
+        # Make a file instance
+        fileobj = File(filename)
         logger.debug("Adding new file table entry")
         session.add(fileobj)
         session.commit()
@@ -139,58 +148,56 @@ def ingest_file(session, logger, filename, path, force_md5, force, skip_fv, skip
     # At this point, 'fileobj' should by a valid DB object.
 
     # See if a diskfile for this file already exists and is present
-    query = session.query(DiskFile).filter(DiskFile.file_id == fileobj.id).filter(DiskFile.present == True)
-    if query.first():
+    query = session.query(DiskFile)\
+                .filter(DiskFile.file_id == fileobj.id)\
+                .filter(DiskFile.present == True)
+
+    try:
+        # Assume that the file is there (will raise an exception otherwise)
+        diskfile = query.one()
+        add_diskfile = False
         # Yes, it's already there.
         logger.debug("already present in diskfile table...")
         # Ensure there's only one and get an instance of it
-        diskfile = query.one()
 
-        # Has the file changed since we last ingested it?
-        if using_s3:
-            # Check the md5 from s3 first.
-            # Lastmod on s3 is always the upload time, no way to set it manually
-            if diskfile.file_md5 == get_s3_md5(key) and (force != True):
-                logger.debug("S3 etag md5 indicates no change")
-                add_diskfile = 0
+        def need_to_add_diskfile_p(md5, msg1, msg2):
+            # If md5 remains the same, we're good (unless we're forcing it)
+            if diskfile.file_md5 == md5 and not force:
+                logger.debug("{0} indicates no change".format(msg1))
+                return False
             else:
-                logger.debug("S3 etag md5 or force flag indicates file has changed - reingesting")
+                logger.debug("{0} indicates file has changed - reingesting".format(msg2))
                 # We could fetch the file and do a local md5 check here if we want
                 # Set the present and canonical flags on the current one to false and create a new entry
                 diskfile.present = False
                 diskfile.canonical = False
                 session.commit()
-                add_diskfile = 1
+                return True
+
+        # Has the file changed since we last ingested it?
+        if using_s3:
+            # Lastmod on s3 is always the upload time, no way to set it manually
+            add_diskfile = need_to_add_diskfile_p(get_s3_md5(key), "S3 etag md5", "S3 etag md5 or force flag")
         else:
             # By default check lastmod time first
-            # there is a subelty wrt timezones here.
+            # there is a subtelty wrt timezones here.
             if (diskfile.lastmod.replace(tzinfo=None) != diskfile.get_lastmod()) or force_md5 or force:
-                logger.debug("lastmod time or force flags indicates file modification")
-                # Check the md5 to be sure if it's changed
-                if diskfile.file_md5 == diskfile.get_file_md5() and (force != True):
-                    logger.debug("md5 indicates no change")
-                    add_diskfile = 0
-                else:
-                    logger.debug("md5/force flag indicates file has changed - reingesting")
-                    # Set the present and canonical flags on the current one to false and create a new entry
-                    diskfile.present = False
-                    diskfile.canonical = False
-                    session.commit()
-                    add_diskfile = 1
+                logger.debug("lastmod time or force flags suggest file modification")
+                add_diskfile = need_to_add_diskfile_p(diskfile.get_file_md5(), "md5", "md5/force flag")
             else:
                 logger.debug("lastmod time indicates file unchanged, not checking further")
-                add_diskfile = 0
 
-    else:
+    except NoResultFound:
         # No not present, insert into diskfile table
         logger.debug("No Present DiskFile exists")
-        add_diskfile = 1
+        add_diskfile = True
 
         # Check to see if there is are older non-present but canonical versions to mark non-canonical
-        query = session.query(DiskFile).filter(DiskFile.canonical == True)
-        query = query.filter(DiskFile.file_id == fileobj.id).filter(DiskFile.present == False)
+        olddiskfiles = session.query(DiskFile)\
+                            .filter(DiskFile.canonical == True)\
+                            .filter(DiskFile.file_id == fileobj.id)\
+                            .filter(DiskFile.present == False)
 
-        olddiskfiles = query.all()
         for olddiskfile in olddiskfiles:
             logger.debug("Marking old diskfile id %d as no longer canonical", olddiskfile.id)
             olddiskfile.canonical = False
@@ -228,7 +235,7 @@ def ingest_file(session, logger, filename, path, force_md5, force, skip_fv, skip
                 fullpath_for_ad = diskfile.uncompressed_cache_file
             else:
                 fullpath_for_ad = diskfile.fullpath()
-    
+
             logger.debug("Instantiating AstroData object on %s", fullpath_for_ad)
             try:
                 diskfile.ad_object = AstroData(fullpath_for_ad, mode='readonly')
@@ -251,7 +258,7 @@ def ingest_file(session, logger, filename, path, force_md5, force, skip_fv, skip
                                         diskfile.uncompressed_cache_file)
 
                 return
-    
+
             # This will use the DiskFile unzipped cache file if it exists
             logger.debug("Adding new DiskFileReport entry")
             dfreport = DiskFileReport(diskfile, skip_fv, skip_md)
@@ -290,66 +297,29 @@ def ingest_file(session, logger, filename, path, force_md5, force, skip_fv, skip
             session.commit()
             # Add the instrument specific tables
             # These will use the DiskFile unzipped cache file if it exists
-            if inst == 'GMOS-N' or inst == 'GMOS-S':
-                logger.debug("Adding new GMOS entry")
-                gmos = Gmos(header, diskfile.ad_object)
-                session.add(gmos)
+            try:
+                name, instClass = instrument_table[inst]
+                logger.debug("Adding new {} entry".format(name))
+                entry = instClass(header, diskfile.ad_object)
+                session.add(entry)
                 session.commit()
-            elif inst == 'NIRI':
-                logger.debug("Adding new NIRI entry")
-                niri = Niri(header, diskfile.ad_object)
-                session.add(niri)
-                session.commit()
-            elif inst == 'GNIRS':
-                logger.debug("Adding new GNIRS entry")
-                gnirs = Gnirs(header, diskfile.ad_object)
-                session.add(gnirs)
-                session.commit()
-            elif inst == 'NIFS':
-                logger.debug("Adding new NIFS entry")
-                nifs = Nifs(header, diskfile.ad_object)
-                session.add(nifs)
-                session.commit()
-            elif inst == 'F2':
-                logger.debug("Assing new F2 entry")
-                flam2 = F2(header, diskfile.ad_object)
-                session.add(flam2)
-                session.commit()
-            elif inst == 'michelle':
-                logger.debug("Adding new MICHELLE entry")
-                michelle = Michelle(header, diskfile.ad_object)
-                session.add(michelle)
-                session.commit()
-            elif inst == 'GSAOI':
-                logger.debug("Adding new GSAOI entry")
-                gsaoi = Gsaoi(header, diskfile.ad_object)
-                session.add(gsaoi)
-                session.commit()
-            elif inst == 'NICI':
-                logger.debug("Adding new NICI entry")
-                nici = Nici(header, diskfile.ad_object)
-                session.add(nici)
-                session.commit()
-            elif inst == 'GPI':
-                logger.debug("Adding new GPI entry")
-                gpi = Gpi(header, diskfile.ad_object)
-                session.add(gpi)
-                session.commit()
+            except KeyError:
+                # Unknown instrument. Maybe we should put a message?
+                pass
 
-            # Do the preview here. 
+            # Do the preview here.
             try:
                 if using_previews:
                     if make_previews:
                         # Go ahead and make the preview now
                         logger.debug("Making Preview")
                         make_preview(session, logger, diskfile)
-                        session.commit()
                     else:
                         # Add it to the preview queue
                         logger.debug("Adding to preview queue")
                         pq = PreviewQueue(diskfile)
                         session.add(pq)
-                        session.commit()
+                    session.commit()
             except:
                 logger.error("Error making preview for %s", diskfile.filename)
 
@@ -370,6 +340,7 @@ def ingest_file(session, logger, filename, path, force_md5, force, skip_fv, skip
                                 diskfile.uncompressed_cache_file)
 
     session.commit()
+
     return add_diskfile
 
 
