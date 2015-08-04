@@ -64,13 +64,55 @@ FILES_TO_TEST = (
     ('S20130129S0081.fits.bz2', 'NOPASS'),
     ('S20130914S0072.fits.bz2', 'NOPASS'),
     ('S20120213S0007.fits.bz2', 'BAD'),
-# HOKUPAA+QUIRC
+# Hokupaa+QUIRC
     ('01apr19_015.fits.bz2', 'CORRECT'),
     ('2002APR26_299.fits.bz2', 'CORRECT'),
     ('00AUG02_221.fits.bz2', 'ENG'),
     ('01feb21_309.fits.bz2', 'NOPASS'),
     ('01feb21_534.fits.bz2', 'NOPASS'),
     ('00aug02_089.fits.bz2', 'BAD'),
+# hrwfs
+    ('2001dec11_0036.fits.bz2', 'CORRECT'),
+    ('S20060804S0127.fits.bz2', 'CORRECT'),
+    ('S20060801S0015.fits.bz2', 'ENG'),
+    ('2002may18_1.5.fits.bz2', 'NOPASS'),
+    ('2003jul30_0012_bias.fits.bz2', 'NOPASS'),
+    ('S20031218S0327.fits.bz2', 'NOPASS'),
+    ('S20020420S0028.fits.bz2', 'BAD'),
+    ('S20021227S0041.fits.bz2', 'EXCEPTION'),
+# MICHELLE
+    ('N20031212S0212.fits.bz2', 'CORRECT'),
+    ('N20050622S0025.fits.bz2', 'CORRECT'),
+    ('N20030227S0173.fits.bz2', 'ENG'),
+    ('N20030616S0134.fits.bz2', 'NOPASS'),
+    ('N20030616S0135b.fits.bz2', 'NOPASS'),
+    ('N20050805S0215.fits.bz2', 'BAD'),
+    ('N20080506S0085.fits.bz2', 'EXCEPTION'),
+# NICI
+    ('S20081119S0090.fits.bz2', 'CORRECT'),
+    ('S20130714S0134.fits.bz2', 'CORRECT'),
+    ('S20130621S0040.fits.bz2', 'ENG'),
+    ('S20090412S0023.fits.bz2', 'NOPASS'),
+    ('S20100406S0691.fits.bz2', 'NOPASS'),
+    ('S20100407S0036.fits.bz2', 'BAD'),
+# NIFS
+    ('N20060722S0027.fits.bz2', 'CORRECT'),
+    ('N20120612S0301.fits.bz2', 'CORRECT'),
+    ('N20051025S0103.fits.bz2', 'ENG'),
+    ('N20060206S0274.fits.bz2', 'NOPASS'),
+    ('N20060208S0236.fits.bz2', 'NOPASS'),
+    ('N20130605S0357.fits.bz2', 'NOPASS'),
+    ('N20051109S0113.fits.bz2', 'BAD'),
+# NIRI
+    ('N20021229S0090.fits.bz2', 'CORRECT'),
+    ('N20081223S0361.fits.bz2', 'CORRECT'),
+    ('N20120911S0139.fits.bz2', 'CORRECT'),
+    ('00sep10_0108.fits.bz2', 'ENG'),
+    ('N20141210S0677.fits.bz2', 'ENG'),
+    ('N20020411S0259.fits.bz2', 'NOPASS'),
+    ('N20030912S0897.fits.bz2', 'NOPASS'),
+    ('N20010519S088.fits.bz2', 'NOPASS'),
+    ('N20130907S0898_dark.fits.bz2', 'NOPASS'),
     )
 
 #@pytest.fixture()
