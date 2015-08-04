@@ -8,7 +8,6 @@ conditions:
 include files:   [ radec ]
 
 keywords:
-  - OBJECT
   - UTSTART
   - UTEND
   - TIME-OBS
