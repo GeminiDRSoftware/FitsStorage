@@ -38,7 +38,8 @@ def gemini_telescope(string):
     name of the telesope. Otherwise returns None.
     """
 
-    return gemini_telescopes.get(string.lower())
+    if isinstance(string, basestring):
+        return gemini_telescopes.get(string.lower())
 
 # A utility function for matching instrument names
 hqcre = re.compile(r'^[Hh][Oo][Kk][Uu][Pp]([Aa])+(\+)*[Qq][Uu][Ii][Rr][Cc]$')
