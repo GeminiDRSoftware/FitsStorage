@@ -24,7 +24,6 @@ The result is a named tuple with elements:
 
 import os
 import re
-import sys
 from collections import namedtuple
 from datetime import datetime
 from time import strptime
@@ -34,6 +33,8 @@ from ..fits_storage_config import validation_def_path
 
 import yaml
 import pyfits as pf
+
+import logging
 
 # General Exceptions
 
@@ -55,7 +56,6 @@ class NoDateError(Exception):
     pass
 
 # Constants
-DEBUG = False
 NOT_FOUND_MESSAGE = "Could not find a validating set of rules"
 STATUSES = ['CORRECT', 'NOPASS', 'NODATE', 'BAD', 'ENG', 'EXCEPTION']
 
@@ -95,8 +95,7 @@ def coerceValue(val):
     raise ValueError('{0} not a known FITS value'.format(val))
 
 def log(text):
-    if DEBUG:
-        print(text)
+    logging.debug(text)
 
 Function = namedtuple('Function', ['name', 'code', 'exceptionIfTrue', 'exceptionIfFalse'])
 

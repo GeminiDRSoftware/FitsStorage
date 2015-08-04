@@ -1,14 +1,23 @@
 '''This module provides with custom functions use by the FITS validation engine,
    that are specific to Gemini'''
 
-from .fits_validator import *
-from .fits_validator import coerceValue
-from ..gemini_metadata_utils import gemini_instrument
-from ..gemini_metadata_utils import GeminiProgram, GeminiObservation, GeminiDataLabel
+try:
+    from .fits_validator import *
+    from .fits_validator import coerceValue, log
+    from ..gemini_metadata_utils import gemini_instrument
+    from ..gemini_metadata_utils import GeminiProgram, GeminiObservation, GeminiDataLabel
+except ValueError:
+    from fits_storage.utils.fits_validator import *
+    from fits_storage.utils.fits_validator import coerceValue, log
+    from fits_storage.gemini_metadata_utils import gemini_instrument
+    from fits_storage.gemini_metadata_utils import GeminiProgram, GeminiObservation, GeminiDataLabel
 
 from astrodata import AstroData
 from datetime import datetime, timedelta
 from StringIO import StringIO
+import sys
+import pyfits as pf
+import logging
 
 FACILITY_INSTRUME = {'bHROS', 'F2', 'GMOS-N', 'GMOS-S', 'GNIRS', 'GPI', 'GSAOI', 'NICI', 'NIFS', 'NIRI'}
 STATUSES.append('NOTGEMINI')
@@ -162,8 +171,12 @@ def process_argument(argv, argument):
 
 if __name__ == '__main__':
     argv = sys.argv[1:]
+    debug   = process_argument(argv, '-d')
     verbose = process_argument(argv, '-v')
     use_ad  = process_argument(argv, '-a')
+
+    if debug:
+        logging.basicConfig(level=logging.DEBUG)
 
     try:
         fits = pf.open(argv[0])
@@ -172,7 +185,6 @@ if __name__ == '__main__':
     fits.verify('fix+exception')
 
     if verbose:
-        DEBUG = True
         try:
             env = Environment()
             env.features = set()
