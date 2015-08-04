@@ -4,4 +4,4 @@ conditions:
   - matching:
     - XTENSION:   IMAGE
 
-include files:    wcs
+# include files:    wcs
