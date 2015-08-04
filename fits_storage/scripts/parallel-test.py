@@ -16,8 +16,8 @@ Options:
   -N             Don't skip files that have been tested already
   -W WORKERS     Number of parallel instances working on the data [default: 10]
   -I INSTRUMENT  Select only files for this instrument. Valid values are:
-                    bhros, flamingos, f2, gmos, gnirs, gpi, gsaoi, hokuppa,
-                    hrwfs, michelle, nici, nifs, niri, oscir, phoenix,
+                    bhros, cirpass, flamingos, f2, gmos, gnirs, gpi, gsaoi,
+                    hokuppa, hrwfs, michelle, nici, nifs, niri, oscir, phoenix,
                     quirc, texes, trecs
   -f FILELIST    Test files only from the filelist
   -M TEXT        Select cases where the 'cause' contains the indicated text
@@ -262,6 +262,7 @@ class Upserter(object):
 
 instruments = {
     'bhros': 'BHROS',
+    'cirpass': 'CIRPASS',
     'flamingos': 'FLAMINGOS',
     'f2': ('F2', 'FLAM'),
     'gmos': ('GMOS', 'GMOS-N', 'GMOS-S'),
