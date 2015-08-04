@@ -13,6 +13,7 @@ include files:
   - ext/gpi
   - ext/gpi-sci
   - ext/gsaoi
+  - ext/hokupaa
   - ext/nici-blue
   - ext/nici-red
   - ext/nifs

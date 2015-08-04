@@ -1,0 +1,8 @@
+# This file is here only to keep AstroData objects happy
+# (Hokupaa+QUIRC produces single image FITS, but AstroData makes all
+# images MEF no matter what...)
+provides:         valid
+conditions:
+  - is hokupaa
+  - matching:
+    - XTENSION:   IMAGE
