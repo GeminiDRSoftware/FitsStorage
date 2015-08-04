@@ -17,7 +17,7 @@ Options:
   -W WORKERS     Number of parallel instances working on the data [default: 10]
   -I INSTRUMENT  Select only files for this instrument. Valid values are:
                     bhros, cirpass, flamingos, f2, gmos, gnirs, gpi, gsaoi,
-                    hokuppa, hrwfs, michelle, nici, nifs, niri, oscir, phoenix,
+                    hokupaa, hrwfs, michelle, nici, nifs, niri, oscir, phoenix,
                     quirc, texes, trecs
   -f FILELIST    Test files only from the filelist
   -M TEXT        Select cases where the 'cause' contains the indicated text
@@ -270,7 +270,7 @@ instruments = {
     'gnirs': 'GNIRS',
     'gpi': 'GPI',
     'gsaoi': 'GSAOI',
-    'hokuppa': 'HOKUPPA+QUIRCS',
+    'hokupaa': 'HOKUPAA+QUIRC',
     'hrwfs': 'HRWFS',
     'michelle': 'MICHELLE',
     'nici': 'NICI',
