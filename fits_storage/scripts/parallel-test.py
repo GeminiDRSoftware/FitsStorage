@@ -230,6 +230,7 @@ class SqlFiles(object):
         try:
             for candidate in self:
                 output_queue.put(candidate)
+            sleep(2)
             output_queue.join()
         except KeyboardInterrupt:
             output_queue.close()
@@ -340,7 +341,7 @@ def evaluatorProcess((versid, version), input_queue, output_queue):
             evaluator = Evaluator(SqlRuleSet)
             while True:
                 try:
-                    (fileid, fname) = input_queue.get(timeout=0.5)
+                    (fileid, fname) = input_queue.get(timeout=2)
                 except EmptyQueue:
                     continue
                 input_queue.task_done()
@@ -362,7 +363,7 @@ class Pool(object):
 
         while True:
             try:
-                yield result_queue.get(timeout=0.5)
+                yield result_queue.get(timeout=2)
                 result_queue.task_done()
             except EmptyQueue:
                 if not sentinel.is_alive():
