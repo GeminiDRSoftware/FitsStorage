@@ -452,14 +452,43 @@ class Environment(dict):
 
         return value
 
+class NegatedTest(object):
+    def __init__(self, test, pass_name=False):
+        self._negated = test
+        self.name = self._negated.name
+        if not pass_name:
+            self.name = 'not ' + self.name
+
+    def test(self, header, env):
+        return not self._negated(header, env)
+
+    def __call__(self, header, env):
+        return self.test(header, env)
+
+class GroupTest(list):
+    def __init__(self, name=None, conjunctive=True, *args, **kw):
+        super(GroupTest, self).__init__(*args, **kw)
+        self.name = name
+        self._conj = conjunctive
+
+    def test(self, header, env):
+        if len(self) == 0:
+            return True
+
+        if self._conj:
+            return all(test(header, env) for test in self)
+        else:
+            return any(test(header, env) for test in self)
+
+    def __call__(self, header, env):
+        return self.test(header, env)
+
 # Extra functions to help RuleSet conditions
 def hdu_in(hdus, h, env):
     return env.hduNum in hdus
-def in_environment(val, h, env, negate = False):
-    r = val in env.features
 
-    if negate:
-        return not r
+def in_environment(val, h, env):
+    r = val in env.features
 
     return r
 
@@ -523,8 +552,8 @@ class RuleSet(list):
         self.fn = filename
         self.keywordDescr = {}
         self.rangeRestrictions = {}
-        self.conditions = []
-        self.postConditions = []
+        self.conditions = GroupTest()
+        self.postConditions = GroupTest()
         self.features = []
 
         self.__initalize(filename)
@@ -545,23 +574,18 @@ class RuleSet(list):
                 raise ValueError('{0}: {1}'.format(self.fn, s))
             self.rangeRestrictions = dict(iter_pairs(data.get('range limits'), Range.from_string))
             # conditions keeps lists of tests that will be performed on the
-            # header to figure out if this ruleset applies or not. A hit on
-            # any of the "False" ones will exclude the ruleset. If no excluding
-            # conditions are met, then the "True" ones are used to figure if it
-            # conditions for inclusion are met
+            # header to figure out if this ruleset applies or not.
             self.conditions = self.__parse_tests(data.get('conditions', []))
             # postConditions is similar to conditions in that it holds tests to be
             # performed over the header contents, and accept the same syntax, but they're run
             # once we know that the ruleset is actually applies to the current HDU and that
-            # the mandatory keywords are all there. It's used mostly for complex logic and
-            # ALL of them have to pass
-            r = self.__parse_tests(data.get('tests', []))
-            self.postConditions = r[True] + r[False]
+            # the mandatory keywords are all there. It's used mostly for complex logic
+            self.postConditions = self.__parse_tests(data.get('tests', []))
             for inc in iter_list(data.get('include files')):
                 self.append(ruleFactory(inc, self.__class__))
 
     def __parse_tests(self, data):
-        result = { True: [], False: [] }
+        result = GroupTest()
 
         for entry in data:
             if isinstance(entry, (str, unicode)):
@@ -571,34 +595,44 @@ class RuleSet(list):
             else:
                 raise RuntimeError("Syntax Error: Invalid entry, {0!r} (on {1})".format(entry, self.fn))
 
-            if element == 'on hdus':
-                result[False].append(callback_factory(hdu_in, set(iter_list(content)), name = 'on hdus'))
+            negated = False
             if element.startswith('is '):
                 if element.startswith('is not '):
-                    ng = False
-                    elem = ' '.join(element.split()[2:])
+                    negated = True
+                    _element = element[6:].strip()
                 else:
-                    ng = True
-                    elem = ' '.join(element.split()[1:])
-                result[False].append(callback_factory(in_environment, elem, negate = ng, name = element))
+                    _element = element[2:].strip()
+                test_to_add = callback_factory(in_environment, _element, name = element)
+
+                if negated:
+                    test_to_add = NegatedTest(test_to_add, pass_name = True)
             else:
                 if element.startswith('not '):
-                    inclusive = False
-                    _element = ' '.join(element.split()[1:])
+                    negated = True
+                    _element = element[3:].strip()
                 else:
-                    inclusive = True
+                    negated = False
                     _element = element
 
-                if _element == 'exists':
+                if _element == 'on hdus':
+                    test_to_add = callback_factory(hdu_in, set(iter_list(content)), name = _element)
+                elif _element == 'exists':
+                    test_to_add = GroupTest(name = _element)
                     for kw in iter_list(content):
-                        result[inclusive].append(callback_factory(kw, name = element))
+                        test_to_add.append(callback_factory(kw, name = element))
                 elif _element == 'matching':
+                    test_to_add = GroupTest(name = _element)
                     for kw, val in iter_pairs(content):
-                        result[inclusive].append(callback_factory(kw, val, name = element))
+                        test_to_add.append(callback_factory(kw, val, name = element))
                 elif _element in RuleSet.__registry:
-                    result[inclusive].append(callback_factory(RuleSet.__registry[_element], name = element))
+                    test_to_add = callback_factory(RuleSet.__registry[_element], name = element)
                 else:
                     raise RuntimeError("Syntax Error: unrecognized condition {0!r}".format(element))
+
+                if negated:
+                    test_to_add = NegatedTest(test_to_add)
+
+            result.append(test_to_add)
 
         return result
 
@@ -629,14 +663,7 @@ class RuleSet(list):
         return messages
 
     def applies_to(self, header, env):
-        incTests, excTests = self.conditions[True], self.conditions[False]
-
-        include = (any(test(header, env) for test in incTests)
-                   if incTests
-                   else True)
-        exclude = any(test(header, env) for test in excTests)
-
-        return not exclude and include
+        return self.conditions.test(header, env)
 
     def __repr__(self):
         return "<{0} '{1}' [{2}]>".format(self.__class__.__name__, self.fn, ', '.join(x.fn for x in self), ', '.join(self.keywordDescr))
@@ -727,6 +754,8 @@ class RuleStack(object):
                     continue
                 if candidate.applies_to(header, env):
                     stack.append(candidate)
+                else:
+                    log("  - Not applicable: {0}".format(candidate.fn))
 
         try:
             env.features.remove('valid')
