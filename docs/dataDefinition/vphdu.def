@@ -17,29 +17,26 @@ include files:
 
 keywords:
   - DATE
-#  - DATE-OBS
   - OBSID
   - DATALAB
-#  - FRAME
   - OBJECT
-  - OBSCLASS:
-    - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
-    - since 2011-1-6
   - RELEASE:
     - date:     2000-1-1 .. *
-  - IAA:
-    - since 2011-1-6
-  - RAWGEMQA:
-    - optional
-    - char:   [ UNKNOWN, USABLE, BAD, CHECK ]
-  - RAWPIREQ:
-    - optional
-    - char:   [ UNKNOWN, 'YES', 'NO', CHECK ]   # Using quotes to prevent YAML to turn this into booleans
-  - RAWBG,RAWCC,RAWIQ,RAWWV:
-    - optional
-    - char:     Any
-    - upper:    UNKNOWN
-    - pattern:  '\d{2}-percentile'
+
+  - optional:
+    - RAWGEMQA:
+      - char:   [ UNKNOWN, USABLE, BAD, CHECK ]
+    - RAWPIREQ:
+      - char:   [ UNKNOWN, 'YES', 'NO', CHECK ]   # Using quotes to prevent YAML to turn this into booleans
+    - RAWBG,RAWCC,RAWIQ,RAWWV:
+      - char:     Any
+      - upper:    UNKNOWN
+      - pattern:  '\d{2}-percentile'
+
+  - since 2011-1-6:
+    - IAA:
+    - OBSCLASS:
+      - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
 
 tests:
 # Checks GEMPRGID, OBSID, AND DATALAB

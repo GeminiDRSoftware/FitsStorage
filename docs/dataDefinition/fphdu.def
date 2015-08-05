@@ -20,15 +20,6 @@ include files:
 
 keywords:
 # Next three are float
-  - AZIMUTH:
-    - float
-    - since 2001-7-1
-  - ELEVATIO:
-    - float
-    - since 2001-7-1
-  - CRPA:
-    - float
-    - since 2001-7-1
   - TRKFRAME
   - DECTRACK
   - TRKEPOCH
@@ -43,9 +34,6 @@ keywords:
 # FRAMNE has been moved to the instrument PDU definitions
 #  - FRAME
   - OBJECT
-  - OBSCLASS:
-    - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
-    - since 2007-6-28
   - OBSTYPE:
     - char:   [ DARK, ARC, FLAT, BIAS, OBJECT, PINHOLE, RONCHI, CAL, FRINGE, MASK ]
   - RAWGEMQA:
@@ -60,10 +48,22 @@ keywords:
     - date:     2000-1-1 .. *
   - SSA
   - UT
-  - PA:
-    - since 2004-1-1
-  - IAA:
-    - since 2007-6-28
+
+  - since 2001-7-1:
+    - AZIMUTH:
+      - float
+    - ELEVATIO:
+      - float
+    - CRPA:
+      - float
+
+  - since 2004-1-1:
+    - PA
+
+  - since 2007-6-28:
+    - IAA
+    - OBSCLASS:
+      - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
 
 tests:
 # Checks GEMPRGID, OBSID, AND DATALAB

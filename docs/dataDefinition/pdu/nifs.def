@@ -33,6 +33,7 @@ keywords:
   - LNRS:
     - int:        1 .. 16
   - OBSMODE
-  - RADECSYS:
-    - since 2006-7-1
   - UT
+
+  - since 2006-7-1:
+    - RADECSYS

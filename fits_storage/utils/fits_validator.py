@@ -253,7 +253,7 @@ def iter_pairs(lst, coercion = lambda x: x):
 
 def iter_keywords(lst):
     for (key, value) in iter_pairs(lst):
-        if key.startswith('if '):
+        if key.startswith('if ') or key.startswith('since ') or key == 'optional':
             if not value:
                 raise ValueError('Found "{0}" with no keywords associated'.format(key))
 
