@@ -1,10 +1,411 @@
-1) Is RAWGEMQA defined and different of 'UNKNOWN'?
-2) Are RAWIQ, RAWCC, RAWWV, RAWBG defined and different of 'UNKNOWN'?
-4) EQUINOX/EPOCH are floating point (Standard) vs something else
-5) If RELEASE is there give points
-6) If IRAF-TLM is there and it's the most recent, give points
-n) Are there missing headers in one of the files?
+DESCRIPTION OF THE RULE FILE SYNTAX AND FUNCTIONALITY
+=====================================================
 
-Think about the following:
+The image-validation rule system for the Gemini Archive has been developed
+following CADC's use of a hierarchical definition for their data dictionary.
+This may not be the best idea and is open to change, but any system that
+would replace the current one should provide at least the same functionality.
 
- * Give extra points to the most recent RELEASE
+Our current system is based on "rule files". Each rule file is composed of
+a number of sections, all of them optional - but at least one of them must
+be present. We'll refer to the sections by the name that is used in the files
+to define them and, while they can appear in any order in the files, you'll
+usually find them in the following order.
+
+   * provides
+   * includes
+   * conditions
+   * range limits
+   * keywords
+   * tests
+
+Here's a real example file showing examples of most of the sections. Please,
+use it as refernce of real usage for the concepts we'll be discussing in the
+rest of the document.
+
+::
+
+        conditions:
+          - is facility
+          - not exists:
+            - XTENSION
+          - set-date
+          - matching:
+            - TELESCOP: Gemini-South
+            - TELESCOP: Gemini-North
+        
+        include files:
+          - radec
+          - pdu/bhros
+          - pdu/flamingos2
+          - pdu/gmos
+          - pdu/gnirs
+          - pdu/gpi
+          - pdu/gsaoi
+          - pdu/nici
+          - pdu/nifs
+          - pdu/niri
+        
+        keywords:
+          - AZIMUTH:
+            - float
+            - since:    2001-7-1
+          - ELEVATIO:
+            - float
+            - since:    2001-7-1
+          - CRPA:
+            - float
+            - since:    2001-7-1
+          - TRKFRAME
+          - DECTRACK
+          - TRKEPOCH
+          - RATRACK
+          - PMDEC
+          - PMRA
+          - DATE
+          - DATE-OBS
+          - GEMPRGID
+          - OBSID
+          - DATALAB
+          - OBJECT
+          - OBSCLASS:
+            - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
+            - since:    2007-6-28
+          - OBSTYPE:
+            - char:   [ DARK, ARC, FLAT, BIAS, OBJECT, PINHOLE, RONCHI, CAL, FRINGE, MASK ]
+          - RAWGEMQA:
+            - char:   [ UNKNOWN, USABLE, BAD, CHECK ]
+          - RAWPIREQ:
+            - char:   [ UNKNOWN, 'YES', 'NO', CHECK ]   # Using quotes to prevent YAML to turn these into booleans
+          - RAWBG,RAWCC,RAWIQ,RAWWV:
+            - char:     Any
+            - upper:    UNKNOWN
+            - pattern:  '\d{2}-percentile'
+          - RELEASE:
+            - date:     2000-1-1 .. *
+          - SSA
+          - UT
+          - PA:
+            - since:    2004-1-1
+          - IAA:
+            - since:    2007-6-28
+        
+        tests:
+        # Checks GEMPRGID, OBSID, AND DATALAB
+          - valid-observation-info
+          - wcs-after-pdu
+
+The meaning and use of those sections will be presented later in this
+document.
+
+Being hierarchical in nature, this system organizes the rules that an image
+must comply to in "levels" (each file represents a level), from the more
+abstract (eg. *is it a Gemini-produced image?*, *is it an engineering image?*)
+to more concrete (eg. *is this the blue-arm extension for a NICI image?*)
+Every HDU of an image MUST pass all the applicable levels to mark that image
+as "correct".
+
+Also, note that each HDU of an image is processed in the same order that they
+found in the file, and they're considered separately from the others. This is
+a limitation of the system (an image is not considered as a whole). We may
+need some information from the Primary HDU to properly test the extensions,
+though; we need a mechanism to pass this information along: the context.
+
+We'll introduce all those concepts now. By the end of the document you'll be
+presented with an example test that explains how the system uses all the
+information to decide on the validity of a FITS file.
+
+Test Context
+------------
+
+The testing framework creates a 'context' for each tested image. This context
+is just a container for words, like 'facility', 'wcs-in-hdu', etc. that are
+added either implicitly by the framework itself or by test functions, or
+explicitly by passed rule files. Those words can be looked up later and used
+as part of the tests.
+
+As mentioned before, this is the way to pass information across HDU tests.
+We'll see more in a moment.
+
+All the words added by users writing new rule files are arbitrary and can
+be used as they please, except for ``valid``, which has a meaning for the
+system. In practice, the only rule files that add ``valid`` to the context
+are the ones under the ``pdu`` and ``ext`` directories, which define the
+peculiarities of each instrument's headers.
+
+General Syntax
+--------------
+
+The files are all valid [YAML](http://en.wikipedia.org/wiki/YAML) documents.
+YAML provides a simple syntax to describe structured data (lists and attribute
+dictionaries) which can be presented in two different ways: inline or block
+format. Please, read YAML's documentation to learn this more in detail, if
+you want, but in principle, the only thing we need to learn is how to write
+lists of values, which can be done like this:
+
+::
+
+        # List in inline mode
+        [ gmos, gnirs, nifs ]
+        
+        # Same list in block mode
+        - gmos
+        - gnirs
+        - nifs
+
+You'll see lists all over the place in the existing documents.
+
+# TODO: Explain lists associated to attributes
+
+YAML allows our software to recognize automatically numbers, strings of
+characters, etc., but also special elements, like null and boolean
+(true/false) values, which can make writing the documents a bit tricky. In
+principle, this only means that whenever you need to write **yes**, **true**,
+**no**, or **false** (capitalized or not), you **must** put that word in
+single quotes (eg. ``'Yes'``). The example document shows a case where this
+was needed.
+
+The 'provides' section
+----------------------
+
+This is the simplest of all sections: it represents a list of words to be
+added to the working environment. These words are not added unconditionally,
+though: the rules listed in the other sections have to pass, first.
+
+Examples:
+
+::
+
+        # Taken from pdu/gmos.def
+        provides:        [ valid, gmos ]
+        
+        # Taken from ext/nifs.def
+        provides:          valid
+
+Currently, there are only two uses for the ``provides`` section:
+
+    - To declare that passing the tests of the current rule file is
+      *necessary condition* to make an HUD a valid one. **All** tested
+      HDUs must incorporate ``valid`` to the context at some point;
+      otherwise, it will NOT be considered a valid HDU, no matter how
+      many tests it passes.
+    - To introduce words that can be used for the processing of further
+      HDUs. Right now we only use it to mark a FITS file as belonging to
+      a certain instrument. As we can only identify the instrument through
+      the PHDU, we will need such a mark when testing extension HDUs. In the
+      example, we're marking the FITS file as belonging to ``gmos``.
+
+The testing engine introduces a number of words in the context before starting
+to process the rule files, or through the use of test functions:
+
+``facility``
+    This image belongs to a facility instrument
+
+``prepared``
+    This is not a raw image, but a preprocessed file. This will be used, for
+    example, to disable testing for WCS
+
+``date:XXXX-YY-ZZ``
+    Used by the engine to determine if certain rules apply or not. This is important
+    because the contents of some instrument FITS headers have evolved over the years
+
+The ``includes`` section
+------------------------
+
+In the introduction we established that the rule file system is hierarchical. We use
+the ``includes`` section to point to the The
+following image shows part of the hierarchy at the time of writing this document.
+
+![Hierarchy](file:graph.svg "Rule file hierarchy")
+
+As we can see, on the top we have ``fits``, which is a dummy file meant only to have a
+top for the hierarchy. It looks like this:
+
+::
+
+        # This file is the root of the definition tree
+
+        include files: gemini
+
+The ``gemini`` file, in turn, introduces some initial conditions for image validity,
+and includes more files:
+
+::
+
+        conditions:
+          - is-gemini-data
+          - not failed-data
+          - not engineering
+        
+        include files: [ fphdu, vphdu, extensions ]
+
+Notice that some files are meant to be included by more than one other (eg. ``wcs`` or
+``radec``), as they provide tests shared across various instruments. Even if a file is
+included more than once at different levels of the structure, it will be tested only once
+per HDU (if applicable).
+
+Every time a file is included, it is tested for *applicability*: ie., if conditions are
+met to use it as a validity test. If it is **not** applicable, then the files included
+in that rule file won't be taken into account.
+
+The ``conditions`` section
+--------------------------
+
+The testing engine reads all the rule files before it starts testing an image,
+but not all rule files apply to all images, or even to all headers within an
+image. Eg., facility instruments images need to adhere to more strict rules
+than those created using visitor instruments; a GSAOI file would never pass
+the rules written for MICHELLE; and an Primary HDU includes certain information
+that won't be found in an Extension HDU; etc.
+
+For this reason, we may write a ``conditions`` section in a rule file. Before
+considering the rule file, the testing engine will check all the "conditions"
+that we list in there against the current HDU. If any of them fails, the rule
+file will not be considered; otherwise, it will be used included in the
+restrictions to be met by the HDU.
+
+Example:
+
+::
+
+        # Taken from fphdu.def
+        conditions:
+          - is facility
+          - not exists:
+            - XTENSION
+          - set-date
+          - matching:
+            - TELESCOP: [ Gemini-South, Gemini-North ]
+
+The following tests can be specified for ``conditions``. Most of them can be
+specified in an "affirmative" and a "negative" way. Explanations for both
+are given:
+
+``is [not] <word>``
+    Passes if ``<word>`` exists in the context. If used as ``is not``, then
+    ``<word>`` must be absent from the context.
+
+``[not] exists``
+    Takes a list of KEYWORDs. All the listed keywords have to exist in the
+    HDU header. If used as ``not exists``, then **none** of the keywords may
+    exist in the the header.
+
+``[not] matching``
+    Takes a list of pairs ``KEYWORD: value`` (where ``value`` may be a list of
+    values). For every listed keyword, it has to be found in the HDU header
+    and its value must be the specified one (or one of them, if a list is
+    provided).
+
+    If used as ``not matching``, then they keyword *may not* match any of the
+    specified values, if it exists in the header.
+
+``[not] <function-name>``
+    There are number of pre-defined functions, for tasks more complicated than
+    just matching keywords. Some of them are used to place values in the
+    context, while others will perform complex tests that are not possible using
+    the regular syntax that we provide.
+    The logic is simple: the test will pass if the function returns a positive
+    result (or a negative one, if used as ``[not] <function-name>``
+    There's a list of functions at the end of this document.
+
+The ``keywords`` section
+------------------------
+
+This section describes a list of keywords that **must exist** in the HDU
+header, and optionally meet certain requirements. Notice that there are similar tests
+in the ``conditions`` section. There's a difference, though: ``conditions`` is used just
+to decide if a rules file is accepted or ignored, for testing purposes. By the time
+we get to ``keywords``, though, the rules file has been accepted: failing any of the
+tests in this section will tag the FITS file as invalid.
+
+An example:
+
+::
+
+        # Taken from pdu/gmos.def
+        keywords:
+          - DARKTIME,EXPTIME:
+            - float:      0 .. *
+        
+          - MASKID:
+            - int
+          - MASKNAME:
+            - char
+          - MASKTYP,MASKLOC:
+            - int:      [ -1, 0, 1 ]
+        
+          - FILTER1,FILTER2:
+            - char:      not null
+          - FILTID1,FILTID2:
+            - int
+        
+          - GRATING:
+            - char:      not null
+          - GRATID:
+            - int
+        
+          - FRAME
+          - TIME-OBS
+          - UTSTART
+
+We see keywords that are listed just to make sure they exist (like ``FRAME`` or ``UTSTART``).
+Then we have keywords like ``GRATING`` or ``MASKID`` that not only have to exist, but they
+also need to meet certain requirements, like containing a value of a certain type, or
+within certain range. Keywords specifying requirements must end in a colon (``:``). Keyword
+names **must** be specified in capital letters.
+
+As you can see in the example, more than one keyword can be specified in a row (separated
+with commas). This syntax is used when related keywords share common requirements, to avoid
+repeating them all over the file. Here's another example of this being useful, taken from
+the GMOS PDU definition:
+
+::
+
+          - CCDSIZE,CCDSEC,DATASEC,DETSEC,BIASSEC:
+            - pattern:    '\[\d+:\d+,\d+:\d+]'
+
+More than one restriction can be specified, even if they are mutually exclusive (eg.
+specifying two different types for a keyword). In the case where two mutually exclusive
+requirements are specified for a keyword, only one of them must be met -of course.
+Examples of these are:
+
+::
+
+        # From pdu/niri.def
+          - FILTER1,FILTER2,FILTER3:
+            - char:     [ 'open', 'blank' ]
+            - pattern:  '.*_G\d{4}'
+        
+        # From pdu/nifs.def
+          - GRATING:
+            - pattern:    '.*_G\d{4}'
+            - pattern:    '[HJK]\d{3}'
+
+In the case of NIRI, we've defined three keywords (``FILTERn``) to be either a character
+string with values that must be **exactly** ``open`` or ``blank``, or a character with a
+pattern matching ``.*_G\d{4}`` (ie. anything followed by ``_G`` and then exactly 4 digits).
+For the NIFS example, we see a ``GRATING`` keyword which accepts two different patterns.
+
+List of requirements
+~~~~~~~~~~~~~~~~~~~~
+
+This is the complete list of requirements that can be specified for a keyword:
+
+``<type>``
+    This would be one of ``char``, ``float``, ``int``, ``bool``, ``date``
+
+``<type>: <range>``
+    Same as with ``<type>``, but adding a range of acceptable values. The way a range
+    can be specified depends on the type. For all of them, a single value, or a list of
+    them can be specified. Examples are:
+
+        ``- char:     [ In, Out ]``
+
+        ``- int:      [ -1, 0, 1 ]``
+
+    For numeric values and dates, a range can be specified like this:
+
+       ``start .. end``
+
+    where either ``start`` *or* ``end`` may be an asterisk (`*`), meaning that the
+    range is open ended on that side. For example:
