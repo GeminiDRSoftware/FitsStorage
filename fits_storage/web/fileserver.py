@@ -91,6 +91,15 @@ def download(req, things):
         downloadlog.query_completed = datetime.datetime.utcnow()
         downloadlog.numresults = len(headers)
 
+        if len(headers) == 0:
+            # No results. No point making a tar file
+            downloadlog.sending_files = False
+            downloadlog.add_note("Nothing to download, aborted")
+            req.content_type = "text/plain"
+            req.write("No files to download. Either you asked to download marked files, but didn't mark any files, or you specified a selection criteria that doesn't find any files")
+            session.commit()
+            return apache.HTTP_OK
+
         if openquery(selection) and len(headers) > fits_open_result_limit:
             # Open query. Almost certainly too many files
             downloadlog.sending_files = False
