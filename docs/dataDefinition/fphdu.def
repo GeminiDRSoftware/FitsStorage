@@ -2,11 +2,9 @@ conditions:
   - is facility
   - not exists:
     - XTENSION
-  - is facility
   - set-date
   - matching:
-    - TELESCOP: Gemini-South
-    - TELESCOP: Gemini-North
+    - TELESCOP: [ Gemini-South, Gemini-North ]
 
 include files:
   - radec
