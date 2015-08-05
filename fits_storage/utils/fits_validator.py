@@ -641,6 +641,9 @@ class RuleSet(list):
     def __repr__(self):
         return "<{0} '{1}' [{2}]>".format(self.__class__.__name__, self.fn, ', '.join(x.fn for x in self), ', '.join(self.keywordDescr))
 
+    def __hash__(self):
+        return hash(self.__class__.__name__ + '_' + self.fn)
+
 class AlternateRuleSets(object):
     """This class is an interface to multiple RuleSets. It chooses among a number of
        alternate rulesets and offers the same behaviour as the first one that matches the
@@ -697,11 +700,15 @@ class RuleStack(object):
 
     def test(self, header, env):
         stack = [self.entryPoint]
+        done = set()
         passed = []
         mess = []
 
         while stack:
-            ruleSet = stack.pop()
+            ruleSet = stack.pop(0)
+            done.add(ruleSet)
+
+            log("  - Expanding {0}".format(ruleSet.fn))
             tmess = ruleSet.test(header, env)
 
             if not tmess:
@@ -715,8 +722,10 @@ class RuleStack(object):
                 return (True, [])
 
             for candidate in ruleSet:
+                if candidate in done:
+                    log("  - Not including {0}. I've seen it before".format(candidate.fn))
+                    continue
                 if candidate.applies_to(header, env):
-                    log("  - Expanding {0}".format(candidate.fn))
                     stack.append(candidate)
 
         try:
