@@ -24,11 +24,11 @@ keywords:
   - OBJECT
   - OBSCLASS:
     - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
-    - since:    2011-1-6
+    - since 2011-1-6
   - RELEASE:
     - date:     2000-1-1 .. *
   - IAA:
-    - since:    2011-1-6
+    - since 2011-1-6
   - RAWGEMQA:
     - optional
     - char:   [ UNKNOWN, USABLE, BAD, CHECK ]

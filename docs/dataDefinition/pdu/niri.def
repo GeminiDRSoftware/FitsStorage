@@ -8,7 +8,7 @@ include files:    wcs
 
 keywords:
   - BEAMSPLT:
-    - since:      2001-7-1
+    - since 2001-7-1
   - CAMERA:
     - char:     [ 'f6', 'f13.9', 'f14', 'f32' ]
   - FILTER1,FILTER2,FILTER3:
@@ -26,7 +26,7 @@ keywords:
   - PVIEW
   - TIME-OBS
   - UTEND:
-    - since:      2001-7-1
+    - since 2001-7-1
 
   - LNRS:
     - int:        0 .. 99

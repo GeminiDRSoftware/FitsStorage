@@ -364,6 +364,11 @@ class KeywordDescriptor(object):
                 self.optional = True
             elif restriction.startswith('if '):
                 self.reqs.append(buildEnvConditionFn(restriction[3:].strip()))
+            elif restriction.startswith('since '):
+                coerced = coerceValue(restriction[5:].strip())
+                if not isinstance(coerced, datetime):
+                    raise ValueError("Wrong value for 'since': {0}".format(value))
+                self.reqs.append(buildSinceFn(coerced))
             else:
                 raise ValueError("Unknown descriptor {0}".format(restriction))
         if isinstance(restriction, dict):
@@ -382,11 +387,6 @@ class KeywordDescriptor(object):
                 self.addTransformedStringRangeTest(str.upper, value)
             elif kw == 'lower':
                 self.addTransformedStringRangeTest(str.lower, value)
-            elif kw == 'since':
-                coerced = coerceValue(value)
-                if not isinstance(coerced, datetime):
-                    raise ValueError("Wrong value for 'since': {0}".format(value))
-                self.reqs.append(buildSinceFn(coerced))
             elif kw == 'pattern':
                 self.range.append(Pattern(value))
             else:

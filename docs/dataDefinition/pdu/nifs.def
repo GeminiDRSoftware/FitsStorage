@@ -34,5 +34,5 @@ keywords:
     - int:        1 .. 16
   - OBSMODE
   - RADECSYS:
-    - since:      2006-7-1
+    - since 2006-7-1
   - UT

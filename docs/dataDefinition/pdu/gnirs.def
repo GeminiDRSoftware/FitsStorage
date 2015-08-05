@@ -46,4 +46,4 @@ keywords:
     - pattern:    '.*G\d{4}'
   - TIME-OBS
   - UTSTART:
-    - since:      2005-1-1
+    - since 2005-1-1
