@@ -27,7 +27,7 @@ keywords:
     - RAWGEMQA:
       - char:   [ UNKNOWN, USABLE, BAD, CHECK ]
     - RAWPIREQ:
-      - char:   [ UNKNOWN, 'YES', 'NO', CHECK ]   # Using quotes to prevent YAML to turn this into booleans
+      - char:   [ UNKNOWN, 'YES', 'NO', CHECK ]   # Using quotes to prevent YAML to turn these into booleans
     - RAWBG,RAWCC,RAWIQ,RAWWV:
       - char:     Any
       - upper:    UNKNOWN

@@ -46,16 +46,7 @@ rest of the document.
           - pdu/nifs
           - pdu/niri
         
-        keywords:
-          - AZIMUTH:
-            - float
-            - since:    2001-7-1
-          - ELEVATIO:
-            - float
-            - since:    2001-7-1
-          - CRPA:
-            - float
-            - since:    2001-7-1
+	keywords:
           - TRKFRAME
           - DECTRACK
           - TRKEPOCH
@@ -68,9 +59,6 @@ rest of the document.
           - OBSID
           - DATALAB
           - OBJECT
-          - OBSCLASS:
-            - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
-            - since:    2007-6-28
           - OBSTYPE:
             - char:   [ DARK, ARC, FLAT, BIAS, OBJECT, PINHOLE, RONCHI, CAL, FRINGE, MASK ]
           - RAWGEMQA:
@@ -85,10 +73,22 @@ rest of the document.
             - date:     2000-1-1 .. *
           - SSA
           - UT
-          - PA:
-            - since:    2004-1-1
-          - IAA:
-            - since:    2007-6-28
+        
+          - since 2001-7-1:
+            - AZIMUTH:
+              - float
+            - ELEVATIO:
+              - float
+            - CRPA:
+              - float
+        
+          - since 2004-1-1:
+            - PA
+        
+          - since 2007-6-28:
+            - IAA
+            - OBSCLASS:
+              - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
         
         tests:
         # Checks GEMPRGID, OBSID, AND DATALAB

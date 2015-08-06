@@ -19,7 +19,6 @@ include files:
   - pdu/niri
 
 keywords:
-# Next three are float
   - TRKFRAME
   - DECTRACK
   - TRKEPOCH
@@ -31,15 +30,13 @@ keywords:
   - GEMPRGID
   - OBSID
   - DATALAB
-# FRAMNE has been moved to the instrument PDU definitions
-#  - FRAME
   - OBJECT
   - OBSTYPE:
     - char:   [ DARK, ARC, FLAT, BIAS, OBJECT, PINHOLE, RONCHI, CAL, FRINGE, MASK ]
   - RAWGEMQA:
     - char:   [ UNKNOWN, USABLE, BAD, CHECK ]
   - RAWPIREQ:
-    - char:   [ UNKNOWN, 'YES', 'NO', CHECK ]   # Using quotes to prevent YAML to turn this into booleans
+    - char:   [ UNKNOWN, 'YES', 'NO', CHECK ]   # Using quotes to prevent YAML to turn these into booleans
   - RAWBG,RAWCC,RAWIQ,RAWWV:
     - char:     Any
     - upper:    UNKNOWN
