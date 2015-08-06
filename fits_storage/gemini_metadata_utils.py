@@ -113,7 +113,7 @@ def gemini_date(string, as_datetime=False, offset=ZERO_OFFSET):
     if len(string) == 8 and string.isdigit():
         try:
             dt = dateutil.parser.parse(string) + offset
-            if DATE_LIMIT_LOW < dt < DATE_LIMIT_HIGH:
+            if DATE_LIMIT_LOW <= dt < DATE_LIMIT_HIGH:
                 return dt_to_text(dt) if not as_datetime else dt
         except ValueError:
             pass
