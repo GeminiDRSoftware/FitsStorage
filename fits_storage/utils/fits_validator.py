@@ -296,7 +296,7 @@ def iter_pairs(lst, coercion = lambda x: x):
 
 def iter_keywords(lst):
     for (key, value) in iter_pairs(lst):
-        if key.startswith('if ') or key.startswith('since ') or key == 'optional':
+        if key.startswith('if ') or key.startswith('since ') or key.startswith('until ') or key == 'optional':
             if not value:
                 raise ValueError('Found "{0}" with no keywords associated'.format(key))
 
@@ -330,6 +330,9 @@ def getEnvDate(env):
 
 def buildSinceFn(value):
     return lambda h, e: getEnvDate(e) < value
+
+def buildUntilFn(value):
+    return lambda h, e: getEnvDate(e) > value
 
 def buildEnvConditionFn(value):
     if value.startswith('not '):
@@ -412,6 +415,11 @@ class KeywordDescriptor(object):
                 if not isinstance(coerced, datetime):
                     raise ValueError("Wrong value for 'since': {0}".format(value))
                 self.reqs.append(buildSinceFn(coerced))
+            elif restriction.startswith('until '):
+                coerced = coerceValue(restriction[5:].strip())
+                if not isinstance(coerced, datetime):
+                    raise ValueError("Wrong value for 'until': {0}".format(value))
+                self.reqs.append(buildUntilFn(coerced))
             else:
                 raise ValueError("Unknown descriptor {0}".format(restriction))
         if isinstance(restriction, dict):
