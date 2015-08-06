@@ -290,7 +290,6 @@ queryselection_filters = (
     ('reduction',     Header.reduction),
     ('telescope',     Header.telescope),
     ('filename',      File.name),
-    ('filelist',      File.name.in_),
     ('binning',       Header.detector_binning),
     ('filter',        Header.filter_name),
     ('spectroscopy',  Header.spectroscopy),
@@ -310,6 +309,14 @@ def queryselection(query, selection):
                 query = query.filter(field(selection[key]))
             else:
                 query = query.filter(field == selection[key])
+
+    # For some bizarre reason, doing a .in_([]) with an empty list is really
+    # slow, and postgres eats CPU for a while doing it.
+    if 'filelist' in selection:
+        if selection['filelist']:
+            query = query.filter(File.name.in_(selection['filelist']))
+        else:
+            query = query.filter(False)
 
     # Ignore the "Include" dummy value
     if selection.get('engineering') in (True, False):
