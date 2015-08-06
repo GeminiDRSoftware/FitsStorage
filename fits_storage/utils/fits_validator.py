@@ -223,6 +223,49 @@ class Range(object):
 
 NotNull = ArbitraryRangeTest(lambda x: isinstance(x, (str, unicode)) and x != '')
 
+class NegatedTest(object):
+    def __init__(self, test, pass_name=False):
+        self._negated = test
+        self.name = self._negated.name
+        if not pass_name:
+            self.name = 'not ' + self.name
+
+    def test(self, header, env):
+        return not self._negated(header, env)
+
+    def __call__(self, header, env):
+        return self.test(header, env)
+
+class AndTest(list):
+    def __init__(self, name=None, default_result=True, *args, **kw):
+        super(AndTest, self).__init__(*args, **kw)
+        self.name = name
+        self._def = default_result
+
+    def test(self, header, env):
+        if len(self) == 0:
+            return self._def
+
+        return all(test(header, env) for test in self)
+
+    def __call__(self, header, env):
+        return self.test(header, env)
+
+class OrTest(list):
+    def __init__(self, name=None, default_result=True, *args, **kw):
+        super(OrTest, self).__init__(*args, **kw)
+        self.name = name
+        self._def = default_result
+
+    def test(self, header, env):
+        if len(self) == 0:
+            return self._def
+
+        return any(test(header, env) for test in self)
+
+    def __call__(self, header, env):
+        return self.test(header, env)
+
 def not_implemented(fn):
     "Decorator for not implemented tests"
     def wrapper(self, *args, **kw):
@@ -278,7 +321,7 @@ def getEnvDate(env):
 
     raise NoDateError()
 
-### Functions for skip test
+### Functions for kw descriptor applicability test
 # The functions in this section are meant to test if the conditions are
 # met so that we can test for the existence and validity of a certain keyword.
 #
@@ -299,7 +342,7 @@ def buildEnvConditionFn(value):
         return lambda h, env: value in env.features
     return lambda h, env: value not in env.features
 
-### End functions for skip test
+### End functions for kw descriptor applicability test
 
 class KeywordDescriptor(object):
     """Instances of this class are representations of a keyword descriptor from a
@@ -345,7 +388,7 @@ class KeywordDescriptor(object):
              - `since`: if the image is older than this date, the restriction
                         test will be skipped completely
         """
-        self.reqs = []
+        self.reqs = AndTest(default_result = False)
         self.transforms = []
         self.range = CompositeRange()
         self.optional = False
@@ -359,7 +402,7 @@ class KeywordDescriptor(object):
     def addRestriction(self, restriction):
         if isinstance(restriction, (str, unicode)):
             if restriction in fitsTypes:
-                self.range.append(Range.from_type(fitsTypes[restriction]))
+                self.addRange(Range.from_type(fitsTypes[restriction]))
             elif restriction == 'optional':
                 self.optional = True
             elif restriction.startswith('if '):
@@ -376,35 +419,35 @@ class KeywordDescriptor(object):
             if kw in fitsTypes:
                 if kw == 'char':
                     if isinstance(value, str) and ' '.join(value.lower().split()) == 'not null':
-                        self.range.append(NotNull)
+                        self.addRange(NotNull)
                     else:
-                        self.range.append(set(iter_list(value)))
+                        self.addRange(set(iter_list(value)))
                 elif ' .. ' in value:
-                    self.range.append(Range.from_string(value, forceType = fitsTypes[kw]))
+                    self.addRange(Range.from_string(value, forceType = fitsTypes[kw]))
                 else:
-                    self.range.append(set(iter_list(value)))
+                    self.addRange(set(iter_list(value)))
             elif kw == 'upper':
                 self.addTransformedStringRangeTest(str.upper, value)
             elif kw == 'lower':
                 self.addTransformedStringRangeTest(str.lower, value)
             elif kw == 'pattern':
-                self.range.append(Pattern(value))
+                self.addRange(Pattern(value))
             else:
                 raise ValueError("Unknown descriptor {0}".format(restriction))
 
+    def addRange(self, rng):
+        self.range.append(rng)
+
     def addTransformedStringRangeTest(self, fn, value):
-        self.range.append(TransformedStringRangeTest(fn, set(iter_list(value))))
+        self.addRange(TransformedStringRangeTest(fn, set(iter_list(value))))
 
     @property
     def mandatory(self):
         return not self.optional
 
-    def skip(self, header, env):
-        "Returns True if this descriptor applies to the given header in the current environment"
-        if not self.reqs:
-            return False
-
-        return all(fn(header, env) for fn in self.reqs)
+    def ignore(self, header, env):
+        "Returns True if this descriptor should be ignored in the current environment"
+        return self.reqs.test(header, env)
 
     def test(self, value):
         "Returns True if the passed value matches the descriptor"
@@ -451,37 +494,6 @@ class Environment(dict):
         self[attr] = value
 
         return value
-
-class NegatedTest(object):
-    def __init__(self, test, pass_name=False):
-        self._negated = test
-        self.name = self._negated.name
-        if not pass_name:
-            self.name = 'not ' + self.name
-
-    def test(self, header, env):
-        return not self._negated(header, env)
-
-    def __call__(self, header, env):
-        return self.test(header, env)
-
-class GroupTest(list):
-    def __init__(self, name=None, conjunctive=True, *args, **kw):
-        super(GroupTest, self).__init__(*args, **kw)
-        self.name = name
-        self._conj = conjunctive
-
-    def test(self, header, env):
-        if len(self) == 0:
-            return True
-
-        if self._conj:
-            return all(test(header, env) for test in self)
-        else:
-            return any(test(header, env) for test in self)
-
-    def __call__(self, header, env):
-        return self.test(header, env)
 
 # Extra functions to help RuleSet conditions
 def hdu_in(hdus, h, env):
@@ -552,8 +564,8 @@ class RuleSet(list):
         self.fn = filename
         self.keywordDescr = {}
         self.rangeRestrictions = {}
-        self.conditions = GroupTest()
-        self.postConditions = GroupTest()
+        self.conditions = AndTest()
+        self.postConditions = AndTest()
         self.features = []
 
         self.__initalize(filename)
@@ -585,7 +597,7 @@ class RuleSet(list):
                 self.append(ruleFactory(inc, self.__class__))
 
     def __parse_tests(self, data):
-        result = GroupTest()
+        result = AndTest()
 
         for entry in data:
             if isinstance(entry, (str, unicode)):
@@ -617,11 +629,11 @@ class RuleSet(list):
                 if _element == 'on hdus':
                     test_to_add = callback_factory(hdu_in, set(iter_list(content)), name = _element)
                 elif _element == 'exists':
-                    test_to_add = GroupTest(name = _element)
+                    test_to_add = AndTest(name = _element)
                     for kw in iter_list(content):
                         test_to_add.append(callback_factory(kw, name = element))
                 elif _element == 'matching':
-                    test_to_add = GroupTest(name = _element)
+                    test_to_add = AndTest(name = _element)
                     for kw, val in iter_pairs(content):
                         test_to_add.append(callback_factory(kw, val, name = element))
                 elif _element in RuleSet.__registry:
@@ -639,7 +651,7 @@ class RuleSet(list):
     def test(self, header, env):
         messages = []
         for kw, descr in self.keywordDescr.items():
-            if descr.skip(header, env):
+            if descr.ignore(header, env):
                 continue
 
             try:
