@@ -216,7 +216,7 @@ In the introduction we established that the rule file system is hierarchical. We
 the ``includes`` section to point to the The
 following image shows part of the hierarchy at the time of writing this document.
 
-![Hierarchy](file:graph.svg "Rule file hierarchy")
+.. image:: file:graph.svg
 
 As we can see, on the top we have ``fits``, which is a dummy file meant only to have a
 top for the hierarchy. It looks like this:
