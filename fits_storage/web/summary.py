@@ -236,7 +236,10 @@ def summary_table(req, sumtype, headers, selection, links=True, user=None, user_
         url_prefix = "/download"
         if sumtype == 'associated_cals':
             url_prefix += '/associated_calibrations'
-        req.write('<P><a href="%s%s">Download all %d files totalling %.2f GB</a>.</P>' % (url_prefix, selection_to_URL(selection), len(headers), bytecount/1.0E9))
+        req.write("<FORM method='GET' action='%s%s'>" % (url_prefix, selection_to_URL(selection)))
+        req.write("<INPUT type='submit' value='Download all %d files totalling %.2f GB'>" % (len(headers), bytecount/1.0E9))
+        req.write(' - this is always available at <a href="%s%s">this link</a>' % (url_prefix, selection_to_URL(selection)))
+        req.write("</FORM>")
 
 
 def isajax(req):
