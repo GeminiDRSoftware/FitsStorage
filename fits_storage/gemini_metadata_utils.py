@@ -5,6 +5,7 @@ classes and functions for parsing the metadata in Gemini FITS files.
 import re
 import datetime
 import dateutil.parser
+import time
 from .fits_storage_config import use_as_archive
 
 DATE_LIMIT_LOW = dateutil.parser.parse('19900101')
@@ -572,7 +573,7 @@ def get_date_offset():
     # We consider the night boundary to be 14:00 local time
     # This is midnight UTC in Hawaii, completely arbitrary in Chile
     zone = time.altzone if time.daylight else time.timezone
-    return timedelta(hours=14) + timedelta(seconds=zone) - ONEDAY_OFFSET
+    return datetime.timedelta(hours=14) + datetime.timedelta(seconds=zone) - ONEDAY_OFFSET
 
 def get_time_period(start, end=None, as_date=False):
     startdt =  gemini_date(start, offset=get_date_offset(), as_datetime=True)

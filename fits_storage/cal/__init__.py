@@ -29,6 +29,7 @@ inst_class = {
     'NICI':     CalibrationNICI,
     'NIFS':     CalibrationNIFS,
     'NIRI':     CalibrationNIRI,
+}
 
 def get_cal_object(session, filename, header=None, descriptors=None, types=None):
     """

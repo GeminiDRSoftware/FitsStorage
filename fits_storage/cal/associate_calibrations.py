@@ -3,7 +3,7 @@ This module contains the "associated calibrations" code. It is used
 to generate a summary table of calibration data associated with the
 results of a search
 """
-from .import get_cal_object
+from . import get_cal_object
 from ..orm.header import Header
 from ..orm.calcache import CalCache
 
