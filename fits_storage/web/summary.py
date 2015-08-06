@@ -213,31 +213,42 @@ def summary_table(req, sumtype, headers, selection, links=True, user=None, user_
     # Loop through the header list, outputing table rows
     even = False
     bytecount = 0
+    num_downloadable = 0
+    num_total = 0
+    
     for header in headers:
         even = not even
         tr_class = ('tr_even' if even else 'tr_odd')
 
-        sumgen.table_row(req, header, tr_class)
+        can_download = sumgen.table_row(req, header, tr_class)
 
-        bytecount += header.diskfile.file_size
+        num_total += 1
+        if can_download:
+            num_downloadable += 1
+            bytecount += header.diskfile.file_size
 
     req.write("</TABLE>\n")
 
-    if sumtype in ('searchresults', 'associated_cals'):
-        req.write("<INPUT type='submit' value='Download Marked Files'>")
-        req.write("</FORM>")
+    # Only show download button if we are allowed to download anything
+    if num_downloadable >0:
+        if sumtype in ('searchresults', 'associated_cals'):
+            req.write("<INPUT type='submit' value='Download Marked Files'>")
+            req.write("</FORM>")
 
     req.write('<a name="tableend"></a>')
     if openquery(selection) and len(headers) == fits_open_result_limit:
         req.write('<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date, date range, program ID etc. Searches like this are limited to %d results, and this search hit that limit. You may want to constrain your search. Constrained searches have a higher result limit.</P>' % fits_open_result_limit)
     elif len(headers) == fits_closed_result_limit:
         req.write('<P>WARNING: Your search generated more than the limit of %d results. You might want to constrain your search more.</P>' % fits_closed_result_limit)
-    else:
+    elif num_downloadable > 0:
         url_prefix = "/download"
         if sumtype == 'associated_cals':
             url_prefix += '/associated_calibrations'
         req.write("<FORM method='GET' action='%s%s'>" % (url_prefix, selection_to_URL(selection)))
-        req.write("<INPUT type='submit' value='Download all %d files totalling %.2f GB'>" % (len(headers), bytecount/1.0E9))
+        if num_downloadable == num_total:
+            req.write("<INPUT type='submit' value='Download all %d files totalling %.2f GB'>" % (num_total, bytecount/1.0E9))
+        else:
+            req.write("<INPUT type='submit' value='Download the %d files totalling %.2f GB that you have access to'>" % (num_downloadable, bytecount/1.0E9))
         req.write(' - this is always available at <a href="%s%s">this link</a>' % (url_prefix, selection_to_URL(selection)))
         req.write("</FORM>")
 

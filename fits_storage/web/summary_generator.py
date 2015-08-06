@@ -387,15 +387,17 @@ class SummaryGenerator(object):
         # than to call req.write() many times, so we build an html
         # string and req.write it at the end
 
-        if trclass:
-            html = '<TR class=%s>' % trclass
-        else:
-            html = '<TR>'
+        html = ('<TR class=%s>' % trclass) if trclass else '<TR>'
+
+        can_download = False
+
         for colkey, col in self.columns.items():
             if col['want']:
                 html += '<TD>'
                 if col['summary_func']:
                     value = getattr(self, col['summary_func'])(header)
+                    if colkey == 'download' and 'N/A' not in value:
+                        can_download = True
                 elif col['header_attr']:
                     value = getattr(header, col['header_attr'])
                 elif col['diskfile_attr']:
@@ -406,6 +408,8 @@ class SummaryGenerator(object):
                 html += '</TD>'
         html += '</TR>\n'
         req.write(html)
+
+        return can_download
 
 
     def filename(self, header):
