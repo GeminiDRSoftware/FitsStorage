@@ -6,7 +6,7 @@ import datetime
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.nici import Nici
-from .calibration import Calibration
+from .calibration import Calibration, not_processed
 
 from sqlalchemy.orm import join
 from sqlalchemy import func, extract
@@ -65,23 +65,11 @@ class CalibrationNICI(Calibration):
             # Associate 10 raw darks by default
             howmany = howmany if howmany else 10
 
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Exposure time must match to within 0.01 (nb floating point match).
         # nb exposure_time is really exposure_time * coadds, but if we're matching both, that doesn't matter
         exptime_lo = float(self.descriptors['exposure_time']) - 0.01
         exptime_hi = float(self.descriptors['exposure_time']) + 0.01
         query = query.filter(Header.exposure_time > exptime_lo).filter(Header.exposure_time < exptime_hi)
-
-        # Absolute time separation must be within 1 day
-        max_interval = datetime.timedelta(days=1)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -89,7 +77,9 @@ class CalibrationNICI(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 day
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
+
         return query.all()
 
     def flat(self, processed=False, howmany=None):
@@ -105,12 +95,6 @@ class CalibrationNICI(Calibration):
             # Default number to associate
             howmany = howmany if howmany else 10
 
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Must totally match: filter_name, focal_plane_mask, disperser
         query = query.filter(Nici.filter_name == self.descriptors['filter_name'])
         query = query.filter(Nici.focal_plane_mask == self.descriptors['focal_plane_mask'])
@@ -119,38 +103,24 @@ class CalibrationNICI(Calibration):
         # GCAL lamp should be on - these flats will then require lamp-off flats to calibrate them
         query = query.filter(Header.gcal_lamp == 'IRhigh')
 
-        # Absolute time separation must be within 1 day
-        max_interval = datetime.timedelta(days=1)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 day
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
+
         return query.all()
 
+    @not_processed
     def lampoff_flat(self, processed=False, howmany=None):
         query = self.session.query(Header).select_from(join(join(Nici, Header), DiskFile))
         query = query.filter(Header.observation_type == 'FLAT')
-
-        if processed:
-            # Not a valid concept
-            return []
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Default number to associate
-            howmany = howmany if howmany else 10
-
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
+        query = query.filter(Header.reduction == 'RAW')
+        # Default number to associate
+        howmany = howmany if howmany else 10
 
         # Must totally match: data_section, well_depth_setting, filter_name, camera
         # Update from AS 20130320 - read mode should not be required to match, but well depth should.
@@ -161,17 +131,13 @@ class CalibrationNICI(Calibration):
         # GCAL lamp should be off
         query = query.filter(Header.gcal_lamp == 'Off')
 
-        # Absolute time separation must be within 1 hour of the lamp on flats
-        max_interval = datetime.timedelta(seconds=3600)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 hour of the lamp on flats
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(seconds=3600), limit=howmany)
+
         return query.all()

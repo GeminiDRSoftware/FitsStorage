@@ -79,22 +79,10 @@ class CalibrationGPI(Calibration):
         #  default to 1 dark for now
         howmany = howmany if howmany else 1
 
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # exposure time must be within 10 seconds difference (I just made that up)
         exptime_hi = float(self.descriptors['exposure_time']) + 10.0
         exptime_lo = float(self.descriptors['exposure_time']) - 10.0
         query = query.filter(Header.exposure_time > exptime_lo).filter(Header.exposure_time < exptime_hi)
-
-        # Absolute time separation must be within 1 year
-        max_interval = datetime.timedelta(days=365)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -102,7 +90,9 @@ class CalibrationGPI(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 year
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
+
         return query.all()
 
     def arc(self, processed=False, howmany=None):
@@ -119,23 +109,11 @@ class CalibrationGPI(Calibration):
         # Always default to 1 arc
         howmany = howmany if howmany else 1
 
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Must Totally Match: disperser, focal_plane_mask, filter_name
         query = query.filter(Gpi.disperser == self.descriptors['disperser'])
         # Apparently FPM doesn't have to match...
         # query = query.filter(Gpi.focal_plane_mask == self.descriptors['focal_plane_mask'])
         query = query.filter(Gpi.filter_name == self.descriptors['filter_name'])
-
-        # Absolute time separation must be within 1 year
-        max_interval = datetime.timedelta(days=365)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -143,7 +121,9 @@ class CalibrationGPI(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 year
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
+
         return query.all()
 
     def telluric_standard(self, processed=False, howmany=None):
@@ -161,21 +141,9 @@ class CalibrationGPI(Calibration):
             query = query.filter(Header.calibration_program == True).filter(Header.observation_class == 'science')
             query = query.filter(Header.spectroscopy == True)
 
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Must Totally Match: disperser, filter_name
         query = query.filter(Gpi.disperser == self.descriptors['disperser'])
         query = query.filter(Gpi.filter_name == self.descriptors['filter_name'])
-
-        # Absolute time separation must be within 1 year
-        max_interval = datetime.timedelta(days=365)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -183,7 +151,9 @@ class CalibrationGPI(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 year
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
+
         return query.all()
 
     def polarization_standard(self, processed=False, howmany=None):
@@ -201,21 +171,9 @@ class CalibrationGPI(Calibration):
             query = query.filter(Header.calibration_program == True).filter(Header.observation_class == 'science')
             query = query.filter(Header.spectroscopy == False).filter(Gpi.wollaston == True)
 
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Must Totally Match: disperser, filter_name
         query = query.filter(Gpi.disperser == self.descriptors['disperser'])
         query = query.filter(Gpi.filter_name == self.descriptors['filter_name'])
-
-        # Absolute time separation must be within 1 year
-        max_interval = datetime.timedelta(days=365)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -223,7 +181,9 @@ class CalibrationGPI(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 year
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
+
         return query.all()
 
 
@@ -241,21 +201,9 @@ class CalibrationGPI(Calibration):
             query = query.filter(Header.observation_type == 'OBJECT').filter(Header.reduction == 'RAW')
             query = query.filter(Gpi.astrometric_standard == True)
 
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # No, don't care I think - Must Totally Match: disperser, filter_name
         #query = query.filter(Gpi.disperser == self.descriptors['disperser'])
         #query = query.filter(Gpi.filter_name == self.descriptors['filter_name'])
-
-        # Absolute time separation must be within 1 year
-        max_interval = datetime.timedelta(days=365)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -263,7 +211,9 @@ class CalibrationGPI(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 year
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
+
         return query.all()
 
 
@@ -281,21 +231,9 @@ class CalibrationGPI(Calibration):
             query = query.filter(Header.observation_type == 'FLAT').filter(Header.reduction == 'RAW')
             query = query.filter(Gpi.wollaston == True).filter(Header.observation_class == 'partnerCal')
 
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Must Totally Match: disperser, filter_name
         query = query.filter(Gpi.disperser == self.descriptors['disperser'])
         query = query.filter(Gpi.filter_name == self.descriptors['filter_name'])
-
-        # Absolute time separation must be within 1 year
-        max_interval = datetime.timedelta(days=365)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -303,7 +241,9 @@ class CalibrationGPI(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 year
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
+
         return query.all()
 
 

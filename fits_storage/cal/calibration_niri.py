@@ -6,7 +6,7 @@ import datetime
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.niri import Niri
-from .calibration import Calibration
+from .calibration import Calibration, not_processed
 
 from sqlalchemy.orm import join
 from sqlalchemy import func, extract, or_
@@ -85,12 +85,6 @@ class CalibrationNIRI(Calibration):
             # Associate 10 raw darks by default
             howmany = howmany if howmany else 10
 
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Must totally match: data_section, read_mode, well_depth_setting, exposure_time, coadds
         query = query.filter(Niri.data_section == self.descriptors['data_section'])
         query = query.filter(Niri.read_mode == self.descriptors['read_mode'])
@@ -103,19 +97,15 @@ class CalibrationNIRI(Calibration):
         exptime_hi = float(self.descriptors['exposure_time']) + 0.01
         query = query.filter(Header.exposure_time > exptime_lo).filter(Header.exposure_time < exptime_hi)
 
-        # Absolute time separation must be within ~6 months
-        max_interval = datetime.timedelta(days=180)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 6 months
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=180), limit=howmany)
+
         return query.all()
 
     def flat(self, processed=False, howmany=None):
@@ -130,12 +120,6 @@ class CalibrationNIRI(Calibration):
             query = query.filter(Header.reduction == 'RAW')
             # Default number to associate
             howmany = howmany if howmany else 10
-
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
 
         # Must totally match: data_section, well_depth_setting, filter_name, camera, focal_plane_mask, disperser
         # Update from AS 20130320 - read mode should not be required to match, but well depth should.
@@ -159,39 +143,28 @@ class CalibrationNIRI(Calibration):
         # GCAL lamp should be on - these flats will then require lamp-off flats to calibrate them
         query = query.filter(or_(Header.gcal_lamp == 'IRhigh', Header.gcal_lamp == 'IRlow'))
 
-        # Absolute time separation must be within 6 months
-        max_interval = datetime.timedelta(days=180)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 6 months
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=180), limit=howmany)
+
         return query.all()
 
     def arc(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'ARC')
+        # Default number to associate
+        howmany = howmany if howmany else 1
 
+        query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
+
+        query = query.filter(Header.observation_type == 'ARC')
         if processed:
             query = query.filter(Header.reduction == 'PROCESSED_ARC')
-            # Default number to associate
-            howmany = howmany if howmany else 1
         else:
             query = query.filter(Header.reduction == 'RAW')
-            # Default number to associate
-            howmany = howmany if howmany else 1
-
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
 
         # Must totally match: data_section, filter_name, camera, focal_plane_mask, disperser
         query = query.filter(Niri.data_section == self.descriptors['data_section'])
@@ -209,39 +182,26 @@ class CalibrationNIRI(Calibration):
         except TypeError:
             pass
 
-        # Absolute time separation must be within 6 months
-        max_interval = datetime.timedelta(days=180)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 6 months
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=180), limit=howmany)
+
         return query.all()
 
-
+    @not_processed
     def lampoff_flat(self, processed=False, howmany=None):
+        # Default number to associate
+        howmany = howmany if howmany else 10
+
         query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
+
         query = query.filter(Header.observation_type == 'FLAT')
-
-        if processed:
-            # Not a valid concept
-            return []
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Default number to associate
-            howmany = howmany if howmany else 10
-
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
+        query = query.filter(Header.reduction == 'RAW')
 
         # Must totally match: data_section, well_depth_setting, filter_name, camera
         # Update from AS 20130320 - read mode should not be required to match, but well depth should.
@@ -253,37 +213,25 @@ class CalibrationNIRI(Calibration):
         # GCAL lamp should be off
         query = query.filter(Header.gcal_lamp == 'Off')
 
-        # Absolute time separation must be within 1 hour of the lamp on flats
-        max_interval = datetime.timedelta(seconds=3600)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 hour of the lamp on flats
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(seconds=3600), limit=howmany)
+
         return query.all()
 
+    @not_processed
     def photometric_standard(self, processed=False, howmany=None):
+        # Default number to associate
+        howmany = howmany if howmany else 10
+
         query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
 
-        if processed:
-            # Not a valid concept
-            return []
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Default number to associate
-            howmany = howmany if howmany else 10
-
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
+        query = query.filter(Header.reduction == 'RAW')
 
         # Phot standards are OBJECT imaging frames
         query = query.filter(Header.observation_type == 'OBJECT')
@@ -296,38 +244,25 @@ class CalibrationNIRI(Calibration):
         query = query.filter(Niri.filter_name == self.descriptors['filter_name'])
         query = query.filter(Niri.camera == self.descriptors['camera'])
 
-        # Absolute time separation must be within 24 hours of the science
-        max_interval = datetime.timedelta(days=1)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 24 hours of the science
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
+
         return query.all()
 
-
+    @not_processed
     def telluric_standard(self, processed=False, howmany=None):
+        # Default number to associate
+        howmany = howmany if howmany else 10
+
         query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
 
-        if processed:
-            # Not a valid concept
-            return []
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Default number to associate
-            howmany = howmany if howmany else 10
-
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
+        query = query.filter(Header.reduction == 'RAW')
 
         # Telluric standards are OBJECT spectroscopy partnerCal frames
         query = query.filter(Header.observation_type == 'OBJECT')
@@ -349,18 +284,14 @@ class CalibrationNIRI(Calibration):
         except TypeError:
             pass
 
-        # Absolute time separation must be within 24 hours of the science
-        max_interval = datetime.timedelta(days=1)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 24 hours of the science
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
+
         return query.all()
 

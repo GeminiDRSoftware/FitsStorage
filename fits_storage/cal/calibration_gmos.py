@@ -7,7 +7,7 @@ from ..fits_storage_config import using_sqlite
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.gmos import Gmos
-from .calibration import Calibration
+from .calibration import Calibration, not_processed, not_imaging, not_spectroscopy
 
 from sqlalchemy.orm import join
 from sqlalchemy import func, extract
@@ -129,16 +129,12 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('dark')
                 self.applicable.append('processed_dark')
 
-
+    @not_imaging
     def arc(self, processed=False, howmany=None):
         """
         This method identifies the best GMOS ARC to use for the target
-        dataset. 
+        dataset.
         """
-        # No arcs for imaging
-        if self.descriptors['spectroscopy'] == False:
-            return []
-
         query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
 
         # Default 1 arc
@@ -148,12 +144,6 @@ class CalibrationGMOS(Calibration):
             query = query.filter(Header.reduction == 'PROCESSED_ARC')
         else:
             query = query.filter(Header.observation_type == 'ARC').filter(Header.reduction == 'RAW')
-
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
 
         # Must Totally Match: Instrument, disperser
         query = query.filter(Header.instrument == self.descriptors['instrument'])
@@ -191,21 +181,15 @@ class CalibrationGMOS(Calibration):
         else:
             query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Absolute time separation must be within 1 year
-        # query = query.filter(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])) < 31557600)
-        # Try this for performance
-        max_interval = datetime.timedelta(days=365)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 year
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
+
         return query.all()
 
     def dark(self, processed=False, howmany=None):
@@ -222,12 +206,6 @@ class CalibrationGMOS(Calibration):
             query = query.filter(Header.observation_type == 'DARK').filter(Header.reduction == 'RAW')
             # Default number of raw darks
             if howmany is None: howmany = 15
-
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
 
         # Must totally match instrument, detector_x_bin, detector_y_bin,
         # read_speed_setting, gain_setting, exposure_time, nodandshuffle
@@ -262,20 +240,15 @@ class CalibrationGMOS(Calibration):
         else:
             query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-
-        # Absolute time separation must be within 1 year (31557600 seconds)
-        max_interval = datetime.timedelta(days=365)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 year
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
+
         return query.all()
 
     def bias(self, processed=False, howmany=None):
@@ -292,12 +265,6 @@ class CalibrationGMOS(Calibration):
             query = query.filter(Header.reduction == 'RAW')
             # Default number of raw biases
             howmany = howmany if howmany else 50
-
-         # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
 
         # Must totally match instrument, detector_x_bin, detector_y_bin, read_speed_setting, gain_setting
         query = query.filter(Header.instrument == self.descriptors['instrument'])
@@ -332,20 +299,15 @@ class CalibrationGMOS(Calibration):
                 query.filter(Gmos.overscan_trimmed == True)
                 query.filter(Gmos.overscan_subtracted == True)
 
-        # Absolute time separation must be within ~3 months
-        max_interval = datetime.timedelta(days=90)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 3 months
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=90), limit=howmany)
+
         return query.all()
 
     def flat(self, processed=False, howmany=None):
@@ -374,13 +336,6 @@ class CalibrationGMOS(Calibration):
             query = query.filter(Header.object == 'Twilight')
             # Default number of raw twilight imaging flats
             howmany = howmany if howmany else 20
-
-
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
 
         # Must totally match instrument, detector_x_bin, detector_y_bin, filter
         query = query.filter(Header.instrument == self.descriptors['instrument'])
@@ -440,7 +395,6 @@ class CalibrationGMOS(Calibration):
                         # In this case, no elevation or crpa constraints.
                         pass
 
-
         # The science amp_read_area must be equal or substring of the cal amp_read_area
         # If the science frame uses all the amps, then they must be a direct match as all amps must be there
         # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
@@ -450,20 +404,15 @@ class CalibrationGMOS(Calibration):
         else:
             query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-
-        # Absolute time separation must be within ~ 6 months
-        max_interval = datetime.timedelta(days=180)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 6 months
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=180), limit=howmany)
+
         return query.all()
 
     def processed_fringe(self, howmany=None):
@@ -478,12 +427,6 @@ class CalibrationGMOS(Calibration):
 
         # Default number to associate
         howmany = howmany if howmany else 1
-
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
 
         # Must totally match instrument, detector_x_bin, detector_y_bin, filter
         query = query.filter(Header.instrument == self.descriptors['instrument'])
@@ -500,34 +443,25 @@ class CalibrationGMOS(Calibration):
         else:
             query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Absolute time separation must be within 1 year
-        max_interval = datetime.timedelta(days=365)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 year
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
+
         return query.all()
 
+    # We don't handle processed ones (yet)
+    @not_processed
+    @not_imaging
     def spectwilight(self, processed=False, howmany=None):
         """
         Method to find the best spectwilight - ie spectroscopy twilight
         ie MOS / IFU / LS twilight
         """
-        # We don't handle processed ones (yet)
-        if processed:
-            return []
-
-        # Not valid for imaging
-        if self.descriptors['spectroscopy'] == False:
-            return []
-
         # Default number to associate
         howmany = howmany if howmany else 2
 
@@ -539,12 +473,6 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Header.observation_type == 'OBJECT')
         query = query.filter(Header.spectroscopy == True)
         query = query.filter(Header.object == 'Twilight')
-
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
 
         # Must totally match instrument, detector_x_bin, detector_y_bin, filter, disperser, focal plane mask
         query = query.filter(Header.instrument == self.descriptors['instrument'])
@@ -569,33 +497,24 @@ class CalibrationGMOS(Calibration):
         else:
             query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Absolute time separation must be within 1 year
-        max_interval = datetime.timedelta(days=365)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 year
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
+
         return query.all()
 
+    # We don't handle processed ones (yet)
+    @not_processed
+    @not_imaging
     def specphot(self, processed=False, howmany=None):
         """
         Method to find the best specphot observation
         """
-        # We don't handle processed ones (yet)
-        if processed:
-            return []
-
-        # Not valid for imaging
-        if self.descriptors['spectroscopy'] == False:
-            return []
-
         # Default number to associate
         howmany = howmany if howmany else 4
 
@@ -608,12 +527,6 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Header.observation_class.in_(['partnerCal', 'progCal']))
         query = query.filter(Header.spectroscopy == True)
         query = query.filter(Header.object != 'Twilight')
-
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
 
         # Must totally match instrument, filter, disperser
         # Found lots of examples where detector binning does not match, so took that out.
@@ -645,33 +558,24 @@ class CalibrationGMOS(Calibration):
         else:
             query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Absolute time separation must be within 1 year
-        max_interval = datetime.timedelta(days=365)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 year
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
+
         return query.all()
 
+    # We don't handle processed ones (yet)
+    @not_processed
+    @not_spectroscopy
     def photometric_standard(self, processed=False, howmany=None):
         """
         Method to find the best phot_std observation
         """
-        # We don't handle processed ones (yet)
-        if processed:
-            return []
-
-        # Not valid for spectroscopy
-        if self.descriptors['spectroscopy'] == True:
-            return []
-
         # Default number to associate
         howmany = howmany if howmany else 4
 
@@ -685,21 +589,9 @@ class CalibrationGMOS(Calibration):
         query = query.filter(Header.observation_class == 'partnerCal')
         query = query.filter(Header.program_id.like('G_-CAL%'))
 
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Must totally match instrument, filter
         query = query.filter(Header.instrument == self.descriptors['instrument'])
         query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
-
-        # Absolute time separation must be within 1 days
-        max_interval = datetime.timedelta(days=1)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -707,5 +599,7 @@ class CalibrationGMOS(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 days
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
+
         return query.all()

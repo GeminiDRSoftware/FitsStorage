@@ -6,7 +6,7 @@ import datetime
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.gnirs import Gnirs
-from .calibration import Calibration
+from .calibration import Calibration, not_processed
 
 from sqlalchemy.orm import join
 from sqlalchemy import func, extract
@@ -93,23 +93,11 @@ class CalibrationGNIRS(Calibration):
             # Default number of raw darks to associate
             howmany = howmany if howmany else 10
 
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Must totally match: read_mode, well_depth_setting, exposure_time, coadds
         query = query.filter(Gnirs.read_mode == self.descriptors['read_mode'])
         query = query.filter(Gnirs.well_depth_setting == self.descriptors['well_depth_setting'])
         query = query.filter(Header.exposure_time == self.descriptors['exposure_time'])
         query = query.filter(Gnirs.coadds == self.descriptors['coadds'])
-
-        # Absolute time separation must be within 3 months
-        max_interval = datetime.timedelta(days=90)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -117,7 +105,9 @@ class CalibrationGNIRS(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 3 months
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=90), limit=howmany)
+
         return query.all()
 
     def flat(self, processed=False, howmany=None):
@@ -145,12 +135,6 @@ class CalibrationGNIRS(Calibration):
             # Default number of raw flats to associate
             howmany = howmany if howmany else 10
 
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Lamp selection (see comments above)
         query = query.filter(Header.gcal_lamp == 'IRhigh')
 
@@ -163,19 +147,15 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
         query = query.filter(Gnirs.well_depth_setting == self.descriptors['well_depth_setting'])
 
-        # Absolute time separation must be within 3 months
-        max_interval = datetime.timedelta(days=90)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 3 months
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=90), limit=howmany)
+
         return query.all()
 
     def arc(self, processed=False, howmany=None):
@@ -192,12 +172,6 @@ class CalibrationGNIRS(Calibration):
         # Always default to 1 arc
         howmany = howmany if howmany else 1
 
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter_name, camera
         query = query.filter(Gnirs.disperser == self.descriptors['disperser'])
         query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
@@ -205,19 +179,15 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
         query = query.filter(Gnirs.camera == self.descriptors['camera'])
 
-        # Absolute time separation must be within 1 year
-        max_interval = datetime.timedelta(days=365)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 year
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
+
         return query.all()
 
     def pinhole_mask(self, processed=False, howmany=None):
@@ -235,22 +205,10 @@ class CalibrationGNIRS(Calibration):
             # Default number of raw pinholes
             howmany = howmany if howmany else 5
 
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Must totally match: disperser, central_wavelength, camera, (only for cross dispersed mode?)
         query = query.filter(Gnirs.disperser == self.descriptors['disperser'])
         query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
         query = query.filter(Gnirs.camera == self.descriptors['camera'])
-
-        # Absolute time separation must be within 1 year
-        max_interval = datetime.timedelta(days=365)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -258,18 +216,17 @@ class CalibrationGNIRS(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 year
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
+
         return query.all()
 
+    @not_processed
     def lampoff_flat(self, processed=False, howmany=None):
         """
         Find the optimal lamp-off flats to go with the lamp-on flat
         """
         query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
-
-        if processed:
-            # No can
-            return []
 
         # Default number of raw pinholes
         howmany = howmany if howmany else 10
@@ -280,12 +237,6 @@ class CalibrationGNIRS(Calibration):
         # With the gcal_lamp Off
         query = query.filter(Header.gcal_lamp == 'Off')
 
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name, well_depth_setting
         # update from RM 20130321 - read mode should not be required to match, but well depth should.
         query = query.filter(Gnirs.disperser == self.descriptors['disperser'])
@@ -295,20 +246,15 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
         query = query.filter(Gnirs.well_depth_setting == self.descriptors['well_depth_setting'])
 
-        # Absolute time separation must be within 1 day
-        # nb these can apply directly to science as well as to lamp-on flats
-        max_interval = datetime.timedelta(days=1)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 day
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
+
         return query.all()
 
     def qh_flat(self, processed=False, howmany=None):
@@ -335,12 +281,6 @@ class CalibrationGNIRS(Calibration):
             # Default number of raw flats to associate
             howmany = howmany if howmany else 10
 
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # GCAL lamp selection - QH lamp in this case
         query = query.filter(Header.gcal_lamp == 'QH')
 
@@ -353,19 +293,15 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
         query = query.filter(Gnirs.well_depth_setting == self.descriptors['well_depth_setting'])
 
-        # Absolute time separation must be within 3 months
-        max_interval = datetime.timedelta(days=90)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 3 months
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=90), limit=howmany)
+
         return query.all()
 
     def telluric_standard(self, processed=False, howmany=None):
@@ -381,15 +317,9 @@ class CalibrationGNIRS(Calibration):
         else:
             query = query.filter(Header.reduction == 'RAW').filter(Header.spectroscopy == True)
             query = query.filter(Header.observation_type == 'OBJECT').filter(Header.observation_class == 'partnerCal')
- 
+
             # Default number of raw flats to associate
             howmany = howmany if howmany else 8
-
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
 
         # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name
         query = query.filter(Gnirs.disperser == self.descriptors['disperser'])
@@ -398,18 +328,13 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Gnirs.camera == self.descriptors['camera'])
         query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
 
-        # Absolute time separation must be within 1 day
-        max_interval = datetime.timedelta(days=1)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
-        return query.all()
+        # Absolute time separation must be within 1 day
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
 
+        return query.all()

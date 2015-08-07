@@ -7,7 +7,7 @@ import datetime
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.f2 import F2
-from .calibration import Calibration
+from .calibration import Calibration, not_processed
 
 from sqlalchemy.orm import join
 from sqlalchemy import func, extract
@@ -91,21 +91,9 @@ class CalibrationF2(Calibration):
             # Default number of raw darks to associate
             howmany = howmany if howmany else 10
 
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Must totally match: read_mode, exposure_time
         query = query.filter(F2.read_mode == self.descriptors['read_mode'])
         query = query.filter(Header.exposure_time == self.descriptors['exposure_time'])
-
-        # Absolute time separation must be within 3 months
-        max_interval = datetime.timedelta(days=90)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
 
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
@@ -113,7 +101,9 @@ class CalibrationF2(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 3 months
+        query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=90), limit=howmany)
+
         return query.all()
 
     def flat(self, processed=False, howmany=None):
@@ -129,12 +119,6 @@ class CalibrationF2(Calibration):
             # Default number of raw flats
             howmany = howmany if howmany else 10
 
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Must totally match: disperser, central_wavelength (spect only), focal_plane_mask, filter_name, lyot_stop, read_mode
         query = query.filter(F2.disperser == self.descriptors['disperser'])
         query = query.filter(F2.focal_plane_mask == self.descriptors['focal_plane_mask'])
@@ -145,19 +129,15 @@ class CalibrationF2(Calibration):
         if self.descriptors['spectroscopy']:
             query = query.filter(func.abs(Header.central_wavelength - self.descriptors['central_wavelength']) < 0.001)
 
-        # Absolute time separation must be within 3 months
-        max_interval = datetime.timedelta(days=90)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 3 months
+        query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=90), limit=howmany)
+
         return query.all()
 
     def arc(self, processed=False, howmany=None):
@@ -171,12 +151,6 @@ class CalibrationF2(Calibration):
 
         # Default number to associate is 1
         howmany = howmany if howmany else 1
- 
-        # Search only the canonical (latest) entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
 
         # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter_name, lyot_stop
         query = query.filter(F2.disperser == self.descriptors['disperser'])
@@ -185,37 +159,24 @@ class CalibrationF2(Calibration):
         query = query.filter(F2.filter_name == self.descriptors['filter_name'])
         query = query.filter(F2.lyot_stop == self.descriptors['lyot_stop'])
 
-        # Absolute time separation must be within 3 months
-        max_interval = datetime.timedelta(days=90)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 3 months
+        query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=90), limit=howmany)
+
         return query.all()
 
+    @not_processed
     def photometric_standard(self, processed=False, howmany=None):
         query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
 
-        if processed:
-            # Not a valid concept
-            return []
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Default number to associate
-            howmany = howmany if howmany else 10
-
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
+        query = query.filter(Header.reduction == 'RAW')
+        # Default number to associate
+        howmany = howmany if howmany else 10
 
         # Phot standards are OBJECT imaging frames
         query = query.filter(Header.observation_type == 'OBJECT')
@@ -228,38 +189,24 @@ class CalibrationF2(Calibration):
         query = query.filter(F2.filter_name == self.descriptors['filter_name'])
         query = query.filter(F2.lyot_stop == self.descriptors['lyot_stop'])
 
-        # Absolute time separation must be within 24 hours of the science
-        max_interval = datetime.timedelta(days=1)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 24 hours of the science
+        query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=1), limit=howmany)
+
         return query.all()
 
-
+    @not_processed
     def telluric_standard(self, processed=False, howmany=None):
         query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
+        query = query.filter(Header.reduction == 'RAW')
 
-        if processed:
-            # Not a valid concept
-            return []
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Default number to associate
-            howmany = howmany if howmany else 10
-
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
+        # Default number to associate
+        howmany = howmany if howmany else 10
 
         # Telluric standards are OBJECT spectroscopy partnerCal frames
         query = query.filter(Header.observation_type == 'OBJECT')
@@ -287,6 +234,7 @@ class CalibrationF2(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
-        return query.all()
+        # Absolute time separation must be within 24 hours of the science
+        query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=1), limit=howmany)
 
+        return query.all()

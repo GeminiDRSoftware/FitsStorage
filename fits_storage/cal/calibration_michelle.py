@@ -63,12 +63,6 @@ class CalibrationMICHELLE(Calibration):
         # Default number to associate
         howmany = howmany if howmany else 10
 
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
-
         # Must totally match: read_mode, exposure_time, coadds
         query = query.filter(Michelle.read_mode == self.descriptors['read_mode'])
         query = query.filter(Header.exposure_time == self.descriptors['exposure_time'])
@@ -86,7 +80,9 @@ class CalibrationMICHELLE(Calibration):
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
+        # Absolute time separation must be within 1 day
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
+
         return query.all()
 
     def flat(self, processed=False, howmany=None):
@@ -95,12 +91,6 @@ class CalibrationMICHELLE(Calibration):
 
         # Default number to associate
         howmany = howmany if howmany else 10
-
-        # Search only canonical entries
-        query = query.filter(DiskFile.canonical == True)
-
-        # Knock out the FAILs
-        query = query.filter(Header.qa_state != 'Fail')
 
         # Must totally match: read_mode, filter
         query = query.filter(Michelle.read_mode == self.descriptors['read_mode'])
@@ -118,18 +108,13 @@ class CalibrationMICHELLE(Calibration):
             wlen_hi = float(self.descriptors['central_wavelength']) + tolerance
             query = query.filter(Header.central_wavelength < wlen_hi).filter(Header.central_wavelength > wlen_lo)
 
-        # Absolute time separation must be within 1 day
-        max_interval = datetime.timedelta(days=1)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
         # Order by absolute time separation.
         # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
         # Use the ut_datetime_secs column for faster and more portable ordering
         targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
         query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
-        query = query.limit(howmany)
-        return query.all()
+        # Absolute time separation must be within 1 day
+        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
 
+        return query.all()

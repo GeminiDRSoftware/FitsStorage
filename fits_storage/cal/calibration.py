@@ -2,6 +2,42 @@
 This module holds the Calibration superclass
 """
 
+import functools
+from ..orm.diskfile import DiskFile
+from ..orm.header import Header
+
+# A common theme across calibrations is that some of them don't handle processed data
+# and will just return an empty list of calibs. This decorator is just some syntactic
+# sugar for that common pattern.
+def not_processed(f):
+    @functools.wraps(f)
+    def wrapper(self, processed=False, *args, **kw):
+        if processed:
+            return []
+        return f(self, processed=processed, *args, **kw)
+
+    return wrapper
+
+# Another common pattern: calibrations that don't apply for imaging
+def not_imaging(f):
+    @functools.wraps(f)
+    def wrapper(self, *args, **kw):
+        if self.descriptors['spectroscopy'] == False:
+            return []
+        return f(self, *args, **kw)
+
+    return wrapper
+
+# Another common pattern: calibrations that don't apply for spectroscopy
+def not_spectroscopy(f):
+    @functools.wraps(f)
+    def wrapper(self, *args, **kw):
+        if self.descriptors['spectroscopy'] == True:
+            return []
+        return f(self, *args, **kw)
+
+    return wrapper
+
 class Calibration(object):
     """
     This class provides a basic Calibration Manager
@@ -52,6 +88,16 @@ class Calibration(object):
             # The data_section comes over as a native python array, needs to be a string
             if self.descriptors['data_section']:
                 self.descriptors['data_section'] = str(self.descriptors['data_section'])
+
+    def set_common_cals_filter(self, query, max_interval, limit):
+        datetime_lo = self.descriptors['ut_datetime'] - max_interval
+        datetime_hi = self.descriptors['ut_datetime'] + max_interval
+
+        return (query.filter(DiskFile.canonical == True)       # Search only canonical entries
+                     .filter(Header.qa_state != 'Fail')        # Knock out the FAILs
+                     .filter(Header.ut_datetime > datetime_lo) # Absolute time separation
+                     .filter(Header.ut_datetime < datetime_hi)
+                     .limit(limit))
 
     def bias(self, processed=False, howmany=None):
         """
