@@ -106,6 +106,12 @@ def calmgr(req, selection):
     returns an apache request status code
     """
 
+    # There selection has to be a closed query. If it's open, then disallow
+    if openquery(selection):
+        req.content_type = "text/plain"
+        req.write("<!-- Error: Selection cannot represent an open query for calibration association -->\n")
+        return HTTP_NOT_ACCEPTABLE
+
     # Only the canonical versions
     selection['canonical'] = True
 
