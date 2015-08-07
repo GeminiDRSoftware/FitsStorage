@@ -19,6 +19,19 @@ usually find them in the following order.
    * keywords
    * tests
 
+They're used in a very specific order, though:
+
+1. ``conditions`` is used to determine if a rules file will be used. If it doesn't,
+   the rest are not taken into account.
+2. ``includes`` is read and all the included ruleset files are queued to be checked
+   later.
+3. ``keywords`` checks are performed.
+4. ``tests`` checks are performed.
+5. ``provides`` is applied, as long as 2 & 3 passed.
+
+Notice the absence of ``range limits``. That one is not used explicitly, but affects
+the checks listed under ``keywords``.
+
 Here's a real example file showing examples of most of the sections. Please,
 use it as refernce of real usage for the concepts we'll be discussing in the
 rest of the document.
@@ -311,7 +324,7 @@ are given:
 The ``keywords`` section
 ------------------------
 
-This section describes a list of keywords that **must exist** in the HDU
+This section describes a list of keywords that **should exist** in the HDU
 header, and optionally meet certain requirements. Notice that there are similar tests
 in the ``conditions`` section. There's a difference, though: ``conditions`` is used just
 to decide if a rules file is accepted or ignored, for testing purposes. By the time
@@ -386,6 +399,65 @@ string with values that must be **exactly** ``open`` or ``blank``, or a characte
 pattern matching ``.*_G\d{4}`` (ie. anything followed by ``_G`` and then exactly 4 digits).
 For the NIFS example, we see a ``GRATING`` keyword which accepts two different patterns.
 
+Controlling which keywords are mandatory
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The keywords that are not listed in a rule file are completely ignored and, **by default**,
+any listed keywords will be considered mandatory. There are cases, though, where a keyword
+may not apply in all cases. We provide two ways to control this:
+
+The ``optional`` modifier
+    It is used mostly for non-facility instruments. In those cases, we may want to ignore a
+    certain keyword if it's not there but, if it exists, then we want to make sure that it
+    meets some requirements. That's what ``optional`` gets us.
+
+The ``if [not] <word>`` modifier
+    This modifier controls wether a keyword is mandatory or not by checking if a certain
+    `<word>` is present (or not) in the environment. An example of this would be checking
+    for keywords will be present in raw images, but not in preprocessed ones, like:
+
+::
+
+          - if not prepared:
+            - GAIN:
+              - float
+            - RDNOISE:
+              - float
+            - CCDSUM:
+              - char:     [ '1 1', '1 2', '1 4', '2 1', '2 2', '2 4', '4 1', '4 2', '4 4' ]
+            - CCDNAME:
+              - char:       not null
+            - CCDSIZE,CCDSEC,DATASEC,DETSEC,BIASSEC:
+              - pattern:    '\[\d+:\d+,\d+:\d+]'
+
+
+The ``since YYYY-MM-DD`` modifier
+    Instrument headers tend to change with time. This happens during development of the
+    instrument, or when there's a change in the Observatory standards. It may be the case
+    that a certain keyword appears in the header only after a certain date, and making it
+    mandatory all the time would give us bogus results for old images.
+
+    This is why we provide the ``since`` modifier. A keyword modified by it is mandatory
+    from the point in time determined by the provided date, but completely ignored before
+    that.
+
+    The date used to compare against this is inferred from the context.
+
+The ``until YYYY-MM-DD`` modifier
+    Same rationale as with ``since``, but meaning that the keyword is considered mandatory
+    only until the date we indicate.
+
+All the modifiers that we have introduced here can be used at the same time. Just make sure
+that they don't cause conflict with each other. They also admit two different uses: directly
+as a modifier of a particular keyword:
+
+::
+
+          - RADECSYS:
+            - since 2006-7-1
+
+or grouping a number of keywords, like in the example shown for ``if word``.
+
 List of requirements
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -396,16 +468,59 @@ This is the complete list of requirements that can be specified for a keyword:
 
 ``<type>: <range>``
     Same as with ``<type>``, but adding a range of acceptable values. The way a range
-    can be specified depends on the type. For all of them, a single value, or a list of
-    them can be specified. Examples are:
+    can be specified may depend on the type:
 
-        ``- char:     [ In, Out ]``
+- For all types, a single value or a list of them can be specified. Examples are::
 
-        ``- int:      [ -1, 0, 1 ]``
+        - char:     [ In, Out ]
+        - int:      [ -1, 0, 1 ]
 
-    For numeric values and dates, a range can be specified like this:
+- For numeric values and dates, a range can be specified like this::
 
-       ``start .. end``
+            start .. end
 
-    where either ``start`` *or* ``end`` may be an asterisk (`*`), meaning that the
-    range is open ended on that side. For example:
+  where either ``start`` *or* ``end`` may be an asterisk (`*`), meaning that the
+  range is open ended on that side. For example::
+
+        - DATEIMAG:     2006-7-1 .. *
+
+- Also, a particular value for ``char`` that makes sure there's some non-null value
+  assigned to the keyword::
+
+        - char:         not null
+
+``upper: <range>``
+    Similar to a ``char: <range>``, but the content of the keyword is converted to
+    uppercase before comparing it with the ``range``. For example::
+
+        - upper:        UNKNOWN
+
+    would accept keywords with a value of ``Unknown``, ``unknown``, ``UNKNOWN``, etc.
+
+``lower: <range>``
+   Same as with ``upper``, but having the content converted to lowercase before
+   comparing. Typically using one or the other is a matter of preference.
+
+``pattern: '<regular expression>'``
+   Accepts as argument a (single) quoted string that is a valid `Python regex <http://https://docs.python.org/2/library/re.html>`.
+   The value associated to the keyword will be matched against the pattern.
+
+The ``tests`` section
+---------------------
+
+``tests`` is applied after ``keywords`` has passed. This means that by the time the
+``tests`` are evaluated, we know that all the required keywords exist and have the
+right value.
+
+The ``tests`` section is used to perform complex checks that would require proper
+algorithmic syntax. Instead of that, we provide such checks in the form of functions.
+Refer to the example rule file at the beginning of this document to see it in use.
+
+The syntax for this section is identical to the one of ``conditions``. On the other
+hand, where failing checks on ``conditions`` would simply discard a rule file,
+failing a check in the ``tests`` section renders a header invalid.
+
+List of functions
+-----------------
+
+The best 
