@@ -43,7 +43,7 @@ def cache_associations(session, obs_hid):
         # Blow away old associations of this caltype
         session.query(CalCache)\
             .filter(CalCache.obs_hid == header.id)\
-            query.filter(CalCache.caltype == caltype)\
+            .filter(CalCache.caltype == caltype)\
             .delete()
 
         # Get the associations for this caltype
