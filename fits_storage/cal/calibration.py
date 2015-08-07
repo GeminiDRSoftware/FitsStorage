@@ -92,11 +92,13 @@ class Calibration(object):
     def set_common_cals_filter(self, query, max_interval, limit):
         datetime_lo = self.descriptors['ut_datetime'] - max_interval
         datetime_hi = self.descriptors['ut_datetime'] + max_interval
+        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
 
         return (query.filter(DiskFile.canonical == True)       # Search only canonical entries
                      .filter(Header.qa_state != 'Fail')        # Knock out the FAILs
                      .filter(Header.ut_datetime > datetime_lo) # Absolute time separation
                      .filter(Header.ut_datetime < datetime_hi)
+                     .order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs)) # Order by absolute time separation.
                      .limit(limit))
 
     def bias(self, processed=False, howmany=None):

@@ -95,12 +95,6 @@ class CalibrationF2(Calibration):
         query = query.filter(F2.read_mode == self.descriptors['read_mode'])
         query = query.filter(Header.exposure_time == self.descriptors['exposure_time'])
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 3 months
         query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=90), limit=howmany)
 
@@ -129,12 +123,6 @@ class CalibrationF2(Calibration):
         if self.descriptors['spectroscopy']:
             query = query.filter(func.abs(Header.central_wavelength - self.descriptors['central_wavelength']) < 0.001)
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 3 months
         query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=90), limit=howmany)
 
@@ -159,12 +147,6 @@ class CalibrationF2(Calibration):
         query = query.filter(F2.filter_name == self.descriptors['filter_name'])
         query = query.filter(F2.lyot_stop == self.descriptors['lyot_stop'])
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 3 months
         query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=90), limit=howmany)
 
@@ -188,12 +170,6 @@ class CalibrationF2(Calibration):
         # Must match filter and lyot stop
         query = query.filter(F2.filter_name == self.descriptors['filter_name'])
         query = query.filter(F2.lyot_stop == self.descriptors['lyot_stop'])
-
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
         # Absolute time separation must be within 24 hours of the science
         query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=1), limit=howmany)
@@ -227,12 +203,6 @@ class CalibrationF2(Calibration):
             query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
         except TypeError:
             pass
-
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
         # Absolute time separation must be within 24 hours of the science
         query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=1), limit=howmany)

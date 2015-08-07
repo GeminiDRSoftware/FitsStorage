@@ -64,12 +64,6 @@ class CalibrationGSAOI(Calibration):
         # Must totally match: filter_name
         query = query.filter(Gsaoi.filter_name == self.descriptors['filter_name'])
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Common filter, with absolute time separation within a month
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=30), limit=howmany)
 
@@ -92,12 +86,6 @@ class CalibrationGSAOI(Calibration):
 
         # Must totally match: filter_name
         query = query.filter(Gsaoi.filter_name == self.descriptors['filter_name'])
-
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
         # Common filter, with absolute time separation within a month
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=30), limit=howmany)

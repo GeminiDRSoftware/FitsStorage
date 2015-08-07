@@ -99,12 +99,6 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Header.exposure_time == self.descriptors['exposure_time'])
         query = query.filter(Gnirs.coadds == self.descriptors['coadds'])
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 3 months
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=90), limit=howmany)
 
@@ -147,12 +141,6 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
         query = query.filter(Gnirs.well_depth_setting == self.descriptors['well_depth_setting'])
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 3 months
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=90), limit=howmany)
 
@@ -179,12 +167,6 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
         query = query.filter(Gnirs.camera == self.descriptors['camera'])
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 1 year
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
 
@@ -209,12 +191,6 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Gnirs.disperser == self.descriptors['disperser'])
         query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
         query = query.filter(Gnirs.camera == self.descriptors['camera'])
-
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
         # Absolute time separation must be within 1 year
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
@@ -245,12 +221,6 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Gnirs.camera == self.descriptors['camera'])
         query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
         query = query.filter(Gnirs.well_depth_setting == self.descriptors['well_depth_setting'])
-
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
         # Absolute time separation must be within 1 day
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
@@ -293,12 +263,6 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
         query = query.filter(Gnirs.well_depth_setting == self.descriptors['well_depth_setting'])
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 3 months
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=90), limit=howmany)
 
@@ -327,12 +291,6 @@ class CalibrationGNIRS(Calibration):
         query = query.filter(Gnirs.focal_plane_mask == self.descriptors['focal_plane_mask'])
         query = query.filter(Gnirs.camera == self.descriptors['camera'])
         query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
-
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
         # Absolute time separation must be within 1 day
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)

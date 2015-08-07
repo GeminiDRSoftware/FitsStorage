@@ -84,12 +84,6 @@ class CalibrationGPI(Calibration):
         exptime_lo = float(self.descriptors['exposure_time']) - 10.0
         query = query.filter(Header.exposure_time > exptime_lo).filter(Header.exposure_time < exptime_hi)
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 1 year
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
 
@@ -115,12 +109,6 @@ class CalibrationGPI(Calibration):
         # query = query.filter(Gpi.focal_plane_mask == self.descriptors['focal_plane_mask'])
         query = query.filter(Gpi.filter_name == self.descriptors['filter_name'])
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 1 year
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
 
@@ -144,12 +132,6 @@ class CalibrationGPI(Calibration):
         # Must Totally Match: disperser, filter_name
         query = query.filter(Gpi.disperser == self.descriptors['disperser'])
         query = query.filter(Gpi.filter_name == self.descriptors['filter_name'])
-
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
         # Absolute time separation must be within 1 year
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
@@ -175,12 +157,6 @@ class CalibrationGPI(Calibration):
         query = query.filter(Gpi.disperser == self.descriptors['disperser'])
         query = query.filter(Gpi.filter_name == self.descriptors['filter_name'])
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 1 year
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
 
@@ -205,12 +181,6 @@ class CalibrationGPI(Calibration):
         #query = query.filter(Gpi.disperser == self.descriptors['disperser'])
         #query = query.filter(Gpi.filter_name == self.descriptors['filter_name'])
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 1 year
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
 
@@ -234,12 +204,6 @@ class CalibrationGPI(Calibration):
         # Must Totally Match: disperser, filter_name
         query = query.filter(Gpi.disperser == self.descriptors['disperser'])
         query = query.filter(Gpi.filter_name == self.descriptors['filter_name'])
-
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
         # Absolute time separation must be within 1 year
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)

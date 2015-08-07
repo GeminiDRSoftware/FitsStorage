@@ -83,12 +83,6 @@ class CalibrationNIFS(Calibration):
         query = query.filter(Nifs.coadds == self.descriptors['coadds'])
         query = query.filter(Nifs.disperser == self.descriptors['disperser'])
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 3 months
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=90), limit=howmany)
 
@@ -117,12 +111,6 @@ class CalibrationNIFS(Calibration):
         # GCAL lamp must be IRhigh or QH
         query = query.filter(Header.gcal_lamp.in_(['IRhigh', 'QH']))
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 10 days
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=10), limit=howmany)
 
@@ -146,12 +134,6 @@ class CalibrationNIFS(Calibration):
         # GCAL lamp must be Off
         query = query.filter(Header.gcal_lamp == 'Off')
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 1 hour
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(seconds=3600), limit=howmany)
 
@@ -170,12 +152,6 @@ class CalibrationNIFS(Calibration):
         query = query.filter(Nifs.focal_plane_mask == self.descriptors['focal_plane_mask'])
         query = query.filter(Nifs.filter_name == self.descriptors['filter_name'])
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 1 year
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
 
@@ -191,12 +167,6 @@ class CalibrationNIFS(Calibration):
         # Must totally match: disperser, central_wavelength
         query = query.filter(Nifs.disperser == self.descriptors['disperser'])
         query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
-
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
         return query.all()
 
@@ -215,12 +185,6 @@ class CalibrationNIFS(Calibration):
         query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
         query = query.filter(Nifs.focal_plane_mask == self.descriptors['focal_plane_mask'])
         query = query.filter(Nifs.filter_name == self.descriptors['filter_name'])
-
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
         # Absolute time separation must be within 1 day
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)

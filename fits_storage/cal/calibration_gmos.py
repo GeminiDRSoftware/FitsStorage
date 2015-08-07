@@ -181,12 +181,6 @@ class CalibrationGMOS(Calibration):
         else:
             query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 1 year
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
 
@@ -240,12 +234,6 @@ class CalibrationGMOS(Calibration):
         else:
             query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 1 year
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
 
@@ -298,12 +286,6 @@ class CalibrationGMOS(Calibration):
             else:
                 query.filter(Gmos.overscan_trimmed == True)
                 query.filter(Gmos.overscan_subtracted == True)
-
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
         # Absolute time separation must be within 3 months
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=90), limit=howmany)
@@ -404,12 +386,6 @@ class CalibrationGMOS(Calibration):
         else:
             query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 6 months
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=180), limit=howmany)
 
@@ -442,12 +418,6 @@ class CalibrationGMOS(Calibration):
             query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         else:
             query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
-
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
         # Absolute time separation must be within 1 year
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
@@ -496,12 +466,6 @@ class CalibrationGMOS(Calibration):
             query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         else:
             query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
-
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
         # Absolute time separation must be within 1 year
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
@@ -558,12 +522,6 @@ class CalibrationGMOS(Calibration):
         else:
             query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
-
         # Absolute time separation must be within 1 year
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
 
@@ -592,12 +550,6 @@ class CalibrationGMOS(Calibration):
         # Must totally match instrument, filter
         query = query.filter(Header.instrument == self.descriptors['instrument'])
         query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
-
-        # Order by absolute time separation.
-        # query = query.order_by(func.abs(extract('epoch', Header.ut_datetime - self.descriptors['ut_datetime'])).asc())
-        # Use the ut_datetime_secs column for faster and more portable ordering
-        targ_ut_dt_secs = int((self.descriptors['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-        query = query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
 
         # Absolute time separation must be within 1 days
         query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
