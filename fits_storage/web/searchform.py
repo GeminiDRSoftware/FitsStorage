@@ -48,16 +48,18 @@ def searchform(req, things, orderby):
     selection = getselection(things)
     formdata = util.FieldStorage(req)
 
+
     # Also args to pass on to results page
     args_string = ""
     if orderby:
         args_string = '?orderby=%s' % orderby[0]
 
     if formdata:
-        if ((len(formdata) == 3) and
+        if ((len(formdata) == 4) and
                 ('engineering' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and
                 ('science_verification' in formdata.keys()) and (formdata['science_verification'].value == 'SvInclude') and
-                ('qa_state' in formdata.keys()) and (formdata['qa_state'].value == 'NotFail')):
+                ('qa_state' in formdata.keys()) and (formdata['qa_state'].value == 'NotFail') and
+                ('Search' in formdata.keys()) and (formdata['Search'].value == 'Search')):
             # This is the default form state, someone just hit submit without doing anything.
             pass
         elif formdata.keys() == ['orderby']:
