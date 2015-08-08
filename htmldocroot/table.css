@@ -2,11 +2,6 @@ body {
   font-family: "Arial", "sans-serif";
 }
 
-td {
-  max-width: 500px;
-  text-overflow: ellipsis;
-}
-
 .fullwidth {
   width: 100%;
   border: 0;

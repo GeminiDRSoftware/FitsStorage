@@ -180,7 +180,8 @@ def usagereport(req):
                 req.write('<TD>%s</TD>' % usagelog.this)
                 req.write('<TD>%s</TD>' % usagelog.bytes)
                 req.write('<TD>%s</TD>' % usagelog.status_string())
-                req.write('<TD>%s</TD>' % usagelog.notes)
+                notes_html = usagelog.notes if (usagelog.notes is None or len(usagelog.notes) < 50) else (usagelog.notes[:50]+'...')
+                req.write('<TD>%s</TD>' % notes_html)
 
                 # Query part
                 querylog = session.query(QueryLog).filter(QueryLog.usagelog_id == usagelog.id).first()
