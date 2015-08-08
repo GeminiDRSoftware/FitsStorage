@@ -1,0 +1,161 @@
+label {
+    display: inline-block;
+    width: 8em;
+    font-weight: bold;
+    line-height:175%;
+}
+
+input {
+    clear: left;
+}
+
+.wide {
+    width: auto;
+}
+
+.next {
+    clear: both;
+}
+
+.left {
+    height: 100%;
+    float: left;
+    width: 50%;
+}
+
+.right {
+    height: 100%;
+    float: right;
+    width: 50%;
+}
+
+.ddw {
+    width:120px;
+}
+.ddwide {
+    width:160px;
+}
+
+.searchform {
+    margin: 10px;
+}
+
+.searchresults {
+    margin: 10px;
+}
+
+#not_loading_cals {
+    display: none;
+}
+
+.help {
+    font-size: 0.85em;
+    font-style: italic;
+}
+
+.helpleft {
+    display: none;
+    font-size: 1.2em;
+    width: 20em;
+    position: absolute;
+    padding: 10px;
+    background: #CCA;
+    border: double;
+    left: auto;
+    z-index: 100;
+}
+
+.helpright {
+    display: none;
+    font-size: 1.2em;
+    width: 20em;
+    position: absolute;
+    padding: 10px;
+    background: #CCA;
+    border: double;
+    left: 500px;
+    z-index: 100;
+}
+
+.help:hover span {
+    display: inline-block;
+}
+
+#previewbox {
+    display: none;
+    position: fixed;
+    box-shadow: 10px 10px 5px #888888;
+    top: 50px;
+    right: 50px;
+    width: 840px;
+    height: 640px;
+    background: #DDF;
+    border: 2px solid;
+    border-radius: 5px;
+    text-align: center;
+}
+
+#previewimage {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.center {
+    text-align: center;
+}
+
+ul.tabs {
+    list-style:none;
+    margin:0;
+    padding:0;
+    border-bottom:1px solid #000;
+    height:32px;
+}
+
+ul.tabs li {
+    float:left;
+    text-indent:0;
+    padding:0;
+    margin:0;
+    list-style-image:none;
+}
+
+ul.tabs a {
+    background-color: #ddd;
+    font-size:16px;
+    display:block;
+    height: 30px;
+    line-height:30px;
+    width: 250px;
+    text-align:center;
+    text-decoration:none;
+    color:#333;
+    padding:0px;
+    margin:0px;
+    border: 1px solid #000;
+    position:relative;
+    top:1px;
+}
+
+ul.tabs a:active {
+    outline:none;
+    background-color: #fff;
+}
+
+ul.tabs a:hover {
+    background-color: #448;
+    color: #eee;
+}
+
+ul.tabs a.current, ul.tabs a.current:hover, ul.tabs li.current a {
+    cursor:default;
+    background-color: #fff;
+    color:#000;
+    border-bottom: 3px solid #fff;
+}
+
