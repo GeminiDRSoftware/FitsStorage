@@ -15,7 +15,7 @@ def curation_report(req, things):
     req.content_type = 'text/html'
     req.write('<html>')
     req.write('<head>')
-    req.write('<title>FITS Storage database curation report</title><link rel="stylesheet" href="/htmldocs/table.css">')
+    req.write('<title>FITS Storage database curation report</title><link rel="stylesheet" href="/table.css">')
     req.write('</head>')
     req.write('<body>')
     req.write('<h1>FITS Storage database curation report</h1>')

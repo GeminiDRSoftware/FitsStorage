@@ -33,7 +33,7 @@ def calibrations(req, selection):
 
     req.write("<head>")
     req.write("<title>%s</title>" % (title))
-    req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+    req.write('<link rel="stylesheet" href="/table.css">')
     req.write("</head>\n")
     req.write("<body>")
     if fits_system_status == "development":

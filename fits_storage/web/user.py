@@ -516,7 +516,7 @@ def staff_access(req, things):
 
     req.content_type = 'text/html'
     req.write("<html><head><title>Gemini Archive Staff Access</title>")
-    req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+    req.write('<link rel="stylesheet" href="/table.css">')
     req.write("</head><body>")
     req.write('<h1>Gemini Archive Staff Access</h1>')
 
@@ -704,7 +704,7 @@ def whoami(req, things):
     """
     req.content_type = "text/html"
     req.write("<html><head><title>Gemini Archive Who Am I</title>")
-    #req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/whoami.css">')
+    #req.write('<link rel="stylesheet" type="text/css" href="/whoami.css">')
     req.write("</head><body>")
 
     username = None
@@ -729,14 +729,14 @@ def whoami(req, things):
     req.write('<span id="whoami">')
     if username:
         # Unicode &#x1f464 is preferable to the user icon, if only browsers supported it (mid 2014)
-        req.write('<img src="/htmldocs/user1-64x64.png" height="18px"> %s &#9662' % username)
+        req.write('<img src="/user1-64x64.png" height="18px"> %s &#9662' % username)
         req.write('<ul class="whoami">')
         req.write('<li class="whoami">%s</li>' % fullname)
         req.write('<li class="whoami"><a href="/logout">Log Out</a></li>')
         req.write('<li class="whoami"><a href="/change_password%s">Change Password</a></li>' % thing_string)
         req.write('<li class="whoami"><a href="/my_programs%s">My Programs</a></li>' % thing_string)
     else:
-        req.write('<img src="/htmldocs/user1-64x64.png" height="18px"> Not logged in &#9662')
+        req.write('<img src="/user1-64x64.png" height="18px"> Not logged in &#9662')
         req.write('<ul class="whoami">')
         req.write('<li class="whoami"><a href="/request_account%s">Request Account</a></li>' % thing_string)
         req.write('<li class="whoami"><a href="/login%s">Login</a></li>' % thing_string)
@@ -753,7 +753,7 @@ def user_list(req):
     """
     req.content_type = 'text/html'
     req.write("<html><head><title>Gemini Archive User List</title>")
-    req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+    req.write('<link rel="stylesheet" href="/table.css">')
     req.write("</head><body>")
     req.write('<h1>Gemini Archive User List</h1>')
 

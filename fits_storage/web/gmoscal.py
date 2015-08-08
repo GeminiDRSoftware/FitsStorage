@@ -44,7 +44,7 @@ def gmoscal(req, selection, do_json=False):
         title = "GMOS Cal (Imaging Twilight Flats and Biases) Report %s" % sayselection(selection)
         req.content_type = "text/html"
         req.write('<html><head><title>%s</title>' % title)
-        req.write('<link rel="stylesheet" href="/htmldocs/table.css"></head><body><h1>%s</h1>' % title)
+        req.write('<link rel="stylesheet" href="/table.css"></head><body><h1>%s</h1>' % title)
         if fits_system_status == 'development':
             req.write("<H1>This is the Development Server, not the operational system. If you're not sure why you're seeing this message, please consult PH</H1>")
 

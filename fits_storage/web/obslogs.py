@@ -21,7 +21,7 @@ def obslogs(req, selection, sumtype):
     req.content_type = "text/html"
     req.write('<!DOCTYPE html><html>')
     req.write('<meta charset="UTF-8">')
-    req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+    req.write('<link rel="stylesheet" href="/table.css">')
     title = "Obslogs table %s" % sayselection(selection)
     req.write("<title>%s</title>" % title)
     req.write("</head>\n")

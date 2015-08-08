@@ -76,7 +76,7 @@ def usagereport(req):
 
         req.write('<!DOCTYPE html><html><head>')
         req.write('<meta charset="UTF-8">')
-        req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/table.css">')
+        req.write('<link rel="stylesheet" type="text/css" href="/table.css">')
         req.write('<title>Fits Server Log Query</title></head>')
         req.write("<body><h1>Fits Server Log Query</h1>")
         req.write("<FORM action='/usagereport' method='POST'>")
@@ -288,7 +288,7 @@ def usagedetails(req, things):
         req.content_type = "text/html"
         req.write('<!DOCTYPE html><html><head>')
         req.write('<meta charset="UTF-8">')
-        req.write('<link rel="stylesheet" type="text/css" href="/htmldocs/table.css">')
+        req.write('<link rel="stylesheet" type="text/css" href="/table.css">')
         req.write('<title>Fits Server Usage Log Detail</title></head>')
         req.write("<body><h1>Fits Server Usage Log Detail</h1>")
         req.write("<h2>Usage Log Entry</h2>")
@@ -490,7 +490,7 @@ def downloadlog(req, things):
         req.content_type = "text/html"
         req.write('<!DOCTYPE html><html><head>')
         req.write('<meta charset="UTF-8">')
-        req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+        req.write('<link rel="stylesheet" href="/table.css">')
         req.write("<title>Download Log</title>")
         req.write("</head>\n")
         req.write("<body>")
@@ -612,7 +612,7 @@ def usagestats(req):
         req.content_type = "text/html"
         req.write('<!DOCTYPE html><html><head>')
         req.write('<meta charset="UTF-8">')
-        req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+        req.write('<link rel="stylesheet" href="/table.css">')
         req.write("<title>Usage Statistics</title>")
         req.write("</head>\n")
         req.write("<body>")

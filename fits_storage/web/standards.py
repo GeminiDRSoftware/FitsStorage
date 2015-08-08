@@ -35,7 +35,7 @@ def standardobs(req, header_id):
         title = "Photometric standards in frame"
         req.write("<head>")
         req.write("<title>%s</title>" % (title))
-        req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+        req.write('<link rel="stylesheet" href="/table.css">')
         req.write("</head>\n")
         req.write("<body>")
         req.write("<H1>%s</H1>" % (title))

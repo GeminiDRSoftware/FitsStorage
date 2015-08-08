@@ -33,7 +33,7 @@ def summary(req, sumtype, selection, orderby, links=True):
     req.content_type = "text/html"
     req.write('<!DOCTYPE html><html>')
     req.write('<meta charset="UTF-8">')
-    req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+    req.write('<link rel="stylesheet" href="/table.css">')
     title = "FITS header %s table %s" % (sumtype, sayselection(selection))
     req.write("<title>%s</title>" % htmlescape(title))
     req.write("</head>\n")
@@ -203,7 +203,7 @@ def summary_table(req, sumtype, headers, selection, links=True, user=None, user_
 
     if sumtype == 'searchresults':
         # Insert the preview box into the html
-        req.write('<span id="previewbox">Click this box to close it. Click [P] links to switch image.<br /><img id="previewimage" src="/htmldocs/ajax-loading.gif" alt=""></span>')
+        req.write('<span id="previewbox">Click this box to close it. Click [P] links to switch image.<br /><img id="previewimage" src="/ajax-loading.gif" alt=""></span>')
 
     req.write('<TABLE class="fullwidth">')
 

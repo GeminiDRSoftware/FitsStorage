@@ -154,7 +154,7 @@ def content(req):
     req.write('<!DOCTYPE html><html><head>')
     req.write('<meta charset="UTF-8">')
     req.write("<title>Database content statistics</title>")
-    req.write('<link rel="stylesheet" href="/htmldocs/table.css">')
+    req.write('<link rel="stylesheet" href="/table.css">')
     req.write("</head><body>\n")
 
     if (fits_system_status == "development"):

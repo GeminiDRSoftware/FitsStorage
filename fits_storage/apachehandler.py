@@ -43,7 +43,7 @@ from functools import partial
 ####### HELPER FUNCTIONS #######
 # Send usage message to browser
 def usagemessage(req):
-    fp = open("/opt/FitsStorage/htmldocroot/htmldocs/usage.html", "r")
+    fp = open("/opt/FitsStorage/htmldocroot/usage.html", "r")
     stuff = fp.read()
     fp.close()
     req.content_type = "text/html"
@@ -319,11 +319,11 @@ def thehandler(req):
         retval = progsobserved(req, selection)
         return retval
 
-    # Some static files that the server should serve via a redirect.
-    staticfiles = ["robots.txt", "favicon.ico", "jquery-1.11.1.min.js", "test.html", "test2.html"]
-    if this in staticfiles:
-        newurl = "/htmldocs/%s" % this
-        util.redirect(req, newurl)
+    # Static files are listed in the apache.conf so do not even go via the python handler now.
+    #staticfiles = ["robots.txt", "favicon.ico", "jquery-1.11.1.min.js", "test.html", "test2.html"]
+    #if this in staticfiles:
+        #newurl = "/htmldocs/%s" % this
+        #util.redirect(req, newurl)
 
     # Last one on the list - if we haven't return(ed) out of this function
     # by one of the methods above, then we should send out the usage message
