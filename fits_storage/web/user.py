@@ -120,7 +120,7 @@ def request_account(req, things):
 
         # Send the new account form
         req.write('<FORM action="/request_account%s" method="POST">' % thing_string)
-        req.write('<P>Fill out and submit this short form to request a Gemini Archive account. You must provide a valid email address - we will be emailing you a link to activate your account and set a password. Usernames must be purely alphanumeric characters and must be at least two characters long.</P>')
+        req.write('<P>Fill out and submit this short form to request a Gemini Archive account. You must provide a valid email address - we will be emailing you a link to activate your account and set a password. The email should arrive promptly, please note the activation link expires 15 minutes after it was sent. Usernames must be purely alphanumeric characters and must be at least two characters long.</P>')
         req.write('<TABLE>')
 
         # username row
@@ -488,7 +488,7 @@ def request_password_reset(req):
 
     # Send the reset form
     req.write('<FORM action="/request_password_reset" method="POST">')
-    req.write("<P>Enter your Gemini Archive Username or the Email address you registered with us when you created the account in the box below and bit submit. We'll send you an email containing a link to follow to reset your password</P>")
+    req.write("<P>Enter your Gemini Archive Username or the Email address you registered with us when you created the account in the box below and hit submit. We'll send you an email containing a link to follow to reset your password. Please note that the link is only valid for 15 minutes.</P>")
     req.write('<INPUT type="text" size=32 name="thing"</INPUT>')
 
     # Some kind of captcha here.
