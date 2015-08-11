@@ -450,7 +450,7 @@ def request_password_reset(req):
             request_valid = True
         else:
             request_valid = False
-            req.write('<P>That is not a valid username or email address in our system. Maybe you need to create a new account</P>')
+            req.write('<P>That is not a valid username or email address in our system. Maybe you need to <a href="/request_account">create a new account</a>?</P>')
 
     if request_valid:
         # Try to process it
@@ -648,6 +648,7 @@ def login(req, things):
 
     if request_attempted:
         req.write('<P>Log-in did not suceed: %s. Please try again.</P>' % reason_bad)
+        req.write('<P>If you have forgotten your username and/or password, <a href="/request_password_reset">click here to reset your password</a>.</P>')
 
     req.write('<FORM action="/login%s" method="POST">' % thing_string)
     req.write('<TABLE>')
