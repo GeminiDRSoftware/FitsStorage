@@ -224,7 +224,6 @@ class Calibration(object):
                 'program_id':           self.header.program_id,
                 'ut_datetime':          self.header.ut_datetime,
                 'exposure_time':        self.header.exposure_time,
-                'observation_class':    self.header.observation_class,
                 'detector_roi_setting': self.header.detector_roi_setting,
                 'reduction':            self.header.reduction,
                 'elevation':            self.header.elevation,
