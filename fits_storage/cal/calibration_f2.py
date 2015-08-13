@@ -140,7 +140,7 @@ class CalibrationF2(Calibration):
         return (
             self.get_query()
                 # Photometric standards are OBJECT imaging partnerCal frames
-                .photometric_standard(partnerCal=True)
+                .photometric_standard(object=True, partnerCal=True)
                 .match_descriptors(F2.filter_name,
                                    F2.lyot_stop)
                 # Absolute time separation must be within 24 hours of the science
@@ -157,7 +157,7 @@ class CalibrationF2(Calibration):
         return (
             self.get_query()
                 # Telluric standards are OBJECT spectroscopy partnerCal frames
-                .telluric_standard(partnerCal=True)
+                .telluric_standard(object=True, partnerCal=True)
                 .match_descriptors(*CalibrationF2.common_descriptors())
                 .tolerance(central_wavelength=0.001)
                 # Absolute time separation must be within 24 hours of the science

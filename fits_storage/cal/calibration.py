@@ -125,11 +125,14 @@ class CalQuery(object):
         self.query = self.query.filter(Header.spectroscopy == status)
         return self
 
+    def object(self):
+        return self.observation_type('OBJECT')
+
     def partnerCal(self):
-        return self.observation_type('OBJECT').observation_class('partnerCal')
+        return self.observation_class('partnerCal')
 
     def science(self):
-        return self.observation_type('OBJECT').observation_class('science')
+        return self.observation_class('science')
 
     def raw_or_processed(self, name, processed):
         if processed:

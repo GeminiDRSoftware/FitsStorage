@@ -234,7 +234,7 @@ class CalibrationGNIRS(Calibration):
 
         return (
             self.get_query()
-                .telluric_standard(partnerCal=True)
+                .telluric_standard(processed=processed, object=True, partnerCal=True)
                 # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name
                 .match_descriptors(Header.central_wavelength,
                                    Gnirs.disperser,
