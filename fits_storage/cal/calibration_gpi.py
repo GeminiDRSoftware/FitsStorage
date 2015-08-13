@@ -135,7 +135,7 @@ class CalibrationGPI(Calibration):
 
         # NOTE: polarization standards are only found in GPI. We won't bother moving this to CalQuery - yet
         if processed:
-            query = self.get_query().reduction('PROCESSED_POLSTANDARD')
+            query = self.get_query().PROCESSED_POLSTANDARD()
         else:
             query = (self.get_query().raw().science().spectroscopy(False)
                                      .add_filters(Header.calibration_program==True,
@@ -158,7 +158,7 @@ class CalibrationGPI(Calibration):
         # NOTE: astrometric standards are only found in GPI. We won't bother moving this to CalQuery - yet
 
         if processed:
-            query = self.get_query().reduction('PROCESSED_ASTROMETRIC')
+            query = self.get_query().PROCESSED_ASTROMETRIC()
         else:
             query = (self.get_query().raw().OBJECT()
                          .add_filters(Gpi.astrometric_standard==True))
@@ -183,7 +183,7 @@ class CalibrationGPI(Calibration):
         query = self.session.query(Header).select_from(join(join(Gpi, Header), DiskFile))
 
         if processed:
-            query = self.get_query().reduction('PROCESSED_POLFLAT')
+            query = self.get_query().PROCESSED_POLFLAT()
         else:
             query = (self.get_query().flat().partnerCal()
                          .add_filters(Gpi.wollaston == True))

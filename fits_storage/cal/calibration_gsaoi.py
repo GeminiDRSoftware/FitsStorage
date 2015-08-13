@@ -52,7 +52,7 @@ class CalibrationGSAOI(Calibration):
             howmany = 1 if processed else 20
 
         if processed:
-            query = self.get_query().reduction('PROCESSED_FLAT')
+            query = self.get_query().PROCESSED_FLAT()
         else:
             query = (self.get_query().raw().OBJECT()
                          .observation_class('dayCal')

@@ -10,6 +10,8 @@ from sqlalchemy import func
 from sqlalchemy.orm import join
 from datetime import timedelta
 
+from .. import gemini_metadata_utils as gmu
+
 # A common theme across calibrations is that some of them don't handle processed data
 # and will just return an empty list of calibs. This decorator is just some syntactic
 # sugar for that common pattern.
@@ -88,6 +90,13 @@ class CalQuery(object):
         try:
             return functools.partial(self.__call_through, getattr(self.query, name))
         except AttributeError:
+            if name in gmu.obs_types:
+                return functools.partial(self.observation_type, name)
+            elif name in gmu.obs_classes:
+                return functools.partial(self.observation_class, name)
+            elif name in gmu.reduction_states:
+                return functools.partial(self.reduction, name)
+
             raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, name))
 
     def all(self):
@@ -134,15 +143,6 @@ class CalQuery(object):
     def spectroscopy(self, status):
         self.query = self.query.filter(Header.spectroscopy == status)
         return self
-
-    def OBJECT(self):
-        return self.observation_type('OBJECT')
-
-    def partnerCal(self):
-        return self.observation_class('partnerCal')
-
-    def science(self):
-        return self.observation_class('science')
 
     def raw_or_processed(self, name, processed):
         if processed:

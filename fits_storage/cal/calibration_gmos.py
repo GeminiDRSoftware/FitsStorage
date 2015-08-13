@@ -381,7 +381,7 @@ class CalibrationGMOS(Calibration):
 
         return (
             self.get_query()
-                .reduction('PROCESSED_FRINGE')
+                .PROCESSED_FRINGE()
                 .add_filters(*filters)
                 .match_descriptors(Header.instrument,
                                    Gmos.detector_x_bin,
@@ -416,9 +416,8 @@ class CalibrationGMOS(Calibration):
 
         return (
             self.get_query()
-                .reduction('RAW')
                 # They are OBJECT spectroscopy frames with target twilight
-                .OBJECT().spectroscopy(True).object('Twilight')
+                .raw().OBJECT().spectroscopy(True).object('Twilight')
                 .add_filters(*filters)
                 .match_descriptors(Header.instrument,
                                    Gmos.detector_x_bin,
@@ -466,9 +465,8 @@ class CalibrationGMOS(Calibration):
 
         return (
             self.get_query()
-                .reduction('RAW')
                 # They are OBJECT partnerCal or progCal spectroscopy frames with target not twilight
-                .OBJECT().spectroscopy(True)
+                .raw().OBJECT().spectroscopy(True)
                 .add_filters(Header.observation_class.in_(['partnerCal', 'progCal']),
                              Header.object != 'Twilight',
                              *filters)
