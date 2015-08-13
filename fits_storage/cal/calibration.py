@@ -6,6 +6,8 @@ import functools
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 
+from sqlalchemy import func
+
 # A common theme across calibrations is that some of them don't handle processed data
 # and will just return an empty list of calibs. This decorator is just some syntactic
 # sugar for that common pattern.
