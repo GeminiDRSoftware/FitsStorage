@@ -7,6 +7,7 @@ from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 
 from sqlalchemy import func
+from sqlalchemy.orm import join
 
 # A common theme across calibrations is that some of them don't handle processed data
 # and will just return an empty list of calibs. This decorator is just some syntactic
@@ -40,6 +41,50 @@ def not_spectroscopy(f):
 
     return wrapper
 
+class CalQuery(object):
+    def __init__(self, session, instrClass, descriptors):
+        self.descr = descriptors
+        self.query = (session.query(Header).select_from(join(join(instrClass, Header), DiskFile))
+                                           .filter(DiskFile.canonical == True) # Search only canonical entries
+                                           .filter(Header.qa_state != 'Fail')) # Knock out the FAILs
+
+    def __call_through(self, query_method, *args, **kw):
+        self.query = query_method(*args, **kw)
+        return self
+
+    def add_filters(self, *args):
+        for arg in args:
+            self.query = self.query.filter(arg)
+
+        return self
+
+    def match_descriptors(self, *args):
+        for arg in args:
+            field = arg.expression.name
+            self.query = self.query.filter(arg == self.descr[field])
+
+        return self
+
+    def max_interval(self, max_interval):
+        datetime_lo = self.descr['ut_datetime'] - max_interval
+        datetime_hi = self.descr['ut_datetime'] + max_interval
+        targ_ut_dt_secs = int((self.descr['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+
+        self.query = (self.query.filter(Header.ut_datetime > datetime_lo) # Absolute time separation
+                                .filter(Header.ut_datetime < datetime_hi)
+                                .order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))) # Order by absolute time separation.
+
+        return self
+
+    def __getattr__(self, name):
+        try:
+            return functools.partial(self.__call_through, getattr(self.query, name))
+        except AttributeError:
+            raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, name))
+
+    def all(self):
+        return self.query.all()
+
 class Calibration(object):
     """
     This class provides a basic Calibration Manager
@@ -51,6 +96,7 @@ class Calibration(object):
     descriptors = None
     types = None
     applicable = []
+    instrClass = None
 
     def __init__(self, session, header, descriptors, types):
         """
@@ -90,6 +136,36 @@ class Calibration(object):
             # The data_section comes over as a native python array, needs to be a string
             if self.descriptors['data_section']:
                 self.descriptors['data_section'] = str(self.descriptors['data_section'])
+
+    def get_query(self, query_type=None, processed=False):
+        q = CalQuery(self.session, self.__class__.instrClass, self.descriptors)
+
+        # The following are filters for some common calibs. If they're not common enough
+        # to be here, the filters will be added straight into the calib retrieval code
+        filters = []
+        if query_type == 'dark':
+            if processed:
+                filters=(Header.reduction == 'PROCESSED_DARK',)
+            else:
+                filters=(Header.reduction == 'RAW',
+                         Header.observation_type == 'DARK')
+        elif query_type == 'flat':
+            if processed:
+                filters=(Header.reduction == 'PROCESSED_FLAT',)
+            else:
+                filters=(Header.reduction == 'RAW',
+                         Header.observation_type == 'FLAT')
+        elif query_type == 'arc':
+            if processed:
+                filters=(Header.reduction == 'PROCESSED_ARC',)
+            else:
+                filters=(Header.reduction == 'RAW',
+                         Header.observation_type == 'ARC')
+
+        if filters:
+            q.add_filters(*filters)
+
+        return q
 
     def set_common_cals_filter(self, query, max_interval, limit):
         datetime_lo = self.descriptors['ut_datetime'] - max_interval

@@ -18,6 +18,7 @@ class CalibrationGNIRS(Calibration):
     It is a subclass of Calibration
     """
     gnirs = None
+    instrClass = Gnirs
 
     def __init__(self, session, header, descriptors, types):
         """
@@ -77,32 +78,39 @@ class CalibrationGNIRS(Calibration):
         if self.descriptors['observation_type'] == 'FLAT' and self.descriptors['gcal_lamp'] == 'IRhigh':
             self.applicable.append('lampoff_flat')
 
-
     def dark(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS Dark for this target frame
         """
-        query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
+        # Default number of processed darks to associate
+        if howmany is None:
+            howmany = 1 if processed else 10
 
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_DARK')
-            # Default number of processed darks to associate
-            howmany = howmany if howmany else 1
-        else:
-            query = query.filter(Header.observation_type == 'DARK').filter(Header.reduction == 'RAW')
-            # Default number of raw darks to associate
-            howmany = howmany if howmany else 10
+        return (
+            self.get_query('dark', processed=processed)
+                # Must totally match: read_mode, well_depth_setting, exposure_time, coadds
+                .match_descriptors(Header.exposure_time,
+                                   Gnirs.read_mode,
+                                   Gnirs.well_depth_setting,
+                                   Gnirs.coadds)
+                # Absolute time separation must be within 3 months
+                .max_interval(datetime.timedelta(days=90))
+                .limit(howmany)
+                .all()
+            )
 
-        # Must totally match: read_mode, well_depth_setting, exposure_time, coadds
-        query = query.filter(Gnirs.read_mode == self.descriptors['read_mode'])
-        query = query.filter(Gnirs.well_depth_setting == self.descriptors['well_depth_setting'])
-        query = query.filter(Header.exposure_time == self.descriptors['exposure_time'])
-        query = query.filter(Gnirs.coadds == self.descriptors['coadds'])
-
-        # Absolute time separation must be within 3 months
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=90), limit=howmany)
-
-        return query.all()
+    def get_gnirs_flat_query(self, processed):
+        return (
+            self.get_query('flat', processed=processed)
+            # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name, well_depth_setting
+            # update from RM 20130321 - read mode should not be required to match, but well depth should.
+            .match_descriptors(Header.central_wavelength,
+                               Gnirs.disperser,
+                               Gnirs.focal_plane_mask,
+                               Gnirs.camera,
+                               Gnirs.filter_name,
+                               Gnirs.well_depth_setting)
+        )
 
     def flat(self, processed=False, howmany=None):
         """
@@ -118,114 +126,81 @@ class CalibrationGNIRS(Calibration):
         # a lamp-off flat applicable to the lamp-on flat to give the subtraciton pairs. 
         # We also have lamp-off flats directly applicable to the science at thermal wavelengths.
         # and we consider QH flats a separate thing.
-        query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
 
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_FLAT')
-            # Default number of processed flats to associate
-            howmany = howmany if howmany else 1
-        else:
-            query = query.filter(Header.observation_type == 'FLAT').filter(Header.reduction == 'RAW')
-            # Default number of raw flats to associate
-            howmany = howmany if howmany else 10
+        if howmany is None:
+            howmany = 1 if processed else 10
 
-        # Lamp selection (see comments above)
-        query = query.filter(Header.gcal_lamp == 'IRhigh')
-
-        # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name, well_depth_setting
-        # update from RM 20130321 - read mode should not be required to match, but well depth should.
-        query = query.filter(Gnirs.disperser == self.descriptors['disperser'])
-        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
-        query = query.filter(Gnirs.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(Gnirs.camera == self.descriptors['camera'])
-        query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
-        query = query.filter(Gnirs.well_depth_setting == self.descriptors['well_depth_setting'])
-
-        # Absolute time separation must be within 3 months
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=90), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_gnirs_flat_query(processed)
+                # Lamp selection (see comments above)
+                .add_filters(Header.gcal_lamp == 'IRhigh')
+                # Absolute time separation must be within 3 months
+                .max_interval(datetime.timedelta(days=90))
+                .limit(howmany)
+                .all()
+            )
 
     def arc(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS ARC for this target frame
         """
-        query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
-
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_ARC')
-        else:
-            query = query.filter(Header.observation_type == 'ARC').filter(Header.reduction == 'RAW')
-
         # Always default to 1 arc
         howmany = howmany if howmany else 1
 
-        # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter_name, camera
-        query = query.filter(Gnirs.disperser == self.descriptors['disperser'])
-        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
-        query = query.filter(Gnirs.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
-        query = query.filter(Gnirs.camera == self.descriptors['camera'])
-
-        # Absolute time separation must be within 1 year
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query('arc', processed=processed)
+                # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter_name, camera
+                .match_descriptors(Header.central_wavelength,
+                                   Gnirs.disperser,
+                                   Gnirs.focal_plane_mask,
+                                   Gnirs.filter_name,
+                                   Gnirs.camera)
+                # Absolute time separation must be within 1 year
+                .max_interval(datetime.timedelta(days=365))
+                .limit(howmany)
+                .all()
+            )
 
     def pinhole_mask(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS pinhole_mask for this target frame
         """
-        query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
+        if howmany is None:
+            howmany = 1 if processed else 5
+        filters = (
+            (Header.reduction == 'PROCESSED_PINHOLE',)
+            if processed else
+            (Header.reduction == 'RAW', Header.observation_type == 'PINHOLE')
+        )
 
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_PINHOLE')
-            # Default number of processed pinholes
-            howmany = howmany if howmany else 1
-        else:
-            query = query.filter(Header.observation_type == 'PINHOLE').filter(Header.reduction == 'RAW')
-            # Default number of raw pinholes
-            howmany = howmany if howmany else 5
-
-        # Must totally match: disperser, central_wavelength, camera, (only for cross dispersed mode?)
-        query = query.filter(Gnirs.disperser == self.descriptors['disperser'])
-        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
-        query = query.filter(Gnirs.camera == self.descriptors['camera'])
-
-        # Absolute time separation must be within 1 year
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query().add_filters(*filters)
+                # Must totally match: disperser, central_wavelength, camera, (only for cross dispersed mode?)
+                .match_descriptors(Header.central_wavelength,
+                                   Gnirs.disperser,
+                                   Gnirs.camera)
+                # Absolute time separation must be within 1 year
+                .max_interval(datetime.timedelta(days=365))
+                .limit(howmany)
+                .all()
+            )
 
     @not_processed
     def lampoff_flat(self, processed=False, howmany=None):
         """
         Find the optimal lamp-off flats to go with the lamp-on flat
         """
-        query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
-
-        # Default number of raw pinholes
+        # Default number of raw lampoff flats
         howmany = howmany if howmany else 10
 
-        # They are RAW flats..
-        query = query.filter(Header.observation_type == 'FLAT').filter(Header.reduction == 'RAW')
-
-        # With the gcal_lamp Off
-        query = query.filter(Header.gcal_lamp == 'Off')
-
-        # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name, well_depth_setting
-        # update from RM 20130321 - read mode should not be required to match, but well depth should.
-        query = query.filter(Gnirs.disperser == self.descriptors['disperser'])
-        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
-        query = query.filter(Gnirs.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(Gnirs.camera == self.descriptors['camera'])
-        query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
-        query = query.filter(Gnirs.well_depth_setting == self.descriptors['well_depth_setting'])
-
-        # Absolute time separation must be within 1 day
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_gnirs_flat_query(processed=False) # lampoff flats are just Raw flats...
+                .add_filters(Header.gcal_lamp == 'Off')
+                # Absolute time separation must be within 1 day
+                .max_interval(datetime.timedelta(days=1))
+                .limit(howmany)
+                .all()
+            )
 
     def qh_flat(self, processed=False, howmany=None):
         """
@@ -240,38 +215,25 @@ class CalibrationGNIRS(Calibration):
         # So, this cal association will give you either IRhigh flats or lamp-Off flats. In some cases, we make
         # a lamp-off flat applicable to the lamp-on flat to give the subtraciton pairs. 
         # and we consider QH flats a separate thing.
-        query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
+        if howmany is None:
+            howmany = 1 if processed else 10
 
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_FLAT')
-            # Default number of processed flats to associate
-            howmany = howmany if howmany else 1
-        else:
-            query = query.filter(Header.observation_type == 'FLAT').filter(Header.reduction == 'RAW')
-            # Default number of raw flats to associate
-            howmany = howmany if howmany else 10
+        return (
+            self.get_gnirs_flat_query(processed) # QH flats are just flats...
+                # ... with QH GCAL lamp
+                .add_filters(Header.gcal_lamp == 'QH')
+                # Absolute time separation must be within 3 months
+                .max_interval(datetime.timedelta(days=90))
+                .limit(howmany)
+                .all()
+            )
 
-        # GCAL lamp selection - QH lamp in this case
-        query = query.filter(Header.gcal_lamp == 'QH')
-
-        # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name, well_depth_setting
-        # update from RM 20130321 - read mode should not be required to match, but well depth should.
-        query = query.filter(Gnirs.disperser == self.descriptors['disperser'])
-        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
-        query = query.filter(Gnirs.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(Gnirs.camera == self.descriptors['camera'])
-        query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
-        query = query.filter(Gnirs.well_depth_setting == self.descriptors['well_depth_setting'])
-
-        # Absolute time separation must be within 3 months
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=90), limit=howmany)
-
-        return query.all()
-
+    # TODO: Check telluric standards with Paul
     def telluric_standard(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS telluric observations for this target frame
         """
+
         query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
 
         if processed:
