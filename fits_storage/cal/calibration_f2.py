@@ -111,7 +111,7 @@ class CalibrationF2(Calibration):
                 # Must totally match: disperser, central_wavelength (spect only), focal_plane_mask, filter_name, lyot_stop, read_mode
                 .match_descriptors(F2.read_mode
                                    *CalibrationF2.common_descriptors())
-                .wavelength_tolerance(0.001, condition=self.descriptors['spectroscopy'])
+                .tolerance(central_wavelenght=0.001, condition=self.descriptors['spectroscopy'])
                 # Absolute time separation must be within 3 months
                 .max_interval(datetime.timedelta(days=90))
                 .limit(howmany)
@@ -127,7 +127,7 @@ class CalibrationF2(Calibration):
                 .arc(processed=processed)
                 # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter_name, lyot_stop
                 .match_descriptors(*CalibrationF2.common_descriptors())
-                .wavelength_tolerance(0.001)
+                .tolerance(central_wavelenght=0.001)
                 # Absolute time separation must be within 3 months
                 .max_interval(datetime.timedelta(days=90))
                 .limit(howmany)
@@ -163,7 +163,7 @@ class CalibrationF2(Calibration):
                 # Telluric standards are OBJECT spectroscopy partnerCal frames
                 .partnerCal(spectroscopy=True)
                 .match_descriptors(*CalibrationF2.common_descriptors())
-                .wavelenght_tolerance(0.001)
+                .tolerance(central_wavelength=0.001)
                 # Absolute time separation must be within 24 hours of the science
                 .max_interval(datetime.timedelta(days=1))
                 .limit(howmany)

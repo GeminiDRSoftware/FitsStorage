@@ -87,16 +87,20 @@ class CalQuery(object):
 
     # The following add filters specific to certain types of calibs
 
-    def wavelength_tolerance(tol, condition=True):
-        try:
-            # Central Wavelength must match within tollerance
-            # Occassionally we get a None, so run this in a try except
-            cenwlen_lo = float(self.descr['central_wavelength']) - tol
-            cenwlen_hi = float(self.descr['central_wavelength']) + tol
-            self.query = (self.query.filter(Header.central_wavelength > cenwlen_lo)
-                                    .filter(Header.central_wavelength < cenwlen_hi))
-        except TypeError:
-            pass
+    def tolerance(condition=True, **kw):
+        if condition:
+            for descriptor, tol in kw.items():
+                # Occassionally we get a None for some descriptors, so run this in a try except
+                try:
+                    lo = float(self.descr[descriptor]) - tol
+                    hi = float(self.descr[descriptor]) + tol
+                    # This may raise AttributeError, we let it go through
+                    column = getattr(Header, descriptor)
+                    self.query = (self.query.filter(column > lo).filter(column < hi))
+                except KeyError:
+                    raise RuntimeError("No such descriptor '{}' defined in this instrument".format(descriptor))
+                except TypeError:
+                    pass
 
         return self
 
