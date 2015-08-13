@@ -33,6 +33,27 @@ NO_LINKS        = 0x00
 FILENAME_LINKS  = 0x01
 ALL_LINKS       = 0xFF
 
+class Row(object):
+    def __init__(self, class_=None, is_header=False):
+        self.can_download = False
+        self.columns = []
+        self.class_ = class_
+        self.is_header = is_header
+
+    def add(self, coltext):
+        self.columns.append(coltext)
+
+    def with_class(self, class_):
+        ce = 'TD' if not self.is_header else 'TH'
+        rc = (" class='" + class_ + "'") if class_ else ""
+
+        pattern = "<TR{row_class}>" + ''.join("<{col_element}>" + x + "</{col_element}>" for x in self.columns) + "</TR>"
+
+        return pattern.format(row_class=rc, col_element=ce)
+
+    def __str__(self):
+        return self.with_class(self.class_)
+
 class SummaryGenerator(object):
     """
     This is the web summary generator class. You instantiate this class and
@@ -97,7 +118,6 @@ class SummaryGenerator(object):
         """
         self.columns['download'] = {
             'heading' : 'Download',
-            'longheading' : None,
             'sortarrows' : False,
             'want' : True,
             'header_attr' : None,
@@ -105,7 +125,6 @@ class SummaryGenerator(object):
             }
         self.columns['filename'] = {
             'heading' : 'Filename',
-            'longheading' : None,
             'sortarrows' : True,
             'want' : True,
             'header_attr' : None,
@@ -113,7 +132,6 @@ class SummaryGenerator(object):
             }
         self.columns['data_label'] = {
             'heading' : 'Data Label',
-            'longheading' : None,
             'sortarrows' : True,
             'want' : True,
             'header_attr' : None,
@@ -121,7 +139,6 @@ class SummaryGenerator(object):
             }
         self.columns['ut_datetime'] = {
             'heading' : 'UT Date Time',
-            'longheading' : None,
             'sortarrows' : True,
             'want' : True,
             'header_attr' : None,
@@ -281,7 +298,6 @@ class SummaryGenerator(object):
             }
         self.columns['present'] = {
             'heading' : 'Present',
-            'longheading' : '',
             'sortarrows' : False,
             'want' : True,
             'header_attr' : None,
@@ -290,7 +306,6 @@ class SummaryGenerator(object):
             }
         self.columns['entrytime'] = {
             'heading' : 'Entry',
-            'longheading' : '',
             'sortarrows' : False,
             'want' : True,
             'header_attr' : None,
@@ -299,7 +314,6 @@ class SummaryGenerator(object):
             }
         self.columns['lastmod'] = {
             'heading' : 'LastMod',
-            'longheading' : '',
             'sortarrows' : False,
             'want' : True,
             'header_attr' : None,
@@ -308,7 +322,6 @@ class SummaryGenerator(object):
             }
         self.columns['file_size'] = {
             'heading' : 'File Size',
-            'longheading' : '',
             'sortarrows' : False,
             'want' : True,
             'header_attr' : None,
@@ -317,7 +330,6 @@ class SummaryGenerator(object):
             }
         self.columns['file_md5'] = {
             'heading' : 'File MD5',
-            'longheading' : '',
             'sortarrows' : False,
             'want' : True,
             'header_attr' : None,
@@ -326,7 +338,6 @@ class SummaryGenerator(object):
             }
         self.columns['compressed'] = {
             'heading' : 'Compressed',
-            'longheading' : '',
             'sortarrows' : False,
             'want' : True,
             'header_attr' : None,
@@ -335,7 +346,6 @@ class SummaryGenerator(object):
             }
         self.columns['data_size'] = {
             'heading' : 'Data Size',
-            'longheading' : '',
             'sortarrows' : False,
             'want' : True,
             'header_attr' : None,
@@ -344,7 +354,6 @@ class SummaryGenerator(object):
             }
         self.columns['data_md5'] = {
             'heading' : 'Data MD5',
-            'longheading' : '',
             'sortarrows' : False,
             'want' : True,
             'header_attr' : None,
@@ -352,64 +361,48 @@ class SummaryGenerator(object):
             'summary_func' : None
             }
 
-    def table_header(self, req):
+    def table_header(self):
         """
-        Writes the html table header row to the req object,
-        for columns as configured
+        Returns a header Row object for columns as configured
         """
-        # Turns out to be better performance to string concatenate
-        # than to call req.write() many times, so we build an html
-        # string and req.write it at the end
 
-        html = '<TR class=tr_head>'
+        row = Row(class_='tr_head', is_header=True)
+
         for colkey, col in self.columns.items():
             if col['want']:
-                html += '<TH>'
-                if col['longheading']:
-                    html += '<abbr title="%s">%s</abbr>' % (col['longheading'], col['heading'])
-                else:
-                    html += col['heading']
+                try:
+                    text = '<abbr title="%s">%s</abbr>' % (col['longheading'], col['heading'])
+                except KeyError:
+                    text = col['heading']
                 if (self.links != NO_LINKS) and col['sortarrows']:
-                    html += '<a href="%s?orderby=%s_asc">&uarr;</a><a href="%s?orderby=%s_desc">&darr;</a>' % (self.uri, colkey, self.uri, colkey)
-                html += '</TH>'
-        html += '</TR>\n'
-        req.write(html)
+                    text += '<a href="%s?orderby=%s_asc">&uarr;</a><a href="%s?orderby=%s_desc">&darr;</a>' % (self.uri, colkey, self.uri, colkey)
+                row.add(text)
 
-    def table_row(self, req, header, trclass=None):
+        return row
+
+    def table_row(self, header):
         """
-        Writes the html for a table row to the req object,
-        for columns as configured, pulling data from the
-        header object given. If trclass is supplied, it is passed as the
-        class of the tr tag.
+        Returns a row object for c for columns as configured, pulling data from the
+        header object given.
         """
-        # Turns out to be better performance to string concatenate
-        # than to call req.write() many times, so we build an html
-        # string and req.write it at the end
 
-        html = ('<TR class=%s>' % trclass) if trclass else '<TR>'
-
-        can_download = False
+        row = Row()
 
         for colkey, col in self.columns.items():
             if col['want']:
-                html += '<TD>'
                 if col['summary_func']:
                     value = getattr(self, col['summary_func'])(header)
                     if colkey == 'download' and 'N/A' not in value:
                         can_download = True
+                    row.add(value)
                 elif col['header_attr']:
-                    value = getattr(header, col['header_attr'])
+                    row.add(getattr(header, col['header_attr']))
                 elif col['diskfile_attr']:
-                    value = getattr(header.diskfile, col['diskfile_attr'])
+                    row.add(getattr(header.diskfile, col['diskfile_attr']))
                 else:
-                    value = "Error: Not Defined in SummaryGenerator!"
-                html += str(value)
-                html += '</TD>'
-        html += '</TR>\n'
-        req.write(html)
+                    row.add("Error: Not Defined in SummaryGenerator!")
 
-        return can_download
-
+        return row
 
     def filename(self, header):
         """

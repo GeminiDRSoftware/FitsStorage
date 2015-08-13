@@ -212,22 +212,21 @@ def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, 
     req.write('<TABLE class="fullwidth">')
 
     # Output the table header
-    sumgen.table_header(req)
+    req.write(str(sumgen.table_header()) + '\n')
 
     # Loop through the header list, outputing table rows
-    even = False
     bytecount = 0
     num_downloadable = 0
     num_total = 0
-    
-    for header in headers:
-        even = not even
-        tr_class = ('tr_even' if even else 'tr_odd')
 
-        can_download = sumgen.table_row(req, header, tr_class)
+    for cnt, header in enumerate(headers):
+        tr_class = ('tr_odd' if cnt % 2 else 'tr_even')
+
+        row = sumgen.table_row(header)
+        req.write(row.with_class(tr_class) + '\n')
 
         num_total += 1
-        if can_download:
+        if row.can_download:
             num_downloadable += 1
             bytecount += header.diskfile.file_size
 
