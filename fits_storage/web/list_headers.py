@@ -35,6 +35,7 @@ def list_headers(session, selection, orderby):
     whichorderby = ['instrument', 'data_label', 'observation_class', 'airmass', 'ut_datetime', 'local_time',
                         'raw_iq', 'raw_cc', 'raw_bg', 'raw_wv', 'qa_state', 'filter_name', 'exposure_time', 'object']
 
+    sort_by_date = True
     if orderby:
         for value in orderby:
             sortingfunc = asc
@@ -46,8 +47,15 @@ def list_headers(session, selection, orderby):
 
             if value == 'filename':
                 query = query.order_by(sortingfunc('DiskFile.%s' % value))
+                sort_by_date = False
             elif value in whichorderby:
+                if value == 'ut_datetime':
+                    sort_by_date = False
                 query = query.order_by(sortingfunc('Header.%s' % value))
+
+    # Force sorting by ascending date if filename or ut_datetime were not part of orderby
+    if sort_by_date:
+        query = query.order_by(asc('Header.ut_datetime'))
 
     is_openquery = openquery(selection)
 
