@@ -85,6 +85,34 @@ class CalQuery(object):
     def all(self):
         return self.query.all()
 
+    # The following add filters specific to certain types of calibs
+
+    def wavelength_tolerance(tol, condition=True):
+        try:
+            # Central Wavelength must match within tollerance
+            # Occassionally we get a None, so run this in a try except
+            cenwlen_lo = float(self.descr['central_wavelength']) - tol
+            cenwlen_hi = float(self.descr['central_wavelength']) + tol
+            self.query = (self.query.filter(Header.central_wavelength > cenwlen_lo)
+                                    .filter(Header.central_wavelength < cenwlen_hi))
+        except TypeError:
+            pass
+
+        return self
+
+    def raw(self):
+        return self.reduction('RAW')
+
+    def reduction(self, red):
+        self.query = self.query.filter(Header.reduction == red)
+        return self
+
+    def partnerCal(self, spectroscopy=False):
+        self.query = (self.query.filter(Header.observation_type == 'OBJECT')
+                                .filter(Header.observation_class == 'partnerCal')
+                                .filter(spectroscopy = spectroscopy))
+        return self
+
 class Calibration(object):
     """
     This class provides a basic Calibration Manager

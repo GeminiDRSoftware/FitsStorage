@@ -19,6 +19,7 @@ class CalibrationF2(Calibration):
     It is a subclass of Calibration
     """
     f2 = None
+    instrClass = F2
 
     def __init__(self, session, header, descriptors, types):
         # Init the superclass
@@ -78,133 +79,90 @@ class CalibrationF2(Calibration):
             self.applicable.append('flat')
 
 
+    # TODO: Check with Paul if the semantics are right
     def dark(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'DARK')
+        if howmany is None:
+            howmany = 1 if processed else 10
 
-        if processed:
-            query.filter(Header.reduction == 'PROCESSED_DARK')
-            # Default number of processed darks to associate
-            howmany = howmany if howmany else 1
-        else:
-            query.filter(Header.reduction == 'RAW')
-            # Default number of raw darks to associate
-            howmany = howmany if howmany else 10
-
-        # Must totally match: read_mode, exposure_time
-        query = query.filter(F2.read_mode == self.descriptors['read_mode'])
-        query = query.filter(Header.exposure_time == self.descriptors['exposure_time'])
-
-        # Absolute time separation must be within 3 months
-        query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=90), limit=howmany)
+        return (
+            self.get_query('dark', processed=processed)
+                .match_descriptors(Header.exposure_time,
+                                   F2.read_mode)
+                # Must totally match: read_mode, exposure_time
+                .max_interval(datetime.timedelta(days=90))
+                .limit(howmany)
+                .all()
+            )
 
         return query.all()
+
+    @staticmethod
+    def common_descriptors():
+        return (F2.disperser, F2.lyot_stop, F2.filter_name, F2.focal_plane_mask)
 
     def flat(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'FLAT')
+        if howmany is None:
+            howmany = 1 if processed else 10
 
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_FLAT')
-            # Default number of processed flats
-            howmany = howmany if howmany else 1
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Default number of raw flats
-            howmany = howmany if howmany else 10
-
-        # Must totally match: disperser, central_wavelength (spect only), focal_plane_mask, filter_name, lyot_stop, read_mode
-        query = query.filter(F2.disperser == self.descriptors['disperser'])
-        query = query.filter(F2.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(F2.filter_name == self.descriptors['filter_name'])
-        query = query.filter(F2.lyot_stop == self.descriptors['lyot_stop'])
-        query = query.filter(F2.read_mode == self.descriptors['read_mode'])
-
-        if self.descriptors['spectroscopy']:
-            query = query.filter(func.abs(Header.central_wavelength - self.descriptors['central_wavelength']) < 0.001)
-
-        # Absolute time separation must be within 3 months
-        query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=90), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query('flat', processed=processed)
+                # Must totally match: disperser, central_wavelength (spect only), focal_plane_mask, filter_name, lyot_stop, read_mode
+                .match_descriptors(F2.read_mode
+                                   *CalibrationF2.common_descriptors())
+                .wavelength_tolerance(0.001, condition=self.descriptors['spectroscopy'])
+                # Absolute time separation must be within 3 months
+                .max_interval(datetime.timedelta(days=90))
+                .limit(howmany)
+                .all()
+            )
 
     def arc(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'ARC')
-
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_ARC')
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-
         # Default number to associate is 1
         howmany = howmany if howmany else 1
 
-        # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter_name, lyot_stop
-        query = query.filter(F2.disperser == self.descriptors['disperser'])
-        query = query.filter(func.abs(Header.central_wavelength - self.descriptors['central_wavelength']) < 0.001)
-        query = query.filter(F2.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(F2.filter_name == self.descriptors['filter_name'])
-        query = query.filter(F2.lyot_stop == self.descriptors['lyot_stop'])
-
-        # Absolute time separation must be within 3 months
-        query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=90), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query("arc", processed=processed)
+                # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter_name, lyot_stop
+                .match_descriptors(*CalibrationF2.common_descriptors())
+                .wavelength_tolerance(0.001)
+                # Absolute time separation must be within 3 months
+                .max_interval(datetime.timedelta(days=90))
+                .limit(howmany)
+                .all()
+            )
 
     @not_processed
     def photometric_standard(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
-
-        query = query.filter(Header.reduction == 'RAW')
         # Default number to associate
         howmany = howmany if howmany else 10
 
-        # Phot standards are OBJECT imaging frames
-        query = query.filter(Header.observation_type == 'OBJECT')
-        query = query.filter(Header.spectroscopy == False)
-
-        # Phot standards are partnerCals
-        query = query.filter(Header.observation_class == 'partnerCal')
-
-        # Must match filter and lyot stop
-        query = query.filter(F2.filter_name == self.descriptors['filter_name'])
-        query = query.filter(F2.lyot_stop == self.descriptors['lyot_stop'])
-
-        # Absolute time separation must be within 24 hours of the science
-        query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=1), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .raw()
+                # Photometric standards are OBJECT spectroscopy partnerCal frames
+                .partnerCal(spectroscopy=False)
+                .match_descriptors(F2.filter_name,
+                                   F2.lyot_stop)
+                # Absolute time separation must be within 24 hours of the science
+                .max_interval(datetime.timedelta(days=1))
+                .limit(howmany)
+                .all()
+            )
 
     @not_processed
     def telluric_standard(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(F2, Header), DiskFile))
-        query = query.filter(Header.reduction == 'RAW')
-
         # Default number to associate
         howmany = howmany if howmany else 10
 
-        # Telluric standards are OBJECT spectroscopy partnerCal frames
-        query = query.filter(Header.observation_type == 'OBJECT')
-        query = query.filter(Header.spectroscopy == True)
-        query = query.filter(Header.observation_class == 'partnerCal')
-
-        # Must match filter, lyot_stop, focal_plane_mask, disperser
-        query = query.filter(F2.filter_name == self.descriptors['filter_name'])
-        query = query.filter(F2.lyot_stop == self.descriptors['lyot_stop'])
-        query = query.filter(F2.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(F2.disperser == self.descriptors['disperser'])
-
-        # Central Wavelength must match within tollerance
-        # Occassionally we get a None, so run this in a try except
-        try:
-            cenwlen_lo = float(self.descriptors['central_wavelength']) - 0.001
-            cenwlen_hi = float(self.descriptors['central_wavelength']) + 0.001
-            query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
-        except TypeError:
-            pass
-
-        # Absolute time separation must be within 24 hours of the science
-        query = self.set_common_cals_filter(filter, max_interval=datetime.timedelta(days=1), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .raw()
+                # Telluric standards are OBJECT spectroscopy partnerCal frames
+                .partnerCal(spectroscopy=True)
+                .match_descriptors(*CalibrationF2.common_descriptors())
+                .wavelenght_tolerance(0.001)
+                # Absolute time separation must be within 24 hours of the science
+                .max_interval(datetime.timedelta(days=1))
+                .limit(howmany)
+                .all()
+            )
