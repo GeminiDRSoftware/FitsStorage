@@ -6,7 +6,7 @@ import datetime
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.gsaoi import Gsaoi
-from .calibration import Calibration
+from .calibration import Calibration, not_processed
 
 from sqlalchemy.orm import join
 from sqlalchemy import func, extract
@@ -69,11 +69,9 @@ class CalibrationGSAOI(Calibration):
 
         return query.all()
 
+    # Processed photometric standards haven't been implemented
+    @not_processed
     def photometric_standard(self, processed=False, howmany=None):
-        if processed:
-            # Not implemented
-            return []
-
         # Default number to associate
         howmany = howmany if howmany else 8
 
