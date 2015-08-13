@@ -122,7 +122,7 @@ class CalQuery(object):
         return self
 
     def spectroscopy(self, status):
-        self.query = self.query.filter(spectroscopy = status)
+        self.query = self.query.filter(Header.spectroscopy == status)
         return self
 
     def partnerCal(self):
@@ -157,6 +157,7 @@ class CalQuery(object):
             ret = self.raw().spectroscopy(False)
             for key in kw:
                 ret = getattr(self, key)()
+            return ret
 
     def telluric_standard(self, processed=False, **kw):
         if processed:
@@ -165,6 +166,7 @@ class CalQuery(object):
             ret = self.raw().spectroscopy(True)
             for key in kw:
                 ret = getattr(self, key)()
+            return ret
 
 class Calibration(object):
     """
