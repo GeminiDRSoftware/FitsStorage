@@ -227,33 +227,24 @@ class CalibrationGNIRS(Calibration):
                 .all()
             )
 
-    # TODO: Check telluric standards with Paul
     def telluric_standard(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS telluric observations for this target frame
         """
+        if howmany is None:
+            howmany = 1 if processed else 8
 
-        query = self.session.query(Header).select_from(join(join(Gnirs, Header), DiskFile))
-
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_TELLURIC')
-            # Default number of processed tellurics to associate
-            howmany = howmany if howmany else 1
-        else:
-            query = query.filter(Header.reduction == 'RAW').filter(Header.spectroscopy == True)
-            query = query.filter(Header.observation_type == 'OBJECT').filter(Header.observation_class == 'partnerCal')
-
-            # Default number of raw flats to associate
-            howmany = howmany if howmany else 8
-
-        # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name
-        query = query.filter(Gnirs.disperser == self.descriptors['disperser'])
-        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
-        query = query.filter(Gnirs.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(Gnirs.camera == self.descriptors['camera'])
-        query = query.filter(Gnirs.filter_name == self.descriptors['filter_name'])
-
-        # Absolute time separation must be within 1 day
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .telluric_standard(partnerCal=True)
+                # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name
+                .match_descriptors(Header.central_wavelength,
+                                   Gnirs.disperser,
+                                   Gnirs.focal_plane_mask,
+                                   Gnirs.camera,
+                                   Gnirs.filter_name)
+                # Absolute time separation must be within 1 day
+                .max_interval(datetime.timedelta(days=1))
+                .limit(howmany)
+                .all()
+            )

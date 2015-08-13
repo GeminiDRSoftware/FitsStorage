@@ -119,6 +119,16 @@ class CalQuery(object):
         self.query = self.query.filter(Header.observation_class == oc)
         return self
 
+    def spectroscopy(self, status):
+        self.query = self.query.filter(spectroscopy = status)
+        return self
+
+    def partnerCal(self):
+        return self.observation_type('OBJECT').observation_class('partnerCal')
+
+    def science(self):
+        return self.observation_type('OBJECT').observation_class('science')
+
     def raw_or_processed(self, name, processed):
         if processed:
             return self.reduction('PROCESSED_' + name)
@@ -137,12 +147,22 @@ class CalQuery(object):
     def pinhole(self, processed=False):
         return self.raw_or_processed('PINHOLE', processed)
 
-    def spectroscopy(self, status):
-        self.query = self.query.filter(spectroscopy = status)
-        return self
+    def photometric_standard(self, processed=False, **kw):
+        if processed:
+            # NOTE: PROCESSED_PHOTSTANDARDS are not used anywhere; this is an advance...
+            return self.reduction('PROCESSED_PHOTSTANDARD')
+        else:
+            ret = self.raw().spectroscopy(False)
+            for key in kw:
+                ret = getattr(self, key)()
 
-    def partnerCal(self, spectroscopy=False):
-        return self.observation_type('OBJECT').observation_class('partnerCal').spectroscopy(spectroscopy)
+    def telluric_standard(self, processed=False, **kw):
+        if processed:
+            return self.reduction('PROCESSED_TELLURIC')
+        else:
+            ret = self.raw().spectroscopy(True)
+            for key in kw:
+                ret = getattr(self, key)()
 
 class Calibration(object):
     """
