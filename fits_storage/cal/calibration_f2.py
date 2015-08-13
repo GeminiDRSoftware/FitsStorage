@@ -85,7 +85,8 @@ class CalibrationF2(Calibration):
             howmany = 1 if processed else 10
 
         return (
-            self.get_query('dark', processed=processed)
+            self.get_query()
+                .dark(processed=processed)
                 .match_descriptors(Header.exposure_time,
                                    F2.read_mode)
                 # Must totally match: read_mode, exposure_time
@@ -105,7 +106,8 @@ class CalibrationF2(Calibration):
             howmany = 1 if processed else 10
 
         return (
-            self.get_query('flat', processed=processed)
+            self.get_query()
+                .flat(processed=processed)
                 # Must totally match: disperser, central_wavelength (spect only), focal_plane_mask, filter_name, lyot_stop, read_mode
                 .match_descriptors(F2.read_mode
                                    *CalibrationF2.common_descriptors())
@@ -121,7 +123,8 @@ class CalibrationF2(Calibration):
         howmany = howmany if howmany else 1
 
         return (
-            self.get_query("arc", processed=processed)
+            self.get_query()
+                .arc(processed=processed)
                 # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter_name, lyot_stop
                 .match_descriptors(*CalibrationF2.common_descriptors())
                 .wavelength_tolerance(0.001)

@@ -87,7 +87,8 @@ class CalibrationGNIRS(Calibration):
             howmany = 1 if processed else 10
 
         return (
-            self.get_query('dark', processed=processed)
+            self.get_query()
+                .dark(processed=processed)
                 # Must totally match: read_mode, well_depth_setting, exposure_time, coadds
                 .match_descriptors(Header.exposure_time,
                                    Gnirs.read_mode,
@@ -101,7 +102,8 @@ class CalibrationGNIRS(Calibration):
 
     def get_gnirs_flat_query(self, processed):
         return (
-            self.get_query('flat', processed=processed)
+            self.get_query()
+            .flat(processed=processed)
             # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name, well_depth_setting
             # update from RM 20130321 - read mode should not be required to match, but well depth should.
             .match_descriptors(Header.central_wavelength,
@@ -148,7 +150,8 @@ class CalibrationGNIRS(Calibration):
         howmany = howmany if howmany else 1
 
         return (
-            self.get_query('arc', processed=processed)
+            self.get_query()
+                .arc(processed=processed)
                 # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter_name, camera
                 .match_descriptors(Header.central_wavelength,
                                    Gnirs.disperser,
@@ -167,14 +170,10 @@ class CalibrationGNIRS(Calibration):
         """
         if howmany is None:
             howmany = 1 if processed else 5
-        filters = (
-            (Header.reduction == 'PROCESSED_PINHOLE',)
-            if processed else
-            (Header.reduction == 'RAW', Header.observation_type == 'PINHOLE')
-        )
 
         return (
-            self.get_query().add_filters(*filters)
+            self.get_query()
+                .pinhole(processed)
                 # Must totally match: disperser, central_wavelength, camera, (only for cross dispersed mode?)
                 .match_descriptors(Header.central_wavelength,
                                    Gnirs.disperser,

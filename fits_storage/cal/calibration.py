@@ -107,11 +107,38 @@ class CalQuery(object):
         self.query = self.query.filter(Header.reduction == red)
         return self
 
-    def partnerCal(self, spectroscopy=False):
-        self.query = (self.query.filter(Header.observation_type == 'OBJECT')
-                                .filter(Header.observation_class == 'partnerCal')
-                                .filter(spectroscopy = spectroscopy))
+    def observation_type(self, ot):
+        self.query = self.query.filter(Header.observation_type == ot)
         return self
+
+    def observation_class(self, oc):
+        self.query = self.query.filter(Header.observation_class == oc)
+        return self
+
+    def raw_or_processed(self, name, processed):
+        if processed:
+            return self.reduction('PROCESSED_' + name)
+        else:
+            return self.raw().observation_type(name)
+
+    def dark(self, processed=False):
+        return self.raw_or_processed('DARK', processed)
+
+    def flat(self, processed=False):
+        return self.raw_or_processed('FLAT', processed)
+
+    def arc(self, processed=False):
+        return self.raw_or_processed('ARC', processed)
+
+    def pinhole(self, processed=False):
+        return self.raw_or_processed('PINHOLE', processed)
+
+    def spectroscopy(self, status):
+        self.query = self.query.filter(spectroscopy = status)
+        return self
+
+    def partnerCal(self, spectroscopy=False):
+        return self.observation_type('OBJECT').observation_class('partnerCal').spectroscopy(spectroscopy)
 
 class Calibration(object):
     """
@@ -165,35 +192,8 @@ class Calibration(object):
             if self.descriptors['data_section']:
                 self.descriptors['data_section'] = str(self.descriptors['data_section'])
 
-    def get_query(self, query_type=None, processed=False):
-        q = CalQuery(self.session, self.__class__.instrClass, self.descriptors)
-
-        # The following are filters for some common calibs. If they're not common enough
-        # to be here, the filters will be added straight into the calib retrieval code
-        filters = []
-        if query_type == 'dark':
-            if processed:
-                filters=(Header.reduction == 'PROCESSED_DARK',)
-            else:
-                filters=(Header.reduction == 'RAW',
-                         Header.observation_type == 'DARK')
-        elif query_type == 'flat':
-            if processed:
-                filters=(Header.reduction == 'PROCESSED_FLAT',)
-            else:
-                filters=(Header.reduction == 'RAW',
-                         Header.observation_type == 'FLAT')
-        elif query_type == 'arc':
-            if processed:
-                filters=(Header.reduction == 'PROCESSED_ARC',)
-            else:
-                filters=(Header.reduction == 'RAW',
-                         Header.observation_type == 'ARC')
-
-        if filters:
-            q.add_filters(*filters)
-
-        return q
+    def get_query(self):
+        return CalQuery(self.session, self.__class__.instrClass, self.descriptors)
 
     def set_common_cals_filter(self, query, max_interval, limit):
         datetime_lo = self.descriptors['ut_datetime'] - max_interval
