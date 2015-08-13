@@ -10,7 +10,6 @@ from ..orm.gmos import Gmos
 from .calibration import Calibration, not_processed, not_imaging, not_spectroscopy
 
 from sqlalchemy.orm import join
-from sqlalchemy import func, extract
 
 import math
 
@@ -19,40 +18,23 @@ class CalibrationGMOS(Calibration):
     This class implements a calibration manager for GMOS.
     It is a subclass of Calibration
     """
-    gmos = None
     instrClass = Gmos
-
-    def __init__(self, session, header, descriptors, types):
-        """
-        This is the init method for the GMOS calibration subclass.
-        """
-        # Init the superclass
-        Calibration.__init__(self, session, header, descriptors, types)
-
-        # if header based, Find the gmosheader
-        if header:
-            query = session.query(Gmos).filter(Gmos.header_id == self.descriptors['header_id'])
-            self.gmos = query.first()
-
-        # Populate the descriptors dictionary for GMOS
-        if self.from_descriptors:
-            self.descriptors['disperser'] = self.gmos.disperser
-            self.descriptors['filter_name'] = self.gmos.filter_name
-            self.descriptors['focal_plane_mask'] = self.gmos.focal_plane_mask
-            self.descriptors['detector_x_bin'] = self.gmos.detector_x_bin
-            self.descriptors['detector_y_bin'] = self.gmos.detector_y_bin
-            self.descriptors['amp_read_area'] = self.gmos.amp_read_area
-            self.descriptors['read_speed_setting'] = self.gmos.read_speed_setting
-            self.descriptors['gain_setting'] = self.gmos.gain_setting
-            self.descriptors['nodandshuffle'] = self.gmos.nodandshuffle
-            self.descriptors['nod_count'] = self.gmos.nod_count
-            self.descriptors['nod_pixels'] = self.gmos.nod_pixels
-            self.descriptors['prepared'] = self.gmos.prepared
-            self.descriptors['overscan_trimmed'] = self.gmos.overscan_trimmed
-            self.descriptors['overscan_subtracted'] = self.gmos.overscan_subtracted
-
-        # Set the list of applicable calibrations
-        self.set_applicable()
+    instrDescriptors = (
+        'disperser',
+        'filter_name',
+        'focal_plane_mask',
+        'detector_x_bin',
+        'detector_y_bin',
+        'amp_read_area',
+        'read_speed_setting',
+        'gain_setting',
+        'nodandshuffle',
+        'nod_count',
+        'nod_pixels',
+        'prepared',
+        'overscan_trimmed',
+        'overscan_subtracted'
+        )
 
     def set_applicable(self):
         """

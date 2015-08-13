@@ -8,37 +8,19 @@ from ..orm.header import Header
 from ..orm.michelle import Michelle
 from .calibration import Calibration
 
-from sqlalchemy.orm import join
-from sqlalchemy import func, extract
-
-
 class CalibrationMICHELLE(Calibration):
     """
     This class implements a calibration manager for MICHELLE.
     It is a subclass of Calibration
     """
-    michelle = None
     instrClass = Michelle
-
-    def __init__(self, session, header, descriptors, types):
-        # Init the superclass
-        Calibration.__init__(self, session, header, descriptors, types)
-
-        # If header based, find the michelleheader
-        if header:
-            query = session.query(Michelle).filter(Michelle.header_id == self.descriptors['header_id'])
-            self.michelle = query.first()
-
-        # Populate the descriptors dictionary for MICHELLE
-        if self.from_descriptors:
-            self.descriptors['read_mode'] = self.michelle.read_mode
-            self.descriptors['coadds'] = self.michelle.coadds
-            self.descriptors['disperser'] = self.michelle.disperser
-            self.descriptors['filter_name'] = self.michelle.filter_name
-            self.descriptors['focal_plane_mask'] = self.michelle.focal_plane_mask
-
-        # Set the list of applicable calibrations
-        self.set_applicable()
+    instrDescriptors = (
+        'read_mode',
+        'coadds',
+        'disperser',
+        'filter_name',
+        'focal_plane_mask'
+        )
 
     def set_applicable(self):
         # Return a list of the calibrations applicable to this MICHELLE dataset

@@ -7,42 +7,19 @@ from ..orm.header import Header
 from ..orm.f2 import F2
 from .calibration import Calibration, not_processed
 
-from sqlalchemy.orm import join
-from sqlalchemy import func, extract
-
-
 class CalibrationF2(Calibration):
     """
     This class implements a calibration manager for F2.
     It is a subclass of Calibration
     """
-    f2 = None
     instrClass = F2
-
-    def __init__(self, session, header, descriptors, types):
-        # Init the superclass
-        """
-        This is the init method for the F2 calibration subclass.
-        """
-
-        # Init the superclass
-        Calibration.__init__(self, session, header, descriptors, types)
-
-        # if header based, Find the f2header
-        if header:
-            query = session.query(F2).filter(F2.header_id == self.descriptors['header_id'])
-            self.f2 = query.first()
-
-        # Populate the descriptors dictionary for F2
-        if self.from_descriptors:
-            self.descriptors['read_mode'] = self.f2.read_mode
-            self.descriptors['disperser'] = self.f2.disperser
-            self.descriptors['focal_plane_mask'] = self.f2.focal_plane_mask
-            self.descriptors['filter_name'] = self.f2.filter_name
-            self.descriptors['lyot_stop'] = self.f2.lyot_stop
-
-        # Set the list of applicable calibrations
-        self.set_applicable()
+    instrDescriptors = (
+        'read_mode',
+        'disperser',
+        'focal_plane_mask',
+        'filter_name',
+        'lyot_stop'
+        )
 
     def set_applicable(self):
         # Return a list of the calibrations applicable to this dataset

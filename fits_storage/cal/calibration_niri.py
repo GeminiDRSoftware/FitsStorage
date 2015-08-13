@@ -8,40 +8,24 @@ from ..orm.header import Header
 from ..orm.niri import Niri
 from .calibration import Calibration, not_processed
 
-from sqlalchemy.orm import join
-from sqlalchemy import func, extract, or_
-
+from sqlalchemy import or_
 
 class CalibrationNIRI(Calibration):
     """
     This class implements a calibration manager for NIRI.
     It is a subclass of Calibration
     """
-    niri = None
     instrClass = Niri
-
-    def __init__(self, session, header, descriptors, types):
-        # Init the superclass
-        Calibration.__init__(self, session, header, descriptors, types)
-
-        # if header based, Find the niriheader
-        if header:
-            query = session.query(Niri).filter(Niri.header_id == self.descriptors['header_id'])
-            self.niri = query.first()
-
-        # Populate the descriptors dictionary for NIRI
-        if self.from_descriptors:
-            self.descriptors['data_section'] = self.niri.data_section
-            self.descriptors['read_mode'] = self.niri.read_mode
-            self.descriptors['well_depth_setting'] = self.niri.well_depth_setting
-            self.descriptors['coadds'] = self.niri.coadds
-            self.descriptors['filter_name'] = self.niri.filter_name
-            self.descriptors['camera'] = self.niri.camera
-            self.descriptors['focal_plane_mask'] = self.niri.focal_plane_mask
-            self.descriptors['disperser'] = self.niri.disperser
-
-        # Set the list of applicable calibrations
-        self.set_applicable()
+    instrDescriptors = (
+        'data_section',
+        'read_mode',
+        'well_depth_setting',
+        'coadds',
+        'filter_name',
+        'camera',
+        'focal_plane_mask',
+        'disperser'
+        )
 
     def set_applicable(self):
         # Return a list of the calibrations applicable to this NIRI dataset
@@ -65,9 +49,9 @@ class CalibrationNIRI(Calibration):
 
         # Spectroscopy OBJECTs require a flat and arc
         if self.descriptors['observation_type'] == 'OBJECT' and self.descriptors['spectroscopy'] == True:
-            self.applicable.append('flat') 
-            self.applicable.append('processed_flat') 
-            self.applicable.append('arc') 
+            self.applicable.append('flat')
+            self.applicable.append('processed_flat')
+            self.applicable.append('arc')
             # science Spectroscopy OBJECTs require a telluric
             if self.descriptors['observation_class'] == 'science':
                 self.applicable.append('telluric_standard')

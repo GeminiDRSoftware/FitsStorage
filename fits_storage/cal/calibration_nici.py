@@ -8,35 +8,17 @@ from ..orm.header import Header
 from ..orm.nici import Nici
 from .calibration import Calibration, not_processed
 
-from sqlalchemy.orm import join
-from sqlalchemy import func, extract
-
-
 class CalibrationNICI(Calibration):
     """
     This class implements a calibration manager for NICI.
     It is a subclass of Calibration
     """
-    nici = None
     instrClass = Nici
-
-    def __init__(self, session, header, descriptors, types):
-        # Init the superclass
-        Calibration.__init__(self, session, header, descriptors, types)
-
-        # if header based, Find the niciheader
-        if header:
-            query = session.query(Nici).filter(Nici.header_id == self.descriptors['header_id'])
-            self.nici = query.first()
-
-        # Populate the descriptors dictionary for NICI
-        if self.from_descriptors:
-            self.descriptors['filter_name'] = self.nici.filter_name
-            self.descriptors['focal_plane_mask'] = self.nici.focal_plane_mask
-            self.descriptors['disperser'] = self.nici.disperser
-
-        # Set the list of applicable calibrations
-        self.set_applicable()
+    instrDescriptors = (
+        'filter_name',
+        'focal_plane_mask',
+        'disperser'
+        )
 
     def set_applicable(self):
         # Return a list of the calibrations applicable to this NICI dataset

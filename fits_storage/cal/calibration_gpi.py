@@ -7,38 +7,19 @@ from ..orm.gpi import Gpi
 from .calibration import Calibration
 
 from sqlalchemy.orm import join
-from sqlalchemy import func, extract
-
 
 class CalibrationGPI(Calibration):
     """
     This class implements a calibration manager for GPI.
     It is a subclass of Calibration
     """
-    gpi = None
     instrClass = Gpi
-
-    def __init__(self, session, header, descriptors, types):
-        """
-        This is the GPI calibration object subclass init method
-        """
-        # Init the superclass
-        Calibration.__init__(self, session, header, descriptors, types)
-
-        # if header based, find the gpiheader
-        if header:
-            query = session.query(Gpi).filter(Gpi.header_id == self.descriptors['header_id'])
-            self.gpi = query.first()
-
-        # Populate the descriptors dictionary for GPI
-        if self.from_descriptors:
-            self.descriptors['coadds'] = self.gpi.coadds
-            self.descriptors['disperser'] = self.gpi.disperser
-            self.descriptors['focal_plane_mask'] = self.gpi.focal_plane_mask
-            self.descriptors['filter_name'] = self.gpi.filter_name
-
-        # Set the list of applicable calibrations
-        self.set_applicable()
+    instrDescriptors = (
+        'coadds',
+        'disperser',
+        'focal_plane_mask',
+        'filter_name',
+        )
 
     def set_applicable(self):
         """
@@ -50,7 +31,7 @@ class CalibrationGPI(Calibration):
         self.applicable = []
 
         # Science OBJECTs require: dark, telluric_standard, astrometric_standard
-        if ((self.descriptors['observation_type'] == 'OBJECT') and 
+        if ((self.descriptors['observation_type'] == 'OBJECT') and
                 (self.descriptors['spectroscopy'] == True) and
                 (self.descriptors['observation_class'] not in ['acq', 'acqCal'])):
             self.applicable.append('dark')

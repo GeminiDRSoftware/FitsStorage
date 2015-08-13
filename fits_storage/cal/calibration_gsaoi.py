@@ -8,34 +8,16 @@ from ..orm.header import Header
 from ..orm.gsaoi import Gsaoi
 from .calibration import Calibration, not_processed
 
-from sqlalchemy.orm import join
-from sqlalchemy import func, extract
-
-
 class CalibrationGSAOI(Calibration):
     """
     This class implements a calibration manager for GSAOI.
     It is a subclass of Calibration
     """
-    gsaoi = None
     instrClass = Gsaoi
-
-    def __init__(self, session, header, descriptors, types):
-        # Init the superclass
-        Calibration.__init__(self, session, header, descriptors, types)
-
-        # If header based, find the gsaoiheader
-        if header:
-            query = session.query(Gsaoi).filter(Gsaoi.header_id == self.descriptors['header_id'])
-            self.gsaoi = query.first()
-
-        # Populate the descriptors dictionary for GSAOI
-        if self.from_descriptors:
-            self.descriptors['filter_name'] = self.gsaoi.filter_name
-            self.descriptors['read_mode'] = self.gsaoi.read_mode
-
-        # Set the list of applicable calibrations
-        self.set_applicable()
+    instrDescriptors = (
+        'filter_name',
+        'read_mode'
+        )
 
     def set_applicable(self):
         # Return a list of the calibrations applicable to this GSAOI dataset

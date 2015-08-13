@@ -6,42 +6,21 @@ from ..orm.header import Header
 from ..orm.gnirs import Gnirs
 from .calibration import Calibration, not_processed
 
-from sqlalchemy.orm import join
-from sqlalchemy import func, extract
-
-
 class CalibrationGNIRS(Calibration):
     """
     This class implements a calibration manager for GNIRS.
     It is a subclass of Calibration
     """
-    gnirs = None
     instrClass = Gnirs
-
-    def __init__(self, session, header, descriptors, types):
-        """
-        This is the GNIRS calibration object subclass init method
-        """
-        # Init the superclass
-        Calibration.__init__(self, session, header, descriptors, types)
-
-        # If header based, find the gnirsheader
-        if header:
-            query = session.query(Gnirs).filter(Gnirs.header_id == self.descriptors['header_id'])
-            self.gnirs = query.first()
-
-        # Populate the descriptors dictionary for GNIRS
-        if self.from_descriptors:
-            self.descriptors['read_mode'] = self.gnirs.read_mode
-            self.descriptors['well_depth_setting'] = self.gnirs.well_depth_setting
-            self.descriptors['coadds'] = self.gnirs.coadds
-            self.descriptors['disperser'] = self.gnirs.disperser
-            self.descriptors['focal_plane_mask'] = self.gnirs.focal_plane_mask
-            self.descriptors['camera'] = self.gnirs.camera
-            self.descriptors['filter_name'] = self.gnirs.filter_name
-
-        # Set the list of applicable calibrations
-        self.set_applicable()
+    instrDescriptors = (
+        'read_mode',
+        'well_depth_setting',
+        'coadds',
+        'disperser',
+        'focal_plane_mask',
+        'camera',
+        'filter_name'
+        )
 
     def set_applicable(self):
         """

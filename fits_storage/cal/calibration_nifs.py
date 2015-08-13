@@ -8,37 +8,19 @@ from ..orm.header import Header
 from ..orm.nifs import Nifs
 from .calibration import Calibration
 
-from sqlalchemy.orm import join
-from sqlalchemy import func, extract
-
-
 class CalibrationNIFS(Calibration):
     """
     This class implements a calibration manager for NIFS.
     It is a subclass of Calibration
     """
-    nifs = None
     instrClass = Nifs
-
-    def __init__(self, session, header, descriptors, types):
-        # Init the superclass
-        Calibration.__init__(self, session, header, descriptors, types)
-
-        # If header based, find the nifsheader
-        if header:
-            query = session.query(Nifs).filter(Nifs.header_id == self.descriptors['header_id'])
-            self.nifs = query.first()
-
-        # Populate the descriptors dictionary for NIFS
-        if self.from_descriptors:
-            self.descriptors['read_mode'] = self.nifs.read_mode
-            self.descriptors['coadds'] = self.nifs.coadds
-            self.descriptors['disperser'] = self.nifs.disperser
-            self.descriptors['focal_plane_mask'] = self.nifs.focal_plane_mask
-            self.descriptors['filter_name'] = self.nifs.filter_name
-
-        # Set the list of applicable calibrations
-        self.set_applicable()
+    instrDescriptors = (
+        'read_mode',
+        'coadds',
+        'disperser',
+        'focal_plane_mask',
+        'filter_name',
+        )
 
     def set_applicable(self):
         # Return a list of the calibrations applicable to this NIFS dataset

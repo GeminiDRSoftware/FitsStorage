@@ -196,6 +196,7 @@ class Calibration(object):
     types = None
     applicable = []
     instrClass = None
+    instrDescriptors = ()
 
     def __init__(self, session, header, descriptors, types):
         """
@@ -230,13 +231,24 @@ class Calibration(object):
                 'cass_rotator_pa':      self.header.cass_rotator_pa,
                 'gcal_lamp':            self.header.gcal_lamp
                 }
+
+            iC = self.instrClass
+            query = session.query(iC).filter(iC.header_id == self.descriptors['header_id'])
+            inst = query.first()
+
+            # Populate the descriptors dictionary for the instrument
+            for descr in self.instrDescriptors:
+                self.descriptors[descr] = getattr(inst, descr)
         else:
             # The data_section comes over as a native python array, needs to be a string
             if self.descriptors['data_section']:
                 self.descriptors['data_section'] = str(self.descriptors['data_section'])
 
+        # Set the list of applicable calibrations
+        self.set_applicable()
+
     def get_query(self):
-        return CalQuery(self.session, self.__class__.instrClass, self.descriptors)
+        return CalQuery(self.session, self.instrClass, self.descriptors)
 
     def set_common_cals_filter(self, query, max_interval, limit):
         datetime_lo = self.descriptors['ut_datetime'] - max_interval
@@ -249,6 +261,12 @@ class Calibration(object):
                      .filter(Header.ut_datetime < datetime_hi)
                      .order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs)) # Order by absolute time separation.
                      .limit(limit))
+
+    def set_applicable(self):
+        """
+        Null method for instruments that do not provide a method in their subclass
+        """
+        self.applicable = []
 
     def bias(self, processed=False, howmany=None):
         """
