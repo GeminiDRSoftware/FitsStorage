@@ -66,8 +66,7 @@ class CalibrationF2(Calibration):
                                    F2.read_mode)
                 # Must totally match: read_mode, exposure_time
                 .max_interval(days=90)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
         return query.all()
@@ -89,8 +88,7 @@ class CalibrationF2(Calibration):
                 .tolerance(central_wavelenght=0.001, condition=self.descriptors['spectroscopy'])
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def arc(self, processed=False, howmany=None):
@@ -105,8 +103,7 @@ class CalibrationF2(Calibration):
                 .tolerance(central_wavelenght=0.001)
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     @not_processed
@@ -122,8 +119,7 @@ class CalibrationF2(Calibration):
                                    F2.lyot_stop)
                 # Absolute time separation must be within 24 hours of the science
                 .max_interval(days=1)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     @not_processed
@@ -139,6 +135,5 @@ class CalibrationF2(Calibration):
                 .tolerance(central_wavelength=0.001)
                 # Absolute time separation must be within 24 hours of the science
                 .max_interval(days=1)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )

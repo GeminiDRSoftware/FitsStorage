@@ -148,8 +148,7 @@ class CalibrationGMOS(Calibration):
                 .tolerance(central_wavelength=0.001)
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def dark(self, processed=False, howmany=None):
@@ -190,8 +189,7 @@ class CalibrationGMOS(Calibration):
                 .if_(self.descriptors['nodandshuffle'], 'match_descriptors', Gmos.nod_count, Gmos.nod_pixels)
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def bias(self, processed=False, howmany=None):
@@ -238,8 +236,7 @@ class CalibrationGMOS(Calibration):
                                   Gmos.gain_setting)
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     # TODO: Discuss 'flat' with Paul. We need to know how the algorithmic paths
@@ -371,8 +368,7 @@ class CalibrationGMOS(Calibration):
                                    Gmos.filter_name)
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     # We don't handle processed ones (yet)
@@ -413,8 +409,7 @@ class CalibrationGMOS(Calibration):
                 .tolerance(central_wavelength=0.02)
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     # We don't handle processed ones (yet)
@@ -461,8 +456,7 @@ class CalibrationGMOS(Calibration):
                 .tolerance(central_wavelength=tol)
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
-                .limit()
-                .all()
+                .all(howmany)
             )
 
     # We don't handle processed ones (yet)
@@ -484,6 +478,5 @@ class CalibrationGMOS(Calibration):
                                    Gmos.filter_name)
                 # Absolute time separation must be within 1 days
                 .max_interval(days=1)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )

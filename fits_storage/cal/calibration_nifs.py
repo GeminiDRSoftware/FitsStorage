@@ -63,8 +63,7 @@ class CalibrationNIFS(Calibration):
                                    Nifs.disperser)
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def flat(self, processed=False, howmany=None):
@@ -80,8 +79,7 @@ class CalibrationNIFS(Calibration):
                 .match_descriptors(*CalibrationNIFS.common_descriptors())
                 # Absolute time separation must be within 10 days
                 .max_interval(days=10)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def lampoff_flat(self, howmany=None):
@@ -97,8 +95,7 @@ class CalibrationNIFS(Calibration):
                 .match_descriptors(*CalibrationNIFS.common_descriptors())
                 # Absolute time separation must be within 1 hour
                 .max_interval(seconds=3600)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def arc(self, howmany=None):
@@ -111,8 +108,7 @@ class CalibrationNIFS(Calibration):
                 .match_descriptors(*CalibrationNIFS.common_descriptors())
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def ronchi_mask(self, processed=False, howmany=None):
@@ -125,8 +121,7 @@ class CalibrationNIFS(Calibration):
                 .match_descriptors(Header.central_wavelength,
                                    Nifs.disperser)
                 # NOTE: No max interval?
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def telluric_standard(self, processed=False, howmany=None):
@@ -140,6 +135,5 @@ class CalibrationNIFS(Calibration):
                 .match_descriptors(*CalibrationNIFS.common_descriptors())
                 # Absolute time separation must be within 1 day
                 .max_interval(days=1)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )

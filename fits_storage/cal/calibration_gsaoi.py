@@ -45,8 +45,7 @@ class CalibrationGSAOI(Calibration):
                 # Common filter, with absolute time separation within a month
             query.match_descriptors(Gsaoi.filter_name)
                  .max_interval(days=30)
-                 .limit(howmany)
-                 .all()
+                 .all(howmany)
             )
 
     # Processed photometric standards haven't been implemented
@@ -61,6 +60,5 @@ class CalibrationGSAOI(Calibration):
                 # Common filter, with absolute time separation within a month
                 .match_descriptors(Gsaoi.filter_name)
                 .max_interval(days=30)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )

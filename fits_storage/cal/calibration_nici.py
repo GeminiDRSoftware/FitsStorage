@@ -47,8 +47,7 @@ class CalibrationNICI(Calibration):
                 .tolerance(exposure_time = 0.01)
                 # Absolute time separation must be within 1 day
                 .max_interval(days=1)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def flat(self, processed=False, howmany=None):
@@ -65,8 +64,7 @@ class CalibrationNICI(Calibration):
                                    Nici.disperser)
                 # Absolute time separation must be within 1 day
                 .max_interval(days=1)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     @not_processed
@@ -86,6 +84,5 @@ class CalibrationNICI(Calibration):
                                    Nici.disperser)
                 # Absolute time separation must be within 1 hour of the lamp on flats
                 .max_interval(seconds=3600)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )

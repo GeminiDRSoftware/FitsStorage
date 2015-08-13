@@ -65,8 +65,7 @@ class CalibrationGPI(Calibration):
                 .tolerance(exposure_time=10.0)
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def arc(self, processed=False, howmany=None):
@@ -82,8 +81,7 @@ class CalibrationGPI(Calibration):
                 .match_descriptors(*CalibrationGPI.common_descriptors())
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def telluric_standard(self, processed=False, howmany=None):
@@ -103,8 +101,7 @@ class CalibrationGPI(Calibration):
                 .match_descriptors(*CalibrationGPI.common_descriptors())
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def polarization_standard(self, processed=False, howmany=None):
@@ -125,8 +122,7 @@ class CalibrationGPI(Calibration):
         return (
             query.match_descriptors(*CalibrationGPI.common_descriptors())
                  .max_interval(days=365)
-                 .limit(howmany)
-                 .all()
+                 .all(howmany)
             )
 
     def astrometric_standard(self, processed=False, howmany=None):
@@ -148,8 +144,7 @@ class CalibrationGPI(Calibration):
             # Looks like we don't care about matching the usual descriptors...
             # Absolute time separation must be within 1 year
             query.max_interval(days=365)
-                 .limit(howmany)
-                 .all()
+                 .all(howmany)
             )
 
     def polarization_flat(self, processed=False, howmany=None):
@@ -173,6 +168,5 @@ class CalibrationGPI(Calibration):
             query.match_descriptors(*CalibrationGPI.common_descriptors())
                  # Absolute time separation must be within 1 year
                  .max_interval(days=365)
-                 .limit(howmany)
-                 .all()
+                 .all(howmany)
             )

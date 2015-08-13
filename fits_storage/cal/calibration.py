@@ -99,8 +99,11 @@ class CalQuery(object):
 
             raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, name))
 
-    def all(self):
-        return self.query.all()
+    def all(self, limit):
+        targ_ut_dt_secs = int((self.descr['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
+        return (self.query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs)) # Order by absolute time separation.
+                          .limit(limit)
+                          .all())
 
     # The following add filters specific to certain types of calibs
 

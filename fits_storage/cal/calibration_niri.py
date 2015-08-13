@@ -72,8 +72,7 @@ class CalibrationNIRI(Calibration):
                 .tolerance(exposure_time = 0.01)
                 # Absolute time separation must be within 6 months
                 .max_interval(days=180)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def flat(self, processed=False, howmany=None):
@@ -96,8 +95,7 @@ class CalibrationNIRI(Calibration):
                 .tolerance(central_wavelength = 0.001, condition=self.descriptors['spectroscopy'])
                 # Absolute time separation must be within 6 months
                 .max_interval(days=180)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def arc(self, processed=False, howmany=None):
@@ -115,8 +113,7 @@ class CalibrationNIRI(Calibration):
                 .tolerance(central_wavelength = 0.001)
                 # Absolute time separation must be within 6 months
                 .max_interval(days=180)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     @not_processed
@@ -135,8 +132,7 @@ class CalibrationNIRI(Calibration):
                                    Niri.disperser)
                 # Absolute time separation must be within 1 hour of the lamp on flats
                 .max_interval(seconds=3600)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     @not_processed
@@ -154,8 +150,7 @@ class CalibrationNIRI(Calibration):
                                    Niri.camera)
                 # Absolute time separation must be within 24 hours of the science
                 .max_interval(days=1)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     @not_processed
@@ -174,6 +169,5 @@ class CalibrationNIRI(Calibration):
                 .tolerance(central_wavelength = 0.001)
                 # Absolute time separation must be within 24 hours of the science
                 .max_interval(days=1)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )

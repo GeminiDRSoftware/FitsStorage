@@ -73,8 +73,7 @@ class CalibrationGNIRS(Calibration):
                                    Gnirs.coadds)
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def get_gnirs_flat_query(self, processed):
@@ -115,8 +114,7 @@ class CalibrationGNIRS(Calibration):
                 .add_filters(Header.gcal_lamp == 'IRhigh')
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def arc(self, processed=False, howmany=None):
@@ -137,8 +135,7 @@ class CalibrationGNIRS(Calibration):
                                    Gnirs.camera)
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def pinhole_mask(self, processed=False, howmany=None):
@@ -157,8 +154,7 @@ class CalibrationGNIRS(Calibration):
                                    Gnirs.camera)
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     @not_processed
@@ -174,8 +170,7 @@ class CalibrationGNIRS(Calibration):
                 .add_filters(Header.gcal_lamp == 'Off')
                 # Absolute time separation must be within 1 day
                 .max_interval(days=1)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def qh_flat(self, processed=False, howmany=None):
@@ -200,8 +195,7 @@ class CalibrationGNIRS(Calibration):
                 .add_filters(Header.gcal_lamp == 'QH')
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def telluric_standard(self, processed=False, howmany=None):
@@ -222,6 +216,5 @@ class CalibrationGNIRS(Calibration):
                                    Gnirs.filter_name)
                 # Absolute time separation must be within 1 day
                 .max_interval(days=1)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )

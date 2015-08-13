@@ -51,8 +51,7 @@ class CalibrationMICHELLE(Calibration):
                                    Michelle.coadds)
                 # Absolute time separation must be within 1 day
                 .max_interval(days=1)
-                .limit(howmany)
-                .all()
+                .all(howmany)
             )
 
     def flat(self, processed=False, howmany=None):
@@ -66,4 +65,4 @@ class CalibrationMICHELLE(Calibration):
                           .tolerance(central_wavelength=0.001))
 
         # Absolute time separation must be within 1 day
-        return query.max_interval(days=1).limit(howmany).all()
+        return query.max_interval(days=1).all(howmany)
