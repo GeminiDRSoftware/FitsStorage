@@ -29,6 +29,10 @@ sum_type_defs = {
                     'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state']
     }
 
+NO_LINKS        = 0x00
+FILENAME_LINKS  = 0x01
+ALL_LINKS       = 0xFF
+
 class SummaryGenerator(object):
     """
     This is the web summary generator class. You instantiate this class and
@@ -41,6 +45,12 @@ class SummaryGenerator(object):
     It is also possible to configure whether you want links in the output html.
     """
 
+    def __init__(self, sumtype, links=ALL_LINKS, uri=None, user=None, user_progid_list=None):
+        """
+        Constructor function for the SummaryGenerator Object.
+        Arguments: sumtype = a string saying the summary type
+                   links = a bool saying whether to include html links in output
+        """
     # columns is a dictionary (collections.OrderedDict) of possible column descriptions.
     # The dictionary key is an arbitrary column name id for internal reference,
     # but is the same as used in the orderby keys
@@ -51,23 +61,8 @@ class SummaryGenerator(object):
     #    sortarrows: Says whether to put sort arrow links in the header
     #    header_attr: Attribute name of orm.header to get value from. Or None to use diskfile
     #    summary_func: Function name in this module to get this from, pass header
+        self.columns = OrderedDict()
 
-    columns = OrderedDict()
-    my_progids = []
-    links = True
-    uri = None
-
-    # These are "caches" of values used to figure out whether the user
-    # has access to the file and thus whether to display the download things
-    user = None
-    user_progid_list = None
-
-    def __init__(self, sumtype, links=True, uri=None, user=None, user_progid_list=None):
-        """
-        Constructor function for the SummaryGenerator Object.
-        Arguments: sumtype = a string saying the summary type
-                   links = a bool saying whether to include html links in output
-        """
         # Load the column definitions, in order
         self.init_cols()
         # Set the want flags
@@ -75,6 +70,10 @@ class SummaryGenerator(object):
         self.set_type(sumtype)
         self.links = links
         self.uri = uri
+        self.my_progids = []
+
+    # These are "caches" of values used to figure out whether the user
+    # has access to the file and thus whether to display the download things
         self.user = user
         self.user_progid_list = user_progid_list
 
@@ -370,7 +369,7 @@ class SummaryGenerator(object):
                     html += '<abbr title="%s">%s</abbr>' % (col['longheading'], col['heading'])
                 else:
                     html += col['heading']
-                if self.links and col['sortarrows']:
+                if (self.links != NO_LINKS) and col['sortarrows']:
                     html += '<a href="%s?orderby=%s_asc">&uarr;</a><a href="%s?orderby=%s_desc">&darr;</a>' % (self.uri, colkey, self.uri, colkey)
                 html += '</TH>'
         html += '</TR>\n'
@@ -421,21 +420,21 @@ class SummaryGenerator(object):
         # The html to return
 
         # The basic filename part, optionally as a link to the header text
-        if self.links:
+        if self.links != NO_LINKS:
             html = '<a href="/fullheader/%d" target="_blank">%s</a>' % (header.diskfile.id, header.diskfile.file.name)
         else:
             html = str(header.diskfile.file.name)
 
         # Do we have any fits verify errors to flag?
         if header.diskfile.fverrors:
-            if self.links:
+            if self.links != NO_LINKS:
                 html += ' <a href="/fitsverify/%d" target="_blank">-fits!</a>' % (header.diskfile.id)
             else:
                 html += ' -fits!' % (header.diskfile.id)
 
         # Do we have metadata errors to flag? (only on non Eng data)
         if (header.engineering is False) and (not header.diskfile.mdready):
-            if self.links:
+            if self.links != NO_LINKS:
                 html += ' <a href="/mdreport/%d" target="_blank">-md!</a>' % (header.diskfile.id)
             else:
                 html += ' -md!' % (header.diskfile.id)
@@ -448,7 +447,7 @@ class SummaryGenerator(object):
         """
         # Generate the diskfile html
         # We parse the data_label to create links to the project id and obs id
-        if self.links:
+        if self.links == ALL_LINKS:
             dl = GeminiDataLabel(header.data_label)
             if dl.datalabel:
                 uri = self.uri
@@ -465,7 +464,7 @@ class SummaryGenerator(object):
         Generates the UT datetime column html
         """
         # format without decimal places on the seconds
-        if self.links and header.ut_datetime is not None:
+        if (self.links == ALL_LINKS) and header.ut_datetime is not None:
             if header.ut_datetime:
                 date_print = header.ut_datetime.strftime("%Y-%m-%d")
                 time_print = header.ut_datetime.strftime("%H:%M:%S")
@@ -482,7 +481,7 @@ class SummaryGenerator(object):
         Generates the instrument column html
         """
         # Add the AO flags to the instrument name
-        if self.links:
+        if self.links == ALL_LINKS:
             html = '<a href="%s/%s">%s</a>' % (self.uri, header.instrument, header.instrument)
             if header.adaptive_optics:
                 html += ' <a href="%s/AO">+ AO</a>' % self.uri
@@ -505,7 +504,7 @@ class SummaryGenerator(object):
         Generates the observation_class column html
         """
         # Can make it a link
-        if self.links and header.observation_class is not None:
+        if (self.links == ALL_LINKS) and header.observation_class is not None:
             return '<a href="%s/%s">%s</a>' % (self.uri, header.observation_class, header.observation_class)
         else:
             return header.observation_class
@@ -515,7 +514,7 @@ class SummaryGenerator(object):
         Generates the observation_type column html
         """
         # Can make it a link
-        if self.links and header.observation_type is not None:
+        if (self.links == ALL_LINKS) and header.observation_type is not None:
             return '<a href="%s/%s">%s</a>' % (self.uri, header.observation_type, header.observation_type)
         else:
             return header.observation_type
@@ -567,7 +566,7 @@ class SummaryGenerator(object):
         # Now the photometric std star symbol
         phothtml = ''
         if header.phot_standard:
-            if self.links:
+            if self.links == ALL_LINKS:
                 phothtml = '<a href="/standardobs/%d">*</a>' % header.id
             else:
                 phothtml = '*'

@@ -9,7 +9,7 @@ from .selection import sayselection, openquery, selection_to_URL
 from .list_headers import list_headers
 from .. import apache_return_codes as apache
 
-from .summary_generator import SummaryGenerator, htmlescape
+from .summary_generator import SummaryGenerator, htmlescape, NO_LINKS, FILENAME_LINKS, ALL_LINKS
 
 # We assume that servers used as archive use a calibration association cache table
 from ..fits_storage_config import use_as_archive
@@ -60,6 +60,9 @@ def summary_body(req, sumtype, selection, orderby, links=True):
     and calls the webhdrsummary function to actually generate
     the html table containing the actual summary information.
     """
+
+    sumlinks = ALL_LINKS if links else NO_LINKS
+
     # In search results, warn about undefined stuff
     if 'notrecognised' in selection.keys():
         req.write("<H4>WARNING: I didn't recognize the following search terms: %s</H4>" % selection['notrecognised'])
@@ -107,8 +110,9 @@ def summary_body(req, sumtype, selection, orderby, links=True):
             querylog.cals_completed = datetime.datetime.utcnow()
             querylog.numcalresults = len(headers)
 
-            # links are messed up with associated_cals, turn them off
-            links = False
+            # links are messed up with associated_cals, turn most of them off
+            if links:
+                sumlinks = FILENAME_LINKS
 
         # Did we get any results?
         if len(headers) > 0:
@@ -116,7 +120,7 @@ def summary_body(req, sumtype, selection, orderby, links=True):
             # pass down the chain to use figure out whether to display download links
             user = userfromcookie(session, req)
             user_progid_list = get_program_list(session, user)
-            summary_table(req, sumtype, headers, selection, links, user, user_progid_list)
+            summary_table(req, sumtype, headers, selection, sumlinks, user, user_progid_list)
         else:
             # No results
             # Pass selection to this so it can do some helpful analysis of why you got no results
@@ -165,7 +169,7 @@ def no_results(req, selection):
             req.write("<P>Hint - The central wavelength setting is not so useful with GNIRS cross-dispersed data because the spectral range is so big. Different central wavelength settings in the OT will come through in the headers and be respected by searches here, but in some cases it makes almost no difference to the actual light falling on the array. We suggest not setting central wavelength when you are searching for GNIRS XD data.</P>")
 
 
-def summary_table(req, sumtype, headers, selection, links=True, user=None, user_progid_list=None):
+def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, user_progid_list=None):
     """
     Generates an HTML header summary table of the specified type from
     the list of header objects provided. Writes that table to an apache
