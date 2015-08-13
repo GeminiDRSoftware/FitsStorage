@@ -20,6 +20,7 @@ class CalibrationGMOS(Calibration):
     It is a subclass of Calibration
     """
     gmos = None
+    instrClass = Gmos
 
     def __init__(self, session, header, descriptors, types):
         """
@@ -135,142 +136,99 @@ class CalibrationGMOS(Calibration):
         This method identifies the best GMOS ARC to use for the target
         dataset.
         """
-        query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
-
         # Default 1 arc
         howmany = howmany if howmany else 1
-
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_ARC')
-        else:
-            query = query.filter(Header.observation_type == 'ARC').filter(Header.reduction == 'RAW')
-
-        # Must Totally Match: Instrument, disperser
-        query = query.filter(Header.instrument == self.descriptors['instrument'])
-        query = query.filter(Gmos.disperser == self.descriptors['disperser'])
-
-        # Must match filter (from KR 20100423)
-        query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
-
-        # Must Match central_wavelength
-        # This gives better performance than abs?
-        # Occassionally we get a None, so run this in a try except
-        try:
-            cenwlen_lo = float(self.descriptors['central_wavelength']) - 0.001
-            cenwlen_hi = float(self.descriptors['central_wavelength']) + 0.001
-            query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
-        except TypeError:
-            pass
-
+        filters = []
         # Must match focal_plane_mask only if it's not the 5.0arcsec slit in the target, otherwise any longslit is OK
         if self.descriptors['focal_plane_mask'] != '5.0arcsec':
-            query = query.filter(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
+            filters.append(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
         else:
-            query = query.filter(Gmos.focal_plane_mask.like('%arcsec'))
-
-        # Must match ccd binning
-        query = query.filter(Gmos.detector_x_bin == self.descriptors['detector_x_bin'])
-        query = query.filter(Gmos.detector_y_bin == self.descriptors['detector_y_bin'])
+            filters.append(Gmos.focal_plane_mask.like('%arcsec'))
 
         # The science amp_read_area must be equal or substring of the cal amp_read_area
         # If the science frame uses all the amps, then they must be a direct match as all amps must be there
         # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
         # have a subset of the amps thus we must do the substring match
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
-            query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         else:
-            query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+            filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Absolute time separation must be within 1 year
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .arc(processed)
+                .add_filters(*filters)
+                .match_descriptors(Header.instrument,
+                                   Gmos.disperser,
+                                   Gmos.filter_name,    # Must match filter (from KR 20100423)
+                                   Gmos.detector_x_bin, # Must match ccd binning
+                                   Gmos.detector_y_bin)
+                .tolerance(central_wavelength=0.001)
+                # Absolute time separation must be within 1 year
+                .max_interval(days=365)
+                .limit(howmany)
+                .all()
+            )
 
     def dark(self, processed=False, howmany=None):
         """
         Method to find best GMOS Dark frame for the target dataset.
         """
-        query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
+        if howmany is None:
+            howmany = 1 if processed else 15
 
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_DARK')
-            # Default number of processed darks
-            if howmany is None: howmany = 1
-        else:
-            query = query.filter(Header.observation_type == 'DARK').filter(Header.reduction == 'RAW')
-            # Default number of raw darks
-            if howmany is None: howmany = 15
-
-        # Must totally match instrument, detector_x_bin, detector_y_bin,
-        # read_speed_setting, gain_setting, exposure_time, nodandshuffle
-        query = query.filter(Header.instrument == self.descriptors['instrument'])
-        query = query.filter(Gmos.detector_x_bin == self.descriptors['detector_x_bin'])
-        query = query.filter(Gmos.detector_y_bin == self.descriptors['detector_y_bin'])
-        query = query.filter(Gmos.read_speed_setting == self.descriptors['read_speed_setting'])
-        query = query.filter(Gmos.gain_setting == self.descriptors['gain_setting'])
-
-        # For some strange reason, GMOS exposure times sometimes come out
-        # a few 10s of ms different between the darks and science frames
-
-        # K.Roth 20110817 told PH just make it the nearest second, as you can't demand non integer times anyway.
-        # Yeah, and GMOS-S ones come out a few 10s of *seconds* different - going to choose darks within 50 secs for now...
-        # query = query.filter(func.abs(Header.exposure_time - self.descriptors['exposure_time']) < 50.0)
-        # Better performance from a range than using abs
-        exptime_lo = float(self.descriptors['exposure_time']) - 50.0
-        exptime_hi = float(self.descriptors['exposure_time']) + 50.0
-        query = query.filter(Header.exposure_time > exptime_lo).filter(Header.exposure_time < exptime_hi)
-
-        query = query.filter(Gmos.nodandshuffle == self.descriptors['nodandshuffle'])
-        if self.descriptors['nodandshuffle']:
-            query = query.filter(Gmos.nod_count == self.descriptors['nod_count'])
-            query = query.filter(Gmos.nod_pixels == self.descriptors['nod_pixels'])
-
+        filters = []
         # The science amp_read_area must be equal or substring of the cal amp_read_area
         # If the science frame uses all the amps, then they must be a direct match as all amps must be there
         # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
         # have a subset of the amps thus we must do the substring match
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
-            query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         else:
-            query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+            filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Absolute time separation must be within 1 year
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
+        # Must match exposure time. For some strange reason, GMOS exposure times sometimes come out
+        # a few 10s of ms different between the darks and science frames
 
-        return query.all()
+        # K.Roth 20110817 told PH just make it the nearest second, as you can't demand non integer times anyway.
+        # Yeah, and GMOS-S ones come out a few 10s of *seconds* different - going to choose darks within 50 secs for now...
+        # That's why we're using a tolerance to match the exposure time
+
+        return (
+            self.get_query()
+                .dark(processed)
+                .add_filters(*filters)
+                .match_descriptors(Header.instrument,
+                                   Gmos.detector_x_bin,
+                                   Gmos.detector_y_bin,
+                                   Gmos.read_speed_setting,
+                                   Gmos.gain_setting,
+                                   Gmos.nodandshuffle)
+                .tolerance(exposure_time = 50.0)
+                .if_(self.descriptors['nodandshuffle'], 'match_descriptors', Gmos.nod_count, Gmos.nod_pixels)
+                # Absolute time separation must be within 1 year
+                .max_interval(days=365)
+                .limit(howmany)
+                .all()
+            )
 
     def bias(self, processed=False, howmany=None):
         """
         Method to find the best bias frames for the target dataset
         """
-        query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'BIAS')
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_BIAS')
-            # Default number of processed Biases
-            howmany = howmany if howmany else 1
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Default number of raw biases
-            howmany = howmany if howmany else 50
+        if howmany is None:
+            howmany = 1 if processed else 50
 
-        # Must totally match instrument, detector_x_bin, detector_y_bin, read_speed_setting, gain_setting
-        query = query.filter(Header.instrument == self.descriptors['instrument'])
-        query = query.filter(Gmos.detector_x_bin == self.descriptors['detector_x_bin'])
-        query = query.filter(Gmos.detector_y_bin == self.descriptors['detector_y_bin'])
-        query = query.filter(Gmos.read_speed_setting == self.descriptors['read_speed_setting'])
-        query = query.filter(Gmos.gain_setting == self.descriptors['gain_setting'])
-
+        filters = []
         # The science amp_read_area must be equal or substring of the cal amp_read_area
         # If the science frame uses all the amps, then they must be a direct match as all amps must be there
         # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
         # have a subset of the amps thus we must do the substring match
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
-            query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
-        else:
-            if self.descriptors['amp_read_area']:
-                # Can't do a contains if the value is None...
-                query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+        elif self.descriptors['amp_read_area'] is not None:
+            # Can't do a contains if the value is None...
+            filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         # The Overscan section handling: this only applies to processed biases
         # as raw biases will never be overscan trimmed or subtracted, and if they're
@@ -281,17 +239,29 @@ class CalibrationGMOS(Calibration):
         # give them the default (which is trimmed and subtracted).
         if processed:
             if self.descriptors['prepared'] == True:
-                query.filter(Gmos.overscan_trimmed == self.descriptors['overscan_trimmed'])
-                query.filter(Gmos.overscan_subtracted == self.descriptors['overscan_subtracted'])
+                filters.append(Gmos.overscan_trimmed == self.descriptors['overscan_trimmed'])
+                filters.append(Gmos.overscan_subtracted == self.descriptors['overscan_subtracted'])
             else:
-                query.filter(Gmos.overscan_trimmed == True)
-                query.filter(Gmos.overscan_subtracted == True)
+                filters.append(Gmos.overscan_trimmed == True)
+                filters.append(Gmos.overscan_subtracted == True)
 
-        # Absolute time separation must be within 3 months
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=90), limit=howmany)
+        return (
+            self.get_query()
+                .bias(processed)
+                .add_filters(*filters)
+                .match_descriptors(Header.instrument,
+                                  Gmos.detector_x_bin,
+                                  Gmos.detector_y_bin,
+                                  Gmos.read_speed_setting,
+                                  Gmos.gain_setting)
+                # Absolute time separation must be within 3 months
+                .max_interval(days=90)
+                .limit(howmany)
+                .all()
+            )
 
-        return query.all()
-
+    # TODO: Discuss 'flat' with Paul. We need to know how the algorithmic paths
+    #       a really done in here. Looks quite messy...
     def flat(self, processed=False, howmany=None):
         """
         Method to find the best GMOS FLAT fields for the target dataset
@@ -396,33 +366,32 @@ class CalibrationGMOS(Calibration):
         Method to find the best processed_fringe frame for the target dataset.
         Note that the concept of a raw fringe frame is meaningless.
         """
-        query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
-
-        # Note that the concept of a raw fringe frame is not valid
-        query = query.filter(Header.reduction == 'PROCESSED_FRINGE')
-
         # Default number to associate
         howmany = howmany if howmany else 1
 
-        # Must totally match instrument, detector_x_bin, detector_y_bin, filter
-        query = query.filter(Header.instrument == self.descriptors['instrument'])
-        query = query.filter(Gmos.detector_x_bin == self.descriptors['detector_x_bin'])
-        query = query.filter(Gmos.detector_y_bin == self.descriptors['detector_y_bin'])
-        query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
-
+        filters = []
         # The science amp_read_area must be equal or substring of the cal amp_read_area
         # If the science frame uses all the amps, then they must be a direct match as all amps must be there
         # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
         # have a subset of the amps thus we must do the substring match
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
-            query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         else:
-            query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+            filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Absolute time separation must be within 1 year
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .reduction('PROCESSED_FRINGE')
+                .add_filters(*filters)
+                .match_descriptors(Header.instrument,
+                                   Gmos.detector_x_bin,
+                                   Gmos.detector_y_bin,
+                                   Gmos.filter_name)
+                # Absolute time separation must be within 1 year
+                .max_interval(days=365)
+                .limit(howmany)
+                .all()
+            )
 
     # We don't handle processed ones (yet)
     @not_processed
@@ -435,42 +404,37 @@ class CalibrationGMOS(Calibration):
         # Default number to associate
         howmany = howmany if howmany else 2
 
-        query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
-
-        query = query.filter(Header.reduction == 'RAW')
-
-        # They are OBJECT spectroscopy frames with target twilight 
-        query = query.filter(Header.observation_type == 'OBJECT')
-        query = query.filter(Header.spectroscopy == True)
-        query = query.filter(Header.object == 'Twilight')
-
-        # Must totally match instrument, detector_x_bin, detector_y_bin, filter, disperser, focal plane mask
-        query = query.filter(Header.instrument == self.descriptors['instrument'])
-        query = query.filter(Gmos.detector_x_bin == self.descriptors['detector_x_bin'])
-        query = query.filter(Gmos.detector_y_bin == self.descriptors['detector_y_bin'])
-        query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
-        query = query.filter(Gmos.disperser == self.descriptors['disperser'])
-        query = query.filter(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
-
-        # Must match central wavelength to within some tolerance. We don't do separate ones for dithers in wavelength?
-        tolerance = 0.02 # microns
-        cenwlen_lo = float(self.descriptors['central_wavelength']) - tolerance
-        cenwlen_hi = float(self.descriptors['central_wavelength']) + tolerance
-        query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
-
+        filters = []
         # The science amp_read_area must be equal or substring of the cal amp_read_area
         # If the science frame uses all the amps, then they must be a direct match as all amps must be there
         # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
         # have a subset of the amps thus we must do the substring match
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
-            query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         else:
-            query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+            filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Absolute time separation must be within 1 year
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .reduction('RAW')
+                # They are OBJECT spectroscopy frames with target twilight
+                .OBJECT().spectroscopy(True).object('Twilight')
+                .add_filters(*filters)
+                .match_descriptors(Header.instrument,
+                                   Gmos.detector_x_bin,
+                                   Gmos.detector_y_bin,
+                                   Gmos.filter_name,
+                                   Gmos.disperser,
+                                   Gmos.focal_plane_mask)
+                # Must match central wavelength to within some tolerance.
+                # We don't do separate ones for dithers in wavelength?
+                # tolerance = 0.02 microns
+                .tolerance(central_wavelength=0.02)
+                # Absolute time separation must be within 1 year
+                .max_interval(days=365)
+                .limit(howmany)
+                .all()
+            )
 
     # We don't handle processed ones (yet)
     @not_processed
@@ -482,50 +446,44 @@ class CalibrationGMOS(Calibration):
         # Default number to associate
         howmany = howmany if howmany else 4
 
-        query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
-
-        query = query.filter(Header.reduction == 'RAW')
-
-        # They are OBJECT partnerCal or progCal spectroscopy frames with target not twilight 
-        query = query.filter(Header.observation_type == 'OBJECT')
-        query = query.filter(Header.observation_class.in_(['partnerCal', 'progCal']))
-        query = query.filter(Header.spectroscopy == True)
-        query = query.filter(Header.object != 'Twilight')
-
-        # Must totally match instrument, filter, disperser
-        # Found lots of examples where detector binning does not match, so took that out.
-        query = query.filter(Header.instrument == self.descriptors['instrument'])
-        #query = query.filter(Gmos.detector_x_bin == self.descriptors['detector_x_bin'])
-        #query = query.filter(Gmos.detector_y_bin == self.descriptors['detector_y_bin'])
-        query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
-        query = query.filter(Gmos.disperser == self.descriptors['disperser'])
-
+        filters = []
         # Must match the focal plane mask, unless the science is a mos mask in which case the specphot is longslit
         if 'MOS' in self.types:
-            query = query.filter(Gmos.focal_plane_mask.contains('arcsec'))
-            tolerance = 0.10 # microns
+            filters.append(Gmos.focal_plane_mask.contains('arcsec'))
+            tol = 0.10 # microns
         else:
-            query = query.filter(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
-            tolerance = 0.05 # microns
-
-        # Must match central wavelength to within some tolerance. We don't do separate ones for dithers in wavelength?
-        cenwlen_lo = float(self.descriptors['central_wavelength']) - tolerance
-        cenwlen_hi = float(self.descriptors['central_wavelength']) + tolerance
-        query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
+            filters.append(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
+            tol = 0.05 # microns
 
         # The science amp_read_area must be equal or substring of the cal amp_read_area
         # If the science frame uses all the amps, then they must be a direct match as all amps must be there
         # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
         # have a subset of the amps thus we must do the substring match
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
-            query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         else:
-            query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+            filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Absolute time separation must be within 1 year
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .reduction('RAW')
+                # They are OBJECT partnerCal or progCal spectroscopy frames with target not twilight
+                .OBJECT().spectroscopy(True)
+                .add_filters(Header.observation_class.in_(['partnerCal', 'progCal']),
+                             Header.object != 'Twilight',
+                             *filters)
+                # Found lots of examples where detector binning does not match, so we're not adding those
+                .match_descriptors(Header.instrument,
+                                   Gmos.filter_name,
+                                   Gmos.disperser)
+                # Must match central wavelength to within some tolerance.
+                # We don't do separate ones for dithers in wavelength?
+                .tolerance(central_wavelength=tol)
+                # Absolute time separation must be within 1 year
+                .max_interval(days=365)
+                .limit()
+                .all()
+            )
 
     # We don't handle processed ones (yet)
     @not_processed
@@ -537,21 +495,15 @@ class CalibrationGMOS(Calibration):
         # Default number to associate
         howmany = howmany if howmany else 4
 
-        query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
-
-        query = query.filter(Header.reduction == 'RAW')
-
-        # They are OBJECT imaging partnerCal frames taken from CAL program IDs
-        query = query.filter(Header.observation_type == 'OBJECT')
-        query = query.filter(Header.spectroscopy == False)
-        query = query.filter(Header.observation_class == 'partnerCal')
-        query = query.filter(Header.program_id.like('G_-CAL%'))
-
-        # Must totally match instrument, filter
-        query = query.filter(Header.instrument == self.descriptors['instrument'])
-        query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
-
-        # Absolute time separation must be within 1 days
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                # They are OBJECT imaging partnerCal frames taken from CAL program IDs
+                .photometric_standard(OBJECT=True, partnerCal=True)
+                .add_filters(Header.program_id.like('G_-CAL%'))
+                .match_descriptors(Header.instrument,
+                                   Gmos.filter_name)
+                # Absolute time separation must be within 1 days
+                .max_interval(days=1)
+                .limit(howmany)
+                .all()
+            )

@@ -18,6 +18,7 @@ class CalibrationNIFS(Calibration):
     It is a subclass of Calibration
     """
     nifs = None
+    instrClass = Nifs
 
     def __init__(self, session, header, descriptors, types):
         # Init the superclass
@@ -63,131 +64,100 @@ class CalibrationNIFS(Calibration):
         if self.descriptors['observation_type'] == 'FLAT' and self.descriptors['gcal_lamp'] != 'Off':
             self.applicable.append('lampoff_flat')
 
+    @staticmethod
+    def common_descriptors():
+        return (Header.central_wavelength, Nifs.disperser, Nifs.focal_plane_mask, Nifs.filter_name)
 
     def dark(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Nifs, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'DARK')
+        if howmany is None:
+            howmany = 1 if processed else 10
 
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_DARK')
-            # Default number of processed darks to associate
-            howmany = howmany if howmany else 1
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Default number of processed darks to associate
-            howmany = howmany if howmany else 10
-
-        # Must totally match: read_mode, exposure_time, coadds, disperser
-        query = query.filter(Nifs.read_mode == self.descriptors['read_mode'])
-        query = query.filter(Header.exposure_time == self.descriptors['exposure_time'])
-        query = query.filter(Nifs.coadds == self.descriptors['coadds'])
-        query = query.filter(Nifs.disperser == self.descriptors['disperser'])
-
-        # Absolute time separation must be within 3 months
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=90), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .dark(processed)
+                .match_descriptors(Header.exposure_time,
+                                   Nifs.read_mode,
+                                   Nifs.coadds,
+                                   Nifs.disperser)
+                # Absolute time separation must be within 3 months
+                .max_interval(days=90)
+                .limit(howmany)
+                .all()
+            )
 
     def flat(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Nifs, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'FLAT')
+        if howmany is None:
+            howmany = 1 if processed else 10
 
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_FLAT')
-            # Default number of processed flats to associate
-            howmany = howmany if howmany else 1
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Default number of processed flats to associate
-            howmany = howmany if howmany else 10
-
-        # Must totally match: disperser, central_wavelength, focal_plane_mask, filter
-        # NIFS flats are always taken in short / high readmode. Don't match against readmode (inst sci Email 2013-03-13)
-        query = query.filter(Nifs.disperser == self.descriptors['disperser'])
-        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
-        query = query.filter(Nifs.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(Nifs.filter_name == self.descriptors['filter_name'])
-
-        # GCAL lamp must be IRhigh or QH
-        query = query.filter(Header.gcal_lamp.in_(['IRhigh', 'QH']))
-
-        # Absolute time separation must be within 10 days
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=10), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .flat(processed)
+                # GCAL lamp must be IRhigh or QH
+                .add_filters(Header.gcal_lamp.in_(['IRhigh', 'QH']))
+                # NIFS flats are always taken in short / high readmode. Don't match against readmode (inst sci Email 2013-03-13)
+                .match_descriptors(*CalibrationNIFS.common_descriptors())
+                # Absolute time separation must be within 10 days
+                .max_interval(days=10)
+                .limit(howmany)
+                .all()
+            )
 
     def lampoff_flat(self, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Nifs, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'FLAT')
-
-        query = query.filter(Header.reduction == 'RAW')
         # Default number of processed flats to associate
         howmany = howmany if howmany else 10
 
-        # Must totally match: disperser, central_wavelength, focal_plane_mask, filter
-        # NIFS flats are always taken in short / high readmode. Don't match against readmode (inst sci Email 2013-03-13)
-        query = query.filter(Nifs.disperser == self.descriptors['disperser'])
-        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
-        query = query.filter(Nifs.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(Nifs.filter_name == self.descriptors['filter_name'])
-
-        # GCAL lamp must be Off
-        query = query.filter(Header.gcal_lamp == 'Off')
-
-        # Absolute time separation must be within 1 hour
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(seconds=3600), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .flat()
+                # GCAL lamp must be IRhigh or QH
+                .add_filters(Header.gcal_lamp == 'Off')
+                # NIFS flats are always taken in short / high readmode. Don't match against readmode (inst sci Email 2013-03-13)
+                .match_descriptors(*CalibrationNIFS.common_descriptors())
+                # Absolute time separation must be within 1 hour
+                .max_interval(seconds=3600)
+                .limit(howmany)
+                .all()
+            )
 
     def arc(self, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Nifs, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'ARC')
-
         # Always associate 1 arc by default
         howmany = howmany if howmany else 1
 
-        # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter
-        query = query.filter(Nifs.disperser == self.descriptors['disperser'])
-        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
-        query = query.filter(Nifs.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(Nifs.filter_name == self.descriptors['filter_name'])
-
-        # Absolute time separation must be within 1 year
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=365), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .arc()
+                .match_descriptors(*CalibrationNIFS.common_descriptors())
+                # Absolute time separation must be within 1 year
+                .max_interval(days=365)
+                .limit(howmany)
+                .all()
+            )
 
     def ronchi_mask(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Nifs, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'RONCHI')
-
         # Always associate 1 ronchi by default
         howmany = howmany if howmany else 1
 
-        # Must totally match: disperser, central_wavelength
-        query = query.filter(Nifs.disperser == self.descriptors['disperser'])
-        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
-
-        return query.all()
+        return (
+            self.get_query()
+                .observation_type('RONCHI')
+                .match_descriptors(Header.central_wavelength,
+                                   Nifs.disperser)
+                # NOTE: No max interval?
+                .limit(howmany)
+                .all()
+            )
 
     def telluric_standard(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Nifs, Header), DiskFile))
+        if howmany is None:
+            howmany = 1 if processed else 12
 
-        if processed:
-            howmany = 1
-            query = query.filter(Header.reduction == 'PROCESSED_TELLURIC')
-        else:
-            query = query.filter(Header.observation_type == 'OBJECT').filter(Header.observation_class == 'partnerCal')
-            howmany = 12
-
-        # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter
-        query = query.filter(Nifs.disperser == self.descriptors['disperser'])
-        query = query.filter(Header.central_wavelength == self.descriptors['central_wavelength'])
-        query = query.filter(Nifs.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(Nifs.filter_name == self.descriptors['filter_name'])
-
-        # Absolute time separation must be within 1 day
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
-
-        return query.all()
-
+        return (
+            self.get_query()
+                # Telluric standards are OBJECT spectroscopy partnerCal frames
+                .telluric_standard(OBJECT=True, partnerCal=True)
+                .match_descriptors(*CalibrationNIFS.common_descriptors())
+                # Absolute time separation must be within 1 day
+                .max_interval(days=1)
+                .limit(howmany)
+                .all()
+            )

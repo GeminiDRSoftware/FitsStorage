@@ -16,6 +16,7 @@ class CalibrationGPI(Calibration):
     It is a subclass of Calibration
     """
     gpi = None
+    instrClass = Gpi
 
     def __init__(self, session, header, descriptors, types):
         """
@@ -116,7 +117,7 @@ class CalibrationGPI(Calibration):
 
         return (
             self.get_query()
-                .telluric_standard(object=True, science=True)
+                .telluric_standard(OBJECT=True, science=True)
                 .add_filters(*filters)
                 .match_descriptors(*CalibrationGPI.common_descriptors())
                 # Absolute time separation must be within 1 year
@@ -159,7 +160,7 @@ class CalibrationGPI(Calibration):
         if processed:
             query = self.get_query().reduction('PROCESSED_ASTROMETRIC')
         else:
-            query = (self.get_query().raw().object()
+            query = (self.get_query().raw().OBJECT()
                          .add_filters(Gpi.astrometric_standard==True))
 
         return (

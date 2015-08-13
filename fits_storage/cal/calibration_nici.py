@@ -18,6 +18,7 @@ class CalibrationNICI(Calibration):
     It is a subclass of Calibration
     """
     nici = None
+    instrClass = Nici
 
     def __init__(self, session, header, descriptors, types):
         # Init the superclass
@@ -53,73 +54,56 @@ class CalibrationNICI(Calibration):
 
 
     def dark(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Nici, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'DARK')
+        if howmany is None:
+            howmany = 1 if processed else 10
 
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_DARK')
-            # Associate 1 processed dark by default
-            howmany = howmany if howmany else 1
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Associate 10 raw darks by default
-            howmany = howmany if howmany else 10
-
-        # Exposure time must match to within 0.01 (nb floating point match).
-        # nb exposure_time is really exposure_time * coadds, but if we're matching both, that doesn't matter
-        exptime_lo = float(self.descriptors['exposure_time']) - 0.01
-        exptime_hi = float(self.descriptors['exposure_time']) + 0.01
-        query = query.filter(Header.exposure_time > exptime_lo).filter(Header.exposure_time < exptime_hi)
-
-        # Absolute time separation must be within 1 day
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .dark(processed)
+                # Exposure time must match to within 0.01 (nb floating point match).
+                # nb exposure_time is really exposure_time * coadds, but if we're matching both, that doesn't matter
+                .tolerance(exposure_time = 0.01)
+                # Absolute time separation must be within 1 day
+                .max_interval(days=1)
+                .limit(howmany)
+                .all()
+            )
 
     def flat(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Nici, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'FLAT')
+        if howmany is None:
+            howmany = 1 if processed else 10
 
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_FLAT')
-            # Default number to associate
-            howmany = howmany if howmany else 1
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Default number to associate
-            howmany = howmany if howmany else 10
-
-        # Must totally match: filter_name, focal_plane_mask, disperser
-        query = query.filter(Nici.filter_name == self.descriptors['filter_name'])
-        query = query.filter(Nici.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(Nici.disperser == self.descriptors['disperser'])
-
-        # GCAL lamp should be on - these flats will then require lamp-off flats to calibrate them
-        query = query.filter(Header.gcal_lamp == 'IRhigh')
-
-        # Absolute time separation must be within 1 day
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .flat(processed)
+                # GCAL lamp should be on - these flats will then require lamp-off flats to calibrate them
+                .add_filters(Header.gcal_lamp == 'IRhigh')
+                .match_descriptors(Nici.filter_name,
+                                   Nici.focal_plane_mask,
+                                   Nici.disperser)
+                # Absolute time separation must be within 1 day
+                .max_interval(days=1)
+                .limit(howmany)
+                .all()
+            )
 
     @not_processed
     def lampoff_flat(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Nici, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'FLAT')
-        query = query.filter(Header.reduction == 'RAW')
         # Default number to associate
         howmany = howmany if howmany else 10
 
-        # Must totally match: data_section, well_depth_setting, filter_name, camera
-        # Update from AS 20130320 - read mode should not be required to match, but well depth should.
-        query = query.filter(Nici.filter_name == self.descriptors['filter_name'])
-        query = query.filter(Nici.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(Nici.disperser == self.descriptors['disperser'])
-
-        # GCAL lamp should be off
-        query = query.filter(Header.gcal_lamp == 'Off')
-
-        # Absolute time separation must be within 1 hour of the lamp on flats
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(seconds=3600), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .flat()
+                .add_filters(Header.gcal_lamp == 'Off')
+                # NOTE: check this comment...
+                # Must totally match: data_section, well_depth_setting, filter_name, camera
+                # Update from AS 20130320 - read mode should not be required to match, but well depth should.
+                .match_descriptors(Nici.filter_name,
+                                   Nici.focal_plane_mask,
+                                   Nici.disperser)
+                # Absolute time separation must be within 1 hour of the lamp on flats
+                .max_interval(seconds=3600)
+                .limit(howmany)
+                .all()
+            )

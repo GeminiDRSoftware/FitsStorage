@@ -18,6 +18,7 @@ class CalibrationGSAOI(Calibration):
     It is a subclass of Calibration
     """
     gsaoi = None
+    instrClass = Gsaoi
 
     def __init__(self, session, header, descriptors, types):
         # Init the superclass
@@ -47,27 +48,24 @@ class CalibrationGSAOI(Calibration):
 
 
     def domeflat(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Gsaoi, Header), DiskFile))
+        if howmany is None:
+            howmany = 1 if processed else 20
 
         if processed:
-            # Default number to associate
-            howmany = howmany if howmany else 1
-            query = query.filter(Header.reduction == 'PROCESSED_FLAT')
+            query = self.get_query().reduction('PROCESSED_FLAT')
         else:
-            # Default number to associate
-            howmany = howmany if howmany else 20
-            query = query.filter(Header.reduction == 'RAW')
-            query = query.filter(Header.observation_type == 'OBJECT')
-            query = query.filter(Header.observation_class == 'dayCal')
-            query = query.filter(Header.object == 'Domeflat')
+            query = (self.get_query().raw().OBJECT()
+                         .observation_class('dayCal')
+                         # Notice that object() is observation_type=='OBJECT', in case the next confuses you...
+                         .add_filters(Header.object == 'Domeflat'))
 
-        # Must totally match: filter_name
-        query = query.filter(Gsaoi.filter_name == self.descriptors['filter_name'])
-
-        # Common filter, with absolute time separation within a month
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=30), limit=howmany)
-
-        return query.all()
+        return (
+                # Common filter, with absolute time separation within a month
+            query.match_descriptors(Gsaoi.filter_name)
+                 .max_interval(days=30)
+                 .limit(howmany)
+                 .all()
+            )
 
     # Processed photometric standards haven't been implemented
     @not_processed
@@ -75,18 +73,12 @@ class CalibrationGSAOI(Calibration):
         # Default number to associate
         howmany = howmany if howmany else 8
 
-        query = self.session.query(Header).select_from(join(join(Gsaoi, Header), DiskFile))
-
-        # They are partnerCal OBJECT frames
-        query = query.filter(Header.reduction == 'RAW')
-        query = query.filter(Header.observation_type == 'OBJECT')
-        query = query.filter(Header.observation_class == 'partnerCal')
-
-        # Must totally match: filter_name
-        query = query.filter(Gsaoi.filter_name == self.descriptors['filter_name'])
-
-        # Common filter, with absolute time separation within a month
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=30), limit=howmany)
-
-        return query.all()
-
+        return (
+            self.get_query()
+                .raw().OBJECT().partnerCal()
+                # Common filter, with absolute time separation within a month
+                .match_descriptors(Gsaoi.filter_name)
+                .max_interval(days=30)
+                .limit(howmany)
+                .all()
+            )

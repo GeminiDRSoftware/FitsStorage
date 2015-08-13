@@ -18,6 +18,7 @@ class CalibrationMICHELLE(Calibration):
     It is a subclass of Calibration
     """
     michelle = None
+    instrClass = Michelle
 
     def __init__(self, session, header, descriptors, types):
         # Init the superclass
@@ -57,52 +58,30 @@ class CalibrationMICHELLE(Calibration):
 
 
     def dark(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Michelle, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'DARK')
-
         # Default number to associate
         howmany = howmany if howmany else 10
 
-        # Must totally match: read_mode, exposure_time, coadds
-        query = query.filter(Michelle.read_mode == self.descriptors['read_mode'])
-        query = query.filter(Header.exposure_time == self.descriptors['exposure_time'])
-        query = query.filter(Michelle.coadds == self.descriptors['coadds'])
-
-        # Absolute time separation must be within 1 day
-        max_interval = datetime.timedelta(days=1)
-        datetime_lo = self.descriptors['ut_datetime'] - max_interval
-        datetime_hi = self.descriptors['ut_datetime'] + max_interval
-        query = query.filter(Header.ut_datetime > datetime_lo).filter(Header.ut_datetime < datetime_hi)
-
-        # Absolute time separation must be within 1 day
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .dark()
+                .match_descriptors(Header.exposure_time,
+                                   Michelle.read_mode,
+                                   Michelle.coadds)
+                # Absolute time separation must be within 1 day
+                .max_interval(days=1)
+                .limit(howmany)
+                .all()
+            )
 
     def flat(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Michelle, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'FLAT')
-
         # Default number to associate
         howmany = howmany if howmany else 10
 
-        # Must totally match: read_mode, filter
-        query = query.filter(Michelle.read_mode == self.descriptors['read_mode'])
-        query = query.filter(Michelle.filter_name == self.descriptors['filter_name'])
+        query = self.get_query().flat().match_descriptors(Michelle.read_mode, Michelle.filter_name)
 
-        # If spectroscopy
         if self.descriptors['spectroscopy'] == True:
-            # must match disperser, focal_plane_mask
-            query = query.filter(Michelle.disperser == self.descriptors['disperser'])
-            query = query.filter(Michelle.focal_plane_mask == self.descriptors['focal_plane_mask'])
-
-            # Wavelength must match to within 0.001 um
-            tolerance = 0.001
-            wlen_lo = float(self.descriptors['central_wavelength']) - tolerance
-            wlen_hi = float(self.descriptors['central_wavelength']) + tolerance
-            query = query.filter(Header.central_wavelength < wlen_hi).filter(Header.central_wavelength > wlen_lo)
+            query = (query.match_descriptors(Michelle.disperser, Michelle.focal_plane_mask)
+                          .tolerance(central_wavelength=0.001))
 
         # Absolute time separation must be within 1 day
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
-
-        return query.all()
+        return query.max_interval(days=1).limit(howmany).all()

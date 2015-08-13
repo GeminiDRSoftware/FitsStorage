@@ -78,6 +78,12 @@ class CalQuery(object):
 
         return self
 
+    def if_(self, condition, methodname, *args, **kw):
+        if condition:
+            return getattr(self, methodname)(*args, **kw)
+
+        return self
+
     def __getattr__(self, name):
         try:
             return functools.partial(self.__call_through, getattr(self.query, name))
@@ -121,11 +127,15 @@ class CalQuery(object):
         self.query = self.query.filter(Header.observation_class == oc)
         return self
 
+    def object(self, ob):
+        self.query = self.query.filter(Header.object == ob)
+        return self
+
     def spectroscopy(self, status):
         self.query = self.query.filter(Header.spectroscopy == status)
         return self
 
-    def object(self):
+    def OBJECT(self):
         return self.observation_type('OBJECT')
 
     def partnerCal(self):
@@ -139,6 +149,9 @@ class CalQuery(object):
             return self.reduction('PROCESSED_' + name)
         else:
             return self.raw().observation_type(name)
+
+    def bias(self, processed=False):
+        return self.raw_or_processed('BIAS', processed)
 
     def dark(self, processed=False):
         return self.raw_or_processed('DARK', processed)

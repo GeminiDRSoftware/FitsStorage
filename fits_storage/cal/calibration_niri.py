@@ -18,6 +18,7 @@ class CalibrationNIRI(Calibration):
     It is a subclass of Calibration
     """
     niri = None
+    instrClass = Niri
 
     def __init__(self, session, header, descriptors, types):
         # Init the superclass
@@ -71,191 +72,124 @@ class CalibrationNIRI(Calibration):
             if self.descriptors['observation_class'] == 'science':
                 self.applicable.append('telluric_standard')
 
-
     def dark(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'DARK')
+        if howmany is None:
+            howmany = 1 if processed else 10
 
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_DARK')
-            # Associate 1 processed dark by default
-            howmany = howmany if howmany else 1
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Associate 10 raw darks by default
-            howmany = howmany if howmany else 10
-
-        # Must totally match: data_section, read_mode, well_depth_setting, exposure_time, coadds
-        query = query.filter(Niri.data_section == self.descriptors['data_section'])
-        query = query.filter(Niri.read_mode == self.descriptors['read_mode'])
-        query = query.filter(Niri.well_depth_setting == self.descriptors['well_depth_setting'])
-
-        # Exposure time must match to within 0.01 (nb floating point match). Coadds must also match.
-        # nb exposure_time is really exposure_time * coadds, but if we're matching both, that doesn't matter
-        query = query.filter(Niri.coadds == self.descriptors['coadds'])
-        exptime_lo = float(self.descriptors['exposure_time']) - 0.01
-        exptime_hi = float(self.descriptors['exposure_time']) + 0.01
-        query = query.filter(Header.exposure_time > exptime_lo).filter(Header.exposure_time < exptime_hi)
-
-        # Absolute time separation must be within 6 months
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=180), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .dark(processed)
+                .match_descriptors(Niri.data_section,
+                                   Niri.read_mode,
+                                   Niri.well_depth_setting,
+                                   Niri.coadds)
+                # Exposure time must match to within 0.01 (nb floating point match). Coadds must also match.
+                # nb exposure_time is really exposure_time * coadds, but if we're matching both, that doesn't matter
+                .tolerance(exposure_time = 0.01)
+                # Absolute time separation must be within 6 months
+                .max_interval(days=180)
+                .limit(howmany)
+                .all()
+            )
 
     def flat(self, processed=False, howmany=None):
-        query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
-        query = query.filter(Header.observation_type == 'FLAT')
+        if howmany is None:
+            howmany = 1 if processed else 10
 
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_FLAT')
-            # Default number to associate
-            howmany = howmany if howmany else 1
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Default number to associate
-            howmany = howmany if howmany else 10
-
-        # Must totally match: data_section, well_depth_setting, filter_name, camera, focal_plane_mask, disperser
-        # Update from AS 20130320 - read mode should not be required to match, but well depth should.
-        query = query.filter(Niri.data_section == self.descriptors['data_section'])
-        query = query.filter(Niri.well_depth_setting == self.descriptors['well_depth_setting'])
-        query = query.filter(Niri.filter_name == self.descriptors['filter_name'])
-        query = query.filter(Niri.camera == self.descriptors['camera'])
-        query = query.filter(Niri.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(Niri.disperser == self.descriptors['disperser'])
-
-        if self.descriptors['spectroscopy'] == True:
-            # Central Wavelength must match within tollerance
-            # Occassionally we get a None, so run this in a try except
-            try:
-                cenwlen_lo = float(self.descriptors['central_wavelength']) - 0.001
-                cenwlen_hi = float(self.descriptors['central_wavelength']) + 0.001
-                query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
-            except TypeError:
-                pass
-
-        # GCAL lamp should be on - these flats will then require lamp-off flats to calibrate them
-        query = query.filter(or_(Header.gcal_lamp == 'IRhigh', Header.gcal_lamp == 'IRlow'))
-
-        # Absolute time separation must be within 6 months
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=180), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .flat(processed)
+                # GCAL lamp should be on - these flats will then require lamp-off flats to calibrate them
+                .add_filters(or_(Header.gcal_lamp == 'IRhigh', Header.gcal_lamp == 'IRlow'))
+                # Must totally match: data_section, well_depth_setting, filter_name, camera, focal_plane_mask, disperser
+                # Update from AS 20130320 - read mode should not be required to match, but well depth should.
+                .match_descriptors(Niri.data_section,
+                                   Niri.well_depth_setting,
+                                   Niri.filter_name,
+                                   Niri.camera,
+                                   Niri.focal_plane_mask,
+                                   Niri.disperser)
+                .tolerance(central_wavelength = 0.001, condition=self.descriptors['spectroscopy'])
+                # Absolute time separation must be within 6 months
+                .max_interval(days=180)
+                .limit(howmany)
+                .all()
+            )
 
     def arc(self, processed=False, howmany=None):
         # Default number to associate
         howmany = howmany if howmany else 1
 
-        query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
-
-        query = query.filter(Header.observation_type == 'ARC')
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_ARC')
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-
-        # Must totally match: data_section, filter_name, camera, focal_plane_mask, disperser
-        query = query.filter(Niri.data_section == self.descriptors['data_section'])
-        query = query.filter(Niri.filter_name == self.descriptors['filter_name'])
-        query = query.filter(Niri.camera == self.descriptors['camera'])
-        query = query.filter(Niri.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(Niri.disperser == self.descriptors['disperser'])
-
-        # Central Wavelength must match within tollerance
-        # Occassionally we get a None, so run this in a try except
-        try:
-            cenwlen_lo = float(self.descriptors['central_wavelength']) - 0.001
-            cenwlen_hi = float(self.descriptors['central_wavelength']) + 0.001
-            query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
-        except TypeError:
-            pass
-
-        # Absolute time separation must be within 6 months
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=180), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .arc(processed)
+                .match_descriptors(Niri.data_section,
+                                   Niri.filter_name,
+                                   Niri.camera,
+                                   Niri.focal_plane_mask,
+                                   Niri.disperser)
+                .tolerance(central_wavelength = 0.001)
+                # Absolute time separation must be within 6 months
+                .max_interval(days=180)
+                .limit(howmany)
+                .all()
+            )
 
     @not_processed
     def lampoff_flat(self, processed=False, howmany=None):
         # Default number to associate
         howmany = howmany if howmany else 10
 
-        query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
-
-        query = query.filter(Header.observation_type == 'FLAT')
-        query = query.filter(Header.reduction == 'RAW')
-
-        # Must totally match: data_section, well_depth_setting, filter_name, camera
-        # Update from AS 20130320 - read mode should not be required to match, but well depth should.
-        query = query.filter(Niri.data_section == self.descriptors['data_section'])
-        query = query.filter(Niri.well_depth_setting == self.descriptors['well_depth_setting'])
-        query = query.filter(Niri.filter_name == self.descriptors['filter_name'])
-        query = query.filter(Niri.camera == self.descriptors['camera'])
-
-        # GCAL lamp should be off
-        query = query.filter(Header.gcal_lamp == 'Off')
-
-        # Absolute time separation must be within 1 hour of the lamp on flats
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(seconds=3600), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                .flat()
+                .add_filters(Header.gcal_lamp == 'Off')
+                .match_descriptors(Niri.data_section,
+                                   Niri.well_depth_setting,
+                                   Niri.filter_name,
+                                   Niri.camera,
+                                   Niri.disperser)
+                # Absolute time separation must be within 1 hour of the lamp on flats
+                .max_interval(seconds=3600)
+                .limit(howmany)
+                .all()
+            )
 
     @not_processed
     def photometric_standard(self, processed=False, howmany=None):
         # Default number to associate
         howmany = howmany if howmany else 10
 
-        query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
-
-        query = query.filter(Header.reduction == 'RAW')
-
-        # Phot standards are OBJECT imaging frames
-        query = query.filter(Header.observation_type == 'OBJECT')
-        query = query.filter(Header.spectroscopy == False)
-
-        # Phot standards are phot standards
-        query = query.filter(Header.phot_standard == True)
-
-        # Must match filter and camera
-        query = query.filter(Niri.filter_name == self.descriptors['filter_name'])
-        query = query.filter(Niri.camera == self.descriptors['camera'])
-
-        # Absolute time separation must be within 24 hours of the science
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
-
-        return query.all()
+        return (
+            self.get_query()
+                # Phot standards are OBJECT imaging frames
+                .raw().OBJECT().spectroscopy(False)
+                # Phot standards are phot standards
+                .add_filters(Header.phot_standard == True)
+                .match_descriptors(Niri.filter_name,
+                                   Niri.camera)
+                # Absolute time separation must be within 24 hours of the science
+                .max_interval(days=1)
+                .limit(howmany)
+                .all()
+            )
 
     @not_processed
     def telluric_standard(self, processed=False, howmany=None):
         # Default number to associate
         howmany = howmany if howmany else 10
 
-        query = self.session.query(Header).select_from(join(join(Niri, Header), DiskFile))
-
-        query = query.filter(Header.reduction == 'RAW')
-
-        # Telluric standards are OBJECT spectroscopy partnerCal frames
-        query = query.filter(Header.observation_type == 'OBJECT')
-        query = query.filter(Header.spectroscopy == True)
-        query = query.filter(Header.observation_class == 'partnerCal')
-
-        # Must match filter, camera, focal_plane_mask, disperser
-        query = query.filter(Niri.filter_name == self.descriptors['filter_name'])
-        query = query.filter(Niri.camera == self.descriptors['camera'])
-        query = query.filter(Niri.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        query = query.filter(Niri.disperser == self.descriptors['disperser'])
-
-        # Central Wavelength must match within tollerance
-        # Occassionally we get a None, so run this in a try except
-        try:
-            cenwlen_lo = float(self.descriptors['central_wavelength']) - 0.001
-            cenwlen_hi = float(self.descriptors['central_wavelength']) + 0.001
-            query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
-        except TypeError:
-            pass
-
-        # Absolute time separation must be within 24 hours of the science
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=1), limit=howmany)
-
-        return query.all()
-
+        return (
+            self.get_query()
+                # Telluric standards are OBJECT spectroscopy partnerCal frames
+                .teluric_standard(OBJECT=True, partnerCal=True)
+                .match_descriptors(Niri.filter_name,
+                                   Niri.camera,
+                                   Niri.focal_plane_mask,
+                                   Niri.disperser)
+                .tolerance(central_wavelength = 0.001)
+                # Absolute time separation must be within 24 hours of the science
+                .max_interval(days=1)
+                .limit(howmany)
+                .all()
+            )
