@@ -8,6 +8,7 @@ from ..orm.header import Header
 
 from sqlalchemy import func
 from sqlalchemy.orm import join
+from datetime import timedelta
 
 # A common theme across calibrations is that some of them don't handle processed data
 # and will just return an empty list of calibs. This decorator is just some syntactic
@@ -65,9 +66,10 @@ class CalQuery(object):
 
         return self
 
-    def max_interval(self, max_interval):
-        datetime_lo = self.descr['ut_datetime'] - max_interval
-        datetime_hi = self.descr['ut_datetime'] + max_interval
+    def max_interval(self, **kw):
+        max_int = timedelta(**kw)
+        datetime_lo = self.descr['ut_datetime'] - max_int
+        datetime_hi = self.descr['ut_datetime'] + max_int
         targ_ut_dt_secs = int((self.descr['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
 
         self.query = (self.query.filter(Header.ut_datetime > datetime_lo) # Absolute time separation

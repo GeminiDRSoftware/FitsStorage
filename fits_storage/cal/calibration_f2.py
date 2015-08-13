@@ -2,8 +2,6 @@
 This module holds the CalibrationF2 class
 """
 
-import datetime
-
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.f2 import F2
@@ -90,7 +88,7 @@ class CalibrationF2(Calibration):
                 .match_descriptors(Header.exposure_time,
                                    F2.read_mode)
                 # Must totally match: read_mode, exposure_time
-                .max_interval(datetime.timedelta(days=90))
+                .max_interval(days=90)
                 .limit(howmany)
                 .all()
             )
@@ -113,7 +111,7 @@ class CalibrationF2(Calibration):
                                    *CalibrationF2.common_descriptors())
                 .tolerance(central_wavelenght=0.001, condition=self.descriptors['spectroscopy'])
                 # Absolute time separation must be within 3 months
-                .max_interval(datetime.timedelta(days=90))
+                .max_interval(days=90)
                 .limit(howmany)
                 .all()
             )
@@ -129,7 +127,7 @@ class CalibrationF2(Calibration):
                 .match_descriptors(*CalibrationF2.common_descriptors())
                 .tolerance(central_wavelenght=0.001)
                 # Absolute time separation must be within 3 months
-                .max_interval(datetime.timedelta(days=90))
+                .max_interval(days=90)
                 .limit(howmany)
                 .all()
             )
@@ -146,7 +144,7 @@ class CalibrationF2(Calibration):
                 .match_descriptors(F2.filter_name,
                                    F2.lyot_stop)
                 # Absolute time separation must be within 24 hours of the science
-                .max_interval(datetime.timedelta(days=1))
+                .max_interval(days=1)
                 .limit(howmany)
                 .all()
             )
@@ -163,7 +161,7 @@ class CalibrationF2(Calibration):
                 .match_descriptors(*CalibrationF2.common_descriptors())
                 .tolerance(central_wavelength=0.001)
                 # Absolute time separation must be within 24 hours of the science
-                .max_interval(datetime.timedelta(days=1))
+                .max_interval(days=1)
                 .limit(howmany)
                 .all()
             )

@@ -1,8 +1,6 @@
 """
 This module holds the CalibrationGNIRS class
 """
-import datetime
-
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.gnirs import Gnirs
@@ -95,7 +93,7 @@ class CalibrationGNIRS(Calibration):
                                    Gnirs.well_depth_setting,
                                    Gnirs.coadds)
                 # Absolute time separation must be within 3 months
-                .max_interval(datetime.timedelta(days=90))
+                .max_interval(days=90)
                 .limit(howmany)
                 .all()
             )
@@ -137,7 +135,7 @@ class CalibrationGNIRS(Calibration):
                 # Lamp selection (see comments above)
                 .add_filters(Header.gcal_lamp == 'IRhigh')
                 # Absolute time separation must be within 3 months
-                .max_interval(datetime.timedelta(days=90))
+                .max_interval(days=90)
                 .limit(howmany)
                 .all()
             )
@@ -159,7 +157,7 @@ class CalibrationGNIRS(Calibration):
                                    Gnirs.filter_name,
                                    Gnirs.camera)
                 # Absolute time separation must be within 1 year
-                .max_interval(datetime.timedelta(days=365))
+                .max_interval(days=365)
                 .limit(howmany)
                 .all()
             )
@@ -179,7 +177,7 @@ class CalibrationGNIRS(Calibration):
                                    Gnirs.disperser,
                                    Gnirs.camera)
                 # Absolute time separation must be within 1 year
-                .max_interval(datetime.timedelta(days=365))
+                .max_interval(days=365)
                 .limit(howmany)
                 .all()
             )
@@ -196,7 +194,7 @@ class CalibrationGNIRS(Calibration):
             self.get_gnirs_flat_query(processed=False) # lampoff flats are just Raw flats...
                 .add_filters(Header.gcal_lamp == 'Off')
                 # Absolute time separation must be within 1 day
-                .max_interval(datetime.timedelta(days=1))
+                .max_interval(days=1)
                 .limit(howmany)
                 .all()
             )
@@ -222,7 +220,7 @@ class CalibrationGNIRS(Calibration):
                 # ... with QH GCAL lamp
                 .add_filters(Header.gcal_lamp == 'QH')
                 # Absolute time separation must be within 3 months
-                .max_interval(datetime.timedelta(days=90))
+                .max_interval(days=90)
                 .limit(howmany)
                 .all()
             )
@@ -244,7 +242,7 @@ class CalibrationGNIRS(Calibration):
                                    Gnirs.camera,
                                    Gnirs.filter_name)
                 # Absolute time separation must be within 1 day
-                .max_interval(datetime.timedelta(days=1))
+                .max_interval(days=1)
                 .limit(howmany)
                 .all()
             )
