@@ -1,6 +1,5 @@
 import pytest
-from fits_storage.utils.ingestqueue import IngestQueue, add_to_ingestqueue, ingest_file
-from fits_storage.utils.ingestqueue import pop_ingestqueue, ingestqueue_length
+from fits_storage.utils.ingestqueue import IngestQueue, IngestQueueUtil
 
 from fits_storage.utils.previewqueue import PreviewQueue
 from fits_storage.utils.previewqueue import pop_previewqueue
@@ -22,13 +21,18 @@ FILES_TO_INGEST = (
 # dummy_logger = logging.getLogger()
 dummy_logger = logging.getLogger('dummy')
 
+@pytest.yield_fixture(scope="module")
+def ingest_util(request, session):
+    yield IngestQueueUtil(session, dummy_logger)
+    session.commit()
+
 @pytest.yield_fixture()
-def add_to_iq(request, session, testfile_path):
+def add_to_iq(request, session, ingest_util, testfile_path):
     nobz2lst = []
     for f in FILES_TO_INGEST:
         path = testfile_path(f)
         filename = os.path.basename(path)
-        add_to_ingestqueue(session, dummy_logger, filename, os.path.dirname(path))
+        ingest_util.add_to_queue(filename, os.path.dirname(path))
         nobz2lst.append(filename)
 
     yield nobz2lst
@@ -38,25 +42,25 @@ def add_to_iq(request, session, testfile_path):
 
 @pytest.mark.usefixtures("rollback")
 class TestIngestQueue:
-    def test_ingestqueue_length(self, session, add_to_iq):
-        assert ingestqueue_length(session) == len(add_to_iq)
+    def test_ingestqueue_length(self, ingest_util, add_to_iq):
+        assert ingest_util.length() == len(add_to_iq)
 
-    def test_ingestqueue_pop(self, session, add_to_iq):
+    def test_ingestqueue_pop(self, ingest_util, add_to_iq):
         files = set(add_to_iq)
-        while ingestqueue_length(session) > 0:
-            obj = pop_ingestqueue(session, dummy_logger)
+        while ingest_util.length() > 0:
+            obj = ingest_util.pop()
             files.remove(obj.filename)
         assert len(files) == 0
 
 @pytest.mark.usefixtures("rollback")
 class TestPreviewQueue:
     @pytest.yield_fixture()
-    def ingest_from_queue(self, request, session, add_to_iq):
+    def ingest_from_queue(self, request, session, ingest_util, add_to_iq):
         cnt = 0
         while True:
             try:
-                iq = pop_ingestqueue(session, dummy_logger)
-                cnt += ingest_file(session, dummy_logger, iq.filename, iq.path, force_md5=False, force=True, skip_fv=True, skip_md=True)
+                iq = ingest_util.pop()
+                cnt += ingest_util.ingest_file(iq.filename, iq.path, force_md5=False, force=True, skip_fv=True, skip_md=True)
             except AttributeError:
                 break
 

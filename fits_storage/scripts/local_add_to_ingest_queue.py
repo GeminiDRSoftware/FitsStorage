@@ -7,7 +7,7 @@ import time
 from fits_storage.orm import sessionfactory
 from fits_storage.fits_storage_config import storage_root
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.utils.ingestqueue import add_to_ingestqueue
+from fits_storage.utils.ingestqueue import IngestQueueUtil
 
 # Option Parsing
 from optparse import OptionParser
@@ -73,7 +73,7 @@ for fullfilename in thefiles:
     i += 1
     logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
     
-    add_to_ingestqueue(session, filename, path)
+    IngestQueueUtil(session, filename).add_to_queue(path)
 
 session.close()
 logger.info("*** local_add_to_ingestqueue.py exiting normally at %s" % datetime.datetime.now())

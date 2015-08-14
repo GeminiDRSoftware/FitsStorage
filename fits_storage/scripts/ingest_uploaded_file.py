@@ -9,7 +9,7 @@ from fits_storage.orm.fileuploadlog import FileUploadLog
 
 from fits_storage.fits_storage_config import storage_root, upload_staging_path, processed_cals_path, using_s3
 from fits_storage.logger import logger, setdemon, setdebug
-from fits_storage.utils.ingestqueue import add_to_ingestqueue
+from fits_storage.utils.ingestqueue import IngestQueueUtil
 
 if(using_s3):
     from fits_storage.fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
@@ -95,7 +95,7 @@ try:
 
 
     logger.info("Queueing for Ingest: %s" % dst)
-    iq_id = add_to_ingestqueue(session, logger, options.filename, path)
+    iq_id = IngestQueueUtil(session, logger).add_to_queue(options.filename, path)
 
     if fileuploadlog:
         fileuploadlog.ingestqueue_id = iq_id

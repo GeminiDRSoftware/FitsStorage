@@ -5,7 +5,7 @@ import datetime
 from fits_storage.orm import sessionfactory
 from fits_storage.fits_storage_config import storage_root
 from fits_storage.logger import logger, setdemon, setdebug
-from fits_storage.utils.ingestqueue import add_to_ingestqueue
+from fits_storage.utils.ingestqueue import IngestQueueUtil
 
 
 # Option Parsing
@@ -49,7 +49,7 @@ class HandleEvents(pyinotify.ProcessEvent):
                 logger.info("Dryrun mode - not actually adding to ingest queue: %s" % event.name)
             else:
                 logger.info("Adding to Ingest Queue: %s" % event.name)
-                add_to_ingestqueue(session, event.name, '')
+                IngestQueueUtil(session, logger).add_to_queue(event.name, '')
 
 
 # Create the notifier

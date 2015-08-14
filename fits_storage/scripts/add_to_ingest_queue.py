@@ -1,7 +1,7 @@
 from fits_storage.orm import sessionfactory
 from fits_storage.fits_storage_config import storage_root, using_s3
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.utils.ingestqueue import add_to_ingestqueue
+from fits_storage.utils.ingestqueue import IngestQueueUtil
 import os
 import re
 import datetime
@@ -127,8 +127,7 @@ session = sessionfactory()
 for filename in thefiles:
     i += 1
     logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
-    add_to_ingestqueue(session, logger, filename, path, force=options.force, force_md5=options.force_md5, after=options.after)
+    IngestQueueUtil(session, logger).add_to_queue(filename, path, force=options.force, force_md5=options.force_md5, after=options.after)
 
 session.close()
 logger.info("*** add_to_ingestqueue.py exiting normally at %s" % datetime.datetime.now())
-

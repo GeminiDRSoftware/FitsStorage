@@ -2,7 +2,7 @@
 from fits_storage.orm import sessionfactory
 from fits_storage.orm.ingestqueue import IngestQueue
 from fits_storage.fits_storage_config import using_s3, storage_root, defer_seconds, fits_lockfile_dir, export_destinations
-from fits_storage.utils.ingestqueue import ingest_file, pop_ingestqueue, ingestqueue_length
+from fits_storage.utils.ingestqueue import IngestQueueUtil
 from fits_storage.utils.exportqueue import add_to_exportqueue
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 import signal
@@ -106,12 +106,13 @@ if options.lockfile:
         lfd.close()
 
 session = sessionfactory()
+ingest_queue = IngestQueueUtil(session, logger)
 
 # Loop forever. loop is a global variable defined up top
 while loop:
     try:
         # Request a queue entry
-        iq = pop_ingestqueue(session, logger, options.fast_rebuild)
+        iq = ingest_queue.pop(options.fast_rebuild)
 
         if iq is None:
             if options.empty:
@@ -125,7 +126,7 @@ while loop:
             if options.fast_rebuild:
                 logger.info("Ingesting %s", iq.filename)
             else:
-                logger.info("Ingesting %s, (%d in queue)", iq.filename, ingestqueue_length(session))
+                logger.info("Ingesting %s, (%d in queue)", iq.filename, ingest_queue.length())
 
             # Check if the file was very recently modified or is locked, defer ingestion if it was
             if (not using_s3) and (options.no_defer == False):
@@ -173,7 +174,7 @@ while loop:
 
 
             try:
-                added_diskfile = ingest_file(session, logger, iq.filename, iq.path, iq.force_md5, iq.force, options.skip_fv, options.skip_wmd, options.make_previews)
+                added_diskfile = ingest_queue.ingest_file(iq.filename, iq.path, iq.force_md5, iq.force, options.skip_fv, options.skip_wmd, options.make_previews)
                 # Now we also add this file to our export list if we have downstream servers and we did add a diskfile
                 if added_diskfile:
                     for destination in export_destinations:

@@ -1,7 +1,7 @@
 from fits_storage.orm import sessionfactory
 from fits_storage.fits_storage_config import storage_root, using_s3, fits_lockfile_dir
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.utils.ingestqueue import add_to_ingestqueue
+from fits_storage.utils.ingestqueue import IngestQueueUtil
 import sys
 import os
 import re
@@ -182,7 +182,7 @@ while loop:
             logger.debug("Getting Session")
             session = sessionfactory()
             logger.debug("Adding file")
-            add_to_ingestqueue(session, logger, filename, path, force=options.force, force_md5=options.force_md5)
+            IngestQueueUtil(session, logger).add_to_queue(filename, path, force=options.force, force_md5=options.force_md5)
             session.commit()
             logger.debug("Committed")
             session.close()
