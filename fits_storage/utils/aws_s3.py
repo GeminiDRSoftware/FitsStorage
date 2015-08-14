@@ -13,6 +13,35 @@ from ..logger import logger
 from .hashes import md5sum
 
 from boto.s3.key import Key
+from boto.s3.connection import S3Connection
+from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
+
+class S3Helper(object):
+    def __init__(self):
+        # These will hold the bucket and the key
+        self.b = None
+        self.key = None
+
+    @property
+    def bucket(self):
+        if self.b is None:
+            self.b = S3Connection(aws_access_key, aws_secret_key).get_bucket(s3_bucket_name)
+
+        return self.b
+
+    def reset_key(self):
+        self.key = None
+
+    def set_key(self, path)
+        self.key = self.bucket.get_key(path)
+
+        return key
+
+    def get_md5(self):
+        return get_s3_md5(self.key)
+
+    def fetch_to_stagging(self, path, filename, fullpath=None):
+        return fetch_to_stagging(self.bucket, path, filename, self.key, fullpath)
 
 def get_s3_md5(key):
     """
