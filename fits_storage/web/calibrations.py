@@ -51,6 +51,12 @@ def calibrations(req, selection):
 
         query = queryselection(query, selection)
 
+        # If openquery, decline to do it
+        if openquery(selection):
+           req.write("<H2>Your search criteria are not sufficiently constrained to do a calibrations search.</H2>")
+           req.write("</body></html>")
+           return HTTP_OK
+
         # Knock out the FAILs
         # Knock out ENG programs
         # Disregard SV-101. This is an undesirable hardwire
@@ -60,9 +66,6 @@ def calibrations(req, selection):
                      .filter(~Header.program_id.like('%SV-101%'))\
                      .order_by(desc(Header.ut_datetime))
 
-        # If openquery, limit number of responses
-        if openquery(selection):
-            query = query.limit(1000)
 
         # OK, do the query
         headers = query.all()
