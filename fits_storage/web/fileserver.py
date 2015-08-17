@@ -194,6 +194,9 @@ def download(req, things):
         readme += "We have included a file listing the md5sums of the data files in here.\n"
         readme += "If you have the 'md5sum' utility installed (most Linux machines at least),\n"
         readme += "You can verify file integrity by running 'md5sum -c md5sums.txt'.\n\n"
+        if associated_calibrations:
+            readme += "Note that this download was from an assoicated calibrations page -\n"
+            readme += "it only contains the calibration files that are associated with the science query.\n\n"
         if denied:
             readme += "The following files in your search results were not included,\n"
             readme += "because they are proprietary data that you do not have access to:\n"
