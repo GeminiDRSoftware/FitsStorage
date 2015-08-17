@@ -38,7 +38,7 @@ class ExportQueue(Base):
     def rebuild(session, element):
         session.query(ExportQueue)\
             .filter(ExportQueue.inprogress == False)\
-            .filter(ExportQueue.filename == eq.filename)\
+            .filter(ExportQueue.filename == element.filename)\
             .delete()
 
     def __repr__(self):
