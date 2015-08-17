@@ -37,6 +37,9 @@ if using_s3:
 
 from ..utils.userprogram import icanhave
 
+def generate_filename(cals, selection):
+    return 'download.tar'
+
 def download(req, things):
     """
     This is the download server. Given a selection, it will send a tarball of the
@@ -123,8 +126,9 @@ def download(req, things):
 
         # Set up the http headers
         downloadlog.sending_files = True
+        tarfilename = generate_filename(associated_calibrations, selection)
         req.content_type = "application/tar"
-        req.headers_out['Content-Disposition'] = 'attachment; filename="download.tar"'
+        req.headers_out['Content-Disposition'] = 'attachment; filename="{}"'.format(tarfilename)
 
         if using_s3:
             s3conn = S3Connection(aws_access_key, aws_secret_key)
@@ -135,7 +139,7 @@ def download(req, things):
         # And keep a list of any files we were denied
         denied = []
         # Here goes!
-        tar = tarfile.open(name="download.tar", mode="w|", fileobj=req)
+        tar = tarfile.open(name=tarfilename, mode="w|", fileobj=req)
         for header in headers:
             filedownloadlog = FileDownloadLog(req.usagelog)
             filedownloadlog.diskfile_filename = header.diskfile.filename
