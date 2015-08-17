@@ -393,7 +393,7 @@ class SummaryGenerator(object):
                 if col['summary_func']:
                     value = getattr(self, col['summary_func'])(header)
                     if colkey == 'download' and 'N/A' not in value:
-                        can_download = True
+                        row.can_download = True
                     row.add(value)
                 elif col['header_attr']:
                     row.add(getattr(header, col['header_attr']))
