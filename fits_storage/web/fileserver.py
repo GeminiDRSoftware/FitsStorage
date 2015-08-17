@@ -37,10 +37,29 @@ if using_s3:
 
 from ..utils.userprogram import icanhave
 
+filename_elements = (
+    'program_id',
+    'observation_id',
+    'inst',
+    'date',
+    'daterange',
+    'obsclass',
+    'obstype'
+    )
+
 def generate_filename(cals, selection):
     content_type = 'data' if not cals else 'calibs'
+    name_components = []
+    for element in filename_elements:
+        if not selection.get(element):
+            continue
+        name_components.append(selection[element])
 
-    return 'gemini_{type}.tar'.format(type=content_type)
+    if name_components:
+        return 'gemini_{type}.{sel}.tar'.format(type=content_type,
+                                                sel='_'.join(name_components))
+    else:
+        return 'gemini_{type}.tar'.format(type=content_type)
 
 def download(req, things):
     """
