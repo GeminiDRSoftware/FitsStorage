@@ -37,17 +37,12 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
                     calheaders.extend(getattr(calobj, mapped_name)(**mapped_args))
 
     # Now loop through the calheaders list and remove duplicates.
-    # Only necessary if we looked at multiple headers
     ids = set()
-    if len(headers) > 1:
-        shortlist = []
-        for calheader in calheaders:
-            if calheader.id not in ids:
-                ids.add(calheader.id)
-                shortlist.append(calheader)
-    else:
-        shortlist = calheaders
-        ids.add(calheaders[0].id)
+    shortlist = []
+    for calheader in calheaders:
+        if calheader.id not in ids:
+            ids.add(calheader.id)
+            shortlist.append(calheader)
 
     # Now we have to recurse to find the calibrations for the calibrations...
     # We only do this for caltype all.
