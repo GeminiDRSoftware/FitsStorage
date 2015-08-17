@@ -38,7 +38,9 @@ if using_s3:
 from ..utils.userprogram import icanhave
 
 def generate_filename(cals, selection):
-    return 'download.tar'
+    content_type = 'data' if not cals else 'calibs'
+
+    return 'gemini_{type}.tar'.format(type=content_type)
 
 def download(req, things):
     """
