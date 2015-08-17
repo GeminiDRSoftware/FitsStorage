@@ -47,7 +47,7 @@ class Row(object):
         ce = 'TD' if not self.is_header else 'TH'
         rc = (" class='" + class_ + "'") if class_ else ""
 
-        pattern = "<TR{row_class}>" + ''.join("<{col_element}>" + x + "</{col_element}>" for x in self.columns) + "</TR>"
+        pattern = "<TR{row_class}>" + ''.join("<{col_element}>" + str(x) + "</{col_element}>" for x in self.columns) + "</TR>"
 
         return pattern.format(row_class=rc, col_element=ce)
 
