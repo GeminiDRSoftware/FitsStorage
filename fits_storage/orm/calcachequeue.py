@@ -30,7 +30,7 @@ class CalCacheQueue(Base):
     def rebuild(session, element):
         session.query(CalCacheQueue)\
                 .filter(CalCacheQueue.inprogress == False)\
-                .filter(CalCacheQueue.obs_hid == ccq.obs_hid)\
+                .filter(CalCacheQueue.obs_hid == element.obs_hid)\
                 .delete()
 
     def __init__(self, obs_hid, sortkey=None):
