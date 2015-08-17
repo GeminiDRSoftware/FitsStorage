@@ -43,6 +43,9 @@ class S3Helper(object):
     def fetch_to_stagging(self, path, filename, fullpath=None):
         return fetch_to_stagging(self.bucket, path, filename, self.key, fullpath)
 
+    def upload_file(self, keyname, filename, logger):
+        return upload_file(self.bucket, keyname, filename, logger)
+
 def get_s3_md5(key):
     """
     Get the MD5 that the S3 server hs for this key.

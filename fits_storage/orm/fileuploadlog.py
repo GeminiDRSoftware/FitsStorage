@@ -1,3 +1,4 @@
+import datetime
 
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, Boolean
@@ -53,3 +54,28 @@ class FileUploadLog(Base):
             self.notes = note
         else:
             self.notes += "\n" + note
+
+class FileUploadWrapper(object):
+    def __init__(self, fileuploadlog = None):
+        self.ful = fileuploadlog
+
+    def __getattr__(self, name):
+        return getattr(self.ful, name)
+
+    def set_wrapped(self, ful):
+        self.ful = ful
+
+    def __enter__(self):
+        try:
+            self.ful.s3_ut_start = datetime.datetime.utcnow()
+        except AttributeError:
+            # The file upload log is None - act as dummy
+            pass
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type is None:
+            try:
+                self.ful.s3_ut_end = datetime.datetime.utcnow()
+            except AttributeError:
+                # The file upload log is None - act as dummy
+                pass

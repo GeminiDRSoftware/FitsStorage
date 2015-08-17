@@ -5,18 +5,15 @@ import datetime
 import shutil
 
 from fits_storage.orm import sessionfactory
-from fits_storage.orm.fileuploadlog import FileUploadLog
+from fits_storage.orm.fileuploadlog import FileUploadLog, FileUploadWrapper
 
 from fits_storage.fits_storage_config import storage_root, upload_staging_path, processed_cals_path, using_s3
 from fits_storage.logger import logger, setdemon, setdebug
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 
-if(using_s3):
+if using_s3:
     from fits_storage.fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
-    from boto.s3.connection import S3Connection
-    from boto.s3.key import Key
-    from fits_storage.utils.aws_s3 import upload_file
-
+    from fits_storage.utils.aws_s3 import S3Helper
 
 # Option Parsing
 from optparse import OptionParser
@@ -49,33 +46,30 @@ else:
 
 session = sessionfactory()
 try:
+    # The fileuploadwrapper acts as a Context Manager (to set times) and as a dummy
+    # FileUploadLog, in case that we don't get an id. Makes the code simpler
+
+    fileuploadlog = FileUploadWrapper()
     # Find the upload log entry to update
     if options.fileuploadlog_id:
-        fileuploadlog = session.query(FileUploadLog).filter(FileUploadLog.id == options.fileuploadlog_id).one()
-    else:
-        fileuploadlog = None
+        fileuploadlog.set_wrapped(session.query(FileUploadLog)
+                                         .filter(FileUploadLog.id == options.fileuploadlog_id)
+                                         .one())
 
     # Move the file to its appropriate loaction in storage_root/path or S3
     # Construct the full path names and move the file into place
     src = os.path.join(upload_staging_path, options.filename)
     dst = os.path.join(path, options.filename)
 
-    if fileuploadlog:
-        fileuploadlog.destination = dst
+    fileuploadlog.destination = dst
 
-    if(using_s3):
+    if using_s3:
         # Copy to S3
         try:
             logger.debug("Connecting to S3")
-            s3conn = S3Connection(aws_access_key, aws_secret_key)
-            bucket = s3conn.get_bucket(s3_bucket_name)
-            logger.info("Uploading %s to S3 as %s" % (src, dst))
-            if fileuploadlog:
-                fileuploadlog.s3_ut_start = datetime.datetime.utcnow()
-            ok = upload_file(bucket, dst, src, logger)
-            if fileuploadlog:
-                fileuploadlog.s3_ut_end = datetime.datetime.utcnow()
-                fileuploadlog.s3_ok = ok
+            s3 = S3Helper(session, logger)
+            with fileuploadlog:
+                fileuploadlog.s3_ok = s3.upload_file(dst, src)
             os.unlink(src)
         except:
             string = traceback.format_tb(sys.exc_info()[2])
@@ -90,15 +84,12 @@ try:
         # Instead, we copy the file and the remove it
         shutil.copy(src, dst)
         os.unlink(src)
-        if fileuploadlog:
-            fileuploadlog.file_ok = True
-
+        fileuploadlog.file_ok = True
 
     logger.info("Queueing for Ingest: %s" % dst)
     iq_id = IngestQueueUtil(session, logger).add_to_queue(options.filename, path)
 
-    if fileuploadlog:
-        fileuploadlog.ingestqueue_id = iq_id
+    fileuploadlog.ingestqueue_id = iq_id
 
 except:
     string = traceback.format_tb(sys.exc_info()[2])
