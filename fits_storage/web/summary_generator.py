@@ -430,7 +430,7 @@ class SummaryGenerator(object):
             if self.links != NO_LINKS:
                 html += ' <a href="/mdreport/%d" target="_blank">-md!</a>' % (header.diskfile.id)
             else:
-                html += ' -md!' % (header.diskfile.id)
+                html += ' -md!'
 
         return html
 
