@@ -10,10 +10,8 @@ from optparse import OptionParser
 
 from fits_storage.fits_storage_config import using_s3
 
-if(using_s3):
-    from boto.s3.connection import S3Connection
-    from fits_storage.fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
-
+if using_s3:
+    from fits_storage.utils.aws_s3 import S3Helper
 
 parser = OptionParser()
 parser.add_option("--limit", action="store", type="int", help="specify a limit on the number of files to examine. The list is sorted by lastmod time before the limit is applied")
@@ -35,7 +33,6 @@ logger.info("*********    rollcall.py - starting up at %s" % datetime.datetime.n
 session = sessionfactory()
 
 # Get a list of all diskfile_ids marked as present
-# If we try and really brute force a list of DiskFile objects, we run out of memory...
 query = session.query(DiskFile.id).select_from(join(DiskFile, File)).filter(DiskFile.present == True).order_by(DiskFile.lastmod)
 
 if(options.filepre):
@@ -50,35 +47,22 @@ logger.info("evaluating number of rows...")
 n = query.count()
 logger.info("%d files to check" % n)
 
-# Semi Brute force approach for now. 
-# It might be better to find some way to retrieve the items from the DB layer one at a time...
-# If we try and really brute force a list of DiskFile objects, we run out of memory...
-logger.info("Getting list...")
-list = query.all()
 logger.info("Starting checking...")
 
-if(using_s3):
-    # Connect to S3
+if using_s3:
     logger.debug("Connecting to s3")
-    s3conn = S3Connection(aws_access_key, aws_secret_key)
-    bucket = s3conn.get_bucket(s3_bucket_name)
+    s3 = S3Helper()
 
 i = 0
 j = 0
 missingfiles = []
-for dfid in list:
-    # Search for it by ID (is there a better way?)
-    df = session.query(DiskFile).filter(DiskFile.id == dfid[0]).one()
-    exists = True
-    if(using_s3):
+for df in query:
+    if using_s3:
         logger.debug("Getting s3 key for %s" % df.filename)
-        key=bucket.get_key(df.filename)
-        if(key is None):
-            exists = False
+        exists = s3.get_key(df.filename) is not None
     else:
-        if(not df.exists()):
-            # This one doesn't actually exist
-            exists = False
+        # Make it false if this one doesn't actually exist
+        exists = df.exists()
 
     if(exists == False):
         df.present = False

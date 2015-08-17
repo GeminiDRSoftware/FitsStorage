@@ -32,10 +32,13 @@ class S3Helper(object):
     def reset_key(self):
         self.key = None
 
-    def set_key(self, path)
-        self.key = self.bucket.get_key(path)
+    def set_key(self, path):
+        self.key = self.get_key(path)
 
         return key
+
+    def get_key(self, path):
+        return self.bucket.get_key(path)
 
     def get_md5(self):
         return get_s3_md5(self.key)
