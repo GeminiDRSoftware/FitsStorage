@@ -4,7 +4,7 @@ from fits_storage.orm.previewqueue import PreviewQueue
 from fits_storage.orm.diskfile import DiskFile
 
 from fits_storage.fits_storage_config import fits_lockfile_dir
-from fits_storage.utils.previewqueue import pop_previewqueue, make_preview
+from fits_storage.utils.previewqueue import PreviewQueueUtil
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 import signal
 import sys
@@ -102,11 +102,12 @@ if options.lockfile:
 
 session = sessionfactory()
 
+prev_queue = PreviewQueueUtil(session, logger)
 # Loop forever. loop is a global variable defined up top
 while loop:
     try:
         # Request a queue entry
-        pq = pop_previewqueue(session, logger)
+        pq = prev_queue.pop()
 
         if pq is None:
             logger.info("Nothing on queue.")
@@ -120,11 +121,7 @@ while loop:
 
             try:
                 # Actually make the preview here
-                # Get the diskfile
-                diskfile = session.query(DiskFile).filter(DiskFile.id == pq.diskfile_id).one()
-                # make the preview
-                logger.info("Making preview for %d: %s", pq.diskfile_id, diskfile.filename)
-                make_preview(session, logger, diskfile)
+                prev_queue.process(pq, make=True)
             except:
                 logger.info("Problem Making Preview - Rolling back")
                 logger.error("Exception making preview %s: %s : %s... %s", pq.diskfile_id, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
@@ -132,7 +129,7 @@ while loop:
                 # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
                 # pq.inprogress=False
                 raise
-            logger.debug("Deleteing previewqueue id %d", pq.id)
+            logger.debug("Deleting previewqueue id %d", pq.id)
             # pq is a transient ORM object, find it in the db
             dbpq = session.query(PreviewQueue).filter(PreviewQueue.id == pq.id).one()
             session.delete(dbpq)

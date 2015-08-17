@@ -15,7 +15,7 @@ from ..fits_storage_config import storage_root, using_sqlite, using_s3, using_pr
 from . import queue
 
 if using_previews:
-    from .previewqueue import make_preview
+    from .previewqueue import PreviewQueueUtil
 
 from ..orm.file import File
 from ..orm.diskfile import DiskFile
@@ -33,7 +33,6 @@ from ..orm.gsaoi import Gsaoi
 from ..orm.nici import Nici
 from ..orm.gpi import Gpi
 from ..orm.ingestqueue import IngestQueue
-from ..orm.previewqueue import PreviewQueue
 from ..orm.obslog import Obslog
 
 from astrodata import AstroData
@@ -59,6 +58,8 @@ class IngestQueueUtil(object):
     def __init__(self, session, logger):
         self.s = session
         self.l = logger
+        if using_previews:
+            self.preview = PreviewQueueUtil(self.s, self.l)
         if using_s3:
             self.s3 = S3Helper()
 
@@ -270,16 +271,7 @@ class IngestQueueUtil(object):
             # Do the preview here.
             try:
                 if using_previews:
-                    if make_previews:
-                        # Go ahead and make the preview now
-                        self.l.debug("Making Preview")
-                        make_preview(self.s, self.l, diskfile)
-                    else:
-                        # Add it to the preview queue
-                        self.l.debug("Adding to preview queue")
-                        pq = PreviewQueue(diskfile)
-                        self.s.add(pq)
-                    self.s.commit()
+                    self.preview.process(diskfile, make=make_previews)
             except:
                 self.l.error("Error making preview for %s", diskfile.filename)
 

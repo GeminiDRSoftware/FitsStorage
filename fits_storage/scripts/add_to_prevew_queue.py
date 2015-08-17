@@ -1,7 +1,7 @@
 from fits_storage.orm import sessionfactory
-from fits_storage.orm.previewqueue import PreviewQueue
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.header import Header
+from fits_storage.utils.previewqueue import PreviewQueueUtil
 from fits_storage.logger import logger, setdebug, setdemon
 import datetime
 import sys
@@ -27,7 +27,7 @@ logger.info("*********    add_to_preview_queue.py - starting up at %s" % datetim
 if (not options.file_pre) and (not options.all):
     logger.error("You must give either a file_pre, or use the all flag")
     sys.exit(1)
-    
+
 session = sessionfactory()
 try:
     # Get a list of diskfile IDs to queue.
@@ -45,11 +45,8 @@ try:
     dfs = query.all()
 
     logger.info("Got %d diskfileitems to queue" % len(dfs))
-    
-    for df in dfs:
-        logger.info("Adding PreviewQueue with diskfile_id %s", df.id)
-        pq = PreviewQueue(df)
-        session.add(pq)
+
+    PreviewQueueUtil(session, logger).process(dfs)
 
     session.commit()
 

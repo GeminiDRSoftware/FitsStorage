@@ -8,6 +8,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm.exc import ObjectDeletedError
 from sqlalchemy.orm import make_transient
 
+from ..orm.diskfile import DiskFile
 from ..orm.preview import Preview
 from ..orm.previewqueue import PreviewQueue
 
@@ -18,281 +19,14 @@ from ..fits_storage_config import using_s3, storage_root, preview_path, z_stagin
 import bz2
 
 if using_s3:
-    from ..fits_storage_config import s3_staging_area, s3_bucket_name, aws_access_key, aws_secret_key
-    from aws_s3 import fetch_to_staging, upload_file
-    from boto.s3.connection import S3Connection
-    from boto.s3.key import Key
+    from ..fits_storage_config import s3_staging_area
+    from aws_s3 import S3Helper
 
 from astrodata import AstroData
 import numpy
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-
-pop_previewqueue = functools.partial(queue.pop_queue, PreviewQueue, fast_rebuild = True)
-
-def make_preview(session, logger, diskfile):
-    """
-    Make the preview, given the diskfile.
-    This can be called from within service_ingest_queue ingest_file, in which case
-    - it will use the pre-fetched / pre-decompressed / pre-opened astrodata object if possible
-    - the diskfile object should contain an ad_object member which is an AstroData instance
-    It can also be called by service_preview_queue in which case we won't have that so it will
-    then either open the file or fetch it from S3 as appropriate etc.
-    """
-
-    # Setup the preview file
-    preview_filename = diskfile.filename + "_preview.jpg"
-    if using_s3:
-        # Create the file in s3_staging_area
-        preview_fullpath = os.path.join(s3_staging_area, preview_filename)
-    else:
-        # Create the preview filename 
-        preview_fullpath = os.path.join(storage_root, preview_path, preview_filename)
-
-    # Connect to S3?
-    if using_s3:
-        logger.debug("Connecting to S3")
-        s3conn = S3Connection(aws_access_key, aws_secret_key)
-        bucket = s3conn.get_bucket(s3_bucket_name)
-
-    # render the preview jpg
-    # Are we responsible for creating an AstroData instance, or is there one for us?
-    our_dfado = diskfile.ad_object == None
-    our_dfcc = False
-    if our_dfado:
-        if using_s3:
-            # Fetch from S3 to staging area
-            fetch_to_staging(bucket, diskfile.path, diskfile.filename)
-
-        if diskfile.compressed:
-            # Create the uncompressed cache filename and unzip to it
-            nonzfilename = diskfile.filename[:-4]
-            diskfile.uncompressed_cache_file = os.path.join(z_staging_area, nonzfilename)
-            if os.path.exists(diskfile.uncompressed_cache_file):
-                os.unlink(diskfile.uncompressed_cache_file)
-            in_file = bz2.BZ2File(diskfile.fullpath(), mode='rb')
-            out_file = open(diskfile.uncompressed_cache_file, 'w')
-            out_file.write(in_file.read())
-            in_file.close()
-            out_file.close()
-            our_dfcc = True
-            ad_fullpath = diskfile.uncompressed_cache_file
-        else:
-            # Just use the diskfile fullpath
-            ad_fullpath = diskfile.fullpath()
-        # Open the astrodata instance
-        diskfile.ad_object = AstroData(ad_fullpath)
-
-    # Now there should be a diskfile.ad_object, either way...
-    fp = open(preview_fullpath, 'w')
-    try:
-        render_preview(diskfile.ad_object, fp, logger)
-        fp.close()
-    except:
-        os.unlink(preview_fullpath)
-        raise
-
-    # Do any cleanup from above
-    if our_dfado:
-        diskfile.ad_object.close()
-        if using_s3:
-            os.unlink(diskfile.fullpath())
-        if our_dfcc:
-            os.unlink(ad_fullpath)
-
-    # Now we should have a preview in fp. Close the file-object
-
-    # If we're not using S3, that's it, the file is in place.
-    # If we are using s3, need to upload it now.
-    if using_s3:
-        upload_file(bucket, preview_filename, preview_fullpath, logger)
-        os.unlink(preview_fullpath)
-
-    # Add to preview table
-    preview = Preview(diskfile, preview_filename)
-    session.add(preview)
-
-    
-def render_preview(ad, outfile, logger):
-    """
-    Pass in an astrodata object and a file-like outfile.
-    This function will create a jpeg rendering of the ad object
-    and write it to the outfile
-    """
-
-    if 'GMOS' in str(ad.instrument()):
-        # Find max extent in detector pixels
-        xmin = 10000
-        ymin = 10000
-        xmax = 0
-        ymax = 0
-        ds = ad.detector_section().as_dict()
-        for i in ds.values():
-            [x1, x2, y1, y2] = i
-            xmin = x1 if x1 < xmin else xmin
-            ymin = y1 if y1 < ymin else ymin
-            xmax = x2 if x2 > xmax else xmax
-            ymax = y2 if y2 > ymax else ymax
-
-        # Divide by binning
-        xmin /= int(ad.detector_x_bin())
-        ymin /= int(ad.detector_y_bin())
-        xmax /= int(ad.detector_x_bin())
-        ymax /= int(ad.detector_y_bin())
-    
-        logger.debug("Full Image extent is: %d:%d, %d:%d", xmin, xmax, ymin, ymax)
-
-        # Make empty array for full image
-        gap = 40 # approx chip gap in pixels
-        shape = (ymax-ymin, (xmax-xmin)+2*gap)
-        full = numpy.zeros(shape, ad['SCI', 1].data.dtype)
-    
-        # Loop through ads, pasting them in. Do gmos bias and gain hack
-        for add in ad['SCI']:
-            s_xmin, s_xmax, s_ymin, s_ymax = add.data_section().as_pytype()
-            logger.debug("Source Image extent is: %d:%d, %d:%d", s_xmin, s_xmax, s_ymin, s_ymax)
-            d_xmin, d_xmax, d_ymin, d_ymax = add.detector_section().as_pytype()
-            # Figure out which chip we are and add gap padding
-            # All the gmos chips ever have been 2048 pixels in X.
-            if d_xmin == 4096 or d_xmin == 5120:
-                pad = 2*gap
-            elif d_xmin == 2048 or d_xmin == 3072:
-                pad = gap
-            else:
-                pad = 0
-            
-            d_xmin += pad
-            d_xmax += pad
-            d_xmin /= int(ad.detector_x_bin())
-            d_xmax /= int(ad.detector_x_bin())
-            d_ymin /= int(ad.detector_y_bin())
-            d_ymax /= int(ad.detector_y_bin())
-            d_xmin -= xmin
-            d_xmax -= xmin
-            d_ymin -= ymin
-            d_ymax -= ymin
-            o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section().as_pytype()
-            bias = numpy.median(add.data[o_ymin:o_ymax, o_xmin:o_xmax])
-            gain = 1.0
-            try:
-                # This throws an exception sometimes if some of the values are None?
-                gain = float(add.gain())
-            except:
-                pass
-            logger.debug("Pasting: %d:%d,%d:%d -> %d:%d,%d:%d", s_xmin, s_xmax, s_ymin, s_ymax, d_xmin, d_xmax, d_ymin, d_ymax)
-            full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
-
-        full = norm(full)
-           
-
-    elif str(ad.instrument()) == 'GSAOI':
-        gap = 125
-        size = 4096 + gap
-        shape = (size, size)
-        full = numpy.zeros(shape, ad['SCI', 1].data.dtype)
-        # Loop though ads, paste them in
-        for add in ad['SCI']:
-            [x1, x2, y1, y2] = add.detector_section().as_pytype()
-            xoffset = 0 if x1 < 2000 else gap
-            yoffset = 0 if y1 < 2000 else gap
-            logger.debug("x1 x2 y1 y2: %d %d %d %d", x1, x2, y1, y2)
-            logger.debug("xoffset yoffset", xoffset, yoffset)
-            logger.debug("full shape: %s", full[y1+yoffset:y2+yoffset, x1+xoffset:x2+xoffset].shape)
-            logger.debug("data shape: %s", add.data.shape)
-            full[y1+yoffset:y2+yoffset, x1+xoffset:x2+xoffset] = add.data
-
-        full = norm(full)
-
-    elif str(ad.instrument()) in ['TReCS', 'michelle']:
-        chopping = False
-        full_shape = (500, 660)
-        full = numpy.zeros(full_shape, numpy.float32)
-        stack_shape = (240, 320)
-        stack = numpy.zeros(stack_shape, numpy.float32)
-        # For michelle, look up the nod-chop cycle
-        cycle = ad.phu_get_key_value('CYCLE')
-        if cycle is None:
-            cycle = 'ABBA'
-        # Loop through the extensions and stack them according to nod position
-        for add in ad['SCI']:
-            # Just sum up along the 4th axis. Ahem, this is the 0th axis in numpy land
-            data = add.data
-            data = numpy.sum(data, axis=0)
-            # Now the new 0th axis is the chop position
-            # If it's two long, subtract the two, otherwise just go with first plane
-            chop_a = None
-            chop_b = None
-            if data.shape[0] == 2:
-                # Trecs
-                chopping = True
-                chop_a = data[0,:,:]
-                chop_b = data[1,:,:]
-                data = chop_a - chop_b
-            elif data.shape[0] == 3:
-                # Michelle
-                chopping = True
-                chop_a = data[1,:,:]
-                chop_b = data[2,:,:]
-                data = data[0,:,:]
-            else:
-                data = data[0,:,:]
-
-            # For the first frame, paste the two raw chop images into the full image
-            if chopping:
-                if add.extver() == 1:
-                    chop_a = norm(chop_a)
-                    chop_b = norm(chop_b)
-                    full[260:500, 0:320] = chop_a
-                    full[260:500, 340:660] = chop_b
-            else:
-                # Not chopping, but still nodding?
-                if len(ad['SCI']) > 1:
-                    if add.extver() == 1:
-                        full[260:500, 0:320] = norm(data)
-                    if add.extver() == 2:
-                        full[260:500, 340:660] = norm(data)
-
-            # Figure out if we're nod A or B
-            # TReCS has this header in each extention
-            if 'NOD' in add.header.keys():
-                nod = add.header['NOD']
-            else:
-                i = add.extver() - 1
-                j = i % len(cycle)
-                nod = cycle[j]
-            #print "Extver: %d, nod: %s" % (add.extver(), nod)
-            if nod == 'A':
-                stack += data
-            else:
-                stack -= data
-
-        # Normalise the stack and paste it into the image
-        stack = norm(stack)
-        if not chopping and len(ad['SCI']) == 1:
-            full = stack
-        else:
-            full[0:240, 180:500] = stack
-
-    else:
-        # Generic plot the first extention case
-        full = ad['SCI', 1].data
-
-        # Do a numpy squeeze on it - this collapses any axis with 1-pixel extent
-        full = numpy.squeeze(full)
-
-        full = norm(full)
-    
-    # plot without axes or frame
-    fig = plt.figure(frameon=False)
-    ax = plt.Axes(fig, [0, 0, 1, 1])
-    ax.set_axis_off()
-    fig.add_axes(ax)
-    ax.imshow(full, cmap=plt.cm.gray)
-    
-    fig.savefig(outfile, format='jpg')
-
-    plt.close()
 
 def norm(data, percentile=0.3):
     """
@@ -305,4 +39,282 @@ def norm(data, percentile=0.3):
     data = numpy.clip(data, plow, phigh)
     data -= plow
     data /= (phigh - plow)
-    return data 
+    return data
+
+class PreviewQueueUtil(object):
+    def __init__(self, session, logger):
+        self.s = session
+        self.l = logger
+        if using_s3:
+            self.s3 = S3Helper()
+
+    def pop(self):
+        return queue.pop_queue(PreviewQueue, self.s, self.l, fast_rebuild=True)
+
+    def process(self, diskfiles, make=False):
+        try:
+            iter(diskfiles)
+        except TypeError:
+            # Didn't get an iterable; Assume we were passed a single diskfile or previewqueue
+            diskfiles = (diskfiles,)
+
+        if make:
+            # Go ahead and make the preview now
+            for df in diskfiles:
+                if isinstance(df, PreviewQueue):
+                    pq = df
+                    df = self.s.query(DiskFile).get(pq.diskfile_id)
+                    self.l.debug("Making Preview for {}: {}".format(pq.id, df.filename))
+                else:
+                    self.l.debug("Making Preview with diskfile_id {}".format(df.id))
+                self.make_preview(df)
+        else:
+            # Add it to the preview queue
+            for df in diskfiles:
+                self.l.info("Adding PreviewQueue with diskfile_id {}".format(df.id))
+                pq = PreviewQueue(df)
+                self.s.add(pq)
+            self.s.commit()
+
+    def make_preview(self, diskfile):
+        """
+        Make the preview, given the diskfile.
+        This can be called from within service_ingest_queue ingest_file, in which case
+        - it will use the pre-fetched / pre-decompressed / pre-opened astrodata object if possible
+        - the diskfile object should contain an ad_object member which is an AstroData instance
+        It can also be called by service_preview_queue in which case we won't have that so it will
+        then either open the file or fetch it from S3 as appropriate etc.
+        """
+
+        # Setup the preview file
+        preview_filename = diskfile.filename + "_preview.jpg"
+        if using_s3:
+            # Create the file in s3_staging_area
+            preview_fullpath = os.path.join(s3_staging_area, preview_filename)
+        else:
+            # Create the preview filename
+            preview_fullpath = os.path.join(storage_root, preview_path, preview_filename)
+
+        # render the preview jpg
+        # Are we responsible for creating an AstroData instance, or is there one for us?
+        our_dfado = diskfile.ad_object == None
+        our_dfcc = False
+        if our_dfado:
+            if using_s3:
+                # Fetch from S3 to staging area
+                self.s3.fetch_to_staging(diskfile.path, diskfile.filename)
+
+            if diskfile.compressed:
+                # Create the uncompressed cache filename and unzip to it
+                nonzfilename = diskfile.filename[:-4]
+                diskfile.uncompressed_cache_file = os.path.join(z_staging_area, nonzfilename)
+                if os.path.exists(diskfile.uncompressed_cache_file):
+                    os.unlink(diskfile.uncompressed_cache_file)
+                with bz2.BZ2File(diskfile.fullpath(), mode='rb') as in_file, open(diskfile.uncompressed_cache_file, 'w') as out_file:
+                    out_file.write(in_file.read())
+                our_dfcc = True
+                ad_fullpath = diskfile.uncompressed_cache_file
+            else:
+                # Just use the diskfile fullpath
+                ad_fullpath = diskfile.fullpath()
+            # Open the astrodata instance
+            diskfile.ad_object = AstroData(ad_fullpath)
+
+        # Now there should be a diskfile.ad_object, either way...
+        with open(preview_fullpath, 'w') as fp:
+            try:
+                self.render_preview(diskfile.ad_object, fp)
+            except:
+                os.unlink(preview_fullpath)
+                raise
+
+        # Do any cleanup from above
+        if our_dfado:
+            diskfile.ad_object.close()
+            if using_s3:
+                os.unlink(diskfile.fullpath())
+            if our_dfcc:
+                os.unlink(ad_fullpath)
+
+        # Now we should have a preview in fp. Close the file-object
+
+        # If we're not using S3, that's it, the file is in place.
+        # If we are using s3, need to upload it now.
+        if using_s3:
+            self.s3.upload_file(preview_filename, preview_fullpath, logger)
+            os.unlink(preview_fullpath)
+
+        # Add to preview table
+        preview = Preview(diskfile, preview_filename)
+        self.s.add(preview)
+
+
+    def render_preview(self, ad, outfile):
+        """
+        Pass in an astrodata object and a file-like outfile.
+        This function will create a jpeg rendering of the ad object
+        and write it to the outfile
+        """
+
+        if 'GMOS' in str(ad.instrument()):
+            # Find max extent in detector pixels
+            xmin = 10000
+            ymin = 10000
+            xmax = 0
+            ymax = 0
+            ds = ad.detector_section().as_dict()
+            for i in ds.values():
+                [x1, x2, y1, y2] = i
+                xmin, ymin = min(x1, xmin), min(y1, ymin)
+                xmax, ymax = max(x2, xmax), max(y2, ymax)
+
+            # Divide by binning
+            xmin /= int(ad.detector_x_bin())
+            ymin /= int(ad.detector_y_bin())
+            xmax /= int(ad.detector_x_bin())
+            ymax /= int(ad.detector_y_bin())
+
+            self.s.debug("Full Image extent is: %d:%d, %d:%d", xmin, xmax, ymin, ymax)
+
+            # Make empty array for full image
+            gap = 40 # approx chip gap in pixels
+            shape = (ymax-ymin, (xmax-xmin)+2*gap)
+            full = numpy.zeros(shape, ad['SCI', 1].data.dtype)
+
+            # Loop through ads, pasting them in. Do gmos bias and gain hack
+            for add in ad['SCI']:
+                s_xmin, s_xmax, s_ymin, s_ymax = add.data_section().as_pytype()
+                self.l.debug("Source Image extent is: %d:%d, %d:%d", s_xmin, s_xmax, s_ymin, s_ymax)
+                d_xmin, d_xmax, d_ymin, d_ymax = add.detector_section().as_pytype()
+                # Figure out which chip we are and add gap padding
+                # All the gmos chips ever have been 2048 pixels in X.
+                if d_xmin == 4096 or d_xmin == 5120:
+                    pad = 2*gap
+                elif d_xmin == 2048 or d_xmin == 3072:
+                    pad = gap
+                else:
+                    pad = 0
+
+                d_xmin = (d_xmin + pad) / int(ad.detector_x_bin()) - xmin
+                d_xmax = (d_xmax + pad) / int(ad.detector_x_bin()) - xmin
+                d_ymin = d_ymin / int(ad.detector_y_bin()) - ymin
+                d_ymax = d_ymax / int(ad.detector_y_bin()) - ymin
+                o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section().as_pytype()
+                bias = numpy.median(add.data[o_ymin:o_ymax, o_xmin:o_xmax])
+                try:
+                    # This throws an exception sometimes if some of the values are None?
+                    gain = float(add.gain())
+                except:
+                    gain = 1.0
+                self.l.debug("Pasting: %d:%d,%d:%d -> %d:%d,%d:%d", s_xmin, s_xmax, s_ymin, s_ymax, d_xmin, d_xmax, d_ymin, d_ymax)
+                full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
+
+            full = norm(full)
+
+        elif str(ad.instrument()) == 'GSAOI':
+            gap = 125
+            size = 4096 + gap
+            shape = (size, size)
+            full = numpy.zeros(shape, ad['SCI', 1].data.dtype)
+            # Loop though ads, paste them in
+            for add in ad['SCI']:
+                [x1, x2, y1, y2] = add.detector_section().as_pytype()
+                xoffset = 0 if x1 < 2000 else gap
+                yoffset = 0 if y1 < 2000 else gap
+                self.l.debug("x1 x2 y1 y2: %d %d %d %d", x1, x2, y1, y2)
+                self.l.debug("xoffset yoffset", xoffset, yoffset)
+                self.l.debug("full shape: %s", full[y1+yoffset:y2+yoffset, x1+xoffset:x2+xoffset].shape)
+                self.l.debug("data shape: %s", add.data.shape)
+                full[y1+yoffset:y2+yoffset, x1+xoffset:x2+xoffset] = add.data
+
+            full = norm(full)
+
+        elif str(ad.instrument()) in {'TReCS', 'michelle'}:
+            chopping = False
+            full_shape = (500, 660)
+            full = numpy.zeros(full_shape, numpy.float32)
+            stack_shape = (240, 320)
+            stack = numpy.zeros(stack_shape, numpy.float32)
+            # For michelle, look up the nod-chop cycle
+            cycle = ad.phu_get_key_value('CYCLE')
+            if cycle is None:
+                cycle = 'ABBA'
+            # Loop through the extensions and stack them according to nod position
+            for add in ad['SCI']:
+                # Just sum up along the 4th axis. Ahem, this is the 0th axis in numpy land
+                data = add.data
+                data = numpy.sum(data, axis=0)
+                # Now the new 0th axis is the chop position
+                # If it's two long, subtract the two, otherwise just go with first plane
+                chop_a = None
+                chop_b = None
+                if data.shape[0] == 2:
+                    # Trecs
+                    chopping = True
+                    chop_a = data[0,:,:]
+                    chop_b = data[1,:,:]
+                    data = chop_a - chop_b
+                elif data.shape[0] == 3:
+                    # Michelle
+                    chopping = True
+                    chop_a = data[1,:,:]
+                    chop_b = data[2,:,:]
+                    data = data[0,:,:]
+                else:
+                    data = data[0,:,:]
+
+                # For the first frame, paste the two raw chop images into the full image
+                if chopping:
+                    if add.extver() == 1:
+                        chop_a = norm(chop_a)
+                        chop_b = norm(chop_b)
+                        full[260:500, 0:320] = chop_a
+                        full[260:500, 340:660] = chop_b
+                else:
+                    # Not chopping, but still nodding?
+                    if len(ad['SCI']) > 1:
+                        if add.extver() == 1:
+                            full[260:500, 0:320] = norm(data)
+                        if add.extver() == 2:
+                            full[260:500, 340:660] = norm(data)
+
+                # Figure out if we're nod A or B
+                # TReCS has this header in each extention
+                if 'NOD' in add.header.keys():
+                    nod = add.header['NOD']
+                else:
+                    i = add.extver() - 1
+                    j = i % len(cycle)
+                    nod = cycle[j]
+                #print "Extver: %d, nod: %s" % (add.extver(), nod)
+                if nod == 'A':
+                    stack += data
+                else:
+                    stack -= data
+
+            # Normalise the stack and paste it into the image
+            stack = norm(stack)
+            if not chopping and len(ad['SCI']) == 1:
+                full = stack
+            else:
+                full[0:240, 180:500] = stack
+
+        else:
+            # Generic plot the first extention case
+            full = ad['SCI', 1].data
+
+            # Do a numpy squeeze on it - this collapses any axis with 1-pixel extent
+            full = numpy.squeeze(full)
+
+            full = norm(full)
+
+        # plot without axes or frame
+        fig = plt.figure(frameon=False)
+        ax = plt.Axes(fig, [0, 0, 1, 1])
+        ax.set_axis_off()
+        fig.add_axes(ax)
+        ax.imshow(full, cmap=plt.cm.gray)
+
+        fig.savefig(outfile, format='jpg')
+
+        plt.close()

@@ -1,8 +1,6 @@
 import pytest
 from fits_storage.utils.ingestqueue import IngestQueue, IngestQueueUtil
-
-from fits_storage.utils.previewqueue import PreviewQueue
-from fits_storage.utils.previewqueue import pop_previewqueue
+from fits_storage.utils.previewqueue import PreviewQueue, PreviewQueueUtil
 import logging
 from sqlalchemy import delete
 import os
@@ -24,6 +22,11 @@ dummy_logger = logging.getLogger('dummy')
 @pytest.yield_fixture(scope="module")
 def ingest_util(request, session):
     yield IngestQueueUtil(session, dummy_logger)
+    session.commit()
+
+@pytest.yield_fixture(scope="module")
+def preview_util(request, session):
+    yield PreviewQueueUtil(session, dummy_logger)
     session.commit()
 
 @pytest.yield_fixture()
@@ -69,10 +72,10 @@ class TestPreviewQueue:
         session.execute(delete(PreviewQueue))
         session.commit()
 
-    def test_previewqueue_pop(self, session, ingest_from_queue):
+    def test_previewqueue_pop(self, preview_util, ingest_from_queue):
         cnt = 0
         while True:
-            if pop_previewqueue(session, dummy_logger) is None:
+            if preview_util.pop() is None:
                 break
             cnt += 1
         assert cnt == ingest_from_queue
