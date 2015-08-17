@@ -1,5 +1,25 @@
 import datetime
 from sqlalchemy.orm import make_transient
+import re
+
+date_re = re.compile(r'(\d{8}S\d{4})')
+
+def sortkey_for_filename(filename):
+    """
+    Return a key to be used in the database sorting. Used mostly for queues, where
+    filenames may be sorted in the wrong order because of the prefixes.
+
+    Instead, it extracts the YYYYMMDDSNNNN from regular files and calibs, and
+    returns that as the sorting key, to make sure that other artifacts won't skew
+    the order.
+
+    If the filename doesn't include this information, we force it to the end of the
+    queue by prepending a 'z' to it.
+    """
+    try:
+        return date_re.search(filename).groups()[0]
+    except AttributeError:
+        return 'z' + filename
 
 def pop_queue(queue_class, session, logger, fast_rebuild=False):
     """

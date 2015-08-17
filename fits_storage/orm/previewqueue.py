@@ -3,6 +3,7 @@ from sqlalchemy import Integer, Text, Boolean
 from sqlalchemy import desc
 
 from . import Base
+from ..utils.queue import sortkey_for_filename
 
 class PreviewQueue(Base):
     """
@@ -18,7 +19,7 @@ class PreviewQueue(Base):
 
     def __init__(self, diskfile):
         self.diskfile_id = diskfile.id
-        self.sortkey = diskfile.filename[1:]
+        self.sortkey = sortkey_for_filename(diskfile.filename)
         self.inprogress = False
 
     @staticmethod

@@ -7,6 +7,7 @@ from sqlalchemy import Integer, Boolean, Text, DateTime
 from sqlalchemy import desc
 
 from . import Base
+from ..utils.queue import sortkey_for_filename
 
 class IngestQueue(Base):
     """
@@ -34,11 +35,7 @@ class IngestQueue(Base):
         self.after = self.added
 
         # Sortkey is used to sort the order in which we de-spool the queue.
-        # If we use the filename, we end up doing all the N files before or
-        # after all the S files, which is not what we want.
-        # We just trim the first letter off the filename, so ignore the N or S
-        # and essentially sort by date and frame number.
-        self.sortkey = filename[1:]
+        self.sortkey = sortkey_for_filename(filename)
 
     @staticmethod
     def find_not_in_progress(session):
