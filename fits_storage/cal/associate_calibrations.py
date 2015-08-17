@@ -85,7 +85,7 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
     #     calheader = session.query(Header).filter(Header.id == result[0]).one()
     #     calheaders.append(calheader)
 
-    calheaders = session.query(Header).filter(Header.id.in_([res[0] for res in query]))
+    calheaders = session.query(Header).filter(Header.id.in_([res[0] for res in query])).all()
     ids = set(calh.id for calh in calheaders)
 
     # Now we have to recurse to find the calibrations for the calibrations...
