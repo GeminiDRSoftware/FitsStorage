@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean
-from sqlalchemy.orm import relation, relationship
+from sqlalchemy.orm import relationship
 import math
 
 from . import Base
@@ -40,10 +40,10 @@ class QAreport(Base, MetricDictMixin):
     submit_time = Column(DateTime)
     submit_host = Column(Text)
 
-    iq_metrics = relationship("QAmetricIQ")
-    sb_metrics = relationship("QAmetricSB")
-    zp_metrics = relationship("QAmetricZP")
-    pe_metrics = relationship("QAmetricPE")
+    iq_metrics = relationship("QAmetricIQ", backref="qareport")
+    sb_metrics = relationship("QAmetricSB", backref="qareport")
+    zp_metrics = relationship("QAmetricZP", backref="qareport")
+    pe_metrics = relationship("QAmetricPE", backref="qareport")
 
     _dct_fields = (
         'hostname', 'userid', 'processid', 'executable', 'software',
@@ -85,7 +85,6 @@ class QAmetricIQ(Base, MetricDictMixin):
 
     id = Column(Integer, primary_key=True)
     qareport_id = Column(Integer, ForeignKey('qareport.id'))
-    qareport = relation(QAreport, order_by=id)
     datalabel = Column(Text)
     filename = Column(Text)
     detector = Column(Text)
@@ -183,7 +182,6 @@ class QAmetricZP(Base, MetricDictMixin):
 
     id = Column(Integer, primary_key=True)
     qareport_id = Column(Integer, ForeignKey('qareport.id'))
-    qareport = relation(QAreport, order_by=id)
     datalabel = Column(Text)
     filename = Column(Text)
     detector = Column(Text)
@@ -269,7 +267,6 @@ class QAmetricSB(Base, MetricDictMixin):
 
     id = Column(Integer, primary_key=True)
     qareport_id = Column(Integer, ForeignKey('qareport.id'))
-    qareport = relation(QAreport, order_by=id)
     datalabel = Column(Text)
     filename = Column(Text)
     detector = Column(Text)
@@ -361,7 +358,6 @@ class QAmetricPE(Base, MetricDictMixin):
 
     id = Column(Integer, primary_key=True)
     qareport_id = Column(Integer, ForeignKey('qareport.id'))
-    qareport = relation(QAreport, order_by=id)
     datalabel = Column(Text)
     filename = Column(Text)
     detector = Column(Text)
