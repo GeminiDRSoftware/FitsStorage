@@ -107,7 +107,7 @@ class CalQuery(object):
 
     # The following add filters specific to certain types of calibs
 
-    def tolerance(condition=True, **kw):
+    def tolerance(self, condition=True, **kw):
         if condition:
             for descriptor, tol in kw.items():
                 # Occassionally we get a None for some descriptors, so run this in a try except
