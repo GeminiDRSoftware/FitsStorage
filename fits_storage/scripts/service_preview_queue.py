@@ -130,8 +130,8 @@ while loop:
                 # pq.inprogress=False
                 raise
             logger.debug("Deleting previewqueue id %d", pq.id)
-            # pq is a transient ORM object, find it in the db
-            dbpq = session.query(PreviewQueue).filter(PreviewQueue.id == pq.id).one()
+            # pq is a transient ORM object, retrieve the persistent one
+            dbpq = session.query(PreviewQueue).get(pq.id)
             session.delete(dbpq)
             session.commit()
 
@@ -139,8 +139,7 @@ while loop:
         loop = False
 
     except:
-        string = traceback.format_tb(sys.exc_info()[2])
-        string = "".join(string)
+        string = "".join(traceback.format_tb(sys.exc_info()[2]))
         session.rollback()
         logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
         # Press on with the next file, don't raise the esception further.

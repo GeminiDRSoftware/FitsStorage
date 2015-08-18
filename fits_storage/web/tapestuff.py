@@ -63,35 +63,35 @@ def tape(req, things):
             field = key.split('-')[0]
             tapeid = int(key.split('-')[1])
             value = formdata[key].value
-            if(tapeid):
-                tape = session.query(Tape).filter(Tape.id == tapeid).one()
-                if(field == 'moveto'):
+            if tapeid:
+                tape = session.query(Tape).get(tapeid)
+                if field == 'moveto':
                     tape.location = value
                     tape.lastmoved = datetime.datetime.utcnow()
-                if(field == 'active'):
-                    if(value == 'Yes'):
+                elif field == 'active':
+                    if value == 'Yes':
                         tape.active = True
-                    if(value == 'No'):
+                    if value == 'No':
                         tape.active = False
-                if(field == 'full'):
-                    if(value == 'Yes'):
+                elif field == 'full':
+                    if value == 'Yes':
                         tape.full = True
-                    if(value == 'No'):
+                    if value == 'No':
                         tape.full = False
-                if(field == 'set'):
+                elif field == 'set':
                     tape.set = value
-                if(field == 'fate'):
+                elif field == 'fate':
                     tape.fate = value
-            if(field == 'newlabel'):
+            if field == 'newlabel':
                 # Add a new tape to the database
                 newtape = Tape(value)
                 session.add(newtape)
 
             session.commit()
-        
+
         query = session.query(Tape)
         # Get a list of the tapes that apply
-        if(len(things)):
+        if len(things):
             searchstring = '%'+things[0]+'%'
             query = query.filter(Tape.label.like(searchstring))
         query = query.order_by(desc(Tape.id))
@@ -110,14 +110,14 @@ def tape(req, things):
             req.write("<UL>")
             req.write("<LI>First Write: %s UTC - Last Write: %s UTC</LI>" % (tape.firstwrite, tape.lastwrite))
             style = ""
-            if(tape.active):
-                if(tape.lastverified is None and tape.full == True):
+            if tape.active:
+                if tape.lastverified is None and tape.full == True:
                     style = " style='color:red'"
-                if(tape.lastverified is None and tape.full == False):
+                if tape.lastverified is None and tape.full == False:
                     style = " style='color:purple'"
-                elif(tape.lastverified < bad):
+                elif tape.lastverified < bad:
                     style = " style='color:red'"
-                elif(tape.lastverified < warning):
+                elif tape.lastverified < warning:
                     style = " style='color:purple'"
 
             req.write("<LI><span%s>Last Verified: %s UTC</span></LI>" % (style, tape.lastverified))
@@ -130,10 +130,10 @@ def tape(req, things):
             twqtotal = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id)
             twq = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.suceeded == True)
             # Count Bytes
-            if(twq.count()):
+            if twq.count():
                 bytesquery = session.query(func.sum(TapeWrite.size)).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.suceeded == True)
                 bytes = bytesquery.one()[0]
-                if(not bytes):
+                if not bytes:
                     bytes = 0
             else:
                 bytes = 0
@@ -162,7 +162,7 @@ def tape(req, things):
             req.write('<TD><LABEL for="%s">Active:</LABEL></TD>' % activekey)
             yeschecked = ""
             nochecked = ""
-            if(tape.active):
+            if tape.active:
                 yeschecked = "checked"
             else:
                 nochecked = "checked"
@@ -175,7 +175,7 @@ def tape(req, things):
             req.write('<TD><LABEL for="%s">Full:</LABEL></TD>' % fullkey)
             yeschecked = ""
             nochecked = ""
-            if(tape.full):
+            if tape.full:
                 yeschecked = "checked"
             else:
                 nochecked = "checked"
@@ -224,24 +224,24 @@ def tapewrite(req, things):
         query = session.query(TapeWrite)
 
         # Can give a tape id (numeric) or label as an argument
-        if(len(things)):
+        if len(things):
             thing = things[0]
             tapeid = 0
             try:
                 tapeid = int(thing)
             except:
                 pass
-            if(tapeid):
+            if tapeid:
                 query = query.filter(TapeWrite.tape_id == tapeid)
             else:
                 thing = '%'+thing+'%'
                 tapequery = session.query(Tape).filter(Tape.label.like(thing))
-                if(tapequery.count() == 0):
+                if tapequery.count() == 0:
                     req.write("<P>Could not find tape by label search</P>")
                     req.write("</body></html>")
                     session.close()
                     return apache.HTTP_OK
-                if(tapequery.count() > 1):
+                if tapequery.count() > 1:
                     req.write("<P>Found multiple tapes by label search. Please give the ID instead</P>")
                     req.write("</body></html>")
                     return apache.HTTP_OK
@@ -256,7 +256,7 @@ def tapewrite(req, things):
             req.write("<UL>")
             req.write("<LI>Start Date: %s UTC - End Date: %s UTC</LI>" % (tw.startdate, tw.enddate))
             req.write("<LI>Succeeded: %s</LI>" % tw.suceeded)
-            if(tw.size is None):
+            if tw.size is None:
                 req.write("<LI>Size: None")
             else:
                 req.write("<LI>Size: %.2f GB</LI>" % (tw.size / 1.0E9))
@@ -287,7 +287,7 @@ def tapefile(req, things):
     req.write("<body>")
     req.write("<h1>FITS Storage tapefile information</h1>")
 
-    if(len(things) != 1):
+    if len(things) != 1:
         req.write("<P>Must supply one argument - tapewrite_id</P>")
         req.write("</body></html>")
         return apache.HTTP_OK
@@ -316,7 +316,7 @@ def tapefile(req, things):
         even = 0
         for tf in query.all():
             even = not even
-            if(even):
+            if even:
                 cs = "tr_even"
             else:
                 cs = "tr_odd"
@@ -373,7 +373,7 @@ def taperead(req, things):
         even = 0
         for tr in query.all():
             even = not even
-            if(even):
+            if even:
                 cs = "tr_even"
             else:
                 cs = "tr_odd"

@@ -28,9 +28,7 @@ def cache_associations(session, obs_hid):
     """
 
     # Get the Header object
-    header = session.query(Header)\
-                .filter(Header.id == obs_hid)\
-                .one()
+    header = session.query(Header).get(obs_hid)
 
     if None in [header.instrument, header.ut_datetime]:
         return

@@ -53,7 +53,7 @@ def standardobs(req, header_id):
         lst = list_phot_std_obs(session, header_id)
         even = False
         for std_id in list_phot_std_obs(session, header_id):
-            std = session.query(PhotStandard).filter(PhotStandard.id == std_id).one()
+            std = session.query(PhotStandard).get(std_id)
             even = not even
             req.write("<TR class=%s>" % ('tr_even' if even else 'tr_odd'))
             req.write("<TD>%s</TD>" % std.name)
@@ -84,7 +84,7 @@ def xmlstandardobs(req, header_id):
     try:
         lst = list_phot_std_obs(session, header_id)
         for std_id in lst:
-            std = session.query(PhotStandard).filter(PhotStandard.id == std_id).one()
+            std = session.query(PhotStandard).get(std_id)
             req.write("<photstandard>")
             req.write("<name>%s</name>" % std.name)
             req.write("<field>%s</field>" % std.field)

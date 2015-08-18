@@ -142,7 +142,7 @@ while loop:
             else:
                 logger.info("Exportqueue id %d DID NOT TRANSFER", eq.id)
                 # The eq instance we have is transient - get one connected to the session
-                dbeq = session.query(ExportQueue).filter(ExportQueue.id == eq.id).one()
+                dbeq = session.query(ExportQueue).get(eq.id)
                 dbeq.lastfailed = datetime.datetime.now()
                 session.commit()
 

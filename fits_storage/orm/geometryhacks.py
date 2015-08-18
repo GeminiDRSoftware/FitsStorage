@@ -35,6 +35,6 @@ def do_std_obs(session, header_id):
     session.commit()
 
     if result.rowcount:
-        header = session.query(Header).filter(Header.id == header_id).one()
+        header = session.query(Header).get(header_id)
         header.phot_standard = True
         session.commit()

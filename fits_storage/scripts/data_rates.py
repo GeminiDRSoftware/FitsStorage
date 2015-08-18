@@ -26,26 +26,25 @@ logger.info("*********    data_rates.py - starting up at %s" % datetime.datetime
 # Get a database session
 session = sessionfactory()
 
-f = open("/data/logs/data_rates.py", "w")
+with open("/data/logs/data_rates.py", "w") as f:
+    ndays = 1000
 
-ndays = 1000
+    today = datetime.datetime.utcnow().date()
+    zerohour = datetime.time(0, 0, 0)
+    ddelta = datetime.timedelta(days=1)
 
-today = datetime.datetime.utcnow().date()
-zerohour = datetime.time(0, 0, 0)
-ddelta = datetime.timedelta(days=1)
+    start = datetime.datetime.combine(today, zerohour)
+    end = start + ddelta
 
-start = datetime.datetime.combine(today, zerohour)
-end = start + ddelta
-
-for i in range(1, ndays):
-    query = session.query(func.sum(DiskFile.data_size)).select_from(join(Header, DiskFile)).filter(DiskFile.present==True).filter(Header.ut_datetime > start).filter(Header.ut_datetime < end)
-    nbytes = query.one()[0]
-    if(not nbytes):
-        nbytes = 0
-    f.write("%s, %f\n" % (str(start.date()), nbytes/1.0E9))
-    start -= ddelta
-    end -= ddelta
-
-f.close()
+    for i in range(1, ndays):
+        query = (session.query(func.sum(DiskFile.data_size))
+                        .select_from(join(Header, DiskFile))
+                        .filter(DiskFile.present==True)
+                        .between(Header.ut_datetime, start, end))
+        # If any DiskFile.data_size is NULL, the result will be None. The 'or 0' takes care of that
+        nbytes = query.one()[0] or 0
+        f.write("%s, %f\n" % (str(start.date()), nbytes/1.0E9))
+        end = start
+        start -= ddelta
 
 logger.info("*** data_rates.py exiting normally at %s" % datetime.datetime.now())

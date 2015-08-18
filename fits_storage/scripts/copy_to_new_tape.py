@@ -39,32 +39,34 @@ logger.info("*********    copy_to_new_tape.py - starting up at %s" % datetime.da
 # non identical version of the file on tapes too.
 session = sessionfactory()
 # Generate a list of the tapes that would be useful to satisfy this read
-query = session.query(Tape).select_from(Tape, TapeWrite, TapeFile, TapeRead)
-query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
-query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
-query = query.filter(TapeFile.filename == TapeRead.filename)
-query = query.filter(TapeFile.md5 == TapeRead.md5)
+tapequery = (
+    session.query(Tape).select_from(Tape, TapeWrite, TapeFile, TapeRead)
+        .filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
+        .filter(Tape.active == True).filter(TapeWrite.suceeded == True)
+        .filter(TapeFile.filename == TapeRead.filename)
+        .filter(TapeFile.md5 == TapeRead.md5)
+    )
 
-tapes = query.all()
-
-if(len(tapes) == 0):
+if tapequery.count() == 0:
     logger.info("No tapes to be read, exiting")
     sys.exit(0)
 
 labels = []
-for tape in tapes:
+for tape in tapequery:
     labels.append(tape.label)
-    query = session.query(func.sum(TapeFile.size)).select_from(Tape, TapeWrite, TapeFile, TapeRead)
-    query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
-    query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
-    query = query.filter(TapeFile.filename == TapeRead.filename)
-    query = query.filter(TapeFile.md5 == TapeRead.md5)
-    query = query.filter(Tape.label == tape.label)
-    query = query.group_by(Tape)
-    s = query.first()
-    logger.info("Tape %s contains %.2f GB to read" % (tape.label, s[0] / 1.0E9))
+    s = (
+        session.query(func.sum(TapeFile.size)).select_from(Tape, TapeWrite, TapeFile, TapeRead)
+            .filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
+            .filter(Tape.active == True).filter(TapeWrite.suceeded == True)
+            .filter(TapeFile.filename == TapeRead.filename)
+            .filter(TapeFile.md5 == TapeRead.md5)
+            .filter(Tape.label == tape.label)
+            .group_by(Tape)
+            .one()
+        )[0]
+    logger.info("Tape %s contains %.2f GB to read" % (tape.label, s / 1.0E9))
 
-if(options.list_tapes):
+if options.list_tapes:
     sys.exit(0)
 
 try:
@@ -76,21 +78,13 @@ try:
     if fromlabel not in labels:
         logger.info("This tape does not contain files that were requested. Aborting")
         sys.exit(1)
+
     totd = TapeDrive(options.totapedrive, fits_tape_scratchdir)
     tolabel = totd.readlabel()
     logger.info("You are writing to this tape: %s" % tolabel)
-    
-
-    # OK, now we need to get a list of the filenums that contain files we want
-    query = session.query(TapeWrite.filenum).select_from(Tape, TapeWrite, TapeFile, TapeRead)
-    query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
-    query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
-    query = query.filter(TapeFile.filename == TapeRead.filename).filter(TapeFile.md5 == TapeRead.md5)
-    query = query.filter(Tape.label == fromlabel)
-    query = query.distinct()
-    filenums = query.all()
 
     # Find the tapes in the database
+    # NOTE: None of those are used. Why?
     fromtape = session.query(Tape).filter(Tape.label == fromlabel).one()
     totape = session.query(Tape).filter(Tape.label == tolabel).one()
 
@@ -113,22 +107,33 @@ try:
         session.close()
         sys.exit(1)
 
+    # OK, now we need to get a list of the filenums that contain files we want
+    filenums = (
+        session.query(TapeWrite.filenum).select_from(Tape, TapeWrite, TapeFile, TapeRead)
+                .filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
+                .filter(Tape.active == True).filter(TapeWrite.suceeded == True)
+                .filter(TapeFile.filename == TapeRead.filename).filter(TapeFile.md5 == TapeRead.md5)
+                .filter(Tape.label == fromlabel)
+                .distinct()
+        )
+
     # Loop through the filenums
-    tars = 0
     bytes = 0
-    logger.info("Going to read from %d file numbers on this tape" % len(filenums))
-    for filenum in filenums:
+    logger.info("Going to read from %d file numbers on this tape" % filenums.count())
+    for tars, (filenum,) in enumerate(filenums, 1):
         logger.info("Going to read from file number %d" % filenum)
-        tars = tars+1
+
         if(options.maxtars and (tars > options.maxtars)):
             logger.info("Read maxtars tar files. Stopping now")
             break
+
         if(options.maxgbs and ((bytes / 1.0E9) > options.maxgbs)):
             logger.info("Read maxgbs GBs. Stopping now")
             break
+
         # Fast forward the drive to that filenum
-        logger.debug("Seeking to filenumber %d" % filenum[0])
-        fromtd.skipto(filenum=filenum[0])
+        logger.debug("Seeking to filenumber %d" % filenum)
+        fromtd.skipto(filenum=filenum)
 
         # Query the filenames at the filenum and make a list of filenames
         query = session.query(TapeFile).select_from(Tape, TapeWrite, TapeFile, TapeRead)
@@ -136,21 +141,22 @@ try:
         query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
         query = query.filter(TapeFile.filename == TapeRead.filename).filter(TapeFile.md5 == TapeRead.md5)
         query = query.filter(Tape.label == fromlabel)
-        query = query.filter(TapeWrite.filenum == filenum[0])
+        query = query.filter(TapeWrite.filenum == filenum)
 
         fileresults = query.all()
         logger.info("Going to copy %d files from this tar archive" % len(fileresults))
-        filenames = []
-        frindex = {}
-        for i in range(len(fileresults)):
-            filenames.append(fileresults[i].filename.encode())
-            bytes += fileresults[i].size
-            frindex[fileresults[i].filename.encode()] = i
+        filenames = set()
+        frbackref = {}
+        for i, fr in enumerate(fileresults):
+            encoded_name = fr.filename.encode()
+            filenames.add(encoded_name)
+            bytes += fr.size
+            frbackref[encoded_name] = fr
 
         # Prepare to write to the new tape
         # Update tape first/lastwrite
         logger.debug("Updating tape record for tape label %s" % totape.label)
-        if(totape.firstwrite == None):
+        if totape.firstwrite == None:
             totape.firstwrite = datetime.datetime.utcnow()
         totape.lastwrite = datetime.datetime.utcnow()
         session.commit()
@@ -194,8 +200,8 @@ try:
             if tarinfo.name in filenames:
                 logger.info("Processing file %s" % tarinfo.name)
                 # Re-find the tapefile instance
-                tf = fileresults[frindex[tarinfo.name]]
-                if (tf.filename.encode() != tarinfo.name):
+                tf = frbackref[tarinfo.name]
+                if tf.filename.encode() != tarinfo.name:
                     logger.error("tapefile instance index dereference problem! Skipping")
                     break
                 #for thing in fileresults:
@@ -247,10 +253,9 @@ try:
                 bytecount += ntf.size
             else:
                 logger.debug("Skipping over file that's not required: %s" % tarinfo.name)
-            if(len(filenames) == 0):
+            if len(filenames) == 0:
                 logger.info("Got everything we need from this tar archive, stopping reading it now")
                 break
-         
 
         # Close the tar archives and update the tapewrite etc
         try:
@@ -277,13 +282,13 @@ try:
         session.commit()
 
         # If the previous tar failed, we should bail out now
-        if(totarok == False):
+        if not totarok:
             logger.error("Previous Tar operation failed, stopping now")
             break
 
     # Are there any more files in TapeRead?
     taperead = session.query(TapeRead).all()
-    if(len(taperead)):
+    if len(taperead):
         logger.info("There are more files to be read on different tapes")
     else:
         logger.info("All requested files have been read")

@@ -12,7 +12,6 @@ from fits_storage.logger import logger, setdemon, setdebug
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 
 if using_s3:
-    from fits_storage.fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
     from fits_storage.utils.aws_s3 import S3Helper
 
 # Option Parsing
@@ -35,14 +34,11 @@ now = datetime.datetime.now()
 logger.info("*********  ingest_uploaded_file.py - starting up at %s" % now)
 
 # Need a filename
-if (not options.filename):
+if not options.filename:
     logger.error("No filename specified, exiting")
     sys.exit(1)
 
-if(options.processed_cal == "True"):
-    path = processed_cals_path
-else:
-    path = ''
+path = processed_cals_path if options.processed_cal == 'True' else ''
 
 session = sessionfactory()
 try:
@@ -52,9 +48,7 @@ try:
     fileuploadlog = FileUploadWrapper()
     # Find the upload log entry to update
     if options.fileuploadlog_id:
-        fileuploadlog.set_wrapped(session.query(FileUploadLog)
-                                         .filter(FileUploadLog.id == options.fileuploadlog_id)
-                                         .one())
+        fileuploadlog.set_wrapped(session.query(FileUploadLog).get(options.fileuploadlog_id))
 
     # Move the file to its appropriate loaction in storage_root/path or S3
     # Construct the full path names and move the file into place
@@ -102,4 +96,3 @@ finally:
     session.close()
 
 logger.info("*** ingest_uploaded_file.py exiting normally at %s" % datetime.datetime.now())
-

@@ -4,10 +4,11 @@ This module handles the web 'user' functions - creating user accounts, login / l
 
 from sqlalchemy import desc
 
-from ..orm import sessionfactory
+from ..orm import sessionfactory, session_scope
 from ..orm.user import User
 
 from ..fits_storage_config import fits_servername, smtp_server
+from sqlalchemy.orm.exc import NoResultFound
 
 # This will only work with apache
 from mod_python import apache
@@ -160,19 +161,12 @@ valid for 15 minutes, so please do that promptly.
 
     """
 
-    session = sessionfactory()
-    try:
-        query = session.query(User).filter(User.id == userid)
-        user = query.one()
-        token = user.generate_reset_token()
-        session.commit()
+    with session_scope() as session:
+        user = session.query(User).get(userid)
         username = user.username
         email = user.email
         fullname = user.fullname
-    except:
-        pass
-    finally:
-        session.close()
+        token = user.generate_reset_token()
 
     url = "https://%s/password_reset/%d/%s" % (fits_servername, userid, token)
 
@@ -232,10 +226,8 @@ def password_reset(req, things):
         return apache.HTTP_OK
 
     # OK, seems possibly legit. Check with database
-    try:
-        session = sessionfactory()
-        query = session.query(User).filter(User.id == userid)
-        user = query.first()
+    with session_scope() as session:
+        user = session.query(User).get(userid)
         if user is None:
             req.write('<P>Invalid request.</P>')
             req.write('</body></html>')
@@ -251,11 +243,6 @@ def password_reset(req, things):
         else:
             # Appears to be valid
             req.write("<H1>Gemini Observatory Archive Password Reset</H1>")
-    except:
-        # pass
-        raise
-    finally:
-        session.close()
 
     # If we got this far we have a valid request.
     # Did we get a submitted form?
@@ -284,10 +271,8 @@ def password_reset(req, things):
 
     if request_valid:
         req.write('<H2>Processing your request...</H2>')
-        try:
-            session = sessionfactory()
-            query = session.query(User).filter(User.id == userid)
-            user = query.one()
+        with session_scope() as session:
+            user = session.query(User).get(userid)
             if user.validate_reset_token(token):
                 user.reset_password(password)
                 session.commit()
@@ -298,11 +283,6 @@ def password_reset(req, things):
                 req.write("<P>Link is no longer valid. Please request a new one.</P>")
                 req.write('</body></html>')
                 return apache.HTTP_OK
-        except:
-            # pass
-            raise
-        finally:
-            session.close()
 
     if request_attempted:
         req.write("<P>Your request was invalid. %s. Please try again.</P>" % reason_bad)
@@ -376,8 +356,7 @@ def change_password(req, things):
 
     if valid_request:
         req.write('<H2>Processing your request...</H2>')
-        try:
-            session = sessionfactory()
+        with session_scope() as session:
             user = userfromcookie(session, req)
             if user is None:
                 valid_request = False
@@ -394,8 +373,6 @@ def change_password(req, things):
                 else:
                     req.write('<p><a href="/searchform">Click here to go to the searchform</p>')
                 sucessfull = True
-        finally:
-            session.close()
 
     if request_attempted is True and valid_request is False:
         req.write('<h2>Request not valid:</h2>')
@@ -455,8 +432,7 @@ def request_password_reset(req):
     if request_valid:
         # Try to process it
         req.write('<P>Processing request...</P>')
-        try:
-            session = sessionfactory()
+        with session_scope() as session:
             query = session.query(User)
             if username:
                 query = query.filter(User.username == username)
@@ -477,11 +453,6 @@ def request_password_reset(req):
                     req.write("<P>If you don't get the email, please contact the Gemini helpdesk.</P>")
                 else:
                     req.write('<P>Sending you a password reset email FAILED. Please contact Gemini Helpdesk. Sorry.</P>')
-        except:
-            #pass
-            raise
-        finally:
-            session.close()
 
         req.write('</body></html>')
         return apache.HTTP_OK
@@ -520,8 +491,7 @@ def staff_access(req, things):
     req.write("</head><body>")
     req.write('<h1>Gemini Archive Staff Access</h1>')
 
-    try:
-        session = sessionfactory()
+    with session_scope() as session:
         thisuser = userfromcookie(session, req)
         if thisuser is None or thisuser.superuser != True:
             req.write("<p>You don't appear to be logged in as a superuser. Sorry.</p>")
@@ -530,36 +500,31 @@ def staff_access(req, things):
 
         # If we got an action, do it
         if username:
-            query = session.query(User).filter(User.username == username)
-            user = query.first()
-            if user is None:
+            try:
+                user = session.query(User).filter(User.username == username).one()
+                if action == "Grant":
+                    action_name = 'Granting'
+                    user.gemini_staff = True
+                elif action == "Revoke":
+                    action_name = 'Revoking'
+                    user.gemini_staff = False
+                req.write("<p>%s staff access for username: %s - %s - %s</p>" % (action_name, user.username, user.fullname, user.email))
+                session.commit()
+            except NoResultFound:
                 req.write("<p>Could not locate user in database</p>")
-            elif action == "Grant":
-                req.write("<p>Granting staff access for username: %s - %s - %s</p>" % (user.username, user.fullname, user.email))
-                user.gemini_staff = True
-                session.commit()
-            elif action == "Revoke":
-                req.write("<p>Revoking staff access for username: %s - %s - %s</p>" % (user.username, user.fullname, user.email))
-                user.gemini_staff = False
-                session.commit()
 
         # Have applied changes, now generate list of staff users
         query = session.query(User).order_by(User.gemini_staff, User.username)
         staff_users = query.all()
-    finally:
-        session.close()
 
-    even = False
-    req.write('<TABLE>')
-    req.write('<TR class=tr_head><TH>Username</TH><TH>Full Name</TH><TH>Email</TH><TH>Staff Access</TH><TH>Superuser</TH><TR>')
-    for user in staff_users:
-        even = not even
-        if even:
-            row_class = "tr_even"
-        else:
-            row_class = "tr_odd"
-        req.write('<TR class=%s><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>' % (row_class, user.username, user.fullname, user.email, user.gemini_staff, user.superuser))
-    req.write('</TABLE>')
+        even = False
+        req.write('<TABLE>')
+        req.write('<TR class=tr_head><TH>Username</TH><TH>Full Name</TH><TH>Email</TH><TH>Staff Access</TH><TH>Superuser</TH><TR>')
+        for user in staff_users:
+            even = not even
+            row_class = "tr_even" if even else "tr_odd"
+            req.write('<TR class=%s><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>' % (row_class, user.username, user.fullname, user.email, user.gemini_staff, user.superuser))
+        req.write('</TABLE>')
 
     req.write('<H2>Grant or Revoke Staff Access</H2>')
     req.write('<FORM action="/staff_access" method="POST">')
@@ -610,19 +575,14 @@ def login(req, things):
             reason_bad = "Username / password not valid"
         else:
             # Find the user and check if the password is valid
-            try:
-                session = sessionfactory()
-                query = session.query(User).filter(User.username == username)
-                user = query.one()
+            with session_scope() as session:
+                user = session.query(User).filter(User.username == username).one()
                 if user.validate_password(password):
                     # Sucessfull login
                     cookie = user.log_in()
                     valid_request = True
-                    session.commit()
                 else:
                     reason_bad = 'Username / password not valid. If you need to reset your password, <a href="/request_password_reset">Click Here</a>'
-            finally:
-                session.close()
 
     req.content_type = "text/html"
     if valid_request:
@@ -675,21 +635,18 @@ def logout(req):
 
     if cookie:
         # Find the user that we are
-        try:
-            session = sessionfactory()
-            query = session.query(User).filter(User.cookie == cookie)
-            users = query.all()
-            if len(users) == 0:
-                # We weren't really logged in.
-                pass
-            elif len(users) > 1:
+        with session_scope() as session:
+            users = session.query(User).filter(User.cookie == cookie).all()
+
+# This if does nothing...
+#            if len(users) == 0:
+#                # We weren't really logged in.
+#                pass
+            if len(users) > 1:
                 # Eeek, multiple users with the same session cookie!?!?!
                 req.log_error("Logout - Multiple Users with same session cookie: %s" % cookie)
             for user in users:
                 user.log_out_all()
-                session.commit()
-        finally:
-            session.close()
 
         Cookie.add_cookie(req, 'gemini_archive_session', '', expires=time.time())
     req.content_type = "text/html"
@@ -710,15 +667,12 @@ def whoami(req, things):
 
     username = None
     # Find out who we are if logged in
-    try:
-        session = sessionfactory()
+    with session_scope() as session:
         user = userfromcookie(session, req)
-    finally:
-        session.close()
 
-    if user is not None:
-        username = user.username
-        fullname = user.fullname
+        if user is not None:
+            username = user.username
+            fullname = user.fullname
 
     # Construct the "things" part of the URL for the link that want to be able to
     # take you back to the same form contents
@@ -758,8 +712,7 @@ def user_list(req):
     req.write("</head><body>")
     req.write('<h1>Gemini Archive User List</h1>')
 
-    try:
-        session = sessionfactory()
+    with session_scope() as session:
         thisuser = userfromcookie(session, req)
         if thisuser is None or thisuser.gemini_staff != True:
             req.write("<p>You don't appear to be logged in as a Gemini Staff user. Sorry.</p>")
@@ -769,22 +722,17 @@ def user_list(req):
         query = session.query(User).order_by(desc(User.superuser)).order_by(desc(User.gemini_staff))
         query = query.order_by(User.username)
         users = query.all()
-    finally:
-        session.close()
 
-    even = False
-    req.write('<TABLE>')
-    req.write('<TR class=tr_head><TH>Username</TH><TH>Full Name</TH><TH>Email</TH><TH>Password</TH><TH>Staff Access</TH><TH>Superuser</TH><TH>Reset Requested</TH><TH>Reset Active</TH><TH>Account Create</TH><TH>Last Password Change</TH><TR>')
-    for user in users:
-        even = not even
-        if even:
-            row_class = "tr_even"
-        else:
-            row_class = "tr_odd"
-        password = user.password is not None
-        reset_requested = user.reset_token is not None
-        reset_active = (user.reset_token is not None) and (user.reset_token_expires > datetime.datetime.utcnow())
-        req.write('<TR class=%s><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>' % (row_class, user.username, user.fullname, user.email, password, user.gemini_staff, user.superuser, reset_requested, reset_active, user.account_created, user.password_changed))
+        even = False
+        req.write('<TABLE>')
+        req.write('<TR class=tr_head><TH>Username</TH><TH>Full Name</TH><TH>Email</TH><TH>Password</TH><TH>Staff Access</TH><TH>Superuser</TH><TH>Reset Requested</TH><TH>Reset Active</TH><TH>Account Create</TH><TH>Last Password Change</TH><TR>')
+        for user in users:
+            even = not even
+            row_class = "tr_even" if even else "tr_odd"
+            password = user.password is not None
+            reset_requested = user.reset_token is not None
+            reset_active = (user.reset_token is not None) and (user.reset_token_expires > datetime.datetime.utcnow())
+            req.write('<TR class=%s><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>' % (row_class, user.username, user.fullname, user.email, password, user.gemini_staff, user.superuser, reset_requested, reset_active, user.account_created, user.password_changed))
     req.write('</TABLE>')
 
     req.write('</body></html>')
@@ -796,60 +744,43 @@ def email_inuse(email):
     """
     Check the database to see if this email is already in use. Returns True if it is, False otherwise
     """
-    try:
-        session = sessionfactory()
-        query = session.query(User).filter(User.email == email)
-        num = query.count()
 
-        if num == 0:
-            return False
-        else:
-            return True
-    finally:
-        session.close()
+    with session_scope as session:
+        num = session.query(User).filter(User.email == email).count()
+
+        return num != 0
 
 def username_inuse(username):
     """
     Check the database to see if a username is already in use. Returns True if it is, False otherwise
     """
-    try:
-        session = sessionfactory()
-        query = session.query(User).filter(User.username == username)
-        num = query.count()
 
-        if num == 0:
-            return False
-        else:
-            return True
-    finally:
-        session.close()
+    with session_scope() as session:
+        num = session.query(User).filter(User.username == username).count()
+
+        return num != 0
 
 digits_cre = re.compile(r'\d')
 lower_cre = re.compile('[a-z]')
 upper_cre = re.compile('[A-Z]')
 nonalpha_cre = re.compile('[^a-zA-Z0-9]')
+password_criteria = (digits_cre, lower_cre, upper_cre, nonalpha_cre)
 def bad_password(candidate):
     """
     Checks candidate for compliance with password rules.
     Returns True if it is bad, False if it is good
     """
-    if len(candidate) < 14:
-        return True
-    elif not bool(digits_cre.search(candidate)):
-        return True
-    elif not bool(lower_cre.search(candidate)):
-        return True
-    elif not bool(upper_cre.search(candidate)):
-        return True
-    elif not bool(nonalpha_cre.search(candidate)):
-        return True
-    else:
+
+    all_crit = all(x.search(candidate) for x in password_criteria)
+    if len(candidate) > 13 and all_crit:
         return False
+
+    return True
 
 def userfromcookie(session, req):
     """
     Given a database session and request object, get the session cookie
-    from the request object and find and return the user object, 
+    from the request object and find and return the user object,
     or None if it is not a valid session cookie
     """
 
@@ -863,11 +794,8 @@ def userfromcookie(session, req):
         return None
 
     # Find the user that we are
-    query = session.query(User).filter(User.cookie == cookie)
-    user = query.first()
-    if user is None:
+    try:
+        return session.query(User).filter(User.cookie == cookie).one()
+    except NoResultFound:
         # This is not a valid session cookie
         return None
-    else:
-        return user
-

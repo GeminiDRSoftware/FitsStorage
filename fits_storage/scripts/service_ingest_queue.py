@@ -141,7 +141,7 @@ while loop:
                         # Defer ingestion of this file for defer_secs
                         after = now + defer
                         # iq is a transient ORM object, find it in the db
-                        dbiq = session.query(IngestQueue).filter(IngestQueue.id == iq.id).one()
+                        dbiq = session.query(IngestQueue).get(iq.id)
                         dbiq.after = after
                         dbiq.inprogress = False
                         session.commit()
@@ -165,7 +165,7 @@ while loop:
                         # Defer ingestion of this file for 15 secs
                         after = datetime.datetime.now() + datetime.timedelta(seconds=15)
                         # iq is a transient ORM object, find it in the db
-                        dbiq = session.query(IngestQueue).filter(IngestQueue.id == iq.id).one()
+                        dbiq = session.query(IngestQueue).get(iq.id)
                         dbiq.after = after
                         dbiq.inprogress = False
                         session.commit()
@@ -188,7 +188,7 @@ while loop:
                 raise
             logger.debug("Deleteing ingestqueue id %d", iq.id)
             # iq is a transient ORM object, find it in the db
-            dbiq = session.query(IngestQueue).filter(IngestQueue.id == iq.id).one()
+            dbiq = session.query(IngestQueue).get(iq.id)
             session.delete(dbiq)
             session.commit()
 

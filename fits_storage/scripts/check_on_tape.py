@@ -36,18 +36,18 @@ session = sessionfactory()
 
 query = session.query(DiskFile.id).select_from(join(File, DiskFile)).filter(DiskFile.canonical==True)
 
-if(options.filepre):
+if options.filepre:
     likestr = "%s%%" % options.filepre
     query = query.filter(File.name.like(likestr))
 
-if(not options.notpresent):
+if not options.notpresent:
     query = query.filter(DiskFile.present==True)
 
 query = query.order_by(File.name)
 
 diskfileids = query.all()
 
-if(len(diskfileids) == 0):
+if len(diskfileids) == 0:
     logger.info("No Files found matching file-pre. Exiting")
     session.close()
     sys.exit(0)
@@ -58,8 +58,7 @@ sumbytes = 0
 sumfiles = 0
 
 for diskfileid in diskfileids:
-
-    diskfile = session.query(DiskFile).filter(DiskFile.id == diskfileid).one()
+    diskfile = session.query(DiskFile).get(diskfileid)
 
     fullpath = diskfile.fullpath()
     dbmd5 = diskfile.file_md5
@@ -68,12 +67,8 @@ for diskfileid in diskfileids:
     url = "http://%s/fileontape/%s" % (options.tapeserver, dbfilename)
     logger.debug("Querying tape server DB at %s" % url)
 
-    u = urllib.urlopen(url)
-    xml = u.read()
-    u.close()
-
+    xml = urllib.urlopen(url).read()
     dom = parseString(xml)
-
     fileelements = dom.getElementsByTagName("file")
 
     tapeids = []
@@ -83,21 +78,20 @@ for diskfileid in diskfileids:
         tapeid = int(fe.getElementsByTagName("tapeid")[0].childNodes[0].data)
         tapeset = int(fe.getElementsByTagName("tapeset")[0].childNodes[0].data)
         logger.debug("Filename: %s; md5=%s, tapeid=%d, tapeset=%d" % (filename, md5, tapeid, tapeset))
-        if((filename == dbfilename) and (md5 == dbmd5) and (tapeid not in tapeids)):
+        if (filename == dbfilename) and (md5 == dbmd5) and (tapeid not in tapeids):
             logger.debug("Found it on tape id %d" % tapeid)
-            if(options.tapeset is not None and tapeset != options.tapeset):
+            if options.tapeset is not None and tapeset != options.tapeset:
                 logger.debug("But this tape id is not in the requested tapeset")
             else:
                 tapeids.append(tapeid)
 
-    if(len(tapeids) < options.mintapes):
+    if len(tapeids) < options.mintapes:
         sumbytes += diskfile.file_size
         sumfiles += 1
         logger.info("*** File %s - %s needs to go to tape, it is on %d tapes: %s" % (fullpath, dbmd5, len(tapeids), tapeids))
     else:
-        if(not options.only):
+        if not options.only:
             logger.info("File %s - %s is OK, it already is on %d tapes: %s" % (fullpath, dbmd5, len(tapeids), tapeids))
-        
 
 logger.info("Found %d files totalling %.2f GB that should go to tape" % (sumfiles, sumbytes/1.0E9))
 

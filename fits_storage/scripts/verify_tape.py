@@ -45,7 +45,7 @@ try:
     # Find the tape in the DB
     try:
         tape = session.query(Tape).filter(Tape.label==label).filter(Tape.active==True).one()
-    except (NoResultFound):
+    except NoResultFound:
         logger.error("The tape %s was not found in the DB." % label)
         sys.exit(1)
 
@@ -59,7 +59,7 @@ try:
         try:
             logger.debug("Sending tape to filenumber %d" % tw.filenum)
             td.skipto(filenum=tw.filenum, fail=True)
-        except (IOError):
+        except IOError:
             logger.error("Found file number in the database but not on tape at filenum: %s" % tw.filenum)
             errors.append(("File number not on tape at filenum = %s" % tw.filenum).encode())
             break
@@ -80,14 +80,14 @@ try:
                 # Find the tapefile object
                 try:
                     tf = session.query(TapeFile).filter(TapeFile.tapewrite_id==tw.id).filter(TapeFile.filename==filename).one()
-                except (NoResultFound):
+                except NoResultFound:
                     pass
 
                 # Check whether this filename is in the DB
-                if(tf):
+                if tf:
                     files_on_tape.append(filename)
                     # Compare the tapefile object in the DB and the tarinfo object for the actual thing on tape
-                    if(tar_info.size==tf.size):
+                    if tar_info.size==tf.size:
                         logger.debug("Size matches in tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
                         # Calculate the md5 of the data on tape
                         f = tar.extractfile(tar_info)
@@ -98,7 +98,7 @@ try:
                         errors.append(("SIZE mismatch at filenum = %d, filename = %s" % (tw.filenum, tf.filename)).encode())
                         break
                     # Compare against the DB
-                    if(md5 != tf.md5):
+                    if md5 != tf.md5:
                         logger.error("md5 mismatch between tape and DB for file: %s, in filenum: %d" % (tf.filename, tw.filenum))
                         errors.append(("MD5 mismatch at filenum = %d, filename = %s" % (tw.filenum, tf.filename)).encode())
                     else:
@@ -108,7 +108,7 @@ try:
                     errors.append(("File not in DB at filenum = %d, filename = %s" % (tw.filenum, tf.filename)).encode())
                     break
             tar.close()
-        except (tarfile.ReadError):
+        except tarfile.ReadError:
             logger.error("Tar read error on open - most likely an empty tar file: tape %s, file number %d" % (label, tw.filenum))
         finally:
             tdfileobj.close()
@@ -124,7 +124,7 @@ try:
     # Print a list of all the errors found
     logger.info("List of Differences Found: %s" % errors)
 
-    if(len(errors)):
+    if len(errors):
         logger.error("There were verify errors - not updating lastverified")
     else:
         now = datetime.datetime.utcnow()

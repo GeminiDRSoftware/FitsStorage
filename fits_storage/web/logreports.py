@@ -170,7 +170,7 @@ def usagereport(req):
                 req.write('<TD>%s</TD>' % usagelog.utdatetime.strftime("%Y-%m-%d %H:%M:%S.%f")[:21])
                 html = ""
                 if usagelog.user_id:
-                    user = session.query(User).filter(User.id == usagelog.user_id).one()
+                    user = session.query(User).get(usagelog.user_id)
                     html = user.username
                     if user.gemini_staff:
                         html += " (Staff)"
@@ -309,7 +309,7 @@ def usagedetails(req, things):
         req.write("</TABLE>")
 
         if usagelog.user_id:
-            user = session.query(User).filter(User.id == usagelog.user_id).one()
+            user = session.query(User).get(usagelog.user_id)
             req.write("<h2>User Details</h2>")
             req.write("<TABLE>")
             req.write("<TR><TD>Username:</TD><TD>%s</TD></TR>" % user.username)
@@ -533,7 +533,7 @@ def downloadlog(req, things):
                 req.write('<TD>%s</TD>' % header.diskfile.filename)
                 req.write('<TD>%s</TD>' % header.data_label)
                 if fdl.usagelog.user_id:
-                    user = session.query(User).filter(User.id == fdl.usagelog.user_id).one()
+                    user = session.query(User).get(fdl.usagelog.user_id)
                     html = "%d: %s" % (user.id, user.username)
                     if user.gemini_staff:
                         html += " (Staff)"
@@ -658,7 +658,7 @@ def usagestats(req):
             tr_class = 'tr_even' if even else 'tr_odd'
             req.write('<TR class="%s">' % tr_class)
             if result[0]:
-                user = session.query(User).filter(User.id == result[0]).one()
+                user = session.query(User).get(result[0])
                 name = user.username
                 if user.gemini_staff:
                     name += " (Staff)"
@@ -685,7 +685,7 @@ def usagestats(req):
             tr_class = 'tr_even' if even else 'tr_odd'
             req.write('<TR class="%s">' % tr_class)
             if result[0]:
-                user = session.query(User).filter(User.id == result[0]).one()
+                user = session.query(User).get(result[0])
                 name = user.username
                 if user.gemini_staff:
                     name += " (Staff)"
@@ -747,13 +747,13 @@ def render_usagestats_row(result, tr_class=''):
 
 ############################################################################################################
 
-# What follows is a function that bulds a rather complicated SQL query, written to optimize the call to
+# What follows is a function that builds a rather complicated SQL query, written to optimize the call to
 # usagestats, and as a testbed for other optimizations. This optimization is not really that needed, because
 # usagestats is not called often, but the original function triggered multiple database queries per rendered
 # row, and I (Ricardo) wanted to remove that behaviour.
 #
 # Understanding it SEEMS not to easy, but that's just because of the size. We'll be providing plenty of
-# documentation to let future maintainers know # what to touch, and where.
+# documentation to let future maintainers know what to touch, and where.
 
 UsageResult = namedtuple('UsageResult',
                 (
