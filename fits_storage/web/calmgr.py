@@ -142,6 +142,7 @@ def calmgr(req, selection):
             #req.write("\ntype_str: %s\n" % type_str)
             descriptors = eval(desc_str)
             types = eval(type_str)
+            req.usagelog.add_note("CalMGR request CalType: %s" % caltype)
             req.usagelog.add_note("CalMGR request Descriptor Dictionary: %s" % descriptors)
             req.usagelog.add_note("CalMGR request Types List: %s" % types)
 
