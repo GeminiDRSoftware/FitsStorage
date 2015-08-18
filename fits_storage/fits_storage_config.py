@@ -6,8 +6,8 @@ We put them in a separate file to ease install issues
 import os, sys
 
 # Is this an archive server
-#use_as_archive = True
-use_as_archive = False
+use_as_archive = True
+#use_as_archive = False
 
 # AWS S3 info
 using_s3 = False
@@ -20,9 +20,9 @@ aws_secret_key = 'o6J/3yECuT50FM46sEuFM5wcdtW8iPzqx3ur1m7a'
 z_staging_area = '/data/FitsStorage/z_staging'
 
 # Configure the path to the storage root here 
-storage_root = '/data/FitsStorage/dataflow'
+#storage_root = '/data/FitsStorage/dataflow'
 #storage_root = '/net/wikiwiki/dataflow'
-#storage_root = '/net/hahalua/data/export'
+storage_root = '/data/gemini_data'
 
 if(using_s3):
     storage_root = s3_staging_area
@@ -30,7 +30,7 @@ if(using_s3):
 # Defer ingestion of files modified within the last defer_seconds seconds
 # for at least a further defer_seconds seconds
 # Set to zero to disable
-defer_seconds = 30
+defer_seconds = 0
 
 
 # Target free space and number of files on storage_root for delete script
@@ -45,6 +45,10 @@ upload_staging_path = "/data/upload_staging"
 # Leave it empty to disable upload authentication
 # The cookie name is 'gemini_fits_upload_auth'
 upload_auth_cookie = None
+
+# This is the cookie supplied to servers we are exporting to.
+export_upload_auth_cookie = None
+
 
 # This is the magic cookie value needed to allow downloading any files
 # without any other form of authentication
@@ -63,7 +67,7 @@ export_bzip = True
 processed_cals_path = "reduced_cals"
 
 # This is the subdirectory in dataroot where preview files live
-using_previews = True
+using_previews = False
 preview_path = "previews"
 
 # The DAS calibration reduction path is used to find the last processing
@@ -118,4 +122,4 @@ odbkeypass = "dontputtheactualkeyinthesvn"
 blocked_urls = []
 #blocked_urls=['debug', 'summary', 'diskfiles', 'ssummary', 'lsummary', 'standardobs', 'calibrations', 'xmlfilelist', 'fileontape', 'calmgr', 'upload_processed_cal', 'fitsverify', 'mdreport', 'fullheader', 'file', 'programsobserved', 'gmoscal', 'qareport', 'qametrics', 'qaforgui', 'stats', 'tape', 'tapewrite', 'tapefile', 'taperead', 'xmltape', 'notification', 'curation', 'observing_statistics', 'authentication']
 
-validation_def_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'docs/dataDefinition')
+validation_def_path = '/opt/FitsStorage/docs/dataDefinition'
