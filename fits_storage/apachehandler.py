@@ -293,6 +293,8 @@ def thehandler(req):
 
     # The processed_cal upload server
     if this == 'upload_processed_cal':
+        if len(things) != 1:
+            return apache.HTTP_NOT_ACCEPTABLE
         retval = upload_file(req, things[0], processed_cal=True)
         return retval
 
