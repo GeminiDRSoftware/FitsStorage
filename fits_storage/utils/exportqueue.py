@@ -13,7 +13,7 @@ from sqlalchemy import desc, join
 from sqlalchemy.orm import make_transient
 from sqlalchemy.orm.exc import ObjectDeletedError
 
-from ..fits_storage_config import storage_root, using_s3, export_bzip, upload_auth_cookie
+from ..fits_storage_config import storage_root, using_s3, export_bzip, export_upload_auth_cookie
 from . import queue
 
 from ..orm.file import File
@@ -130,7 +130,7 @@ def export_file(session, logger, filename, path, destination):
         request.add_header('Cache-Control', 'no-cache')
         request.add_header('Content-Length', '%d' % len(postdata))
         request.add_header('Content-Type', 'application/octet-stream')
-        request.add_header('Cookie', 'gemini_fits_upload_auth=%s' % upload_auth_cookie)
+        request.add_header('Cookie', 'gemini_fits_upload_auth=%s' % export_upload_auth_cookie)
         u = urllib2.urlopen(request)
         response = u.read()
         u.close()
