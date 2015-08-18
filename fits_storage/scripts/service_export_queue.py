@@ -5,6 +5,7 @@ import os
 import datetime
 import time
 import traceback
+import urllib2
 from fits_storage.orm import sessionfactory
 from fits_storage.orm.exportqueue import ExportQueue
 from fits_storage.utils.exportqueue import export_file, pop_exportqueue, exportqueue_length, retry_failures
@@ -127,7 +128,7 @@ while loop:
 
             try:
                 sucess = export_file(session, logger, eq.filename, eq.path, eq.destination)
-            except:
+            except urllib2.URLError:
                 logger.info("Problem Exporting File - Rolling back")
                 session.rollback()
                 # Originally we set the inprogress flag back to False at the point that we abort.
