@@ -9,6 +9,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy import func, update
 from sqlalchemy.sql.sqltypes import String, Date, DateTime, NullType
 from datetime import datetime, date
+from contextlib import contextmanager
 
 from ..fits_storage_config import fits_database
 
@@ -24,6 +25,20 @@ Base = declarative_base()
 # and an sqlalchemy session to go with it
 pg_db = create_engine(fits_database, echo = False)
 sessionfactory = sessionmaker(pg_db)
+
+@contextmanager
+def session_scope():
+    "Provide a transactional scope around a series of operations"
+
+    session = sessionfactory()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 class StringLiteral(String):
     def literal_processor(self, dialect):
