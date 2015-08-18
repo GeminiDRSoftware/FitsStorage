@@ -124,10 +124,11 @@ if (n>5000):
 
 session = sessionfactory()
 
+iq = IngestQueueUtil(session, logger)
 for filename in thefiles:
     i += 1
     logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
-    IngestQueueUtil(session, logger).add_to_queue(filename, path, force=options.force, force_md5=options.force_md5, after=options.after)
+    iq.add_to_queue(filename, path, force=options.force, force_md5=options.force_md5, after=options.after)
 
 session.close()
 logger.info("*** add_to_ingestqueue.py exiting normally at %s" % datetime.datetime.now())
