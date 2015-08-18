@@ -84,7 +84,7 @@ class IngestQueueUtil(object):
         #except ObjectDeletedError:
             #logger.debug("Added filename %s to ingestqueue which was immediately deleted", filename)
 
-    def need_to_add_diskfile(self, fileobj):
+    def need_to_add_diskfile(self, fileobj, force, force_md5):
         # See if a diskfile for this file already exists and is present
         query = self.s.query(DiskFile)\
                     .filter(DiskFile.file_id == fileobj.id)\
@@ -346,7 +346,7 @@ class IngestQueueUtil(object):
 
         # At this point, 'fileobj' should by a valid DB object.
 
-        if self.need_to_add_diskfile(fileobj):
+        if self.need_to_add_diskfile(fileobj, force, force_md5):
             return self.add_diskfile_entry(fileobj, filename, path, fullpath, skip_fv, skip_md, make_previews)
 
         return False
