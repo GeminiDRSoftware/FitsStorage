@@ -8,6 +8,7 @@ import datetime
 import hashlib
 import bz2
 import functools
+import httplib
 
 from sqlalchemy import desc, join
 from sqlalchemy.orm import make_transient
@@ -162,7 +163,7 @@ def export_file(session, logger, filename, path, destination):
             logger.debug("Transfer not successful")
             return False
 
-    except urllib2.URLError:
+    except urllib2.URLError, httplib.IncompleteRead:
         logger.info("URLError posting %d bytes of data to destination server at: %s", len(postdata), url)
         logger.debug("Transfer Failed")
         return False
