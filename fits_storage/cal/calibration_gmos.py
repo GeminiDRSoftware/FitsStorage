@@ -213,17 +213,18 @@ class CalibrationGMOS(Calibration):
         # The Overscan section handling: this only applies to processed biases
         # as raw biases will never be overscan trimmed or subtracted, and if they're
         # processing their own biases, they ought to know what they want to do.
-
-        # If the target frame is prepared, then we match the overscan state. If the target frame is
-        # not prepared, then we don't know what thier procesing intentions are, so we
-        # give them the default (which is trimmed and subtracted).
         if processed:
             if self.descriptors['prepared'] == True:
+                # If the target frame is prepared, then we match the overscan state. 
                 filters.append(Gmos.overscan_trimmed == self.descriptors['overscan_trimmed'])
                 filters.append(Gmos.overscan_subtracted == self.descriptors['overscan_subtracted'])
             else:
-                filters.append(Gmos.overscan_trimmed == True)
-                filters.append(Gmos.overscan_subtracted == True)
+                # If the target frame is not prepared, then we don't know what thier procesing intentions are.
+                # we could go with the default (which is trimmed and subtracted).
+                # But actually it's better to just send them what we have, as we has a mishmash of both historically
+                #filters.append(Gmos.overscan_trimmed == True)
+                #filters.append(Gmos.overscan_subtracted == True)
+                pass
 
         return (
             self.get_query()
