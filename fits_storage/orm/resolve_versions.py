@@ -3,7 +3,7 @@ from sqlalchemy import Integer, Text, Boolean
 import os
 
 from . import Base
-from .hashes import md5sum_size_fp, md5sum_size_bz2
+from ..utils.hashes import md5sum_size_fp, md5sum_size_bz2
 
 class Version(Base):
     """
