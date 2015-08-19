@@ -1,11 +1,12 @@
 #! /usr/bin/env python
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.orm.previewqueue import PreviewQueue
 from fits_storage.orm.diskfile import DiskFile
 
 from fits_storage.fits_storage_config import fits_lockfile_dir
 from fits_storage.utils.previewqueue import PreviewQueueUtil
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
+from fits_storage.utils.pidfile import PidFile, PidFileError
 import signal
 import sys
 import os
@@ -19,7 +20,7 @@ parser = OptionParser()
 parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
 parser.add_option("--name", action="store", dest="name", help="Name for this process. Used in logfile and lockfile")
-parser.add_option("--lockfile", action="store_true", dest="lockfile", help="Use a lockfile to limit instances")
+parser.add_option("--lockfile", action="store_true", default="service_preview_queue", dest="lockfile", help="Use a lockfile to limit instances")
 parser.add_option("--empty", action="store_true", default=False, dest="empty", help="This flag indicates that we should empty the current queue and then exit.")
 (options, args) = parser.parse_args()
 
@@ -59,96 +60,53 @@ signal.signal(signal.SIGTERM, nicehandler)
 # Annouce startup
 logger.info("*********    service_preview_queue.py - starting up at %s", datetime.datetime.now())
 
-if options.lockfile:
-    # Does the Lockfile exist?
-    lockfile = "%s/%s.lock" % (fits_lockfile_dir, options.name)
-    if os.path.exists(lockfile):
-        logger.info("Lockfile %s already exists, testing for viability", lockfile)
-        actually_locked = True
-        try:
-            # Read the pid from the lockfile
-            lfd = open(lockfile, 'r')
-            oldpid = int(lfd.read())
-            lfd.close()
-        except:
-            logger.error("Could not read pid from lockfile %s", lockfile)
-            oldpid = 0
-        # Try and send a null signal to test if the process is viable.
-        try:
-            if oldpid:
-                os.kill(oldpid, 0)
-        except:
-            # If this gets called then the lockfile refers to a process which either doesn't exist or is not ours.
-            logger.error("PID in lockfile prefers to a process which either doesn't exist, or is not ours - %d", oldpid)
-            actually_locked = False
-
-        if actually_locked:
-            logger.info("Lockfile %s refers to PID %d which appears to be valid. Exiting", lockfile, oldpid)
-            sys.exit()
-        else:
-            logger.error("Lockfile %s refers to PID %d which appears to be not us. Deleting lockfile", lockfile, oldpid)
-            os.unlink(lockfile)
-            logger.info("Creating replacement lockfile %s", lockfile)
-            lfd = open(lockfile, 'w')
-            lfd.write("%s\n" % os.getpid())
-            lfd.close()
-
-    else:
-        logger.info("Lockfile does not exist: %s", lockfile)
-        logger.info("Creating new lockfile %s", lockfile)
-        lfd = open(lockfile, 'w')
-        lfd.write("%s\n" % os.getpid())
-        lfd.close()
-
-session = sessionfactory()
-
-prev_queue = PreviewQueueUtil(session, logger)
-# Loop forever. loop is a global variable defined up top
-while loop:
-    try:
-        # Request a queue entry
-        pq = prev_queue.pop()
-
-        if pq is None:
-            logger.info("Nothing on queue.")
-            if options.empty:
-                logger.info("--empty flag set, exiting")
-                break
-            else:
-                logger.info("...Waiting")
-            time.sleep(5)
-        else:
-
+try:
+    with PidFile(logger, options.name, dummy=not options.lockfile) as pidfile, session_scope() as session:
+        prev_queue = PreviewQueueUtil(session, logger)
+        # Loop forever. loop is a global variable defined up top
+        while loop:
             try:
-                # Actually make the preview here
-                prev_queue.process(pq, make=True)
+                # Request a queue entry
+                pq = prev_queue.pop()
+
+                if pq is None:
+                    logger.info("Nothing on queue.")
+                    if options.empty:
+                        logger.info("--empty flag set, exiting")
+                        break
+                    else:
+                        logger.info("...Waiting")
+                    time.sleep(5)
+                else:
+
+                    try:
+                        # Actually make the preview here
+                        prev_queue.process(pq, make=True)
+                    except:
+                        logger.info("Problem Making Preview - Rolling back")
+                        logger.error("Exception making preview %s: %s : %s... %s",
+                                     pq.diskfile_id, sys.exc_info()[0], sys.exc_info()[1],
+                                                     traceback.format_tb(sys.exc_info()[2]))
+                        session.rollback()
+                        # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
+                        # pq.inprogress=False
+                        raise
+                    logger.debug("Deleting previewqueue id %d", pq.id)
+                    # pq is a transient ORM object, retrieve the persistent one
+                    dbpq = session.query(PreviewQueue).get(pq.id)
+                    session.delete(dbpq)
+                    session.commit()
+
+            except KeyboardInterrupt:
+                loop = False
+
             except:
-                logger.info("Problem Making Preview - Rolling back")
-                logger.error("Exception making preview %s: %s : %s... %s", pq.diskfile_id, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
+                string = "".join(traceback.format_tb(sys.exc_info()[2]))
                 session.rollback()
-                # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
-                # pq.inprogress=False
-                raise
-            logger.debug("Deleting previewqueue id %d", pq.id)
-            # pq is a transient ORM object, retrieve the persistent one
-            dbpq = session.query(PreviewQueue).get(pq.id)
-            session.delete(dbpq)
-            session.commit()
+                logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
+                # Press on with the next file, don't raise the exception further.
+                # raise
+except PidFileError as e:
+    logger.error(str(e))
 
-    except KeyboardInterrupt:
-        loop = False
-
-    except:
-        string = "".join(traceback.format_tb(sys.exc_info()[2]))
-        session.rollback()
-        logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
-        # Press on with the next file, don't raise the esception further.
-        # raise
-
-    finally:
-        session.close()
-
-if options.lockfile:
-    logger.info("Deleting Lockfile %s", lockfile)
-    os.unlink(lockfile)
 logger.info("*********    service_preview_queue.py - exiting at %s", datetime.datetime.now())

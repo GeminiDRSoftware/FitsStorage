@@ -8,10 +8,11 @@ from sqlalchemy import desc
 from sqlalchemy.orm.exc import ObjectDeletedError, NoResultFound
 from sqlalchemy.orm import make_transient
 import functools
+import fcntl
 
 from ..orm.geometryhacks import add_footprint, do_std_obs
 
-from ..fits_storage_config import storage_root, using_sqlite, using_s3, using_previews
+from ..fits_storage_config import storage_root, using_sqlite, using_s3, using_previews, defer_seconds
 from . import queue
 
 if using_previews:
@@ -370,3 +371,41 @@ class IngestQueueUtil(object):
 
     def pop(self, fast_rebuild=False):
         return queue.pop_queue(IngestQueue, self.s, self.l, fast_rebuild)
+
+    def maybe_defer(self, iq):
+        """Check if the file was very recently modified or is locked, defer ingestion if it was"""
+        after = None
+
+        fullpath = os.path.join(storage_root, iq.path, iq.filename)
+        if defer_seconds > 0:
+            lastmod = datetime.datetime.fromtimestamp(os.path.getmtime(fullpath))
+            now = datetime.datetime.now()
+            age = now - lastmod
+            defer = datetime.timedelta(seconds=defer_seconds)
+            if age < defer:
+                self.l.info("Deferring ingestion of recently modified file %s", iq.filename)
+                # Defer ingestion of this file for defer_secs
+                after = now + defer
+        else:
+            # Check if it is locked
+            try:
+                with open(fullpath, "r+") as fd:
+                    try:
+                        fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    except IOError:
+                        self.l.info("Deferring ingestion of locked file %s", iq.filename)
+                        # Defer ingestion of this file for 15 secs
+                        after = datetime.datetime.now() + datetime.timedelta(seconds=15)
+            except IOError:
+                # Probably don't have write permission to the file
+                self.l.warning("Could not open %s for update to test lock", fullpath)
+
+        if after is not None:
+            # iq is a transient ORM object, find it in the db
+            dbiq = self.s.query(IngestQueue).get(iq.id)
+            dbiq.after = after
+            dbiq.inprogress = False
+            self.s.commit()
+            return True
+
+        return False

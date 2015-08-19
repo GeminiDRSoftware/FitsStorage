@@ -2,6 +2,7 @@
 This is the ExportQueue ORM class
 """
 import datetime
+from sqlalchemy import desc
 from sqlalchemy import Column
 from sqlalchemy import Integer, Boolean, Text, DateTime
 

@@ -1,17 +1,17 @@
 #! /usr/bin/env python
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.orm.ingestqueue import IngestQueue
-from fits_storage.fits_storage_config import using_s3, storage_root, defer_seconds, fits_lockfile_dir, export_destinations
+from fits_storage.fits_storage_config import using_s3, storage_root, fits_lockfile_dir, export_destinations
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 from fits_storage.utils.exportqueue import add_to_exportqueue
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
+from fits_storage.utils.pidfile import PidFile, PidFileError
 import signal
 import sys
 import os
 import datetime
 import time
 import traceback
-import fcntl
 
 from optparse import OptionParser
 
@@ -23,7 +23,7 @@ parser.add_option("--fast-rebuild", action="store_true", dest="fast_rebuild", de
 parser.add_option("--make-previews", action="store_true", dest="make_previews", default=False, help="Make previews during ingest rather than queueing for later")
 parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
-parser.add_option("--name", action="store", dest="name", help="Name for this process. Used in logfile and lockfile")
+parser.add_option("--name", action="store", dest="name", default="service_ingest_queue", help="Name for this process. Used in logfile and lockfile")
 parser.add_option("--lockfile", action="store_true", dest="lockfile", help="Use a lockfile to limit instances")
 parser.add_option("--empty", action="store_true", default=False, dest="empty", help="This flag indicates that service ingest queue should empty the current queue and then exit.")
 (options, args) = parser.parse_args()
@@ -61,152 +61,71 @@ signal.signal(signal.SIGSEGV, handler)
 signal.signal(signal.SIGPIPE, handler)
 signal.signal(signal.SIGTERM, nicehandler)
 
-# Annouce startup
+# Announce startup
 logger.info("*********    service_ingest_queue.py - starting up at %s", datetime.datetime.now())
 
-if options.lockfile:
-    # Does the Lockfile exist?
-    lockfile = "%s/%s.lock" % (fits_lockfile_dir, options.name)
-    if os.path.exists(lockfile):
-        logger.info("Lockfile %s already exists, testing for viability", lockfile)
-        actually_locked = True
-        try:
-            # Read the pid from the lockfile
-            lfd = open(lockfile, 'r')
-            oldpid = int(lfd.read())
-            lfd.close()
-        except:
-            logger.error("Could not read pid from lockfile %s", lockfile)
-            oldpid = 0
-        # Try and send a null signal to test if the process is viable.
-        try:
-            if oldpid:
-                os.kill(oldpid, 0)
-        except:
-            # If this gets called then the lockfile refers to a process which either doesn't exist or is not ours.
-            logger.error("PID in lockfile prefers to a process which either doesn't exist, or is not ours - %d", oldpid)
-            actually_locked = False
+try:
+    with PidFile(logger, options.name, dummy=not options.lockfile) as pidfile, session_scope() as session:
+        ingest_queue = IngestQueueUtil(session, logger)
 
-        if actually_locked:
-            logger.info("Lockfile %s refers to PID %d which appears to be valid. Exiting", lockfile, oldpid)
-            sys.exit()
-        else:
-            logger.error("Lockfile %s refers to PID %d which appears to be not us. Deleting lockfile", lockfile, oldpid)
-            os.unlink(lockfile)
-            logger.info("Creating replacement lockfile %s", lockfile)
-            lfd = open(lockfile, 'w')
-            lfd.write("%s\n" % os.getpid())
-            lfd.close()
-
-    else:
-        logger.info("Lockfile does not exist: %s", lockfile)
-        logger.info("Creating new lockfile %s", lockfile)
-        lfd = open(lockfile, 'w')
-        lfd.write("%s\n" % os.getpid())
-        lfd.close()
-
-session = sessionfactory()
-ingest_queue = IngestQueueUtil(session, logger)
-
-# Loop forever. loop is a global variable defined up top
-while loop:
-    try:
-        # Request a queue entry
-        iq = ingest_queue.pop(options.fast_rebuild)
-
-        if iq is None:
-            if options.empty:
-                logger.info("Nothing on queue and --empty flag set, exiting")
-                break
-            else:
-                logger.info("Nothing on queue... Waiting")
-            time.sleep(2)
-        else:
-            # Don't query queue length in fast_rebuild mode
-            if options.fast_rebuild:
-                logger.info("Ingesting %s", iq.filename)
-            else:
-                logger.info("Ingesting %s, (%d in queue)", iq.filename, ingest_queue.length())
-
-            # Check if the file was very recently modified or is locked, defer ingestion if it was
-            if (not using_s3) and (options.no_defer == False):
-                fullpath = os.path.join(storage_root, iq.path, iq.filename)
-                if defer_seconds > 0:
-                    lastmod = datetime.datetime.fromtimestamp(os.path.getmtime(fullpath))
-                    now = datetime.datetime.now()
-                    age = now - lastmod
-                    defer = datetime.timedelta(seconds=defer_seconds)
-                    if age < defer:
-                        logger.info("Deferring ingestion of recently modified file %s", iq.filename)
-                        # Defer ingestion of this file for defer_secs
-                        after = now + defer
-                        # iq is a transient ORM object, find it in the db
-                        dbiq = session.query(IngestQueue).get(iq.id)
-                        dbiq.after = after
-                        dbiq.inprogress = False
-                        session.commit()
-                        continue
-                else:
-                    # Check if it is locked
-                    locked = False
-                    try:
-                        fd = open(fullpath, "r+")
-                        try:
-                            fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                        except IOError:
-                            locked = True
-                        fd.close()
-                    except IOError:
-                        # Probably don't have write permission to the file
-                        logger.warning("Could not open %s for update to test lock", fullpath)
-
-                    if locked:
-                        logger.info("Deferring ingestion of locked file %s", iq.filename)
-                        # Defer ingestion of this file for 15 secs
-                        after = datetime.datetime.now() + datetime.timedelta(seconds=15)
-                        # iq is a transient ORM object, find it in the db
-                        dbiq = session.query(IngestQueue).get(iq.id)
-                        dbiq.after = after
-                        dbiq.inprogress = False
-                        session.commit()
-                        continue
-
-
-
+        # Loop forever. loop is a global variable defined up top
+        while loop:
             try:
-                added_diskfile = ingest_queue.ingest_file(iq.filename, iq.path, iq.force_md5, iq.force, options.skip_fv, options.skip_wmd, options.make_previews)
-                # Now we also add this file to our export list if we have downstream servers and we did add a diskfile
-                if added_diskfile:
-                    for destination in export_destinations:
-                        add_to_exportqueue(session, logger, iq.filename, iq.path, destination)
+                # Request a queue entry
+                iq = ingest_queue.pop(options.fast_rebuild)
+
+                if iq is None:
+                    if options.empty:
+                        logger.info("Nothing on queue and --empty flag set, exiting")
+                        break
+                    else:
+                        logger.info("Nothing on queue... Waiting")
+                    time.sleep(2)
+                else:
+                    # Don't query queue length in fast_rebuild mode
+                    if options.fast_rebuild:
+                        logger.info("Ingesting %s", iq.filename)
+                    else:
+                        logger.info("Ingesting %s, (%d in queue)", iq.filename, ingest_queue.length())
+
+                    # Check if the file was very recently modified or is locked, defer ingestion if it was
+                    if (not using_s3) and (options.no_defer == False):
+                        if ingest_queue.maybe_defer(iq):
+                            continue
+
+                    try:
+                        added_diskfile = ingest_queue.ingest_file(iq.filename, iq.path, iq.force_md5,
+                                                                  iq.force, options.skip_fv, options.skip_wmd,
+                                                                  options.make_previews)
+                        # Now we also add this file to our export list if we have downstream servers and we did add a diskfile
+                        if added_diskfile:
+                            for destination in export_destinations:
+                                add_to_exportqueue(session, logger, iq.filename, iq.path, destination)
+                    except:
+                        logger.info("Problem Ingesting File - Rolling back")
+                        logger.error("Exception ingesting file %s: %s : %s... %s",
+                                     iq.filename, sys.exc_info()[0], sys.exc_info()[1],
+                                                  traceback.format_tb(sys.exc_info()[2]))
+                        # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
+                        # iq.inprogress=False
+                        raise
+                    logger.debug("Deleting ingestqueue id %d", iq.id)
+                    # iq is a transient ORM object, find it in the db
+                    dbiq = session.query(IngestQueue).get(iq.id)
+                    session.delete(dbiq)
+                    session.commit()
+
+            except KeyboardInterrupt:
+                loop = False
+
             except:
-                logger.info("Problem Ingesting File - Rolling back")
-                logger.error("Exception ingesting file %s: %s : %s... %s", iq.filename, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
+                string = traceback.format_tb(sys.exc_info()[2])
+                string = "".join(string)
                 session.rollback()
-                # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
-                # iq.inprogress=False
-                raise
-            logger.debug("Deleteing ingestqueue id %d", iq.id)
-            # iq is a transient ORM object, find it in the db
-            dbiq = session.query(IngestQueue).get(iq.id)
-            session.delete(dbiq)
-            session.commit()
+                logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
+                # Press on with the next file, don't raise the exception further.
+                # raise
+except PidFileError as e:
+    logger.error(str(e))
 
-    except KeyboardInterrupt:
-        loop = False
-
-    except:
-        string = traceback.format_tb(sys.exc_info()[2])
-        string = "".join(string)
-        session.rollback()
-        logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
-        # Press on with the next file, don't raise the esception further.
-        # raise
-
-    finally:
-        session.close()
-
-if options.lockfile:
-    logger.info("Deleting Lockfile %s", lockfile)
-    os.unlink(lockfile)
 logger.info("*********    service_ingest_queue.py - exiting at %s", datetime.datetime.now())
