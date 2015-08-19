@@ -83,12 +83,16 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
         query = query.filter(CalCache.caltype == caltype)
     query = query.distinct().order_by(CalCache.caltype).order_by(CalCache.rank)
 
-    # for result in query.all():
-    #     calheader = session.query(Header).filter(Header.id == result[0]).one()
-    #     calheaders.append(calheader)
+    ids = set()
+    for result in query.all():
+        calheader = session.query(Header).filter(Header.id == result[0]).one()
+        calheaders.append(calheader)
+        ids.add(calheader.id)
 
-    calheaders = session.query(Header).filter(Header.id.in_([res[0] for res in query])).all()
-    ids = set(calh.id for calh in calheaders)
+    # Ricardo - this was your code for the above paragraph - I think it produces the same results,
+    # but the ordering in the calheaders list comes out different.
+    # calheaders = session.query(Header).filter(Header.id.in_([res[0] for res in query])).all()
+    # ids = set(calh.id for calh in calheaders)
 
     # Now we have to recurse to find the calibrations for the calibrations...
     # We only do this for caltype all.
