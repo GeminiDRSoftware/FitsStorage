@@ -2,7 +2,7 @@ import datetime
 from optparse import OptionParser
 from sqlalchemy import func, join
 
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.orm.header import Header
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
@@ -23,10 +23,7 @@ setdemon(options.demon)
 # Annouce startup
 logger.info("*********    data_rates.py - starting up at %s" % datetime.datetime.now())
 
-# Get a database session
-session = sessionfactory()
-
-with open("/data/logs/data_rates.py", "w") as f:
+with session_scope() as session, open("/data/logs/data_rates.py", "w") as f:
     ndays = 1000
 
     today = datetime.datetime.utcnow().date()
@@ -40,7 +37,7 @@ with open("/data/logs/data_rates.py", "w") as f:
         query = (session.query(func.sum(DiskFile.data_size))
                         .select_from(join(Header, DiskFile))
                         .filter(DiskFile.present==True)
-                        .between(Header.ut_datetime, start, end))
+                        .filter(Header.ut_datetime.between(start, end)))
         # If any DiskFile.data_size is NULL, the result will be None. The 'or 0' takes care of that
         nbytes = query.one()[0] or 0
         f.write("%s, %f\n" % (str(start.date()), nbytes/1.0E9))

@@ -12,6 +12,7 @@ from fits_storage.logger import logger, setdebug, setdemon
 
 import orm
 from fits_storage.orm.resolve_versions import Version
+from sqlalchemy import distinct
 
 setdebug(False)
 setdemon(False)
@@ -42,36 +43,35 @@ def extract_header(path):
     f.verify('fix')
     return [hdu.header for hdu in f]
 
-session = orm.sessionfactory()
-unable = (x[0] for x in session.query(Version.filename).
-                                filter(Version.unable == True).
-                                group_by(Version.filename))
-for fname in unable:
-    logger.info('Comparing instances of {0}'.format(fname))
-    prefix = fname[:6]
-    d = os.path.join('/data/differences', prefix)
-    try:
-        os.makedirs(d)
-    except os.error:
-        if not os.path.exists(d):
-            logger.error('Could not create {0}'.format(d))
-            continue
-
-    with open(os.path.join(d, fname + '.log'), 'w') as logfile:
+with orm.session_scope() as session:
+    unable = (session.query(distinct(Version.filename))
+                     .filter(Version.unable == True))
+    for (fname,) in unable:
+        logger.info('Comparing instances of {0}'.format(fname))
+        prefix = fname[:6]
+        d = os.path.join('/data/differences', prefix)
         try:
-            sys.stderr = logfile
+            os.makedirs(d)
+        except os.error:
+            if not os.path.exists(d):
+                logger.error('Could not create {0}'.format(d))
+                continue
 
-            files = session.query(Version).filter(Version.filename == fname)
-            headers = []
-            for f in files:
-                print(f.fullpath, file=logfile)
-                headers.append(extract_header(f.fullpath))
-                f.unable = False
-                f.score = -1
+        with open(os.path.join(d, fname + '.log'), 'w') as logfile:
+            try:
+                sys.stderr = logfile
 
-            pprint.pprint(compare_headers(*headers), stream = logfile)
-            session.commit()
-        except (pyfits.verify.VerifyError, IOError) as e:
-            print(e, file=logfile)
-        finally:
-            sys.stderr = sys.__stderr__
+                files = session.query(Version).filter(Version.filename == fname)
+                headers = []
+                for f in files:
+                    print(f.fullpath, file=logfile)
+                    headers.append(extract_header(f.fullpath))
+                    f.unable = False
+                    f.score = -1
+
+                pprint.pprint(compare_headers(*headers), stream = logfile)
+                session.commit()
+            except (pyfits.verify.VerifyError, IOError) as e:
+                print(e, file=logfile)
+            finally:
+                sys.stderr = sys.__stderr__

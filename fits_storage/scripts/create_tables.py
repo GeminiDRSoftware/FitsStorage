@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from optparse import OptionParser
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.orm.createtables import create_tables, drop_tables
 
 # Option Parsing
@@ -12,16 +12,13 @@ parser.add_option("--nocreate", action="store_true", dest="nocreate", help="Do n
 (options, args) = parser.parse_args()
 
 
-session = sessionfactory()
+with session_scope() as session:
+    if options.drop:
+        print "Dropping database tables"
+        drop_tables(session)
 
-if options.drop:
-    print "Dropping database tables"
-    drop_tables(session)
-
-if not options.nocreate:
-    print "Creating database tables"
-    create_tables(session)
-
-session.close()
+    if not options.nocreate:
+        print "Creating database tables"
+        create_tables(session)
 
 print "You may now want to ingest the standard star list"

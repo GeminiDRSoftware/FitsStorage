@@ -3,7 +3,7 @@ import datetime
 import urllib
 from xml.dom.minidom import parseString
 from sqlalchemy import join
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.orm.file import File
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
@@ -32,69 +32,61 @@ msg = ""
 # Annouce startup
 logger.info("*********    check_on_tape.py - starting up at %s" % datetime.datetime.now())
 
-session = sessionfactory()
+with session_scope() as session:
+    query = session.query(DiskFile).select_from(join(File, DiskFile)).filter(DiskFile.canonical==True)
 
-query = session.query(DiskFile.id).select_from(join(File, DiskFile)).filter(DiskFile.canonical==True)
+    if options.filepre:
+        likestr = "%s%%" % options.filepre
+        query = query.filter(File.name.like(likestr))
 
-if options.filepre:
-    likestr = "%s%%" % options.filepre
-    query = query.filter(File.name.like(likestr))
+    if not options.notpresent:
+        query = query.filter(DiskFile.present==True)
 
-if not options.notpresent:
-    query = query.filter(DiskFile.present==True)
+    query = query.order_by(File.name)
 
-query = query.order_by(File.name)
+    cnt = query.count()
+    if cnt == 0:
+        logger.info("No Files found matching file-pre. Exiting")
+        sys.exit(0)
 
-diskfileids = query.all()
+    logger.info("Got %d files to check" % cnt)
 
-if len(diskfileids) == 0:
-    logger.info("No Files found matching file-pre. Exiting")
-    session.close()
-    sys.exit(0)
+    sumbytes = 0
+    sumfiles = 0
 
-logger.info("Got %d files to check" % len(diskfileids))
+    for diskfile in query:
+        fullpath = diskfile.fullpath()
+        dbmd5 = diskfile.file_md5
+        dbfilename = diskfile.filename
 
-sumbytes = 0
-sumfiles = 0
+        url = "http://%s/fileontape/%s" % (options.tapeserver, dbfilename)
+        logger.debug("Querying tape server DB at %s" % url)
 
-for diskfileid in diskfileids:
-    diskfile = session.query(DiskFile).get(diskfileid)
+        xml = urllib.urlopen(url).read()
+        dom = parseString(xml)
+        fileelements = dom.getElementsByTagName("file")
 
-    fullpath = diskfile.fullpath()
-    dbmd5 = diskfile.file_md5
-    dbfilename = diskfile.filename
+        tapeids = []
+        for fe in fileelements:
+            filename = fe.getElementsByTagName("filename")[0].childNodes[0].data
+            md5 = fe.getElementsByTagName("md5")[0].childNodes[0].data
+            tapeid = int(fe.getElementsByTagName("tapeid")[0].childNodes[0].data)
+            tapeset = int(fe.getElementsByTagName("tapeset")[0].childNodes[0].data)
+            logger.debug("Filename: %s; md5=%s, tapeid=%d, tapeset=%d" % (filename, md5, tapeid, tapeset))
+            if (filename == dbfilename) and (md5 == dbmd5) and (tapeid not in tapeids):
+                logger.debug("Found it on tape id %d" % tapeid)
+                if options.tapeset is not None and tapeset != options.tapeset:
+                    logger.debug("But this tape id is not in the requested tapeset")
+                else:
+                    tapeids.append(tapeid)
 
-    url = "http://%s/fileontape/%s" % (options.tapeserver, dbfilename)
-    logger.debug("Querying tape server DB at %s" % url)
+        if len(tapeids) < options.mintapes:
+            sumbytes += diskfile.file_size
+            sumfiles += 1
+            logger.info("*** File %s - %s needs to go to tape, it is on %d tapes: %s" % (fullpath, dbmd5, len(tapeids), tapeids))
+        else:
+            if not options.only:
+                logger.info("File %s - %s is OK, it already is on %d tapes: %s" % (fullpath, dbmd5, len(tapeids), tapeids))
 
-    xml = urllib.urlopen(url).read()
-    dom = parseString(xml)
-    fileelements = dom.getElementsByTagName("file")
-
-    tapeids = []
-    for fe in fileelements:
-        filename = fe.getElementsByTagName("filename")[0].childNodes[0].data
-        md5 = fe.getElementsByTagName("md5")[0].childNodes[0].data
-        tapeid = int(fe.getElementsByTagName("tapeid")[0].childNodes[0].data)
-        tapeset = int(fe.getElementsByTagName("tapeset")[0].childNodes[0].data)
-        logger.debug("Filename: %s; md5=%s, tapeid=%d, tapeset=%d" % (filename, md5, tapeid, tapeset))
-        if (filename == dbfilename) and (md5 == dbmd5) and (tapeid not in tapeids):
-            logger.debug("Found it on tape id %d" % tapeid)
-            if options.tapeset is not None and tapeset != options.tapeset:
-                logger.debug("But this tape id is not in the requested tapeset")
-            else:
-                tapeids.append(tapeid)
-
-    if len(tapeids) < options.mintapes:
-        sumbytes += diskfile.file_size
-        sumfiles += 1
-        logger.info("*** File %s - %s needs to go to tape, it is on %d tapes: %s" % (fullpath, dbmd5, len(tapeids), tapeids))
-    else:
-        if not options.only:
-            logger.info("File %s - %s is OK, it already is on %d tapes: %s" % (fullpath, dbmd5, len(tapeids), tapeids))
-
-logger.info("Found %d files totalling %.2f GB that should go to tape" % (sumfiles, sumbytes/1.0E9))
-
-session.close()
-
-logger.info("**check_on_tape.py exiting normally")
+    logger.info("Found %d files totalling %.2f GB that should go to tape" % (sumfiles, sumbytes/1.0E9))
+    logger.info("**check_on_tape.py exiting normally")
