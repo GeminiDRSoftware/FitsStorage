@@ -244,8 +244,6 @@ class CalibrationGMOS(Calibration):
         if howmany is None:
             howmany = 1 if processed else 20
 
-        descriptors = flat_descr + (Gmos.focal_plane_mask,)
-
         if processed:
             query = self.get_query().PROCESSED_FLAT()
         else:
@@ -254,8 +252,7 @@ class CalibrationGMOS(Calibration):
             query = self.get_query().raw().dayCal().OBJECT().object('Twilight')
         return (
             query.add_filters(*filt)
-                 # Focal plane mask must match for imaging too... To avoid daytime thru-MOS mask imaging "flats"
-                 .match_descriptors(*descriptors)
+                 .match_descriptors(*flat_descr)
                  # Absolute time separation must be within 6 months
                  .max_interval(days=180)
                  .all(howmany)
@@ -286,8 +283,6 @@ class CalibrationGMOS(Calibration):
             # when el=90, cos(el) = 0 and the range is infinite. Only check at lower elevations
             if under_85:
                 crpa_thres = 7.5 / math.cos(math.radians(self.descriptors['elevation']))
-
-        descriptors = flat_descr + (Gmos.disperser,)
 
         return (
             self.get_query()
@@ -325,7 +320,10 @@ class CalibrationGMOS(Calibration):
             Gmos.filter_name,
             Gmos.read_speed_setting,
             Gmos.gain_setting,
-            Header.spectroscopy
+            Header.spectroscopy,
+            # Focal plane mask must match for imaging too... To avoid daytime thru-MOS mask imaging "flats"
+            Gmos.focal_plane_mask,
+            Gmos.disperser, # this can be common-mode as imaging is always 'MIRROR'
             )
 
         # The science amp_read_area must be equal or substring of the cal amp_read_area
