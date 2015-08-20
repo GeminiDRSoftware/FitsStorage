@@ -129,7 +129,6 @@ try:
         # Enter main loop
         loop = True
         lastfound = datetime.datetime.now()
-        iq_util = IngestQueueUtil(session, logger)
         while loop:
             logger.debug("looking from: %s", gemfilename(site, ut_date, num))
             found = False

@@ -1,5 +1,7 @@
 import datetime
 from sqlalchemy.orm import make_transient
+import traceback
+
 import re
 
 date_re = re.compile(r'(\d{8}S\d{4})')
@@ -84,3 +86,14 @@ def queue_length(queue_class, session):
         return session.query(queue_class)\
                     .filter(queue_class.inprogress == False)\
                     .count()
+
+def set_error(queue_class, oid, exc_type, exc_value, tb, session):
+    session.rollback()
+    dbob = session.query(queue_class).get(oid)
+    dbob.error = traceback.format_tb(tb)
+    session.commit()
+
+def delete_with_id(queue_class, oid, session):
+    dbob = session.query(queue_class).get(oid)
+    session.delete(dbob)
+    session.commit()

@@ -24,6 +24,7 @@ class IngestQueue(Base):
     force = Column(Boolean)
     after = Column(DateTime)
     sortkey = Column(Text, index=True)
+    error = Column(Text)
 
     def __init__(self, filename, path):
         self.filename = filename
@@ -33,6 +34,7 @@ class IngestQueue(Base):
         self.force_md5 = False
         self.force = False
         self.after = self.added
+        self.error = None
 
         # Sortkey is used to sort the order in which we de-spool the queue.
         self.sortkey = sortkey_for_filename(filename)

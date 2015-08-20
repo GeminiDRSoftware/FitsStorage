@@ -26,7 +26,7 @@ parser.add_option("--demon", action="store_true", dest="demon", default=False, h
 parser.add_option("--name", action="store", dest="name", default="service_ingest_queue", help="Name for this process. Used in logfile and lockfile")
 parser.add_option("--lockfile", action="store_true", dest="lockfile", help="Use a lockfile to limit instances")
 parser.add_option("--empty", action="store_true", default=False, dest="empty", help="This flag indicates that service ingest queue should empty the current queue and then exit.")
-(options, args) = parser.parse_args()
+options, args = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
@@ -89,7 +89,7 @@ try:
                         logger.info("Ingesting %s, (%d in queue)", iq.filename, ingest_queue.length())
 
                     # Check if the file was very recently modified or is locked, defer ingestion if it was
-                    if (not using_s3) and (options.no_defer == False):
+                    if not (using_s3 or options.no_defer):
                         if ingest_queue.maybe_defer(iq):
                             continue
 
@@ -108,12 +108,12 @@ try:
                                                   traceback.format_tb(sys.exc_info()[2]))
                         # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
                         # iq.inprogress=False
+
+                        # Recover the session to a working state and log the error to the database
+                        ingest_queue.set_error(iq, *sys.exc_info())
                         raise
                     logger.debug("Deleting ingestqueue id %d", iq.id)
-                    # iq is a transient ORM object, find it in the db
-                    dbiq = session.query(IngestQueue).get(iq.id)
-                    session.delete(dbiq)
-                    session.commit()
+                    ingest_queue.delete(iq)
 
             except KeyboardInterrupt:
                 loop = False
