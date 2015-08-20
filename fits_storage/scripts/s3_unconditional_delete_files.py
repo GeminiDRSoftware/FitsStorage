@@ -3,7 +3,7 @@ import sys
 
 from sqlalchemy import join, desc
 
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.file import File
 from fits_storage.fits_storage_config import using_s3
@@ -20,12 +20,11 @@ parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run 
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
-(options, args) = parser.parse_args()
+options, args = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
 setdemon(options.demon)
-
 
 # Annouce startup
 logger.info("*********    s3_unconditional_delete_files.py - starting up at %s" % datetime.datetime.now())
@@ -44,35 +43,32 @@ if not options.filepre or len(options.filepre) < 5:
     logger.error("filepre is dangerously short, please re-think what youre doing")
     sys.exit(3)
 
-session = sessionfactory()
+with session_scope() as session:
+    query = (
+        session.query(DiskFile).select_from(join(File, DiskFile))
+                .filter(DiskFile.present==True)
+                .filter(File.name.like("{}%".format(options.filepre)))
+            )
 
-query = (
-    session.query(DiskFile).select_from(join(File, DiskFile))
-            .filter(DiskFile.present==True)
-            .filter(File.name.like("{}%".format(options.filepre)))
-        )
+    nfiles = query.count()
 
-nfiles = query.count()
+    if nfiles == 0:
+        logger.info("No Files found matching file-pre. Exiting")
+        sys.exit(0)
 
-if nfiles == 0:
-    logger.info("No Files found matching file-pre. Exiting")
-    session.close()
-    sys.exit(0)
+    logger.info("Got %d files for deletion" % nfiles)
 
-logger.info("Got %d files for deletion" % nfiles)
+    s3 = S3Helper()
 
-s3 = S3Helper()
+    for diskfile in query:
+        logger.info("Deleting file %s" % diskfile.filename)
+        key = s3.get_key(diskfile.filename)
+        if key is None:
+            logger.error("File %s did not exist on S3 anyway!" % diskfile.filename)
+        else:
+            key.delete()
 
-for diskfile in query:
-    logger.info("Deleting file %s" % diskfile.filename)
-    key = s3.get_key(diskfile.filename)
-    if(key is None):
-        logger.error("File %s did not exist on S3 anyway!" % diskfile.filename)
-    else:
-        key.delete()
+        diskfile.present = False
+        session.commit()
 
-    diskfile.present = False
-    session.commit()
-
-session.close()
 logger.info("** s3_unconditional_delete_files.py exiting normally")

@@ -40,8 +40,8 @@ class S3Helper(object):
     def get_key(self, path):
         return self.bucket.get_key(path)
 
-    def get_md5(self):
-        return get_s3_md5(self.key)
+    def get_md5(self, key=None):
+        return get_s3_md5(key if key is not None else self.key)
 
     def fetch_to_stagging(self, path, filename, fullpath=None):
         return fetch_to_stagging(self.bucket, path, filename, self.key, fullpath)
