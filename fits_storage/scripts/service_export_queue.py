@@ -8,7 +8,7 @@ import traceback
 import urllib2
 from fits_storage.orm import session_scope
 from fits_storage.orm.exportqueue import ExportQueue
-from fits_storage.utils.exportqueue import export_file, pop_exportqueue, exportqueue_length, retry_failures
+from fits_storage.utils.exportqueue import ExportQueueUtil
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.fits_storage_config import fits_lockfile_dir
 from fits_storage.utils.pidfile import PidFile, PidFileError
@@ -66,12 +66,13 @@ try:
         interval = datetime.timedelta(minutes=options.retry_mins)
         eq = None
 
+        export_queue = ExportQueueUtil(session, logger)
         # Loop forever. loop is a global variable defined up top
         while loop:
             try:
                 # Request a queue entry
                 logger.debug("Requesting an exportqueue entry")
-                eq = pop_exportqueue(session, logger)
+                eq = export_queue.pop()
 
                 if eq is None:
                     if options.empty:
@@ -85,25 +86,27 @@ try:
                     retry_failures(session, logger, interval)
 
                 else:
-                    logger.info("Exporting %s, (%d in queue)", eq.filename, exportqueue_length(session))
+                    logger.info("Exporting %s, (%d in queue)", eq.filename, export_queue.length())
 
                     try:
-                        success = export_file(session, logger, eq.filename, eq.path, eq.destination)
+                        success = export_queue.export_file(eq.filename, eq.path, eq.destination)
                     except urllib2.URLError:
                         logger.info("Problem Exporting File - Rolling back")
-                        session.rollback()
                         # Originally we set the inprogress flag back to False at the point that we abort.
                         # But that can lead to an immediate re-try and subsequent rapid rate re-failures,
                         # and it will never move on to the next file. So leave it set inprogress to avoid that.
+
+                        # Setting the error may be pointless, because the export will be tried again in
+                        # (maybe) a few minutes, but let's do it for consistency
+                        export_queue.set_error(eq, *sys.exc_info())
                         raise
                     if success:
-                        logger.debug("Deleteing exportqueue id %d", eq.id)
-                        session.query(ExportQueue).filter(ExportQueue.id == eq.id).delete()
+                        logger.debug("Deleting exportqueue id %d", eq.id)
+                        export_queue.delete(eq)
                     else:
                         logger.info("Exportqueue id %d DID NOT TRANSFER", eq.id)
                         # The eq instance we have is transient - get one connected to the session
-                        dbeq = session.query(ExportQueue).get(eq.id)
-                        dbeq.lastfailed = datetime.datetime.now()
+                        export_queue.set_lastfailed(eq)
                     session.commit()
 
             except KeyboardInterrupt:

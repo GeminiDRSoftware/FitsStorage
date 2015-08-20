@@ -19,6 +19,7 @@ class CalCacheQueue(Base):
     inprogress = Column(Boolean, index=True)
     ut_datetime = Column(DateTime)
     sortkey = Column(DateTime(timezone=False), index=True)
+    error = Column(Text)
 
     @staticmethod
     def find_not_in_progress(session):
@@ -38,3 +39,4 @@ class CalCacheQueue(Base):
         self.inprogress = False
         self.sortkey = sortkey
         self.ut_datetime = datetime.datetime.utcnow()
+        self.error = None

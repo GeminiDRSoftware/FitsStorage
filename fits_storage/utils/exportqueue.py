@@ -24,155 +24,195 @@ from ..orm.exportqueue import ExportQueue
 from .. import apache_return_codes as apache
 
 if using_s3:
-    from boto.s3.connection import S3Connection
-    from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
+    from .aws_s3 import S3Helper
     import logging
     logging.getLogger('boto').setLevel(logging.CRITICAL)
 
-def add_to_exportqueue(session, logger, filename, path, destination):
-    """
-    Adds a file to the export queue
-    """
-    logger.info("Adding file %s to %s to exportqueue", filename, destination)
-    eq = ExportQueue(filename, path, destination)
-    logger.debug("Instantiated ExportQueue object")
-    session.add(eq)
-    session.commit()
-    make_transient(eq)
-    logger.debug("Added id %d for filename %s to exportqueue", eq.id, eq.filename)
+class ExportQueueUtil(object):
+    def __init__(self, session, logger):
+        self.s = session
+        self.l = logger
 
+    def length(self):
+        return queue.queue_length(ExportQueue, self.s)
 
-def export_file(session, logger, filename, path, destination):
-    """
-    Exports a file to a downstream server.
+    def pop(self):
+        return queue.pop_queue(ExportQueue, self.s, self.l, fast_rebuild=False)
 
-    Returns True if sucessfull, False otherwise
-    """
-    logger.debug("export_file %s to %s", filename, destination)
+    def set_error(self, trans, exc_type, exc_value, tb):
+        "Sets an error message to a transient object"
+        queue.set_error(ExportQueue, trans.id, exc_type, exc_value, tb, self.s)
 
-    # First, lookup the md5 of the file we have, and see if the
-    # destination server already has it with that md5
-    # This is all done with the data md5 not the file, if the correct data
-    # is there at the other end but the compression state is wrong, we're not going
-    # to re-export it here.
-    # To ignore the compression factor, we match against File.name rather than DiskFile.filename
-    # and we strip any .bz2 from the local filename
+    def delete(self, trans):
+        "Deletes a transient object"
+        queue.delete_with_id(ExportQueue, trans.id, self.s)
 
-    # Strip any .bz2 from local filename
-    filename_nobz2 = File.trim_name(filename)
+    def set_last_failed(self, trans):
+        self.s.query(ExportQueue).get(trans.id).lastfailed = datetime.datetime.now()
+        self.s.commit()
 
-    # Search Database
-    query = session.query(DiskFile).select_from(join(File, DiskFile))\
-                .filter(DiskFile.present == True)\
-                .filter(File.name == filename_nobz2)
-    diskfile = query.one()
-    our_md5 = diskfile.data_md5
+    def add_to_queue(self, filename, path, destination):
+        """
+        Adds a file to the export queue
+        """
+        self.l.info("Adding file %s to %s to exportqueue", filename, destination)
+        eq = ExportQueue(filename, path, destination)
+        self.l.debug("Instantiated ExportQueue object")
+        self.s.add(eq)
+        self.s.commit()
+        make_transient(eq)
+        self.l.debug("Added id %d for filename %s to exportqueue", eq.id, eq.filename)
 
-    logger.debug("Checking for remote file md5")
-    dest_md5 = get_destination_data_md5(filename, logger, destination)
+        return eq
 
-    if (dest_md5 is not None) and (dest_md5 == our_md5):
-        logger.info("Data %s is already at %s with md5 %s", filename, destination, dest_md5)
-        return True
-    logger.debug("Data not present at destination: dest_md5: %s, our_md5: %s - reading file", dest_md5, our_md5)
+    def export_file(self, filename, path, destination):
+        """
+        Exports a file to a downstream server.
 
-    # Read the file into the payload postdata buffer to HTTP POST
-    data = None
-    if using_s3:
-        # Read the file from S3
-        s3conn = S3Connection(aws_access_key, aws_secret_key)
-        bucket = s3conn.get_bucket(s3_bucket_name)
-        key = bucket.get_key(os.path.join(path, filename))
-        if key is None:
-            logger.error("cannot access %s in S3 bucket", filename)
-        else:
-            data = key.get_contents_as_string()
-    else:
-        # Read the file from disk
-        fullpath = os.path.join(storage_root, path, filename)
-        try:
-            data = open(fullpath, 'r').read()
-        except IOError:
-            logger.error("cannot access %s", fullpath)
+        Returns True if sucessfull, False otherwise
+        """
+        self.l.debug("export_file %s to %s", filename, destination)
 
-    # Do we need to compress or uncompress the data?
-    # If the data are already compressed, we're not going to re-compress it
-    # And don't try to pass a unicode filename.
-    filename = filename.encode('ascii', 'ignore')
-    if export_bzip and diskfile.compressed == False:
-        # Need to compress it
-        logger.debug("bzip2ing file on the fly")
-        data = bz2.compress(data)
-        # Add .bz2 to the filename from here on, update our_md5
-        filename += '.bz2'
-        m = hashlib.md5()
-        m.update(data)
-        our_md5 = m.hexdigest()
+        # First, lookup the md5 of the file we have, and see if the
+        # destination server already has it with that md5
+        # This is all done with the data md5 not the file, if the correct data
+        # is there at the other end but the compression state is wrong, we're not going
+        # to re-export it here.
+        # To ignore the compression factor, we match against File.name rather than DiskFile.filename
+        # and we strip any .bz2 from the local filename
 
-    if (export_bzip is None) and (diskfile.compressed == True):
-        # Need to uncompress it
-        logger.debug("gunzipping on the fly")
-        data = bz2.decompress(data)
-        # Trim .bz2 from the filename from here on, update our_md5
-        filename = File.trime_name(filename)
+        # Strip any .bz2 from local filename
+        filename_nobz2 = File.trim_name(filename)
+
+        # Search Database
+        query = self.s.query(DiskFile).select_from(join(File, DiskFile))\
+                    .filter(DiskFile.present == True)\
+                    .filter(File.name == filename_nobz2)
+        diskfile = query.one()
         our_md5 = diskfile.data_md5
 
-    # Construct upload URL
-    url = "%s/upload_file/%s" % (destination, filename)
+        self.l.debug("Checking for remote file md5")
+        dest_md5 = self.get_destination_data_md5(filename, self.l, destination)
 
-    # Connect to the URL and post the data
-    # NB need to make the data buffer into a bytearray not a str
-    # Otherwise get ascii encoding errors from httplib layer
-    try:
-        logger.info("Transferring file %s to destination %s", filename, destination)
-        postdata = bytearray(data)
-        data = None
-        request = urllib2.Request(url, data=postdata)
-        request.add_header('Cache-Control', 'no-cache')
-        request.add_header('Content-Length', '%d' % len(postdata))
-        request.add_header('Content-Type', 'application/octet-stream')
-        request.add_header('Cookie', 'gemini_fits_upload_auth=%s' % export_upload_auth_cookie)
-        u = urllib2.urlopen(request)
-        response = u.read()
-        u.close()
-        http_status = u.getcode()
-        logger.debug("Got status code: %d and response: %s", http_status, response)
-
-        # verify that it transfered OK
-        ok = True
-        if http_status == apache.OK:
-            # response is a short json document
-            verification = json.loads(response)[0]
-            if verification['filename'] != filename:
-                logger.error("Transfer Verification Filename mismatch: %s vs %s", verification['filename'], filename)
-                ok = False
-            if verification['size'] != len(postdata):
-                logger.error("Transfer Verification size mismatch: %s vs %s", verification['size'], len(postdata))
-                ok = False
-            if verification['md5'] != our_md5:
-                logger.error("Transfer Verification md5 mismatch: %s vs %s", verification['md5'], our_md5)
-                ok = False
-        else:
-            logger.error("Bad HTTP status code transferring %s to %s", filename, destination)
-            ok = False
-
-        if ok:
-            logger.debug("Transfer sucessfull")
+        if (dest_md5 is not None) and (dest_md5 == our_md5):
+            self.l.info("Data %s is already at %s with md5 %s", filename, destination, dest_md5)
             return True
+        self.l.debug("Data not present at destination: dest_md5: %s, our_md5: %s - reading file", dest_md5, our_md5)
+
+        # Read the file into the payload postdata buffer to HTTP POST
+        data = None
+        if using_s3:
+            # Read the file from S3
+            s3 = S3Helper()
+            key = s3.bucket.get_key(os.path.join(path, filename))
+            if key is None:
+                self.l.error("cannot access %s in S3 bucket", filename)
+            else:
+                data = key.get_contents_as_string()
         else:
-            logger.debug("Transfer not successful")
+            # Read the file from disk
+            fullpath = os.path.join(storage_root, path, filename)
+            try:
+                data = open(fullpath, 'r').read()
+            except IOError:
+                self.l.error("cannot access %s", fullpath)
+
+        # Do we need to compress or uncompress the data?
+        # If the data are already compressed, we're not going to re-compress it
+        # And don't try to pass a unicode filename.
+        filename = filename.encode('ascii', 'ignore')
+        if export_bzip and diskfile.compressed == False:
+            # Need to compress it
+            self.l.debug("bzip2ing file on the fly")
+            data = bz2.compress(data)
+            # Add .bz2 to the filename from here on, update our_md5
+            filename += '.bz2'
+            m = hashlib.md5()
+            m.update(data)
+            our_md5 = m.hexdigest()
+
+        if (export_bzip is None) and (diskfile.compressed == True):
+            # Need to uncompress it
+            self.l.debug("gunzipping on the fly")
+            data = bz2.decompress(data)
+            # Trim .bz2 from the filename from here on, update our_md5
+            filename = File.trime_name(filename)
+            our_md5 = diskfile.data_md5
+
+        # Construct upload URL
+        url = "%s/upload_file/%s" % (destination, filename)
+
+        # Connect to the URL and post the data
+        # NB need to make the data buffer into a bytearray not a str
+        # Otherwise get ascii encoding errors from httplib layer
+        try:
+            self.l.info("Transferring file %s to destination %s", filename, destination)
+            postdata = bytearray(data)
+            data = None
+            request = urllib2.Request(url, data=postdata)
+            request.add_header('Cache-Control', 'no-cache')
+            request.add_header('Content-Length', '%d' % len(postdata))
+            request.add_header('Content-Type', 'application/octet-stream')
+            request.add_header('Cookie', 'gemini_fits_upload_auth=%s' % export_upload_auth_cookie)
+            u = urllib2.urlopen(request)
+            response = u.read()
+            u.close()
+            http_status = u.getcode()
+            self.l.debug("Got status code: %d and response: %s", http_status, response)
+
+            # verify that it transfered OK
+            ok = True
+            if http_status == apache.OK:
+                # response is a short json document
+                verification = json.loads(response)[0]
+                if verification['filename'] != filename:
+                    self.l.error("Transfer Verification Filename mismatch: %s vs %s", verification['filename'], filename)
+                    ok = False
+                if verification['size'] != len(postdata):
+                    self.l.error("Transfer Verification size mismatch: %s vs %s", verification['size'], len(postdata))
+                    ok = False
+                if verification['md5'] != our_md5:
+                    self.l.error("Transfer Verification md5 mismatch: %s vs %s", verification['md5'], our_md5)
+                    ok = False
+            else:
+                self.l.error("Bad HTTP status code transferring %s to %s", filename, destination)
+                ok = False
+
+            if ok:
+                self.l.debug("Transfer sucessfull")
+                return True
+            else:
+                self.l.debug("Transfer not successful")
+                return False
+
+        except urllib2.URLError, httplib.IncompleteRead:
+            self.l.info("URLError posting %d bytes of data to destination server at: %s", len(postdata), url)
+            self.l.debug("Transfer Failed")
             return False
+        except:
+            self.l.error("Problem posting %d bytes of data to destination server at: %s", len(postdata), url)
+            raise
 
-    except urllib2.URLError, httplib.IncompleteRead:
-        logger.info("URLError posting %d bytes of data to destination server at: %s", len(postdata), url)
-        logger.debug("Transfer Failed")
-        return False
-    except:
-        logger.error("Problem posting %d bytes of data to destination server at: %s", len(postdata), url)
-        raise
+    def retry_failures(self, interval):
+        """
+        This function looks for failed transfers in the export queue, where
+        the failure is more than <interval> ago, and flags them for re-try
+        """
 
-pop_exportqueue = functools.partial(queue.pop_queue, ExportQueue, fast_rebuild = False)
-exportqueue_length = functools.partial(queue.queue_length, ExportQueue)
+        before = datetime.datetime.now()
+        before -= interval
+
+        query = self.s.query(ExportQueue)\
+                    .filter(ExportQueue.inprogress == True)\
+                    .filter(ExportQueue.lastfailed < before)
+
+        num = query.update({"inprogress": False})
+        if num > 0:
+            self.l.info("There are %d failed ExportQueue items to retry", num)
+        else:
+            self.l.debug("There are no failed ExportQueue items to retry")
+
+        self.s.commit()
 
 def get_destination_data_md5(filename, logger, destination):
     """
@@ -212,24 +252,3 @@ def get_destination_data_md5(filename, logger, destination):
 
     # Should never get here
     return None
-
-def retry_failures(session, logger, interval):
-    """
-    This function looks for failed transfers in the export queue, where
-    the failure is more than <interval> ago, and flags them for re-try
-    """
-
-    before = datetime.datetime.now()
-    before -= interval
-
-    query = session.query(ExportQueue)\
-                .filter(ExportQueue.inprogress == True)\
-                .filter(ExportQueue.lastfailed < before)
-
-    num = query.update({"inprogress": False})
-    if num > 0:
-        logger.info("There are %d failed ExportQueue items to retry", num)
-    else:
-        logger.debug("There are %d failed ExportQueue items to retry", num)
-
-    session.commit()

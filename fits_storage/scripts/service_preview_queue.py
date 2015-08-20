@@ -90,12 +90,11 @@ try:
                         session.rollback()
                         # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
                         # pq.inprogress=False
+                        # Recover the session to a working state and log the error to the database
+                        prev_queue.set_error(pq, *sys.exc_info())
                         raise
                     logger.debug("Deleting previewqueue id %d", pq.id)
-                    # pq is a transient ORM object, retrieve the persistent one
-                    dbpq = session.query(PreviewQueue).get(pq.id)
-                    session.delete(dbpq)
-                    session.commit()
+                    prev_queue.delete(dbpq)
 
             except KeyboardInterrupt:
                 loop = False

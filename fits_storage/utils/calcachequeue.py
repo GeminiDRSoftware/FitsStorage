@@ -18,8 +18,24 @@ from . import queue
 from ..cal import get_cal_object
 from ..cal.associate_calibrations import associate_cals
 
-pop_calcachequeue = functools.partial(queue.pop_queue, CalCacheQueue)
-calcachequeue_length = functools.partial(queue.queue_length, CalCacheQueue)
+class CalCacheQueueUtil(object):
+    def __init__(self, session, logger):
+        self.s = session
+        self.l = logger
+
+    def length(self):
+        return queue.queue_length(CalCacheQueue, self.s)
+
+    def pop(self, fast_rebuild=False):
+        return queue.pop_queue(CalCacheQueue, self.s, self.l, fast_rebuild)
+
+    def set_error(self, trans, exc_type, exc_value, tb):
+        "Sets an error message to a transient object"
+        queue.set_error(CalCacheQueue, trans.id, exc_type, exc_value, tb, self.s)
+
+    def delete(self, trans):
+        "Deletes a transient object"
+        queue.delete_with_id(CalCacheQueue, trans.id, self.s)
 
 def cache_associations(session, obs_hid):
     """

@@ -3,7 +3,7 @@ from fits_storage.orm import session_scope
 from fits_storage.orm.ingestqueue import IngestQueue
 from fits_storage.fits_storage_config import using_s3, storage_root, fits_lockfile_dir, export_destinations
 from fits_storage.utils.ingestqueue import IngestQueueUtil
-from fits_storage.utils.exportqueue import add_to_exportqueue
+from fits_storage.utils.exportqueue import ExportQueueUtil
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.utils.pidfile import PidFile, PidFileError
 import signal
@@ -67,6 +67,7 @@ logger.info("*********    service_ingest_queue.py - starting up at %s", datetime
 try:
     with PidFile(logger, options.name, dummy=not options.lockfile) as pidfile, session_scope() as session:
         ingest_queue = IngestQueueUtil(session, logger)
+        export_queue = ExportQueueUtil(session, logger)
 
         # Loop forever. loop is a global variable defined up top
         while loop:
@@ -100,7 +101,7 @@ try:
                         # Now we also add this file to our export list if we have downstream servers and we did add a diskfile
                         if added_diskfile:
                             for destination in export_destinations:
-                                add_to_exportqueue(session, logger, iq.filename, iq.path, destination)
+                                export_queue.add_to_queue(iq.filename, iq.path, destination)
                     except:
                         logger.info("Problem Ingesting File - Rolling back")
                         logger.error("Exception ingesting file %s: %s : %s... %s",

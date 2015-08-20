@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 from fits_storage.orm import session_scope
 from fits_storage.orm.calcachequeue import CalCacheQueue
-from fits_storage.utils.calcachequeue import pop_calcachequeue, calcachequeue_length, cache_associations
+from fits_storage.utils.calcachequeue import CalCacheQueueUtil, cache_associations
 from fits_storage.fits_storage_config import fits_lockfile_dir
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.utils.pidfile import PidFile, PidFileError
@@ -62,10 +62,11 @@ logger.info("*********    service_calcache_queue.py - starting up at %s", dateti
 try:
     with PidFile(logger, options.name, dummy=not options.lockfile) as pidfile, session_scope() as session:
         # Loop forever. loop is a global variable defined up top
+        ccq_util = CalCacheQueueUtil(session, logger)
         while loop:
             try:
                 # Request a queue entry
-                ccq = pop_calcachequeue(session, logger, options.fast_rebuild)
+                ccq = ccq_util.pop(options.fast_rebuild)
 
                 if ccq is None:
                     logger.info("Nothing on queue.")
@@ -80,7 +81,7 @@ try:
                     if options.fast_rebuild:
                         logger.info("Processing obs_hid %d", ccq.obs_hid)
                     else:
-                        logger.info("Processing obs_hid %d, (%d in queue)", ccq.obs_hid, calcachequeue_length(session))
+                        logger.info("Processing obs_hid %d, (%d in queue)", ccq.obs_hid, ccq_util.length())
 
                     try:
                         # Do the associations and put them in the CalCache table
@@ -89,14 +90,15 @@ try:
                     except:
                         logger.info("Problem Associating Calibrations for Cache - Rolling back")
                         logger.error("Exception processing obs_hid %d: %s : %s... %s", ccq.obs_hid, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
-                        session.rollback()
                         # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
                         # iq.inprogress=False
+
+                        # Recover the session to a working state and log the error to the database
+                        ccq_util.set_error(ccq, *sys.exc_info())
+                        raise
                     logger.debug("Deleteing calcachequeue id %d", ccq.id)
                     # ccq is a transient ORM object, find it in the db
-                    dbccq = session.query(CalCacheQueue).filter(CalCacheQueue.id == ccq.id).one()
-                    session.delete(dbccq)
-                    session.commit()
+                    ccq_util.delete(ccq)
 
             except KeyboardInterrupt:
                 loop = False
@@ -107,7 +109,7 @@ try:
                 session.rollback()
                 logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
                 # Press on with the next file, don't raise the esception further. Unless if debugging uncomment next line
-                raise
+                # raise
 except PidFileError as e:
     logger.error(str(e))
 

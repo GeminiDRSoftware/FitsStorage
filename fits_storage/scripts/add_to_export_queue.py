@@ -1,7 +1,7 @@
 from fits_storage.orm import session_scope
 from fits_storage.fits_storage_config import storage_root
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.utils.exportqueue import add_to_exportqueue
+from fits_storage.utils.exportqueue import ExportQueueUtil
 from fits_storage.web.list_headers import list_headers
 from fits_storage.web.selection import getselection, openquery
 import os
@@ -60,9 +60,10 @@ with session_scope() as session:
 
     headers = None
 
+    export_queue = ExportQueueUtil(session, logger)
     n = len(filenames)
     for i, (filename, path) in enumerate(zip(filenames, paths), 1):
         logger.info("Queueing for Export: (%d/%d): %s" % (i, n, filename))
-        add_to_exportqueue(session, logger, filename, path, destination)
+        export_queue.add_to_queue(filename, path, destination)
 
 logger.info("*** add_to_exportqueue.py exiting normally at %s" % datetime.datetime.now())

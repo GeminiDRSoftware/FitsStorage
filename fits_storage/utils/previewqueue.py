@@ -51,6 +51,14 @@ class PreviewQueueUtil(object):
     def pop(self):
         return queue.pop_queue(PreviewQueue, self.s, self.l, fast_rebuild=True)
 
+    def set_error(self, trans, exc_type, exc_value, tb):
+        "Sets an error message to a transient object"
+        queue.set_error(PreviewQueue, trans.id, exc_type, exc_value, tb, self.s)
+
+    def delete(self, trans):
+        "Deletes a transient object"
+        queue.delete_with_id(PreviewQueue, trans.id, self.s)
+
     def process(self, diskfiles, make=False):
         try:
             iter(diskfiles)

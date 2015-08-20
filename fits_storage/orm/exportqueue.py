@@ -21,6 +21,7 @@ class ExportQueue(Base):
     inprogress = Column(Boolean, index=True)
     added = Column(DateTime)
     lastfailed = Column(DateTime)
+    error = Column(Text)
 
     def __init__(self, filename, path, destination):
         self.filename = filename
@@ -28,6 +29,7 @@ class ExportQueue(Base):
         self.destination = destination
         self.added = datetime.datetime.now()
         self.inprogress = False
+        self.error = None
 
     @staticmethod
     def find_not_in_progress(session):
