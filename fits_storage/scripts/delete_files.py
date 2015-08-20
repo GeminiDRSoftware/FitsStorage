@@ -9,7 +9,7 @@ from sqlalchemy import join, desc
 from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.file import File
-from fits_storage.fits_storage_config import storage_root, target_max_files, target_gb_free
+from fits_storage.fits_storage_config import storage_root, target_max_files, target_gb_free, smtp_server
 from fits_storage.logger import logger, setdebug, setdemon
 
 
@@ -207,7 +207,7 @@ if options.emailto:
 
     message = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (mailfrom, ", ".join(mailto), subject, '\n'.join(msglines))
 
-    server = smtplib.SMTP('mail.gemini.edu')
+    server = smtplib.SMTP(smtp_server)
     server.sendmail(mailfrom, mailto, message)
     server.quit()
 
