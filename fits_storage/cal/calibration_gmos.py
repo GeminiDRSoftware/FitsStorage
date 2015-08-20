@@ -266,7 +266,7 @@ class CalibrationGMOS(Calibration):
         ifu = mos_or_ls = False
         ifu_el_thres = mos_ls_el_thres = 0.0
         under_85 = False
-        crpa_if_thres = 0.0
+        crpa_thres = 0.0
         # QAP might not give us these for now. Remove this 'if' later when it does
         if 'elevation' in self.descriptors:
             # Spectroscopy flats also have to somewhat match telescope position for flexure, as follows
