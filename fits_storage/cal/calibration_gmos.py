@@ -240,106 +240,107 @@ class CalibrationGMOS(Calibration):
                 .all(howmany)
             )
 
-    # TODO: Discuss 'flat' with Paul. We need to know how the algorithmic paths
-    #       a really done in here. Looks quite messy...
+    def imaging_flat(self, processed, howmany, flat_descr, filt):
+        if howmany is None:
+            howmany = 1 if processed else 20
+
+        descriptors = flat_descr + (Gmos.focal_plane_mask,)
+
+        if processed:
+            query = self.get_query().PROCESSED_FLAT()
+        else:
+            # Imaging flats are twilight flats
+            # Twilight flats are dayCal OBJECT frames with target Twilight
+            query = self.get_query().raw().dayCal().OBJECT().object('Twilight')
+        return (
+            query.add_filters(*filt)
+                 # Focal plane mask must match for imaging too... To avoid daytime thru-MOS mask imaging "flats"
+                 .match_descriptors(*descriptors)
+                 # Absolute time separation must be within 6 months
+                 .max_interval(days=180)
+                 .all(howmany)
+            )
+
+    def spectroscopy_flat(self, processed, howmany, flat_descr, filt):
+        if howmany is None:
+            howmany = 1 if processed else 2
+
+        elev = 'elevation' in self.descriptors
+        ifu = mos_or_ls = False
+        ifu_el_thres = mos_ls_el_thres = 0.0
+        under_85 = False
+        crpa_if_thres = 0.0
+        # QAP might not give us these for now. Remove this 'if' later when it does
+        if 'elevation' in self.descriptors:
+            # Spectroscopy flats also have to somewhat match telescope position for flexure, as follows
+            # this is from FitsStorage TRAC #43 discussion with KR 20130425. This code defines the
+            # thresholds and the conditions where they apply
+            ifu = self.descriptors['focal_plane_mask'].startswith('IFU')
+            mos_or_ls = self.descriptors['central_wavelength'] > 0.55 or self.descriptors['disperser'].startswith('R150')
+            under_85 = self.descriptors['elevation'] < 85
+
+            # For IFU, elevation must we within 7.5 degrees
+            ifu_el_thres = 7.5
+            mos_ls_el_thres = 15.0
+            # crpa*cos(el) must be within 7.5 degrees, ie crpa must be within 7.5 / cos(el)
+            # when el=90, cos(el) = 0 and the range is infinite. Only check at lower elevations
+            if under_85:
+                crpa_thres = 7.5 / math.cos(math.radians(self.descriptors['elevation']))
+
+        descriptors = flat_descr + (Gmos.disperser,)
+
+        return (
+            self.get_query()
+                .flat(processed)
+                .add_filters(*filt)
+                .match_descriptors(*descriptors)
+            # Central wavelength is in microns (by definition in the DB table).
+                .tolerance(central_wavelength=0.001)
+
+            # Spectroscopy flats also have to somewhat match telescope position for flexure, as follows
+            # this is from FitsStorage TRAC #43 discussion with KR 20130425
+            # See the comments above to explain the thresholds
+                .tolerance(condition = ifu, elevation=ifu_el_thres)
+                .tolerance(condition = mos_or_ls, elevation=mos_ls_el_thres)
+                .tolerance(condition = under_85, cass_rotator_pa=crpa_thres)
+
+            # Absolute time separation must be within 6 months
+                .max_interval(days=180)
+                .all(howmany)
+            )
+
     def flat(self, processed=False, howmany=None):
         """
         Method to find the best GMOS FLAT fields for the target dataset
         """
-        query = self.session.query(Header).select_from(join(join(Gmos, Header), DiskFile))
 
-        if processed:
-            query = query.filter(Header.reduction == 'PROCESSED_FLAT')
-            # Default number of processed flats
-            howmany = howmany if howmany else 1
-        else:
-            query = query.filter(Header.reduction == 'RAW')
-            # Set default number of raw flats later depending on if spectroscopy
+        filters = []
 
-        # Only spectroscopy flats are actually obstype flat for gmos
-        # Imaging flats are twilight flats
-        if self.descriptors['spectroscopy']:
-            query = query.filter(Header.observation_type == 'FLAT')
-            # Default number of spectroscopy flats
-            howmany = howmany if howmany else 2
-        else:
-            # Twilight flats are dayCal OBJECT frames with target Twilight
-            query = query.filter(Header.observation_class == 'dayCal').filter(Header.observation_type == 'OBJECT')
-            query = query.filter(Header.object == 'Twilight')
-            # Default number of raw twilight imaging flats
-            howmany = howmany if howmany else 20
-
+        # Common descriptors for both types of flat
         # Must totally match instrument, detector_x_bin, detector_y_bin, filter
-        query = query.filter(Header.instrument == self.descriptors['instrument'])
-        query = query.filter(Gmos.detector_x_bin == self.descriptors['detector_x_bin'])
-        query = query.filter(Gmos.detector_y_bin == self.descriptors['detector_y_bin'])
-        query = query.filter(Gmos.filter_name == self.descriptors['filter_name'])
-        query = query.filter(Gmos.read_speed_setting == self.descriptors['read_speed_setting'])
-        query = query.filter(Gmos.gain_setting == self.descriptors['gain_setting'])
-        query = query.filter(Header.spectroscopy == self.descriptors['spectroscopy'])
-
-        # Focal plane mask must match for imaging too... To avoid daytime thru-MOS mask imaging "flats"
-        query = query.filter(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
-
-        if self.descriptors['spectroscopy']:
-            query = query.filter(Gmos.disperser == self.descriptors['disperser'])
-            # Central wavelength is in microns (by definition in the DB table).
-            cenwlen_lo = float(self.descriptors['central_wavelength']) - 0.001
-            cenwlen_hi = float(self.descriptors['central_wavelength']) + 0.001
-            query = query.filter(Header.central_wavelength > cenwlen_lo).filter(Header.central_wavelength < cenwlen_hi)
-
-            # Spectroscopy flats also have to somewhat match telescope position for flexure, as follows
-            # this is from FitsStorage TRAC #43 discussion with KR 20130425
-            # QAP might not give us these for now. Remove this 'if' later when it does
-            if 'elevation' in self.descriptors:
-                if self.descriptors['focal_plane_mask'].startswith('IFU'):
-                    # For IFU, elevation must we within 7.5 degrees
-                    el_thresh = 7.5 # degrees
-                    el_hi = float(self.descriptors['elevation']) + el_thresh
-                    el_lo = float(self.descriptors['elevation']) - el_thresh
-                    query = query.filter(Header.elevation > el_lo).filter(Header.elevation < el_hi)
-                    # and crpa*cos(el) must be within 7.5 degrees, ie crpa must be within 7.5 / cos(el)
-                    # when el=90, cos(el) = 0 and the range is infinite. Only check at lower elevations
-                    if self.descriptors['elevation'] < 85:
-                        crpa_thresh = 7.5 / math.cos(math.radians(self.descriptors['elevation']))
-                        crpa_hi = float(self.descriptors['cass_rotator_pa']) + crpa_thresh
-                        crpa_lo = float(self.descriptors['cass_rotator_pa']) - crpa_thresh
-                        # Should deal with wrap properly here, but need to figure out what we get in the headers round the wrap
-                        # simple case will be fine unless they did an unwrap between the science and the flat
-                        query = query.filter(Header.cass_rotator_pa > crpa_lo).filter(Header.cass_rotator_pa < crpa_hi)
-                else:
-                    # MOS or LS case (spectroscopy byt not IFU)
-                    if self.descriptors['central_wavelength'] > 0.55 or self.descriptors['disperser'].startswith('R150'):
-                        # Elevation must be within 15 degrees
-                        el_thresh = 15.0
-                        el_hi = float(self.descriptors['elevation']) + el_thresh
-                        el_lo = float(self.descriptors['elevation']) - el_thresh
-                        query = query.filter(Header.elevation > el_lo).filter(Header.elevation < el_hi)
-                        # And crpa*col(el) must be within 15 degrees
-                        if self.descriptors['elevation'] < 85:
-                            crpa_thresh = 7.5 / math.cos(math.radians(self.descriptors['elevation']))
-                            crpa_hi = float(self.descriptors['cass_rotator_pa']) + crpa_thresh
-                            crpa_lo = float(self.descriptors['cass_rotator_pa']) - crpa_thresh
-                            # Should deal with wrap properly here, but need to figure out what we get in the headers round the wrap
-                            # simple case will be fine unless they did an unwrap between the science and the flat
-                            query = query.filter(Header.cass_rotator_pa > crpa_lo).filter(Header.cass_rotator_pa < crpa_hi)
-                    else:
-                        # In this case, no elevation or crpa constraints.
-                        pass
+        flat_descriptors = (
+            Header.instrument,
+            Gmos.detector_x_bin,
+            Gmos.detector_y_bin,
+            Gmos.filter_name,
+            Gmos.read_speed_setting,
+            Gmos.gain_setting,
+            Header.spectroscopy
+            )
 
         # The science amp_read_area must be equal or substring of the cal amp_read_area
         # If the science frame uses all the amps, then they must be a direct match as all amps must be there
         # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
         # have a subset of the amps thus we must do the substring match
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
-            query = query.filter(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+            flat_descriptors = flat_descriptors + (Gmos.amp_read_area,)
         else:
-            query = query.filter(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+            filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Absolute time separation must be within 6 months
-        query = self.set_common_cals_filter(query, max_interval=datetime.timedelta(days=180), limit=howmany)
-
-        return query.all()
+        if self.descriptors['spectroscopy']:
+            return self.spectroscopy_flat(processed, howmany, flat_descriptors, filters)
+        else:
+            return self.imaging_flat(processed, howmany, flat_descriptors, filters)
 
     def processed_fringe(self, howmany=None):
         """
