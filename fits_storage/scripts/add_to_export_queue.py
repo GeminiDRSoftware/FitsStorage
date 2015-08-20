@@ -1,5 +1,5 @@
-from fits_storage.orm import sessionfactory
-from fits_storage.fits_storage_config import storage_root, using_s3
+from fits_storage.orm import session_scope
+from fits_storage.fits_storage_config import storage_root
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.exportqueue import add_to_exportqueue
 from fits_storage.web.list_headers import list_headers
@@ -9,9 +9,6 @@ import sys
 import re
 import datetime
 import time
-if (using_s3):
-    from fits_storage.fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
-    from boto.s3.connection import S3Connection
 
 # Option Parsing
 from optparse import OptionParser
@@ -21,7 +18,7 @@ parser.add_option("--destination", action="store", type="string", dest="destinat
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
-(options, args) = parser.parse_args()
+options, args = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
@@ -40,8 +37,6 @@ if not options.destination:
 else:
     destination = options.destination
 
-session = sessionfactory()
-
 selection = options.selection + '/present'
 
 orderby = []
@@ -50,26 +45,24 @@ selection = getselection(things)
 logger.info("Selection: %s" % selection)
 logger.info("Selection is open: %s" % openquery(selection))
 
-logger.info("Getting header object list")
-headers = list_headers(session, selection, orderby)
+with session_scope() as session:
+    logger.info("Getting header object list")
+    headers = list_headers(session, selection, orderby)
 
-# For some reason, looping through the header list directly for the add
-# is really slow if the list is big.
-logger.info("Building filename and path lists")
-filenames = []
-paths = []
-for header in headers:
-    filenames.append(header.diskfile.filename)
-    paths.append(header.diskfile.path)
+    # For some reason, looping through the header list directly for the add
+    # is really slow if the list is big.
+    logger.info("Building filename and path lists")
+    filenames = []
+    paths = []
+    for header in headers:
+        filenames.append(header.diskfile.filename)
+        paths.append(header.diskfile.path)
 
-headers = None
+    headers = None
 
-i = 0
-n = len(filenames)
-for i in range(n):
-    logger.info("Queueing for Export: (%d/%d): %s" % (i, n, filenames[i]))
-    add_to_exportqueue(session, logger, filenames[i], paths[i], destination)
+    n = len(filenames)
+    for i, (filename, path) in enumerate(zip(filenames, paths), 1):
+        logger.info("Queueing for Export: (%d/%d): %s" % (i, n, filename))
+        add_to_exportqueue(session, logger, filename, path, destination)
 
-session.close()
 logger.info("*** add_to_exportqueue.py exiting normally at %s" % datetime.datetime.now())
-

@@ -1,4 +1,4 @@
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.header import Header
 from fits_storage.utils.previewqueue import PreviewQueueUtil
@@ -15,7 +15,7 @@ parser.add_option("--all", action="store_true", dest="all", help="queue all obse
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
-(options, args) = parser.parse_args()
+options, args = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
@@ -24,12 +24,11 @@ setdemon(options.demon)
 # Annouce startup
 logger.info("*********    add_to_preview_queue.py - starting up at %s" % datetime.datetime.now())
 
-if (not options.file_pre) and (not options.all):
+if not (options.file_pre or options.all):
     logger.error("You must give either a file_pre, or use the all flag")
     sys.exit(1)
 
-session = sessionfactory()
-try:
+with session_scope() as session:
     # Get a list of diskfile IDs to queue.
     query = session.query(DiskFile)
 
@@ -48,10 +47,4 @@ try:
 
     PreviewQueueUtil(session, logger).process(dfs)
 
-    session.commit()
-
-finally:
-    session.close()
-
 logger.info("*** add_to_preview_queue.py exiting normally at %s" % datetime.datetime.now())
-

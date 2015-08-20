@@ -1,4 +1,4 @@
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.fits_storage_config import storage_root, using_s3
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.ingestqueue import IngestQueueUtil
@@ -6,9 +6,9 @@ import os
 import re
 import datetime
 import time
-if (using_s3):
-    from fits_storage.fits_storage_config import s3_bucket_name, aws_access_key, aws_secret_key
-    from boto.s3.connection import S3Connection
+if using_s3:
+    from aws_s3 import S3Helper
+    s3 = S3Helper()
 
 # Option Parsing
 from optparse import OptionParser
@@ -21,7 +21,7 @@ parser.add_option("--force", action="store_true", dest="force", default = False,
 parser.add_option("--force_md5", action="store_true", dest="force_md5", default = False, help="Force checking of file change by md5 not just lastmod date")
 parser.add_option("--after", action="store", dest="after", default = None, help="ingest only after this datetime")
 
-(options, args) = parser.parse_args()
+options, args = parser.parse_args()
 path = options.path
 
 # Logging level to debug? Include stdio log?
@@ -35,13 +35,9 @@ logger.info("*********    add_to_ingest_queue.py - starting up at %s" % now)
 # Get a list of all the files in the datastore
 # We assume this is just one dir (ie non recursive) for now.
 
-if(using_s3):
-    logger.info("Querying files for ingest from S3 bucket: %s" % s3_bucket_name)
-    s3conn = S3Connection(aws_access_key, aws_secret_key)
-    bucket = s3conn.get_bucket(s3_bucket_name)
-    filelist = []
-    for key in bucket.list():
-        filelist.append(key.name)
+if using_s3:
+    logger.info("Querying files for ingest from S3 bucket")
+    filelist = [key.name for key in s3.bucket.list()]
 else:
     fulldirpath = os.path.join(storage_root, path)
     logger.info("Queueing files for ingest from: %s" % fulldirpath)
@@ -53,50 +49,23 @@ file_re = options.file_re
 # Handle the today and twoday etc options
 now = datetime.datetime.utcnow()
 delta = datetime.timedelta(days=1)
-if(options.file_re == "today"):
-    file_re = now.date().strftime("%Y%m%d")
+named_intervals = {
+    'today': 1,
+    'twoday': 2,
+    'fourday': 3,
+    'tenday': 10,
+    'twentyday': 20
+    }
 
-if(options.file_re == "twoday"):
-    then = now-delta
-    a = now.date().strftime("%Y%m%d")
-    b = then.date().strftime("%Y%m%d")
-    file_re = "%s|%s" % (a, b)
-
-if(options.file_re == "fourday"):
-    a = now.date().strftime("%Y%m%d")
-    then = now - delta
-    b = then.date().strftime("%Y%m%d")
-    then = then - delta
-    c = then.date().strftime("%Y%m%d")
-    then = then - delta
-    d = then.date().strftime("%Y%m%d")
-    file_re = "%s|%s|%s|%s" % (a, b, c, d)
-
-if(options.file_re == "tenday"):
-    list = []
-    then = now
-    for i in range(10):
-        list.append(then.date().strftime("%Y%m%d"))
-        then = then-delta
-    file_re = '|'.join(list)
-
-if(options.file_re == "twentyday"):
-    list = []
-    then = now
-    for i in range(20):
-        list.append(then.date().strftime("%Y%m%d"))
-        then = then-delta
-    file_re = '|'.join(list)
-
-if(file_re):
-    cre = re.compile(file_re)
-
+if options.file_re in named_intervals:
+    then = now.date()
+    dates = [then-(delta*n) for n in range(named_intervals[options.file])]
+    file_re = '|'.join(d.date().strftime("%Y%m%d") for d in dates)
 
 files = []
-if(file_re):
-    for filename in filelist:
-        if(cre.search(filename)):
-            files.append(filename)
+if file_re:
+    cre = re.compile(file_re)
+    files = filter(cre.search, filelist)
 else:
     files = filelist
 
@@ -108,27 +77,31 @@ fitscre = re.compile(".fits")
 obslogcre = re.compile("_obslog.txt")
 previewcre = re.compile("_preview.jpg")
 logger.info("Checking for tmp files")
+
+def skip_file(filename):
+    return (
+        tmpcre.search(filename)
+     or previewcre.search(filename)
+     or not (fitscre.search(filename) or obslogcre.search(filename))
+     )
+
 for filename in files:
-    if(tmpcre.search(filename) or previewcre.search(filename) or not (fitscre.search(filename) or obslogcre.search(filename))):
+    if skip_file(filename):
         logger.info("skipping tmp file: %s" % filename)
     else:
         thefiles.append(filename)
 
-i = 0
 n = len(thefiles)
 # print what we're about to do, and give abort opportunity
 logger.info("About to scan %d files" % n)
-if (n>5000):
+if n > 5000:
     logger.info("That's a lot of files. Hit ctrl-c within 5 secs to abort")
     time.sleep(6)
 
-session = sessionfactory()
+with session_scope() as session:
+    iq = IngestQueueUtil(session, logger)
+    for i, filename in enumerate(thefiles, 1):
+        logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
+        iq.add_to_queue(filename, path, force=options.force, force_md5=options.force_md5, after=options.after)
 
-iq = IngestQueueUtil(session, logger)
-for filename in thefiles:
-    i += 1
-    logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
-    iq.add_to_queue(filename, path, force=options.force, force_md5=options.force_md5, after=options.after)
-
-session.close()
 logger.info("*** add_to_ingestqueue.py exiting normally at %s" % datetime.datetime.now())
