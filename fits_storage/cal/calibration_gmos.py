@@ -268,17 +268,26 @@ class CalibrationGMOS(Calibration):
         under_85 = False
         crpa_thres = 0.0
         # QAP might not give us these for now. Remove this 'if' later when it does
-        if 'elevation' in self.descriptors:
+        if self.descriptors.get('elevation') is not None:
             # Spectroscopy flats also have to somewhat match telescope position for flexure, as follows
             # this is from FitsStorage TRAC #43 discussion with KR 20130425. This code defines the
             # thresholds and the conditions where they apply
-            ifu = self.descriptors['focal_plane_mask'].startswith('IFU')
-            mos_or_ls = self.descriptors['central_wavelength'] > 0.55 or self.descriptors['disperser'].startswith('R150')
+            try:
+                ifu = self.descriptors['focal_plane_mask'].startswith('IFU')
+                # For IFU, elevation must we within 7.5 degrees
+                ifu_el_thres = 7.5
+            except AttributeEror:
+                # focal_plane_mask came as None. Leave 'ifu' as False
+                pass
+            try:
+                mos_or_ls = self.descriptors['central_wavelength'] > 0.55 or self.descriptors['disperser'].startswith('R150')
+                # For MOS and LS, elevation must we within 15 degrees
+                mos_ls_el_thres = 15.0
+            except AttributeError:
+                # Just in case disperser is None
+                pass
             under_85 = self.descriptors['elevation'] < 85
 
-            # For IFU, elevation must we within 7.5 degrees
-            ifu_el_thres = 7.5
-            mos_ls_el_thres = 15.0
             # crpa*cos(el) must be within 7.5 degrees, ie crpa must be within 7.5 / cos(el)
             # when el=90, cos(el) = 0 and the range is infinite. Only check at lower elevations
             if under_85:
