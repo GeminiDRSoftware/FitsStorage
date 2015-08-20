@@ -1,4 +1,4 @@
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.orm.file import File
 from fits_storage.orm.diskfile import DiskFile
 
@@ -30,54 +30,53 @@ setdemon(options.demon)
 logger.info("*********    rollcall.py - starting up at %s" % datetime.datetime.now())
 
 # Get a database session
-session = sessionfactory()
+with session_scope() as session:
+    # Get a list of all diskfile_ids marked as present
+    query = session.query(DiskFile.id).select_from(join(DiskFile, File)).filter(DiskFile.present == True).order_by(DiskFile.lastmod)
 
-# Get a list of all diskfile_ids marked as present
-query = session.query(DiskFile.id).select_from(join(DiskFile, File)).filter(DiskFile.present == True).order_by(DiskFile.lastmod)
+    if(options.filepre):
+        likestr = "%s%%" % options.filepre
+        query = query.filter(File.name.like(likestr))
 
-if(options.filepre):
-    likestr = "%s%%" % options.filepre
-    query = query.filter(File.name.like(likestr))
+    # Did we get a limit option?
+    if(options.limit):
+        query = query.limit(options.limit)
 
-# Did we get a limit option?
-if(options.limit):
-    query = query.limit(options.limit)
+    logger.info("evaluating number of rows...")
+    n = query.count()
+    logger.info("%d files to check" % n)
 
-logger.info("evaluating number of rows...")
-n = query.count()
-logger.info("%d files to check" % n)
+    logger.info("Starting checking...")
 
-logger.info("Starting checking...")
-
-if using_s3:
-    logger.debug("Connecting to s3")
-    s3 = S3Helper()
-
-i = 0
-j = 0
-missingfiles = []
-for df in query:
     if using_s3:
-        logger.debug("Getting s3 key for %s" % df.filename)
-        exists = s3.get_key(df.filename) is not None
-    else:
-        # Make it false if this one doesn't actually exist
-        exists = df.exists()
+        logger.debug("Connecting to s3")
+        s3 = S3Helper()
 
-    if(exists == False):
-        df.present = False
-        j += 1
-        logger.info("File %d/%d: Marking file %s (diskfile id %d) as not present" % (i, n, df.filename, df.id))
-        missingfiles.append(df.filename)
-        session.commit()
-    else:
-        if ((i % 1000) == 0):
-            logger.info("File %d/%d: present and correct" % (i, n))
-    i += 1
+    i = 0
+    j = 0
+    missingfiles = []
+    for df in query:
+        if using_s3:
+            logger.debug("Getting s3 key for %s" % df.filename)
+            exists = s3.get_key(df.filename) is not None
+        else:
+            # Make it false if this one doesn't actually exist
+            exists = df.exists()
 
-if(j > 0):
-    logger.warning("\nMarked %d files as no longer present\n%s\n" % (j, missingfiles))
-else:
-    logger.info("\nMarked %d files as no longer present\n%s\n" % (j, missingfiles))
+        if(exists == False):
+            df.present = False
+            j += 1
+            logger.info("File %d/%d: Marking file %s (diskfile id %d) as not present" % (i, n, df.filename, df.id))
+            missingfiles.append(df.filename)
+            session.commit()
+        else:
+            if ((i % 1000) == 0):
+                logger.info("File %d/%d: present and correct" % (i, n))
+        i += 1
+
+    if(j > 0):
+        logger.warning("\nMarked %d files as no longer present\n%s\n" % (j, missingfiles))
+    else:
+        logger.info("\nMarked %d files as no longer present\n%s\n" % (j, missingfiles))
 
 logger.info("*** rollcall.py exiting normally at %s" % datetime.datetime.now())

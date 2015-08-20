@@ -6,7 +6,7 @@ import os
 import smtplib
 from sqlalchemy import join, desc
 
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.file import File
 from fits_storage.fits_storage_config import storage_root, target_max_files, target_gb_free
@@ -41,156 +41,161 @@ setdebug(options.debug)
 setdemon(options.demon)
 
 
-msg = ""
+msglines = []
 # Annouce startup
 logger.info("*********    delete_files.py - starting up at %s" % datetime.datetime.now())
 
-session = sessionfactory()
+def add_to_msg(log, msg):
+    log(msg)
+    msglines.append(msg)
 
-query = session.query(DiskFile.id).select_from(join(File, DiskFile)).filter(DiskFile.canonical==True)
+with session_scope() as session:
+    query = session.query(DiskFile).select_from(join(File, DiskFile)).filter(DiskFile.canonical==True)
 
-if options.auto:
-    # chdir to the storage root to kick the automounter
-    cwd = os.getcwd()
-    os.chdir(storage_root)
-    s = os.statvfs(storage_root)
-    os.chdir(cwd)
-    gbavail = s.f_bsize * s.f_bavail / (1024 * 1024 * 1024)
-    if(options.numbystat):
-        numfiles = s.f_files - s.f_favail
+    if options.auto:
+        # chdir to the storage root to kick the automounter
+        cwd = os.getcwd()
+        os.chdir(storage_root)
+        s = os.statvfs(storage_root)
+        os.chdir(cwd)
+        gbavail = s.f_bsize * s.f_bavail / (1024 * 1024 * 1024)
+        if options.numbystat:
+            numfiles = s.f_files - s.f_favail
+        else:
+            numfiles = session.query(DiskFile).filter(DiskFile.present == True).count()
+        logger.debug("Disk has %d files present and %.2f GB available" % (numfiles, gbavail))
+        numtodelete = numfiles - target_max_files
+        if numtodelete > 0:
+            add_to_msg(logger.info, "Need to delete at least %d files" % numtodelete)
+
+        gbtodelete = target_gb_free - gbavail
+        if gbtodelete > 0:
+            add_to_msg(logger.info, "Need to delete at least %.2f GB" % gbtodelete)
+
+        if numtodelete <= 0 and gbtodelete <= 0:
+            logger.info("In Auto mode and nothing needs deleting. Exiting")
+            sys.exit(0)
+
+    if options.filepre:
+        likestr = "%s%%" % options.filepre
+        query = query.filter(File.name.like(likestr))
+
+    if not options.notpresent:
+        query = query.filter(DiskFile.present == True)
+
+    if options.oldbylastmod:
+        query = query.order_by(desc(DiskFile.lastmod))
     else:
-        numfiles = session.query(DiskFile).filter(DiskFile.present == True).count()
-    logger.debug("Disk has %d files present and %.2f GB available" % (numfiles, gbavail))
-    numtodelete = numfiles - target_max_files
-    if numtodelete > 0:
-        logger.info("Need to delete at least %d files" % numtodelete)
-        msg += "Need to delete at least %d files\n" % numtodelete
+        query = query.order_by(File.name)
 
-    gbtodelete = target_gb_free - gbavail
-    if gbtodelete > 0:
-        logger.info("Need to delete at least %.2f GB" % gbtodelete)
-        msg += "Need to delete at least %.2f GB\n" % gbtodelete
+    if options.maxnum:
+        query = query.limit(options.maxnum)
 
-    if (numtodelete <=0) and (gbtodelete <=0):
-        logger.info("In Auto mode and nothing needs deleting. Exiting")
-        session.close()
+    cnt = query.count()
+
+    if cnt == 0:
+        logger.info("No Files found matching file-pre. Exiting")
         sys.exit(0)
 
-if options.filepre:
-    likestr = "%s%%" % options.filepre
-    query = query.filter(File.name.like(likestr))
+    logger.info("Got %d files to consider for deletion" % cnt)
+    if cnt > 2000 and not options.yesimsure:
+        logger.error("To proceed with this many files, you must say --yesimsure")
+        sys.exit(1)
 
-if not options.notpresent:
-    query = query.filter(DiskFile.present == True)
+    sumbytes = 0
+    sumfiles = 0
+    sumgb = 0
 
-if options.oldbylastmod:
-    query = query.order_by(desc(DiskFile.lastmod))
-else:
-    query = query.order_by(File.name)
+    for diskfile in query:
+        badmd5 = False
 
-if options.maxnum:
-    query = query.limit(options.maxnum)
+        fullpath = diskfile.fullpath()
+        dbmd5 = diskfile.file_md5
+        dbfilename = diskfile.filename
 
-diskfileids = query.all()
-
-if len(diskfileids) == 0:
-    logger.info("No Files found matching file-pre. Exiting")
-    session.close()
-    sys.exit(0)
-
-logger.info("Got %d files to consider for deletion" % len(diskfileids))
-if len(diskfileids) > 2000 and not options.yesimsure:
-    logger.error("To proceed with this many files, you must say --yesimsure")
-    session.close()
-    sys.exit(1)
-
-sumbytes = 0
-sumfiles = 0
-sumgb = 0
-
-for diskfileid in diskfileids:
-
-    badmd5 = False
-
-    diskfile = session.query(DiskFile).get(diskfileid)
-
-    fullpath = diskfile.fullpath()
-    dbmd5 = diskfile.file_md5
-    dbfilename = diskfile.filename
-
-    logger.debug("Full path filename: %s" % fullpath)
-    if(not diskfile.exists()):
-        logger.error("Cannot access file %s" % fullpath)
-    else:
-
-        if not options.skipmd5:
-            filemd5 = diskfile.get_file_md5()
-            logger.debug("Actual File MD5 and canonical database diskfile MD5 are: %s and %s" % (filemd5, dbmd5))
-            if filemd5 != dbmd5:
-                logger.error("File: %s has an md5sum mismatch between the database and the actual file. Skipping" % dbfilename)
-                badmd5 = True
+        logger.debug("Full path filename: %s" % fullpath)
+        if not diskfile.exists():
+            logger.error("Cannot access file %s" % fullpath)
         else:
-            filemd5 = dbmd5
 
-        if not badmd5:
-            url = "http://%s/fileontape/%s" % (options.tapeserver, dbfilename)
-            logger.debug("Querying tape server DB at %s" % url)
-
-            xml = urllib.urlopen(url).read()
-            dom = parseString(xml)
-            fileelements = dom.getElementsByTagName("file")
-
-            tapeids = []
-            for fe in fileelements:
-                filename = fe.getElementsByTagName("filename")[0].childNodes[0].data
-                md5 = fe.getElementsByTagName("md5")[0].childNodes[0].data
-                tapeid = int(fe.getElementsByTagName("tapeid")[0].childNodes[0].data)
-                logger.debug("Filename: %s; md5=%s, tapeid=%d" % (filename, md5, tapeid))
-                found = (filename == dbfilename) and (tapeid not in tapeids)
-                if not options.skipmd5:
-                    found = found and (md5 == filemd5)
-
-                if found:
-                    logger.debug("Found it on tape id %d" % tapeid)
-                    tapeids.append(tapeid)
-
-            if len(tapeids) >= options.mintapes:
-                sumbytes += diskfile.file_size
-                sumgb = sumbytes / 1.0E9
-                sumfiles += 1
-                if options.dryrun:
-                    logger.info("Dry run - not actually deleting File %s - %s which is on %d tapes: %s" % (fullpath, filemd5, len(tapeids), tapeids))
-                    msg += "Dry run - not deleting File %s - %s which is on %d tapes: %s\n" % (fullpath, filemd5, len(tapeids), tapeids)
-                else:
-                    logger.info("Deleting File %s - %s which is on %d tapes: %s" % (fullpath, filemd5, len(tapeids), tapeids))
-                    msg += "Deleting File %s - %s which is on %d tapes: %s\n" % (fullpath, filemd5, len(tapeids), tapeids) 
-                    try:
-                        os.unlink(fullpath)
-                        logger.debug("Marking diskfile id %d as not present" % diskfile.id)
-                        diskfile.present = False
-                        session.commit()
-                    except:
-                        logger.error("Could not unlink file %s: %s - %s" % (fullpath, sys.exc_info()[0], sys.exc_info()[1]))
-                        msg += "Could not unlink file %s: %s - %s\n" % (fullpath, sys.exc_info()[0], sys.exc_info()[1])
+            if not options.skipmd5:
+                filemd5 = diskfile.get_file_md5()
+                logger.debug("Actual File MD5 and canonical database diskfile MD5 are: %s and %s" % (filemd5, dbmd5))
+                if filemd5 != dbmd5:
+                    logger.error("File: %s has an md5sum mismatch between the database and the actual file. Skipping" % dbfilename)
+                    badmd5 = True
             else:
-                logger.info("File %s is not on sufficient tapes to be elligable for deletion" % dbfilename)
-                msg += "File %s is not on sufficient tapes to be elligable for deletion\n" % dbfilename
-        if options.maxgb:
-            if sumgb>options.maxgb:
-                logger.info("Allready deleted %.2f GB - stopping now" % sumgb)
-                msg += "Allready deleted %.2f GB - stopping now\n" % sumgb
-                break
-        if options.auto:
-            if (numtodelete > 0) and (sumfiles >= numtodelete):
-                logger.info("Have now deleted the necessary number of files: %d Stopping now" % sumfiles)
-                msg += "Have now deleted the necessary number of files: %d Stopping now\n" % sumfiles
-                break
-            if (gbtodelete > 0) and (sumgb >= gbtodelete):
-                logger.info("Have now deleted the necessary number of GB: %.2f Stopping now" % sumgb)
-                msg += "Have now deleted the necessary number of GB: %.2f Stopping now\n" % sumgb
-                break
+                filemd5 = dbmd5
 
-session.close()
+            if not badmd5:
+                url = "http://%s/fileontape/%s" % (options.tapeserver, dbfilename)
+                logger.debug("Querying tape server DB at %s" % url)
+
+                xml = urllib.urlopen(url).read()
+                dom = parseString(xml)
+                fileelements = dom.getElementsByTagName("file")
+
+                tapeids = []
+                for fe in fileelements:
+                    filename = fe.getElementsByTagName("filename")[0].childNodes[0].data
+                    md5 = fe.getElementsByTagName("md5")[0].childNodes[0].data
+                    tapeid = int(fe.getElementsByTagName("tapeid")[0].childNodes[0].data)
+                    logger.debug("Filename: %s; md5=%s, tapeid=%d" % (filename, md5, tapeid))
+                    found = (filename == dbfilename) and (tapeid not in tapeids)
+                    if not options.skipmd5:
+                        found = found and (md5 == filemd5)
+
+                    if found:
+                        logger.debug("Found it on tape id %d" % tapeid)
+                        tapeids.append(tapeid)
+
+                if len(tapeids) >= options.mintapes:
+                    sumbytes += diskfile.file_size
+                    sumgb = sumbytes / 1.0E9
+                    sumfiles += 1
+                    if options.dryrun:
+                        add_to_msg(
+                            logger.info,
+                            "Dry run - not actually deleting File %s - %s which is on %d tapes: %s" % (fullpath, filemd5, len(tapeids), tapeids)
+                            )
+                    else:
+                        add_to_msg(
+                            logger.info,
+                            "Deleting File %s - %s which is on %d tapes: %s" % (fullpath, filemd5, len(tapeids), tapeids)
+                            )
+                        try:
+                            os.unlink(fullpath)
+                            logger.debug("Marking diskfile id %d as not present" % diskfile.id)
+                            diskfile.present = False
+                            session.commit()
+                        except:
+                            add_to_msg(
+                                logger.error,
+                                "Could not unlink file %s: %s - %s" % (fullpath, sys.exc_info()[0], sys.exc_info()[1])
+                                )
+                else:
+                    add_to_msg(
+                        logger.info,
+                        "File %s is not on sufficient tapes to be elligable for deletion" % dbfilename
+                        )
+            if options.maxgb:
+                if sumgb>options.maxgb:
+                    add_to_msg(logger.info, "Allready deleted %.2f GB - stopping now" % sumgb)
+                    break
+            if options.auto:
+                if (numtodelete > 0) and (sumfiles >= numtodelete):
+                    add_to_msg(
+                        logger.info,
+                        "Have now deleted the necessary number of files: %d Stopping now" % sumfiles
+                        )
+                    break
+                if (gbtodelete > 0) and (sumgb >= gbtodelete):
+                    add_to_msg(
+                        logger.info,
+                        "Have now deleted the necessary number of GB: %.2f Stopping now" % sumgb
+                        )
+                    break
+
 if options.emailto:
     if options.dryrun:
         subject = "Dry run file delete report"
@@ -200,7 +205,7 @@ if options.emailto:
     mailfrom = 'fitsdata@gemini.edu'
     mailto = [options.emailto]
 
-    message = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (mailfrom, ", ".join(mailto), subject, msg)
+    message = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (mailfrom, ", ".join(mailto), subject, '\n'.join(msglines))
 
     server = smtplib.SMTP('mail.gemini.edu')
     server.sendmail(mailfrom, mailto, message)

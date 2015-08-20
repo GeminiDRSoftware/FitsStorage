@@ -16,38 +16,44 @@ parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run 
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
-(options, args) = parser.parse_args()
+options, args = parser.parse_args()
 
 rawlist = os.listdir('.')
-thelist = []
 restring = '^' + options.filepre + '.*'
 cre = re.compile(restring)
-for i in rawlist:
-  if(cre.match(i)):
-    thelist.append(i)
+thelist = filter(cre.match, rawlist)
 
 print "Files to consider: %s" % thelist
 
-for thefile in thelist:
+if options.dryrun:
+    def remove(fname, md5, tapes):
+        print "Dry run - not actually deleting File %s - %s which is on %d tapes: %s" % (fname, md5, len(tapes), tapes)
+else:
+    def remove(fname, md5, tapes)
+        print "Deleting File %s - %s which is on %d tapes: %s" % (fname, md5, len(tapes), tapes)
+        try:
+            os.unlink(fname)
+        except:
+            print "Could not unlink file %s: %s - %s" % (fname, sys.exc_info()[0], sys.exc_info()[1])
 
+def getXmlData(element, tag):
+    return element.getElementsByTagName(tag)[0].childNodes[0].data
+
+for thefile in thelist:
   m = hashlib.md5()
   block = 64*1024
-  f = open(thefile, 'r')
-  data = f.read(block)
-  m.update(data)
-  while(data):
-    data = f.read(block)
-    m.update(data)
-  f.close()
+  with open(thefile, 'r') as f:
+      data = f.read(block)
+      m.update(data)
+      while data:
+        data = f.read(block)
+        m.update(data)
   filemd5 = m.hexdigest()
 
   print "Considering %s - %s" % (thefile, filemd5)
 
   url = "http://%s/fileontape/%s" % (options.tapeserver, thefile)
-
-  u = urllib.urlopen(url)
-  xml = u.read()
-  u.close()
+  xml = urllib.urlopen(url).read()
 
   dom = parseString(xml)
 
@@ -55,21 +61,14 @@ for thefile in thelist:
 
   tapeids = []
   for fe in fileelements:
-    filename = fe.getElementsByTagName("filename")[0].childNodes[0].data
-    md5 = fe.getElementsByTagName("md5")[0].childNodes[0].data
-    tapeid = int(fe.getElementsByTagName("tapeid")[0].childNodes[0].data)
-    if((filename == thefile) and ((md5 == filemd5) or options.nomd5) and (tapeid not in tapeids)):
+    filename = getXmlData(fe, "filename")
+    md5 = getXmlData(fe, "md5")
+    tapeid = int(getXmlData(fe, "tapeid"))
+    if (filename == thefile) and ((md5 == filemd5) or options.nomd5) and (tapeid not in tapeids):
       #print "Found it on tape id %d" % tapeid
       tapeids.append(tapeid)
 
-  if(len(tapeids) >= options.mintapes):
-    if(options.dryrun):
-      print "Dry run - not actually deleting File %s - %s which is on %d tapes: %s" % (thefile, filemd5, len(tapeids), tapeids)
-    else:
-      print "Deleting File %s - %s which is on %d tapes: %s" % (thefile, filemd5, len(tapeids), tapeids)
-      try:
-        os.unlink(thefile)
-      except:
-        print "Could not unlink file %s: %s - %s" % (thefile, sys.exc_info()[0], sys.exc_info()[1])
+  if len(tapeids) >= options.mintapes:
+    remove(thefile, filemd5, tapeids)
   else:
     print "File %s is not on sufficient tapes to be elligable for deletion" % thefile

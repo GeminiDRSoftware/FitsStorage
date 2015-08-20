@@ -4,7 +4,7 @@ import traceback
 import datetime
 import shutil
 
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.orm.fileuploadlog import FileUploadLog, FileUploadWrapper
 
 from fits_storage.fits_storage_config import storage_root, upload_staging_path, processed_cals_path, using_s3
@@ -40,59 +40,58 @@ if not options.filename:
 
 path = processed_cals_path if options.processed_cal == 'True' else ''
 
-session = sessionfactory()
-try:
-    # The fileuploadwrapper acts as a Context Manager (to set times) and as a dummy
-    # FileUploadLog, in case that we don't get an id. Makes the code simpler
+with session_scope() as session:
+    try:
+        # The fileuploadwrapper acts as a Context Manager (to set times) and as a dummy
+        # FileUploadLog, in case that we don't get an id. Makes the code simpler
 
-    fileuploadlog = FileUploadWrapper()
-    # Find the upload log entry to update
-    if options.fileuploadlog_id:
-        fileuploadlog.set_wrapped(session.query(FileUploadLog).get(options.fileuploadlog_id))
+        fileuploadlog = FileUploadWrapper()
+        # Find the upload log entry to update
+        if options.fileuploadlog_id:
+            fileuploadlog.set_wrapped(session.query(FileUploadLog).get(options.fileuploadlog_id))
 
-    # Move the file to its appropriate loaction in storage_root/path or S3
-    # Construct the full path names and move the file into place
-    src = os.path.join(upload_staging_path, options.filename)
-    dst = os.path.join(path, options.filename)
+        # Move the file to its appropriate location in storage_root/path or S3
+        # Construct the full path names and move the file into place
+        src = os.path.join(upload_staging_path, options.filename)
+        dst = os.path.join(path, options.filename)
 
-    fileuploadlog.destination = dst
+        fileuploadlog.destination = dst
 
-    if using_s3:
-        # Copy to S3
-        try:
-            logger.debug("Connecting to S3")
-            s3 = S3Helper(session, logger)
-            with fileuploadlog:
-                fileuploadlog.s3_ok = s3.upload_file(dst, src)
+        if using_s3:
+            # Copy to S3
+            try:
+                logger.debug("Connecting to S3")
+                s3 = S3Helper(session, logger)
+                with fileuploadlog:
+                    fileuploadlog.s3_ok = s3.upload_file(dst, src)
+                os.unlink(src)
+            except:
+                string = traceback.format_tb(sys.exc_info()[2])
+                string = "".join(string)
+                fileuploadlog.add_note("Exception during S3 upload, see log file")
+                logger.error("Exception during S3 upload: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
+
+        else:
+            dst = os.path.join(storage_root, dst)
+            logger.debug("Moving %s to %s" % (src, dst))
+            # We can't use os.rename as that keeps the old permissions and ownership, which we specifically want to avoid
+            # Instead, we copy the file and the remove it
+            shutil.copy(src, dst)
             os.unlink(src)
-        except:
-            string = traceback.format_tb(sys.exc_info()[2])
-            string = "".join(string)
-            fileuploadlog.add_note("Exception during S3 upload, see log file")
-            logger.error("Exception during S3 upload: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
+            fileuploadlog.file_ok = True
 
-    else:
-        dst = os.path.join(storage_root, dst)
-        logger.debug("Moving %s to %s" % (src, dst))
-        # We can't use os.rename as that keeps the old permissions and ownership, which we specifically want to avoid
-        # Instead, we copy the file and the remove it
-        shutil.copy(src, dst)
-        os.unlink(src)
-        fileuploadlog.file_ok = True
+        logger.info("Queueing for Ingest: %s" % dst)
+        iq_id = IngestQueueUtil(session, logger).add_to_queue(options.filename, path)
 
-    logger.info("Queueing for Ingest: %s" % dst)
-    iq_id = IngestQueueUtil(session, logger).add_to_queue(options.filename, path)
+        fileuploadlog.ingestqueue_id = iq_id
 
-    fileuploadlog.ingestqueue_id = iq_id
+    except:
+        string = traceback.format_tb(sys.exc_info()[2])
+        string = "".join(string)
+        logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
+        raise
 
-except:
-    string = traceback.format_tb(sys.exc_info()[2])
-    string = "".join(string)
-    logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
-    raise
-
-finally:
-    session.commit()
-    session.close()
+    finally:
+        session.commit()
 
 logger.info("*** ingest_uploaded_file.py exiting normally at %s" % datetime.datetime.now())

@@ -2,7 +2,7 @@ import pyinotify
 import re
 import datetime
 
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.fits_storage_config import storage_root
 from fits_storage.logger import logger, setdemon, setdebug
 from fits_storage.utils.ingestqueue import IngestQueueUtil
@@ -25,8 +25,6 @@ setdemon(options.demon)
 logger.info("*********    inotify_ingest_queue.py - starting up at %s" % datetime.datetime.now())
 logger.info("Ingesting files from: %s" % storage_root)
 
-session = sessionfactory()
-
 # Create the pyinotify watch manager 
 wm = pyinotify.WatchManager()
 
@@ -36,33 +34,35 @@ mask = pyinotify.IN_MOVED_FROM | pyinotify.IN_DELETE | pyinotify.IN_CLOSE_WRITE 
 # Create the Event Handler
 class HandleEvents(pyinotify.ProcessEvent):
     tmpre = re.compile('(tmp)|(swp)|(^\.)')
+    def __init__(self, session, logger):
+        super(HandleEvents, self).__init__()
+        self.s = session
+        self.l = logger
     def process_default(self, event):
-        logger.debug("Pyinotify Event: %s" % str(event))
+        self.l.debug("Pyinotify Event: %s" % str(event))
         # Does it have a tmp or swp in the filename or start with a dot?
         if(self.tmpre.search(event.name)):
             # It's a tmp file, ignore it
-            logger.debug("Ignoring Event on tmp file: %s" % event.name)
+            self.l.debug("Ignoring Event on tmp file: %s" % event.name)
         else:
             # Go ahead and process it
-            logger.info("Processing PyInotify Event on pathname: %s" % event.pathname)
+            self.l.info("Processing PyInotify Event on pathname: %s" % event.pathname)
             if(options.dryrun):
-                logger.info("Dryrun mode - not actually adding to ingest queue: %s" % event.name)
+                self.l.info("Dryrun mode - not actually adding to ingest queue: %s" % event.name)
             else:
-                logger.info("Adding to Ingest Queue: %s" % event.name)
-                IngestQueueUtil(session, logger).add_to_queue(event.name, '')
+                self.l.info("Adding to Ingest Queue: %s" % event.name)
+                IngestQueueUtil(self.s, self.l).add_to_queue(event.name, '')
 
 
-# Create the notifier
-notifier = pyinotify.Notifier(wm, HandleEvents())
+with session_scope() as session:
+    # Create the notifier
+    notifier = pyinotify.Notifier(wm, HandleEvents(session, logger))
 
-# Add the watch
-wm.add_watch(storage_root, mask)
+    # Add the watch
+    wm.add_watch(storage_root, mask)
 
-# Go into the notifier event loop
-try:
-    notifier.loop()
-finally:
-    session.close()
-    logger.info("*** inotify_ingest_queue.py exiting normally at %s" % datetime.datetime.now())
-
-
+    # Go into the notifier event loop
+    try:
+        notifier.loop()
+    finally:
+        logger.info("*** inotify_ingest_queue.py exiting normally at %s" % datetime.datetime.now())

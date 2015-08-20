@@ -1,7 +1,7 @@
 import sys
 import datetime
 
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.orm.file import File
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.header import Header
@@ -19,7 +19,7 @@ parser.add_option("--file-pre", action="store", dest="filepre", help="filename p
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
-(options, args) = parser.parse_args()
+options, args = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
@@ -28,69 +28,56 @@ setdemon(options.demon)
 # Annouce startup
 logger.info("*********    purge_old_diskfiles.py - starting up at %s" % datetime.datetime.now())
 
-if(len(options.filepre) < 1):
+if not options.filepre:
     logger.error("You must specify a file-pre")
     sys.exit(1)
 
-session = sessionfactory()
+if not options.dryrun:
+    def delete(s, name, obj):
+        logger.debug("Deleting {} id {}".format(name, obj.id))
+        s.delete(obj)
+        s.commit()
+else:
+    def delete(s, name, obj):
+        logger.debug("Dry Run - would delete {} id %d".format(name, obj.id))
 
-logger.info("Getting list of file_ids to check")
-likestr = "%s%%" % options.filepre
-logger.debug("Matching File.name LIKE %s" % likestr)
-query = session.query(File.id).filter(File.name.like(likestr))
-fileids = query.all()
+with session_scope() as session:
+    logger.info("Getting list of file_ids to check")
+    likestr = "%s%%" % options.filepre
+    logger.debug("Matching File.name LIKE %s" % likestr)
+    query = session.query(File.id).filter(File.name.like(likestr))
+    fileids = query.all()
 
-logger.info("Got %d files to check" % len(fileids))
+    logger.info("Got %d files to check" % len(fileids))
 
-if(len(fileids)==0):
-    session.close()
-    logger.info("No files to check, exiting")
-    sys.exit(0)
+    if not fileids:
+        session.close()
+        logger.info("No files to check, exiting")
+        sys.exit(0)
 
+    # Loop through the file ids
+    for fileid in fileids:
+        #logger.debug("Checking file_id %d" % fileid)
+        query = session.query(DiskFile).filter(DiskFile.file_id==fileid).filter(DiskFile.present==False).filter(DiskFile.canonical==False)
+        todelete = query.all()
+        if todelete:
+            logger.info("Found diskfiles to delete for file_id %d" % fileid)
+            for diskfile in todelete:
+                logger.debug("Need to delete diskfile id %d" % diskfile.id)
+                # Are there any header rows?
+                hquery = session.query(Header).filter(Header.diskfile_id==diskfile.id)
+                for header in hquery:
+                    logger.debug("Need to delete header id %d" % header.id)
+                    # Are there any instrument headers that need deleting?
+                    gquery = session.query(Gmos).filter(Gmos.header_id==header.id)
+                    for g in gquery:
+                        delete(session, 'GMOS', g)
+                    nquery = session.query(Niri).filter(Niri.header_id==header.id)
+                    for n in nquery:
+                        delete(session, 'NIRI', n)
 
-# Loop through the file ids
-for fileid in fileids:
-    #logger.debug("Checking file_id %d" % fileid)
-    query = session.query(DiskFile).filter(DiskFile.file_id==fileid).filter(DiskFile.present==False).filter(DiskFile.canonical==False)
-    todelete = query.all()
-    if(len(todelete)>0):
-        logger.info("Found diskfiles to delete for file_id %d" % fileid)
-        for diskfile in todelete:
-            logger.debug("Need to delete diskfile id %d" % diskfile.id)
-            # Are there any header rows?
-            hquery = session.query(Header).filter(Header.diskfile_id==diskfile.id)
-            for header in hquery.all():
-                logger.debug("Need to delete header id %d" % header.id)
-                # Are there any instrument headers that need deleting?
-                gquery = session.query(Gmos).filter(Gmos.header_id==header.id)
-                for g in gquery.all():
-                    if(not options.dryrun):
-                        logger.debug("Deleting GMOS id %d" % g.id)
-                        session.delete(g)
-                        session.commit()
-                    else:
-                        logger.debug("Dry Run - would delete GMOS id %d" % g.id)
-                nquery = session.query(Niri).filter(Niri.header_id==header.id)
-                for n in nquery.all():
-                    if(not options.dryrun):
-                        logger.debug("Deleting NIRI id %d" % n.id)
-                        session.delete(n)
-                        session.commit()
-                    else:
-                        logger.debug("Dry Run - would delete Niri id %d" % n.id)
-                if(not options.dryrun):
-                    logger.debug("Deleting header id %d" % header.id)
-                    session.delete(header)
-                    session.commit()
-                else:
-                    logger.debug("Dry Run - not deleting Header id %d" % header.id)
-            if(not options.dryrun):
-                logger.debug("Deleting diskfile id %d" % diskfile.id)
-                session.delete(diskfile)
-                session.commit()
-            else:
-                logger.debug("Dry Run - not deleting DiskFile id %d" % diskfile.id)
+                    delete(session, 'Header', header)
+                delete(session, 'Diskfile', diskfile)
 
-session.close()
 logger.info("*** purge_old_diskfiles exiting normally at %s" % datetime.datetime.now())
 

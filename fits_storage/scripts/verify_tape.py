@@ -5,7 +5,7 @@ import tarfile
 from sqlalchemy import join
 from sqlalchemy.orm.exc import NoResultFound
 
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile
 
 from fits_storage. import fits_storage_config
@@ -29,14 +29,11 @@ from fits_storage.logger import logger, setdebug, setdemon
 setdebug(options.debug)
 setdemon(options.demon)
 
-session = sessionfactory()
-
-
 # Annouce startup
 logger.info("*********    verify_tape.py - starting up at %s" % datetime.datetime.now())
 
 
-try:
+with session_scope() as session:
     # Make a FitsStorageTape object from class TapeDrive initializing the device and scratchdir
     td = TapeDrive(options.tapedrive, fits_storage_config.fits_tape_scratchdir)
     td.setblk0()
@@ -117,22 +114,16 @@ try:
         # Check whether we read everything in the DB
         files_in_DB = session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape))).filter(TapeWrite.filenum==tw.filenum).filter(Tape.label==label).order_by(TapeFile.filename).all()
         for file in files_in_DB:
-            if file.filename not in files_on_tape:
-                logger.error("This file was in the database, but not on the tape: %s, in filenum: %d" % (file.filename, file.filenum))
-                errors.append(("File not on Tape at filenum = %d, filename = %s" % (file.filenum, file.filename)).encode())
+            if f.filename not in files_on_tape:
+                logger.error("This file was in the database, but not on the tape: %s, in filenum: %d" % (f.filename, f.filenum))
+                errors.append(("File not on Tape at filenum = %d, filename = %s" % (f.filenum, f.filename)).encode())
 
     # Print a list of all the errors found
     logger.info("List of Differences Found: %s" % errors)
 
-    if len(errors):
+    if errors:
         logger.error("There were verify errors - not updating lastverified")
     else:
         now = datetime.datetime.utcnow()
         logger.info("There were no verify errors - updating lastverified to: %s UTC" % now)
         tape.lastverified = now
-        session.commit()
-
-finally:
-    td.cdback()
-    session.close()
-

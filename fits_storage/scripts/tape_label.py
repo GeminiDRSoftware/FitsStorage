@@ -11,25 +11,25 @@ parser.add_option("--label", action="store", dest="label", help="Write the label
 parser.add_option("--tapedrive", action="store", dest="tapedrive", help="The tapedrive device to use")
 parser.add_option("--force", action="store_true", dest="force", help="Normally, --label will refuse to label a tape that allready contains a tapelabel. This option forces it to do so.")
 
-(options, args) = parser.parse_args()
+options, args = parser.parse_args()
 
-if((not options.read) and (not options.label)):
+if not (options.read or options.label):
     print "You must supply either the --read or the --label option"
     sys.exit(1)
 
 td = TapeDrive(options.tapedrive, fits_tape_scratchdir)
 
-if(options.read):
+if options.read:
     print td.readlabel(fail=False)
     sys.exit(0)
 
 
-if(options.label):
+if options.label:
     oldlabel = td.readlabel(fail=False)
-    if(oldlabel):
+    if oldlabel:
         print "This tape already has a FitsStorage tape label"
         print "Current label is: %s" % oldlabel
-        if(options.force):
+        if options.force:
             print "--force specified: will overwrite"
             print "Writing new tape label: %s" % options.label
             td.writelabel(options.label)

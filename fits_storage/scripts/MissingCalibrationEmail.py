@@ -22,14 +22,12 @@ utcstart = utcend - datetime.timedelta(days=options.ndays)
 daterange = "%s-%s" % (utcstart.date().strftime("%Y%m%d"), utcend.date().strftime("%Y%m%d"))
 
 # If ndays == 1 then just do a single date
-if(options.ndays == 1):
+if options.ndays == 1:
     daterange = "%s" % utcend.date().strftime("%Y%m%d")
 
 url = "http://%s/calibrations/GMOS/NotFail/%s/arc/warnings" % (options.httpserver, daterange)
 
-f = urllib2.urlopen(url)
-html = f.read()
-f.close()
+html = urllib2.urlopen(url).read()
 
 cremissing = re.compile('Counted (\d*) potential missing Calibrations')
 crewarning = re.compile('Query generated (\d*) warnings')
@@ -37,12 +35,12 @@ crewarning = re.compile('Query generated (\d*) warnings')
 warnings = int(crewarning.search(html).group(1))
 missing = int(cremissing.search(html).group(1))
 
-# ISG have put local mail servers on these machines, that relay mail to the 
+# ISG have put local mail servers on these machines, that relay mail to the
 # main mail servers without requiring authentication. This also provides
 # a spooling queue if there's a network issue
 mailhost = "localhost"
 
-if(missing==0):
+if missing==0:
     if options.skipdays == 0:
         subject = "No missing calibrations today. Yay!"
     else:

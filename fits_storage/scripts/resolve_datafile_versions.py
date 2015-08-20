@@ -65,9 +65,6 @@ setdemon(arguments['--demon'])
 # Annouce startup
 logger.info("*********    resolve_datafile_versions.py - starting up at %s" % datetime.datetime.now())
 
-# Get a session
-session = orm.sessionfactory()
-
 def scan_directory(sess, which, idemp):
     # Recurse through the directory structure, finding files, add to db.
     for root, dirs, files in os.walk(which):
@@ -160,7 +157,7 @@ def deduplicate(sess, fname):
 
             valid_paths = tuple(x.fullpath[x.fullpath.find('Gemini_FITS'):] for x in best)
             nobz2 = os.path.splitext(fname)[0]
-            stamps = session.query(Tape.label, TapeWrite.filenum, TapeFile.filename, TapeFile.lastmod).\
+            stamps = sess.query(Tape.label, TapeWrite.filenum, TapeFile.filename, TapeFile.lastmod).\
                              join(TapeWrite, TapeFile).\
                              filter(orm.func.lower(TapeFile.filename) == nobz2.lower())
             interesting = filter(lambda xx: xx[1] in valid_paths,
@@ -191,153 +188,153 @@ def deduplicate(sess, fname):
 
     sess.commit()
 
-if arguments['scan']:
-    idemp = not arguments['--noidemp']
-    for srcdir in arguments['<directory>']:
-        scan_directory(session, srcdir, idemp)
-    logger.info("Exiting after scan")
-    sys.exit(0)
+# Get a session
+with orm.session_scope() as session:
+    if arguments['scan']:
+        idemp = not arguments['--noidemp']
+        for srcdir in arguments['<directory>']:
+            scan_directory(session, srcdir, idemp)
+        logger.info("Exiting after scan")
+        sys.exit(0)
 
-def reset_version(vers):
-    vers.unable = False
-    vers.score = -1
-    vers.accepted = None
-    vers.is_clear = None
-    vers.used_date = None
+    def reset_version(vers):
+        vers.unable = False
+        vers.score = -1
+        vers.accepted = None
+        vers.is_clear = None
+        vers.used_date = None
 
-if arguments['reset']:
-    if arguments['able']:
-        logger.info("Setting unable=False on all entries")
-        session.execute("UPDATE versions SET unable=False")
-        session.commit()
-    else:
-        from redis import Redis
-        found = set()
-        for vers in session.query(Version).filter(Version.filename.in_(arguments['<filename>'])):
-            found.add(vers.filename)
-            reset_version(vers)
-        session.commit()
-
-        r = Redis(arguments['--server'])
-        for fname in found:
-            r.lpush('pending', fname)
-    sys.exit(0)
-
-def fix_header(value):
-    try:
-        if value.startswith('='):
-            return value.split("'")[1].strip()
-    except AttributeError:
-        value = 'UNKNOWN'
-
-    return value
-
-if arguments['rename']:
-    thr = arguments['--threshold']
-    query = session.query(Version.filename).\
-                    filter(Version.accepted == True).\
-                    filter(Version.score <= thr).\
-                    group_by(Version.filename)
-
-    for (fname,) in query:
-        logger.info("Looking up {0}".format(fname))
-        versions = list(session.query(Version).filter(Version.filename == fname))
-        headers = []
-        passed = []
-        instrs = []
-        for v in versions:
-            try:
-                fits = pf.open(bz2.BZ2File(v.fullpath))
-                fits.verify('silentfix+exception')
-                passed.append(v)
-                headers.append(fits[0].header)
-            except pf.verify.VerifyError:
-                pass
-        instrs = [fix_header(x.get('INSTRUME')) for x in headers]
-        if len(set(instrs)) > 1:
-            logger.info(" - Renaming")
-            for v, instr in zip(passed, instrs):
-                reset_version(v)
-                exploded = v.filename.split('.')
-                new_fname = '.'.join([exploded[0], instr] + exploded[1:])
-                v.filename = new_fname
+    if arguments['reset']:
+        if arguments['able']:
+            logger.info("Setting unable=False on all entries")
+            session.execute("UPDATE versions SET unable=False")
             session.commit()
-    sys.exit(0)
+        else:
+            from redis import Redis
+            found = set()
+            for vers in session.query(Version).filter(Version.filename.in_(arguments['<filename>'])):
+                found.add(vers.filename)
+                reset_version(vers)
+            session.commit()
 
-################################################################################
-# De-duplicating rules
-#
-# We'll start by going through a number or rules to "score" our files.
-# The first approach will be naive: set the competing entries' scores to
-# 0, and submit each one to a set of rules; the rule functions return a score,
-# typically "0" for "not passed" or "1" for "passed", but the rules may award
-# more than one point.
-#
-# The final score for one entry will be the sum of the result for all rules. At
-# the end of the process, the version with the highest score is accepted. If
-# there's a tie for highest score, we have failed in finding a winner and will
-# mark all the involved versions as "unable".
-#
-# In a second iteration we should refine this process to make sure that no
-# accepted version fails a test that others pass, just as an extra safety
-# measure.
-#
-# To see the set of rules, look into ../utils/image_validity.py and look for
-# functions decorated with @register_rule
+            r = Redis(arguments['--server'])
+            for fname in found:
+                r.lpush('pending', fname)
+        sys.exit(0)
 
-# Now we iterate over the non-evaluated images using the following procedure:
-#
-#  1) We grab one filename
-#  2) We query for all the non-evaluated instances of that filename
-#  3) We score each instance using the image_validity scorer
-#  4) We check if only one instance has the higher score.
-#  4.1) If that's the case, we mark the instance as accepted and the others as
-#       not, but always as not-clear
-#  4.2) Otherwise, we calculate MD5sums on the high-scorers. If there are coincidences,
-#       we mark all equal MD5sums (except for one) as "not-accepted, clear".
-#  4.2.1) If there's only one instance left, we mark it as the winner.
-#  4.2.2) Otherwise, we mark ALL instances as "unable"
-#
-# Note that this process CAN'T tag that "is_clear" as True, except in the case of
-# exact duplicates, because we haven't at this point come up with an extensive set
-# of rules
-#
-# If we can't declare a winner, we mark all the instances as "unable"
-if arguments['process']:
+    def fix_header(value):
+        try:
+            if value.startswith('='):
+                return value.split("'")[1].strip()
+        except AttributeError:
+            value = 'UNKNOWN'
+
+        return value
+
+    if arguments['rename']:
+        thr = arguments['--threshold']
+        query = session.query(Version.filename).\
+                        filter(Version.accepted == True).\
+                        filter(Version.score <= thr).\
+                        group_by(Version.filename)
+
+        for (fname,) in query:
+            logger.info("Looking up {0}".format(fname))
+            versions = list(session.query(Version).filter(Version.filename == fname))
+            headers = []
+            passed = []
+            instrs = []
+            for v in versions:
+                try:
+                    fits = pf.open(bz2.BZ2File(v.fullpath))
+                    fits.verify('silentfix+exception')
+                    passed.append(v)
+                    headers.append(fits[0].header)
+                except pf.verify.VerifyError:
+                    pass
+            instrs = [fix_header(x.get('INSTRUME')) for x in headers]
+            if len(set(instrs)) > 1:
+                logger.info(" - Renaming")
+                for v, instr in zip(passed, instrs):
+                    reset_version(v)
+                    exploded = v.filename.split('.')
+                    new_fname = '.'.join([exploded[0], instr] + exploded[1:])
+                    v.filename = new_fname
+                session.commit()
+        sys.exit(0)
+
     ################################################################################
-    # Look for filenames that appear just once in the database and mark them as
-    # accepted (and clear).
+    # De-duplicating rules
+    #
+    # We'll start by going through a number or rules to "score" our files.
+    # The first approach will be naive: set the competing entries' scores to
+    # 0, and submit each one to a set of rules; the rule functions return a score,
+    # typically "0" for "not passed" or "1" for "passed", but the rules may award
+    # more than one point.
+    #
+    # The final score for one entry will be the sum of the result for all rules. At
+    # the end of the process, the version with the highest score is accepted. If
+    # there's a tie for highest score, we have failed in finding a winner and will
+    # mark all the involved versions as "unable".
+    #
+    # In a second iteration we should refine this process to make sure that no
+    # accepted version fails a test that others pass, just as an extra safety
+    # measure.
+    #
+    # To see the set of rules, look into ../utils/image_validity.py and look for
+    # functions decorated with @register_rule
 
-    if arguments['--uniques']:
-        logger.info("Looking for purely unique filenames...")
-        resolve_uniq(session)
-        session.commit()
+    # Now we iterate over the non-evaluated images using the following procedure:
+    #
+    #  1) We grab one filename
+    #  2) We query for all the non-evaluated instances of that filename
+    #  3) We score each instance using the image_validity scorer
+    #  4) We check if only one instance has the higher score.
+    #  4.1) If that's the case, we mark the instance as accepted and the others as
+    #       not, but always as not-clear
+    #  4.2) Otherwise, we calculate MD5sums on the high-scorers. If there are coincidences,
+    #       we mark all equal MD5sums (except for one) as "not-accepted, clear".
+    #  4.2.1) If there's only one instance left, we mark it as the winner.
+    #  4.2.2) Otherwise, we mark ALL instances as "unable"
+    #
+    # Note that this process CAN'T tag that "is_clear" as True, except in the case of
+    # exact duplicates, because we haven't at this point come up with an extensive set
+    # of rules
+    #
+    # If we can't declare a winner, we mark all the instances as "unable"
+    if arguments['process']:
+        ################################################################################
+        # Look for filenames that appear just once in the database and mark them as
+        # accepted (and clear).
 
-    logger.info("De-duplicating: scoring + MD5")
-    logger.info("Starting sequential process: will query the database for files")
-    query = session.query(Version.filename).\
-                    filter(Version.unable == False).\
-                    filter(Version.is_clear == None).\
-                    filter(Version.accepted == None).\
-                    group_by(Version.filename)
+        if arguments['--uniques']:
+            logger.info("Looking for purely unique filenames...")
+            resolve_uniq(session)
+            session.commit()
 
-    for (fname,) in query:
-        deduplicate(session, fname)
-elif arguments['parallel']:
-    logger.info("De-duplicating: scoring + MD5")
-    logger.info("Starting a parallel process: will query Redis for files")
-    from redis import Redis
+        logger.info("De-duplicating: scoring + MD5")
+        logger.info("Starting sequential process: will query the database for files")
+        query = session.query(Version.filename).\
+                        filter(Version.unable == False).\
+                        filter(Version.is_clear == None).\
+                        filter(Version.accepted == None).\
+                        group_by(Version.filename)
 
-    verb = arguments['--verbose']
-    r = Redis(arguments['--server'])
-
-    fname = r.lpop('pending')
-    try:
-        while fname is not None:
+        for (fname,) in query:
             deduplicate(session, fname)
-            fname = r.lpop('pending')
-    finally:
-        if fname is not None:
-            r.lpush('pending', fname)
+    elif arguments['parallel']:
+        logger.info("De-duplicating: scoring + MD5")
+        logger.info("Starting a parallel process: will query Redis for files")
+        from redis import Redis
 
-session.close()
+        verb = arguments['--verbose']
+        r = Redis(arguments['--server'])
+
+        fname = r.lpop('pending')
+        try:
+            while fname is not None:
+                deduplicate(session, fname)
+                fname = r.lpop('pending')
+        finally:
+            if fname is not None:
+                r.lpush('pending', fname)

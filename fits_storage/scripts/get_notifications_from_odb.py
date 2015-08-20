@@ -4,7 +4,7 @@ import urllib2
 from xml.dom.minidom import parseString
 from optparse import OptionParser
 
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.logger import logger, setdebug, setdemon
 
 from fits_storage.utils.notifications import ingest_odb_xml
@@ -27,9 +27,7 @@ url = "http://%s:8442/odbbrowser/programs" % options.odb
 if options.semester:
     url += "?programSemester=%s" % options.semester
 logger.info("Fetching XML from ODB server: %s", url)
-u = urllib2.urlopen(url)
-xml = u.read()
-u.close()
+xml = urllib2.urlopen(url).read()
 logger.debug("Got %d bytes from server.", len(xml))
 
 # Upload to remote, or ingest locally?
@@ -50,11 +48,9 @@ if options.to_remote_server:
         report = []
 
 else:
-    # Get a database session
-    session = sessionfactory()
-
-    # Do the actual ingest
-    report = ingest_odb_xml(session, xml)
+    with session_scope() as session:
+        # Do the actual ingest
+        report = ingest_odb_xml(session, xml)
 
 # Replay the report into the log files
 server = "local"

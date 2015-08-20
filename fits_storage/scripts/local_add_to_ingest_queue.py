@@ -4,7 +4,7 @@ import re
 import datetime
 import time
 
-from fits_storage.orm import sessionfactory
+from fits_storage.orm import session_scope
 from fits_storage.fits_storage_config import storage_root
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.ingestqueue import IngestQueueUtil
@@ -36,7 +36,7 @@ filelist = []
 for root, dirs, files in os.walk(fulldirpath):
     if ".svn" in root:
         continue
-                
+
     print "Ingesting:", root
     filelist.extend([os.path.abspath(os.path.join(root, fn)) for fn in files])
 
@@ -62,19 +62,17 @@ if (n > 5000):
     logger.info("That's a lot of files. Hit ctrl-c within 5 secs to abort")
     time.sleep(6)
 
-session = sessionfactory()
+with session_scope() as session:
+    iq = IngestQueueUtil(session, logger)
 
-for fullfilename in thefiles:
-    filename = os.path.basename(fullfilename)
-    path = os.path.dirname(fullfilename)
-    if storage_root in path:
-        path = path[len(storage_root)+1:]
-    
-    i += 1
-    logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
-    
-    IngestQueueUtil(session, filename).add_to_queue(path)
+    for fullfilename in thefiles:
+        filename = os.path.basename(fullfilename)
+        path = os.path.dirname(fullfilename)
+        if storage_root in path:
+            path = path[len(storage_root)+1:]
+        i += 1
+        logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
 
-session.close()
+        iq.add_to_queue(filename, path)
+
 logger.info("*** local_add_to_ingestqueue.py exiting normally at %s" % datetime.datetime.now())
-
