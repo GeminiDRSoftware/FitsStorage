@@ -83,9 +83,9 @@ class CalibrationF2(Calibration):
             self.get_query()
                 .flat(processed=processed)
                 # Must totally match: disperser, central_wavelength (spect only), focal_plane_mask, filter_name, lyot_stop, read_mode
-                .match_descriptors(F2.read_mode
+                .match_descriptors(F2.read_mode,
                                    *CalibrationF2.common_descriptors())
-                .tolerance(central_wavelenght=0.001, condition=self.descriptors['spectroscopy'])
+                .tolerance(central_wavelength=0.001, condition=self.descriptors['spectroscopy'])
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
                 .all(howmany)
@@ -100,7 +100,7 @@ class CalibrationF2(Calibration):
                 .arc(processed=processed)
                 # Must Totally Match: disperser, central_wavelength, focal_plane_mask, filter_name, lyot_stop
                 .match_descriptors(*CalibrationF2.common_descriptors())
-                .tolerance(central_wavelenght=0.001)
+                .tolerance(central_wavelength=0.001)
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
                 .all(howmany)

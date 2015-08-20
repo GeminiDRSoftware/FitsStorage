@@ -288,7 +288,7 @@ class CalibrationGMOS(Calibration):
             self.get_query()
                 .flat(processed)
                 .add_filters(*filt)
-                .match_descriptors(*descriptors)
+                .match_descriptors(*flat_descr)
             # Central wavelength is in microns (by definition in the DB table).
                 .tolerance(central_wavelength=0.001)
 
