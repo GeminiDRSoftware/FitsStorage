@@ -161,7 +161,7 @@ class CalibrationNIRI(Calibration):
         return (
             self.get_query()
                 # Telluric standards are OBJECT spectroscopy partnerCal frames
-                .teluric_standard(OBJECT=True, partnerCal=True)
+                .telluric_standard(OBJECT=True, partnerCal=True)
                 .match_descriptors(Niri.filter_name,
                                    Niri.camera,
                                    Niri.focal_plane_mask,
