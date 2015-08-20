@@ -262,7 +262,6 @@ class CalibrationGMOS(Calibration):
         if howmany is None:
             howmany = 1 if processed else 2
 
-        elev = 'elevation' in self.descriptors
         ifu = mos_or_ls = False
         ifu_el_thres = mos_ls_el_thres = 0.0
         under_85 = False
@@ -276,7 +275,7 @@ class CalibrationGMOS(Calibration):
                 ifu = self.descriptors['focal_plane_mask'].startswith('IFU')
                 # For IFU, elevation must we within 7.5 degrees
                 ifu_el_thres = 7.5
-            except AttributeEror:
+            except AttributeError:
                 # focal_plane_mask came as None. Leave 'ifu' as False
                 pass
             try:
