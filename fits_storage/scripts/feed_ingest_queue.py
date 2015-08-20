@@ -129,6 +129,7 @@ try:
         # Enter main loop
         loop = True
         lastfound = datetime.datetime.now()
+        iq_util = IngestQueueUtil(session, logger)
         while loop:
             logger.debug("looking from: %s", gemfilename(site, ut_date, num))
             found = False
@@ -141,7 +142,6 @@ try:
                     # Get a database session
                     logger.debug("Getting Session")
                     with session_scope() as session:
-                        session = sessionfactory()
                         logger.debug("Adding file")
                         IngestQueueUtil(session, logger).add_to_queue(filename, path, force=options.force, force_md5=options.force_md5)
                     logger.debug("Committed")
