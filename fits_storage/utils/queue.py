@@ -90,7 +90,7 @@ def queue_length(queue_class, session):
 def set_error(queue_class, oid, exc_type, exc_value, tb, session):
     session.rollback()
     dbob = session.query(queue_class).get(oid)
-    dbob.error = traceback.format_tb(tb)
+    dbob.error = str(exc_value) + '\n---------------------------------------------------------------------\n' + ''.join(traceback.format_tb(tb))
     session.commit()
 
 def delete_with_id(queue_class, oid, session):
