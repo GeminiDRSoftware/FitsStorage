@@ -277,6 +277,9 @@ class Header(Base):
                 qa_state = ad.qa_state().for_db()
                 if qa_state in ['Fail', 'CHECK', 'Undefined', 'Usable', 'Pass']:
                     self.qa_state = qa_state
+                else:
+                    # Default to Undefined. Avoid having NULL values
+                    self.qa_state = 'Undefined'
 
             # Set the release date
             try:
