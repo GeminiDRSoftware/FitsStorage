@@ -12,15 +12,17 @@ from .exportqueue import ExportQueueUtil
 
 from sqlalchemy import desc
 
+from collections import namedtuple
+
 queues = (
-    ('Ingest', IngestQueue, IngestQueueUtil),
-    ('Calibration Cache', CalCacheQueue, CalCacheQueueUtil),
-    ('Previews', PreviewQueue, PreviewQueueUtil),
-    ('Export', ExportQueue, ExportQueueUtil),
+    ('Ingest', 'iq', IngestQueue, IngestQueueUtil),
+    ('Calibration Cache', 'cq', CalCacheQueue, CalCacheQueueUtil),
+    ('Preview', 'pq', PreviewQueue, PreviewQueueUtil),
+    ('Export', 'eq', ExportQueue, ExportQueueUtil),
     )
 
 def stats(session):
-    for qname, qtype, qutil in queues:
+    for qname, linkname, qtype, qutil in queues:
         length = qutil(session, None).length()
         errors = (
             session.query(qtype)
@@ -29,20 +31,34 @@ def stats(session):
                 .count()
             )
         yield {'name': qname,
+               'lname': linkname,
                'type': qtype,
                'length': length,
                'errors': errors}
 
 error_query = {
     # Type: (select_from, join, columns, sorting)
-    IngestQueue:  (None, None, (IngestQueue.filename, IngestQueue.added), (IngestQueue.added,)),
-    ExportQueue:  (None, None, (ExportQueue.filename, ExportQueue.added), (ExportQueue.added,)),
-    PreviewQueue: ((DiskFile,), (PreviewQueue,), (DiskFile.filename,), (desc(DiskFile.filename),)),
+    IngestQueue:  (None, None,
+                   (IngestQueue.id, IngestQueue.filename, IngestQueue.error, IngestQueue.added),
+                   (IngestQueue.added,)),
+    ExportQueue:  (None, None,
+                   (ExportQueue.id, ExportQueue.filename, ExportQueue.error, ExportQueue.added),
+                   (ExportQueue.added,)),
+    PreviewQueue: ((DiskFile,), (PreviewQueue,),
+                   (PreviewQueue.id, DiskFile.filename, PreviewQueue.error),
+                   (desc(DiskFile.filename),)),
     CalCacheQueue: ((DiskFile,), (Header, CalCacheQueue.obs_hid == Header.id,),
-                    (DiskFile.filename,), (CalCacheQueue.ut_datetime,)),
+                    (CalCacheQueue.id, DiskFile.filename, CalCacheQueue.error, CalCacheQueue.ut_datetime),
+                    (CalCacheQueue.ut_datetime,)),
     }
 
-def error_summary(session, qtype, lim):
+ErrorResult = namedtuple('ErrorResult', 'oid filename error added')
+
+def get_error_result(args):
+    return ErrorResult(oid=args[0], filename=args[1], error=args[2],
+                       added=(args[2].strftime('%Y-%m-%d %H:%M') if len(args) == 4 else 'Unknown'))
+
+def compose_error_query(session, qtype, *filters):
     sel_from, join, columns, sort = error_query[qtype]
     q = session.query(*columns)
     if sel_from is not None:
@@ -51,6 +67,30 @@ def error_summary(session, qtype, lim):
             q = q.join(*join)
     if sort is not None:
         q = q.order_by(*sort)
-    for res in q.filter(qtype.inprogress==True).filter(qtype.error != None).limit(lim):
-        yield {'filename': res[0],
-               'since':    (res[1].strftime('%Y-%m-%d %H:%M') if len(res) == 2 else 'Unknown')}
+
+    for f in filters:
+        q = q.filter(f)
+
+    return q
+
+def error_summary(session, qtype, lim):
+    q = compose_error_query(session, qtype,
+                            qtype.inprogress == True,
+                            qtype.error != None)
+    for res in (get_error_result(row) for row in q.limit(lim)):
+        yield {'oid':      res.oid,
+               'filename': res.filename,
+               'since':    res.added}
+
+class UnknownQueueError(Exception):
+    pass
+
+def error_detail(session, lname, oid):
+    for qname, linkname, qtype, qutil in queues:
+        if linkname == lname:
+            res = get_error_result(compose_error_query(session, qtype, qtype.id == oid).one())
+            return {'qname':    qname,
+                    'filename': res.filename,
+                    'since':    res.added,
+                    'tb':       res.error}
+    raise UnknownQueueError("'{lname}' is not the associated name for any known queue".format(lname))

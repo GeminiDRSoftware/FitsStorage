@@ -104,7 +104,6 @@ mapping_simple = {
     'request_password_reset': request_password_reset,       # request password reset email
     'logout': logout,                                       # logout
     'user_list': user_list,                                 # user_list
-    'queuestatus': queuestatus,                             # Show some stats on what's going on with the queues
     }
 
 # Functions invoked with (req, things)
@@ -130,6 +129,7 @@ mapping_things = {
     'my_programs': my_programs,         # my_programs
     'staff_access': staff_access,       # staff_access
     'preview': preview,                 # previews
+    'queuestatus': queuestatus,         # Show some info on what's going on with the queues
 }
 
 # Functions invoked with (req, selections)

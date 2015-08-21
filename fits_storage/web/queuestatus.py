@@ -2,7 +2,7 @@
 This module handles the web 'queue' functions. Mainly showing status
 """
 
-from ..utils.queuestats import stats, error_summary
+from ..utils.queuestats import stats, error_summary, error_detail, UnknownQueueError
 from ..orm import session_scope
 
 from mod_python import apache
@@ -25,9 +25,10 @@ page_body_tmpl = '''\
 
 general_status_tmpl = '''\
 <table>
- <tr class='tr_head'><th>Queue<th># Elements<th># Errors</tr>
+ <tr class='tr_head'><th>Queue<th># Pending<th># Errors</tr>
 {rows}
 </table>
+<p>NB: The total number of elements in each queue is <em>pending + errors</em>
 
 {detail}'''
 
@@ -40,12 +41,12 @@ detail_status_tmpl = '''\
 {rows}
 </table>'''
 
-detail_status_row = "<tr class='{cls}'><td>{since}<td>{filename}</tr>"
+detail_status_row = "<tr class='{cls}'><td>{since}<td><a href='/queuestatus/{qname}/{oid}'>{filename}</a></tr>"
 
 def row_cycle():
     return cycle(('tr_odd', 'tr_even'))
 
-def queuestatus(req):
+def queuestatus_summary(req):
     req.content_type = "text/html"
 
     with session_scope() as session:
@@ -59,7 +60,7 @@ def queuestatus(req):
                 if nerr > DETAIL_THRESHOLD:
                     qname = qname + ' (limited to the first {})'.format(DETAIL_THRESHOLD)
                 summary = error_summary(session, qstat['type'], DETAIL_THRESHOLD)
-                details = [detail_status_row.format(cls=dclass, **error_desc)
+                details = [detail_status_row.format(cls=dclass, qname=qstat['lname'], **error_desc)
                                 for error_desc, dclass in zip(summary, row_cycle())]
                 detail_tables.append(detail_status_tmpl.format(name=qname, rows='\n'.join(details)))
 
@@ -71,3 +72,35 @@ def queuestatus(req):
     req.write(page_body_tmpl.format(title='Gemini Archive - Queue Status Page', body=body))
 
     return apache.HTTP_OK
+
+error_detail_body = '''\
+<table>
+ <tr><td align='right'><strong>Filename:</strong><td>{filename}</tr>
+ <tr><td align='right'><strong>Added:</strong><td>{since}</tr>
+ <tr><td align='right' valign='top'><strong>Traceback:</strong></tr>
+</table>
+<pre>
+{tb}
+</pre>'''
+
+def queuestatus_tb(req, qshortname, oid):
+    req.content_type = "text/html"
+
+    with session_scope() as session:
+        det = error_detail(session, qshortname, oid)
+
+    title = 'Gemini Archive - Error for object {oid} on the {qname} Queue'.format(oid=oid, **det)
+    req.write(page_body_tmpl.format(title=title, body=error_detail_body.format(**det)))
+    return apache.HTTP_OK
+
+def queuestatus(req, things):
+    if len(things) > 1:
+        try:
+            return queuestatus_tb(req, things[0], int(things[1]))
+        except (TypeError, ValueError):
+            # things[1] is not a valid integer, thus not an ID...
+            pass
+        except UnknownQueueError:
+            # Something failed under queuestatus_tb...
+            pass
+    return queuestatus_summary(req)
