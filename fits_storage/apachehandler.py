@@ -34,6 +34,7 @@ from web.logreports import usagereport, usagedetails, downloadlog, usagestats
 from web.preview import preview
 from web.obslogs import obslogs
 from web.reporting import report
+from web.queuestatus import queuestatus
 
 from orm import sessionfactory
 from orm.usagelog import UsageLog
@@ -103,6 +104,7 @@ mapping_simple = {
     'request_password_reset': request_password_reset,       # request password reset email
     'logout': logout,                                       # logout
     'user_list': user_list,                                 # user_list
+    'queuestatus': queuestatus,                             # Show some stats on what's going on with the queues
     }
 
 # Functions invoked with (req, things)

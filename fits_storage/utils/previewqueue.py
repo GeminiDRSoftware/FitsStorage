@@ -48,6 +48,9 @@ class PreviewQueueUtil(object):
         if using_s3:
             self.s3 = S3Helper()
 
+    def length(self):
+        return queue.queue_length(PreviewQueue, self.s)
+
     def pop(self):
         return queue.pop_queue(PreviewQueue, self.s, self.l, fast_rebuild=True)
 
