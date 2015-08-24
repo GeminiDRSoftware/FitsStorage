@@ -30,7 +30,8 @@ sum_type_defs = {
     }
 
 NO_LINKS        = 0x00
-FILENAME_LINKS  = 0x01
+SORT_ARROWS     = 0x01
+FILENAME_LINKS  = 0x02
 ALL_LINKS       = 0xFF
 
 class Row(object):
@@ -374,7 +375,7 @@ class SummaryGenerator(object):
                     text = '<abbr title="%s">%s</abbr>' % (col['longheading'], col['heading'])
                 except KeyError:
                     text = col['heading']
-                if (self.links != NO_LINKS) and col['sortarrows']:
+                if (self.links & SORT_ARROWS != 0) and col['sortarrows']:
                     text += '<a href="%s?orderby=%s_asc">&uarr;</a><a href="%s?orderby=%s_desc">&darr;</a>' % (self.uri, colkey, self.uri, colkey)
                 row.add(text)
 
