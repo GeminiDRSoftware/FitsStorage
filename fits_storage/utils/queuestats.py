@@ -47,7 +47,7 @@ error_query = {
     PreviewQueue: ((DiskFile,), (PreviewQueue,),
                    (PreviewQueue.id, DiskFile.filename, PreviewQueue.error),
                    (desc(DiskFile.filename),)),
-    CalCacheQueue: ((DiskFile,), (Header, CalCacheQueue.obs_hid == Header.id,),
+    CalCacheQueue: ((DiskFile,), (Header, (CalCacheQueue, CalCacheQueue.obs_hid == Header.id)),
                     (CalCacheQueue.id, DiskFile.filename, CalCacheQueue.error, CalCacheQueue.ut_datetime),
                     (CalCacheQueue.ut_datetime,)),
     }
@@ -56,7 +56,7 @@ ErrorResult = namedtuple('ErrorResult', 'oid filename error added')
 
 def get_error_result(args):
     return ErrorResult(oid=args[0], filename=args[1], error=args[2],
-                       added=(args[2].strftime('%Y-%m-%d %H:%M') if len(args) == 4 else 'Unknown'))
+                       added=(args[3].strftime('%Y-%m-%d %H:%M') if len(args) == 4 else 'Unknown'))
 
 def compose_error_query(session, qtype, *filters):
     sel_from, join, columns, sort = error_query[qtype]
@@ -64,7 +64,11 @@ def compose_error_query(session, qtype, *filters):
     if sel_from is not None:
         q = q.select_from(*sel_from)
         if join is not None:
-            q = q.join(*join)
+            for j in join:
+                if isinstance(j, tuple):
+                    q = q.join(*j)
+                else:
+                    q = q.join(j)
     if sort is not None:
         q = q.order_by(*sort)
 
