@@ -42,14 +42,6 @@ from orm.usagelog import UsageLog
 from functools import partial
 
 ####### HELPER FUNCTIONS #######
-# Send usage message to browser
-def usagemessage(req):
-    fp = open("/opt/FitsStorage/htmldocroot/usage.html", "r")
-    stuff = fp.read()
-    fp.close()
-    req.content_type = "text/html"
-    req.write(stuff)
-    return apache.HTTP_OK
 
 # Send debugging info to browser
 def debugmessage(req):
@@ -234,7 +226,7 @@ def thehandler(req):
         if use_as_archive:
             util.redirect(req, "/searchform")
         else:
-            return usagemessage(req)
+            util.redirect(req, "/usage.html")
 
     # Extract the main action
     this = things.pop(0)
@@ -330,7 +322,11 @@ def thehandler(req):
         #util.redirect(req, newurl)
 
     # Last one on the list - if we haven't return(ed) out of this function
-    # by one of the methods above, then we should send out the usage message
-    return usagemessage(req)
+    # by one of the methods above, then if we're the archive we 404, else
+    # we should send out the usage message
+    if use_as_archive:
+        return apache.HTTP_NOT_FOUND
+    else:
+        util.redirect(req, "/usage.html")
 
 # End of apache handler() function.
