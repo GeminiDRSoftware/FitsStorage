@@ -273,7 +273,7 @@ class Calibration(object):
         self.from_descriptors = False
 
         # Populate the descriptors dictionary for header
-        if self.descriptors is None:
+        if self.descriptors is None and self.instrClass is not None:
             self.from_descriptors = True
             self.types = eval(self.header.types)
             self.descriptors = {
@@ -301,7 +301,7 @@ class Calibration(object):
             # Populate the descriptors dictionary for the instrument
             for descr in self.instrDescriptors:
                 self.descriptors[descr] = getattr(inst, descr)
-        else:
+        elif self.descriptors is not None:
             # The data_section comes over as a native python array, needs to be a string
             if self.descriptors['data_section']:
                 self.descriptors['data_section'] = str(self.descriptors['data_section'])
