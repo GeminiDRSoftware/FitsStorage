@@ -12,6 +12,7 @@ import os
 import datetime
 import time
 import traceback
+from sqlalchemy.exc import OperationalError
 
 from optparse import OptionParser
 
@@ -116,7 +117,7 @@ try:
                     logger.debug("Deleting ingestqueue id %d", iq.id)
                     ingest_queue.delete(iq)
 
-            except KeyboardInterrupt:
+            except KeyboardInterrupt, OperationalError:
                 loop = False
 
             except:

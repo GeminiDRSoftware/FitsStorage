@@ -12,6 +12,8 @@ from fits_storage.utils.exportqueue import ExportQueueUtil
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.fits_storage_config import fits_lockfile_dir
 from fits_storage.utils.pidfile import PidFile, PidFileError
+from sqlalchemy.exc import OperationalError
+
 
 from optparse import OptionParser
 
@@ -109,7 +111,7 @@ try:
                         export_queue.set_lastfailed(eq)
                     session.commit()
 
-            except KeyboardInterrupt:
+            except KeyboardInterrupt, OperationalError:
                 loop = False
 
             except:

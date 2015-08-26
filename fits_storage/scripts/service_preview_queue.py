@@ -13,6 +13,8 @@ import os
 import datetime
 import time
 import traceback
+from sqlalchemy.exc import OperationalError
+
 
 from optparse import OptionParser
 
@@ -96,7 +98,7 @@ try:
                     logger.debug("Deleting previewqueue id %d", pq.id)
                     prev_queue.delete(dbpq)
 
-            except KeyboardInterrupt:
+            except KeyboardInterrupt, OperationalError:
                 loop = False
 
             except:
