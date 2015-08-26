@@ -31,7 +31,7 @@ def summary(req, sumtype, selection, orderby, links=True):
     tags to make it a page in it's own right.
     """
     req.content_type = "text/html"
-    req.write('<!DOCTYPE html><html>')
+    req.write('<!DOCTYPE html><html><head>')
     req.write('<meta charset="UTF-8">')
     req.write('<link rel="stylesheet" href="/table.css">')
     title = "FITS header %s table %s" % (sumtype, sayselection(selection))
