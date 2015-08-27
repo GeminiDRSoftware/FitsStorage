@@ -15,7 +15,6 @@ class CalibrationGPI(Calibration):
     """
     instrClass = Gpi
     instrDescriptors = (
-        'coadds',
         'disperser',
         'focal_plane_mask',
         'filter_name',

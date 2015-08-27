@@ -20,7 +20,6 @@ class CalibrationNIRI(Calibration):
         'data_section',
         'read_mode',
         'well_depth_setting',
-        'coadds',
         'filter_name',
         'camera',
         'focal_plane_mask',
@@ -66,7 +65,7 @@ class CalibrationNIRI(Calibration):
                 .match_descriptors(Niri.data_section,
                                    Niri.read_mode,
                                    Niri.well_depth_setting,
-                                   Niri.coadds)
+                                   Header.coadds)
                 # Exposure time must match to within 0.01 (nb floating point match). Coadds must also match.
                 # nb exposure_time is really exposure_time * coadds, but if we're matching both, that doesn't matter
                 .tolerance(exposure_time = 0.01)

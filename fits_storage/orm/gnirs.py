@@ -18,7 +18,6 @@ class Gnirs(Base):
     filter_name = Column(Text, index=True)
     read_mode = Column(Text, index=True)
     well_depth_setting = Column(Text, index=True)
-    coadds = Column(Integer, index=True)
     camera = Column(Text, index=True)
     focal_plane_mask = Column(Text)
 
@@ -33,6 +32,5 @@ class Gnirs(Base):
         self.filter_name = ad.filter_name().for_db()
         self.read_mode = ad.read_mode().for_db()
         self.well_depth_setting = ad.well_depth_setting().for_db()
-        self.coadds = ad.coadds().for_db()
         self.camera = ad.camera().for_db()
         self.focal_plane_mask = ad.focal_plane_mask().for_db()

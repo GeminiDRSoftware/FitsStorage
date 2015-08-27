@@ -15,7 +15,6 @@ class CalibrationGNIRS(Calibration):
     instrDescriptors = (
         'read_mode',
         'well_depth_setting',
-        'coadds',
         'disperser',
         'focal_plane_mask',
         'camera',
@@ -70,7 +69,7 @@ class CalibrationGNIRS(Calibration):
                 .match_descriptors(Header.exposure_time,
                                    Gnirs.read_mode,
                                    Gnirs.well_depth_setting,
-                                   Gnirs.coadds)
+                                   Header.coadds)
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
                 .all(howmany)

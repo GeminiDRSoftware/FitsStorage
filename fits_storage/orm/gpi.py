@@ -14,7 +14,6 @@ class Gpi(Base):
     id = Column(Integer, primary_key=True)
     header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
     header = relation(Header, order_by=id)
-    coadds = Column(Integer, index=True)
     filter_name = Column(Text, index=True)
     disperser = Column(Text, index=True)
     focal_plane_mask = Column(Text, index=True)
@@ -29,7 +28,6 @@ class Gpi(Base):
         self.populate(ad)
 
     def populate(self, ad):
-        self.coadds = ad.coadds().for_db()
         self.filter_name = ad.filter_name().for_db()
         self.disperser = ad.disperser().for_db()
         self.focal_plane_mask = ad.focal_plane_mask().for_db()

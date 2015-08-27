@@ -16,7 +16,6 @@ class CalibrationMICHELLE(Calibration):
     instrClass = Michelle
     instrDescriptors = (
         'read_mode',
-        'coadds',
         'disperser',
         'filter_name',
         'focal_plane_mask'
@@ -48,7 +47,7 @@ class CalibrationMICHELLE(Calibration):
                 .dark()
                 .match_descriptors(Header.exposure_time,
                                    Michelle.read_mode,
-                                   Michelle.coadds)
+                                   Header.coadds)
                 # Absolute time separation must be within 1 day
                 .max_interval(days=1)
                 .all(howmany)

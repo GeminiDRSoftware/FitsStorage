@@ -66,6 +66,7 @@ class Header(Base):
     detector_binning = Column(Text)
     detector_config = Column(Text)
     detector_roi_setting = Column(Text)
+    coadds = Column(Integer)
     spectroscopy = Column(Boolean, index=True)
     mode = Column(MODE_ENUM, index=True)
     adaptive_optics = Column(Boolean)
@@ -233,6 +234,7 @@ class Header(Base):
 
             self.detector_roi_setting = ad.detector_roi_setting().for_db()
 
+            self.coadds = ad.coadds().for_db()
 
             # Hack the AO header and LGS for now
             try:

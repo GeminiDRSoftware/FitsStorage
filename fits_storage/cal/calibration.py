@@ -288,6 +288,7 @@ class Calibration(object):
                 'ut_datetime':          self.header.ut_datetime,
                 'exposure_time':        self.header.exposure_time,
                 'detector_roi_setting': self.header.detector_roi_setting,
+                'coadds':               self.header.coadds,
                 'reduction':            self.header.reduction,
                 'elevation':            self.header.elevation,
                 'cass_rotator_pa':      self.header.cass_rotator_pa,

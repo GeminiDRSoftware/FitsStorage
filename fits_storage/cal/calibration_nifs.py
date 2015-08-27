@@ -16,7 +16,6 @@ class CalibrationNIFS(Calibration):
     instrClass = Nifs
     instrDescriptors = (
         'read_mode',
-        'coadds',
         'disperser',
         'focal_plane_mask',
         'filter_name',
@@ -59,7 +58,7 @@ class CalibrationNIFS(Calibration):
                 .dark(processed)
                 .match_descriptors(Header.exposure_time,
                                    Nifs.read_mode,
-                                   Nifs.coadds,
+                                   Header.coadds,
                                    Nifs.disperser)
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
