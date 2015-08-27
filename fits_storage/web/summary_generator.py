@@ -7,7 +7,7 @@ from cgi import escape
 
 from ..gemini_metadata_utils import GeminiDataLabel
 
-from ..utils.userprogram import canhave_header
+from ..utils.userprogram import canhave_header, canhave_coords
 
 from ..fits_storage_config import using_previews
 
@@ -413,27 +413,31 @@ class SummaryGenerator(object):
 
         # The html to return
 
-        # The basic filename part, optionally as a link to the header text
-        if self.links != NO_LINKS:
-            html = '<a href="/fullheader/%d" target="_blank">%s</a>' % (header.diskfile.id, header.diskfile.file.name)
+        # Determine if this user can have the link to the header
+        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
+            # The basic filename part, optionally as a link to the header text
+            if self.links != NO_LINKS:
+                html = '<a href="/fullheader/%d" target="_blank">%s</a>' % (header.diskfile.id, header.diskfile.file.name)
+            else:
+                html = str(header.diskfile.file.name)
+
+            # Do we have any fits verify errors to flag?
+            if header.diskfile.fverrors:
+                if self.links != NO_LINKS:
+                    html += ' <a href="/fitsverify/%d" target="_blank">-fits!</a>' % (header.diskfile.id)
+                else:
+                    html += ' -fits!' % (header.diskfile.id)
+
+            # Do we have metadata errors to flag? (only on non Eng data)
+            if (header.engineering is False) and (not header.diskfile.mdready):
+                if self.links != NO_LINKS:
+                    html += ' <a href="/mdreport/%d" target="_blank">-md!</a>' % (header.diskfile.id)
+                else:
+                    html += ' -md!'
+
+            return html
         else:
-            html = str(header.diskfile.file.name)
-
-        # Do we have any fits verify errors to flag?
-        if header.diskfile.fverrors:
-            if self.links != NO_LINKS:
-                html += ' <a href="/fitsverify/%d" target="_blank">-fits!</a>' % (header.diskfile.id)
-            else:
-                html += ' -fits!' % (header.diskfile.id)
-
-        # Do we have metadata errors to flag? (only on non Eng data)
-        if (header.engineering is False) and (not header.diskfile.mdready):
-            if self.links != NO_LINKS:
-                html += ' <a href="/mdreport/%d" target="_blank">-md!</a>' % (header.diskfile.id)
-            else:
-                html += ' -md!'
-
-        return html
+            return self.prop_message(header, header.diskfile.file.name)
 
     def datalabel(self, header):
         """
@@ -527,11 +531,15 @@ class SummaryGenerator(object):
         """
         Generates the airmass column html
         """
-        # All we do is format it with 2 decimal places
-        try:
-            return "%.2f" % header.airmass
-        except (TypeError, AttributeError):
-            return ''
+        # Determine if this user can see this info
+        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
+            # All we do is format it with 2 decimal places
+            try:
+                return "%.2f" % header.airmass
+            except (TypeError, AttributeError):
+                return ''
+        else:
+            return self.prop_message(header, 'N/A')
 
     def local_time(self, header):
         """
@@ -548,34 +556,37 @@ class SummaryGenerator(object):
         """
         Generates the object name column html
         """
-        # nb target names sometime contain ampersand characters which should be escaped in the html.
-        # Also we trim at 12 characters and abbreviate
-        if header.object is None:
-            basehtml = 'None'
-        elif len(header.object) > 12:
-            basehtml = '<abbr title="%s">%s</abbr>' % (htmlescape(header.object), htmlescape(header.object[:12]))
-        else:
-            basehtml = htmlescape(header.object)
-
-        # Now the photometric std star symbol
-        phothtml = ''
-        if header.phot_standard:
-            if self.links == ALL_LINKS:
-                phothtml = '<a href="/standardobs/%d">*</a>' % header.id
+        # Determine if this user can see this info
+        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
+            # nb target names sometime contain ampersand characters which should be escaped in the html.
+            # Also we trim at 12 characters and abbreviate
+            if header.object is None:
+                basehtml = 'None'
+            elif len(header.object) > 12:
+                basehtml = '<abbr title="%s">%s</abbr>' % (htmlescape(header.object), htmlescape(header.object[:12]))
             else:
-                phothtml = '*'
+                basehtml = htmlescape(header.object)
 
-        # Now the target symbol
-        symhtml = ''
-        if header.types is not None:
-            if 'AT_ZENITH' in header.types:
-                symhtml = '<abbr title="Target is Zenith in AzEl co-ordinate frame">&#x2693;&#x2191;</abbr>'
-            elif 'AZEL_TARGET' in header.types:
-                symhtml = '<abbr title="Target is in AzEl co-ordinate frame">&#x2693;</abbr>'
-            elif 'NON_SIDEREAL' in header.types:
-                symhtml = '<abbr title="Target is non-sidereal">&#x2604;</abbr>'
+            # Now the photometric std star symbol
+            phothtml = ''
+            if header.phot_standard:
+                if self.links == ALL_LINKS:
+                    phothtml = '<a href="/standardobs/%d">*</a>' % header.id
+                else:
+                    phothtml = '*'
 
-        return '%s %s %s' % (basehtml, phothtml, symhtml)
+            # Now the target symbol
+            symhtml = ''
+            if header.types is not None:
+                if 'AT_ZENITH' in header.types:
+                    symhtml = '<abbr title="Target is Zenith in AzEl co-ordinate frame">&#x2693;&#x2191;</abbr>'
+                elif 'AZEL_TARGET' in header.types:
+                    symhtml = '<abbr title="Target is in AzEl co-ordinate frame">&#x2693;</abbr>'
+                elif 'NON_SIDEREAL' in header.types:
+                    symhtml = '<abbr title="Target is non-sidereal">&#x2604;</abbr>'
+            return '%s %s %s' % (basehtml, phothtml, symhtml)
+        else:
+            return self.prop_message(header, 'N/A')
 
     def filter_name(self, header):
         """
@@ -603,8 +614,7 @@ class SummaryGenerator(object):
         Generates the download column html
         """
         # Determine if this user has access to this file
-        can = canhave_header(None, self.user, header, user_progid_list=self.user_progid_list)
-        if can:
+        if canhave_header(None, self.user, header, user_progid_list=self.user_progid_list):
             html = '<div class="center">'
 
             # Preview link
@@ -623,7 +633,16 @@ class SummaryGenerator(object):
 
             return html
         else:
-            return '<div class="center"><abbr title="This appears to be proprietary data to which you do not have access. It becomes public on %s">N/A</abbr></div>' % header.release
+            return self.prop_message(header, 'N/A', centered=True)
+
+    def prop_message(self, header, text, centered = False):
+        text = '<abbr title="This appears to be proprietary data to which you do not have access. It becomes public on {rel}">{text}</abbr>'.format(
+                                    rel  = header.release,
+                                    text = text)
+        if centered:
+            return '<div class="center">' + text + '</div>'
+        else:
+            return text
 
 def htmlescape(string):
     """
