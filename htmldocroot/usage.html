@@ -100,6 +100,7 @@ data that meets all the criteria you specify. You can put them in any order.</P>
 <LI>The word <tt>photstandard</tt> to only show files that contain an observation containing a photometric standard in the Gemini list</LI>
 <LI>The string <tt>filter=xxx</tt> will only include observations where the filter is xxx. Just use the filter name, eg <tt>filter=g</tt>, don't use the _GNNNN</LI>
 <LI>The words <tt>Twilight</tt> or <tt>NotTwilight</tt> specify that the target name should or should not be 'Twilight'</LI>
+<LI><tt>exposure_time=</tt> and <tt>coadds=</tt>  can select by exposure time (best to use a range) and coadds (exact integer match)</LI>
 <LI>Azimuth, Elevation, Cass Rotator PA, RA and Dec ranges can be selected. For exmple <tt>el=45.6:78.9</tt> will only select files taken at 45.6 &lt= elevation &lt 78.9. You can use 'az', 'el', 'crpa', 'ra', 'dec'. You must supply two numbers (decimal point optional and negative sign) separated by a colon. Note that it does not do intelligent range wrapping, the smaller number must be first and there's curently no way to select everything in the 20 degree range between 350 and 10 degrees. Also it takes the numbers from the header literally, in the az and crap systems these may not be limited to 0:360 or -180:180 due to the 540 degree range of these systems.</LI>
 
 </UL></P>

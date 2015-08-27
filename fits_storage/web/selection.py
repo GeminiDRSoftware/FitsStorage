@@ -62,7 +62,8 @@ getselection_key_value = {
     'crpa': 'crpa', 'CRPA': 'crpa',
     'filepre': 'filepre',
     'cenwlen': 'cenwlen',
-    'exposure_time': 'exposure_time'
+    'exposure_time': 'exposure_time',
+    'coadds': 'coadds'
     }
 
 # Also, some entries set themselves as the value for a certain selection
@@ -222,7 +223,8 @@ sayselection_defs = {
     'mode': 'Spectroscopy Mode',
     'cenwlen': 'Central Wavelength',
     'camera': 'Camera',
-    'exposure_time': 'Exposure Time'
+    'exposure_time': 'Exposure Time',
+    'coadds': 'Coadds'
     }
 
 def sayselection(selection):
@@ -294,6 +296,7 @@ queryselection_filters = (
     ('filter',        Header.filter_name),
     ('spectroscopy',  Header.spectroscopy),
     ('mode',          Header.mode),
+    ('coadds',        Header.coadds)
     )
 
 def queryselection(query, selection):
@@ -663,7 +666,7 @@ def selection_to_URL(selection):
                 urlstring += '/spectroscopy'
             else:
                 urlstring += '/imaging'
-        elif key in {'ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera', 'exposure_time'}:
+        elif key in {'ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera', 'exposure_time', 'coadds'}:
             urlstring += '/%s=%s' % (key, selection[key])
         elif key == 'present':
             if selection[key] is True:
