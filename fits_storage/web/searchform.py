@@ -81,6 +81,13 @@ def searchform(req, things, orderby):
                 util.redirect(req, '/searchform' + urlstring + args_string)
                 # util.redirect raises apache.SERVER_RETURN, so we're out of this code path now
 
+    # Construct suffix to html title
+    things = []
+    for thing in ['program_id', 'inst', 'date', 'daterange']:
+        if thing in selection:
+            things.append(selection[thing])
+    title_suffix = ' '.join(things)
+
     req.content_type = "text/html"
     req.write('<!DOCTYPE html><html><head>')
     req.write('<meta charset="UTF-8">')
@@ -91,7 +98,7 @@ def searchform(req, things, orderby):
     req.write('<link rel="stylesheet" type="text/css" href="/titlebar.css">')
     req.write('<link rel="stylesheet" type="text/css" href="/form.css">')
     req.write('<link rel="stylesheet" type="text/css" href="/table.css">')
-    req.write('<title>Gemini Archive Search Form</title></head><body>')
+    req.write('<title>Gemini Archive Search %s</title></head><body>' % title_suffix)
 
     req.write(titlebar_html)
 
