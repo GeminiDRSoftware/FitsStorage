@@ -79,6 +79,8 @@ def request_account(req, things):
     # Uncomment next line for form debugging
     # req.write("<P>formdata: %s</P>" % formdata)
     req.write("<h1>New Account Request</h1>")
+    req.write("<p>Please note that user accounts are for individual use and should not be shared.")
+    req.write("You must not share your password with anyone and should take reasonable measures to keep it confidential.</p>")
 
     if valid_request:
         req.write('<TABLE>')
