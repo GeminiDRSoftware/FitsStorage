@@ -222,7 +222,15 @@ def updateform(html, selection):
                 inst = selection['inst']
                 if inst.startswith('GMOS'):
                     inst = 'GMOS'
-                html = html.replace('class="%sexpT"' % inst, 'class="%sexpT" value="%s"' % (inst, selection[key]))
+                html = html.replace('id="%sexpT"' % inst, 'id="%sexpT" value="%s"' % (inst, selection[key]))
+
+        elif key == 'coadds':
+           # Only update the one for the instrument selected
+           if 'inst' in selection.keys():
+                inst = selection['inst']
+                if inst.startswith('GMOS'):
+                    inst = 'GMOS'
+                html = html.replace('id="%scoadds"' % inst, 'id="%scoadds" value="%s"' % (inst, selection[key]))
 
         elif key == 'disperser':
             # GPI has custom values

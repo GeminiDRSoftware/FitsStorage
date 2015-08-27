@@ -418,6 +418,11 @@
         <span class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 50 - 80.</span>
     </span><br />
 
+    <label>Coadds:</label><input id="GNIRScoadds" name="coadds" type="text" placeholder="(leave blank for Any)" />
+    <span class="help">(Coadds)
+        <span class="helpright">Specify the number of coadds here. This is an exact integer match</span>
+    </span><br />
+
     <label>Well Depth:</label><select id="gnirs_depth" class="ddw" name="well_depth">
         <option value="">Any</option>
         <option value="Deep">Deep</option>
@@ -528,6 +533,11 @@
             <span class="helpright">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 50 - 80.</span>
         </span><br />
 
+        <label>Coadds:</label><input id="NIRIcoadds" name="coadds" type="text" placeholder="(leave blank for Any)" />
+        <span class="help">(Coadds)
+            <span class="helpright">Specify the number of coadds here. This is an exact integer match</span>
+        </span><br />
+
         <label>Read Mode:</label><select id="niri_readmode" class="ddw" name="niri_readmode">
             <option value="">Any</option>
             <option value="High_Background">High Background</option>
@@ -587,7 +597,12 @@
     <div class="right">
     <label>Exposure Time:</label><input id="NIFSexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)" />
     <span class="help">(Exposure Time)
-        <span class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</span>
+        <span class="helpright">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</span>
+    </span><br />
+
+    <label>Coadds:</label><input id="NIFScoadds" name="coadds" type="text" placeholder="(leave blank for Any)" />
+    <span class="help">(Coadds)
+        <span class="helpright">Specify the number of coadds here. This is an exact integer match</span>
     </span><br />
 
     <label>Read Mode:</label><select id="nifs_readmode" class="ddw" name="nifs_readmode">
