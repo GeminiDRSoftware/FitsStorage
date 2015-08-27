@@ -86,6 +86,7 @@ class Header(Base):
     reduction = Column(REDUCTION_STATE_ENUM, index=True)
     types = Column(Text)
     phot_standard = Column(Boolean)
+    proprietary_coordinates = Column(Boolean)
 
     def __init__(self, diskfile):
         self.diskfile_id = diskfile.id
@@ -293,6 +294,10 @@ class Header(Base):
                 # This exception will trigger if RELEASE date is missing or malformed.
                 pass
 
+            # Proprietary coordinates
+            self.proprietary_coordinates = False
+            if ad.phu_get_key_value('PROP_MD') == True:
+                self.proprietary_coordinates = True
 
             # Set the gcal_lamp state
             gcal_lamp = ad.gcal_lamp().for_db() 

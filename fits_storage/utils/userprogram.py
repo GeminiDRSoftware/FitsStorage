@@ -40,6 +40,24 @@ def icanhave(session, req, item, filedownloadlog=None):
         return canhave_obslog(session, user, item, filedownloadlog, gotmagic=gotmagic)
 
 
+def canhave_coords(session, user, header, gotmagic=False, user_progid_list=None):
+    """
+    Returns a boolean saying whether or not the given user can have
+    access to the given header coordinates.
+    You can optionally pass in the users program list directly. If you
+    don't, then this function will look it up, which requires the session
+    to be valid. If you pass in the user program list, you don't actually
+    need to pass a valid session - it can be None.
+    """
+
+    # Is not even proprietary coordinate data
+    if not header.proprietary_coordinates:
+        return True
+
+    # If it is proprietary coordinate data
+    # the rules are exactly the same as for the data
+    return canhave_header(session, user, header, gotmagic=gotmagic, user_progid_list=user_progid_list)
+
 def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False, user_progid_list=None):
     """
     Returns a boolean saying whether or not the given user can have
