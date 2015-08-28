@@ -747,7 +747,7 @@ def email_inuse(email):
     Check the database to see if this email is already in use. Returns True if it is, False otherwise
     """
 
-    with session_scope as session:
+    with session_scope() as session:
         num = session.query(User).filter(User.email == email).count()
 
         return num != 0
