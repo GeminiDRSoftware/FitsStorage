@@ -4,7 +4,7 @@ import traceback
 
 import re
 
-date_re = re.compile(r'(\d{8}S\d{4})')
+date_re = re.compile(r'(\d{8}[SE]\d+)')
 
 def sortkey_for_filename(filename):
     """
@@ -12,16 +12,16 @@ def sortkey_for_filename(filename):
     filenames may be sorted in the wrong order because of the prefixes.
 
     Instead, it extracts the YYYYMMDDSNNNN from regular files and calibs, and
-    returns that as the sorting key, to make sure that other artifacts won't skew
-    the order.
+    returns that as the sorting key, prepended with a z to make sure that other 
+    artifacts won't skew the order.
 
     If the filename doesn't include this information, we force it to the end of the
-    queue by prepending a 'z' to it.
+    queue by prepending an 'a' to it (the queue is popped in descending search order)
     """
     try:
-        return date_re.search(filename).groups()[0]
+        return 'z' + date_re.search(filename).groups()[0]
     except AttributeError:
-        return 'z' + filename
+        return 'a' + filename
 
 def pop_queue(queue_class, session, logger, fast_rebuild=False):
     """
