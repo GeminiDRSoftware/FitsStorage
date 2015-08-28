@@ -111,7 +111,7 @@ function clearInstrumentForms() {
 };
 
 function setAdvancedVisibility() {
-    if (document.getElementById("engdata").value != "EngExclude" || document.getElementById("svdata").value != "SvInclude" || document.getElementById("qastate").value != "NotFail") {
+    if (document.getElementById("engdata").value != "EngExclude" || document.getElementById("svdata").value != "SvInclude" || document.getElementById("qastate").value != "NotFail" || document.getElementById("filepre").value != "") {
         $('#advanced_options').show();
     }
 };
