@@ -10,6 +10,9 @@ from .summary import list_headers
 from .standards import xmlstandardobs
 from ..apache_return_codes import HTTP_OK
 
+from ..utils.userprogram import canhave_coords, got_magic
+from .user import userfromcookie
+
 diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
                    'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready')
 
@@ -92,10 +95,16 @@ header_fields = ('program_id', 'engineering', 'science_verification',
                  'requested_bg', 'qa_state', 'release', 'reduction',
                  'types', 'phot_standard')
 
+proprietary_fields = ('ra', 'dec', 'azimuth', 'elevation', 'airmass',
+                      'object', 'cass_rotator_pa')
+
 def jsonsummary(req, selection):
     """
     This generates a JSON list of the files that met the selection.
     This contains most of the details from the header table
+
+    We have to check for proprietary coordinates here and blank out
+    the coordinates if the user does not have access to them.
     """
     req.content_type = "application/json"
 
@@ -105,12 +114,21 @@ def jsonsummary(req, selection):
 
     session = sessionfactory()
     orderby = ['filename_asc']
+
+    # Get the current user if logged id
+    user = userfromcookie(session, req)
+    gotmagic = got_magic(req)
+
     try:
         headers = list_headers(session, selection, orderby)
         thelist = []
         for thedict, header in diskfile_dicts(headers, return_header=True):
+            chc = canhave_coords(session, user, header, gotmagic)
             for field in header_fields:
                 thedict[field] = _for_json(getattr(header, field))
+            if not chc:
+                for field in proprietary_fields:
+                    thedict[field] = None
 
             thelist.append(thedict)
     finally:
