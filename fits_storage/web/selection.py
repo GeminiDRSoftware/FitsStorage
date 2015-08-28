@@ -2,7 +2,7 @@
 This module deals with the 'selection' concept.
 Functions in this module are only used within FitsStorageWebSummary.
 """
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 
 from ..gemini_metadata_utils import gemini_telescope, gemini_instrument
 from ..gemini_metadata_utils import gemini_observation_type, gemini_observation_class, gemini_reduction_state
@@ -306,6 +306,11 @@ def queryselection(query, selection):
     and return the query object
     """
 
+    # This function is used to add the stuff to stop it finding data by coords when
+    # the coords are proprietary.
+    def querypropcoords(query):
+        return query.filter(or_(Header.proprietary_coordinates == False, Header.release <= func.now()))
+
     for key, field in queryselection_filters:
         if key in selection:
             if isinstance(field, MethodType):
@@ -333,6 +338,7 @@ def queryselection(query, selection):
             object = object.replace('*', '%')
         # ilike is a case insensitive version of like
         query = query.filter(Header.object.ilike(object))
+        query = querypropcoords(query)
 
     # Should we query by date?
     if 'date' in selection:
@@ -433,11 +439,13 @@ def queryselection(query, selection):
         a, b = _parse_range(selection['az'])
         if a is not None and b is not None:
             query = query.filter(Header.azimuth >= a).filter(Header.azimuth < b)
+            query = querypropcoords(query)
 
     if 'el' in selection:
         a, b = _parse_range(selection['el'])
         if a is not None and b is not None:
             query = query.filter(Header.elevation >= a).filter(Header.elevation < b)
+            query = querypropcoords(query)
 
     if 'ra' in selection:
         valid = True
@@ -484,6 +492,7 @@ def queryselection(query, selection):
                 query = query.filter(Header.ra >= lower).filter(Header.ra < upper)
             else:
                 query = query.filter(or_(Header.ra >= lower, Header.ra < upper))
+            query = querypropcoords(query)
 
     if 'dec' in selection:
         valid = True
@@ -522,6 +531,7 @@ def queryselection(query, selection):
 
         if valid and (lower is not None) and (upper is not None):
             query = query.filter(Header.dec >= lower).filter(Header.dec < upper)
+            query = querypropcoords(query)
 
 
     if 'exposure_time' in selection:
@@ -564,6 +574,7 @@ def queryselection(query, selection):
         a, b = _parse_range(selection['crpa'])
         if a is not None and b is not None:
             query = query.filter(Header.cass_rotator_pa >= a).filter(Header.cass_rotator_pa < b)
+            query = querypropcoords(query)
 
     if 'filepre' in selection:
         likestr = '%s%%' % selection['filepre']
