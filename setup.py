@@ -4,6 +4,7 @@ from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 import subprocess
 import sys
+import os
 import fits_storage
 
 class PyTest(TestCommand):
@@ -22,6 +23,21 @@ class PyTest(TestCommand):
         import pytest
         errno = pytest.main(['tests'] + self.pytest_args.split())
         sys.exit(errno)
+
+OPT_ROOT='/opt/FitsStorage'
+
+data_files = []
+for directory, _, files in os.walk('data'):
+    if not files:
+        continue
+    data_files.append((os.path.join(OPT_ROOT, directory),
+                       list(os.path.join(directory, f) for f in files)))
+htmldocs = []
+for directory, _, files in os.walk('htmldocroot'):
+    if not files:
+        continue
+    htmldocs.append((os.path.join(OPT_ROOT, directory),
+                     list(os.path.join(directory, f) for f in files)))
 
 setup(
     name='FitsStorage',
@@ -42,7 +58,8 @@ setup(
                         'sqlalchemy >= 0.9.9',
                         'pyinotify >= 0.9',
                         'docopt >= 0.6',
-                        'pyfits >= 3.2'],
+                        'pyfits >= 3.2',
+                        'jinja2 >= 2.8'],
     # We should use entry_points instead of scripts, but that requires
     # modifying the scripts...
     scripts = [
@@ -54,5 +71,6 @@ setup(
         'fits_storage/scripts/service_export_queue.py',
         'fits_storage/scripts/service_ingest_queue.py',
         'fits_storage/scripts/service_preview_queue.py',
-        ]
+        ],
+    data_files=data_files + htmldocs
 )
