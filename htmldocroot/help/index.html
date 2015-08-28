@@ -36,6 +36,18 @@ which name resolver you would like to use and click the "Resolve" button. The na
 by name and enter the co-ordinates in the RA and Dec fields for you. Your search will then be based on those
 sky co-ordinates, not the literal name of the target.</p>
 
+<h4>Proprietary Coordinates</h4>
+<p>The default for all gemini data is that all metadata is immediately public, only the actual pixel values are considered
+proprietary. A few campaign science projects are granted a special status where the co-ordinates of their observations are
+also considered proprietary. This is typically where multiple observations of the same target are necessary to confirm a
+result, and the concern is that a third party who notices which targets are being heavily re-observed could scoop the result.
+Once the proprietary period has expired, both the coordinates and pixel values of these data become public. While they are
+still proprietary, they will never show up in searches by any sky coordinate (RA, Dec, Azimuth, Elevation etc etc). A quirk
+of they way this is implemented (it was not in the original design and was retrofitted) is that this holds true even if you
+are logged in as a user that has proprietary access to that data. In that case, full details of the data will show up if you
+find the data by other means (eg by program ID or observation date), but the data will still not show up if you search by
+coordinates.</p>
+
 <h3>More generic searches</h3>
 
 <p>You can of course search by any combination of items on the search form, including any combination of the above.
