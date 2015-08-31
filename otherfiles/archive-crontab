@@ -1,0 +1,34 @@
+UR_DIR=/opt/Ureka/Ureka
+UR_VARIANT=common
+UR_OS=linux-rhe6
+UR_CPU=x86_64
+UR_BITS=64
+PATH=/opt/Ureka/Ureka/variants/common/bin:/opt/Ureka/Ureka/bin:/opt/Ureka/Ureka/python/bin:/usr/local/bin:/bin:/usr/bin
+MAILTO=fitsadmin@gemini.edu
+PYTHON_EGG_CACHE=/var/cache/python_egg_cache
+PYTHONPATH=/opt/FitsStorage:/opt/python_modules/lib/python2.7/site-packages:/opt/gemini_python
+#
+### INGEST QUEUE ###
+*/5 * * * * python /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq1
+#*/5 * * * * python /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq2
+*/5 * * * * python /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --empty --name=siq3
+*/5 * * * * python /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --empty --name=siq4
+#
+### PREVIEW QUEUE ###
+*/5 * * * * /bin/nice -n 19 python /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --debug --lockfile --name=spq1
+#*/5 * * * * /bin/nice -n 19 python /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --debug --lockfile --name=spq2
+#
+### CALCACHE QUEUE ###
+0 * * * * python /opt/FitsStorage/fits_storage/scripts/add_to_calcache_queue.py --lastdays=4
+0 0 * * * python /opt/FitsStorage/fits_storage/scripts/add_to_calcache_queue.py --lastdays=30
+*/5 * * * * python /opt/FitsStorage/fits_storage/scripts/service_calcache_queue.py --demon --lockfile --name=scq1
+*/5 * * * * python /opt/FitsStorage/fits_storage/scripts/service_calcache_queue.py --demon --lockfile --name=scq2 
+#
+### NOTIFICATIONS ###
+#50 7 * * * python /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015A
+#55 7 * * * python /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015B
+#0 8 * * *  python /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon
+#
+### DATABASE MAINTAINANCE ###
+0 7 * * * python /opt/FitsStorage/fits_storage/scripts/database_vacuum.py --demon
+30 7 * * * python /opt/FitsStorage/fits_storage/scripts/database_backup.py --demon
