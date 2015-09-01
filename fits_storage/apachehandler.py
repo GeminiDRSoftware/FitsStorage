@@ -265,18 +265,25 @@ def thehandler(req):
 
     # This is the header summary handler
     if this in {'summary', 'diskfiles', 'ssummary', 'lsummary', 'searchresults', 'associated_cals'}:
-        links = True
         # the nolinks feature is used especially in external email notifications
-        if 'nolinks' in things:
-            links = False
+        try:
             things.remove('nolinks')
+            links = False
+        except ValueError:
+            links = True
+        # the body_only feature is used when embedding the summary
+        try:
+            things.remove('body_only')
+            body_only = True
+        except ValueError:
+            body_only = False
 
         # Parse the rest of the uri here while we're at it
         # Expect some combination of program_id, observation_id, date and instrument name
         # We put the ones we got in a dictionary
         selection = getselection(things)
 
-        retval = summary(req, this, selection, orderby, links)
+        retval = summary(req, this, selection, orderby, links=links, body_only=body_only)
         return retval
 
     # This is the standard star in observation server

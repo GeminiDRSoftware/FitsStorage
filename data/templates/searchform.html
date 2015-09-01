@@ -25,7 +25,11 @@
  <p>selection: {{ selection }}</p>
 {%- endif %}
 {% if selection %}
- <ul class="tabs"><li><a href="#" id="resultstab" class="current">Search Results</a></li><li><a href="#" id="caltab">Load Associated Calibrations</a></li><li><a href="#" id="obslogstab">Load Associated Observation Logs</a></li></ul>
+ <ul class="tabs">
+  <li><a href="#" id="resultstab" class="current">Search Results</a></li>
+  <li><a href="#" id="caltab">Load Associated Calibrations</a></li>
+  <li><a href="#" id="obslogstab">Load Associated Observation Logs</a></li>
+ </ul>
  <div class="frames">
  <div id="searchresults" class="searchresults">
  <span id="loading"><img src="/ajax-loading.gif" alt="">  Loading...<br /></span>

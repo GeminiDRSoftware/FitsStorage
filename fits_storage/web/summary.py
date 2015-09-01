@@ -25,7 +25,7 @@ from .userprogram import get_program_list
 
 from ..orm.querylog import QueryLog
 
-def summary(req, sumtype, selection, orderby, links=True):
+def summary(req, sumtype, selection, orderby, links=True, body_only=False):
     """
     This is the main summary generator.
     The main work is done by the summary_body() function.
@@ -35,16 +35,19 @@ def summary(req, sumtype, selection, orderby, links=True):
 
     req.content_type = "text/html"
 
-    template = templating.get_env().get_template('summary.html')
 
-    summary_body(req, sumtype, selection, orderby, links)
+    sb = summary_body(req, sumtype, selection, orderby, links)
+    if body_only:
+        req.write(sb)
+    else:
+        template = templating.get_env().get_template('summary.html')
 
-    req.write(template.render(
-                sumtype      = sumtype,
-                sayselection = sayselection(selection),
-                sumbody = summary_body(req, sumtype, selection, orderby, links)
+        req.write(template.render(
+                    sumtype      = sumtype,
+                    sayselection = sayselection(selection),
+                    sumbody = sb
+                    )
                 )
-            )
     return apache.HTTP_OK
 
 def summary_body(req, sumtype, selection, orderby, links=True):

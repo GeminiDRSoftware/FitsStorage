@@ -29,84 +29,55 @@ function setModeVisibility() {
 };
 
 function clearInstrumentForms() {
-    document.getElementById("gmos_binning").value = '';
-    document.getElementById("gmos_disperser").value = '';
-    document.getElementById("gmos_filter").value = '';
-    document.getElementById("gmos_mask").value = '';
-    document.getElementById("GMOSexpT").value = '';
-    document.getElementById("NandS").value = '';
-    document.getElementById("gmos_readspeed").value = '';
-    document.getElementById("gmos_gain").value = '';
-    document.getElementById("gmos_roi").value = '';
-    document.getElementById("gnirs_disperser").value = '';
-    document.getElementById("gnirs_cam").value = '';
-    document.getElementById("gnirs_mask").value = '';
-    document.getElementById("gnirs_depth").value = '';
-    document.getElementById("gnirs_readmode").value = '';
-    document.getElementById("GNIRSexpT").value = '';
-    document.getElementById("niri_filter").value = '';
-    document.getElementById("niri_disperser").value = '';
-    document.getElementById("niri_mask").value = '';
-    document.getElementById("niri_cam").value = '';
-    document.getElementById("niri_readmode").value = '';
-    document.getElementById("niri_roi").value = '';
-    document.getElementById("NIRIexpT").value = '';
-    document.getElementById("nifs_disperser").value = '';
-    document.getElementById("nifs_mask").value = '';
-    document.getElementById("nifs_readmode").value = '';
-    document.getElementById("NIFSexpT").value = '';
-    document.getElementById("michelle_filter").value = '';
-    document.getElementById("michelle_disperser").value = '';
-    document.getElementById("michelle_mask").value = '';
-    document.getElementById("trecs_filter").value = '';
-    document.getElementById("trecs_disperser").value = '';
-    document.getElementById("trecs_mask").value = '';
-    document.getElementById("F2_filter").value = '';
-    document.getElementById("F2_disperser").value = '';
-    document.getElementById("F2_mask").value = '';
-    document.getElementById("F2expT").value = '';
-    document.getElementById("nici_filter").value = '';
-    document.getElementById("gsaoi_filter").value = '';
-    document.getElementById("GSAOIexpT").value = '';
+    var fields_to_clear = $(".inst_clearable");
+    $.each(fields_to_clear, function(index, object) {
+        object.value = '';
+    });
 };
 
 function setAdvancedVisibility() {
-    if (document.getElementById("engdata").value != "EngExclude" || document.getElementById("svdata").value != "SvInclude" || document.getElementById("qastate").value != "NotFail" || document.getElementById("filepre").value != "") {
+    if ($("#engdata").val() != "EngExclude" || $("#svdata").val() != "SvInclude" || $("#qastate").val() != "NotFail" || $("#filepre").val() != "") {
         $('#advanced_options').show();
     }
 };
 
 function gmosCustomMaskEnable() {
-    if (document.getElementById("gmos_mask").value == "custom") {
-        document.getElementById("custom_mask").disabled = false;
+    if ($("#gmos_mask").val() == "custom") {
+        $("#custom_mask").prop('disabled', false);
     } else {
-        document.getElementById("custom_mask").disabled = true;
+        $("#custom_mask").prop('disabled', true);
     }
 };
 
-function CalsTab() {
-    if (document.getElementById("caltab").innerHTML == 'Associated Calibrations') {
-        /* already been clicked, switch to it */
-        $("#searchresults").hide();
-        $("#obslog_results").hide();
-        $("#calibration_results").show();
-        /* set the tab classes */
-        document.getElementById("caltab").className += 'current';
-        document.getElementById("obslogstab").className = document.getElementById("obslogstab").className.replace('current', '')
-        document.getElementById("resultstab").className = document.getElementById("resultstab").className.replace('current', '')
-    } else {
-        /* First time - initiate loading the associated cals */
-	var allow_cals_element = document.getElementById("allow_cals");
-        var allow;
 
-	try {
-	  allow = document.getElementById("allow_cals").value == "yes";
-	}
-	catch (err) {
-	  allow = false
-	}
-        var urlstring = document.getElementById("things").value;
-        var calurl = '/associated_cals' + urlstring;
+var tabInfo = [
+	Object({ id: 'resultstab', divId: 'searchresults' }),
+	Object({ id: 'caltab',     divId: 'calibration_results'}),
+	Object({ id: 'obslogstab', divId: 'obslog_results'})
+	];
+
+function setCurrentTab(tabName) {
+   $.each(tabInfo, function(index, tabObj) {
+      var li = $("#" + tabObj.id);
+      var frame = $("#" + tabObj.divId);
+      if (tabObj.id == tabName) {
+         li.prop('className', 'current');
+	 frame.show()
+      }
+      else {
+         li.prop('className', '');
+	 frame.hide();
+      }
+   });
+}
+
+function CalsTab() {
+    if ($("#caltab").html() == 'Load Associated Calibrations') {
+        /* First time - initiate loading the associated cals */
+        var allow = $("#allow_cals").val() == "yes";
+
+        var urlstring = $("#things").val();
+        var calurl = '/associated_cals/body_only' + urlstring;
         if (allow) {
             $("#loading_cals").show();
             $('#calibration_results').load(calurl, function(){
@@ -115,55 +86,27 @@ function CalsTab() {
         } else {
             $("#not_loading_cals").show();
         }
-        document.getElementById("caltab").innerHTML='View Calibrations';
-        $("#searchresults").hide();
-        $("#obslog_results").hide();
-        $("#calibration_results").show();
-        /* set the tab classes */
-        document.getElementById("caltab").className += 'current';
-        document.getElementById("resultstab").className = document.getElementById("resultstab").className.replace('current', '')
-        document.getElementById("obslogstab").className = document.getElementById("obslogstab").className.replace('current', '')
+        $("#caltab").html('View Calibrations');
     }
+    setCurrentTab('caltab');
 }
 
 function ResultsTab() {
-    /* Just switch the displayed div */
-    $("#calibration_results").hide();
-    $("#obslog_results").hide();
-    $("#searchresults").show();
-    /* set the tab classes */
-    document.getElementById("resultstab").className += 'current';
-    document.getElementById("caltab").className = document.getElementById("caltab").className.replace('current', '')
-    document.getElementById("obslogstab").className = document.getElementById("obslogstab").className.replace('current', '')
+    setCurrentTab('resultstab');
 }
 
 function ObslogsTab() {
-    if (document.getElementById("obslogstab").innerHTML == 'Associated Observation Logs') {
-        /* already been loaded, just switch to it */
-        $("#calibration_results").hide();
-        $("#searchresults").hide();
-        $("#obslog_results").show();
-        /* set the tab classes */
-        document.getElementById("obslogstab").className += 'current';
-        document.getElementById("resultstab").className = document.getElementById("resultstab").className.replace('current', '')
-        document.getElementById("caltab").className = document.getElementById("caltab").className.replace('current', '')
-    } else {
+    if (document.getElementById("obslogstab").innerHTML == 'Load Associated Observation Logs') {
         /* First time - initiate loading the associated obslogs */
-        var urlstring = document.getElementById("things").value;
+        var urlstring = $("#things").val();
         var obsurl = '/associated_obslogs' + urlstring;
             /* $("#loading_obslogs").show(); */
             $('#obslog_results').load(obsurl, function(){
                 /* $("#loading_obslogs").hide(); */
             });
         document.getElementById("obslogstab").innerHTML='View Obslogs';
-        $("#searchresults").hide();
-        $("#calibration_results").hide();
-        $("#obslog_results").show();
-        /* set the tab classes */
-        document.getElementById("obslogstab").className += 'current';
-        document.getElementById("resultstab").className = document.getElementById("resultstab").className.replace('current', '')
-        document.getElementById("caltab").className = document.getElementById("obslogstab").className.replace('current', '')
     }
+    setCurrentTab('obslogstab');
 }
 
 // The Name Resolver
@@ -188,21 +131,20 @@ function nameresolver() {
         success: function(xml, status, jqXHR) {
             if ((xml.getElementsByTagName("INFO").length > 0) && (xml.getElementsByTagName("INFO")[0].childNodes[0].nodeValue == ' *** Nothing found *** ')) {
                 alert("Object not found");
-                document.getElementById("ra").value = '';
-                document.getElementById("dec").value = '';
-                $('#resload').hide();
+                $('#ra').val('');
+                $('#dec').val('');
             } else {
                 ra = xml.getElementsByTagName("jradeg")[0].childNodes[0].nodeValue;
                 dec = xml.getElementsByTagName("jdedeg")[0].childNodes[0].nodeValue;
-                document.getElementById("ra").value = ra;
-                document.getElementById("dec").value = dec;
-                $('#resload').hide();
+                $('#ra').val(ra);
+                $('#dec').val(dec);
             }
+            $('#resload').hide();
         },
         error: function(request, status, errorThrown) {
             alert("Please ensure a resolver is selected and a valid target name is specified");
-            document.getElementById("ra").value = '';
-            document.getElementById("dec").value = '';
+            $('#ra').val('');
+            $('#dec').val('');
             $('#resload').hide();
         }
     });
@@ -213,12 +155,12 @@ function setPreviewVisibility() {
     $('.preview').click(function(e) {
         e.preventDefault();
         // Set the image to the loading swirlything
-        $('#previewbox').children('img').attr('src', "/ajax-loading.gif");
+        $('#previewbox').children('img').prop('src', "/ajax-loading.gif");
         $('#previewbox').show();
         // Get the URL from the a href link
-        var url = ($(this).children('a').attr('href'));
+        var url = ($(this).children('a').prop('href'));
         // Set the URL of the img element to the preview url
-        $('#previewbox').children('img').attr('src', url);
+        $('#previewbox').children('img').prop('src', url);
         // Hide it on click anywhere
         $('#previewbox').click(function() {
             $('#previewbox').hide();
