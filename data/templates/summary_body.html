@@ -1,0 +1,45 @@
+<!-- BEGIN Summary -->
+{% if selection.notrecognised -%}
+<H4>WARNING: I didn't recognize the following search terms: {{ selection.notrecognised }} </H4>
+{%- endif %}
+{% if dev_system -%}
+<h4>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h4>
+{%- endif %}
+{% if selection.warning -%}
+<h3>WARNING: {{ selection.warning }}</h3>
+{%- endif %}
+{% if got_results %}
+{% include "summary_table.html" %}
+{% else %}
+<!-- BEGIN no results... -->
+<H2>Your search returned no results</H2>
+<P>No data in the archive match your search criteria. Note that most searches (including program ID)
+   are <b>exact match</b> searches, including only the first part of a program ID for example will
+   not match any data. Also note that many combinations of search terms are in practice mutually
+   exclusive - there will be no science BIAS frames for example, nor will there by any Imaging ARCs.
+
+<P>We suggest re-setting some of your constraints to <i>Any</i> and repeating your search.
+{% if selection.observation_class == 'science' and selection.observation_type in ('ARC', 'FLAT', 'DARK', 'BIAS') -%}
+<P>In this case, your combination of observation type and observation class is unlikely to find and data
+{%- endif %}
+{% if selection.inst -%}
+{% if selection.mode == 'MOS' and selection.inst not in ('GMOS', 'GMOS-N', 'GMOS-S', 'F2') -%}
+<P>Hint: {{ selection.inst }} does not support Multi-Object Spectroscopy
+{%- endif %}
+{% if selection.mode == 'IFS' and selection.inst not in ('GMOS', 'GMOS-N', 'GMOS-S', 'GNIRS', 'NIFS', 'GPI') -%}
+<P>Hint: {{ selection.inst }} does not support Integral Field Spectroscopy
+{%- endif %}
+{% if selection.spectroscopy and selection in ('NICI', 'GSAOI') -%}
+<P>Hint: {{ selection.inst }} is purely an imager - it does not do spectroscopy.
+{%- endif %}
+{% if selection.inst == 'GNIRS' and selection.disperser == 'XD' and selection.central_wavelength -%}
+<P>Hint - The central wavelength setting is not so useful with GNIRS cross-dispersed data because the
+   spectral range is so big. Different central wavelength settings in the OT will come through in the
+   headers and be respected by searches here, but in some cases it makes almost no difference to the
+   actual light falling on the array. We suggest not setting central wavelength when you are searching
+   for GNIRS XD data.
+{%- endif %}
+{%- endif %}{# selection.inst #}
+<!-- END no results... -->
+{%- endif %}
+<!-- END Summary -->

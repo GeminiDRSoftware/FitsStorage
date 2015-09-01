@@ -3,13 +3,15 @@ This module contains the main web summary code.
 """
 import datetime
 
-from ..orm import sessionfactory
+from ..orm import session_scope
 from ..fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
 from .selection import sayselection, openquery, selection_to_URL
 from .list_headers import list_headers
 from .. import apache_return_codes as apache
 
 from .summary_generator import SummaryGenerator, htmlescape, NO_LINKS, FILENAME_LINKS, ALL_LINKS
+
+from . import templating
 
 # We assume that servers used as archive use a calibration association cache table
 from ..fits_storage_config import use_as_archive
@@ -30,18 +32,19 @@ def summary(req, sumtype, selection, orderby, links=True):
     This function just wraps that in the relevant html
     tags to make it a page in it's own right.
     """
+
     req.content_type = "text/html"
-    req.write('<!DOCTYPE html><html><head>')
-    req.write('<meta charset="UTF-8">')
-    req.write('<link rel="stylesheet" href="/table.css">')
-    title = "FITS header %s table %s" % (sumtype, sayselection(selection))
-    req.write("<title>%s</title>" % htmlescape(title))
-    req.write("</head>\n")
-    req.write("<body>")
+
+    template = templating.get_env().get_template('summary.html')
 
     summary_body(req, sumtype, selection, orderby, links)
 
-    req.write("</body></html>")
+    req.write(template.render(
+                sumtype      = sumtype,
+                sayselection = sayselection(selection),
+                sumbody = summary_body(req, sumtype, selection, orderby, links)
+                )
+            )
     return apache.HTTP_OK
 
 def summary_body(req, sumtype, selection, orderby, links=True):
@@ -61,15 +64,10 @@ def summary_body(req, sumtype, selection, orderby, links=True):
     the html table containing the actual summary information.
     """
 
+    template = templating.get_env().get_template('summary_body.html')
+
     sumlinks = ALL_LINKS if links else NO_LINKS
 
-    # In search results, warn about undefined stuff
-    if 'notrecognised' in selection.keys():
-        req.write("<H4>WARNING: I didn't recognize the following search terms: %s</H4>" % selection['notrecognised'])
-
-    if sumtype not in ['searchresults', 'associated_cals']:
-        if fits_system_status == "development":
-            req.write('<h4>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h4>')
     # If this is a diskfiles summary, select even ones that are not canonical
     if sumtype != 'diskfiles':
         # Usually, we want to only select headers with diskfiles that are canonical
@@ -78,95 +76,74 @@ def summary_body(req, sumtype, selection, orderby, links=True):
     if sumtype == 'searchresults':
         selection['present'] = True
 
-    session = sessionfactory()
-    try:
-        # Instantiate querylog, populate initial fields
-        querylog = QueryLog(req.usagelog)
-        querylog.summarytype = sumtype
-        querylog.selection = str(selection)
-        querylog.query_started = datetime.datetime.utcnow()
+    with session_scope() as session:
+        try:
+            # Instantiate querylog, populate initial fields
+            querylog = QueryLog(req.usagelog)
+            querylog.summarytype = sumtype
+            querylog.selection = str(selection)
+            querylog.query_started = datetime.datetime.utcnow()
 
-        headers = list_headers(session, selection, orderby)
-        num_headers = len(headers)
-        querylog.query_completed = datetime.datetime.utcnow()
-        querylog.numresults = num_headers
-        # Did we get any selection warnings?
-        if 'warning' in selection.keys():
-            req.write("<h3>WARNING: %s</h3>" % selection['warning'])
-            querylog.add_note("Selection Warning: %s" % selection['warning'])
-        # Note any notrecognised in the querylog
-        if 'notrecognised' in selection.keys():
-            querylog.add_note("Selection NotRecognised: %s" % selection['notrecognised'])
-        # Note in the log if we hit limits
-        if num_headers == fits_open_result_limit:
-            querylog.add_note("Hit Open search result limit")
-        if num_headers == fits_closed_result_limit:
-            querylog.add_note("Hit Closed search result limit")
+            headers = list_headers(session, selection, orderby)
+            num_headers = len(headers)
 
-        # If this is associated_cals, we do the association here
-        if sumtype == 'associated_cals':
-            querylog.add_note("Associated Cals")
-            headers = associate_cals(session, headers)
-            querylog.cals_completed = datetime.datetime.utcnow()
-            querylog.numcalresults = len(headers)
+            hit_open_limit = num_headers == fits_open_result_limit
+            hit_closed_limit = num_headers == fits_closed_result_limit
 
-            # links are messed up with associated_cals, turn most of them off
-            if links:
-                sumlinks = FILENAME_LINKS
+            querylog.query_completed = datetime.datetime.utcnow()
+            querylog.numresults = num_headers
+            # Did we get any selection warnings?
+            if 'warning' in selection:
+                querylog.add_note("Selection Warning: {}".format(selection['warning']))
+            # Note any notrecognised in the querylog
+            if 'notrecognised' in selection.keys():
+                querylog.add_note("Selection NotRecognised: %s" % selection['notrecognised'])
+            # Note in the log if we hit limits
+            if hit_open_limit:
+                querylog.add_note("Hit Open search result limit")
+            if hit_closed_limit:
+                querylog.add_note("Hit Closed search result limit")
 
-        # Did we get any results?
-        if len(headers) > 0:
-            # We have a session at this point, so get the user and their program list to
-            # pass down the chain to use figure out whether to display download links
-            user = userfromcookie(session, req)
-            user_progid_list = get_program_list(session, user)
-            summary_table(req, sumtype, headers, selection, sumlinks, user, user_progid_list)
-        else:
-            # No results
-            # Pass selection to this so it can do some helpful analysis of why you got no results
-            no_results(req, selection)
+            # If this is associated_cals, we do the association here
+            if sumtype == 'associated_cals':
+                querylog.add_note("Associated Cals")
+                headers = associate_cals(session, headers)
+                querylog.cals_completed = datetime.datetime.utcnow()
+                querylog.numcalresults = len(headers)
 
-        querylog.summary_completed = datetime.datetime.utcnow()
+                # links are messed up with associated_cals, turn most of them off
+                if links:
+                    sumlinks = FILENAME_LINKS
 
-        # Add and commit the querylog
-        session.add(querylog)
-        session.commit()
+            # Did we get any results?
+            if len(headers) > 0:
+                # We have a session at this point, so get the user and their program list to
+                # pass down the chain to use figure out whether to display download links
+                user = userfromcookie(session, req)
+                user_progid_list = get_program_list(session, user)
+                sumtable_data = summary_table(req, sumtype, headers, selection, sumlinks, user, user_progid_list)
+            else:
+                sumtable_data = {}
 
-    except IOError:
-        pass
-    finally:
-        session.close()
+            querylog.summary_completed = datetime.datetime.utcnow()
 
-def no_results(req, selection):
-    """
-    Print a helpful no results message
-    """
-    # We pass the selection dictionary to this function
-    # and check for obvious mutually exclusive things
-    req.write("<H2>Your search returned no results</H2>")
-    req.write("<P>No data in the archive match your search criteria. Note that most searches (including program ID) are <b>exact match</b> searches, including only the first part of a program ID for example will not match any data. Also note that many combinations of search terms are in practice mutually exclusive - there will be no science BIAS frames for example, nor will there by any Imaging ARCs.</P>")
-    req.write("<P>We suggest re-setting some of your constraints to <i>Any</i> and repeating your search.</P>")
+            # Add and commit the querylog
+            session.add(querylog)
 
-    # Check for obvious mutually exclusive selections
-    if 'observation_class' in selection.keys() and 'observation_type' in selection.keys():
-        if selection['observation_class'] == 'science':
-            if selection['observation_type'] in ['ARC', 'FLAT', 'DARK', 'BIAS']:
-                req.write("<P>In this case, your combination of observation type and observation class is unlikely to find and data</P>")
-    if 'inst' in selection.keys() and 'mode' in selection.keys():
-        if selection['mode'] == 'MOS':
-            if selection['inst'] not in ['GMOS', 'GMOS-N', 'GMOS-S', 'F2']:
-                req.write("<P>Hint: %s does not support Multi-Object Spectroscopy</P>" % selection['inst'])
-        if selection['mode'] == 'IFS':
-            if selection['inst'] not in ['GMOS', 'GMOS-N', 'GMOS-S', 'GNIRS', 'NIFS', 'GPI']:
-                req.write("<P>Hint: %s does not support Integral Field Spectroscopy</P>" % selection['inst'])
-    if 'inst' in selection.keys() and 'spectroscopy' in selection.keys():
-        if selection['spectroscopy'] == True:
-            if selection['inst'] in ['NICI', 'GSAOI']:
-                req.write("<P>Hint: %s is purely an imager - it does not do spectroscopy.</P>" % selection['inst'])
-    # GNIRS XD central wavelength is not so useful
-    if 'inst' in selection.keys() and 'disperser' in selection.keys() and 'central_wavelength' in selection.keys():
-        if selection['inst'] == 'GNIRS' and 'XD' in selection['disperser']:
-            req.write("<P>Hint - The central wavelength setting is not so useful with GNIRS cross-dispersed data because the spectral range is so big. Different central wavelength settings in the OT will come through in the headers and be respected by searches here, but in some cases it makes almost no difference to the actual light falling on the array. We suggest not setting central wavelength when you are searching for GNIRS XD data.</P>")
+            return template.render(
+                got_results      = sumtable_data,
+                dev_system       = (sumtype not in {'searchresults', 'associated_cals'}) and fits_system_status == 'development',
+                open_query       = openquery(selection),
+                hit_open_limit   = hit_open_limit,
+                hit_closed_limit = hit_closed_limit,
+                open_limit       = fits_open_result_limit,
+                closed_limit     = fits_closed_result_limit,
+                selection        = selection,
+                **sumtable_data
+                )
+
+        except IOError:
+            pass
 
 
 def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, user_progid_list=None):
@@ -190,70 +167,63 @@ def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, 
 
     sumgen = SummaryGenerator(sumtype, links, uri, user, user_progid_list)
 
-    # If the query was open or truncated, print a message saying so, and disallow calibration association
-    if openquery(selection) and len(headers) == fits_open_result_limit:
-        req.write('<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date, date range, program ID etc. Searches like this are limited to %d results, and this search hit that limit. Calibration association will not be available. You may want to constrain your search. Constrained searches have a higher result limit.</P>' % fits_open_result_limit)
-        req.write('<input type="hidden" id="allow_cals" value="no">')
-    elif len(headers) == fits_closed_result_limit:
-        req.write('<P>WARNING: Your search generated more than the limit of %d results. Not all results have been shown, and calibration association will not be available. You might want to constrain your search more.</P>' % fits_closed_result_limit)
-        req.write('<input type="hidden" id="allow_cals" value="no">')
-    else:
-        req.write('<input type="hidden" id="allow_cals" value="yes">')
+    url_prefix = "/download"
+    if sumtype == 'associated_cals':
+        url_prefix += '/associated_calibrations'
 
-    if sumtype in ['searchresults', 'associated_cals']:
-        # And tell them about clicking things
-        req.write('<p>Click the [P] to preview an image of the data in your browser. Click the [D] to download that one file, use the check boxes to select a subset of the results to download, or if available a download all link is at <a href="#tableend"> the end of the table</a>. Click the filename to see the full header in a new tab. Click anything else to add that to your search criteria.</p>')
-        req.write("<FORM action='/download' method='POST'>")
+    download_all_url = '{}{}'.format(url_prefix, selection_to_URL(selection))
 
-    if sumtype == 'searchresults':
-        # Insert the preview box into the html
-        req.write('<span id="previewbox">Click this box to close it. Click [P] links to switch image.<br /><img id="previewimage" src="/ajax-loading.gif" alt=""></span>')
+    class RowYielder(object):
+        def __init__(self, gen, headers):
+            self.gen     = gen
+            self.headers = iter(headers)
+            self.bcount  = 0  # Byte count
+            self.down    = 0  # Downloadable files
+            self.total   = 0  # Total files
 
-    req.write('<TABLE class="fullwidth">')
+        @property
+        def downloadable(self):
+            return self.down
 
-    # Output the table header
-    req.write(str(sumgen.table_header()) + '\n')
+        @property
+        def all_downloadable(self):
+            return self.total == self.down
 
-    # Loop through the header list, outputing table rows
-    bytecount = 0
-    num_downloadable = 0
-    num_total = 0
+        @property
+        def size(self):
+            return str(self.bcount)
 
-    for cnt, header in enumerate(headers):
-        tr_class = ('tr_odd' if cnt % 2 else 'tr_even')
+        @property
+        def size_in_gb(self):
+            return '{:.2f}'.format(self.bcount / 1.0E9)
 
-        row = sumgen.table_row(header)
-        req.write(row.with_class(tr_class) + '\n')
+        def __iter__(self):
+            return self
 
-        num_total += 1
-        if row.can_download:
-            num_downloadable += 1
-            bytecount += header.diskfile.file_size
+        def next(self):
+            header = self.headers.next()
+            row = sumgen.table_row(header)
+            self.total = self.total + 1
+            if row.can_download:
+                self.down    = self.down + 1
+                self.bcount += header.diskfile.file_size
 
-    req.write("</TABLE>\n")
+            return row
 
-    # Only show download button if we are allowed to download anything
-    if num_downloadable >0:
-        if sumtype in ('searchresults', 'associated_cals'):
-            req.write("<INPUT type='submit' value='Download Marked Files'>")
-            req.write("</FORM>")
+        # For future Python 3 compliance
+        __next__ = next
 
-    req.write('<a name="tableend"></a>')
-    if openquery(selection) and len(headers) == fits_open_result_limit:
-        req.write('<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date, date range, program ID etc. Searches like this are limited to %d results, and this search hit that limit. You may want to constrain your search. Constrained searches have a higher result limit.</P>' % fits_open_result_limit)
-    elif len(headers) == fits_closed_result_limit:
-        req.write('<P>WARNING: Your search generated more than the limit of %d results. You might want to constrain your search more.</P>' % fits_closed_result_limit)
-    elif num_downloadable > 0:
-        url_prefix = "/download"
-        if sumtype == 'associated_cals':
-            url_prefix += '/associated_calibrations'
-        req.write("<FORM method='GET' action='%s%s'>" % (url_prefix, selection_to_URL(selection)))
-        if num_downloadable == num_total:
-            req.write("<INPUT type='submit' value='Download all %d files totalling %.2f GB'>" % (num_total, bytecount/1.0E9))
-        else:
-            req.write("<INPUT type='submit' value='Download the %d files totalling %.2f GB that you have access to'>" % (num_downloadable, bytecount/1.0E9))
-        req.write(' - this is always available at <a href="%s%s">this link</a>' % (url_prefix, selection_to_URL(selection)))
-        req.write("</FORM>")
+    template = templating.get_env().get_template('summary_table.html')
+
+    template_args = dict(
+        clickable     = sumtype in {'searchresults', 'associated_cals'},
+        insert_prev   = sumtype == 'searchresults',
+        headers       = sumgen.table_header(),
+        data_rows     = RowYielder(sumgen, headers),
+        down_all_link = download_all_url,
+        )
+
+    return template_args
 
 
 def isajax(req):

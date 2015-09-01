@@ -44,16 +44,16 @@ class Row(object):
     def add(self, coltext):
         self.columns.append(coltext)
 
-    def with_class(self, class_):
-        ce = 'TD' if not self.is_header else 'TH'
-        rc = (" class='" + class_ + "'") if class_ else ""
-
-        pattern = "<TR{row_class}>" + ''.join("<{col_element}>" + str(x) + "</{col_element}>" for x in self.columns) + "</TR>"
-
-        return pattern.format(row_class=rc, col_element=ce)
-
-    def __str__(self):
-        return self.with_class(self.class_)
+#    def with_class(self, class_):
+#        ce = 'TD' if not self.is_header else 'TH'
+#        rc = (" class='" + class_ + "'") if class_ else ""
+#
+#        pattern = "<TR{row_class}>" + ''.join("<{col_element}>" + str(x) + "</{col_element}>" for x in self.columns) + "</TR>"
+#
+#        return pattern.format(row_class=rc, col_element=ce)
+#
+#    def __str__(self):
+#        return self.with_class(self.class_)
 
 class SummaryGenerator(object):
     """

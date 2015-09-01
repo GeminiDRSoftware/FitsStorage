@@ -1,63 +1,23 @@
 function setInstVisibility() {
-    if ($('#instselect').val().match("GMOS")) {
-        $('#GMOS').show();
-    } else {
-        $('#GMOS').hide();
-    }
-
-    if ($('#instselect').val().match("GNIRS")) {
-        $('#GNIRS').show();
-    } else {
-        $('#GNIRS').hide();
-    }
-
-    if ($('#instselect').val().match("NIRI")) {
-        $('#NIRI').show();
-    } else {
-        $('#NIRI').hide();
-    }
-
-    if ($('#instselect').val().match("NIFS")) {
-        $('#NIFS').show();
-    } else {
-        $('#NIFS').hide();
-    }
-
-    if ($('#instselect').val().match("michelle")) {
-        $('#Michelle').show();
-    } else {
-        $('#Michelle').hide();
-    }
-
-    if ($('#instselect').val().match("TReCS")) {
-        $('#TReCS').show();
-    } else {
-        $('#TReCS').hide();
-    }
-
-    if ($('#instselect').val().match("F2")) {
-        $('#F2').show();
-    } else {
-        $('#F2').hide();
-    }
-
-    if ($('#instselect').val().match("NICI")) {
-        $('#NICI').show();
-    } else {
-        $('#NICI').hide();
-    }
-
-    if ($('#instselect').val().match("GSAOI")) {
-        $('#GSAOI').show();
-    } else {
-        $('#GSAOI').hide();
-    }
-
-    if ($('#instselect').val().match("GPI")) {
-        $('#GPI').show();
-    } else {
-        $('#GPI').hide();
-    }
+    var instPairs = {
+    	"GMOS":     "#GMOS",
+    	"GNIRS":    "#GNIRS",
+    	"NIRI":     "#NIRI",
+    	"NIFS":     "#NIFS",
+	"michelle": "#Michelle",
+    	"TReCS":    "#TReCS",
+    	"F2":       "#F2",
+    	"NICI":     "#NICI",
+    	"GSAOI":    "#GSAOI",
+    	"GPI":      "#GPI"
+	};
+    $.each(instPairs, function(key, value) {
+        if ($('#instselect').val().match(key)) {
+            $(value).show();
+        } else {
+            $(value).hide();
+        }
+    });
 };
 
 function setModeVisibility() {
@@ -136,10 +96,18 @@ function CalsTab() {
         document.getElementById("resultstab").className = document.getElementById("resultstab").className.replace('current', '')
     } else {
         /* First time - initiate loading the associated cals */
-        var allow = document.getElementById("allow_cals").value;
+	var allow_cals_element = document.getElementById("allow_cals");
+        var allow;
+
+	try {
+	  allow = document.getElementById("allow_cals").value == "yes";
+	}
+	catch (err) {
+	  allow = false
+	}
         var urlstring = document.getElementById("things").value;
         var calurl = '/associated_cals' + urlstring;
-        if (allow == "yes") {
+        if (allow) {
             $("#loading_cals").show();
             $('#calibration_results').load(calurl, function(){
                 $("#loading_cals").hide();

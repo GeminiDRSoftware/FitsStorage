@@ -94,13 +94,11 @@ def searchform(req, things, orderby):
 
     req.content_type = "text/html"
 
-    # summary_body = summary_body(req, 'searchresults', selection, orderby)
-
     template_args = dict(
         title_suffix = title_suffix,
         thing_string = thing_string,
         args_string  = args_string,
-        summary_body = '',
+        summary_body = summary_body(req, 'searchresults', selection, orderby),
         updated      = updateform(selection),
         debugging    = False, # Enable this to show some debugging data
         selection    = selection,

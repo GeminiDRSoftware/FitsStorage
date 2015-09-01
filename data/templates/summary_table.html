@@ -1,0 +1,56 @@
+{% macro generate_row(row_obj, class, element='TD') %}
+<TR class='{{ class }}'>{% for content in row_obj.columns %}<{{ element }}>{{ content }}</{{ element }}>{% endfor %}</TR>
+{%- endmacro %}
+{% if open_query and hit_open_limit %}
+<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date,
+   date range, program ID etc. Searches like this are limited to {{ open_limit }} results, and
+   this search hit that limit. Calibration association will not be available. You may want to
+   constrain your search. Constrained searches have a higher result limit.
+{% elif hit_closed_limit %}
+<P>WARNING: Your search generated more than the limit of {{ closed_limit }} results. Not all
+   results have been shown, and calibration association will not be available. You might want
+   to constrain your search more.
+{% else %}
+<input type="hidden" id="allow_cals" value="yes">
+{% endif %}
+{% if clickable %}
+<P>Click the [P] to preview an image of the data in your browser. Click the [D] to download that
+   one file, use the check boxes to select a subset of the results to download, or if available
+   a download all link is at <a href="#tableend"> the end of the table</a>. Click the filename
+   to see the full header in a new tab. Click anything else to add that to your search criteria.</p>
+<FORM action='/download' method='POST'>
+{%- endif %}
+{% if insert_prev %}
+<span id="previewbox">Click this box to close it. Click [P] links to switch image.<br />
+<img id="previewimage" src="/ajax-loading.gif" alt=""></span>
+{%- endif %}
+<TABLE class="fullwidth">
+{{ generate_row(headers, class='tr_head', element='TH') }}
+{% for row in data_rows %}
+{{ generate_row(row, class=loop.cycle('tr_odd', 'tr_even')) }}
+{% endfor %}
+</TABLE>
+{# Only show download button if we are allowed to download anything #}
+{% if clickable and data_rows.downloadable %}
+<INPUT type='submit' value='Download Marked Files'>
+</FORM>
+{% endif %}
+<a name="tableend"></a>
+{% if open_query and hit_open_limit %}
+<P>WARNING: Your search does not constrain the number of results - ie you did not specify a date,
+   date range, program ID etc. Searches like this are limited to {{ open_limit }} results, and this
+   search hit that limit. You may want to constrain your search. Constrained searches have a higher
+   result limit.
+{% elif hit_closed_limit %}
+<P>WARNING: Your search generated more than the limit of {{ closed_limit }} results. You might want
+   to constrain your search more.
+{% elif data_rows.downloadable%}
+<FORM method='GET' action='{{ down_all_link }}'>
+{% if data_rows.all_downloadable %}
+<INPUT type='submit' value='Download all {{ data_rows.downloadable }} files totalling {{ data_rows.size_in_gb }} GB'>
+{% else %}
+<INPUT type='submit' value='Download the {{ data_rows.downloadable }} files totalling {{ data_rows.size_in_gb }} GB that you have access to'>
+{% endif %}
+- this is always available at <a href="{{ down_all_link }}">this link</a>
+</FORM>
+{% endif %}
