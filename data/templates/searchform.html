@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+
+{% block title %}Gemini Archive Search {{ title_suffix }}{% endblock %}
+
+{% block body %}
+<div class="titlebar">
+ <div class="titlebar_left">
+ Gemini Observatory Archive
+ </div>
+ <div class="titlebar_help" id="help_about">
+  <a href="/help/index.html" target="_blank">Help</a> - <a href="/help/about.html" target="_blank">About</a>
+ </div>
+ <div class="titlebar_right" id="div_whoami">
+  Loading...
+ </div>
+</div>
+
+<input type="hidden" id="things" name="things" value="{{ thing_string }}">
+<input type="hidden" id="args" name="args" value="{{ args_string }}">
+<div class="page">
+<form class="searchform" action="/searchform" method="POST">
+{% include "searchform_detail.html" %}
+</form>
+{% if debugging -%}
+ <p>selection: {{ selection }}</p>
+{%- endif %}
+{% if selection %}
+ <ul class="tabs"><li><a href="#" id="resultstab" class="current">Search Results</a></li><li><a href="#" id="caltab">Load Associated Calibrations</a></li><li><a href="#" id="obslogstab">Load Associated Observation Logs</a></li></ul>
+ <div class="frames">
+ <div id="searchresults" class="searchresults">
+ <span id="loading"><img src="/ajax-loading.gif" alt="">  Loading...<br /></span>
+{{ summary_body }}
+ </div><div id="calibration_results" class="searchresults">
+ <span id="loading_cals"><br /><img src="/ajax-loading.gif" alt="">  Finding Associated Calibrations... This can take several seconds depending on the size of your calibration association search...</span>
+ <span id="not_loading_cals"><br />You cannot do calibration association on an unconstrained search, or one that hits the search limit. Please revise your original search so that this is not the case.</span>
+ </div><div id="obslog_results" class="searchresults">
+ </div></div>
+{% else %}
+ <P>Set at least one search criteria above to search for data. Mouse over the (text in brackets) to see more help for each item.</P>
+{% endif %}
+{% endblock %}

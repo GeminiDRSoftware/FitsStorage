@@ -6,8 +6,10 @@ This is the searchform module
 from mod_python import apache, util
 
 from .selection import getselection, selection_to_URL
+from .selection import getselection_detector_conf
 from .summary import summary_body
 from .calibrations import calibrations
+from . import templating
 
 from ..fits_storage_config import fits_aux_datadir
 import os
@@ -16,12 +18,13 @@ import urllib
 from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
 
 # Load the titlebar html text into strings
-with open(os.path.join(fits_aux_datadir, "titlebar.html")) as f:
-    titlebar_html = f.read()
+#with open(os.path.join(fits_aux_datadir, "titlebar.html")) as f:
+#    titlebar_html = f.read()
 
 # Load the form html text into strings
-with open(os.path.join(fits_aux_datadir, "form.html")) as f:
-    form_html = f.read()
+#with open(os.path.join(fits_aux_datadir, "form.html")) as f:
+#    form_html = f.read()
+
 
 def searchform(req, things, orderby):
     """
@@ -48,6 +51,7 @@ def searchform(req, things, orderby):
     selection = getselection(things)
     formdata = util.FieldStorage(req)
 
+    template = templating.get_env().get_template('searchform.html')
 
     # Also args to pass on to results page
     args_string = ""
@@ -89,163 +93,86 @@ def searchform(req, things, orderby):
     title_suffix = ' '.join(things)
 
     req.content_type = "text/html"
-    req.write('<!DOCTYPE html><html><head>')
-    req.write('<meta charset="UTF-8">')
-    req.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>')
-    req.write('<script src="/titlebar.js"></script>')
-    req.write('<script src="/form.js"></script>')
-    req.write('<link rel="stylesheet" type="text/css" href="/whoami.css">')
-    req.write('<link rel="stylesheet" type="text/css" href="/titlebar.css">')
-    req.write('<link rel="stylesheet" type="text/css" href="/form.css">')
-    req.write('<link rel="stylesheet" type="text/css" href="/table.css">')
-    req.write('<title>Gemini Archive Search %s</title></head><body>' % title_suffix)
 
-    req.write(titlebar_html)
+    # summary_body = summary_body(req, 'searchresults', selection, orderby)
 
-    req.write('<input type="hidden" id="things" name="things" value="%s">' % thing_string)
-    req.write('<input type="hidden" id="args" name="args" value="%s">' % args_string)
-    req.write('<div class="page">')
-    req.write('<form class="searchform" action="/searchform" method="POST">')
+    template_args = dict(
+        title_suffix = title_suffix,
+        thing_string = thing_string,
+        args_string  = args_string,
+        summary_body = '',
+        updated      = updateform(selection),
+        debugging    = False, # Enable this to show some debugging data
+        selection    = selection,
+        # Look at the end of the file for this
+        **dropdown_options
+        )
 
-    form_html_updt = updateform(form_html, selection)
-    req.write(form_html_updt)
-
-    req.write('</form>')
-    # Uncomment this for form processing selection debugging...
-    # req.write('<p>selection: %s</p>' % selection)
-
-    # playing around with the idea of 'tabs'
-    if selection:
-        req.write('<ul class="tabs"><li><a href="#" id="resultstab" class="current">Search Results</a></li><li><a href="#" id="caltab">Load Associated Calibrations</a></li><li><a href="#" id="obslogstab">Load Associated Observation Logs</a></li></ul>')
-        req.write('<div class="frames">')
-        req.write('<div id="searchresults" class="searchresults">')
-        req.write('<span id="loading"><img src="/ajax-loading.gif" alt="">  Loading...<br /></span>')
-        summary_body(req, 'searchresults', selection, orderby)
-        req.write('</div><div id="calibration_results" class="searchresults">')
-        req.write('<span id="loading_cals"><br /><img src="/ajax-loading.gif" alt="">  Finding Associated Calibrations... This can take several seconds depending on the size of your calibration association search...</span>')
-        req.write('<span id="not_loading_cals"><br />You cannot do calibration association on an unconstrained search, or one that hits the search limit. Please revise your original search so that this is not the case.</span>')
-        req.write('</div><div id="obslog_results" class="searchresults">')
-        req.write('</div></div>')
-    #req.write('<div id="searchresults" class="searchresults">')
-    #if selection:
-    #    req.write('<span id="loading"><p><img src="/ajax-loading.gif">  Loading...</p></span>')
-    #    summary_body(req, 'searchresults', selection, orderby)
-    else:
-        req.write('<P>Set at least one search criteria above to search for data. Mouse over the (text in brackets) to see more help for each item.</P>')
-    req.write('</div>')
-    req.write('</body></html>')
+    req.write(template.render(template_args))
 
     return apache.HTTP_OK
 
-def updateform(html, selection):
+std_gmos_fpm = {'NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec'}
+
+def updateform(selection):
     """
     Receives html page as a string and updates it according to values in the selection dictionary.
     Pre-populates input fields with said selection values
     """
-    for key in selection.keys():
-        if key in ['program_id', 'observation_id', 'data_label']:
+    dct = {}
+    for key, value in selection.items():
+        if key in {'program_id', 'observation_id', 'data_label'}:
             # Program id etc
             # don't do program_id if we have already done obs_id, etc
-            if key == 'program_id' and ('observation_id' in selection.keys() or 'data_label' in selection.keys()):
-                pass
-            else:
-                html = html.replace('name="program_id"', 'name="program_id" value="%s"' % selection[key])
+            if key == 'program_id' and not ('observation_id' in selection or 'data_label' in selection):
+                dct['program_id'] = value
 
-        elif key in ['date', 'daterange']:
+        elif key in {'date', 'daterange'}:
             # If there is a date and a daterange, only use the date part
-            if 'date' in selection.keys() and 'daterange' in selection.keys():
+            if 'date' in selection and 'daterange' in selection:
                 key = 'date'
-            html = html.replace('name="date"', 'name="date" value="%s"' % selection[key])
+            dct['date'] = value
 
-        elif key in ['ra', 'dec', 'sr', 'object', 'cenwlen', 'filepre']:
-            # These are all the text fields that don't need anything special
-            html = html.replace('name="%s"' % key, 'name=%s value="%s"' % (key, selection[key]))
-
-        elif key == 'mode':
-            if  selection[key] == 'MOS':
-                html = html.replace('value="MOS"', 'value="MOS" selected')
-            elif selection[key] == 'IFS':
-                html = html.replace('value="IFS"', 'value="IFS" selected')
-            elif selection[key] == 'LS':
-                html = html.replace('value="LS"', 'value="LS" selected')
-
-        elif key == 'spectroscopy' and 'mode' not in selection.keys():
-            if selection[key] is True:
-                html = html.replace('value="spectroscopy"', 'value="spectroscopy" selected')
-            else:
-                html = html.replace('value="imaging"', 'value="imaging" selected')
+        elif key == 'spectroscopy' and 'mode' not in selection:
+            dct['mode'] = 'spectroscopy' if value else 'imaging'
 
         elif key == 'engineering':
-            if selection[key] is True:
-                html = html.replace('value="EngOnly"', 'value="EngOnly" selected')
-            elif selection[key] is False:
-                html = html.replace('value="EngExclude"', 'value="EngExclude" selected')
+            if value is True:
+                dct[key] = 'EngOnly'
+            elif value is False:
+                dct[key] = 'EngExclude'
             else:
-                html = html.replace('value="EngInclude"', 'value="EngInclude" selected')
+                dct[key] = 'EngInclude'
 
         elif key == 'science_verification':
-            if selection[key] is True:
-                html = html.replace('value="SvOnly"', 'value="SvOnly" selected')
-            elif selection[key] is False:
-                html = html.replace('value="SvExclude"', 'value="SvExclude" selected')
+            if value is True:
+                dct[key] = 'SvOnly'
+            elif value is False:
+                dct[key] = 'SvExclude'
             else:
-                html = html.replace('value="SvInclude"', 'value="SvInclude" selected')
+                dct[key] = 'SvInclude'
 
         elif key == 'focal_plane_mask':
-
-            if 'inst' in selection.keys() and selection['inst'].startswith('GMOS'):
-                if (selection[key] in ['NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec']):
-                    html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
-                else:
-                    # Custom mask name
-                    html = html.replace('class="mask" value="custom"', 'class="mask" value="custom" selected')
-                    html = html.replace('id="custom_mask"', 'id="custom_mask" value=%s' % selection[key])
+            if selection.get('inst', '').startswith('GMOS') and value not in std_gmos_fpm:
+                # Custom mask name
+                dct[key] = 'custom'
+                dct['custom_mask'] = value
             else:
-                html = html.replace('class="mask" value="%s"' % selection[key], 'class="mask" value="%s" selected' % selection[key])
+                dct[key] = value
 
         elif key == 'detector_config':
-            for item in selection[key]:
-                html = html.replace('value="%s"' % item, 'value="%s" selected' % item)
+            for item in value:
+                dct[getselection_detector_conf[item]] = item
 
-        elif key == 'filter':
-            # Generic filter pulldown
-            # Only mark filter for the selected instrument. Cannot specify filter with inst = Any anyway
-            if 'inst' in selection.keys():
-                inst = selection['inst']
-                if inst.startswith('GMOS'):
-                    inst = 'GMOS'
-                html = html.replace('class="%sfilter" value="%s"' % (inst, selection[key]), 'class="%sfilter" value="%s" selected' % (inst, selection[key]))
-
-        elif key == 'exposure_time':
-            # Only update the one for the instrument selected
-            if 'inst' in selection.keys():
-                inst = selection['inst']
-                if inst.startswith('GMOS'):
-                    inst = 'GMOS'
-                html = html.replace('id="%sexpT"' % inst, 'id="%sexpT" value="%s"' % (inst, selection[key]))
-
-        elif key == 'coadds':
-           # Only update the one for the instrument selected
-           if 'inst' in selection.keys():
-                inst = selection['inst']
-                if inst.startswith('GMOS'):
-                    inst = 'GMOS'
-                html = html.replace('id="%scoadds"' % inst, 'id="%scoadds" value="%s"' % (inst, selection[key]))
-
-        elif key == 'disperser':
-            # GPI has custom values
-            if 'inst' in selection.keys():
-                inst = selection['inst']
-                if inst == 'GPI':
-                    html = html.replace('class="GPIdisperser" value="%s"' % selection[key], 'class="GPIdisperser" value="%s" selected' % selection[key])
-            else:
-                # Generic disperser pulldown
-                html = html.replace('class="disperser" value="%s"' % selection[key], 'class="disperser" value="%s" selected' % selection[key])
+        elif value in {'AO', 'NOTAO', 'NGS', 'LGS'}:
+            # The Adaptive Optics ends up in various selection keys...
+            dct['ao'] = value
         else:
-            # This does all the generic pulldown menus
-            html = html.replace('value="%s"' % selection[key], 'value="%s" selected' % selection[key])
+            # The rest needs no special processing. This does all the generic pulldown menus and text fields
+            # if key in {'ra', 'dec', 'sr', 'object', 'cenwlen', 'filepre', 'mode', 'filter', 'exposure_time', 'coadds', 'disperser', ...}:
+            dct[key] = value
 
-    return html
+    return dct
 
 def updateselection(formdata, selection):
     """
@@ -360,3 +287,416 @@ def nameresolver(req, things):
 
     req.write(xml)
     return apache.HTTP_OK
+
+# DATA FOR THE TEMPLATES
+
+dropdown_options = {
+    "engdata_options":
+        [("EngExclude", "Exclude"),
+         ("EngInclude", "Include"),
+         ("EngOnly", "Find Only")],
+    "mode_options":
+        [("imaging", "Imaging"),
+         ("spectroscopy", "Spectroscopy"),
+         ("LS", "Long-slit spectroscopy"),
+         ("MOS", "Multi-object spectroscopy"),
+         ("IFS", "Integral field spectroscopy")],
+    "svdata_options":
+        [("SvInclude", "Include"),
+         ("SvExclude", "Exclude"),
+         ("SvOnly", "Find Only")],
+    "gmos_mask_options":
+        [("0.5arcsec", "0.5 arcsec"),
+         ("0.75arcsec", "0.75 arcsec"),
+         ("1.0arcsec", "1.0 arcsec"),
+         ("1.5arcsec", "1.5 arcsec"),
+         ("2.0arcsec", "2.0 arcsec"),
+         ("5.0arcsec", "5.0 arcsec"),
+         ("NS0.75arcsec", "NS 0.75 arcsec"),
+         ("NS1.0arcsec", "NS 1.0 arcsec"),
+         ("NS1.5arcsec", "NS 1.5 arcsec"),
+         ("NS2.0arcsec", "NS 2.0 arcsec"),
+         ("IFU-R", "IFU-R"),
+         ("IFU-B", "IFU-B"),
+         ("IFU-2", "IFU-2"),
+         ("Imaging", "Imaging"),
+         ("focus_array_new", "focus array new"),
+         ("custom", "Custom")],
+    "gnirs_mask_options":
+        [("0.10arcsec", "0.10 arcsec"),
+         ("0.15arcsec", "0.15 arcsec"),
+         ("0.20arcsec", "0.20 arcsec"),
+         ("0.30arcsec", "0.30 arcsec"),
+         ("0.45arcsec", "0.45 arcsec"),
+         ("0.68arcsec", "0.675 arcsec"),
+         ("1.0arcsec", "1.0 arcsec"),
+         ("0.10arcsecXD", "0.10 arcsec XD"),
+         ("0.15arcsecXD", "0.15 arcsec XD"),
+         ("0.20arcsecXD", "0.20 arcsec XD"),
+         ("0.30arcsecXD", "0.30 arcsec XD"),
+         ("0.45arcsecXD", "0.45 arcsec XD"),
+         ("0.68arcsecXD", "0.675 arcsec XD"),
+         ("1.0arcsecXD", "1.0 arcsec XD"),
+         ("Acq", "acquisition"),
+         ("AcqXD", "acquisition XD"),
+         ("SmPinholes", "pinhole 0.1"),
+         ("LgPinholes", "pinhole 0.3"),
+         ("SmPinholesXD", "pinhole 0.1 XD"),
+         ("LgPinholesXD", "pinhole 0.3 XD"),
+         ("pupilview", "pupil viewer"),
+         ("IFU", "IFU")],
+    "niri_mask_options":
+        [("f6-2pix", "f6-2pix"),
+         ("f6-2pixBl", "f6-2pix Blue"),
+         ("f6-4pix", "f6-4pix"),
+         ("f6-4pixBl", "f6-4pix Blue"),
+         ("f6-6pix", "f6-6pix"),
+         ("f6-6pixBl", "f6-6pix Blue"),
+         ("f32-6pix", "f32-6pix"),
+         ("f32-9pix", "f32-9pix"),
+         ("f6-cam", "f6-cam"),
+         ("f14-cam", "f14-cam"),
+         ("f32-cam", "f32-cam"),
+         ("pinhole", "pinhole")],
+    "nifs_mask_options":
+        [("Blocked", "Blocked"),
+         ("Ronchi_Screen", "Ronchi Screen"),
+         ("KG3_ND_Filter", "KG3 ND Filter"),
+         ("KG5_ND_Filter", "KG5 ND Filter"),
+         ("0.1_Hole", "0.1 Hole"),
+         ("0.2_Occ_Disc", "0.2 Occ Disc"),
+         ("0.5_Occ_Disc", "0.5 Occ Disc"),
+         ("3.0_Mask", "3.0 Mask")],
+    "michelle_mask_options":
+        [("1_pixels", "1 pixel"),
+         ("2_pixels", "2 pixels"),
+         ("3_pixels", "3 pixels"),
+         ("4_pixels", "4 pixels"),
+         ("6_pixels", "6 pixels"),
+         ("8_pixels", "8 pixels"),
+         ("16_pixels", "16 pixels")],
+    "trecs_mask_options":
+        [("0.21", '0.21&quot;'),
+         ("0.26", '0.26&quot;'),
+         ("0.31", '0.31&quot;'),
+         ("0.35", '0.35&quot;'),
+         ("0.65", '0.65&quot;'),
+         ("0.70", '0.70&quot;'),
+         ("1.30", '1.30&quot;')],
+    "f2_mask_options":
+        [("1pix-slit", "1pix-slit"),
+         ("2pix-slit", "2pix-slit"),
+         ("3pix-slit", "3pix-slit"),
+         ("4pix-slit", "4pix-slit"),
+         ("6pix-slit", "6pix-slit"),
+         ("8pix-slit", "8pix-slit")],
+    "gmos_gain_options":
+        [("low", "Low"),
+         ("high", "High")],
+    "gmos_speed_options":
+        [("fast", "Fast"),
+         ("slow", "Slow")],
+    "gnirs_depth_options":
+        [("Deep", "Deep"),
+         ("Shallow", "Shallow")],
+    "gnirs_readmode_options":
+        [("Very_Bright_Objects", "Very Bright Objects"),
+         ("Bright_Objects", "Bright Objects"),
+         ("Faint_Objects", "Faint Objects"),
+         ("Very_Faint_Objects", "Very Faint Objects")],
+    "nifs_readmode_options":
+        [("Bright", "Bright"),
+         ("Medium", "Medium"),
+         ("Faint", "Faint")],
+    "nas_options":
+        [("NodAndShuffle", "Nod &amp; Shuffle"),
+         ("Classic", "Classic")],
+    "niri_readmode_options":
+        [("High_Background", "High Background"),
+         ("Medium_Background", "Medium Background"),
+         ("Low_Background", "Low Background")],
+    "gmos_filter_options":
+        [("u", "u'"),
+         ("g", "g'"),
+         ("r", "r'"),
+         ("i", "i'"),
+         ("z", "z'"),
+         ("Y", "Y"),
+         ("Z", "Z"),
+         ("OIII", "OIII"),
+         ("OIIIC", "OIIIC"),
+         ("Ha", "Ha"),
+         ("HaC", "HaC"),
+         ("HeII", "HeII"),
+         ("HeIIC", "HeIIC"),
+         ("SII", "SII"),
+         ("CaT", "CaT"),
+         ("Lya395", "Lya395")],
+    "gnirs_filter_options":
+        [("XD", "XD"),
+         ("H2", "H2"),
+         ("X", "X"),
+         ("J", "J"),
+         ("H", "H"),
+         ("K", "K"),
+         ("L", "L"),
+         ("M", "M"),
+         ("PAH", "PAH"),
+         ("YPHOT", "YPHOT"),
+         ("JPHOT", "JPHOT"),
+         ("KPHOT", "KPHOT"),
+         ("X_(order_6)", "X_(order_6)"),
+         ("J_(order_5)", "J_(order_5)"),
+         ("H_(order_4)", "H_(order_4)"),
+         ("K_(order_3)", "K_(order_3)"),
+         ("L_(order_2)", "L_(order_2)"),
+         ("M_(order_1)", "M_(order_1)")],
+    "niri_filter_options":
+        [("Y", "Y"),
+         ("J", "J"),
+         ("H", "H"),
+         ("K", "K"),
+         ("K(prime)", "K'"),
+         ("M(prime)", "M'"),
+         ("L(prime)", "L'"),
+         ("K(short)", "K (short)"),
+         ("Br(alpha)", "Br-&alpha;"),
+         ("Br(alpha)Con", "Br-&alpha; con"),
+         ("Br(gamma)", "Br-&gamma;"),
+         ("H2_1-0_S1", "H2 1-0 S1"),
+         ("H2_2-1_S1", "H2 2-1 S1"),
+         ("HeI", "He I"),
+         ("HeI(2p2s)", "He I (2p2s)"),
+         ("FeII", "Fe II"),
+         ("CH4(short)", "CH4 (short)"),
+         ("CH4(long)", "CH4 (long)"),
+         ("CH4ice(2275)", "CH4 ice (2.275)"),
+         ("CO 2-0 (bh)", "CO 2-0 (bh)"),
+         ("hydrocarb", "Hydrocarbon"),
+         ("H2Oice", "H2O ice (3.050)"),
+         ("H2Oice(2045)", "H2O ice (2.045)"),
+         ("Jcon(1065)", "J con (1.065)"),
+         ("Jcon(112)", "J con (1.12)"),
+         ("Jcon(121)", "J con (1.21)"),
+         ("H-con(157)", "H con (1.57)"),
+         ("Kcon(209)", "K con (2.09)")],
+    "michelle_filter_options":
+        [("F112B21", "F112B21"),
+         ("F116B9", "F116B9"),
+         ("F125B9", "F125B9"),
+         ("F86B2", "F86B2"),
+         ("I103B10", "I103B10"),
+         ("I107B4", "I107B4"),
+         ("I112B21", "I112B21"),
+         ("I116B9", "I116B9"),
+         ("I125B9", "I125B9"),
+         ("I128B2", "I128B2"),
+         ("I185B9", "I185B9"),
+         ("I79B10", "I79B10"),
+         ("I86B2", "I86B2"),
+         ("I88B10", "I88B10"),
+         ("I97B10", "I97B10"),
+         ("IP116B9", "IP116B9"),
+         ("IP125B9", "IP125B9"),
+         ("IP97B10", "IP97B10"),
+         ("QBlock", "QBlock")],
+    "trecs_filter_options":
+        [("ArIII-9.0um", "ArIII 9.0&micro;m"),
+         ("N", "N"),
+         ("Nprime", "N'"),
+         ("NeII-12.8um", "NeII 12.8&micro;m"),
+         ("NeII_ref2-13.1um", "NeII ref2 13.1&micro;m"),
+         ("PAH1-8.6um", "PAH1 8.6&micro;m"),
+         ("PAH2-11.3um", "PAH2 11.3&micro;m"),
+         ("Qa-18.3um", "Qa 18.3&micro;m"),
+         ("Qb-24.5um", "Qb 24.5&micro;m"),
+         ("Qw-20.8um", "Qw 20.8&micro;m"),
+         ("Si1-7.9um", "Si1 7.9&micro;m"),
+         ("Si2-8.8um", "Si2 8.8&micro;m"),
+         ("Si3-9.7um", "Si4 9.7&micro;m"),
+         ("Si2-10.4um", "Si2 10.4&micro;m"),
+         ("Si5-11.7um", "Si5 11.7&micro;m"),
+         ("Si6-12.3um", "Si6 12.3&micro;m"),
+         ("SIV-10.5um", "SIV 10.5&micro;m")],
+    "f2_filter_options":
+        [("Y", "Y"),
+         ("J", "J"),
+         ("H", "H"),
+         ("Ks", "Ks"),
+         ("JH", "JH"),
+         ("HK", "HK"),
+         ("J-lo", "J low")],
+    "nici_filter_options":
+        [("Ks+H", "Ks+H"),
+         ("CH4-H4L+CH4-H4S", "CH4-H4L+CH4-H4S"),
+         ("CH4-H4L+H", "CH4-H4L+H"),
+         ("CH4-H1L+CH4-H1S", "CH4-H1L+CH4-H1S"),
+         ("Kcont+CH4-H1S", "Kcont+CH4-H1S"),
+         ("CH4-H4S+CH4-H4L", "CH4-H4S+CH4-H4L"),
+         ("CH4-H4L", "CH4-H4L"),
+         ("CH4-H4S", "CH4-H4S"),
+         ("Ks+CH4-H4S", "Ks+CH4-H4S"),
+         ("Lprime+CH4-H1S", "Lprime+CH4-H1S"),
+         ("CH4-K5L+CH4-K5S", "CH4-K5L+CH4-K5S"),
+         ("CH4-H1S+CH4-H1L", "CH4-H1S+CH4-H1L"),
+         ("CH4-H1L+Br-gamma", "CH4-H1L+Br-gamma"),
+         ("CH4-H4L+J", "CH4-H4L+J")],
+    "gsaoi_filter_options":
+        [("Z", "Z"),
+         ("J", "J"),
+         ("H", "H"),
+         ("K", "K"),
+         ("Kprime", "K(prime)"),
+         ("Kshort", "K(short)"),
+         ("Jcont", "J-continuum"),
+         ("Hcont", "H-continuum"),
+         ("CH4short", "CH4(short)"),
+         ("CH4long", "CH4(long)"),
+         ("Kcntshrt", "K(short) continuum"),
+         ("Kcntlong", "K(long) continuum"),
+         ("HeI1083", "He I 1.083"),
+         ("PaG", "H I P&gamma;"),
+         ("PaB", "H I P&beta;"),
+         ("FeII", "[FeII] 1.644"),
+         ("H2O", "H2O"),
+         ("HeI-2p2s", "He I (2p2s)"),
+         ("H2(1-0)", "H2 1-0 S(1)"),
+         ("BrG", "H I Br&gamma;"),
+         ("H2(2-1)", "H2 2-1 S(1)"),
+         ("CO2360", "CO &Delta;v=2")],
+    "gpi_filter_options":
+        [("Y", "Y"),
+         ("J", "J"),
+         ("H", "H"),
+         ("K1", "K1"),
+         ("K2", "K2")],
+    "gpi_disp_options":
+        [("DISP_PRISM", "PRISM"),
+         ("DISP_WOLLASTON", "WOLLASTON")],
+    "gmos_disp_options":
+        [("B600", "B600"),
+         ("R400", "R400"),
+         ("R831", "R831"),
+         ("B1200", "B1200"),
+         ("R150", "R150"),
+         ("MIRROR", "MIRROR")],
+    "gnirs_disp_options":
+        [("10_mm", "10 l/mm"),
+         ("32_mm", "32 l/mm"),
+         ("111_mm", "111 l/mm"),
+         ("10lXD", "10 l/mm XD"),
+         ("32lXD", "32 l/mm XD"),
+         ("111lXD", "111 l/mm XD")],
+    "niri_disp_options":
+        [("Hgrism", "H-grism"),
+         ("Jgrism", "J-grism"),
+         ("Kgrism", "K-grism"),
+         ("Lgrism", "L-grism"),
+         ("Mgrism", "M-grism")],
+    "nifs_disp_options":
+        [("Z", "Z"),
+         ("J", "J"),
+         ("H", "H"),
+         ("K", "K"),
+         ("K_Short", "K short"),
+         ("K_Long", "K long"),
+         ("Mirror", "Mirror")],
+    "michelle_disp_options":
+        [("LowN", "Low N"),
+         ("MedN1", "Med N1"),
+         ("MedN2", "Med N2"),
+         ("LowQ", "Low Q"),
+         ("Echelle", "Echelle")],
+    "trecs_disp_options":
+        [("LowRes-10", "Low-Res 10"),
+         ("LowRes-20", "Low-Res 20")],
+    "f2_disp_options":
+        [("R3K", "R3K"),
+         ("JH", "JH"),
+         ("HK", "HK")],
+    "reduction_options":
+        [("RAW", "Raw Only"),
+         ("PREPARED", "Reduced (not Cals)"),
+         ("PROCESSED_BIAS", "Processed Biases Only"),
+         ("PROCESSED_FLAT", "Processed Flats Only"),
+         ("PROCESSED_FRINGE", "Processed Fringe Frames Only")],
+    "qa_options":
+        [("NotFail", "Not Fail"),
+         ("AnyQA", "Any"),
+         ("Pass", "Pass"),
+         ("Lucky", "Pass or Undefined"),
+         ("Win", "Pass or Usable"),
+         ("Usable", "Usable"),
+         ("Fail", "Fail")],
+    "inst_options":
+        [("GMOS", "GMOS-N or GMOS-S"),
+         ("GMOS-N", "GMOS-N"),
+         ("GMOS-S", "GMOS-S"),
+         ("GNIRS", "GNIRS"),
+         ("NIRI", "NIRI"),
+         ("NIFS", "NIFS"),
+         ("GSAOI", "GSAOI"),
+         ("F2", "F2"),
+         ("GPI", "GPI"),
+         ("NICI", "NICI"),
+         ("michelle", "Michelle"),
+         ("TReCS", "T-ReCS"),
+         ("bHROS", "bHROS"),
+         ("hrwfs", "HRWFS / AcqCam"),
+         ("OSCIR", "OSCIR"),
+         ("FLAMINGOS", "FLAMINGOS"),
+         ("Hokupaa+QUIRC", "Hokupaa+QUIRC"),
+         ("PHOENIX", "PHOENIX"),
+         ("TEXES", "TEXES"),
+         ("ABU", "ABU"),
+         ("CIRPASS", "CIRPASS")],
+    "obs_cls_options":
+        [("science", "science"),
+         ("acq", "acq"),
+         ("progCal", "progCal"),
+         ("dayCal", "dayCal"),
+         ("partnerCal", "partnerCal"),
+         ("acqCal", "acqCal")],
+    "obs_typ_options":
+        [("OBJECT", "OBJECT"),
+         ("BIAS", "BIAS"),
+         ("DARK", "DARK"),
+         ("FLAT", "FLAT"),
+         ("ARC", "ARC"),
+         ("PINHOLE", "PINHOLE"),
+         ("RONCHI", "RONCHI"),
+         ("CAL", "CAL"),
+         ("FRINGE", "FRINGE"),
+         ("MASK", "MOS MASK")],
+    "ao_options":
+        [("NOTAO", "Not AO"),
+         ("AO", "AO"),
+         ("NGS", "NGS"),
+         ("LGS", "LGS")],
+    "bin_options":
+        [("1x1", "1x1"),
+         ("1x2", "1x2"),
+         ("1x4", "1x4"),
+         ("2x1", "2x1"),
+         ("2x2", "2x2"),
+         ("2x4", "2x4"),
+         ("4x1", "4x1"),
+         ("4x2", "4x2"),
+         ("4x4", "4x4")],
+    "gmos_droi_options":
+        [("Full Frame", "Full Frame"),
+         ("Central Spectrum", "Central Spectrum"),
+         ("Central Stamp", "Central Stamp")],
+    "niri_droi_options":
+        [("Full Frame", "Full Frame"),
+         ("Central768", "Central 768"),
+         ("Central512", "Central 512"),
+         ("Central256", "Central 256")],
+    "gnirs_cam_options":
+        [("GnirsShort", '0.15 &quot;/pix'),
+         ("GnirsLong", '0.05 &quot;/pix')],
+    "niri_cam_options":
+        [("f6", 'f/6 (0.12 &quot;/pix)'),
+         ("f13.9", 'f/14 (0.05 &quot;/pix)'),
+         ("f32", 'f/32 (0.02 &quot;/pix)')]
+    }

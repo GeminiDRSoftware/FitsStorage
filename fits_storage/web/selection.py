@@ -102,10 +102,24 @@ getselection_booleans = {
     }
 
 getselection_detector_conf = {
-    'low', 'high', 'slow', 'fast', 'Deep', 'Shallow', 'Bright', 'Medium',
-    'Faint', 'NodAndShuffle', 'Classic', 'Very_Bright_Objects',
-    'Bright_Objects', 'Faint_Objects', 'Very_Faint_Objects',
-    'Low_Background', 'Medium_Background', 'High_Background'
+    'low':'gmos_gain',
+    'high':'gmos_gain',
+    'slow':'gmos_speed',
+    'fast':'gmos_speed',
+    'Deep':'gnirs_depth',
+    'Shallow':'gnirs_depth',
+    'Bright':'nifs_readmode',
+    'Medium':'nifs_readmode',
+    'Faint':'nifs_readmode',
+    'NodAndShuffle':'nod_and_shuffle',
+    'Classic':'nod_and_shuffle',
+    'Very_Bright_Objects':'gnirs_readmode',
+    'Bright_Objects':'gnirs_readmode',
+    'Faint_Objects':'gnirs_readmode',
+    'Very_Faint_Objects':'gnirs_readmode',
+    'Low_Background':'niri_readmode',
+    'Medium_Background':'niri_readmode',
+    'High_Background':'niri_readmode',
     }
 
 getselection_detector_roi = {

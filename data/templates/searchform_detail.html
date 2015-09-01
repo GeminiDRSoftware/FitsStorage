@@ -1,0 +1,568 @@
+{%- macro set_value_if(text, condition) -%}
+{% if condition %} value="{{ text }}"{% endif %}
+{%- endmacro %}
+{%- macro generate_option_list(options, selected, evaluate_sel=True) -%}
+{% for value, text in options %}
+        <option value="{{ value }}"{% if evaluate_sel and (value == selected) %} selected{% endif %}>{{ text }}</option>
+{%- endfor %}
+{%- endmacro %}
+
+
+<div class="right">
+
+    <label>Target Name:</label>
+    <input id="object_name" type="text" placeholder="(leave blank for Any)" name="object" value="{{ updated.object }}" />
+    <span class="help"> (Name of Target)
+        <span class="helpright">Enter a target name here. If you don't <i>Resolve</i> the target name into a co-ordinate search, this will do a search on the target name as specified in the phase-II. Be aware that observers sometimes use a different target name to what you expect - this is only really useful if you set up the Phase-II, or otherwise know exactly what target name was used. If you set a Name Resolver and click resolve, we will fetch co-ordinates of your target from the resolver specified and then the search will disregard the target name and search only by co-ordinates. Note that the name resolvers will not work solar system bodies.<br /><br />Searches on the target name are <b>not case sensitive</b>, and you can use the * character as a wildcard - for example <tt>mrk*</tt> will find e.g. <tt>Mrk42</tt>, and <tt>*io*</tt> will find e.g. <tt>Io</tt>, <tt>Io.eph</tt>, <tt>Or<b>io</b>n</tt>, etc.</span>
+    </span><br />
+ 
+    <label>Resolver:</label>
+    <select id="resolver" class="ddw">
+         <option value="">None</option>
+         <option value="SIMBAD">SIMBAD</option>
+         <option value="NED">NED</option>
+         <option value="VIZIER">VIZIER</option>
+    </select>
+    <button id="resbutton" type="button">Resolve</button>
+    <span id="resload" style="display:none"><img src="/htmldocs/ajax-loading.gif" alt="In progress"></span>
+    <span class="help"> (Name Resolver)
+        <span class="helpright">Choose a Name Resolver and click the resolve button to attempt to find the co-ordinates of your named source. If the form has both a target name and co-ordinates, the search will disregard the target name. Note: The name resolvers will only work for objects outside the solar system, there's no capability for meaningful use with moving objects, for example planets.</span>
+    </span>
+    <br />
+
+    <label>RA:</label>
+    <input id="ra" type="text" placeholder="(leave blank for Any)" name="ra" value="{{ updated.ra }}"/>
+    <span class="help"> (HH:MM:SS.ss or decimal degrees)
+    <span class="helpright">Right Ascension. You can use HH:MM:SS[.ss...] or decimal degrees. In either case you can specify a single value or a range, eg 11:22:33 - 12:34:56. If you enter a single value, also see the Search Radius field.</span>
+    </span><br />
+
+    <label>Dec:</label>
+    <input id="dec" type="text" placeholder="(leave blank for Any)" name="dec" value="{{ updated.dec }}" />
+    <span class="help"> ([+-]DD:MM:SS.ss or decimal degrees)
+    <span class="helpright">Declination. You can use [+|-]DD:MM:SS[.ss...] or decimal degrees. In either case you can specify a single value or a range, eg 11:22:33 - 12:34:56 or -65:43:21 - -12:34:56. If you enter a single value, also see the Search Radius field.</span>
+    </span><br />
+
+    <label>Search radius:</label>
+    <input type="text" placeholder="(leave blank for Any)" name="sr" value="{{ updated.sr }}" />
+    <span class="help"> (arcsecs or decimal degrees)
+        <span class="helpright">Search radius in arcseconds, unless you specify "d" or "degs" to make it decimal degrees. i.e. <b>180</b> means 180 arcseconds, <b>10degs</b> or <b>10d</b> means 10 degrees. <br />If RA and/or dec  has been given as a single value (as opposed to a range), this specifies the size of the box around it to search. This is actually a simple search in a square box (in the tangent plane), not a true cone search. Strange things may happen near the poles.</span>
+    </span>
+    <br />
+    <label>Raw / Reduced:</label>
+    <select class="ddwide" name="reduction_state">
+        <option value="">Any</option>
+{{ generate_option_list(reduction_options, updated.reduction) }}
+    </select>
+    <span class="help">(Select data by processing state)
+    <span class="helpright">You can select raw data, reduced data, or processed calibrations. We only guarantee the presence of RAW data, reduced data and processed calibrations are mostly on a best efforts basis.</span></span>
+    <br />
+    
+    <label class="wide" id="advanced_header">Advanced Options &#9662;</label>
+    <span class="help">(click to show / hide)
+    <span class="helpright">Click where it says "Advanced Options" to show or hide the advanced options.</span></span>
+    <div id="advanced_options" style="display:none">
+        <select id="engdata" class="ddw" name="engineering">
+{{ generate_option_list(engdata_options, updated.engineering) }}
+        </select>
+        Engineering data
+        <span class="help">(help)
+            <span class="helpright">Choose whether to include, exclude, or display only respective engineering data.</span>
+        </span>
+        <br />
+
+        <select id="svdata" class="ddw" name="science_verification">
+{{ generate_option_list(svdata_options, updated.science_verification) }}
+        </select>
+        Science Verification data
+        <span class="help">(help)
+            <span class="helpright">Choose whether to include, exclude, or display only science verification data.</span>
+        </span><br />
+
+        QA State:
+        <select id="qastate" class="ddw" name="qa_state">
+{{ generate_option_list(qa_options, updated.qa_state) }}
+        </select>
+        <span class="help">(help)
+            <span class="helpright">Define the quality of results you wish to access - choose Any for all results, including Fail.</span>
+        </span>
+        <br /> 
+        Filename Prefix:
+        <input id="filepre" type="text" placeholder="(leave empty for Any)" name="filepre" />
+<span class="help">(help)
+            <span class="helpright">Specify the first part of the filename to match by.</span>
+        </span>
+        <br />
+
+    </div>
+</div>
+<div class="left">
+    <label>Program ID:</label>
+    <input type="text" placeholder="(leave empty for Any)" name="program_id" value="{{ updated.program_id }}"/>
+    <span class="help">(or Obs. ID / Data Label. Exact Match)
+        <span class="helpleft">You can put a program ID, Observation ID or Data Label into this box. The search will be for an exact match to what you put in, substring type matches are not provided. Example: GN-2001A-Q-1</span>
+    </span><br />
+
+    <label>UTC Date:</label>
+    <input type="text" placeholder="(leave empty for Any)" name="date" value="{{ updated.date }}" />
+    <span class="help">(YYYYMMDD or start - end)
+        <span class="helpleft">You can specify either an individual date in the form YYYYMMDD, or a date range in the form yyyymmdd - YYYYMMDD. Examples: 20101231 or 20100101 - 20100131. Note that this searches for data taken on the <b>UTC date</b> specified, and that Gemini South observing nights span two UTC dates.</span>
+    </span><br />
+
+    <label>Instrument:</label>
+    <select id="instselect" class="ddw" name="inst">
+        <option value="">Any</option>
+{{ generate_option_list(inst_options, updated.inst) }}
+    </select>
+    <span class="help">(Select GMOS for GMOS-N and GMOS-S)
+        <span class="helpleft">Select the instrument you are looking for data from.</span>
+    </span><br />
+
+    <label>Obs. Class:</label>
+    <select class="ddw" name="observation_class">
+        <option value="">Any</option>
+{{ generate_option_list(obs_cls_options, updated.observation_class) }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select an Observation Class here, or set it to Any to not search by Observation Class.</span>
+    </span><br />
+
+    <label>Obs. Type:</label>
+    <select class="ddw" name="observation_type">
+        <option value="">Any</option>
+{{ generate_option_list(obs_typ_options, updated.observation_type) }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select an Observation Type here, or set it to Any to not search by Observation Type.</span>
+    </span><br />
+
+    <label>Mode:</label>
+    <select id="Mode" class="ddw" name="mode">
+        <option value="">Any</option>
+{{ generate_option_list(mode_options, updated.mode) }}
+    </select>
+    <span class="help">(Imaging / Spectroscopy etc)
+        <span class="helpleft">Select Imaging or various Spectroscopy modes here. Spectroscopy implies all spectroscopic modes. Note that not all instruments support all these modes, such searches will return no results.</span>
+    </span><br />
+    
+    <label>Adaptive Optics:</label>
+    <select class="ddw" name="AO">
+        <option value="">Any</option>
+{{ generate_option_list(ao_options, updated.ao) }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select data did or did not use Adaptive Optics, or that used specifically LGS or NGS AO.</span>
+    </span><br />
+
+    <div id="Spec" style="display:none">
+        <label class="wide">Central Wavelength: </label>
+        <input type="text" placeholder="(Any)" name="cenwlen" size="8" value="{{ updated.cenwlen }}" />
+        <span class="help"> (microns, eg 1.2 or 2.0-2.4)
+            <span class="helpleft">Central Wavelength in microns. You can supply a single value or a range. If you use a single value, we assume a range of +-0.1. Note this just searches for files where the <b>central wavelength</b> of a spectrum is within the given range, or within 0.1 microns of the given value. It does not currently know the spectral range of the data and check if the value given is within that range. Note also that central wavelength isn't a very useful concept with some configurations - in particulr <b>we do not recomend searching on central wavelength for GNIRS XD data.</b></span>
+        </span><br />
+    </div>
+</div>
+
+<div class="next" id="GMOS" style="display:none">
+    <br /><label>GMOS</label><br />
+    
+    <div class="left">
+    <label>Exposure Time:</label><input id="GMOSexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)"{{ set_value_if(updated.exposure_time, 'GMOS' in updated.inst) }} />
+    <span class="help">(Exposure Time)
+        <span class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</span>
+    </span><br />
+
+
+    <label>Binning:</label><select id="gmos_binning" class="ddw" name="binning">
+        <option value="">Any</option>
+{{ generate_option_list(bin_options, updated.binning) }}
+    </select>
+    <span class="help">(CCD Binning)
+        <span class="helpleft">Select a CCD binning.</span>
+    </span><br />
+
+    <label>Disperser:</label><select id="gmos_disperser" class="ddw" name="disperser">
+        <option value="">Any</option>
+{{ generate_option_list(gmos_disp_options, updated.disperser, 'GMOS' in updated.inst) }}
+    </select>
+    <span class="help">(GMOS Gratings)
+        <span class="helpleft">Select a GMOS grating. You can select MIRROR to force Imaging mode</span>
+    </span><br />
+    
+    <label>Filter:</label><select id="gmos_filter" class="ddw" name="filter">
+        <option value="">Any</option>
+{{ generate_option_list(gmos_filter_options, updated.filter, 'GMOS' in updated.inst) }}
+    </select>
+    <span class="help">(GMOS filters)
+        <span class="helpleft">Select a GMOS filter.</span>
+    </span><br />
+        
+
+
+    <label>Mask:</label><select id="gmos_mask" class="ddw" name="focal_plane_mask">
+        <option value="">Any</option>
+{{ generate_option_list(gmos_mask_options, updated.focal_plane_mask, 'GMOS' in updated.inst) }}
+    </select>
+    <input id="custom_mask" class="mask" name="custom_mask" type="text" placeholder="(custom mask)" value="{{ updated.custom_mask }}"/>
+    <span class="help">(Focal Plane Mask)
+        <span class="helpleft">Select a GMOS mask. To select a custom mask name, or one not listed in the pulldown, select "custom" and them put the mask name in the text field. This will do an exact match.</span>
+    </span><br /><br />
+    </div>
+
+    <div class="right">
+    <label>Nod&amp;Shuffle:</label><select id="NandS" class="ddw" name="nod_and_shuffle">
+        <option value="">Any</option>
+{{ generate_option_list(nas_options, updated.nod_and_shuffle) }}
+    </select>
+    <span class="help">(Nod and Shuffle)
+        <span class="helpright">Select whether you want to search for Nod and Shuffle or Classic readout data. Leave at Any for both. Classic means <b>not</b> Nod and Shuffle.</span>
+    </span><br />
+
+    <label>Readout Speed:</label><select id="gmos_readspeed" class="ddw" name="gmos_speed">
+        <option value="">Any</option>
+{{ generate_option_list(gmos_speed_options, updated.gmos_speed) }}
+    </select>
+    <span class="help">(Readout Speed)
+        <span class="helpright">Select between slow and fast read speed. Leave at Any for both.</span>
+    </span><br />
+
+    <label>Readout Gain:</label><select id="gmos_gain" class="ddw" name="gmos_gain">
+        <option value="">Any</option>
+{{ generate_option_list(gmos_gain_options, updated.gmos_gain) }}
+    </select>
+    <span class="help">(Readout Gain)
+        <span class="helpright">Search for low or high gain data. Leave at Any for both</span>
+    </span><br />
+
+    <label>ROI:</label><select id="gmos_roi" class="ddw" name="detector_roi">
+        <option value="">Any</option>
+{{ generate_option_list(gmos_droi_options, updated.detector_roi, 'GMOS' in updated.inst) }}
+    </select>
+    <span class="help">(Region of Interest)
+        <span class="helpright">Search for various Regions of Interest, otherwise known as readout area. It's not possible to search for custom ROIs here, though they will be included if you leave this at Any.</span>
+    </span><br /><br />
+    </div>
+
+</div>
+<br />
+
+<div class="next" id="GNIRS" style="display:none">
+    <br /><label>GNIRS</label><br />
+
+    <div class="left">
+    <label>Disperser:</label><select id="gnirs_disperser" class="ddw" name="disperser">
+        <option value="">Any</option>
+{{ generate_option_list(gnirs_disp_options, updated.disperser, updated.inst == 'GNIRS') }}
+    </select>
+    <span class="help">(GNIRS Gratings / XD prisms)
+        <span class="helpleft">GNIRS grating, and optionally cross-dispersing prism. The XD (cross dispersed) options will select both the LXD and SXD prisms.</span>
+    </span><br />
+
+    <label>Camera:</label><select id="gnirs_cam" class="ddw" name="camera">
+        <option value="">Any</option>
+{{ generate_option_list(gnirs_cam_options, updated.camera, updated.inst == 'GNIRS') }}
+    </select>
+    <span class="help">(GNIRS Camera)
+        <span class="helpleft">GNIRS camera. Note that in either case, both the Blue and Red cameras will be selected (eg 0.05 "/pix will select both the LongBlue and LongRed cameras)</span>
+    </span><br />
+
+    <label>Mask:</label><select id="gnirs_mask" class="ddw" name="focal_plane_mask">
+        <option value="">Any</option>
+{{ generate_option_list(gnirs_mask_options, updated.focal_plane_mask, updated.inst == 'GNIRS') }}
+    </select>
+    <span class="help">(GNIRS focal plane mask)
+        <span class="helpleft">Note that if you're searching for Cross Dispersed data, you almost certainly want to select the "XD" version of the slit. These are the shorter slits intended for use in cross dispersed mode. The version without XD on the end is the full length longslit.</span>
+    </span><br />
+
+    <label>Filter:</label><select id="gnirs_filter" class="ddw" name="filter">
+        <option value="">Any</option>
+{{ generate_option_list(gnirs_filter_options, updated.filter, updated.inst == 'GNIRS') }}
+    </select>
+    <span class="help">(GNIRS filter)
+        <span class="helpleft">For Imaging, this selects the filter as normal. For spectroscopy, you can specify the blocking filters here. Leave this set to Any for spectroscopy data unless you only want data that used a specific blocking filter.</span>
+    </span><br \><br />
+    </div>
+
+    <div class="right">           
+    <label>Exposure Time:</label><input id="GNIRSexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)"{{ set_value_if(updated.exposure_time, updated.inst == 'GNIRS') }}  />
+    <span class="help">(Exposure Time)
+        <span class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 50 - 80.</span>
+    </span><br />
+
+    <label>Coadds:</label><input id="GNIRScoadds" name="coadds" type="text" placeholder="(leave blank for Any)" {{ set_value_if(updated.coadds, updated.inst == 'GNIRS') }} />
+    <span class="help">(Coadds)
+        <span class="helpright">Specify the number of coadds here. This is an exact integer match</span>
+    </span><br />
+
+    <label>Well Depth:</label><select id="gnirs_depth" class="ddw" name="well_depth">
+        <option value="">Any</option>
+{{ generate_option_list(gnirs_depth_options, updated.gnirs_depth) }}
+    </select>
+    <span class="help">(GNIRS Well Depth)
+        <span class="helpright">GNIRS well depth setting</span>
+    </span><br />
+
+    <label>Read Mode:</label><select id="gnirs_readmode" class="ddw" name="gnirs_readmode">
+        <option value="">Any</option>
+{{ generate_option_list(gnirs_readmode_options, updated.gnirs_readmode) }}
+    </select>
+    <span class="help">(GNIRS Read Mode)
+        <span class="helpright">GNIRS readmode</span>
+    </span><br /><br />
+    </div>
+
+</div>
+
+<div class="next" id="NIRI" style="display:none">
+    <br /><label>NIRI</label><br />
+
+    <div class="left">
+        <label>Filter:</label><select id="niri_filter" class="ddw" name="filter">
+            <option value="">Any</option>
+{{ generate_option_list(niri_filter_options, updated.filter, updated.inst == 'NIRI') }}
+        </select>
+        <span class="help">(NIRI Filters)
+            <span class="helpleft">Select a NIRI filter from the list</span>
+        </span><br />
+        
+        <label>Disperser:</label><select id="niri_disperser" class="ddw" name="disperser">
+            <option value="">Any</option>
+{{ generate_option_list(niri_disp_options, updated.disperser, updated.inst == 'NIRI') }}
+        </select>
+        <span class="help">(NIRI grisms)
+            <span class="helpleft">Select a NIRI grism from the list</span>
+        </span><br />
+
+        <label>Mask:</label><select id="niri_mask" class="ddw" name="focal_plane_mask">
+            <option value="">Any</option>
+{{ generate_option_list(niri_mask_options, updated.focal_plane_mask, updated.inst == 'NIRI') }}
+        </select>
+        <span class="help">(Focal Plane Mask)
+            <span class="helpleft">Select a NIRI focal plane mask from the list. Note that the NIRI f32-10pix slit is actually just the f6-2pix slit used with the f32 camera, and shows up in the headers (and thus the archive) as such.</span>
+        </span><br />
+
+        <label>Camera:</label><select id="niri_cam" class="ddw" name="camera">
+            <option value="">Any</option>
+{{ generate_option_list(niri_cam_options, updated.camera, updated.inst == 'NIRI') }}
+        </select>
+        <span class="help">(NIRI Camera / pixel scale)
+            <span class="helpleft">Select a NIRI camera from the list. This is what determines pixel scale.</span>
+        </span><br />
+    </div>
+    
+    <div class="right">
+        <label>Exposure Time:</label><input id="NIRIexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)"{{ set_value_if(updated.exposure_time, updated.inst == 'NIRI') }} />
+        <span class="help">(Exposure Time)
+            <span class="helpright">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 50 - 80.</span>
+        </span><br />
+
+        <label>Coadds:</label><input id="NIRIcoadds" name="coadds" type="text" placeholder="(leave blank for Any)"{{ set_value_if(updated.coadds, updated.inst == 'NIRI') }} />
+        <span class="help">(Coadds)
+            <span class="helpright">Specify the number of coadds here. This is an exact integer match</span>
+        </span><br />
+
+        <label>Read Mode:</label><select id="niri_readmode" class="ddw" name="niri_readmode">
+            <option value="">Any</option>
+{{ generate_option_list(niri_readmode_options, updated.niri_readmode) }}
+        </select>
+        <span class="help">(NIRI Read Mode)
+            <span class="helpright">Select a NIRI Read Mode.</span>
+        </span><br />
+
+        <label>Subarray:</label><select id="niri_roi" class="ddw" name="detector_roi">
+            <option value="">Any</option>
+{{ generate_option_list(niri_droi_options, updated.detector_roi, updated.inst == 'NIRI') }}
+        </select>
+        <span class="help">(Subarray)
+            <span class="helpright">Select a NIRI subarray, also known as Region of Interest (ROI)</span>
+        </span><br />
+    </div>      
+</div>
+
+<div class="next" id="NIFS" style="display:none">
+    <br /><label>NIFS</label><br />
+    <div class="left">
+    <label>Disperser:</label><select id="nifs_disperser" class="ddw" name="disperser">
+        <option value="">Any</option>
+{{ generate_option_list(nifs_disp_options, updated.disperser, updated.inst == 'NIFS') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Help Text</span>
+    </span><br />
+
+    <label>Mask:</label><select id="nifs_mask" class="ddw" name="focal_plane_mask">
+        <option value="">Any</option>
+{{ generate_option_list(nifs_mask_options, updated.focal_plane_mask, updated.inst == 'NIFS') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Help Text</span>
+    </span><br />
+    </div>
+
+    <div class="right">
+    <label>Exposure Time:</label><input id="NIFSexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)"{{ set_value_if(updated.exposure_time, updated.inst == 'NIFS') }} />
+    <span class="help">(Exposure Time)
+        <span class="helpright">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</span>
+    </span><br />
+
+    <label>Coadds:</label><input id="NIFScoadds" name="coadds" type="text" placeholder="(leave blank for Any)"{{ set_value_if(updated.coadds, updated.inst == 'NIFS') }} />
+    <span class="help">(Coadds)
+        <span class="helpright">Specify the number of coadds here. This is an exact integer match</span>
+    </span><br />
+
+    <label>Read Mode:</label><select id="nifs_readmode" class="ddw" name="nifs_readmode">
+            <option value="">Any</option>
+{{ generate_option_list(nifs_readmode_options, updated.nifs_readmode) }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Help Text</span>
+    </span><br /><br />
+    </div>
+</div>
+
+<div class="next" id="Michelle" style="display:none">
+    <br /><label>Michelle</label><br />
+    <label>Filter:</label><select id="michelle_filter" class="ddw" name="filter">
+        <option value="">Any</option>
+{{ generate_option_list(michelle_filter_options, updated.filter, updated.inst == 'michelle') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select a Michelle filter.</span>
+    </span><br />
+
+    <label>Disperser:</label><select id="michelle_disperser" class="ddw" name="disperser">
+        <option value="">Any</option>
+{{ generate_option_list(michelle_disp_options, updated.disperser, updated.inst == 'michelle') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select a Michelle disperser</span>
+    </span><br />
+
+    <label>Mask:</label><select id="michelle_mask" class="ddw" name="focal_plane_mask">
+        <option value="">Any</option>
+{{ generate_option_list(michelle_mask_options, updated.focal_plane_mask, updated.inst == 'michelle') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select a Michelle mask</span>
+    </span><br />
+</div>
+
+<div class="next" id="TReCS" style="display:none">
+    <br /><label>TReCS</label><br />
+    <label>Filter:</label><select id="trecs_filter" class="ddw" name="filter">
+        <option value="">Any</option>
+{{ generate_option_list(trecs_filter_options, updated.filter, updated.inst == 'TReCS') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select a TReCS filter.</span>
+    </span><br />
+
+    <label>Disperser:</label><select id="trecs_disperser" class="ddw" name="disperser">
+        <option value="">Any</option>
+{{ generate_option_list(trecs_disp_options, updated.disperser, updated.inst == 'TReCS') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select a TReCS disperser</span>
+    </span><br />
+
+    <label>Mask:</label><select id="trecs_mask" class="ddw" name="focal_plane_mask">
+        <option value="">Any</option>
+{{ generate_option_list(trecs_mask_options, updated.focal_plane_mask, updated.inst == 'TReCS') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select a TReCS mask</span>
+    </span><br />
+</div>
+
+<div class="next" id="F2" style="display:none">
+    <br /><label>F2</label><br />
+    <div class="left">
+    <label>Filter:</label><select id="F2_filter" class="ddw" name="filter">
+        <option class="F2filter" value="">Any</option>
+{{ generate_option_list(f2_filter_options, updated.filter, updated.inst == 'F2') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select an F2 filter.</span>
+    </span><br />
+
+    <label>Disperser:</label><select id="F2_disperser" class="ddw" name="disperser">
+        <option value="">Any</option>
+{{ generate_option_list(f2_disp_options, updated.disperser, updated.inst == 'F2') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select an F2 disperser</span>
+    </span><br />
+    </div>
+
+    <div class="right">
+    <label>Mask:</label><select id="F2_mask" class="ddw" name="focal_plane_mask">
+        <option value="">Any</option>
+{{ generate_option_list(f2_mask_options, updated.focal_plane_mask, updated.inst == 'F2') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select an F2 mask</span>
+    </span><br />
+
+    <label>Exposure Time:</label><input id="F2expT" name="exposure_time" type="text" placeholder="(leave blank for Any)"{{ set_value_if(updated.exposure_time, updated.inst == 'F2') }} />
+    <span class="help">(Exposure Time)
+        <span class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</span>
+    </span><br /><br />
+    </div>
+
+</div>
+
+<div class="next" id="NICI" style="display:none">
+    <br /><label>NICI</label><br />
+    <label>Filter:</label><select id="nici_filter" class="ddw" name="filter">
+        <option value="">Any</option>
+{{ generate_option_list(nici_filter_options, updated.filter, updated.inst == 'NICI') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select a NICI filter.</span>
+    </span><br />
+</div>
+
+<div class="next" id="GSAOI" style="display:none">
+    <br /><label>GSAOI</label><br />
+    <label>Filter:</label><select id="gsaoi_filter" class="ddw" name="filter">
+        <option value="">Any</option>
+{{ generate_option_list(gsaoi_filter_options, updated.filter, updated.inst == 'GSAOI') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select a GSAOI filter.</span>
+    </span><br />
+
+    <label>Exposure Time:</label><input id="GSAOIexpT" name="exposure_time" type="text" placeholder="(leave blank for Any)"{{ set_value_if(updated.exposure_time, updated.inst == 'GSAOI') }} />
+    <span class="help">(Exposure Time)
+        <span class="helpleft">Specify Exposure Time here. If you give a single number we search half a second each way, eg 10.0 searches 9.5 - 10.5. If you give a range, we search the range you give, eg 500 - 800.</span>
+    </span><br />
+</div>
+
+<div class="next" id="GPI" style="display:none">
+    <br /><label>GPI</label><br />
+    <label>Filter:</label><select id="gpi_filter" class="ddw" name="filter">
+        <option value="">Any</option>
+{{ generate_option_list(gpi_filter_options, updated.filter, updated.inst == 'GPI') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select a GPI filter.</span>
+    </span><br />
+
+    <label>Disperser:</label><select id="gpi_disperser" class="ddw" name="disperser">
+        <option value="">Any</option>
+{{ generate_option_list(gpi_disp_options, updated.disperser, updated.inst == 'GPI') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select a GPI disperser.</span>
+    </span><br />
+
+</div>
+
+
+<div class="next center">
+<input type="submit" name="Search" value="Search" />
+<input type="reset" value="Reset to previous search" />
+<input type="button" value="Start Over" onclick="window.location='/searchform'" />
+<input type="submit" name="ObsLogsOnly" value="Search ObsLogs Only" />
+<span class="help">(help on buttons)
+    <span class="helpright">Search - search as per the form fields.<br />Reset to previous search - resets the form to the settings from when you last hit search.<br />Start Over - resets the form to the blank initial defaults.<br />Search ObsLogs Only - Search for ObsLogs by Date and/or Program ID.</span></span>
+<br /></div>
