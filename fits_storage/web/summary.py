@@ -87,7 +87,7 @@ def summary_body(req, sumtype, selection, orderby, links=True):
             querylog.selection = str(selection)
             querylog.query_started = datetime.datetime.utcnow()
 
-            headers = list_headers(session, selection, orderby)
+            headers = list_headers(session, selection, orderby, full_query=True)
             num_headers = len(headers)
 
             hit_open_limit = num_headers == fits_open_result_limit
@@ -110,7 +110,7 @@ def summary_body(req, sumtype, selection, orderby, links=True):
             # If this is associated_cals, we do the association here
             if sumtype == 'associated_cals':
                 querylog.add_note("Associated Cals")
-                headers = associate_cals(session, headers)
+                headers = associate_cals(session, (x[0] for x in headers))
                 querylog.cals_completed = datetime.datetime.utcnow()
                 querylog.numcalresults = len(headers)
 
@@ -205,11 +205,11 @@ def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, 
 
         def next(self):
             header = self.headers.next()
-            row = sumgen.table_row(header)
+            row = sumgen.table_row(*header)
             self.total = self.total + 1
             if row.can_download:
                 self.down    = self.down + 1
-                self.bcount += header.diskfile.file_size
+                self.bcount += header[1].file_size
 
             return row
 

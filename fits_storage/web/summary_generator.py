@@ -381,7 +381,7 @@ class SummaryGenerator(object):
 
         return row
 
-    def table_row(self, header):
+    def table_row(self, header, diskfile, file):
         """
         Returns a row object for c for columns as configured, pulling data from the
         header object given.
@@ -392,20 +392,20 @@ class SummaryGenerator(object):
         for colkey, col in self.columns.items():
             if col['want']:
                 if col['summary_func']:
-                    value = getattr(self, col['summary_func'])(header)
+                    value = getattr(self, col['summary_func'])(header, diskfile, file)
                     if colkey == 'download' and 'N/A' not in value:
                         row.can_download = True
                     row.add(value)
                 elif col['header_attr']:
                     row.add(getattr(header, col['header_attr']))
                 elif col['diskfile_attr']:
-                    row.add(getattr(header.diskfile, col['diskfile_attr']))
+                    row.add(getattr(diskfile, col['diskfile_attr']))
                 else:
                     row.add("Error: Not Defined in SummaryGenerator!")
 
         return row
 
-    def filename(self, header):
+    def filename(self, header, diskfile, file):
         """
         Generates the filename column html
         """
@@ -417,29 +417,29 @@ class SummaryGenerator(object):
         if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
             # The basic filename part, optionally as a link to the header text
             if self.links != NO_LINKS:
-                html = '<a href="/fullheader/%d" target="_blank">%s</a>' % (header.diskfile.id, header.diskfile.file.name)
+                html = '<a href="/fullheader/%d" target="_blank">%s</a>' % (diskfile.id, file.name)
             else:
-                html = str(header.diskfile.file.name)
+                html = str(file.name)
 
             # Do we have any fits verify errors to flag?
-            if header.diskfile.fverrors:
+            if diskfile.fverrors:
                 if self.links != NO_LINKS:
-                    html += ' <a href="/fitsverify/%d" target="_blank">-fits!</a>' % (header.diskfile.id)
+                    html += ' <a href="/fitsverify/%d" target="_blank">-fits!</a>' % (diskfile.id)
                 else:
-                    html += ' -fits!' % (header.diskfile.id)
+                    html += ' -fits!' % (diskfile.id)
 
             # Do we have metadata errors to flag? (only on non Eng data)
-            if (header.engineering is False) and (not header.diskfile.mdready):
+            if (header.engineering is False) and (not diskfile.mdready):
                 if self.links != NO_LINKS:
-                    html += ' <a href="/mdreport/%d" target="_blank">-md!</a>' % (header.diskfile.id)
+                    html += ' <a href="/mdreport/%d" target="_blank">-md!</a>' % (diskfile.id)
                 else:
                     html += ' -md!'
 
             return html
         else:
-            return self.prop_message(header, header.diskfile.file.name)
+            return self.prop_message(header, file.name)
 
-    def datalabel(self, header):
+    def datalabel(self, header, *args):
         """
         Generates the datalabel column html
         """
@@ -457,7 +457,7 @@ class SummaryGenerator(object):
 
         return html
 
-    def ut_datetime(self, header):
+    def ut_datetime(self, header, *args):
         """
         Generates the UT datetime column html
         """
@@ -474,7 +474,7 @@ class SummaryGenerator(object):
         return "None"
 
 
-    def instrument(self, header):
+    def instrument(self, header, *args):
         """
         Generates the instrument column html
         """
@@ -497,7 +497,7 @@ class SummaryGenerator(object):
                     html += ' NGS'
         return html
 
-    def observation_class(self, header):
+    def observation_class(self, header, *args):
         """
         Generates the observation_class column html
         """
@@ -507,7 +507,7 @@ class SummaryGenerator(object):
         else:
             return header.observation_class
 
-    def observation_type(self, header):
+    def observation_type(self, header, *args):
         """
         Generates the observation_type column html
         """
@@ -517,7 +517,7 @@ class SummaryGenerator(object):
         else:
             return header.observation_type
 
-    def exposure_time(self, header):
+    def exposure_time(self, header, *args):
         """
         Generates the exposure time column html
         """
@@ -527,7 +527,7 @@ class SummaryGenerator(object):
         except (TypeError, AttributeError):
             return ''
 
-    def airmass(self, header):
+    def airmass(self, header, *args):
         """
         Generates the airmass column html
         """
@@ -541,7 +541,7 @@ class SummaryGenerator(object):
         else:
             return self.prop_message(header, 'N/A')
 
-    def local_time(self, header):
+    def local_time(self, header, *args):
         """
         Generates the local_time column html
         """
@@ -552,7 +552,7 @@ class SummaryGenerator(object):
             return ''
 
 
-    def object(self, header):
+    def object(self, header, *args):
         """
         Generates the object name column html
         """
@@ -588,14 +588,14 @@ class SummaryGenerator(object):
         else:
             return self.prop_message(header, 'N/A')
 
-    def filter_name(self, header):
+    def filter_name(self, header, *args):
         """
         Generates the filter name column html
         """
         # Just htmlescape it
         return htmlescape(header.filter_name)
 
-    def waveband(self, header):
+    def waveband(self, header, *args):
         """
         Generates the waveband column html
         """
@@ -609,7 +609,7 @@ class SummaryGenerator(object):
         else:
             return htmlescape(header.filter_name)
 
-    def download(self, header):
+    def download(self, header, diskfile, file):
         """
         Generates the download column html
         """
@@ -619,15 +619,15 @@ class SummaryGenerator(object):
 
             # Preview link
             if using_previews:
-                if header.diskfile.previews:
-                    html += '<span class="preview"><a href="/preview/%s">[P] </a></span>' % header.diskfile.file.name
+                if diskfile.previews:
+                    html += '<span class="preview"><a href="/preview/%s">[P] </a></span>' % file.name
 
             # Download link
-            html += '<a href="/file/%s">[D]</a>' % header.diskfile.file.name
+            html += '<a href="/file/%s">[D]</a>' % file.name
 
             # Download select button
             if self.sumtype in ['searchresults', 'associated_cals']:
-                html += " <input type='checkbox' name='files' value='%s'>" % header.diskfile.file.name
+                html += " <input type='checkbox' name='files' value='%s'>" % file.name
 
             html += '</div>'
 

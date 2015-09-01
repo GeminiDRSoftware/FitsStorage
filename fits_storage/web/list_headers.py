@@ -13,7 +13,7 @@ from ..gemini_metadata_utils import gemini_date, gemini_time_period_from_range
 from sqlalchemy import asc, desc
 import dateutil.parser
 
-def list_headers(session, selection, orderby):
+def list_headers(session, selection, orderby, full_query=False):
     """
     This function queries the database for a list of header table
     entries that satisfy the selection criteria.
@@ -25,7 +25,10 @@ def list_headers(session, selection, orderby):
     Returns a list of Header objects
     """
     # The basic query...
-    query = session.query(Header).select_from(Header, DiskFile, File)
+    if full_query:
+        query = session.query(Header, DiskFile, File).select_from(Header, DiskFile, File)
+    else:
+        query = session.query(Header).select_from(Header, DiskFile, File)
     query = query.filter(Header.diskfile_id == DiskFile.id)
     query = query.filter(DiskFile.file_id == File.id)
     query = queryselection(query, selection)
