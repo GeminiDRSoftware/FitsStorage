@@ -163,12 +163,16 @@ class Header(Base):
 
             # RA and Dec are not valid for AZEL_TARGET frames
             if 'AZEL_TARGET' not in ad.types:
-                self.ra = ad.ra().for_db()
-                self.dec = ad.dec().for_db()
+                self.ra = ad.ra(offsets=True).for_db()
+                self.dec = ad.dec(offsets=True).for_db()
                 if type(self.ra) is str:
                     self.ra = ratodeg(self.ra)
                 if type(self.dec) is str:
                     self.dec = dectodeg(self.dec)
+                if self.ra > 360.0 or self.ra < 0.0:
+                    self.ra = None
+                if self.dec > 90.0 or self.dec < -90.0:
+                    self.dec = None
 
             # These should be in the descriptor function really.
             azimuth = ad.azimuth().for_db()
