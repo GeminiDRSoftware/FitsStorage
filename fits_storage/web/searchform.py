@@ -109,7 +109,8 @@ def searchform(req, things, orderby):
         if selection:
             template_args.update(summary_body(req, session, 'searchresults', selection, orderby))
 
-        req.write(template.render(template_args))
+        for text in template.generate(template_args):
+            req.write(text)
 
     return apache.HTTP_OK
 

@@ -37,18 +37,19 @@ def summary(req, sumtype, selection, orderby, links=True, body_only=False):
 
 
     with session_scope() as session:
-        sb = summary_body(req, sumtype, selection, orderby, links)
+        template_args = summary_body(req, session, sumtype, selection, orderby, links)
         if body_only:
-            req.write(sb)
+            template = templating.get_env().get_template('summary_body.html')
         else:
             template = templating.get_env().get_template('summary.html')
 
-            req.write(template.render(
-                        sumtype      = sumtype,
-                        sayselection = sayselection(selection),
-                        sumbody = sb
-                        )
-                    )
+            template_args.update({
+                'sumtype'      : sumtype,
+                'sayselection' : sayselection(selection)
+                })
+
+        for text in template.generate(template_args):
+            req.write(text)
 
     return apache.HTTP_OK
 
