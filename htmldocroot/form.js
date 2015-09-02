@@ -51,9 +51,9 @@ function gmosCustomMaskEnable() {
 
 
 var tabInfo = [
-	Object({ id: 'resultstab', divId: 'searchresults' }),
-	Object({ id: 'caltab',     divId: 'calibration_results'}),
-	Object({ id: 'obslogstab', divId: 'obslog_results'})
+	{ id: 'resultstab', divId: 'searchresults' },
+	{ id: 'caltab',     divId: 'calibration_results'},
+	{ id: 'obslogstab', divId: 'obslog_results'}
 	];
 
 function setCurrentTab(tabName) {
