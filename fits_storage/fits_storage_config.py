@@ -97,6 +97,9 @@ fits_database = 'postgresql:///'+fits_dbname
 # Configure the auxillary data directory here
 fits_aux_datadir = "/opt/FitsStorage/data"
 
+# Configure the template directory here
+template_path = fits_aux_datadir + "/templates"
+
 # Configure the Backup Directory here
 fits_db_backup_dir = "/data/FitsStorage/backups"
 
