@@ -11,7 +11,7 @@ from mod_python import util
 
 from fits_storage_config import blocked_urls, use_as_archive
 from web.summary import summary
-from web.file_list import xmlfilelist, jsonfilelist, jsonsummary
+from web.file_list import xmlfilelist, jsonfilelist, jsonsummary, jsonqastate
 from web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead
 from web.xml_tape import xmltape
 from web.progsobserved import progsobserved
@@ -130,6 +130,7 @@ mapping_selection = {
     'xmlfilelist': xmlfilelist,     # The xml and json file list handlers
     'jsonfilelist': jsonfilelist,
     'jsonsummary': jsonsummary,
+    'jsonqastate': jsonqastate,
     'calmgr': calmgr,               # The calmgr handler
     'gmoscal': gmoscal,             # The GMOS twilight flat and bias report
 

@@ -6,6 +6,9 @@ summaries.
 import json
 
 from ..orm import sessionfactory
+from ..orm.header import Header
+from ..orm.diskfile import DiskFile
+from selection import queryselection
 from .summary import list_headers
 from .standards import xmlstandardobs
 from ..apache_return_codes import HTTP_OK
@@ -136,6 +139,34 @@ def jsonsummary(req, selection):
     json.dump(thelist, req, indent=4)
     return HTTP_OK
 
+def jsonqastate(req, selection):
+    """
+    This generates a JSON list giving datalabel and qa_state.
+    It is intended for use by the ODB.
+    It does not limit the number of results
+    """
+    req.content_type = "application/json"
+    # Like the summaries, only list canonical files by default
+    if 'canonical' not in selection.keys():
+        selection['canonical']=True
+
+    session = sessionfactory()
+    try:
+       # We do this directly rather than with list_headers for efficiency
+       # as this could be used on very large queries bu the ODB
+       query = session.query(Header).select_from(Header, DiskFile)
+       query = query.filter(Header.diskfile_id == DiskFile.id) 
+       query = queryselection(query, selection)
+
+       thelist = []
+       for header in query:
+           thelist.append({'data_label': _for_json(header.data_label),
+                           'qa_state': _for_json(header.qa_state)})
+    finally:
+        session.close()
+
+    json.dump(thelist, req)
+    return HTTP_OK
 
 from decimal import Decimal
 from datetime import datetime, date, time
