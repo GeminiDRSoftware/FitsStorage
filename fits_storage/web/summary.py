@@ -36,21 +36,23 @@ def summary(req, sumtype, selection, orderby, links=True, body_only=False):
     req.content_type = "text/html"
 
 
-    sb = summary_body(req, sumtype, selection, orderby, links)
-    if body_only:
-        req.write(sb)
-    else:
-        template = templating.get_env().get_template('summary.html')
+    with session_scope() as session:
+        sb = summary_body(req, sumtype, selection, orderby, links)
+        if body_only:
+            req.write(sb)
+        else:
+            template = templating.get_env().get_template('summary.html')
 
-        req.write(template.render(
-                    sumtype      = sumtype,
-                    sayselection = sayselection(selection),
-                    sumbody = sb
+            req.write(template.render(
+                        sumtype      = sumtype,
+                        sayselection = sayselection(selection),
+                        sumbody = sb
+                        )
                     )
-                )
+
     return apache.HTTP_OK
 
-def summary_body(req, sumtype, selection, orderby, links=True):
+def summary_body(req, session, sumtype, selection, orderby, links=True):
     """
     This is the main summary generator.
     req is an apache request handler request object
@@ -67,7 +69,7 @@ def summary_body(req, sumtype, selection, orderby, links=True):
     the html table containing the actual summary information.
     """
 
-    template = templating.get_env().get_template('summary_body.html')
+    # template = templating.get_env().get_template('summary_body.html')
 
     sumlinks = ALL_LINKS if links else NO_LINKS
 
@@ -79,74 +81,73 @@ def summary_body(req, sumtype, selection, orderby, links=True):
     if sumtype == 'searchresults':
         selection['present'] = True
 
-    with session_scope() as session:
-        try:
-            # Instantiate querylog, populate initial fields
-            querylog = QueryLog(req.usagelog)
-            querylog.summarytype = sumtype
-            querylog.selection = str(selection)
-            querylog.query_started = datetime.datetime.utcnow()
+    try:
+        # Instantiate querylog, populate initial fields
+        querylog = QueryLog(req.usagelog)
+        querylog.summarytype = sumtype
+        querylog.selection = str(selection)
+        querylog.query_started = datetime.datetime.utcnow()
 
-            headers = list_headers(session, selection, orderby, full_query=True)
-            num_headers = len(headers)
+        headers = list_headers(session, selection, orderby, full_query=True)
+        num_headers = len(headers)
 
-            hit_open_limit = num_headers == fits_open_result_limit
-            hit_closed_limit = num_headers == fits_closed_result_limit
+        hit_open_limit = num_headers == fits_open_result_limit
+        hit_closed_limit = num_headers == fits_closed_result_limit
 
-            querylog.query_completed = datetime.datetime.utcnow()
-            querylog.numresults = num_headers
-            # Did we get any selection warnings?
-            if 'warning' in selection:
-                querylog.add_note("Selection Warning: {}".format(selection['warning']))
-            # Note any notrecognised in the querylog
-            if 'notrecognised' in selection.keys():
-                querylog.add_note("Selection NotRecognised: %s" % selection['notrecognised'])
-            # Note in the log if we hit limits
-            if hit_open_limit:
-                querylog.add_note("Hit Open search result limit")
-            if hit_closed_limit:
-                querylog.add_note("Hit Closed search result limit")
+        querylog.query_completed = datetime.datetime.utcnow()
+        querylog.numresults = num_headers
+        # Did we get any selection warnings?
+        if 'warning' in selection:
+            querylog.add_note("Selection Warning: {}".format(selection['warning']))
+        # Note any notrecognised in the querylog
+        if 'notrecognised' in selection.keys():
+            querylog.add_note("Selection NotRecognised: %s" % selection['notrecognised'])
+        # Note in the log if we hit limits
+        if hit_open_limit:
+            querylog.add_note("Hit Open search result limit")
+        if hit_closed_limit:
+            querylog.add_note("Hit Closed search result limit")
 
-            # If this is associated_cals, we do the association here
-            if sumtype == 'associated_cals':
-                querylog.add_note("Associated Cals")
-                headers = associate_cals(session, (x[0] for x in headers))
-                querylog.cals_completed = datetime.datetime.utcnow()
-                querylog.numcalresults = len(headers)
+        # If this is associated_cals, we do the association here
+        if sumtype == 'associated_cals':
+            querylog.add_note("Associated Cals")
+            headers = associate_cals(session, (x[0] for x in headers))
+            querylog.cals_completed = datetime.datetime.utcnow()
+            querylog.numcalresults = len(headers)
 
-                # links are messed up with associated_cals, turn most of them off
-                if links:
-                    sumlinks = FILENAME_LINKS
+            # links are messed up with associated_cals, turn most of them off
+            if links:
+                sumlinks = FILENAME_LINKS
 
-            # Did we get any results?
-            if len(headers) > 0:
-                # We have a session at this point, so get the user and their program list to
-                # pass down the chain to use figure out whether to display download links
-                user = userfromcookie(session, req)
-                user_progid_list = get_program_list(session, user)
-                sumtable_data = summary_table(req, sumtype, headers, selection, sumlinks, user, user_progid_list)
-            else:
-                sumtable_data = {}
+        # Did we get any results?
+        if len(headers) > 0:
+            # We have a session at this point, so get the user and their program list to
+            # pass down the chain to use figure out whether to display download links
+            user = userfromcookie(session, req)
+            user_progid_list = get_program_list(session, user)
+            sumtable_data = summary_table(req, sumtype, headers, selection, sumlinks, user, user_progid_list)
+        else:
+            sumtable_data = {}
 
-            querylog.summary_completed = datetime.datetime.utcnow()
+        querylog.summary_completed = datetime.datetime.utcnow()
 
-            # Add and commit the querylog
-            session.add(querylog)
+        # Add and commit the querylog
+        session.add(querylog)
 
-            return template.render(
-                got_results      = sumtable_data,
-                dev_system       = (sumtype not in {'searchresults', 'associated_cals'}) and fits_system_status == 'development',
-                open_query       = openquery(selection),
-                hit_open_limit   = hit_open_limit,
-                hit_closed_limit = hit_closed_limit,
-                open_limit       = fits_open_result_limit,
-                closed_limit     = fits_closed_result_limit,
-                selection        = selection,
-                **sumtable_data
-                )
+        return dict(
+            got_results      = sumtable_data,
+            dev_system       = (sumtype not in {'searchresults', 'associated_cals'}) and fits_system_status == 'development',
+            open_query       = openquery(selection),
+            hit_open_limit   = hit_open_limit,
+            hit_closed_limit = hit_closed_limit,
+            open_limit       = fits_open_result_limit,
+            closed_limit     = fits_closed_result_limit,
+            selection        = selection,
+            **sumtable_data
+            )
 
-        except IOError:
-            pass
+    except IOError:
+        pass
 
 
 def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, user_progid_list=None):

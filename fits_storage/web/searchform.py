@@ -11,11 +11,12 @@ from .summary import summary_body
 from .calibrations import calibrations
 from . import templating
 
+from ..orm import session_scope
 from ..fits_storage_config import fits_aux_datadir
+from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
+
 import os
 import urllib
-
-from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
 
 # Load the titlebar html text into strings
 #with open(os.path.join(fits_aux_datadir, "titlebar.html")) as f:
@@ -94,19 +95,21 @@ def searchform(req, things, orderby):
 
     req.content_type = "text/html"
 
-    template_args = dict(
-        title_suffix = title_suffix,
-        thing_string = thing_string,
-        args_string  = args_string,
-        summary_body = summary_body(req, 'searchresults', selection, orderby),
-        updated      = updateform(selection),
-        debugging    = False, # Enable this to show some debugging data
-        selection    = selection,
-        # Look at the end of the file for this
-        **dropdown_options
-        )
+    with session_scope() as session:
+        template_args = dict(
+            title_suffix = title_suffix,
+            thing_string = thing_string,
+            args_string  = args_string,
+            updated      = updateform(selection),
+            debugging    = False, # Enable this to show some debugging data
+            selection    = selection,
+            # Look at the end of the file for this
+            **dropdown_options
+            )
+        if selection:
+            template_args.update(summary_body(req, session, 'searchresults', selection, orderby))
 
-    req.write(template.render(template_args))
+        req.write(template.render(template_args))
 
     return apache.HTTP_OK
 
