@@ -73,11 +73,13 @@ class CalibrationGMOS(Calibration):
 
             # If it (is spectroscopy) and
             # (is an OBJECT) and
-            # (is not a Twilight)
+            # (is not a Twilight) and
+            # (is not a specphot)
             # then it needs an arc, flat, spectwilight, specphot
             if ((self.descriptors['spectroscopy'] == True) and
                     (self.descriptors['observation_type'] == 'OBJECT') and
-                    (self.descriptors['object'] != 'Twilight')):
+                    (self.descriptors['object'] != 'Twilight') and
+                    (self.descriptors['observation_class'] not in ['partnerCal', 'progCal'])):
                 self.applicable.append('arc')
                 self.applicable.append('processed_arc')
                 self.applicable.append('flat')
