@@ -95,7 +95,7 @@ def update_headers(req):
                     response.append(error_response(e.message, id=label))
                 finally:
                     if reingest:
-                       iq.add_to_queue(filename, os.path.dirname(fullpath))
+                       iq.add_to_queue(filename, os.path.dirname(path))
         except RequestError as e:
             response = error_response(e.message)
         except TypeError:
