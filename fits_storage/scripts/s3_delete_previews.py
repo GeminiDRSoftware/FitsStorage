@@ -5,7 +5,7 @@ from sqlalchemy import join, desc
 
 from fits_storage.fits_storage_config import using_s3
 from fits_storage.logger import logger, setdebug, setdemon
-from aws_s3 import S3Helper
+from fits_storage.utils.aws_s3 import S3Helper
 
 from multiprocessing import Pool
 
