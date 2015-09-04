@@ -1,10 +1,14 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, Boolean
+from sqlalchemy import Integer, Text, Boolean, Enum
 from sqlalchemy.orm import relation
 
 from .header import Header
 
 from . import Base
+
+# Enumerated column types
+READ_SPEED_SETTING_ENUM = Enum('slow', 'fast', name='gmos_read_speed_setting')
+GAIN_SETTING_ENUM = Enum('low', 'high', name='gmos_gain_setting')
 
 class Gmos(Base):
     """
@@ -21,8 +25,8 @@ class Gmos(Base):
     detector_x_bin = Column(Integer, index=True)
     detector_y_bin = Column(Integer, index=True)
     amp_read_area = Column(Text, index=True)
-    read_speed_setting = Column(Text, index=True)
-    gain_setting = Column(Text, index=True)
+    read_speed_setting = Column(READ_SPEED_SETTING_ENUM, index=True)
+    gain_setting = Column(GAIN_SETTING_ENUM, index=True)
     focal_plane_mask = Column(Text, index=True)
     nodandshuffle = Column(Boolean, index=True)
     nod_count = Column(Integer, index=True)
@@ -44,7 +48,11 @@ class Gmos(Base):
         self.detector_y_bin = ad.detector_y_bin().for_db()
         self.amp_read_area = ad.amp_read_area().for_db()
         self.read_speed_setting = ad.read_speed_setting().for_db()
+
+        # This will need a try-except to catch messed up values of gain_setting.
+        # But I don't know what the exception is called yet.
         self.gain_setting = ad.gain_setting().for_db()
+
         self.focal_plane_mask = ad.focal_plane_mask().for_db()
         self.nodandshuffle = 'GMOS_NODANDSHUFFLE' in ad.types
         if self.nodandshuffle:

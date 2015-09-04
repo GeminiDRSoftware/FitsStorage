@@ -1,9 +1,15 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text
+from sqlalchemy import Integer, Text, Enum
 from sqlalchemy.orm import relation
+from sqlalchemy.exc import DataError
 
 from . import Base
 from .header import Header
+
+# Enumerated Column types
+GNIRS_READ_MODE_ENUM = Enum('Very Faint Objects', 'Faint Objects', 'Bright Objects', 'Very Bright Objects', 'Invalid', name='gnirs_read_mode')
+GNIRS_WELL_DEPTH_SETTING_ENUM = Enum('Shallow', 'Deep', 'Invalid', name='gnirs_well_depth_setting')
+
 
 class Gnirs(Base):
     """
@@ -16,8 +22,8 @@ class Gnirs(Base):
     header = relation(Header, order_by=id)
     disperser = Column(Text, index=True)
     filter_name = Column(Text, index=True)
-    read_mode = Column(Text, index=True)
-    well_depth_setting = Column(Text, index=True)
+    read_mode = Column(GNIRS_READ_MODE_ENUM, index=True)
+    well_depth_setting = Column(GNIRS_WELL_DEPTH_SETTING_ENUM, index=True)
     camera = Column(Text, index=True)
     focal_plane_mask = Column(Text)
 

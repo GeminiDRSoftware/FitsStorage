@@ -1,9 +1,11 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text
+from sqlalchemy import Integer, Text, Enum
 from sqlalchemy.orm import relation
 
 from . import Base
 from .header import Header
+
+MICHELLE_READ_MODE_ENUM = Enum('CHOP', 'NDCHOP', 'STARE', 'chop', 'stare', 'nod', 'chop-nod', name='michelle_read_mode')
 
 class Michelle(Base):
     """
@@ -16,7 +18,7 @@ class Michelle(Base):
     header = relation(Header, order_by=id)
     disperser = Column(Text, index=True)
     filter_name = Column(Text, index=True)
-    read_mode = Column(Text, index=True)
+    read_mode = Column(MICHELLE_READ_MODE_ENUM, index=True)
     focal_plane_mask = Column(Text)
 
     def __init__(self, header, ad):
