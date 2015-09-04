@@ -35,6 +35,7 @@ from web.preview import preview
 from web.obslogs import obslogs
 from web.reporting import report
 from web.queuestatus import queuestatus
+from web.api import update_headers
 
 from orm import sessionfactory
 from orm.usagelog import UsageLog
@@ -96,6 +97,7 @@ mapping_simple = {
     'request_password_reset': request_password_reset,       # request password reset email
     'logout': logout,                                       # logout
     'user_list': user_list,                                 # user_list
+    'update_headers': update_headers,                       # JSON RPC dispatcher
     }
 
 # Functions invoked with (req, things)

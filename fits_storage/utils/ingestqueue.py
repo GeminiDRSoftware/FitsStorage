@@ -7,6 +7,7 @@ import datetime
 from sqlalchemy import desc
 from sqlalchemy.orm.exc import ObjectDeletedError, NoResultFound
 from sqlalchemy.orm import make_transient
+from time import sleep
 import functools
 import fcntl
 
@@ -40,6 +41,9 @@ from astrodata import AstroData
 
 if using_s3:
     from .aws_s3 import S3Helper
+
+class IngestError(Exception):
+    pass
 
 instrument_table = {
     # Instrument: (Name for debugging, Class)
@@ -285,6 +289,38 @@ class IngestQueueUtil(object):
         self.s.commit()
 
         return True
+
+    def delete_inactive_from_queue(self, filename, busy_wait=0):
+        """
+        Checks if a file is in the ingest queue.
+
+        If the entry is in there and looks like in progress, and has an associated error, an
+        IngestError will be raised.
+
+        If the entry is in progress and busy_wait is > 0, that many seconds will be waited and we'll
+        test again. If the entry is still in progress, an IngestError will be raised.
+
+        If the entry is not in progress, it will be removed and `True` will be the result of the
+        function. Otherwise, it will return `False`
+        """
+        try:
+            tried_once = False
+            while not tried_once:
+                obj = self.s.query(IngestQueue).filter(IngestQueue.filename == filename).one()
+                tried_once = True
+                if not obj.inprogress:
+                    self.s.delete(obj)
+                    self.s.commit()
+                    return True
+                elif obj.error:
+                    raise IngestError("The file is stuck in the ingest queue with an error")
+                elif busy_wait > 0:
+                    sleep(busy_wait)
+
+            raise IngestError("The file is stuck for an unreasonable amount of time")
+        except NoResultFound:
+            # Not present
+            return False
 
     def ingest_file(self, filename, path, force_md5, force, skip_fv, skip_md, make_previews=False):
         """
