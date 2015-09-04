@@ -19,8 +19,8 @@ PYTHONPATH=/opt/FitsStorage:/opt/python_modules/lib/python2.7/site-packages:/opt
 #*/5 * * * * /bin/nice -n 19 python /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --debug --lockfile --name=spq2
 #
 ### CALCACHE QUEUE ###
-1-23 * * * * python /opt/FitsStorage/fits_storage/scripts/add_to_calcache_queue.py --lastdays=2
-0 0 * * * python /opt/FitsStorage/fits_storage/scripts/add_to_calcache_queue.py --lastdays=14
+1-23 * * * * python /opt/FitsStorage/fits_storage/scripts/add_to_calcache_queue.py --demon --lockfile --name=hourly --lastdays=2
+0 0 * * * python /opt/FitsStorage/fits_storage/scripts/add_to_calcache_queue.py --demon --lockfile --name=daily --lastdays=14
 */5 * * * * python /opt/FitsStorage/fits_storage/scripts/service_calcache_queue.py --demon --lockfile --name=scq1
 */5 * * * * python /opt/FitsStorage/fits_storage/scripts/service_calcache_queue.py --demon --lockfile --name=scq2 
 #
