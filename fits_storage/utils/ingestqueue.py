@@ -184,7 +184,7 @@ class IngestQueueUtil(object):
         self.l.debug("Adding new DiskFile entry")
         if using_s3:
             # At this point, we fetch a local copy of the file to the staging area
-            if not self.s3.fetch_to_staging(path, filename, fullpath):
+            if not self.s3.fetch_to_staging(path, filename, fullpath=fullpath):
                 # Failed to fetch the file from S3. Can't do this
                 return
 
@@ -279,6 +279,7 @@ class IngestQueueUtil(object):
                     self.preview.process(diskfile, make=make_previews)
             except:
                 self.l.error("Error making preview for %s", diskfile.filename)
+                raise
 
         if diskfile.ad_object:
             self.l.debug("Closing centrally opened astrodata object")
@@ -357,7 +358,7 @@ class IngestQueueUtil(object):
         # First, sanity check if the file actually exists
         if using_s3:
             fullpath = os.path.join(storage_root, filename)
-            if self.s3.set_key(os.path.join(path, filename)):
+            if self.s3.set_key(filename) is None:
                 self.l.error("cannot access %s in S3 bucket", filename)
                 self.check_present(filename)
                 return

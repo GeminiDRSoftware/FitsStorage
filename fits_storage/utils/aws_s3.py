@@ -26,7 +26,6 @@ class S3Helper(object):
     def bucket(self):
         if self.b is None:
             self.b = S3Connection(aws_access_key, aws_secret_key).get_bucket(s3_bucket_name)
-
         return self.b
 
     def reset_key(self):
@@ -34,8 +33,7 @@ class S3Helper(object):
 
     def set_key(self, path):
         self.key = self.get_key(path)
-
-        return key
+        return self.key
 
     def get_key(self, path):
         return self.bucket.get_key(path)
@@ -49,116 +47,117 @@ class S3Helper(object):
     def upload_file(self, keyname, filename, logger):
         return upload_file(self.bucket, keyname, filename, logger)
 
-def get_s3_md5(key):
-    """
-    Get the MD5 that the S3 server hs for this key.
-    Simply strips quotes from the etag value.
-    """
-    return key.etag.replace('"', '')
+    def get_s3_md5(self, key=None):
+        """
+        Get the MD5 that the S3 server hs for this key.
+        Simply strips quotes from the etag value.
+        """
+        key = self.key if key is None else key
+        return key.etag.replace('"', '')
 
 
-def fetch_to_staging(bucket, path, filename, key=None, fullpath=None):
-    """
-    Fetch the file from s3 and put it in the storage_root directory.
-    Do some validation, and re-try as appropriate
-    Return True if suceeded, False otherwise
-    """
+    def fetch_to_staging(self, path, filename, key=None, fullpath=None):
+        """
+        Fetch the file from s3 and put it in the storage_root directory.
+        Do some validation, and re-try as appropriate
+        Return True if suceeded, False otherwise
+        """
 
-    # Make the full path of the destination file if we were not given one
-    if fullpath is None:
-        fullpath = os.path.join(storage_root, filename)
+        # Make the full path of the destination file if we were not given one
+        if fullpath is None:
+            fullpath = os.path.join(storage_root, filename)
 
-    # Check if the file already exists in the staging area, remove it if so
-    if os.path.exists(fullpath):
-        logger.warning("File already exists at S3 download location: %s. Will delete it first.", fullpath)
-        try:
-            os.unlink(fullpath)
-        except:
-            logger.error("Unable to delete %s which is in the way of the S3 download", fullpath)
-
-    # Try up to 5 times. Have seen socket.error raised
-    tries = 0
-    gotit = False
-    while (not gotit) and (tries < 5):
-        tries += 1
-        logger.debug("Fetching %s to s3_staging_area, try %d", filename, tries)
-
-        # If we do not have a key object, get one
-        if key is None:
-            key = bucket.get_key(os.path.join(path, filename))
-
-        try:
-            if key is None:
-                logger.error("Key has dissapeared out of S3 bucket! %s", filename)
-            else:
-                key.get_contents_to_filename(fullpath)
-        except socket.error:
-            # OK, we got a socket error.
-            logger.debug("Socket Error fetching %s from S3 - will retry, tries=%d", filename, tries)
-            logger.debug("Socket Error details: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
-                                traceback.format_tb(sys.exc_info()[2]))
-            sleep(10)
-
-            # Nullify the key object - seems like if it fails getting a new key is necessary
-            key = None
-
-            # Remove any partial file we got downloaded
+        # Check if the file already exists in the staging area, remove it if so
+        if os.path.exists(fullpath):
+            logger.warning("File already exists at S3 download location: %s. Will delete it first.", fullpath)
             try:
                 os.unlink(fullpath)
             except:
-                pass
-
-        # Did we get anything?
-        if os.access(fullpath, os.F_OK):
-            # Check size and md5
-            filesize = os.path.getsize(fullpath)
-            if filesize == key.size:
-                # It's the right size, check the md5
-                filemd5 = md5sum(fullpath)
-                if filemd5 == get_s3_md5(key):
-                    # md5 matches
-                    gotit = True
+                logger.error("Unable to delete %s which is in the way of the S3 download", fullpath)
+    
+        # Try up to 5 times. Have seen socket.error raised
+        tries = 0
+        gotit = False
+        while (not gotit) and (tries < 5):
+            tries += 1
+            logger.debug("Fetching %s to s3_staging_area, try %d", filename, tries)
+    
+            # If we do not have a key object, get one
+            if key is None:
+                key = self.bucket.get_key(os.path.join(path, filename))
+    
+            try:
+                if key is None:
+                    logger.error("Key has dissapeared out of S3 bucket! %s", filename)
                 else:
-                    # Size is OK, but md5 is not
+                    self.key.get_contents_to_filename(fullpath)
+            except socket.error:
+                # OK, we got a socket error.
+                logger.debug("Socket Error fetching %s from S3 - will retry, tries=%d", filename, tries)
+                logger.debug("Socket Error details: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
+                                    traceback.format_tb(sys.exc_info()[2]))
+                sleep(10)
+    
+                # Nullify the key object - seems like if it fails getting a new key is necessary
+                key = None
+    
+                # Remove any partial file we got downloaded
+                try:
+                    os.unlink(fullpath)
+                except:
+                    pass
+    
+            # Did we get anything?
+            if os.access(fullpath, os.F_OK):
+                # Check size and md5
+                filesize = os.path.getsize(fullpath)
+                if filesize == key.size:
+                    # It's the right size, check the md5
+                    filemd5 = md5sum(fullpath)
+                    if filemd5 == self.get_s3_md5(key):
+                        # md5 matches
+                        gotit = True
+                    else:
+                        # Size is OK, but md5 is not
+                        gotit = False
+                        logger.debug("Problem fetching %s from S3 - size OK, but md5 mismatch - file: %s; key: %s", filename,
+                                        filemd5, get_s3_md5(key))
+                        sleep(10)
+                else:
+                    # Didn't get enough bytes
                     gotit = False
-                    logger.debug("Problem fetching %s from S3 - size OK, but md5 mismatch - file: %s; key: %s", filename,
-                                    filemd5, get_s3_md5(key))
+                    logger.debug("Problem fetching %s from S3 - size mismatch - file: %s; key: %s", filename, filesize, key.size)
                     sleep(10)
             else:
-                # Didn't get enough bytes
+                # file is not accessible
                 gotit = False
-                logger.debug("Problem fetching %s from S3 - size mismatch - file: %s; key: %s", filename, filesize, key.size)
-                sleep(10)
+    
+        if gotit:
+            logger.debug("Downloaded file from S3 sucessfully")
+            return True
         else:
-            # file is not accessible
-            gotit = False
+            logger.error("Failed to sucessfully download file %s from S3. Giving up.", filename)
+            return False
 
-    if gotit:
-        logger.debug("Downloaded file from S3 sucessfully")
-        return True
-    else:
-        logger.error("Failed to sucessfully download file %s from S3. Giving up.", filename)
-        return False
-
-def upload_file(bucket, keyname, filename, logger):
-    """
-    Upload the file at filename to the S3 bucket, calling it keyname
-    """
-    logger.debug("Creating key: %s", keyname)
-    k = Key(bucket)
-    k.key = keyname
-    logger.info("Uploading %s to S3 as %s", filename, keyname )
-    num = 0
-    ok = False
-    while num < 5 and not ok:
-        num += 1
-        try:
-            k.set_contents_from_filename(filename)
-            logger.info("Uploaded %s OK on try %d", filename, num)
-            ok = True
-        except:
-            logger.debug("Upload try %d appeared to fail", num)
-            logger.debug("Exception is: %s %s %s", sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
-    if num == 5 and not ok:
-        logger.error("Gave up trying to upload %s to S3", filename)
-    return ok
+    def upload_file(self, keyname, filename, logger):
+        """
+        Upload the file at filename to the S3 bucket, calling it keyname
+        """
+        logger.debug("Creating key: %s", keyname)
+        k = Key(self.bucket)
+        k.key = keyname
+        logger.info("Uploading %s to S3 as %s", filename, keyname )
+        num = 0
+        ok = False
+        while num < 5 and not ok:
+            num += 1
+            try:
+                k.set_contents_from_filename(filename)
+                logger.info("Uploaded %s OK on try %d", filename, num)
+                ok = True
+            except:
+                logger.debug("Upload try %d appeared to fail", num)
+                logger.debug("Exception is: %s %s %s", sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
+        if num == 5 and not ok:
+            logger.error("Gave up trying to upload %s to S3", filename)
+        return ok

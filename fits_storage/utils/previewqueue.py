@@ -152,7 +152,7 @@ class PreviewQueueUtil(object):
         # If we're not using S3, that's it, the file is in place.
         # If we are using s3, need to upload it now.
         if using_s3:
-            self.s3.upload_file(preview_filename, preview_fullpath, logger)
+            self.s3.upload_file(preview_filename, preview_fullpath, self.l)
             os.unlink(preview_fullpath)
 
         # Add to preview table
@@ -185,7 +185,7 @@ class PreviewQueueUtil(object):
             xmax /= int(ad.detector_x_bin())
             ymax /= int(ad.detector_y_bin())
 
-            self.s.debug("Full Image extent is: %d:%d, %d:%d", xmin, xmax, ymin, ymax)
+            self.l.debug("Full Image extent is: %d:%d, %d:%d", xmin, xmax, ymin, ymax)
 
             # Make empty array for full image
             gap = 40 # approx chip gap in pixels
