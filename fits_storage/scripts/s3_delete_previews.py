@@ -50,7 +50,7 @@ if options.count:
     logger.info("Found %d preview files", len(filelist))
     sys.exit(0)
 
-if options.dry_run:
+if options.dryrun:
     def delete_it(filename, logger=None):
         if logger:
             logger.info("Dryrun - not actually Deleting, %s", filename)
