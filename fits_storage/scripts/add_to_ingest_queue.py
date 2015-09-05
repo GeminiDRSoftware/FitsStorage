@@ -7,7 +7,7 @@ import re
 import datetime
 import time
 if using_s3:
-    from aws_s3 import S3Helper
+    from fits_storage.utils.aws_s3 import S3Helper
     s3 = S3Helper()
 
 # Option Parsing
