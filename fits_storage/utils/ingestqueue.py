@@ -279,7 +279,6 @@ class IngestQueueUtil(object):
                     self.preview.process(diskfile, make=make_previews)
             except:
                 self.l.error("Error making preview for %s", diskfile.filename)
-                raise
 
         if diskfile.ad_object:
             self.l.debug("Closing centrally opened astrodata object")
