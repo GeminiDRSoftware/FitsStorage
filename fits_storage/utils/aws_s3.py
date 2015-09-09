@@ -11,6 +11,9 @@ from time import sleep
 from ..fits_storage_config import storage_root
 from .hashes import md5sum
 
+def is_string(obj):
+    return isinstance(obj, (str, unicode))
+
 class S3Helper(object):
     def __init__(self, logger_ = None):
         # This will hold the bucket
@@ -40,7 +43,7 @@ class S3Helper(object):
         Get the MD5 that the S3 server hs for this key.
         Simply strips quotes from the etag value.
         """
-        if isinstance(key, (str, unicode)):
+        if is_string(key):
             key = self.get_key(key)
 
         return self.get_etag(key).replace('"', '')
@@ -189,7 +192,7 @@ try:
 
         def exists_key(self, key):
             try:
-                if isinstance(key, (str, unicode)):
+                if is_string(key):
                     key = self.bucket.Object(key)
                 key.expires
                 return True
@@ -217,7 +220,7 @@ try:
             return k
 
         def fetch_file(self, key, filename, path):
-            if isinstance(key, (str, unicode)):
+            if is_string(key):
                 key = self.get_key(key)
 
             if not self.exists_key(key):
@@ -277,7 +280,7 @@ except ImportError:
             return k
 
         def fetch_file(self, key, filename, path):
-            if isinstance(key, (str, unicode)):
+            if is_string(key):
                 key = self.bucket.get_key(key)
 
             if key is None:
