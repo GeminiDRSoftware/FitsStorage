@@ -44,7 +44,7 @@ class S3Helper(object):
         if isinstance(key, str):
             key = self.get_key(key)
 
-        return get_etag(key).replace('"', '')
+        return self.get_etag(key).replace('"', '')
 
     def get_etag(self, key):
         raise NotImplementedError("This method needs to be implemented by subclasses")
