@@ -29,7 +29,7 @@ logger.info("Connecting to S3 and getting bucket")
 s3 = get_helper()
 path = options.path
 
-def log(logger, text, *args):
+def log(text, *args):
     if logger:
         logger.info(text, *args)
     else:
