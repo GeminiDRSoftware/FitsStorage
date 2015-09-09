@@ -10,6 +10,7 @@ from fits_storage.orm import session_scope
 from fits_storage.orm.notification import Notification
 from fits_storage.logger import logger, setdebug, setdemon
 
+from fits_storage_config import fits_servername, use_as_archive, smtp_server
 
 parser = OptionParser()
 parser.add_option("--emailfrom", action="store", dest="fromaddr", default="fitsdata@gemini.edu", help="Email Address to send from")
@@ -25,7 +26,6 @@ setdemon(options.demon)
 # ISG have local smtp servers set up on the fits hosts (mkofits1 and cpofits1) that relay mail to the gemini smtp
 # servers without needing to authenticate. Otherwise, the gemini smtp will not relay to external addresses.
 
-mailhost = "localhost"
 cre = re.compile(r'\.fits')
 
 logger.info("YouveGotDataEmail.py starting for date %s" % options.date)
@@ -38,14 +38,20 @@ The archive search for this data may be found at: {form_url}
 Data Quality assessment will proceed as normal over the next few days.
 """
 
+# Configure the URL base
+if use_as_archive:
+    url_base = "https://archive.gemini.edu"
+else:
+    url_base = "http://%s" % fits_servername
+
 # The project / email list. Get from the database
 with session_scope() as session:
     for notif in session.query(Notification):
         if (notif.selection is None) or (notif.to is None):
             logger.error("Critical fields are None in notification id: %s; label: %s", notif.id, notif.label)
         else:
-            url = "https://archive.gemini.edu/summary/%s/%s" % (options.date, notif.selection)
-            searchform_url = "https://archive.gemini.edu/searchform/%s/%s" % (options.date, notif.selection)
+            url = "%s/summary/%s/%s" % (url_base, options.date, notif.selection)
+            searchform_url = "%s/searchform/%s/%s" % (url_base, options.date, notif.selection)
 
             logger.debug("URL is: %s", url)
             html = urllib2.urlopen(url).read()
@@ -78,7 +84,7 @@ with session_scope() as session:
 
                 try:
                     logger.info("Sending Email- To: %s; CC: %s; Subject: %s", msg['To'], msg['Cc'], msg['Subject'])
-                    smtp = smtplib.SMTP(mailhost)
+                    smtp = smtplib.SMTP(smtp_server)
                     smtp.sendmail(options.fromaddr, fulllist, msg.as_string())
                     retval = smtp.quit()
                     logger.info("SMTP seems to have worked OK: %s", str(retval))
