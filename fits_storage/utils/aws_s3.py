@@ -168,9 +168,15 @@ class S3Helper(object):
 
 from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
 try:
+    import boto3
     from boto3.session import Session
     from botocore.exceptions import ClientError
     import shutil
+    import logging
+
+    boto3.set_stream_logger(level=logging.CRITICAL)
+    logging.getLogger('boto').setLevel(logging.CRITICAL)
+    logging.getLogger('botocore').setLevel(logging.CRITICAL)
 
     class Boto3Helper(S3Helper):
         @property
