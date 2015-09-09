@@ -11,11 +11,31 @@ from time import sleep
 from ..fits_storage_config import storage_root
 from .hashes import md5sum
 
+
+# The first part (Helper) was intended as a base class to allow for both Boto2 and Boto3 to
+# coexist peacefully within our codebase. We decided to deprecate Boto2 because it just makes
+# life more complicated, and it's full of bugs that get fixed in Boto3 in advance, because
+# it is now the recommended library to use.
+
+# (Ricardo): I've removed the Boto2 code altogether, but I'll keep the structure as it is.
+#            If at other point anyone out of Gemini wants to use the archive code, it will
+#            be easier to adapt this module to make use of other cloud services.
+
 def is_string(obj):
     return isinstance(obj, (str, unicode))
 
-class S3Helper(object):
-    def __init__(self, logger_ = None):
+class EmptyLogger(object):
+    """Dummy logger object. We won't use the NullHandler from logger because we really don't want
+       to import the logging module from this one. It would affect the web server and maybe
+       other servers"""
+    def __getattr__(self, attr):
+        return self
+
+    def __call__(self, *args, **kw):
+        pass
+
+class Helper(object):
+    def __init__(self, logger_ = EmptyLogger()):
         # This will hold the bucket
         self.l = logger_
         self.b = None
@@ -167,133 +187,80 @@ class S3Helper(object):
             return False
 
 from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
-try:
-    import boto3
-    from boto3.session import Session
-    from botocore.exceptions import ClientError
-    import shutil
-    import logging
 
-    boto3.set_stream_logger(level=logging.CRITICAL)
-    logging.getLogger('boto').setLevel(logging.CRITICAL)
-    logging.getLogger('botocore').setLevel(logging.CRITICAL)
+import boto3
+from boto3.session import Session
+from botocore.exceptions import ClientError
+import shutil
+import logging
 
-    class Boto3Helper(S3Helper):
-        @property
-        def s3(self):
-             return Session(aws_access_key_id     = aws_access_key,
-                            aws_secret_access_key = aws_secret_key).resource('s3')
+boto3.set_stream_logger(level=logging.CRITICAL)
+logging.getLogger('boto').setLevel(logging.CRITICAL)
+logging.getLogger('botocore').setLevel(logging.CRITICAL)
 
-        @property
-        def bucket(self):
-            if self.b is None:
-                self.b = self.s3.Bucket(s3_bucket_name)
-            return self.b
+class Boto3Helper(Helper):
+    @property
+    def s3(self):
+         return Session(aws_access_key_id     = aws_access_key,
+                        aws_secret_access_key = aws_secret_key).resource('s3')
 
-        def list_keys(self):
-            return self.bucket.objects.all()
+    @property
+    def bucket(self):
+        if self.b is None:
+            self.b = self.s3.Bucket(s3_bucket_name)
+        return self.b
 
-        def key_names(self):
-            return [obj.key for obj in self.list_keys()]
+    def list_keys(self):
+        return self.bucket.objects.all()
 
-        def exists_key(self, key):
-            try:
-                if is_string(key):
-                    key = self.bucket.Object(key)
-                key.expires
-                return True
-            except ClientError:
-                return False
+    def key_names(self):
+        return [obj.key for obj in self.list_keys()]
 
-        def get_key(self, keyname):
-            return self.bucket.Object(keyname)
-
-        def get_etag(self, key):
-            return key.e_tag
-
-        def get_size(self, key):
-            return key.content_length
-
-        def get_name(self, obj):
-            return obj.key
-
-        def get_as_string(self, keyname):
-            return self.get_key(keyname).get()['Body'].read()
-
-        def store_file_to_keyname(self, keyname, path):
-            k = self.get_key(keyname)
-            k.put(Body=open(path, 'rb'))
-            return k
-
-        def fetch_file(self, key, filename, path):
+    def exists_key(self, key):
+        try:
             if is_string(key):
-                key = self.get_key(key)
+                key = self.bucket.Object(key)
+            key.expires
+            return True
+        except ClientError:
+            return False
 
-            if not self.exists_key(key):
-                self.l.error("Key has dissapeared out of S3 bucket! %s", filename)
+    def get_key(self, keyname):
+        return self.bucket.Object(keyname)
+
+    def get_etag(self, key):
+        return key.e_tag
+
+    def get_size(self, key):
+        return key.content_length
+
+    def get_name(self, obj):
+        return obj.key
+
+    def get_as_string(self, keyname):
+        return self.get_key(keyname).get()['Body'].read()
+
+    def store_file_to_keyname(self, keyname, path):
+        k = self.get_key(keyname)
+        k.put(Body=open(path, 'rb'))
+        return k
+
+    def fetch_file(self, key, filename, fileobj):
+        if is_string(key):
+            key = self.get_key(key)
+
+        if not self.exists_key(key):
+            self.l.error("Key has dissapeared out of S3 bucket! %s", filename)
+        else:
+            body = key.get()['Body']
+            if istring(fileobj):
+                # We're dealing with a path+filename
+                with open(fileobj, 'wb') as output:
+                    shutil.copyfileobj(body, output)
             else:
-                with open(path, 'wb') as output:
-                    shutil.copyfileobj(key.get()['Body'], output)
-                return key
+                # Assume we got an open stream
+                shutil.copyfileobj(body, fileobj)
+            return key
 
-    def get_helper(*args, **kwargs):
-        return Boto3Helper(*args, **kwargs)
-
-except ImportError:
-    from boto.s3.key import Key
-    from boto.s3.connection import S3Connection
-
-    class BotoHelper(S3Helper):
-        @property
-        def s3(self):
-            return S3Connection(aws_access_key, aws_secret_key)
-
-        @property
-        def bucket(self):
-            if self.b is None:
-                self.b = self.s3.get_bucket(s3_bucket_name)
-            return self.b
-
-        def list_keys(self):
-            return self.bucket.list()
-
-        def key_names(self):
-            return [key.name for key in self.list_keys()]
-
-        def exists_key(self, key):
-            return self.bucket.get_key(key) is not None
-
-        def get_key(self, keyname):
-            return self.bucket.get_key(keyname)
-
-        def get_etag(self, key):
-            return key.etag
-
-        def get_size(self, key):
-            return key.size
-
-        def get_name(self, key):
-            return key.name
-
-        def get_as_string(self, keyname):
-            return self.get_key(keyname).get_contents_as_string()
-
-        def store_file_to_keyname(self, keyname, path):
-            k = Key(self.bucket)
-            k.key = keyname
-            k.set_contents_from_filename(filename)
-
-            return k
-
-        def fetch_file(self, key, filename, path):
-            if is_string(key):
-                key = self.bucket.get_key(key)
-
-            if key is None:
-                self.l.error("Key has dissapeared out of S3 bucket! %s", filename)
-            else:
-                self.key.get_contents_to_filename(path)
-                return key
-
-    def get_helper(*args, **kwargs):
-        return BotoHelper(*args, **kwargs)
+def get_helper(*args, **kwargs):
+    return Boto3Helper(*args, **kwargs)

@@ -21,8 +21,8 @@ import os
 import cStringIO
 
 if using_s3:
-    from boto.s3.connection import S3Connection
-    from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
+    from ..utils.aws_s3 import get_helper
+    s3 = get_helper()
 
 from ..utils.userprogram import icanhave
 
@@ -94,10 +94,7 @@ def sendpreview(session, req, diskfile_id):
     req.content_type = 'image/jpeg'
     if using_s3:
         # S3 file server
-        s3conn = S3Connection(aws_access_key, aws_secret_key)
-        bucket = s3conn.get_bucket(s3_bucket_name)
-        key = bucket.get_key(preview.filename)
-        key.get_contents_to_file(req)
+        s3.fetch_file(preview.filename, req)
     else:
         # Serve from regular file
         fullpath = os.path.join(storage_root, preview_path, preview.filename)

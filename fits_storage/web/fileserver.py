@@ -32,8 +32,8 @@ else:
     from ..cal.associate_calibrations import associate_cals
 
 if using_s3:
-    from boto.s3.connection import S3Connection
-    from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
+    from ..utils.aws_s3 import get_helper
+    s3 = get_helper()
 
 from ..utils.userprogram import icanhave
 
@@ -151,10 +151,6 @@ def download(req, things):
         req.content_type = "application/tar"
         req.headers_out['Content-Disposition'] = 'attachment; filename="{}"'.format(tarfilename)
 
-        if using_s3:
-            s3conn = S3Connection(aws_access_key, aws_secret_key)
-            bucket = s3conn.get_bucket(s3_bucket_name)
-
         # We are going to build an md5sum file while we do this
         md5file = ""
         # And keep a list of any files we were denied
@@ -172,9 +168,7 @@ def download(req, things):
                 md5file += "%s  %s\n" % (header.diskfile.file_md5, header.diskfile.filename)
                 if using_s3:
                     # Fetch the file into a cStringIO buffer
-                    key = bucket.get_key(header.diskfile.filename)
-                    buffer = cStringIO.StringIO()
-                    key.get_contents_to_file(buffer)
+                    s3.fetch_file(header.diskfile.filename, buffer)
                     # Write buffer into tarfile
                     buffer.seek(0)
                     # - create a tarinfo object
@@ -347,21 +341,19 @@ def sendonefile(req, diskfile, content_type=None):
 
     if using_s3:
         # S3 file server
-        s3conn = S3Connection(aws_access_key, aws_secret_key)
-        bucket = s3conn.get_bucket(s3_bucket_name)
-        key = bucket.get_key(diskfile.filename)
+        fname = diskfile.filename
         req.set_content_length(diskfile.data_size)
         req.log_error("Here")
         if diskfile.compressed:
             buffer = cStringIO.StringIO()
-            key.get_contents_to_file(buffer)
+            s3.fetch_file(fname, buffer)
             buffer.seek(0)
             try:
                 req.write(bz2.decompress(buffer.getvalue()))
             finally:
                 buffer.close()
         else:
-            key.get_contents_to_file(req)
+            s3.fetch_file(fname, req)
     else:
         # Serve from regular file
         if diskfile.compressed == True:

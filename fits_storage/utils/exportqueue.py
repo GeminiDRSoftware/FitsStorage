@@ -25,8 +25,6 @@ from .. import apache_return_codes as apache
 
 if using_s3:
     from .aws_s3 import get_helper
-    import logging
-    logging.getLogger('boto').setLevel(logging.CRITICAL)
 
 class ExportQueueUtil(object):
     def __init__(self, session, logger):

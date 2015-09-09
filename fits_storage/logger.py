@@ -43,7 +43,8 @@ smtphandler.setFormatter(formatter)
 logger.addHandler(filehandler)
 
 # Turn off boto debug logging
-logging.getLogger('boto').setLevel(logging.WARNING)
+# We do this inside utils.aws_s3 now
+# logging.getLogger('boto').setLevel(logging.WARNING)
 
 # Utility functions follow
 
