@@ -41,7 +41,7 @@ class S3Helper(object):
         Get the MD5 that the S3 server hs for this key.
         Simply strips quotes from the etag value.
         """
-        if isinstance(key, str):
+        if isinstance(key, (str, unicode)):
             key = self.get_key(key)
 
         return self.get_etag(key).replace('"', '')
@@ -190,7 +190,7 @@ try:
 
         def exists_key(self, key):
             try:
-                if isinstance(key, str):
+                if isinstance(key, (str, unicode)):
                     key = self.bucket.Object(key)
                 key.expires
                 return True
@@ -218,8 +218,8 @@ try:
             return k
 
         def fetch_file(self, key, filename, path):
-            if isinstance(key, str):
-                key = self.bucket.get_key(key)
+            if isinstance(key, (str, unicode)):
+                key = self.get_key(key)
 
             if not self.exists_key(key):
                 self.l.error("Key has dissapeared out of S3 bucket! %s", filename)
@@ -228,8 +228,8 @@ try:
                     shutil.copyfileobj(key.get()['Body'], output)
                 return key
 
-    def get_helper():
-        return Boto3Helper()
+    def get_helper(*args, **kwargs):
+        return Boto3Helper(*args, **kwargs)
 
 except ImportError:
     from boto.s3.key import Key
@@ -278,7 +278,7 @@ except ImportError:
             return k
 
         def fetch_file(self, key, filename, path):
-            if isinstance(key, str):
+            if isinstance(key, (str, unicode)):
                 key = self.bucket.get_key(key)
 
             if key is None:
@@ -287,5 +287,5 @@ except ImportError:
                 self.key.get_contents_to_filename(path)
                 return key
 
-    def get_helper():
-        return BotoHelper()
+    def get_helper(*args, **kwargs):
+        return BotoHelper(*args, **kwargs)
