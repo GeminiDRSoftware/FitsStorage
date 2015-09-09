@@ -31,8 +31,8 @@ emailsubject = "Messages from FitsStorage on %s" % os.uname()[1]
 smtphandler = logging.handlers.SMTPHandler(mailhost=smtp_server, fromaddr='fitsdata@gemini.edu',
                     toaddrs=[email_errors_to], subject=emailsubject)
 
-# The smtp handler should only do WARNINGSs or worse
-smtphandler.setLevel(logging.WARNING)
+# The smtp handler should only do CRITICALs or worse
+smtphandler.setLevel(logging.CRITICAL)
 
 # Add formater to handlers
 filehandler.setFormatter(formatter)
