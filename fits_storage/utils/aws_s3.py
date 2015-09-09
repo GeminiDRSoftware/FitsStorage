@@ -9,13 +9,12 @@ import traceback
 from time import sleep
 
 from ..fits_storage_config import storage_root
-from ..logger import logger
 from .hashes import md5sum
 
 class S3Helper(object):
     def __init__(self, logger_ = None):
         # This will hold the bucket
-        self.l = logger_ if logger_ is not None else logger
+        self.l = logger_
         self.b = None
 
     @property
