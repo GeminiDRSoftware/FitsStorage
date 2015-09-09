@@ -20,7 +20,7 @@ import bz2
 
 if using_s3:
     from ..fits_storage_config import s3_staging_area
-    from aws_s3 import S3Helper
+    from aws_s3 import get_helper
 
 from astrodata import AstroData
 import numpy
@@ -46,7 +46,7 @@ class PreviewQueueUtil(object):
         self.s = session
         self.l = logger
         if using_s3:
-            self.s3 = S3Helper()
+            self.s3 = get_helper(logger_ = logger)
 
     def length(self):
         return queue.queue_length(PreviewQueue, self.s)
@@ -152,7 +152,7 @@ class PreviewQueueUtil(object):
         # If we're not using S3, that's it, the file is in place.
         # If we are using s3, need to upload it now.
         if using_s3:
-            self.s3.upload_file(preview_filename, preview_fullpath, self.l)
+            self.s3.upload_file(preview_filename, preview_fullpath)
             os.unlink(preview_fullpath)
 
         # Add to preview table

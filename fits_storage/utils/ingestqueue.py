@@ -40,7 +40,7 @@ from ..orm.obslog import Obslog
 from astrodata import AstroData
 
 if using_s3:
-    from .aws_s3 import S3Helper
+    from .aws_s3 import get_helper
 
 class IngestError(Exception):
     pass
@@ -66,7 +66,7 @@ class IngestQueueUtil(object):
         if using_previews:
             self.preview = PreviewQueueUtil(self.s, self.l)
         if using_s3:
-            self.s3 = S3Helper()
+            self.s3 = get_helper()
 
     def add_to_queue(self, filename, path, force_md5=False, force=False, after=None):
         """
@@ -121,7 +121,7 @@ class IngestQueueUtil(object):
             # Has the file changed since we last ingested it?
             if using_s3:
                 # Lastmod on s3 is always the upload time, no way to set it manually
-                result = need_to_add_diskfile_p(self.s3.get_md5(), "S3 etag md5", "S3 etag md5 or force flag")
+                result = need_to_add_diskfile_p(self.s3.get_md5(fileobj.name), "S3 etag md5", "S3 etag md5 or force flag")
             else:
                 # By default check lastmod time first
                 # there is a subtelty wrt timezones here.
@@ -357,7 +357,7 @@ class IngestQueueUtil(object):
         # First, sanity check if the file actually exists
         if using_s3:
             fullpath = os.path.join(storage_root, filename)
-            if self.s3.set_key(filename) is None:
+            if not self.s3.exists_key(filename):
                 self.l.error("cannot access %s in S3 bucket", filename)
                 self.check_present(filename)
                 return

@@ -5,7 +5,7 @@ from sqlalchemy import join, desc
 
 from fits_storage.fits_storage_config import using_s3
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.utils.aws_s3 import S3Helper
+from fits_storage.utils.aws_s3 import get_helper
 
 
 # Option Parsing
@@ -38,8 +38,9 @@ if not options.yesimsure:
 
 # Get a full listing from S3. The preview files might not be in the DB.
 logger.info("Getting file list from S3")
-for key in S3Helper().bucket.list():
-    logger.info("Deleting %s" % key.name)
+s3 = get_helper()
+for key in s3.list_keys():
+    logger.info("Deleting %s" % s3.get_name(key))
     key.delete()
 
 logger.info("** s3_nuke.py exiting normally")

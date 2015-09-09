@@ -11,7 +11,7 @@ from optparse import OptionParser
 from fits_storage.fits_storage_config import using_s3
 
 if using_s3:
-    from fits_storage.utils.aws_s3 import S3Helper
+    from fits_storage.utils.aws_s3 import get_helper
 
 parser = OptionParser()
 parser.add_option("--limit", action="store", type="int", help="specify a limit on the number of files to examine. The list is sorted by lastmod time before the limit is applied")
@@ -50,7 +50,7 @@ with session_scope() as session:
 
     if using_s3:
         logger.debug("Connecting to s3")
-        s3 = S3Helper()
+        s3 = get_helper()
 
     i = 0
     j = 0
@@ -58,7 +58,7 @@ with session_scope() as session:
     for df in query:
         if using_s3:
             logger.debug("Getting s3 key for %s" % df.filename)
-            exists = s3.get_key(df.filename) is not None
+            exists = s3.exists_key(df.filename)
         else:
             # Make it false if this one doesn't actually exist
             exists = df.exists()

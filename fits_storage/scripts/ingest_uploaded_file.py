@@ -12,7 +12,7 @@ from fits_storage.logger import logger, setdemon, setdebug
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 
 if using_s3:
-    from fits_storage.utils.aws_s3 import S3Helper
+    from fits_storage.utils.aws_s3 import get_helper
 
 # Option Parsing
 from optparse import OptionParser
@@ -61,7 +61,7 @@ with session_scope() as session:
             # Copy to S3
             try:
                 logger.debug("Connecting to S3")
-                s3 = S3Helper(session, logger)
+                s3 = get_helper(logger_ = logger)
                 with fileuploadlog:
                     fileuploadlog.s3_ok = s3.upload_file(dst, src)
                 os.unlink(src)

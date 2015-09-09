@@ -24,7 +24,7 @@ from ..orm.exportqueue import ExportQueue
 from .. import apache_return_codes as apache
 
 if using_s3:
-    from .aws_s3 import S3Helper
+    from .aws_s3 import get_helper
     import logging
     logging.getLogger('boto').setLevel(logging.CRITICAL)
 
@@ -103,12 +103,12 @@ class ExportQueueUtil(object):
         data = None
         if using_s3:
             # Read the file from S3
-            s3 = S3Helper()
-            key = s3.bucket.get_key(os.path.join(path, filename))
-            if key is None:
+            keyname = os.path.join(path, filename)
+            s3 = get_helper()
+            if not s3.exists_key(keyname):
                 self.l.error("cannot access %s in S3 bucket", filename)
             else:
-                data = key.get_contents_as_string()
+                data = s3.get_as_string(keyname).get_contents_as_string()
         else:
             # Read the file from disk
             fullpath = os.path.join(storage_root, path, filename)

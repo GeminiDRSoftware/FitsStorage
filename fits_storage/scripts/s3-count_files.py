@@ -6,7 +6,6 @@ from sqlalchemy import join, desc
 
 from fits_storage.fits_storage_config import using_s3
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.utils.aws_s3 import S3Helper
 
 # Option Parsing
 from optparse import OptionParser
@@ -28,14 +27,16 @@ if not using_s3:
     logger.error("This script is only useable on installations using S3 for storage")
     sys.exit(1)
 
-logger.info("Querying files from S3 bucket: %s" % s3_bucket_name)
+from fits_storage.utils.aws_s3 import get_helper
+
+s3 = get_helper()
+logger.info("Querying files from S3 bucket: %s" % s3.bucket.name)
 
 logger.info("Counting...")
 
 dct = defaultdict(int)
 
-s3 = S3Helper()
-for key in s3.bucket.list():
+for key in s3.key_names():
     dct[key[:5]] += 1
 
 logger.info("done")

@@ -7,7 +7,7 @@ from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.file import File
 from fits_storage.fits_storage_config import using_s3
-from fits_storage.utils.aws_s3 import S3Helper
+from fits_storage.utils.aws_s3 import get_helper
 from fits_storage.logger import logger, setdebug, setdemon
 
 
@@ -58,7 +58,7 @@ with session_scope() as session:
 
     logger.info("Got %d files for deletion" % nfiles)
 
-    s3 = S3Helper()
+    s3 = get_helper()
 
     for diskfile in query:
         logger.info("Deleting file %s" % diskfile.filename)

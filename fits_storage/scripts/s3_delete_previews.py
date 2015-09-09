@@ -5,7 +5,7 @@ from sqlalchemy import join, desc
 
 from fits_storage.fits_storage_config import using_s3
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.utils.aws_s3 import S3Helper
+from fits_storage.utils.aws_s3 import get_helper
 
 from multiprocessing import Pool
 
@@ -43,8 +43,8 @@ if not (options.yesimsure or options.count):
 # Get a full listing from S3. The preview files might not be in the DB.
 logger.info("Getting file list from S3")
 
-s3 = S3Helper()
-filelist = [key for key in s3.bucket.list() if key.name.endswith("_preview.jpg")]
+s3 = get_helper()
+filelist = filter(lambda n: n.endswith("_preview.jpg"), s3.key_names())
 
 if options.count:
     logger.info("Found %d preview files", len(filelist))
@@ -56,12 +56,11 @@ if options.dryrun:
             logger.info("Dryrun - not actually Deleting, %s", filename)
 else:
     def delete_it(filename, logger=None):
-        key = s3.bucket.get_key(filename)
         if logger:
             logger.info("Deleting %s", filename)
         else:
             print "Deleting %s" % filename
-        key.delete()
+        s3.get_key(filename).delete()
 
 if options.threads:
     threads = int(options.threads)

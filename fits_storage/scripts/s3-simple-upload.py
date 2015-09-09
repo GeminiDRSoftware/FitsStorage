@@ -1,8 +1,8 @@
-from boto.s3.connection import S3Connection
-from boto.s3.key import Key
+# from boto.s3.connection import S3Connection
+# from boto.s3.key import Key
 
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.utils.aws_s3 import S3Helper
+from fits_storage.utils.aws_s3 import get_helper
 from fits_storage.utils.hashes import md5sum
 
 import os
@@ -26,7 +26,7 @@ file = options.file
 setdebug(options.debug)
 setdemon(options.demon)
 logger.info("Connecting to S3 and getting bucket")
-s3 = S3Helper()
+s3 = get_helper()
 path = options.path
 
 def log(logger, text, *args):
@@ -41,27 +41,28 @@ def do_file(filename, logger=None):
         log("%s is not a regular file - skipping", filename)
         return
 
-    # See if it already exists in S3
-    k = s3.bucket.get_key(filename)
-    if k:
-        # Yes, it exists, get anbd check the md5s
+    # See if it already exists in S3. Otherwise, we want to store it
+    store = not s3.exists_key(filename)
+
+    if not store:
+        # Yes, it exists, get and check the md5s
+
+        k = s3.get_key(filename)
         s3md5 = s3.get_md5(k)
         filemd5 = md5sum(fullpath)
         if s3md5 == filemd5:
             # Identical file already there
-            log("%s: Already exists with size %d and MD5 %s", filename, k.size, s3md5)
+            log("%s: Already exists with size %d and MD5 %s", filename, s3.get_size(k), s3md5)
         else:
             # Exists but is wrong version
             log("%s: Already exists but is wrong MD5 - deleting", filename)
-            s3.bucket.delete_key(filename)
-            k = None
+            k.delete()
+            store = True
 
-    if k is None:
+    if store:
         log("Uploading %s", filename)
-        k = Key(s3.bucket)
-        k.key = filename
-        k.set_contents_from_filename(fullpath)
-        log("%s: Uploaded size, MD5  is %d, %s", filename, k.size, k.md5)
+        k = s3.store_file_to_keyname(filename, fullpath)
+        log("%s: Uploaded size, MD5  is %d, %s", filename, s3.get_size(k), s3.get_md5(k))
 
 # Announce startup
 logger.info("*********  s3-simple-upload starting")

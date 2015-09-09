@@ -7,8 +7,8 @@ import re
 import datetime
 import time
 if using_s3:
-    from fits_storage.utils.aws_s3 import S3Helper
-    s3 = S3Helper()
+    from fits_storage.utils.aws_s3 import get_helper()
+    s3 = get_helper()
 
 # Option Parsing
 from optparse import OptionParser
@@ -37,7 +37,7 @@ logger.info("*********    add_to_ingest_queue.py - starting up at %s" % now)
 
 if using_s3:
     logger.info("Querying files for ingest from S3 bucket")
-    filelist = [key.name for key in s3.bucket.list()]
+    filelist = s3.key_names()
 else:
     fulldirpath = os.path.join(storage_root, path)
     logger.info("Queueing files for ingest from: %s" % fulldirpath)
