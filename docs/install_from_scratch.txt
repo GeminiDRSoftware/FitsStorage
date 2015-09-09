@@ -91,6 +91,9 @@ cd boto3-1.1.3
 python setup.py build
 python setup.py install --prefix=/opt/python_modules
 
+# test python import of psycopg2. If fails, then 
+vi /opt/python_modules/lib/python2.7/site-packages/easy-install.pth
+and remove /sdata/Ureka/Ureka/python/lib/python2.7/site-packages
 
 sudo mkdir /opt/fitsverify
 sudo chown phirst /opt/fitsverify
