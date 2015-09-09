@@ -1,6 +1,7 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean, Enum
 from sqlalchemy.orm import relation
+from sqlalchemy.exc import DataError
 
 from .header import Header
 
@@ -47,11 +48,16 @@ class Gmos(Base):
         self.detector_x_bin = ad.detector_x_bin().for_db()
         self.detector_y_bin = ad.detector_y_bin().for_db()
         self.amp_read_area = ad.amp_read_area().for_db()
-        self.read_speed_setting = ad.read_speed_setting().for_db()
 
-        # This will need a try-except to catch messed up values of gain_setting.
-        # But I don't know what the exception is called yet.
-        self.gain_setting = ad.gain_setting().for_db()
+        try:
+            self.read_speed_setting = ad.read_speed_setting().for_db()
+        except DataError:
+            pass
+
+        try:
+            self.gain_setting = ad.gain_setting().for_db()
+        except DataError:
+            pass
 
         self.focal_plane_mask = ad.focal_plane_mask().for_db()
         self.nodandshuffle = 'GMOS_NODANDSHUFFLE' in ad.types
