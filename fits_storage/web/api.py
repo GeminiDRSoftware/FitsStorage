@@ -3,7 +3,7 @@ from ..orm.file     import File
 from ..orm.header   import Header
 from ..orm.diskfile import DiskFile
 
-from ..utils.fitseditor import get_card, modify_card
+from ..utils.fitseditor import compare_cards, modify_multiple_cards
 from ..utils.ingestqueue import IngestQueueUtil, IngestError
 
 from mod_python import apache, util
@@ -64,6 +64,43 @@ def error_response(message, id=None):
 
     return response
 
+qa_keywords = ('RAWGEMQA', 'RAWPIREQ')
+qa_state_pairs = {
+    'Undefined': ('UNKNOWN', 'UNKNOWN'),
+    'Pass':      ('USABLE',  'YES'),
+    'Usable':    ('USABLE',  'NO'),
+    'Fail':      ('BAD',     'NO'),
+    'Check':     ('UNKNOWN', 'UNKNOWN'),
+}
+
+change_actions = {
+    'qa_state': (qa_keywords, qa_state_pairs),
+}
+
+def validate_changes(changes):
+    for key, value in changes.items():
+        try:
+            _, pairs = change_actions[key]
+            if value not in pairs:
+                raise ItemError("Illegal value '{}' for action '{}'".format(value, key))
+        except KeyError:
+            raise ItemError("Unknown action: {}".format(key))
+
+def is_unchanged(path, new_values):
+    return all(compare_cards(path, new_values, ext=0))
+
+def apply_changes(df, changes):
+    changed = False
+
+    for key, value in changes.items():
+        if is_unchanged(path, new_values):
+            continue
+
+        changed = True
+        modify_multiple_cards(path, new_values, ext=0)
+
+    return changed
+
 def update_headers(req):
     with session_scope() as session:
         iq = IngestQueueUtil(session, DummyLogger())
@@ -78,12 +115,10 @@ def update_headers(req):
                     if not isinstance(query['values'], dict):
                         response.append(error_response("This looks like a malformed request: 'values' should be a dictionary", id=label))
                         continue
+                    validate_changes(query['values'])
                     path = df.fullpath()
                     reingest = iq.delete_inactive_from_queue()
-                    for key, value in query['values'].items():
-                        if get_card(path, key, ext=0) != value:
-                            modify_card(path, key, value, ext=0)
-                    reingest = True
+                    reingest = apply_changes(df, query['values']) or reingest
                     response.append({'result': True, 'id': label})
                 except ItemError as e:
                     response.append(error_response(e.message))
