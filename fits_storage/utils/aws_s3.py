@@ -253,7 +253,7 @@ class Boto3Helper(Helper):
             self.l.error("Key has dissapeared out of S3 bucket! %s", filename)
         else:
             body = key.get()['Body']
-            if istring(fileobj):
+            if is_string(fileobj):
                 # We're dealing with a path+filename
                 with open(fileobj, 'wb') as output:
                     shutil.copyfileobj(body, output)
