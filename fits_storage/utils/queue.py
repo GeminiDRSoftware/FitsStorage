@@ -1,6 +1,7 @@
 import datetime
 from sqlalchemy.orm import make_transient
 import traceback
+import linecache
 
 import re
 
@@ -87,10 +88,34 @@ def queue_length(queue_class, session):
                     .filter(queue_class.inprogress == False)\
                     .count()
 
+def format_tb(tb):
+    ret = []
+    while tb is not None:
+        f = tb.tb_frame
+        lineno = tb.tb_lineno
+        co = f.f_code
+        filename = co.co_filename
+        name = co.co_name
+        ret.append('  File "%s", line %d, in %s' % (filename, lineno, name))
+        linecache.checkcache(filename)
+        line = linecache.getline(filename, lineno, f.f_globals)
+        if line: ret.append('    ' + line.strip())
+        tb = tb.tb_next
+
+    return ret
+
 def set_error(queue_class, oid, exc_type, exc_value, tb, session):
     session.rollback()
     dbob = session.query(queue_class).get(oid)
-    dbob.error = str(exc_value) + '\n---------------------------------------------------------------------\n' + ''.join(traceback.format_tb(tb))
+
+    text = []
+
+    if tb:
+        text.append('Traceback (most recent call last):')
+        text.extend(format_tb(tb))
+    text.extend([x.rstrip() for x in  traceback.format_exception_only(exc_type, exc_value)])
+
+    dbob.error = '\n'.join(text)
     session.commit()
 
 def delete_with_id(queue_class, oid, session):
