@@ -3,6 +3,7 @@ This module holds the Calibration superclass
 """
 
 import functools
+from ..orm.file     import File
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 
@@ -51,13 +52,20 @@ class CalQuery(object):
        kind of DSL (Domain Specific Language) that should make query building more
        natural -or easier to understand- for the calibrations."""
 
-    def __init__(self, session, instrClass, descriptors):
+    def __init__(self, session, instrClass, descriptors, full_query=False):
         # Keep a copy of the instrument descriptors and start the query with
         # some common filters
         self.descr = descriptors
-        self.query = (session.query(Header).select_from(join(join(instrClass, Header), DiskFile))
-                                           .filter(DiskFile.canonical == True) # Search only canonical entries
-                                           .filter(Header.qa_state != 'Fail')) # Knock out the FAILs
+        if full_query:
+            query = (session.query(Header, DiskFile, File)
+                            .select_from(join(join(join(instrClass, Header), DiskFile), File))
+                            .filter(DiskFile.id == Header.diskfile_id)
+                            .filter(File.id == DiskFile.file_id))
+        else:
+            query = (session.query(Header)
+                            .select_from(join(join(instrClass, Header), DiskFile)))
+        self.query = (query.filter(DiskFile.canonical == True) # Search only canonical entries
+                           .filter(Header.qa_state != 'Fail')) # Knock out the FAILs
 
     def __call_through(self, query_method, *args, **kw):
         "Used to make arbitrary calls to the internal SQLAlchemy query object"
@@ -260,7 +268,7 @@ class Calibration(object):
     instrClass = None
     instrDescriptors = ()
 
-    def __init__(self, session, header, descriptors, types):
+    def __init__(self, session, header, descriptors, types, full_query=False):
         """
         Initialize a calibration manager for a given header object (ie data file)
         Need to pass in an sqlalchemy session that should already be open, this class will not close it
@@ -271,6 +279,7 @@ class Calibration(object):
         self.descriptors = descriptors
         self.types = types
         self.from_descriptors = False
+        self.full_query = full_query
 
         # Populate the descriptors dictionary for header
         if self.descriptors is None and self.instrClass is not None:
@@ -311,7 +320,7 @@ class Calibration(object):
         self.set_applicable()
 
     def get_query(self):
-        return CalQuery(self.session, self.instrClass, self.descriptors)
+        return CalQuery(self.session, self.instrClass, self.descriptors, full_query=self.full_query)
 
     def set_applicable(self):
         """

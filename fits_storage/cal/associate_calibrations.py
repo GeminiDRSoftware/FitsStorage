@@ -15,7 +15,7 @@ mapping = {
     'processed_dark': ('dark', { 'processed': True }),
     }
 
-def associate_cals(session, headers, caltype="all", recurse_level=0):
+def associate_cals(session, headers, caltype="all", recurse_level=0, full_query=False):
     """
     This function takes a list of headers from a search result and
     generates a list of the associated calibration headers
@@ -26,7 +26,7 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
 
     for header in headers:
         # Get a calibration object on this science header
-        calobj = get_cal_object(session, None, header=header)
+        calobj = get_cal_object(session, None, header=header, full_query=full_query)
 
         # Go through the calibration types. For now we just look for both
         # raw and processed versions of each.
@@ -41,24 +41,29 @@ def associate_cals(session, headers, caltype="all", recurse_level=0):
     # Now loop through the calheaders list and remove duplicates.
     ids = set()
     shortlist = []
-    for calheader in calheaders:
+    for result in calheaders:
+        if full_query:
+            calheader, df, fl = result
+        else:
+            calheader = result
         if calheader.id not in ids:
             ids.add(calheader.id)
-            shortlist.append(calheader)
+            shortlist.append(result)
 
     # Now we have to recurse to find the calibrations for the calibrations...
     # We only do this for caltype all.
     # Keep digging deeper until we don't find any extras, or we hit too many recurse levels
 
-    if caltype == 'all' and recurse_level < 4 and len(shortlist) > 0:
-        for cal in associate_cals(session, shortlist, caltype=caltype, recurse_level=recurse_level + 1):
-            if cal.id not in ids:
+    if caltype == 'all' and recurse_level < 1 and len(shortlist) > 0:
+        down_list = (shortlist if not full_query else (x[0] for x in shortlist))
+        for cal in associate_cals(session, down_list, caltype=caltype, recurse_level=recurse_level + 1, full_query=full_query):
+            if (cal.id if not full_query else cal[0].id) not in ids:
                 shortlist.append(cal)
 
     # All done, return the shortlist
     return shortlist
 
-def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
+def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0, full_query=False):
     """
     This function takes a list of headers from a search result and
     generates a list of the associated calibration headers
@@ -78,21 +83,30 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0):
     for header in headers:
         obs_hids.append(header.id)
 
-    query = session.query(Header).join(CalCache, Header.id == CalCache.cal_hid).filter(CalCache.obs_hid.in_(obs_hids))
+    if not full_query:
+        query = session.query(Header).join(CalCache, Header.id == CalCache.cal_hid)
+    else:
+        query = (session.query(Header, DiskFile, File)
+                        .select_from(CalCache, Header, DiskFile, File)
+                        .join(CalCache, Header.id == CalCache.cal_hid)
+                        .filter(DiskFile.id == Header.diskfile_id)
+                        .filter(File.id == DiskFile.file_id))
+    query = query.filter(CalCache.obs_hid.in_(obs_hids))
     if caltype != 'all':
         query = query.filter(CalCache.caltype == caltype)
     query = query.distinct().order_by(CalCache.caltype).order_by(CalCache.rank)
 
     calheaders = query.all()
-    ids = set(calh.id for calh in calheaders)
+    ids = set((calh.id if not full_query else calh[0].id) for calh in calheaders)
 
     # Now we have to recurse to find the calibrations for the calibrations...
     # We only do this for caltype all.
     # Keep digging deeper until we don't find any extras, or we hit too many recurse levels
 
     if caltype == 'all' and recurse_level < 4 and len(calheaders) > 0:
-        for cal in associate_cals_from_cache(session, calheaders, caltype=caltype, recurse_level=recurse_level + 1):
-            if cal.id not in ids:
+        down_list = (calheaders if not full_query else (x[0] for x in calheaders)
+        for cal in associate_cals_from_cache(session, down_list, caltype=caltype, recurse_level=recurse_level + 1, full_query=full_query):
+            if (cal.id if not ful_query else cal[0].id) not in ids:
                 calheaders.append(cal)
 
     return calheaders

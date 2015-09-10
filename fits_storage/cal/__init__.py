@@ -31,7 +31,7 @@ inst_class = {
     'NIRI':     CalibrationNIRI,
 }
 
-def get_cal_object(session, filename, header=None, descriptors=None, types=None):
+def get_cal_object(session, filename, header=None, descriptors=None, types=None, full_query=False):
     """
     This function returns an appropriate calibration object for the given dataset
     Need to pass in a sqlalchemy session that should already be open, the class will not close it
@@ -53,6 +53,6 @@ def get_cal_object(session, filename, header=None, descriptors=None, types=None)
         instrument = descriptors['instrument']
 
     calClass = inst_class.get(instrument, Calibration)
-    cal = calClass(session, header, descriptors, types)
+    cal = calClass(session, header, descriptors, types, full_query=full_query)
 
     return cal
