@@ -96,9 +96,9 @@ try:
                         prev_queue.set_error(pq, *sys.exc_info())
                         raise
                     logger.debug("Deleting previewqueue id %d", pq.id)
-                    prev_queue.delete(dbpq)
+                    prev_queue.delete(pq)
 
-            except KeyboardInterrupt, OperationalError:
+            except (KeyboardInterrupt, OperationalError):
                 loop = False
 
             except:

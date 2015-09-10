@@ -111,7 +111,7 @@ try:
                         export_queue.set_lastfailed(eq)
                     session.commit()
 
-            except KeyboardInterrupt, OperationalError:
+            except (KeyboardInterrupt, OperationalError):
                 loop = False
 
             except:

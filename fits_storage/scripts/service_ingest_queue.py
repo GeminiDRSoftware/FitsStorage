@@ -117,7 +117,7 @@ try:
                     logger.debug("Deleting ingestqueue id %d", iq.id)
                     ingest_queue.delete(iq)
 
-            except KeyboardInterrupt, OperationalError:
+            except (KeyboardInterrupt, OperationalError):
                 loop = False
 
             except:

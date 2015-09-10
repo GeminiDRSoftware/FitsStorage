@@ -102,7 +102,7 @@ try:
                     # ccq is a transient ORM object, find it in the db
                     ccq_util.delete(ccq)
 
-            except KeyboardInterrupt, OperationalError:
+            except (KeyboardInterrupt, OperationalError):
                 loop = False
 
             except:
