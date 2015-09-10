@@ -5,7 +5,8 @@ from sqlalchemy.orm import relation
 from . import Base
 from .header import Header
 
-NIFS_READ_MODE_ENUM = Enum('Faint Object', 'Medium Object', 'Bright Object', 'Invalid', name='nifs_read_mode')
+READ_MODES = ['Faint Object', 'Medium Object', 'Bright Object', 'Invalid']
+READ_MODE_ENUM = Enum(*READ_MODES, name='nifs_read_mode')
 
 class Nifs(Base):
     """
@@ -18,7 +19,7 @@ class Nifs(Base):
     header = relation(Header, order_by=id)
     disperser = Column(Text, index=True)
     filter_name = Column(Text, index=True)
-    read_mode = Column(NIFS_READ_MODE_ENUM, index=True)
+    read_mode = Column(READ_MODE_ENUM, index=True)
     focal_plane_mask = Column(Text)
 
     def __init__(self, header, ad):
@@ -30,5 +31,9 @@ class Nifs(Base):
     def populate(self, ad):
         self.disperser = ad.disperser().for_db()
         self.filter_name = ad.filter_name().for_db()
-        self.read_mode = ad.read_mode().for_db()
+
+        read_mode = ad.read_mode().for_db()
+        if read_mode in READ_MODES:
+            self.read_mode = read_mode
+
         self.focal_plane_mask = ad.focal_plane_mask().for_db()

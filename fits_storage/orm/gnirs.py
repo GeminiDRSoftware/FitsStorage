@@ -1,14 +1,16 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Enum
 from sqlalchemy.orm import relation
-from sqlalchemy.exc import DataError
 
 from . import Base
 from .header import Header
 
 # Enumerated Column types
-GNIRS_READ_MODE_ENUM = Enum('Very Faint Objects', 'Faint Objects', 'Bright Objects', 'Very Bright Objects', 'Invalid', name='gnirs_read_mode')
-GNIRS_WELL_DEPTH_SETTING_ENUM = Enum('Shallow', 'Deep', 'Invalid', name='gnirs_well_depth_setting')
+READ_MODES = ['Very Faint Objects', 'Faint Objects', 'Bright Objects', 'Very Bright Objects', 'Invalid']
+READ_MODE_ENUM = Enum(*READ_MODES, name='gnirs_read_mode')
+
+WELL_DEPTH_SETTINGS = ['Shallow', 'Deep', 'Invalid']
+WELL_DEPTH_SETTING_ENUM = Enum(*WELL_DEPTH_SETTINGS, name='gnirs_well_depth_setting')
 
 
 class Gnirs(Base):
@@ -22,8 +24,8 @@ class Gnirs(Base):
     header = relation(Header, order_by=id)
     disperser = Column(Text, index=True)
     filter_name = Column(Text, index=True)
-    read_mode = Column(GNIRS_READ_MODE_ENUM, index=True)
-    well_depth_setting = Column(GNIRS_WELL_DEPTH_SETTING_ENUM, index=True)
+    read_mode = Column(READ_MODE_ENUM, index=True)
+    well_depth_setting = Column(WELL_DEPTH_SETTING_ENUM, index=True)
     camera = Column(Text, index=True)
     focal_plane_mask = Column(Text)
 
@@ -36,7 +38,14 @@ class Gnirs(Base):
     def populate(self, ad):
         self.disperser = ad.disperser().for_db()
         self.filter_name = ad.filter_name().for_db()
-        self.read_mode = ad.read_mode().for_db()
-        self.well_depth_setting = ad.well_depth_setting().for_db()
+
+        read_mode = ad.read_mode().for_db()
+        if read_mode in READ_MODES:
+            self.read_mode = read_mode
+
+        well_depth_setting = ad.well_depth_setting().for_db()
+        if well_depth_setting in WELL_DEPTH_SETTINGS:
+            self.well_depth_setting = well_depth_setting
+
         self.camera = ad.camera().for_db()
         self.focal_plane_mask = ad.focal_plane_mask().for_db()

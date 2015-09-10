@@ -1,15 +1,17 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean, Enum
 from sqlalchemy.orm import relation
-from sqlalchemy.exc import DataError
 
 from .header import Header
 
 from . import Base
 
 # Enumerated column types
-READ_SPEED_SETTING_ENUM = Enum('slow', 'fast', name='gmos_read_speed_setting')
-GAIN_SETTING_ENUM = Enum('low', 'high', name='gmos_gain_setting')
+READ_SPEED_SETTINGS = ['slow', 'fast']
+READ_SPEED_SETTING_ENUM = Enum(*READ_SPEED_SETTINGS, name='gmos_read_speed_setting')
+
+GAIN_SETTINGS = ['low', 'high']
+GAIN_SETTING_ENUM = Enum(*GAIN_SETTINGS, name='gmos_gain_setting')
 
 class Gmos(Base):
     """
@@ -49,15 +51,13 @@ class Gmos(Base):
         self.detector_y_bin = ad.detector_y_bin().for_db()
         self.amp_read_area = ad.amp_read_area().for_db()
 
-        try:
-            self.read_speed_setting = ad.read_speed_setting().for_db()
-        except DataError:
-            pass
+        read_speed = ad.read_speed_setting().for_db()
+        if read_speed in READ_SPEED_SETTINGS:
+            self.read_speed_setting = read_speed
 
-        try:
-            self.gain_setting = ad.gain_setting().for_db()
-        except DataError:
-            pass
+        gain_setting = ad.gain_setting().for_db()
+        if gain_setting in GAIN_SETTINGS:
+            self.gain_setting = gain_setting
 
         self.focal_plane_mask = ad.focal_plane_mask().for_db()
         self.nodandshuffle = 'GMOS_NODANDSHUFFLE' in ad.types
