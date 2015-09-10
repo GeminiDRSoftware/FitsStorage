@@ -100,6 +100,7 @@ class Helper(object):
             except:
                 self.l.debug("Upload try %d appeared to fail", num)
                 self.l.debug("Exception is: %s %s %s", sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
+                sleep(5)
         if num == 5 and not ok:
             self.l.error("Gave up trying to upload %s to S3", filename)
         return ok
@@ -136,12 +137,12 @@ class Helper(object):
 
             try:
                 key = self.fetch_file(key or keyname, filename, fullpath)
-            except socket.error:
-                # OK, we got a socket error.
-                self.l.debug("Socket Error fetching %s from S3 - will retry, tries=%d", filename, tries)
-                self.l.debug("Socket Error details: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
+            except:
+                # OK, we got some error.
+                self.l.debug("Error fetching %s from S3 - will retry, tries=%d", filename, tries)
+                self.l.debug("Error details: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
                                     traceback.format_tb(sys.exc_info()[2]))
-                sleep(10)
+                sleep(5)
 
                 # Nullify the key object - seems like if it fails getting a new key is necessary
                 key = None
