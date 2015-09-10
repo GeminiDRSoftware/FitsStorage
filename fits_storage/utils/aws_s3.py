@@ -86,7 +86,10 @@ class Helper(object):
     def upload_file(self, keyname, filename):
         raise NotImplementedError("This method needs to be implemented by subclasses")
 
-    def fetch_file(self, keyname, filename, path):
+    def fetch_to_staging(self, keyname, filename, fullpath=None):
+        raise NotImplementedError("This method needs to be implemented by subclasses")
+
+    def fetch_temporary(self, keyname):
         raise NotImplementedError("This method needs to be implemented by subclasses")
 
 from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name, s3_staging_area
