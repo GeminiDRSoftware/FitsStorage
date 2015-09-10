@@ -167,22 +167,19 @@ def download(req, things):
                 filedownloadlog.canhaveit = True
                 md5file += "%s  %s\n" % (header.diskfile.file_md5, header.diskfile.filename)
                 if using_s3:
-                    # Fetch the file into a cStringIO buffer
-                    s3.fetch_file(header.diskfile.filename, buffer)
-                    # Write buffer into tarfile
-                    buffer.seek(0)
-                    # - create a tarinfo object
-                    tarinfo = tarfile.TarInfo(header.diskfile.filename)
-                    tarinfo.size = header.diskfile.file_size
-                    tarinfo.uid = 0
-                    tarinfo.gid = 0
-                    tarinfo.uname = 'gemini'
-                    tarinfo.gname = 'gemini'
-                    tarinfo.mtime = time.mktime(header.diskfile.lastmod.timetuple())
-                    tarinfo.mode = 0644
-                    # - and add it to the tar file
-                    tar.addfile(tarinfo, buffer)
-                    buffer.close()
+                    with s3.fetch_temporary(header.diskfile.filename) as buffer:
+                        # Write buffer into tarfile
+                        # - create a tarinfo object
+                        tarinfo = tarfile.TarInfo(header.diskfile.filename)
+                        tarinfo.size = header.diskfile.file_size
+                        tarinfo.uid = 0
+                        tarinfo.gid = 0
+                        tarinfo.uname = 'gemini'
+                        tarinfo.gname = 'gemini'
+                        tarinfo.mtime = time.mktime(header.diskfile.lastmod.timetuple())
+                        tarinfo.mode = 0644
+                        # - and add it to the tar file
+                        tar.addfile(tarinfo, buffer)
                 else:
                     tar.add(header.diskfile.fullpath(), header.diskfile.filename)
             else:
@@ -344,16 +341,12 @@ def sendonefile(req, diskfile, content_type=None):
         fname = diskfile.filename
         req.set_content_length(diskfile.data_size)
         req.log_error("Here")
-        if diskfile.compressed:
-            buffer = cStringIO.StringIO()
-            s3.fetch_file(fname, buffer)
-            buffer.seek(0)
-            try:
-                req.write(bz2.decompress(buffer.getvalue()))
-            finally:
-                buffer.close()
-        else:
-            s3.fetch_file(fname, req)
+        with s3.fetch_temporary(fname) as buffer:
+            data = buffer.read()
+            if diskfile.compressed:
+                req.write(bz2.decompress(data))
+            else:
+                req.write(data)
     else:
         # Serve from regular file
         if diskfile.compressed == True:

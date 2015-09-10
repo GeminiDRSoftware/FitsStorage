@@ -113,6 +113,7 @@ class PreviewQueueUtil(object):
         if our_dfado:
             if using_s3:
                 # Fetch from S3 to staging area
+                # TODO: We're not checking here if the file was actually retrieved...
                 self.s3.fetch_to_staging(diskfile.path, diskfile.filename)
 
             if diskfile.compressed:

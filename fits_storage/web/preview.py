@@ -89,12 +89,13 @@ def sendpreview(session, req, diskfile_id):
     preview = query.first()
     if preview is None:
         return False
-    
+
     # Send them the data
     req.content_type = 'image/jpeg'
     if using_s3:
         # S3 file server
-        s3.fetch_file(preview.filename, req)
+        with s3.fetch_temporary(preview.filename) as temp:
+            req.write(temp.read())
     else:
         # Serve from regular file
         fullpath = os.path.join(storage_root, preview_path, preview.filename)

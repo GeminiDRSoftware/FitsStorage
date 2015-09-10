@@ -58,7 +58,7 @@ def do_file(filename, logger=None):
 
     if store:
         log("Uploading %s", filename)
-        k = s3.store_file_to_keyname(filename, fullpath)
+        k = s3.upload_file(filename, fullpath)
         log("%s: Uploaded size, MD5  is %d, %s", filename, s3.get_size(k), s3.get_md5(k))
 
 # Announce startup

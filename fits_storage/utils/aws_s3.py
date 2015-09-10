@@ -10,7 +10,7 @@ from time import sleep
 
 from ..fits_storage_config import storage_root
 from .hashes import md5sum
-
+from contextlib import contextmanager
 
 # The first part (Helper) was intended as a base class to allow for both Boto2 and Boto3 to
 # coexist peacefully within our codebase. We decided to deprecate Boto2 because it just makes
@@ -20,6 +20,9 @@ from .hashes import md5sum
 # (Ricardo): I've removed the Boto2 code altogether, but I'll keep the structure as it is.
 #            If at other point anyone out of Gemini wants to use the archive code, it will
 #            be easier to adapt this module to make use of other cloud services.
+
+class DownloadError(Exception):
+    pass
 
 def is_string(obj):
     return isinstance(obj, (str, unicode))
@@ -80,120 +83,21 @@ class Helper(object):
     def get_as_string(self, key):
         raise NotImplementedError("This method needs to be implemented by subclasses")
 
-    def store_file_to_keyname(self, keyname, path):
-        raise NotImplementedError("This method needs to be implemented by subclasses")
-
     def upload_file(self, keyname, filename):
-        """
-        Upload the file at filename to the S3 bucket, calling it keyname
-        """
-        self.l.debug("Creating key: %s", keyname)
-        self.l.info("Uploading %s to S3 as %s", filename, keyname )
-        num = 0
-        ok = False
-        while num < 5 and not ok:
-            num += 1
-            try:
-                self.store_file_to_keyname(keyname, filename)
-                self.l.info("Uploaded %s OK on try %d", filename, num)
-                ok = True
-            except:
-                self.l.debug("Upload try %d appeared to fail", num)
-                self.l.debug("Exception is: %s %s %s", sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
-                sleep(5)
-        if num == 5 and not ok:
-            self.l.error("Gave up trying to upload %s to S3", filename)
-        return ok
+        raise NotImplementedError("This method needs to be implemented by subclasses")
 
     def fetch_file(self, keyname, filename, path):
         raise NotImplementedError("This method needs to be implemented by subclasses")
 
-    def fetch_to_staging(self, path, filename, key=None, fullpath=None):
-        """
-        Fetch the file from s3 and put it in the storage_root directory.
-        Do some validation, and re-try as appropriate
-        Return True if suceeded, False otherwise
-        """
-
-        # Make the full path of the destination file if we were not given one
-        if fullpath is None:
-            fullpath = os.path.join(storage_root, filename)
-
-        # Check if the file already exists in the staging area, remove it if so
-        if os.path.exists(fullpath):
-            self.l.warning("File already exists at S3 download location: %s. Will delete it first.", fullpath)
-            try:
-                os.unlink(fullpath)
-            except:
-                self.l.error("Unable to delete %s which is in the way of the S3 download", fullpath)
-
-        # Try up to 5 times. Have seen socket.error raised
-        tries = 0
-        gotit = False
-        keyname = os.path.join(path, filename)
-        while (not gotit) and (tries < 5):
-            tries += 1
-            self.l.debug("Fetching %s to s3_staging_area, try %d", filename, tries)
-
-            try:
-                key = self.fetch_file(key or keyname, filename, fullpath)
-            except:
-                # OK, we got some error.
-                self.l.debug("Error fetching %s from S3 - will retry, tries=%d", filename, tries)
-                self.l.debug("Error details: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
-                                    traceback.format_tb(sys.exc_info()[2]))
-                sleep(5)
-
-                # Nullify the key object - seems like if it fails getting a new key is necessary
-                key = None
-
-                # Remove any partial file we got downloaded
-                try:
-                    os.unlink(fullpath)
-                except:
-                    pass
-
-            # Did we get anything?
-            if os.access(fullpath, os.F_OK):
-                # Check size and md5
-                filesize = os.path.getsize(fullpath)
-                s3size = self.get_size(key)
-                if filesize == s3size:
-                    # It's the right size, check the md5
-                    filemd5 = md5sum(fullpath)
-                    s3md5 = self.get_md5(key)
-                    if filemd5 == s3md5:
-                        # md5 matches
-                        gotit = True
-                    else:
-                        # Size is OK, but md5 is not
-                        gotit = False
-                        self.l.debug("Problem fetching %s from S3 - size OK, but md5 mismatch - file: %s; key: %s",
-                                        filename, filemd5, s3md5)
-                        sleep(10)
-                else:
-                    # Didn't get enough bytes
-                    gotit = False
-                    self.l.debug("Problem fetching %s from S3 - size mismatch - file: %s; key: %s", filename, filesize, s3size)
-                    sleep(10)
-            else:
-                # file is not accessible
-                gotit = False
-
-        if gotit:
-            self.l.debug("Downloaded file from S3 sucessfully")
-            return True
-        else:
-            self.l.error("Failed to sucessfully download file %s from S3. Giving up.", filename)
-            return False
-
-from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name
+from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name, s3_staging_area
 
 import boto3
-from boto3.session import Session
+# from boto3.session import Session
+from boto3.s3.transfer import S3Transfer, S3UploadFailedError, RetriesExceededError
 from botocore.exceptions import ClientError
 import shutil
 import logging
+from tempfile import mkstemp
 
 boto3.set_stream_logger(level=logging.CRITICAL)
 logging.getLogger('boto').setLevel(logging.CRITICAL)
@@ -201,9 +105,19 @@ logging.getLogger('botocore').setLevel(logging.CRITICAL)
 
 class Boto3Helper(Helper):
     @property
+    def session(self):
+        if boto3.DEFAULT_SESSION is None:
+            boto3.setup_default_session(aws_access_key_id     = aws_access_key,
+                                        aws_secret_access_key = aws_secret_key)
+        return boto3.DEFAULT_SESSION
+
+    @property
+    def client(self):
+        return self.session.client('s3')
+
+    @property
     def s3(self):
-         return Session(aws_access_key_id     = aws_access_key,
-                        aws_secret_access_key = aws_secret_key).resource('s3')
+         return self.session.resource('s3')
 
     @property
     def bucket(self):
@@ -241,27 +155,79 @@ class Boto3Helper(Helper):
     def get_as_string(self, keyname):
         return self.get_key(keyname).get()['Body'].read()
 
-    def store_file_to_keyname(self, keyname, path):
-        k = self.get_key(keyname)
-        k.put(Body=open(path, 'rb'))
-        return k
+    def upload_file(self, keyname, filename):
+        client = self.client
+        transfer = S3Transfer(client)
+        try:
+            transfer.upload_file(filename, self.bucket.name, keyname)
+        except S3UploadFailedError as e:
+            self.l.error(e.message)
+            return None
 
-    def fetch_file(self, key, filename, fileobj):
-        if is_string(key):
-            key = self.get_key(key)
+        return self.get_key(keyname)
 
-        if not self.exists_key(key):
-            self.l.error("Key has dissapeared out of S3 bucket! %s", filename)
-        else:
-            body = key.get()['Body']
-            if is_string(fileobj):
-                # We're dealing with a path+filename
-                with open(fileobj, 'wb') as output:
-                    shutil.copyfileobj(body, output)
+    def fetch_to_staging(self, keyname, filename, fullpath=None):
+        """
+        Fetch the file from s3 and put it in the storage_root directory.
+        Do some validation, and re-try as appropriate
+        Return True if suceeded, False otherwise
+        """
+
+        if not fullpath:
+            fullpath = os.path.join(storage_root, filename)
+
+        # Check if the file already exists in the staging area, remove it if so
+        if os.path.exists(fullpath):
+            self.l.warning("File already exists at S3 download location: %s. Will delete it first.", fullpath)
+            try:
+                os.unlink(fullpath)
+            except:
+                self.l.error("Unable to delete %s which is in the way of the S3 download", fullpath)
+                # TODO: Return here? Should be the obvious
+
+        client = self.client
+        transfer = S3Transfer(client)
+        try:
+            transfer.download_file(self.bucket.name, keyname, fullpath)
+        except RetriesExceededError as e:
+            self.l.error(e.message)
+            return False
+
+        key = self.get_key(keyname)
+        # Check size and md5
+        filesize = os.path.getsize(fullpath)
+        s3size = self.get_size(key)
+        if filesize == s3size:
+            # It's the right size, check the md5
+            filemd5 = md5sum(fullpath)
+            s3md5 = self.get_md5(key)
+            if filemd5 == s3md5:
+                # md5 matches
+                self.l.debug("Downloaded file from S3 sucessfully")
+                return True
             else:
-                # Assume we got an open stream
-                shutil.copyfileobj(body, fileobj)
-            return key
+                # Size is OK, but md5 is not
+                self.l.debug("Problem fetching %s from S3 - size OK, but md5 mismatch - file: %s; key: %s",
+                                filename, filemd5, s3md5)
+                sleep(10)
+        else:
+            # Didn't get enough bytes
+            self.l.debug("Problem fetching %s from S3 - size mismatch - file: %s; key: %s", filename, filesize, s3size)
+            sleep(10)
+
+        return False
+
+    @contextmanager
+    def fetch_temporary(self, keyname):
+        filename = os.path.basename(keyname)
+        _, fullpath = mkstemp(dir=s3_staging_area)
+        try:
+            if not self.fetch_to_staging(keyname, filename, fullpath):
+                raise DownloadError("Could not download the file for some reason")
+            yield open(fullpath)
+        finally:
+            if os.path.exists(fullpath):
+                os.unlink(fullpath)
 
 def get_helper(*args, **kwargs):
     return Boto3Helper(*args, **kwargs)
