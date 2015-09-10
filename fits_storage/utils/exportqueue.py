@@ -183,7 +183,7 @@ class ExportQueueUtil(object):
                 self.l.debug("Transfer not successful")
                 return False
 
-        except urllib2.URLError, httplib.IncompleteRead:
+        except (urllib2.URLError, httplib.IncompleteRead):
             self.l.info("URLError posting %d bytes of data to destination server at: %s", len(postdata), url)
             self.l.debug("Transfer Failed")
             return False
