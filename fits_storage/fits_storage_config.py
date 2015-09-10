@@ -56,6 +56,11 @@ export_upload_auth_cookie = None
 # Leave it as None to disable this feature
 magic_download_cookie = None
 
+# This is the magic cookie value needed to allow API access without
+# any other authentication.
+# Leave it as None to disable this feature
+magic_api_cookie = None
+
 # This is the list of downstream servers we export files we ingest to
 export_destinations = []
 #export_destinations = ['hbffits2']
