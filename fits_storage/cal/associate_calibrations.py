@@ -5,6 +5,8 @@ results of a search
 """
 from . import get_cal_object
 from ..gemini_metadata_utils import cal_types
+from ..orm.file import File
+from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.calcache import CalCache
 
@@ -88,7 +90,7 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0, 
     else:
         query = (session.query(Header, DiskFile, File)
                         .select_from(CalCache, Header, DiskFile, File)
-                        .join(CalCache, Header.id == CalCache.cal_hid)
+                        .filter(Header.id == CalCache.cal_hid)
                         .filter(DiskFile.id == Header.diskfile_id)
                         .filter(File.id == DiskFile.file_id))
     query = query.filter(CalCache.obs_hid.in_(obs_hids))
@@ -106,7 +108,7 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0, 
     if caltype == 'all' and recurse_level < 4 and len(calheaders) > 0:
         down_list = (calheaders if not full_query else (x[0] for x in calheaders))
         for cal in associate_cals_from_cache(session, down_list, caltype=caltype, recurse_level=recurse_level + 1, full_query=full_query):
-            if (cal.id if not ful_query else cal[0].id) not in ids:
+            if (cal.id if not full_query else cal[0].id) not in ids:
                 calheaders.append(cal)
 
     return calheaders
