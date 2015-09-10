@@ -104,7 +104,7 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0, 
     # Keep digging deeper until we don't find any extras, or we hit too many recurse levels
 
     if caltype == 'all' and recurse_level < 4 and len(calheaders) > 0:
-        down_list = (calheaders if not full_query else (x[0] for x in calheaders)
+        down_list = (calheaders if not full_query else (x[0] for x in calheaders))
         for cal in associate_cals_from_cache(session, down_list, caltype=caltype, recurse_level=recurse_level + 1, full_query=full_query):
             if (cal.id if not ful_query else cal[0].id) not in ids:
                 calheaders.append(cal)
