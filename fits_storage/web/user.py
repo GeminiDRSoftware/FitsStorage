@@ -20,6 +20,7 @@ import datetime
 import time
 import smtplib
 from email.mime.text import MIMEText
+import functools
 
 def request_account(req, things):
     """
@@ -801,3 +802,67 @@ def userfromcookie(session, req):
     except NoResultFound:
         # This is not a valid session cookie
         return None
+
+class AccessForbidden(Exception):
+    def __init__(self, message, template, content_type='text/html'):
+        self.message      = message
+        self.args         = [message]
+        self.template     = template
+        self.content_type = content_type
+
+DEFAULT_403_TEMPLATE = 'errors/forbidden.html'
+JSON_403_TEMPLATE = 'errors/forbidden.json'
+
+def needs_login(**loginkw):
+    """Decorator for functions that need a user to be logged in, or some sort of cookie
+       to be set. The basic use is (notice the decorator parenthesis, they're important):
+
+          @needs_login()
+          def decorated_function():
+              ...
+
+       Which rejects access if the user is not logged in. The decorator accepts a number
+       of keyword arguments. The most restrictive is the one that applies, except for
+       magic cookies:
+
+         - magic_cookie=[...]
+           A list of magic cookies. Any of them will grant access, even to non-logged in
+           users. Useful for scripts, etc.
+
+         - staffer=True
+           The user must be Gemini Staff
+
+         - superuser=True
+           The user must be Superuser in the archive system
+
+         - content_type='...'
+           Can be set to `html` (the default) or `json`, depending on the kind of answer
+           we want to provide, in case that the access is forbidden"""
+    def decorator(fn):
+        @functools.wraps(fn)
+        def wrapper(req, *args, **kw):
+            if loginkw.get('content_type') == 'json':
+                content_type = 'application/json'
+                template     = JSON_403_TEMPLATE
+            else:
+                content_type = 'text/html'
+                template     = DEFAULT_403_TEMPLATE
+            with session_scope() as session:
+                got_magic = False
+                cookies = Cookie.get_cookies(req)
+                for cookie in loginkw.get('magic_cookie', []):
+                    if cookie is not None and cookie in cookies:
+                        got_magic = True
+                        break
+
+                if not got_magic:
+                    user = userfromcookie(session, req)
+                    if not user:
+                        raise AccessForbidden("You need to be logged in to access this resource", template=template, content_type=content_type)
+                    if loginkw.get('staffer') is True and not user.gemini_staff:
+                        raise AccessForbidden("You need to be logged in as Gemini Staff member to access this resource", template=template, content_type=content_type)
+                    if loginkw.get('superuser') is True and not user.superuser:
+                        raise AccessForbidden("You need to be logged in as a Superuser to access this resource", template=template, content_type=content_type)
+            return fn(req, *args, **kw)
+        return wrapper
+    return decorator

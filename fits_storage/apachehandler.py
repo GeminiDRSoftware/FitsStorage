@@ -27,7 +27,7 @@ from web.fileserver import fileserver, download
 from web.qastuff import qareport, qametrics, qaforgui
 from web.statistics import content, stats
 from web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password
-from web.user import staff_access, user_list, userfromcookie
+from web.user import staff_access, user_list, userfromcookie, AccessForbidden
 from web.userprogram import my_programs
 from web.searchform import searchform, nameresolver
 from web.logreports import usagereport, usagedetails, downloadlog, usagestats
@@ -36,6 +36,7 @@ from web.obslogs import obslogs
 from web.reporting import report
 from web.queuestatus import queuestatus
 from web.api import update_headers
+from web import templating
 
 from orm import sessionfactory
 from orm.usagelog import UsageLog
@@ -177,6 +178,12 @@ def handler(req):
     except apache.SERVER_RETURN:
         req.status = 303
         raise
+
+    except AccessForbidden as e:
+        req.status = 403
+        req.content_type = e.content_type
+        req.write(templating.get_env().get_template(e.template).render(message = e.message))
+        retary = apache.OK
 
     except Exception:
         req.status = apache.HTTP_INTERNAL_SERVER_ERROR

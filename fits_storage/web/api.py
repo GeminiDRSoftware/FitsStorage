@@ -6,6 +6,10 @@ from ..orm.diskfile import DiskFile
 from ..utils.fitseditor import compare_cards, modify_multiple_cards
 from ..utils.ingestqueue import IngestQueueUtil, IngestError
 
+from .user import needs_login
+
+from ..fits_storage_config import magic_api_cookie
+
 from mod_python import apache, util
 from contextlib import contextmanager
 import os
@@ -101,6 +105,7 @@ def apply_changes(df, changes):
 
     return changed
 
+@needs_login(magic_cookie=[magic_api_cookie], content_type='json')
 def update_headers(req):
     with session_scope() as session:
         iq = IngestQueueUtil(session, DummyLogger())
