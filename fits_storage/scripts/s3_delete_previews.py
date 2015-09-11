@@ -44,7 +44,22 @@ if not (options.yesimsure or options.count):
 logger.info("Getting file list from S3")
 
 s3 = get_helper()
-filelist = filter(lambda n: n.endswith("_preview.jpg"), s3.key_names())
+#filelist = filter(lambda n: n.endswith("_preview.jpg"), s3.key_names())
+
+keys = s3.list_keys()
+logger.info("Got key list")
+
+i=0
+filelist = []
+for key in keys:
+    i += 1
+    name = key.key
+    if i%100000 == 0:
+        logger.info("Filtered %d", i)
+    if name.endswith("_preview.jpg"):
+        filelist.append(name)
+
+logger.info("Got name list")
 
 if options.count:
     logger.info("Found %d preview files", len(filelist))
