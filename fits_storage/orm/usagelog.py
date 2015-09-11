@@ -77,5 +77,9 @@ class UsageLog(Base):
             html += " (SERVER ERROR)"
         elif self.status == 404:
             html += " (NOT FOUND)"
+        elif self.status == 405:
+            html += " (METHOD NOT ALLOWED)"
+        elif self.status == 406:
+            html += " (NOT ACCEPTABLE)"
 
         return html
