@@ -32,8 +32,7 @@ def feed_names():
 
     for obj in s3.bucket.objects.all():
         name = obj.key
-        # if name.endswith("_preview.jpg"):
-        if name.endswith(".fits"):
+        if name.endswith("_preview.jpg"):
             logger.info("Found {}".format(name))
             yield name
 
