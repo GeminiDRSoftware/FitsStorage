@@ -86,7 +86,7 @@ class Helper(object):
     def upload_file(self, keyname, filename):
         raise NotImplementedError("This method needs to be implemented by subclasses")
 
-    def fetch_to_staging(self, keyname, filename, fullpath=None):
+    def fetch_to_staging(self, keyname, fullpath=None):
         raise NotImplementedError("This method needs to be implemented by subclasses")
 
     def fetch_temporary(self, keyname):
@@ -169,7 +169,7 @@ class Boto3Helper(Helper):
 
         return self.get_key(keyname)
 
-    def fetch_to_staging(self, keyname, filename, fullpath=None):
+    def fetch_to_staging(self, keyname, fullpath=None):
         """
         Fetch the file from s3 and put it in the storage_root directory.
         Do some validation, and re-try as appropriate
@@ -177,7 +177,7 @@ class Boto3Helper(Helper):
         """
 
         if not fullpath:
-            fullpath = os.path.join(storage_root, filename)
+            fullpath = os.path.join(storage_root, keyname)
 
         # Check if the file already exists in the staging area, remove it if so
         if os.path.exists(fullpath):
@@ -211,21 +211,20 @@ class Boto3Helper(Helper):
             else:
                 # Size is OK, but md5 is not
                 self.l.debug("Problem fetching %s from S3 - size OK, but md5 mismatch - file: %s; key: %s",
-                                filename, filemd5, s3md5)
+                                keyname, filemd5, s3md5)
                 sleep(10)
         else:
             # Didn't get enough bytes
-            self.l.debug("Problem fetching %s from S3 - size mismatch - file: %s; key: %s", filename, filesize, s3size)
+            self.l.debug("Problem fetching %s from S3 - size mismatch - file: %s; key: %s", keyname, filesize, s3size)
             sleep(10)
 
         return False
 
     @contextmanager
     def fetch_temporary(self, keyname):
-        filename = os.path.basename(keyname)
         _, fullpath = mkstemp(dir=s3_staging_area)
         try:
-            if not self.fetch_to_staging(keyname, filename, fullpath):
+            if not self.fetch_to_staging(keyname, fullpath):
                 raise DownloadError("Could not download the file for some reason")
             yield open(fullpath)
         finally:

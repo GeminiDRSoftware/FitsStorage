@@ -114,7 +114,7 @@ class PreviewQueueUtil(object):
             if using_s3:
                 # Fetch from S3 to staging area
                 # TODO: We're not checking here if the file was actually retrieved...
-                self.s3.fetch_to_staging(diskfile.path, diskfile.filename)
+                self.s3.fetch_to_staging(diskfile.filename)
 
             if diskfile.compressed:
                 # Create the uncompressed cache filename and unzip to it

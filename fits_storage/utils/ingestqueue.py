@@ -184,7 +184,7 @@ class IngestQueueUtil(object):
         self.l.debug("Adding new DiskFile entry")
         if using_s3:
             # At this point, we fetch a local copy of the file to the staging area
-            if not self.s3.fetch_to_staging(path, filename, fullpath=fullpath):
+            if not self.s3.fetch_to_staging(filename):
                 # Failed to fetch the file from S3. Can't do this
                 return
 
