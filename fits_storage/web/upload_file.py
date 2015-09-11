@@ -6,16 +6,18 @@ import datetime
 
 from ..fits_storage_config import upload_staging_path, upload_auth_cookie
 
-from ..apache_return_codes import HTTP_OK, HTTP_NOT_ACCEPTABLE, HTTP_FORBIDDEN
+from ..apache_return_codes import HTTP_OK, HTTP_NOT_ACCEPTABLE
 from ..apache_return_codes import HTTP_SERVICE_UNAVAILABLE
 
-from ..orm import sessionfactory
+from ..orm import session_scope
 from ..orm.fileuploadlog import FileUploadLog
 
+from .user import needs_login
 
 if upload_auth_cookie:
     from mod_python import Cookie
 
+@needs_login(only_magic=True, magic_cookies=[('gemini_fits_upload_auth', upload_auth_cookie)], annotate=FileUploadLog)
 def upload_file(req, filename, processed_cal="False"):
     """
     This handles uploading files including processed calibrations.
@@ -29,85 +31,71 @@ def upload_file(req, filename, processed_cal="False"):
     Log Entries are inserted into the FileUploadLog table
     """
 
-    session = sessionfactory()
-    try:
-        fileuploadlog = FileUploadLog(req.usagelog)
-        fileuploadlog.filename = filename
-        fileuploadlog.processed_cal = processed_cal
-        session.add(fileuploadlog)
-        session.commit()
+    with session_scope() as session:
+        try:
+            fileuploadlog = FileUploadLog(req.usagelog)
+            fileuploadlog.filename = filename
+            fileuploadlog.processed_cal = processed_cal
+            session.add(fileuploadlog)
+            session.commit()
 
-        if(req.method != 'POST'):
-            fileuploadlog.add_note("Aborted - not HTTP POST")
-            return HTTP_NOT_ACCEPTABLE
+            if req.method != 'POST':
+                fileuploadlog.add_note("Aborted - not HTTP POST")
+                return HTTP_NOT_ACCEPTABLE
 
-        authenticated = True
-        if upload_auth_cookie:
-            authenticated = False
-            cookies = Cookie.get_cookies(req)
-            if cookies.has_key('gemini_fits_upload_auth'):
-                auth_value = cookies['gemini_fits_upload_auth'].value
-                if auth_value == upload_auth_cookie:
-                    authenticated = True
+            # It's a bit brute force to read all the data in one chunk,
+            # but that's fine, files are never more than a few hundred MB...
+            fileuploadlog.ut_transfer_start = datetime.datetime.utcnow()
+            clientdata = req.read()
 
-        if not authenticated:
-            fileuploadlog.add_note("Not Authenticated for Upload")
-            return HTTP_FORBIDDEN
+            fileuploadlog.ut_transfer_complete = datetime.datetime.utcnow()
+            fullfilename = os.path.join(upload_staging_path, filename)
 
-        # It's a bit brute force to read all the data in one chunk,
-        # but that's fine, files are never more than a few hundred MB...
-        fileuploadlog.ut_transfer_start = datetime.datetime.utcnow()
-        clientdata = req.read()
+            with open(fullfilename, 'w') as f:
+                f.write(clientdata)
 
-        fileuploadlog.ut_transfer_complete = datetime.datetime.utcnow()
-        fullfilename = os.path.join(upload_staging_path, filename)
-    
-        f = open(fullfilename, 'w')
-        f.write(clientdata)
-        f.close()
-    
-        # compute the md5  and size while we still have the buffer in memory
-        m = hashlib.md5()
-        m.update(clientdata)
-        md5 = m.hexdigest()
-        size = len(clientdata)
-        fileuploadlog.size = size
-        fileuploadlog.md5 = md5
-    
-        # Free up memory
-        clientdata = None
+            # compute the md5  and size while we still have the buffer in memory
+            m = hashlib.md5()
+            m.update(clientdata)
+            md5 = m.hexdigest()
+            size = len(clientdata)
+            fileuploadlog.size = size
+            fileuploadlog.md5 = md5
 
-        # Construct the verification dictionary and json encode it
-        verification = {'filename': filename, 'size': size, 'md5': md5}
-        verif_json = json.dumps([verification])
+            # Free up memory
+            clientdata = None
 
-        # And write that back to the client
-        req.write(verif_json)
+            # Construct the verification dictionary and json encode it
+            verification = {'filename': filename, 'size': size, 'md5': md5}
+            verif_json = json.dumps([verification])
 
-        # Now invoke the setuid ingest program
-        command = ["/opt/FitsStorage/fits_storage/scripts/invoke", "/opt/FitsStorage/fits_storage/scripts/ingest_uploaded_file.py", "--filename=%s" % filename, "--demon", "--processed_cal=%s" % processed_cal, "--fileuploadlog_id=%d" % fileuploadlog.id]
+            # And write that back to the client
+            req.write(verif_json)
 
-        #ret = subprocess.call(command)
-        subp_p = subprocess.Popen(command)
-        subp_p.wait()
+            # Now invoke the setuid ingest program
+            command = ["/opt/FitsStorage/fits_storage/scripts/invoke",
+                       "/opt/FitsStorage/fits_storage/scripts/ingest_uploaded_file.py", "--filename=%s" % filename,
+                       "--demon",
+                       "--processed_cal=%s" % processed_cal,
+                       "--fileuploadlog_id=%d" % fileuploadlog.id]
 
-        ret = subp_p.returncode
-        fileuploadlog.invoke_pid = subp_p.pid
-        fileuploadlog.invoke_status = subp_p.returncode
+            #ret = subprocess.call(command)
+            subp_p = subprocess.Popen(command)
+            subp_p.wait()
 
-        # Because invoke calls execv(), which in turn replaces the process image of the invoke process with that of
-        # python running ingest_uploaded_calibration.py, the return value we get acutally comes from that script, not invoke
+            ret = subp_p.returncode
+            fileuploadlog.invoke_pid = subp_p.pid
+            fileuploadlog.invoke_status = subp_p.returncode
 
-        if(ret != 0):
-            return HTTP_SERVICE_UNAVAILABLE
-        else:
+            # Because invoke calls execv(), which in turn replaces the process image of the invoke process with that of
+            # python running ingest_uploaded_calibration.py, the return value we get acutally comes from that script, not invoke
+
+            if ret != 0:
+                return HTTP_SERVICE_UNAVAILABLE
+            else:
+                return HTTP_OK
+
+        except IOError:
+            # Probably a network timeout
+            fileuploadlog.add_note("IOError")
             return HTTP_OK
-
-    except IOError:
-        # Probably a network timeout
-        fileuploadlog.add_note("IOError")
-        return HTTP_OK
- 
-    finally:
-        session.commit()
-        session.close()

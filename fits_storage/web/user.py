@@ -804,16 +804,17 @@ def userfromcookie(session, req):
         return None
 
 class AccessForbidden(Exception):
-    def __init__(self, message, template, content_type='text/html'):
+    def __init__(self, message, template, content_type='text/html', annotate=None):
         self.message      = message
         self.args         = [message]
         self.template     = template
         self.content_type = content_type
+        self.annotate     = annotate
 
 DEFAULT_403_TEMPLATE = 'errors/forbidden.html'
 JSON_403_TEMPLATE = 'errors/forbidden.json'
 
-def needs_login(**loginkw):
+def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=False, content_type='html', annotate=None):
     """Decorator for functions that need a user to be logged in, or some sort of cookie
        to be set. The basic use is (notice the decorator parenthesis, they're important):
 
@@ -826,14 +827,23 @@ def needs_login(**loginkw):
        magic cookies:
 
          - magic_cookie=[...]
-           A list of magic cookies. Any of them will grant access, even to non-logged in
-           users. Useful for scripts, etc.
+           A list of cookie `(name, expected_value)` pairs. If the query provides a pair that matches any of the
+           included ones, even non-logged in users will have granted access. Useful for scripts, etc.
 
-         - staffer=True
-           The user must be Gemini Staff
+         - only_magic=(False|True)
+           This relates to the *EXPECTED* value of a cookie (the one provided in `magic_cookie`). If any of the
+           expected cookie pairs has an empty (eg. None) value, then the behaviour of needs_login is the
+           following:
 
-         - superuser=True
-           The user must be Superuser in the archive system
+             - If only_magic is False, then we revert to the standard auth protocol (we don't check for
+               magic cookies at all)
+             - If only_magic is True, and one of the expected values is None, then we allow access always
+
+         - staffer=(False|True)
+           If True, the user must be Gemini Staff
+
+         - superuser=(False|True)
+           If True, the user must be Superuser in the archive system
 
          - content_type='...'
            Can be set to `html` (the default) or `json`, depending on the kind of answer
@@ -841,28 +851,35 @@ def needs_login(**loginkw):
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(req, *args, **kw):
-            if loginkw.get('content_type') == 'json':
-                content_type = 'application/json'
-                template     = JSON_403_TEMPLATE
+            if content_type == 'json':
+                ctype    = 'application/json'
+                template = JSON_403_TEMPLATE
             else:
-                content_type = 'text/html'
-                template     = DEFAULT_403_TEMPLATE
+                ctype    = 'text/html'
+                template = DEFAULT_403_TEMPLATE
             with session_scope() as session:
+                disabled_cookies = any(not expected for cookie, expected in magic_cookies)
+
                 got_magic = False
-                cookies = Cookie.get_cookies(req)
-                for cookie in loginkw.get('magic_cookie', []):
-                    if cookie is not None and cookie in cookies:
-                        got_magic = True
-                        break
+                if disabled_cookies and only_magic:
+                    got_magic = True
+                elif not disabled_cookies:
+                    cookies = Cookie.get_cookies(req)
+                    for cookie, content in magic_cookies:
+                        if content is not None and cookies.get(cookie) == content:
+                            got_magic = True
+                            break
 
                 if not got_magic:
+                    if only_magic:
+                        raise AccessForbidden("Could not find a proper magic cookie for a cookie-only service", template=template, content_type=ctype, annotate=annotate)
                     user = userfromcookie(session, req)
                     if not user:
-                        raise AccessForbidden("You need to be logged in to access this resource", template=template, content_type=content_type)
-                    if loginkw.get('staffer') is True and not user.gemini_staff:
-                        raise AccessForbidden("You need to be logged in as Gemini Staff member to access this resource", template=template, content_type=content_type)
-                    if loginkw.get('superuser') is True and not user.superuser:
-                        raise AccessForbidden("You need to be logged in as a Superuser to access this resource", template=template, content_type=content_type)
+                        raise AccessForbidden("You need to be logged in to access this resource", template=template, content_type=ctype, annotate=annotate)
+                    if staffer is True and not user.gemini_staff:
+                        raise AccessForbidden("You need to be logged in as Gemini Staff member to access this resource", template=template, content_type=ctype, annotate=annotate)
+                    if superuser is True and not user.superuser:
+                        raise AccessForbidden("You need to be logged in as a Superuser to access this resource", template=template, content_type=ctype, annotate=annotate)
             return fn(req, *args, **kw)
         return wrapper
     return decorator

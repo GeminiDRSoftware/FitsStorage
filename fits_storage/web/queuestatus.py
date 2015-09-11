@@ -4,6 +4,7 @@ This module handles the web 'queue' functions. Mainly showing status
 
 from ..utils.queuestats import stats, error_summary, error_detail, UnknownQueueError
 from ..orm import session_scope
+from .user import needs_login
 
 from mod_python import apache
 from itertools import cycle
@@ -93,6 +94,7 @@ def queuestatus_tb(req, qshortname, oid):
     req.write(page_body_tmpl.format(title=title, body=error_detail_body.format(**det)))
     return apache.HTTP_OK
 
+@needs_login(staffer=True)
 def queuestatus(req, things):
     if len(things) > 1:
         try:

@@ -105,7 +105,7 @@ def apply_changes(df, changes):
 
     return changed
 
-@needs_login(magic_cookie=[magic_api_cookie], content_type='json')
+@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], content_type='json')
 def update_headers(req):
     with session_scope() as session:
         iq = IngestQueueUtil(session, DummyLogger())

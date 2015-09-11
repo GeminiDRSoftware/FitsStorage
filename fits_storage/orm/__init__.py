@@ -28,7 +28,7 @@ pg_db = create_engine(fits_database, echo = False)
 sessionfactory = sessionmaker(pg_db)
 
 @contextmanager
-def session_scope():
+def session_scope(no_rollback=False):
     "Provide a transactional scope around a series of operations"
 
     session = sessionfactory()
@@ -36,7 +36,10 @@ def session_scope():
         yield session
         session.commit()
     except:
-        session.rollback()
+        if not no_rollback:
+            session.rollback()
+        else:
+            session.commit()
         raise
     finally:
         session.close()

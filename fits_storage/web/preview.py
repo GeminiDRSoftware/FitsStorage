@@ -11,7 +11,7 @@ from ..orm.preview import Preview
 
 from .selection import getselection, openquery, selection_to_URL
 from .summary import list_headers
-from .user import userfromcookie
+from .user import userfromcookie, AccessForbidden
 
 # This will only work with apache
 from mod_python import apache
@@ -69,7 +69,7 @@ def preview(req, things):
         else:
             # Refuse to send data
             downloadlog.numdenied = 1
-            return apache.HTTP_FORBIDDEN
+            raise AccessForbidden("You don't have access to the requested data")
 
     except IOError:
         pass

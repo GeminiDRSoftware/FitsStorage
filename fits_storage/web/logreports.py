@@ -19,13 +19,14 @@ from ..orm.user import User
 
 from ..gemini_metadata_utils import ONEDAY_OFFSET
 
-from .user import userfromcookie
+from .user import needs_login
 from .selection import getselection, queryselection, sayselection
 from .list_headers import list_headers
 
 from mod_python import apache
 from mod_python import util
 
+@needs_login(staffer=True)
 def usagereport(req):
     """
     This is the usage report handler
@@ -33,11 +34,6 @@ def usagereport(req):
 
     session = sessionfactory()
     try:
-        # Need to be logged in as gemini staff to do this
-        user = userfromcookie(session, req)
-        if user is None or user.gemini_staff is False:
-            return apache.HTTP_FORBIDDEN
-
         # Process the form data if there is any
         # Default all the pre-fill strings
         # Default to last day
@@ -264,6 +260,7 @@ def usagereport(req):
 
     return apache.HTTP_OK
 
+@needs_login(staffer=True)
 def usagedetails(req, things):
     """
     This is the usage report detail handler
@@ -272,12 +269,6 @@ def usagedetails(req, things):
 
     session = sessionfactory()
     try:
-        # Need to be logged in as gemini staff to do this
-        user = userfromcookie(session, req)
-        if user is None or user.gemini_staff is False:
-            return apache.HTTP_FORBIDDEN
-
-
         if len(things) != 1:
             return apache.HTTP_NOT_ACCEPTABLE
         try:
@@ -472,6 +463,7 @@ def usagedetails(req, things):
 
     return apache.HTTP_OK
 
+@needs_login(staffer=True)
 def downloadlog(req, things):
     """
     This accepts a selection and returns a log showing all the downloads of the
@@ -480,12 +472,6 @@ def downloadlog(req, things):
     session = sessionfactory()
 
     try:
-        # Need to be logged in as gemini staff to do this
-        user = userfromcookie(session, req)
-        if user is None or user.gemini_staff is False:
-            return apache.HTTP_FORBIDDEN
-
-
         selection = getselection(things)
 
         req.content_type = "text/html"
@@ -588,6 +574,7 @@ usagestats_header = """
 </tr>
 """
 
+@needs_login(staffer=True)
 def usagestats(req):
     """
     Usage statistics:
@@ -605,11 +592,6 @@ def usagestats(req):
     session = sessionfactory()
 
     try:
-        # Need to be logged in as gemini staff to do this
-        user = userfromcookie(session, req)
-        if user is None or user.gemini_staff is False:
-            return apache.HTTP_FORBIDDEN
-
         req.content_type = "text/html"
         req.write('<!DOCTYPE html><html><head>')
         req.write('<meta charset="UTF-8">')

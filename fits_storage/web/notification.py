@@ -4,12 +4,13 @@ This module contains the notification html generator function, and odb import vi
 from ..orm import sessionfactory
 from ..orm.notification import Notification
 from ..fits_storage_config import use_as_archive
-from .user import userfromcookie
+from .user import needs_login
 from ..utils.userprogram import got_magic
 from ..utils.notifications import ingest_odb_xml
 
 from mod_python import apache, util
 
+@needs_login(staffer=True)
 def notification(req):
     """
     This is the email notifications page. It's both to show the current notifcation list and to update it.
@@ -24,12 +25,6 @@ def notification(req):
 
     session = sessionfactory()
     try:
-        # On archive systems, need to be logged in as gemini staff to do this
-        if use_as_archive:
-            user = userfromcookie(session, req)
-            if user is None or user.gemini_staff is False:
-                return apache.HTTP_FORBIDDEN
-
         # Process form data first
         formdata = util.FieldStorage(req)
         # req.write(str(formdata))

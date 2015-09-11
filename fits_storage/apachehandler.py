@@ -38,7 +38,7 @@ from web.queuestatus import queuestatus
 from web.api import update_headers
 from web import templating
 
-from orm import sessionfactory
+from orm import session_scope, NoResultFound
 from orm.usagelog import UsageLog
 
 from functools import partial
@@ -161,42 +161,50 @@ def handler(req):
 
     # Add the log to the database
     # We need to do that here, so there we can reference it in the querylog etc from within the handler call tree
-    try:
-        session = sessionfactory()
-        user = userfromcookie(session, req)
-        if user:
-            req.usagelog.user_id = user.id
-        session.add(req.usagelog)
-        session.commit()
+    with session_scope() as session:
+        try:
+            user = userfromcookie(session, req)
+            if user:
+                req.usagelog.user_id = user.id
+            session.add(req.usagelog)
+            session.commit()
 
-        # Call the actual handler
-        retary = thehandler(req)
-        req.status = retary
+            # Call the actual handler
+            retary = thehandler(req)
+            req.status = retary
 
-    # util.redirect raises this exception.
-    # Log it as a redirect (303)
-    except apache.SERVER_RETURN:
-        req.status = 303
-        raise
+        # util.redirect raises this exception.
+        # Log it as a redirect (303)
+        except apache.SERVER_RETURN:
+            req.status = 303
+            raise
 
-    except AccessForbidden as e:
-        req.status = 403
-        req.content_type = e.content_type
-        req.write(templating.get_env().get_template(e.template).render(message = e.message))
-        retary = apache.OK
+        except AccessForbidden as e:
+            req.status = 403
+            req.content_type = e.content_type
+            req.write(templating.get_env().get_template(e.template).render(message = e.message))
+            if e.annotate is not None:
+                annotationClass = e.annotate
+                try:
+                    log = session.query(annotationClass).filter(annotationClass.usagelog_id == req.usagelog.id).one()
+                except NoResultFound:
+                    log = annotationClass(req.usagelog)
+                log.add_note(e.message)
+                session.add(log)
+            retary = apache.OK
 
-    except Exception:
-        req.status = apache.HTTP_INTERNAL_SERVER_ERROR
-        raise
-    finally:
-        # Grab the final log values
-        req.usagelog.set_finals(req)
-        session.commit()
-        session.close()
+        except Exception:
+            req.status = apache.HTTP_INTERNAL_SERVER_ERROR
+            raise
+        finally:
+            # Grab the final log values
+            req.usagelog.set_finals(req)
+            session.commit()
+            session.close()
 
-    if retary in (apache.OK, apache.HTTP_OK):
-        return apache.OK
-    return retary
+        if retary in (apache.OK, apache.HTTP_OK):
+            return apache.OK
+        return retary
 
 # The top level handler. This essentially calls out to the specific
 # handler function depending on the uri that we're handling
