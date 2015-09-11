@@ -22,3 +22,31 @@ h5:before {counter-increment: h5; content: counter(h2) "." counter(h3) "." count
 
 h2.nocount:before, h3.nocount:before, h4.nocount:before, h5.nocount:before, h6.nocount:before { content: ""; counter-increment: none } 
 
+.table-of-contents {
+  float: right;
+  background: #eee;
+  padding: 1em 2em;
+  margin: 0 0 1em 1em;
+}
+.table-of-contents ul {
+  padding: 0;
+}
+.table-of-contents li {
+  margin: 0 0 0.5em 0;
+}
+.table-of-contents a {
+  text-decoration: none;
+}
+.table-of-contents a:hover,
+.table-of-contents a:active {
+  text-decoration: underline;
+}
+
+h2:target {
+  animation: highlight 1s ease;
+}
+
+@keyframes highlight {
+  from { background: yellow; }
+  to {background: white;}
+}

@@ -1,31 +1,34 @@
 <!DOCTYPE html><html>
 <head>
 <meta charset="UTF-8">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="toc.js"></script>
 <link rel="stylesheet" href="/help/help.css">
 <title>Gemini Observatory Archive - Help</title>
 </head>
 <body>
-<h1>Gemini Observatory Archive - Help</h1>
+<span id="toc"></span>
+<h1 id="help">Gemini Observatory Archive - Help</h1>
 <p>Welcome to the Gemini Observatory Archive. We have tried to make the system as simple to use as possible.</p>
 
-<h2>Basic Searching</h2>
+<h2 id="basic-searching">Basic Searching</h2>
 <p>There is only one search form for the archive. The archive can be found at 
 <a href="https://archive.gemini.edu">https://archive.gemini.edu</a>. Simply enter appropriate text into the
 relevant boxes, and/or make selections in the relevant pull downs, and hit the search button. Leave any fields
 you do not want to search on blank or set to Any. For more information on each field, mouse over the help text which appears
 in parenthesis after the search field. <p>
 
-<h3>Searching for data for a particular program</h3>
+<h3 id="search-by-programid">Searching for data for a particular program</h3>
 <p>If you are the PI or a Co-I of a program, or otherwise wish to search for data taken for a particular program ID, simply
 enter the full program ID in the Program ID search field and hit search. You don't need to enter anything else.</p>
 
-<h3>Searching by instrument and instrument configuration</h3>
+<h3 id="search-by-instrument-config">Searching by instrument and instrument configuration</h3>
 <p>To search for data from a particular instrument, select that instrument in the instrument pull-down. If you 
 select one of our facility instruments, an extra part of the form will appear which allows you to search for data
 taken in specific configrations of that instrument, for example with a certail filter, diffraction grating or 
 readout mode. The options are specific to each instrment and cover the major modes of that instrument.</p>
 
-<h3>Searching by object name or sky-coordinates</h3>
+<h3 id="search-by-object">Searching by object name or sky-coordinates</h3>
 <p>If you simply enter some text in the Target Name box, the archive will search for observations that used
 that specific target name. You can use '*' as a wildcard - see the help text on the search field for details, but
 note that you are searching based on what was entered as the target name in the Phase-II. Obviously, many astronomical
@@ -48,7 +51,7 @@ are logged in as a user that has proprietary access to that data. In that case, 
 find the data by other means (eg by program ID or observation date), but the data will still not show up if you search by
 coordinates.</p>
 
-<h3>More generic searches</h3>
+<h3 id="generic-searches">More generic searches</h3>
 
 <p>You can of course search by any combination of items on the search form, including any combination of the above.
 If you wish, you can narrow down your search further - for example you could enter a date range if you were only
@@ -56,7 +59,7 @@ interested in data taken between certain dates, or if you are only interested in
 and acquisition data), you can select science in the Obs Class pull-down. Simply fill out which ever combination of 
 fields you would like to search by and click search.</p>
 
-<h3>Results Table features</h3>
+<h3 id="results-table">Results Table features</h3>
 
 <p>In the search results table, you can click on the filename of a data file to see the full FITS header of that file
 in a new browser tab. Also if you have access to that data (see later) you will see a [P] in the download column - this
@@ -91,7 +94,7 @@ a search that does not have such constraints will be cut off at 500 results.</p>
 your results were truncated, you may well see different results by sorting, as the sort applies to the search
 before it is truncated.<p>
 
-<h2>Sucessive Searching</h2>
+<h2 id="sucessive-searching">Sucessive Searching</h2>
 <p>When you fill out the search form and click the Search button, you'll see your search results below the filled out
 search form. If you look at the results and realize you would like to narrow your search down further, you can simply
 add extra criteria to the search by filling in additional fields in the form and clicking Search again. Conversely,
@@ -102,7 +105,7 @@ in any of the text fields, or by setting one or more of the pull-downs back to "
 "Reset to previous search" button to reset the form fields to how they were last time you clicked search. There's also
 a "Start Over" button that will completely reset the form to the blank defaults.</p>
 
-<h2>Bookmarking, Saving, and Sharing Searches</h2>
+<h2 id="bookmarking-searches">Bookmarking, Saving, and Sharing Searches</h2>
 
 <p>When you do a search, the search terms are encoded in the URL of the search results. This means that you can 
 Bookmark the results page in your browser and revisiting that bookmark will essentially re-run the same search on 
@@ -114,7 +117,7 @@ is just the same as if you'd filled out the search form again - all the features
 (eg by email or social media) for example with collaborators or colleagues. It's just a URL like any other web page, that
 when visited behaves just like you had re-entered the original search terms in the form and clicked Search.</p>
 
-<h2>Searching for Calibrations</h2>
+<h2 id="calibration-searches">Searching for Calibrations</h2>
 
 <p>You can search for calibration data direcltly by simply setting the Observation Type and/or Observation Class fields
 to match the calibrations you want to search for. You probably also want to select the instrument and set some of the 
@@ -125,7 +128,7 @@ under the form is has three tabs - if you click on the "Load Associated Calibrat
 search results and find the best match calibration files for all relevant baseline calibration types for each file. This
 can take a few seconds, but once it's loaded you can flip back and forth between the tabs quickly.</p>
 
-<h2>Data Access and Proprietary Period</h2>
+<h2 id="data-access">Data Access and Proprietary Period</h2>
 
 <p>Data files have a proprietary period during which they are only available to the PI who proposed the observations, 
 or their delegates. The proprietary period varies, but for regular Queue and Classical data it is 18 months. 
@@ -156,7 +159,7 @@ log back in. Obviously, you should be aware of this when using public or shared 
 log out from one browser, all your archive sessions will be logged out. So if you think you might have left some
 system logged in that you didn't mean to, you can just log out from somewhere else and it will log out all your sessions.</p>
 
-<h3>Registering programs for Proprietary Data Access</h3>
+<h3 id="program-registration">Registering programs for Proprietary Data Access</h3>
 
 <p>Once you are logged in, you can register a Gemini Program ID with your archive account to get access to
 proprietary data from that program. To do so, select the "My programs" link in the drop down under your username.
@@ -167,7 +170,7 @@ or anyone who they wish to have access to the proprietary data.</p>
 <p>Once you have registered a program with your account, you will be able to preview and download proprietary data
 from that program.</p>
 
-<h2>Downloading Data</h2>
+<h2 id="downloading">Downloading Data</h2>
 
 <p>If your search constrained the number of results (see section 1.5 above) then right at the end of the results
 page there will be a "Download all" button. Alternatively, you can go through the table and click the button in the
@@ -184,7 +187,7 @@ The system will suggest a default filename for the download based on the search 
 to modify that before the file is saved. Some browsers will prompt for the directory where you want to save the file,
 some will default to a <tt>Downloads</tt> directory or similar.</p> 
 
-<h2>Searching for Observation Logs</h2>
+<h2 id="obslogs">Searching for Observation Logs</h2>
 <p>You can also search for observation logs both directly and by association. To search directly, simply fill out
 the program ID and/or date search fields and click the "Search Obslogs Only" button. To see observation logs
 associated with a regular search for data, click the "Load Associated Observation Logs" tab in the results area, and
@@ -192,7 +195,7 @@ the archive will show you all the Observation Logs associated with data in your 
 of Observation Logs, you can simply click on a filename to view it in a new tab in your browser, or you can use your
 browser "Save As" function to save it to local disk.</p>
 
-<h2>Accessing the Archive from scripts and the command line</h2>
+<h2 id="api-access">Accessing the Archive from scripts and the command line</h2>
 
 <p>Many URLs to services on the archive can be constructed easily by hand or programatically, and then acessed using
 command line tools such as <tt>wget</tt> or <tt>curl</tt>, or from a scripting language, for example using the 
