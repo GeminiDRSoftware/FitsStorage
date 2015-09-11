@@ -7,7 +7,7 @@ from fits_storage.fits_storage_config import using_s3
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.aws_s3 import get_helper
 
-from multiprocessing import Pool
+from multiprocessing import Pool, Process, Queue
 
 # Option Parsing
 from optparse import OptionParser
@@ -26,6 +26,16 @@ options, args = parser.parse_args()
 setdebug(options.debug)
 setdemon(options.demon)
 
+def feed_names():
+    # Get a full listing from S3. The preview files might not be in the DB.
+    logger.info("Getting file list from S3")
+
+    for obj in s3.bucket.objects.all():
+        name = obj.key
+        # if name.endswith("_preview.jpg"):
+        if name.endswith(".fits"):
+            logger.info("Found {}".format(name))
+            yield name
 
 # Annouce startup
 logger.info("*********    s3_delete_previews.py - starting up at %s" % datetime.datetime.now())
@@ -40,48 +50,33 @@ if not (options.yesimsure or options.count):
     logger.error("You need to say --yesimsure to make it work")
     sys.exit(2)
 
-# Get a full listing from S3. The preview files might not be in the DB.
-logger.info("Getting file list from S3")
-
 s3 = get_helper()
 #filelist = filter(lambda n: n.endswith("_preview.jpg"), s3.key_names())
-
-keys = s3.list_keys()
-logger.info("Got key list")
-
-filelist = []
-for i, key in enumerate(keys, 1):
-    name = key.key
-    if i%100000 == 0:
-        logger.info("Filtered %d", i)
-    if name.endswith("_preview.jpg"):
-        filelist.append(name)
-
-logger.info("Got name list")
 
 if options.count:
     logger.info("Found %d preview files", len(filelist))
     sys.exit(0)
 
 if options.dryrun:
-    def delete_it(filename, logger=None):
-        if logger:
-            logger.info("Dryrun - not actually Deleting, %s", filename)
+    def delete_it(filename):
+        return "Dryrun - not actually Deleting, {}".format(filename)
 else:
-    def delete_it(filename, logger=None):
-        if logger:
-            logger.info("Deleting %s", filename)
-        else:
-            print "Deleting %s" % filename
+    def delete_it(filename):
+#        if logger:
+#            logger.info("Deleting %s", filename)
+#        else:
+#            print "Deleting %s" % filename
         s3.get_key(filename).delete()
+        return "Removed {}".format(filename)
 
 if options.threads:
     threads = int(options.threads)
     logger.info("Starting parallel delete with %d threads", threads)
     pool = Pool(threads)
-    pool.map(delete_it, filelist)
+    for result in pool.imap_unordered(delete_it, feed_names(), chunksize=100):
+        logger.info(result)
 else:
-    for filename in filelist:
-        delete_it(filename, logger=logger)
+    for filename in feed_names():
+        logger.info(delete_it(filename))
 
 logger.info("** s3_delete_previews.py exiting normally")
