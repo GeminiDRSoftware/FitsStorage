@@ -49,10 +49,8 @@ s3 = get_helper()
 keys = s3.list_keys()
 logger.info("Got key list")
 
-i=0
 filelist = []
-for key in keys:
-    i += 1
+for i, key in enumerate(keys, 1):
     name = key.key
     if i%100000 == 0:
         logger.info("Filtered %d", i)
