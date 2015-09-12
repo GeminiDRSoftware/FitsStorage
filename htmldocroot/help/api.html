@@ -1,11 +1,254 @@
 <!DOCTYPE html><html>
 <head>
 <meta charset="UTF-8">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="toc.js"></script>
 <link rel="stylesheet" href="/help/help.css">
 <title>Gemini Observatory Archive APIs</title>
 </head>
 <body>
+<span id="toc"></span>
 <h1>Gemini Observatory Archive APIs</h1>
+
+<h2 id="intro">Introduction</h2>
+<p>This page gives information on accessing the Gemini Observatory Archive programatically - for example through
+scripts or on the command line. There are two main aspects to this. Firstly, it is easy to construct (either 
+manually or programatically) URLs that lead to useful searches or features within the archive system. These
+could return HTML that you might want to load directly into a browser for example. Secondly, you can construct
+URLs that return information in JSON that you can then easily process within your own software. We discourage
+processing HTML from the archive in your own software (i.e. <i>scraping</i> the HTML) - we offer no guarantee
+that we will maintain the format of the HTML so your software may stop working if we change it, and generally
+it's easier, more robust, and faster to use one of the JSON APIs to obtain that information.</p>
+
+<h2 id="concepts">Basic Concepts</h2>
+<p>URLs on the archive are of the form <code>https://archive.gemini.edu/<i>FEATURE</i>/<i>SELECTION</i></code> where
+<i>FEATURE</i> and <i>SELECTION</i> are the archive feature you want to access, and the data selection criteria
+respecively, as explained below. This applies to the human-oriented features of the archive as well as the APIs.</p>
+
+<h3>Archive Features</h3>
+<p>You have probbaly used the regular search form for the archive, and noticed that the URL for that is
+<code>https://archive.gemini.edu/<i>searchform</i></code>. "searchform" is a good example of an archive feature 
+in this context, and we'll use it with a lot of our examples below. We'll discuss a complete list of features
+later.<p>
+
+<h3>Selection Criteria</h3>
+<p>This is a key concept of the archive system. Search terms used to select data in the archive are placed
+<i>directly in the URL</i> separated by slashes, just like directories in a normal URL. Many things that you will want
+to search by in the archive, such as Gemini Program IDs or UT dates have a prescribed standard format, and the
+archive will recognise these automatically for what they are. For example 8 digit numbers that refer to valid
+dates such as <code>20140410</code> will be recognised automatically as a UT date, and strings such as GN-2010B-Q-123 will
+be recognized automatically as Gemini Program IDs.</p>
+<p>So, using these examples, using <code>GN-2010B-Q-123</code> as the selection would select data from that program ID, and
+using <code>GN-2010B-Q-123/20140410</code> would select data from that program ID that was taken on that UT date.
+It does not matter what order you specify these in.</p>
+<p>In this way, we can build up URLs that refer to the search or search results of various searches on the archive. All
+these should be accessed with regular HTTP GET, there's no need to HTTP POST search parameters to the system, we provide 
+a <a href="http://en.wikipedia.org/wiki/Representational_state_transfer">RESTful</a> interface to the data.</p>
+
+<h2 id="features">Features</h2>
+<p>Here is a list of the available features on the system:</p>
+
+<h3>searchform</h3>
+<p>The regular search form for the archive. When you pass a selection criteria to the search form it will pre-populate
+the fields of the form with the selection criteria you have passed, and will execute that search. This is how it works
+when you do a search and then bookmark the resulting web page or copy the URL for future use etc - when you do the search, 
+it simply places the search terms from the form into the URL and redirects your browser to that URL. If you re-visit this
+URL later, it will re-do the search and return you the filled out search form with the results. You can then of course 
+modify the fields in the form and search again if you wish.</p>
+
+<h3>summary</h3>
+<p>This works a lot like searchform, except it just sends you the simlpe results table. You don't get the search form itself,
+nor do you get the tabs to see associated calibrations or observation logs, you simply get the main search results table showing
+the results of the search as specified by the selection criteria you specified in the URL. You can also use ssummary (short summary)
+and lsummary (long summary) to get versions with fewer and more columns respectively.</p>
+
+<h3>jsonfilelist</h3>
+<p>This returns you a <a href="http://en.wikipedia.org/wiki/JSON">JSON</a> representation of the files in the archive that
+match your selection criteria. The JOSN returned contains a list of dictionaries, where each dictionary describes a file
+in the archive. The keys in the dictionary and their meanings are as follows:</p>
+<table border="1">
+<tr><th>Key</th><th>Description</th></tr>
+<tr>
+<td>name</td>
+<td>The name of the dataset. This does not include the .bz2 if the file is compressed.</td>
+</tr><tr>
+<td>filename</td>
+<td>the filename of the file. Most of the files in the archive are bzip2 compressed, so this will likely end in .bz2</td>
+</tr><tr>
+<td>compressed</td>
+<td>Boolean value saying if the file is compressed or not</td>
+</tr><tr>
+<td>lastmod</td>
+<td>last modification timestamp of the file that was ingested</td>
+</tr><tr>
+<td>path</td>
+<td>path to the file within the data store. This is normally empty on the archive</td>
+</tr><tr>
+<td>mdready</td>
+<td>Boolean value that says if the metadata of the file passes validation</td>
+</tr><tr>
+<td>file_size</td>
+<td>the size of the file as stored in the archive in bytes</td>
+</tr><tr>
+<td>data_size</td>
+<td>the size of the FITS data in the file. If the file is compressed, this represents the size of the uncompressed data. 
+If the file is not compressed this will be the same as file_size</td>
+</tr><tr>
+<td>size</td>
+<td>the same as file_size. Deprecated</td>
+</tr><tr>
+<td>file_md5</td>
+<td>the MD5 hash of the file as stored in the archive, in hexdigest format</td>
+</tr><tr>
+<td>data_md5</td>
+<td>the MD5 hash of the FITS data in the file. If the file is compressed, this represents the MD5 hash of the uncompressed data. 
+If the file is not compressed this will be the same as file_md5</td>
+</tr><tr>
+<td>md5</td>
+<td>the same as file_md5. Deprecated</td>
+</tr>
+</table>
+
+<h3>jsonsummary</h3>
+<p>This returns you a JSON representation of your search results that includes all the information (and more) that you get on the summary and 
+searchform results tables. As with jsonfilelist, you get a list of dictionaries, one dictionary per file. You get all the keys from jsonfilelist
+plus a lot more that contain details of the data, as follows:</p>
+<table border="1">
+<tr><th>Key</th><th>Description</th></tr>
+<tr>
+<td>telescope</td>
+<td>The telescope where the data were taken</td>
+</tr><tr>
+<td>instrument</td>
+<td>The name of the instrument that took the data</td>
+</tr><tr>
+<td>observation_class</td>
+<td>Gemini Observation Class</td>
+</tr><tr>
+<td>observation_type</td>
+<td>Gemini Observation Type</td>
+</tr><tr>
+<td>program_id</td>
+<td>Gemini Program ID</td>
+</tr><tr>
+<td>observation_id</td>
+<td>Gemini Observation ID</td>
+</tr><tr>
+<td>data_label</td>
+<td>Gemini Data Label</td>
+</tr><tr>
+<td>engineering</td>
+<td>Boolean that says if this is engineering data</td>
+</tr><tr>
+<td>science_verification</td>
+<td>Boolean that says if this is science verification data</td>
+</tr><tr>
+<td>calibration_program</td>
+<td>Boolean that says if this is calibration program data</td>
+</tr><tr>
+<td>requested_iq<br/>requested_cc<br/>requested_bg<br/>requested_wv</td>
+<td>The requested site quality percentiles - IQ = Image Quality, CC = Cloud Cover, BG = Sky Background, WV = Water Vapor. 
+The value is the integer percentile, 100 implies "Any"</td>
+</tr><tr>
+<td>raw_iq<br/>raw_cc<br/>raw_bg<br/>raw_wv</td>
+<td>The measured or estimated delivered site quality percentiles - IQ = Image Quality, CC = Cloud Cover, BG = Sky Background, WV = Water Vapor. 
+The value is the integer percentile, 100 implies "Any"</td>
+</tr><tr>
+<td>ut_datetime</td>
+<td>UT Date and Time of the observation. ISO 8601 format</td>
+</tr><tr>
+<td>local_time</td>
+<td>Local Date and Time of the observation. ISO 8601 format</td>
+</tr><tr>
+<td>ra<br/>dec</td>
+<td>RA and Dec in decimal degrees</td>
+</tr><tr>
+<td>object</td>
+<td>Object name as specified in the OT</td>
+</tr><tr>
+<td>azimuth<br/>elevation</td>
+<td>Azimuth and Elevation in decimat degrees</td>
+</tr><tr>
+<td>cass_rotator_pa</td>
+<td>Position Angle of the Cassegrain Rotator, in decimal degrees</td>
+</tr><tr>
+<td>airmass</td>
+<td>Airmass of the observation</td>
+</tr><tr>
+<td>adaptive_optics</td>
+<td>Boolean to say if adaptive optics was in use</td>
+</tr><tr>
+<td>laser_guide_star</td>
+<td>Boolean to say if the laser guide star was in use</td>
+</tr><tr>
+<td>wavefront_sensor</td>
+<td>Says which wavefront sensor was in use</td>
+</tr><tr>
+<td>qa_state</td>
+<td>Quality State of the file - Pass, Usable, Fail, Undefined, CHECK</td>
+</tr><tr>
+<td>mode</td>
+<td>imaging, spectroscopy, LS (Longslit Spectroscopy), MOS (Multi Object Spectroscopy) or IFS (Integral Field Spectroscopy)</td>
+</tr><tr>
+<td>spectroscopy</td>
+<td>Boolean to say if this is spectrally dispersed data</td>
+</tr><tr>
+<td>types</td>
+<td>The AstroData types of this file. This is basically a tag list.</td>
+</tr><tr>
+<td>release</td>
+<td>The date on which the proprietary period of this data expires or expired</td>
+</tr><tr>
+<td>reduction</td>
+<td>The reduction state of the data. "RAW" for raw data.</td>
+</tr><tr>
+<td>phot_standard</td>
+<td>Boolean to say if a Gemini Standard star is in the field.</td>
+</tr><tr>
+<td>gcal_lamp</td>
+<td>Which GCAL lamp was being observed, if any</td>
+</tr><tr>
+<td>exposure_time</td>
+<td>Exposure Time in seconds. If the data are co-added, this is the total of all the coadds.<td>
+</tr><tr>
+<td>detector_roi_setting</td>
+<td>The requested Detector Region of Interest (subarray) name<td>
+</tr><tr>
+<td>detector_config</td>
+<td>A string summarizing the detector configuration<td>
+</tr><tr>
+<td>camera</td>
+<td>The camera in use<td>
+</tr><tr>
+<td>detector_binning</td>
+<td>A string representation of the detector binning in use<td>
+</tr><tr>
+<td>wavelength_band</td>
+<td>The wavelength band<td>
+</tr><tr>
+<td>central_wavelength</td>
+<td>Central Wavelength of spectroscopy data<td>
+</tr><tr>
+<td>filter_name</td>
+<td>Name of the Filter in use<td>
+</tr><tr>
+<td>focal_plane_mask</td>
+<td>Name of the focal plane mask (typically a slit mask for spectroscopy) in use<td>
+</tr><tr>
+<td>disperser</td>
+<td>Name of the disperser (usually a diffraction grating or grism) in use<td>
+</tr>
+</table>
+
+<h2>Downloading Data</h2>
+<p>TODO - The download feature warrants some special discussion, including how to authenticate so as to be able to
+download proprietary data.</p>
+
+<h2>Selection Criteria</h2>
+<p>TODO - Here are details of the selection criteria you can use:</p>
+
+<h2>Sample python code</h2>
+<p>TODO - Some examples of python code that demonstrates the JSON APIs discussed above</p>
 
 </body>
 </html>
