@@ -37,61 +37,6 @@ class EmptyLogger(object):
     def __call__(self, *args, **kw):
         pass
 
-class Helper(object):
-    def __init__(self, logger_ = EmptyLogger()):
-        # This will hold the bucket
-        self.l = logger_
-        self.b = None
-
-    @property
-    def bucket(self):
-        raise NotImplementedError("This method needs to be implemented by subclasses")
-
-    @property
-    def list_keys(self):
-        raise NotImplementedError("This method needs to be implemented by subclasses")
-
-    @property
-    def key_names(self):
-        raise NotImplementedError("This method needs to be implemented by subclasses")
-
-    def exists_key(self, key):
-        raise NotImplementedError("This method needs to be implemented by subclasses")
-
-    def get_key(self, keyname):
-        raise NotImplementedError("This method needs to be implemented by subclasses")
-
-    def get_md5(self, key):
-        """
-        Get the MD5 that the S3 server hs for this key.
-        Simply strips quotes from the etag value.
-        """
-        if is_string(key):
-            key = self.get_key(key)
-
-        return self.get_etag(key).replace('"', '')
-
-    def get_etag(self, key):
-        raise NotImplementedError("This method needs to be implemented by subclasses")
-
-    def get_size(self, key):
-        raise NotImplementedError("This method needs to be implemented by subclasses")
-
-    def get_name(self, key):
-        raise NotImplementedError("This method needs to be implemented by subclasses")
-
-    def get_as_string(self, key):
-        raise NotImplementedError("This method needs to be implemented by subclasses")
-
-    def upload_file(self, keyname, filename):
-        raise NotImplementedError("This method needs to be implemented by subclasses")
-
-    def fetch_to_staging(self, keyname, fullpath=None):
-        raise NotImplementedError("This method needs to be implemented by subclasses")
-
-    def fetch_temporary(self, keyname):
-        raise NotImplementedError("This method needs to be implemented by subclasses")
-
 from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name, s3_staging_area
 
 import boto3
@@ -106,7 +51,12 @@ boto3.set_stream_logger(level=logging.CRITICAL)
 logging.getLogger('boto').setLevel(logging.CRITICAL)
 logging.getLogger('botocore').setLevel(logging.CRITICAL)
 
-class Boto3Helper(Helper):
+class Boto3Helper(object):
+    def __init__(self, logger_ = EmptyLogger()):
+        # This will hold the bucket
+        self.l = logger_
+        self.b = None
+
     @property
     def session(self):
         if boto3.DEFAULT_SESSION is None:
@@ -146,6 +96,20 @@ class Boto3Helper(Helper):
     def get_key(self, keyname):
         return self.bucket.Object(keyname)
 
+    def get_md5(self, key):
+        """
+        Get the MD5 that the S3 server hs for this key.
+        Simply strips quotes from the etag value.
+        """
+        if is_string(key):
+            key = self.get_key(key)
+
+        try:
+            return key.metadata['md5']
+        except KeyError:
+            # Old object, we haven't re-calculated the MD5 yet
+            return None
+
     def get_etag(self, key):
         return key.e_tag
 
@@ -158,18 +122,30 @@ class Boto3Helper(Helper):
     def get_as_string(self, keyname):
         return self.get_key(keyname).get()['Body'].read()
 
+    def set_metadata(self, keyname, **kw):
+        obj = self.get_key(keyname)
+        md = obj.metadata
+        md.update(kw)
+        obj.put(Metadata=md)
+
     def upload_file(self, keyname, filename):
+        md5 = md5sum(filename)
         client = self.client
         transfer = S3Transfer(client)
         try:
-            transfer.upload_file(filename, self.bucket.name, keyname)
+            transfer.upload_file(filename, self.bucket.name, keyname,
+                                 extra_args={'Metadata': {'md5': md5}})
         except S3UploadFailedError as e:
             self.l.error(e.message)
             return None
 
-        return self.get_key(keyname)
+        obj = self.get_key(keyname)
+        # Make sure that the object is available before returning the key
+        obj.wait_until_exists()
 
-    def fetch_to_staging(self, keyname, fullpath=None):
+        return obj
+
+    def fetch_to_staging(self, keyname, fullpath=None, skip_tests=False):
         """
         Fetch the file from s3 and put it in the storage_root directory.
         Do some validation, and re-try as appropriate
@@ -196,6 +172,9 @@ class Boto3Helper(Helper):
             self.l.error(e.message)
             return False
 
+        if skip_tests:
+            return True
+
         key = self.get_key(keyname)
         # Check size and md5
         filesize = os.path.getsize(fullpath)
@@ -221,10 +200,10 @@ class Boto3Helper(Helper):
         return False
 
     @contextmanager
-    def fetch_temporary(self, keyname):
+    def fetch_temporary(self, keyname, **kwarg):
         _, fullpath = mkstemp(dir=s3_staging_area)
         try:
-            if not self.fetch_to_staging(keyname, fullpath):
+            if not self.fetch_to_staging(keyname, fullpath, **kwarg):
                 raise DownloadError("Could not download the file for some reason")
             yield open(fullpath)
         finally:
