@@ -37,8 +37,9 @@ if not options.yesimsure:
 
 
 # Get a full listing from S3. The preview files might not be in the DB.
-logger.info("Getting file list from S3")
 s3 = get_helper()
+logger.info("Getting file list from S3")
+logger.info("Bucket is %s", str(s3.bucket))
 for key in s3.list_keys():
     logger.info("Deleting %s" % s3.get_name(key))
     key.delete()
