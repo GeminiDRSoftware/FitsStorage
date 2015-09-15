@@ -42,21 +42,24 @@ def fetch_and_compute(keyname):
         return md5sum_size_fp(fileobj)[0]
 
 def process_it(name):
-    if name.endswith('_preview.jpg'):
-        return "skipping preview {}".format(name)
-
-    if s3.get_md5(name):
-        return "Found metadata for {}".format(name)
-
-    etag = s3.get_etag(s3.get_key(name)).replace('"', '')
-    computed_md5 = None
     try:
-        if ('-' not in etag) and (len(etag) == 32) and int(etag, 16):
-            computed_md5 = etag
-    except ValueError:
-        pass
-    s3.set_metadata(name, md5=(computed_md5 if computed_md5 is not None else fetch_and_compute(name)))
-    return "Metadata MD5 set for {}".format(name)
+        if name.endswith('_preview.jpg'):
+            return "skipping preview {}".format(name)
+
+        if s3.get_md5(name):
+            return "Found metadata for {}".format(name)
+
+        etag = s3.get_etag(s3.get_key(name)).replace('"', '')
+        computed_md5 = None
+        try:
+            if ('-' not in etag) and (len(etag) == 32) and int(etag, 16):
+                computed_md5 = etag
+        except ValueError:
+            pass
+        s3.set_metadata(name, md5=(computed_md5 if computed_md5 is not None else fetch_and_compute(name)))
+        return "Metadata MD5 set for {}".format(name)
+    except:
+        return "ERROR processing {}".format(name)
 
 if options.threads:
     threads = int(options.threads)
