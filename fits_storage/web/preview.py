@@ -94,7 +94,7 @@ def sendpreview(session, req, diskfile_id):
     req.content_type = 'image/jpeg'
     if using_s3:
         # S3 file server
-        with s3.fetch_temporary(preview.filename) as temp:
+        with s3.fetch_temporary(preview.filename, skip_tests=True) as temp:
             req.write(temp.read())
     else:
         # Serve from regular file
