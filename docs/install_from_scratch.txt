@@ -170,6 +170,9 @@ sudo chown fitsdata /data/z_staging
 # if using s3
 sudo mkdir /data/s3_staging
 sudo chown fitsdata /data/s3_staging
+# apache needs access to this to download preview images now
+sudo chmod oug+rw /data/s3_staging
+
 
 # Now get a shell as fitsdata
 cd /opt/FitsStorage/
