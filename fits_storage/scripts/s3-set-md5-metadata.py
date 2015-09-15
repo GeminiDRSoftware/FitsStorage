@@ -1,12 +1,20 @@
 #!/usr/bin/env python
 
 from fits_storage.fits_storage_config import using_s3
-from fits_storage.logger import logger, setdemon
+from fits_storage.logger import logger, setdemon, setdebug
 
 import sys
 import datetime
 
-setdemon(False)
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
+parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
+parser.add_option("--filepre", action="store", dest="filepre", help="File prefix to operate on")
+options, args = parser.parse_args()
+# Logging level to debug? Include stdio log?
+setdebug(options.debug)
+setdemon(options.demon)
 
 # Annouce startup
 logger.info("*********    s3-set-md5-metadata - starting up at %s" % datetime.datetime.now())
@@ -27,6 +35,11 @@ def fetch_and_compute(keyname):
 
 for objsum in s3.bucket.objects.all():
     name = objsum.key
+    if name.endswith('_preview.jpg'):
+        continue
+    if options.filepre and not name.startswith(options.filepre):
+        continue
+
     if s3.get_md5(name):
         logger.info("Found metadata for {}".format(name))
         continue
