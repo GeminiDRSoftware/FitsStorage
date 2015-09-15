@@ -81,12 +81,14 @@ class CalibrationGNIRS(Calibration):
             .flat(processed=processed)
             # Must totally match: disperser, central_wavelength, focal_plane_mask, camera, filter_name, well_depth_setting
             # update from RM 20130321 - read mode should not be required to match, but well depth should.
-            .match_descriptors(Header.central_wavelength,
-                               Gnirs.disperser,
+            # For imaging, central wavelength and disperser are not required to match
+            .match_descriptors(Gnirs.disperser,
                                Gnirs.focal_plane_mask,
                                Gnirs.camera,
                                Gnirs.filter_name,
                                Gnirs.well_depth_setting)
+            .if_(self.descriptors['spectroscopy'], 'match_descriptors', Gnirs.disperser)
+            .if_(self.descriptors['spectroscopy'], 'tolerance', central_wavelength=0.001)
         )
 
     def flat(self, processed=False, howmany=None):
