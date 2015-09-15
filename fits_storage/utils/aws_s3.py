@@ -7,7 +7,7 @@ import sys
 import socket
 import traceback
 from time import sleep
-from urllib import pathname2url
+from urllib import pathname2url, unquote
 
 from ..fits_storage_config import storage_root
 from .hashes import md5sum
@@ -128,7 +128,7 @@ class Boto3Helper(object):
         md = obj.metadata
         md.update(kw)
         bn = self.bucket.name
-        self.client.copy_object(Bucket=bn, Key=keyname, CopySource=pathname2url('{}/{}'.format(bn, keyname)),
+        self.client.copy_object(Bucket=bn, Key=keyname, CopySource=unquote(pathname2url('{}/{}'.format(bn, keyname))),
                                 MetadataDirective='REPLACE', Metadata=md)
 
     def upload_file(self, keyname, filename):
