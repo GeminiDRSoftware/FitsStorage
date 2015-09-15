@@ -6,6 +6,8 @@ from fits_storage.logger import logger, setdemon, setdebug
 import sys
 import datetime
 
+from multiprocessing import Pool, Process, Queue
+
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
@@ -39,8 +41,7 @@ def fetch_and_compute(keyname):
     with s3.fetch_temporary(keyname, skip_tests=True) as fileobj:
         return md5sum_size_fp(fileobj)[0]
 
-def process_it(objsum):
-    name = objsum.key
+def process_it(name):
     if name.endswith('_preview.jpg'):
         return "skipping preview {}".format(name)
 
@@ -65,7 +66,7 @@ if options.threads:
         logger.info(result)
 else:
     for filename in feed_names():
-        logger.info(process_ie(filename))
+        logger.info(process_it(filename))
 
 
 logger.info("*********    s3-set-md5-metadata - ending at %s" % datetime.datetime.now())
