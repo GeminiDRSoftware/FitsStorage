@@ -121,7 +121,7 @@ class IngestQueueUtil(object):
             # Has the file changed since we last ingested it?
             if using_s3:
                 # Lastmod on s3 is always the upload time, no way to set it manually
-                result = need_to_add_diskfile_p(self.s3.get_md5(fileobj.name), "S3 etag md5", "S3 etag md5 or force flag")
+                result = need_to_add_diskfile_p(self.s3.get_md5(diskfile.filename), "S3 etag md5", "S3 etag md5 or force flag")
             else:
                 # By default check lastmod time first
                 # there is a subtelty wrt timezones here.
