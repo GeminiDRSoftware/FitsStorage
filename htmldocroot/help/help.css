@@ -46,6 +46,14 @@ h2:target {
   animation: highlight 1s ease;
 }
 
+h3:target {
+  animation: highlight 1s ease;
+}
+
+p:target {
+  animation: highlight 1s ease;
+}
+
 @keyframes highlight {
   from { background: yellow; }
   to {background: white;}

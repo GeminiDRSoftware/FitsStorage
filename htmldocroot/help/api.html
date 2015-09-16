@@ -11,9 +11,9 @@
 <h1>Gemini Observatory Archive APIs</h1>
 
 <h2 id="intro">Introduction</h2>
-<p>This page gives information on accessing the Gemini Observatory Archive programatically - for example through
+<p>This page gives information on accessing the Gemini Observatory Archive programmatically - for example through
 scripts or on the command line. There are two main aspects to this. Firstly, it is easy to construct (either 
-manually or programatically) URLs that lead to useful searches or features within the archive system. These
+manually or programmatically) URLs that lead to useful searches or features within the archive system. These
 could return HTML that you might want to load directly into a browser for example. Secondly, you can construct
 URLs that return information in JSON that you can then easily process within your own software. We discourage
 processing HTML from the archive in your own software (i.e. <i>scraping</i> the HTML) - we offer no guarantee
@@ -57,15 +57,15 @@ URL later, it will re-do the search and return you the filled out search form wi
 modify the fields in the form and search again if you wish.</p>
 
 <h3>summary</h3>
-<p>This works a lot like searchform, except it just sends you the simlpe results table. You don't get the search form itself,
+<p>This works a lot like searchform, except it just sends you the simple results table. You don't get the search form itself,
 nor do you get the tabs to see associated calibrations or observation logs, you simply get the main search results table showing
-the results of the search as specified by the selection criteria you specified in the URL. You can also use ssummary (short summary)
-and lsummary (long summary) to get versions with fewer and more columns respectively.</p>
+the results of the search as specified by the selection criteria you specified in the URL. You can also use <tt>ssummary</tt> (short summary)
+and <tt>lsummary</tt> (long summary) to get versions with fewer and more columns respectively.</p>
 
 <h3>jsonfilelist</h3>
 <p>This returns you a <a href="http://en.wikipedia.org/wiki/JSON">JSON</a> representation of the files in the archive that
 match your selection criteria. You should almost always include /canonical as one of your selection criteria (see note below). 
-The JOSN returned contains a list of dictionaries, where each dictionary describes a file
+The JSON returned contains a list of dictionaries, where each dictionary describes a file
 in the archive. The keys in the dictionary and their meanings are as follows:</p>
 <table border="1">
 <tr><th>Key</th><th>Description</th></tr>
@@ -169,7 +169,7 @@ The value is the integer percentile, 100 implies "Any"</td>
 <td>Object name as specified in the OT</td>
 </tr><tr>
 <td>azimuth<br/>elevation</td>
-<td>Azimuth and Elevation in decimat degrees</td>
+<td>Azimuth and Elevation in decimal degrees</td>
 </tr><tr>
 <td>cass_rotator_pa</td>
 <td>Position Angle of the Cassegrain Rotator, in decimal degrees</td>
@@ -261,12 +261,12 @@ authentication in order to download proprietary data. In the case where you do n
 <code>/download</code> URL will send you any public files that match your selection criteria, and will include
 in the README.txt file a list of files to which you were denied access.</p>
 
-<p>To authenicate to these services, you need to supply your archive session cookie.
+<p>To authenticate to these services, you need to supply your archive session cookie.
 a <a href="http://en.wikipedia.org/wiki/HTTP_cookie">web cookie</a> is a small piece of data sent from a web
 server to your browser that your browser stores and presents back to the web server. 
 When you log in to your account on the archive, the server sends you a cookie called
 <code>gemini_archive_session</code>. The value of this cookie identifies you to the system and verifies that
-you have sucesfully logged in. In order to authenticate yourself to the download service, you need to send the
+you have sucessfully logged in. In order to authenticate yourself to the download service, you need to send the
 same cookie to the server with your request. If you want to do this from a script or the command line you will
 first have to find the value of that cookie from your browser, and then include it in your download request headers.</p>
 
@@ -285,8 +285,8 @@ in to the archive, a new value will be sent to the browser where you logged in.<
 
 <p>Here are details of the selection criteria you can use. Multiple ones are separated by /s in the URL just like directories would be.</p>
 
-<p>The <code>present</code> and <code>canoncial</code> selection criteria are worth of special explanation. When the archive ingests
-a new data file, that file is marked as both present (pysically present in the file store) and canonical (it is the canonical version
+<p>The <code>present</code> and <code>canonical</code> selection criteria are worth of special explanation. When the archive ingests
+a new data file, that file is marked as both present (physically present in the file store) and canonical (it is the canonical version
 of that file). If the file is modified at Gemini (for example the QA state is updated) and it is re-ingested into the archive, the archive
 adds a new database record for the updated file but the entry for the old file is not deleted, it is simply marked as not present and 
 not canonical. This means that the archive has some history information of previous file versions. We use two separate flags for these
@@ -374,7 +374,7 @@ criteria with the JSON APIs</strong>.</p>
 <td>Filename prefix</td>
 <td></td>
 <td>N201203</td>
-<td>Selects all files that have names begining with... For non-standard filenames, use e.g. filepre=00AUG</td>
+<td>Selects all files that have names beginning with... For non-standard filenames, use e.g. filepre=00AUG</td>
 </tr>
 
 <tr>
@@ -500,7 +500,7 @@ criteria with the JSON APIs</strong>.</p>
 <td>Telescope position</td>
 <td>az=(min:max)/el=(min:max)/crpa=(min:max)</td>
 <td>az=155.0:155.5/el=88.0-89.0</td>
-<td>Telescope Azimuth, Elevation and Cassegrain Rotator Position Angle. Decimal degrees. You must supply two numbers (decimal point optional and negative sign) separated by a colon. Note that it does not do intelligent range wrapping, the smaller number must be first and there's curently no way to select everything in the 20 degree range between 350 and 10 degrees. Also it takes the numbers from the header literally, in the az and crpa systems these may not be limited to 0:360 or -180:180 due to the 540 degree range of these systems.</td>
+<td>Telescope Azimuth, Elevation and Cassegrain Rotator Position Angle. Decimal degrees. You must supply two numbers (decimal point optional and negative sign) separated by a colon. Note that it does not do intelligent range wrapping, the smaller number must be first and there's currently no way to select everything in the 20 degree range between 350 and 10 degrees. Also it takes the numbers from the header literally, in the az and crpa systems these may not be limited to 0:360 or -180:180 due to the 540 degree range of these systems.</td>
 </tr>
 </table>
 

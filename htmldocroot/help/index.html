@@ -13,19 +13,23 @@
 
 <h2 id="searching">Searching</h2>
 <p>There is only one search form for the archive. The archive can be found at 
-<a href="https://archive.gemini.edu">https://archive.gemini.edu</a>. Simply enter appropriate text into the
+<a href="https://archive.gemini.edu">https://archive.gemini.edu</a>. Enter appropriate text into the
 relevant boxes, and/or make selections in the relevant pull downs, and hit the search button. Leave any fields
 you do not want to search on blank or set to Any. For more information on each field, mouse over the help text which appears
 in parenthesis after the search field. <p>
 
+<p>You can <a href="#bookmarking-searches">bookmark, save, or share</a> your search if you like.</p>
+
 <h3>Searching for data for a particular program</h3>
-<p>If you are the PI or a Co-I of a program, or otherwise wish to search for data taken for a particular program ID, simply
-enter the full program ID in the Program ID search field and hit search. You don't need to enter anything else.</p>
+<p>If you are the PI or a Co-I of a program, or otherwise wish to search for data taken for a particular program ID,
+enter the full program ID in the Program ID search field and hit search. You don't need to enter anything else.
+Assuming you have a reasonable internet connection, results should appear within a few seconds.
+Note that this is an exact match search, you have to enter the full program ID, and wildcards won't work in here.</p>
 
 <h3>Searching by instrument and instrument configuration</h3>
 <p>To search for data from a particular instrument, select that instrument in the instrument pull-down. If you 
 select one of our facility instruments, an extra part of the form will appear which allows you to search for data
-taken in specific configrations of that instrument, for example with a certail filter, diffraction grating or 
+taken in specific configurations of that instrument, for example with a certail filter, diffraction grating or 
 readout mode. The options are specific to each instrment and cover the major modes of that instrument.</p>
 
 <h3>Searching by object name or sky-coordinates</h3>
@@ -33,46 +37,45 @@ readout mode. The options are specific to each instrment and cover the major mod
 that specific target name. You can use '*' as a wildcard - see the help text on the search field for details, but
 note that you are searching based on what was entered as the target name in the Phase-II. Obviously, many astronomical
 objects have multiple names, and also there's nothing to stop the PI calling their target whatever they like. If you
-are looking for data on a particular object on the sky, you are better off either entering the co-ordinates directly,
+are looking for data on a particular object on the sky, you are better off either entering the coordinates directly,
 or using the name resolver. To use the name resolver, enter your target name in the Target Name field, then select 
 which name resolver you would like to use and click the "Resolve" button. The name resolver will look up your object
-by name and enter the co-ordinates in the RA and Dec fields for you. Your search will then be based on those
-sky co-ordinates, not the literal name of the target.</p>
+by name and enter the coordinates in the RA and Dec fields for you. Your search will then be based on those
+sky coordinates, not the literal name of the target.</p>
 
 <h4>Proprietary Coordinates</h4>
 <p>The default for all gemini data is that all metadata is immediately public, only the actual pixel values are considered
-proprietary. A few campaign science projects are granted a special status where the co-ordinates of their observations are
+proprietary. A few campaign science projects are granted a special status where the coordinates of their observations are
 also considered proprietary. This is typically where multiple observations of the same target are necessary to confirm a
 result, and the concern is that a third party who notices which targets are being heavily re-observed could scoop the result.
 Once the proprietary period has expired, both the coordinates and pixel values of these data become public. While they are
-still proprietary, they will never show up in searches by any sky coordinate (RA, Dec, Azimuth, Elevation etc etc). A quirk
-of they way this is implemented (it was not in the original design and was retrofitted) is that this holds true even if you
-are logged in as a user that has proprietary access to that data. In that case, full details of the data will show up if you
-find the data by other means (eg by program ID or observation date), but the data will still not show up if you search by
-coordinates.</p>
+still proprietary, they will never show up in searches by any sky coordinate (RA, Dec, Azimuth, Elevation etc etc). 
+This holds true even if you are logged in as a user that has proprietary access to that data. In that case, full details 
+of the data will show up if you find the data by other means (eg by program ID or observation date), but the data will 
+still not show up if you search by coordinates.</p>
 
 <h3>More generic searches</h3>
 
 <p>You can of course search by any combination of items on the search form, including any combination of the above.
-If you wish, you can narrow down your search further - for example you could enter a date range if you were only
+If you wish, you can subsequently narrow down your search further - for example you could enter a date range if you were only
 interested in data taken between certain dates, or if you are only interested in science data (as opposed to calibration
-and acquisition data), you can select science in the Obs Class pull-down. Simply fill out which ever combination of 
+and acquisition data), you can select science in the Obs Class pull-down. Simply fill out whichever combination of 
 fields you would like to search by and click search.</p>
 
-<h2 id="results-table">Results Table features</h3>
+<h2 id="results-table">Results Table features</h2>
 
 <p>In the search results table, you can click on the filename of a data file to see the full FITS header of that file
-in a new browser tab. Also if you have access to that data (see later) you will see a [P] in the download column - this
-shows you a preview of that data file in your browser window. You can simply click on the preview image to make it
+in a new browser tab. Also if you have access to that data file (see later) you will see a [P] in the download column - this
+shows you a preview of that data file in your browser window. You can click on the preview image to make it
 go away, or while it is still up you can click on the [P] link for a different file to see the preview of that file.
 Some data may not have preview images available, for example certain visitor instrument data or data that was only
-ingested into the archive a few seconds before you did your search. Most previews simply show the raw data, though 
-Mid-IR data taken with chopping will show you a the sum and the difference of the chop beams to aid visualization
+ingested into the archive a few seconds before you did your search. Most previews just show the raw data, although 
+Mid-IR data taken with chopping will show you the sum and the difference of the chop beams to aid visualization
 of the data.</p>
 
-<p>The rest of the columns in the table that are hyperlinks will simply add the thing you clicked on as a search
+<p>The rest of the columns in the table that are hyperlinks will add the thing you clicked on as a search
 to your search form. So for example if your search returns data from a number of different instruments, and you click
-on the instrument name in one of the results, you will refine your search to that instruemnt only. Likewise, you can 
+on the instrument name in one of the results, you will refine your search to that instrument only. Likewise, you can 
 click an observation class or observation type to narrow your search down to only that observation class or type.</p>
 
 <p>The links in the Data Label column are a little more subtle. Gemini Data Labels are composed of the Program ID followed
@@ -82,21 +85,22 @@ clicking <tt>GN-2010A-Q-11</tt> will add that program ID as a search constraint,
 Observation ID <tt>GN-2010A-Q-11-22</tt> as a search constraint, and clicking the <tt>33</tt> would add the complete
 data label as a search constraint, which should only find files with that exact data label.</p>
 
-<p>To undo any search selections made like this, simply delete them from the fields in the search form and click
-the Search button.</p>
+<p>To undo any search selections made like this, clear the fields in the search form and click
+the Search button. Note that observation ID and data label share the program ID form field, so for example to remove an
+observation id selection but keep the program id selection, just delete the last part to make it back into the program ID.</p>
 
-<p>The number of rows in the results table will be truncated if your search returns too many results. The limit depends
-on whether your search is constrained or not - searches that include a date or date range, or program ID for example 
-by definition have a limited number of possible results and in those cases you will see up to 10,000 results. However
-a search that does not have such constraints will be cut off at 500 results.</p>
+<p id="results-table-truncation">The number of rows in the results table will be truncated if your search returns too many 
+results. The limit depends on whether your search is constrained or not - searches that include a date or date range, or 
+program ID for example by definition have a limited number of possible results and in those cases you will see up to 
+10,000 results. However a search that does not have such constraints will be cut off at 500 results.</p>
 
-<p>You can also sort the results table by clikcing the small up and down arrows in the column headings. Note that if 
+<p>You can also sort the results table by clicking the small up and down arrows in the column headings. Note that if 
 your results were truncated, you may well see different results by sorting, as the sort applies to the search
 before it is truncated.<p>
 
-<h2 id="sucessive-searching">Sucessive Searching</h2>
+<h2 id="successive-searching">Successive Searching</h2>
 <p>When you fill out the search form and click the Search button, you'll see your search results below the filled out
-search form. If you look at the results and realize you would like to narrow your search down further, you can simply
+search form. If you look at the results and realize you would like to narrow your search down further, you can
 add extra criteria to the search by filling in additional fields in the form and clicking Search again. Conversely,
 if you look at your results are realize that your search is over-constrained, you can broaden it by deleting the text
 in any of the text fields, or by setting one or more of the pull-downs back to "Any".</p>
@@ -119,9 +123,11 @@ when visited behaves just like you had re-entered the original search terms in t
 
 <h2 id="calibration-searches">Searching for Calibrations</h2>
 
-<p>You can search for calibration data direcltly by simply setting the Observation Type and/or Observation Class fields
-to match the calibrations you want to search for. You probably also want to select the instrument and set some of the 
-instrument configuration fields to match what you're looking for (eg the filter, grating, or exposure time).</p>
+<p>You can search for calibration data directly by setting the Observation Type and/or Observation Class fields
+to match the calibrations you want to search for - for GMOS BIASes are taken with observation type "BIAS" and observation
+class "dayCal". If you are looking for processed calibrations, then you can select that in the Raw / Reduced pullodwn.
+You probably also want to select the instrument and set some of the instrument configuration fields to match what you're 
+looking for (eg the filter, grating, or exposure time).</p>
 
 <p>The archive will also automatically associate calibrations for you when you search for data. The search results area
 under the form is has three tabs - if you click on the "Load Associated Calibrations" the archive will go through your
@@ -133,7 +139,7 @@ can take a few seconds, but once it's loaded you can flip back and forth between
 <p>Data files have a proprietary period during which they are only available to the PI who proposed the observations, 
 or their delegates. The proprietary period varies, but for regular Queue and Classical data it is 18 months. 
 Some programs such as Science Verification programs may have shorter proprietary period, and Calibration data generally
-has no proprietary period.</p>
+have no proprietary period.</p>
 
 <p>Non-proprietary data is world public. You do not need to be logged in to the archive to download it.</p>
 
@@ -172,7 +178,7 @@ from that program.</p>
 
 <h2 id="downloading">Downloading Data</h2>
 
-<p>If your search constrained the number of results (see section 1.5 above) then right at the end of the results
+<p>If your search constrained the number of results (<a href="#results-table-truncation">see earlier</a>) then right at the end of the results
 page there will be a "Download all" button. Alternatively, you can go through the table and click the button in the
 download column for the files you want and click the "Download Marked Files" button. If you want a lot of files but
 not all of them, you can probably constrain your search to just the ones you want and then use the Download All 
@@ -182,22 +188,22 @@ and available for almost all platforms. The uncompress command is usually <tt>bu
 a summary of what was downloaded, and the md5sums.txt file allows you to verify that your files were not corrupted
 during the transfer - see instructions in the readme file.</p>
 
-<p>The download system should activate your browsers regular Save-As feature, no additional plugin or app is required. 
+<p>The download system should activate your browser's regular Save-As feature, no additional plugin or app is required. 
 The system will suggest a default filename for the download based on the search criteria, your browser may allow you
 to modify that before the file is saved. Some browsers will prompt for the directory where you want to save the file,
 some will default to a <tt>Downloads</tt> directory or similar.</p> 
 
 <h2 id="obslogs">Searching for Observation Logs</h2>
-<p>You can also search for observation logs both directly and by association. To search directly, simply fill out
+<p>You can also search for observation logs both directly and by association. To search directly, fill out
 the program ID and/or date search fields and click the "Search Obslogs Only" button. To see observation logs
 associated with a regular search for data, click the "Load Associated Observation Logs" tab in the results area, and
 the archive will show you all the Observation Logs associated with data in your search results. Once you have a listing
-of Observation Logs, you can simply click on a filename to view it in a new tab in your browser, or you can use your
-browser "Save As" function to save it to local disk.</p>
+of Observation Logs, you can click on a filename to view it in a new tab in your browser, or you can use your
+browser's "Save As" function to save it to local disk.</p>
 
 <h2 id="api-access">Accessing the Archive from scripts and the command line</h2>
 
-<p>Many URLs to services on the archive can be constructed easily by hand or programatically, and then acessed using
+<p>Many URLs to services on the archive can be constructed easily by hand or programatically, and then accessed using
 command line tools such as <tt>wget</tt> or <tt>curl</tt>, or from a scripting language, for example using the 
 <tt>urllib</tt> module or similar in python. Further details are provided in the 
 <a href="/help/api.html">Application Programmer Interface (API) documentation</a></p>
