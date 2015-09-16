@@ -50,3 +50,8 @@ h2:target {
   from { background: yellow; }
   to {background: white;}
 }
+
+.sample {
+  padding: 20px;
+  background-color: #ddc;
+  margin: 20px;

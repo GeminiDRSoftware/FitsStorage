@@ -64,7 +64,8 @@ and lsummary (long summary) to get versions with fewer and more columns respecti
 
 <h3>jsonfilelist</h3>
 <p>This returns you a <a href="http://en.wikipedia.org/wiki/JSON">JSON</a> representation of the files in the archive that
-match your selection criteria. The JOSN returned contains a list of dictionaries, where each dictionary describes a file
+match your selection criteria. You should almost always include /canonical as one of your selection criteria (see note below). 
+The JOSN returned contains a list of dictionaries, where each dictionary describes a file
 in the archive. The keys in the dictionary and their meanings are as follows:</p>
 <table border="1">
 <tr><th>Key</th><th>Description</th></tr>
@@ -111,7 +112,8 @@ If the file is not compressed this will be the same as file_md5</td>
 
 <h3>jsonsummary</h3>
 <p>This returns you a JSON representation of your search results that includes all the information (and more) that you get on the summary and 
-searchform results tables. As with jsonfilelist, you get a list of dictionaries, one dictionary per file. You get all the keys from jsonfilelist
+searchform results tables. You should almost always include /canonical as one of your selection criteria (see note below). 
+As with jsonfilelist, you get a list of dictionaries, one dictionary per file. You get all the keys from jsonfilelist
 plus a lot more that contain details of the data, as follows:</p>
 <table border="1">
 <tr><th>Key</th><th>Description</th></tr>
@@ -269,7 +271,7 @@ same cookie to the server with your request. If you want to do this from a scrip
 first have to find the value of that cookie from your browser, and then include it in your download request headers.</p>
 
 <p>Finding the value of the cookie depends on your browser. In Firefox, navigate to any archive page, then go to 
-Tools -> Page Info, then inside Security there is a View Cookies button. In Safari first go to Preferences -> Advanced
+Tools - Page Info, then inside Security there is a View Cookies button. In Safari first go to Preferences - Advanced
 and turn on "Show Develop menu" then navigate to an archive page and in the Develop menu click "Show Web Inspector" then
 select Cookies in the Resources tab. The cookie you need is called <code>gemini_archive_session</code>.</p>
 
@@ -280,10 +282,375 @@ you need to reset it (for example because it became known to someone else), then
 in to the archive, a new value will be sent to the browser where you logged in.</p>
 
 <h2>Selection Criteria</h2>
-<p>TODO - Here are details of the selection criteria you can use:</p>
+
+<p>Here are details of the selection criteria you can use. Multiple ones are separated by /s in the URL just like directories would be.</p>
+
+<p>The <code>present</code> and <code>canoncial</code> selection criteria are worth of special explanation. When the archive ingests
+a new data file, that file is marked as both present (pysically present in the file store) and canonical (it is the canonical version
+of that file). If the file is modified at Gemini (for example the QA state is updated) and it is re-ingested into the archive, the archive
+adds a new database record for the updated file but the entry for the old file is not deleted, it is simply marked as not present and 
+not canonical. This means that the archive has some history information of previous file versions. We use two separate flags for these
+because we use the same software for internal data management, where old files may be scrubbed off disk to free up space for new ones - in
+which case the database record will reflect that file version can be canonical but no longer present on disk.</p>
+
+<p>The search form and data summaries assume <strong>canonical</strong> as one of the search criteria as you are almost always looking
+for the most recent (canonical) version of the file. The JSON APIs do not do this so as to allow you to deliberately look for information on 
+previous versions of the file. Assuming you don't want to do that, <strong>you should always have /canonical as one your selection
+criteria with the JSON APIs</strong>.</p>
+
+<table border="1">
+<tr><th>Property</th><th>Format</th><th>Example</th><th>Notes</th></tr>
+
+<tr>
+<td>Single UT Date</td>
+<td>YYYYMMDD</td>
+<td>20100401</td>
+</tr>
+
+<tr>
+<td>UT Date Range</td>
+<td>yyyymmdd-YYYYMMDD</td>
+<td>20100401-20100420</td>
+<td>Inclusive</td>
+</tr>
+
+<tr>
+<td>Telescope</td>
+<td></td>
+<td>Gemini-South</td>
+<td>or Gemini-North</td>
+</tr>
+
+<tr>
+<td>Instrument</td>
+<td></td>
+<td>GNIRS</td>
+<td>to get both GMOS-N and GMOS-S just use GMOS</td>
+</tr>
+
+<tr>
+<td>Program ID</td>
+<td>(GN|GS)-(Semester)-(Program Type)-(Program Number)</td>
+<td>GN-2009B-Q-51</td>
+<td>If the program ID is non-standard, you can use e.g. progid=GN-GNIRS-Engineering</td>
+</tr>
+
+<tr>
+<td>Observation ID</td>
+<td>(Program ID)-(Observation Number)</td>
+<td>GN-2009B-Q-51-9</td>
+<td>If the observation ID is non-standard, you can use e.g. obsid=GN-GNIRS-Engineering-003</td>
+</tr>
+
+<tr>
+<td>Data Label</td>
+<td>(Observation ID)-(Dataset number)</td>
+<td>GN-2009B-Q-51-28-001</td>
+<td></td>
+</tr>
+
+<tr>
+<td>Observation Type</td>
+<td></td>
+<td>OBJECT</td>
+<td></td>
+</tr>
+
+<tr>
+<td>Observation Class</td>
+<td></td>
+<td>science</td>
+<td></td>
+</tr>
+
+<tr>
+<td>Filename</td>
+<td></td>
+<td>S20091028S0097.fits</td>
+<td>Works with or without the .fits. For non-standard filenames, use filename=some_odd_filename.fits</td>
+</tr>
+
+<tr>
+<td>Filename prefix</td>
+<td></td>
+<td>N201203</td>
+<td>Selects all files that have names begining with... For non-standard filenames, use e.g. filepre=00AUG</td>
+</tr>
+
+<tr>
+<td>QA state</td>
+<td></td>
+<td>Pass</td>
+<td>Pass, Usable, Fail, NotFail, Win or Lucky - Win means Pass or Usable (ie not Fail or Undefined), NotFail is literally every state other than Fail, Lucky means Pass or Undefined.</td>
+</tr>
+
+<tr>
+<td>Mode</td>
+<td>imaging</td>
+<td></td>
+<td>imaging or spectroscopy.</td>
+</tr>
+
+<tr>
+<td>Adaptive Optics</td>
+<td></td>
+<td>AO</td>
+<td>AO means any adaptive optics in use. NOTAO means not AO. NGS means NGS AO, LGS means LGS AO</td>
+</tr>
+
+<tr>
+<td>File curation</td>
+<td>canonical</td>
+<td></td>
+<td>present, canonical, notpresent, notcanonical. See note above.</td>
+</tr>
+
+<tr>
+<td>GMOS grating name</td>
+<td></td>
+<td>B600</td>
+<td>Selects only files using that GMOS grating</td>
+</tr>
+
+<tr>
+<td>GMOS mask name</td>
+<td></td>
+<td>GN2009BC009-04</td>
+<td>Selects only files using that GMOS mask name</td>
+</tr>
+
+<tr>
+<td>Binning</td>
+<td>NxM</td>
+<td>2x2</td>
+<td>Pixel binning. Unbinned data shows as 1x1</td>
+</tr>
+
+<tr>
+<td>Detector config</td>
+<td></td>
+<td>high</td>
+<td>The words low, high, slow, fast will be interpreted as detector configurations - ie read gain setting or read speed setting</td>
+</tr>
+
+<tr>
+<td>Detector ROI</td>
+<td></td>
+<td>FullFrame</td>
+<td>The words FullFrame, CentralSpectrum, CentralStamp are interpreted as detector Region of Interest (ROI). FullFrame will include instruments that do not have configurable ROIs.</td>
+</tr>
+
+<tr>
+<td>Calibration Type</td>
+<td></td>
+<td>ARC</td>
+<td>This is only useful with the calibration systems</td>
+</tr>
+
+<tr>
+<td>Reduction State</td>
+<td></td>
+<td>RAW</td>
+<td>e.g. RAW, PREPARED, PROCESSED_BIAS, PROCESSED_FLAT. Most data in the archive is RAW data, but this is how you specify if you are looking for a certain type or reduced data.</td>
+</tr>
+
+<tr>
+<td>Photometric Standard</td>
+<td>photstandard</td>
+<td>photstandard</td>
+<td>Selects only data that have a Gemini photometric standard in the field of view.</td>
+</tr>
+
+<tr>
+<td>Filter</td>
+<td>filter=(filtername)</td>
+<td>filter=g</td>
+<td>Select by filter name. Don't include any _G1234 type suffix.</td>
+</tr>
+
+<tr>
+<td>Twilight observation</td>
+<td></td>
+<td>Twilight</td>
+<td>Use Twilight or NotTwilight to select or exclude twilight sky observations (eg twilight flat fields)</td>
+</tr>
+
+<tr>
+<td>exposure time</td>
+<td>exposure_time=(number or range)</td>
+<td>exposure_time=59-61</td>
+<td>Select by exposure time. Due to floating point ambiguity with some of the instruments, it's best to use a range.</td>
+</tr>
+
+<tr>
+<td>coadds</td>
+<td>coadds=(integer)</td>
+<td>coadds=10</td>
+<td>Select by number of coadds. Integer exact match</td>
+</tr>
+
+<tr>
+<td>Telescope sky position</td>
+<td>ra=(min:max)/dec=(min:max)</td>
+<td>ra=123.5:123.6/dec=21.1:22.2</td>
+<td>ICRS RA and Dec, decimal degrees</td>
+</tr>
+
+<tr>
+<td>Telescope position</td>
+<td>az=(min:max)/el=(min:max)/crpa=(min:max)</td>
+<td>az=155.0:155.5/el=88.0-89.0</td>
+<td>Telescope Azimuth, Elevation and Cassegrain Rotator Position Angle. Decimal degrees. You must supply two numbers (decimal point optional and negative sign) separated by a colon. Note that it does not do intelligent range wrapping, the smaller number must be first and there's curently no way to select everything in the 20 degree range between 350 and 10 degrees. Also it takes the numbers from the header literally, in the az and crpa systems these may not be limited to 0:360 or -180:180 due to the 540 degree range of these systems.</td>
+</tr>
+</table>
+
 
 <h2>Sample python code</h2>
-<p>TODO - Some examples of python code that demonstrates the JSON APIs discussed above</p>
+<h3>Simple file list using jsonfilelist</h3>
+<p>This is a simple example in python that constructs a jsonfilelist URL, fetches the JSON document text into a string,
+parses that into a list of dictionaries, and then loops through showing some details of the files we found.</p>
+<div class="sample"><pre><code>
+import urllib
+import json
+
+# Construct the URL. We'll use the jsonfilelist service
+url = "https://archive.gemini.edu/jsonfilelist/"
+
+# List the files for GN-2010B-Q-22 taken with GMOS-N on 2010-12-31
+url += "canonical/GN-2010B-Q-22/GMOS-N/20101231"
+
+# Open the URL and fetch the JSON document text into a string
+u = urllib.urlopen(url)
+jsondoc = u.read()
+u.close()
+
+# Decode the JSON
+files = json.loads(jsondoc)
+
+# This is a list of dictionaries each containing info about a file
+for f in files:
+    print "Filename: %s" % f['filename']
+    print "-- file size: %d, data size: %d" % (f['file_size'], f['data_size'])
+
+</code></pre></div>
+
+<p>Gives the following output:</p>
+<div class="sample"><pre><code>
+Filename: N20101231S0338.fits.bz2
+-- file size: 21314852, data size: 57548160
+Filename: N20101231S0339.fits.bz2
+-- file size: 21130627, data size: 57548160
+Filename: N20101231S0340.fits.bz2
+-- file size: 21022898, data size: 57548160
+Filename: N20101231S0341.fits.bz2
+-- file size: 21154419, data size: 57548160
+Filename: N20101231S0342.fits.bz2
+-- file size: 21086479, data size: 57548160
+Filename: N20101231S0343.fits.bz2
+-- file size: 21018470, data size: 57548160
+</code></pre></div>
+
+
+<h3>More details of the files using jsonsummary</h3>
+<p>Similar to the example above, but getting more details about the observations using the jsonsummary API</p>
+<div class="sample"><pre><code>
+import urllib
+import json
+
+# Construct the URL. We'll use the jsonsummary service
+url = "https://archive.gemini.edu/jsonsummary/"
+
+# List the OBJECT files taken with GMOS-N on 2010-12-31
+url += "canonical/OBJECT/GMOS-N/20101231"
+
+# Open the URL and fetch the JSON document text into a string
+u = urllib.urlopen(url)
+jsondoc = u.read()
+u.close()
+
+# Decode the JSON
+files = json.loads(jsondoc)
+
+# This is a list of dictionaries each containing info about a file
+total_data_size = 0
+print "%20s %22s %10s %8s %s" % ("Filename", "Data Label", "ObsClass",
+                                 "QA state", "Object Name")
+for f in files:
+    total_data_size += f['data_size']
+    print "%20s %22s %10s %8s %s" % (f['name'], f['data_label'],
+                                     f['observation_class'], f['qa_state'],
+                                     f['object'])
+
+print "Total data size: %d" % total_data_size
+
+</code></pre></div>
+
+<p>Gives the following output:</p>
+<div class="sample"><pre><code>
+            Filename             Data Label   ObsClass QA state Object Name
+ N20101231S0222.fits  GN-2010B-Q-51-196-001        acq   Usable CDFS
+ N20101231S0223.fits  GN-2010B-Q-51-196-002        acq   Usable CDFS
+ N20101231S0224.fits  GN-2010B-Q-51-196-003        acq   Usable CDFS
+ N20101231S0274.fits  GN-2010B-Q-51-196-004        acq     Pass CDFS
+ N20101231S0275.fits  GN-2010B-Q-51-196-005        acq     Pass CDFS
+ N20101231S0276.fits  GN-2010B-Q-51-196-006        acq     Pass CDFS
+ N20101231S0278.fits  GN-2010B-Q-51-169-006    science     Pass CDFS
+ N20101231S0333.fits  GN-2010B-C-10-103-001        acq     Pass SDSSJ0841+2042
+ N20101231S0334.fits  GN-2010B-C-10-103-002        acq     Pass SDSSJ0841+2042
+ N20101231S0335.fits  GN-2010B-C-10-103-003        acq     Pass SDSSJ0841+2042
+ N20101231S0337.fits   GN-2010B-C-10-82-004    science     Pass SDSSJ0841+2042
+ N20101231S0338.fits    GN-2010B-Q-22-4-001    science     Pass L5c02
+ N20101231S0339.fits    GN-2010B-Q-22-4-002    science     Pass L5c02
+ N20101231S0340.fits    GN-2010B-Q-22-4-003    science     Pass L5c02
+ N20101231S0341.fits    GN-2010B-Q-22-4-004    science     Pass L5c02
+ N20101231S0342.fits    GN-2010B-Q-22-4-005    science     Pass L5c02
+ N20101231S0343.fits    GN-2010B-Q-22-4-006    science     Pass L5c02
+ N20101231S0369.fits   GN-2010B-Q-37-56-001        acq     Pass Cluster F - East
+ N20101231S0370.fits   GN-2010B-Q-37-56-002        acq     Pass Cluster F - East
+ N20101231S0371.fits   GN-2010B-Q-37-56-003        acq     Pass Cluster F - East
+ N20101231S0373.fits   GN-2010B-Q-37-17-008    science     Pass Cluster F - East
+ N20101231S0374.fits   GN-2010B-Q-37-17-009    science     Pass Cluster F - East
+ N20101231S0377.fits   GN-2010B-Q-37-17-012    science     Pass Cluster F - East
+ N20101231S0378.fits    GN-2010B-Q-64-1-001    science     Pass PTF10cwr
+ N20101231S0379.fits    GN-2010B-Q-64-1-002    science     Pass PTF10cwr
+ N20101231S0380.fits    GN-2010B-Q-64-1-003    science     Pass PTF10cwr
+ N20101231S0381.fits    GN-2010B-Q-64-1-004    science     Pass PTF10cwr
+ N20101231S0382.fits    GN-2010B-Q-64-1-005    science     Pass PTF10cwr
+ N20101231S0383.fits    GN-2010B-Q-64-1-006    science     Pass PTF10cwr
+ N20101231S0397.fits  GN-CAL20101231-11-001 partnerCal     Pass PG1323-086
+ N20101231S0398.fits  GN-CAL20101231-11-002 partnerCal     Pass PG1323-086
+ N20101231S0399.fits  GN-CAL20101231-11-003 partnerCal     Pass PG1323-086
+ N20101231S0400.fits  GN-CAL20101231-11-004 partnerCal     Pass PG1323-086
+ N20101231S0401.fits  GN-CAL20101231-11-005 partnerCal     Pass PG1323-086
+ N20101231S0402.fits  GN-CAL20101231-11-006 partnerCal     Pass PG1323-086
+ N20101231S0403.fits  GN-CAL20101231-11-007 partnerCal     Pass PG1323-086
+ N20101231S0404.fits  GN-CAL20101231-11-008 partnerCal     Pass PG1323-086
+ N20101231S0405.fits  GN-CAL20101231-11-009 partnerCal     Pass PG1323-086
+ N20101231S0406.fits  GN-CAL20101231-11-010 partnerCal     Pass PG1323-086
+ N20101231S0407.fits  GN-CAL20101231-11-011 partnerCal     Pass PG1323-086
+ N20101231S0408.fits  GN-CAL20101231-11-012 partnerCal     Pass PG1323-086
+ N20101231S0409.fits  GN-CAL20101231-11-013 partnerCal     Pass PG1323-086
+ N20101231S0410.fits  GN-CAL20101231-11-014 partnerCal     Pass PG1323-086
+ N20101231S0411.fits  GN-CAL20101231-11-015 partnerCal     Pass PG1323-086
+ N20101231S0412.fits  GN-CAL20101231-11-016 partnerCal     Pass PG1323-086
+ N20101231S0413.fits  GN-CAL20101231-12-001     dayCal     Pass Twilight
+ N20101231S0414.fits  GN-CAL20101231-12-008     dayCal     Pass Twilight
+ N20101231S0415.fits  GN-CAL20101231-12-009     dayCal     Pass Twilight
+ N20101231S0416.fits  GN-CAL20101231-12-010     dayCal     Pass Twilight
+ N20101231S0417.fits  GN-CAL20101231-12-011     dayCal     Pass Twilight
+ N20101231S0418.fits  GN-CAL20101231-12-012     dayCal     Pass Twilight
+ N20101231S0419.fits  GN-CAL20101231-12-013     dayCal     Pass Twilight
+ N20101231S0420.fits  GN-CAL20101231-12-014     dayCal     Pass Twilight
+ N20101231S0421.fits  GN-CAL20101231-12-015     dayCal     Pass Twilight
+ N20101231S0422.fits  GN-CAL20101231-12-016     dayCal     Pass Twilight
+ N20101231S0423.fits  GN-CAL20101231-12-017     dayCal     Pass Twilight
+ N20101231S0424.fits  GN-CAL20101231-12-018     dayCal     Pass Twilight
+ N20101231S0425.fits  GN-CAL20101231-12-019     dayCal     Pass Twilight
+ N20101231S0426.fits  GN-CAL20101231-12-020     dayCal     Pass Twilight
+ N20101231S0427.fits  GN-CAL20101231-12-021     dayCal     Pass Twilight
+ N20101231S0428.fits  GN-CAL20101231-12-022     dayCal     Pass Twilight
+Total data size: 1856059200
+</code></pre></div>
 
 </body>
 </html>
