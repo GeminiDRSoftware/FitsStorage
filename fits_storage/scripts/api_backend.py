@@ -17,6 +17,7 @@ import json
 import wsgiref.simple_server
 from wsgiref.validate import validator
 from wsgiref.util import request_uri, application_uri, shift_path_info
+import pyfits as pf
 
 from fits_storage.utils.fitseditor import compare_cards, modify_multiple_cards
 from fits_storage.fits_storage_config import api_backend_location
@@ -94,12 +95,13 @@ def set_image_metadata(environ, start_response):
     except ValueError:
         raise WSGIError("The data for this query is not valid JSON")
 
-    start_response("200 OK", [('Content-Type', 'application/json')])
-
     try:
-        return [json.dumps({'result': apply_changes(path, changes)})]
+        result = apply_changes(path, changes)
     except (pf.VerifyError, IOError):
         raise WSGIError("There were problems when opening/modifying the file")
+
+    start_response("200 OK", [('Content-Type', 'application/json')])
+    return [json.dumps({'result': result})]
 
 #######################################################################################
 #
