@@ -32,5 +32,5 @@ class ApiProxy(object):
             return response['result']
         except TypeError:
             raise ApiProxyError("The response message is not valid: {!r}".format(response))
-        except urllib2.HTTPError as e:
+        except (urllib2.HTTPError, urllib2.URLError) as e:
             raise ApiProxyError("HTTP error when connecting to {}".format(path))

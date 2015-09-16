@@ -101,6 +101,7 @@ def update_headers(req):
             response = []
             reingest = False
             for query in data:
+                label = None
                 try:
                     label, df = lookup_diskfile(session, query)
                     filename = df.filename
@@ -114,7 +115,7 @@ def update_headers(req):
                     reingest = proxy.set_image_metadata(path=path, changes=query['values'])
                     response.append({'result': True, 'id': label})
                 except ItemError as e:
-                    response.append(error_response(e.message))
+                    response.append(error_response(e.message, id=label))
                 except KeyError as e:
                     response.append(error_response("This looks like a malformed request: 'values' does not exist", id=label))
                 except IngestError as e:
