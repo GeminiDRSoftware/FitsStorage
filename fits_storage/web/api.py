@@ -39,7 +39,7 @@ def locked_file(path):
 
 def get_json_data(req):
     try:
-        return json.loads(util.FieldStorage(req)['data'])
+        return json.loads(req.read())
     except KeyError:
         raise RequestError("This looks like a malformed request. Cannot find the 'data' entry")
     except ValueError:
@@ -109,9 +109,9 @@ def update_headers(req):
                         continue
                     validate_changes(query['values'])
                     path = df.fullpath()
-                    reingest = iq.delete_inactive_from_queue()
+                    reingest = iq.delete_inactive_from_queue(filename)
                     # reingest = apply_changes(df, query['values']) or reingest
-                    reingest = proxy.set_image_metadata(path=fullpath, changes=query['values'])
+                    reingest = proxy.set_image_metadata(path=path, changes=query['values'])
                     response.append({'result': True, 'id': label})
                 except ItemError as e:
                     response.append(error_response(e.message))
