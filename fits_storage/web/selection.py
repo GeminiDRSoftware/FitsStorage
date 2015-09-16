@@ -136,9 +136,8 @@ def getselection(things):
     """
     this takes a list of things from the URL, and returns a
     selection hash that is used by the html generators
-    The list of things is ordered. We disregard all but the
-    last occurence of a project id, observation id or
-    datalabel.
+    We disregard all but the most specific of
+    a project id, observation id or datalabel.
     """
     selection = {}
     for thing in things:
@@ -163,16 +162,10 @@ def getselection(things):
                 selection[getselection_simple_associations[thing]] = thing
             elif GeminiProgram(thing).valid or key == 'progid':
                 selection['program_id'] = value
-                selection.pop('observation_id', None)
-                selection.pop('data_label', None)
             elif GeminiObservation(thing).observation_id or key == 'obsid':
                 selection['observation_id'] = value
-                selection.pop('program_id', None)
-                selection.pop('data_label', None)
-            elif GeminiDataLabel(thing).datalabel:
+            elif GeminiDataLabel(thing).datalabel or key == 'datalabel':
                 selection['data_label'] = thing
-                selection.pop('observation_id', None)
-                selection.pop('program_id', None)
             elif thing in {'LGS', 'NGS'}:
                 selection['lgs'] = thing
                 # Make LGS / NGS selection imply AO selection
@@ -202,6 +195,12 @@ def getselection(things):
                 else:
                     selection['notrecognised'] = thing
 
+    # Disregard all but the most specific of program_id, observation_id, data_label
+    if selection.has_key('data_label'):
+        selection.pop('observation_id', None)
+        selection.pop('program_id', None)
+    if selection.has_key('observation_id'):
+        selection.pop('program_id', None)
     return selection
 
 sayselection_defs = {
@@ -671,10 +670,36 @@ def selection_to_URL(selection):
     """
     urlstring = ''
 
+    # We go only want one of data_label, observation_id, program_id in the URL,
+    # the most specific one should carry.
+    if selection.has_key('data_label'):
+        selection.pop('observation_id', None)
+        selection.pop('program_id', None)
+    if selection.has_key('observation_id'):
+        selection.pop('program_id', None)
+
     for key in selection:
         if key in {'warning', 'Search', 'ObsLogsOnly'}:
             # Don't put the warning text or search buttons in the URL
             pass
+        elif key == 'data_label':
+            # See if it is a valid data_label
+            dl = GeminiDataLabel(selection[key])
+            if dl.valid:
+                # Regular form, just stuff it in
+                urlstring += '/%s' % selection[key]
+            else:
+                # It's a non standard one
+                urlstring += '/datalabel=%s' % selection[key]
+        elif key == 'observation_id':
+            # See if it is a valid observation id, or if we need to add obsid=
+            go = GeminiObservation(selection[key])
+            if go.valid:
+                # Regular obs id, just stuff it in
+                urlstring += '/%s' % selection[key]
+            else:
+                # It's a non standard one
+                urlstring += '/obsid=%s' % selection[key]
         elif key == 'program_id':
             # See if it is a valid program id, or if we need to add progid=
             gp = GeminiProgram(selection[key])

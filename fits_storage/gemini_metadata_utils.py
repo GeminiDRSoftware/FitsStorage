@@ -461,9 +461,11 @@ class GeminiDataLabel:
             self.dlnum = dlm.group(3)
             self.project = GeminiProgram(self.projectid)
             self.observation_id = '%s-%s' % (self.projectid, self.obsnum)
+            self.valid = True
         else:
             # Match failed - Null the datalabel field
             self.datalabel = ''
+            self.valid = False
 
 class GeminiObservation:
     """
@@ -489,10 +491,12 @@ class GeminiObservation:
                 self.observation_id = observation_id
                 self.program = GeminiProgram(match.group(1))
                 self.obsnum = match.group(2)
+                self.valid = True
             else:
                 self.observation_id = ''
                 self.project = ''
                 self.obsnum = ''
+                self.valid = False
         else:
             self.observation_id = ''
 

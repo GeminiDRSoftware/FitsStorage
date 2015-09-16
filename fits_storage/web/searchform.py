@@ -128,6 +128,10 @@ def updateform(selection):
             # don't do program_id if we have already done obs_id, etc
             if key == 'program_id' and not ('observation_id' in selection or 'data_label' in selection):
                 dct['program_id'] = value
+            if key == 'observation_id' and not ('data_label' in selection):
+                dct['program_id'] = value
+            if key == 'data_label':
+                dct['program_id'] = value
 
         elif key in {'date', 'daterange'}:
             # If there is a date and a daterange, only use the date part
