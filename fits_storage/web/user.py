@@ -866,9 +866,12 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
                 elif not disabled_cookies:
                     cookies = Cookie.get_cookies(req)
                     for cookie, content in magic_cookies:
-                        if content is not None and cookies.get(cookie).value == content:
-                            got_magic = True
-                            break
+                        try:
+                            if content is not None and cookies[cookie].value == content:
+                                got_magic = True
+                                break
+                        except KeyError:
+                            pass
 
                 if not got_magic:
                     if only_magic:
