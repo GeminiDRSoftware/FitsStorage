@@ -14,8 +14,12 @@
 #
 
 import json
+import wsgiref.simple_server
+from wsgiref.validate import validator
 from wsgiref.util import request_uri, application_uri, shift_path_info
+
 from fits_storage.utils.fitseditor import compare_cards, modify_multiple_cards
+from fits_storage.fits_storage_config import api_backend_location
 
 HTTP_OK            = 200
 FORBIDDEN          = 403
@@ -58,7 +62,10 @@ def get_route(environ, routes):
         raise WSGIError("'{}' not a valid query for method '{}'".format(path_info, req_meth), status=NOT_FOUND)
 
 def get_post_data(environ):
-    return environ['wsgi.input'].read()
+    try:
+        return environ['wsgi.input'].read(int(environ.get('CONTENT_LENGTH', 0)))
+    except ValueError:
+        return ''
 
 #######################################################################################
 #
@@ -90,7 +97,7 @@ def set_image_metadata(environ, start_response):
     start_response("200 OK", [('Content-Type', 'application/json')])
 
     try:
-        return json.dumps({'result': apply_changes(path, changes)})
+        return [json.dumps({'result': apply_changes(path, changes)})]
     except (pf.VerifyError, IOError):
         raise WSGIError("There were problems when opening/modifying the file")
 
@@ -111,3 +118,15 @@ def app(environ, start_response):
         return route(environ, start_response)
     except WSGIError as e:
         return e.response(environ, start_response)
+
+# Provide a basic WSGI server, in case we're testing or don't need any fancy
+# container...
+if __name__ == '__main__':
+    try:
+        server, port = api_backend_location.split(':')
+    except ValueError:
+        server = api_backend_location
+        port   = '8000'
+
+    httpd = wsgiref.simple_server.make_server(server, int(port), app)
+    httpd.serve_forever()

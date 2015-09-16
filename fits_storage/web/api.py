@@ -9,7 +9,7 @@ from ..utils.api import ApiProxy, ApiProxyError
 
 from .user import needs_login
 
-from ..fits_storage_config import magic_api_cookie
+from ..fits_storage_config import magic_api_cookie, api_backend_location
 
 from mod_python import apache, util
 from contextlib import contextmanager
@@ -95,7 +95,7 @@ def validate_changes(changes):
 def update_headers(req):
     with session_scope() as session:
         iq = IngestQueueUtil(session, DummyLogger())
-        proxy = ApiProxy('localhost:8000')
+        proxy = ApiProxy(api_backend_location)
         try:
             data = get_json_data(req)
             response = []

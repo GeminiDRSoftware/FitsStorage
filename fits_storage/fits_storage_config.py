@@ -61,6 +61,10 @@ magic_download_cookie = None
 # Leave it as None to disable this feature
 magic_api_cookie = None
 
+# API backend stuff
+provides_api = True
+api_backend_location = 'localhost:8000'
+
 # This is the list of downstream servers we export files we ingest to
 export_destinations = []
 #export_destinations = ['hbffits2']
