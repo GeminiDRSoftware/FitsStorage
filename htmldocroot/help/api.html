@@ -241,8 +241,43 @@ The value is the integer percentile, 100 implies "Any"</td>
 </table>
 
 <h2>Downloading Data</h2>
-<p>TODO - The download feature warrants some special discussion, including how to authenticate so as to be able to
-download proprietary data.</p>
+<p>Two URLs are available to download data from the archive.</p>
+
+<p>Firstly, the <code>/download</code> URL uses the same selection criteria as detailed above, and will return a tar 
+archive containing the data that match the selection. The files inside the tar archive will be compressed with bzip2. 
+Also inside the tar archive is a <code>README.txt</code> file with some details of the download, and an 
+<code>md5sums.txt</code> file that contains the MD5 hash of each file in the download, so that file integrity can 
+easily be checked using the <code>md5sum</code> program installed on most UNIX-like systems.</p>
+
+<p>Secondly, the <code>/file</code> URL accepts a single filename and will return you just that file, uncompressed
+and ready to use.</p>
+
+<h3>Authentication</h3>
+
+<p>Note that these URLs will provide public data without any need to authenticate. However, they do require
+authentication in order to download proprietary data. In the case where you do not authenticate, the 
+<code>/download</code> URL will send you any public files that match your selection criteria, and will include
+in the README.txt file a list of files to which you were denied access.</p>
+
+<p>To authenicate to these services, you need to supply your archive session cookie.
+a <a href="http://en.wikipedia.org/wiki/HTTP_cookie">web cookie</a> is a small piece of data sent from a web
+server to your browser that your browser stores and presents back to the web server. 
+When you log in to your account on the archive, the server sends you a cookie called
+<code>gemini_archive_session</code>. The value of this cookie identifies you to the system and verifies that
+you have sucesfully logged in. In order to authenticate yourself to the download service, you need to send the
+same cookie to the server with your request. If you want to do this from a script or the command line you will
+first have to find the value of that cookie from your browser, and then include it in your download request headers.</p>
+
+<p>Finding the value of the cookie depends on your browser. In Firefox, navigate to any archive page, then go to 
+Tools -> Page Info, then inside Security there is a View Cookies button. In Safari first go to Preferences -> Advanced
+and turn on "Show Develop menu" then navigate to an archive page and in the Develop menu click "Show Web Inspector" then
+select Cookies in the Resources tab. The cookie you need is called <code>gemini_archive_session</code>.</p>
+
+<p>The value of the cookie you need will be a long apparently random string of characters. You should be able to copy
+/ paste it into to your script. Be sure to keep that cookie value confidential, anyone who has it can access your archive account. If
+you need to reset it (for example because it became known to someone else), then simply use a web browser to
+<strong>Log Out</strong> of the archive and the old value will no longer be accepted by the server. When you log back
+in to the archive, a new value will be sent to the browser where you logged in.</p>
 
 <h2>Selection Criteria</h2>
 <p>TODO - Here are details of the selection criteria you can use:</p>
