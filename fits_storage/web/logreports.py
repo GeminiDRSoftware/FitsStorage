@@ -9,7 +9,7 @@ from sqlalchemy import and_, between, cast, desc, extract, func, join
 from sqlalchemy import BigInteger, Date, Integer, Interval, String
 from sqlalchemy.orm import aliased
 
-from ..orm import sessionfactory
+from ..orm import session_scope
 from ..orm.usagelog import UsageLog
 from ..orm.querylog import QueryLog
 from ..orm.downloadlog import DownloadLog
@@ -22,243 +22,97 @@ from ..gemini_metadata_utils import ONEDAY_OFFSET
 from .user import needs_login
 from .selection import getselection, queryselection, sayselection
 from .list_headers import list_headers
+from . import templating
 
 from mod_python import apache
 from mod_python import util
 
 @needs_login(staffer=True)
-def usagereport(req):
+@templating.templated("logreports/usagereport.html", with_session=True, with_generator=True)
+def usagereport(session, req):
     """
     This is the usage report handler
     """
 
-    session = sessionfactory()
-    try:
-        # Process the form data if there is any
-        # Default all the pre-fill strings
-        # Default to last day
-        today = datetime.datetime.utcnow().date()
-        tomorrow = today + ONEDAY_OFFSET
-        start = today.isoformat()
-        end = tomorrow.isoformat()
-        username = ''
-        ipaddr = ''
-        this = ''
-        status = ''
+    # Process the form data if there is any
+    # Default all the pre-fill strings
+    # Default to last day
+    today = datetime.datetime.utcnow().date()
+    tomorrow = today + ONEDAY_OFFSET
+    start = today.isoformat()
+    end = tomorrow.isoformat()
+    username = ''
+    ipaddr = ''
+    this = ''
+    status = ''
 
-        formdata = util.FieldStorage(req)
-        for key, value in formdata.items():
-            if key == 'start' and len(value):
-                start = dateutil.parser.parse(value)
-            elif key == 'end' and len(value):
-                end = dateutil.parser.parse(value)
-            elif key == 'username' and len(value):
-                user = session.query(User).filter(User.username == formdata[key]).first()
-                if user:
-                    username = user.username
-                    user_id = user.id
-            elif key == 'ipaddr' and len(value):
-                ipaddr = str(value)
-            elif key == 'this' and len(value):
-                this = str(value)
-            elif key == 'status' and len(value):
-                try:
-                    status = int(value)
-                except:
-                    pass
+    formdata = util.FieldStorage(req)
+    for key, value in formdata.items():
+        if key == 'start' and len(value):
+            start = dateutil.parser.parse(value)
+        elif key == 'end' and len(value):
+            end = dateutil.parser.parse(value)
+        elif key == 'username' and len(value):
+            user = session.query(User).filter(User.username == formdata[key]).first()
+            if user:
+                username = user.username
+                user_id = user.id
+        elif key == 'ipaddr' and len(value):
+            ipaddr = str(value)
+        elif key == 'this' and len(value):
+            this = str(value)
+        elif key == 'status' and len(value):
+            try:
+                status = int(value)
+            except:
+                pass
 
-        # send them the form, pre-populate if have values
-        req.content_type = "text/html"
+    template_args = dict(
+        form=dict(start=start,
+                  end=end,
+                  user=username,
+                  ip=ipaddr,
+                  this=this,
+                  status=status)
+        )
 
-        req.write('<!DOCTYPE html><html><head>')
-        req.write('<meta charset="UTF-8">')
-        req.write('<link rel="stylesheet" type="text/css" href="/table.css">')
-        req.write('<title>Fits Server Log Query</title></head>')
-        req.write("<body><h1>Fits Server Log Query</h1>")
-        req.write("<FORM action='/usagereport' method='POST'>")
-        req.write("<TABLE>")
+    if formdata:
+        # Subquery to add a "row count" to the QueryLog and the DownloadLog. This is an easy way to pick just
+        # the first relation when joining a one-to-many with potentially more than one result per match.
+        # The underlying mechanism is the windowing capability of PostgreSQL (using the 'OVER ...' clause)
+        qls = session.query(QueryLog, func.row_number().over(QueryLog.usagelog_id).label('row_number')).subquery()
+        dls = session.query(DownloadLog, func.row_number().over(DownloadLog.usagelog_id).label('row_number')).subquery()
+        aQueryLog = aliased(QueryLog, qls)
+        aDownloadLog = aliased(DownloadLog, dls)
+        query = (
+            session.query(UsageLog, aQueryLog, aDownloadLog)
+                   .outerjoin(aQueryLog, and_(aQueryLog.usagelog_id==UsageLog.id, qls.c.row_number == 1))
+                   .outerjoin(aDownloadLog, and_(aDownloadLog.usagelog_id==UsageLog.id, dls.c.row_number == 1))
+            )
+        if start:
+            query = query.filter(UsageLog.utdatetime >= start)
+        if end:
+            query = query.filter(UsageLog.utdatetime <= end)
+        if username:
+            user = session.query(User).filter(User.username == username).first()
+            if user:
+                query = query.filter(UsageLog.user_id == user.id)
+        if ipaddr:
+            query = query.filter(UsageLog.ip_address == ipaddr)
+        if this:
+            query = query.filter(UsageLog.this == this)
+        if status:
+            try:
+                query = query.filter(UsageLog.status == int(status))
+            except:
+                pass
 
-        # Start and End of Query
-        req.write('<TR><TD><LABEL for="start">UT Start of Report</LABEL></TD>')
-        req.write('<TD><INPUT type="text" size=20 name="start" value=%s></TD></TR>' % start)
-        req.write('<TR><TD><LABEL for="end">UT End of Report</LABEL></TD>')
-        req.write('<TD><INPUT type="text" size=20 name="end" value=%s></TD></TR>' % end)
+        usagelogs = query.order_by(desc(UsageLog.utdatetime))
 
-        req.write('<TR><TD><LABEL for="username">Username</LABEL></TD>')
-        req.write('<TD><INPUT type="text" size=20 name="username" value=%s></TD></TR>' % username)
+        if usagelogs.count() > 0:
+            template_args['results'] = usagelogs
 
-        req.write('<TR><TD><LABEL for="ipaddr">IP address</LABEL></TD>')
-        req.write('<TD><INPUT type="text" size=20 name="ipaddr" value=%s></TD></TR>' % ipaddr)
-
-        req.write('<TR><TD><LABEL for="this">"This" feature</LABEL></TD>')
-        req.write('<TD><INPUT type="text" size=20 name="this" value=%s></TD></TR>' % this)
-
-        req.write('<TR><TD><LABEL for="status">HTTP Status</LABEL></TD>')
-        req.write('<TD><INPUT type="text" size=4 name="status" value=%s></TD></TR>' % status)
-
-        req.write("</TABLE>")
-        req.write('<INPUT type="submit" value="Submit"></INPUT>')
-        req.write("</FORM>")
-
-        if len(formdata.keys()) > 0:
-            req.write("<h1>Usage Report</h1>")
-            query = session.query(UsageLog)
-            if start:
-                query = query.filter(UsageLog.utdatetime >= start)
-            if end:
-                query = query.filter(UsageLog.utdatetime <= end)
-            if username:
-                user = session.query(User).filter(User.username == username).first()
-                if user:
-                    query = query.filter(UsageLog.user_id == user.id)
-            if ipaddr:
-                query = query.filter(UsageLog.ip_address == ipaddr)
-            if this:
-                query = query.filter(UsageLog.this == this)
-            if status:
-                try:
-                    query = query.filter(UsageLog.status == int(status))
-                except:
-                    pass
-
-            usagelogs = query.order_by(desc(UsageLog.utdatetime))
-
-            req.write('<TABLE>')
-            req.write('<TR class="tr_head">')
-            req.write('<TH colspan=9>Usage</TH>')
-            req.write('<TH colspan=6>Query</TH>')
-            req.write('<TH colspan=7>Download</TH>')
-            req.write('</TR>\n')
-            req.write('<TR class="tr_head">')
-            req.write('<TH>ID</TH>')
-            req.write('<TH>UT Date Time</TH>')
-            req.write('<TH>Username</TH>')
-            req.write('<TH>IP Address</TH>')
-            req.write('<TH>HTTP</TH>')
-            req.write('<TH>This</TH>')
-            req.write('<TH>Bytes</TH>')
-            req.write('<TH>Status</TH>')
-            req.write('<TH>Notes</TH>')
-            # Query part
-            req.write('<TH>N res</TH>')
-            req.write('<TH>N cal</TH>')
-            req.write('<TH>T res</TH>')
-            req.write('<TH>T cal</TH>')
-            req.write('<TH>T sum</TH>')
-            req.write('<TH>Notes</TH>')
-            # Download part
-            req.write('<TH>N res</TH>')
-            req.write('<TH>N den</TH>')
-            req.write('<TH>Send</TH>')
-            req.write('<TH>T res</TH>')
-            req.write('<TH>T DL</TH>')
-            req.write('<TH>MB/sec</TH>')
-            req.write('<TH>Notes</TH>')
-            req.write('</TR>\n')
-
-            even = False
-            for usagelog in usagelogs:
-
-                even = not even
-
-                req.write('<TR class="%s">' % ('tr_even' if even else 'tr_odd'))
-                req.write('<TD><a href="/usagedetails/%d">%d</a></TD>' % (usagelog.id, usagelog.id))
-                req.write('<TD>%s</TD>' % usagelog.utdatetime.strftime("%Y-%m-%d %H:%M:%S.%f")[:21])
-                html = ""
-                if usagelog.user_id:
-                    user = session.query(User).get(usagelog.user_id)
-                    html = user.username
-                    if user.gemini_staff:
-                        html += " (Staff)"
-                req.write('<TD>%s</TD>' % html)
-                req.write('<TD>%s</TD>' % usagelog.ip_address)
-                req.write('<TD>%s</TD>' % usagelog.method)
-                req.write('<TD>%s</TD>' % usagelog.this)
-                req.write('<TD>%s</TD>' % usagelog.bytes)
-                req.write('<TD>%s</TD>' % usagelog.status_string())
-                notes_html = usagelog.notes if (usagelog.notes is None or len(usagelog.notes) < 50) else (usagelog.notes[:50]+'...')
-                req.write('<TD>%s</TD>' % notes_html)
-
-                # Query part
-                querylog = session.query(QueryLog).filter(QueryLog.usagelog_id == usagelog.id).first()
-                if querylog:
-                    req.write('<TD>%s</TD>' % querylog.numresults)
-
-                    html = ''
-                    if querylog.numcalresults:
-                        html = str(querylog.numcalresults)
-                    req.write('<TD>%s</TD>' % html)
-
-                    html = ''
-                    if querylog.query_completed and querylog.query_started:
-                        tres = querylog.query_completed - querylog.query_started
-                        html = '%.2f' % tres.total_seconds()
-                    req.write('<TD>%s</TD>' % html)
-
-                    html = ''
-                    if querylog.cals_completed and querylog.query_started:
-                        tcal = querylog.cals_completed - querylog.query_started
-                        html = '%.2f' % tcal.total_seconds()
-                    req.write('<TD>%s</TD>' % html)
-
-                    html = ''
-                    if querylog.summary_completed and querylog.query_started:
-                        tsum = querylog.summary_completed - querylog.query_started
-                        html = '%.2f' % tsum.total_seconds()
-                    req.write('<TD>%s</TD>' % html)
-
-                    html = '<abbr title="%s">Sel</abbr>' % querylog.selection
-                    if querylog.notes:
-                        html += ' <abbr title="%s">Notes</abbr>' % querylog.notes
-                    req.write('<TD>%s</TD>' % html)
-                else:
-                    req.write('<TD colspan=6></TD>')
-
-                # Download part
-                dllog = session.query(DownloadLog).filter(DownloadLog.usagelog_id == usagelog.id).first()
-                if dllog:
-                    req.write('<TD>%s</TD>' % dllog.numresults)
-
-                    if dllog.numdenied:
-                        req.write('<TD>%s</TD>' % dllog.numdenied)
-                    else:
-                        req.write('<TD></TD>')
-
-
-                    req.write('<TD>%s</TD>' % dllog.sending_files)
-
-                    html = ''
-                    if dllog.query_started and dllog.query_completed:
-                        tres = dllog.query_completed - dllog.query_started
-                        html = '%.2f' % tres.total_seconds()
-                    req.write('<TD>%s</TD>' % html)
-
-                    html = ''
-                    bytespersec = 0
-                    if dllog.query_completed and dllog.download_completed:
-                        tdl = dllog.download_completed - dllog.query_completed
-                        tdlsecs = tdl.total_seconds()
-                        html = '%.2f' % tdlsecs
-                        bytes = usagelog.bytes
-                        bytespersec = bytes / tdlsecs
-                    req.write('<TD>%s</TD><TD>%.2f</TD>' % (html, bytespersec / 1000000.0))
-
-                    html = '<abbr title="%s">Sel</abbr>' % dllog.selection
-                    if dllog.notes:
-                        html += ' <abbr title="%s">Notes</abbr>' % dllog.notes
-                    req.write('<TD>%s</TD>' % html)
-
-                else:
-                    req.write('<TD colspan=7></TD>')
-
-                req.write('</TR>\n')
-            req.write('</TABLE>')
-        req.write("</body></html>")
-
-    finally:
-        session.close()
-
-    return apache.HTTP_OK
+    return template_args
 
 @needs_login(staffer=True)
 def usagedetails(req, things):
@@ -267,8 +121,12 @@ def usagedetails(req, things):
     things should contain an useagelog ID number
     """
 
-    session = sessionfactory()
-    try:
+    with session_scope() as session:
+        # Need to be logged in as gemini staff to do this
+        user = userfromcookie(session, req)
+        if user is None or user.gemini_staff is False:
+            return apache.HTTP_FORBIDDEN
+
         if len(things) != 1:
             return apache.HTTP_NOT_ACCEPTABLE
         try:
@@ -458,8 +316,6 @@ def usagedetails(req, things):
             req.write("<TABLE>")
 
         req.write("</body></html>")
-    finally:
-        session.close()
 
     return apache.HTTP_OK
 
@@ -469,7 +325,6 @@ def downloadlog(req, things):
     This accepts a selection and returns a log showing all the downloads of the
     files that match the selection.
     """
-    session = sessionfactory()
 
     try:
         selection = getselection(things)
@@ -589,9 +444,12 @@ def usagestats(req):
     Generate counts per year, per week and per day
     """
 
-    session = sessionfactory()
+    with session_scope() as session:
+        # Need to be logged in as gemini staff to do this
+        user = userfromcookie(session, req)
+        if user is None or user.gemini_staff is False:
+            return apache.HTTP_FORBIDDEN
 
-    try:
         req.content_type = "text/html"
         req.write('<!DOCTYPE html><html><head>')
         req.write('<meta charset="UTF-8">')
@@ -678,9 +536,6 @@ def usagestats(req):
             req.write('<TD>%.2f</TD>' % gb)
             req.write('</TR>')
         req.write('</TABLE>')
-
-    finally:
-        session.close()
 
     return apache.HTTP_OK
 

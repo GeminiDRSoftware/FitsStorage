@@ -1,0 +1,74 @@
+{% extends "layout_nofrills.html" %}
+{% block title %}Fits Server Log Query{% endblock %}
+{% block body %}
+<h1>Fits Server Log Query</h1>
+
+<form action='/usagereport' method='POST'>
+ <table>
+  <tr><td><label for="start">UT Start of Report</label>
+      <td><input type="text" size=20 name="start" value="{{ form.start }}" ></tr>
+  <tr><td><label for="end">UT End of Report</label>
+      <td><input type="text" size=20 name="end" value="{{ form.end }}" /></tr>
+  <tr><td><label for="username">Username</label>
+      <td><input type="text" size=20 name="username" value="{{ form.user }}" /></tr>
+  <tr><td><label for="ipaddr">IP address</label>
+      <td><input type="text" size=20 name="ipaddr" value="{{ form.ip }}" /></tr>
+  <tr><td><label for="this">"This" feature</label>
+      <td><input type="text" size=20 name="this" value="{{ form.this }}" /></tr>
+  <tr><td><label for="status">HTTP Status</label>
+      <td><input type="text" size=4 name="status" value="{{ form.status }}" /></tr>
+ </table>
+ <input type="submit" value="Submit" />
+</form>
+
+{% if results -%}
+<h1>Usage Report</h1>
+
+<table>
+ <tr class="tr_head"><th colspan='9'>Usage<th colspan='6'>Query<th colspan='7'>Download</tr>
+ <tr class="tr_head">
+  <th>ID<th>UT Date Time<th>Username<th>IP Address<th>HTTP<th>This<th>Bytes<th>Status<th>Notes
+  <!-- Query part -->
+  <th>N res<th>N cal<th>T res<th>T cal<th>T sum<th>Notes
+  <!-- Download part -->
+  <th>N res<th>N den<th>Send<th>T res<th>T DL<th>MB/sec<th>Notes
+ </tr>
+ {%- for ulog, qlog, dlog in results %}
+ <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+   <td><a href="/usagedetails/{{ ulog.id }}">{{ ulog.id }}</a>
+   <td>{{ ulog.utdatetime|datetime('full', chopped=True) }}
+   <td>{{ ulog.user.username }}{% if ulog.user.gemini_staff %} (Staff){% endif %}
+   <td>{{ ulog.ip_address }}
+   <td>{{ ulog.method }}
+   <td>{{ ulog.this }}
+   <td>{{ ulog.bytes }}
+   <td>{{ ulog.status_string }}
+   <td>{% if ulog.notes %}{{ ulog.notes|truncate(50, True) }}{% endif %}
+   {%- if qlog %}
+   <td>{{ qlog.numresults }}
+   <td>{{ qlog.numcalresults or '' }}
+   <td>{{ qlog.query_completed|seconds_since(qlog.query_started) }}
+   <td>{{ qlog.cals_completed|seconds_since(qlog.query_started) }}
+   <td>{{ qlog.summary_completed|seconds_since(qlog.query_started) }}
+   <td><abbr title="{{ qlog.selection }}">Sel</abbr>{% if qlog.notes %} <abbr title="{{ qlog.notes }}">Notes</abbr>{% endif %}
+   {%- else %}
+   <td colspan='6'>
+   {%- endif %}
+   {%- if dlog %}
+   <td>{{ dlog.numresults }}
+   <td>{{ dlog.numdenied or '' }}
+   <td>{{ dlog.sending_files }}
+   <td>{{ dlog.query_completed|seconds_since(dlog.query_started) }}
+   {%- with dltime = dlog.download_completed|seconds_since(dlog.query_started, formatted=False) %}
+   <td>{{ '{:.2f}'.format(dltime) }}
+   <td>{{ '{:.2f}'.format(0 if not dltime else (ulog.bytes / (dltime * 1000000.0))) }}
+   {%- endwith %}
+   <td><abbr title="{{ dlog.selection }}">Sel</abbr>{% if dlog.notes %} <abbr title="{{ dlog.notes }}">Notes</abbr>{% endif %}
+   {%- else %}
+   <td colspan='7'>
+   {%- endif %}
+ </tr>
+ {%- endfor %}
+</table>
+{%- endif %}
+{% endblock %}

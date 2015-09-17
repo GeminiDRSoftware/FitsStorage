@@ -2,11 +2,13 @@ import datetime
 
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime
+from sqlalchemy.orm import relation
 
 from ..fits_storage_config import using_apache
 from ..apache_return_codes import REMOTE_NOLOOKUP
 
 from . import Base
+from .user import User
 
 from . import sessionfactory
 
@@ -28,6 +30,8 @@ class UsageLog(Base):
     bytes = Column(Integer)
     status = Column(Integer, index=True)
     notes = Column(Text)
+
+    user = relation(User)
 
     def __init__(self, req):
         """
@@ -62,6 +66,7 @@ class UsageLog(Base):
         else:
             self.notes += "\n" + note
 
+    @property
     def status_string(self):
         """
         Returns a string with the http status and a human readable translation

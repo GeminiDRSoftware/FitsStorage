@@ -8,6 +8,28 @@ from ..orm import session_scope
 from functools import wraps
 from mod_python import apache
 
+def datetime_filter(value, format=None, chopped=False):
+    if format=='full':
+        fmt = "%Y-%m-%d %H:%M:%S.%f"
+    elif format=='date':
+        fmt = "%Y-%m-%d"
+    else:
+        fmt = "%Y-%m-%d %H:%M:%S"
+
+    res = value.strftime(fmt)
+
+    return res if not chopped else res[:21]
+
+def seconds_since_filter(value, since, formatted=True):
+    if not (value and since):
+        return '' if formatted else 0
+
+    ret = (value - since).total_seconds()
+
+    if formatted:
+        return '{:.2f}'.format(ret)
+    return ret
+
 def get_env():
     jinja_env = Environment(loader=FileSystemLoader(template_path),
                             extensions=['jinja2.ext.with_'],
@@ -16,6 +38,9 @@ def get_env():
     # This may be too much of an assumption, BUT... performance is better
                             autoescape=False)
 #                            autoescape=True)
+
+    jinja_env.filters['datetime'] = datetime_filter
+    jinja_env.filters['seconds_since'] = seconds_since_filter
 
     return jinja_env
 

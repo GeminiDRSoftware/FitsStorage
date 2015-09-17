@@ -4,7 +4,7 @@ This module handles the web 'user' functions - creating user accounts, login / l
 
 from sqlalchemy import desc
 
-from ..orm import sessionfactory, session_scope
+from ..orm import session_scope
 from ..orm.user import User
 
 from ..fits_storage_config import fits_servername, smtp_server
@@ -92,13 +92,13 @@ def request_account(session, req, things):
 
     if valid_request:
         try:
-            session = sessionfactory()
-            newuser = User(username)
-            newuser.fullname = fullname
-            newuser.email = email
-            session.add(newuser)
-            session.commit()
-            template_args['emailed'] = send_password_reset_email(newuser.id)
+            with session_scope() as session:
+                newuser = User(username)
+                newuser.fullname = fullname
+                newuser.email = email
+                session.add(newuser)
+                session.commit()
+                template_args['emailed'] = send_password_reset_email(newuser.id)
         except:
             template_args['error'] = True
 
