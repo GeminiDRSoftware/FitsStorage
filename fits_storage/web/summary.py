@@ -39,9 +39,9 @@ def summary(req, sumtype, selection, orderby, links=True, body_only=False):
     with session_scope() as session:
         template_args = summary_body(req, session, sumtype, selection, orderby, links)
         if body_only:
-            template = templating.get_env().get_template('summary_body.html')
+            template = templating.get_env().get_template('search_and_summary/summary_body.html')
         else:
-            template = templating.get_env().get_template('summary.html')
+            template = templating.get_env().get_template('search_and_summary/summary.html')
 
             template_args.update({
                 'sumtype'      : sumtype,
@@ -69,8 +69,6 @@ def summary_body(req, session, sumtype, selection, orderby, links=True):
     and calls the webhdrsummary function to actually generate
     the html table containing the actual summary information.
     """
-
-    # template = templating.get_env().get_template('summary_body.html')
 
     sumlinks = ALL_LINKS if links else NO_LINKS
 
@@ -218,7 +216,7 @@ def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, 
         # For future Python 3 compliance
         __next__ = next
 
-    template = templating.get_env().get_template('summary_table.html')
+    template = templating.get_env().get_template('search_and_summary/summary_table.html')
 
     template_args = dict(
         clickable     = sumtype in {'searchresults', 'associated_cals'},

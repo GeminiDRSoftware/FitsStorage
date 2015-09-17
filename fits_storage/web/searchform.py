@@ -52,7 +52,7 @@ def searchform(req, things, orderby):
     selection = getselection(things)
     formdata = util.FieldStorage(req)
 
-    template = templating.get_env().get_template('searchform.html')
+    template = templating.get_env().get_template('search_and_summary/searchform.html')
 
     # Also args to pass on to results page
     args_string = ""

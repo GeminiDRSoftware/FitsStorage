@@ -19,7 +19,7 @@
 <input type="hidden" id="args" name="args" value="{{ args_string }}">
 <div class="page">
 <form class="searchform" action="/searchform" method="POST">
-{% include "searchform_detail.html" %}
+{% include "search_and_summary/searchform_detail.html" %}
 </form>
 {% if debugging -%}
  <p>selection: {{ selection }}</p>
@@ -33,7 +33,7 @@
  <div class="frames">
  <div id="searchresults" class="searchresults">
  <span id="loading"><img src="/ajax-loading.gif" alt="">  Loading...<br /></span>
-{% include "summary_body.html" %}
+{% include "search_and_summary/summary_body.html" %}
  </div><div id="calibration_results" class="searchresults">
  <span id="loading_cals"><br /><img src="/ajax-loading.gif" alt="">  Finding Associated Calibrations... This can take several seconds depending on the size of your calibration association search...</span>
  <span id="not_loading_cals"><br />You cannot do calibration association on an unconstrained search, or one that hits the search limit. Please revise your original search so that this is not the case.</span>
