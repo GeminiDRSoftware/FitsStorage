@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block title %}Gemini Archive - Queue Status Page{% endblock %}
+{% block body %}
+<h1>Gemini Archive - Queue Status Page</h1>
+<table>
+ <tr class='tr_head'><th>Queue<th># Pending<th># Errors</tr>
+ {% for row in general_rows %}
+ <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'><td><strong>{{ row.name }}</strong><td>{{ row.size }}<td>{{ row.errors }}</tr>
+ {% endfor %}
+</table>
+<p>NB: The total number of elements in each queue is <em>pending + errors</em>
+
+{% for table in detail_tables %}
+<h2>Detailed errors for queue {{ table.name }}</h2>
+<table>
+ <tr class='tr_head'><th>In queue since<th>Filename</tr>
+ {% for row in table.rows %}
+ <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'><td>{{ row.since }}<td><a href='/queuestatus/{{ table.lname }}/{{ row.oid }}'>{{ row.filename }}</a></tr>
+ {%- endfor %}
+</table>
+{%- endfor %}
+{% endblock %}

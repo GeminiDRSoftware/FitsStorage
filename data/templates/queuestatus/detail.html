@@ -1,0 +1,13 @@
+{% extends "layout_nofrills.html" %}
+{% block title %}Gemini Archive - Queue Error Detail{% endblock %}
+{% block body %}
+<h1>Gemini Archive - Error for object {{ oid }} on the {{ qname }} Queue</h1>
+<table>
+ <tr><td align='right'><strong>Filename:</strong><td>{{ filename }}</tr>
+ <tr><td align='right'><strong>Added:</strong><td>{{ since }}</tr>
+ <tr><td align='right' valign='top'><strong>Traceback:</strong></tr>
+</table>
+<pre>
+{{ tb }}
+</pre>
+{% endblock %}

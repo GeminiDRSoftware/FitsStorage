@@ -33,7 +33,7 @@ def stats(session):
         yield {'name': qname,
                'lname': linkname,
                'type': qtype,
-               'length': length,
+               'size': length,
                'errors': errors}
 
 error_query = {
