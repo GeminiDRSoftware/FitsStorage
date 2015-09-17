@@ -9,6 +9,7 @@ from ..orm import sessionfactory
 from ..orm.userprogram import UserProgram
 
 from .user import userfromcookie
+from . import templating
 
 # This will only work with apache
 from mod_python import apache
@@ -16,27 +17,23 @@ from mod_python import util
 
 import urllib
 
-def my_programs(req, things):
+@templating.templated("user_programs.html", with_session=True)
+def my_programs(session, req, things):
     """
     Generates a page showing the user what programs
     they have registered access to.
     Also generates and processes a form to add new ones.
     """
 
-    # Build the thing_string to link back to the searchform
-    thing_string = ''
-    if things:
-        thing_string = '/' + '/'.join(things)
-
     # First, process the form data if there is any
     formdata = util.FieldStorage(req)
 
     program_id = ''
     program_key = ''
-    if len(formdata.keys()) > 0:
-        if 'program_id' in formdata.keys():
+    if formdata:
+        if 'program_id' in formdata:
             program_id = formdata['program_id'].value
-        if 'program_key' in formdata.keys():
+        if 'program_key' in formdata:
             program_key = formdata['program_key'].value
 
     # Now figure out if we are logged in, who we are, and current prog_list
@@ -45,58 +42,24 @@ def my_programs(req, things):
     prog_list = []
     reason_bad = ''
 
-    try:
-        session = sessionfactory()
-        user = userfromcookie(session, req)
-        if user:
-            username = user.username
-            if program_id or program_key:
-                reason_bad = request_user_program(session, user, program_id, program_key)
-            prog_list = get_program_list(session, user)
-    finally:
-        session.close()
+    user = userfromcookie(session, req)
+    if user:
+        username = user.username
+        if program_id or program_key:
+            reason_bad = request_user_program(session, user, program_id, program_key)
+        prog_list = get_program_list(session, user)
 
-
-    req.content_type = "text/html"
-    req.write("<html><head><title>Gemini Archive Registered Program List</title></head><body>")
     if username == '':
-        req.write('<h1>Not logged in</h1>')
-        req.write('<p>You need to be logged in to see your registered programs.</p>')
-        req.write('<p>You can <a href="/login">log in here</a></p>')
-        req.write('</body></html>')
-        return apache.HTTP_OK
+        return dict(logged_in = False)
 
-    if len(prog_list) == 0:
-        req.write('<h1>No programs registered</h1>')
-        req.write('<p>There are currently no programs registered to username: %s</p>' % username)
-    else:
-        req.write('<h1>Registered Program list for %s</h1>' % username)
-        req.write('<ul>')
-        for prog in prog_list:
-            req.write('<li>%s</li>' % prog)
-        req.write('</ul>')
+    template_args(
+        # Build the thing_string to link back to the searchform
+        username     = username,
+        progs        = prog_list,
+        thing_string = '/'.join(things)
+        )
 
-    if reason_bad:
-        req.write("<h2>Registering your new program failed</h2>")
-        req.write('<p>%s</p>' % reason_bad)
-
-    req.write('<p><a href="/searchform%s">Click here to return to your search form</a></p>' % thing_string)
-
-    req.write('<h2>Register a new program</h2>')
-    req.write('<p>To register a new program with your account, fill out and submit the form below</p>')
-
-    req.write('<FORM action="/my_programs%s" method="POST">' % thing_string)
-    req.write('<TABLE>')
-    req.write('<TR><TD><LABEL for="program_id">Program ID</LABEL><TD>')
-    req.write('<TD><INPUT type="text" size=16 name="program_id"></INPUT></TD></TR>')
-    req.write('<TR><TD><LABEL for="program_key">Program Key</LABEL><TD>')
-    req.write('<TD><INPUT type="text" size=8 name="program_key"></INPUT></TD></TR>')
-    req.write('</TABLE>')
-    req.write('<INPUT type="submit" value="Submit"></INPUT>')
-    req.write('</FORM>')
-    req.write("</body></html>")
-    return apache.HTTP_OK
-
+    return template_args
 
 def get_program_list(session, user):
     """

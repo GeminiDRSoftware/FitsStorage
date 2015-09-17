@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block title %}Gemini Archive Registered Program List{% endblock %}
+
+{% block body %}
+{% if logged_in %}
+ {% if not progs %}
+   <h1>No programs registered</h1>
+   <p>There are currently no programs registered to username: {{ username }}</p>
+ {% else %}
+   <h1>Registered Program list for {{ username }}</h1>
+   <ul>
+     {% for prog in progs %}<li>{{ prog }}</li>{% endfor %}
+   </ul>
+ {% endif %}
+ {% if reason_bad %}
+   <h2>Registering your new program failed</h2>
+   <p>{{ reason_bad }}</p>
+ {% endif %}
+ <p><a href="/searchform/{{ thing_string }}">Click here to return to your search form</a></p>
+
+ <h2>Register a new program</h2>
+ <p>To register a new program with your account, fill out and submit the form below</p>
+
+ <form action="/my_programs/{{ thing_string }}" method="POST">
+  <table>
+   <tr><td><label for="program_id">Program ID</label><td>
+       <td><input type="text" size=16 name="program_id"></input></td></tr>
+   <tr><td><label for="program_key">Program Key</label><td>
+       <td><input type="text" size=8 name="program_key"></input></td></tr>
+  </table>
+  <input type="submit" value="Submit"></input>
+ </form>
+{% else %}{# Not logged in! #}
+  <h1>Not logged in</h1>
+  <p>You need to be logged in to see your registered programs.</p>
+  <p>You can <a href="/login">log in here</a></p>
+{% endif %}
+{% endblock %}
