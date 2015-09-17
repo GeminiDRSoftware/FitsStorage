@@ -111,24 +111,30 @@ class PreviewQueueUtil(object):
         our_dfado = diskfile.ad_object == None
         our_dfcc = False
         if our_dfado:
+            # We munge the filenames here to avoid file collisions in the staging directories
+            # with the ingest process
+            munged_filename = diskfile.filename
+            munged_fullpath = diskfile.fullpath()
             if using_s3:
                 # Fetch from S3 to staging area
                 # TODO: We're not checking here if the file was actually retrieved...
-                self.s3.fetch_to_staging(diskfile.filename)
+                munged_filename = "preview_" + diskfile.filename
+                munged_fullpath = os.path.join(s3_staging_area, munged_filename)
+                self.s3.fetch_to_staging(diskfile.filename, fullpath=munged_fullpath)
 
             if diskfile.compressed:
                 # Create the uncompressed cache filename and unzip to it
-                nonzfilename = diskfile.filename[:-4]
+                nonzfilename = munged_filename[:-4]
                 diskfile.uncompressed_cache_file = os.path.join(z_staging_area, nonzfilename)
                 if os.path.exists(diskfile.uncompressed_cache_file):
                     os.unlink(diskfile.uncompressed_cache_file)
-                with bz2.BZ2File(diskfile.fullpath(), mode='rb') as in_file, open(diskfile.uncompressed_cache_file, 'w') as out_file:
+                with bz2.BZ2File(munged_fullpath, mode='rb') as in_file, open(diskfile.uncompressed_cache_file, 'w') as out_file:
                     out_file.write(in_file.read())
                 our_dfcc = True
                 ad_fullpath = diskfile.uncompressed_cache_file
             else:
                 # Just use the diskfile fullpath
-                ad_fullpath = diskfile.fullpath()
+                ad_fullpath = munged_fullpath
             # Open the astrodata instance
             diskfile.ad_object = AstroData(ad_fullpath)
 
@@ -144,7 +150,7 @@ class PreviewQueueUtil(object):
         if our_dfado:
             diskfile.ad_object.close()
             if using_s3:
-                os.unlink(diskfile.fullpath())
+                os.unlink(munged_fullpath)
             if our_dfcc:
                 os.unlink(ad_fullpath)
 
