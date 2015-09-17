@@ -1,0 +1,82 @@
+{# A number of calibrations have common presentation requirements... #}
+{% macro generate_cals(objects, cap_name) %}
+    {% with cals = objects %}
+      {% if cals.applicable and not cals.found %}
+        <h3><FONT COLOR="Red">NO {{ cap_name }} FOUND!</FONT></h3>
+        {% for cal in cals %}
+	  <h4>{{ cap_name }}: <a href="/fullheader/{{ cal.name }}">{{ cal.name }}</a> - <a href="/summary/{{ cal.dl }}">{{ cal.dl }}</a></h4>
+	{% endfor %}
+      {% elif cals.found %}
+      {% endif %}
+    {% endwith %}
+{%- endmacro %}
+
+{% extends "layout.html" %}
+
+{% block title %}Calibrations {{ say_selection }}{% endblock %}
+
+{% block body %}
+{% if is_development %}
+  <h1>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h1>
+{% endif %}
+<h1>Calibrations {{ say_selection }}</h1>
+{% if is_open %}
+  <h2>Your search criteria are not sufficiently constrained to do a calibrations search.</h2>
+{% else %}
+  <h2>Found {{ ndatasets }} datasets to check for suitable calibrations</h2>
+  <hr>
+{% for object in objects %}
+  {% if object.will_render %}
+    <h3><a href="/fullheader/{{ object.filename }}">{{ object.filename }}</a>
+        - <a href="/summary/{{ object.datalabel }}">{{ object.datalabel }}</a></h3>
+
+    {% with arcs = object.cals.arcs %}{# ARCS #}
+      {% if arcs.applicable and not arcs.found %}
+        <h3><FONT COLOR="Red">NO ARC FOUND!</FONT></h3>
+      {% elif arcs.found %}
+        {% for arc in arcs %}
+	  <h4>ARC: <a href="/fullheader/{{ arc.name }}">{{ arc.name }}</a> - <a href="/summary/{{ arc.dl }}">{{ arc.dl }}</a></h4>
+	  {% if not arc.inter %}
+	    <P><FONT COLOR="Red">Hmmm, could not determine time delta...</FONT></P>
+	  {% else %}
+	    <P>arc was taken {{ arc.inter }} object</P>
+	    {% if arc.iwarn %}
+	    <P><FONT COLOR="Red">WARNING - this is more than 1 day different</FONT></P>
+	    {% endif %}
+	  {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% with darks = object.cals.darks %}{# DARKS #}
+      {% if darks.applicable and not darks.found %}
+        <h3><FONT COLOR="Red">NO DARK FOUND!</FONT></h3>
+      {% elif darks.found %}
+        {% for dark in darks %}
+	  <h4>DARK: <a href="/fullheader/{{ dark.name }}">{{ dark.name }}</a> - <a href="/summary/{{ dark.dl }}">{{ dark.dl }}</a></h4>
+	  {% if not dark.inter %}
+	    <P><FONT COLOR="Red">Hmmm, could not determine time delta...</FONT></P>
+	  {% else %}
+	    <P>dark was taken {{ dark.inter }} object</P>
+	    {% if dark.iwarn %}
+	    <P><FONT COLOR="Red">WARNING - this is more than {{ dark.warning }} different</FONT></P>
+	    {% endif %}
+	  {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+{{ generate_cals(object.cals.biases, 'BIAS') }}
+{{ generate_cals(object.cals.flats, 'FLATS') }}
+{{ generate_cals(object.cals.pinhole_masks, 'PINHOLE_MASK') }}
+{{ generate_cals(object.cals.ronchi_masks, 'RONCHI_MASK') }}
+
+    <hr>
+  {% endif %}
+{% endfor %}
+  <HR>
+  <H2>Counted {{ counter.missings }} potential missing Calibrations</H2>
+  <H2>Query generated {{ counter.warnings }} warnings</H2>
+
+{% endif %}{# is_open? #}
+{% endblock %}

@@ -10,7 +10,8 @@ from mod_python import apache
 
 def get_env():
     jinja_env = Environment(loader=FileSystemLoader(template_path),
-    # When autoescape=False we assume that by default everything we
+                            extensions=['jinja2.ext.with_'],
+    # When autoescape=False we assume that by default everything we output
     # is HTML-safe (no '<', no '>', no '&', ...)
     # This may be too much of an assumption, BUT... performance is better
                             autoescape=False)
