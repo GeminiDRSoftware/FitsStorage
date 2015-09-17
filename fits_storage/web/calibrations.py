@@ -216,11 +216,12 @@ def calibrations(req, selection):
 
             if 'pinhole_mask' in c.applicable and caltype in ('all', 'pinhole_mask'):
                 requires = True
-                pinhole_mask = c.pinhole_mask()
-                if pinhole_mask:
-                    html += '<H4>PINHOLE_MASK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
-                                pinhole_mask.diskfile.file.name, pinhole_mask.diskfile.file.name,
-                                pinhole_mask.data_label, pinhole_mask.data_label)
+                pinhole_masks = c.pinhole_mask()
+                if pinhole_masks:
+                    for pinhole_mask in pinhole_masks:
+                        html += '<H4>PINHOLE_MASK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
+                                    pinhole_mask.diskfile.file.name, pinhole_mask.diskfile.file.name,
+                                    pinhole_mask.data_label, pinhole_mask.data_label)
                 else:
                     html += '<H3><FONT COLOR="Red">NO PINHOLE_MASK FOUND!</FONT></H3>'
                     warning = True
@@ -230,9 +231,10 @@ def calibrations(req, selection):
                 requires = True
                 ronchi_mask = c.ronchi_mask()
                 if ronchi_mask:
-                    html += '<H4>RONCHI_MASK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
-                                ronchi_mask.diskfile.file.name, ronchi_mask.diskfile.file.name,
-                                ronchi_mask.data_label, ronchi_mask.data_label)
+                    for ronchi_mask in ronchi_masks:
+                        html += '<H4>RONCHI_MASK: <a href="/fullheader/%s">%s</a> - <a href="/summary/%s">%s</a></H4>' % (
+                                    ronchi_mask.diskfile.file.name, ronchi_mask.diskfile.file.name,
+                                    ronchi_mask.data_label, ronchi_mask.data_label)
                 else:
                     html += '<H3><FONT COLOR="Red">NO RONCHI_MASK FOUND!</FONT></H3>'
                     warning = True
@@ -244,18 +246,14 @@ def calibrations(req, selection):
             if 'caloption' in selection:
                 caloption = selection['caloption']
 
-            if caloption == 'warnings':
-                if warning:
-                    req.write(html)
-            elif caloption == 'missing':
-                if missing:
-                    req.write(html)
-            elif caloption == 'requires':
-                if requires:
-                    req.write(html)
-            elif caloption == 'takenow':
-                if takenow:
-                    req.write(html)
+            if caloption == 'warnings' and warning:
+                req.write(html)
+            elif caloption == 'missing' and missing:
+                req.write(html)
+            elif caloption == 'requires' and requires:
+                req.write(html)
+            elif caloption == 'takenow' and takenow:
+                req.write(html)
             else:
                 req.write(html)
             if warning:
