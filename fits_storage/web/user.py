@@ -24,7 +24,8 @@ import smtplib
 from email.mime.text import MIMEText
 import functools
 
-def request_account(req, things):
+@templating.templated("user/request_account.html", with_session=True)
+def request_account(session, req, things):
     """
     Generates and handles web form for requesting new user accounts
     """
@@ -77,9 +78,6 @@ def request_account(req, things):
         else:
             valid_request = True
 
-    req.content_type = "text/html"
-    template = templating.get_env().get_template('user/request_account.html')
-
     template_args = dict(
         reason_bad        = reason_bad,
         request_attempted = request_attempted,
@@ -95,22 +93,19 @@ def request_account(req, things):
         formdata          = formdata
         )
 
-    with session_scope() as session:
-        if valid_request:
-            try:
-                session = sessionfactory()
-                newuser = User(username)
-                newuser.fullname = fullname
-                newuser.email = email
-                session.add(newuser)
-                session.commit()
-                template_args['emailed'] = send_password_reset_email(newuser.id)
-            except:
-                template_args['error'] = True
-                req.write(template.render(template_args))
+    if valid_request:
+        try:
+            session = sessionfactory()
+            newuser = User(username)
+            newuser.fullname = fullname
+            newuser.email = email
+            session.add(newuser)
+            session.commit()
+            template_args['emailed'] = send_password_reset_email(newuser.id)
+        except:
+            template_args['error'] = True
 
-        req.write(template.render(template_args))
-    return apache.HTTP_OK
+    return apache.HTTP_OK, template_args
 
 def send_password_reset_email(userid):
     """
