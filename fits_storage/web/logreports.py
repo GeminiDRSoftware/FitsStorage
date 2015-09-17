@@ -15,6 +15,8 @@ from ..orm.querylog import QueryLog
 from ..orm.downloadlog import DownloadLog
 from ..orm.filedownloadlog import FileDownloadLog
 from ..orm.fileuploadlog import FileUploadLog
+from ..orm.diskfile import DiskFile
+from ..orm.header import Header
 from ..orm.user import User
 
 from ..gemini_metadata_utils import ONEDAY_OFFSET
@@ -115,292 +117,103 @@ def usagereport(session, req):
     return template_args
 
 @needs_login(staffer=True)
-def usagedetails(req, things):
+@templating.templated("logreports/usagedetails.html", with_session=True)
+def usagedetails(session, req, things):
     """
     This is the usage report detail handler
     things should contain an useagelog ID number
     """
 
-    with session_scope() as session:
-        # Need to be logged in as gemini staff to do this
-        user = userfromcookie(session, req)
-        if user is None or user.gemini_staff is False:
-            return apache.HTTP_FORBIDDEN
+    if len(things) != 1:
+        return apache.HTTP_NOT_ACCEPTABLE
+    try:
+        ulid = int(things[0])
+    except:
+        return apache.HTTP_NOT_ACCEPTABLE
 
-        if len(things) != 1:
-            return apache.HTTP_NOT_ACCEPTABLE
-        try:
-            id = int(things[0])
-        except:
-            return apache.HTTP_NOT_ACCEPTABLE
+    # Subquery to add a "row count" to the QueryLog and the DownloadLog. This is an easy way to pick just
+    # the first relation when joining a one-to-many with potentially more than one result per match.
+    # The underlying mechanism is the windowing capability of PostgreSQL (using the 'OVER ...' clause)
+    qls = session.query(QueryLog, func.row_number().over(QueryLog.usagelog_id).label('row_number')).subquery()
+    dls = session.query(DownloadLog, func.row_number().over(DownloadLog.usagelog_id).label('row_number')).subquery()
+    aQueryLog = aliased(QueryLog, qls)
+    aDownloadLog = aliased(DownloadLog, dls)
+    usagelog, user, querylog, downloadlog = (
+        session.query(UsageLog, User, aQueryLog, aDownloadLog)
+               .outerjoin(User, User.id == UsageLog.user_id)
+               .outerjoin(aQueryLog, and_(aQueryLog.usagelog_id==UsageLog.id, qls.c.row_number == 1))
+               .outerjoin(aDownloadLog, and_(aDownloadLog.usagelog_id==UsageLog.id, dls.c.row_number == 1))
+               .filter(UsageLog.id == ulid).one()
+        )
 
-        usagelog = session.query(UsageLog).filter(UsageLog.id == id).first()
-        req.content_type = "text/html"
-        req.write('<!DOCTYPE html><html><head>')
-        req.write('<meta charset="UTF-8">')
-        req.write('<link rel="stylesheet" type="text/css" href="/table.css">')
-        req.write('<title>Fits Server Usage Log Detail</title></head>')
-        req.write("<body><h1>Fits Server Usage Log Detail</h1>")
-        req.write("<h2>Usage Log Entry</h2>")
-        req.write("<TABLE>")
-        req.write("<TR><TD>ID:</TD><TD>%s</TD>" % usagelog.id)
-        req.write("<TR><TD>UT DateTime:</TD><TD>%s</TD></TR>" % usagelog.utdatetime)
-        req.write("<TR><TD>User ID:</TD><TD>%s</TD></TR>" % usagelog.user_id)
-        req.write("<TR><TD>IP address:</TD><TD>%s</TD></TR>" % usagelog.ip_address)
-        req.write("<TR><TD>User Agent:</TD><TD>%s</TD></TR>" % usagelog.user_agent)
-        req.write("<TR><TD>Referer:</TD><TD>%s</TD></TR>" % usagelog.referer)
-        req.write("<TR><TD>HTTP method:</TD><TD>%s</TD></TR>" % usagelog.method)
-        req.write("<TR><TD>URI:</TD><TD>%s</TD></TR>" % usagelog.uri)
-        req.write("<TR><TD>This feature:</TD><TD>%s</TD></TR>" % usagelog.this)
-        req.write("<TR><TD>Bytes returned:</TD><TD>%s</TD></TR>" % usagelog.bytes)
-        req.write("<TR><TD>HTTP status:</TD><TD>%s</TD></TR>" % usagelog.status_string())
-        req.write("<TR><TD>Notes:</TD><TD><PRE>%s</PRE></TD></TR>" % usagelog.notes)
-        req.write("</TABLE>")
+    filedownloadlogs = session.query(FileDownloadLog).filter(FileDownloadLog.usagelog_id==ulid)
+    fileuploadlogs = session.query(FileUploadLog).filter(FileUploadLog.usagelog_id==ulid)
 
-        if usagelog.user_id:
-            user = session.query(User).get(usagelog.user_id)
-            req.write("<h2>User Details</h2>")
-            req.write("<TABLE>")
-            req.write("<TR><TD>Username:</TD><TD>%s</TD></TR>" % user.username)
-            req.write("<TR><TD>Full Name:</TD><TD>%s</TD></TR>" % user.fullname)
-            req.write("<TR><TD>Email:</TD><TD>%s</TD></TR>" % user.email)
-            req.write("<TR><TD>Gemini Staff:</TD><TD>%s</TD></TR>" % user.gemini_staff)
-            req.write("<TR><TD>Superuser:</TD><TD>%s</TD></TR>" % user.superuser)
-            req.write("<TR><TD>Account Created:</TD><TD>%s</TD></TR>" % user.account_created)
-            req.write("<TR><TD>Password Changed:</TD><TD>%s</TD></TR>" % user.password_changed)
-            req.write("</TABLE>")
-
-        querylog = session.query(QueryLog).filter(QueryLog.usagelog_id==usagelog.id).first()
-        if querylog:
-            req.write("<h2>Query Details</h2>")
-            req.write("<TABLE>")
-            req.write("<TR><TD>Summary Type:</TD><TD>%s</TD></TR>" % querylog.summarytype)
-            req.write("<TR><TD>Selection:</TD><TD>%s</TD></TR>" % querylog.selection)
-            req.write("<TR><TD>Number of Results:</TD><TD>%s</TD></TR>" % querylog.numresults)
-            req.write("<TR><TD>Number of Calibration Results:</TD><TD>%s</TD></TR>" % querylog.numcalresults)
-            req.write("<TR><TD>Query Started:</TD><TD>%s</TD></TR>" % querylog.query_started)
-            req.write("<TR><TD>Query Completed:</TD><TD>%s</TD></TR>" % querylog.query_completed)
-            req.write("<TR><TD>Cals Completed:</TD><TD>%s</TD></TR>" % querylog.cals_completed)
-            req.write("<TR><TD>Summary Completed:</TD><TD>%s</TD></TR>" % querylog.summary_completed)
-            if querylog.query_completed and querylog.query_started:
-                td = querylog.query_completed - querylog.query_started
-                req.write("<TR><TD>Query Seconds:</TD><TD>%.2f</TD></TR>" % td.total_seconds())
-            if querylog.cals_completed and querylog.query_started:
-                td = querylog.cals_completed - querylog.query_started
-                req.write("<TR><TD>Cals query Seconds:</TD><TD>%.2f</TD></TR>" % td.total_seconds())
-            if querylog.summary_completed and querylog.query_started:
-                td = querylog.summary_completed - querylog.query_started
-                req.write("<TR><TD>Summary Seconds:</TD><TD>%.2f</TD></TR>" % td.total_seconds())
-            req.write("<TR><TD>Notes:</TD><TD>%s</TD></TR>" % querylog.notes)
-            req.write("</TABLE>")
-
-        downloadlog = session.query(DownloadLog).filter(DownloadLog.usagelog_id==usagelog.id).first()
-        if downloadlog:
-            req.write("<h2>Download Details</h2>")
-            req.write("<TABLE>")
-            req.write("<TR><TD>Selection:</TD><TD>%s</TD></TR>" % downloadlog.selection)
-            req.write("<TR><TD>Num Results:</TD><TD>%s</TD></TR>" % downloadlog.numresults)
-            req.write("<TR><TD>Sending Files:</TD><TD>%s</TD></TR>" % downloadlog.sending_files)
-            req.write("<TR><TD>Num Denied:</TD><TD>%s</TD></TR>" % downloadlog.numdenied)
-            req.write("<TR><TD>Query Started:</TD><TD>%s</TD></TR>" % downloadlog.query_started)
-            req.write("<TR><TD>Query Completed:</TD><TD>%s</TD></TR>" % downloadlog.query_completed)
-            req.write("<TR><TD>Download completed:</TD><TD>%s</TD></TR>" % downloadlog.download_completed)
-            if downloadlog.query_completed and downloadlog.query_started:
-                td = downloadlog.query_completed - downloadlog.query_started
-                req.write("<TR><TD>Query Seconds:</TD><TD>%.2f</TD></TR>" % td.total_seconds())
-            if downloadlog.download_completed and downloadlog.query_completed:
-                td = downloadlog.download_completed - downloadlog.query_completed
-                req.write("<TR><TD>Download Seconds:</TD><TD>%.2f</TD></TR>" % td.total_seconds())
-                req.write("<TR><TD>Download Kbytes / sec:</TD><TD>%.2f</TD></TR>" % (usagelog.bytes / (1000*td.total_seconds())))
-            req.write("<TR><TD>Notes:</TD><TD>%s</TD></TR>" % downloadlog.notes)
-            req.write("</TABLE>")
-
-        filedownloadlogs = session.query(FileDownloadLog).filter(FileDownloadLog.usagelog_id==usagelog.id).all()
-        if len(filedownloadlogs):
-            req.write("<h2>File Download Details</h2>")
-            req.write("<TABLE>")
-            req.write('<TR class="tr_head">')
-            req.write("<TH>Filename</TH>")
-            req.write("<TH>File size</TH>")
-            req.write("<TH>File md5sum</TH>")
-            req.write("<TH>UT DateTime</TH>")
-            req.write("<TH>Released</TH>")
-            req.write("<TH>PI Access</TH>")
-            req.write("<TH>Staff Access</TH>")
-            req.write("<TH>Magic Access</TH>")
-            req.write("<TH>Eng Access</TH>")
-            req.write("<TH>Can Have It</TH>")
-            req.write("<TH>Notes</TH>")
-            req.write("</TR>")
-            even = False
-            for filedownloadlog in filedownloadlogs:
-                even = not even
-                if even:
-                    req.write('<TR class="tr_even">')
-                else:
-                    req.write('<TR class="tr_odd">')
-                req.write("<TD>%s</TD>" % filedownloadlog.diskfile_filename)
-                req.write("<TD>%d</TD>" % filedownloadlog.diskfile_file_size)
-                req.write("<TD>%s</TD>" % filedownloadlog.diskfile_file_md5)
-                req.write("<TD>%s</TD>" % filedownloadlog.ut_datetime)
-                req.write("<TD>%s</TD>" % filedownloadlog.released)
-                req.write("<TD>%s</TD>" % filedownloadlog.pi_access)
-                req.write("<TD>%s</TD>" % filedownloadlog.staff_access)
-                req.write("<TD>%s</TD>" % filedownloadlog.magic_access)
-                req.write("<TD>%s</TD>" % filedownloadlog.eng_access)
-                req.write("<TD>%s</TD>" % filedownloadlog.canhaveit)
-                req.write("<TD>%s</TD>" % filedownloadlog.notes)
-                req.write("</TR>")
-            req.write("</TABLE>")
-
-        fileuploadlogs = session.query(FileUploadLog).filter(FileUploadLog.usagelog_id==usagelog.id).all()
-        if len(fileuploadlogs):
-            req.write("<h2>File Upload Details</h2>")
-            req.write("<TABLE>")
-            req.write('<TR class="tr_head">')
-            req.write("<TH>Transfer UT Start</TH>")
-            req.write("<TH>Transfer UT Complete</TH>")
-            req.write("<TH>Transfer Seconds</TH>")
-            req.write("<TH>Transfer Kbyte/s </TH>")
-            req.write("<TH>Filename</TH>")
-            req.write("<TH>Size</TH>")
-            req.write("<TH>MD5</TH>")
-            req.write("<TH>Processed Cal</TH>")
-            req.write("<TH>Invoke Status</TH>")
-            req.write("<TH>Invoke PID</TH>")
-            req.write("<TH>Destination</TH>")
-            req.write("<TH>S3 UT Start</TH>")
-            req.write("<TH>S3 UT End</TH>")
-            req.write("<TH>S3 Seconds</TH>")
-            req.write("<TH>S3 kbyte/s</TH>")
-            req.write("<TH>S3 OK</TH>")
-            req.write("<TH>File OK</TH>")
-            req.write("<TH>IngestQueue ID</TH>")
-            req.write("<TH>Notes</TH>")
-            req.write("</TR>")
-            even = False
-            for fileuploadlog in fileuploadlogs:
-                even = not even
-                if even:
-                    req.write('<TR class="tr_even">')
-                else:
-                    req.write('<TR class="tr_odd">')
-                req.write("<TD>%s</TD>" % fileuploadlog.ut_transfer_start)
-                req.write("<TD>%s</TD>" % fileuploadlog.ut_transfer_complete)
-                if fileuploadlog.ut_transfer_start and fileuploadlog.ut_transfer_complete:
-                    tdel = fileuploadlog.ut_transfer_complete - fileuploadlog.ut_transfer_start
-                    req.write("<TD>%.2f</TD>" % tdel.total_seconds())
-                    req.write("<TD>%.2f</TD>" % (fileuploadlog.size / (1000*tdel.total_seconds())))
-                else:
-                    req.write("<TD></TD><TD></TD>")
-                req.write("<TD>%s</TD>" % fileuploadlog.filename)
-                req.write("<TD>%s</TD>" % fileuploadlog.size)
-                req.write("<TD>%s</TD>" % fileuploadlog.md5)
-                req.write("<TD>%s</TD>" % fileuploadlog.processed_cal)
-                req.write("<TD>%s</TD>" % fileuploadlog.invoke_status)
-                req.write("<TD>%s</TD>" % fileuploadlog.invoke_pid)
-                req.write("<TD>%s</TD>" % fileuploadlog.destination)
-                req.write("<TD>%s</TD>" % fileuploadlog.s3_ut_start)
-                req.write("<TD>%s</TD>" % fileuploadlog.s3_ut_end)
-                if fileuploadlog.s3_ut_start and fileuploadlog.s3_ut_end:
-                    tdel = fileuploadlog.s3_ut_end - fileuploadlog.s3_ut_start
-                    req.write("<TD>%.2f</TD>" % tdel.total_seconds())
-                    req.write("<TD>%.2f</TD>" % (fileuploadlog.size / (1000*tdel.total_seconds())))
-                else:
-                    req.write("<TD></TD><TD></TD>")
-                req.write("<TD>%s</TD>" % fileuploadlog.s3_ok)
-                req.write("<TD>%s</TD>" % fileuploadlog.file_ok)
-                req.write("<TD>%s</TD>" % fileuploadlog.ingestqueue_id)
-                req.write("<TD>%s</TD>" % fileuploadlog.notes)
-                req.write("</TR>")
-            req.write("<TABLE>")
-
-        req.write("</body></html>")
-
-    return apache.HTTP_OK
+    return dict(
+        ulog  = usagelog,
+        user  = user,
+        qlog  = querylog,
+        dlog  = downloadlog,
+        has_downloads = filedownloadlogs.count() > 0,
+        fdlog = filedownloadlogs,
+        has_uploads = fileuploadlogs.count() > 0,
+        uplog = fileuploadlogs
+        )
 
 @needs_login(staffer=True)
-def downloadlog(req, things):
+@templating.templated("logreports/downloadlog.html", with_session=True, with_generator=True)
+def downloadlog(session, req, things):
     """
-    This accepts a selection and returns a log showing all the downloads of the
-    files that match the selection.
+    This accepts a list of filename patterns and returns a log showing all the downloads
+    of the files that match the selection.
+
+    "downloadlog" is a bit of a misnomer, maybe. The use case here is to let people
+    know who, and when, has downloaded a certain file (or files).
     """
 
-    try:
-        selection = getselection(things)
+    def calc_permission(fdl):
+        permission = ""
+        if fdl.pi_access: permission += 'PI '
+        if fdl.released: permission += 'Released '
+        if fdl.staff_access: permission += 'Staff '
+        if fdl.magic_access: permission += 'Magic '
+        if fdl.eng_access: permission += 'Eng '
+        if not fdl.canhaveit: permission += 'DENIED '
 
-        req.content_type = "text/html"
-        req.write('<!DOCTYPE html><html><head>')
-        req.write('<meta charset="UTF-8">')
-        req.write('<link rel="stylesheet" href="/table.css">')
-        req.write("<title>Download Log</title>")
-        req.write("</head>\n")
-        req.write("<body>")
-        req.write("<h1>File Download log</h1>")
-        req.write("<h3>Selection: %s</h3>" % sayselection(selection))
+        return permission
 
-        if 'notrecognised' in selection.keys():
-            req.write("<H4>WARNING: I didn't recognize the following search terms: %s</H4>" % selection['notrecognised'])
+    hsq = session.query(Header, func.row_number().over(Header.diskfile_id).label('row_number')).subquery()
+    aHeader = aliased(Header, hsq)
+    dfsq = session.query(DiskFile, func.row_number().over(DiskFile.filename).label('row_number')).subquery()
+    aDiskFile = aliased(DiskFile, dfsq)
 
-        headers = list_headers(session, selection, None)
+    class Queries(object):
+        def __init__(self, things):
+            self.th = things
 
-        if len(headers) == 0:
-            req.write("<h2>No results match selection</h2>")
-            req.write("</body></html>")
-            return apache.HTTP_OK
+        @property
+        def empty(self):
+            return len(self.th) == 0
 
-        req.write("<TABLE>")
-        req.write('<TR class="tr_head">')
-        req.write("<TH>UsageLog ID</TH>")
-        req.write("<TH>Filename</TH>")
-        req.write("<TH>Data Label</TH>")
-        req.write("<TH>User</TH>")
-        req.write("<TH>Permission</TH>")
-        req.write("<TH>Feature Used</TH>")
-        req.write("<TH>IP addr</TH>")
-        req.write("<TH>UT DateTime</TH>")
-        req.write("<TH>HTTP Status</TH>")
-        req.write("</TR>")
+        @property
+        def many(self):
+            return len(self.th) > 1
 
-        even = False
-        for header in headers:
-            query = session.query(FileDownloadLog)\
-                            .filter(FileDownloadLog.diskfile_filename == header.diskfile.filename)\
-                            .filter(FileDownloadLog.diskfile_file_md5 == header.diskfile.file_md5)
-            for fdl in query:
-                even = not even
-                req.write('<TR class="%s">' % ('tr_even' if even else 'tr_odd'))
-                req.write('<TD><a href="/usagedetails/%d">%d</a></TD>' % (fdl.usagelog_id, fdl.usagelog_id))
-                req.write('<TD>%s</TD>' % header.diskfile.filename)
-                req.write('<TD>%s</TD>' % header.data_label)
-                if fdl.usagelog.user_id:
-                    user = session.query(User).get(fdl.usagelog.user_id)
-                    html = "%d: %s" % (user.id, user.username)
-                    if user.gemini_staff:
-                        html += " (Staff)"
-                    req.write('<TD>%s</TD>' % html)
-                else:
-                    req.write('<TD>Anonymous</TD>')
-                permission = ""
-                if fdl.pi_access: permission += 'PI '
-                if fdl.released: permission += 'Released '
-                if fdl.staff_access: permission += 'Staff '
-                if fdl.magic_access: permission += 'Magic '
-                if fdl.eng_access: permission += 'Eng '
-                if not fdl.canhaveit: permission += 'DENIED '
-                req.write('<TD>%s</TD>' % permission)
-                req.write('<TD>%s</TD>' % fdl.usagelog.this)
-                req.write('<TD>%s</TD>' % fdl.usagelog.ip_address)
-                req.write('<TD>%s</TD>' % fdl.ut_datetime)
-                req.write('<TD>%s</TD>' % fdl.usagelog.status_string())
-                req.write('</TR>')
+        def __iter__(self):
+            for pattern in self.th:
+                yield (
+                    pattern,
+                    session.query(FileDownloadLog, User)#, aHeader.data_label)
+                            .join(UsageLog)
+                            .outerjoin(User)
+                            .filter(FileDownloadLog.diskfile_filename.like(pattern + '%'))
+                            .order_by(desc(FileDownloadLog.ut_datetime))
+                    )
 
-        req.write('</TABLE>')
-
-    finally:
-        session.close()
-
-    return apache.HTTP_OK
+    return dict(
+        permissions = calc_permission,
+        queries = Queries(things)
+        )
 
 usagestats_header = """
 <tr class='tr_head'>
@@ -430,7 +243,8 @@ usagestats_header = """
 """
 
 @needs_login(staffer=True)
-def usagestats(req):
+@templating.templated("logreports/usagestats.html", with_session=True, with_generator=True)
+def usagestats(session, req):
     """
     Usage statistics:
     Site hits
@@ -444,131 +258,53 @@ def usagestats(req):
     Generate counts per year, per week and per day
     """
 
-    with session_scope() as session:
-        # Need to be logged in as gemini staff to do this
-        user = userfromcookie(session, req)
-        if user is None or user.gemini_staff is False:
-            return apache.HTTP_FORBIDDEN
+    first, last = session.query(func.min(UsageLog.utdatetime),
+                                func.max(UsageLog.utdatetime)).first()
 
-        req.content_type = "text/html"
-        req.write('<!DOCTYPE html><html><head>')
-        req.write('<meta charset="UTF-8">')
-        req.write('<link rel="stylesheet" href="/table.css">')
-        req.write("<title>Usage Statistics</title>")
-        req.write("</head>\n")
-        req.write("<body>")
-        req.write("<h1>Usage Statistics</h1>")
+    # General statistics breakdown
+    groups = (('Per Year', build_query(session, 'year')),
+              ('Per Week', build_query(session, 'week', first)),
+              ('Per Day',  build_query(session, 'day', first)))
 
-        first, last = session.query(func.min(UsageLog.utdatetime),
-                                    func.max(UsageLog.utdatetime)).first()
+    end = datetime.datetime.utcnow()
+    interval = datetime.timedelta(days=90)
+    start = end - interval
 
-        groups = (('Per Year', build_query(session, 'year')),
-                  ('Per Week', build_query(session, 'week', first)),
-                  ('Per Day',  build_query(session, 'day', first)))
+    user_stats_sq = (
+        session.query(UsageLog.user_id, func.count(1).label("downloads"))
+                .filter(UsageLog.this=='searchform')
+                .filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
+                .group_by(UsageLog.user_id).order_by(desc(func.count(1)))
+                .limit(10).subquery()
+        )
 
-        for header, query in groups:
-            req.write("<h2>%s</h2>" % header)
-            req.write('<TABLE>')
-            req.write(usagestats_header)
-            even = True
-            header = True
-            for result in query:
-                even = not even
-                req.write(render_usagestats_row(result, tr_class=('tr_even' if even else 'tr_odd')))
-            req.write('</TABLE>')
+    user_stats_1 = (
+        session.query(user_stats_sq.c.downloads, User)
+                .outerjoin(User, User.id == user_stats_sq.c.user_id)
+        )
 
-        req.write('<H2>Within the last 90 days...</H2>')
-        end = datetime.datetime.utcnow()
-        interval = datetime.timedelta(days=90)
-        start = end - interval
+    user_stats_sq = (
+        session.query(UsageLog.user_id, func.sum(UsageLog.bytes).label("bytes"))
+            .filter(UsageLog.this=='download')
+            .filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
+            .group_by(UsageLog.user_id).order_by(desc(func.sum(UsageLog.bytes)))
+            .limit(10).subquery()
+        )
 
-        req.write('<h3>Most inquisitive Users</h3>')
-        query = session.query(UsageLog.user_id, func.count(1)).filter(UsageLog.this=='searchform')
-        query = query.filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
-        query = query.group_by(UsageLog.user_id).order_by(desc(func.count(1))).limit(10)
-        results = query.all()
-        req.write('<TABLE>')
-        req.write('<TR class="tr_head">')
-        req.write('<TH>User</TH>')
-        req.write('<TH>Searches</TH>')
-        req.write('</TR>')
-        even = False
-        for result in results:
-            even = not even
-            tr_class = 'tr_even' if even else 'tr_odd'
-            req.write('<TR class="%s">' % tr_class)
-            if result[0]:
-                user = session.query(User).get(result[0])
-                name = user.username
-                if user.gemini_staff:
-                    name += " (Staff)"
-            else:
-                name = "Anonymous"
-            req.write('<TD>%s</TD>' % name)
-            req.write('<TD>%s</TD>' % result[1])
-            req.write('</TR>')
-        req.write('</TABLE>')
-
-        req.write('<h3>Most hungry Users</h3>')
-        query = session.query(UsageLog.user_id, func.sum(UsageLog.bytes)).filter(UsageLog.this=='download')
-        query = query.filter(UsageLog.utdatetime >= start).filter(UsageLog.utdatetime < end)
-        query = query.group_by(UsageLog.user_id).order_by(desc(func.sum(UsageLog.bytes))).limit(10)
-        results = query.all()
-        req.write('<TABLE>')
-        req.write('<TR class="tr_head">')
-        req.write('<TH>User</TH>')
-        req.write('<TH>GB</TH>')
-        req.write('</TR>')
-        even = False
-        for result in results:
-            even = not even
-            tr_class = 'tr_even' if even else 'tr_odd'
-            req.write('<TR class="%s">' % tr_class)
-            if result[0]:
-                user = session.query(User).get(result[0])
-                name = user.username
-                if user.gemini_staff:
-                    name += " (Staff)"
-            else:
-                name = "Anonymous"
-            req.write('<TD>%s</TD>' % name)
-            gb = result[1] / 1.0E9
-            req.write('<TD>%.2f</TD>' % gb)
-            req.write('</TR>')
-        req.write('</TABLE>')
-
-    return apache.HTTP_OK
-
-def render_usagestats_row(result, tr_class=''):
-    """
-    Generates an html table row giving the stats
-    if header=true, generates the header row
-    if tr_class, sets that class on the <TR>
-    """
+    user_stats_2 = (
+        session.query(user_stats_sq.c.bytes, User)
+                .outerjoin(User, User.id == user_stats_sq.c.user_id)
+        )
 
     def bytes_to_GB(bytes):
         return int(bytes) / 1.0E9
 
-    if tr_class:
-        html = '<TR class=%s>' % tr_class
-    else:
-        html = '<TR>'
-
-    html += '<TD>%s</TD>' % (result.date)
-
-    html += '<TD>%d</TD><TD>%d</TD>' % (result.hit_ok, result.hit_fail)
-    html += '<TD>%d</TD><TD>%d</TD>' % (result.search_ok, result.search_fail)
-    html += '<TD>%s</TD><TD>%.2f</TD>' % (result.pi_down, bytes_to_GB(result.pi_bytes))
-    html += '<TD>%s</TD><TD>%.2f</TD>' % (result.public_down, bytes_to_GB(result.public_bytes))
-    html += '<TD>%s</TD><TD>%.2f</TD>' % (result.anon_down, bytes_to_GB(result.anon_bytes))
-    html += '<TD>%s</TD><TD>%.2f</TD>' % (result.staff_down, bytes_to_GB(result.staff_bytes))
-    html += '<TD>%s</TD><TD>%.2f</TD>' % (result.total_down, bytes_to_GB(result.total_bytes))
-    html += '<TD>%s</TD>' % result.failed_down
-    html += '<TD>%d</TD><TD>%.2f</TD>' % (result.up, bytes_to_GB(result.up_bytes))
-
-    html += '</TR>'
-
-    return html
+    return dict(
+        bytes_to_GB = bytes_to_GB,
+        groups      = groups,
+        inquisitive = user_stats_1,
+        hungry      = user_stats_2
+        )
 
 ############################################################################################################
 

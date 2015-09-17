@@ -1,0 +1,102 @@
+{% extends "layout_nofrills.html" %}
+{% block title %}File Server Usage Log Detail{% endblock %}
+{% block body %}
+<h1>Fits Server Usage Log Detail</h1>
+<h2>Usage Log Entry</h2>
+<table>
+  <tr><td>ID:<td>{{ ulog.id }}
+  <tr><td>UT DateTime:<td>{{ ulog.utdatetime }}</tr>
+  <tr><td>User ID:<td>{{ ulog.user_id }}</tr>
+  <tr><td>IP address:<td>{{ ulog.ip_address }}</tr>
+  <tr><td>User Agent:<td>{{ ulog.user_agent }}</tr>
+  <tr><td>Referer:<td>{{ ulog.referer }}</tr>
+  <tr><td>HTTP method:<td>{{ ulog.method }}</tr>
+  <tr><td>URI:<td>{{ ulog.uri }}</tr>
+  <tr><td>This feature:<td>{{ ulog.this }}</tr>
+  <tr><td>Bytes returned:<td>{{ ulog.bytes }}</tr>
+  <tr><td>HTTP status:<td>{{ ulog.status_string }}</tr>
+  <tr><td>Notes:<td><pre>{{ ulog.notes or '' }}</pre></tr>
+</table>
+{% if user %}
+<h2>User Details</h2>
+<table>
+  <tr><td>Username:<td>{{ user.username }}</tr>
+  <tr><td>Full Name:<td>{{ user.fullname }}</tr>
+  <tr><td>Email:<td>{{ user.email }}</tr>
+  <tr><td>Gemini Staff:<td>{{ user.gemini_staff }}</tr>
+  <tr><td>Superuser:<td>{{ user.superuser }}</tr>
+  <tr><td>Account Created:<td>{{ user.account_created }}</tr>
+  <tr><td>Password Changed:<td>{{ user.password_changed }}</tr>
+</table>
+{% endif %}
+{% if qlog %}
+<h2>Query Details</h2>
+<table>
+  <tr><td>Summary Type:<td>{{ qlog.summarytype }}</tr>
+  <tr><td>Selection:<td>{{ qlog.selection }}</tr>
+  <tr><td>Number of Results:<td>{{ qlog.numresults }}</tr>
+  <tr><td>Number of Calibration Results:<td>{{ qlog.numcalresults }}</tr>
+  <tr><td>Query Started:<td>{{ qlog.query_started }}</tr>
+  <tr><td>Query Completed:<td>{{ qlog.query_completed }}</tr>
+  <tr><td>Cals Completed:<td>{{ qlog.cals_completed }}</tr>
+  <tr><td>Summary Completed:<td>{{ qlog.summary_completed }}</tr>
+  <tr><td>Query Seconds:<td>{{ qlog.query_completed|seconds_since(qlog.query_started) }}</tr>
+  <tr><td>Cals query Seconds:<td>{{ qlog.cals_completed|seconds_since(qlog.query_started) }}</tr>
+  <tr><td>Summary Seconds:<td>{{ qlog.summary_completed|seconds_since(qlog.query_started) }}</tr>
+  <tr><td>Notes:<td>{{ qlog.notes }}</tr>
+</table>
+{% endif %}
+{% if has_downloads %}
+<h2>File Download Details</h2>
+<table>
+  <tr class="tr_head">
+    <th>Filename<th>File size<th>File md5sum<th>UT DateTime<th>Released<th>PI Access
+    <th>Staff Access<th>Magic Access<th>Eng Access<th>Can Have It<th>Notes
+  </tr>
+  {%- for log in fdlog %}
+  <tr class="{{ loop.cycle("tr_odd", "tr_even") }}">
+    <td>{{ log.diskfile_filename }}<td>{{ log.diskfile_file_size }}<td>{{ log.diskfile_file_md5 }}<td>{{ log.ut_datetime }}<td>{{ log.released or '' }}
+    <td>{{ log.pi_access or '' }}<td>{{ log.staff_access or '' }}<td>{{ log.magic_access or '' }}<td>{{ log.eng_access or '' }}<td>{{ log.canhaveit }}
+    <td>{{ log.notes or '' }}
+  </tr>
+  {%- endfor %}
+</table>
+{% endif %}
+{% if has_uploads %}
+<h2>File Upload Details</h2>
+<table>
+  <tr class="tr_head">
+    <th>Transfer UT Start<th>Transfer UT Complete<th>Transfer Seconds<th>Transfer Kbyte/s<th>Filename
+    <th>Size<th>MD5<th>Processed Cal<th>Invoke Status<th>Invoke PID<th>Destination<th>S3 UT Start<th>S3 UT End
+    <th>S3 Seconds<th>S3 kbyte/s<th>S3 OK<th>File OK<th>IngestQueue ID<th>Notes
+  </tr>
+  {%- for log in fileuploadlogs %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+    <td>{{ log.ut_transfer_start }}
+    <td>{{ log.ut_transfer_complete }}
+    {%- with uptime = log.ut_transfer_complete|seconds_since(log.ut_transfer_start, formatted=False) %}
+    <td>{{ uptime|format_float }}
+    <td>{{ log.size|throughput(uptime, 1000.0) }}
+    {%- endwith %}
+    <td>{{ log.filename }}
+    <td>{{ log.size }}
+    <td>{{ log.md5 }}
+    <td>{{ log.processed_cal }}
+    <td>{{ log.invoke_status }}
+    <td>{{ log.invoke_pid }}
+    <td>{{ log.destination }}
+    <td>{{ log.s3_ut_start }}
+    <td>{{ log.s3_ut_end }}
+    {%- with uptime = log.s3_ut_end|seconds_since(log.s3_ut_start, formatted=False) %}
+    <td>{{ uptime|format_float }}
+    <td>{{ log.size|throughput(uptime, 1000.0) }}
+    {%- endwith %}
+    <td>{{ log.s3_ok }}
+    <td>{{ log.file_ok }}
+    <td>{{ log.ingestqueue_id }}
+    <td>{{ log.notes }}
+  </tr>
+  {%- endfor %}
+<table>
+{% endif %}
+{% endblock %}

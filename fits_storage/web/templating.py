@@ -22,7 +22,7 @@ def datetime_filter(value, format=None, chopped=False):
 
 def seconds_since_filter(value, since, formatted=True):
     if not (value and since):
-        return '' if formatted else 0
+        return '' if formatted else None
 
     ret = (value - since).total_seconds()
 
@@ -30,8 +30,20 @@ def seconds_since_filter(value, since, formatted=True):
         return '{:.2f}'.format(ret)
     return ret
 
+def bytes_per_second(value, time, divider=1000000.0):
+    try:
+        return '{:.2f}'.format((value / time) / divider)
+    except (ZeroDivisionError, TypeError):
+        return ''
+
+def format_float(value, decimals=2):
+    try:
+        return '{:.{pre}f}'.format(value, pre=decimals)
+    except ValueError:
+        return ''
+
 def get_env():
-    jinja_env = Environment(loader=FileSystemLoader(template_path),
+    jinja_env = Environment(loader=FileSystemLoader(template_root),
                             extensions=['jinja2.ext.with_'],
     # When autoescape=False we assume that by default everything we output
     # is HTML-safe (no '<', no '>', no '&', ...)
@@ -41,13 +53,27 @@ def get_env():
 
     jinja_env.filters['datetime'] = datetime_filter
     jinja_env.filters['seconds_since'] = seconds_since_filter
+    jinja_env.filters['throughput'] = bytes_per_second
+    jinja_env.filters['format_float'] = format_float
 
     return jinja_env
 
 # This is a decorator for functions that use templates. Simplifies
 # some use cases, making it easy to return from the function at
-# any point
+# any point without having to care about repeating the content generation
+# at every single exit point.
 def templated(template_name, content_type="text/html", with_generator=False, with_session=False, default_status=apache.HTTP_OK):
+    """template_name is the path to the template file, relative to the template_root.
+
+       If with_generator is True, Jinja2 will be instructed to try to chunk the output,
+       sending info back to the client as soon as possible.
+
+       If with_session is true, we keep the whole operation within a session scope (the
+       session object is passed as first argument to the decorated function). This allows
+       the function to return ORM objects that can be manipulated by the template, without
+       having to detach them from the session first. A typical use case is to pass a query
+       so that the template iterates over it.
+    """
     def template_decorator(fn):
         @wraps(fn)
         def fn_wrapper(req, *args, **kw):

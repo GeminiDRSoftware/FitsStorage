@@ -3,56 +3,36 @@ This is the Fits Storage Web Summary module. It provides the functions
 which query the database and generate html for the web header
 summaries.
 """
-from ..orm import sessionfactory
+from ..orm import session_scope
 from ..orm.header import Header
 from ..orm.diskfile import DiskFile
 from ..orm.file import File
 from .selection import sayselection, queryselection
+from . import templating
 from ..apache_return_codes import HTTP_OK
 from sqlalchemy import join
 
-
+@templating.templated("progsobserved.html")
 def progsobserved(req, selection):
     """
     This function generates a list of programs observed on a given night
     """
 
-    # Get a database session
-    session = sessionfactory()
-    try:
-        # the basic query in this case
-        query = session.query(Header.program_id).select_from(join(join(DiskFile, File), Header))
+    with session_scope() as session:
+        try:
+            # the basic query in this case
+            query = session.query(Header.program_id).select_from(join(join(DiskFile, File), Header))
 
-        # Add the selection criteria
-        query = queryselection(query, selection)
+            # Add the selection criteria
+            query = queryselection(query, selection)
 
-        # And the group by clause
-        query = query.group_by(Header.program_id)
+            # And the group by clause
+            progs_query = query.group_by(Header.program_id)
 
-        progs = query.all()
-        title = "Programs Observed: %s" % sayselection(selection)
-        req.content_type = "text/html"
-        req.write('<html><head><title>%s</title></head><body><h1>%s</h1>' % (title, title))
-        req.write('<H2>To paste into nightlog: </H2>')
-        req.write('<P>')
-        for row in progs:
-            prog = row[0]
-            if prog:
-                req.write('%s ' % prog)
-        req.write('</P>')
-
-        req.write('<H2>With more detail: </H2>')
-        req.write('<UL>')
-        for row in progs:
-            prog = row[0]
-            if prog:
-                req.write('<LI><a href="/summary/%s/%s">%s</a></LI> ' % (prog, '/'.join(selection.values()), prog))
-        req.write('</UL>')
-        req.write('</body></html>')
-        return HTTP_OK
-
-
-    except IOError:
-        pass
-    finally:
-        session.close()
+            return dict(
+                selection = sayselection(selection),
+                progs     = [p[0] for p in progs_query],
+                joined_sel = '/'.join(selection.values())
+                )
+        except IOError:
+            pass

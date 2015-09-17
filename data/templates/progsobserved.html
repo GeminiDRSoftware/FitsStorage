@@ -1,0 +1,14 @@
+{% extends "layout_nofrills.html" %}
+{% block title %}Programs Observed: {{ selection }}{% endblock %}
+{% block body %}
+<h1>Programs Observed: {{ selection }}</h1>
+<h2>To paste into nightlog:</h2>
+<p>{% for prog in progs %}{{ prog }} {% endfor %}</p>
+
+<h2>With more detail:</h2>
+<ul>
+  {%- for prog in progs %}
+  <li><a href="/summary/{{ prog }}/{{ joined_sel }}">{{ prog }}</a></li>
+  {%- endfor %}
+</ul>
+{% endblock %}

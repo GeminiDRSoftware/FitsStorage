@@ -60,8 +60,8 @@
    <td>{{ dlog.sending_files }}
    <td>{{ dlog.query_completed|seconds_since(dlog.query_started) }}
    {%- with dltime = dlog.download_completed|seconds_since(dlog.query_started, formatted=False) %}
-   <td>{{ '{:.2f}'.format(dltime) }}
-   <td>{{ '{:.2f}'.format(0 if not dltime else (ulog.bytes / (dltime * 1000000.0))) }}
+   <td>{{ dltime|format_float }}
+   <td>{{ ulog.bytes|throughput(dltime, 1000000.0) }}
    {%- endwith %}
    <td><abbr title="{{ dlog.selection }}">Sel</abbr>{% if dlog.notes %} <abbr title="{{ dlog.notes }}">Notes</abbr>{% endif %}
    {%- else %}

@@ -1,0 +1,77 @@
+{% extends "layout_nofrills.html" %}
+{% block title %}Usage Statistics{% endblock %}
+{% block body %}
+<h1>Usage Statistics</h1>
+{% for header, query in groups %}
+<h2>{{ header }}</h2>
+<table>
+  <tr class='tr_head'>
+    <th>
+    <th colspan=2>Site Hits
+    <th colspan=2>Searches
+    <th colspan=2>PI Downloads
+    <th colspan=2>Public Downloads
+    <th colspan=2>Anonymous Downloads
+    <th colspan=2>Staff Downloads
+    <th colspan=2>Total Downloads
+    <th>Failed Downloads
+    <th colspan=2>Uploads
+  </tr>
+  <tr class='tr_head'>
+    <th>Period
+    <th>ok<th>fail
+    <th>ok<th>fail
+    <th>files<th>gb
+    <th>files<th>gb
+    <th>files<th>gb
+    <th>files<th>gb
+    <th>files<th>gb
+    <th>number
+    <th>files<th>gb
+  </tr>
+  {%- for result in query %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+    <td>{{ result.date }}
+    <td>{{ result.hit_ok }}<td>{{ result.hit_fail }}
+    <td>{{ result.search_ok}}<td>{{ result.search_fail }}
+    <td>{{ result.pi_down }}<td>{{ bytes_to_GB(result.pi_bytes)|format_float }}
+    <td>{{ result.public_down }}<td>{{ bytes_to_GB(result.public_bytes)|format_float }}
+    <td>{{ result.anon_down }}<td>{{ bytes_to_GB(result.anon_bytes)|format_float }}
+    <td>{{ result.staff_down }}<td>{{ bytes_to_GB(result.staff_bytes)|format_float }}
+    <td>{{ result.total_down }}<td>{{ bytes_to_GB(result.total_bytes)|format_float }}
+    <td>{{ result.failed_down }}
+    <td>{{ result.up }}<td>{{ bytes_to_GB(result.up_bytes)|format_float }}
+
+  </tr>
+  {%- endfor %}
+</table>
+{% endfor %}
+<h2>Within the last 90 days...</h2>
+<h3>Most inquisitive Users</h3>
+<table>
+  <tr class='tr_head'><th>User<th>Searches</tr>
+  {%- for count, user in inquisitive %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+    {%- if user %}
+    <td>{{ user.username }}{{ ' (Staff)' if user.gemini_staff else '' }}
+    {%- else %}
+    <td>Anonymous
+    {%- endif %}
+    <td>{{ count }}
+  {%- endfor %}
+</table>
+
+<h3>Most hungry Users</h3>
+<table>
+  <tr class='tr_head'><th>User<th>GB</tr>
+  {%- for bytes, user in hungry %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+    {%- if user %}
+    <td>{{ user.username }}{{ ' (Staff)' if user.gemini_staff else '' }}
+    {%- else %}
+    <td>Anonymous
+    {%- endif %}
+    <td>{{ bytes_to_GB(bytes)|format_float }}
+  {%- endfor %}
+</table>
+{% endblock %}

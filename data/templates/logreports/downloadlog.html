@@ -1,0 +1,40 @@
+{% extends "layout_nofrills.html" %}
+{% block title %}Download Log{% endblock %}
+{% block body %}
+<h1>File Download log</h1>
+{%- if queries.empty %}
+<h2>Please, provide at least one filename pattern for the query</h2>
+{%- else %}
+{%- for pattern, query in queries %}
+{%- if queries.many %}
+<h2>{{ pattern }}</h2>
+{% endif %}
+{%- if query.count() < 1 %}
+<h3>No matches</h3>
+{%- else %}
+<table>
+  <tr class="tr_head">
+    <th>UsageLog ID<th>Filename<th>User<th>Permission
+    <th>Feature Used<th>IP addr<th>UT DateTime<th>HTTP Status
+  </tr>
+  {%- for fdl, user in query %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+    <td><a href="/usagedetails/{{ fdl.usagelog_id }}">{{ fdl.usagelog_id }}</a>
+    <td>{{ fdl.diskfile_filename }}
+    {%- if user %}
+    <td>{{ user.id }}: {{ user.username }}{{ ' (Staff)' if user.gemini_staff else '' }}
+    {%- else %}
+    <td>Anonymous
+    {%- endif %}
+    <td>{{ permissions(fdl) }}
+    <td>{{ fdl.usagelog.this }}
+    <td>{{ fdl.usagelog.ip_address }}
+    <td>{{ fdl.ut_datetime }}
+    <td>{{ fdl.usagelog.status_string }}
+  </tr>
+  {%- endfor %}
+</table>
+{%- endif %}{# query.count() ... #}
+{%- endfor %}
+{%- endif %}{# queries.empty #}
+{% endblock %}
