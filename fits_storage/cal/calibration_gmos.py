@@ -265,7 +265,7 @@ class CalibrationGMOS(Calibration):
             howmany = 1 if processed else 2
 
         ifu = mos_or_ls = False
-        ifu_el_thres = mos_ls_el_thres = 0.0
+        el_thres = 0.0
         under_85 = False
         crpa_thres = 0.0
         # QAP might not give us these for now. Remove this 'if' later when it does
@@ -276,23 +276,23 @@ class CalibrationGMOS(Calibration):
             try:
                 ifu = self.descriptors['focal_plane_mask'].startswith('IFU')
                 # For IFU, elevation must we within 7.5 degrees
-                ifu_el_thres = 7.5
+                el_thres = 7.5
             except AttributeError:
                 # focal_plane_mask came as None. Leave 'ifu' as False
                 pass
             try:
                 mos_or_ls = self.descriptors['central_wavelength'] > 0.55 or self.descriptors['disperser'].startswith('R150')
                 # For MOS and LS, elevation must we within 15 degrees
-                mos_ls_el_thres = 15.0
+                el_thres = 15.0
             except AttributeError:
                 # Just in case disperser is None
                 pass
             under_85 = self.descriptors['elevation'] < 85
 
-            # crpa*cos(el) must be within 7.5 degrees, ie crpa must be within 7.5 / cos(el)
+            # crpa*cos(el) must be within el_thres degrees, ie crpa must be within el_thres / cos(el)
             # when el=90, cos(el) = 0 and the range is infinite. Only check at lower elevations
             if under_85:
-                crpa_thres = 7.5 / math.cos(math.radians(self.descriptors['elevation']))
+                crpa_thres = el_thres / math.cos(math.radians(self.descriptors['elevation']))
 
         return (
             self.get_query()
@@ -305,8 +305,8 @@ class CalibrationGMOS(Calibration):
             # Spectroscopy flats also have to somewhat match telescope position for flexure, as follows
             # this is from FitsStorage TRAC #43 discussion with KR 20130425
             # See the comments above to explain the thresholds
-                .tolerance(condition = ifu, elevation=ifu_el_thres)
-                .tolerance(condition = mos_or_ls, elevation=mos_ls_el_thres)
+                .tolerance(condition = ifu, elevation=el_thres)
+                .tolerance(condition = mos_or_ls, elevation=el_thres)
                 .tolerance(condition = under_85, cass_rotator_pa=crpa_thres)
 
             # Absolute time separation must be within 6 months
