@@ -1,0 +1,24 @@
+{% extends "layout_nofrills.html" %}
+
+{% block title %}Gemini Archive Who Am I{% endblock %}
+
+{% block body %}
+<span id="whoami">
+{% if username %}
+{# Unicode &#x1f464 is preferable to the user icon, if only browsers supported it (mid 2014) #}
+  <img src="/user1-64x64.png" height="18px"> {{ username }} &#9662;
+  <ul class="whoami">
+  <li class="whoami">{{ fullname }}</li>
+  <li class="whoami"><a href="/logout">Log Out</a></li>
+  <li class="whoami"><a href="/change_password/{{ thing_string }}">Change Password</a></li>
+  <li class="whoami"><a href="/my_programs/{{ thing_string }}">My Programs</a></li>
+  </ul>
+{% else %}
+  <img src="/user1-64x64.png" height="18px"> Not logged in &#9662;
+  <ul class="whoami">
+  <li class="whoami"><a href="/request_account/{{ thing_string }}">Request Account</a></li>
+  <li class="whoami"><a href="/login/{{ thing_string }}">Login</a></li>
+  </ul>
+{% endif %}
+</span>
+{% endblock %}

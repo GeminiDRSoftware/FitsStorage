@@ -24,6 +24,8 @@ import smtplib
 from email.mime.text import MIMEText
 import functools
 
+bad_password_msg = "Bad password - must be at least 14 characters long, and contain at least one lower case letter, upper case letter, decimal digit and non-alphanumeric character (e.g. !, #, %, * etc)"
+
 @templating.templated("user/request_account.html", with_session=True)
 def request_account(session, req, things):
     """
@@ -39,20 +41,14 @@ def request_account(session, req, things):
     fullname = ''
     email = ''
 
-    # Contruct the thing_string for the url to link back to their form
-    if things:
-        thing_string = '/' + '/'.join(things)
-    else:
-        thing_string = ''
-
     # Parse the form data here
-    if len(formdata.keys()) > 0:
+    if formdata:
         request_attempted = True
-        if 'username' in formdata.keys():
+        if 'username' in formdata:
             username = formdata['username'].value
-        if 'fullname' in formdata.keys():
+        if 'fullname' in formdata:
             fullname = formdata['fullname'].value
-        if 'email' in formdata.keys():
+        if 'email' in formdata:
             email = formdata['email'].value
 
         # Validate
@@ -81,7 +77,8 @@ def request_account(session, req, things):
     template_args = dict(
         reason_bad        = reason_bad,
         request_attempted = request_attempted,
-        thing_string      = thing_string,
+        # Contruct the thing_string for the url to link back to their form
+        thing_string      = '/'.join(things),
         valid_request     = valid_request,
         # User data
         username          = username,
@@ -206,11 +203,11 @@ def password_reset(session, req, things):
     formdata = util.FieldStorage(req)
     password = None
     again = None
-    if len(formdata.keys()) > 0:
+    if formdata:
         request_attempted = True
-        if 'password' in formdata.keys():
+        if 'password' in formdata:
             password = formdata['password'].value
-        if 'again' in formdata.keys():
+        if 'again' in formdata:
             again = formdata['again'].value
 
         # Validate
@@ -219,7 +216,7 @@ def password_reset(session, req, things):
         elif password != again:
             template_args['reason_bad'] = 'Password and Password again do not match'
         elif bad_password(password):
-            template_args['reason_bad'] = 'Bad password - must be at least 14 characters long, and contain at least one lower case letter, upper case letter, decimal digit and non-alphanumeric character (e.g. !, #, %, * etc)'
+            template_args['reason_bad'] = bad_password_msg
         else:
             request_valid = True
 
@@ -233,9 +230,6 @@ def password_reset(session, req, things):
             template_args['invalid_link'] = True
             return template_args
 
-#    if request_attempted:
-#        req.write("<P>Your request was invalid. %s. Please try again.</P>" % reason_bad)
-
     # Send the new account form
     template_args.update(dict(
         userid = userid,
@@ -244,6 +238,7 @@ def password_reset(session, req, things):
 
     return template_args
 
+@templating.templated("user/change_password.html")
 def change_password(req, things):
     """
     Handles a logged in user wanting to change their password.
@@ -256,26 +251,20 @@ def change_password(req, things):
     request_attempted = False
     valid_request = None
     reason_bad = None
-    sucessfull = False
+    successful = False
 
     oldpassword = ''
     newpassword = ''
     newagain = ''
 
-    # Construct the things_string to link back to the current form
-    if things:
-        thing_string = '/' + '/'.join(things)
-    else:
-        thing_string = ''
-
     # Parse the form data here
-    if len(formdata.keys()) > 0:
+    if formdata:
         request_attempted = True
-        if 'oldpassword' in formdata.keys():
+        if 'oldpassword' in formdata:
             oldpassword = formdata['oldpassword'].value
-        if 'newpassword' in formdata.keys():
+        if 'newpassword' in formdata:
             newpassword = formdata['newpassword'].value
-        if 'newagain' in formdata.keys():
+        if 'newagain' in formdata:
             newagain = formdata['newagain'].value
 
         # Validate what came in
@@ -288,17 +277,13 @@ def change_password(req, things):
         elif newagain == '':
             reason_bad = 'No new password again supplied'
         elif bad_password(newpassword):
-            reason_bad = 'Bad password - must be at least 8 characters and contain both uppercase and lowercase letters, and numbers'
+            reason_bad = bad_password_msg
         elif newpassword != newagain:
             reason_bad = 'New Password and New Password Again do not match'
         else:
             valid_request = True
 
-    req.content_type = "text/html"
-    req.write("<html><head><title>Gemini Archive Password reset request</title></head><body>")
-
     if valid_request:
-        req.write('<H2>Processing your request...</H2>')
         with session_scope() as session:
             user = userfromcookie(session, req)
             if user is None:
@@ -310,35 +295,16 @@ def change_password(req, things):
             else:
                 user.change_password(newpassword)
                 session.commit()
-                req.write('<p>Password has been changed</p>')
-                if things:
-                    req.write('<p><a href="/searchform%s">Click here to go back to your searchform</p>' % thing_string)
-                else:
-                    req.write('<p><a href="/searchform">Click here to go to the searchform</p>')
-                sucessfull = True
+                successful = True
 
-    if request_attempted is True and valid_request is False:
-        req.write('<h2>Request not valid:</h2>')
-        req.write('<p>%s</p>' % reason_bad)
+    template_args = dict(
+        successful    = successful,
+        reason_bad    = reason_bad,
+        # Construct the things_string to link back to the current form
+        thing_string  = '/'.join(things)
+        )
 
-    if not sucessfull:
-        # Send the password change form
-        req.write('<FORM action="/change_password%s" method="POST">' % thing_string)
-        req.write('<P>Fill out and submit this form to change your password. Password must be 8 characters or more and must contain uppercase and lowercase letters, and numbers.</P>')
-        req.write('<TABLE>')
-        req.write('<TR><TD><LABEL for="oldpassword">Current Password</LABEL></TD>')
-        req.write('<TD><INPUT type="password" size=16 name="oldpassword"</TD></TR>')
-        req.write('<TR><TD><LABEL for="newpassword">New Password</LABEL></TD>')
-        req.write('<TD><INPUT type="password" size=16 name="newpassword"</TD></TR>')
-        req.write('<TR><TD><LABEL for="newagain">New Password Again</LABEL></TD>')
-        req.write('<TD><INPUT type="password" size=16 name="newagain"</TD></TR>')
-        req.write('</TABLE>')
-        req.write('<INPUT type="submit" value="Submit"></INPUT>')
-        req.write('</FORM>')
-
-
-    req.write("</body></html>")
-    return apache.HTTP_OK
+    return template_args
 
 @templating.templated("user/request_password_reset.html", with_session=True)
 def request_password_reset(session, req):
@@ -396,7 +362,8 @@ def request_password_reset(session, req):
 
     return template_args
 
-def staff_access(req, things):
+@templating.templated("user/staff_access.html", with_session=True)
+def staff_access(session, req, things):
     """
     Allows supersusers to set accounts to be or not be gemini staff
     """
@@ -406,63 +373,39 @@ def staff_access(req, things):
     action = ''
 
     # Parse the form data
-    if len(formdata.keys()) > 0:
+    if formdata:
         if 'username' in formdata.keys():
             username = formdata['username'].value
         if 'action' in formdata.keys():
             action = formdata['action'].value
 
-    req.content_type = 'text/html'
-    req.write("<html><head><title>Gemini Archive Staff Access</title>")
-    req.write('<link rel="stylesheet" href="/table.css">')
-    req.write("</head><body>")
-    req.write('<h1>Gemini Archive Staff Access</h1>')
+    thisuser = userfromcookie(session, req)
+    if thisuser is None or thisuser.superuser != True:
+        return dict(allowed = False)
 
-    with session_scope() as session:
-        thisuser = userfromcookie(session, req)
-        if thisuser is None or thisuser.superuser != True:
-            req.write("<p>You don't appear to be logged in as a superuser. Sorry.</p>")
-            req.write('</body></html>')
-            return apache.HTTP_OK
+    template_args = dict(allowed = True)
 
-        # If we got an action, do it
-        if username:
-            try:
-                user = session.query(User).filter(User.username == username).one()
-                if action == "Grant":
-                    action_name = 'Granting'
-                    user.gemini_staff = True
-                elif action == "Revoke":
-                    action_name = 'Revoking'
-                    user.gemini_staff = False
-                req.write("<p>%s staff access for username: %s - %s - %s</p>" % (action_name, user.username, user.fullname, user.email))
-                session.commit()
-            except NoResultFound:
-                req.write("<p>Could not locate user in database</p>")
+    # If we got an action, do it
+    if username:
+        try:
+            user = session.query(User).filter(User.username == username).one()
+            if action == "Grant":
+                action_name = 'Granting'
+                user.gemini_staff = True
+            elif action == "Revoke":
+                action_name = 'Revoking'
+                user.gemini_staff = False
+            template_args['action_name'] = action_name
+            template_args['action_user'] = user
+        except NoResultFound:
+            template_args['no_result'] = True
 
-        # Have applied changes, now generate list of staff users
-        query = session.query(User).order_by(User.gemini_staff, User.username)
-        staff_users = query.all()
+    # Have applied changes, now generate list of staff users
+    template_args['user_list'] = session.query(User).order_by(User.gemini_staff, User.username)
 
-        even = False
-        req.write('<TABLE>')
-        req.write('<TR class=tr_head><TH>Username</TH><TH>Full Name</TH><TH>Email</TH><TH>Staff Access</TH><TH>Superuser</TH><TR>')
-        for user in staff_users:
-            even = not even
-            row_class = "tr_even" if even else "tr_odd"
-            req.write('<TR class=%s><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>' % (row_class, user.username, user.fullname, user.email, user.gemini_staff, user.superuser))
-        req.write('</TABLE>')
+    return template_args
 
-    req.write('<H2>Grant or Revoke Staff Access</H2>')
-    req.write('<FORM action="/staff_access" method="POST">')
-    req.write('<label for="username">Username:</label><input type="text" name="username">')
-    req.write('<select name="action"><option value="">Action</option><option value="Grant">Grant</option><option value="Revoke">Revoke</option></select>')
-    req.write('<INPUT type="submit" value="Submit"></INPUT>')
-    req.write('</FORM>')
-    req.write('</body></html>')
-
-    return apache.HTTP_OK
-
+@templating.templated("user/login.html")
 def login(req, things):
     """
     Presents and processes a login form
@@ -478,18 +421,12 @@ def login(req, things):
     password = ''
     cookie = None
 
-    # Rebuild the thing_string for the url
-    if things:
-        thing_string = '/' + '/'.join(things)
-    else:
-        thing_string = ''
-
     # Parse the form data here
-    if len(formdata.keys()) > 0:
+    if formdata:
         request_attempted = True
-        if 'username' in formdata.keys():
+        if 'username' in formdata:
             username = formdata['username'].value
-        if 'password' in formdata.keys():
+        if 'password' in formdata:
             password = formdata['password'].value
 
         # Validate
@@ -517,39 +454,17 @@ def login(req, things):
         cookie_obj = Cookie.Cookie('gemini_archive_session', cookie, expires=time.time()+31536000, path="/")
         Cookie.add_cookie(req, cookie_obj)
 
-    req.write("<html><head><title>Gemini Archive log in</title></head><body>")
+    template_args = dict(
+        # Rebuild the thing_string for the url
+        thing_string      = '/'.join(things),
+        valid_request     = valid_request,
+        reason_bad        = reason_bad,
+        username          = username
+        )
 
-    if valid_request:
-        req.write('<P>Welcome, you are sucessfully logged in to the Gemini Archive.</P>')
-        if things:
-            url = "/searchform"
-            for thing in things:
-                url += "/%s" % thing
-            req.write('<p><a href="%s">Click here to go back to your search form</a></p>' % url)
-            req.write('<p><a href="/searchform">Click here to go to an empty search form</a></p>')
-        else:
-            req.write('<p><a href="/searchform">Click here to go to the search form</a></p>')
+    return template_args
 
-        req.write('</body></html>')
-        return apache.HTTP_OK
-
-    if request_attempted:
-        req.write('<P>Log-in did not suceed: %s. Please try again.</P>' % reason_bad)
-        req.write('<P>If you have forgotten your username and/or password, <a href="/request_password_reset">click here to reset your password</a>.</P>')
-
-    req.write('<FORM action="/login%s" method="POST">' % thing_string)
-    req.write('<TABLE>')
-    req.write('<TR><TD><LABEL for="username">Username</LABEL><TD>')
-    req.write('<TD><INPUT type="text" size=16 name="username" value=%s></INPUT></TD></TR>' % username)
-    req.write('<TR><TD><LABEL for="password">Password</LABEL><TD>')
-    req.write('<TD><INPUT type="password" size=16 name="password"></INPUT></TD></TR>')
-    req.write('</TABLE>')
-    req.write('<INPUT type="submit" value="Submit"></INPUT>')
-    req.write('</FORM>')
-    req.write("</body></html>")
-    return apache.HTTP_OK
-
-
+@templating.templated("user/logout.html")
 def logout(req):
     """
     Log out all archive sessions for this user
@@ -565,10 +480,6 @@ def logout(req):
         with session_scope() as session:
             users = session.query(User).filter(User.cookie == cookie).all()
 
-# This if does nothing...
-#            if len(users) == 0:
-#                # We weren't really logged in.
-#                pass
             if len(users) > 1:
                 # Eeek, multiple users with the same session cookie!?!?!
                 req.log_error("Logout - Multiple Users with same session cookie: %s" % cookie)
@@ -576,96 +487,48 @@ def logout(req):
                 user.log_out_all()
 
         Cookie.add_cookie(req, 'gemini_archive_session', '', expires=time.time())
-    req.content_type = "text/html"
-    req.write("<html><head><title>Gemini Archive log out</title></head><body>")
-    req.write('<P>You are sucessfully logged out of the Gemini Archive.</P>')
-    req.write('<p>You might now want to go to the <a href="/">archive home page</a></p>')
-    req.write('</body></html>')
-    return apache.HTTP_OK
 
-def whoami(req, things):
+    return {}
+
+@templating.templated("user/whoami.html", with_session=True)
+def whoami(session, req, things):
     """
     Tells you who you are logged in as, and presents the account maintainace links
     """
-    req.content_type = "text/html"
-    req.write("<html><head><title>Gemini Archive Who Am I</title>")
-    #req.write('<link rel="stylesheet" type="text/css" href="/whoami.css">')
-    req.write("</head><body>")
-
-    username = None
     # Find out who we are if logged in
-    with session_scope() as session:
-        user = userfromcookie(session, req)
 
-        if user is not None:
-            username = user.username
-            fullname = user.fullname
+    template_args = {}
+
+    user = userfromcookie(session, req)
+
+    if user is not None:
+        template_args['username'] = user.username
+        template_args['fullname'] = user.fullname
 
     # Construct the "things" part of the URL for the link that want to be able to
     # take you back to the same form contents
-    if len(things):
-        thing_string = '/' + '/'.join(things)
-    else:
-        thing_string = ''
+    template_args['thing_string'] = '/'.join(things)
 
-    req.write('<span id="whoami">')
-    if username:
-        # Unicode &#x1f464 is preferable to the user icon, if only browsers supported it (mid 2014)
-        req.write('<img src="/user1-64x64.png" height="18px"> %s &#9662' % username)
-        req.write('<ul class="whoami">')
-        req.write('<li class="whoami">%s</li>' % fullname)
-        req.write('<li class="whoami"><a href="/logout">Log Out</a></li>')
-        req.write('<li class="whoami"><a href="/change_password%s">Change Password</a></li>' % thing_string)
-        req.write('<li class="whoami"><a href="/my_programs%s">My Programs</a></li>' % thing_string)
-    else:
-        req.write('<img src="/user1-64x64.png" height="18px"> Not logged in &#9662')
-        req.write('<ul class="whoami">')
-        req.write('<li class="whoami"><a href="/request_account%s">Request Account</a></li>' % thing_string)
-        req.write('<li class="whoami"><a href="/login%s">Login</a></li>' % thing_string)
-        req.write('</ul>')
+    return template_args
 
-    req.write('</span>')
-    req.write('</body></html>')
-    return apache.HTTP_OK
-
-def user_list(req):
+@templating.templated("user/list.html", with_session=True)
+def user_list(session, req):
     """
     Displays a list of archive users. Must be logged in as a gemini_staff user to
     see this.
     """
-    req.content_type = 'text/html'
-    req.write("<html><head><title>Gemini Archive User List</title>")
-    req.write('<link rel="stylesheet" href="/table.css">')
-    req.write("</head><body>")
-    req.write('<h1>Gemini Archive User List</h1>')
 
-    with session_scope() as session:
-        thisuser = userfromcookie(session, req)
-        if thisuser is None or thisuser.gemini_staff != True:
-            req.write("<p>You don't appear to be logged in as a Gemini Staff user. Sorry.</p>")
-            req.write('</body></html>')
-            return apache.HTTP_OK
+    thisuser = userfromcookie(session, req)
+    if thisuser is None or thisuser.gemini_staff != True:
+        return dict(staffer = False)
 
-        query = session.query(User).order_by(desc(User.superuser)).order_by(desc(User.gemini_staff))
-        query = query.order_by(User.username)
-        users = query.all()
+    users = (session.query(User)
+                .order_by(desc(User.superuser),
+                          desc(User.gemini_staff),
+                          User.username))
 
-        even = False
-        req.write('<TABLE>')
-        req.write('<TR class=tr_head><TH>Username</TH><TH>Full Name</TH><TH>Email</TH><TH>Password</TH><TH>Staff Access</TH><TH>Superuser</TH><TH>Reset Requested</TH><TH>Reset Active</TH><TH>Account Create</TH><TH>Last Password Change</TH><TR>')
-        for user in users:
-            even = not even
-            row_class = "tr_even" if even else "tr_odd"
-            password = user.password is not None
-            reset_requested = user.reset_token is not None
-            reset_active = (user.reset_token is not None) and (user.reset_token_expires > datetime.datetime.utcnow())
-            req.write('<TR class=%s><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>' % (row_class, user.username, user.fullname, user.email, password, user.gemini_staff, user.superuser, reset_requested, reset_active, user.account_created, user.password_changed))
-    req.write('</TABLE>')
-
-    req.write('</body></html>')
-
-    return apache.HTTP_OK
-
+    return dict(staffer = True,
+                users   = users)
 
 def email_inuse(email):
     """

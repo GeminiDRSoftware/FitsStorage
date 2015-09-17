@@ -24,7 +24,7 @@
 {%   if emailed %}
  <p>You should shortly receive an email with a link to set your password and activate your account.</p>
  <p>If you don't get the email, please contact the Gemini helpdesk. TODO - add link to helpdesk</p>
- <p><a href="/searchform{{ thing_string }}">Click here to return to your search.</a> 
+ <p><a href="/searchform/{{ thing_string }}">Click here to return to your search.</a> 
     After you set your password and log in using another browser tab, you can just reload or hit the submit button again and it will recognize your login</p>
 {%   else %}
  <p>Sending you a password reset email FAILED. Please contact Gemini Helpdesk. Sorry.</p>
@@ -34,7 +34,7 @@
 {%  if request_attempted %}
  <p>Your request was invalid. {{ reason_bad }}. Please try again.</p>
 {%  endif %}
- <form action="/request_account{{ thing_string}}" method="POST">
+ <form action="/request_account/{{ thing_string}}" method="POST">
   <p>Fill out and submit this short form to request a Gemini Archive account. You must provide a valid email address - we will be emailing you a link to activate your account and set a password. The email should arrive promptly, please note the activation link expires 15 minutes after it was sent. Usernames must be purely alphanumeric characters and must be at least two characters long.</p>
   <table>
    <tr><td><label for="username">Username</label><td>

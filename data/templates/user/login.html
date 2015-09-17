@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block title %}Gemini Archive log in{% endblock %}
+
+{% block body %}
+ {% if valid_request %}
+   <P>Welcome, you are sucessfully logged in to the Gemini Archive.</P>
+   {% if thing_string %}
+     <p><a href="/searchform/{{ thing_string }}">Click here to go back to your search form</a></p>
+     <p><a href="/searchform">Click here to go to an empty search form</a></p>
+   {% else %}
+     <p><a href="/searchform">Click here to go to the search form</a></p>
+   {% endif %}
+ {% else %}
+   {% if reason_bad %}
+     <P>Log-in did not suceed: {{ reason_bad }}. Please try again.</P>
+     <P>If you have forgotten your username and/or password,
+        <a href="/request_password_reset">click here to reset your password</a>.</P>
+   {% endif %}
+   <FORM action="/login/{{ thing_string }}" method="POST">
+   <TABLE>
+   <TR><TD><LABEL for="username">Username</LABEL><TD>
+   <TD><INPUT type="text" size=16 name="username" value='{{ username }}'></INPUT></TD></TR>
+   <TR><TD><LABEL for="password">Password</LABEL><TD>
+   <TD><INPUT type="password" size=16 name="password"></INPUT></TD></TR>
+   </TABLE>
+   <INPUT type="submit" value="Submit"></INPUT>
+   </FORM>
+ {% endif %}{# valid request #}
+{% endblock %}

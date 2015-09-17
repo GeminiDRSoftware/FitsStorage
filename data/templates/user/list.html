@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block title %}Gemini Archive User List{% endblock %}
+
+{% block body %}
+<h1>Gemini Archive User List</h1>
+{% if staffer %}
+ <table>
+  <tr class='tr_head'>
+    <th>Username<th>Full Name<th>Email<th>Password<th>Staff Access<th>Superuser
+    <th>Reset Requested<th>Reset Active<th>Account Create<th>Last Password Change</tr>
+ {% for user in users %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+    <td>{{ user.username }}<td>{{ user.fullname }}<td>{{ user.email }}<td>{{ user.has_password }}
+    <td>{{ user.gemini_staff }}<td>{{ user.superuser }}<td>{{ user.reset_requested }}
+    <td>{{ user.reset_active }}<td>{{ user.account_created }}<td>{{ user.password_changed }}</tr>
+ {% endfor %}
+ </table>
+{% else %}
+ <p>You don't appear to be logged in as a Gemini Staff user. Sorry.</p>
+{% endif %}
+{% endblock %}

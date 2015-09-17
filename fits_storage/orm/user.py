@@ -147,3 +147,15 @@ class User(Base):
         """
         self.cookie = None
         return self.cookie
+
+    @property
+    def reset_requested(self):
+        return self.reset_token is not None
+
+    @property
+    def reset_active(self):
+        return self.reset_requested and (self.reset_token_expires > datetime.utcnow())
+
+    @property
+    def has_password(self):
+        return self.password is not None
