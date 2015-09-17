@@ -105,14 +105,16 @@ def request_account(session, req, things):
         except:
             template_args['error'] = True
 
-    return apache.HTTP_OK, template_args
+    return template_args
 
 def send_password_reset_email(userid):
     """
     Sends the user a password reset email
     """
 
-    message_text = """
+    message_text = """\
+Hello {name},
+
   A password reset has been requested for the Gemini Archive account
 registered to this email address. If you did not request a password
 reset, you can safely ignore this email, though if you get several
@@ -122,7 +124,13 @@ requested this password reset, please click on the link below or paste
 it into your browser to reset your password. The reset link is only
 valid for 15 minutes, so please do that promptly.
 
-    """
+The username for this account is {username}
+{url}
+
+Regards,
+    Gemini Observatory Archive
+
+"""
 
     with session_scope() as session:
         user = session.query(User).get(userid)
@@ -133,11 +141,7 @@ valid for 15 minutes, so please do that promptly.
 
     url = "https://%s/password_reset/%d/%s" % (fits_servername, userid, token)
 
-    message = "Hello %s,\n" % fullname
-    message += message_text
-    message += 'The username for this account is: %s\n' % username
-    message += "%s\n\n" % url
-    message += "Regards,\n    Gemini Observatory Archive\n\n"
+    message = message_text.format(name=fullname, username=username, url=url)
 
     fromaddr = 'fitsadmin@gemini.edu'
     tolist = [email, fromaddr]
@@ -154,6 +158,7 @@ valid for 15 minutes, so please do that promptly.
 
     return True
 
+@templating.templated("user/password_reset.html", with_session=True)
 def password_reset(req, things):
     """
     Handles users clicking on a password reset link that we emailed them.
@@ -161,16 +166,14 @@ def password_reset(req, things):
     password reset form and process it when submitted.
     """
 
-    req.content_type = "text/html"
-    req.write("<html><head><title>Gemini Archive password reset request</title></head><body>")
-
-    # debug print
-    # req.write('<P>things: %s</P>' % things)
+    template_args = dict(
+        valid_request = False,
+        debugging     = False, # Activate to see in the page what things are we passed
+        things        = things
+        )
 
     if len(things) != 2:
-        req.write('<P>Invalid request.</P>')
-        req.write('</body></html>')
-        return apache.HTTP_OK
+        return template_args
 
     # Extract and validate the things from the URL
     userid = things[0]
@@ -179,35 +182,24 @@ def password_reset(req, things):
     try:
         userid = int(userid)
     except:
-        req.write('<P>Invalid request.</P>')
-        req.write('</body></html>')
-        return apache.HTTP_OK
+        return template_args
 
     if len(token) != 56:
-        req.write('<P>Invalid request.</P>')
-        req.write('</body></html>')
-        return apache.HTTP_OK
+        return template_args
 
     # OK, seems possibly legit. Check with database
-    with session_scope() as session:
-        user = session.query(User).get(userid)
-        if user is None:
-            req.write('<P>Invalid request.</P>')
-            req.write('</body></html>')
-            return apache.HTTP_OK
-        elif user.reset_token_expires < datetime.datetime.utcnow():
-            req.write('<P>This reset link has expired. They are only valid for 15 minutes. Sorry. Please request a new one and try again.</P>')
-            req.write('</body></html>')
-            return apache.HTTP_OK
-        elif user.reset_token != token:
-            req.write("<P>This is not a valid password reset link. Sorry. If you pasted the link, please check it didn't get truncated and try again, or request a new reset.</P>")
-            req.write('</body></html>')
-            return apache.HTTP_OK
-        else:
-            # Appears to be valid
-            req.write("<H1>Gemini Observatory Archive Password Reset</H1>")
+    user = session.query(User).get(userid)
+    if user is None:
+        return template_args
+    elif user.reset_token_expires < datetime.datetime.utcnow():
+        template_args['expired'] = True
+        return template_args
+    elif user.reset_token != token:
+        template_args['invalid_token'] = True
+        return template_args
 
     # If we got this far we have a valid request.
+    template_args['valid_request'] = True
     # Did we get a submitted form?
     request_attempted = False
     request_valid = False
@@ -234,35 +226,25 @@ def password_reset(req, things):
 
     if request_valid:
         req.write('<H2>Processing your request...</H2>')
-        with session_scope() as session:
-            user = session.query(User).get(userid)
-            if user.validate_reset_token(token):
-                user.reset_password(password)
-                session.commit()
-                req.write('<P>Password has been reset.</P>')
-                req.write('<p><a href="/login">Click here to log in.</a></p>')
-                return apache.HTTP_OK
-            else:
-                req.write("<P>Link is no longer valid. Please request a new one.</P>")
-                req.write('</body></html>')
-                return apache.HTTP_OK
+        if user.validate_reset_token(token):
+            user.reset_password(password)
+            session.commit()
+            template_args['password_reset'] = True
+            return template_args
+        else:
+            template_args['invalid_link'] = True
+            return template_args
 
     if request_attempted:
         req.write("<P>Your request was invalid. %s. Please try again.</P>" % reason_bad)
 
     # Send the new account form
-    req.write('<FORM action="/password_reset/%d/%s" method="POST">' % (userid, token))
-    req.write('<P>Fill out and submit this form to reset your password. Password must be at least 14 characters long, and contain at least one lower case letter, upper case letter, decimal digit and non-alphanumeric character (e.g. !, #, %, * etc)</P>')
-    req.write('<TABLE>')
-    req.write('<TR><TD><LABEL for="password">New Password</LABEL></TD>')
-    req.write('<TD><INPUT type="password" size=16 name="password"</TD></TR>')
-    req.write('<TR><TD><LABEL for="again">New Password Again</LABEL></TD>')
-    req.write('<TD><INPUT type="password" size=16 name="again"</TD></TR>')
-    req.write('</TABLE>')
-    req.write('<INPUT type="submit" value="Submit"></INPUT>')
-    req.write('</FORM>')
-    req.write("</body></html>")
-    return apache.HTTP_OK
+    template_args.update(dict(
+        userid = userid,
+        token = token
+        ))
+
+    return template_args
 
 def change_password(req, things):
     """
@@ -360,7 +342,8 @@ def change_password(req, things):
     req.write("</body></html>")
     return apache.HTTP_OK
 
-def request_password_reset(req):
+@templating.templated("user/request_password_reset.html", with_session=True)
+def request_password_reset(session, req):
     """
     Generate and process a web form to request a password reset
     """
@@ -371,11 +354,8 @@ def request_password_reset(req):
     username = None
     email = None
 
-    req.content_type = "text/html"
-    req.write("<html><head><title>Gemini Archive Password reset request</title></head><body>")
-
     # Parse the form data here
-    if len(formdata.keys()) > 0:
+    if formdata:
         if 'thing' in formdata.keys():
             thing = formdata['thing'].value
 
@@ -390,47 +370,33 @@ def request_password_reset(req):
             request_valid = True
         else:
             request_valid = False
-            req.write('<P>That is not a valid username or email address in our system. Maybe you need to <a href="/request_account">create a new account</a>?</P>')
+
+    template_args = dict(
+        request_valid = request_valid
+        )
 
     if request_valid:
         # Try to process it
-        req.write('<P>Processing request...</P>')
-        with session_scope() as session:
-            query = session.query(User)
-            if username:
-                query = query.filter(User.username == username)
-            elif email:
-                query = query.filter(User.email == email)
-            else:
-                # Something is wrong
-                req.write('<P>Error: no valid username or email. This should not happen.</P>')
-                return apache.HTTP_OK
-            users = query.all()
-            if len(users) > 1:
-                req.write("<P>Multiple usernames are using this email address. We'll send an email for each username. Please contact the Gemini Helpdesk to sort this out.</P>")
-            for user in users:
-                req.write("<P>Sending password reset email for username: %s</P>" % user.username)
-                emailed = send_password_reset_email(user.id)
-                if emailed:
-                    req.write('<P>You should shortly receive an email with a link to set your password and activate your account.</P>')
-                    req.write("<P>If you don't get the email, please contact the Gemini helpdesk.</P>")
-                else:
-                    req.write('<P>Sending you a password reset email FAILED. Please contact Gemini Helpdesk. Sorry.</P>')
+        query = session.query(User)
+        if username:
+            query = query.filter(User.username == username)
+        elif email:
+            query = query.filter(User.email == email)
+        else:
+            # Something is wrong
+            template_args['invalid_data'] = True
+            return template_args
 
-        req.write('</body></html>')
-        return apache.HTTP_OK
+        users = query.all()
+        if len(users) > 1:
+            template_args['multiple_users'] = True
+        emailed_users = []
+        for user in users:
+            emailed = send_password_reset_email(user.id)
+            emailed_users.append((user.username, emailed))
+        template_args['emailed_users'] = emailed_users
 
-    # Send the reset form
-    req.write('<FORM action="/request_password_reset" method="POST">')
-    req.write("<P>Enter your Gemini Archive Username or the Email address you registered with us when you created the account in the box below and hit submit. We'll send you an email containing a link to follow to reset your password. Please note that the link is only valid for 15 minutes.</P>")
-    req.write('<INPUT type="text" size=32 name="thing"</INPUT>')
-
-    # Some kind of captcha here.
-
-    req.write('<INPUT type="submit" value="Submit"></INPUT>')
-    req.write('</FORM>')
-    req.write("</body></html>")
-    return apache.HTTP_OK
+    return template_args
 
 def staff_access(req, things):
     """
