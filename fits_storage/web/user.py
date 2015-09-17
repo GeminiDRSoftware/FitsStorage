@@ -159,7 +159,7 @@ Regards,
     return True
 
 @templating.templated("user/password_reset.html", with_session=True)
-def password_reset(req, things):
+def password_reset(session, req, things):
     """
     Handles users clicking on a password reset link that we emailed them.
     Check the reset token for validity, if valid the present them with a
@@ -203,7 +203,6 @@ def password_reset(req, things):
     # Did we get a submitted form?
     request_attempted = False
     request_valid = False
-    reason_bad = ''
     formdata = util.FieldStorage(req)
     password = None
     again = None
@@ -216,16 +215,15 @@ def password_reset(req, things):
 
         # Validate
         if password is None:
-            reason_bad = 'No new Password supplied'
+            template_args['reason_bad'] = 'No new Password supplied'
         elif password != again:
-            reason_bad = 'Password and Password again do not match'
+            template_args['reason_bad'] = 'Password and Password again do not match'
         elif bad_password(password):
-            reason_bad = 'Bad password - must be at least 14 characters long, and contain at least one lower case letter, upper case letter, decimal digit and non-alphanumeric character (e.g. !, #, %, * etc)'
+            template_args['reason_bad'] = 'Bad password - must be at least 14 characters long, and contain at least one lower case letter, upper case letter, decimal digit and non-alphanumeric character (e.g. !, #, %, * etc)'
         else:
             request_valid = True
 
     if request_valid:
-        req.write('<H2>Processing your request...</H2>')
         if user.validate_reset_token(token):
             user.reset_password(password)
             session.commit()
@@ -235,8 +233,8 @@ def password_reset(req, things):
             template_args['invalid_link'] = True
             return template_args
 
-    if request_attempted:
-        req.write("<P>Your request was invalid. %s. Please try again.</P>" % reason_bad)
+#    if request_attempted:
+#        req.write("<P>Your request was invalid. %s. Please try again.</P>" % reason_bad)
 
     # Send the new account form
     template_args.update(dict(
