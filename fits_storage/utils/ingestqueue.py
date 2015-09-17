@@ -13,7 +13,7 @@ import fcntl
 
 from ..orm.geometryhacks import add_footprint, do_std_obs
 
-from ..fits_storage_config import storage_root, using_sqlite, using_s3, using_previews, defer_seconds
+from ..fits_storage_config import storage_root, using_sqlite, using_s3, using_previews, defer_seconds, use_as_archive
 from . import queue
 
 if using_previews:
@@ -36,6 +36,7 @@ from ..orm.nici import Nici
 from ..orm.gpi import Gpi
 from ..orm.ingestqueue import IngestQueue
 from ..orm.obslog import Obslog
+from ..orm.calcachequeue import CalCacheQueue
 
 from astrodata import AstroData
 
@@ -279,6 +280,13 @@ class IngestQueueUtil(object):
                     self.preview.process(diskfile, make=make_previews)
             except:
                 self.l.error("Error making preview for %s", diskfile.filename)
+
+            # If we are in archive mode, add to calcachequeue here
+            if use_as_archive:
+                self.l.info("Adding header id %d to calcachequeue", header.id)
+                cq = CalCacheQueue(header.id, sortkey=header.ut_datetime)
+                self.s.add(cq)
+                self.s.commit()
 
         if diskfile.ad_object:
             self.l.debug("Closing centrally opened astrodata object")
