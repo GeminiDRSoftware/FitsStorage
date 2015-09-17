@@ -90,6 +90,11 @@ def request_user_program(session, user, program_id, program_key):
     if len(program_key) < 5:
         return "Invalid program key"
 
+    # Is this program ID already registered for this user?
+    query = session.query(UserProgram).filter(UserProgram.user_id == user.id).filter(UserProgram.program_id == program_id)
+    if query.count() > 0:
+        return "That program ID is already registered for this user"
+
     valid = validate_program_key(program_id, program_key)
 
     if valid:
