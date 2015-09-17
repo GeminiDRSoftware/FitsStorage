@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<on_tape>
+{% for t in tapes -%}
+<tape>
+ <label>{{ t.label }}</label>
+ <active>{{ t.active }}</active>
+ <firstwrite>{{ t.firstwrite }}</firstwrite>
+ <lastwrite>{{ t.lastwrite }}</lastwrite>
+ <lastverified>{{ t.lastverified }}</lastverified>
+ <location>{{ t.location }}</location>
+ <lastmoved>{{ t.lastmoved }}</lastmoved>
+ <full>{{ t.full }}</full>
+ <set>{{ t.set }}</set>
+ <fate>{{ t.fate }}</fate>
+{% for tw in t.tapewrites -%}
+ <tapewrite>
+  <startdate>{{ tw.startdate }}</startdate>
+  <filenum>{{ tw.filenum }}</filenum>
+  <enddate>{{ tw.enddate }}</enddate>
+  <suceeded>{{ tw.tape_id }}</suceeded>
+  <size>{{ tw.size }}</size>
+  <beforestatus>{{ tw.beforestatus }}</beforestatus>
+  <afterstatus>{{ tw.afterstatus }}</afterstatus>
+  <hostname>{{ tw.hostname }}</hostname>
+  <tapedrive>{{ tw.tapedrive }}</tapedrive>
+  <notes>{{ tw.notes }}</notes>
+{% for tf in tw.tapefiles -%}
+  <tapefile>
+   <filename>{{ tf.filename }}</filename>
+   <size>{{ tf.size }}</size>
+   <ccrc>{{ tf.ccrc }}</ccrc>
+   <md5>{{ tf.md5 }}</md5>
+   <lastmod>{{ tf.lastmod }}</lastmod>
+  </tapefile>
+{%- endfor %}
+ </tapewrite>
+{%- endfor %}
+</tape>
+{%- endfor %}
+</on_tape>

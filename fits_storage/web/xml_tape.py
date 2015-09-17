@@ -1,71 +1,66 @@
 """
 This module contains the tape related xml generator functions. 
 """
-from ..orm import sessionfactory
+from ..orm import session_scope
 from ..orm.tapestuff import Tape, TapeWrite, TapeFile
 
+from . import templating
+
 from ..apache_return_codes import HTTP_OK
+
+# We use these wrappers in order to trigger separate query for the
+# internal objects. This is done only to conserve memory, because
+# SQLAlchemy tends to hog a lot of it and we may end up being killed.
+# Otherwise we could just use Tape.tapewrites and TapeWrite.tapefiles...
+class QueryWrapper(object):
+    def __init__(self, session, query, Wrapper):
+        self.s = session
+        self.q = query
+        self.W = Wrapper
+
+    def __iter__(self):
+        for obj in self.q:
+            yield self.W(self.s, obj)
+
+class TapeWrapper(object):
+    def __init__(self, session, obj):
+        self.s = session
+        self.o = obj
+
+    def __getattr__(self, attr):
+        return getattr(self.o, attr)
+
+    @property
+    def tapewrites(self):
+        q = (self.s.query(TapeWrite)
+                    .filter(TapeWrite.tape_id == self.o.id)
+                    .filter(TapeWrite.suceeded == True)
+                    .order_by(TapeWrite.id))
+        return QueryWrapper(self.s, q, TapeWriterWrapper)
+
+class TapeWriterWrapper(object):
+    def __init__(self, session, obj):
+        self.s = session
+        self.o = obj
+
+    def __getattr__(self, attr):
+        return getattr(self.o, attr)
+
+    @property
+    def tapefiles(self):
+        return self.s.query(TapeFile).filter(TapeFile.tapewrite_id == self.o.id)
 
 def xmltape(req):
     """
     Outputs xml describing the tapes that the specified file is on
     """
     req.content_type = "text/xml"
-    req.write('<?xml version="1.0" ?>')
-    req.write("<on_tape>")
 
-    session = sessionfactory()
-    try:
-        tape = session.query(Tape).filter(Tape.active == True).order_by(Tape.id).all()
-
-        for t in tape:
-            req.write("<tape>")
-            req.write("<label>%s</label>" % t.label)
-            req.write("<active>%s</active>" % t.active)
-            req.write("<firstwrite>%s</firstwrite>" % t.firstwrite)
-            req.write("<lastwrite>%s</lastwrite>" % t.lastwrite)
-            req.write("<lastverified>%s</lastverified>" % t.lastverified)
-            req.write("<location>%s</location>" % t.location)
-            req.write("<lastmoved>%s</lastmoved>" % t.lastmoved)
-            req.write("<full>%s</full>" % t.full)
-            req.write("<set>%s</set>" % t.set)
-            req.write("<fate>%s</fate>" % t.fate)
-
-
-            tapewrite = session.query(TapeWrite).filter(TapeWrite.tape_id == t.id).filter(TapeWrite.suceeded == True).order_by(TapeWrite.id).all()
-
-            for tw in tapewrite:
-                req.write("<tapewrite>")
-                req.write("<startdate>%s</startdate>" % tw.startdate)
-                req.write("<filenum>%s</filenum>" % tw.filenum)
-                req.write("<enddate>%s</enddate>" % tw.enddate)
-                req.write("<suceeded>%s</suceeded>" % tw.tape_id)
-                req.write("<size>%s</size>" % tw.size)
-                req.write("<beforestatus>%s</beforestatus>" % tw.beforestatus)
-                req.write("<afterstatus>%s</afterstatus>" % tw.afterstatus)
-                req.write("<hostname>%s</hostname>" % tw.hostname)
-                req.write("<tapedrive>%s</tapedrive>" % tw.tapedrive)
-                req.write("<notes>%s</notes>" % tw.notes)
-
-
-                tapefile = session.query(TapeFile).filter(TapeFile.tapewrite_id == tw.id).all()
-
-                for tf in tapefile:
-                    req.write("<tapefile>")
-                    req.write("<filename>%s</filename>" % tf.filename)
-                    req.write("<size>%s</size>" % tf.size)
-                    req.write("<ccrc>%s</ccrc>" % tf.ccrc)
-                    req.write("<md5>%s</md5>" % tf.md5)
-                    req.write("<lastmod>%s</lastmod>" % tf.lastmod)
-                    req.write("</tapefile>")
-
-                req.write("</tapewrite>")
-
-            req.write("</tape>")
-
-    finally:
-        session.close()
-
-    req.write("</on_tape>")
+    with session_scope() as session:
+        template = templating.get_env().get_template('tape.xml')
+        query = session.query(Tape).filter(Tape.active == True).order_by(Tape.id)
+        # Potentially huge reponse. Better to chunk it
+        for text in template.generate(tapes = QueryWrapper(session, query, TapeWrapper)):
+            req.write(text)
     return HTTP_OK
 
