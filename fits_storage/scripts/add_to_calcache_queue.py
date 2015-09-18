@@ -12,6 +12,7 @@ parser = OptionParser()
 parser.add_option("--file-re", action="store", type="string", dest="file_pre", help="filename prefix to select files to queue by")
 parser.add_option("--lastdays", action="store", type="int", dest="lastdays", help="queue observations with ut_datetime in last n days")
 parser.add_option("--all", action="store_true", dest="all", help="queue all observations in database. Use with Caution")
+parser.add_option("--mdbad", action="store_true", dest="mdbad", help="add files even if they fail metadata validation")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
@@ -36,6 +37,8 @@ with session_scope() as session:
             .filter(DiskFile.id == Header.diskfile_id)
             .filter(DiskFile.canonical == True)
         )
+    if not options.mdbad:
+        query = query.filter(DiskFile.mdready == True)
 
     if options.file_pre:
         query = query.filter(DiskFile.filename.like(options.file_pre+'%'))
