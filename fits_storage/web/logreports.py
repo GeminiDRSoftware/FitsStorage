@@ -296,11 +296,7 @@ def usagestats(session, req):
                 .outerjoin(User, User.id == user_stats_sq.c.user_id)
         )
 
-    def bytes_to_GB(bytes):
-        return int(bytes) / 1.0E9
-
     return dict(
-        bytes_to_GB = bytes_to_GB,
         groups      = groups,
         inquisitive = user_stats_1,
         hungry      = user_stats_2

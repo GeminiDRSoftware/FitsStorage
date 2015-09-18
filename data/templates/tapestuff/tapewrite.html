@@ -1,0 +1,22 @@
+{% extends "layout_just_title.html" %}
+{% block title %}FITS Storage tapewrite information{% endblock %}
+{% block body %}
+<h1>FITS Storage tapewrite information</h1>
+{% if message %}
+<p>{{ message }}
+{% else %}
+  {%- for tw, tape in tws %}
+  <h2>ID: {{ tw.id }}; Tape ID: {{ tw.tape_id }}; Tape Label: {{ tape.label }}; File Number: {{ tw.filenum }}</h2>
+  <ul>
+    <li>Start Date: {{ tw.startdate }} UTC - End Date: {{ tw.enddate }} UTC
+    <li>Succeeded: {{ tw.suceeded }}
+    <li>Size: {% if tw.size != None %}{{ tw.size|bytes_to_GB|format_float }} GB{% else %}None{% endif %}
+    <li>Status Before: <code>{{ tw.beforestatus }}</code>
+    <li>Status After: <code>{{ tw.afterstatus }}</code>
+    <li>Hostname: {{ tw.hostname }}, Tape Device: {{ tw.tapedrive }}
+    <li>Notes: {{ tw.notes }}
+    <li>Files: <a href="/tapefile/{{ tw.id }}">List</a>
+  </ul>
+  {%- endfor %}
+{% endif %}
+{% endblock %}

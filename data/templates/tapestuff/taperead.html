@@ -1,0 +1,29 @@
+{% extends "layout_nofrills.html" %}
+{% block title %}FITS Storage taperead information{% endblock %}
+{% block body %}
+<h1>FITS Storage taperead information</h1>
+{% if message %}
+<p>{{ message }}</p>
+{% else %}
+<table border='0'>
+  <tr class='tr_head'>
+    <th>Filename
+    <th>MD5
+    <th>Tape ID
+    <th>Tape Label
+    <th>File Num on Tape
+    <th>Requester
+  </tr>
+  {%- for tr in tapereads %}
+  <tr class="{{ loop.cycle("tr_odd", "tr_even") }}">
+    <td>{{ tr.filename }}
+    <td>{{ tr.md5 }}
+    <td>{{ tr.tape_id }}
+    <td>{{ tr.tape_label }}
+    <td>{{ tr.filenum }}
+    <td>{{ tr.requester }}
+  </tr>
+  {%- endfor %}
+</table>
+{% endif %}
+{% endblock %}

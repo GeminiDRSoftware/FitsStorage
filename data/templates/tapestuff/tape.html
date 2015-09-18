@@ -1,0 +1,67 @@
+{% macro verified_style(tape) %}
+{%- if tape.active -%}
+{%- if tape.lastverified == None %} style='{{ 'color:red' if tape.full else 'color:purple' }}'
+{%- elif tape.lastverified < bad %} style='color:red'
+{%- elif tape.lastverified < warning %} style='color:purple'
+{%- endif -%}
+{%- endif -%}
+{% endmacro %}
+
+{% macro radio_buttons(name, state) %}
+<input type="radio" name="{{ name }}" value="Yes"{% if state %} checked{% endif %} />Yes
+<input type="radio" name="{{ name }}" value="No"{% if not state %} checked{% endif %} />No
+{% endmacro %}
+
+{% extends "layout_just_title.html" %}
+{% block title %}FITS Storage tape information{% endblock %}
+{% block body %}
+<h1>FITS Storage tape information</h1>
+{%- for tape, write_count, successful_write_count, write_gb in generator %}
+<hr />
+<h2>ID: {{ tape.id }}, Label: {{ tape.label }}, Set: {{ tape.set }}</h2>
+<ul>
+  <li>First Write: {{ tape.firstwrite }} UTC - Last Write: {{ tape.lastwrite }}
+  <li><span{{ verified_style(tape) }}>Last Verified: {{ tape.lastverified }} UTC</span>
+  <li>Location: {{ tape.location }}; Last Moved: {{ tape.lastmoved }}
+  <li>Active: {{ tape.active }}
+  <li>Full: {{ tape.full }}
+  <li>Fate: {{ tape.fate }}
+  <li>Sucessfull/Total Writes: <a href='/tapewrite/{{ tape.id }}'>{{ successful_write_count }}/{{write_count }}</a>.
+      {{ write_gb|format_float }} GB Sucessfully written
+</ul>
+
+<form action="/tape" method="post">
+  <table>
+    <tr>
+     <td><label for="moveto-{{ tape.id }}">Move to a new location:</label>
+     <td><input type="text" size='32' name="moveto-{{ tape.id }}" />
+    </tr>
+    <tr>
+     <td><label for="set-{{ tape.id }}">Change Set Number to:</label>
+     <td><input type="text" size='32' name="set-{{ tape.id }}" />
+    </tr>
+    <tr>
+     <td><label for="active-{{ tape.id }}">Active:</label>
+     <td>{{ radio_buttons("active-{}".format(tape.id), tape.active) }}
+    </tr>
+    <tr>
+     <td><label for="full-{{ tape.id }}">Full:</label>
+     <td>{{ radio_buttons("full-{}".format(tape.id), tape.full) }}
+    </tr>
+    <tr>
+     <td><label for="fate-{{ tape.id }}">Fate:</label>
+     <td><input type="text" size='32' name="fate-{{ tape.id }}" />
+    </tr>
+  </table>
+  <input type="submit" value="Save" /> <input type="reset" />
+</form>
+{%- endfor %}
+<hr />
+<h2>Add a new Tape</h2>
+<form action="/tape" method="post">
+ <label for="newlabel-0">Label</label>
+ <input type="text" size='32' name="newlabel-0" />
+  <input type="submit" value="Save" />
+  <input type="reset" />
+</form>
+{% endblock %}

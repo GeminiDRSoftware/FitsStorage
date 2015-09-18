@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<file_list>
+{%- for tf in filelist %}
+<file><filename>{{ tf.filename }}</filename><size>{{ tf.size }}</size><md5>{{ tf.md5 }}</md5><ccrc>{{ tf.ccrc }}</ccrc><lastmod>{{ tf.lastmod }}</lastmod><tapeid>{{ tf.tapewrite.tape.id }}</tapeid><tapeset>{{ tf.tapewrite.tape.set }}</tapeset></file>
+{%- endfor %}
+</file_list>

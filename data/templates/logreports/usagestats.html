@@ -34,13 +34,13 @@
     <td>{{ result.date }}
     <td>{{ result.hit_ok }}<td>{{ result.hit_fail }}
     <td>{{ result.search_ok}}<td>{{ result.search_fail }}
-    <td>{{ result.pi_down }}<td>{{ bytes_to_GB(result.pi_bytes)|format_float }}
-    <td>{{ result.public_down }}<td>{{ bytes_to_GB(result.public_bytes)|format_float }}
-    <td>{{ result.anon_down }}<td>{{ bytes_to_GB(result.anon_bytes)|format_float }}
-    <td>{{ result.staff_down }}<td>{{ bytes_to_GB(result.staff_bytes)|format_float }}
-    <td>{{ result.total_down }}<td>{{ bytes_to_GB(result.total_bytes)|format_float }}
+    <td>{{ result.pi_down }}<td>{{ result.pi_bytes|bytes_to_GB|format_float }}
+    <td>{{ result.public_down }}<td>{{ result.public_bytes|bytes_to_GB|format_float }}
+    <td>{{ result.anon_down }}<td>{{ result.anon_bytes|bytes_to_GB|format_float }}
+    <td>{{ result.staff_down }}<td>{{ result.staff_bytes|bytes_to_GB|format_float }}
+    <td>{{ result.total_down }}<td>{{ result.total_bytes|bytes_to_GB|format_float }}
     <td>{{ result.failed_down }}
-    <td>{{ result.up }}<td>{{ bytes_to_GB(result.up_bytes)|format_float }}
+    <td>{{ result.up }}<td>{{ result.up_bytes|bytes_to_GB|format_float }}
 
   </tr>
   {%- endfor %}
@@ -71,7 +71,7 @@
     {%- else %}
     <td>Anonymous
     {%- endif %}
-    <td>{{ bytes_to_GB(bytes)|format_float }}
+    <td>{{ bytes|bytes_to_GB|format_float }}
   {%- endfor %}
 </table>
 {% endblock %}
