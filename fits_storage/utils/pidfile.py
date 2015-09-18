@@ -44,7 +44,7 @@ class PidFile(object):
                 raise PidFileError("Cannot recognize the PID in lockfile {}".format(self.path))
             except OSError:
                 # This is ok - go on
-                logger.error("PID in lockfile refers to a process which either doesn't exist, or is not ours - {}".format(oldpid))
+                self.l.error("PID in lockfile refers to a process which either doesn't exist, or is not ours - {}".format(oldpid))
 
             self.l.error("Removing the current PID file")
             os.unlink(self.path)
