@@ -310,7 +310,7 @@ class Calibration(object):
 
             # Populate the descriptors dictionary for the instrument
             for descr in self.instrDescriptors:
-                self.descriptors[descr] = getattr(inst, descr)
+                self.descriptors[descr] = getattr(inst, descr, None)
         elif self.descriptors is not None:
             # The data_section comes over as a native python array, needs to be a string
             if self.descriptors['data_section']:
