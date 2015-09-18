@@ -52,8 +52,9 @@ def my_programs(session, req, things):
     if username == '':
         return dict(logged_in = False)
 
-    template_args(
+    template_args = dict(
         # Build the thing_string to link back to the searchform
+        logged_in    = True,
         username     = username,
         progs        = prog_list,
         thing_string = '/'.join(things)
