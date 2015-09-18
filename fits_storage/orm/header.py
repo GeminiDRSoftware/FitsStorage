@@ -345,6 +345,8 @@ class Header(Base):
                 self.reduction = 'PROCESSED_DARK'
             if 'PROCESSED_ARC' in ad.types:
                 self.reduction = 'PROCESSED_ARC'
+            if 'PROCESSED_SCIENCE' in ad.types:
+                self.reduction = 'PROCESSED_SCIENCE'
 
             # Get the types list
             self.types = str(ad.types)
