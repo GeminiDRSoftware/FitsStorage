@@ -768,6 +768,8 @@ def selection_to_URL(selection):
         elif key == 'detector_config':
             for config in selection[key]:
                 urlstring += '/%s' % config
+        elif key == 'filepre':
+            urlstring += '/filepre=%s' % selection[key]
         else:
             urlstring += '/%s' % selection[key]
 
