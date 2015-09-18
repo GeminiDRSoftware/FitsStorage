@@ -52,7 +52,7 @@ class PreviewQueueUtil(object):
         return queue.queue_length(PreviewQueue, self.s)
 
     def pop(self):
-        return queue.pop_queue(PreviewQueue, self.s, self.l, fast_rebuild=True)
+        return queue.pop_queue(PreviewQueue, self.s, self.l)
 
     def set_error(self, trans, exc_type, exc_value, tb):
         "Sets an error message to a transient object"
@@ -75,10 +75,13 @@ class PreviewQueueUtil(object):
                 if isinstance(df, PreviewQueue):
                     pq = df
                     df = self.s.query(DiskFile).get(pq.diskfile_id)
-                    self.l.debug("Making Preview for {}: {}".format(pq.id, df.filename))
+                    self.l.info("Making Preview for {}: {}".format(pq.id, df.filename))
                 else:
-                    self.l.debug("Making Preview with diskfile_id {}".format(df.id))
-                self.make_preview(df)
+                    self.l.info("Making Preview with diskfile_id {}".format(df.id))
+                if df.present == True:
+                    self.make_preview(df)
+                else:
+                    self.l.info("Skipping non-present diskfile_id %d", df.id)
         else:
             # Add it to the preview queue
             for df in diskfiles:
@@ -110,49 +113,52 @@ class PreviewQueueUtil(object):
         # Are we responsible for creating an AstroData instance, or is there one for us?
         our_dfado = diskfile.ad_object == None
         our_dfcc = False
-        if our_dfado:
-            # We munge the filenames here to avoid file collisions in the staging directories
-            # with the ingest process
-            munged_filename = diskfile.filename
-            munged_fullpath = diskfile.fullpath()
-            if using_s3:
-                # Fetch from S3 to staging area
-                # TODO: We're not checking here if the file was actually retrieved...
-                munged_filename = "preview_" + diskfile.filename
-                munged_fullpath = os.path.join(s3_staging_area, munged_filename)
-                self.s3.fetch_to_staging(diskfile.filename, fullpath=munged_fullpath)
+        try:
+            if our_dfado:
+                # We munge the filenames here to avoid file collisions in the staging directories
+                # with the ingest process
+                munged_filename = diskfile.filename
+                munged_fullpath = diskfile.fullpath()
+                if using_s3:
+                    # Fetch from S3 to staging area
+                    # TODO: We're not checking here if the file was actually retrieved...
+                    munged_filename = "preview_" + diskfile.filename
+                    munged_fullpath = os.path.join(s3_staging_area, munged_filename)
+                    self.s3.fetch_to_staging(diskfile.filename, fullpath=munged_fullpath)
 
-            if diskfile.compressed:
-                # Create the uncompressed cache filename and unzip to it
-                nonzfilename = munged_filename[:-4]
-                diskfile.uncompressed_cache_file = os.path.join(z_staging_area, nonzfilename)
-                if os.path.exists(diskfile.uncompressed_cache_file):
-                    os.unlink(diskfile.uncompressed_cache_file)
-                with bz2.BZ2File(munged_fullpath, mode='rb') as in_file, open(diskfile.uncompressed_cache_file, 'w') as out_file:
-                    out_file.write(in_file.read())
-                our_dfcc = True
-                ad_fullpath = diskfile.uncompressed_cache_file
-            else:
-                # Just use the diskfile fullpath
-                ad_fullpath = munged_fullpath
-            # Open the astrodata instance
-            diskfile.ad_object = AstroData(ad_fullpath)
+                if diskfile.compressed:
+                    # Create the uncompressed cache filename and unzip to it
+                    nonzfilename = munged_filename[:-4]
+                    diskfile.uncompressed_cache_file = os.path.join(z_staging_area, nonzfilename)
+                    if os.path.exists(diskfile.uncompressed_cache_file):
+                        os.unlink(diskfile.uncompressed_cache_file)
+                    with bz2.BZ2File(munged_fullpath, mode='rb') as in_file, open(diskfile.uncompressed_cache_file, 'w') as out_file:
+                        out_file.write(in_file.read())
+                    our_dfcc = True
+                    ad_fullpath = diskfile.uncompressed_cache_file
+                else:
+                    # Just use the diskfile fullpath
+                    ad_fullpath = munged_fullpath
+                # Open the astrodata instance
+                diskfile.ad_object = AstroData(ad_fullpath)
 
-        # Now there should be a diskfile.ad_object, either way...
-        with open(preview_fullpath, 'w') as fp:
-            try:
-                self.render_preview(diskfile.ad_object, fp)
-            except:
-                os.unlink(preview_fullpath)
-                raise
+            # Now there should be a diskfile.ad_object, either way...
+            with open(preview_fullpath, 'w') as fp:
+                try:
+                    self.render_preview(diskfile.ad_object, fp)
+                except:
+                    os.unlink(preview_fullpath)
+                    raise
 
-        # Do any cleanup from above
-        if our_dfado:
-            diskfile.ad_object.close()
-            if using_s3:
-                os.unlink(munged_fullpath)
-            if our_dfcc:
-                os.unlink(ad_fullpath)
+        finally:
+            # Do any cleanup from above
+            if our_dfado:
+                if diskfile.ad_object is not None:
+                    diskfile.ad_object.close()
+                if using_s3:
+                    os.unlink(munged_fullpath)
+                if our_dfcc:
+                    os.unlink(ad_fullpath)
 
         # Now we should have a preview in fp. Close the file-object
 
@@ -174,7 +180,7 @@ class PreviewQueueUtil(object):
         and write it to the outfile
         """
 
-        if 'GMOS' in str(ad.instrument()):
+        if 'GMOS' in str(ad.instrument()) and 'PROCESSED_SCIENCE' not in ad.types:
             # Find max extent in detector pixels
             xmin = 10000
             ymin = 10000
