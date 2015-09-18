@@ -92,6 +92,9 @@ class ExportQueueUtil(object):
         self.l.debug("Checking for remote file md5")
         dest_md5 = self.get_destination_data_md5(filename, self.l, destination)
 
+        if dest_md5 == 'ERROR':
+            return False
+
         if (dest_md5 is not None) and (dest_md5 == our_md5):
             self.l.info("Data %s is already at %s with md5 %s", filename, destination, dest_md5)
             return True
@@ -216,6 +219,9 @@ def get_destination_data_md5(filename, logger, destination):
     """
     Queries the jsonfilelist url at the destination to get the md5 of the file
     at the destination.
+    Return None if destination does not have the file
+    Return md5sum if it does
+    Return "ERROR" if an error occurred
     """
 
     # Construct and retrieve the URL
@@ -224,29 +230,30 @@ def get_destination_data_md5(filename, logger, destination):
         u = urllib2.urlopen(url)
         json_data = u.read()
         u.close()
-    except urllib2.URLError:
-        logger.error("Failed to get json data from destination server at URL: %s", url)
+    except (urllib2.URLError, httplib.IncompleteRead):
+        logger.debug("Failed to get json data from destination server at URL: %s", url)
+        return "ERROR"
 
     try:
         thelist = json.loads(json_data)
     except ValueError:
-        logger.error("JSON decode failed. JSON data: %s", json_data)
+        logger.debug("JSON decode failed. JSON data: %s", json_data)
+        return "ERROR"
 
     if len(thelist) == 0:
         logger.debug("Destination server does not have filename %s", filename)
         return None
     if len(thelist) > 1:
-        logger.error("Got multiple results from destination server")
+        logger.debug("Got multiple results from destination server")
     else:
         thedict = thelist[0]
         if 'filename' not in thedict.keys():
-            logger.error("No filename in json data")
+            logger.debug("No filename in json data")
         elif thedict['filename'] not in [filename, filename+'.bz2']:
-            logger.error("Wrong filename in json data")
+            logger.debug("Wrong filename in json data")
         elif 'data_md5' not in thedict.keys():
-            logger.error("No data_md5 in json data")
+            logger.debug("No data_md5 in json data")
         else:
             return thedict['data_md5']
 
-    # Should never get here
-    return None
+    return "ERROR"
