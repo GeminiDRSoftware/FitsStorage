@@ -2,16 +2,17 @@
 This is a script which defines functions for generating content, general, and possibly usage statistics on the database. It queries the database for stats and outputs them as HTML via the apachehandler.
 """
 
-from sqlalchemy import desc, func, join, and_, or_, cast, between
-from sqlalchemy import Interval, Date
+from sqlalchemy import desc, func, join, and_, or_, cast, between, distinct
+from sqlalchemy import Interval, Date, String
+from sqlalchemy.sql import column
 from sqlalchemy.orm import aliased
 
 from ..fits_storage_config import fits_system_status
-from ..orm import sessionfactory
 from ..orm.file import File
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.ingestqueue import IngestQueue
+from ..utils.query_utils import to_int, null_to_zero
 
 from . import templating
 
@@ -110,94 +111,64 @@ def content(session, req):
                 .one()
         )
 
-    # build the telescope list
-    query = session.query(Header.telescope).group_by(Header.telescope).order_by(Header.telescope)
-    # results comes back as a list of one element tuples - clean up to a simple list
-    tels = [tel for (tel,) in query if tel is not None]
-
     # This query takes canonical files grouped by telescope and instrument, and counts the
     # total files. This is the general query that we'll specialize to extract all the stats
-    general_query = (
-        session.query(Header.telescope, Header.instrument, func.count())
+    by_instrument_query = (
+        session.query(Header.telescope, Header.instrument,
+                      func.count().label("instnum"),                      # Total images taken by the instrument
+                      func.sum(DiskFile.file_size).label("instbytes"),    # Total image sizes...
+                      func.sum(DiskFile.data_size).label("instdata"),
+                      func.sum(to_int(Header.engineering == True)).label("engnum"),
+                      func.sum(to_int(Header.engineering == False)).label("scinum"),
+                      func.sum(to_int(or_(Header.observation_class == 'science',
+                                          Header.observation_class=='acq'))).label("sciacqnum"),
+                      func.sum(to_int(or_(Header.observation_class=='progCal',
+                                          Header.observation_class=='partnerCal',
+                                          Header.observation_class=='acqCal',
+                                          Header.observation_class=='dayCal'))).label("calacqnum"),
+                      func.sum(to_int(Header.observation_type == 'OBJECT')).label("objnum")
+                      )
                 .select_from(join(DiskFile, Header))
                 .filter(DiskFile.canonical == True)
                 .filter(Header.telescope != None)
                 .filter(Header.instrument != None)
                 .group_by(Header.telescope, Header.instrument)
+                .order_by(Header.telescope, Header.instrument)
         )
-
-    # Specialized queries. Query objects are 'lazy', meaning that they will only be performed when we try to
-    # extract rows from them
-    filesizesq = general_query.add_columns(func.sum(DiskFile.file_size), func.sum(DiskFile.data_size))
-    engq = general_query.filter(Header.engineering == True)
-    sciq = general_query.filter(Header.engineering == False)
-    classq = general_query.filter(or_(Header.observation_class == 'science',
-                                          Header.observation_class=='acq'))
-    calq = general_query.filter(or_(Header.observation_class=='progCal',
-                                        Header.observation_class=='partnerCal',
-                                        Header.observation_class=='acqCal',
-                                        Header.observation_class=='dayCal'))
-    typeq = general_query.filter(Header.observation_type == 'OBJECT')
-
-    class Result(object):
-        def __init__(self):
-            self.instnum = 0
-            self.instbytes = 0
-            self.instdata = 0
-            self.engnum = 0
-            self.scinum = 0
-            self.sciacqnum = 0
-            self.calacqnum = 0
-            self.objnum = 0
-
-    # Build up the results
-    results_inst = defaultdict(Result)
-
-    for tel, instr, cnt, fs, ds in filesizesq:
-        obj = results_inst[(tel, instr)]
-        obj.instnum = cnt
-        obj.instbytes = fs
-        obj.instdata = ds
-
-    pairs = ((engq, 'engnum'),
-             (sciq, 'scinum'),
-             (classq, 'sciacqnum'),
-             (calq, 'calacqnum'),
-             (typeq, 'objnum'))
-    for qry, field in pairs:
-        for tel, instr, cnt in qry:
-            obj = results_inst[(tel, instr)]
-            setattr(obj, field, cnt)
 
     # datetime variables and queries declared here
     # reject invalid 1969 type years by selecting post 1990
     firstyear = dt_date(1990, 01, 01)
-    start = session.query(func.min(Header.ut_datetime)).filter(Header.ut_datetime > firstyear).first()[0]
-    end = session.query(func.max(Header.ut_datetime)).select_from(join(Header, DiskFile)).filter(DiskFile.canonical == True).first()[0]
+    start = session.query(func.min(Header.ut_datetime)).filter(Header.ut_datetime > firstyear).one()[0]
+    end = session.query(func.max(Header.ut_datetime)).select_from(join(Header, DiskFile)).filter(DiskFile.canonical == True).one()[0]
+
+    # Select all combinations of (YEAR, TELESCOPE) to use in the following query
+    tel_and_year = (
+        session.query(distinct(Header.telescope).label("telescope"),
+                      func.generate_series(start.year, end.year).label('year'))
+                .filter(Header.telescope.isnot(None)).subquery()
+        )
 
     # Build the query (file size and num grouped by telescope and year)
     extract_year = func.extract('YEAR', Header.ut_datetime)
-    yearquery = session.query(Header.telescope, extract_year, func.sum(DiskFile.file_size), func.count(), func.sum(DiskFile.data_size))\
-                            .select_from(join(Header, DiskFile))\
-                            .filter(DiskFile.canonical == True)\
-                            .filter(Header.ut_datetime >= firstyear)\
-                            .group_by(Header.telescope, extract_year)\
-                            .order_by(desc(extract_year), Header.telescope)
-
-    # Extract data
-    results_year = defaultdict(dict)
-
-    for tel, year, yearbytes, yearnum, yeardata in yearquery:
-        if tel is None:
-            continue
-        results_year[int(year)][tel] = (yearbytes, yearnum, yeardata)
+    CANONICAL=to_int(DiskFile.canonical == True)
+    by_year_query = (
+        session.query(tel_and_year.c.telescope, tel_and_year.c.year,
+                      func.sum(CANONICAL * DiskFile.file_size).label('yearbytes'),
+                      func.sum(CANONICAL).label('yearnum'),
+                      func.sum(CANONICAL * DiskFile.data_size).label('yeardata'))
+                .outerjoin(Header, and_(tel_and_year.c.year == extract_year,
+                                        tel_and_year.c.telescope == Header.telescope))
+                .outerjoin(DiskFile)
+                .group_by(tel_and_year.c.year, tel_and_year.c.telescope)
+                .order_by(desc(tel_and_year.c.year), tel_and_year.c.telescope)
+        )
 
     return dict(
         is_development = (fits_system_status == "development"),
         num_files      = filenum,
         size_files     = filesize,
         data_size      = datasize,
-        telescopes     = tels,
-        by_instrument  = sorted(results_inst.items()),
-        by_year        = sorted(results_year.items(), reverse=True),
+        by_instrument  = by_instrument_query,
+        by_year        = by_year_query,
         )

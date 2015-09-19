@@ -32,10 +32,10 @@
     <th>Calibration Obs. Class&nbsp;
     <th>Object Obs. Type&nbsp;
   </tr>
-  {%- for (tel, instrument), values in by_instrument %}
+  {%- for values in by_instrument %}
   <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
-    <td>{{ tel }}
-    <td>{{ instrument }}
+    <td>{{ values.telescope }}
+    <td>{{ values.instrument }}
     <td>{{ values.instbytes|bytes_to_GB(GiB=True)|group_digits(2) }}
     <td>{{ values.instdata|bytes_to_GB(GiB=True)|group_digits(2) }}
     <td>{{ values.instnum|group_digits }}
@@ -60,22 +60,18 @@
     <th>Storage size&nbsp;
     <th>FITS filesize&nbsp;
   </tr>
-  {%- for year, data in by_year %}
-  {%- for tel in telescopes %}
+  {%- for values in by_year %}
   <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
-    <td>{{ tel }}
-    <td>{{ year }}
-    {%- if data[tel] %}
-    {%- with yearbytes, yearnum, yeardata = data[tel] %}
-    <td>{{ yearbytes|bytes_to_GB(GiB=True)|group_digits(2) }}
-    <td>{{ yeardata|bytes_to_GB(GiB=True)|group_digits(2) }}
-    <td>{{ yearnum|group_digits }}
-    {%- endwith %}
+    <td>{{ values.telescope }}
+    <td>{{ values.year }}
+    {%- if values.yearbytes %}
+    <td>{{ values.yearbytes|bytes_to_GB(GiB=True)|group_digits(2) }}
+    <td>{{ values.yeardata|bytes_to_GB(GiB=True)|group_digits(2) }}
+    <td>{{ values.yearnum|group_digits }}
     {%- else %}
     <td colspan='3'>
     {%- endif %}
   </tr>
-  {%- endfor %}
   {%- endfor %}
 </table>
 {% endblock %}
