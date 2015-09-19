@@ -13,23 +13,23 @@ from itertools import cycle
 
 DETAIL_THRESHOLD = 20
 
-@templating.templated("queuestatus/index.html")
-def queuestatus_summary(req):
+@templating.templated("queuestatus/index.html", with_session=True)
+def queuestatus_summary(session, req):
     general_rows = []
     detail_tables = []
 
-    with session_scope() as session:
-        for qstat in stats(session):
-            general_rows.append(qstat)
-            nerr = qstat['errors']
-            if nerr > 0:
-                qname = qstat['name']
-                if nerr > DETAIL_THRESHOLD:
-                    qname = qname + ' (limited to the first {})'.format(DETAIL_THRESHOLD)
-                summary = error_summary(session, qstat['type'], DETAIL_THRESHOLD)
-                detail_tables.append(dict(name=qname,
-                                          lname=qstat['lname'],
-                                          rows=summary))
+    for qstat in stats(session):
+        general_rows.append(qstat)
+        nerr = qstat['errors']
+        if nerr > 0:
+            qname = qstat['name']
+            if nerr > DETAIL_THRESHOLD:
+                qname = qname + ' (limited to the first {})'.format(DETAIL_THRESHOLD)
+            summary = error_summary(session, qstat['type'], DETAIL_THRESHOLD)
+            detail_tables.append(dict(name=qname,
+                                      lname=qstat['lname'],
+                                      rows=summary))
+
 
     template_args = dict(
         general_rows  = general_rows,
