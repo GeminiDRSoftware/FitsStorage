@@ -1,0 +1,64 @@
+{% extends "layout_nofrills.html" %}
+{% block title %}FITS Storage database statistics{% endblock %}
+{% block body %}
+<h1>FITS Storage database statistics</h1>
+<h2>File Table</h2>
+<ul>
+  <li>total rows: {{ file_count }}
+</ul>
+
+<h2>DiskFile Table Statistics</h2>
+<ul>
+  <li>Total Rows: {{ df_stats.total_rows }}
+  {%- if df_stats.total_rows %}
+  <li>Present Rows: {{ df_stats.present_rows }} ({{ (100 * df_stats.present_rows / df_stats.total_rows)|format_float }}%)
+  {%- endif %}
+  {%- if df_stats.present_size != None %}
+  <li>Total present size: {{ df_stats.present_size }} bytes ({{ df_stats.present_size|bytes_to_GB(GiB=True)|format_float }} GB)
+  {%- endif %}
+  <li>Most recent diskfile entry was at: {{ df_stats.latest }}
+  <li>Number of DiskFile rows added in the last minute: {{ df_stats.last_minute }}
+  <li>Number of DiskFile rows added in the last hour: {{ df_stats.last_hour }}
+  <li>Number of DiskFile rows added in the last day: {{ df_stats.last_day }}
+  <li>Last {{ df_stats.last_queries.count() }} entires added:
+    <ul>
+      {%- for entry in df_stats.last_queries %}
+      <li>{{ entry.file.name }}: {{ entry.entrytime }}
+      {%- endfor %}
+    </ul>
+</ul>
+
+<h2>Header Table</h2>
+<ul>
+  <li>Total Rows: {{ header_count }}
+</ul>
+
+<h2>Ingest Queue</h2>
+<ul>
+  <li>Total Rows: {{ iq_stats.count }}
+  <li>Currently In Progress: {{ iq_stats.in_progress }}
+</ul>
+
+<h2>Data Rates</h2>
+<h3>Last {{ daily_rates.count() }} days</h3>
+<ul>
+  {%- for entry in daily_rates %}
+  <li>{{ entry.start }}: {{ (entry.bytes or 0)|bytes_to_GB|format_float }} GB, {{ entry.count }} files
+  {%- endfor %}
+</ul>
+
+<h3>Last {{ weekly_rates.count() }} weeks</h3>
+<ul>
+  {%- for entry in weekly_rates %}
+  <li>{{ entry.start }} - {{ entry.end }}: {{ (entry.bytes or 0)|bytes_to_GB|format_float }} GB, {{ entry.count }}
+  {%- endfor %}
+</ul>
+
+<h3>Last {{ monthly_rates.count() }} months</h3>
+<ul>
+  {%- for entry in monthly_rates %}
+  <li>{{ entry.start }} - {{ entry.end }}: {{ (entry.bytes or 0)|bytes_to_GB|format_float }} GB, {{ entry.count }}
+  {%- endfor %}
+</ul>
+
+{% endblock %}

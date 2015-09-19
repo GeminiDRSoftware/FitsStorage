@@ -1,0 +1,81 @@
+{% extends "layout_nofrills.html" %}
+{% block title %}Database content statistics{% endblock %}
+{% block body %}
+{% if is_development %}
+<h1>This is the development system, please use <a href="http://fits/">fits</a> for operational use</h1>
+{% endif %}
+<h1>Database content statistics</h1>
+
+<p>Total number of files: {{ num_files|group_digits }}</p>
+{%- if size_files != None %}
+<p>Total file storage size: {{ size_files|bytes_to_GB(GiB=True)|group_digits(2) }} GB</p>
+{%- endif %}
+{%- if data_size != None %}
+<p>Total FITS data size: {{ size_files|bytes_to_GB(GiB=True)|group_digits(2) }} GB</p>
+{%- endif %}
+
+<h3>Data and file volume by telescope/instrument</h3>
+<table>
+  <tr class='tr_head'>
+    <th rowspan="2">Telescope&nbsp;
+    <th rowspan="2">Instrument&nbsp;
+    <th colspan="2">Data Volume (GB)&nbsp;
+    <th colspan="6">Number of files&nbsp;
+  </tr>
+  <tr class='tr_head'>
+    <th>Storage size&nbsp;
+    <th>FITS filesize&nbsp;
+    <th>Total&nbsp;
+    <th>Engineering&nbsp;
+    <th>Science&nbsp;
+    <th>Science/Acq Obs. Class&nbsp;
+    <th>Calibration Obs. Class&nbsp;
+    <th>Object Obs. Type&nbsp;
+  </tr>
+  {%- for (tel, instrument), values in by_instrument %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+    <td>{{ tel }}
+    <td>{{ instrument }}
+    <td>{{ values.instbytes|bytes_to_GB(GiB=True)|group_digits(2) }}
+    <td>{{ values.instdata|bytes_to_GB(GiB=True)|group_digits(2) }}
+    <td>{{ values.instnum|group_digits }}
+    <td>{{ values.engnum|group_digits }}
+    <td>{{ values.scinum|group_digits }}
+    <td>{{ values.sciacqnum|group_digits }}
+    <td>{{ values.calacqnum|group_digits }}
+    <td>{{ values.objnum|group_digits }}
+  </tr>
+  {%- endfor %}
+</table>
+
+<h3>Data and file volume by telescope/year</h3>
+<table>
+  <tr class='tr_head'>
+    <th rowspan="2">Telescope&nbsp;
+    <th rowspan="2">Year&nbsp;
+    <th colspan="2">Data Volume (GB)&nbsp;
+    <th rowspan="2">Number of files&nbsp;
+  </tr>
+  <tr class='tr_head'>
+    <th>Storage size&nbsp;
+    <th>FITS filesize&nbsp;
+  </tr>
+  {%- for year, data in by_year %}
+  {%- for tel in telescopes %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+    <td>{{ tel }}
+    <td>{{ year }}
+    {%- if data[tel] %}
+    {%- with yearbytes, yearnum, yeardata = data[tel] %}
+    <td>{{ yearbytes|bytes_to_GB(GiB=True)|group_digits(2) }}
+    <td>{{ yeardata|bytes_to_GB(GiB=True)|group_digits(2) }}
+    <td>{{ yearnum|group_digits }}
+    {%- endwith %}
+    {%- else %}
+    <td colspan='3'>
+    {%- endif %}
+  </tr>
+  {%- endfor %}
+  {%- endfor %}
+</table>
+{% endblock %}

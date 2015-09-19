@@ -36,13 +36,21 @@ def bytes_per_second(value, time, divider=1000000.0):
     except (ZeroDivisionError, TypeError):
         return ''
 
-def bytes_to_GB(value):
-    return int(value) / 1.0E9
-
+def bytes_to_GB(value, GiB=False):
+    return int(value) / (1.0E9 if not GiB else 1073741824.0)
 
 def format_float(value, decimals=2):
     try:
         return '{:.{pre}f}'.format(value, pre=decimals)
+    except ValueError:
+        return ''
+
+def group_digits(value, decimals=0):
+    try:
+        if decimals > 0:
+            return '{:,.{pre}f}'.format(value, pre=decimals)
+        else:
+            return '{:,}'.format(value)
     except ValueError:
         return ''
 
@@ -60,6 +68,7 @@ def get_env():
     jinja_env.filters['throughput'] = bytes_per_second
     jinja_env.filters['format_float'] = format_float
     jinja_env.filters['bytes_to_GB'] = bytes_to_GB
+    jinja_env.filters['group_digits'] = group_digits
 
     return jinja_env
 
