@@ -10,8 +10,6 @@ from ..apache_return_codes import REMOTE_NOLOOKUP
 from . import Base
 from .user import User
 
-from . import sessionfactory
-
 class UsageLog(Base):
     """
     This is the ORM class for the usage log table
