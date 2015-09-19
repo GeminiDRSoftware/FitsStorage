@@ -154,7 +154,7 @@ def tapefile(session, req, things):
         pass
 
 @templating.templated("tapestuff/taperead.html", with_session=True, with_generator=True)
-def taperead(session, req, things):
+def taperead(session, req):
     """
     This is the taperead list function
     """

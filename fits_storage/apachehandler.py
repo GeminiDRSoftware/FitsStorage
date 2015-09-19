@@ -93,6 +93,7 @@ mapping_simple = {
     'usagereport': usagereport,                             # Usage Statistics and Reports
     'usagestats': usagestats,                               # Usage Stats
     'xmltape': xmltape,                                     # XML Tape handler
+    'taperead': taperead,                                   # TapeRead handler
     'notification': notification,                           # Emailnotification handler
     'import_odb_notifications': import_odb_notifications,   # Notification update from odb handler
     'request_password_reset': request_password_reset,       # request password reset email
@@ -114,7 +115,6 @@ mapping_things = {
     'tape': tape,                       # Tape handler
     'tapewrite': tapewrite,             # TapeWrite handler
     'tapefile': tapefile,               # TapeFile handler
-    'taperead': taperead,               # TapeRead handler
     'curation': curation_report,        # curation_report handler
     'request_account': request_account, # new account request
     'password_reset': password_reset,   # account password reset request
