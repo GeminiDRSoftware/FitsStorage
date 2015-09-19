@@ -6,7 +6,7 @@ import dateutil.parser
 from collections import namedtuple
 
 from sqlalchemy import and_, between, cast, desc, extract, func, join
-from sqlalchemy import BigInteger, Date, Integer, Interval, String
+from sqlalchemy import Date, Interval, String
 from sqlalchemy.orm import aliased
 
 from ..orm import session_scope
@@ -18,6 +18,8 @@ from ..orm.fileuploadlog import FileUploadLog
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.user import User
+
+from ..utils.query_utils import to_int, null_to_zero
 
 from ..gemini_metadata_utils import ONEDAY_OFFSET
 
@@ -355,12 +357,6 @@ def build_query(session, period, since=None):
        Both 'week' and 'day' must speficy `since`, to limit the amount of returned data. 'year'
        will work over all the data set.'''
 
-    # This little function we'll use later to cast many of the results into integers. This is mainly
-    # to translate booleans (True, False) into numbers, because often a True means '1 of this'. Thus,
-    # we can use the result later in sums and products.
-    def to_int(expr, big=False):
-        return cast(expr, Integer if not big else BigInteger)
-
     # Note that we're using 'IS TRUE' here. This is a common theme across the whole query. The reason
     # for using 'IS' (identity) instead of '=' (equality) is that NULL values ARE NOT taken into account
     # for equality tests: we'd get a NULL out of it, and we want a boolean.
@@ -586,10 +582,10 @@ def build_query(session, period, since=None):
     DOWNLOAD_FAILED    = and_(STATUS_200.is_(False), download_query.c.ulid.isnot(None)).is_(True)
     UPLOAD_PERFORMED   = and_(STATUS_200.is_(True), upload_query.c.ulid.isnot(None)).is_(True)
 
-    FILE_COUNT = to_int(func.coalesce(download_query.c.count, 0))
-    PUBFILE_COUNT = to_int(func.coalesce(download_query.c.released, 0))
-    DOWNBYTE_COUNT = to_int(func.coalesce(download_query.c.bytes, 0), big=True)
-    UPBYTE_COUNT = to_int(func.coalesce(upload_query.c.bytes, 0), big=True)
+    FILE_COUNT = to_int(null_to_zero(download_query.c.count))
+    PUBFILE_COUNT = to_int(null_to_zero(download_query.c.released))
+    DOWNBYTE_COUNT = to_int(null_to_zero(download_query.c.bytes), big=True)
+    UPBYTE_COUNT = to_int(null_to_zero(upload_query.c.bytes), big=True)
 
     COUNT_DOWNLOAD = to_int(DOWNLOAD_PERFORMED) * FILE_COUNT
     COUNT_FAILED = to_int(DOWNLOAD_FAILED)
@@ -598,8 +594,8 @@ def build_query(session, period, since=None):
     STAFF_DOWNLOAD = to_int(and_(DOWNLOAD_PERFORMED, download_query.c.staff_access.is_(True)))
     ANON_DOWNLOAD = to_int(and_(DOWNLOAD_PERFORMED, UsageLog.user_id.is_(None)))
 
-    TOTAL_BYTES = COUNT_DOWNLOAD * to_int(func.coalesce(UsageLog.bytes, 0), big=True)
-    PUBFILE_BYTES = to_int(func.coalesce(download_query.c.released_bytes, 0), big=True)
+    TOTAL_BYTES = COUNT_DOWNLOAD * to_int(null_to_zero(UsageLog.bytes), big=True)
+    PUBFILE_BYTES = to_int(null_to_zero(download_query.c.released_bytes), big=True)
 
     q = query.add_columns(func.sum(HIT_OK).label('hits_ok'), func.sum(HIT_FAIL).label('hits_fail'),
                           func.sum(SEARCH_OK).label('search_ok'), func.sum(SEARCH_FAIL).label('search_fail'),
