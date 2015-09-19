@@ -180,7 +180,7 @@ class PreviewQueueUtil(object):
         and write it to the outfile
         """
 
-        if 'GMOS' in str(ad.instrument()) and 'PROCESSED_SCIENCE' not in ad.types:
+        if 'GMOS' in str(ad.instrument()) and len(ad['SCI']) > 1:
             # Find max extent in detector pixels
             xmin = 10000
             ymin = 10000
