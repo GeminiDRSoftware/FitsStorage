@@ -11,7 +11,7 @@
 <p>Total file storage size: {{ size_files|bytes_to_GB(GiB=True)|group_digits(2) }} GB</p>
 {%- endif %}
 {%- if data_size != None %}
-<p>Total FITS data size: {{ size_files|bytes_to_GB(GiB=True)|group_digits(2) }} GB</p>
+<p>Total FITS data size: {{ data_size|bytes_to_GB(GiB=True)|group_digits(2) }} GB</p>
 {%- endif %}
 
 <h3>Data and file volume by telescope/instrument</h3>
