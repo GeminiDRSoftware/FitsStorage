@@ -5,6 +5,11 @@
 <script src="toc.js"></script>
 <link rel="stylesheet" href="/help/help.css">
 <title>Gemini Observatory Archive APIs</title>
+<style>
+table, th, td {
+  border: 1px solid black;
+}
+</style>
 </head>
 <body>
 <span id="toc"></span>
@@ -67,7 +72,7 @@ the results of the search as specified by the selection criteria you specified i
 match your selection criteria. You should almost always include /canonical as one of your selection criteria (see note below). 
 The JSON returned contains a list of dictionaries, where each dictionary describes a file
 in the archive. The keys in the dictionary and their meanings are as follows:</p>
-<table border="1">
+<table>
 <tr><th>Key</th><th>Description</th></tr>
 <tr>
 <td>name</td>
@@ -115,7 +120,7 @@ If the file is not compressed this will be the same as file_md5</td>
 searchform results tables. You should almost always include /canonical as one of your selection criteria (see note below). 
 As with jsonfilelist, you get a list of dictionaries, one dictionary per file. You get all the keys from jsonfilelist
 plus a lot more that contain details of the data, as follows:</p>
-<table border="1">
+<table>
 <tr><th>Key</th><th>Description</th></tr>
 <tr>
 <td>telescope</td>
@@ -298,7 +303,7 @@ for the most recent (canonical) version of the file. The JSON APIs do not do thi
 previous versions of the file. Assuming you don't want to do that, <strong>you should always have /canonical as one your selection
 criteria with the JSON APIs</strong>.</p>
 
-<table border="1">
+<table>
 <tr><th>Property</th><th>Format</th><th>Example</th><th>Notes</th></tr>
 
 <tr>
