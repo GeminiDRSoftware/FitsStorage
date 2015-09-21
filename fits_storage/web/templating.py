@@ -93,6 +93,7 @@ def templated(template_name, content_type="text/html", with_generator=False, wit
         def fn_wrapper(req, *args, **kw):
             template = get_env().get_template(template_name)
             with session_scope() as session:
+                req.content_type = content_type
                 if with_session:
                     context = fn(session, req, *args, **kw)
                 else:
@@ -102,7 +103,6 @@ def templated(template_name, content_type="text/html", with_generator=False, wit
                 else:
                     status = default_status
 
-                req.content_type = content_type
                 if not with_generator:
                     req.write(template.render(context))
                 else:
