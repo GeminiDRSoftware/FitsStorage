@@ -1,0 +1,25 @@
+{% extends "layout_nofrills.html" %}
+{% block title %}Photometric standards in frame{% endblock %}
+{% block body %}
+<h1>Photometric standards in frame</h1>
+
+<table border='0'>
+  <tr class='tr_head'>
+    <th>Name<th>Field<th>RA<th>DEC
+    {%- for band in band_names %}
+    <th>{{ band }}_mag
+    {%- endfor %}
+  </tr>
+  {%- for std in phot_std_obs %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+    <td>{{ std.name }}
+    <td>{{ std.field }}
+    <td>{{ std.ra }}
+    <td>{{ std.dec }}
+    {%- for band in bands %}
+    <td>{{ std[band] or '' }}
+    {%- endfor %}
+  </tr>
+  {%- endfor %}
+</table>
+{% endblock %}

@@ -11,6 +11,8 @@ from ..fits_storage_config import using_apache, storage_root, fits_servername
 from ..gemini_metadata_utils import cal_types
 from ..apache_return_codes import HTTP_OK, HTTP_NOT_ACCEPTABLE
 
+from . import templating
+
 from sqlalchemy import join, desc
 
 import urllib
@@ -54,38 +56,131 @@ def cals_info(cal_obj, caltype, qtype='UNKNOWN', log=no_func, add_note=no_func, 
             else:
                 cals = []
 
+            cal_res = []
             for cal in cals:
-                # OK, say what we found
-                resp.append("<calibration>")
-                resp.append("<caltype>%s</caltype>" % ct)
-                resp.append("<datalabel>%s</datalabel>" % cal.data_label)
-                resp.append("<filename>%s</filename>" % cal.diskfile.file.name)
-                resp.append("<md5>%s</md5>" % cal.diskfile.data_md5)
                 if cal.diskfile.present:
                     if http:
-                        resp.append("<url>http://%s/file/%s</url>" % (hostname, cal.diskfile.file.name))
+                        url = "http://{host}/file/{name}".format(host=hostname,
+                                                                 name=cal.diskfile.file.name)
                     else:
                         path = os.path.join(storage_root, cal.diskfile.file.path, cal.diskfile.file.name)
-                        resp.append("<url>file://%s</url>" % path)
+                        url = "file://{}".format(path)
                 else:
                     # Once we are sending new stlye processed calibrations to the GSA,
                     # we can form a URL to the GSA here and return that.
-                    resp.append("<!-- Calibration Result found in DB, but file is not present on FITS server -->")
-                resp.append("</calibration>")
+                    url = None
+
+                cal_res.append(
+                    dict(label = cal.data_label,
+                         name  = cal.diskfile.file.name,
+                         md5   = cal.diskfile.data_md5,
+                         url   = url
+                    ))
+
                 add_note("CalMGR %s returning %s %s" % (qtype, ct, cal.diskfile.file.name))
+
+            yield dict(
+                error = False,
+                type  = ct,
+                cals  = cal_res
+                )
+
             if len(cals) == 0:
-                resp.append("<!-- NO CALIBRATION FOUND for caltype %s-->" % ct)
                 add_note("CalMGR %s - no calibration type %s found" % (qtype, ct))
         except Exception:
-            resp.append("<!-- PROBLEM WHILE SEARCHING FOR caltype %s-->" % ct)
+            yield dict(
+                error = True,
+                type  = ct,
+                cals  = None
+                )
+
             string = traceback.format_tb(sys.exc_info()[2])
             string = "".join(string)
             log("Exception in cal association: %s: %s %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
             add_note("Exception in cal association: %s: %s %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
 
-    return '\n'.join(resp) + '\n'
+def generate_post_calmgr(session, req, selection, caltype):
+    # OK, get the details from the POST data
+    clientdata = req.read()
+    clientstr = urllib.unquote_plus(clientdata)
 
-def calmgr(req, selection):
+    match = re.match("descriptors=(.*)&types=(.*)", clientstr)
+    desc_str = match.group(1)
+    type_str = match.group(2)
+
+    descriptors = eval(desc_str)
+    types = eval(type_str)
+    req.usagelog.add_note("CalMGR request CalType: %s" % caltype)
+    req.usagelog.add_note("CalMGR request Descriptor Dictionary: %s" % descriptors)
+    req.usagelog.add_note("CalMGR request Types List: %s" % types)
+
+    # OK, there are a couple of items that are handled in the DB as if they are descriptors
+    # but they're actually types. This is where we push them into the descriptor disctionary
+    descriptors['nodandshuffle'] = 'GMOS_NODANDSHUFFLE' in types
+    descriptors['spectroscopy'] = 'SPECT' in types
+    descriptors['overscan_subtracted'] = 'OVERSCAN_SUBTRACTED' in types
+    descriptors['overscan_trimmed'] = 'OVERSCAN_TRIMMED' in types
+    descriptors['prepared'] = 'PREPARED' in types
+
+    # Get a cal object for this target data
+    c = get_cal_object(session, None, header=None, descriptors=descriptors, types=types)
+
+    yield dict(
+        label    = descriptors['data_label'],
+        filename = None,
+        md5      = None,
+        cal_info = cals_info(c, caltype, qtype='POST',
+                                      log=req.log_error,
+                                      add_note=req.usagelog.add_note,
+                                      hostname=fits_servername,
+                                      storage_root=storage_root)
+        )
+
+    # Commit the changes to the usagelog
+    session.commit()
+
+def generate_get_calmgr(session, req, selection, caltype):
+    # OK, we got called via a GET - find the science datasets in the database
+    # The Basic Query
+    query = session.query(Header).select_from(join(join(File, DiskFile), Header))
+
+    # Query the selection
+    # Knock out the FAILs
+    # Order by date, most recent first
+    query = queryselection(query, selection)\
+                 .filter(Header.qa_state != 'Fail')\
+                 .order_by(desc(Header.ut_datetime))
+
+    # If openquery, limit number of responses
+    # NOTE: This shouldn't happen, as we're disallowing open queries
+    if openquery(selection):
+        query = query.limit(1000)
+
+    # OK, do the query
+    headers = query.all()
+
+    # Did we get anything?
+    if len(headers) > 0:
+        # Loop through targets frames we found
+        for header in headers:
+            # Get a cal object for this target data
+            c = get_cal_object(session, None, header=header)
+
+            yield dict(
+                label    = header.data_label,
+                filename = header.diskfile.file.name,
+                md5      = header.diskfile.data_md5,
+                cal_info = cals_info(c, caltype, qtype='GET',
+                                     log=req.log_error,
+                                     add_note=req.usagelog.add_note,
+                                     hostname=req.server.server_hostname),
+                )
+
+    # commit the usagelog notes
+    session.commit()
+
+@templating.templated("calmgr.xml", content_type='text/xml', with_session=True)
+def calmgr(session, req, selection):
     """
     This is the calibration manager. It implements a machine readable calibration association server
     req is an apache request handler object
@@ -109,127 +204,31 @@ def calmgr(req, selection):
     # There selection has to be a closed query. If it's open, then disallow
     if openquery(selection):
         req.content_type = "text/plain"
-        req.write("<!-- Error: Selection cannot represent an open query for calibration association -->\n")
-        return HTTP_NOT_ACCEPTABLE
+        req.write("<!-- Error: Selection cannot represent an open query for calibration association -->\n\n")
+        raise templating.SkipTemplateError(HTTP_NOT_ACCEPTABLE)
 
     # Only the canonical versions
     selection['canonical'] = True
 
-    session = sessionfactory()
     try:
         # Was the request for only one type of calibration?
-        caltype = ''
-        if 'caltype' in selection:
-            caltype = selection['caltype']
+        caltype = selection.get('caltype', '')
+
+
         # An empty cal type is acceptable for GET - means to list all the calibrations available
-        elif req.method == 'POST':
+        if not caltype and req.method == 'POST':
             req.content_type = "text/plain"
-            req.write("<!-- Error: No calibration type specified-->\n")
-            return HTTP_NOT_ACCEPTABLE
+            req.write("<!-- Error: No calibration type specified-->\n\n")
+            raise templating.SkipTemplateError(HTTP_NOT_ACCEPTABLE)
 
-        # Did we get called via an HTTP POST or HTTP GET?
-        if req.method == 'POST':
-            # OK, get the details from the POST data
-            req.content_type = "text/plain"
-            clientdata = req.read()
-            #req.write("\nclient data: %s\n" % clientdata)
-            clientstr = urllib.unquote_plus(clientdata)
-            #req.write("\nclient str: %s\n" % clientstr)
-            match = re.match("descriptors=(.*)&types=(.*)", clientstr)
-            desc_str = match.group(1)
-            type_str = match.group(2)
-            #req.write("\ndesc_str: %s\n" % desc_str)
-            #req.write("\ntype_str: %s\n" % type_str)
-            descriptors = eval(desc_str)
-            types = eval(type_str)
-            req.usagelog.add_note("CalMGR request CalType: %s" % caltype)
-            req.usagelog.add_note("CalMGR request Descriptor Dictionary: %s" % descriptors)
-            req.usagelog.add_note("CalMGR request Types List: %s" % types)
+        gen = (generate_post_calmgr if req.method == 'POST' else generate_get_calmgr)
 
-            # OK, there are a couple of items that are handled in the DB as if they are descriptors
-            # but they're actually types. This is where we push them into the descriptor disctionary
-            descriptors['nodandshuffle'] = 'GMOS_NODANDSHUFFLE' in types
-            descriptors['spectroscopy'] = 'SPECT' in types
-            descriptors['overscan_subtracted'] = 'OVERSCAN_SUBTRACTED' in types
-            descriptors['overscan_trimmed'] = 'OVERSCAN_TRIMMED' in types
-            descriptors['prepared'] = 'PREPARED' in types
-
-
-            # Get a cal object for this target data
-            req.content_type = "text/xml"
-            req.write('<?xml version="1.0" encoding="UTF-8"?>')
-            req.write('<calibration_associations xmlns="http://www.gemini.edu/xml/gsaCalibrations/v1.0">\n')
-            req.write('<!-- Generated by %s for POST request at %s / %s UTC-->' % (os.uname()[1],
-                            datetime.datetime.now(), datetime.datetime.utcnow()))
-            req.write("<dataset>\n")
-            req.write("<datalabel>%s</datalabel>\n" % descriptors['data_label'])
-
-            c = get_cal_object(session, None, header=None, descriptors=descriptors, types=types)
-
-            req.write(cals_info(c, caltype, qtype='GET',
-                                log=req.log_error,
-                                add_note=req.usagelog.add_note,
-                                hostname=fits_servername,
-                                storage_root=storage_root))
-
-            req.write("</dataset>\n")
-            req.write("</calibration_associations>\n")
-
-            # Commit the changes to the usagelog
-            session.commit()
-            return HTTP_OK
-
-        else:
-            # OK, we got called via a GET - find the science datasets in the database
-            # The Basic Query
-            query = session.query(Header).select_from(join(join(File, DiskFile), Header))
-
-            # Query the selection
-            # Knock out the FAILs
-            # Order by date, most recent first
-            query = queryselection(query, selection)\
-                         .filter(Header.qa_state != 'Fail')\
-                         .order_by(desc(Header.ut_datetime))
-
-            # If openquery, limit number of responses
-            if openquery(selection):
-                query = query.limit(1000)
-
-            # OK, do the query
-            headers = query.all()
-
-            req.content_type = "text/xml"
-            req.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            req.write('<calibration_associations xmlns="http://www.gemini.edu/xml/gsaCalibrations/v1.0">\n')
-            req.write('<!-- Generated by %s for GET request at %s / %s UTC-->' % (os.uname()[1],
-                            datetime.datetime.now(), datetime.datetime.utcnow()))
-            # Did we get anything?
-            if len(headers) > 0:
-                # Loop through targets frames we found
-                for header in headers:
-                    req.write("<dataset>\n")
-                    req.write("<datalabel>%s</datalabel>\n" % header.data_label)
-                    req.write("<filename>%s</filename>\n" % header.diskfile.file.name)
-                    req.write("<md5>%s</md5>\n" % header.diskfile.data_md5)
-
-                    # Get a cal object for this target data
-                    c = get_cal_object(session, None, header=header)
-
-                    req.write(cals_info(c, caltype, qtype='GET',
-                                        log=req.log_error,
-                                        add_note=req.usagelog.add_note,
-                                        hostname=req.server.server_hostname))
-
-                    req.write("</dataset>\n")
-            else:
-                req.write("<!-- COULD NOT LOCATE METADATA FOR DATASET -->\n")
-
-            req.write("</calibration_associations>\n")
-            # commit the usagelog notes
-            session.commit()
-            return HTTP_OK
+        return dict(
+            machine_name = os.uname()[1],
+            req_method   = req.method,
+            now          = datetime.datetime.now(),
+            utcnow       = datetime.datetime.utcnow(),
+            generator    = gen(session, req, selection, caltype),
+            )
     except IOError:
         pass
-    finally:
-        session.close()
-

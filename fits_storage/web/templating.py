@@ -72,6 +72,10 @@ def get_env():
 
     return jinja_env
 
+class SkipTemplateError(Exception):
+    def __init__(self, status):
+        self.status = status
+
 # This is a decorator for functions that use templates. Simplifies
 # some use cases, making it easy to return from the function at
 # any point without having to care about repeating the content generation
@@ -94,20 +98,24 @@ def templated(template_name, content_type="text/html", with_generator=False, wit
             template = get_env().get_template(template_name)
             with session_scope() as session:
                 req.content_type = content_type
-                if with_session:
-                    context = fn(session, req, *args, **kw)
-                else:
-                    context = fn(req, *args, **kw)
-                if isinstance(context, tuple):
-                    status, context = context
-                else:
-                    status = default_status
+                try:
+                    if with_session:
+                        context = fn(session, req, *args, **kw)
+                    else:
+                        context = fn(req, *args, **kw)
+                    if isinstance(context, tuple):
+                        status, context = context
+                    else:
+                        status = default_status
 
-                if not with_generator:
-                    req.write(template.render(context))
-                else:
-                    for text in template.generate(context):
-                        req.write(text)
+                    if not with_generator:
+                        req.write(template.render(context))
+                    else:
+                        for text in template.generate(context):
+                            req.write(text)
+                except SkipTemplateError as e:
+                    status = e.status
+
                 return status
         return fn_wrapper
     return template_decorator

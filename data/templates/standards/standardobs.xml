@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+{%- for std in phot_std_obs %}
+<photstandard>")
+ <name>{{ std.name }}</name>
+ <field>{{ std.field }}</field>
+ <ra>{{ std.ra }}</ra>
+ <dec>{{ std.dec }}</dec>
+ {%- for band in bands %}
+ <{{ band }}>{% if std[band] is not None %}{{ std[band] }}{% endif %}</{{ band }}>
+ {%- endfor %}
+</photstandard>
+{%- endfor %}
