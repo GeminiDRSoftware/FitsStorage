@@ -80,9 +80,9 @@ click an observation class or observation type to narrow your search down to onl
 
 <p>The links in the Data Label column are a little more subtle. Gemini Data Labels are composed of the Program ID followed
 by the Observation number and finally the data set number. These are three separate links in the data label. Clicking on
-any of these will add that as a search constraint. So for example if the data label is <tt>GN-2010A-Q-11-22-33</tt> then
-clicking <tt>GN-2010A-Q-11</tt> will add that program ID as a search constraint, clicking the <tt>22</tt> will add
-Observation ID <tt>GN-2010A-Q-11-22</tt> as a search constraint, and clicking the <tt>33</tt> would add the complete
+any of these will add that as a search constraint. So for example if the data label is <kbd>GN-2010A-Q-11-22-33</kbd> then
+clicking <kbd>GN-2010A-Q-11</kbd> will add that program ID as a search constraint, clicking the <kbd>22</kbd> will add
+Observation ID <kbd>GN-2010A-Q-11-22</kbd> as a search constraint, and clicking the <kbd>33</kbd> would add the complete
 data label as a search constraint, which should only find files with that exact data label.</p>
 
 <p>To undo any search selections made like this, clear the fields in the search form and click
@@ -184,14 +184,14 @@ download column for the files you want and click the "Download Marked Files" but
 not all of them, you can probably constrain your search to just the ones you want and then use the Download All 
 feature. Either way, this will send you a tar file containing the bzip2 compressed tar files, a README.txt file, 
 and an md5sums.txt file. bzip2 is a standard compression tool installed on almost all Linux and Mac computers by default
-and available for almost all platforms. The uncompress command is usually <tt>bunzip2</tt>. The README file gives you
+and available for almost all platforms. The uncompress command is usually <code>bunzip2</code>. The README file gives you
 a summary of what was downloaded, and the md5sums.txt file allows you to verify that your files were not corrupted
 during the transfer - see instructions in the readme file.</p>
 
 <p>The download system should activate your browser's regular Save-As feature, no additional plugin or app is required. 
 The system will suggest a default filename for the download based on the search criteria, your browser may allow you
 to modify that before the file is saved. Some browsers will prompt for the directory where you want to save the file,
-some will default to a <tt>Downloads</tt> directory or similar.</p> 
+some will default to a <kbd>Downloads</kbd> directory or similar.</p> 
 
 <h2 id="obslogs">Searching for Observation Logs</h2>
 <p>You can also search for observation logs both directly and by association. To search directly, fill out
@@ -204,8 +204,8 @@ browser's "Save As" function to save it to local disk.</p>
 <h2 id="api-access">Accessing the Archive from scripts and the command line</h2>
 
 <p>Many URLs to services on the archive can be constructed easily by hand or programmatically, and then accessed using
-command line tools such as <tt>wget</tt> or <tt>curl</tt>, or from a scripting language, for example using the 
-<tt>urllib</tt> module or similar in python. Further details are provided in the 
+command line tools such as <kbd>wget</kbd> or <kbd>curl</kbd>, or from a scripting language, for example using the 
+<kbd>urllib</kbd> module or similar in python. Further details are provided in the 
 <a href="/help/api.html">Application Programmer Interface (API) documentation</a></p>
 
 </body>
