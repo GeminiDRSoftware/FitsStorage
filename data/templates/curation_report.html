@@ -1,0 +1,42 @@
+{% extends "layout_nofrills.html" %}
+{% block title %}FITS Storage database curation report{% endblock %}
+{% block body %}
+<h1>FITS Storage database curation report</h1>
+
+<h2>Duplicate Canonical DiskFiles:</h2>
+{%- if dup_canon.count() == 0 %}
+None found.
+{%- else %}
+<table border='0'>
+  <tr class='tr_head'><th>DiskFile id<th>FileName</tr>
+  {% for df_id, file in dup_canon %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'><td>{{ df_id }}<td><td><a href="/summary/{{ file.name }}"> {{ file.name }} </a></tr>
+  {% endfor %}
+</table>
+{%- endif %}
+
+<h2>Duplicate Present DiskFiles:</h2>
+{%- if dup_pres.count() == 0 %}
+None found.
+{%- else %}
+<table border='0'>
+  <tr class='tr_head'><th>DiskFile id<th>FileName</tr>
+  {% for df_id, file in dup_pres %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'><td>{{ df_id }}<td><td><a href="/summary/{{ file.name }}"> {{ file.name }} </a></tr>
+  {% endfor %}
+</table>
+{%- endif %}
+
+<h2>DiskFiles that are Present but not Canonical:</h2>
+{%- if pres_no_can.count() == 0 %}
+None found.
+{%- else %}
+<table border='0'>
+  <tr class='tr_head'><th>DiskFile id<th>FileName</tr>
+  {% for df_id, file in pres_no_can %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'><td>{{ df_id }}<td><td><a href="/summary/{{ file.name }}"> {{ file.name }} </a></tr>
+  {% endfor %}
+</table>
+{%- endif %}
+
+{% endblock %}

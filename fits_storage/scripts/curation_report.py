@@ -5,7 +5,7 @@ orm.curation.py
 
 from fits_storage.orm import session_scope
 from fits_storage.orm.header import Header
-from fits_storage.orm.curation import duplicate_datalabels, duplicate_canonicals, duplicate_present, present_not_canonical
+from fits_storage.orm.curation import duplicate_canonicals, duplicate_present, present_not_canonical
 from optparse import OptionParser
 
 parser = OptionParser()
@@ -19,60 +19,25 @@ parser.add_option("--noeng", action="store_const", const="ENG", dest="exclude", 
 checkonly = options.checkonly
 exclude = options.exclude
 
+def print_results(query, header, empty_message):
+    if query.count() == 0:
+        print empty_message
+    else:
+        for df_id, file in query:
+            print "{header}: DiskFile id = {dfid:9}, File id = {fid:9}".format(header= header,
+                                                                               dfid  = df_id,
+                                                                               fid   = file.id)
 
 # Get a database session
 with session_scope() as session:
-    # Work for duplicate_datalabels
-    dupdata = duplicate_datalabels(session, checkonly, exclude)
-    previous_ans = ''
-    # This for loop changes the list of df_ids to the corresponding DiskFile ids
-    if len(dupdata) > 0:
-        for val in dupdata:
-            this_ans = val
-            header = session.query(Header).filter(Header.diskfile_id == val).first()
-            if header:
-                if previous_ans != '' and previous_ans == this_ans:
-                    print "duplicate datalabel rows: DiskFile id = %s,    Filename = %s,    Datalabel = %s" %    (header.diskfile.id, header.diskfile.file.name, header.data_label) 
-                previous_ans = this_ans
-    else:
-        print "No duplicate datalabel rows detected."
+    print_results(duplicate_canonicals(session),
+                  "duplicate canonical row",
+                  "No duplicate canonical rows found.")
 
+    print_results(duplicate_present(session),
+                  "duplicate present row",
+                  "No duplicate present rows found.")
 
-    # Work for duplicate_canonicals
-    dupcanon = duplicate_canonicals(session)
-    # Iterates through the list of rows and returns the desired values
-    previous_file = ''
-    empty = True
-    for val in dupcanon:
-        this_file = val.file_id
-        if previous_file != '' and previous_file == this_file:
-            print "duplicate canonical rows: DiskFile id = %s,    File id = %s,    canonical = %s" %    (val.id, val.file.id, val.canonical)
-            empty = False
-        previous_file = this_file
-    if not empty:
-        print "No duplicate canonical rows detected."
-
-
-    # Work for duplicate_present
-    duppres = duplicate_present(session)
-    # Iterates through the list of rows and returns the desired values
-    previous_file = ''
-    empty = True
-    for val in duppres:
-        this_file = val.file_id
-        if previous_file != '' and previous_file == this_file:
-            print "duplicate present rows: DiskFile id = %s,    File id = %s,    present = %s" %    (val.id,    val.file.id, val.present)
-            empty = False
-        previous_file = this_file
-    if not empty:
-        print "No duplicate present rows detected."
-
-
-    # Work for present_not_canonical
-    presnotcanon = present_not_canonical(session)
-    # Iterates through the list of rows and returns the desired values
-    if len(presnotcanon) > 0:
-        for val in presnotcanon:
-            print "duplicate present not canonical rows: DiskFile id = %s,    present = %s,    canonical = %s" %    (val.id, val.present, val.canonical)
-    else:
-        print "No rows with the conditions present=True and canonical=False."
+    print_results(present_not_canonical(session),
+                  "duplicate present not canonical row",
+                  "No present diskfile found to be non-canonical.")

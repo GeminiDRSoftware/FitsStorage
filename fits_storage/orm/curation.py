@@ -3,80 +3,55 @@ This module contains the functions for curation_report.py that compare items in 
 Header and DiskFile.
 """
 from .diskfile import DiskFile
+from .file     import File
 
-from sqlalchemy import text
+from sqlalchemy import text, distinct
 from sqlalchemy.orm import aliased
 
-def duplicate_datalabels(session, checkonly=None, exclude=None):
-    """
-    Returns a list of df_ids as ids that were created to represent the join of DiskFile and
-    Header tables and identify which rows have duplicate datalabels.
-    """
-    # Form a connection with session
-    conn = session.connection()
-    # A select statement that joins the Header and DiskFile tables and reduces its size with filters
-    sql = """SELECT a.df_id
-                                FROM (Diskfile JOIN Header ON DiskFile.id = Header.diskfile_id) AS a (df_id),
-                                         (DiskFile JOIN Header ON DiskFile.id = Header.diskfile_id) AS b (df_id)
-                                WHERE a.df_id != b.df_id AND
-                                            a.canonical = 'True' AND
-                                            b.canonical = 'True' AND
-                                            a.data_label = b.data_label"""
-    if checkonly:
-        sql += """ AND a.data_label LIKE '%%%s%%'""" % (checkonly)
-    if exclude:
-        sql += """ AND a.data_label NOT LIKE '%%%s%%'""" % (exclude)
-
-    sql += """ ORDER BY a.diskfile_id ASC"""
-
-    # Execute the select statement
-    result = conn.execute(text(sql))
-    # Makes a list of all the joined table ids, df_id, in the list "duplicates"
-    duplicates = []
-    for row in result:
-        duplicates.append(row['df_id'])
-    return duplicates
-
+diskfile_alias = aliased(DiskFile)
 
 def duplicate_canonicals(session):
-    """
-    Returns a list of all the values in a row for any rows where there is more than one row
-    with the same file_id that has canonical = True.
-    """
+    """Find canonical DiskFiles with duplicate file_ids.
+
+       Returns a query object"""
     # Make an alias of DiskFile
-    diskfile_alias = aliased(DiskFile)
     # Self join DiskFile with its alias and compare their file_ids
-    query = session.query(DiskFile).select_from(diskfile_alias)
-    query = query.filter(DiskFile.id == diskfile_alias.id).filter(DiskFile.canonical == True)
-    query = query.filter(diskfile_alias.canonical == True).filter(DiskFile.file_id == diskfile_alias.file_id)
-    query = query.order_by(DiskFile.id)
-    # Creates a list of the rows identified by the query
-    diskfiles = query.all()
+    return (
+        session.query(distinct(DiskFile.id), File)
+                .join(File)
+                .join(diskfile_alias, DiskFile.file_id == diskfile_alias.file_id)
+                .filter(DiskFile.id != diskfile_alias.id)
+                .filter(DiskFile.canonical == True)
+                .filter(diskfile_alias.canonical == True)
+                .order_by(DiskFile.id)
+        )
     return diskfiles
 
 
 def duplicate_present(session):
-    """
-    Returns a list of all the values in a row for any rows where there is more than one row
-    with the same file_id that has present = True.
-    """
-    # Make and alias of DiskFile
-    diskfile_alias = aliased(DiskFile)
-    # Self join DiskFile with its alias and compare the file_ids
-    query = session.query(DiskFile).select_from(diskfile_alias)
-    query = query.filter(DiskFile.id == diskfile_alias.id).filter(DiskFile.present == True).filter(diskfile_alias.present == True)
-    query = query.filter(DiskFile.file_id == diskfile_alias.file_id).order_by(DiskFile.id)
-    # Creates a list of the rows identified by the query
-    diskfiles = query.all()
-    return diskfiles
+    """Find present DiskFiles with duplicate file_ids.
+
+       Returns a query object"""
+
+    return (
+        session.query(distinct(DiskFile.id), File)
+            .join(File)
+            .join(diskfile_alias, DiskFile.file_id == diskfile_alias.file_id)
+            .filter(DiskFile.id != diskfile_alias.id)
+            .filter(DiskFile.present == True)
+            .filter(diskfile_alias.present == True)
+            .order_by(DiskFile.id)
+        )
 
 def present_not_canonical(session):
-    """
-    Returns a list of all the values in a row for any rows that have present=True AND
-    canonical=True.
-    """
-    # Filters the DiskFile table for any rows where present = True AND canonical = False
-    query = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.canonical == False).order_by(DiskFile.id)
-    # Creates a list of the rows identified by the query
-    diskfiles = query.all()
-    return diskfiles
+    """Find present DiskFiles that are not canonical.
+
+       Returns a query object"""
+
+    return (
+        session.query(distinct(DiskFile.id), File)
+            .join(File)
+            .filter(DiskFile.present == True)
+            .filter(DiskFile.canonical == False)
+            .order_by(DiskFile.id)
+        )

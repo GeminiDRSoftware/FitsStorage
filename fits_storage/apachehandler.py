@@ -100,6 +100,7 @@ mapping_simple = {
     'logout': logout,                                       # logout
     'user_list': user_list,                                 # user_list
     'update_headers': update_headers,                       # JSON RPC dispatcher
+    'curation': curation_report,                            # curation_report handler
     }
 
 # Functions invoked with (req, things)
@@ -115,7 +116,6 @@ mapping_things = {
     'tape': tape,                       # Tape handler
     'tapewrite': tapewrite,             # TapeWrite handler
     'tapefile': tapefile,               # TapeFile handler
-    'curation': curation_report,        # curation_report handler
     'request_account': request_account, # new account request
     'password_reset': password_reset,   # account password reset request
     'login': login,                     # login form
