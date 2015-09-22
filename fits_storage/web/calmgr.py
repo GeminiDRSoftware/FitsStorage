@@ -210,25 +210,22 @@ def calmgr(session, req, selection):
     # Only the canonical versions
     selection['canonical'] = True
 
-    try:
-        # Was the request for only one type of calibration?
-        caltype = selection.get('caltype', '')
+    # Was the request for only one type of calibration?
+    caltype = selection.get('caltype', '')
 
 
-        # An empty cal type is acceptable for GET - means to list all the calibrations available
-        if not caltype and req.method == 'POST':
-            req.content_type = "text/plain"
-            req.write("<!-- Error: No calibration type specified-->\n\n")
-            raise templating.SkipTemplateError(HTTP_NOT_ACCEPTABLE)
+    # An empty cal type is acceptable for GET - means to list all the calibrations available
+    if not caltype and req.method == 'POST':
+        req.content_type = "text/plain"
+        req.write("<!-- Error: No calibration type specified-->\n\n")
+        raise templating.SkipTemplateError(HTTP_NOT_ACCEPTABLE)
 
-        gen = (generate_post_calmgr if req.method == 'POST' else generate_get_calmgr)
+    gen = (generate_post_calmgr if req.method == 'POST' else generate_get_calmgr)
 
-        return dict(
-            machine_name = os.uname()[1],
-            req_method   = req.method,
-            now          = datetime.datetime.now(),
-            utcnow       = datetime.datetime.utcnow(),
-            generator    = gen(session, req, selection, caltype),
-            )
-    except IOError:
-        pass
+    return dict(
+        machine_name = os.uname()[1],
+        req_method   = req.method,
+        now          = datetime.datetime.now(),
+        utcnow       = datetime.datetime.utcnow(),
+        generator    = gen(session, req, selection, caltype),
+        )

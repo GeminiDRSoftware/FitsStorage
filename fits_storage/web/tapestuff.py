@@ -35,74 +35,71 @@ def tape(session, req, things):
     This is the tape list function
     """
 
-    try:
-        # Process form data first
-        formdata = util.FieldStorage(req)
-        for key, value in formdata.items():
-            field = key.split('-')[0]
-            tapeid = int(key.split('-')[1])
+    # Process form data first
+    formdata = util.FieldStorage(req)
+    for key, value in formdata.items():
+        field = key.split('-')[0]
+        tapeid = int(key.split('-')[1])
 
-            if tapeid:
-                tape = session.query(Tape).get(tapeid)
-                if field == 'moveto':
-                    tape.location = value
-                    tape.lastmoved = datetime.datetime.utcnow()
-                elif field == 'active':
-                    if value == 'Yes':
-                        tape.active = True
-                    if value == 'No':
-                        tape.active = False
-                elif field == 'full':
-                    if value == 'Yes':
-                        tape.full = True
-                    if value == 'No':
-                        tape.full = False
-                elif field == 'set':
-                    tape.set = value
-                elif field == 'fate':
-                    tape.fate = value
-            if field == 'newlabel':
-                # Add a new tape to the database
-                newtape = Tape(value)
-                session.add(newtape)
+        if tapeid:
+            tape = session.query(Tape).get(tapeid)
+            if field == 'moveto':
+                tape.location = value
+                tape.lastmoved = datetime.datetime.utcnow()
+            elif field == 'active':
+                if value == 'Yes':
+                    tape.active = True
+                if value == 'No':
+                    tape.active = False
+            elif field == 'full':
+                if value == 'Yes':
+                    tape.full = True
+                if value == 'No':
+                    tape.full = False
+            elif field == 'set':
+                tape.set = value
+            elif field == 'fate':
+                tape.fate = value
+        if field == 'newlabel':
+            # Add a new tape to the database
+            newtape = Tape(value)
+            session.add(newtape)
 
-            session.commit()
+        session.commit()
 
-        # datetimes used to colour last verified warnings.
-        now = datetime.datetime.utcnow()
-        year = datetime.timedelta(days=365)
-        nine = datetime.timedelta(days=int(365*0.75))
-        bad = now - year
-        warning = now - nine
+    # datetimes used to colour last verified warnings.
+    now = datetime.datetime.utcnow()
+    year = datetime.timedelta(days=365)
+    nine = datetime.timedelta(days=int(365*0.75))
+    bad = now - year
+    warning = now - nine
 
-        def generator():
-            query = session.query(Tape)
-            # Get a list of the tapes that apply
-            if things:
-                searchstring = '%'+things[0]+'%'
-                query = query.filter(Tape.label.like(searchstring))
-            tapequery = query.order_by(desc(Tape.id))
+    def generator():
+        query = session.query(Tape)
+        # Get a list of the tapes that apply
+        if things:
+            searchstring = '%'+things[0]+'%'
+            query = query.filter(Tape.label.like(searchstring))
+        tapequery = query.order_by(desc(Tape.id))
 
 
-            for tape in tapequery:
-                # Count Writes
-                twqtotal = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id)
-                twq = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.suceeded == True)
-                # Count Bytes
-                bytes = 0
-                if twq.count():
-                    bytesquery = session.query(func.sum(TapeWrite.size)).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.suceeded == True)
-                    bytes = bytesquery.one()[0] or 0
+        for tape in tapequery:
+            # Count Writes
+            twqtotal = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id)
+            twq = session.query(TapeWrite).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.suceeded == True)
+            # Count Bytes
+            bytes = 0
+            if twq.count():
+                bytesquery = session.query(func.sum(TapeWrite.size)).filter(TapeWrite.tape_id == tape.id).filter(TapeWrite.suceeded == True)
+                bytes = bytesquery.one()[0] or 0
 
-                yield (tape, twqtotal.count(), twq.count(), float(bytes)/1.0E9)
+            yield (tape, twqtotal.count(), twq.count(), float(bytes)/1.0E9)
 
-        return dict(
-            bad = bad,
-            warning = warning,
-            generator = generator(),
-            )
-    except IOError:
-        pass
+    return dict(
+        bad = bad,
+        warning = warning,
+        generator = generator(),
+        )
 
 @templating.templated("tapestuff/tapewrite.html", with_session=True, with_generator=True)
 def tapewrite(session, req, things):
@@ -110,30 +107,27 @@ def tapewrite(session, req, things):
     This is the tapewrite list function
     """
 
-    try:
-        # Find the appropriate TapeWrite entries
-        query = session.query(TapeWrite, Tape).join(Tape)
+    # Find the appropriate TapeWrite entries
+    query = session.query(TapeWrite, Tape).join(Tape)
 
-        # Can give a tape id (numeric) or label as an argument
-        if things:
-            thing = things[0]
+    # Can give a tape id (numeric) or label as an argument
+    if things:
+        thing = things[0]
+        try:
+            query = query.filter(TapeWrite.tape_id == int(thing))
+        except ValueError:
+            thing = '%'+thing+'%'
+            tapequery = session.query(Tape).filter(Tape.label.like(thing))
             try:
-                query = query.filter(TapeWrite.tape_id == int(thing))
-            except ValueError:
-                thing = '%'+thing+'%'
-                tapequery = session.query(Tape).filter(Tape.label.like(thing))
-                try:
-                    query = query.filter(Tape.id == tapequery.one().id)
-                except NoResultFound:
-                    return dict(message = "Could not find tape by label search")
-                except MultipleResultsFound:
-                    return dict(message = "Found multiple tapes by label search. Please give the ID instead")
+                query = query.filter(Tape.id == tapequery.one().id)
+            except NoResultFound:
+                return dict(message = "Could not find tape by label search")
+            except MultipleResultsFound:
+                return dict(message = "Found multiple tapes by label search. Please give the ID instead")
 
-        query = query.order_by(desc(TapeWrite.startdate))
+    query = query.order_by(desc(TapeWrite.startdate))
 
-        return dict(tws = query)
-    except IOError:
-        pass
+    return dict(tws = query)
 
 @templating.templated("tapestuff/tapefile.html", with_session=True, with_generator=True)
 def tapefile(session, req, things):
@@ -146,21 +140,16 @@ def tapefile(session, req, things):
 
     tapewrite_id = things[0]
 
-    try:
-        query = session.query(TapeFile).filter(TapeFile.tapewrite_id == tapewrite_id).order_by(TapeFile.id)
+    query = session.query(TapeFile).filter(TapeFile.tapewrite_id == tapewrite_id).order_by(TapeFile.id)
 
-        return dict(tapefiles = query)
-    except IOError:
-        pass
+    return dict(tapefiles = query)
 
 @templating.templated("tapestuff/taperead.html", with_session=True, with_generator=True)
 def taperead(session, req):
     """
     This is the taperead list function
     """
-    try:
-        query = session.query(TapeRead).order_by(TapeRead.id)
 
-        return dict(tapefiles = query)
-    except IOError:
-        pass
+    query = session.query(TapeRead).order_by(TapeRead.id)
+
+    return dict(tapefiles = query)

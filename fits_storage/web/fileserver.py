@@ -255,63 +255,59 @@ def fileserver(req, things):
         filename = filenamegiven
 
     with session_scope(no_rollback=True) as session:
-        try:
-            # Instantiate the download log
-            downloadlog = DownloadLog(req.usagelog)
-            session.add(downloadlog)
-            downloadlog.query_started = datetime.datetime.utcnow()
+        # Instantiate the download log
+        downloadlog = DownloadLog(req.usagelog)
+        session.add(downloadlog)
+        downloadlog.query_started = datetime.datetime.utcnow()
 
-            query = session.query(File).filter(File.name == filename)
-            if query.count() == 0:
-                downloadlog.add_note("Not found in File table")
-                return apache.HTTP_NOT_FOUND
-            file = query.one()
-            # OK, we should have the file record now.
-            # Next, find the canonical diskfile for it
-            query = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.file_id == file.id)
-            diskfile = query.one()
+        query = session.query(File).filter(File.name == filename)
+        if query.count() == 0:
+            downloadlog.add_note("Not found in File table")
+            return apache.HTTP_NOT_FOUND
+        file = query.one()
+        # OK, we should have the file record now.
+        # Next, find the canonical diskfile for it
+        query = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.file_id == file.id)
+        diskfile = query.one()
 
-            # And now find the header record...
-            query = session.query(Header).filter(Header.diskfile_id == diskfile.id)
-            headers = query.all()
-            if len(headers) > 1:
-                downloadlog.add_note("WARNING: Multiple files found!")
-            if len(headers) > 0:
-                item = headers[0]
-                content_type = 'application/fits'
+        # And now find the header record...
+        query = session.query(Header).filter(Header.diskfile_id == diskfile.id)
+        headers = query.all()
+        if len(headers) > 1:
+            downloadlog.add_note("WARNING: Multiple files found!")
+        if len(headers) > 0:
+            item = headers[0]
+            content_type = 'application/fits'
+        else:
+            # Didn't find a header - is it an obslog file
+            query = session.query(Obslog).filter(Obslog.diskfile_id == diskfile.id)
+            obslogs = query.all()
+            if len(obslogs) > 1:
+                downloadlog.add_note("WARNING: Multiple obslogs found!")
+            if len(obslogs) > 0:
+                item = obslogs[0]
+                content_type = 'text/plain'
             else:
-                # Didn't find a header - is it an obslog file
-                query = session.query(Obslog).filter(Obslog.diskfile_id == diskfile.id)
-                obslogs = query.all()
-                if len(obslogs) > 1:
-                    downloadlog.add_note("WARNING: Multiple obslogs found!")
-                if len(obslogs) > 0:
-                    item = obslogs[0]
-                    content_type = 'text/plain'
-                else:
-                    # Not an obslog either
-                    item = None
+                # Not an obslog either
+                item = None
 
-            downloadlog.query_completed = datetime.datetime.utcnow()
-            downloadlog.numresults = 1
-            if item is None:
-                downloadlog.numresults = 0
+        downloadlog.query_completed = datetime.datetime.utcnow()
+        downloadlog.numresults = 1
+        if item is None:
+            downloadlog.numresults = 0
+        else:
+            # Is the client allowed to get this file?
+            if icanhave(session, req, item):
+                # Send them the data
+                downloadlog.sending_files = True
+                sendonefile(req, item.diskfile, content_type=content_type)
+                downloadlog.download_completed = datetime.datetime.utcnow()
             else:
-                # Is the client allowed to get this file?
-                if icanhave(session, req, item):
-                    # Send them the data
-                    downloadlog.sending_files = True
-                    sendonefile(req, item.diskfile, content_type=content_type)
-                    downloadlog.download_completed = datetime.datetime.utcnow()
-                else:
-                    # Refuse to send data
-                    downloadlog.numdenied = 1
-                    raise AccessForbidden("Not enough privileges to download this content")
+                # Refuse to send data
+                downloadlog.numdenied = 1
+                raise AccessForbidden("Not enough privileges to download this content")
 
-            return apache.HTTP_OK
-        except IOError:
-            pass
-
+        return apache.HTTP_OK
 
 def sendonefile(req, diskfile, content_type=None):
     """

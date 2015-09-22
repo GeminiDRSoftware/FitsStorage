@@ -28,73 +28,70 @@ def stats(session, req):
     presented in html in the browser in a list format.
     """
 
-    try:
-        # DiskFile table statistics
-        DiskFileStats = namedtuple('DiskFileStats', "total_rows present_rows present_size latest last_minute last_hour last_day last_queries")
-        df_query = session.query(DiskFile)
-        def number_of_entries_within(delta):
-            return df_query.filter(DiskFile.entrytime > (datetime.now() - delta)).count()
+    # DiskFile table statistics
+    DiskFileStats = namedtuple('DiskFileStats', "total_rows present_rows present_size latest last_minute last_hour last_day last_queries")
+    df_query = session.query(DiskFile)
+    def number_of_entries_within(delta):
+        return df_query.filter(DiskFile.entrytime > (datetime.now() - delta)).count()
 
-        diskfile_stats = DiskFileStats(
-            total_rows   = df_query.count(),
-            present_rows = df_query.filter(DiskFile.present == True).count(),
-            present_size = session.query(func.sum(DiskFile.file_size)).filter(DiskFile.present == True).one()[0],
-            latest       = session.query(func.max(DiskFile.entrytime)).one()[0],
-            last_minute  = number_of_entries_within(timedelta(minutes=1)),
-            last_hour    = number_of_entries_within(timedelta(hours=1)),
-            last_day     = number_of_entries_within(timedelta(days=1)),
-            last_queries = df_query.order_by(desc(DiskFile.entrytime)).limit(10)
+    diskfile_stats = DiskFileStats(
+        total_rows   = df_query.count(),
+        present_rows = df_query.filter(DiskFile.present == True).count(),
+        present_size = session.query(func.sum(DiskFile.file_size)).filter(DiskFile.present == True).one()[0],
+        latest       = session.query(func.max(DiskFile.entrytime)).one()[0],
+        last_minute  = number_of_entries_within(timedelta(minutes=1)),
+        last_hour    = number_of_entries_within(timedelta(hours=1)),
+        last_day     = number_of_entries_within(timedelta(days=1)),
+        last_queries = df_query.order_by(desc(DiskFile.entrytime)).limit(10)
+        )
+
+    # Ingest queue stats
+    IngestStats = namedtuple('IngestStats', "count in_progress")
+    ingest_stats = IngestStats(
+        count = session.query(IngestQueue).count(),
+        in_progress = session.query(IngestQueue).filter(IngestQueue.inprogress == True).count(),
+        )
+
+    # Data rate statistics
+    today = datetime.utcnow().date()
+    zerohour = dt_time(0, 0, 0)
+    comb = datetime.combine(today, zerohour)
+    onemsecond = cast('1 microsecond', Interval)
+    oneday = cast('1 day', Interval)
+
+    def period_stats(until, times, period):
+        # For more info on how generate_series work to create the time intervals, please
+        # refer to the documentation for logreports.build_query
+        #
+        # It's all PostgreSQL black magic and trickery ;-)
+
+        oneinterval = cast('1 {}'.format(period), Interval)
+        intervals = func.generate_series((until - (oneinterval * times)) + oneday, until, oneinterval).label('start')
+        aliased_intervals = aliased(session.query(intervals).subquery(), 'timeperiod')
+
+        start = aliased_intervals.c.start
+        end   = (start + oneinterval) - onemsecond
+
+        return (
+            session.query(cast(start, Date).label("start"), cast(end, Date).label("end"),
+                          func.sum(DiskFile.file_size).label("bytes"),
+                          func.count(DiskFile.id).label("count"))
+                    .select_from(aliased_intervals)
+                    .outerjoin(Header, between(Header.ut_datetime, start, end))
+                    .outerjoin(DiskFile)
+                    .order_by(desc(start))
+                    .group_by(start)
             )
 
-        # Ingest queue stats
-        IngestStats = namedtuple('IngestStats', "count in_progress")
-        ingest_stats = IngestStats(
-            count = session.query(IngestQueue).count(),
-            in_progress = session.query(IngestQueue).filter(IngestQueue.inprogress == True).count(),
-            )
-
-        # Data rate statistics
-        today = datetime.utcnow().date()
-        zerohour = dt_time(0, 0, 0)
-        comb = datetime.combine(today, zerohour)
-        onemsecond = cast('1 microsecond', Interval)
-        oneday = cast('1 day', Interval)
-
-        def period_stats(until, times, period):
-            # For more info on how generate_series work to create the time intervals, please
-            # refer to the documentation for logreports.build_query
-            #
-            # It's all PostgreSQL black magic and trickery ;-)
-
-            oneinterval = cast('1 {}'.format(period), Interval)
-            intervals = func.generate_series((until - (oneinterval * times)) + oneday, until, oneinterval).label('start')
-            aliased_intervals = aliased(session.query(intervals).subquery(), 'timeperiod')
-
-            start = aliased_intervals.c.start
-            end   = (start + oneinterval) - onemsecond
-
-            return (
-                session.query(cast(start, Date).label("start"), cast(end, Date).label("end"),
-                              func.sum(DiskFile.file_size).label("bytes"),
-                              func.count(DiskFile.id).label("count"))
-                        .select_from(aliased_intervals)
-                        .outerjoin(Header, between(Header.ut_datetime, start, end))
-                        .outerjoin(DiskFile)
-                        .order_by(desc(start))
-                        .group_by(start)
-                )
-
-        return dict(
-            file_count    = session.query(File).count(),
-            df_stats      = diskfile_stats,
-            header_count  = session.query(Header).count(),
-            iq_stats      = ingest_stats,
-            daily_rates   = period_stats(until=comb, times=10, period='day'),
-            weekly_rates  = period_stats(until=comb, times=6, period='week'),
-            monthly_rates = period_stats(until=comb, times=6, period='month'),
-            )
-    except IOError:
-        pass
+    return dict(
+        file_count    = session.query(File).count(),
+        df_stats      = diskfile_stats,
+        header_count  = session.query(Header).count(),
+        iq_stats      = ingest_stats,
+        daily_rates   = period_stats(until=comb, times=10, period='day'),
+        weekly_rates  = period_stats(until=comb, times=6, period='week'),
+        monthly_rates = period_stats(until=comb, times=6, period='month'),
+        )
 
 @templating.templated("statistics/content.html", with_session=True, with_generator=True)
 def content(session, req):

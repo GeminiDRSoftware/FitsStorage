@@ -250,42 +250,40 @@ def calibrations(session, req, selection):
 
     caloption = selection.get('caloption', '')
     session = sessionfactory()
-    try:
-        # OK, find the target files
-        # The Basic Query
-        query = session.query(Header).select_from(join(join(DiskFile, File), Header))
 
-        # Only the canonical versions
-        selection['canonical'] = True
+    # OK, find the target files
+    # The Basic Query
+    query = session.query(Header).select_from(join(join(DiskFile, File), Header))
 
-        query = queryselection(query, selection)
+    # Only the canonical versions
+    selection['canonical'] = True
 
-        # If openquery, decline to do it
-        if openquery(selection):
-            template_args['is_open'] = True
-            return template_args
+    query = queryselection(query, selection)
 
-        # Knock out the FAILs
-        # Knock out ENG programs
-        # Disregard SV-101. This is an undesirable hardwire
-        # Order by date, most recent first
-        headers = query.filter(Header.qa_state != 'Fail')\
-                       .filter(Header.engineering != True)\
-                       .filter(~Header.program_id.like('%SV-101%'))\
-                       .order_by(desc(Header.ut_datetime))
-
-        template_args['ndatasets'] = headers.count()
-
-        # Was the request for only one type of calibration?
-        caltype = 'all'
-        if 'caltype' in selection:
-            caltype = selection['caltype']
-
-        template_args['objects'] = (WrapperObject(session, obj, counter, caloption, caltype) for obj in headers)
-
+    # If openquery, decline to do it
+    if openquery(selection):
+        template_args['is_open'] = True
         return template_args
-    except IOError:
-        return {}
+
+    # Knock out the FAILs
+    # Knock out ENG programs
+    # Disregard SV-101. This is an undesirable hardwire
+    # Order by date, most recent first
+    headers = query.filter(Header.qa_state != 'Fail')\
+                   .filter(Header.engineering != True)\
+                   .filter(~Header.program_id.like('%SV-101%'))\
+                   .order_by(desc(Header.ut_datetime))
+
+    template_args['ndatasets'] = headers.count()
+
+    # Was the request for only one type of calibration?
+    caltype = 'all'
+    if 'caltype' in selection:
+        caltype = selection['caltype']
+
+    template_args['objects'] = (WrapperObject(session, obj, counter, caloption, caltype) for obj in headers)
+
+    return template_args
 
 def interval_string(a, b):
     """

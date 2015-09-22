@@ -193,6 +193,12 @@ def handler(req):
                 session.add(log)
             retary = apache.OK
 
+        except templating.InterruptedError:
+            # HTTP 499 is a non-standard code used by a number of web servers. Nginx defines it
+            # as Client Closed Request. We'll stick to that meaning.
+            req.status = 499
+            retary = apache.OK
+
         except Exception:
             req.status = apache.HTTP_INTERNAL_SERVER_ERROR
             raise

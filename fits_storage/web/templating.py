@@ -76,6 +76,9 @@ class SkipTemplateError(Exception):
     def __init__(self, status):
         self.status = status
 
+class InterruptedError(Exception):
+    pass
+
 # This is a decorator for functions that use templates. Simplifies
 # some use cases, making it easy to return from the function at
 # any point without having to care about repeating the content generation
@@ -115,6 +118,10 @@ def templated(template_name, content_type="text/html", with_generator=False, wit
                             req.write(text)
                 except SkipTemplateError as e:
                     status = e.status
+                except IOError:
+                    # Assume that his means we got an interrupted connection
+                    # (eg. the user stopped the query on their browser)
+                    raise InterruptedError
 
                 return status
         return fn_wrapper

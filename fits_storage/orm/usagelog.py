@@ -84,5 +84,7 @@ class UsageLog(Base):
             html += " (METHOD NOT ALLOWED)"
         elif self.status == 406:
             html += " (NOT ACCEPTABLE)"
+        elif self.status == 499:
+            html += " (CLIENT CLOSED REQUEST)"
 
         return html

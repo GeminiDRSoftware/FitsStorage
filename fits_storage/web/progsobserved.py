@@ -19,20 +19,17 @@ def progsobserved(req, selection):
     """
 
     with session_scope() as session:
-        try:
-            # the basic query in this case
-            query = session.query(Header.program_id).select_from(join(join(DiskFile, File), Header))
+        # the basic query in this case
+        query = session.query(Header.program_id).select_from(join(join(DiskFile, File), Header))
 
-            # Add the selection criteria
-            query = queryselection(query, selection)
+        # Add the selection criteria
+        query = queryselection(query, selection)
 
-            # And the group by clause
-            progs_query = query.group_by(Header.program_id)
+        # And the group by clause
+        progs_query = query.group_by(Header.program_id)
 
-            return dict(
-                selection = sayselection(selection),
-                progs     = [p[0] for p in progs_query],
-                joined_sel = '/'.join(selection.values())
-                )
-        except IOError:
-            pass
+        return dict(
+            selection = sayselection(selection),
+            progs     = [p[0] for p in progs_query],
+            joined_sel = '/'.join(selection.values())
+            )
