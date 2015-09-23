@@ -1,4 +1,4 @@
-from ..orm import sessionfactory
+from ..orm import session_scope
 
 from ..fits_storage_config import using_s3, storage_root, preview_path
 
@@ -8,6 +8,7 @@ from ..orm.file import File
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.preview import Preview
+from ..orm.downloadlog import DownloadLog
 
 from .selection import getselection, openquery, selection_to_URL
 from .summary import list_headers
@@ -17,8 +18,8 @@ from .user import userfromcookie, AccessForbidden
 from mod_python import apache
 from mod_python import util
 
+import datetime
 import os
-import cStringIO
 
 if using_s3:
     from ..utils.aws_s3 import get_helper
@@ -35,60 +36,50 @@ def preview(req, things):
 
     # OK, first find the file they asked for in the database
     # tart up the filename if possible
-    if len(things) == 0:
-        return apache.HTTP_NOT_FOUND
-    filenamegiven = things.pop(0)
-    filename = gemini_fitsfilename(filenamegiven)
-    if filename:
-        pass
-    else:
-        filename = filenamegiven
-    session = sessionfactory()
     try:
-        query = session.query(File).filter(File.name == filename)
-        if query.count() == 0:
-            return apache.HTTP_NOT_FOUND
-        file = query.one()
-        # OK, we should have the file record now.
-        # Next, find the canonical diskfile for it
-        query = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.file_id == file.id)
-        diskfile = query.one()
-        # And now find the header record...
-        query = session.query(Header).filter(Header.diskfile_id == diskfile.id)
-        header = query.one()
-
-        # Is the client allowed to get this file?
-        canhaveit = icanhave(session, req, header)
-
-        if canhaveit:
-            # Send them the data if we can
-            if sendpreview(session, req, diskfile.id):
-                return apache.HTTP_OK
-            else:
-                return apache.HTTP_NOT_FOUND
+        filenamegiven = things.pop(0)
+        filename = gemini_fitsfilename(filenamegiven)
+        if filename:
+            pass
         else:
-            # Refuse to send data
-            downloadlog.numdenied = 1
-            raise AccessForbidden("You don't have access to the requested data")
+            filename = filenamegiven
+    except IndexError:
+        return apache.HTTP_NOT_FOUND
 
-    except IOError:
-        pass
-    finally:
-        session.commit()
-        session.close()
+    with session_scope() as session:
+        try:
+            # Find the information associated with the canonical diskfile and header for the file on the query
+            preview, header = (
+                session.query(Preview, Header).join(DiskFile).join(Header).join(File)
+                        .filter(DiskFile.present == True)
+                        .filter(File.name == filename)
+                        .first()
+                )
+        except TypeError: # Will happen if .first() returns None
+            return apache.HTTP_NOT_FOUND
 
+        downloadlog = DownloadLog(req.usagelog)
+        session.add(downloadlog)
+        downloadlog.query_started = datetime.datetime.utcnow()
 
-def sendpreview(session, req, diskfile_id):
+        try:
+            # Is the client allowed to get this file?
+            if icanhave(session, req, header):
+                # Send them the data if we can
+                sendpreview(req, preview)
+            else:
+                # Refuse to send data
+                downloadlog.numdenied = 1
+                raise AccessForbidden("You don't have access to the requested data")
+        finally:
+            downloadlog.query_completed = datetime.datetime.utcnow()
+
+        return apache.HTTP_OK
+
+def sendpreview(req, preview):
     """
-    Send the one preview file referenced by the diskfile_id
-    Return True if we were able, False otherwise
+    Send the one referenced preview file
     """
-
-    # Find the preview entry
-    query = session.query(Preview).filter(Preview.diskfile_id == diskfile_id)
-    preview = query.first()
-    if preview is None:
-        return False
 
     # Send them the data
     req.content_type = 'image/jpeg'
@@ -100,4 +91,3 @@ def sendpreview(session, req, diskfile_id):
         # Serve from regular file
         fullpath = os.path.join(storage_root, preview_path, preview.filename)
         req.sendfile(fullpath)
-    return True
