@@ -83,7 +83,7 @@ class InterruptedError(Exception):
 # some use cases, making it easy to return from the function at
 # any point without having to care about repeating the content generation
 # at every single exit point.
-def templated(template_name, content_type="text/html", with_generator=False, with_session=False, default_status=apache.HTTP_OK):
+def templated(template_name, content_type="text/html", with_generator=False, with_session=False, default_status=apache.HTTP_OK, at_end_hook=None):
     """template_name is the path to the template file, relative to the template_root.
 
        If with_generator is True, Jinja2 will be instructed to try to chunk the output,
@@ -94,6 +94,10 @@ def templated(template_name, content_type="text/html", with_generator=False, wit
        the function to return ORM objects that can be manipulated by the template, without
        having to detach them from the session first. A typical use case is to pass a query
        so that the template iterates over it.
+
+       If at_end_hook is defined, it has to be a callable object. It will be invoked after
+       the template has generated all the text, passing both the session object and the
+       request.
     """
     def template_decorator(fn):
         @wraps(fn)
@@ -116,6 +120,9 @@ def templated(template_name, content_type="text/html", with_generator=False, wit
                     else:
                         for text in template.generate(context):
                             req.write(text)
+
+                    if at_end_hook:
+                        at_end_hook(session, req)
                 except SkipTemplateError as e:
                     status = e.status
                 except IOError:
