@@ -80,15 +80,11 @@ def import_odb_notifications(req):
     xml = req.read()
 
     with session_scope() as session:
-        try:
-            # Process it
-            report = ingest_odb_xml(session, xml)
+        # Process it
+        report = ingest_odb_xml(session, xml)
 
-            # Write back the report
-            req.content_type = "text/plain"
-            for l in report:
-                req.write(l)
-                req.write('\n')
-
-        except IOError:
-            raise templating.InterruptError
+        # Write back the report
+        req.content_type = "text/plain"
+        for l in report:
+            req.write(l)
+            req.write('\n')

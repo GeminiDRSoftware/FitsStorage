@@ -2,7 +2,7 @@
 This module generates the Observing Statistics - ie "Open Shutter" Statistic reports for Inger
 """
 
-from ..orm import sessionfactory
+from ..orm import session_scope
 from .summary import list_headers
 from ..apache_return_codes import HTTP_OK
 from ..gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
@@ -20,9 +20,7 @@ def observing_statistics(req, selection):
     req.content_type = "text/plain"
 
     # Get a database session.
-    session = sessionfactory()
-    try:
-
+    with session_scope() as session:
         lst = []
         if('date' in selection.keys()):
             lst.append(calculate_observing_statistics(session, selection, req, debug=False))
@@ -94,11 +92,6 @@ def observing_statistics(req, selection):
             req.write('\n')
 
         return HTTP_OK
-
-    except IOError:
-        pass
-    finally:
-        session.close()
 
 def calculate_observing_statistics(session, selection, req, debug=False):
     """

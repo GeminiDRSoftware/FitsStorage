@@ -28,56 +28,53 @@ def report(req, thing):
 #        return apache.HTTP_OK
 
     with session_scope() as session:
-        try:
-            if thing.isdigit():
-                # We got a diskfile_id
-                query = session.query(DiskFile).filter(DiskFile.id == thing)
-                if query.count() == 0:
-                    req.content_type = "text/plain"
-                    req.write("Cannot find diskfile for id: %s\n" % thing)
-                    return apache.OK
-            # Now construct the query
+        if thing.isdigit():
+            # We got a diskfile_id
+            query = session.query(DiskFile).filter(DiskFile.id == thing)
+            if query.count() == 0:
+                req.content_type = "text/plain"
+                req.write("Cannot find diskfile for id: %s\n" % thing)
+                return apache.OK
+        # Now construct the query
+        else:
+            fnthing = gemini_fitsfilename(thing)
+            # We got a filename
+            if fnthing:
+                error_message = "Cannot find file for: %s\n" % fnthing
+                query = session.query(File).filter(File.name == fnthing)
             else:
-                fnthing = gemini_fitsfilename(thing)
-                # We got a filename
-                if fnthing:
-                    error_message = "Cannot find file for: %s\n" % fnthing
-                    query = session.query(File).filter(File.name == fnthing)
-                else:
-                    error_message = "Cannot find (non-standard named) file for: %s\n" % thing
-                    query = session.query(File).filter(File.name == thing)
+                error_message = "Cannot find (non-standard named) file for: %s\n" % thing
+                query = session.query(File).filter(File.name == thing)
 
-                if query.count() == 0:
-                    req.content_type = "text/plain"
-                    req.write(error_message)
-                    return apache.HTTP_OK
-                file = query.one()
-                # Query diskfiles to find the diskfile for file that is canonical
-                query = session.query(DiskFile).filter(DiskFile.canonical == True).filter(DiskFile.file_id == file.id)
+            if query.count() == 0:
+                req.content_type = "text/plain"
+                req.write(error_message)
+                return apache.HTTP_OK
+            file = query.one()
+            # Query diskfiles to find the diskfile for file that is canonical
+            query = session.query(DiskFile).filter(DiskFile.canonical == True).filter(DiskFile.file_id == file.id)
 
-            diskfile = query.one()
-            # Find the diskfilereport
-            query = session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == diskfile.id)
-            diskfilereport = query.one()
-            req.content_type = "text/plain"
-            if this == 'fitsverify':
-                req.write(diskfilereport.fvreport)
-            if this == 'mdreport':
-                try:
-                    req.write(diskfilereport.mdreport)
-                except TypeError:
-                    req.write('No report was generated\n')
-            if this == 'fullheader':
-                # Need to find the header associated with this diskfile
-                query = (session.query(Header, FullTextHeader)
-                            .filter(FullTextHeader.diskfile_id == diskfile.id)
-                            .filter(Header.diskfile_id == diskfile.id))
-                header, ftheader = query.one()
-                if canhave_coords(session, userfromcookie(session, req), header):
-                    req.write(ftheader.fulltext)
-                else:
-                    req.write("The data you're trying to access has proprietary rights and cannot be displayed")
-        except IOError:
-            pass
+        diskfile = query.one()
+        # Find the diskfilereport
+        query = session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == diskfile.id)
+        diskfilereport = query.one()
+        req.content_type = "text/plain"
+        if this == 'fitsverify':
+            req.write(diskfilereport.fvreport)
+        if this == 'mdreport':
+            try:
+                req.write(diskfilereport.mdreport)
+            except TypeError:
+                req.write('No report was generated\n')
+        if this == 'fullheader':
+            # Need to find the header associated with this diskfile
+            query = (session.query(Header, FullTextHeader)
+                        .filter(FullTextHeader.diskfile_id == diskfile.id)
+                        .filter(Header.diskfile_id == diskfile.id))
+            header, ftheader = query.one()
+            if canhave_coords(session, userfromcookie(session, req), header):
+                req.write(ftheader.fulltext)
+            else:
+                req.write("The data you're trying to access has proprietary rights and cannot be displayed")
 
     return apache.HTTP_OK
