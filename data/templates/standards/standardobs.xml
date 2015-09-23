@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 {%- for std in phot_std_obs %}
-<photstandard>")
+<photstandard>
  <name>{{ std.name }}</name>
  <field>{{ std.field }}</field>
  <ra>{{ std.ra }}</ra>
