@@ -326,7 +326,6 @@ def sendonefile(req, diskfile, content_type=None):
         # S3 file server
         fname = diskfile.filename
         req.set_content_length(diskfile.data_size)
-        req.log_error("Here")
         with s3.fetch_temporary(fname) as buffer:
             data = buffer.read()
             if diskfile.compressed:
