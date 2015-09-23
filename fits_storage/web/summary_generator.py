@@ -393,7 +393,7 @@ class SummaryGenerator(object):
             if col['want']:
                 if col['summary_func']:
                     value = getattr(self, col['summary_func'])(header, diskfile, file)
-                    if colkey == 'download' and 'N/A' not in value:
+                    if colkey == 'download' and '[D]' in value:
                         row.can_download = True
                     row.add(value)
                 elif col['header_attr']:
@@ -633,7 +633,7 @@ class SummaryGenerator(object):
 
             return html
         else:
-            return self.prop_message(header, 'N/A', centered=True)
+            return self.prop_message(header, header.release.strftime('%Y%m%d'), centered=True)
 
     def prop_message(self, header, text, centered = False):
         text = '<abbr title="This appears to be proprietary data to which you do not have access. It becomes public on {rel}">{text}</abbr>'.format(
