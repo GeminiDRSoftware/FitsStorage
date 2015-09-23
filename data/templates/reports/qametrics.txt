@@ -1,0 +1,28 @@
+{%- if iq -%}
+#Datalabel, filename, detector, filter, utdatetime, Nsamples, FWHM, FWHM_std, isoFWHM, isoFWHM_std, EE50d, EE50d_std, elip, elip_std, pa, pa_std, strehl, strehl_std, percentile_band, comments
+{%- for filternm, utdt, metrics in iq %}
+{{ metrics.datalabel }}, {{ metrics.filename }}, {{ metrics.detector }}, {{ filternm }}, {{ utdt }}, {{ metrics.nsamples }}, {{ metrics.fwhm }}, {{ metrics.fwhm_std }}, {{ metrics.isofwhm }}, {{ metrics.isofwhm_std }}, {{ metrics.ee50d }}, {{ metrics.ee50d_std }}, {{ metrics.elip }}, {{ metrics.elip_std }}, {{ metrics.pa }}, {{ metrics.pa_std }}, {{ metrics.strehl }}, {{ metrics.strehl_std }}, {{ metrics.percentile_band }}, {{ metrics.comment }}
+{%- endfor %}
+#---------
+{%- endif %}
+{%- if zp %}
+#Datalabel, filename, detector, filter, utdatetime, Nsamples, zp_mag, zp_mag_std, cloud, cloud_std, photref, percentile_band, comment
+{%- for filternm, utdt, metrics in zp %}
+{{ metrics.datalabel }}, {{ metrics.filename }}, {{ metrics.detector }}, {{ filternm }}, {{ utdt }}, {{ metrics.nsamples }}, {{ metrics.mag }}, {{ metrics.mag_std }}, {{ metrics.cloud }}, {{ metrics.cloud_std }}, {{ metrics.photref }}, {{ metrics.percentile_band }}, {{ metrics.comment }}
+{%- endfor %}
+#---------
+{%- endif %}
+{%- if sb %}
+#Datalabel, filename, detector, filter, utdatetime, Nsamples, sb_mag, sb_mag_std, sb_electrons, sb_electrons_std, percentile_band, comment
+{%- for filternm, utdt, metrics in sb %}
+{{ metrics.datalabel }}, {{ metrics.filename }}, {{ metrics.detector }}, {{ filternm }}, {{ utdt }}, {{ metrics.nsamples }}, {{ metrics.mag }}, {{ metrics.mag_std }}, {{ metrics.electrons }}, {{ metrics.electrons_std }}, {{ metrics.percentile_band }}, {{ metrics.comment }}
+{%- endfor %}
+#---------
+{%- endif %}
+{%- if pe %}
+#Datalabel, filename, detector, filter, utdatetime, Nsamples, dra, dra_std, ddec, ddec_std, astref, comment
+{%- for filternm, utdt, metrics in pe %}
+{{ metrics.datalabel }}, {{ metrics.filename }}, {{ metrics.detector }}, {{ filternm }}, {{ utdt }}, {{ metrics.nsamples }}, {{ metrics.dra }}, {{ metrics.dra_std }}, {{ metrics.ddec }}, {{ metrics.ddec_std }}, {{ metrics.astref }}, {{ metrics.comment }}
+{%- endfor %}
+#---------
+{%- endif %}

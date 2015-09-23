@@ -2,7 +2,7 @@
 This module contains the QA metric database interface
 """
 
-from ..orm import sessionfactory
+from ..orm import session_scope
 from sqlalchemy import desc
 import urllib
 import datetime
@@ -17,6 +17,8 @@ from ..orm.qastuff import QAreport, QAmetricSB, QAmetricIQ, QAmetricZP, QAmetric
 from ..orm.qastuff import evaluate_bg_from_metrics, evaluate_cc_from_metrics
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
+
+from . import templating
 
 def qareport(req):
     """
@@ -43,16 +45,13 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
     """
     This function takes a list of qareport dictionaries and inserts into the database
     """
-    session = sessionfactory()
-    try:
+    with session_scope() as session:
         for qa_dict in thelist:
             # Get a new QAreport ORM object
             qareport = QAreport.from_dict(qa_dict, submit_host, submit_time)
 
             session.add(qareport)
             session.commit()
-    finally:
-        session.close()
 
     return HTTP_OK
 
@@ -63,69 +62,42 @@ def parse_json(clientdata):
     """
     return json.loads(clientdata)
 
-def qametrics(req, things):
+@templating.templated("reports/qametrics.txt", content_type='text/plain', with_session=True, with_generator=True)
+def qametrics(session, req, things):
     """
     This function is the initial, simple display of QA metric data
     """
-    session = sessionfactory()
-    try:
 
-        def print_metrics(cls, header, pattern):
-            query = session.query(cls).select_from(cls, QAreport).filter(cls.qareport_id == QAreport.id)
+    def yield_metrics(session, cls):
+        query = session.query(cls).select_from(cls, QAreport).filter(cls.qareport_id == QAreport.id)
+        for qa in query:
+            hquery = session.query(Header).select_from(Header, DiskFile)\
+                                .filter(Header.diskfile_id == DiskFile.id)\
+                                .filter(DiskFile.canonical == True)\
+                                .filter(Header.data_label == qa.datalabel)
+            header = hquery.first()
+            if header:
+                filternm = header.filter_name
+                utdt = header.ut_datetime
+            else:
+                filternm = None
+                utdt = None
 
-            req.write(header + '\n')
+            yield filternm, utdt, qa
 
-            for qa in query:
-                hquery = session.query(Header).select_from(Header, DiskFile)\
-                                    .filter(Header.diskfile_id == DiskFile.id)\
-                                    .filter(DiskFile.canonical == True)\
-                                    .filter(Header.data_label == qa.datalabel)
-                header = hquery.first()
-                if header:
-                    filternm = header.filter_name
-                    utdt = header.ut_datetime
-                else:
-                    filternm = None
-                    utdt = None
+    pairs = (
+        ('iq', QAmetricIQ),
+        ('zp', QAmetricZP),
+        ('sb', QAmetricSB),
+        ('pe', QAmetricPE),
+        )
 
-                req.write(pattern.format(filternm=filternm, utdt=utdt, **qa) + '\n')
+    ret = {}
+    for thing, cls in pairs:
+        if thing in things:
+            ret[thing] = yield_metrics(session, cls)
 
-            req.write("#---------")
-
-        req.content_type = "text/plain"
-        if 'iq' in things:
-            header = ("#Datalabel, filename, detector, filter, utdatetime, Nsamples, FWHM, FWHM_std, isoFWHM, isoFWHM_std, "
-                      "EE50d, EE50d_std, elip, elip_std, pa, pa_std, strehl, strehl_std, percentile_band, comments")
-            pattern = ("{datalabel}, {filename}, {detector}, {filternm}, {utdt}, {nsamples}, {fwhm}, {fwhm_std}, "
-                       "{isofwhm}, {isofwhm_std}, {ee50d}, {ee50d_std}, {elip}, {elip_std}, {pa}, {pa_std}, "
-                       "{strehl}, {strehl_std}, {percentile_band}, {comment}")
-            print_metrics(QAmetricIQ, header, pattern)
-
-        if 'zp' in things:
-            header = ("#Datalabel, filename, detector, filter, utdatetime, Nsamples, zp_mag, zp_mag_std, cloud, cloud_std, photref, percentile_band, comment")
-            pattern = ("{datalabel}, {filename}, {detector}, {filternm}, {utdt}, {nsamples}, {mag}, {mag_std}, "
-                       "{cloud}, {cloud_std}, {photref}, {percentile_band}, {comment}")
-            print_metrics(QAmetricZP, header, pattern)
-
-        if 'sb' in things:
-            header = "#Datalabel, filename, detector, filter, utdatetime, Nsamples, sb_mag, sb_mag_std, sb_electrons, sb_electrons_std, percentile_band, comment"
-            pattern = ("{datalabel}, {filename}, {detector}, {filternm}, {utdt}, {nsamples}, {mag}, {mag_std}, "
-                       "{electrons}, {electrons_std}, {percentile_band}, {comment}")
-            print_metrics(QAmetricSB, header, pattern)
-
-        if 'pe' in things:
-            header = "#Datalabel, filename, detector, filter, utdatetime, Nsamples, dra, dra_std, ddec, ddec_std, astref, comment"
-            pattern = ("{datalabel}, {filename}, {detector}, {filternm}, {utdt}, {nsamples}, {dra}, {dra_std}, "
-                       "{ddec}, {ddec_std}, {astref}, {comment}")
-            print_metrics(QAmetricPE, header, pattern)
-
-
-    except IOError:
-        pass
-    finally:
-        session.close()
-
-    return HTTP_OK
+    return ret
 
 def qaforgui(req, things):
     """
@@ -143,8 +115,7 @@ def qaforgui(req, things):
         req.write("Error: no datestamp given")
         return HTTP_NOT_ACCEPTABLE
 
-    session = sessionfactory()
-    try:
+    with session_scope() as session:
         req.content_type = "application/json"
 
         # We only want the most recent of each value for each datalabel
@@ -292,11 +263,6 @@ def qaforgui(req, things):
 
         # Serialize it out via json to the request object
         json.dump(list_for_json, req, indent=4)
-
-    except IOError:
-        pass
-    finally:
-        session.close()
 
     return HTTP_OK
 
