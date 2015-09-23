@@ -1,0 +1,12 @@
+{% extends "layout_nofrills.html" %}
+{% block title %}Obslogs table {{ selection }}{% endblock %}
+{% block body %}
+{%- if 'warning' in selection %}
+<h3>WARNING: {{ selection.warning }}</h3>
+{% endif %}
+{%- if no_obslogs == True %}
+<h2>No Obslogs found</h2>
+{%- else %}
+{% include "obslog/obslogs_table.html" %}
+{%- endif %}
+{% endblock %}

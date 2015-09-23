@@ -1,0 +1,37 @@
+{%- if hits_open == True %}
+<p>WARNING: Your search does not constrain the number of results - ie you did not specify a date,
+   date range, program ID etc. Searches like this are limited to {{ open_limit }} results, and this
+   search hit that limit. You may want to constrain your search. Constrained searches have a
+   higher result limit
+{%- elif hits_closed == True %}
+<p>WARNING: Your search generated more than the limit of {{ closed_limit }} results. Not all results
+   have been shown. You might want to constrain your search more.
+{%- endif %}
+
+<p>Click the filename to open the obslog in your browser. Right-click the filename or use your
+   browser Save-Link-As function to download to a file. If the filename is not a link, you do not
+   have access to that observation log - they follow the same proprietary period as the data they refer to.
+<table class='fullwidth'>
+  <tr class='tr_head'><th>Filename<th>UT Date<th>Program ID</tr>
+  {%- for name, date, prog_id, can_have in obslogs %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+    {%- if can_have == True %}
+    <td><a href="/file/{{ name }}" target="_blank">{{ name }}</a>
+    {%- else %}
+    <td>{{ name }}
+    {%- endif %}
+    <td>{{ date }}<td>{{ prog_id }}
+  </tr>
+  {%- endfor %}
+</table>
+<a name="tableend"></a>
+
+{%- if hits_open == True %}
+<p>WARNING: Your search does not constrain the number of results - ie you did not specify a date,
+   date range, program ID etc. Searches like this are limited to {{ open_limit }} results, and this
+   search hit that limit. You may want to constrain your search. Constrained searches have a
+   higher result limit
+{%- elif hits_closed == True %}
+<p>WARNING: Your search generated more than the limit of {{ closed_limit }} results. Not all results
+   have been shown. You might want to constrain your search more.
+{%- endif %}
