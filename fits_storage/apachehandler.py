@@ -15,7 +15,7 @@ from web.file_list import xmlfilelist, jsonfilelist, jsonsummary, jsonqastate
 from web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead
 from web.xml_tape import xmltape
 from web.progsobserved import progsobserved
-from web.gmoscal import gmoscal
+from web.gmoscal import gmoscal_html, gmoscal_json
 from web.notification import notification, import_odb_notifications
 from web.calmgr import calmgr
 from web.calibrations import calibrations
@@ -135,7 +135,7 @@ mapping_selection = {
     'jsonsummary': jsonsummary,
     'jsonqastate': jsonqastate,
     'calmgr': calmgr,               # The calmgr handler
-    'gmoscal': gmoscal,             # The GMOS twilight flat and bias report
+    'gmoscal': gmoscal_html,        # The GMOS twilight flat and bias report
 
 
     # Obslogs get their own summary-like handler
@@ -148,7 +148,7 @@ mapping_selection = {
     # The GMOS twilight flat and bias report (JSON result)
     # The function here is the same as for 'gmoscal'. We're using partial for
     # the same reason as with obslogs (see above)
-    'gmoscaljson': partial(gmoscal, do_json=True),
+    'gmoscaljson': gmoscal_json,
 }
 
 #### END STANDARD ROUTING ####

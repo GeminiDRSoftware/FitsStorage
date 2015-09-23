@@ -1,0 +1,91 @@
+{% extends "layout_nofrills.html" %}
+{% block title %}GMOS Cal (Imaging Twilight Flats and Biases) Report {{ said_selection }}{% endblock %}
+{% block body %}
+<h1>GMOS Cal (Imaging Twilight Flats and Biases) Report {{ said_selection }}</h1>
+{% if is_development %}
+<h1>This is the Development Server, not the operational system. If you're not sure why you're seeing this message, please consult PH</h1>
+{% endif %}
+{% if using_sqlite %}
+<h1>The GMOS Cal page is not implemented with the SQLite database backend as it uses database functionality not supported by SQLite.</h1>
+<p>Talk to PH is you have a use case needing this.
+<p>You should not see this message from facility central servers
+{% else %}
+<h2>Twilight Flats</h2>
+ {%- if flat_autodetected_range %}
+<h2>Auto-detecting Last Processing Date: {{ flat_autodetected_range }}</h2>
+ {%- endif %}
+<table border='0'>
+  <tr class='tr_head'><th>Number of Science Frames<th>Number of Twilight Frames<th>Filter<th>Binning</tr>
+  {%- for _, (nsci, ntwi, filt, binn) in twilight %}
+   {%- if nsci > 0 and ntwi == 0 %}
+  <tr class='{{ loop.cycle("tr_warnodd", "tr_warneven") }}'>
+   {%- else %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+   {%- endif %}
+    <td>{{ nsci }}<td>{{ ntwi }}<td>{{ filt }}<td>{{ binn }}
+  </tr>
+  {%- endfor %}
+</table>
+
+<p><a href="/summary/GMOS/imaging/OBJECT/science/NotFail/{{ datething }}">Science Frames Summary Table</a>
+<p><a href="/summary/GMOS/imaging/OBJECT/dayCal/Lucky/{{ datething }}">Twilight Flat Summary Table</a>
+<p>NB. Summary table links above will show ENG and SV program data not reflected in the counts above.
+
+<h2>Biases</h2>
+ {%- if bias_autodetected_range %}
+<h2>Auto-detecting Last Processing Date: {{ bias_autodetected_range }}</h2>
+ {%- endif %}
+<table border='0'>
+  <tr class='tr_head'>
+    <th rowspan='2'>UT Date
+    {%- for b in binlist %}
+    <th colspan='2'>{{ b }}
+    {%- endfor %}
+  </tr>
+  <tr class='tr_head'>
+    {%- for b in binlist %}{%- for r in roilist %}
+    <th>{{ r }}
+    {%- endfor %}{%- endfor %}
+  </tr>
+  {%- for utdate, values in bias %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+    <td>{{ utdate }}
+    {%- for b in binlist %}{%- for r in roilist %}
+    <td>{{ values.get(b, {}).get(r, 0) }}
+    {%- endfor %}{%- endfor %}
+  </tr>
+  {%- endfor %}
+  <tr class='tr_head'>
+    <th>Total
+    {%- for b in binlist %}{%- for r in roilist %}
+    <th>{{ total_bias.get("%s-%s" % (b, r), 0) }}
+    {%- endfor %}{%- endfor %}
+  </tr>
+</table>
+{%- if nobiases %}
+<p>There were {{ nobiases|length }} dates with no biases not set to Fail: {{ nobiases|join(', ') }}
+{%- endif %}
+
+<h2>Nod and Shuffle Darks</h2>
+<p>This table shows how many suitable N&amp;S darks can be found for every nodandshuffle OBJECT science frame
+   within the last year. It counts darks taken within 6 months of the science as well as the total number found.
+   We aim to have 15 darks taken within 6 months of the science. You can also see the number of months between
+   the science and the most distant one within the 15 to give you an idea how far back you have to go to find
+   a set of 15. If you see the same observation Id listed twice, then there are observations in that
+   observation ID that require different darks.
+
+<table border='0'>
+  <tr class='tr_head'><th>Observation ID<th>Number Within 6 Months<th>Total Number Known<th>Age of oldest one (months)</tr>
+  {%- for entry in nod_and_shuffle %}
+   {%- if entry.young < 15 %}
+  <tr class='{{ loop.cycle("tr_warnodd", "tr_warneven") }}'>
+   {%- else %}
+  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+   {%- endif %}
+    <td><a href="/summary/{{ entry.observation_id }}">{{ entry.observation_id }}</a>
+    <td>{{ entry.young }}<td>{{ entry.count }}<td>{{ entry.age }}
+  {%- endfor %}
+</table>
+
+{% endif %}{# using_sqlite #}
+{% endblock %}

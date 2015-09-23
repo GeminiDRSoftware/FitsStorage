@@ -4,7 +4,7 @@ This module contains the gmoscal html generator function.
 import sqlalchemy
 from sqlalchemy.sql.expression import cast
 from sqlalchemy import func, join, desc
-from ..orm import sessionfactory
+from ..orm import session_scope
 from ..orm.gmos import Gmos
 from ..orm.header import Header
 from ..orm.diskfile import DiskFile
@@ -15,6 +15,8 @@ from .calibrations import interval_hours
 from ..cal import get_cal_object
 from ..fits_storage_config import using_sqlite, fits_system_status, das_calproc_path
 from ..gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
+
+from . import templating
 
 from ..apache_return_codes import HTTP_OK, HTTP_NOT_IMPLEMENTED
 
@@ -28,435 +30,261 @@ import time
 import re
 import dateutil.parser
 import json
+from collections import defaultdict, namedtuple
+
+@templating.templated("gmoscal.html", with_session=True)
+def gmoscal_html(session, req, selection):
+    return gmoscal(session, req, selection)
 
 
-def gmoscal(req, selection, do_json=False):
+def gmoscal_json(req, selection):
+    with session_scope() as session:
+        req.content_type = 'application/json'
+        result = {
+            'selection': selection
+            }
+
+        values = gmoscal(session, req, selection)
+
+        if 'flat_autodetected_range' in values:
+            result['Twilight_AutoDetectedDates'] = values['flat_autodetected_range']
+        if 'bias_autodetected_range' in values:
+            result['Bias_AutoDetectedDates'] = values['bias_autodetected_range']
+
+        jlist = [{'n_sci': nsci, 'n_twilight': ntwi, 'filter': filt, 'binning': binn}
+                 for key, (nsci, ntwi, filt, binn) in values['twilight']]
+        result['twilight_flats'] = jlist
+        result['biases'] = dict((k.strftime("%Y%m%d"), v) for k, v in values['bias'])
+
+        json.dump([result], req, indent=4)
+        return HTTP_OK
+
+def gmoscal(session, req, selection):
     """
     This generates a GMOS imaging twilight flat, bias and nod and shuffle darks report.
     If no date or daterange is given, tries to find last processing date
     """
 
-    if do_json:
-        req.content_type = "application/json"
-        json_dict = {}
-        json_dict['selection'] = selection
-    else:
-        title = "GMOS Cal (Imaging Twilight Flats and Biases) Report %s" % sayselection(selection)
-        req.content_type = "text/html"
-        req.write('<html><head><title>%s</title>' % title)
-        req.write('<link rel="stylesheet" href="/table.css"></head><body><h1>%s</h1>' % title)
-        if fits_system_status == 'development':
-            req.write("<H1>This is the Development Server, not the operational system. If you're not sure why you're seeing this message, please consult PH</H1>")
+    result = dict(
+        said_selection = sayselection(selection),
+        is_development = fits_system_status == 'development',
+        )
 
     if using_sqlite:
-        req.write("<H1>The GMOS Cal page is not implemented with the SQLite database backend as it uses database functionality not supported by SQLite.</H1>")
-        req.write("<P>Talk to PH is you have a use case needing this.</P>")
-        req.write("<P>You should not see this message from facility central servers</P>")
-        return HTTP_NOT_IMPLEMENTED
+        result['using_sqlite'] = True
+        return HTTP_NOT_IMPLEMENTED, result
 
-    # Get a database session
-    session = sessionfactory()
-    try:
-        # First the Twilight Flats part
-        if not do_json:
-            req.write('<H2>Twilight Flats</H2>')
+    # Was a date provided by user?
+    datenotprovided = ('date' not in selection) and ('daterange' not in selection)
+    # If no date or daterange, look on endor or josie to get the last processing date
 
-        # Was a date provided by user?
-        datenotprovided = ('date' not in selection) and ('daterange' not in selection)
-        # If no date or daterange, look on endor or josie to get the last processing date
-        if datenotprovided:
-            base_dir = das_calproc_path
-            checkfile = 'Basecalib/flatall.list'
-            enddate = datetime.datetime.now().date()
-            date = enddate
-            found = -1000
-            startdate = None
-            while found < 0:
-                datestr = date.strftime("%Y%b%d").lower()
-                file = os.path.join(base_dir, datestr, checkfile)
-                if os.path.exists(file):
-                    found = 1
-                    startdate = date
-                date -= ONEDAY_OFFSET
-                found += 1
+    def autodetect_range(checkfile, selection):
+        base_dir = das_calproc_path
+        enddate = datetime.datetime.now().date()
+        date = enddate
+        found = -1000
+        startdate = None
 
-                if startdate:
-                    # Start the day after the last reduction
-                    startdate += ONEDAY_OFFSET
-                    selection['daterange'] = "%s-%s" % (startdate.strftime("%Y%m%d"), enddate.strftime("%Y%m%d"))
-                    if do_json:
-                        json_dict['Twilight_AutoDetectedDates'] = selection['daterange']
-                    else:
-                        req.write("<H2>Auto-detecting Last Processing Date: %s</H2>" % selection['daterange'])
+        ret = None
+        while found < 0:
+            datestr = date.strftime("%Y%b%d").lower()
+            file = os.path.join(base_dir, datestr, checkfile)
+            if os.path.exists(file):
+                found = 1
+                startdate = date
+            date -= ONEDAY_OFFSET
+            found += 1
 
-        # We do this twice, first for the science data, then for the twilight flat data
-        # These are differentiated by being science or dayCal
+            if startdate:
+                # Start the day after the last reduction
+                startdate += ONEDAY_OFFSET
+                ret = "%s-%s" % (startdate.strftime("%Y%m%d"), enddate.strftime("%Y%m%d"))
+                selection['daterange'] = ret
 
-        # Put the results into dictionaries, which we can then combine into one html table or json items
-        sci = {}
-        tlf = {}
-        for observation_class in (['science', 'dayCal']):
+        return ret
 
-            # The basic query for this
-            query = session.query(func.count(1), Header.filter_name, Header.detector_binning).select_from(join(join(DiskFile, File), Header))
-            query = query.filter(DiskFile.canonical == True)
+    if datenotprovided:
+        res = autodetect_range('Basecalib/flatall.list', selection)
+        if res:
+            result['flat_autodetected_range'] = res
 
-            # Fudge and add the selection criteria
-            selection['observation_class'] = observation_class
-            selection['observation_type'] = 'OBJECT'
-            selection['spectroscopy'] = False
-            selection['inst'] = 'GMOS'
-            selection['qa_state'] = 'NotFail'
-            if observation_class == 'dayCal':
-                selection['qa_state'] = 'Lucky'
-                # Only select full frame dayCals
-                query = query.filter(Header.detector_roi_setting == 'Full Frame')
-                # Twilight flats must have the target name 'Twilight'
-                query = query.filter(Header.object == 'Twilight')
+    # We do this twice, first for the science data, then for the twilight flat data
+    # These are differentiated by being science or dayCal
 
-            query = queryselection(query, selection)
-
-            # Knock out ENG programs
-            query = query.filter(Header.engineering == False).filter(Header.science_verification == False)
-
-            # Group by clause
-            query = query.group_by(Header.filter_name, Header.detector_binning).order_by(Header.detector_binning, Header.filter_name)
-
-            list = query.all()
-
-
-            # Populate the dictionary
-            # as {'i-2x2':[10, 'i', '2x2'], ...}    ie [number, filter_name, binning]
-            if observation_class == 'science':
-                dict = sci
-            else:
-                dict = tlf
-
-            for row in list:
-                # row[0] = count, [1] = filter, [2] = binning
-                key = "%s-%s" % (row[1], row[2])
-                dict[key] = [row[0], row[1], row[2]]
-
-        # Make the master dictionary
-        # as {'i-2x2':[10, 20, 'i', '2x2'], ...}     [n_sci, n_tlf, filter_name, binning]
-        all = {}
-        for key in sci.keys():
-            nsci = sci[key][0]
-            ntlf = 0
-            filter_name = sci[key][1]
-            binning = sci[key][2]
-            all[key] = [nsci, ntlf, filter_name, binning]
-        for key in tlf.keys():
-            if key in all.keys():
-                all[key][1] = tlf[key][0]
-            else:
-                nsci = 0
-                ntlf = tlf[key][0]
-                filter_name = tlf[key][1]
-                binning = tlf[key][2]
-                all[key] = [nsci, ntlf, filter_name, binning]
-
-
-        if do_json:
-            jlist = []
-            for key in all.keys():
-                jlist.append({'filter': all[key][2], 'binning': all[key][3], 'n_sci': all[key][0], 'n_twilight': all[key][1]})
-            json_dict['twilight_flats'] = jlist
-        else:
-            # Output the HTML table and links to summaries etc
-            req.write('<TABLE border=0>')
-            req.write('<TR class=tr_head>')
-            req.write('<TH>Number of Science Frames</TH>')
-            req.write('<TH>Number of Twilight Frames</TH>')
-            req.write('<TH>Filter</TH>')
-            req.write('<TH>Binning</TH>')
-            req.write('</TR>')
-
-            even = False
-            keys = all.keys()
-            keys.sort(reverse=True)
-            for key in keys:
-                even = not even
-                if even:
-                    if (all[key][0] > 0) and (all[key][1] == 0):
-                        cs = "tr_warneven"
-                    else:
-                        cs = "tr_even"
-                else:
-                    if (all[key][0] > 0) and (all[key][1] == 0):
-                        cs = "tr_warnodd"
-                    else:
-                        cs = "tr_odd"
-    
-                req.write("<TR class=%s>" % cs)
-
-                for i in range(4):
-                    req.write("<TD>%s</TD>" % all[key][i])
-
-                req.write("</TR>")
-            req.write("</TABLE>")
-            datething = ''
-            if 'date' in selection:
-                datething = selection['date']
-            if 'daterange' in selection:
-                datething = selection['daterange']
-            req.write('<P><a href="/summary/GMOS/imaging/OBJECT/science/NotFail/%s">Science Frames Summary Table</a></P>' % datething)
-            req.write('<P><a href="/summary/GMOS/imaging/OBJECT/dayCal/Lucky/%s">Twilight Flat Summary Table</a></P>' % datething)
-            req.write('<P>NB. Summary table links above will show ENG and SV program data not reflected in the counts above.</P>')
-
-        # Now the BIAS report
-       
-        if not do_json:
-            req.write('<H2>Biases</H2>')
-
-        # If no date or daterange, look on endor or josie to get the last processing date
-        if datenotprovided:
-            base_dir = das_calproc_path
-            checkfile = 'Basecalib/biasall.list'
-            enddate = datetime.datetime.now().date()
-            date = enddate
-            found = -1000
-            startdate = None
-            while found < 0:
-                datestr = date.strftime("%Y%b%d").lower()
-                file = os.path.join(base_dir, datestr, checkfile)
-                if os.path.exists(file):
-                    found = 1
-                    startdate = date
-                date -= ONEDAY_OFFSET
-                found += 1
-
-                if startdate:
-                    # Start the day after the last reduction
-                    startdate += ONEDAY_OFFSET
-                    selection['daterange'] = "%s-%s" % (startdate.strftime("%Y%m%d"), enddate.strftime("%Y%m%d"))
-                    if do_json:
-                        json_dict['Bias_AutoDetectedDates'] = selection['daterange']
-                    else:
-                        req.write("<H2>Auto-detecting Last Processing Date: %s</H2>" % selection['daterange'])
-
-        if time.daylight:
-            tzoffset = timedelta(seconds=time.altzone)
-        else:
-            tzoffset = timedelta(seconds=time.timezone)
-
-        offset = sqlalchemy.sql.expression.literal(tzoffset - ONEDAY_OFFSET, sqlalchemy.types.Interval)
-        query = session.query(func.count(1), cast((Header.ut_datetime + offset), sqlalchemy.types.DATE).label('utdate'), Header.detector_binning, Header.detector_roi_setting).select_from(join(join(DiskFile, File), Header))
-
-        query = query.filter(DiskFile.canonical == True)
+    twilight = {}
+    # Put the results into dictionaries, which we can then combine into one html table or json items
+    for observation_class in ('science', 'dayCal'):
+        # The basic query for this
+        query = (
+            session.query(func.count(1), Header.filter_name, Header.detector_binning)
+                .select_from(join(join(DiskFile, File), Header))
+                .filter(DiskFile.canonical == True)
+            )
 
         # Fudge and add the selection criteria
-        # Keep the same selection from the flats above, but drop the spectroscopy specifier and add some others
-        selection.pop('spectroscopy')
-        selection['observation_type'] = 'BIAS'
+        selection['observation_class'] = observation_class
+        selection['observation_type'] = 'OBJECT'
+        selection['spectroscopy'] = False
         selection['inst'] = 'GMOS'
         selection['qa_state'] = 'NotFail'
+
+        if observation_class == 'dayCal':
+            selection['qa_state'] = 'Lucky'
+            # Only select full frame dayCals
+            query = query.filter(Header.detector_roi_setting == 'Full Frame')
+            # Twilight flats must have the target name 'Twilight'
+            query = query.filter(Header.object == 'Twilight')
+
         query = queryselection(query, selection)
 
-        query = query.group_by('utdate', Header.detector_binning, Header.detector_roi_setting).order_by('utdate', Header.detector_binning, Header.detector_roi_setting)
+        # Knock out ENG programs
+        query = query.filter(Header.engineering == False).filter(Header.science_verification == False)
 
-        list = query.all()
+        # Group by clause
+        query = query.group_by(Header.filter_name, Header.detector_binning).order_by(Header.detector_binning, Header.filter_name)
 
-        # OK, re-organise results into tally table dict
-        # dict is: {utdate: {binning: {roi: Number}}
-        dict = {}
-        for row in list:
-            # Parse the element numbers for simplicity
-            num = row[0]
-            utdate = row[1]
-            binning = row[2]
-            roi = row[3]
+        # Populate the dictionary
+        # as {'i-2x2':[10, 'i', '2x2'], ...}    ie [number, filter_name, binning]
 
-            if utdate not in dict.keys():
-                dict[utdate] = {}
-            if binning not in dict[utdate].keys():
-                dict[utdate][binning] = {}
-            if roi not in dict[utdate][binning].keys():
-                dict[utdate][binning][roi] = num
+        for cnt, filt, binn in query:
+            # row[0] = count, [1] = filter, [2] = binning
+            key = "%s-%s" % (filt, binn)
+            if observation_class == 'science':
+                twilight[key] = [cnt, 0, filt, binn]
+            else:
+                try:
+                    twilight[key][1] = cnt
+                except KeyError:
+                    twilight[key] = [0, cnt, filt, binn]
 
-        if do_json:
-            jdict = {}
-            for key in dict.keys():
-                jkey = key.strftime("%Y%m%d")
-                jdict[jkey] = dict[key]
-            json_dict['biases'] = jdict
-        else:
-            # Output the HTML table
-            # While we do it, add up the totals as a simple column tally
-            binlist = ['1x1', '2x2', '2x1', '1x2', '2x4', '4x2', '4x1', '1x4', '4x4']
-            roilist = ['Full Frame', 'Central Spectrum']
-            req.write('<TABLE border=0>')
-            req.write('<TR class=tr_head>')
-            req.write('<TH rowspan=2>UT Date</TH>')
-            for b in binlist:
-                req.write('<TH colspan=2>%s</TH>' %b)
-            req.write('</TR>')
-            req.write('<TR class=tr_head>')
-            for b in binlist:
-                for r in roilist:
-                    req.write('<TH>%s</TH>'% r)
-            req.write('</TR>')
-    
-            even = False
-            utdates = dict.keys()
-            utdates.sort(reverse=True)
-            total = []
-            for i in range(0, len(binlist)*len(roilist)):
-                total.append(0)
-    
-            for utdate in utdates:
-                even = not even
-                if even:
-                    cs = "tr_even"
-                else:
-                    cs = "tr_odd"
-    
-                req.write("<TR class=%s>" % cs)
-                req.write("<TD>%s</TD>" % utdate)
-                i = 0
-                for b in binlist:
-                    for r in roilist:
-                        try:
-                            num = dict[utdate][b][r]
-                        except KeyError:
-                            num = 0
-                        total[i] += num
-                        i += 1
-                        req.write("<TD>%d</TD>" % num)
-                req.write("</TR>")
-    
-            req.write("<TR class=tr_head>")
-            req.write("<TH>%s</TH>" % 'Total')
-            for t in total:
-                req.write("<TH>%d</TH>" % t)
-            req.write("</TR>")
-            req.write("</TABLE>")
+    datething = ''
+    if 'date' in selection:
+        datething = selection['date']
+    if 'daterange' in selection:
+        datething = selection['daterange']
 
-            # OK, find if there were dates for which there were no biases...
-            # Can only do this if we got a daterange selection, otherwise it's broken if there's none on the first or last day
-            # utdates is a reverse sorted list for which there were biases.
-            if 'daterange' in selection:
-                # Parse the date to start and end datetime objects
-                date, enddate = gemini_time_period_from_range(selection['daterange'], as_date=True)
-    
-                nobiases = []
-                while date <= enddate:
-                    if date not in utdates:
-                        nobiases.append(str(date))
-                    date += ONEDAY_OFFSET
-    
-                req.write('<P>There were %d dates with no biases not set to Fail: ' % len(nobiases))
-                if len(nobiases) > 0:
-                    req.write(', '.join(nobiases))
-                req.write('</P>')
+    if datenotprovided:
+        res = autodetect_range('Basecalib/biasall.list', selection)
+        if res:
+            result['bias_autodetected_range'] = res
 
-        if not do_json:
-            # Now the Nod and Shuffle report
-            req.write('<H2>Nod and Shuffle Darks</H2>')
-            req.write('<P>This table shows how many suitable N&S darks can be found for every nodandshuffle OBJECT science frame within the last year. It counts darks taken within 6 months of the science as well as the total number found. We aim to have 15 darks taken within 6 months of the science. You can also see the number of months between the science and the most distant one within the 15 to give you an idea how far back you have to go to find a set of 15. If you see the same observation Id listed twice, then there are observations in that observation ID that require different darks.</P>')
+    tzoffset = timedelta(seconds=(time.altzone if time.daylight else time.timezone))
 
-            # The basic query for this
-            query = session.query(Header).select_from(join(join(Header, DiskFile), Gmos))
+    offset = sqlalchemy.sql.expression.literal(tzoffset - ONEDAY_OFFSET, sqlalchemy.types.Interval)
+    query = (
+        session.query(func.count(1), cast((Header.ut_datetime + offset), sqlalchemy.types.DATE).label('utdate'), Header.detector_binning, Header.detector_roi_setting)
+            .select_from(join(join(DiskFile, File), Header))
+            .filter(DiskFile.canonical == True)
+        )
 
-            # Fudge and add the selection criteria
-            selection = {}
-            selection['canonical'] = True
-            selection['observation_class'] = 'science'
-            selection['observation_type'] = 'OBJECT'
-            selection['inst'] = 'GMOS'
-            selection['qa_state'] = 'Pass'
+    # Fudge and add the selection criteria
+    # Keep the same selection from the flats above, but drop the spectroscopy specifier and add some others
+    selection.pop('spectroscopy')
+    selection['observation_type'] = 'BIAS'
+    selection['inst'] = 'GMOS'
+    selection['qa_state'] = 'NotFail'
+    query = (
+        queryselection(query, selection)
+            .group_by('utdate', Header.detector_binning, Header.detector_roi_setting)
+            .order_by('utdate', Header.detector_binning, Header.detector_roi_setting)
+        )
 
-            query = queryselection(query, selection)
+    # OK, re-organise results into tally table dict
+    # dict is: {utdate: {binning: {roi: Number}}
+    bias = {}
+    total_bias = defaultdict(int)
+    for num, utdate, binning, roi in query:
+        if utdate not in bias.keys():
+            bias[utdate] = {}
+        if binning not in bias[utdate].keys():
+            bias[utdate][binning] = {}
+        if roi not in bias[utdate][binning].keys():
+            bias[utdate][binning][roi] = num
 
-            # Only Nod and Shuffle frames
-            query = query.filter(Gmos.nodandshuffle == True)
+        total_bias['%s-%s' % (binning, roi)] += num
 
-            # Knock out ENG programs and SV programs
-            query = query.filter(Header.engineering == False).filter(Header.science_verification == False)
+    # OK, find if there were dates for which there were no biases...
+    # Can only do this if we got a daterange selection, otherwise it's broken if there's none on the first or last day
+    # utdates is a reverse sorted list for which there were biases.
+    if 'daterange' in selection:
+        # Parse the date to start and end datetime objects
+        date, enddate = gemini_time_period_from_range(selection['daterange'], as_date=True)
 
-            # Limit to things within 1 year
-            now = datetime.datetime.now()
-            year = timedelta(days=366)
-            then = now - year
-            query = query.filter(Header.ut_datetime > then)
+        nobiases = []
+        while date <= enddate:
+            if date not in bias:
+                nobiases.append(str(date))
+            date += ONEDAY_OFFSET
 
-            #query = query.group_by(Header.observation_id).order_by(Header.observation_id, desc(Header.ut_datetime))
-            query = query.order_by(desc(Header.observation_id), desc(Header.ut_datetime))
+        if nobiases:
+            result['nobiases'] = nobiases
 
-            list = query.all()
+    # Nod & Shuffle Darks
+    # The basic query for this
+    def nod_and_shuffle(session, selection):
+        query = session.query(Header).select_from(join(join(Header, DiskFile), Gmos))
 
-            # OK, we're going to build the results table as a list of dictionaries first, so that we can group the obsIDs together
-            # when we display the HTML.
+        # Fudge and add the selection criteria
+        selection = {}
+        selection['canonical'] = True
+        selection['observation_class'] = 'science'
+        selection['observation_type'] = 'OBJECT'
+        selection['inst'] = 'GMOS'
+        selection['qa_state'] = 'Pass'
 
-            table = []
+        query = queryselection(query, selection)
 
-            for l in list:
-                c = get_cal_object(session, None, header=l)
-                darks = c.dark()
-                young = 0
-                oldest = 0
-                count = 0
-                oldest = 0
-                for d in darks:
-                    count += 1
-                    # For each dark, figure out the time difference
-                    age = interval_hours(l, d)
-                    if age < 4320:
-                        young += 1
-                    if fabs(age) > fabs(oldest):
-                        oldest = age
-                dict = {}
-                dict['observation_id'] = l.observation_id
-                dict['data_label'] = l.data_label
-                dict['count'] = count
-                dict['young'] = young
-                dict['age'] = int(round(oldest/720, 1))
-                table.append(dict)
+        # Only Nod and Shuffle frames
+        query = query.filter(Gmos.nodandshuffle == True)
 
-            # Output the HTML table and links to summaries etc
-            req.write('<TABLE border=0>')
-            req.write('<TR class=tr_head>')
-            req.write('<TH>Observation ID</TH>')
-            req.write('<TH>Number Within 6 Months</TH>')
-            req.write('<TH>Total Number known</TH>')
-            req.write('<TH>Age of oldest one (months)</TH>')
-            req.write('</TR>')
+        # Knock out ENG programs and SV programs
+        query = query.filter(Header.engineering == False).filter(Header.science_verification == False)
 
-            even = True
-            done = []
-            for dict in table:
-                nd = copy.copy(dict)
-                del nd['data_label']
-                if nd not in done:
-                    done.append(nd)
-                    even = not even
-                    if nd['young'] < 15:
-                        if even:
-                            cs = 'tr_warneven'
-                        else:
-                            cs = 'tr_warnodd'
-                    else:
-                        if even:
-                            cs = 'tr_even'
-                        else:
-                            cs = 'tr_odd'
-                    req.write("<TR class=%s>" % cs)
-                    req.write('<TD><a href="/summary/%s">%s</a></TD>' % (nd['observation_id'], nd['observation_id']))
-                    req.write("<TD>%d</TD>" % nd['young'])
-                    req.write("<TD>%d</TD>" % nd['count'])
-                    req.write("<TD>%d</TD>" % nd['age'])
-                    req.write("</TR>")
+        # Limit to things within 1 year
+        now = datetime.datetime.now()
+        year = timedelta(days=366)
+        then = now - year
+        query = query.filter(Header.ut_datetime > then)
 
-            req.write("</TABLE>")
-            req.write("</body></html>")
+        query = query.order_by(desc(Header.observation_id), desc(Header.ut_datetime))
 
-        if do_json:
-            json.dump([json_dict], req, indent=4)
+        # OK, we're going to build the results table as a list of dictionaries first, so that we can group the obsIDs together
+        # when we display the HTML.
 
-        return HTTP_OK
+        NAndD = namedtuple("NAndD", "observation_id count young age")
 
-    except IOError:
-        pass
-    finally:
-        session.close()
+        done = set()
 
+        for l in query:
+            c = get_cal_object(session, None, header=l)
+            darks = c.dark()
+            young = 0
+            oldest = 0
+            count = 0
+            oldest = 0
+            for d in darks:
+                count += 1
+                # For each dark, figure out the time difference
+                age = interval_hours(l, d)
+                if age < 4320:
+                    young += 1
+                if fabs(age) > fabs(oldest):
+                    oldest = age
+
+            entry = NAndD(l.observation_id, count, young, int(round(oldest/720, 1)))
+            if entry not in done:
+                done.add(entry)
+                yield entry
+
+    result.update(dict(
+        twilight        = sorted([(k, tuple(v)) for (k, v) in twilight.items()], reverse=True),
+        bias            = sorted(bias.items(), reverse=True),
+        total_bias      = total_bias,
+        binlist         = ('1x1', '2x2', '2x1', '1x2', '2x4', '4x2', '4x1', '1x4', '4x4'),
+        roilist         = ('Full Frame', 'Central Spectrum'),
+        nobiases        = nobiases,
+        nod_and_shuffle = nod_and_shuffle(session, selection),
+        datething       = datething
+        ))
+
+    return result
