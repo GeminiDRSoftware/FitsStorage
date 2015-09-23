@@ -20,7 +20,7 @@
     <th>Last Modified
   </tr>
   {%- for tf in tapefiles %}
-  <tr class="{{ loop.cycle("tr_odd", "tr_even") }}">
+  <tr class="alternating">
     <td>{{ tf.id }}
     <td>{{ tf.tapewrite_id }}
     <td>{{ tf.tapewrite.startdate }} UTC

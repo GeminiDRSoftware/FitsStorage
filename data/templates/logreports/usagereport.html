@@ -34,7 +34,7 @@
   <th>N res<th>N den<th>Send<th>T res<th>T DL<th>MB/sec<th>Notes
  </tr>
  {%- for ulog, qlog, dlog in results %}
- <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+ <tr class="alternating">
    <td><a href="/usagedetails/{{ ulog.id }}">{{ ulog.id }}</a>
    <td>{{ ulog.utdatetime|datetime('full', chopped=True) }}
    <td>{{ ulog.user.username }}{% if ulog.user.gemini_staff %} (Staff){% endif %}

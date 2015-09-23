@@ -15,7 +15,7 @@
     <th>Requester
   </tr>
   {%- for tr in tapereads %}
-  <tr class="{{ loop.cycle("tr_odd", "tr_even") }}">
+  <tr class="alternating">
     <td>{{ tr.filename }}
     <td>{{ tr.md5 }}
     <td>{{ tr.tape_id }}

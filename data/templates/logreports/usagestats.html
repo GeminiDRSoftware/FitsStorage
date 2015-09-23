@@ -30,7 +30,7 @@
     <th>files<th>gb
   </tr>
   {%- for result in query %}
-  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+  <tr class='alternating'>
     <td>{{ result.date }}
     <td>{{ result.hit_ok }}<td>{{ result.hit_fail }}
     <td>{{ result.search_ok}}<td>{{ result.search_fail }}
@@ -51,7 +51,7 @@
 <table>
   <tr class='tr_head'><th>User<th>Searches</tr>
   {%- for count, user in inquisitive %}
-  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+  <tr class='alternating'>
     {%- if user %}
     <td>{{ user.username }}{{ ' (Staff)' if user.gemini_staff else '' }}
     {%- else %}
@@ -65,7 +65,7 @@
 <table>
   <tr class='tr_head'><th>User<th>GB</tr>
   {%- for bytes, user in hungry %}
-  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+  <tr class='alternating'>
     {%- if user %}
     <td>{{ user.username }}{{ ' (Staff)' if user.gemini_staff else '' }}
     {%- else %}

@@ -1,5 +1,5 @@
 {% macro generate_row(row_obj, class, element='TD') %}
-<TR class='{{ class }}'>{% for content in row_obj.columns %}<{{ element }}>{{ content }}</{{ element }}>{% endfor %}</TR>
+<tr class='{{ class }}'>{% for content in row_obj.columns %}<{{ element }}>{{ content }}</{{ element }}>{% endfor %}</tr>
 {%- endmacro %}
 {% if open_query and hit_open_limit %}
 <P>WARNING: Your search does not constrain the number of results - ie you did not specify a date,
@@ -27,7 +27,7 @@
 <TABLE class="fullwidth">
 {{ generate_row(headers, class='tr_head', element='TH') }}
 {% for row in data_rows %}
-{{ generate_row(row, class=loop.cycle('tr_odd', 'tr_even')) }}
+{{ generate_row(row, class='alternating') }}
 {% endfor %}
 </TABLE>
 {# Only show download button if we are allowed to download anything #}

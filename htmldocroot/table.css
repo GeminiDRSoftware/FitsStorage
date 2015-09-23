@@ -13,35 +13,34 @@ body {
   font-size: small
 }
 
-.tr_odd {
+tr.alternating:nth-child(odd) {
   background-color: #F0F0FF;
   white-space:nowrap;
   font-size: small
 }
 
-.tr_even {
+tr.alternating:nth-child(even) {
   background-color: #E0E0FF;
   white-space:nowrap;
   font-size: small
 }
 
-.tr_odd:hover {
-  background-color: #C0C0FF;
-}
-
-.tr_even:hover {
-  background-color: #C0C0FF;
-}
-
-.tr_warnodd {
+tr.warn-alternating:nth-child(odd) {
   background-color: #FFF0F0;
   white-space:nowrap;
   font-size: small
 }
 
-.tr_warneven {
+tr.warn-alternating:nth-child(even) {
   background-color: #FFE0E0;
   white-space:nowrap;
   font-size: small
 }
 
+tr.alternating:hover {
+  background-color: #C0C0FF;
+}
+
+tr.warn-alternating:hover {
+  background-color: #C0C0FF;
+}

@@ -11,7 +11,7 @@
     {%- endfor %}
   </tr>
   {%- for std in phot_std_obs %}
-  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+  <tr class='alternating'>
     <td>{{ std.name }}
     <td>{{ std.field }}
     <td>{{ std.ra }}

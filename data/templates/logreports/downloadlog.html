@@ -18,7 +18,7 @@
     <th>Feature Used<th>IP addr<th>UT DateTime<th>HTTP Status
   </tr>
   {%- for fdl, user in query %}
-  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+  <tr class='alternating'>
     <td><a href="/usagedetails/{{ fdl.usagelog_id }}">{{ fdl.usagelog_id }}</a>
     <td>{{ fdl.diskfile_filename }}
     {%- if user %}

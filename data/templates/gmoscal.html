@@ -20,7 +20,7 @@
    {%- if nsci > 0 and ntwi == 0 %}
   <tr class='{{ loop.cycle("tr_warnodd", "tr_warneven") }}'>
    {%- else %}
-  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+  <tr class='alternating'>
    {%- endif %}
     <td>{{ nsci }}<td>{{ ntwi }}<td>{{ filt }}<td>{{ binn }}
   </tr>
@@ -48,7 +48,7 @@
     {%- endfor %}{%- endfor %}
   </tr>
   {%- for utdate, values in bias %}
-  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+  <tr class='alternating'>
     <td>{{ utdate }}
     {%- for b in binlist %}{%- for r in roilist %}
     <td>{{ values.get(b, {}).get(r, 0) }}
@@ -77,13 +77,10 @@
 <table border='0'>
   <tr class='tr_head'><th>Observation ID<th>Number Within 6 Months<th>Total Number Known<th>Age of oldest one (months)</tr>
   {%- for entry in nod_and_shuffle %}
-   {%- if entry.young < 15 %}
-  <tr class='{{ loop.cycle("tr_warnodd", "tr_warneven") }}'>
-   {%- else %}
-  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
-   {%- endif %}
+  <tr class='{{ "warn-alternating" if entry.young < 15 else "alternating" }} '>
     <td><a href="/summary/{{ entry.observation_id }}">{{ entry.observation_id }}</a>
     <td>{{ entry.young }}<td>{{ entry.count }}<td>{{ entry.age }}
+  </tr>
   {%- endfor %}
 </table>
 

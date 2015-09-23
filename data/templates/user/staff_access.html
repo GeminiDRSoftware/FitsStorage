@@ -13,7 +13,7 @@
  <TABLE>
  <tr class='tr_head'><th>Username</th><th>Full Name</th><th>Email</th><th>Staff Access</th><th>Superuser</th><tr>
    {% for user in user_list %}
-     <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+     <tr class='alternating'>
        <td>{{ user.username }}<td>{{ user.fullname }}<td>{{ user.email }}
        <td>{{ user.gemini_staff }}<td>{{ user.superuser }}</tr>
    {% endfor %}

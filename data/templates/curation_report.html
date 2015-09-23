@@ -10,7 +10,7 @@ None found.
 <table border='0'>
   <tr class='tr_head'><th>DiskFile id<th>FileName</tr>
   {% for df_id, file in dup_canon %}
-  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'><td>{{ df_id }}<td><td><a href="/summary/{{ file.name }}"> {{ file.name }} </a></tr>
+  <tr class='alternating'><td>{{ df_id }}<td><td><a href="/summary/{{ file.name }}"> {{ file.name }} </a></tr>
   {% endfor %}
 </table>
 {%- endif %}
@@ -22,7 +22,7 @@ None found.
 <table border='0'>
   <tr class='tr_head'><th>DiskFile id<th>FileName</tr>
   {% for df_id, file in dup_pres %}
-  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'><td>{{ df_id }}<td><td><a href="/summary/{{ file.name }}"> {{ file.name }} </a></tr>
+  <tr class='alternating'><td>{{ df_id }}<td><td><a href="/summary/{{ file.name }}"> {{ file.name }} </a></tr>
   {% endfor %}
 </table>
 {%- endif %}
@@ -34,7 +34,7 @@ None found.
 <table border='0'>
   <tr class='tr_head'><th>DiskFile id<th>FileName</tr>
   {% for df_id, file in pres_no_can %}
-  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'><td>{{ df_id }}<td><td><a href="/summary/{{ file.name }}"> {{ file.name }} </a></tr>
+  <tr class='alternating'><td>{{ df_id }}<td><td><a href="/summary/{{ file.name }}"> {{ file.name }} </a></tr>
   {% endfor %}
 </table>
 {%- endif %}

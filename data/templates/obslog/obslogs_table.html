@@ -14,7 +14,7 @@
 <table class='fullwidth'>
   <tr class='tr_head'><th>Filename<th>UT Date<th>Program ID</tr>
   {%- for name, date, prog_id, can_have in obslogs %}
-  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+  <tr class='alternating'>
     {%- if can_have == True %}
     <td><a href="/file/{{ name }}" target="_blank">{{ name }}</a>
     {%- else %}

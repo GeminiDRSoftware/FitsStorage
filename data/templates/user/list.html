@@ -10,7 +10,7 @@
     <th>Username<th>Full Name<th>Email<th>Password<th>Staff Access<th>Superuser
     <th>Reset Requested<th>Reset Active<th>Account Create<th>Last Password Change</tr>
  {% for user in users %}
-  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+  <tr class='alternating'>
     <td>{{ user.username }}<td>{{ user.fullname }}<td>{{ user.email }}<td>{{ user.has_password }}
     <td>{{ user.gemini_staff }}<td>{{ user.superuser }}<td>{{ user.reset_requested }}
     <td>{{ user.reset_active }}<td>{{ user.account_created }}<td>{{ user.password_changed }}</tr>

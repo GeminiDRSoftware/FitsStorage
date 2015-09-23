@@ -54,7 +54,7 @@
     <th>Staff Access<th>Magic Access<th>Eng Access<th>Can Have It<th>Notes
   </tr>
   {%- for log in fdlog %}
-  <tr class="{{ loop.cycle("tr_odd", "tr_even") }}">
+  <tr class='alternating'>
     <td>{{ log.diskfile_filename }}<td>{{ log.diskfile_file_size }}<td>{{ log.diskfile_file_md5 }}<td>{{ log.ut_datetime }}<td>{{ log.released or '' }}
     <td>{{ log.pi_access or '' }}<td>{{ log.staff_access or '' }}<td>{{ log.magic_access or '' }}<td>{{ log.eng_access or '' }}<td>{{ log.canhaveit }}
     <td>{{ log.notes or '' }}
@@ -71,7 +71,7 @@
     <th>S3 Seconds<th>S3 kbyte/s<th>S3 OK<th>File OK<th>IngestQueue ID<th>Notes
   </tr>
   {%- for log in fileuploadlogs %}
-  <tr class='{{ loop.cycle("tr_odd", "tr_even") }}'>
+  <tr class='alternating'>
     <td>{{ log.ut_transfer_start }}
     <td>{{ log.ut_transfer_complete }}
     {%- with uptime = log.ut_transfer_complete|seconds_since(log.ut_transfer_start, formatted=False) %}
