@@ -17,11 +17,7 @@
 <table border='0'>
   <tr class='tr_head'><th>Number of Science Frames<th>Number of Twilight Frames<th>Filter<th>Binning</tr>
   {%- for _, (nsci, ntwi, filt, binn) in twilight %}
-   {%- if nsci > 0 and ntwi == 0 %}
-  <tr class='{{ loop.cycle("tr_warnodd", "tr_warneven") }}'>
-   {%- else %}
-  <tr class='alternating'>
-   {%- endif %}
+  <tr class='{{ "warn-alternating" if (nsci > 0 and ntwi == 0) else "alternating" }} '>
     <td>{{ nsci }}<td>{{ ntwi }}<td>{{ filt }}<td>{{ binn }}
   </tr>
   {%- endfor %}
