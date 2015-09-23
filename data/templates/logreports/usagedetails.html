@@ -9,7 +9,7 @@
   <tr><td>User ID:<td>{{ ulog.user_id }}</tr>
   <tr><td>IP address:<td>{{ ulog.ip_address }}</tr>
   <tr><td>User Agent:<td>{{ ulog.user_agent }}</tr>
-  <tr><td>Referer:<td>{{ ulog.referer }}</tr>
+  <tr><td>Referer:<td><a target="_blank" href="{{ ulog.referer }}">{{ ulog.referer }}</a></tr>
   <tr><td>HTTP method:<td>{{ ulog.method }}</tr>
   <tr><td>URI:<td>{{ ulog.uri }}</tr>
   <tr><td>This feature:<td>{{ ulog.this }}</tr>

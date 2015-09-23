@@ -35,7 +35,7 @@
  </tr>
  {%- for ulog, qlog, dlog in results %}
  <tr class="alternating">
-   <td><a href="/usagedetails/{{ ulog.id }}">{{ ulog.id }}</a>
+   <td><a target="_blank" href="/usagedetails/{{ ulog.id }}">{{ ulog.id }}</a>
    <td>{{ ulog.utdatetime|datetime('full', chopped=True) }}
    <td>{{ ulog.user.username }}{% if ulog.user.gemini_staff %} (Staff){% endif %}
    <td>{{ ulog.ip_address }}
