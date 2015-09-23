@@ -7,6 +7,7 @@ from ..fits_storage_config import template_root
 from ..orm import session_scope
 from functools import wraps
 from mod_python import apache
+from ..apache_return_codes import HTTP_SERVICE_UNAVAILABLE
 
 def datetime_filter(value, format=None, chopped=False):
     if format=='full':
@@ -76,6 +77,9 @@ class SkipTemplateError(Exception):
     def __init__(self, status):
         self.status = status
 
+class TemplateAccessError(Exception):
+    pass
+
 class InterruptedError(Exception):
     pass
 
@@ -102,7 +106,11 @@ def templated(template_name, content_type="text/html", with_generator=False, wit
     def template_decorator(fn):
         @wraps(fn)
         def fn_wrapper(req, *args, **kw):
-            template = get_env().get_template(template_name)
+            try:
+                template = get_env().get_template(template_name)
+            except IOError:
+                raise TemplateAccessError(template_name)
+
             with session_scope() as session:
                 req.content_type = content_type
                 try:
