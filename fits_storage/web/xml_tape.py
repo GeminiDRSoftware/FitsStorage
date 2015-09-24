@@ -50,17 +50,14 @@ class TapeWriterWrapper(object):
     def tapefiles(self):
         return self.s.query(TapeFile).filter(TapeFile.tapewrite_id == self.o.id)
 
-def xmltape(req):
+@templating.templated("tape.xml", content_type='text/xml', with_session=True, with_generator=True)
+def xmltape(session, req):
     """
     Outputs xml describing the tapes that the specified file is on
     """
-    req.content_type = "text/xml"
 
-    with session_scope() as session:
-        template = templating.get_env().get_template('tape.xml')
-        query = session.query(Tape).filter(Tape.active == True).order_by(Tape.id)
-        # Potentially huge reponse. Better to chunk it
-        for text in template.generate(tapes = QueryWrapper(session, query, TapeWrapper)):
-            req.write(text)
-    return HTTP_OK
+    query = session.query(Tape).filter(Tape.active == True).order_by(Tape.id)
 
+    return dict(
+        tapes = QueryWrapper(session, query, TapeWrapper)
+        )

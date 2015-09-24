@@ -33,27 +33,27 @@ def summary(req, sumtype, selection, orderby, links=True, body_only=False):
     tags to make it a page in it's own right.
     """
 
-    req.content_type = "text/html"
+    if body_only:
+        return embeddable_summary(req, sumtype, selection, orderby, links)
+    else:
+        return full_page_summary(req, sumtype, selection, orderby, links)
 
+@templating.templated("search_and_summary/summary.html", with_session=True, with_generator=True)
+def full_page_summary(session, req, sumtype, selection, orderby, links):
+    template_args = summary_body(session, req, sumtype, selection, orderby, links)
 
-    with session_scope() as session:
-        template_args = summary_body(req, session, sumtype, selection, orderby, links)
-        if body_only:
-            template = templating.get_env().get_template('search_and_summary/summary_body.html')
-        else:
-            template = templating.get_env().get_template('search_and_summary/summary.html')
+    template_args.update({
+        'sumtype'      : sumtype,
+        'sayselection' : sayselection(selection)
+        })
 
-            template_args.update({
-                'sumtype'      : sumtype,
-                'sayselection' : sayselection(selection)
-                })
+    return template_args
 
-        for text in template.generate(template_args):
-            req.write(text)
+@templating.templated("search_and_summary/summary_body.html", with_session=True, with_generator=True)
+def embeddable_summary(session, req, sumtype, selection, orderby, links):
+    return summary_body(session, req, sumtype, selection, orderby, links)
 
-    return apache.HTTP_OK
-
-def summary_body(req, session, sumtype, selection, orderby, links=True):
+def summary_body(session, req, sumtype, selection, orderby, links=True):
     """
     This is the main summary generator.
     req is an apache request handler request object
@@ -210,8 +210,6 @@ def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, 
 
         # For future Python 3 compliance
         __next__ = next
-
-    template = templating.get_env().get_template('search_and_summary/summary_table.html')
 
     template_args = dict(
         clickable     = sumtype in {'searchresults', 'associated_cals'},

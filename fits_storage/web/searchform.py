@@ -26,8 +26,8 @@ import urllib
 #with open(os.path.join(fits_aux_datadir, "form.html")) as f:
 #    form_html = f.read()
 
-
-def searchform(req, things, orderby):
+@templating.templated("search_and_summary/searchform.html", with_session=True, with_generator=True)
+def searchform(session, req, things, orderby):
     """
     Generate the searchform html and handle the form submit.
     """
@@ -51,8 +51,6 @@ def searchform(req, things, orderby):
     thing_string = '/' + '/'.join(things)
     selection = getselection(things)
     formdata = util.FieldStorage(req)
-
-    template = templating.get_env().get_template('search_and_summary/searchform.html')
 
     # Also args to pass on to results page
     args_string = ""
@@ -93,26 +91,20 @@ def searchform(req, things, orderby):
             things.append(selection[thing])
     title_suffix = ' '.join(things)
 
-    req.content_type = "text/html"
+    template_args = dict(
+        title_suffix = title_suffix,
+        thing_string = thing_string,
+        args_string  = args_string,
+        updated      = updateform(selection),
+        debugging    = False, # Enable this to show some debugging data
+        selection    = selection,
+        # Look at the end of the file for this
+        **dropdown_options
+        )
+    if selection:
+        template_args.update(summary_body(session, req, 'searchresults', selection, orderby))
 
-    with session_scope() as session:
-        template_args = dict(
-            title_suffix = title_suffix,
-            thing_string = thing_string,
-            args_string  = args_string,
-            updated      = updateform(selection),
-            debugging    = False, # Enable this to show some debugging data
-            selection    = selection,
-            # Look at the end of the file for this
-            **dropdown_options
-            )
-        if selection:
-            template_args.update(summary_body(req, session, 'searchresults', selection, orderby))
-
-        for text in template.generate(template_args):
-            req.write(text)
-
-    return apache.HTTP_OK
+    return template_args
 
 std_gmos_fpm = {'NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec'}
 
@@ -288,10 +280,9 @@ def nameresolver(req, things):
     url = urls[resolver] + target
 
     urlfd = urllib.urlopen(url)
-    xml = urlfd.read()
+    req.write(urlfd.read())
     urlfd.close()
 
-    req.write(xml)
     return apache.HTTP_OK
 
 # DATA FOR THE TEMPLATES
