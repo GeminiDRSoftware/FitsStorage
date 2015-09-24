@@ -42,10 +42,16 @@ def standardobs(session, req, header_id):
 
     return get_standard_obs(session, req, header_id)
 
-@templating.templated("standards/standardobs.xml", content_type='text/xml', with_session=True)
-def xmlstandardobs(req, header_id):
-    """
-    Writes xml fragment defining the standards visible in this header_id
-    """
-
-    return get_standard_obs(session, req, header_id)
+# NOTE: There's no direct access to this from the front end. It was used in file_list, but
+#       we really want to use get_standard_obs instead.
+#
+# TODO: It will stay commented for the time being, but it should be removed after making sure
+#       that we don't really want to use it anywhere else
+#
+# @templating.templated("standards/standardobs.xml", content_type='text/xml', with_session=True)
+# def xmlstandardobs(req, header_id):
+#     """
+#     Writes xml fragment defining the standards visible in this header_id
+#     """
+#
+#     return get_standard_obs(session, req, header_id)

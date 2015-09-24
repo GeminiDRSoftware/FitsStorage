@@ -5,54 +5,41 @@ summaries.
 """
 import json
 
-from ..orm import sessionfactory
+from ..orm import session_scope
 from ..orm.header import Header
 from ..orm.diskfile import DiskFile
 from selection import queryselection
 from .summary import list_headers
-from .standards import xmlstandardobs
+from .standards import get_standard_obs
 from ..apache_return_codes import HTTP_OK
 
 from ..utils.userprogram import canhave_coords, got_magic
 from .user import userfromcookie
 
+from . import templating
+
 diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
                    'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready')
 
-def xmlfilelist(req, selection):
+@templating.templated("filelist/filelist.xml", content_type='text/xml', with_session=True, with_generator=True)
+def xmlfilelist(session, req, selection):
     """
     This generates an xml list of the files that met the selection
     """
-    req.content_type = "text/xml"
-    req.write('<?xml version="1.0" ?>')
-    req.write("<file_list>")
-    req.write("<selection>%s</selection>" % selection)
 
-    session = sessionfactory()
-    orderby = ['filename_asc']
-    try:
-        headers = list_headers(session, selection, orderby)
-        for header in headers:
-            req.write("<file>")
-            req.write("<name>%s</name>" % header.diskfile.file.name)
-            req.write("<filename>%s</filename>" % header.diskfile.filename)
-            req.write("<path>%s</path>" % header.diskfile.path)
-            req.write("<compressed>%s</compressed>" % header.diskfile.compressed)
-            req.write("<size>%d</size>" % header.diskfile.file_size)
-            req.write("<file_size>%d</file_size>" % header.diskfile.file_size)
-            req.write("<data_size>%d</data_size>" % header.diskfile.data_size)
-            req.write("<md5>%s</md5>" % header.diskfile.file_md5)
-            req.write("<file_md5>%s</file_md5>" % header.diskfile.file_md5)
-            req.write("<data_md5>%s</data_md5>" % header.diskfile.data_md5)
-            req.write("<lastmod>%s</lastmod>" % header.diskfile.lastmod)
-            req.write("<mdready>%s</mdready>" % header.diskfile.mdready)
+    def generate_headers(session, selection):
+        orderby = ['filename_asc']
+        for header, diskfile, file in list_headers(session, selection, orderby, full_query=True):
+            ret = (header, diskfile, file)
             if header.phot_standard:
-                xmlstandardobs(req, header.id)
-            req.write("</file>")
-    finally:
-        session.close()
-    req.write("</file_list>")
-    return HTTP_OK
+                yield ret + (get_standard_obs(session, req, header.id),)
+            else:
+                yield ret + (None,)
+
+    return dict(
+        selection = selection,
+        content   = generate_headers(session, selection),
+        )
 
 def diskfile_dicts(headers, return_header=False):
     for header in headers:
@@ -73,13 +60,11 @@ def jsonfilelist(req, selection):
     """
     req.content_type = "application/json"
 
-    session = sessionfactory()
-    orderby = ['filename_asc']
-    try:
+    with session_scope() as session:
+        orderby = ['filename_asc']
         headers = list_headers(session, selection, orderby)
         thelist = list(diskfile_dicts(headers))
-    finally:
-        session.close()
+
     json.dump(thelist, req, indent=4)
     return HTTP_OK
 
@@ -115,14 +100,13 @@ def jsonsummary(req, selection):
     if 'canonical' not in selection.keys():
         selection['canonical']=True
 
-    session = sessionfactory()
     orderby = ['filename_asc']
 
-    # Get the current user if logged id
-    user = userfromcookie(session, req)
-    gotmagic = got_magic(req)
+    with session_scope() as session:
+        # Get the current user if logged id
+        user = userfromcookie(session, req)
+        gotmagic = got_magic(req)
 
-    try:
         headers = list_headers(session, selection, orderby)
         thelist = []
         for thedict, header in diskfile_dicts(headers, return_header=True):
@@ -134,8 +118,7 @@ def jsonsummary(req, selection):
                     thedict[field] = None
 
             thelist.append(thedict)
-    finally:
-        session.close()
+
     json.dump(thelist, req, indent=4)
     return HTTP_OK
 
@@ -150,12 +133,11 @@ def jsonqastate(req, selection):
     if 'canonical' not in selection.keys():
         selection['canonical']=True
 
-    session = sessionfactory()
-    try:
+    with session_scope() as session:
        # We do this directly rather than with list_headers for efficiency
        # as this could be used on very large queries bu the ODB
        query = session.query(Header, DiskFile)
-       query = query.filter(Header.diskfile_id == DiskFile.id) 
+       query = query.filter(Header.diskfile_id == DiskFile.id)
        query = queryselection(query, selection)
 
        thelist = []
@@ -163,8 +145,6 @@ def jsonqastate(req, selection):
            thelist.append({'data_label': _for_json(header.data_label),
                            'entrytime': _for_json(diskfile.entrytime),
                            'qa_state': _for_json(header.qa_state)})
-    finally:
-        session.close()
 
     json.dump(thelist, req)
     return HTTP_OK
