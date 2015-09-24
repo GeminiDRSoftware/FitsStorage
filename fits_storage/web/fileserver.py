@@ -61,6 +61,31 @@ def generate_filename(cals, selection):
     else:
         return 'gemini_{type}.tar'.format(type=content_type)
 
+readme_body = """\
+This is a tar file of search results downloaded from the gemini archive.
+
+The search criteria was: {selection_url}
+The search was performed at: {search_time} UTC
+The search was performed by archive user: {username}
+
+We have included a file listing the md5sums of the data files in here.
+If you have the 'md5sum' utility installed (most Linux machines at least),
+You can verify file integrity by running 'md5sum -c md5sums.txt'.
+
+"""
+
+readme_associated = """\
+Note that this download was from an assoicated calibrations page -
+it only contains the calibration files that are associated with the science query.
+
+"""
+
+readme_denied = """\
+The following files in your search results were not included,
+because they are proprietary data that you do not have access to:
+{denied}
+"""
+
 def download(req, things):
     """
     This is the download server. Given a selection, it will send a tarball of the
@@ -202,20 +227,13 @@ def download(req, things):
         buffer.close()
 
         # And add the README.TXT file
-        readme = "This is a tar file of search results downloaded from the gemini archive.\n\n"
-        readme += "The search criteria was: %s\n" % selection_to_URL(selection)
-        readme += "The search was performed at: %s UTC\n" % datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        readme += "The search was performed by archive user: %s\n\n" % username
-        readme += "We have included a file listing the md5sums of the data files in here.\n"
-        readme += "If you have the 'md5sum' utility installed (most Linux machines at least),\n"
-        readme += "You can verify file integrity by running 'md5sum -c md5sums.txt'.\n\n"
+        readme = readme_body.format(selection_url=selection_to_URL(selection),
+                                    search_time=datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+                                    username=username)
         if associated_calibrations:
-            readme += "Note that this download was from an assoicated calibrations page -\n"
-            readme += "it only contains the calibration files that are associated with the science query.\n\n"
+            readme += readme_associated
         if denied:
-            readme += "The following files in your search results were not included,\n"
-            readme += "because they are proprietary data that you do not have access to:\n"
-            readme += '\n'.join(denied) + '\n'
+            readme += readme_denied.format(denied = '\n'.join(denied))
         # - create a tarinfo object
         tarinfo = tarfile.TarInfo('README.txt')
         tarinfo.size = len(readme)
