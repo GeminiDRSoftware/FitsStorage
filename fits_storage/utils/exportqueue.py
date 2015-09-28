@@ -9,6 +9,7 @@ import hashlib
 import bz2
 import functools
 import httplib
+import ssl
 
 from sqlalchemy import desc, join
 from sqlalchemy.orm import make_transient
@@ -186,8 +187,8 @@ class ExportQueueUtil(object):
                 self.l.debug("Transfer not successful")
                 return False
 
-        except (urllib2.URLError, httplib.IncompleteRead):
-            self.l.info("URLError posting %d bytes of data to destination server at: %s", len(postdata), url)
+        except (urllib2.URLError, httplib.IncompleteRead, ssl.SSLError):
+            self.l.info("Error posting %d bytes of data to destination server at: %s", len(postdata), url)
             self.l.debug("Transfer Failed")
             return False
         except:
