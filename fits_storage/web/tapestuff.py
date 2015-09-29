@@ -1,13 +1,12 @@
 """
 This module contains the tape related html generator functions. 
 """
-from ..orm import sessionfactory
+from ..orm import sessionfactory, NoResultFound, MultipleResultsFound
 from ..orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 from . import templating
 from mod_python import apache, util
 
 from sqlalchemy import join, desc, func
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 import datetime
 

@@ -4,11 +4,10 @@ This module handles the web 'user' functions - creating user accounts, login / l
 
 from sqlalchemy import desc
 
-from ..orm import session_scope
+from ..orm import session_scope, NoResultFound
 from ..orm.user import User
 
 from ..fits_storage_config import fits_servername, smtp_server
-from sqlalchemy.orm.exc import NoResultFound
 
 from . import templating
 
