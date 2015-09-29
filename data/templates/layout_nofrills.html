@@ -2,6 +2,8 @@
 <html><head>
 <meta charset="UTF-8">
 <link rel="stylesheet" type="text/css" href="/table.css">
-<title>{% block title %}{% endblock %}</title></head>
+<title>{% block title %}{% endblock %}</title>
+{% block extra_style %}{% endblock %}{% block extra_script %}{% endblock %}
+</head>
 <body>{% block body %}{% endblock %}</body>
 </html>
