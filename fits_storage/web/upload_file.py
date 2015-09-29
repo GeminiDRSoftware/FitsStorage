@@ -4,10 +4,12 @@ import hashlib
 import subprocess
 import datetime
 
-from ..fits_storage_config import upload_staging_path, upload_auth_cookie
+from ..fits_storage_config import upload_staging_path, upload_auth_cookie, api_backend_location
 
 from ..apache_return_codes import HTTP_OK, HTTP_NOT_ACCEPTABLE
 from ..apache_return_codes import HTTP_SERVICE_UNAVAILABLE
+
+from ..utils.api import ApiProxy, ApiProxyError
 
 from ..orm import session_scope
 from ..orm.fileuploadlog import FileUploadLog
@@ -71,25 +73,38 @@ def upload_file(req, filename, processed_cal="False"):
         # And write that back to the client
         req.write(verif_json)
 
-        # Now invoke the setuid ingest program
-        command = ["/opt/FitsStorage/fits_storage/scripts/invoke",
-                   "/opt/FitsStorage/fits_storage/scripts/ingest_uploaded_file.py", "--filename=%s" % filename,
-                   "--demon",
-                   "--processed_cal=%s" % processed_cal,
-                   "--fileuploadlog_id=%d" % fileuploadlog.id]
-
-        #ret = subprocess.call(command)
-        subp_p = subprocess.Popen(command)
-        subp_p.wait()
-
-        ret = subp_p.returncode
-        fileuploadlog.invoke_pid = subp_p.pid
-        fileuploadlog.invoke_status = subp_p.returncode
-
-        # Because invoke calls execv(), which in turn replaces the process image of the invoke process with that of
-        # python running ingest_uploaded_calibration.py, the return value we get acutally comes from that script, not invoke
-
-        if ret != 0:
+        # Now invoke the backend to ingest the file
+        proxy = ApiProxy(api_backend_location)
+        try:
+            result = proxy.ingest_upload(filename=filename,
+                                         processed_cal=bool(processed_cal),
+                                         fileuploadlog_id = fileuploadlog.id)
+        except ApiProxyError:
+            # TODO: Actually log this and tell someone about it...
+            # response.append(error_response("An internal error ocurred and your query could not be performed. It has been logged"))
             return HTTP_SERVICE_UNAVAILABLE
-        else:
-            return HTTP_OK
+
+        return HTTP_OK
+
+#        # Now invoke the setuid ingest program
+#        command = ["/opt/FitsStorage/fits_storage/scripts/invoke",
+#                   "/opt/FitsStorage/fits_storage/scripts/ingest_uploaded_file.py", "--filename=%s" % filename,
+#                   "--demon",
+#                   "--processed_cal=%s" % processed_cal,
+#                   "--fileuploadlog_id=%d" % fileuploadlog.id]
+#
+#        #ret = subprocess.call(command)
+#        subp_p = subprocess.Popen(command)
+#        subp_p.wait()
+#
+#        ret = subp_p.returncode
+#        fileuploadlog.invoke_pid = subp_p.pid
+#        fileuploadlog.invoke_status = subp_p.returncode
+#
+#        # Because invoke calls execv(), which in turn replaces the process image of the invoke process with that of
+#        # python running ingest_uploaded_calibration.py, the return value we get acutally comes from that script, not invoke
+#
+#        if ret != 0:
+#            return HTTP_SERVICE_UNAVAILABLE
+#        else:
+#            return HTTP_OK

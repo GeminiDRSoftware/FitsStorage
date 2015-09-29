@@ -14,13 +14,24 @@
 #
 
 import json
+import os
 import wsgiref.simple_server
 from wsgiref.validate import validator
 from wsgiref.util import request_uri, application_uri, shift_path_info
-import pyfits as pf
+import datetime
 
-from fits_storage.utils.fitseditor import compare_cards, modify_multiple_cards
+from fits_storage.logger import logger, setdebug, setdemon
+
+# NOTE: Maybe we want this to be a startup option
+setdebug(False)
+setdemon(False)
+
+# Annouce startup
+now = datetime.datetime.now()
+logger.info("*********  ingest_uploaded_file.py - starting up at %s" % now)
+
 from fits_storage.fits_storage_config import api_backend_location
+from fits_storage.orm import session_scope
 
 HTTP_OK            = 200
 FORBIDDEN          = 403
@@ -81,6 +92,8 @@ def get_arguments(environ):
 #   Helper functions
 #
 
+from fits_storage.utils.fitseditor import compare_cards, modify_multiple_cards
+
 def fits_is_unchanged(path, new_values):
     return all(compare_cards(path, new_values, ext=0))
 
@@ -95,6 +108,8 @@ def fits_apply_changes(path, changes):
 #
 #   API Code
 #
+
+import pyfits as pf
 
 def set_image_metadata(environ, start_response):
     try:
@@ -112,6 +127,64 @@ def set_image_metadata(environ, start_response):
     start_response("200 OK", [('Content-Type', 'application/json')])
     return [json.dumps({'result': result})]
 
+from fits_storage.orm.fileuploadlog import FileUploadLog, FileUploadWrapper
+from fits_storage.utils.ingestqueue import IngestQueueUtil
+from fits_storage.fits_storage_config import storage_root, upload_staging_path, processed_cals_path, using_s3
+if using_s3:
+    from fits_storage.utils.aws_s3 import get_helper
+
+def ingest_upload(environ, start_response):
+    try:
+        query = get_arguments(environ)
+        filename    = query['filename']
+        fulog_id    = query.get('fileuploadlog_id', None)
+        is_proc_cal = query.get('processed_cal', False)
+    except KeyError as e:
+        raise WSGIError("Missing argument '{}'".format(e.message))
+
+    path = processed_cals_path if is_proc_cal else ''
+    fileuploadlog = FileUploadWrapper()
+    with session_scope() as session:
+        if fulog_id is not None:
+            fileuploadlog.set_wrapped(session.query(FileUploadLog).get(fulog_id))
+
+        # Move the file to its appropriate location in storage_root/path or S3
+        # Construct the full path names and move the file into place
+        src = os.path.join(upload_staging_path, filename)
+        dst = os.path.join(path, filename)
+        fileuploadlog.destination = dst
+
+        if using_s3:
+            # Copy to S3
+            try:
+                s3 = get_helper()
+                with fileuploadlog:
+                    fileuploadlog.s3_ok = s3.upload_file(dst, src)
+                os.unlink(src)
+            except Exception:
+                string = traceback.format_tb(sys.exc_info()[2])
+                string = "".join(string)
+                fileuploadlog.add_note("Exception during S3 upload, see log file")
+
+                logger.error("Exception during S3 upload: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
+
+        else:
+            dst = os.path.join(storage_root, dst)
+            logger.debug("Moving %s to %s" % (src, dst))
+            # We can't use os.rename as that keeps the old permissions and ownership, which we specifically want to avoid
+            # Instead, we copy the file and the remove it
+            shutil.copy(src, dst)
+            os.unlink(src)
+            fileuploadlog.file_ok = True
+
+        logger.info("Queueing for Ingest: %s" % dst)
+        iq_id = IngestQueueUtil(session, logger).add_to_queue(filename, path)
+
+        fileuploadlog.ingestqueue_id = iq_id
+
+    start_response("200 OK", [('Content-Type', 'application/json')])
+    return [json.dumps({'result': True})]
+
 #######################################################################################
 #
 #   Routes and application entry point
@@ -120,6 +193,7 @@ def set_image_metadata(environ, start_response):
 routes = {
     'POST': {
         '/set_image_metadata': set_image_metadata,
+        '/ingest_upload':      ingest_upload,
     }
 }
 
