@@ -7,6 +7,7 @@ from . import templating
 from ..fits_storage_config import upload_staging_path, api_backend_location
 
 from ..utils.api import ApiProxy, ApiProxyError
+from ..utils.userprogram import icanhave
 
 from mod_python import util
 import json
@@ -26,6 +27,10 @@ def miscfiles(session, req):
         return save_file(session, req, formdata)
 
     return {}
+
+def enumerate_miscfiles(session, req, query):
+    for misc, file in query:
+        yield icanhave(session, req, misc), misc, file
 
 def search_miscfiles(session, req, formdata):
     ret = {}
@@ -50,7 +55,9 @@ def search_miscfiles(session, req, formdata):
         query = query.filter(MiscFile.program_id.like('%' + prog + '%'))
         ret['searchProg'] = prog
 
-    ret['fileList'] = query.order_by(File.name).limit(500)
+    query = query.order_by(File.name).limit(500)
+    ret['count'] = query.count
+    ret['fileList'] = enumerate_miscfiles(session, req, query)
 
     return ret
 

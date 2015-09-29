@@ -55,16 +55,22 @@
 </form>
 {%- if fileList %}
 <hr />
-{% if fileList.count() == 0 %}
+{% if count == 0 %}
 <h3>No results found
 {% else %}
 <table border='0'>
  <thead>
-  <tr class='tr_head'><th>Filename<th>Program<th>Description</tr>
+  <tr class='tr_head'><th>Filename<th>Program<th>Release Date<th>Description</tr>
  </thead>
  <tbody>
- {%- for meta, file in fileList %}
-  <tr class='alternating'><td><a href='/file/{{ file.name }}'>{{ file.name }}</a><td>{{ meta.program_id or '' }}<td><span>{{ (meta.description or '')|e }}</span></tr>
+ {%- for can_have, meta, file in fileList %}
+  <tr class='alternating'>
+  {%- if can_have %}
+  <td><a href='/file/{{ file.name }}'>{{ file.name }}</a>
+  {%- else %}
+  <td>{{ file.name }}
+  {%- endif %}
+  <td>{{ meta.program_id or '' }}<td>{{ meta.release.date() }}<td><span>{{ (meta.description or '')|e }}</span></tr>
  {% endfor %}
  </tbody>
 {%- endif %}
