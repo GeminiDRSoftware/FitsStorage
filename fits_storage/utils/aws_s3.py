@@ -66,7 +66,7 @@ class Boto3Helper(object):
         return boto3.DEFAULT_SESSION
 
     @property
-    def client(self):
+    def s3_client(self):
         return self.session.client('s3')
 
     @property
@@ -128,16 +128,17 @@ class Boto3Helper(object):
         md = obj.metadata
         md.update(kw)
         bn = self.bucket.name
-        self.client.copy_object(Bucket=bn, Key=keyname, CopySource=unquote(pathname2url('{}/{}'.format(bn, keyname))),
+        self.s3_client.copy_object(Bucket=bn, Key=keyname, CopySource=unquote(pathname2url('{}/{}'.format(bn, keyname))),
                                 MetadataDirective='REPLACE', Metadata=md)
 
-    def upload_file(self, keyname, filename):
+    def upload_file(self, keyname, filename, extra_meta = {}):
         md5 = md5sum(filename)
-        client = self.client
-        transfer = S3Transfer(client)
+        transfer = S3Transfer(self.s3_client)
         try:
+            meta = dict(md5 = md5)
+            meta.update(extra_meta)
             transfer.upload_file(filename, self.bucket.name, keyname,
-                                 extra_args={'Metadata': {'md5': md5}})
+                                 extra_args={'Metadata': meta})
         except S3UploadFailedError as e:
             self.l.error(e.message)
             return None
@@ -167,8 +168,7 @@ class Boto3Helper(object):
                 self.l.error("Unable to delete %s which is in the way of the S3 download", fullpath)
                 # TODO: Return here? Should be the obvious
 
-        client = self.client
-        transfer = S3Transfer(client)
+        transfer = S3Transfer(self.s3_client)
         try:
             transfer.download_file(self.bucket.name, keyname, fullpath)
         except RetriesExceededError as e:
