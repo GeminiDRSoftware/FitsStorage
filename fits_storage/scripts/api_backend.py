@@ -68,35 +68,44 @@ def get_post_data(environ):
     except ValueError:
         return ''
 
-#######################################################################################
-#
-#   API Code
-#
-
-def is_unchanged(path, new_values):
-    return all(compare_cards(path, new_values, ext=0))
-
-def apply_changes(path, changes):
-    if is_unchanged(path, changes):
-        return False
-
-    modify_multiple_cards(path, changes, ext=0)
-    return True
-
-def set_image_metadata(environ, start_response):
+def get_arguments(environ):
     try:
-        query = json.loads(get_post_data(environ))
-        path    = query['path']
-        changes = query['changes']
-    except KeyError as e:
-        raise WSGIError("Missing argument '{}'".format(e.message))
+        return json.loads(get_post_data(environ))
     except TypeError:
         raise WSGIError("The query is not a valid JSON method call")
     except ValueError:
         raise WSGIError("The data for this query is not valid JSON")
 
+#######################################################################################
+#
+#   Helper functions
+#
+
+def fits_is_unchanged(path, new_values):
+    return all(compare_cards(path, new_values, ext=0))
+
+def fits_apply_changes(path, changes):
+    if fits_is_unchanged(path, changes):
+        return False
+
+    modify_multiple_cards(path, changes, ext=0)
+    return True
+
+#######################################################################################
+#
+#   API Code
+#
+
+def set_image_metadata(environ, start_response):
     try:
-        result = apply_changes(path, changes)
+        query = get_arguments(environ)
+        path    = query['path']
+        changes = query['changes']
+    except KeyError as e:
+        raise WSGIError("Missing argument '{}'".format(e.message))
+
+    try:
+        result = fits_apply_changes(path, changes)
     except (pf.VerifyError, IOError):
         raise WSGIError("There were problems when opening/modifying the file")
 
