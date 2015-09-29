@@ -67,7 +67,9 @@ logger.info("*********    service_ingest_queue.py - starting up at %s", datetime
 
 try:
     with PidFile(logger, options.name, dummy=not options.lockfile) as pidfile, session_scope() as session:
-        ingest_queue = IngestQueueUtil(session, logger)
+        ingest_queue = IngestQueueUtil(session, logger, skip_fv = options.skip_fv,
+                                                        skip_md = options.skip_wmd,
+                                                        make_previews = options.make_previews)
         export_queue = ExportQueueUtil(session, logger)
 
         # Loop forever. loop is a global variable defined up top
@@ -96,9 +98,7 @@ try:
                             continue
 
                     try:
-                        added_diskfile = ingest_queue.ingest_file(iq.filename, iq.path, iq.force_md5,
-                                                                  iq.force, options.skip_fv, options.skip_wmd,
-                                                                  options.make_previews)
+                        added_diskfile = ingest_queue.ingest_file(iq.filename, iq.path, iq.force_md5, iq.force)
                         # Now we also add this file to our export list if we have downstream servers and we did add a diskfile
                         if added_diskfile:
                             for destination in export_destinations:

@@ -61,9 +61,20 @@ instrument_table = {
     }
 
 class IngestQueueUtil(object):
-    def __init__(self, session, logger):
+    def __init__(self, session, logger, skip_md=True, skip_fv=True, make_previews=False):
+        """
+        skip_fv: causes the ingest to skip running fitsverify on the files
+        skip_md: causes the ingest to skip running md on the files.
+        make_preview: If we are doing previews, we usually simply add it to the preview
+                      queue. However for a rebuild, it's more efficient to just make the
+                      preview when ingesting, while we have the file uncompressed etc.
+                      Set this to true to make the preview at ingest time.
+        """
         self.s = session
         self.l = logger
+        self.skip_md = skip_md
+        self.skip_fv = skip_fv
+        self.make_prev = make_previews
         if using_previews:
             self.preview = PreviewQueueUtil(self.s, self.l)
         if using_s3:
@@ -181,7 +192,7 @@ class IngestQueueUtil(object):
         except NoResultFound:
             pass
 
-    def add_diskfile_entry(self, fileobj, filename, path, fullpath, skip_fv, skip_md, make_previews):
+    def add_diskfile_entry(self, fileobj, filename, path, fullpath):
         self.l.debug("Adding new DiskFile entry")
         if using_s3:
             # At this point, we fetch a local copy of the file to the staging area
@@ -198,7 +209,6 @@ class IngestQueueUtil(object):
                             os.access(diskfile.uncompressed_cache_file, os.F_OK))
 
 
-        # If it's an obslog file, process it as such 
         if 'obslog' in filename:
             obslog = Obslog(diskfile)
             self.s.add(obslog)
@@ -228,7 +238,7 @@ class IngestQueueUtil(object):
 
             # This will use the DiskFile unzipped cache file if it exists
             self.l.debug("Adding new DiskFileReport entry")
-            dfreport = DiskFileReport(diskfile, skip_fv, skip_md)
+            dfreport = DiskFileReport(diskfile, self.skip_fv, self.skip_md)
             self.s.add(dfreport)
             self.s.commit()
 
@@ -277,7 +287,7 @@ class IngestQueueUtil(object):
             # Do the preview here.
             try:
                 if using_previews:
-                    self.preview.process(diskfile, make=make_previews)
+                    self.preview.process(diskfile, make=self.make_previews)
             except:
                 self.l.error("Error making preview for %s", diskfile.filename)
 
@@ -330,7 +340,7 @@ class IngestQueueUtil(object):
             # Not present
             return False
 
-    def ingest_file(self, filename, path, force_md5, force, skip_fv, skip_md, make_previews=False):
+    def ingest_file(self, filename, path, force_md5, force):
         """
         Ingests a file into the database. If the file isn't known to the database
         at all, all three (file, diskfile, header) table entries are created.
@@ -350,12 +360,6 @@ class IngestQueueUtil(object):
                              of the last modification timestamps.
         force: causes this function to ingest the file regardless of md5 and
                      modtime.
-        skip_fv: causes the ingest to skip running fitsverify on the file
-        skip_md: causes the ingest to skip running md on the file.
-        make_preview: If we are doing previews, we usually simply add it to the preview
-                      queue here. However for a rebuild, it's more efficient to just make
-                      the preview at this point while we have the file uncompressed etc.
-                      Set this to true to make the preview at ingest time.
 
         return value is a boolean to say whether we added a new diskfile or not
         """
@@ -392,7 +396,7 @@ class IngestQueueUtil(object):
         # At this point, 'fileobj' should by a valid DB object.
 
         if self.need_to_add_diskfile(fileobj, force, force_md5):
-            return self.add_diskfile_entry(fileobj, filename, path, fullpath, skip_fv, skip_md, make_previews)
+            return self.add_diskfile_entry(fileobj, filename, path, fullpath)
 
         return False
 
