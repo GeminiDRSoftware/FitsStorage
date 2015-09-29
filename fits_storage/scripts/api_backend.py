@@ -13,12 +13,15 @@
 #   Generic stuff, mainly to control the routing and error responses
 #
 
+import datetime
 import json
 import os
+import traceback
+import sys
+
 import wsgiref.simple_server
 from wsgiref.validate import validator
 from wsgiref.util import request_uri, application_uri, shift_path_info
-import datetime
 
 from fits_storage.logger import logger, setdebug, setdemon
 
@@ -128,6 +131,7 @@ def set_image_metadata(environ, start_response):
     return [json.dumps({'result': result})]
 
 from fits_storage.orm.fileuploadlog import FileUploadLog, FileUploadWrapper
+from fits_storage.orm.miscfile import is_miscfile, miscfile_meta, miscfile_meta_path
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 from fits_storage.fits_storage_config import storage_root, upload_staging_path, processed_cals_path, using_s3
 if using_s3:
@@ -144,6 +148,7 @@ def ingest_upload(environ, start_response):
 
     path = processed_cals_path if is_proc_cal else ''
     fileuploadlog = FileUploadWrapper()
+
     with session_scope() as session:
         if fulog_id is not None:
             fileuploadlog.set_wrapped(session.query(FileUploadLog).get(fulog_id))
@@ -154,19 +159,31 @@ def ingest_upload(environ, start_response):
         dst = os.path.join(path, filename)
         fileuploadlog.destination = dst
 
+        it_is_misc = is_miscfile(src)
+        if it_is_misc:
+            misc_meta = miscfile_meta(src)
+
         if using_s3:
             # Copy to S3
             try:
                 s3 = get_helper()
                 with fileuploadlog:
-                    fileuploadlog.s3_ok = s3.upload_file(dst, src)
+                    extra_meta = {}
+                    if it_is_misc:
+                        extra_meta = misc_meta
+                    fileuploadlog.s3_ok = s3.upload_file(dst, src, extra_meta)
                 os.unlink(src)
+                if it_is_misc:
+                    os.unlink(miscfile_meta_path(src))
             except Exception:
                 string = traceback.format_tb(sys.exc_info()[2])
                 string = "".join(string)
-                fileuploadlog.add_note("Exception during S3 upload, see log file")
+                if fileuploadlog.ful:
+                    fileuploadlog.add_note("Exception during S3 upload, see log file")
+                    session.flush()
 
                 logger.error("Exception during S3 upload: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
+                raise
 
         else:
             dst = os.path.join(storage_root, dst)
@@ -177,6 +194,8 @@ def ingest_upload(environ, start_response):
             os.unlink(src)
             fileuploadlog.file_ok = True
 
+#        if it_is_misc:
+#            filename = misc_meta['filename']
         logger.info("Queueing for Ingest: %s" % dst)
         iq_id = IngestQueueUtil(session, logger).add_to_queue(filename, path)
 

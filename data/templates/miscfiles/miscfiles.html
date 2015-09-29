@@ -1,0 +1,72 @@
+{% extends "layout_nofrills.html" %}
+{% block title %}Generic Files Management{% endblock %}
+{% block extra_script %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+{% endblock %}
+{% block body %}
+<h1>Generic Files Management</h1>
+{% if can_manage == True %}
+ <!-- Here, code to add new files -->
+{% endif %}
+{%- if actionMessage %}
+<div class='action_message'>{{ actionMessage }}</div>
+{%- endif %}
+{%- if errorMessage %}
+<div class='error_message'>{{ errorMessage }}</div>
+{%- endif %}
+<form action='/miscfiles' method='POST' enctype='multipart/form-data'>
+  <table>
+   <tr><td colspan='2'><h3>File Search</h3>
+   <tr><td><label for='name'>File name:</label>
+       <td><input type='text' name='name'
+       		  placeholder='File name, or a part of it' size='75'
+       		  value='{{ searchName }}'/>
+   <tr><td><label for='keyw'>Keywords:</label>
+       <td><input type='text' name='keyw'
+       		  placeholder='Keywords to be found in the description' size='75'
+		  value='{{ searchKeyw }}' />
+   <tr><td><label for='prog'>Program:</label>
+       <td><input type='text' name='prog'
+       		  placeholder='Gemini program ID' size='32'
+		  value='{{ searchProg }}' />
+   <tr><td>
+       <td><input type='submit' name='search' value='Search' />
+           <input type='reset' />
+<!-- TODO: Upload form should be seen only by staffers -->
+   <tr><td colspan='2'><h3>Add New File</h3>
+   <tr><td><label for='uploadFile'><strong>File</strong>:</label>
+       <td><input type='file' name='uploadFile' />
+   <tr><td><label for='uploadRelease'><strong>Release Date</strong>:</label>
+       <td><select name='uploadRelease'>
+             <option value='default'>18 Months from Now</option>
+	     <option value='now'>Now</option>
+           </select>
+   <tr><td><label for='uploadProg'>Program ID:</label>
+       <td><input type='text' name='uploadProg' size='32'
+            placeholder='Gemini Program ID (optional)'
+	    value='{{ uploadProg }}' />
+   <tr><td style='vertical-align: top'><label for='uploadDesc'>Description:</label>
+       <td><textarea name='uploadDesc' cols='50' rows='5'
+       		     placeholder='Describe the contents of the file. It may be useful to add keywords (eg. #my-instrument) to help with search. Optional, but recommended'></textarea>
+   <tr><td>
+       <td><input type='submit' name='upload' value='Send' />
+  </table>
+</form>
+{%- if fileList %}
+<hr />
+{% if fileList.count() == 0 %}
+<h3>No results found
+{% else %}
+<table border='0'>
+ <thead>
+  <tr class='tr_head'><th>Filename<th>Program<th>Description</tr>
+ </thead>
+ <tbody>
+ {%- for meta, file in fileList %}
+  <tr class='alternating'><td><a href='/file/{{ file.name }}'>{{ file.name }}</a><td>{{ meta.program_id or '' }}<td><span>{{ (meta.description or '')|e }}</span></tr>
+ {% endfor %}
+ </tbody>
+{%- endif %}
+{%- endif %}
+{% endblock %}

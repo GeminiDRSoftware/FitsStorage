@@ -16,29 +16,7 @@ from ..web.user import userfromcookie
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.obslog import Obslog
-
-def icanhave(session, req, item, filedownloadlog=None):
-    """
-    Returns a boolean saying whether the requesting client can have
-    access to the given item. The item is either a header object or an obslog object
-    """
-
-    # Does the client have the magic cookie?
-    gotmagic = got_magic(req)
-    if gotmagic:
-        if filedownloadlog:
-            filedownloadlog.magic_access = True
-        return True
-
-    # Get the user from the request
-    user = userfromcookie(session, req)
-
-    if isinstance(item, Header):
-        return canhave_header(session, user, item, filedownloadlog, gotmagic=gotmagic)
-
-    if isinstance(item, Obslog):
-        return canhave_obslog(session, user, item, filedownloadlog, gotmagic=gotmagic)
-
+from ..orm.miscfile import MiscFile
 
 def canhave_coords(session, user, header, gotmagic=False, user_progid_list=None):
     """
@@ -58,6 +36,47 @@ def canhave_coords(session, user, header, gotmagic=False, user_progid_list=None)
     # the rules are exactly the same as for the data
     return canhave_header(session, user, header, gotmagic=gotmagic, user_progid_list=user_progid_list)
 
+def is_staffer(user, filedownloadlog):
+    # Is the user gemini staff?
+    if user is not None and user.gemini_staff is True:
+        if filedownloadlog:
+            filedownloadlog.staff_access = True
+        return True
+    return False
+
+def is_released(release_date, filedownloadlog):
+    # Can't compare a datetime to a date
+    if isinstance(release_date, datetime.datetime):
+        release_date = release_date.date()
+
+    # Is the release date in the past?
+    today = datetime.datetime.utcnow().date()
+    if release_date and today >= release_date:
+        if filedownloadlog:
+            filedownloadlog.released = True
+        return True
+    return False
+
+def reset_pi_access(filedownloadlog):
+    if filedownloadlog:
+        filedownloadlog.released = False
+        filedownloadlog.staff_access = False
+        filedownloadlog.eng_access = False
+        filedownloadlog.magic_access = False
+        filedownloadlog.pi_access = False
+
+def is_users_program(session, user, user_progid_list, program_id, filedownloadlog):
+    # If we didn't get passed in the users program list, get it
+    if user_progid_list is None:
+        user_progid_list = get_program_list(session, user)
+
+    # Is the program in the list?
+    if program_id in user_progid_list:
+        if filedownloadlog:
+            filedownloadlog.pi_access = True
+        return True
+    return False
+
 def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False, user_progid_list=None):
     """
     Returns a boolean saying whether or not the given user can have
@@ -70,45 +89,26 @@ def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False, 
     the file access rules that were used.
     """
 
-    # Is the user gemini staff?
-    if user is not None and user.gemini_staff is True:
-        if filedownloadlog:
-            filedownloadlog.staff_access = True
-        return True
+    def is_eng():
+        # Is the data engineering?
+        if header.engineering is True:
+            if filedownloadlog:
+                filedownloadlog.eng_access = True
+            return True
+        return False
 
-    # Is the release date in the past?
-    today = datetime.datetime.utcnow().date()
-    if header.release and today >= header.release:
-        if filedownloadlog:
-            filedownloadlog.released = True
-        return True
+    clear = any([is_eng(),
+                 is_staffer(user, filedownloadlog),
+                 is_released(header.release, filedownloadlog)])
 
-    # Is the data engineering?
-    if header.engineering is True:
-        if filedownloadlog:
-            filedownloadlog.eng_access = True
+    if clear:
         return True
 
     # If none of the above, then user is requesting pi access
-    if filedownloadlog:
-        filedownloadlog.released = False
-        filedownloadlog.staff_access = False
-        filedownloadlog.eng_access = False
-        filedownloadlog.magic_access = False
-        filedownloadlog.pi_access = False
+    reset_pi_access(filedownloadlog)
 
-    # If we didn't get passed in the users program list, get it
-    if user_progid_list is None:
-        user_progid_list = get_program_list(session, user)
-
-    # Is the program in the list?
-    if header.program_id in user_progid_list:
-        if filedownloadlog:
-            filedownloadlog.pi_access = True
-        return True
-
-    # If none of the above, then deny access
-    return False
+    # Last chance. If not the PI, then deny access
+    return is_users_program(session, user, user_progid_list, header.program_id, filedownloadlog)
 
 def canhave_obslog(session, user, obslog, filedownloadlog=None, gotmagic=False, user_progid_list=None):
     """
@@ -122,22 +122,10 @@ def canhave_obslog(session, user, obslog, filedownloadlog=None, gotmagic=False, 
     the file access rules that were used.
     """
 
-    # Is the user gemini staff?
-    if user is not None and user.gemini_staff is True:
-        if filedownloadlog:
-            filedownloadlog.staff_access = True
-        return True
+    clear = any([is_staffer(user, filedownloadlog),
+                 is_users_program(session, user, user_progid_list, obslog.program_id, filedownloadlog)])
 
-    # Is this a PI requesting their obslogs
-
-    # If we didn't get passed in the users program list, get it
-    if user_progid_list is None:
-        user_progid_list = get_program_list(session, user)
-
-    # Is the program in the list?
-    if obslog.program_id in user_progid_list:
-        if filedownloadlog:
-            filedownloadlog.pi_access = True
+    if clear:
         return True
 
     # As agreed by PH, AA, IJ, BM:
@@ -161,16 +149,38 @@ def canhave_obslog(session, user, obslog, filedownloadlog=None, gotmagic=False, 
     if maxrel:
         # Is the release date in the past?
         maxrel = datetime.datetime.combine(maxrel, zerohour)
-        if maxrel <= datetime.datetime.utcnow():
-            return True
-        else:
-            return False
+        return is_released(maxrel, filedownloadlog)
     else:
         # If we didn't get a release date, assume it's public (eg eng data?)
         return True
 
     # If none of the above, then deny access
     return False
+
+def canhave_miscfile(session, user, misc, filedownloadlog=None, gotmagic=False, user_progid_list=None):
+    """
+    Returns a boolean saying whether or not the given user can have
+    access to the given miscellaneous file.
+
+    You can optionally pass in the users program list directly. If you
+    don't, then this function will look it up, which requires the session
+    to be valid. If you pass in the user program list, you don't actually
+    need to pass a valid session - it can be None.
+    If you pass in a FileDownloadLog object, we will update it to note
+    the file access rules that were used.
+    """
+
+    clear = any([is_staffer(user, filedownloadlog),
+                 is_released(misc.release, filedownloadlog)])
+
+    if clear:
+        return True
+
+    # If none of the above, then user is requesting pi access
+    reset_pi_access(filedownloadlog)
+
+    # Last chance. If not the PI, then deny access
+    return is_users_program(session, user, user_progid_list, misc.program_id, filedownloadlog)
 
 def got_magic(req):
     """
@@ -189,3 +199,31 @@ def got_magic(req):
             got = True
 
     return got
+
+def cant_have(*args, **kw):
+    return False
+
+icanhave_function = {
+    Header:   canhave_header,
+    Obslog:   canhave_obslog,
+    MiscFile: canhave_miscfile,
+}
+
+def icanhave(session, req, item, filedownloadlog=None):
+    """
+    Returns a boolean saying whether the requesting client can have
+    access to the given item. The item is either a header object or an obslog object
+    """
+
+    # Does the client have the magic cookie?
+    gotmagic = got_magic(req)
+    if gotmagic:
+        if filedownloadlog:
+            filedownloadlog.magic_access = True
+        return True
+
+    # Get the user from the request
+    user = userfromcookie(session, req)
+
+    fn = icanhave_function.get(item.__class__, cant_have)
+    return fn(session, user, item, filedownloadlog, gotmagic=gotmagic)

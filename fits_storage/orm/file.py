@@ -1,6 +1,6 @@
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text
-#from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship
 
 from . import Base
 
@@ -15,6 +15,8 @@ class File(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False, unique=True, index=True)
+
+    diskfiles = relationship('DiskFile', lazy='dynamic')
 
     def __init__(self, filename):
         self.name = File.trim_name(filename)

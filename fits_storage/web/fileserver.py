@@ -1,4 +1,4 @@
-from ..orm import session_scope
+from ..orm import session_scope, NoResultFound, MultipleResultsFound
 
 from ..fits_storage_config import using_s3, fits_open_result_limit, fits_closed_result_limit
 
@@ -9,10 +9,11 @@ from ..orm.header import Header
 from ..orm.obslog import Obslog
 from ..orm.downloadlog import DownloadLog
 from ..orm.filedownloadlog import FileDownloadLog
+from ..orm.miscfile import MiscFile
 
 from .selection import getselection, openquery, selection_to_URL
 from .summary import list_headers
-from .user import userfromcookie, AccessForbidden
+from .user import userfromcookie, AccessForbidden, DEFAULT_403_TEMPLATE
 
 # This will only work with apache
 from mod_python import apache
@@ -255,6 +256,32 @@ def download(req, things):
 
     return apache.HTTP_OK
 
+def is_regular_file(session, diskfile):
+    try:
+        header = session.query(Header).filter(Header.diskfile_id == diskfile.id).one()
+        return header, 'application/fits'
+    except MultipleResultsFound:
+        raise MultipleResultsFound("Multiple files found!")
+
+def is_obslog(session, diskfile):
+    try:
+        obslog = session.query(Obslog).filter(Obslog.diskfile_id == diskfile.id).one()
+        return obslog, 'text/plain'
+    except MultipleResultsFound:
+        raise MultipleResultsFound("Multiple obslogs found!")
+
+def is_misc(session, diskfile):
+    try:
+        miscfile = session.query(MiscFile).filter(MiscFile.diskfile_id == diskfile.id).one()
+        return miscfile, 'application/octect-stream'
+    except MultipleResultsFound:
+        raise MultipleResultsFound("Multiple files found!")
+
+supported_tests = (
+    is_regular_file,
+    is_obslog,
+    is_misc
+)
 
 def fileserver(req, things):
     """
@@ -278,36 +305,32 @@ def fileserver(req, things):
         session.add(downloadlog)
         downloadlog.query_started = datetime.datetime.utcnow()
 
-        query = session.query(File).filter(File.name == filename)
-        if query.count() == 0:
+        try:
+            file = session.query(File).filter(File.name == filename).one()
+        except NoResultFound:
             downloadlog.add_note("Not found in File table")
             return apache.HTTP_NOT_FOUND
-        file = query.one()
         # OK, we should have the file record now.
         # Next, find the canonical diskfile for it
-        query = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.file_id == file.id)
-        diskfile = query.one()
+        diskfile = (
+            session.query(DiskFile)
+                    .filter(DiskFile.present == True)
+                    .filter(DiskFile.file_id == file.id)
+                    .one()
+            )
 
+        item = None
         # And now find the header record...
-        query = session.query(Header).filter(Header.diskfile_id == diskfile.id)
-        headers = query.all()
-        if len(headers) > 1:
-            downloadlog.add_note("WARNING: Multiple files found!")
-        if len(headers) > 0:
-            item = headers[0]
-            content_type = 'application/fits'
-        else:
-            # Didn't find a header - is it an obslog file
-            query = session.query(Obslog).filter(Obslog.diskfile_id == diskfile.id)
-            obslogs = query.all()
-            if len(obslogs) > 1:
-                downloadlog.add_note("WARNING: Multiple obslogs found!")
-            if len(obslogs) > 0:
-                item = obslogs[0]
-                content_type = 'text/plain'
-            else:
-                # Not an obslog either
-                item = None
+        for is_file_type in supported_tests:
+            try:
+                item, content_type = is_file_type(session, diskfile)
+                break
+            except NoResultFound:
+                # Not the kind of the object we were looking for
+                pass
+            except MultipleResultsFound as e:
+                downloadlog.add_note(str(e))
+                break
 
         downloadlog.query_completed = datetime.datetime.utcnow()
         downloadlog.numresults = 1
@@ -323,7 +346,7 @@ def fileserver(req, things):
             else:
                 # Refuse to send data
                 downloadlog.numdenied = 1
-                raise AccessForbidden("Not enough privileges to download this content")
+                raise AccessForbidden("Not enough privileges to download this content", DEFAULT_403_TEMPLATE)
 
         return apache.HTTP_OK
 

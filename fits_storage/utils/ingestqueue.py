@@ -10,6 +10,7 @@ from sqlalchemy.orm import make_transient
 from time import sleep
 import functools
 import fcntl
+import dateutil.parser
 
 from ..orm.geometryhacks import add_footprint, do_std_obs
 
@@ -37,6 +38,7 @@ from ..orm.gpi import Gpi
 from ..orm.ingestqueue import IngestQueue
 from ..orm.obslog import Obslog
 from ..orm.calcachequeue import CalCacheQueue
+from ..orm.miscfile import is_miscfile, miscfile_meta, MiscFile
 
 from astrodata import AstroData
 
@@ -209,7 +211,17 @@ class IngestQueueUtil(object):
                             os.access(diskfile.uncompressed_cache_file, os.F_OK))
 
 
-        if 'obslog' in filename:
+        if is_miscfile(filename):
+            meta = miscfile_meta(filename)
+            misc = MiscFile()
+            misc.diskfile_id = diskfile.id
+            misc.release = dateutil.parser.parse(meta['release'])
+            misc.description = meta['description']
+            misc.program_id  = meta['program']
+
+            self.s.add(misc)
+            self.s.commit()
+        elif 'obslog' in filename:
             obslog = Obslog(diskfile)
             self.s.add(obslog)
             self.s.commit()
