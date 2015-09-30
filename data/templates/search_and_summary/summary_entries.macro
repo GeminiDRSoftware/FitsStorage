@@ -1,0 +1,99 @@
+{%- macro head(row) %}
+<tr class='tr_head'>
+{%- for col in row %}
+ {%- if col.longheading %}
+ <th><abbr title='{{ col.longheading }}'>{{ col.heading }}</abbr>
+ {%- else %}
+ <th>{{ col.heading }}
+ {%- endif %}
+ {%- if col.sortarrows %}<a href="{{ uri }}?orderby={{ col.key }}_asc">&uarr;</a><a href="{{ uri }}?orderby={{ col.key }}_desc">&darr;</a>{%- endif %}
+{%- endfor %}
+</tr>
+{%- endmacro %}
+
+{%- macro row(row) -%}
+<tr class='alternating'>
+{%- for column in row.columns %}
+ <td>
+  {%- if column.text -%}
+{{ column.text|e }}
+  {%- elif column.content -%}
+    {%- if column.content.prop_message -%}{{ prop_message(column.content) }}
+      {%- elif column.key == 'filename' -%}{{ generate_filename(column.content) }}
+      {%- elif column.key == 'data_label' -%}{{ generate_datalabel(column.content, row.uri) }}
+      {%- elif column.key == 'ut_datetime' -%}{{ generate_utdatetime(column.content, row.uri) }}
+      {%- elif column.key == 'instrument' -%}{{ generate_instrument(column.content, row.uri) }}
+      {%- elif column.key == 'observation_class' -%}{{ generate_uri_link(column.content, row.uri) }}
+      {%- elif column.key == 'observation_type' -%}{{ generate_uri_link(column.content, row.uri) }}
+      {%- elif column.key == 'object' -%}{{ generate_object(column.content) }}
+      {%- elif column.key == 'download' -%}{{ generate_download(column.content) }}
+    {%- endif -%}
+  {%- else -%}
+&lt;Unknown content&gt;
+  {%- endif -%}
+{%- endfor %}
+</tr>
+{%- endmacro %}
+
+{%- macro maybe_link(text, uri, test, blank=False) -%}
+{%- if test != True -%}
+{{ text }}
+{%- else -%}
+<a href="{{ uri }}"{% if blank == True %} target="_blank"{% endif %}>{{ text }}</a>
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro generate_filename(col) -%}
+{{ maybe_link(col.name, "/fullheader/%s" % col.df_id, blank=True, test=col.links) }}
+{%- if col.fverr -%} {{ maybe_link("-fits!", "/fitsverify/%s" % col.df_id, blank=True, test=col.links) }}{%- endif -%}
+{%- if col.mderr -%} {{ maybe_link("-md!", "/mdreport/%s" % col.df_id, blank=True, test=col.links) }}{%- endif -%}
+{%- endmacro -%}
+
+{%- macro generate_datalabel(col, uri) -%}
+{%- if col.links and col.dl.valid == True -%}
+<a href="{{ uri }}/{{ col.dl.projectid }}">{{ col.dl.projectid}}</a>-<a href="{{ uri }}/{{ col.dl.observation_id }}">{{ col.dl.obsnum }}</a>-<a href="{{ uri }}/{{ col.dl.datalabel }}">{{ col.dl.dlnum }}</a>
+{%- else -%}
+{{ col.daTalabel }}
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro generate_utdatetime(col, uri) -%}
+{%- if col.links == True -%}
+<a href="{{ uri }}/{{ col.dl }}">{{ col.dp }}</a> {{ col.tp }}
+{%- else -%}
+{{ col.dt }}
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro generate_instrument(col, uri) -%}
+{{ maybe_link(col.inst, "%s/%s" % (uri, col.inst), test=col.links) }}
+{%- if col.ao == True %} {{ maybe_link("+ AO", "%s/AO" % uri, test=col.links) }} {% if col.lg == True %}{{ maybe_link("+ LGS", "%s/LGS" % uri, test=col.links) }}{% else %}{{ maybe_link("+ NGS", "%s/NGS" % uri, test=col.links) }}{% endif %}{% endif -%}
+{%- endmacro -%}
+
+{%- macro generate_object(col) -%}
+{%- if col.abbr %}<abbr title="{{ col.name|e }}">{{ col.name|truncate(12)|e }}</abbr>{% else %}{{ col.name|e }}{% endif %}
+{%- if col.photstd %} {{ maybe_link('*', "/standardobs/%d" % col.id, test=col.links) }}{%- endif -%}
+{%- if col.type -%}
+{%- if col.type == 'zen' %} <abbr title="Target is Zenith in AzEl co-ordinate frame">&#x2693;&#x2191;</abbr>{% endif -%}
+{%- if col.type == 'azeltgt' %} <abbr title="Target is in AzEl co-ordinate frame">&#x2693;</abbr>{% endif -%}
+{%- if col.type == 'ns' %} <abbr title="Target is non-sidereal">&#x2604;</abbr>{% endif -%}
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro generate_download(col) -%}
+<div class='center'>
+{%- if col.prev %}<span class="preview"><a href="/preview/{{ col.name }}">[P]</a> </span>{% endif -%}
+<a href="/file/{{ col.name }}">[D]</a>
+{%- if down_sel %} <input type='checkbox' name='files' value='{{ col.name }}'>{% endif -%}
+</div>
+{%- endmacro -%}
+
+{%- macro generate_uri_link(col, uri) -%}
+{{ maybe_link(col.text, "%s/%s" % (uri, col.text), test=col.links) }}
+{%- endmacro -%}
+
+{%- macro prop_message(col) %}
+{%- if col.centered %}<div class="center">{% endif %}
+<abbr title="This appears to be proprietary data to which you do not have access. It becomes public on {{ col.release }}">{{ col.prop_message }}</abbr>
+{%- if col.centered %}</div>{% endif %}
+{%- endmacro %}

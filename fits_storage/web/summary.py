@@ -214,6 +214,7 @@ def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, 
     template_args = dict(
         clickable     = sumtype in {'searchresults', 'associated_cals'},
         insert_prev   = sumtype == 'searchresults',
+        uri           = sumgen.uri,
         headers       = sumgen.table_header(),
         data_rows     = RowYielder(sumgen, headers),
         down_all_link = download_all_url,

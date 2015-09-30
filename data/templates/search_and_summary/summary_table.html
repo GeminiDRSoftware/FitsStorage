@@ -1,6 +1,5 @@
-{% macro generate_row(row_obj, class, element='TD') %}
-<tr class='{{ class }}'>{% for content in row_obj.columns %}<{{ element }}>{{ content }}</{{ element }}>{% endfor %}</tr>
-{%- endmacro %}
+{% import "search_and_summary/summary_entries.macro" as generate %}
+
 {% if open_query and hit_open_limit %}
 <P>WARNING: Your search does not constrain the number of results - ie you did not specify a date,
    date range, program ID etc. Searches like this are limited to {{ open_limit }} results, and
@@ -25,9 +24,9 @@
 <img id="previewimage" src="/ajax-loading.gif" alt=""></span>
 {%- endif %}
 <TABLE class="fullwidth">
-{{ generate_row(headers, class='tr_head', element='TH') }}
+{{ generate.head(headers) }}
 {% for row in data_rows %}
-{{ generate_row(row, class='alternating') }}
+{{ generate.row(row) }}
 {% endfor %}
 </TABLE>
 {# Only show download button if we are allowed to download anything #}

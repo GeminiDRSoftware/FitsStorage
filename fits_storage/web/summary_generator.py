@@ -2,7 +2,7 @@
 This module contains the web summary generator class.
 """
 
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from cgi import escape
 
 from ..gemini_metadata_utils import GeminiDataLabel
@@ -34,12 +34,34 @@ SORT_ARROWS     = 0x01
 FILENAME_LINKS  = 0x02
 ALL_LINKS       = 0xFF
 
+ColDef = namedtuple('ColDef', "heading longheading sortarrows want header_attr diskfile_attr summary_func")
+# There are less default values than fields in the namedtuple. This is to force heading having a value
+# This means that the first element in the defaults corresponds to 'longheading'
+ColDef.__new__.__defaults__ = (None, True, False, None, None, None)
+
+class ColWrapper(object):
+    def __init__(self, summary, key, coldef):
+        self._arrows  = (summary.links & SORT_ARROWS) != 0
+        self.key      = key
+        self._coldef  = coldef
+
+    def __getattr__(self, attr):
+        return getattr(self._coldef, attr)
+
+    @property
+    def sortarrow(self):
+        return self._arrows or self._coldef.sortarrows
+
+    def __str__(self):
+        if hasattr(self, 'content'):
+            return "<ColWrapper '{}' {}>".format(self.key, str(self.content))
+
+        return "<ColWrapper '{}'>".format(self.key)
+
 class Row(object):
-    def __init__(self, class_=None, is_header=False):
+    def __init__(self):
         self.can_download = False
         self.columns = []
-        self.class_ = class_
-        self.is_header = is_header
 
     def add(self, coltext):
         self.columns.append(coltext)
@@ -89,7 +111,8 @@ class SummaryGenerator(object):
         self.init_cols()
         # Set the want flags
         self.sumtype = sumtype
-        self.set_type(sumtype)
+        self.wanted = sum_type_defs[sumtype]
+#        self.set_type(sumtype)
         self.links = links
         self.uri = uri
         self.my_progids = []
@@ -98,6 +121,7 @@ class SummaryGenerator(object):
     # has access to the file and thus whether to display the download things
         self.user = user
         self.user_progid_list = user_progid_list
+
 
     def set_type(self, sumtype):
         """
@@ -117,269 +141,113 @@ class SummaryGenerator(object):
         """
         Initializes the columns dictionary with default settings
         """
-        self.columns['download'] = {
-            'heading' : 'Download',
-            'sortarrows' : False,
-            'want' : True,
-            'header_attr' : None,
-            'summary_func' : 'download'
-            }
-        self.columns['filename'] = {
-            'heading' : 'Filename',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : None,
-            'summary_func' : 'filename'
-            }
-        self.columns['data_label'] = {
-            'heading' : 'Data Label',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : None,
-            'summary_func' : 'datalabel'
-            }
-        self.columns['ut_datetime'] = {
-            'heading' : 'UT Date Time',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : None,
-            'summary_func' : 'ut_datetime'
-            }
-        self.columns['instrument'] = {
-            'heading' : 'Inst',
-            'longheading' : 'Instrument',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : None,
-            'summary_func' : 'instrument'
-            }
-        self.columns['observation_class'] = {
-            'heading' : 'Class',
-            'longheading' : 'Obs Class',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : None,
-            'summary_func' : 'observation_class'
-            }
-        self.columns['observation_type'] = {
-            'heading' : 'Type',
-            'longheading' : 'Obs Type',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : None,
-            'summary_func' : 'observation_type'
-            }
-        self.columns['object'] = {
-            'heading' : 'Object',
-            'longheading' : 'Target Object Name',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : None,
-            'summary_func' : 'object'
-            }
-        self.columns['waveband'] = {
-            'heading' : 'WaveBand',
-            'longheading' : 'Imaging Filter or Spectroscopy Disperser and Wavelength',
-            'sortarrows' : False,
-            'want' : True,
-            'header_attr' : None,
-            'summary_func' : 'waveband'
-            }
-        self.columns['exposure_time'] = {
-            'heading' : 'ExpT',
-            'longheading' : 'Exposure Time',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : None,
-            'summary_func' : 'exposure_time'
-            }
-        self.columns['airmass'] = {
-            'heading' : 'AM',
-            'longheading' : 'AirMass',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : None,
-            'summary_func' : 'airmass'
-            }
-        self.columns['local_time'] = {
-            'heading' : 'LclTime',
-            'longheading' : 'Local Time',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : None,
-            'summary_func' : 'local_time'
-            }
-        self.columns['filter_name'] = {
-            'heading' : 'Filter',
-            'longheading' : 'Filter Name',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : None,
-            'summary_func' : 'filter_name'
-            }
-        self.columns['disperser'] = {
-            'heading' : 'Disperser',
-            'longheading' : 'Disperser: Central Wavelength',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : 'disperser',
-            'summary_func' : None
-            }
-        self.columns['fpmask'] = {
-            'heading' : 'FP Mask',
-            'longheading' : 'Focal Plane Mask',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : 'focal_plane_mask',
-            'summary_func' : None
-            }
-        self.columns['detector_roi'] = {
-            'heading' : 'ROI',
-            'longheading' : 'Detector ROI',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : 'detector_roi_setting',
-            'summary_func' : None
-            }
-        self.columns['detector_binning'] = {
-            'heading' : 'Binning',
-            'longheading' : 'Detector Binning',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : 'detector_binning',
-            'summary_func' : None
-            }
-        self.columns['detector_config'] = {
-            'heading' : 'DetConf',
-            'longheading' : 'Detector Configuration',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : 'detector_config',
-            'summary_func' : None
-            }
-        self.columns['qa_state'] = {
-            'heading' : 'QA',
-            'longheading' : 'QA State',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : 'qa_state',
-            'summary_func' : None
-            }
-        self.columns['raw_iq'] = {
-            'heading' : 'IQ',
-            'longheading' : 'Raw IQ',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : 'raw_iq',
-            'summary_func' : None
-            }
-        self.columns['raw_cc'] = {
-            'heading' : 'CC',
-            'longheading' : 'Raw CC',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : 'raw_cc',
-            'summary_func' : None
-            }
-        self.columns['raw_wv'] = {
-            'heading' : 'WV',
-            'longheading' : 'Raw WV',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : 'raw_wv',
-            'summary_func' : None
-            }
-        self.columns['raw_bg'] = {
-            'heading' : 'BG',
-            'longheading' : 'Raw BG',
-            'sortarrows' : True,
-            'want' : True,
-            'header_attr' : 'raw_bg',
-            'summary_func' : None
-            }
-        self.columns['present'] = {
-            'heading' : 'Present',
-            'sortarrows' : False,
-            'want' : True,
-            'header_attr' : None,
-            'diskfile_attr' : 'present',
-            'summary_func' : None
-            }
-        self.columns['entrytime'] = {
-            'heading' : 'Entry',
-            'sortarrows' : False,
-            'want' : True,
-            'header_attr' : None,
-            'diskfile_attr' : 'entrytime',
-            'summary_func' : None
-            }
-        self.columns['lastmod'] = {
-            'heading' : 'LastMod',
-            'sortarrows' : False,
-            'want' : True,
-            'header_attr' : None,
-            'diskfile_attr' : 'lastmod',
-            'summary_func' : None
-            }
-        self.columns['file_size'] = {
-            'heading' : 'File Size',
-            'sortarrows' : False,
-            'want' : True,
-            'header_attr' : None,
-            'diskfile_attr' : 'file_size',
-            'summary_func' : None
-            }
-        self.columns['file_md5'] = {
-            'heading' : 'File MD5',
-            'sortarrows' : False,
-            'want' : True,
-            'header_attr' : None,
-            'diskfile_attr' : 'file_md5',
-            'summary_func' : None
-            }
-        self.columns['compressed'] = {
-            'heading' : 'Compressed',
-            'sortarrows' : False,
-            'want' : True,
-            'header_attr' : None,
-            'diskfile_attr' : 'compressed',
-            'summary_func' : None
-            }
-        self.columns['data_size'] = {
-            'heading' : 'Data Size',
-            'sortarrows' : False,
-            'want' : True,
-            'header_attr' : None,
-            'diskfile_attr' : 'data_size',
-            'summary_func' : None
-            }
-        self.columns['data_md5'] = {
-            'heading' : 'Data MD5',
-            'sortarrows' : False,
-            'want' : True,
-            'header_attr' : None,
-            'diskfile_attr' : 'data_md5',
-            'summary_func' : None
-            }
+        self.columns = {
+            'download':    ColDef(heading      = 'Download',
+                                  sortarrows   = False,
+                                  summary_func = 'download'),
+            'filename':    ColDef(heading      = 'Filename',
+                                  summary_func = 'filename'),
+            'data_label':  ColDef(heading      = 'Data Label',
+                                  summary_func = 'datalabel'),
+            'ut_datetime': ColDef(heading      = 'UT Date Time',
+                                  summary_func = 'ut_datetime'),
+            'instrument':  ColDef(heading      = 'Inst',
+                                  longheading  = 'Instrument',
+                                  summary_func = 'instrument'),
+            'observation_class':
+                           ColDef(heading      = 'Class',
+                                  longheading  = 'Obs Class',
+                                  summary_func = 'observation_class'),
+            'observation_type':
+                           ColDef(heading      = 'Type',
+                                  longheading  = 'Obs Type',
+                                  summary_func = 'observation_type'),
+            'object':      ColDef(heading      = 'Object',
+                                  longheading  = 'Target Object Name',
+                                  summary_func = 'object'),
+            'waveband':    ColDef(heading      = 'WaveBand',
+                                  longheading  = 'Imaging Filter or Spectroscopy Disperser and Wavelenght',
+                                  sortarrows   = False,
+                                  summary_func = 'waveband'),
+            'exposure_time':
+                           ColDef(heading      = 'ExpT',
+                                  longheading  = 'Exposure Time',
+                                  summary_func = 'exposure_time'),
+            'airmass':     ColDef(heading      = 'AM',
+                                  longheading  = 'AirMass',
+                                  summary_func = 'airmass'),
+            'local_time':  ColDef(heading      = 'LclTime',
+                                  longheading  = 'Local Time',
+                                  summary_func = 'local_time'),
+            'filter_name': ColDef(heading      = 'Filter',
+                                  longheading  = 'Filter Name',
+                                  header_attr  = 'filter_name'),
+            'disperser':   ColDef(heading      = 'Disperser',
+                                  longheading  = 'Disperser: Central Wavelength',
+                                  header_attr  = 'disperser'),
+            'fpmask':      ColDef(heading      = 'FP Mask',
+                                  longheading  = 'Focal Plane Mask',
+                                  header_attr  = 'focal_plane_mask'),
+            'detector_roi':
+                           ColDef(heading      = 'FP Mask',
+                                  longheading  = 'Detector ROI',
+                                  header_attr  = 'detector_roi_setting'),
+            'detector_binning':
+                           ColDef(heading      = 'Binning',
+                                  longheading  = 'Detector Binning',
+                                  header_attr  = 'detector_binning'),
+            'detector_config':
+                           ColDef(heading      = 'DetConf',
+                                  longheading  = 'Detector Configuration',
+                                  header_attr  = 'detector_config'),
+            'qa_state':    ColDef(heading      = 'QA',
+                                  longheading  = 'QA State',
+                                  header_attr  = 'qa_state'),
+            'raw_iq':      ColDef(heading      = 'IQ',
+                                  longheading  = 'Raw IQ',
+                                  header_attr  = 'raw_iq'),
+            'raw_cc':      ColDef(heading      = 'CC',
+                                  longheading  = 'Raw CC',
+                                  header_attr  = 'raw_cc'),
+            'raw_wv':      ColDef(heading      = 'WV',
+                                  longheading  = 'Raw WV',
+                                  header_attr  = 'raw_wv'),
+            'raw_bg':      ColDef(heading      = 'BG',
+                                  longheading  = 'Raw BG',
+                                  header_attr  = 'raw_bg'),
+            'present':     ColDef(heading      = 'Present',
+                                  sortarrows   = False,
+                                  diskfile_attr = 'present'),
+            'entrytime':   ColDef(heading      = 'Present',
+                                  sortarrows   = False,
+                                  diskfile_attr = 'entrytime'),
+            'lastmod':     ColDef(heading      = 'LastMod',
+                                  sortarrows   = False,
+                                  diskfile_attr = 'lastmod'),
+            'file_size':   ColDef(heading      = 'File Size',
+                                  sortarrows   = False,
+                                  diskfile_attr = 'file_size'),
+            'file_md5':    ColDef(heading      = 'File MD5',
+                                  sortarrows   = False,
+                                  diskfile_attr = 'file_md5'),
+            'compressed':  ColDef(heading      = 'Compressed',
+                                  sortarrows   = False,
+                                  diskfile_attr = 'compressed'),
+            'data_size':   ColDef(heading      = 'Data Size',
+                                  sortarrows   = False,
+                                  diskfile_attr = 'data_size'),
+            'data_md5':    ColDef(heading      = 'Data MD5',
+                                  sortarrows   = False,
+                                  diskfile_attr = 'data_md5'),
+        }
 
     def table_header(self):
         """
         Returns a header Row object for columns as configured
         """
 
-        row = Row(class_='tr_head', is_header=True)
-
-        for colkey, col in self.columns.items():
-            if col['want']:
-                try:
-                    text = '<abbr title="%s">%s</abbr>' % (col['longheading'], col['heading'])
-                except KeyError:
-                    text = col['heading']
-                if (self.links & SORT_ARROWS != 0) and col['sortarrows']:
-                    text += '<a href="%s?orderby=%s_asc">&uarr;</a><a href="%s?orderby=%s_desc">&darr;</a>' % (self.uri, colkey, self.uri, colkey)
-                row.add(text)
-
-        return row
+        for colkey, col in ((x, self.columns[x]) for x in self.wanted):
+            yield ColWrapper(self, colkey, col)
 
     def table_row(self, header, diskfile, file):
         """
@@ -389,19 +257,24 @@ class SummaryGenerator(object):
 
         row = Row()
 
-        for colkey, col in self.columns.items():
-            if col['want']:
-                if col['summary_func']:
-                    value = getattr(self, col['summary_func'])(header, diskfile, file)
-                    if colkey == 'download' and '[D]' in value:
-                        row.can_download = True
-                    row.add(value)
-                elif col['header_attr']:
-                    row.add(getattr(header, col['header_attr']))
-                elif col['diskfile_attr']:
-                    row.add(getattr(diskfile, col['diskfile_attr']))
+        row.uri = self.uri
+        for colkey, col in ((x, self.columns[x]) for x in self.wanted):
+            c = ColWrapper(self, colkey, col)
+            if col.summary_func:
+                value = getattr(self, col.summary_func)(header, diskfile, file)
+                if colkey == 'download' and '[D]' in value:
+                    row.can_download = True
+                if isinstance(value, dict):
+                    c.content = value
                 else:
-                    row.add("Error: Not Defined in SummaryGenerator!")
+                    c.text    = value
+            elif col.header_attr:
+                c.text = getattr(header, col.header_attr)
+            elif col.diskfile_attr:
+                c.text = getattr(diskfile, col.diskfile_attr)
+            else:
+                c.text = "Error: Not Defined in SummaryGenerator!"
+            row.add(c)
 
         return row
 
@@ -415,29 +288,15 @@ class SummaryGenerator(object):
 
         # Determine if this user can have the link to the header
         if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
-            # The basic filename part, optionally as a link to the header text
-            if self.links != NO_LINKS:
-                html = '<a href="/fullheader/%d" target="_blank">%s</a>' % (diskfile.id, file.name)
-            else:
-                html = str(file.name)
-
-            # Do we have any fits verify errors to flag?
-            if diskfile.fverrors:
-                if self.links != NO_LINKS:
-                    html += ' <a href="/fitsverify/%d" target="_blank">-fits!</a>' % (diskfile.id)
-                else:
-                    html += ' -fits!' % (diskfile.id)
-
-            # Do we have metadata errors to flag? (only on non Eng data)
-            if (header.engineering is False) and (not diskfile.mdready):
-                if self.links != NO_LINKS:
-                    html += ' <a href="/mdreport/%d" target="_blank">-md!</a>' % (diskfile.id)
-                else:
-                    html += ' -md!'
-
-            return html
+            return dict(
+                links = self.links != NO_LINKS,
+                name  = file.name,
+                df_id = diskfile.id,
+                fverr = diskfile.fverrors != 0,
+                mderr = (header.engineering is False) and (not diskfile.mdready)
+                )
         else:
-            return self.prop_message(header, file.name)
+            return dict(prop_message=file.name, release=header.release)
 
     def datalabel(self, header, *args):
         """
@@ -445,77 +304,62 @@ class SummaryGenerator(object):
         """
         # Generate the diskfile html
         # We parse the data_label to create links to the project id and obs id
-        if self.links == ALL_LINKS:
-            dl = GeminiDataLabel(header.data_label)
-            if dl.datalabel:
-                uri = self.uri
-                html = '<a href="%s/%s">%s</a>-<a href="%s/%s">%s</a>-<a href="%s/%s">%s</a>' % (uri, dl.projectid, dl.projectid, uri, dl.observation_id, dl.obsnum, uri, dl.datalabel, dl.dlnum)
-            else:
-                html = str(header.data_label)
-        else:
-            html = str(header.data_label)
-
-        return html
+        return dict(
+            links     = self.links == ALL_LINKS,
+            datalabel = str(header.data_label),
+            dl        = GeminiDataLabel(header.data_label),
+            )
 
     def ut_datetime(self, header, *args):
         """
         Generates the UT datetime column html
         """
+        links = (self.links == ALL_LINKS) and header.ut_datetime is not None
+        ret = dict(links = links)
         # format without decimal places on the seconds
-        if (self.links == ALL_LINKS) and header.ut_datetime is not None:
-            if header.ut_datetime:
-                date_print = header.ut_datetime.strftime("%Y-%m-%d")
-                time_print = header.ut_datetime.strftime("%H:%M:%S")
-                date_link = header.ut_datetime.strftime("%Y%m%d")
-                return '<a href="%s/%s">%s</a> %s' % (self.uri, date_link, date_print, time_print)
-        elif header.ut_datetime:
-            return str(header.ut_datetime.strftime("%Y-%m-%d %H:%M:%S"))
+        if header.ut_datetime is not None:
+            if links:
+                ret.update(dict(
+                    dp = header.ut_datetime.strftime("%Y-%m-%d"),
+                    tp = header.ut_datetime.strftime("%H:%M:%S"),
+                    dl = header.ut_datetime.strftime("%Y%m%d")
+                ))
+            else:
+                ret['dt'] = header.ut_datetime.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            ret['dt'] = 'None'
 
-        return "None"
-
+        return ret
 
     def instrument(self, header, *args):
         """
         Generates the instrument column html
         """
         # Add the AO flags to the instrument name
-        if self.links == ALL_LINKS:
-            html = '<a href="%s/%s">%s</a>' % (self.uri, header.instrument, header.instrument)
-            if header.adaptive_optics:
-                html += ' <a href="%s/AO">+ AO</a>' % self.uri
-                if header.laser_guide_star:
-                    html += ' <a href="%s/LGS"> LGS</a>' % self.uri
-                else:
-                    html += ' <a href="%s/NGS"> NGS</a>' % self.uri
-        else:
-            html = str(header.instrument)
-            if header.adaptive_optics:
-                html += ' + AO'
-                if header.laser_guide_star:
-                    html += ' LGS'
-                else:
-                    html += ' NGS'
-        return html
+        return dict(
+            links = self.links == ALL_LINKS,
+            inst  = header.instrument,
+            ao    = header.adaptive_optics,
+            lg    = header.laser_guide_star
+            )
 
     def observation_class(self, header, *args):
         """
         Generates the observation_class column html
         """
-        # Can make it a link
-        if (self.links == ALL_LINKS) and header.observation_class is not None:
-            return '<a href="%s/%s">%s</a>' % (self.uri, header.observation_class, header.observation_class)
-        else:
-            return header.observation_class
+        return dict(
+            links = (self.links == ALL_LINKS) and header.observation_class is not None,
+            text  = header.observation_class
+        )
 
     def observation_type(self, header, *args):
         """
         Generates the observation_type column html
         """
-        # Can make it a link
-        if (self.links == ALL_LINKS) and header.observation_type is not None:
-            return '<a href="%s/%s">%s</a>' % (self.uri, header.observation_type, header.observation_type)
-        else:
-            return header.observation_type
+        return dict(
+            links = (self.links == ALL_LINKS) and header.observation_type is not None,
+            text  = header.observation_type
+        )
 
     def exposure_time(self, header, *args):
         """
@@ -539,7 +383,7 @@ class SummaryGenerator(object):
             except (TypeError, AttributeError):
                 return ''
         else:
-            return self.prop_message(header, 'N/A')
+            return dict(prop_message='N/A', release=header.release)
 
     def local_time(self, header, *args):
         """
@@ -560,40 +404,29 @@ class SummaryGenerator(object):
         if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
             # nb target names sometime contain ampersand characters which should be escaped in the html.
             # Also we trim at 12 characters and abbreviate
-            if header.object is None:
-                basehtml = 'None'
-            elif len(header.object) > 12:
-                basehtml = '<abbr title="%s">%s</abbr>' % (htmlescape(header.object), htmlescape(header.object[:12]))
-            else:
-                basehtml = htmlescape(header.object)
+            name = str(header.object)
+            ret = dict(
+                links = self.links == ALL_LINKS,
+                id    = header.id,
+                name  = name,
+                )
+            if len(name) > 12:
+                ret['abbr'] = True
 
-            # Now the photometric std star symbol
-            phothtml = ''
             if header.phot_standard:
-                if self.links == ALL_LINKS:
-                    phothtml = '<a href="/standardobs/%d">*</a>' % header.id
-                else:
-                    phothtml = '*'
+                ret['photstd'] = True
 
-            # Now the target symbol
-            symhtml = ''
             if header.types is not None:
                 if 'AT_ZENITH' in header.types:
-                    symhtml = '<abbr title="Target is Zenith in AzEl co-ordinate frame">&#x2693;&#x2191;</abbr>'
+                    ret['type'] = 'zen'
                 elif 'AZEL_TARGET' in header.types:
-                    symhtml = '<abbr title="Target is in AzEl co-ordinate frame">&#x2693;</abbr>'
+                    ret['type'] = 'azeltgt'
                 elif 'NON_SIDEREAL' in header.types:
-                    symhtml = '<abbr title="Target is non-sidereal">&#x2604;</abbr>'
-            return '%s %s %s' % (basehtml, phothtml, symhtml)
-        else:
-            return self.prop_message(header, 'N/A')
+                    ret['type'] = 'ns'
 
-    def filter_name(self, header, *args):
-        """
-        Generates the filter name column html
-        """
-        # Just htmlescape it
-        return htmlescape(header.filter_name)
+            return ret
+        else:
+            return dict(prop_message='N/A', release=header.release)
 
     def waveband(self, header, *args):
         """
@@ -602,12 +435,11 @@ class SummaryGenerator(object):
         # Print filter_name for imaging, disperser and cen_wlen for spec
         if header.spectroscopy and header.instrument != 'GPI':
             try:
-                html = "%s : %.3f" % (htmlescape(header.disperser), header.central_wavelength)
+                return "{} : {:.3f}".format(header.disperser, header.central_wavelength)
             except:
-                html = "None"
-            return html
+                return "None"
         else:
-            return htmlescape(header.filter_name)
+            return header.filter_name
 
     def download(self, header, diskfile, file):
         """
@@ -617,40 +449,19 @@ class SummaryGenerator(object):
         if canhave_header(None, self.user, header, user_progid_list=self.user_progid_list):
             html = '<div class="center">'
 
+            ret = dict(name=file.name)
             # Preview link
             if using_previews:
-                if diskfile.previews:
-                    html += '<span class="preview"><a href="/preview/%s">[P] </a></span>' % file.name
-
-            # Download link
-            html += '<a href="/file/%s">[D]</a>' % file.name
+                ret['prev'] = True
 
             # Download select button
             if self.sumtype in ['searchresults', 'associated_cals']:
-                html += " <input type='checkbox' name='files' value='%s'>" % file.name
+                ret['down_sel'] = True
 
-            html += '</div>'
-
-            return html
+            return ret
         else:
-            return self.prop_message(header, header.release.strftime('%Y%m%d'), centered=True)
-
-    def prop_message(self, header, text, centered = False):
-        text = '<abbr title="This appears to be proprietary data to which you do not have access. It becomes public on {rel}">{text}</abbr>'.format(
-                                    rel  = header.release,
-                                    text = text)
-        if centered:
-            return '<div class="center">' + text + '</div>'
-        else:
-            return text
-
-def htmlescape(string):
-    """
-    Convenience wrapper to cgi escape, providing type protection
-    """
-
-    if type(string) in [str, unicode]:
-        return escape(string)
-    else:
-        return None
-
+            return dict(
+                prop_message=header.release.strftime('%Y%m%d'),
+                release=header.release,
+                centered=True
+            )
