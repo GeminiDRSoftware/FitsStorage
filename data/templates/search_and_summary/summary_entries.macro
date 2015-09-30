@@ -28,8 +28,6 @@
       {%- elif column.key == 'object' -%}{{ generate_object(column.content) }}
       {%- elif column.key == 'download' -%}{{ generate_download(column.content) }}
     {%- endif -%}
-  {%- else -%}
-&lt;Unknown content&gt;
   {%- endif -%}
 {%- endfor %}
 </tr>
