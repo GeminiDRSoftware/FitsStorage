@@ -172,7 +172,7 @@ def qaforgui(req, things):
                     'raw_filename': header.diskfile.file.name,
                     'ut_time': str(header.ut_datetime),
                     'local_time': str(header.local_time),
-                    'wavelength': float(header.central_wavelength) if header.central_wavelength else None
+                    'wavelength': float(header.central_wavelength) if header.central_wavelength else None,
                     'waveband': header.wavelength_band,
                     'airmass': airmass,
                     'filter': header.filter_name,
