@@ -9,7 +9,7 @@ from .selection import sayselection, openquery, selection_to_URL
 from .list_headers import list_headers
 from .. import apache_return_codes as apache
 
-from .summary_generator import SummaryGenerator, htmlescape, NO_LINKS, FILENAME_LINKS, ALL_LINKS
+from .summary_generator import SummaryGenerator, NO_LINKS, FILENAME_LINKS, ALL_LINKS
 
 from . import templating
 
