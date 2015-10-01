@@ -51,7 +51,7 @@
 {%- if col.links and col.dl.valid == True -%}
 <a href="{{ uri }}/{{ col.dl.projectid }}">{{ col.dl.projectid}}</a>-<a href="{{ uri }}/{{ col.dl.observation_id }}">{{ col.dl.obsnum }}</a>-<a href="{{ uri }}/{{ col.dl.datalabel }}">{{ col.dl.dlnum }}</a>
 {%- else -%}
-{{ col.daTalabel }}
+{{ col.datalabel }}
 {%- endif -%}
 {%- endmacro -%}
 
