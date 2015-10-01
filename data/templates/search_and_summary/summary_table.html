@@ -30,12 +30,12 @@
 {% endfor %}
 </TABLE>
 {# Only show download button if we are allowed to download anything #}
-{% if clickable and data_rows.downloadable %}
+{% if clickable == True and data_rows.downloadable == True %}
 <INPUT type='submit' value='Download Marked Files'>
 </FORM>
 {% endif %}
 <span id="tableend"></span>
-{% if open_query and hit_open_limit %}
+{% if open_query == True and hit_open_limit == True %}
 <P>WARNING: Your search does not constrain the number of results - ie you did not specify a date,
    date range, program ID etc. Searches like this are limited to {{ open_limit }} results, and this
    search hit that limit. You may want to constrain your search. Constrained searches have a higher
@@ -43,9 +43,9 @@
 {% elif hit_closed_limit %}
 <P>WARNING: Your search generated more than the limit of {{ closed_limit }} results. You might want
    to constrain your search more.
-{% elif data_rows.downloadable%}
+{% elif data_rows.downloadable == True %}
 <FORM method='GET' action='{{ down_all_link }}'>
-{% if data_rows.all_downloadable %}
+{% if data_rows.all_downloadable == True %}
 <INPUT type='submit' value='Download all {{ data_rows.downloadable }} files totalling {{ data_rows.size_in_gb }} GB'>
 {% else %}
 <INPUT type='submit' value='Download the {{ data_rows.downloadable }} files totalling {{ data_rows.size_in_gb }} GB that you have access to'>

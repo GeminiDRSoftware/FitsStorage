@@ -262,7 +262,7 @@ class SummaryGenerator(object):
             c = ColWrapper(self, colkey, col)
             if col.summary_func:
                 value = getattr(self, col.summary_func)(header, diskfile, file)
-                if colkey == 'download' and '[D]' in value:
+                if colkey == 'download' and 'downloadable' in value:
                     row.can_download = True
                 if isinstance(value, dict):
                     c.content = value
@@ -457,6 +457,8 @@ class SummaryGenerator(object):
             # Download select button
             if self.sumtype in ['searchresults', 'associated_cals']:
                 ret['down_sel'] = True
+
+            ret['downloadable'] = True
 
             return ret
         else:

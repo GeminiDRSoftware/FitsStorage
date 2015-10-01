@@ -184,7 +184,7 @@ def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, 
 
         @property
         def downloadable(self):
-            return self.down
+            return self.down > 0
 
         @property
         def all_downloadable(self):
