@@ -13,6 +13,8 @@ from .summary_generator import SummaryGenerator, NO_LINKS, FILENAME_LINKS, ALL_L
 
 from . import templating
 
+from urllib import quote_plus
+
 # We assume that servers used as archive use a calibration association cache table
 from ..fits_storage_config import use_as_archive
 if use_as_archive:
@@ -160,6 +162,7 @@ def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, 
     # hack the uri to make it look like we came from searchform
     # so that the results point back to a form
     uri = req.uri
+    uri = quote_plus(uri, safe='/=')
     if isajax(req) and sumtype == 'searchresults':
         uri = uri.replace("searchresults", "searchform")
 
