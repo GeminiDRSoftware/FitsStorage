@@ -1,14 +1,9 @@
-<!DOCTYPE html><html><head>
+<!DOCTYPE html>
+<html><head>
 <meta charset="UTF-8">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-<script src="/static/titlebar.js"></script>
-<script src="/static/form.js"></script>
-<link rel="stylesheet" type="text/css" href="/static/whoami.css">
-<link rel="stylesheet" type="text/css" href="/static/titlebar.css">
-<link rel="stylesheet" type="text/css" href="/static/form.css">
 <link rel="stylesheet" type="text/css" href="/static/table.css">
-<title>{% block title %}{% endblock %}</title></head>
-<body>
-{% block body %}{% endblock %}
-</body>
+<title>{% block title %}{% endblock %}</title>
+{% block extra_style %}{% endblock %}{% block extra_script %}{% endblock %}
+</head>
+<body>{% block body %}{% endblock %}</body>
 </html>

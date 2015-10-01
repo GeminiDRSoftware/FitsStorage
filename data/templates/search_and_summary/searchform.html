@@ -1,5 +1,19 @@
 {% extends "layout.html" %}
 
+{%- block extra_script %}
+<!-- Additional scripts for the search form -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="/static/titlebar.js"></script>
+<script src="/static/form.js"></script>
+{%- endblock %}
+
+{%- block extra_style %}
+<!-- Additional style for the search form -->
+<link rel="stylesheet" type="text/css" href="/static/whoami.css" />
+<link rel="stylesheet" type="text/css" href="/static/titlebar.css" />
+<link rel="stylesheet" type="text/css" href="/static/form.css" />
+{%- endblock %}
+
 {% block title %}Gemini Archive Search {{ title_suffix }}{% endblock %}
 
 {% block body %}

@@ -1,3 +1,12 @@
 {% extends "layout.html" %}
 {% block title %}FITS header {{ sumtype|e }} table {{ sayselection|e }}{% endblock %}
 {% block body %}{% include "search_and_summary/summary_body.html" %}{% endblock %}
+{%- block extra_style %}
+<style type="text/css">
+body {
+  margin:0;
+  padding:0;
+  font-family: "Arial", "sans-serif";
+}
+</style>
+{%- endblock %}
