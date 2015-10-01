@@ -173,6 +173,7 @@ $(document).ready(function() {
     $("#loading").hide();
     $("#loading_cals").hide();
     $('#calibration_results').hide();
+    $('#obslog_results').hide();
     setAdvancedVisibility();
     setInstVisibility();
     setModeVisibility();
