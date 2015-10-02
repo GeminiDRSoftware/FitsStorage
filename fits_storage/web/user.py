@@ -185,12 +185,18 @@ def password_reset(session, req, things):
 
     # OK, seems possibly legit. Check with database
     user = session.query(User).get(userid)
-    if user is None:
-        return template_args
-    elif user.reset_token_expires < datetime.datetime.utcnow():
-        template_args['expired'] = True
-        return template_args
-    elif user.reset_token != token:
+    try:
+        if user is None:
+            return template_args
+        elif user.reset_token_expires < datetime.datetime.utcnow():
+            template_args['expired'] = True
+            return template_args
+        elif user.reset_token != token:
+            template_args['invalid_token'] = True
+            return template_args
+    except TypeError:
+        # Probably something was None - from them trying to re-use the link
+        # in the email
         template_args['invalid_token'] = True
         return template_args
 
