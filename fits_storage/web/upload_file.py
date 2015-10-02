@@ -20,7 +20,7 @@ if upload_auth_cookie:
     from mod_python import Cookie
 
 @needs_login(only_magic=True, magic_cookies=[('gemini_fits_upload_auth', upload_auth_cookie)], annotate=FileUploadLog)
-def upload_file(req, filename, processed_cal="False"):
+def upload_file(req, filename, processed_cal=False):
     """
     This handles uploading files including processed calibrations.
     It has to be called via a POST request with a binary data payload
