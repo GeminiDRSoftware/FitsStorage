@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html><head>
 <meta charset="UTF-8">
+{% block extra_header %}{% endblock %}
 <link rel="stylesheet" type="text/css" href="/static/table.css">
 <title>{% block title %}{% endblock %}</title>
-{% block extra_style %}{% endblock %}{% block extra_script %}{% endblock %}
 </head>
 <body>{% block body %}{% endblock %}</body>
 </html>
