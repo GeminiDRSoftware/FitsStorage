@@ -24,14 +24,18 @@ from wsgiref.validate import validator
 from wsgiref.util import request_uri, application_uri, shift_path_info
 
 from fits_storage.logger import logger, setdebug, setdemon
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
+parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
+options, args = parser.parse_args()
 
 # NOTE: Maybe we want this to be a startup option
-setdebug(False)
-setdemon(True)
+setdebug(options.debug)
+setdemon(options.demon)
 
 # Annouce startup
-now = datetime.datetime.now()
-logger.info("*********  api_backend.py - starting up at %s" % now)
+logger.info("*********  api_backend.py - starting up at %s" % datetime.datetime.now())
 
 from fits_storage.fits_storage_config import api_backend_location
 from fits_storage.orm import session_scope
@@ -146,6 +150,7 @@ def ingest_upload(environ, start_response):
     except KeyError as e:
         raise WSGIError("Missing argument '{}'".format(e.message))
 
+    logger.info("ingest_upload: filename: %s, fulog_id: %d, is_proc_cal: %s", filename, fulog_id, is_proc_cal)
     path = processed_cals_path if is_proc_cal else ''
     fileuploadlog = FileUploadWrapper()
 
@@ -164,6 +169,7 @@ def ingest_upload(environ, start_response):
             misc_meta = miscfile_meta(src)
 
         if using_s3:
+            logger.debug("Copying to S3")
             # Copy to S3
             try:
                 s3 = get_helper()
@@ -175,13 +181,13 @@ def ingest_upload(environ, start_response):
                 os.unlink(src)
                 if it_is_misc:
                     os.unlink(miscfile_meta_path(src))
+                logger.debug("Copy to S3 appeared to work")
             except Exception:
                 string = traceback.format_tb(sys.exc_info()[2])
                 string = "".join(string)
                 if fileuploadlog.ful:
                     fileuploadlog.add_note("Exception during S3 upload, see log file")
                     session.flush()
-
                 logger.error("Exception during S3 upload: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
                 raise
 
@@ -232,5 +238,6 @@ if __name__ == '__main__':
         server = api_backend_location
         port   = '8000'
 
+    logger.info("Server is at %s:%s", server, port)
     httpd = wsgiref.simple_server.make_server(server, int(port), app)
     httpd.serve_forever()
