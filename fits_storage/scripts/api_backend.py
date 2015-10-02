@@ -24,6 +24,7 @@ from wsgiref.validate import validator
 from wsgiref.util import request_uri, application_uri, shift_path_info
 
 from fits_storage.logger import logger, setdebug, setdemon
+import logging
 import argparse
 parser = argparse.ArgumentParser("Backend server for the Apache frontend. Performs operations as a separate user")
 parser.add_argument("--debug", action="store_true", dest="debug", help="Increase log level to debug")
@@ -229,6 +230,26 @@ def app(environ, start_response):
     except WSGIError as e:
         return e.response(environ, start_response)
 
+class LoggerWSGIRequestHandler(wsgiref.simple_server.WSGIRequestHandler):
+    l = logger
+
+    def _log_message(self, level, format, *args):
+        self.l.log(level, "%s - - [%s] " + format, self.client_address[0],
+                                                   self.log_date_time_string(),
+                                                   *args)
+
+    def log_error(self, format, *args):
+        "Reimplementation of BaseHTTPServer.log_error"
+
+        self._log_message(logging.ERROR, format, *args)
+
+    def log_message(self, format, *args):
+        """Reimplementation of BaseHTTPServer.log_message to use a logger
+           instead of sys.stderr"""
+
+        self._log_message(logging.INFO, format, *args)
+
+
 # Provide a basic WSGI server, in case we're testing or don't need any fancy
 # container...
 if __name__ == '__main__':
@@ -239,5 +260,5 @@ if __name__ == '__main__':
         port   = '8000'
 
     logger.info("Server is at %s:%s", server, port)
-    httpd = wsgiref.simple_server.make_server(server, int(port), app)
+    httpd = wsgiref.simple_server.make_server(server, int(port), app, handler_class=LoggerWSGIRequestHandler)
     httpd.serve_forever()
