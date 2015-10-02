@@ -69,7 +69,7 @@
 {%- endmacro -%}
 
 {%- macro generate_object(col) -%}
-{%- if col.abbr %}<abbr title="{{ col.name|e }}">{{ col.name|truncate(12)|e }}</abbr>{% else %}{{ col.name|e }}{% endif %}
+{%- if col.abbr %}<abbr title="{{ col.name|e }}">{{ col.name|truncate(12,True)|e }}</abbr>{% else %}{{ col.name|e }}{% endif %}
 {%- if col.photstd %} {{ maybe_link('*', "/standardobs/%d" % col.id, test=col.links) }}{%- endif -%}
 {%- if col.type -%}
 {%- if col.type == 'zen' %} <abbr title="Target is Zenith in AzEl co-ordinate frame">&#x2693;&#x2191;</abbr>{% endif -%}
