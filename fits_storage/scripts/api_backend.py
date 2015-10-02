@@ -24,11 +24,11 @@ from wsgiref.validate import validator
 from wsgiref.util import request_uri, application_uri, shift_path_info
 
 from fits_storage.logger import logger, setdebug, setdemon
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
-parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
-options, args = parser.parse_args()
+import argparse
+parser = argparse.ArgumentParser("Backend server for the Apache frontend. Performs operations as a separate user")
+parser.add_argument("--debug", action="store_true", dest="debug", help="Increase log level to debug")
+parser.add_argument("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
+options = parser.parse_args()
 
 # NOTE: Maybe we want this to be a startup option
 setdebug(options.debug)
