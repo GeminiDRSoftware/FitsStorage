@@ -184,7 +184,7 @@ class IngestQueueUtil(object):
             diskfile = query.one()
             self.l.debug("%s is present=True in diskfile table at diskfile_id = %s", filename, diskfile.id)
             # Is the file actually present on disk?
-            if fileobj.exists():
+            if diskfile.exists():
                 self.l.debug("%s is actually present on disk. That's good", filename)
             else:
                 self.l.info("%s is present in diskfile table id %d but missing on the disk.", filename, diskfile.id)
