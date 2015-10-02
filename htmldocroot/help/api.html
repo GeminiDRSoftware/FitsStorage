@@ -247,7 +247,7 @@ The value is the integer percentile, 100 implies "Any"</td>
 </tr>
 </table>
 
-<h2>Downloading Data</h2>
+<h2 id="downloading">Downloading Data</h2>
 <p>Two URLs are available to download data from the archive.</p>
 
 <p>Firstly, the <code>/download</code> URL uses the same selection criteria as detailed above, and will return a tar 
@@ -286,7 +286,7 @@ you need to reset it (for example because it became known to someone else), then
 <strong>Log Out</strong> of the archive and the old value will no longer be accepted by the server. When you log back
 in to the archive, a new value will be sent to the browser where you logged in.</p>
 
-<h2>Selection Criteria</h2>
+<h2 id="selection">Selection Criteria</h2>
 
 <p>Here are details of the selection criteria you can use. Multiple ones are separated by /s in the URL just like directories would be.</p>
 
@@ -511,7 +511,7 @@ criteria with the JSON APIs</strong>.</p>
 </table>
 
 
-<h2>Sample python code</h2>
+<h2 id="sample_code">Sample python code</h2>
 <h3>Simple file list using jsonfilelist</h3>
 <p>This is a simple example in python that constructs a jsonfilelist URL, fetches the JSON document text into a string,
 parses that into a list of dictionaries, and then loops through showing some details of the files we found.</p>
