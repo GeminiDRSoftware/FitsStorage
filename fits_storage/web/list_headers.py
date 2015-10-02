@@ -36,7 +36,8 @@ def list_headers(session, selection, orderby, full_query=False):
     # Do we have any order by arguments?
 
     whichorderby = ['instrument', 'data_label', 'observation_class', 'observation_type', 'airmass', 'ut_datetime', 'local_time',
-                        'raw_iq', 'raw_cc', 'raw_bg', 'raw_wv', 'qa_state', 'filter_name', 'exposure_time', 'object']
+                    'raw_iq', 'raw_cc', 'raw_bg', 'raw_wv', 'qa_state', 'filter_name', 'exposure_time', 'object', 'disperser', 
+                    'focal_plane_mask', 'ra', 'dec', 'detector_binning']
 
     sort_by_date = True
     if orderby:

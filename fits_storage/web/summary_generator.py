@@ -5,7 +5,7 @@ This module contains the web summary generator class.
 from collections import OrderedDict, namedtuple
 from cgi import escape
 
-from ..gemini_metadata_utils import GeminiDataLabel
+from ..gemini_metadata_utils import GeminiDataLabel, degtora, degtodec
 
 from ..utils.userprogram import canhave_header, canhave_coords
 
@@ -20,7 +20,7 @@ search_col_mapping = {
     'col_exp': ('exposure_time', 'E'),
     'col_air': ('airmass', 'A'),
     'col_flt': ('filter_name', 'F'),
-    'col_fpm': ('fpmask', 'M'),
+    'col_fpm': ('focal_plane_mask', 'M'),
     'col_bin': ('detector_binning', 'B'),
     'col_qas': ('qa_state', 'Q'),
     'col_riq': ('raw_iq', 'i'),
@@ -28,9 +28,17 @@ search_col_mapping = {
     'col_rwv': ('raw_wv', 'w'),
     'col_rbg': ('raw_bg', 'b'),
     'col_dis': ('disperser', 'D'),
+    'col_ra' : ('ra', 'r'),
+    'col_dec': ('dec', 'd'),
 }
 
 rev_map_comp = dict((v[1], k) for (k, v) in search_col_mapping.items())
+
+col_order = (
+    'col_cls', 'col_typ', 'col_obj', 'col_wvb', 'col_flt', 'col_dis', 'col_fpm', 
+    'col_exp', 'col_bin', 'col_air', 'col_ra', 'col_dec', 
+    'col_qas', 'col_riq', 'col_rcc', 'col_rwv', 'col_rbg',
+)
 
 default_search_cols = [ 'col_cls', 'col_typ', 'col_obj', 'col_wvb', 'col_exp', 'col_qas' ]
 
@@ -53,7 +61,7 @@ sum_type_defs = {
                     'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'qa_state',
                     'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
     'lsummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
-                    'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'filter_name', 'fpmask',
+                    'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'filter_name', 'focal_plane_mask',
                     'detector_roi', 'detector_binning', 'detector_config', 'qa_state',
                     'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
     'ssummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
@@ -213,6 +221,12 @@ class SummaryGenerator(object):
             'airmass':     ColDef(heading      = 'AM',
                                   longheading  = 'AirMass',
                                   summary_func = 'airmass'),
+            'ra':          ColDef(heading      = 'RA',
+                                  longheading  = 'Right Ascension',
+                                  summary_func = 'ra'),
+            'dec':         ColDef(heading      = 'Dec',
+                                  longheading  = 'Declination',
+                                  summary_func = 'dec'),
             'local_time':  ColDef(heading      = 'LclTime',
                                   longheading  = 'Local Time',
                                   summary_func = 'local_time'),
@@ -222,7 +236,7 @@ class SummaryGenerator(object):
             'disperser':   ColDef(heading      = 'Disperser',
                                   longheading  = 'Disperser: Central Wavelength',
                                   header_attr  = 'disperser'),
-            'fpmask':      ColDef(heading      = 'FP Mask',
+            'focal_plane_mask': ColDef(heading = 'FP Mask',
                                   longheading  = 'Focal Plane Mask',
                                   header_attr  = 'focal_plane_mask'),
             'detector_roi':
@@ -417,6 +431,34 @@ class SummaryGenerator(object):
             # All we do is format it with 2 decimal places
             try:
                 return "%.2f" % header.airmass
+            except (TypeError, AttributeError):
+                return ''
+        else:
+            return dict(prop_message='N/A', release=header.release)
+
+    def ra(self, header, *args):
+        """
+        Generates the RA
+        """
+        # Determine if this user can see this info
+        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
+            # Sexadeimal format
+            try:
+                return degtora(float(header.ra))
+            except (TypeError, AttributeError):
+                return ''
+        else:
+            return dict(prop_message='N/A', release=header.release)
+
+    def dec(self, header, *args):
+        """
+        Generates the Dec
+        """
+        # Determine if this user can see this info
+        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
+            # Sexadeimal format
+            try:
+                return degtodec(float(header.dec))
             except (TypeError, AttributeError):
                 return ''
         else:
