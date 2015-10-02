@@ -118,6 +118,10 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('dark')
                 self.applicable.append('processed_dark')
 
+            # If it is MOS then it needs a MASK
+            if 'MOS' in self.types:
+                self.applicable.append('mask')
+
     @not_imaging
     def arc(self, processed=False, howmany=None):
         """
@@ -492,5 +496,25 @@ class CalibrationGMOS(Calibration):
                                    Gmos.filter_name)
                 # Absolute time separation must be within 1 days
                 .max_interval(days=1)
+                .all(howmany)
+            )
+
+    # We don't handle processed ones (yet)
+    @not_processed
+    def mask(self, processed=False, howmany=None):
+        """
+        Method to find the MASK (MDF) file
+        """
+        # Default number to associate
+        howmany = howmany if howmany else 1
+
+        return (
+            self.get_query()
+                # They are MASK observation type
+                # The focal_plane_mask of the science file must match the data_label of the MASK file (yes, really...)
+                # Cant force an instrument match as sometimes it just says GMOS in the mask...
+                .add_filters(Header.observation_type == 'MASK',
+                             Header.data_label == self.descriptors['focal_plane_mask'],
+                             Header.instrument.startswith('GMOS'))
                 .all(howmany)
             )

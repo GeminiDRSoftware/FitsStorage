@@ -448,9 +448,16 @@ class Calibration(object):
         return []
 
     def polarization_flat(self, processed=False, howmany=None):
-
         """
         Null method for instruments that do not provide a method in their subclass
         """
         # Not defined for this instrument
         return []
+
+    def mask(self, processed=False, howmany=None):
+        """
+        Null method for instruments that do not provide a method in their subclass
+        """
+        # Not defined for this instrument
+        return []
+
