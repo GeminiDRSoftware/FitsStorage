@@ -32,11 +32,6 @@ search_col_mapping = {
 
 rev_map_comp = dict((v[1], k) for (k, v) in search_col_mapping.items())
 
-col_order = (
-    'col_cls', 'col_typ', 'col_obj', 'col_wvb', 'col_exp', 'col_air', 'col_flt',
-    'col_fpm', 'col_bin', 'col_qas', 'col_riq', 'col_rcc', 'col_rwv', 'col_rbg',
-)
-
 default_search_cols = [ 'col_cls', 'col_typ', 'col_obj', 'col_wvb', 'col_exp', 'col_qas' ]
 
 def formdata_to_compressed(selected):
