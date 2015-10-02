@@ -187,8 +187,10 @@ $(document).ready(function() {
     });
     $('#advanced_header').click(function() {
         $('#advanced_options').toggle();
+        $('#column_selection').hide();
     });
     $('#col_select_header').click(function() {
+        $('#advanced_options').hide();
         $('#column_selection').toggle();
     });
     $('#gmos_mask').change(function() {
