@@ -27,11 +27,11 @@ from fits_storage.logger import logger, setdebug, setdemon
 
 # NOTE: Maybe we want this to be a startup option
 setdebug(False)
-setdemon(False)
+setdemon(True)
 
 # Annouce startup
 now = datetime.datetime.now()
-logger.info("*********  ingest_uploaded_file.py - starting up at %s" % now)
+logger.info("*********  api_backend.py - starting up at %s" % now)
 
 from fits_storage.fits_storage_config import api_backend_location
 from fits_storage.orm import session_scope
