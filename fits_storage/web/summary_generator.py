@@ -32,14 +32,11 @@ search_col_mapping = {
     'col_rwv': ('raw_wv', 'w'),
     'col_rbg': ('raw_bg', 'b'),
 }
+# Note that the order these come out in is actually the same as the order
+# of the columns buttons in the searchform.
+
 
 rev_map_comp = dict((v[1], k) for (k, v) in search_col_mapping.items())
-
-col_order = (
-    'col_cls', 'col_typ', 'col_obj', 'col_wvb', 'col_flt', 'col_dis', 'col_cwl', 'col_fpm', 
-    'col_exp', 'col_bin', 'col_air', 'col_ra', 'col_dec', 
-    'col_qas', 'col_riq', 'col_rcc', 'col_rwv', 'col_rbg',
-)
 
 default_search_cols = [ 'col_cls', 'col_typ', 'col_obj', 'col_wvb', 'col_exp', 'col_qas' ]
 
