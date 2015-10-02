@@ -191,6 +191,43 @@ def dectodeg(string):
 
     return degs
 
+def degtora(decimal):
+    """
+    Convert decimal degrees to RA HH:MM:SS.ss string
+    """
+    decimal /= 15.0
+    hours = int(decimal)
+    decimal -= hours
+
+    decimal *= 60.0
+    minutes = int(decimal)
+    decimal -= minutes
+
+    decimal *= 60.0
+    seconds = decimal
+
+    return "%02d:%02d:%02.2f" % (hours, minutes, seconds)
+
+def degtodec(decimal):
+    """
+    Convert decimal degrees to Dec +-DD:MM:SS.ss string
+    """
+    sign = '+' if decimal >= 0.0 else '-'
+    decimal = abs(decimal)
+    degrees = int(decimal)
+    decimal -= degrees
+
+    decimal *= 60.0
+    minutes = int(decimal)
+    decimal -= minutes
+
+    decimal *= 60.0
+    seconds = decimal
+
+    return "%s%02d:%02d:%02.2f" % (sign, degrees, minutes, seconds)
+
+
+
 dmscre = re.compile(r'^([+-]?)(\d*):([012345]\d):([012345]\d)(\.?\d*)$')
 def dmstodeg(string):
     """
