@@ -155,6 +155,8 @@ def getselection(things):
 
             if sep == '=' and key in getselection_key_value:
                 selection[getselection_key_value[key]] = value
+            elif sep == '=' and key == 'cols':
+                selection['cols'] = value
             elif thing in getselection_booleans:
                 kw, val = getselection_booleans[thing]
                 selection[kw] = val
@@ -664,7 +666,7 @@ def _parse_range(string):
 
     return a, b
 
-def selection_to_URL(selection):
+def selection_to_URL(selection, with_columns=False):
     """
     Receives a selection dictionary, parses values and converts to URL string
     """
@@ -718,6 +720,9 @@ def selection_to_URL(selection):
                 urlstring += '/imaging'
         elif key in {'ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera', 'exposure_time', 'coadds'}:
             urlstring += '/%s=%s' % (key, selection[key])
+        elif key == 'cols':
+            if with_columns:
+                urlstring += '/cols=%s' % selection['cols']
         elif key == 'present':
             if selection[key] is True:
                 urlstring += '/present'

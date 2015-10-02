@@ -188,6 +188,9 @@ $(document).ready(function() {
     $('#advanced_header').click(function() {
         $('#advanced_options').toggle();
     });
+    $('#col_select_header').click(function() {
+        $('#column_selection').toggle();
+    });
     $('#gmos_mask').change(function() {
         gmosCustomMaskEnable();
     });

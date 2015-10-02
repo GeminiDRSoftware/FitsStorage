@@ -11,13 +11,54 @@ from ..utils.userprogram import canhave_header, canhave_coords
 
 from ..fits_storage_config import using_previews
 
+search_col_mapping = {
+#   col_key    (column_name, compressend_name)
+    'col_cls': ('observation_class', 'C'),
+    'col_typ': ('observation_type', 'T'),
+    'col_obj': ('object', 'O'),
+    'col_wvb': ('waveband', 'W'),
+    'col_exp': ('exposure_time', 'E'),
+    'col_air': ('airmass', 'A'),
+    'col_flt': ('filter_name', 'F'),
+    'col_fpm': ('fpmask', 'M'),
+    'col_bin': ('detector_binning', 'B'),
+    'col_qas': ('qa_state', 'Q'),
+    'col_riq': ('raw_iq', 'i'),
+    'col_rcc': ('raw_cc', 'c'),
+    'col_rwv': ('raw_wv', 'w'),
+    'col_rbg': ('raw_bg', 'b'),
+}
+
+rev_map_comp = dict((v[1], k) for (k, v) in search_col_mapping.items())
+
+col_order = (
+    'col_cls', 'col_typ', 'col_obj', 'col_wvb', 'col_exp', 'col_air', 'col_flt',
+    'col_fpm', 'col_bin', 'col_qas', 'col_riq', 'col_rcc', 'col_rwv', 'col_rbg',
+)
+
+default_search_cols = [ 'col_cls', 'col_typ', 'col_obj', 'col_wvb', 'col_exp', 'col_qas' ]
+
+def formdata_to_compressed(selected):
+    return ''.join([search_col_mapping[k][1] for k in selected])
+
+def selection_to_form_indices(selection):
+    return tuple(rev_map_comp[x] for x in selection['cols'])
+
+def selection_to_column_names(selection):
+    try:
+        cols = selection_to_form_indices(selection)
+    except KeyError:
+        # Default case. 'cols' was not in selections
+        cols = default_search_cols
+    return tuple(search_col_mapping[x][0] for x in cols)
+
 sum_type_defs = {
     'summary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
                     'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'qa_state',
                     'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
     'lsummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
                     'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'filter_name', 'fpmask',
-                    'detector_roi', 'detector_binnin', 'detector_config', 'qa_state',
+                    'detector_roi', 'detector_binning', 'detector_config', 'qa_state',
                     'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
     'ssummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
                     'object', 'waveband', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
@@ -25,6 +66,7 @@ sum_type_defs = {
                     'file_size', 'file_md5', 'compressed', 'data_size', 'data_md5'],
     'searchresults' : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
                     'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state'],
+    'customsearch'  : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument'],
     'associated_cals': ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
                     'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state']
     }
@@ -89,7 +131,7 @@ class SummaryGenerator(object):
     It is also possible to configure whether you want links in the output html.
     """
 
-    def __init__(self, sumtype, links=ALL_LINKS, uri=None, user=None, user_progid_list=None):
+    def __init__(self, sumtype, links=ALL_LINKS, uri=None, user=None, user_progid_list=None, additional_columns=()):
         """
         Constructor function for the SummaryGenerator Object.
         Arguments: sumtype = a string saying the summary type
@@ -111,8 +153,7 @@ class SummaryGenerator(object):
         self.init_cols()
         # Set the want flags
         self.sumtype = sumtype
-        self.wanted = sum_type_defs[sumtype]
-#        self.set_type(sumtype)
+        self.wanted = sum_type_defs[sumtype] + list(additional_columns)
         self.links = links
         self.uri = uri
         self.my_progids = []
@@ -455,7 +496,7 @@ class SummaryGenerator(object):
                 ret['prev'] = True
 
             # Download select button
-            if self.sumtype in ['searchresults', 'associated_cals']:
+            if self.sumtype in ['searchresults', 'customsearch', 'associated_cals']:
                 ret['down_sel'] = True
 
             ret['downloadable'] = True

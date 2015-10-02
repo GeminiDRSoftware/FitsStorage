@@ -46,9 +46,9 @@
 {% elif data_rows.downloadable == True %}
 <FORM method='GET' action='{{ down_all_link }}'>
 {% if data_rows.all_downloadable == True %}
-<INPUT type='submit' value='Download all {{ data_rows.downloadable }} files totalling {{ data_rows.size_in_gb }} GB'>
+<INPUT type='submit' value='Download all {{ data_rows.down }} files totalling {{ data_rows.size_in_gb }} GB'>
 {% else %}
-<INPUT type='submit' value='Download the {{ data_rows.downloadable }} files totalling {{ data_rows.size_in_gb }} GB that you have access to'>
+<INPUT type='submit' value='Download the {{ data_rows.down }} files totalling {{ data_rows.size_in_gb }} GB that you have access to'>
 {% endif %}
 - this is always available at <a href="{{ down_all_link }}">this link</a>
 </FORM>

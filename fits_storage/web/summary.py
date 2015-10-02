@@ -10,6 +10,7 @@ from .list_headers import list_headers
 from .. import apache_return_codes as apache
 
 from .summary_generator import SummaryGenerator, NO_LINKS, FILENAME_LINKS, ALL_LINKS
+import re
 
 from . import templating
 
@@ -55,7 +56,7 @@ def full_page_summary(session, req, sumtype, selection, orderby, links):
 def embeddable_summary(session, req, sumtype, selection, orderby, links):
     return summary_body(session, req, sumtype, selection, orderby, links)
 
-def summary_body(session, req, sumtype, selection, orderby, links=True):
+def summary_body(session, req, sumtype, selection, orderby, links=True, additional_columns=()):
     """
     This is the main summary generator.
     req is an apache request handler request object
@@ -79,7 +80,7 @@ def summary_body(session, req, sumtype, selection, orderby, links=True):
         # Usually, we want to only select headers with diskfiles that are canonical
         selection['canonical'] = True
     # Archive search results should only show files that are present, so they can be downloaded
-    if sumtype == 'searchresults':
+    if sumtype in {'searchresults', 'customsearch'}:
         selection['present'] = True
 
     # Instantiate querylog, populate initial fields
@@ -125,7 +126,7 @@ def summary_body(session, req, sumtype, selection, orderby, links=True):
         # pass down the chain to use figure out whether to display download links
         user = userfromcookie(session, req)
         user_progid_list = get_program_list(session, user)
-        sumtable_data = summary_table(req, sumtype, headers, selection, sumlinks, user, user_progid_list)
+        sumtable_data = summary_table(req, sumtype, headers, selection, sumlinks, user, user_progid_list, additional_columns)
     else:
         sumtable_data = {}
 
@@ -136,7 +137,7 @@ def summary_body(session, req, sumtype, selection, orderby, links=True):
 
     return dict(
         got_results      = sumtable_data,
-        dev_system       = (sumtype not in {'searchresults', 'associated_cals'}) and fits_system_status == 'development',
+        dev_system       = (sumtype not in {'searchresults', 'customsearch', 'associated_cals'}) and fits_system_status == 'development',
         open_query       = openquery(selection),
         hit_open_limit   = hit_open_limit,
         hit_closed_limit = hit_closed_limit,
@@ -146,7 +147,7 @@ def summary_body(session, req, sumtype, selection, orderby, links=True):
         **sumtable_data
         )
 
-def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, user_progid_list=None):
+def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, user_progid_list=None, additional_columns=()):
     """
     Generates an HTML header summary table of the specified type from
     the list of header objects provided. Writes that table to an apache
@@ -163,10 +164,11 @@ def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, 
     # so that the results point back to a form
     uri = req.uri
     uri = quote_plus(uri, safe='/=')
-    if isajax(req) and sumtype == 'searchresults':
+    if isajax(req) and sumtype in {'searchresults', 'customsearch'}:
         uri = uri.replace("searchresults", "searchform")
+        uri = uri.replace("customsearch", "searchform")
 
-    sumgen = SummaryGenerator(sumtype, links, uri, user, user_progid_list)
+    sumgen = SummaryGenerator(sumtype, links, uri, user, user_progid_list, additional_columns)
 
     url_prefix = "/download"
     if sumtype == 'associated_cals':
@@ -215,8 +217,8 @@ def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, 
         __next__ = next
 
     template_args = dict(
-        clickable     = sumtype in {'searchresults', 'associated_cals'},
-        insert_prev   = sumtype == 'searchresults',
+        clickable     = sumtype in {'searchresults', 'customsearch', 'associated_cals'},
+        insert_prev   = sumtype in {'searchresults', 'customsearch'},
         uri           = sumgen.uri,
         headers       = sumgen.table_header(),
         data_rows     = RowYielder(sumgen, headers),

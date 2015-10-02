@@ -8,6 +8,7 @@ from mod_python import apache, util
 from .selection import getselection, selection_to_URL
 from .selection import getselection_detector_conf
 from .summary import summary_body
+from .summary_generator import selection_to_column_names, selection_to_form_indices, formdata_to_compressed, search_col_mapping
 from .calibrations import calibrations
 from . import templating
 
@@ -57,6 +58,8 @@ def searchform(session, req, things, orderby):
     if orderby:
         args_string = '?orderby=%s' % orderby[0]
 
+    column_selection = {}
+
     if formdata:
         if ((len(formdata) == 4) and
                 ('engineering' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and
@@ -72,7 +75,7 @@ def searchform(session, req, things, orderby):
             # Populate selection dictionary with values from form input
             updateselection(formdata, selection)
             # build URL
-            urlstring = selection_to_URL(selection)
+            urlstring = selection_to_URL(selection, with_columns=True)
             if 'ObsLogsOnly' in formdata.keys():
                 # ObsLogs Only search
                 util.redirect(req, '/obslogs' + urlstring)
@@ -83,6 +86,12 @@ def searchform(session, req, things, orderby):
                 formdata.clear()
                 util.redirect(req, '/searchform' + urlstring + args_string)
                 # util.redirect raises apache.SERVER_RETURN, so we're out of this code path now
+
+    try:
+        indices = selection_to_form_indices(selection)
+        column_selection = dict((k, k in indices) for k in search_col_mapping)
+    except KeyError:
+        pass
 
     # Construct suffix to html title
     things = []
@@ -98,11 +107,13 @@ def searchform(session, req, things, orderby):
         updated      = updateform(selection),
         debugging    = False, # Enable this to show some debugging data
         selection    = selection,
+        col_sel      = column_selection,
         # Look at the end of the file for this
         **dropdown_options
         )
     if selection:
-        template_args.update(summary_body(session, req, 'searchresults', selection, orderby))
+        template_args.update(summary_body(session, req, 'customsearch', selection, orderby,
+                                          additional_columns=selection_to_column_names(selection)))
 
     return template_args
 
@@ -178,11 +189,13 @@ def updateselection(formdata, selection):
     Handles many different specific cases
     """
     # Populate selection dictionary with values from form input
-    for key in formdata.keys():
+    for key in formdata:
         # if we got a list, there are multiple fields with that name. This is true for filter at least
-        # Pick the last one
-        if type(formdata[key]) is list:
+        # Pick the last one (except for col_selection)
+        if type(formdata[key]) is list and key != 'col_selection':
             value = formdata[key][-1].value
+        if key == 'col_selection':
+            value = [x.value for x in formdata[key]]
         else:
             value = formdata[key].value
         if key == 'program_id':
@@ -246,6 +259,8 @@ def updateselection(formdata, selection):
         elif key == 'custom_mask':
             # Ignore - done in focal_plane_mask
             pass
+        elif key == 'col_selection':
+            selection['cols'] = formdata_to_compressed(value)
         elif key in ['gmos_speed', 'gmos_gain', 'nod_and_shuffle', 'niri_readmode', 'well_depth', 'nifs_readmode']:
             if 'detector_config' not in selection.keys():
                 selection['detector_config'] = []
