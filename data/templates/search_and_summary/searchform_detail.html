@@ -102,19 +102,6 @@
         </span>
         <br>
     </div>
-{%- if col_sel is defined %}
-    <div id="column_selection" style="display:none">
-<table>
-  <tr><td>{{ column_sel('Class', 'col_cls', std=True) }}   <td>{{ column_sel('FP Mask', 'col_fpm') }}
-  <tr><td>{{ column_sel('Type', 'col_typ', std=True) }}    <td>{{ column_sel('Binning', 'col_bin') }}
-  <tr><td>{{ column_sel('Object', 'col_obj', std=True) }}  <td>{{ column_sel('QA State', 'col_qas', std=True) }}
-  <tr><td>{{ column_sel('WaveBand', 'col_wvb', std=True) }}<td>{{ column_sel('Raw IQ', 'col_riq') }}
-  <tr><td>{{ column_sel('ExpT', 'col_exp', std=True) }}    <td>{{ column_sel('Raw CC', 'col_rcc') }}
-  <tr><td>{{ column_sel('Airmass', 'col_air') }}           <td>{{ column_sel('Raw WV', 'col_rwv') }}
-  <tr><td>{{ column_sel('Filter', 'col_flt') }}            <td>{{ column_sel('Raw BG', 'col_rbg') }}
-</table>
-    </div>
-{%- endif %}
 </div>
 <div class="left">
     <label>Program ID:</label>
@@ -182,7 +169,30 @@
         </span><br>
     </div>
 </div>
-
+{%- if col_sel is defined %}
+<div class="next" id="column_selection" style="display:none">
+<table class="fullwidth">
+  <tr><td>{{ column_sel('ObsClass', 'col_cls', std=True) }}
+      <td>{{ column_sel('ObsType', 'col_typ', std=True) }}
+      <td>{{ column_sel('Object Name', 'col_obj', std=True) }}
+      <td>{{ column_sel('WaveBand', 'col_wvb', std=True) }}
+      <td>{{ column_sel('Filter', 'col_flt') }}
+      <td>{{ column_sel('FP Mask', 'col_fpm') }}
+  <tr><td>{{ column_sel('Disperser', 'col_dis') }}
+      <td>{{ column_sel('Binning', 'col_bin') }}
+      <td>{{ column_sel('ExpTime', 'col_exp', std=True) }}
+      <td>{{ column_sel('Airmass', 'col_air') }}
+      <td>
+      <td>
+  <tr><td>{{ column_sel('QA State', 'col_qas', std=True) }}
+      <td>{{ column_sel('Raw IQ', 'col_riq') }}
+      <td>{{ column_sel('Raw CC', 'col_rcc') }}
+      <td>{{ column_sel('Raw WV', 'col_rwv') }}
+      <td>{{ column_sel('Raw BG', 'col_rbg') }}
+      <td>
+</table>
+</div>
+{%- endif %}
 <div class="next" id="GMOS" style="display:none">
     <br><label>GMOS</label><br>
     

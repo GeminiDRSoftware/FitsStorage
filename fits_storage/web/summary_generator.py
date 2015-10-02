@@ -27,6 +27,7 @@ search_col_mapping = {
     'col_rcc': ('raw_cc', 'c'),
     'col_rwv': ('raw_wv', 'w'),
     'col_rbg': ('raw_bg', 'b'),
+    'col_dis': ('disperser', 'D'),
 }
 
 rev_map_comp = dict((v[1], k) for (k, v) in search_col_mapping.items())
