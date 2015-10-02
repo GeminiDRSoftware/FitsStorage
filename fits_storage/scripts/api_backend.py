@@ -228,6 +228,7 @@ def app(environ, start_response):
         route = get_route(environ, routes)
         return route(environ, start_response)
     except WSGIError as e:
+        logger.error("[%s] %s", e.status, e.message)
         return e.response(environ, start_response)
 
 class LoggerWSGIRequestHandler(wsgiref.simple_server.WSGIRequestHandler):
