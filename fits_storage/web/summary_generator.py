@@ -22,20 +22,21 @@ search_col_mapping = {
     'col_flt': ('filter_name', 'F'),
     'col_fpm': ('focal_plane_mask', 'M'),
     'col_bin': ('detector_binning', 'B'),
+    'col_cwl': ('central_wavelength', 'L'),
+    'col_dis': ('disperser', 'D'),
+    'col_ra' : ('ra', 'r'),
+    'col_dec': ('dec', 'd'),
     'col_qas': ('qa_state', 'Q'),
     'col_riq': ('raw_iq', 'i'),
     'col_rcc': ('raw_cc', 'c'),
     'col_rwv': ('raw_wv', 'w'),
     'col_rbg': ('raw_bg', 'b'),
-    'col_dis': ('disperser', 'D'),
-    'col_ra' : ('ra', 'r'),
-    'col_dec': ('dec', 'd'),
 }
 
 rev_map_comp = dict((v[1], k) for (k, v) in search_col_mapping.items())
 
 col_order = (
-    'col_cls', 'col_typ', 'col_obj', 'col_wvb', 'col_flt', 'col_dis', 'col_fpm', 
+    'col_cls', 'col_typ', 'col_obj', 'col_wvb', 'col_flt', 'col_dis', 'col_cwl', 'col_fpm', 
     'col_exp', 'col_bin', 'col_air', 'col_ra', 'col_dec', 
     'col_qas', 'col_riq', 'col_rcc', 'col_rwv', 'col_rbg',
 )
@@ -234,8 +235,12 @@ class SummaryGenerator(object):
                                   longheading  = 'Filter Name',
                                   header_attr  = 'filter_name'),
             'disperser':   ColDef(heading      = 'Disperser',
-                                  longheading  = 'Disperser: Central Wavelength',
+                                  longheading  = 'Disperser',
                                   header_attr  = 'disperser'),
+            'central_wavelength': 
+                           ColDef(heading      = 'Wavelength',
+                                  longheading  = 'Central Wavelength',
+                                  header_attr  = 'central_wavelength'),
             'focal_plane_mask': ColDef(heading = 'FP Mask',
                                   longheading  = 'Focal Plane Mask',
                                   header_attr  = 'focal_plane_mask'),
