@@ -45,12 +45,14 @@ HTTP_OK            = 200
 FORBIDDEN          = 403
 NOT_FOUND          = 404
 METHOD_NOT_ALLOWED = 405
+INTERNAL_ERROR     = 500
 
 status_text = {
     HTTP_OK           : "OK",
     FORBIDDEN         : "Forbidden",
     NOT_FOUND         : "Not Found",
     METHOD_NOT_ALLOWED: "Method not Allowed",
+    INTERNAL_ERROR    : "Internal Error",
     }
 
 def get_status_text(status):
@@ -100,6 +102,41 @@ def get_arguments(environ):
 #   Helper functions
 #
 
+import inspect
+
+class ApiCall(object):
+    def __init__(self, call):
+        self._call  = call
+        self.__doc__ = call.__doc__
+
+    def __call__(self, environ, start_response):
+        query = get_arguments(environ)
+        try:
+            ret = self._call(**query)
+        except TypeError as e:
+            args, _, _, defaults = inspect.getargspec(self._call)
+            non_default = set(args if defaults is None else args[:-len(defaults)])
+            passed      = set(query)
+            missing = non_default - passed
+            extra   = passed - non_default
+            if missing:
+                raise WSGIError("Missing argument(s): {}".format(', '. join(missing)))
+            elif extra:
+                raise WSGIError("Unexpected argument(s): {}".format(', '. join(extra)))
+            raise WSGIError(str(e))
+
+        try:
+            result = json.dumps({'result': ret})
+        except TypeError:
+            raise WSGIError("Error when trying to prepare the result to be returned",
+                            status=INTERNAL_ERROR)
+
+        start_response("200 OK", [('Content-Type', 'application/json')])
+        return [result]
+
+def json_api_call(fn):
+    return ApiCall(fn)
+
 from fits_storage.utils.fitseditor import compare_cards, modify_multiple_cards
 
 def fits_is_unchanged(path, new_values):
@@ -119,21 +156,12 @@ def fits_apply_changes(path, changes):
 
 import pyfits as pf
 
-def set_image_metadata(environ, start_response):
+@json_api_call
+def set_image_metadata(path, changes):
     try:
-        query = get_arguments(environ)
-        path    = query['path']
-        changes = query['changes']
-    except KeyError as e:
-        raise WSGIError("Missing argument '{}'".format(e.message))
-
-    try:
-        result = fits_apply_changes(path, changes)
+        return fits_apply_changes(path, changes)
     except (pf.VerifyError, IOError):
         raise WSGIError("There were problems when opening/modifying the file")
-
-    start_response("200 OK", [('Content-Type', 'application/json')])
-    return [json.dumps({'result': result})]
 
 from fits_storage.orm.fileuploadlog import FileUploadLog, FileUploadWrapper
 from fits_storage.orm.miscfile import is_miscfile, miscfile_meta, miscfile_meta_path
@@ -142,16 +170,8 @@ from fits_storage.fits_storage_config import storage_root, upload_staging_path, 
 if using_s3:
     from fits_storage.utils.aws_s3 import get_helper
 
-def ingest_upload(environ, start_response):
-    try:
-        query = get_arguments(environ)
-        filename    = query['filename']
-        fulog_id    = query.get('fileuploadlog_id', None)
-        is_proc_cal = query.get('processed_cal', False)
-    except KeyError as e:
-        logger.error("WSGI missing argument: %s", e.message)
-        raise WSGIError("Missing argument '{}'".format(e.message))
-
+@json_api_call
+def ingest_upload(filename, fulog_id=None, is_proc_cal=False):
     logger.info("ingest_upload: filename: %s, fulog_id: %d, is_proc_cal: %s", filename, fulog_id, is_proc_cal)
     path = processed_cals_path if is_proc_cal else ''
     fileuploadlog = FileUploadWrapper()
@@ -202,31 +222,23 @@ def ingest_upload(environ, start_response):
             os.unlink(src)
             fileuploadlog.file_ok = True
 
-#        if it_is_misc:
-#            filename = misc_meta['filename']
         logger.info("Queueing for Ingest: %s" % dst)
         iq_id = IngestQueueUtil(session, logger).add_to_queue(filename, path)
 
         fileuploadlog.ingestqueue_id = iq_id
 
-    start_response("200 OK", [('Content-Type', 'application/json')])
-    return [json.dumps({'result': True})]
+    return True
 
-def log_message(environ, start_response):
+@json_api_call
+def log_message(message, args=(), level=logging.INFO):
     try:
-        query   = get_arguments(environ)
-        message = query['message']
-        args    = tuple(query.get('args', []))
-        level   = query.get('level', logging.INFO)
+        args = tuple(args)
     except TypeError as e:
         raise WSGIError("Invalid argument for 'args'. Must be an iterable")
-    except KeyError as e:
-        raise WSGIError("Missing argument '{}'".format(e.message))
 
     logger.log(level, message, *args)
 
-    start_response("200 OK", [('Content-Type', 'application/json')])
-    return [json.dumps({'result': True})]
+    return True
 
 #######################################################################################
 #
