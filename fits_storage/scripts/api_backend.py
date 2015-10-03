@@ -211,6 +211,22 @@ def ingest_upload(environ, start_response):
     start_response("200 OK", [('Content-Type', 'application/json')])
     return [json.dumps({'result': True})]
 
+def log_message(environ, start_response):
+    try:
+        query   = get_arguments(environ)
+        message = query['message']
+        args    = tuple(query.get('args', []))
+        level   = query.get('level', logging.INFO)
+    except TypeError as e:
+        raise WSGIError("Invalid argument for 'args'. Must be an iterable")
+    except KeyError as e:
+        raise WSGIError("Missing argument '{}'".format(e.message))
+
+    logger.log(level, message, *args)
+
+    start_response("200 OK", [('Content-Type', 'application/json')])
+    return [json.dumps({'result': True})]
+
 #######################################################################################
 #
 #   Routes and application entry point
@@ -220,6 +236,7 @@ routes = {
     'POST': {
         '/set_image_metadata': set_image_metadata,
         '/ingest_upload':      ingest_upload,
+        '/log':                log_message,
     }
 }
 
