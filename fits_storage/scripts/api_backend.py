@@ -149,6 +149,7 @@ def ingest_upload(environ, start_response):
         fulog_id    = query.get('fileuploadlog_id', None)
         is_proc_cal = query.get('processed_cal', False)
     except KeyError as e:
+        logger.error("WSGI missing argument: %s", e.message)
         raise WSGIError("Missing argument '{}'".format(e.message))
 
     logger.info("ingest_upload: filename: %s, fulog_id: %d, is_proc_cal: %s", filename, fulog_id, is_proc_cal)
