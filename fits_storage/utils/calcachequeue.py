@@ -58,8 +58,9 @@ def cache_associations(session, obs_hid):
         session.query(CalCache)\
             .filter(CalCache.obs_hid == header.id)\
             .filter(CalCache.caltype == caltype)\
-            .delete()
+            .delete(synchronize_session=False)
 
+        session.commit()
         # Get the associations for this caltype
         cal_headers = associate_cals(session, [header], caltype=caltype)
         for rank, cal_header in enumerate(cal_headers):
