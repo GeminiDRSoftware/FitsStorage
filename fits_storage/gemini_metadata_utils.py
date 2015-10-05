@@ -596,6 +596,15 @@ class GeminiProgram:
             self.is_ft = sci_match.group(3) == 'FT'
             self.is_ds = sci_match.group(3) == 'DS'
             self.is_eng = sci_match.group(3) == 'ENG'
+
+            # If the program number contained leading zeros, strip them out of the official program_id
+            if sci_match.group(4)[0] == '0':
+                prog_num = int(sci_match.group(4))
+                self.program_id = "%s-%s-%s-%s" % (sci_match.group(1),
+                                                   sci_match.group(2),
+                                                   sci_match.group(3),
+                                                   prog_num)
+
         else:
             # Not a valid format. Probably some kind of engineering test program
             # that someone just made up.
