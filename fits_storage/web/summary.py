@@ -177,6 +177,18 @@ def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, 
     download_all_url = '{}{}'.format(url_prefix, selection_to_URL(selection))
 
     class RowYielder(object):
+        """
+        Instances of this class are used by the summary template to iterate over the
+        rows of data.
+
+        These rows of data could be accessed directly, but there are a number of things
+        to compute (total size, total downloadable files, etc.). This task is better
+        done in the controller side of the process (this class), instead of in the
+        view (template)
+
+        The instance consumes its source data and once it has iterated over all the
+        available header objects, it can only be used to query the totalized values.
+        """
         def __init__(self, gen, headers):
             self.gen     = gen
             self.headers = iter(headers)
@@ -186,10 +198,12 @@ def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, 
 
         @property
         def downloadable(self):
+            "Used by the template to figure out if any of the results are downloadable"
             return self.down > 0
 
         @property
         def all_downloadable(self):
+            "Convenience property for the template figure out if ALL results are downloadable"
             return self.total == self.down
 
         @property
@@ -204,6 +218,7 @@ def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, 
             return self
 
         def next(self):
+            "Obtain the next row of data and keep some stats about it."
             header = self.headers.next()
             row = sumgen.table_row(*header)
             self.total = self.total + 1

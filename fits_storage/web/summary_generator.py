@@ -11,8 +11,14 @@ from ..utils.userprogram import canhave_header, canhave_coords
 
 from ..fits_storage_config import using_previews
 
+# The following dictionary maps column key names as used in the summary template
+# with a pair of values (column name, compressed name). The column name refers
+# to the internal key used by the SummaryGenerator to access a column definition.
+# The compressed name is a character (typically a letter, but not restricted to it)
+# used in links to the searchform to persist the columns that should be displayed.
+
 search_col_mapping = {
-#   col_key    (column_name, compressend_name)
+#   col_key    (column_name, compressed_name)
     'col_cls': ('observation_class', 'C'),
     'col_typ': ('observation_type', 'T'),
     'col_obj': ('object', 'O'),
@@ -34,7 +40,6 @@ search_col_mapping = {
 }
 # Note that the order these come out in is actually the same as the order
 # of the columns buttons in the searchform.
-
 
 rev_map_comp = dict((v[1], k) for (k, v) in search_col_mapping.items())
 
@@ -78,12 +83,19 @@ SORT_ARROWS     = 0x01
 FILENAME_LINKS  = 0x02
 ALL_LINKS       = 0xFF
 
+# Named tuple to hold the column definitions. Before this we used dictionaries, but it's kind of messy and
+# verbose to use def['blah'] instead of def.blah
 ColDef = namedtuple('ColDef', "heading longheading sortarrows want header_attr diskfile_attr summary_func")
 # There are less default values than fields in the namedtuple. This is to force heading having a value
 # This means that the first element in the defaults corresponds to 'longheading'
 ColDef.__new__.__defaults__ = (None, True, False, None, None, None)
 
 class ColWrapper(object):
+    """
+    This class wraps column data to present it in a useful way to the template that will render it.
+
+    The column wrapper gets extra attributes added to it. See SummaryGenerator.table_row for details.
+    """
     def __init__(self, summary, key, coldef):
         self._arrows  = (summary.links & SORT_ARROWS) != 0
         self.key      = key
@@ -94,6 +106,7 @@ class ColWrapper(object):
 
     @property
     def sortarrow(self):
+        "Boolean. Should this column present sort arrows?"
         return self._arrows or self._coldef.sortarrows
 
     def __str__(self):
@@ -103,6 +116,10 @@ class ColWrapper(object):
         return "<ColWrapper '{}'>".format(self.key)
 
 class Row(object):
+    """
+    Simple object to group column data related to the same target. The main use for it
+    is to carry the "can be downloaded?" information
+    """
     def __init__(self):
         self.can_download = False
         self.columns = []
@@ -110,27 +127,21 @@ class Row(object):
     def add(self, coltext):
         self.columns.append(coltext)
 
-#    def with_class(self, class_):
-#        ce = 'TD' if not self.is_header else 'TH'
-#        rc = (" class='" + class_ + "'") if class_ else ""
-#
-#        pattern = "<TR{row_class}>" + ''.join("<{col_element}>" + str(x) + "</{col_element}>" for x in self.columns) + "</TR>"
-#
-#        return pattern.format(row_class=rc, col_element=ce)
-#
-#    def __str__(self):
-#        return self.with_class(self.class_)
-
 class SummaryGenerator(object):
     """
     This is the web summary generator class. You instantiate this class and
     configure what columns you want in your web summary, (and optionally
     what program_ids you have pre-release data access to), then the object
-    provides methods to generate the header of the html table and generate
-    each row of the html table from an ORM header object.
+    provides methods to generate the header and row data, from which HTML (or
+    other) can be creted.
+
     For simplicity, there are also methods that configure the object to
     generate the "standard" summary table types.
-    It is also possible to configure whether you want links in the output html.
+
+    It is also possible to configure whether you want links in the output.
+
+    See the comments on the `table_row` method to learn the kind of information
+    that is returned for each column.
     """
 
     def __init__(self, sumtype, links=ALL_LINKS, uri=None, user=None, user_progid_list=None, additional_columns=()):
@@ -164,21 +175,6 @@ class SummaryGenerator(object):
     # has access to the file and thus whether to display the download things
         self.user = user
         self.user_progid_list = user_progid_list
-
-
-    def set_type(self, sumtype):
-        """
-        Sets the columns to include in the summary, based on pre-defined
-        summary types.
-        Valid types are: summary, ssummary, lsummary, diskfiles
-        """
-
-        try:
-            want = sum_type_defs[sumtype]
-            for key in self.columns:
-                self.columns[key]['want'] = key in want
-        except KeyError:
-            pass
 
     def init_cols(self):
         """
@@ -313,6 +309,33 @@ class SummaryGenerator(object):
         row.uri = self.uri
         for colkey, col in ((x, self.columns[x]) for x in self.wanted):
             c = ColWrapper(self, colkey, col)
+
+            # Most of our columns consists on just some text to be displayed.
+            # We set said text to the column wrapper using the `text` attribute
+            #
+            # Some other columns carry more information than just the text
+            # (links to be added, downloadable, etc). This is encoded in a
+            # dictionary, which i added to the column wrapper using the
+            # `content` attribute.
+            #
+            # The dictionary can be one of two kinds:
+            #
+            #  - If the data/metadata is proprietary and should not be displayed,
+            #    a dictionary consisting on 'prop_message' and 'release' keys is
+            #    returned. The prop_message is a hint on what should be displayed
+            #    (eg. on an HTML page). 'release' is the release date of the
+            #    proprietary data.
+            #
+            #  - Otherwise, an arbitrary dictionary of data is returned. There's
+            #    no standard definition for this, and it is defined by the needs
+            #    of the rendering end.
+            #
+            # It's up to the content generation device (eg. a template) to figure
+            # out which one is to be used, and to render the information accordingly.
+            #
+            # The following code figures out where to extra the information from,
+            # and sets the appropriate attribute.
+
             if col.summary_func:
                 value = getattr(self, col.summary_func)(header, diskfile, file)
                 if colkey == 'download' and 'downloadable' in value:
@@ -333,18 +356,15 @@ class SummaryGenerator(object):
 
     def filename(self, header, diskfile, file):
         """
-        Generates the filename column html
+        Generates the filename column data
         """
-        # Generate the filename column contents html
-
-        # The html to return
-
         # Determine if this user can have the link to the header
         if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
             return dict(
                 links = self.links != NO_LINKS,
                 name  = file.name,
                 df_id = diskfile.id,
+                # Booleans indicating if error information is present
                 fverr = diskfile.fverrors != 0,
                 mderr = (header.engineering is False) and (not diskfile.mdready)
                 )
@@ -353,9 +373,8 @@ class SummaryGenerator(object):
 
     def datalabel(self, header, *args):
         """
-        Generates the datalabel column html
+        Generates the datalabel column data
         """
-        # Generate the diskfile html
         # We parse the data_label to create links to the project id and obs id
         return dict(
             links     = self.links == ALL_LINKS,
@@ -365,7 +384,7 @@ class SummaryGenerator(object):
 
     def ut_datetime(self, header, *args):
         """
-        Generates the UT datetime column html
+        Generates the UT datetime column data
         """
         links = (self.links == ALL_LINKS) and header.ut_datetime is not None
         ret = dict(links = links)
@@ -386,7 +405,7 @@ class SummaryGenerator(object):
 
     def instrument(self, header, *args):
         """
-        Generates the instrument column html
+        Generates the instrument column data
         """
         # Add the AO flags to the instrument name
         return dict(
@@ -398,7 +417,7 @@ class SummaryGenerator(object):
 
     def observation_class(self, header, *args):
         """
-        Generates the observation_class column html
+        Generates the observation_class column data
         """
         return dict(
             links = (self.links == ALL_LINKS) and header.observation_class is not None,
@@ -407,7 +426,7 @@ class SummaryGenerator(object):
 
     def observation_type(self, header, *args):
         """
-        Generates the observation_type column html
+        Generates the observation_type column data
         """
         return dict(
             links = (self.links == ALL_LINKS) and header.observation_type is not None,
@@ -416,7 +435,7 @@ class SummaryGenerator(object):
 
     def exposure_time(self, header, *args):
         """
-        Generates the exposure time column html
+        Generates the exposure time column data
         """
         # All we do is format it with 2 decimal places
         try:
@@ -426,7 +445,7 @@ class SummaryGenerator(object):
 
     def airmass(self, header, *args):
         """
-        Generates the airmass column html
+        Generates the airmass column data
         """
         # Determine if this user can see this info
         if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
@@ -468,7 +487,7 @@ class SummaryGenerator(object):
 
     def local_time(self, header, *args):
         """
-        Generates the local_time column html
+        Generates the local_time column data
         """
         # All we do is format it without decimal places
         try:
@@ -479,18 +498,20 @@ class SummaryGenerator(object):
 
     def object(self, header, *args):
         """
-        Generates the object name column html
+        Generates the object name column data
         """
         # Determine if this user can see this info
         if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
-            # nb target names sometime contain ampersand characters which should be escaped in the html.
-            # Also we trim at 12 characters and abbreviate
+            # nb target names sometime contain ampersand characters which should be escaped in html.
+            # Be careful with those.
             name = str(header.object)
             ret = dict(
                 links = self.links == ALL_LINKS,
                 id    = header.id,
                 name  = name,
                 )
+
+            # Some rendering (eg. HTML) may want to abbreviate the content if longer than 12 characters
             if len(name) > 12:
                 ret['abbr'] = True
 
@@ -511,9 +532,9 @@ class SummaryGenerator(object):
 
     def waveband(self, header, *args):
         """
-        Generates the waveband column html
+        Generates the waveband column data
         """
-        # Print filter_name for imaging, disperser and cen_wlen for spec
+        # filter_name for imaging, disperser and cen_wlen for spec
         if header.spectroscopy and header.instrument != 'GPI':
             try:
                 return "{} : {:.3f}".format(header.disperser, header.central_wavelength)
@@ -524,12 +545,10 @@ class SummaryGenerator(object):
 
     def download(self, header, diskfile, file):
         """
-        Generates the download column html
+        Generates the download column data
         """
         # Determine if this user has access to this file
         if canhave_header(None, self.user, header, user_progid_list=self.user_progid_list):
-            html = '<div class="center">'
-
             ret = dict(name=file.name)
             # Preview link
             if using_previews:
