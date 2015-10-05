@@ -94,14 +94,14 @@ if using_s3:
     from fits_storage.utils.aws_s3 import get_helper
 
 @json_api_call
-def ingest_upload(filename, fulog_id=None, is_proc_cal=False):
-    logger.info("ingest_upload: filename: %s, fulog_id: %d, is_proc_cal: %s", filename, fulog_id, is_proc_cal)
-    path = processed_cals_path if is_proc_cal else ''
+def ingest_upload(filename, fileuploadlog_id=None, processed_cal=False):
+    logger.info("ingest_upload: filename: %s, fileuploadlog_id: %d, processed_cal: %s", filename, fileuploadlog_id, processed_cal)
+    path = processed_cals_path if processed_cal else ''
     fileuploadlog = FileUploadWrapper()
 
     with session_scope() as session:
-        if fulog_id is not None:
-            fileuploadlog.set_wrapped(session.query(FileUploadLog).get(fulog_id))
+        if fileuploadlog_id is not None:
+            fileuploadlog.set_wrapped(session.query(FileUploadLog).get(fileuploadlog_id))
 
         # Move the file to its appropriate location in storage_root/path or S3
         # Construct the full path names and move the file into place
