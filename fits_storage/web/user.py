@@ -681,10 +681,10 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
                     user = userfromcookie(session, req)
                     if not user:
                         raise AccessForbidden("You need to be logged in to access this resource", template=template, content_type=ctype, annotate=annotate)
-                    if staffer is True and not user.gemini_staff:
-                        raise AccessForbidden("You need to be logged in as Gemini Staff member to access this resource", template=template, content_type=ctype, annotate=annotate)
                     if superuser is True and not user.superuser:
                         raise AccessForbidden("You need to be logged in as a Superuser to access this resource", template=template, content_type=ctype, annotate=annotate)
+                    if staffer is True and not user.gemini_staff:
+                        raise AccessForbidden("You need to be logged in as Gemini Staff member to access this resource", template=template, content_type=ctype, annotate=annotate)
             return fn(req, *args, **kw)
         return wrapper
     return decorator
