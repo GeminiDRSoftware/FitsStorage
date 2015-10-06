@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, Boolean, DateTime
+from sqlalchemy import BigInteger, Integer, Text, Boolean, DateTime
 from sqlalchemy.orm import relation
 
 import os
@@ -32,13 +32,13 @@ class DiskFile(Base):
     present = Column(Boolean, index=True)
     canonical = Column(Boolean, index=True)
     file_md5 = Column(Text)
-    file_size = Column(Integer)
+    file_size = Column(BigInteger)
     lastmod = Column(DateTime(timezone=True), index=True)
     entrytime = Column(DateTime(timezone=True), index=True)
 
     compressed = Column(Boolean)
     data_md5 = Column(Text)
-    data_size = Column(Integer)
+    data_size = Column(BigInteger)
 
     isfits = Column(Boolean)
     fvwarnings = Column(Integer)
