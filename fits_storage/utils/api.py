@@ -71,7 +71,7 @@ class WSGIError(Exception):
 
     def response(self, environ, start_response):
         start_response(get_status_text(self.status), [('Content-Type', self.ct)])
-        yield '{{"error": "{}"}}'.format(self.message)
+        return [json.dumps({'error': self.message})]
 
 def get_post_data(environ):
     try:
