@@ -572,6 +572,16 @@ def bad_password(candidate):
 
     return True
 
+def is_staffer(req, session=None):
+    try:
+        if session is None:
+            with session_scope() as s:
+                return userfromcookie(s, req).gemini_staff
+        else:
+            return userfromcookie(session, req).gemini_staff
+    except (TypeError, AttributeError):
+        return False
+
 def userfromcookie(session, req):
     """
     Given a database session and request object, get the session cookie

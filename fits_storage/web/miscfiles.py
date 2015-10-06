@@ -8,6 +8,7 @@ from ..fits_storage_config import upload_staging_path, api_backend_location
 
 from ..utils.api import ApiProxy, ApiProxyError
 from ..utils.userprogram import icanhave
+from .user import needs_login, is_staffer
 
 from mod_python import util
 import json
@@ -15,25 +16,29 @@ import os
 from shutil import copyfileobj
 from datetime import datetime, timedelta
 
-@templating.templated("miscfiles/miscfiles.html", with_session=True)
-def miscfiles(session, req):
+def miscfiles(req):
     formdata = util.FieldStorage(req)
 
     if 'search' in formdata:
-        return search_miscfiles(session, req, formdata)
+        return search_miscfiles(req, formdata)
 
     # TODO: Only Gemini staff should have access to this
     if 'upload' in formdata:
-        return save_file(session, req, formdata)
+        return save_file(req, formdata)
 
-    return {}
+    return bare_page(req)
+
+@templating.templated("miscfiles/miscfiles.html")
+def bare_page(req):
+    return dict(is_staff=is_staffer(req))
 
 def enumerate_miscfiles(session, req, query):
     for misc, file in query:
         yield icanhave(session, req, misc), misc, file
 
+@templating.templated("miscfiles/miscfiles.html", with_session=True)
 def search_miscfiles(session, req, formdata):
-    ret = {}
+    ret = dict(is_staff=is_staffer(req, session))
     query = session.query(MiscFile, File).join(DiskFile).join(File)
 
     message = []
@@ -67,6 +72,8 @@ def validate(req):
     #    - valid Program ID
     pass
 
+@needs_login(staffer=True)
+@templating.templated("miscfiles/miscfiles.html", with_session=True)
 def save_file(session, req, formdata):
     fileitem = formdata['uploadFile']
     localfilename = normalize_diskname(fileitem.filename)
@@ -93,7 +100,7 @@ def save_file(session, req, formdata):
     elif formdata['uploadRelease'] == 'now':
         release_date = datetime.now()
     else:
-        return dict(errorMessage = "Wrong value for release date",
+        return dict(is_staff=True, errorMessage = "Wrong value for release date",
                     **current_data)
 
     try:
@@ -108,16 +115,16 @@ def save_file(session, req, formdata):
     except IOError:
         cleanup()
         # TODO: We should log the failure
-        return dict(errorMessage = "Error when trying to save the file",
+        return dict(is_staff=True, errorMessage = "Error when trying to save the file",
                     **current_data)
 
     try:
         proxy = ApiProxy(api_backend_location)
         result = proxy.ingest_upload(filename=localfilename)
-        return dict(actionMessage = "Ingested with result: " + str(result))
+        return dict(is_staff=True, actionMessage = "Ingested with result: " + str(result))
     except ApiProxyError:
         cleanup()
-        return dict(errorMessage = "Error when trying to queue the file for ingestion",
+        return dict(eis_staff=True, rrorMessage = "Error when trying to queue the file for ingestion",
                     **current_data)
 
-    return {}
+    return dict(is_staff=True)

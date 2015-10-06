@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block title %}Generic Files Management{% endblock %}
-{% block extra_script %}
+{% block extra_header %}
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 
 {% endblock %}
@@ -17,44 +17,56 @@
 {%- endif %}
 <form action='/miscfiles' method='POST' enctype='multipart/form-data'>
   <table>
-   <tr><td colspan='2'><h3>File Search</h3>
-   <tr><td><label for='name'>File name:</label>
-       <td><input type='text' name='name'
-       		  placeholder='File name, or a part of it' size='75'
-       		  value='{{ searchName }}'/>
-   <tr><td><label for='keyw'>Keywords:</label>
-       <td><input type='text' name='keyw'
-       		  placeholder='Keywords to be found in the description' size='75'
-		  value='{{ searchKeyw }}' />
-   <tr><td><label for='prog'>Program:</label>
-       <td><input type='text' name='prog'
-       		  placeholder='Gemini program ID' size='32'
-		  value='{{ searchProg }}' />
-   <tr><td>
-       <td><input type='submit' name='search' value='Search' />
-           <input type='reset' />
+   <tbody id='search_form'>
+    <tr><td colspan='2'><h3>File Search</h3>
+    <tr><td><label for='name'>File name:</label>
+        <td><input type='text' name='name'
+        		  placeholder='File name, or a part of it' size='75'
+        		  value='{{ searchName }}'/>
+    <tr><td><label for='keyw'>Keywords:</label>
+        <td><input type='text' name='keyw'
+        		  placeholder='Keywords to be found in the description' size='75'
+ 		  value='{{ searchKeyw }}' />
+    <tr><td><label for='prog'>Program:</label>
+        <td><input type='text' name='prog'
+        		  placeholder='Gemini program ID' size='32'
+ 		  value='{{ searchProg }}' />
+    <tr><td>
+        <td><input type='submit' name='search' value='Search' />
+            <input type='reset' />
+   </tbody>
 <!-- TODO: Upload form should be seen only by staffers -->
-   <tr><td colspan='2'><h3>Add New File</h3>
-   <tr><td><label for='uploadFile'><strong>File</strong>:</label>
-       <td><input type='file' name='uploadFile' />
-   <tr><td><label for='uploadRelease'><strong>Release Date</strong>:</label>
-       <td><select name='uploadRelease'>
-             <option value='default'>18 Months from Now</option>
-	     <option value='now'>Now</option>
-           </select>
-   <tr><td><label for='uploadProg'>Program ID:</label>
-       <td><input type='text' name='uploadProg' size='32'
-            placeholder='Gemini Program ID (optional)'
-	    value='{{ uploadProg }}' />
-   <tr><td style='vertical-align: top'><label for='uploadDesc'>Description:</label>
-       <td><textarea name='uploadDesc' cols='50' rows='5'
-       		     placeholder='Describe the contents of the file. It may be useful to add keywords (eg. #my-instrument) to help with search. Optional, but recommended'></textarea>
-   <tr><td>
-       <td><input type='submit' name='upload' value='Send' />
+{% if is_staff %}
+   <tbody id='upload_form'>
+    <tr><td colspan='2'><h3>Add New File</h3>
+    <tr><td><label for='uploadFile'><strong>File</strong>:</label>
+        <td><input type='file' name='uploadFile' />
+    <tr><td><label for='uploadRelease'><strong>Release Date</strong>:</label>
+        <td><select name='uploadRelease'>
+              <option value='default'>18 Months from Now</option>
+ 	     <option value='now'>Now</option>
+            </select>
+    <tr><td><label for='uploadProg'>Program ID:</label>
+        <td><input type='text' name='uploadProg' size='32'
+             placeholder='Gemini Program ID (optional)'
+ 	    value='{{ uploadProg }}' />
+    <tr><td style='vertical-align: top'><label for='uploadDesc'>Description:</label>
+        <td><textarea name='uploadDesc' cols='50' rows='5'
+        		     placeholder='Describe the contents of the file. It may be useful to add keywords (eg. #my-instrument) to help with search. Optional, but recommended'></textarea>
+    <tr><td>
+        <td><input type='submit' name='upload' value='Send' />
+   </tbody>
+<!--
+   <tbody id='add_button'>
+     <tr><td colspan='2'><img src='/static/add.png' width='24' height='24' style='vertical-align: middle' /> <span style='vertical-align: middle'>Add a new file</span>
+   </tbody>
+   -->
+{% endif %}
   </table>
 </form>
 {%- if fileList %}
 <hr />
+<div id='search_results'>
 {% if count == 0 %}
 <h3>No results found
 {% else %}
@@ -74,5 +86,6 @@
  {% endfor %}
  </tbody>
 {%- endif %}
+</div>
 {%- endif %}
 {% endblock %}
