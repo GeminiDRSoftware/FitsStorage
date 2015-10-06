@@ -6,7 +6,7 @@
  {%- else %}
  <th>{{ col.heading }}
  {%- endif %}
- {%- if col.sortarrows %}<a href="{{ uri }}?orderby={{ col.key }}_asc">&uarr;</a><a href="{{ uri }}?orderby={{ col.key }}_desc">&darr;</a>{%- endif %}
+ {%- if col.sortarrow == True %}<a href="{{ uri }}?orderby={{ col.key }}_asc">&uarr;</a><a href="{{ uri }}?orderby={{ col.key }}_desc">&darr;</a>{%- endif %}
 {%- endfor %}
 </tr>
 {%- endmacro %}

@@ -107,7 +107,7 @@ class ColWrapper(object):
     @property
     def sortarrow(self):
         "Boolean. Should this column present sort arrows?"
-        return self._arrows or self._coldef.sortarrows
+        return self._arrows and self._coldef.sortarrows
 
     def __str__(self):
         if hasattr(self, 'content'):
