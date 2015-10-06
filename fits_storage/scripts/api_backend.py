@@ -90,6 +90,7 @@ from fits_storage.orm.fileuploadlog import FileUploadLog, FileUploadWrapper
 from fits_storage.orm.miscfile import is_miscfile, miscfile_meta, miscfile_meta_path
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 from fits_storage.fits_storage_config import storage_root, upload_staging_path, processed_cals_path, using_s3
+import shutil
 if using_s3:
     from fits_storage.utils.aws_s3 import get_helper
 
@@ -127,23 +128,26 @@ def ingest_upload(filename, fileuploadlog_id=None, processed_cal=False):
                 if it_is_misc:
                     os.unlink(miscfile_meta_path(src))
                 logger.debug("Copy to S3 appeared to work")
-            except Exception:
+            except Exception as e:
                 string = traceback.format_tb(sys.exc_info()[2])
                 string = "".join(string)
                 if fileuploadlog.ful:
                     fileuploadlog.add_note("Exception during S3 upload, see log file")
                     session.flush()
                 logger.error("Exception during S3 upload: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
-                raise
+                raise WSGIError("Error when trying to move a file into S3: {!r}".format(str(e)))
 
         else:
-            dst = os.path.join(storage_root, dst)
-            logger.debug("Moving %s to %s" % (src, dst))
-            # We can't use os.rename as that keeps the old permissions and ownership, which we specifically want to avoid
-            # Instead, we copy the file and the remove it
-            shutil.copy(src, dst)
-            os.unlink(src)
-            fileuploadlog.file_ok = True
+            try:
+                dst = os.path.join(storage_root, dst)
+                logger.debug("Moving %s to %s" % (src, dst))
+                # We can't use os.rename as that keeps the old permissions and ownership, which we specifically want to avoid
+                # Instead, we copy the file and the remove it
+                shutil.copy(src, dst)
+                os.unlink(src)
+                fileuploadlog.file_ok = True
+            except (IOError, OSError) as e:
+                raise WSGIError("Error when trying to move a file into the storage: {!r}".format(str(e)))
 
         logger.info("Queueing for Ingest: %s" % dst)
         iq_id = IngestQueueUtil(session, logger).add_to_queue(filename, path)
