@@ -13,20 +13,40 @@ from .user import needs_login, is_staffer
 from mod_python import util
 import json
 import os
-from shutil import copyfileobj
+import stat
 from datetime import datetime, timedelta
+from tempfile import NamedTemporaryFile
+
+class LargeFileFieldStorage(util.FieldStorage):
+    def __init__(self, *args, **kw):
+        self.uploaded_file = None
+
+        kw['file_callback'] = self.file_callback
+        util.FieldStorage.__init__(self, *args, **kw)
+
+    def file_callback(self, name):
+        fobj = NamedTemporaryFile(mode='w+b', suffix='.' + name, dir=upload_staging_path, delete=False)
+        self.uploaded_file = fobj
+        return fobj
 
 def miscfiles(req):
-    formdata = util.FieldStorage(req)
+    try:
+        formdata = LargeFileFieldStorage(req)
 
-    if 'search' in formdata:
-        return search_miscfiles(req, formdata)
+        if 'search' in formdata:
+            return search_miscfiles(req, formdata)
 
-    # TODO: Only Gemini staff should have access to this
-    if 'upload' in formdata:
-        return save_file(req, formdata)
+        # TODO: Only Gemini staff should have access to this
+        if 'upload' in formdata:
+            return save_file(req, formdata)
 
-    return bare_page(req)
+        return bare_page(req)
+    finally:
+        if formdata.uploaded_file is not None:
+            try:
+                os.unlink(formdata.uploaded_file.name)
+            except OSError:
+                pass
 
 @templating.templated("miscfiles/miscfiles.html")
 def bare_page(req):
@@ -104,8 +124,9 @@ def save_file(session, req, formdata):
                     **current_data)
 
     try:
-        with open(fullpath, 'w') as dst, open(jsonpath, 'w') as meta:
-            copyfileobj(fileitem.file, dst)
+        os.rename(formdata.uploaded_file.name, fullpath)
+        os.chmod(fullpath, stat.S_IRUSR|stat.S_IRGRP|stat.S_IROTH)
+        with open(jsonpath, 'w') as meta:
             json.dump({'filename': fileitem.filename,
                        'is_misc':  'True',
                        'release':  release_date.strftime('%Y-%m-%d'),
