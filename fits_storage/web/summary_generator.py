@@ -562,8 +562,12 @@ class SummaryGenerator(object):
 
             return ret
         else:
+            try:
+                prop_message=header.release.strftime('%Y%m%d')
+            except AttributeError:
+                prop_message='N/A'
             return dict(
-                prop_message=header.release.strftime('%Y%m%d'),
+                prop_message=prop_message,
                 release=header.release,
                 centered=True
             )
