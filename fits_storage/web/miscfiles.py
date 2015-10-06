@@ -92,7 +92,7 @@ def validate(req):
     #    - valid Program ID
     pass
 
-@needs_login(staffer=True)
+@needs_login(superuser=True)
 @templating.templated("miscfiles/miscfiles.html", with_session=True)
 def save_file(session, req, formdata):
     fileitem = formdata['uploadFile']
@@ -133,19 +133,17 @@ def save_file(session, req, formdata):
                        'description': formdata.get('uploadDesc', None),
                        'program': formdata.get('uploadProg', None)},
                      meta)
+        proxy = ApiProxy(api_backend_location)
+        result = proxy.ingest_upload(filename=localfilename)
+        return dict(is_staff=True, actionMessage = "Ingested with result: " + str(result))
     except IOError:
         cleanup()
         # TODO: We should log the failure
         return dict(is_staff=True, errorMessage = "Error when trying to save the file",
                     **current_data)
-
-    try:
-        proxy = ApiProxy(api_backend_location)
-        result = proxy.ingest_upload(filename=localfilename)
-        return dict(is_staff=True, actionMessage = "Ingested with result: " + str(result))
     except ApiProxyError:
         cleanup()
-        return dict(eis_staff=True, rrorMessage = "Error when trying to queue the file for ingestion",
+        return dict(is_staff=True, errorMessage = "Error when trying to queue the file for ingestion",
                     **current_data)
 
     return dict(is_staff=True)
