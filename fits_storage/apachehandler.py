@@ -102,7 +102,6 @@ mapping_simple = {
     'user_list': user_list,                                 # user_list
     'update_headers': update_headers,                       # JSON RPC dispatcher
     'curation': curation_report,                            # curation_report handler
-    'miscfiles': miscfiles,                                 # Miscellanea (Opaque files)
     'validate_misc': validate_misc,                         # Test misc-file metadata before upload
     }
 
@@ -128,6 +127,7 @@ mapping_things = {
     'staff_access': staff_access,       # staff_access
     'preview': preview,                 # previews
     'queuestatus': queuestatus,         # Show some info on what's going on with the queues
+    'miscfiles': miscfiles,             # Miscellanea (Opaque files)
 }
 
 # Functions invoked with (req, selections)
