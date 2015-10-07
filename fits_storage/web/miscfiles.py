@@ -67,10 +67,10 @@ def search_miscfiles(session, req, formdata):
 
     message = []
 
-    name = formdata['name'].strip()
+    name = formdata.get('name', '').strip()
     # Make sure there are no '&' in the keywords
-    keyw = ' '.join(formdata['keyw'].split('&')).strip()
-    prog = formdata['prog'].strip()
+    keyw = ' '.join(formdata.get('keyw', '').split('&')).strip()
+    prog = formdata.get('prog', '').strip()
 
     if name:
         query = query.filter(File.name.like('%' + name + '%'))
