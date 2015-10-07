@@ -72,10 +72,10 @@
 {% else %}
 <table border='0'>
  <thead>
-  <tr class='tr_head'><th>Download<th>Filename<th>Program<th>Release Date<th>Description</tr>
+  <tr class='tr_head'><th>Download<th>Filename<th>Size<th>Program<th>Release Date<th>Description</tr>
  </thead>
  <tbody>
- {%- for can_have, meta, file in fileList %}
+ {%- for can_have, meta, disk, file in fileList %}
   <tr class='alternating'>
   {%- if can_have %}
   <td style='text-align: center'><a href='/file/{{ file.name }}'>[D]</a>
@@ -83,6 +83,7 @@
   <td>
   {%- endif %}
   <td><a href='{{ uri }}/{{ meta.id }}'>{{ file.name }}</a>
+  <td style='text-align: right'>{{ disk.file_size|abbreviate_size }}
   <td>{{ meta.program_id or '' }}
   <td>{{ meta.release.date() }}
   <td><span>{{ (meta.description or '')|e|truncate(100) }}</span></tr>

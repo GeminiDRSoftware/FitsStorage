@@ -57,13 +57,13 @@ def bare_page(req):
     return dict(is_staff=is_staffer(req))
 
 def enumerate_miscfiles(session, req, query):
-    for misc, file in query:
-        yield icanhave(session, req, misc), misc, file
+    for misc, disk, file in query:
+        yield icanhave(session, req, misc), misc, disk, file
 
 @templating.templated("miscfiles/miscfiles.html", with_session=True)
 def search_miscfiles(session, req, formdata):
     ret = dict(is_staff=is_staffer(req, session))
-    query = session.query(MiscFile, File).join(DiskFile).join(File)
+    query = session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)
 
     message = []
 
@@ -157,14 +157,15 @@ def save_file(session, req, formdata):
 @templating.templated("miscfiles/detail.html", with_session=True)
 def detail_miscfile(session, req, handle):
     try:
-        query = session.query(MiscFile, File).join(DiskFile).join(File)
+        query = session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)
         try:
-            meta, fobj = query.filter(MiscFile.id == int(handle)).one()
+            meta, df, fobj = query.filter(MiscFile.id == int(handle)).one()
         except ValueError:
             # Must be a file name...
-            meta, fobj = query.filter(File.name == handle).one()
+            meta, df, fobj = query.filter(File.name == handle).one()
         return dict(
             meta = meta,
+            disk = df,
             file = fobj
             )
     except NoResultFound:

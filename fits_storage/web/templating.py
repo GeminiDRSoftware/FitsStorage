@@ -55,6 +55,18 @@ def group_digits(value, decimals=0):
     except ValueError:
         return ''
 
+KB = 1024
+MB = 1024 * KB
+GB = 1024 * MB
+
+def abbreviate_size(value):
+    if value >= GB:
+        return '{:.2f} GB'.format(value / GB)
+    elif value >= MB:
+        return '{:.2f} MB'.format(value / MB)
+    else:
+        return '{:.2f} KB'.format(value / KB)
+
 def get_env():
     jinja_env = Environment(loader=FileSystemLoader(template_root),
                             extensions=['jinja2.ext.with_'],
@@ -70,6 +82,7 @@ def get_env():
     jinja_env.filters['format_float'] = format_float
     jinja_env.filters['bytes_to_GB'] = bytes_to_GB
     jinja_env.filters['group_digits'] = group_digits
+    jinja_env.filters['abbreviate_size'] = abbreviate_size
 
     return jinja_env
 
