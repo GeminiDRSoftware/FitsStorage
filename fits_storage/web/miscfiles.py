@@ -164,6 +164,7 @@ def detail_miscfile(session, req, handle):
             # Must be a file name...
             meta, df, fobj = query.filter(File.name == handle).one()
         return dict(
+            canhave = icanhave(session, req, meta),
             meta = meta,
             disk = df,
             file = fobj

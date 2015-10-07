@@ -6,7 +6,7 @@
 {% else %}
 <h1>Generic File Details</h1>
 <table>
- <tr><td><strong>Filename:</strong><td><a href='/files/{{ file.name }}'>{{ file.name }}</a> ({{ disk.file_size|abbreviate_size }})
+ <tr><td><strong>Filename:</strong><td>{% if canhave %}<a href='/files/{{ file.name }}'>{{ file.name }}</a> ({{ disk.file_size|abbreviate_size }}){% else %}{{ file.name }}{% endif %}
  <tr><td><strong>Program:</strong><td>{{ meta.program_id }}
  <tr><td><strong>Release:</strong><td>{{ meta.release.date() }}
  <tr><td style='vertical-align: top'><strong>Description:</strong>
