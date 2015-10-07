@@ -34,15 +34,15 @@ def miscfiles(req, things):
     try:
         formdata = LargeFileFieldStorage(req)
 
+        if len(things) == 1:
+            return detail_miscfile(req, things[0], formdata)
+
         if 'search' in formdata:
             return search_miscfiles(req, formdata)
 
         # TODO: Only Gemini staff should have access to this
         if 'upload' in formdata:
             return save_file(req, formdata)
-
-        if len(things) == 1:
-            return detail_miscfile(req, things[0])
 
         return bare_page(req)
     finally:
@@ -155,7 +155,7 @@ def save_file(session, req, formdata):
     return dict(can_add=True)
 
 @templating.templated("miscfiles/detail.html", with_session=True)
-def detail_miscfile(session, req, handle):
+def detail_miscfile(session, req, handle, formdata):
     try:
         query = session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)
         try:
@@ -163,12 +163,23 @@ def detail_miscfile(session, req, handle):
         except ValueError:
             # Must be a file name...
             meta, df, fobj = query.filter(File.name == handle).one()
-        return dict(
+
+        ret = dict(
+            canedit = is_staffer(req, session),
             canhave = icanhave(session, req, meta),
+            uri  = req.uri,
             meta = meta,
             disk = df,
             file = fobj
             )
+
+        if 'save' in formdata:
+            meta.program_id = formdata.get('prog', '')
+            meta.description = formdata.get('desc', '')
+            session.flush()
+            ret['message'] = "Successfully updated"
+
+        return ret
     except NoResultFound:
         return dict(error = "Can't find the required content")
     except MultipleResultsFound:

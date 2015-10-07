@@ -1,16 +1,40 @@
 {% extends "layout.html" %}
 {% block title %}Generic File Detail - {% if error %}Error!!{% else %}{{ file.name }}{% endif %}{% endblock %}
+
+{% if message %}
+{% block extra_header %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script type='text/javascript'>
+  setTimeout(function() {
+    $('#message').fadeOut();
+  }, 3000);
+</script>
+{% endblock %}
+{% endif %}
+
 {% block body %}
-{% if error %}
+{%- if error %}
 {{ error }}
-{% else %}
+{%- else %}
 <h1>Generic File Details</h1>
+{%- if message %}
+<div id='message' style='background: #99ffcc; padding: 2ex; '>{{ message }}</div>
+{%- endif %}
+{%- if canedit %}
+<form action='{{ uri }}' method='POST'>
+{%- endif %}
 <table>
  <tr><td><strong>Filename:</strong><td>{% if canhave %}<a href='/files/{{ file.name }}'>{{ file.name }}</a> ({{ disk.file_size|abbreviate_size }}){% else %}{{ file.name }}{% endif %}
- <tr><td><strong>Program:</strong><td>{{ meta.program_id }}
+ <tr><td><strong>Program:</strong><td>{% if canedit %}<input type='text' name='prog' value='{{ meta.program_id }}' />{% else %}{{ meta.program_id }}{% endif %}
  <tr><td><strong>Release:</strong><td>{{ meta.release.date() }}
  <tr><td style='vertical-align: top'><strong>Description:</strong>
-     <td><textarea name='uploadDesc' cols='80' rows='24' disabled>{{ meta.description|e }}</textarea>
-<table>
+     <td><textarea name='desc' cols='80' rows='24' {% if not canedit %}disabled{% endif %}>{{ meta.description|e }}</textarea>
+{% if canedit %}
+ <tr><td><td><input type='submit' name='save' value='Save changes' />
 {% endif %}
+</table>
+{%- if canedit %}
+</form>
+{% endif %}
+{%- endif %}
 {% endblock %}
