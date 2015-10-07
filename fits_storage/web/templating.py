@@ -55,7 +55,7 @@ def group_digits(value, decimals=0):
     except ValueError:
         return ''
 
-KB = 1024
+KB = 1024.0
 MB = 1024 * KB
 GB = 1024 * MB
 
