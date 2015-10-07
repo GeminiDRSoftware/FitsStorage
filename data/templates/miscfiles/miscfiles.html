@@ -1,9 +1,46 @@
 {% extends "layout.html" %}
 {% block title %}Generic Files Management{% endblock %}
+
 {% block extra_header %}
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/form.css" />
+<style type="text/css">
+ body {
+   margin: 0;
+ }
+</style>
+<script type='text/javascript'>
+var tabInfo = [
+        { id: 'search_tab', divId: 'search_frame' },
+        { id: 'add_tab',    divId: 'add_frame'}
+        ];
 
+function setCurrentTab(tabName) {
+   $.each(tabInfo, function(index, tabObj) {
+      var li = $("#" + tabObj.id);
+      var frame = $("#" + tabObj.divId);
+      if (tabObj.id == tabName) {
+         li.prop('className', 'current');
+         frame.show()
+      }
+      else {
+         li.prop('className', '');
+         frame.hide();
+      }
+   });
+}
+
+$(document).ready(function() {
+  $('#search_tab').click(function() {
+    setCurrentTab('search_tab');
+  });
+  $('#add_tab').click(function() {
+    setCurrentTab('add_tab');
+  });
+});
+</script>
 {% endblock %}
+
 {% block body %}
 <h1>Generic Files Management</h1>
 {% if can_manage == True %}
@@ -13,83 +50,25 @@
 <div class='action_message'>{{ actionMessage }}</div>
 {%- endif %}
 {%- if errorMessage %}
-<div class='error_message'>{{ errorMessage }}</div>
+ <div class='error_message'>{{ errorMessage }}</div>
 {%- endif %}
-<form action='/miscfiles' method='POST' enctype='multipart/form-data'>
-  <table>
-   <tbody id='search_form'>
-    <tr><td colspan='2'><h3>File Search</h3>
-    <tr><td><label for='name'>File name:</label>
-        <td><input type='text' name='name'
-        		  placeholder='File name, or a part of it' size='75'
-        		  value='{{ searchName }}'/>
-    <tr><td><label for='keyw'>Keywords:</label>
-        <td><input type='text' name='keyw'
-        		  placeholder='Keywords to be found in the description' size='75'
- 		  value='{{ searchKeyw }}' />
-    <tr><td><label for='prog'>Program:</label>
-        <td><input type='text' name='prog'
-        		  placeholder='Gemini program ID' size='32'
- 		  value='{{ searchProg }}' />
-    <tr><td>
-        <td><input type='submit' name='search' value='Search' />
-            <input type='reset' />
-   </tbody>
-<!-- TODO: Upload form should be seen only by staffers -->
-{% if is_staff %}
-   <tbody id='upload_form'>
-    <tr><td colspan='2'><h3>Add New File</h3>
-    <tr><td><label for='uploadFile'><strong>File</strong>:</label>
-        <td><input type='file' name='uploadFile' />
-    <tr><td><label for='uploadRelease'><strong>Release Date</strong>:</label>
-        <td><select name='uploadRelease'>
-              <option value='default'>18 Months from Now</option>
- 	     <option value='now'>Now</option>
-            </select>
-    <tr><td><label for='uploadProg'>Program ID:</label>
-        <td><input type='text' name='uploadProg' size='32'
-             placeholder='Gemini Program ID (optional)'
- 	    value='{{ uploadProg }}' />
-    <tr><td style='vertical-align: top'><label for='uploadDesc'>Description:</label>
-        <td><textarea name='uploadDesc' cols='80' rows='24'
-        		     placeholder='Describe the contents of the file. It may be useful to add keywords (eg. #my-instrument) to help with search. Optional, but recommended'></textarea>
-    <tr><td>
-        <td><input type='submit' name='upload' value='Send' />
-   </tbody>
-<!--
-   <tbody id='add_button'>
-     <tr><td colspan='2'><img src='/static/add.png' width='24' height='24' style='vertical-align: middle' /> <span style='vertical-align: middle'>Add a new file</span>
-   </tbody>
-   -->
-{% endif %}
-  </table>
-</form>
-{%- if fileList %}
-<hr />
-<div id='search_results'>
-{% if count == 0 %}
-<h3>No results found
-{% else %}
-<table border='0'>
- <thead>
-  <tr class='tr_head'><th>Download<th>Filename<th>Size<th>Program<th>Release Date<th>Description</tr>
- </thead>
- <tbody>
- {%- for can_have, meta, disk, file in fileList %}
-  <tr class='alternating'>
-  {%- if can_have %}
-  <td style='text-align: center'><a href='/file/{{ file.name }}'>[D]</a>
-  {%- else %}
-  <td>
-  {%- endif %}
-  <td><a href='{{ uri }}/{{ meta.id }}'>{{ file.name }}</a>
-  <td style='text-align: right'>{{ disk.file_size|abbreviate_size }}
-  <td>{{ meta.program_id or '' }}
-  <td>{{ meta.release.date() }}
-  <td><span>{{ (meta.description or '')|e|truncate(100) }}</span></tr>
- {% endfor %}
- </tbody>
+{%- if can_add %}
+<div id='tabsdiv'>
+ <ul class='tabs'>
+   <li><a href="#" id="search_tab" class="current">Search</a>
+   <li><a href="#" id="add_tab">Add New</a>
+ </ul>
+</div>
+&nbsp;
+<div id='frames' style='padding-left: 2em; padding-right: 2em'>
+ <div id='search_frame'>
 {%- endif %}
+{% include "miscfiles/miscfile_search.html" %}
+{%- if can_add %}
+ </div><!-- search div -->
+ <div id='add_frame' hidden='true'>
+{% include "miscfiles/miscfile_add.html" %}
+ </div>
 </div>
 {%- endif %}
 {% endblock %}

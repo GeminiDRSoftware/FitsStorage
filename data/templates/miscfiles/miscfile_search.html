@@ -1,0 +1,52 @@
+{{ formdata }}
+<form action='/miscfiles' method='POST'>
+  <table>
+   <tbody id='search_form'>
+    <tr><td colspan='2'><h3>File Search</h3>
+    <tr><td><label for='name'>File name:</label>
+        <td><input type='text' name='name'
+        		  placeholder='File name, or a part of it' size='75'
+        		  value='{{ searchName }}'/>
+    <tr><td><label for='keyw'>Keywords:</label>
+        <td><input type='text' name='keyw'
+        		  placeholder='Keywords to be found in the description' size='75'
+ 		  value='{{ searchKeyw }}' />
+    <tr><td><label for='prog'>Program:</label>
+        <td><input type='text' name='prog'
+        		  placeholder='Gemini program ID' size='32'
+ 		  value='{{ searchProg }}' />
+    <tr><td>
+        <td><input type='submit' name='search' value='Search' />
+            <input type='reset' />
+   </tbody>
+  </table>
+</form>
+{%- if fileList %}
+<hr />
+<div id='search_results'>
+{% if count == 0 %}
+<h3>No results found
+{% else %}
+<table border='0'>
+ <thead>
+  <tr class='tr_head'><th>Download<th>Filename<th>Size<th>Program<th>Release Date<th>Description</tr>
+ </thead>
+ <tbody>
+ {%- for can_have, meta, disk, file in fileList %}
+  <tr class='alternating'>
+  {%- if can_have %}
+  <td style='text-align: center'><a href='/file/{{ file.name }}'>[D]</a>
+  {%- else %}
+  <td>
+  {%- endif %}
+  <td><a href='{{ uri }}/{{ meta.id }}'>{{ file.name }}</a>
+  <td style='text-align: right'>{{ disk.file_size|abbreviate_size }}
+  <td>{{ meta.program_id or '' }}
+  <td>{{ meta.release.date() }}
+  <td><span>{{ (meta.description or '')|e|truncate(100) }}</span></tr>
+ {% endfor %}
+ </tbody>
+</table>
+{%- endif %}
+</div>
+{%- endif %}

@@ -54,7 +54,7 @@ def miscfiles(req, things):
 
 @templating.templated("miscfiles/miscfiles.html")
 def bare_page(req):
-    return dict(is_staff=is_staffer(req))
+    return dict(can_add=is_staffer(req))
 
 def enumerate_miscfiles(session, req, query):
     for misc, disk, file in query:
@@ -62,7 +62,7 @@ def enumerate_miscfiles(session, req, query):
 
 @templating.templated("miscfiles/miscfiles.html", with_session=True)
 def search_miscfiles(session, req, formdata):
-    ret = dict(is_staff=is_staffer(req, session))
+    ret = dict(can_add=is_staffer(req, session))
     query = session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)
 
     message = []
@@ -126,7 +126,7 @@ def save_file(session, req, formdata):
     elif formdata['uploadRelease'] == 'now':
         release_date = datetime.now()
     else:
-        return dict(is_staff=True, errorMessage = "Wrong value for release date",
+        return dict(can_add=True, errorMessage = "Wrong value for release date",
                     **current_data)
 
     try:
@@ -141,18 +141,18 @@ def save_file(session, req, formdata):
                      meta)
         proxy = ApiProxy(api_backend_location)
         result = proxy.ingest_upload(filename=localfilename)
-        return dict(is_staff=True, actionMessage = "Ingested with result: " + str(result))
+        return dict(can_add=True, actionMessage = "Ingested with result: " + str(result))
     except IOError:
         cleanup()
         # TODO: We should log the failure
-        return dict(is_staff=True, errorMessage = "Error when trying to save the file",
+        return dict(can_add=True, errorMessage = "Error when trying to save the file",
                     **current_data)
     except ApiProxyError:
         cleanup()
-        return dict(is_staff=True, errorMessage = "Error when trying to queue the file for ingestion",
+        return dict(can_add=True, errorMessage = "Error when trying to queue the file for ingestion",
                     **current_data)
 
-    return dict(is_staff=True)
+    return dict(can_add=True)
 
 @templating.templated("miscfiles/detail.html", with_session=True)
 def detail_miscfile(session, req, handle):

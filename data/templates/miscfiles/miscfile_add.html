@@ -1,0 +1,23 @@
+<form action='/miscfiles' method='POST' enctype='multipart/form-data'>
+  <table>
+   <tbody id='upload_form'>
+    <tr><td colspan='2'><h3>Add New File</h3>
+    <tr><td><label for='uploadFile'><strong>File</strong>:</label>
+        <td><input type='file' name='uploadFile' />
+    <tr><td><label for='uploadRelease'><strong>Release Date</strong>:</label>
+        <td><select name='uploadRelease'>
+              <option value='default'>18 Months from Now</option>
+ 	     <option value='now'>Now</option>
+            </select>
+    <tr><td><label for='uploadProg'>Program ID:</label>
+        <td><input type='text' name='uploadProg' size='32'
+             placeholder='Gemini Program ID (optional)'
+ 	    value='{{ uploadProg }}' />
+    <tr><td style='vertical-align: top'><label for='uploadDesc'>Description:</label>
+        <td><textarea name='uploadDesc' cols='80' rows='24'
+        		     placeholder='Describe the contents of the file. It may be useful to add keywords (eg. #my-instrument) to help with search. Optional, but recommended'></textarea>
+    <tr><td>
+        <td><input type='submit' name='upload' value='Send' />
+   </tbody>
+  </table>
+</form>
