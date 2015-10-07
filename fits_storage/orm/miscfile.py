@@ -12,6 +12,8 @@ if using_s3:
 
 import json
 import os
+from base64 import urlsafe_b64encode as encode_string
+from base64 import urlsafe_b64decode as decode_string
 
 class FileClash(Exception):
     pass
@@ -39,14 +41,27 @@ def is_miscfile(path):
 
     return False
 
-def miscfile_meta(path):
+def decode_description(meta):
     try:
-        return json.load(open(miscfile_meta_path(path)))
+        # urlsafe_b64decode doesn't seem to like unicode strings; force it to str
+        return decode_string(str(meta['description']))
+    except (KeyError, AttributeError):
+        # If there's no description member, or it is None, pass
+        pass
+
+def miscfile_meta(path, urlencode=False):
+    try:
+        meta = json.load(open(miscfile_meta_path(path)))
+        if urlencode:
+            meta['description'] = encode_string(meta['description'])
     except IOError:
         if using_s3:
-            return s3.get_key(path).metadata
+            meta = s3.get_key(path).metadata
+            meta['description'] = decode_description(meta)
         else:
             raise
+
+    return meta
 
 class MiscFile(Base):
     """

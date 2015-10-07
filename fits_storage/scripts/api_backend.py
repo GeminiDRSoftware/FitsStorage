@@ -111,8 +111,13 @@ def ingest_upload(filename, fileuploadlog_id=None, processed_cal=False):
         fileuploadlog.destination = dst
 
         it_is_misc = is_miscfile(src)
-        if it_is_misc:
-            misc_meta = miscfile_meta(src)
+        try:
+            if it_is_misc:
+                misc_meta = miscfile_meta(src, urlencode=True)
+        except Exception as e:
+            print sys.exc_info()[1]
+            print '\n'.join(traceback.format_tb(sys.exc_info()[2]))
+            raise e
 
         if using_s3:
             logger.debug("Copying to S3")
