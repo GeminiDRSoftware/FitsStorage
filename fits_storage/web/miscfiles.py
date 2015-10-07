@@ -1,6 +1,7 @@
 from ..orm.miscfile import MiscFile, normalize_diskname
 from ..orm.diskfile import DiskFile
 from ..orm.file     import File
+from ..orm          import NoResultFound, MultipleResultsFound
 
 from . import templating
 
@@ -29,7 +30,7 @@ class LargeFileFieldStorage(util.FieldStorage):
         self.uploaded_file = fobj
         return fobj
 
-def miscfiles(req):
+def miscfiles(req, things):
     try:
         formdata = LargeFileFieldStorage(req)
 
@@ -39,6 +40,9 @@ def miscfiles(req):
         # TODO: Only Gemini staff should have access to this
         if 'upload' in formdata:
             return save_file(req, formdata)
+
+        if len(things) == 1:
+            return detail_miscfile(req, things[0])
 
         return bare_page(req)
     finally:
@@ -79,6 +83,8 @@ def search_miscfiles(session, req, formdata):
     if prog:
         query = query.filter(MiscFile.program_id.like('%' + prog + '%'))
         ret['searchProg'] = prog
+
+    ret['uri'] = req.uri
 
     query = query.order_by(File.name).limit(500)
     ret['count'] = query.count
@@ -147,3 +153,21 @@ def save_file(session, req, formdata):
                     **current_data)
 
     return dict(is_staff=True)
+
+@templating.templated("miscfiles/detail.html", with_session=True)
+def detail_miscfile(session, req, handle):
+    try:
+        query = session.query(MiscFile, File).join(DiskFile).join(File)
+        try:
+            meta, fobj = query.filter(MiscFile.id == int(handle)).one()
+        except ValueError:
+            # Must be a file name...
+            meta, fobj = query.filter(File.name == handle).one()
+        return dict(
+            meta = meta,
+            file = fobj
+            )
+    except NoResultFound:
+        return dict(error = "Can't find the required content")
+    except MultipleResultsFound:
+        return dict(error = "More than one file was found matching the provided name. This is an error!")

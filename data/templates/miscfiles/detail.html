@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block title %}Generic File Detail - {% if error %}Error!!{% else %}{{ file.name }}{% endif %}{% endblock %}
+{% block body %}
+{% if error %}
+{{ error }}
+{% else %}
+<h1>Generic File Details</h1>
+<table>
+ <tr><td><strong>Filename:</strong><td>{{ file.name }}
+ <tr><td><strong>Program:</strong><td>{{ meta.program_id }}
+ <tr><td><strong>Release:</strong><td>{{ meta.release.date() }}
+ <tr><td style='vertical-align: top'><strong>Description:</strong>
+     <td><textarea name='uploadDesc' cols='80' rows='24' disabled>{{ meta.description|e }}</textarea>
+<table>
+{% endif %}
+{% endblock %}
