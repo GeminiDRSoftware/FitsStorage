@@ -8,6 +8,7 @@ from ..orm import session_scope
 from functools import wraps
 from mod_python import apache
 from ..apache_return_codes import HTTP_SERVICE_UNAVAILABLE
+from datetime import datetime
 
 def datetime_filter(value, format=None, chopped=False):
     if format=='full':
@@ -75,6 +76,9 @@ def get_env():
     # This may be too much of an assumption, BUT... performance is better
                             autoescape=False)
 #                            autoescape=True)
+
+    jinja_env.globals['NOW'] = lambda: datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    jinja_env.globals['TODAY'] = lambda: str(datetime.now().date())
 
     jinja_env.filters['datetime'] = datetime_filter
     jinja_env.filters['seconds_since'] = seconds_since_filter
