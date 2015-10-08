@@ -11,6 +11,8 @@ from time import sleep
 import functools
 import fcntl
 import dateutil.parser
+import sys
+import traceback
 
 from ..orm.geometryhacks import add_footprint, do_std_obs
 
@@ -76,7 +78,7 @@ class IngestQueueUtil(object):
         self.l = logger
         self.skip_md = skip_md
         self.skip_fv = skip_fv
-        self.make_prev = make_previews
+        self.make_previews = make_previews
         if using_previews:
             self.preview = PreviewQueueUtil(self.s, self.l)
         if using_s3:
@@ -301,7 +303,11 @@ class IngestQueueUtil(object):
                 if using_previews:
                     self.preview.process(diskfile, make=self.make_previews)
             except:
+                # For debug
+                string = traceback.format_tb(sys.exc_info()[2])
+                string = "".join(string)
                 self.l.error("Error making preview for %s", diskfile.filename)
+                self.l.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
 
             # If we are in archive mode and the metadata is OK, add to calcachequeue here
             if use_as_archive and diskfile.mdready:
