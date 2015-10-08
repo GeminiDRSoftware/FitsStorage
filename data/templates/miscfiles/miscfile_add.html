@@ -1,14 +1,30 @@
+{# This is script is added here because we only need it when the user gets this content #}
+<script type='text/javascript'>
+ $(document).ready(function() {
+   $('#uploadRelease').change(function() {
+     if ($('#uploadRelease')[0].value == 'arbitrary') {
+       $('#release_div').show();
+       $('#arbRelease').focus();
+     } else {
+       $('#release_div').hide();
+     }
+   });
+ });
+</script>
+
 <form action='/miscfiles' method='POST' enctype='multipart/form-data'>
   <table>
    <tbody id='upload_form'>
     <tr><td colspan='2'><h3>Add New File</h3>
     <tr><td><label for='uploadFile'><strong>File</strong>:</label>
         <td><input type='file' name='uploadFile' />
-    <tr><td><label for='uploadRelease'><strong>Release Date</strong>:</label>
-        <td><select name='uploadRelease'>
+    <tr><td style='vertical-align: top'><label for='uploadRelease'><strong>Release Date</strong>:</label>
+        <td><select id='uploadRelease' name='uploadRelease'>
+ 	      <option value='now' selected>Today</option>
               <option value='default'>18 Months from Now</option>
- 	     <option value='now'>Now</option>
+	      <option value='arbitrary'>Arbitrary</option>
             </select>
+	    <div id='release_div' hidden><input type='text' id='arbRelease' name='arbRelease' placeholder='YYYY-MM-DD' value='{{ TODAY() }}' /></div>
     <tr><td><label for='uploadProg'>Program ID:</label>
         <td><input type='text' name='uploadProg' size='32'
              placeholder='Gemini Program ID (optional)'

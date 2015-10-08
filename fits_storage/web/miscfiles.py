@@ -40,7 +40,6 @@ def miscfiles(req, things):
             if 'search' in formdata:
                 return search_miscfiles(req, formdata)
 
-            # TODO: Only Gemini staff should have access to this
             if 'upload' in formdata:
                 return save_file(req, formdata)
 
@@ -97,6 +96,10 @@ def search_miscfiles(session, req, formdata):
 
     return ret
 
+def string_to_date(string):
+    # May raise ValueError if the format is wrong or the date is invalid
+    return datetime.strptime(string, '%Y-%m-%d').date()
+
 def validate(req):
     # TODO: Validate a field:
     #    - existance of a filename
@@ -131,8 +134,11 @@ def save_file(session, req, formdata):
     elif formdata['uploadRelease'] == 'now':
         release_date = datetime.now()
     else:
-        return dict(can_add=True, errorMessage = "Wrong value for release date",
-                    **current_data)
+        try:
+            release_date = string_to_date(formdata['arbRelease'])
+        except (ValueError, KeyError):
+            return dict(can_add=True, errorMessage = "Wrong value for release date",
+                        **current_data)
 
     try:
         os.rename(formdata.uploaded_file.name, fullpath)
