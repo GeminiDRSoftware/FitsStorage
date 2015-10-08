@@ -2,6 +2,7 @@ import urllib2
 import sys
 import re
 import smtplib
+import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from optparse import OptionParser
@@ -10,7 +11,7 @@ from fits_storage.orm import session_scope
 from fits_storage.orm.notification import Notification
 from fits_storage.logger import logger, setdebug, setdemon
 
-from fits_storage_config import fits_servername, use_as_archive, smtp_server
+from fits_storage.fits_storage_config import fits_servername, use_as_archive, smtp_server
 
 parser = OptionParser()
 parser.add_option("--emailfrom", action="store", dest="fromaddr", default="fitsdata@gemini.edu", help="Email Address to send from")
@@ -38,6 +39,11 @@ The archive search for this data may be found at: {form_url}
 Data Quality assessment will proceed as normal over the next few days.
 """
 
+# Parse out "today" in the date. This works on the web site, but if they wait a day before
+# clicking the link, they'll get the wrong day.
+if options.date == "today":
+    options.date = datetime.datetime.utcnow().strftime("%Y%m%d")
+
 # Configure the URL base
 if use_as_archive:
     url_base = "https://archive.gemini.edu"
@@ -50,7 +56,7 @@ with session_scope() as session:
         if (notif.selection is None) or (notif.to is None):
             logger.error("Critical fields are None in notification id: %s; label: %s", notif.id, notif.label)
         else:
-            url = "%s/summary/%s/%s" % (url_base, options.date, notif.selection)
+            url = "%s/summary/nolinks/%s/%s" % (url_base, options.date, notif.selection)
             searchform_url = "%s/searchform/%s/%s" % (url_base, options.date, notif.selection)
 
             logger.debug("URL is: %s", url)
