@@ -1,16 +1,27 @@
 {% extends "layout.html" %}
 {% block title %}Generic File Detail - {% if error %}Error!!{% else %}{{ file.name }}{% endif %}{% endblock %}
 
-{% if message %}
 {% block extra_header %}
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script type='text/javascript'>
-  setTimeout(function() {
-    $('#message').fadeOut();
-  }, 3000);
+ $(document).ready(function() {
+{%- if message or errorMessage %}
+    setTimeout(function() {
+      $('#message').fadeOut();
+    }, 3000);
+
+{%- endif %}
+   $('#uploadRelease').change(function() {
+     if ($('#uploadRelease')[0].value == 'arbitrary') {
+       $('#release_div').show();
+       $('#arbRelease').focus();
+     } else {
+       $('#release_div').hide();
+     }
+   });
+ });
 </script>
 {% endblock %}
-{% endif %}
 
 {% block body %}
 {%- if error %}
@@ -19,16 +30,30 @@
 <h1>Generic File Details</h1>
 {%- if message %}
 <div id='message' style='background: #99ffcc; padding: 2ex; '>{{ message }}</div>
+{%- elif errorMessage %}
+<div id='message' style='background: #ff3333; padding: 2ex; '>{{ errorMessage }}</div>
 {%- endif %}
 {%- if canedit %}
 <form action='{{ uri }}' method='POST'>
 {%- endif %}
 <table>
  <tr><td><strong>Filename:</strong><td>{% if canhave %}<a href='/files/{{ file.name }}'>{{ file.name }}</a> ({{ disk.file_size|abbreviate_size }}){% else %}{{ file.name }}{% endif %}
- <tr><td><strong>Program:</strong><td>{% if canedit %}<input type='text' name='prog' value='{{ meta.program_id }}' />{% else %}{{ meta.program_id }}{% endif %}
- <tr><td><strong>Release:</strong><td>{{ meta.release.date() }}
- <tr><td style='vertical-align: top'><strong>Description:</strong>
-     <td><textarea name='desc' cols='80' rows='24' {% if not canedit %}disabled{% endif %}>{{ meta.description|e }}</textarea>
+ <tr><td style='vertical-align: top'><strong>Release:</strong>
+{%- if canedit %}
+        <td><select id='release' name='release'>
+	      <option value='arbitrary' selected>Arbitrary</option>
+ 	      <option value='now'>Today</option>
+              <option value='default'>18 Months from Now</option>
+            </select>
+	    <div id='release_div'><input type='text' id='arbRelease' name='arbRelease' placeholder='YYYY-MM-DD' value='{{ meta.release.date() }}' /></div>
+{%- else %}
+        <td>{{ meta.release.date() }}
+{%- endif %}
+ <tr><td>Program:<td>{% if canedit %}<input type='text' name='prog' placeholder='Gemini Program ID' size='32' value='{{ meta.program_id }}' />{% else %}{{ meta.program_id }}{% endif %}
+ <tr><td style='vertical-align: top'>Description:
+     <td><textarea name='desc' cols='80' rows='24'
+        	   placeholder='Describe the contents of the file. It may be useful to add keywords (eg. #my-instrument) to help with search. Optional, but recommended'
+		   {%- if not canedit %}disabled{% endif %}>{{ meta.description|e }}</textarea>
 {% if canedit %}
  <tr><td><td><input type='submit' name='save' value='Save changes' />
 {% endif %}

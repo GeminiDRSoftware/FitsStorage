@@ -98,7 +98,7 @@ def search_miscfiles(session, req, formdata):
 
 def string_to_date(string):
     # May raise ValueError if the format is wrong or the date is invalid
-    return datetime.strptime(string, '%Y-%m-%d').date()
+    return datetime.strptime(string, '%Y-%m-%d')
 
 def validate(req):
     # TODO: Validate a field:
@@ -185,6 +185,18 @@ def detail_miscfile(session, req, handle, formdata):
             )
 
         if 'save' in formdata:
+            if formdata['release'] == 'default':
+                release_date = datetime.now() + timedelta(days=540) # Now + 18 pseudo-months
+            elif formdata['release'] == 'now':
+                release_date = datetime.now()
+            else:
+                try:
+                    release_date = string_to_date(formdata['arbRelease'])
+                except (ValueError, KeyError):
+                    ret['errorMessage'] = "Wrong value for release date"
+                    return ret
+
+            meta.release = release_date
             meta.program_id = formdata.get('prog', '')
             meta.description = formdata.get('desc', '')
             session.flush()
