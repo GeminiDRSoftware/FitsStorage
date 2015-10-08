@@ -33,13 +33,14 @@ def list_headers(session, selection, orderby, full_query=False):
     query = query.filter(DiskFile.file_id == File.id)
     query = queryselection(query, selection)
 
+
     # Do we have any order by arguments?
 
     whichorderby = ['instrument', 'data_label', 'observation_class', 'observation_type', 'airmass', 'ut_datetime', 'local_time',
                     'raw_iq', 'raw_cc', 'raw_bg', 'raw_wv', 'qa_state', 'filter_name', 'exposure_time', 'object', 'disperser', 
                     'focal_plane_mask', 'ra', 'dec', 'detector_binning', 'central_wavelength']
 
-    sort_by_date = True
+    order_criteria = []
     if orderby:
         for value in orderby:
             sortingfunc = asc
@@ -50,32 +51,22 @@ def list_headers(session, selection, orderby, full_query=False):
                 value = value.replace('_asc', '')
 
             if value == 'filename':
-                query = query.order_by(sortingfunc(DiskFile.filename))
-                sort_by_date = False
+                order_criteria.append(sortingfunc(DiskFile.filename))
             elif value in whichorderby:
-                if value == 'ut_datetime':
-                    sort_by_date = False
-                query = query.order_by(sortingfunc(Header.ut_datetime))
+                thing = getattr(Header, value)
+                order_criteria.append(sortingfunc(thing))
+
+
 
     is_openquery = openquery(selection)
 
-    # Force sorting by date if filename or ut_datetime were not part of orderby.
-    # Ascending if not an open query, descending if open query.
-    if sort_by_date:
-        if is_openquery:
-            query = query.order_by(desc('Header.ut_datetime'))
-        else:
-            query = query.order_by(asc('Header.ut_datetime'))
-
-
-
-
-    # By default we should order by filename, except for the archive, we should order by reverse date
-    if use_as_archive:
-        fn = (desc if is_openquery else asc)
-        query = query.order_by(fn(Header.ut_datetime))
+    # Default sorting by ascending date if closed query, desc date if open query
+    if is_openquery:
+        order_criteria.append(desc(Header.ut_datetime))
     else:
-        query = query.order_by(File.name)
+        order_criteria.append(asc(Header.ut_datetime))
+
+    query = query.order_by(*order_criteria)
 
     # If this is an open query, we should limit the number of responses
     if is_openquery:
