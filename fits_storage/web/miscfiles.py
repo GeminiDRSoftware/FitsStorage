@@ -18,6 +18,8 @@ import stat
 from datetime import datetime, timedelta
 from tempfile import NamedTemporaryFile
 
+SEARCH_LIMIT = 500
+
 class LargeFileFieldStorage(util.FieldStorage):
     def __init__(self, *args, **kw):
         self.uploaded_file = None
@@ -87,8 +89,10 @@ def search_miscfiles(session, req, formdata):
 
     ret['uri'] = req.uri
 
-    query = query.order_by(File.name).limit(500)
-    ret['count'] = query.count
+    query = query.order_by(File.name).limit(SEARCH_LIMIT)
+    cnt = query.count()
+    ret['count'] = cnt
+    ret['hit_limit'] = (cnt == SEARCH_LIMIT)
     ret['fileList'] = enumerate_miscfiles(session, req, query)
 
     return ret

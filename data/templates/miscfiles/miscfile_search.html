@@ -25,7 +25,11 @@
 <div id='search_results'>
 {% if count == 0 %}
 <h3>No results found
-{% else %}
+{%- else %}
+{%- if hit_limit %}
+<p><strong>ATTENTION!</strong> You have the search query hit the limit of {{ count }} files.
+   Please, refine the search if you cannot find the file you're looking for.
+{%- endif %}
 <table border='0'>
  <thead>
   <tr class='tr_head'><th>Download<th>Filename<th>Size<th>Program<th>Release Date<th>Description</tr>
@@ -43,7 +47,7 @@
   <td>{{ meta.program_id or '' }}
   <td>{{ meta.release.date() }}
   <td><span>{{ (meta.description or '')|e|truncate(100) }}</span></tr>
- {% endfor %}
+ {%- endfor %}
  </tbody>
 </table>
 {%- endif %}
