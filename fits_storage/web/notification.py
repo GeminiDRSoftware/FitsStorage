@@ -88,3 +88,5 @@ def import_odb_notifications(req):
         for l in report:
             req.write(l)
             req.write('\n')
+
+    return apache.HTTP_OK
