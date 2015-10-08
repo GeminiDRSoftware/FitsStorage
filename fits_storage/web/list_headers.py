@@ -5,6 +5,7 @@ header object list by executing the query.
 """
 from ..orm.file import File
 from ..orm.diskfile import DiskFile
+from ..orm.preview import Preview
 from ..orm.header import Header
 from ..orm.obslog import Obslog
 from ..fits_storage_config import fits_open_result_limit, fits_closed_result_limit, use_as_archive
@@ -13,7 +14,7 @@ from ..gemini_metadata_utils import gemini_date, gemini_time_period_from_range
 from sqlalchemy import asc, desc
 import dateutil.parser
 
-def list_headers(session, selection, orderby, full_query=False):
+def list_headers(session, selection, orderby, full_query=False, add_previews=False):
     """
     This function queries the database for a list of header table
     entries that satisfy the selection criteria.
@@ -26,11 +27,12 @@ def list_headers(session, selection, orderby, full_query=False):
     """
     # The basic query...
     if full_query:
-        query = session.query(Header, DiskFile, File).select_from(Header, DiskFile, File)
+        if add_previews:
+            query = session.query(Header, DiskFile, File, Preview).join(DiskFile).join(File).outerjoin(Preview)
+        else:
+            query = session.query(Header, DiskFile, File).join(DiskFile).join(File)
     else:
-        query = session.query(Header).select_from(Header, DiskFile, File)
-    query = query.filter(Header.diskfile_id == DiskFile.id)
-    query = query.filter(DiskFile.file_id == File.id)
+        query = session.query(Header).join(DiskFile).join(File)
     query = queryselection(query, selection)
 
 

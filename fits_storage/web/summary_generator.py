@@ -298,7 +298,7 @@ class SummaryGenerator(object):
         for colkey, col in ((x, self.columns[x]) for x in self.wanted):
             yield ColWrapper(self, colkey, col)
 
-    def table_row(self, header, diskfile, file):
+    def table_row(self, header, diskfile, file, preview=None):
         """
         Returns a row object for c for columns as configured, pulling data from the
         header object given.
@@ -337,7 +337,10 @@ class SummaryGenerator(object):
             # and sets the appropriate attribute.
 
             if col.summary_func:
-                value = getattr(self, col.summary_func)(header, diskfile, file)
+                value = getattr(self, col.summary_func)(header=header,
+                                                        diskfile=diskfile,
+                                                        file=file,
+                                                        preview=preview)
                 if colkey == 'download' and 'downloadable' in value:
                     row.can_download = True
                 if isinstance(value, dict):
@@ -354,7 +357,7 @@ class SummaryGenerator(object):
 
         return row
 
-    def filename(self, header, diskfile, file):
+    def filename(self, header, diskfile, file, **kw):
         """
         Generates the filename column data
         """
@@ -371,7 +374,7 @@ class SummaryGenerator(object):
         else:
             return dict(prop_message=file.name, release=header.release)
 
-    def datalabel(self, header, *args):
+    def datalabel(self, header, **kw):
         """
         Generates the datalabel column data
         """
@@ -382,7 +385,7 @@ class SummaryGenerator(object):
             dl        = GeminiDataLabel(header.data_label),
             )
 
-    def ut_datetime(self, header, *args):
+    def ut_datetime(self, header, **kw):
         """
         Generates the UT datetime column data
         """
@@ -403,7 +406,7 @@ class SummaryGenerator(object):
 
         return ret
 
-    def instrument(self, header, *args):
+    def instrument(self, header, **kw):
         """
         Generates the instrument column data
         """
@@ -415,7 +418,7 @@ class SummaryGenerator(object):
             lg    = header.laser_guide_star
             )
 
-    def observation_class(self, header, *args):
+    def observation_class(self, header, **kw):
         """
         Generates the observation_class column data
         """
@@ -424,7 +427,7 @@ class SummaryGenerator(object):
             text  = header.observation_class
         )
 
-    def observation_type(self, header, *args):
+    def observation_type(self, header, **kw):
         """
         Generates the observation_type column data
         """
@@ -433,7 +436,7 @@ class SummaryGenerator(object):
             text  = header.observation_type
         )
 
-    def exposure_time(self, header, *args):
+    def exposure_time(self, header, **kw):
         """
         Generates the exposure time column data
         """
@@ -443,7 +446,7 @@ class SummaryGenerator(object):
         except (TypeError, AttributeError):
             return ''
 
-    def airmass(self, header, *args):
+    def airmass(self, header, **kw):
         """
         Generates the airmass column data
         """
@@ -457,7 +460,7 @@ class SummaryGenerator(object):
         else:
             return dict(prop_message='N/A', release=header.release)
 
-    def ra(self, header, *args):
+    def ra(self, header, **kw):
         """
         Generates the RA
         """
@@ -471,7 +474,7 @@ class SummaryGenerator(object):
         else:
             return dict(prop_message='N/A', release=header.release)
 
-    def dec(self, header, *args):
+    def dec(self, header, **kw):
         """
         Generates the Dec
         """
@@ -485,7 +488,7 @@ class SummaryGenerator(object):
         else:
             return dict(prop_message='N/A', release=header.release)
 
-    def local_time(self, header, *args):
+    def local_time(self, header, **kw):
         """
         Generates the local_time column data
         """
@@ -496,7 +499,7 @@ class SummaryGenerator(object):
             return ''
 
 
-    def object(self, header, *args):
+    def object(self, header, **kw):
         """
         Generates the object name column data
         """
@@ -530,7 +533,7 @@ class SummaryGenerator(object):
         else:
             return dict(prop_message='N/A', release=header.release)
 
-    def waveband(self, header, *args):
+    def waveband(self, header, **kw):
         """
         Generates the waveband column data
         """
@@ -543,7 +546,7 @@ class SummaryGenerator(object):
         else:
             return header.filter_name
 
-    def download(self, header, diskfile, file):
+    def download(self, header, diskfile, file, preview, **kw):
         """
         Generates the download column data
         """
@@ -551,7 +554,7 @@ class SummaryGenerator(object):
         if canhave_header(None, self.user, header, user_progid_list=self.user_progid_list):
             ret = dict(name=file.name)
             # Preview link
-            if using_previews:
+            if using_previews and preview is not None:
                 ret['prev'] = True
 
             # Download select button

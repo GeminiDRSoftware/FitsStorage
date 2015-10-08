@@ -89,7 +89,7 @@ def summary_body(session, req, sumtype, selection, orderby, links=True, addition
     querylog.selection = str(selection)
     querylog.query_started = datetime.datetime.utcnow()
 
-    headers = list_headers(session, selection, orderby, full_query=True)
+    headers = list_headers(session, selection, orderby, full_query=True, add_previews=True)
     num_headers = len(headers)
 
     hit_open_limit = num_headers == fits_open_result_limit
