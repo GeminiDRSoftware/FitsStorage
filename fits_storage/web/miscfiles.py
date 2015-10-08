@@ -34,15 +34,16 @@ def miscfiles(req, things):
     try:
         formdata = LargeFileFieldStorage(req)
 
-        if len(things) == 1:
+        if len(things) == 0:
+            if 'search' in formdata:
+                return search_miscfiles(req, formdata)
+
+            # TODO: Only Gemini staff should have access to this
+            if 'upload' in formdata:
+                return save_file(req, formdata)
+
+        elif len(things) == 1:
             return detail_miscfile(req, things[0], formdata)
-
-        if 'search' in formdata:
-            return search_miscfiles(req, formdata)
-
-        # TODO: Only Gemini staff should have access to this
-        if 'upload' in formdata:
-            return save_file(req, formdata)
 
         return bare_page(req)
     finally:
