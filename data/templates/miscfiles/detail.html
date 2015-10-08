@@ -2,6 +2,9 @@
 {% block title %}Generic File Detail - {% if error %}Error!!{% else %}{{ file.name }}{% endif %}{% endblock %}
 
 {% block extra_header %}
+{%- if message or errorMessage %}
+<link rel="stylesheet" type="text/css" href="/static/messages.css" />
+{%- endif %}
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script type='text/javascript'>
  $(document).ready(function() {
@@ -29,9 +32,9 @@
 {%- else %}
 <h1>Generic File Details</h1>
 {%- if message %}
-<div id='message' style='background: #99ffcc; padding: 2ex; '>{{ message }}</div>
+<div class='action_message' id='message'>{{ message }}</div>
 {%- elif errorMessage %}
-<div id='message' style='background: #ff3333; padding: 2ex; '>{{ errorMessage }}</div>
+<div class='error_message' id='message'>{{ errorMessage }}</div>
 {%- endif %}
 {%- if canedit %}
 <form action='{{ uri }}' method='POST'>

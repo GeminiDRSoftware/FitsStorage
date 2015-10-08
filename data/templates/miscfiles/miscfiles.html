@@ -10,6 +10,15 @@
    margin: 0;
  }
 </style>
+{%- if actionMessage or errorMessage %}
+
+<link rel="stylesheet" type="text/css" href="/static/messages.css" />
+<script type='text/javascript'>
+    setTimeout(function() {
+      $('#message').fadeOut();
+    }, 3000);
+</script>
+{%- endif %}
 {% endblock %}
 
 {% block body %}
@@ -18,10 +27,10 @@
  <!-- Here, code to add new files -->
 {% endif %}
 {%- if actionMessage %}
-<div class='action_message'>{{ actionMessage }}</div>
+<div id='message' class='action_message'>{{ actionMessage }}</div>
 {%- endif %}
 {%- if errorMessage %}
- <div class='error_message'>{{ errorMessage }}</div>
+ <div id='message' class='error_message'>{{ errorMessage }}</div>
 {%- endif %}
 {%- if can_add %}
 <div id='tabsdiv'>

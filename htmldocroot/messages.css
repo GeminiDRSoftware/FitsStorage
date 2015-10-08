@@ -1,0 +1,11 @@
+div.action_message {
+  background: #99ffcc;
+  width: 100%;
+  padding: 2ex;
+}
+
+div.error_message {
+  background: #ff3333;
+  width: 100%;
+  padding: 2ex;
+}
