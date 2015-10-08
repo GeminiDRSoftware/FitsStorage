@@ -32,7 +32,7 @@ logger.debug("Got %d bytes from server.", len(xml))
 
 # Upload to remote, or ingest locally?
 if options.to_remote_server:
-    url = "http://%s/import_odb_notifications" % options.to_remote_server
+    url = "%s/import_odb_notifications" % options.to_remote_server
     opener = urllib2.build_opener()
     opener.addheaders.append(('Cookie', 'gemini_fits_authorization=%s' % magic_download_cookie))
     u = opener.open(url, xml)
