@@ -50,18 +50,24 @@ def list_headers(session, selection, orderby, full_query=False):
                 value = value.replace('_asc', '')
 
             if value == 'filename':
-                query = query.order_by(sortingfunc('DiskFile.%s' % value))
+                query = query.order_by(sortingfunc(DiskFile.filename))
                 sort_by_date = False
             elif value in whichorderby:
                 if value == 'ut_datetime':
                     sort_by_date = False
-                query = query.order_by(sortingfunc('Header.%s' % value))
-
-    # Force sorting by ascending date if filename or ut_datetime were not part of orderby
-    if sort_by_date:
-        query = query.order_by(asc('Header.ut_datetime'))
+                query = query.order_by(sortingfunc(Header.ut_datetime))
 
     is_openquery = openquery(selection)
+
+    # Force sorting by date if filename or ut_datetime were not part of orderby.
+    # Ascending if not an open query, descending if open query.
+    if sort_by_date:
+        if is_openquery:
+            query = query.order_by(desc('Header.ut_datetime'))
+        else:
+            query = query.order_by(asc('Header.ut_datetime'))
+
+
 
 
     # By default we should order by filename, except for the archive, we should order by reverse date
