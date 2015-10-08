@@ -3,42 +3,13 @@
 
 {% block extra_header %}
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="/static/misc.js"></script>
 <link rel="stylesheet" type="text/css" href="/static/form.css" />
 <style type="text/css">
  body {
    margin: 0;
  }
 </style>
-<script type='text/javascript'>
-var tabInfo = [
-        { id: 'search_tab', divId: 'search_frame' },
-        { id: 'add_tab',    divId: 'add_frame'}
-        ];
-
-function setCurrentTab(tabName) {
-   $.each(tabInfo, function(index, tabObj) {
-      var li = $("#" + tabObj.id);
-      var frame = $("#" + tabObj.divId);
-      if (tabObj.id == tabName) {
-         li.prop('className', 'current');
-         frame.show()
-      }
-      else {
-         li.prop('className', '');
-         frame.hide();
-      }
-   });
-}
-
-$(document).ready(function() {
-  $('#search_tab').click(function() {
-    setCurrentTab('search_tab');
-  });
-  $('#add_tab').click(function() {
-    setCurrentTab('add_tab');
-  });
-});
-</script>
 {% endblock %}
 
 {% block body %}
