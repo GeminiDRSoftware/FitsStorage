@@ -57,7 +57,8 @@ def my_programs(session, req, things):
         logged_in    = True,
         username     = username,
         progs        = prog_list,
-        thing_string = '/'.join(things)
+        thing_string = '/'.join(things),
+        reason_bad   = reason_bad
         )
 
     return template_args
