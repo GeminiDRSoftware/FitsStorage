@@ -32,9 +32,9 @@ def my_programs(session, req, things):
     program_key = ''
     if formdata:
         if 'program_id' in formdata:
-            program_id = formdata['program_id'].value
+            program_id = formdata['program_id'].value.strip()
         if 'program_key' in formdata:
-            program_key = formdata['program_key'].value
+            program_key = formdata['program_key'].value.strip()
 
     # Now figure out if we are logged in, who we are, and current prog_list
     # If we have form data, try and action it
