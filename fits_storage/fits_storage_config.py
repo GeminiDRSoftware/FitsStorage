@@ -12,6 +12,7 @@ use_as_archive = True
 # AWS S3 info
 using_s3 = False
 s3_bucket_name = 'gemini-archive'
+s3_backup_bucket_name = 'gemini-archive-ttt'
 s3_staging_area = '/data/FitsStorage/s3_staging'
 aws_access_key = 'AKIAJ554XPYMJZBPGQAA'
 aws_secret_key = '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'

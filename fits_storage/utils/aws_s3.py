@@ -53,10 +53,11 @@ logging.getLogger('boto').setLevel(logging.CRITICAL)
 logging.getLogger('botocore').setLevel(logging.CRITICAL)
 
 class Boto3Helper(object):
-    def __init__(self, logger_ = EmptyLogger()):
+    def __init__(self, bucket_name = s3_bucket_name, logger_ = EmptyLogger()):
         # This will hold the bucket
         self.l = logger_
         self.b = None
+        self.b_name = bucket_name
 
     @property
     def session(self):
@@ -76,7 +77,7 @@ class Boto3Helper(object):
     @property
     def bucket(self):
         if self.b is None:
-            self.b = self.s3.Bucket(s3_bucket_name)
+            self.b = self.s3.Bucket(self.b_name)
         return self.b
 
     def list_keys(self):
@@ -130,6 +131,11 @@ class Boto3Helper(object):
         bn = self.bucket.name
         self.s3_client.copy_object(Bucket=bn, Key=keyname, CopySource=unquote(pathname2url('{}/{}'.format(bn, keyname))),
                                 MetadataDirective='REPLACE', Metadata=md)
+
+    def copy(self, keyname, to_bucket, metadatadirective='COPY', **kw):
+        bn = self.bucket.name
+        self.s3_client.copy_object(Bucket=to_bucket, Key=keyname, CopySource=unquote(pathname2url('{}/{}'.format(bn, keyname))),
+                                MetadataDirective=metadatadirective, **kw)
 
     def upload_file(self, keyname, filename, extra_meta = {}):
         md5 = md5sum(filename)

@@ -41,7 +41,7 @@ from .preview import Preview
 from .previewqueue import PreviewQueue
 from .obslog import Obslog
 from .miscfile import MiscFile
-#from .resolve_versions import Version
+from .glacier import Glacier
 
 def create_tables(session):
     """
@@ -91,7 +91,7 @@ def create_tables(session):
     PreviewQueue.metadata.create_all(bind=pg_db)
     Obslog.metadata.create_all(bind=pg_db)
     MiscFile.metadata.create_all(bind=pg_db)
-    #Version.metadata.create_all(bind=pg_db)
+    Glacier.metadata.create_all(bind=pg_db)
 
     # Add the geometry types separately. this is postgres specific and referencing these column in local mode isn't going to work
     # Ignore any errors, commonly from column already exists...
