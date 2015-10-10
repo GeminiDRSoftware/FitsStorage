@@ -75,7 +75,7 @@ qa_state_pairs = {
     'Pass':      ('USABLE',  'YES'),
     'Usable':    ('USABLE',  'NO'),
     'Fail':      ('BAD',     'NO'),
-    'Check':     ('UNKNOWN', 'UNKNOWN'),
+    'Check':     ('CHECK',   'CHECK'),
 }
 
 change_actions = {
