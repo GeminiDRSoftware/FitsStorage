@@ -69,6 +69,7 @@ try:
             glacier.when_uploaded = now
             #glacier.last_inventory = now
             session.add(glacier)
+            session.commit()
 except PidFileError as e:
     logger.error(str(e))
 
