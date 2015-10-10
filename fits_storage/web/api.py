@@ -51,10 +51,10 @@ def lookup_diskfile(session, query):
     try:
         if 'data_label' in query:
             label = query['data_label']
-            df = session.query(DiskFile).join(Header, DiskFile).filter(Header.data_label == label).one()
+            df = session.query(DiskFile).join(Header, DiskFile).filter(DiskFile.present == True).filter(Header.data_label == label).one()
         elif 'filename' in query:
             label = query['filename']
-            df = session.query(DiskFile).filter(DiskFile.filename == label).one()
+            df = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.filename == label).one()
         else:
             raise ItemError("Expected 'data_label' or 'filename' to identify the item")
     except NoResultFound:
