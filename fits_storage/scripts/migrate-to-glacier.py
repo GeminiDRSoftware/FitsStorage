@@ -21,7 +21,7 @@ import traceback
 import argparse
 
 parser = argparse.ArgumentParser(description='Migrate data in S3 to Glacier')
-parser.add_argument('--file-pre', dest='files', action='append', metavar='PREF', help="File prefix to check (omit for all)")
+parser.add_argument('--file-pre', dest='filepre', action='store', metavar='PREF', help="File prefix to check (omit for all)")
 parser.add_argument('--daysold', dest='daysold', action='store', metavar='N', type=int, default=14, help="Operate on diskfiles with a lastmode time more than N days ago")
 parser.add_argument('--numdays', dest='numdays', action='store', metavar='M', type=int, default=0, help="Operate on diskfiles with a lastmode time at most M days older than more than --daysold")
 parser.add_argument('--limit', dest='limit', action='store', metavar='L', type=int, default=None, help="Limit the number of files to transfer this run to L")
@@ -45,14 +45,17 @@ try:
             session.query(DiskFile).outerjoin(Glacier, (and_(DiskFile.filename == Glacier.filename,
                                                              DiskFile.file_md5 == Glacier.md5)))
                                    .filter(DiskFile.present == True)
-                                   .filter(or_(Glacier.id.is_(None), DiskFile.lastmod > Glacier.last_inventory))
+                                   .filter(or_(Glacier.id.is_(None), DiskFile.lastmod > Glacier.when_uploaded))
         )
+        if options.filepre:
+            query = query.filter(DiskFile.filename.startswith(options.filepre))
+
         until = func.now() - cast('{} days'.format(options.daysold), Interval)
         if options.numdays:
             since = func.now() - cast('{} days'.format(options.daysold + options.numdays), Interval)
-            query = query.filter(between(DiskFile.entrytime, since, until))
+            query = query.filter(between(DiskFile.lastmod, since, until))
         else:
-            query = query.filter(DiskFile.entrytime < until)
+            query = query.filter(DiskFile.lastmod < until)
         if options.limit:
             query = query.limit(options.limit)
 
@@ -64,7 +67,7 @@ try:
             glacier.md5 = diskfile.file_md5
             now = datetime.datetime.now()
             glacier.when_uploaded = now
-            glacier.last_inventory = now
+            #glacier.last_inventory = now
             session.add(glacier)
 except PidFileError as e:
     logger.error(str(e))
