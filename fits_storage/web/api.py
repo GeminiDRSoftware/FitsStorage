@@ -82,14 +82,20 @@ change_actions = {
     'qa_state': (qa_keywords, qa_state_pairs),
 }
 
-def validate_changes(changes):
+def map_changes(changes):
+    change_pairs = []
     for key, value in changes.items():
         try:
-            _, pairs = change_actions[key]
-            if value not in pairs:
-                raise ItemError("Illegal value '{}' for action '{}'".format(value, key))
+            keywords, pairs = change_actions[key]
         except KeyError:
             raise ItemError("Unknown action: {}".format(key))
+
+        try:
+            change_pairs.extend(zip(keywords, pairs[value]))
+        except KeyError:
+            raise ItemError("Illegal value '{}' for action '{}'".format(value, key))
+
+    return dict(change_pairs)
 
 @needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], content_type='json')
 def update_headers(req):
@@ -108,11 +114,11 @@ def update_headers(req):
                     if not isinstance(query['values'], dict):
                         response.append(error_response("This looks like a malformed request: 'values' should be a dictionary", id=label))
                         continue
-                    validate_changes(query['values'])
+                    new_values = map_changes(query['values'])
                     path = df.fullpath()
                     reingest = iq.delete_inactive_from_queue(filename)
                     # reingest = apply_changes(df, query['values']) or reingest
-                    reingest = proxy.set_image_metadata(path=path, changes=query['values'])
+                    reingest = proxy.set_image_metadata(path=path, changes=new_values)
                     response.append({'result': True, 'id': label})
                 except ItemError as e:
                     response.append(error_response(e.message, id=label))
