@@ -26,12 +26,12 @@ parser.add_argument('--daysold', dest='daysold', action='store', metavar='N', ty
 parser.add_argument('--numdays', dest='numdays', action='store', metavar='M', type=int, default=0, help="Operate on diskfiles with a lastmode time at most M days older than more than --daysold")
 parser.add_argument('--limit', dest='limit', action='store', metavar='L', type=int, default=None, help="Limit the number of files to transfer this run to L")
 parser.add_argument('--debug', dest='debug', action='store_true', help="Increase log level to debug")
-parser.add_argument('--quiet', dest='quiet', action='store_true', help="Do not generate output to stdout")
+parser.add_argument('--demon', dest='demon', action='store_true', help="Do not generate output to stdout")
 
 options = parser.parse_args()
 
 setdebug(options.debug)
-setdemon(options.quiet)
+setdemon(options.demon)
 
 s3 = get_helper()
 
