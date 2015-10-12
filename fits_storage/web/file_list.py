@@ -143,6 +143,7 @@ def jsonqastate(req, selection):
        thelist = []
        for header, diskfile in query:
            thelist.append({'data_label': _for_json(header.data_label),
+                           'filename': _for_json(diskfile.filename),
                            'entrytime': _for_json(diskfile.entrytime),
                            'qa_state': _for_json(header.qa_state)})
 
