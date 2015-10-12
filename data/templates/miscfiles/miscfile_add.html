@@ -1,38 +1,137 @@
 {# This is script is added here because we only need it when the user gets this content #}
 <script type='text/javascript'>
- $(document).ready(function() {
-   $('#uploadRelease').change(function() {
-     if ($('#uploadRelease')[0].value == 'arbitrary') {
-       $('#release_div').show();
-       $('#arbRelease').focus();
-     } else {
-       $('#release_div').hide();
-     }
+ var formFlags = {
+   file: false,
+   release: true,
+   program: true,
+   latestReleaseTested: null,
+   allValid: function() {
+     return this.file &&
+            this.release &&
+	    this.program;
+   }
+ }
+
+ var defaultReleaseDate = '{{ TODAY() }}';
+
+ function setFieldValidity(field, valid) {
+   var id = null;
+   if (field == 'release') {
+     formFlags.release = valid;
+     id = '#arbRelease';
+   }
+   else if (field == 'program') {
+     formFlags.program = valid;
+     id = '#uploadProg';
+   }
+
+   if (valid)
+     $(id).removeClass('invalid_data');
+   else
+     $(id).addClass('invalid_data');
+ }
+
+ function validateUsingAjax(message, field) {
+   $.ajax({
+   	type: "POST",
+	url:  "/miscfiles/validate_add",
+	data: JSON.stringify(message),
+	contentType: "application/json; charset=utf-8",
+	success: function(data) { setFieldValidity(field, data.result); },
+	failure: function(errMsg) {
+	  // TODO: what to do...?
+	  alert("Uh... error?")
+	}
    });
+ }
+
+ function validateFile() {
+   var value = $('#uploadFile')[0].value;
+   if (value != '') {
+     formFlags.file = true;
+   } else
+     formFlags.file = false;
+ }
+
+ function validateReleaseDate() {
+   var value = $('#arbRelease')[0].value;
+   if (value == formFlags.latestReleaseTested)
+     return;
+
+   formFlags.latestReleaseTested = value;
+
+   if (value == defaultReleaseDate) {
+     setFieldValidity('release', true);
+   } else {
+     setFieldValidity('release', false);
+     validateUsingAjax({ release: value }, 'release');
+   }
+ }
+
+ function handleReleaseDateUi() {
+   if ($('#uploadRelease')[0].value == 'arbitrary') {
+     validateReleaseDate();
+     $('#release_div').show();
+     $('#arbRelease').focus();
+   } else {
+     setFieldValidity('release', true);
+     $('#release_div').hide();
+   }
+ }
+
+ function validateProgram() {
+   var value = $('#uploadProg')[0].value;
+   if (value == '') {
+     setFieldValidity('program', true);
+   }
+   else {
+     validateUsingAjax({ program: value }, 'program');
+   }
+ }
+
+ $(document).ready(function() {
+   // File stuff
+   validateFile();
+   $('#uploadFile').change(validateFile);
+
+   // Release date stuff
+   handleReleaseDateUi();
+   $('#uploadRelease').change(function() { handleReleaseDateUi(); });
+   $('#arbRelease').change(function() { formFlags.release = false; });
+   $('#arbRelease').focusout(validateReleaseDate);
+
+   // Program ID stuff
+   validateProgram();
+   $('#uploadProg').change(function() { validateProgram(); });
  });
 </script>
 
-<form action='/miscfiles' method='POST' enctype='multipart/form-data'>
+<form action='/miscfiles' method='POST' enctype='multipart/form-data' onsubmit='return formFlags.allValid();'>
   <table>
    <tbody id='upload_form'>
-    <tr><td colspan='2'><h3>Add New File</h3>
-    <tr><td><label for='uploadFile'><strong>File</strong>:</label>
-        <td><input type='file' name='uploadFile' />
-    <tr><td style='vertical-align: top'><label for='uploadRelease'><strong>Release Date</strong>:</label>
+    <tr><td>
+        <td colspan='2'><h3>Add New File</h3>
+    <tr><td>*
+        <td><label for='uploadFile'><strong>File</strong>:</label>
+        <td><input id='uploadFile' type='file' name='uploadFile' />
+    <tr><td style='vertical-align: top'>*
+        <td style='vertical-align: top'><label for='uploadRelease'><strong>Release Date</strong>:</label>
         <td><select id='uploadRelease' name='uploadRelease'>
  	      <option value='now' selected>Today</option>
               <option value='default'>18 Months from Now</option>
 	      <option value='arbitrary'>Arbitrary</option>
             </select>
 	    <div id='release_div' hidden><input type='text' id='arbRelease' name='arbRelease' placeholder='YYYY-MM-DD' value='{{ TODAY() }}' /></div>
-    <tr><td><label for='uploadProg'>Program ID:</label>
-        <td><input type='text' name='uploadProg' size='32'
+    <tr><td>
+        <td><label for='uploadProg'>Program ID:</label>
+        <td><input id='uploadProg' type='text' name='uploadProg' size='32'
              placeholder='Gemini Program ID (optional)'
  	    value='{{ uploadProg }}' />
-    <tr><td style='vertical-align: top'><label for='uploadDesc'>Description:</label>
+    <tr><td>
+        <td style='vertical-align: top'><label for='uploadDesc'>Description:</label>
         <td><textarea name='uploadDesc' cols='80' rows='24'
         		     placeholder='Describe the contents of the file. It may be useful to add keywords (eg. #my-instrument) to help with search. Optional, but recommended'></textarea>
-    <tr><td>
+    <tr><td><td>
         <td><input type='submit' name='upload' value='Send' />
    </tbody>
   </table>

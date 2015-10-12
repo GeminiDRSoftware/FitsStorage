@@ -36,7 +36,7 @@ from web.obslogs import obslogs
 from web.reporting import report
 from web.queuestatus import queuestatus
 from web.api import update_headers
-from web.miscfiles import miscfiles, validate as validate_misc
+from web.miscfiles import miscfiles
 from web import templating
 
 from orm import session_scope, NoResultFound
@@ -102,7 +102,6 @@ mapping_simple = {
     'user_list': user_list,                                 # user_list
     'update_headers': update_headers,                       # JSON RPC dispatcher
     'curation': curation_report,                            # curation_report handler
-    'validate_misc': validate_misc,                         # Test misc-file metadata before upload
     }
 
 # Functions invoked with (req, things)

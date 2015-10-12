@@ -7,11 +7,14 @@ from . import templating
 
 from ..fits_storage_config import upload_staging_path, api_backend_location
 
+from ..gemini_metadata_utils import GeminiProgram
+
 from ..utils.api import ApiProxy, ApiProxyError
 from ..utils.userprogram import icanhave
 from .user import needs_login, is_staffer
 
-from mod_python import util
+from mod_python import util, apache
+import dateutil
 import json
 import os
 import stat
@@ -32,23 +35,28 @@ class LargeFileFieldStorage(util.FieldStorage):
         self.uploaded_file = fobj
         return fobj
 
-def miscfiles(req, things):
-    try:
-        formdata = LargeFileFieldStorage(req)
+def getFormData(req):
+    return LargeFileFieldStorage(req)
 
+def miscfiles(req, things):
+    formdata = None
+    try:
+        if len(things) == 1 and things[0] == 'validate_add':
+            return validate(req)
+
+        formdata = getFormData(req)
         if len(things) == 0:
             if 'search' in formdata:
                 return search_miscfiles(req, formdata)
 
             if 'upload' in formdata:
                 return save_file(req, formdata)
-
         elif len(things) == 1:
             return detail_miscfile(req, things[0], formdata)
 
         return bare_page(req)
     finally:
-        if formdata.uploaded_file is not None:
+        if formdata and formdata.uploaded_file is not None:
             try:
                 os.unlink(formdata.uploaded_file.name)
             except OSError:
@@ -101,10 +109,32 @@ def string_to_date(string):
     return datetime.strptime(string, '%Y-%m-%d')
 
 def validate(req):
-    # TODO: Validate a field:
-    #    - existance of a filename
-    #    - valid Program ID
-    pass
+    if req.method != 'POST':
+        return apache.HTTP_NOT_ACCEPTABLE
+
+    raw_data = req.read()
+
+    try:
+        input_data = json.loads(raw_data)
+        response = {'result': True}
+        if 'release' in input_data:
+            try:
+                dateutil.parser.parse(input_data['release'])
+            except ValueError:
+                response['result'] = False
+        elif 'program' in input_data:
+            prog = GeminiProgram(input_data['program'])
+            response['result'] = prog.valid
+        else:
+            raise ValueError
+    except ValueError:
+        return apache.HTTP_BAD_REQUEST
+
+
+    req.content_type = 'application/json'
+    req.write(json.dumps(response))
+
+    return apache.HTTP_OK
 
 @needs_login(superuser=True)
 @templating.templated("miscfiles/miscfiles.html", with_session=True)

@@ -159,3 +159,6 @@ ul.tabs a.current, ul.tabs a.current:hover, ul.tabs li.current a {
     border-bottom: 3px solid #fff;
 }
 
+input.invalid_data {
+  background: #ff3333;
+}
