@@ -6,6 +6,13 @@
 <link rel="stylesheet" type="text/css" href="/static/messages.css" />
 {%- endif %}
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+{%- if canedit %}
+<link rel="stylesheet" type="text/css" href="/static/form.css" />
+<script type="text/javascript">
+  var updating = true;
+</script>
+<script src="/static/misc_valid.js"></script>
+{%- endif %}
 <script type='text/javascript'>
  $(document).ready(function() {
 {%- if message or errorMessage %}
@@ -14,6 +21,7 @@
     }, 3000);
 
 {%- endif %}
+/*
    $('#release').change(function() {
      if ($('#release')[0].value == 'arbitrary') {
        $('#release_div').show();
@@ -22,6 +30,7 @@
        $('#release_div').hide();
      }
    });
+ */
  });
 </script>
 {% endblock %}
@@ -43,7 +52,7 @@
  <tr><td><strong>Filename:</strong><td>{% if canhave %}<a href='/files/{{ file.name }}'>{{ file.name }}</a> ({{ disk.file_size|abbreviate_size }}){% else %}{{ file.name }}{% endif %}
  <tr><td style='vertical-align: top'><strong>Release:</strong>
 {%- if canedit %}
-        <td><select id='release' name='release'>
+        <td><select id='uploadRelease' name='release'>
 	      <option value='arbitrary' selected>Arbitrary</option>
  	      <option value='now'>Today</option>
               <option value='default'>18 Months from Now</option>
@@ -52,7 +61,7 @@
 {%- else %}
         <td>{{ meta.release.date() }}
 {%- endif %}
- <tr><td>Program:<td>{% if canedit %}<input type='text' name='prog' placeholder='Gemini Program ID' size='32' value='{{ meta.program_id }}' />{% else %}{{ meta.program_id }}{% endif %}
+ <tr><td>Program:<td>{% if canedit %}<input type='text' id='uploadProg' name='prog' placeholder='Gemini Program ID' size='32' value='{{ meta.program_id }}' />{% else %}{{ meta.program_id }}{% endif %}
  <tr><td style='vertical-align: top'>Description:
      <td><textarea name='desc' cols='80' rows='24'
         	   placeholder='Describe the contents of the file. It may be useful to add keywords (eg. #my-instrument) to help with search. Optional, but recommended'

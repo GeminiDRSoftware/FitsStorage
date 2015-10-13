@@ -4,6 +4,12 @@
 {% block extra_header %}
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script src="/static/misc.js"></script>
+{%- if can_add %}
+<script type="text/javascript">
+  var updating = false;
+</script>
+<script src="/static/misc_valid.js"></script>
+{%- endif %}
 <link rel="stylesheet" type="text/css" href="/static/form.css" />
 <style type="text/css">
  body {
