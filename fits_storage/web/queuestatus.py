@@ -14,7 +14,7 @@ from ..orm.calcachequeue import CalCacheQueue
 from . import templating
 
 from mod_python import apache
-from itertools import cycle
+import json
 
 DETAIL_THRESHOLD = 20
 
@@ -76,15 +76,16 @@ def queuestatus(req, things):
     return queuestatus_summary(req)
 
 queues = {
-    'ingest': IngestQueue,
-    'export': ExportQueue,
-    'calcache': CalCacheQueue,
-    'preview': PreviewQueue
+    'iq': IngestQueue,
+    'eq': ExportQueue,
+    'cq': CalCacheQueue,
+    'pq': PreviewQueue
     }
 
 def queuestatus_update(req, things):
     try:
-        queue = queues[things[1]]
+        lqname = things[1]
+        queue = queues[lqname]
     except KeyError:
         return apache.HTTP_NOT_FOUND
 
@@ -95,8 +96,12 @@ def queuestatus_update(req, things):
     except (ValueError, IndexError):
         pass
 
-    if not most_recent:
+    req.content_type = 'application/json'
+    with session_scope() as session:
         # Full query, probably the first one, the client side has no cached data
-        pass
+        if not most_recent:
+            esummary = error_summary(session, queue, DETAIL_THRESHOLD)
+            summary = regular_summary(session, queue, DETAIL_THRESHOLD)
+            req.write(json.dumps(dict(waiting=list(summary), errors=list(esummary))))
 
     return apache.HTTP_OK
