@@ -75,9 +75,13 @@ class PreviewQueueUtil(object):
                 if isinstance(df, PreviewQueue):
                     pq = df
                     df = self.s.query(DiskFile).get(pq.diskfile_id)
-                    self.l.info("Making Preview for {}: {}".format(pq.id, df.filename))
+                    message = "Making Preview for {}: {}".format(pq.id, df.filename)
                 else:
-                    self.l.info("Making Preview with diskfile_id {}".format(df.id))
+                    message = "Making Preview with diskfile_id {}".format(df.id)
+                if len(df.previews) > 0:
+                    self.l.info("Skipping preview for diskfile_id {} (would duplicate)".format(df.id))
+                    continue
+                self.l.info(message)
                 if df.present == True:
                     self.make_preview(df)
                 else:
