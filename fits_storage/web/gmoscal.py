@@ -206,11 +206,11 @@ def gmoscal(session, req, selection):
     # OK, find if there were dates for which there were no biases...
     # Can only do this if we got a daterange selection, otherwise it's broken if there's none on the first or last day
     # utdates is a reverse sorted list for which there were biases.
+    nobiases = []
     if 'daterange' in selection:
         # Parse the date to start and end datetime objects
         date, enddate = gemini_time_period_from_range(selection['daterange'], as_date=True)
 
-        nobiases = []
         while date <= enddate:
             if date not in bias:
                 nobiases.append(str(date))
