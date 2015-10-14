@@ -16,9 +16,9 @@ from collections import namedtuple
 
 queues = (
     ('Ingest', 'iq', IngestQueue, IngestQueueUtil),
-    ('Calibration Cache', 'cq', CalCacheQueue, CalCacheQueueUtil),
-    ('Preview', 'pq', PreviewQueue, PreviewQueueUtil),
     ('Export', 'eq', ExportQueue, ExportQueueUtil),
+    ('Preview', 'pq', PreviewQueue, PreviewQueueUtil),
+    ('Calibration Cache', 'cq', CalCacheQueue, CalCacheQueueUtil),
     )
 
 def stats(session):
@@ -36,7 +36,7 @@ def stats(session):
                'size': length,
                'errors': errors}
 
-error_query = {
+stat_query = {
     # Type: (select_from, join, columns, sorting)
     IngestQueue:  (None, None,
                    (IngestQueue.id, IngestQueue.filename, IngestQueue.error, IngestQueue.added),
@@ -52,14 +52,14 @@ error_query = {
                     (CalCacheQueue.ut_datetime,)),
     }
 
-ErrorResult = namedtuple('ErrorResult', 'oid filename error added')
+StatResult = namedtuple('StatResult', 'oid filename error added')
 
 def get_error_result(args):
-    return ErrorResult(oid=args[0], filename=args[1], error=args[2],
+    return StatResult(oid=args[0], filename=args[1], error=args[2],
                        added=(args[3].strftime('%Y-%m-%d %H:%M') if len(args) == 4 else 'Unknown'))
 
-def compose_error_query(session, qtype, *filters):
-    sel_from, join, columns, sort = error_query[qtype]
+def compose_stat_query(session, qtype, *filters):
+    sel_from, join, columns, sort = stat_query[qtype]
     q = session.query(*columns)
     if sel_from is not None:
         q = q.select_from(*sel_from)
@@ -78,9 +78,18 @@ def compose_error_query(session, qtype, *filters):
     return q
 
 def error_summary(session, qtype, lim):
-    q = compose_error_query(session, qtype,
+    q = compose_stat_query(session, qtype,
                             qtype.inprogress == True,
                             qtype.error != None)
+    for res in (get_error_result(row) for row in q.limit(lim)):
+        yield {'oid':      res.oid,
+               'filename': res.filename,
+               'since':    res.added}
+
+def regular_summary(session, qtype, lim):
+    q = compose_stat_query(session, qtype,
+                              qtype.inprogress != True,
+                              qtype.error.is_(None))
     for res in (get_error_result(row) for row in q.limit(lim)):
         yield {'oid':      res.oid,
                'filename': res.filename,
@@ -92,7 +101,7 @@ class UnknownQueueError(Exception):
 def error_detail(session, lname, oid):
     for qname, linkname, qtype, qutil in queues:
         if linkname == lname:
-            res = get_error_result(compose_error_query(session, qtype, qtype.id == oid).one())
+            res = get_error_result(compose_stat_query(session, qtype, qtype.id == oid).one())
             return {'qname':    qname,
                     'filename': res.filename,
                     'since':    res.added,

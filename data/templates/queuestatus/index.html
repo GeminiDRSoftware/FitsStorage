@@ -1,23 +1,109 @@
 {% extends "layout.html" %}
 
 {% block title %}Gemini Archive - Queue Status Page{% endblock %}
+
+{% block extra_header %}
+<style type='text/css'>
+ .tabs {
+   clear: both;
+   padding: 0;
+   margin: 0;
+   height: 32px;
+   border-bottom: 1px solid #000;
+ }
+
+ .tab {
+   float: left;
+ }
+
+ .tab [type=radio] {
+   display: none;
+ }
+
+ .tab label {
+   display: inline-block;
+   background-color: #ddd;
+   border: 1px solid #000;
+   width: 280px;
+   font-size:16px;
+   height: 30px;
+   line-height: 30px;
+   text-align: center;
+   color:#333;
+   padding:0px;
+   margin:0px;
+   position: relative;
+   top: 1px;
+ }
+
+ .content {
+   display: none;
+   position: absolute;
+   padding: 0 2em;
+   left: 0;
+   width: 100%;
+   clear: both;
+ }
+
+ .content-left {
+   float: left;
+   width: 50%;
+ }
+
+ .content-right {
+   float: right;
+   width: 50%;
+ }
+
+ [type=radio]:checked ~ label {
+   background: white;
+   border-bottom: 1px solid white;
+   z-index: 2;
+ }
+
+ [type=radio]:checked ~ label ~ .content {
+   display: block;
+ }
+</style>
+{% endblock %}
+
 {% block body %}
 <h1>Gemini Archive - Queue Status Page</h1>
-<table>
- <tr class='tr_head'><th>Queue<th># Pending<th># Errors</tr>
- {% for row in general_rows %}
- <tr class='alternating'><td><strong>{{ row.name }}</strong><td>{{ row.size }}<td>{{ row.errors }}</tr>
- {% endfor %}
-</table>
-<p>NB: The total number of elements in each queue is <em>pending + errors</em>
 
-{% for table in detail_tables %}
-<h2>Detailed errors for queue {{ table.name }}</h2>
+<div class='tabs'>
+{%- for row in general_rows %}
+  <div class='tab'>
+    <input type="radio" id='{{ row.lname }}' name='tab-group' {% if row.lname == 'iq' %}checked{% endif %}/>
+    <label id='label-{{ row.lname }}' for="{{ row.lname }}">{{ row.name }} ({{ row.size + row.errors }}/{{ row.errors }})</label>
+
+    <div class="content">
+{%- with table = detail_tables[row.lname] %}
+     <div class='content-left'>
+{%- if row.lname in detail_tables %}
+<h3>Waiting...</h3>
 <table>
  <tr class='tr_head'><th>In queue since<th>Filename</tr>
  {% for row in table.rows %}
  <tr class='alternating'><td>{{ row.since }}<td><a href='/queuestatus/{{ table.lname }}/{{ row.oid }}'>{{ row.filename }}</a></tr>
  {%- endfor %}
 </table>
+{%- endif %}
+     </div>
+     <div class='content-right'>
+{%- if row.errors %}
+<h3>Errors</h3>
+<table>
+ <tr class='tr_head'><th>In queue since<th>Filename</tr>
+ {% for row in table.errors %}
+ <tr class='alternating'><td>{{ row.since }}<td><a href='/queuestatus/{{ table.lname }}/{{ row.oid }}'>{{ row.filename }}</a></tr>
+ {%- endfor %}
+</table>
+{%- endif %}
+     </div>
+{%- endwith %}
+    </div>
+  </div>
 {%- endfor %}
+</div>
+
 {% endblock %}
