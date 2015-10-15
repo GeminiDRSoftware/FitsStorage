@@ -26,7 +26,6 @@ from .tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 from .notification import Notification
 from .photstandard import PhotStandard
 from .qastuff import QAreport, QAmetricIQ, QAmetricZP, QAmetricSB, QAmetricPE
-from .authentication import Authentication
 from .exportqueue import ExportQueue
 from .user import User
 from .userprogram import UserProgram
@@ -76,7 +75,6 @@ def create_tables(session):
     QAmetricZP.metadata.create_all(bind=pg_db)
     QAmetricSB.metadata.create_all(bind=pg_db)
     QAmetricPE.metadata.create_all(bind=pg_db)
-    Authentication.metadata.create_all(bind=pg_db)
     ExportQueue.metadata.create_all(bind=pg_db)
     User.metadata.create_all(bind=pg_db)
     UserProgram.metadata.create_all(bind=pg_db)
