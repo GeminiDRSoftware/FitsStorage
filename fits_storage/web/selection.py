@@ -96,6 +96,8 @@ getselection_booleans = {
     'science_verification': ('science_verification', True),
     'notscience_verification': ('science_verification', False),
     'photstandard': ('photstandard', True),
+    'mdgood': ('mdready', True),
+    'mdbad': ('mdready', False),
 
      # this is basically a dummy value for the search form defaults
     'includeengineering': ('engineering', 'Include'),
@@ -239,7 +241,8 @@ sayselection_defs = {
     'cenwlen': 'Central Wavelength',
     'camera': 'Camera',
     'exposure_time': 'Exposure Time',
-    'coadds': 'Coadds'
+    'coadds': 'Coadds',
+    'mdready': 'MetaData OK'
     }
 
 def sayselection(selection):
@@ -311,7 +314,8 @@ queryselection_filters = (
     ('filter',        Header.filter_name),
     ('spectroscopy',  Header.spectroscopy),
     ('mode',          Header.mode),
-    ('coadds',        Header.coadds)
+    ('coadds',        Header.coadds),
+    ('mdready',       DiskFile.mdready)
     )
 
 def queryselection(query, selection):
