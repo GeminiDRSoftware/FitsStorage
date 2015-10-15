@@ -15,6 +15,7 @@ from . import templating
 
 from mod_python import apache
 import json
+from hashlib import md5
 
 DETAIL_THRESHOLD = 20
 
@@ -60,11 +61,11 @@ def queuestatus_tb(req, qshortname, oid):
 
 QUEUELIMIT = 200
 
-@needs_login(staffer=True)
+# @needs_login(staffer=True)
 def queuestatus(req, things):
-    if len(things) > 1:
-        if things[0] == 'json':
-            return queuestatus_update(req, things)
+    if len(things) == 1 and things[0] == 'json':
+        return queuestatus_update(req, things)
+    elif len(things) > 1:
         try:
             return queuestatus_tb(req, things[0], int(things[1]))
         except (TypeError, ValueError):
@@ -75,33 +76,45 @@ def queuestatus(req, things):
             pass
     return queuestatus_summary(req)
 
-queues = {
-    'iq': IngestQueue,
-    'eq': ExportQueue,
-    'cq': CalCacheQueue,
-    'pq': PreviewQueue
-    }
+#queues = {
+#    'iq': IngestQueue,
+#    'eq': ExportQueue,
+#    'cq': CalCacheQueue,
+#    'pq': PreviewQueue
+#    }
+
+queues = (
+    (IngestQueue,   'iq'),
+    (ExportQueue,   'eq'),
+    (CalCacheQueue, 'cq'),
+    (PreviewQueue,  'pq'),
+)
 
 def queuestatus_update(req, things):
-    try:
-        lqname = things[1]
-        queue = queues[lqname]
-    except KeyError:
-        return apache.HTTP_NOT_FOUND
+    cache = {}
 
-    most_recent, activity = None, False
+    # Try to decode the payload in the POST query
     try:
-        most_recent = int(things[2])
-        activity = things[3] == 'active'
-    except (ValueError, IndexError):
+        cache = json.loads(req.read())
+        if type(cache) != dict:
+            cache = {}
+    except ValueError:
         pass
 
-    req.content_type = 'application/json'
     with session_scope() as session:
-        # Full query, probably the first one, the client side has no cached data
-        if not most_recent:
-            esummary = error_summary(session, queue, DETAIL_THRESHOLD)
-            summary = regular_summary(session, queue, DETAIL_THRESHOLD)
-            req.write(json.dumps(dict(waiting=list(summary), errors=list(esummary))))
+
+        result = []
+        for queue, lqname in queues:
+            esummary = list(error_summary(session, queue, DETAIL_THRESHOLD))
+            summary = list(regular_summary(session, queue, DETAIL_THRESHOLD))
+            ids = [x['oid'] for x in summary + esummary]
+            dig = md5(str(ids)).hexdigest()
+            if dig != cache.get(lqname):
+                result.append(dict(queue=lqname, token=dig, waiting=summary, errors=esummary))
+            else:
+                result.append(dict(queue=lqname, token=dig))
+
+        req.content_type = 'application/json'
+        req.write(json.dumps(result))
 
     return apache.HTTP_OK

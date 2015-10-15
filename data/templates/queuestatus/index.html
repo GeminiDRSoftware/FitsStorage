@@ -65,6 +65,131 @@
    display: block;
  }
 </style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script type='text/javascript'>
+  function text(content) {
+    return document.createTextNode(content);
+  }
+
+  function header(content) {
+    var head = document.createElement('h3');
+    head.appendChild(text(content));
+
+    return head;
+  }
+
+  function linkTo(url, content) {
+    var link = document.createElement('a');
+    link.href = url;
+    link.appendChild(text(content));
+
+    return link;
+  }
+
+  function newRow(content, is_header) {
+    var row = document.createElement('tr');
+    var element;
+
+    if (is_header) {
+      element = 'th';
+      row.className = 'tr_head';
+    }
+    else {
+      element = 'td';
+      row.className = 'alternating';
+    }
+
+    $.each(content, function(index, value) {
+      var cell = document.createElement(element);
+      cell.appendChild(value);
+      row.appendChild(cell);
+    });
+
+    return row;
+  }
+
+  function newTable(queue, data) {
+    var table = document.createElement('table');
+
+    table.appendChild(newRow([text('In queue since'), text('Filename')], true));
+    $.each(data, function(index, value) {
+      table.appendChild(newRow([text(value.since),
+      				linkTo('/queuestatus/' + queue + '/' + value.oid, value.filename)]));
+    });
+
+    return table;
+  }
+
+  function updateContent(data) {
+    var result = {};
+
+    $.each(data, function(index, value) {
+      result[value.queue] = value.token;
+
+      if (typeof(value.waiting) != 'undefined') {
+        var waiting = $('#waiting-' + value.queue);
+        var errors = $('#errors-' + value.queue);
+	var size = value.waiting.length;
+	var nerrors = value.errors.length;
+	var sizeSpan = $('#size-' + value.queue);
+	var errorSpan = $('#nerrors-' + value.queue);
+
+	sizeSpan.empty();
+	errorSpan.empty();
+	waiting.empty();
+	errors.empty();
+
+	sizeSpan.append(text(size + nerrors));
+	errorSpan.append(text(nerrors));
+
+	if (size > 0) {
+	  waiting.append(header('Waiting...'));
+	  waiting.append(newTable(value.queue, value.waiting));
+	}
+	if (nerrors > 0) {
+	  errors.append(header('Errors'));
+	  errors.append(newTable(value.queue, value.errors));
+	}
+      }
+    });
+
+    return result;
+  }
+
+  var remote = {
+    lastEntry: null,
+    querying: false,
+    loadContent: function() {
+      if (this.querying) return;
+
+      this.querying = true;
+
+      $.ajax({
+        type: "POST",
+	parent: this,
+	url:  "/queuestatus/json",
+	data: JSON.stringify(this.lastEntry),
+	contentType: "application/json; charset=utf-8",
+	success: function(data) {
+	  this.parent.lastEntry = updateContent(data);
+	  this.parent.querying = false;
+	},
+	failure: function(errMsg) {
+	  this.parent.querying = false;
+	  // TODO: Should notify the failure somehow...
+	}
+      });
+
+      return true;
+    }
+  };
+
+  // Reload every 60 seconds
+  $(document).ready(function() {
+    setInterval(remote.loadContent, 60000);
+  });
+</script>
 {% endblock %}
 
 {% block body %}
@@ -74,11 +199,11 @@
 {%- for row in general_rows %}
   <div class='tab'>
     <input type="radio" id='{{ row.lname }}' name='tab-group' {% if row.lname == 'iq' %}checked{% endif %}/>
-    <label id='label-{{ row.lname }}' for="{{ row.lname }}">{{ row.name }} ({{ row.size + row.errors }}/{{ row.errors }})</label>
+    <label id='label-{{ row.lname }}' for="{{ row.lname }}">{{ row.name }} (<span id='size-{{ row.lname }}'>{{ row.size + row.errors }}</span>/<span id='nerrors-{{ row.lname }}'>{{ row.errors }}</span>)</a></label>
 
-    <div class="content">
+    <div id='content-{{ row.lname }}' class="content">
 {%- with table = detail_tables[row.lname] %}
-     <div class='content-left'>
+     <div id='waiting-{{ row.lname }}' class='content-left'>
 {%- if row.lname in detail_tables %}
 <h3>Waiting...</h3>
 <table>
@@ -89,7 +214,7 @@
 </table>
 {%- endif %}
      </div>
-     <div class='content-right'>
+     <div id='errors-{{ row.lname }}' class='content-right'>
 {%- if row.errors %}
 <h3>Errors</h3>
 <table>
