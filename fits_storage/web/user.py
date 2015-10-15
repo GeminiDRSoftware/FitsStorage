@@ -111,14 +111,15 @@ def send_password_reset_email(userid):
     message_text = """\
 Hello {name},
 
-  A password reset has been requested for the Gemini Archive account
-registered to this email address. If you did not request a password
-reset, you can safely ignore this email, though if you get several
-spurious reset request emails, please file a helpdesk ticket
-(TODO - add link to helpdesk) to let us know. Assuming that you
-requested this password reset, please click on the link below or paste
-it into your browser to reset your password. The reset link is only
-valid for 15 minutes, so please do that promptly.
+  A password reset has been requested for the Gemini Archive account 
+registered to this email address. If you did not request a password reset, 
+you can safely ignore this email, though if you get several spurious reset 
+request emails, please file a helpdesk ticket at 
+http://www.gemini.edu/sciops/helpdesk in the Gemini Observatory Archive
+category to let us know. Assuming that you requested this password reset, 
+please click on the link below or paste it into your browser to reset your 
+password. The reset link is only valid for 15 minutes, so please do that 
+promptly.
 
 The username for this account is {username}
 {url}
