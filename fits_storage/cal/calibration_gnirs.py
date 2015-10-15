@@ -6,6 +6,8 @@ from ..orm.header import Header
 from ..orm.gnirs import Gnirs
 from .calibration import Calibration, not_processed
 
+from sqlalchemy import or_
+
 class CalibrationGNIRS(Calibration):
     """
     This class implements a calibration manager for GNIRS.
@@ -215,6 +217,8 @@ class CalibrationGNIRS(Calibration):
                                    Gnirs.focal_plane_mask,
                                    Gnirs.camera,
                                    Gnirs.filter_name)
+                # Usable is not OK for these - may be partly saturated for example
+                .add_filters(or_(Header.qa_state == 'Pass', Header.qa_state == 'Undefined'))
                 # Absolute time separation must be within 1 day
                 .max_interval(days=1)
                 .all(howmany)
