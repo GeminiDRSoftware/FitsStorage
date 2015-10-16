@@ -61,7 +61,7 @@ def queuestatus_tb(req, qshortname, oid):
 
 QUEUELIMIT = 200
 
-# @needs_login(staffer=True)
+@needs_login(staffer=True)
 def queuestatus(req, things):
     if len(things) == 1 and things[0] == 'json':
         return queuestatus_update(req, things)
