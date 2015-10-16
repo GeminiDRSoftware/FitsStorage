@@ -130,8 +130,8 @@
       if (typeof(value.waiting) != 'undefined') {
         var waiting = $('#waiting-' + value.queue);
         var errors = $('#errors-' + value.queue);
-	var size = value.waiting.length;
-	var nerrors = value.errors.length;
+	var size = value.total_waiting;
+	var nerrors = value.total_errors;
 	var sizeSpan = $('#size-' + value.queue);
 	var errorSpan = $('#nerrors-' + value.queue);
 

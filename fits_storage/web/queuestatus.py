@@ -76,20 +76,6 @@ def queuestatus(req, things):
             pass
     return queuestatus_summary(req)
 
-#queues = {
-#    'iq': IngestQueue,
-#    'eq': ExportQueue,
-#    'cq': CalCacheQueue,
-#    'pq': PreviewQueue
-#    }
-
-queues = (
-    (IngestQueue,   'iq'),
-    (ExportQueue,   'eq'),
-    (CalCacheQueue, 'cq'),
-    (PreviewQueue,  'pq'),
-)
-
 def queuestatus_update(req, things):
     cache = {}
 
@@ -104,13 +90,14 @@ def queuestatus_update(req, things):
     with session_scope() as session:
 
         result = []
-        for queue, lqname in queues:
+        for qstat in stats(session):
+            queue, lqname, tsize, terr = qstat['type'], qstat['lname'], qstat['size'], qstat['errors']
             esummary = list(error_summary(session, queue, DETAIL_THRESHOLD))
             summary = list(regular_summary(session, queue, DETAIL_THRESHOLD))
-            ids = [x['oid'] for x in summary + esummary]
+            ids = [tsize, terr] + [x['oid'] for x in summary + esummary]
             dig = md5(str(ids)).hexdigest()
             if dig != cache.get(lqname):
-                result.append(dict(queue=lqname, token=dig, waiting=summary, errors=esummary))
+                result.append(dict(queue=lqname, token=dig, waiting=summary, errors=esummary, total_waiting=tsize, total_errors=terr))
             else:
                 result.append(dict(queue=lqname, token=dig))
 
