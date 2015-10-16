@@ -8,7 +8,7 @@ import json
 from ..orm import session_scope
 from ..orm.header import Header
 from ..orm.diskfile import DiskFile
-from selection import queryselection
+from selection import queryselection, openquery
 from .summary import list_headers
 from .standards import get_standard_obs
 from ..apache_return_codes import HTTP_OK
@@ -118,6 +118,9 @@ def jsonsummary(req, selection):
                     thedict[field] = None
 
             thelist.append(thedict)
+
+    if openquery(selection) and thelist:
+        thelist[-1]['results_truncated'] = True
 
     json.dump(thelist, req, indent=4)
     return HTTP_OK
