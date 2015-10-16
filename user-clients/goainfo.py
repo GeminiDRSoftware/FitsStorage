@@ -18,10 +18,11 @@
 #
 
 from contextlib import closing
-import urllib
+from datetime import datetime
 import json
 import logging
 import sys
+import urllib
 
 STANDARD_SERVER='archive.gemini.edu'
 
@@ -55,6 +56,37 @@ def grab_info_from_url(url):
     except IOError:
         logging.error("Could not contact the web server!")
 
+def strip_datetime_extras(datetimestring):
+    """
+    Takes a string containing date & time string and removes decimal seconds from it
+    (We don't need such precision), and also timezone data
+
+    It also adds a 'T' to separate date and time, to make it more compliant with
+    ISO 8601 -and in the process we remove that pesky space, which would make it more
+    difficult to extract fields from the listings
+    """
+
+    # The UT datetime strings may come with +00:00 at the end (time zone offset).
+    # strptime doesn't support time zones, so we're going to try and partition
+    # the string upon finding "+". If there's no "+", the second and third
+    # variables will be set to ''. In any case, we don't care about their values,
+    # so we just use _ as a placeholder for them.
+    dt, _, _ = datetimestring.partition('+')
+
+    return datetime.strptime(dt, "%Y-%m-%d %H:%M:%S.%f").strftime("%Y-%m-%dT%H:%M:%S")
+
+# We're printing most of the information straight from what we get from the JSON
+# object, but we may want to format some stuff in other ways...
+#
+# What we do is to provide a filtering function, that takes the raw value and
+# returns the formatted output. This will be indexed by field name. If the field
+# does not appear in the dictionary, then we don't do anything and the raw value
+# will be used as normal.
+extra_formatting = {
+    'lastmod': strip_datetime_extras,
+    'ut_datetime': strip_datetime_extras,
+    }
+
 def print_info(filelist, metadata_to_print):
     formatlist = []
     for field in metadata_to_print:
@@ -62,6 +94,9 @@ def print_info(filelist, metadata_to_print):
 
     formatstring = ' '.join(formatlist)
     for fileinfo in filelist:
+        for field in metadata_to_print:
+            if field in extra_formatting:
+                fileinfo[field] = extra_formatting[field](fileinfo[field])
         # Note: The **argument syntax means "argument is a dictionary; expand it
         #       as pass-by-name arguments.
         #
