@@ -572,14 +572,15 @@ def build_query(session, period, since=None):
     # retrieved columns. All the information to figure out what info are we working with
     # has been described before.
     STATUS_200 = (UsageLog.status == 200)
+    STATUS_FAIL = (UsageLog.status >= 400)
     THIS_SEARCH = (UsageLog.this == "searchform")
     HIT_OK = to_int(STATUS_200.is_(True))
-    HIT_FAIL = to_int(STATUS_200.isnot(True))
+    HIT_FAIL = to_int(STATUS_FAIL.is_(True))
     SEARCH_OK = to_int(and_(STATUS_200, THIS_SEARCH).is_(True))
-    SEARCH_FAIL = to_int(and_(STATUS_200.isnot(True), THIS_SEARCH.is_(True)))
+    SEARCH_FAIL = to_int(and_(STATUS_FAIL.is_(True), THIS_SEARCH.is_(True)))
 
     DOWNLOAD_PERFORMED = and_(STATUS_200.is_(True), download_query.c.ulid.isnot(None)).is_(True)
-    DOWNLOAD_FAILED    = and_(STATUS_200.is_(False), download_query.c.ulid.isnot(None)).is_(True)
+    DOWNLOAD_FAILED    = and_(STATUS_FAIL.is_(True), download_query.c.ulid.isnot(None)).is_(True)
     UPLOAD_PERFORMED   = and_(STATUS_200.is_(True), upload_query.c.ulid.isnot(None)).is_(True)
 
     FILE_COUNT = to_int(null_to_zero(download_query.c.count))
@@ -594,13 +595,13 @@ def build_query(session, period, since=None):
     STAFF_DOWNLOAD = to_int(and_(DOWNLOAD_PERFORMED, download_query.c.staff_access.is_(True)))
     ANON_DOWNLOAD = to_int(and_(DOWNLOAD_PERFORMED, UsageLog.user_id.is_(None)))
 
-    TOTAL_BYTES = COUNT_DOWNLOAD * to_int(null_to_zero(UsageLog.bytes), big=True)
+    TOTAL_BYTES = to_int(null_to_zero(UsageLog.bytes), big=True)
     PUBFILE_BYTES = to_int(null_to_zero(download_query.c.released_bytes), big=True)
 
     q = query.add_columns(func.sum(HIT_OK).label('hits_ok'), func.sum(HIT_FAIL).label('hits_fail'),
                           func.sum(SEARCH_OK).label('search_ok'), func.sum(SEARCH_FAIL).label('search_fail'),
-                          func.sum(COUNT_DOWNLOAD).label('downloads_total'), func.sum(TOTAL_BYTES).label('bytes_total'),
-                          func.sum(COUNT_UPLOAD).label('uploads_total'), func.sum(COUNT_UPLOAD * UPBYTE_COUNT).label('ul_bytes_total'),
+                          func.sum(COUNT_DOWNLOAD).label('downloads_total'), func.sum(DOWNBYTE_COUNT).label('bytes_total'),
+                          func.sum(COUNT_UPLOAD).label('uploads_total'), func.sum(UPBYTE_COUNT).label('ul_bytes_total'),
                           func.sum(PI_DOWNLOAD * FILE_COUNT).label('pi_downloads'), func.sum(PI_DOWNLOAD * DOWNBYTE_COUNT).label('pi_dl_bytes'),
                           func.sum(STAFF_DOWNLOAD * FILE_COUNT).label('staff_downloads'), func.sum(STAFF_DOWNLOAD * DOWNBYTE_COUNT).label('staff_dl_bytes'),
                           func.sum(PUBFILE_COUNT).label('public_downloads'), func.sum(PUBFILE_BYTES).label('public_dl_bytes'),
