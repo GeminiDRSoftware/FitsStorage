@@ -574,9 +574,9 @@ def build_query(session, period, since=None):
     STATUS_200 = (UsageLog.status == 200)
     THIS_SEARCH = (UsageLog.this == "searchform")
     HIT_OK = to_int(STATUS_200.is_(True))
-    HIT_FAIL = to_int(STATUS_200.is_(False))
+    HIT_FAIL = to_int(STATUS_200.isnot(True))
     SEARCH_OK = to_int(and_(STATUS_200, THIS_SEARCH).is_(True))
-    SEARCH_FAIL = to_int(and_(STATUS_200.is_(True), THIS_SEARCH.is_(False)))
+    SEARCH_FAIL = to_int(and_(STATUS_200.isnot(True), THIS_SEARCH.is_(True)))
 
     DOWNLOAD_PERFORMED = and_(STATUS_200.is_(True), download_query.c.ulid.isnot(None)).is_(True)
     DOWNLOAD_FAILED    = and_(STATUS_200.is_(False), download_query.c.ulid.isnot(None)).is_(True)
