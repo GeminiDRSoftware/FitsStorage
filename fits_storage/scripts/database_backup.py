@@ -32,7 +32,7 @@ if not options.dontbackup:
     # The backup filename
     filename = "%s.%s.pg_dump_c" % (fits_dbname, datestring)
     if options.queues:
-        command = ["/usr/bin/pg_dump", "--format=c", "--file=%s/%s" % (fits_db_backup_dir, filename), '--exclude-table=*queue', fits_dbname]
+        command = ["/usr/bin/pg_dump", "--format=c", "--file=%s/%s" % (fits_db_backup_dir, filename), '--exclude-table=*queue*', fits_dbname]
     else:
         command = ["/usr/bin/pg_dump", "--format=c", "--file=%s/%s" % (fits_db_backup_dir, filename), fits_dbname]
 
