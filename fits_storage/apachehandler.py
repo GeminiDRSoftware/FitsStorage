@@ -35,7 +35,7 @@ from web.preview import preview
 from web.obslogs import obslogs
 from web.reporting import report
 from web.queuestatus import queuestatus
-from web.api import update_headers
+from web.api import update_headers, ingest_files
 from web.miscfiles import miscfiles
 from web import templating
 
@@ -101,6 +101,7 @@ mapping_simple = {
     'logout': logout,                                       # logout
     'user_list': user_list,                                 # user_list
     'update_headers': update_headers,                       # JSON RPC dispatcher
+    'ingest_files': ingest_files,                           # JSON RPC dispatcher
     'curation': curation_report,                            # curation_report handler
     }
 

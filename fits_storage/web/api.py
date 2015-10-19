@@ -6,9 +6,11 @@ from ..orm.diskfile import DiskFile
 from ..utils.fitseditor import compare_cards, modify_multiple_cards
 from ..utils.ingestqueue import IngestQueueUtil, IngestError
 from ..utils.api import ApiProxy, ApiProxyError
+from ..utils.null_logger import EmptyLogger
 
 from .user import needs_login
 
+from ..fits_storage_config import storage_root
 from ..fits_storage_config import magic_api_cookie, api_backend_location
 
 from mod_python import apache, util
@@ -17,6 +19,7 @@ import os
 import pyfits as pf
 import json
 import fcntl
+from glob import iglob
 
 class RequestError(Exception):
     pass
@@ -142,4 +145,39 @@ def update_headers(req):
     req.content_type = 'application/json'
     req.write(json.dumps(response))
 
+    return apache.HTTP_OK
+
+def ingest_files(req):
+    req.content_type = 'application/json'
+    try:
+        arguments = json.loads(req.read())
+        file_pre  = arguments['filepre']
+        path      = arguments['path']
+        force     = arguments['force']
+        force_md5 = arguments['force_md5']
+    except ValueError:
+        req.write(json.dumps(error_response('Invalid information sent to the server')))
+        return apache.HTTP_OK
+    except KeyError as e:
+        req.write(json.dumps(error_response('Missing argument: {}'.format(e.args[0]))))
+        return apache.HTTP_OK
+
+    # Assume that we're working on the local directory. There's no need for this
+    # API entry in the S3 machine
+    pattern = os.path.join(storage_root, path, file_pre)
+    added = []
+
+    logger = EmptyLogger()
+
+    with session_scope() as session:
+        iq = IngestQueueUtil(session, logger)
+        for i, entry in enumerate(iglob(pattern + '*'), 1):
+            filename = os.path.basename(entry)
+            iq.add_to_queue(filename, path, force=force, force_md5=force_md5)
+            added.append(filename)
+
+    if not added:
+        req.write(json.dumps(error_response('Could not find any file with prefix: {}*'.format(file_pre))))
+    else:
+        req.write(json.dumps(dict(result=True, added=added)))
     return apache.HTTP_OK

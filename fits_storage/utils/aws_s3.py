@@ -13,6 +13,8 @@ from ..fits_storage_config import storage_root
 from .hashes import md5sum
 from contextlib import contextmanager
 
+from .null_logger import EmptyLogger
+
 # The first part (Helper) was intended as a base class to allow for both Boto2 and Boto3 to
 # coexist peacefully within our codebase. We decided to deprecate Boto2 because it just makes
 # life more complicated, and it's full of bugs that get fixed in Boto3 in advance, because
@@ -27,16 +29,6 @@ class DownloadError(Exception):
 
 def is_string(obj):
     return isinstance(obj, (str, unicode))
-
-class EmptyLogger(object):
-    """Dummy logger object. We won't use the NullHandler from logger because we really don't want
-       to import the logging module from this one. It would affect the web server and maybe
-       other servers"""
-    def __getattr__(self, attr):
-        return self
-
-    def __call__(self, *args, **kw):
-        pass
 
 from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name, s3_staging_area
 
