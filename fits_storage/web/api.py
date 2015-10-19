@@ -179,5 +179,5 @@ def ingest_files(req):
     if not added:
         req.write(json.dumps(error_response('Could not find any file with prefix: {}*'.format(file_pre))))
     else:
-        req.write(json.dumps(dict(result=True, added=added)))
+        req.write(json.dumps(dict(result=True, added=sorted(added))))
     return apache.HTTP_OK

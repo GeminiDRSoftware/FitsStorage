@@ -4,7 +4,7 @@
 #****              G E M I N I  O B S E R V A T O R Y                ****
 #************************************************************************
 #
-#   Script name:        goainfo
+#   Script name:        ingest-files
 #
 #   Purpose:
 #      Add files to the Archive ingest queue. This is done periodically
@@ -28,7 +28,7 @@ import json
 from contextlib import closing
 import logging
 
-SERVER = 'localhost'
+SERVER = 'fits'
 
 logger = logging.getLogger('Ingesting')
 logging.basicConfig(format='%(name)s... %(levelname)s: %(message)s')
