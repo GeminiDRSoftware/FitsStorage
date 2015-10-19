@@ -22,7 +22,9 @@ class RequestError(Exception):
     pass
 
 class ItemError(Exception):
-    pass
+    def __init__(self, message, label=None):
+        super(ItemError, self).__init__(message)
+        self.label = label
 
 class DummyLogger(object):
     def __getattr__(self, attr):
@@ -58,7 +60,7 @@ def lookup_diskfile(session, query):
         else:
             raise ItemError("Expected 'data_label' or 'filename' to identify the item")
     except NoResultFound:
-        raise ItemError("Could not find a file matching '{}'".format(label))
+        raise ItemError("Could not find a file matching '{}'".format(label), label=label)
 
     return label, df
 
@@ -121,7 +123,7 @@ def update_headers(req):
                     reingest = proxy.set_image_metadata(path=path, changes=new_values)
                     response.append({'result': True, 'id': label})
                 except ItemError as e:
-                    response.append(error_response(e.message, id=label))
+                    response.append(error_response(e.message, id=e.label))
                 except KeyError as e:
                     response.append(error_response("This looks like a malformed request: 'values' does not exist", id=label))
                 except IngestError as e:
