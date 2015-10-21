@@ -1,0 +1,30 @@
+[Unit]
+Description=Fits Storage API Backend
+After=syslog.target network.target
+
+###########################################################################################################################
+#
+#  All this should go into an Environment File (see EnvironmentFile under [Service]
+#
+###########################################################################################################################
+#
+#  UR_DIR=/opt/Ureka/Ureka
+#  UR_VARIANT=common
+#  UR_OS=linux-rhe6
+#  UR_CPU=x86_64
+#  UR_BITS=64
+#  PATH=/opt/Ureka/Ureka/variants/common/bin:/opt/Ureka/Ureka/bin:/opt/Ureka/Ureka/python/bin:/usr/local/bin:/bin:/usr/bin
+#  MAILTO=fitsadmin@gemini.edu
+#  PYTHON_EGG_CACHE=/home/fitsdata/.python_eggs
+#  PYTHONPATH=/opt/FitsStorage:/opt/python_modules/lib/python2.7/site-packages:/opt/gemini_python
+
+[Service]
+EnvironmentFile=/path/to/some/environment/file
+User=fitsdata
+ExecStart=python /opt/FitsStorage/fits_storage/scripts/api_backend.py --demon
+Restart=always
+# This will force the system to wait one second before respawning
+RestartSec=1
+
+[Install]
+WantedBy=runlevel5.target
