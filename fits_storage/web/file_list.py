@@ -127,7 +127,7 @@ def jsonsummary(req, selection):
 
 def jsonqastate(req, selection):
     """
-    This generates a JSON list giving datalabel , entrytime and qa_state.
+    This generates a JSON list giving datalabel, entrytime, data_md5 and qa_state.
     It is intended for use by the ODB.
     It does not limit the number of results
     """
@@ -147,6 +147,7 @@ def jsonqastate(req, selection):
        for header, diskfile in query:
            thelist.append({'data_label': _for_json(header.data_label),
                            'filename': _for_json(diskfile.filename),
+                           'data_md5': _for_json(diskfile.data_md5),
                            'entrytime': _for_json(diskfile.entrytime),
                            'qa_state': _for_json(header.qa_state)})
 
