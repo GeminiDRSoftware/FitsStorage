@@ -24,6 +24,9 @@ from .null_logger import EmptyLogger
 #            If at other point anyone out of Gemini wants to use the archive code, it will
 #            be easier to adapt this module to make use of other cloud services.
 
+COPY_LIMIT = 5 * 1024 * 1024 * 1000 # ~ 5GB. (It should probably be 5 * 1024**3, but we use a tad less to make sure...)
+MULTIPART_COPY_PART_SIZE = 2000000000 # A bit under 2GB. Reduces the total number of parts...
+
 class DownloadError(Exception):
     pass
 
@@ -33,7 +36,6 @@ def is_string(obj):
 from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name, s3_staging_area
 
 import boto3
-# from boto3.session import Session
 from boto3.s3.transfer import S3Transfer, S3UploadFailedError, RetriesExceededError
 from botocore.exceptions import ClientError
 import shutil
@@ -43,6 +45,20 @@ from tempfile import mkstemp
 boto3.set_stream_logger(level=logging.CRITICAL)
 logging.getLogger('boto').setLevel(logging.CRITICAL)
 logging.getLogger('botocore').setLevel(logging.CRITICAL)
+
+def get_source(bucket, key):
+    return unquote(pathname2url('{}/{}'.format(bucket, key)))
+
+def generate_ranges(size):
+    c = 0
+    e = size - 1
+
+    while c < e:
+        n = c + MULTIPART_COPY_PART_SIZE
+        if n >= e:
+            n = (e + 1)
+        yield '{}-{}'.format(c, n-1)
+        c = n
 
 class Boto3Helper(object):
     def __init__(self, bucket_name = s3_bucket_name, logger_ = EmptyLogger()):
@@ -121,13 +137,40 @@ class Boto3Helper(object):
         md = obj.metadata
         md.update(kw)
         bn = self.bucket.name
-        self.s3_client.copy_object(Bucket=bn, Key=keyname, CopySource=unquote(pathname2url('{}/{}'.format(bn, keyname))),
-                                MetadataDirective='REPLACE', Metadata=md)
+        self.s3_client.copy_object(Bucket=bn, Key=keyname, CopySource=get_source(bn, keyname),
+                                   MetadataDirective='REPLACE', Metadata=md)
+
+    def copy_multipart(self, keyname, to_bucket, copy_metadata=True):
+        src = get_source(self.bucket.name, keyname)
+        obj = self.get_key(keyname)
+        sz = obj.content_length
+        extras = {'Metadata': obj.metadata} if copy_metadata else {}
+        client = self.s3_client
+
+        initiated = client.create_multipart_upload(Bucket=to_bucket, Key=keyname, **extras)
+        mpu = boto3.resource('s3').MultipartUpload(to_bucket, keyname, initiated['UploadId'])
+        self.l.debug("Initiated multipart upload with id: %s", initiated['UploadId'])
+        for n, rng in enumerate(generate_ranges(sz), 1):
+            self.l.debug("Uploading part: %s", n)
+            client.upload_part_copy(Bucket=to_bucket, Key=keyname, CopySource=src,
+                                    PartNumber=n,
+                                    CopySourceRange="bytes=" + rng,
+                                    UploadId=mpu.id)
+        parts = {'Parts': [dict(ETag=part.e_tag, PartNumber=part.part_number) for part in mpu.parts.filter(Key=keyname)]}
+        self.l.debug("Completing the upload...")
+        mpu.complete(MultipartUpload=parts)
 
     def copy(self, keyname, to_bucket, metadatadirective='COPY', **kw):
         bn = self.bucket.name
-        self.s3_client.copy_object(Bucket=to_bucket, Key=keyname, CopySource=unquote(pathname2url('{}/{}'.format(bn, keyname))),
-                                MetadataDirective=metadatadirective, **kw)
+        try:
+            self.s3_client.copy_object(Bucket=to_bucket, Key=keyname, CopySource=get_source(bn, keyname),
+                                       MetadataDirective=metadatadirective, **kw)
+        except ClientError:
+            if self.get_key(keyname).content_length > COPY_LIMIT:
+                self.l.warning("Looks like we're trying to copy a rather large key (%s). Let's switch to multipart", keyname)
+                self.copy_multipart(keyname, to_bucket, metadatadirective=='COPY')
+            else:
+                raise
 
     def upload_file(self, keyname, filename, extra_meta = {}):
         md5 = md5sum(filename)
