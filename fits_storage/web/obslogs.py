@@ -88,8 +88,7 @@ def associate_obslogs(session, headers):
     # Could do this more efficiently by grouping the header query by date and progid, but this will do for now
     for header in headers:
         query = session.query(Obslog).filter(Obslog.date == header.ut_datetime.date()).filter(Obslog.program_id == header.program_id)
-        results = query.all()
-        for result in results:
+        for result in query:
             if result not in obslogs:
                 obslogs.append(result)
 

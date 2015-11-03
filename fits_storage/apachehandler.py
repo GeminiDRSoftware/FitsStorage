@@ -146,7 +146,7 @@ mapping_selection = {
     # one of them, but aside from that, it's just a regular (req, selections)
     # We're using functools.partial here to pin sumtype's value
     'obslogs': partial(obslogs, sumtype='obslogs'),
-    'associated_obslogs': partial(obslogs, sumtype='obslogs'),
+    'associated_obslogs': partial(obslogs, sumtype='associated_obslogs'),
 
     # The GMOS twilight flat and bias report (JSON result)
     # The function here is the same as for 'gmoscal'. We're using partial for
