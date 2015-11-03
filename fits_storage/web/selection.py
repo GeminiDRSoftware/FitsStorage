@@ -169,7 +169,7 @@ def getselection(things):
             elif GeminiObservation(thing).observation_id or key == 'obsid':
                 selection['observation_id'] = value
             elif GeminiDataLabel(thing).datalabel or key == 'datalabel':
-                selection['data_label'] = thing
+                selection['data_label'] = value
             elif thing in {'LGS', 'NGS'}:
                 selection['lgs'] = thing
                 # Make LGS / NGS selection imply AO selection
