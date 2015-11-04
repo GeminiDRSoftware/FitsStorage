@@ -49,9 +49,13 @@
 
 {%- macro generate_datalabel(col, uri) -%}
 {%- if col.links and col.dl.valid == True -%}
-<a href="{{ uri }}/{{ col.dl.projectid }}">{{ col.dl.projectid}}</a>-<a href="{{ uri }}/{{ col.dl.observation_id }}">{{ col.dl.obsnum }}</a>-<a href="{{ uri }}/{{ col.dl.datalabel }}">{{ col.dl.dlnum }}</a>
+  {%- if col.dl.extension -%}
+    <a href="{{ uri }}/{{ col.dl.projectid }}">{{ col.dl.projectid}}</a>-<a href="{{ uri }}/{{ col.dl.observation_id }}">{{ col.dl.obsnum }}</a>-<a href="{{ uri }}/{{ col.dl.datalabel_noextension }}">{{ col.dl.dlnum }}-</a><a href="{{ uri }}/{{ col.dl.datalabel }}">{{ col.dl.extension }}</a>
+  {%- else -%}
+    <a href="{{ uri }}/{{ col.dl.projectid }}">{{ col.dl.projectid}}</a>-<a href="{{ uri }}/{{ col.dl.observation_id }}">{{ col.dl.obsnum }}</a>-<a href="{{ uri }}/{{ col.dl.datalabel }}">{{ col.dl.dlnum }}</a>
+  {%- endif -%}
 {%- else -%}
-{{ col.datalabel }}
+  {{ col.datalabel }}
 {%- endif -%}
 {%- endmacro -%}
 

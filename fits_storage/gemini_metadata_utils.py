@@ -455,7 +455,9 @@ def percentilestring(num, type):
 
 # This re matches program_id-obsum-dlnum - ie a datalabel,
 # With 3 groups - program_id, obsnum, dlnum
-dlcre = re.compile(r'^((?:%s)|(?:%s))-(\d*)-(\d*)$' % (calengre, scire))
+# This also allows for an optional -blah on the end (processed biases etc)
+
+dlcre = re.compile(r'^((?:%s)|(?:%s))-(\d*)-(\d*)(?:-(\w*))?$' % (calengre, scire))
 
 class GeminiDataLabel:
     """
@@ -479,6 +481,7 @@ class GeminiDataLabel:
     observation_id = ''
     obsnum = ''
     dlnum = ''
+    extension = ''
     project = ''
 
     def __init__(self, dl):
@@ -487,6 +490,8 @@ class GeminiDataLabel:
         self.observation_id = ''
         self.obsnum = ''
         self.dlnum = ''
+        self.extension = ''
+        self.datalabel_noextension = ''
         if self.datalabel:
             self.parse()
 
@@ -496,8 +501,10 @@ class GeminiDataLabel:
             self.projectid = dlm.group(1)
             self.obsnum = dlm.group(2)
             self.dlnum = dlm.group(3)
+            self.extension = dlm.group(4)
             self.project = GeminiProgram(self.projectid)
             self.observation_id = '%s-%s' % (self.projectid, self.obsnum)
+            self.datalabel_noextension = '%s-%s-%s' % (self.projectid, self.obsnum, self.dlnum)
             self.valid = True
         else:
             # Match failed - Null the datalabel field
