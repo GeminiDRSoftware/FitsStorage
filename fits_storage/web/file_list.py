@@ -8,6 +8,7 @@ import json
 from ..orm import session_scope
 from ..orm.header import Header
 from ..orm.diskfile import DiskFile
+from ..orm.file import File
 from selection import queryselection, openquery
 from .summary import list_headers
 from .standards import get_standard_obs
@@ -139,8 +140,9 @@ def jsonqastate(req, selection):
     with session_scope() as session:
        # We do this directly rather than with list_headers for efficiency
        # as this could be used on very large queries bu the ODB
-       query = session.query(Header, DiskFile)
+       query = session.query(Header, DiskFile).select_from(Header, DiskFile, File)
        query = query.filter(Header.diskfile_id == DiskFile.id)
+       query = query.filter(DiskFile.file_id == File.id)
        query = queryselection(query, selection)
 
        thelist = []
