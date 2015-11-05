@@ -14,7 +14,7 @@ from web.summary import summary
 from web.file_list import xmlfilelist, jsonfilelist, jsonsummary, jsonqastate
 from web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead
 from web.xml_tape import xmltape
-from web.progsobserved import progsobserved
+from web.progsobserved import progsobserved, sitemap
 from web.gmoscal import gmoscal_html, gmoscal_json
 from web.notification import notification, import_odb_notifications
 from web.calmgr import calmgr
@@ -103,6 +103,7 @@ mapping_simple = {
     'update_headers': update_headers,                       # JSON RPC dispatcher
     'ingest_files': ingest_files,                           # JSON RPC dispatcher
     'curation': curation_report,                            # curation_report handler
+    'sitemap.xml': sitemap,                                 # sitemap.xml for google et al
     }
 
 # Functions invoked with (req, things)
