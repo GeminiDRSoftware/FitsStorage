@@ -1,9 +1,10 @@
 conditions:
   - matching:
     - FRAME:       FK5
-
 keywords:
   - RA:
     - float:       0.0 .. 360.0
   - DEC:
     - float:       -90.0 .. 90.0
+# This must be float
+#  - EQUINOX

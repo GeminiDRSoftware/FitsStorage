@@ -1,6 +1,4 @@
 conditions:
-  - is-gemini-data
+  - is gemini-data
   - not failed-data
   - not engineering
-
-include files: [ fphdu, vphdu, extensions ]
