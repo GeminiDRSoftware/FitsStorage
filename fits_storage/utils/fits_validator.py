@@ -64,12 +64,15 @@ fitsTypes = {
     'float': float,
     'int': int,
     'bool': bool,
-    'date': datetime
+    'date': datetime,
+    'sexagesimal': str,
     }
 
 rangePatterns = (
     re.compile(r'(\S+)\s+\.\.\s+(\S+)'),
     )
+
+radecPattern = '^[-+]?\d{1,2}:\d{2}:\d{2}(?:\.\d+)?$'
 
 typeCoercion = (
     int,
@@ -396,7 +399,10 @@ class KeywordDescriptor(object):
     def addRestriction(self, restriction):
         if isinstance(restriction, (str, unicode)):
             if restriction in fitsTypes:
-                self.addRange(Range.from_type(fitsTypes[restriction]))
+                if restriction == 'sexagesimal':
+                    self.addRange(Pattern(radecPattern))
+                else:
+                    self.addRange(Range.from_type(fitsTypes[restriction]))
             elif restriction == 'optional':
                 self.optional = True
             elif restriction.startswith('if '):
