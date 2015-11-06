@@ -120,6 +120,9 @@ class CompositeRange(object):
 
         return any((value in test) for test in self.tests)
 
+    def __repr__(self):
+        return '[' + ', '.join(repr(x) for x in self.tests) + ']'
+
     def append(self, test):
         self.tests.append(test)
 
@@ -249,12 +252,6 @@ class AndTest(list):
         if len(self) == 0:
             return self._def
 
-        # print("--------------")
-        # results = []
-        # for test in self:
-        #     print("Evaluating: {}".format(test.name))
-        #     results.append(test(header, env))
-        # return all(results)
         return all(test(header, env) for test in self)
 
     def __call__(self, header, env):
@@ -323,10 +320,14 @@ def getEnvDate(env):
 # the code, because you may expect different results
 
 def buildSinceFn(value):
-    return lambda h, e: getEnvDate(e) < value
+    t = lambda h, e: getEnvDate(e) < value
+    t.name = 'since'
+    return t
 
 def buildUntilFn(value):
-    return lambda h, e: getEnvDate(e) > value
+    t = lambda h, e: getEnvDate(e) > value
+    t.name = 'until'
+    return t
 
 def buildEnvConditionFn(value):
     if value.startswith('not '):
@@ -336,8 +337,11 @@ def buildEnvConditionFn(value):
         negated = False
 
     if negated:
-        return lambda h, env: value in env.features
-    return lambda h, env: value not in env.features
+        t = lambda h, env: value in env.features
+    else:
+        t = lambda h, env: value not in env.features
+    t.name = value
+    return t
 
 ### End functions for kw descriptor applicability test
 
@@ -573,8 +577,8 @@ class RuleSetFactory(object):
         self._cls = ruleSetClass
         self._cache = {}
 
-    def __parse_tests(self, sourcename, data):
-        result = AndTest()
+    def __parse_tests(self, sourcename, data, name=None):
+        result = AndTest(name=name)
 
         for entry in data:
             if isinstance(entry, (str, unicode)):
@@ -647,8 +651,8 @@ class RuleSetFactory(object):
 
         keywordDescr = {}
         rangeRestrictions = {}
-        conditions = AndTest()
-        postConditions = AndTest()
+        conditions = AndTest(name='conditions')
+        postConditions = AndTest(name='postConditions')
         features = []
 
         #for entry in data:
@@ -657,7 +661,7 @@ class RuleSetFactory(object):
 
         # conditions keeps lists of tests that will be performed on the
         # header to figure out if this ruleset applies or not.
-        conditions = self.__parse_tests(sourcename, data.get('conditions', []))
+        conditions = self.__parse_tests(sourcename, data.get('conditions', []), name='conditions')
 
         features = list(iter_list(data.get('provides')))
 
@@ -697,7 +701,7 @@ class RuleSetFactory(object):
             # performed over the header contents, and accept the same syntax, but they're run
             # once we know that the ruleset is actually applies to the current HDU and that
             # the mandatory keywords are all there. It's used mostly for complex logic
-            postConditions = self.__parse_tests(sourcename, data.get('tests', []))
+            postConditions = self.__parse_tests(sourcename, data.get('tests', []), name='postConditions')
 
             rangeRestrictions = dict(iter_pairs(data.get('range limits'), Range.from_string))
 
