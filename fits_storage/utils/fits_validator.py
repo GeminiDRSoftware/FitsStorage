@@ -349,7 +349,10 @@ class TestUntil(object):
 class TestEnvCondition(object):
     def __init__(self, value):
         self.v = value
-        self.name = value
+        self.name = 'if {}'.format(value)
+
+    def __call__(self, header, env):
+        return self.v not in env
 
 def testEnvCondition(value):
     if value.startswith('not '):
@@ -479,24 +482,6 @@ class KeywordDescriptor(object):
 
         return value in self.range
 
-def test_inclusion(v1, v2, *args, **kw):
-    if isinstance(v2, (str, unicode)):
-        return v1 == v2
-    return v1 in v2
-
-def run_function(func, header, env):
-    res = func.code(header, env)
-    if isinstance(res, tuple):
-        res, message = res
-    else:
-        message = ''
-    if res and func.exceptionIfTrue is not None:
-        raise func.exceptionIfTrue(message)
-    elif not res and func.exceptionIfFalse is not None:
-        raise func.exceptionIfFalse(message)
-
-    return res
-
 reserved_unit_identifiers = {
     'conditions',
     'keywords',
@@ -530,29 +515,49 @@ class Environment(dict):
 def hdu_in(hdus, h, env):
     return env.hduNum in hdus
 
-def in_environment(val, h, env):
+def in_features(val, h, env):
     r = val in env.features
 
     return r
 
-def callback_factory(attr, value = None, name = 'Unknown test name', *args, **kw):
-    if isinstance(attr, Function):
-        l = lambda header, env: run_function(attr, header, env)
-    elif isinstance(attr, FunctionType):
-        if value is not None:
-            l = lambda header, env: attr(value, header, env, *args, **kw)
-        else:
-            l = lambda header, env: attr(header, env, *args, **kw)
-    elif isinstance(attr, (str, unicode)):
-        if value is not None:
-            l = lambda header, env: test_inclusion(header.get(attr), value, env)
-        else:
-            l = lambda header, env: attr in header
-    else:
-        raise RuntimeError("Don't know how to define a callback for [{0}, {1}]".format(attr, value))
+class RunFunction(object):
+    def __init__(self, func, value, name, *args, **kw):
+        self.fn   = func if value is None else partial(func, value)
+        self.args = args
+        self.kw   = kw
+        self.name = name
 
-    l.name = name
-    return l
+    def __call__(self, header, env):
+        return self.fn(header, env, *self.args, **self.kw)
+
+def run_registered_function(func, header, env):
+    res = func.code(header, env)
+    if isinstance(res, tuple):
+        res, message = res
+    else:
+        message = ''
+    if res and func.exceptionIfTrue is not None:
+        raise func.exceptionIfTrue(message)
+    elif not res and func.exceptionIfFalse is not None:
+        raise func.exceptionIfFalse(message)
+
+    return res
+
+def kw_matches_value(kw, value, header, env):
+    value_to_test = header.get(kw)
+
+    if isinstance(value, (str, unicode)):
+        return value_to_test == value
+
+    # If value is not a string, assume that it is an iterable
+    return value_to_test in value
+
+def kw_in_header(kw, header, env):
+    return kw in header
+
+def named_function(fn, name):
+    fn.name = name
+    return fn
 
 def get_from_scope(sourcename, scope, name):
     components = name.split('.')
@@ -609,7 +614,8 @@ class RuleSetFactory(object):
                     _element = element[6:].strip()
                 else:
                     _element = element[2:].strip()
-                test_to_add = callback_factory(in_environment, _element, name = element)
+
+                test_to_add = RunFunction(in_features, _element, name = element)
 
                 if negated:
                     test_to_add = NegatedTest(test_to_add, pass_name = True)
@@ -627,18 +633,21 @@ class RuleSetFactory(object):
                 if _element == 'exists':
                     test_to_add = AndTest(name = _element)
                     for kw in iter_list(content):
-                        test_to_add.append(callback_factory(kw, name = element))
+                        test_to_add.append(named_function(partial(kw_in_header, kw),
+                                                          name=element))
                 elif _element in {'matching', 'matching(pdu)'}:
                     mtest = AndTest(name = _element)
                     for kw, val in iter_pairs(content):
-                        mtest.append(callback_factory(kw, val, name = element))
+                        mtest.append(named_function(partial(kw_matches_value, kw, val),
+                                                    name = '{} {}'.format(element, val)))
                     if _element == 'matching(pdu)':
                         test_to_add = lambda hlist,env: mtest(hlist[0], env)
                         test_to_add.name='matching(pdu)'
                     else:
                         test_to_add = mtest
                 elif _element in RuleSetFactory.__registry:
-                    test_to_add = callback_factory(RuleSetFactory.__registry[_element], name = element)
+                    test_to_add = named_function(partial(run_registered_function, RuleSetFactory.__registry[_element]),
+                                                 name = element)
                 else:
                     raise RuntimeError("Syntax Error: unrecognized condition {0!r}".format(element))
 
