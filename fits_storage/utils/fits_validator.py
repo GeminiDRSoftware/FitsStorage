@@ -324,35 +324,38 @@ def getEnvDate(env):
     raise NoDateError()
 
 ### Functions for kw descriptor applicability test
-# The functions in this section are meant to test if the conditions are
-# met so that we can test for the existence and validity of a certain keyword.
+# The following classes produce callables that are meant to test if the conditions
+# are so that we can test for the existence and validity of a certain keyword.
 #
 # They must return False if this is NOT the case. Have this in mind when reading
 # the code, because you may expect different results
 
-def buildSinceFn(value):
-    t = lambda h, e: getEnvDate(e) < value
-    t.name = 'since'
-    return t
+class TestSince(object):
+    def __init__(self, value):
+        self.v = value
+        self.name = 'since'
 
-def buildUntilFn(value):
-    t = lambda h, e: getEnvDate(e) > value
-    t.name = 'until'
-    return t
+    def __call__(self, header, env):
+        return getEnvDate(env) < self.v
 
-def buildEnvConditionFn(value):
+class TestUntil(object):
+    def __init__(self, value):
+        self.v = value
+        self.name = 'until'
+
+    def __call__(self, header, env):
+        return getEnvDate(env) > self.v
+
+class TestEnvCondition(object):
+    def __init__(self, value):
+        self.v = value
+        self.name = value
+
+def testEnvCondition(value):
     if value.startswith('not '):
-        negated = True
-        value = value[4:].strip()
+        return NegatedTest(TestEnvCondition(value[4:].strip()))
     else:
-        negated = False
-
-    if negated:
-        t = lambda h, env: value in env.features
-    else:
-        t = lambda h, env: value not in env.features
-    t.name = value
-    return t
+        return TestEnvCondition(value)
 
 ### End functions for kw descriptor applicability test
 
@@ -421,17 +424,17 @@ class KeywordDescriptor(object):
             elif restriction == 'optional':
                 self.optional = True
             elif restriction.startswith('if '):
-                self.reqs.append(buildEnvConditionFn(restriction[3:].strip()))
+                self.reqs.append(testEnvCondition(restriction[3:].strip()))
             elif restriction.startswith('since '):
                 coerced = coerceValue(restriction[5:].strip())
                 if not isinstance(coerced, datetime):
                     raise ValueError("Wrong value for 'since': {0}".format(value))
-                self.reqs.append(buildSinceFn(coerced))
+                self.reqs.append(TestSince(coerced))
             elif restriction.startswith('until '):
                 coerced = coerceValue(restriction[5:].strip())
                 if not isinstance(coerced, datetime):
                     raise ValueError("Wrong value for 'until': {0}".format(value))
-                self.reqs.append(buildUntilFn(coerced))
+                self.reqs.append(TestUntil(coerced))
             else:
                 raise ValueError("Unknown descriptor {0}".format(restriction))
         if isinstance(restriction, dict):
