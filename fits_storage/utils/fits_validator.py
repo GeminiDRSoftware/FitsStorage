@@ -347,18 +347,18 @@ class TestUntil(object):
         return getEnvDate(env) > self.v
 
 class TestEnvCondition(object):
-    def __init__(self, value):
+    def __init__(self, value, name):
         self.v = value
-        self.name = 'if {}'.format(value)
+        self.name = name
 
     def __call__(self, header, env):
-        return self.v not in env
+        return self.v in env.features
 
-def testEnvCondition(value):
-    if value.startswith('not '):
-        return NegatedTest(TestEnvCondition(value[4:].strip()))
-    else:
-        return TestEnvCondition(value)
+def testEnvCondition(value, name, negated):
+    t = TestEnvCondition(value, name)
+    if negated:
+        return NegatedTest(t, pass_name=True)
+    return t
 
 ### End functions for kw descriptor applicability test
 
@@ -427,7 +427,12 @@ class KeywordDescriptor(object):
             elif restriction == 'optional':
                 self.optional = True
             elif restriction.startswith('if '):
-                self.reqs.append(testEnvCondition(restriction[3:].strip()))
+                value = restriction[3:].strip()
+                if value.startswith('not '):
+                    fn = testEnvCondition(value[4:], restriction, negated=False)
+                else:
+                    fn = testEnvCondition(value, restriction, negated=True)
+                self.reqs.append(fn)
             elif restriction.startswith('since '):
                 coerced = coerceValue(restriction[5:].strip())
                 if not isinstance(coerced, datetime):
@@ -514,11 +519,6 @@ class Environment(dict):
 # Extra functions to help RuleSet conditions
 def hdu_in(hdus, h, env):
     return env.hduNum in hdus
-
-def in_features(val, h, env):
-    r = val in env.features
-
-    return r
 
 class RunFunction(object):
     def __init__(self, func, value, name, *args, **kw):
@@ -615,10 +615,8 @@ class RuleSetFactory(object):
                 else:
                     _element = element[2:].strip()
 
-                test_to_add = RunFunction(in_features, _element, name = element)
+                test_to_add = testEnvCondition(_element, name = element, negated = negated)
 
-                if negated:
-                    test_to_add = NegatedTest(test_to_add, pass_name = True)
             else:
                 if element.startswith('not '):
                     negated = True
@@ -629,7 +627,7 @@ class RuleSetFactory(object):
 
 # If we want this, it should go at the validation-unit level
 #                if _element == 'on hdus':
-#                    test_to_add = callback_factory(hdu_in, set(iter_list(content)), name = _element)
+#                    test_to_add = Runfunction(hdu_in, set(iter_list(content)), name = _element)
                 if _element == 'exists':
                     test_to_add = AndTest(name = _element)
                     for kw in iter_list(content):
