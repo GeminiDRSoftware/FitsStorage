@@ -1,5 +1,5 @@
 conditions:
-  - matching(pdu):
+  - matching:
     - INSTRUME:    GSAOI
 
 import: [ fac-pdu, ext, wcs ]

@@ -12,31 +12,31 @@ niri-pdu:
   - merge: fac-pdu
   - maybe-merge: wcs
   - keywords:
-   - CAMERA:
-     - char:     [ 'f6', 'f13.9', 'f14', 'f32' ]
-   - FILTER1,FILTER2,FILTER3:
-     - char:     [ 'open', 'blank' ]
-     - pattern:  '.*_G\d{4}'
-   - EXPTIME:
-     - float:      0 .. 1000
-   - COADDS:
-     - int:        0 .. 999
-   - FOCUSNAM
-   - FPMASK:
-     - pattern:    '.*_G\d{4}'
-   - FRAME
-   - MODE
-   - PVIEW
-   - TIME-OBS
+    - CAMERA:
+      - char:     [ 'f6', 'f13.9', 'f14', 'f32' ]
+    - FILTER1,FILTER2,FILTER3:
+      - char:     [ 'open', 'blank' ]
+      - pattern:  '.*_G\d{4}'
+    - EXPTIME:
+      - float:      0 .. 1000
+    - COADDS:
+      - int:        0 .. 999
+    - FOCUSNAM
+    - FPMASK:
+      - pattern:    '.*_G\d{4}'
+    - FRAME
+    - MODE
+    - PVIEW
+    - TIME-OBS
 
-   - LNRS:
-     - int:        0 .. 99
-   - NDAVGS:
-     - int:        0 .. 99
+    - LNRS:
+      - int:        0 .. 99
+    - NDAVGS:
+      - int:        0 .. 99
 
-   - A_VDDUC,A_VDET:
-     - float:      -10 .. 0
+    - A_VDDUC,A_VDET:
+      - float:      -10 .. 0
 
-   - since 2001-7-1:
-     - BEAMSPLT
-     - UTEND
+    - since 2001-7-1:
+      - BEAMSPLT
+      - UTEND

@@ -5,7 +5,7 @@ conditions:
 import: [ vis-pdu, ext ]
 
 validation:
-  - primary-hdy: flam-pdu
+  - primary-hdu: flam-pdu
   - extension:   ext.image
 
 flam-pdu:

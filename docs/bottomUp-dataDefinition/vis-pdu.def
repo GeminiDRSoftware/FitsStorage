@@ -1,8 +1,6 @@
-merge:             gemini
-
 conditions:
   - set-date
-  - matching(pdu):
+  - matching:
     - TELESCOP:  [ Gemini-South, Gemini-North ]
 
 import:  radec
@@ -17,7 +15,7 @@ keywords:
   - RELEASE:
     - date:     2000-1-1 .. *
 
-  - optional
+  - optional:
     - RAWGEMQA:
       - char:   [ UNKNOWN, USABLE, BAD, CHECK ]
     - RAWPIREQ:

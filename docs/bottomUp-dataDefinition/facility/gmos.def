@@ -1,8 +1,12 @@
 conditions:
-  - matching(pdu):
+  - matching:
     - INSTRUME: [ GMOS-N, GMOS-S ]
 
 import: [ fac-pdu, ext, wcs ]
+
+validation:
+  - primary-hdu: gmos-pdu
+  - extension  : gmos-ext
 
 gmos-pdu:
   - merge: fac-pdu

@@ -1,5 +1,5 @@
 conditions:
-  - matching(pdu):
+  - matching:
     - INSTRUME:   GPI
 
 import:  fac-pdu
@@ -42,7 +42,8 @@ gpi-pdu:
     - SIMLEVEL
 
 gpi-ext:
-  - not-maching:
-    - EXTNAME: SCI
+  - conditions:
+    - not matching:
+      - EXTNAME: SCI
   - keywords:
     - DATASEC

@@ -6,37 +6,37 @@ import: [ fac-pdu, ext, wcs ]
 
 validation:
   - primary-hdu: nici-pdu
-  - extension  : nici-blue|nici-red
+  - extension  : [ nici-blue, nici-red ]
 
 nici-pdu:
   - merge: fac-pdu
   - keywords:
-   - BIAS_B
-   - BIAS_R
-   - DICHROIC
-   - FILTER_B
-   - FILTER_R
-   - FRAME
-   - FOCS
-   - FPMW
-   - MODE_B
-   - MODE_R
-   - NDFW
-   - PMW
-   - TIME-OBS
-   - TTSM
-   - UTEND
+    - BIAS_B
+    - BIAS_R
+    - DICHROIC
+    - FILTER_B
+    - FILTER_R
+    - FRAME
+    - FOCS
+    - FPMW
+    - MODE_B
+    - MODE_R
+    - NDFW
+    - PMW
+    - TIME-OBS
+    - TTSM
+    - UTEND
 
 nici-blue:
-  - merge: image
+  - merge: ext.image
   - conditions:
-   - matching:
-     - CHANNEL:    BLUE
+    - matching:
+      - CHANNEL:    BLUE
   - maybe-merge: wcs
 
 nici-red:
-  - merge: image
+  - merge: ext.image
   - conditions:
-   - matching:
-     - CHANNEL:    RED
+    - matching:
+      - CHANNEL:    RED
   - maybe-merge: wcs

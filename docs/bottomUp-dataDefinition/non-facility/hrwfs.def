@@ -1,8 +1,8 @@
 conditions:
-  - matching(pdu):
+  - matching:
     - INSTRUME:    hrwfs
 
-import:   [ vis-pdu, ext, radec, wfs ]
+import:   [ vis-pdu, ext, radec, wcs ]
 
 hrwfs-pdu:
   - merge: vis-pdu
@@ -19,4 +19,4 @@ hrwfs-pdu:
 
 hrwfs-ext:
   - merge: ext.image
-  - maybe-merge: wfs
+  - maybe-merge: wcs

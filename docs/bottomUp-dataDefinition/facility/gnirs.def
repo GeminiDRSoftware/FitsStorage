@@ -1,5 +1,5 @@
 conditions:
-  - matching(pdu):
+  - matching:
     - INSTRUME:   GNIRS
 
 import:           [ fac-pdu, ext, wcs ]

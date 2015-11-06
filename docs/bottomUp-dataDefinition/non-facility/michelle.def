@@ -1,11 +1,11 @@
 conditions:
-  - matching(pdu):
+  - matching:
     - INSTRUME:    michelle
 
 range limits:
   - DATEIMAG:      2003-10-01 .. *
 
-import:   [ vis-pdu, ext, radec, wfs ]
+import:   [ vis-pdu, ext, radec, wcs ]
 
 validation:
   - primary-hdu: mich-pdu
@@ -14,7 +14,7 @@ validation:
 mich-pdu:
   - merge: vis-pdu
   - maybe-merge: radec
-  - maybe-merge: wfs
+  - maybe-merge: wcs
   - keywords:
     - OBSTYPE
     - UTDATE

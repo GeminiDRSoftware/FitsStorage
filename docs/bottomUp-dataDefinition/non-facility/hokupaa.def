@@ -1,19 +1,15 @@
 conditions:
-  - matching(pdu):
-    - INSTRUME:    Hokupaa+QUIRC
+  - matching:
+    - INSTRUME:  Hokupaa+QUIRC
 
-import: [ vis-pdu, radec ]
+import:     vis-pdu
 
 validation:
-  - primary-pdu: hok-pdu
-  # (Hokupaa+QUIRC produces single image FITS, but AstroData makes all
-  # images look like MEF no matter what... so we include this dummy
-  # extension to make the validation software happy
-  - extension:   ext.image
+  - primary-hdu: hok-pdu
 
 hok-pdu:
   - merge: vis-pdu
-  - merge-maybe: radec
+  - maybe-merge: radec
   - keywords:
     - OBJECT
     - IMAGETYP

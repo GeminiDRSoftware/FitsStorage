@@ -1,8 +1,6 @@
-merge:             gemini
-
 conditions:
   - set-date
-  - matching(pdu):
+  - matching:
     - TELESCOP:  [ Gemini-South, Gemini-North ]
 
 import:  radec
