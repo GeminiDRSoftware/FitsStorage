@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+
+from functools import partial
+
 __all__ = ['RuleSetFactory', 'RuleSet', 'RuleCollection', 'Environment', 'ValidationError', 'BadData',
            'EngineeringImage', 'GeneralError', 'NoDateError', 'Evaluator',
            'STATUSES', 'Result']
@@ -84,6 +87,10 @@ typeCoercion = (
     lambda x: datetime(*strptime(x, "%Y-%m-%dT%H:%M:%S")[:6]),
     )
 
+# This function will be used in a few places where the default behaviour
+# is to return the same value that has been passed, unchanged
+identity_lambda = lambda x: x
+
 ###################################################################################
 
 def coerceValue(val):
@@ -140,8 +147,9 @@ class Pattern(object):
 class ArbitraryRangeTest(object):
     """Range test class that will test values against an arbitrary function
        passed by the user"""
-    def __init__(self, test):
+    def __init__(self, test, name):
         self.test = test
+        self.name = name
 
     def __contains__(self, x):
         return self.test(x)
@@ -227,7 +235,10 @@ class Range(object):
         return "{0} .. {1}".format((str(self.low) if self.low else '*'),
                                    (str(self.high) if self.high else '*'))
 
-NotNull = ArbitraryRangeTest(lambda x: isinstance(x, (str, unicode)) and x != '')
+def not_null_test(x):
+    return isinstance(x, (str, unicode)) and x != ''
+
+NotNull = ArbitraryRangeTest(not_null_test, 'not null')
 
 class NegatedTest(object):
     def __init__(self, test, pass_name=False):
@@ -275,7 +286,7 @@ def iter_list(lst):
     elif lst is not None:
         yield lst
 
-def iter_pairs(lst, coercion = lambda x: x):
+def iter_pairs(lst, coercion = identity_lambda):
     for k in iter_list(lst):
         if isinstance(k, dict):
             for key, value in k.items():
@@ -393,7 +404,7 @@ class KeywordDescriptor(object):
         self.transforms = []
         self.range = CompositeRange()
         self.optional = False
-        self.fn = lambda x: x
+        self.fn = identity_lambda
 
         # Maybe we should warn when this is None...
         if info is not None:
@@ -682,7 +693,7 @@ class RuleSetFactory(object):
             for entry in iter_list(data.get('import')):
                 scope[entry] = self.parse(entry, *args, **kw)
 
-            local_scope = set(filter(lambda x: x not in reserved_global_identifiers, data))
+            local_scope = set([x for x in data if x not in reserved_global_identifiers])
             # Sort out illegal semantics early on
             if local_scope:
                 for key in ('keywords', 'tests', 'merge', 'merge-maybe'):
@@ -713,7 +724,7 @@ class RuleSetFactory(object):
 
             # Prepare the validation section, if there's any
             valdct = dict(iter_pairs(data.get('validation', []) + data.get('validation(final)', [])))
-            invalid_valdct = filter(lambda x: x not in {'primary-hdu', 'extension'}, valdct)
+            invalid_valdct = [x for x in valdct if x not in {'primary-hdu', 'extension'}]
             if invalid_valdct:
                 text = ('entry {0!r}'.format(invalid_valdct[0])
                             if len(invalid_valdct) == 1
@@ -747,7 +758,7 @@ class RuleSetFactory(object):
         fullname = '.'.join([sourcename, unitname])
         if isinstance(data, dict):
             data = [data]
-        invalid_kw = filter(lambda x: x.keys()[0] not in reserved_unit_identifiers, data)
+        invalid_kw = [x for x in data if x.keys()[0] not in reserved_unit_identifiers]
         if invalid_kw:
             text = ('entry {0!r}'.format(invalid_kw[0])
                         if len(invalid_kw) == 1
