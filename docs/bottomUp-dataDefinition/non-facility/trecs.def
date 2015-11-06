@@ -7,7 +7,7 @@ range limits:
 
 import:   [ vis-pdu, ext, wcs ]
 
-validation:
+validation(final):
   - primary-hdu: trecs-pdu
   - extension:   trecs-ext
 

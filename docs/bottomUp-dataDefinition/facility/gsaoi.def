@@ -4,7 +4,7 @@ conditions:
 
 import: [ fac-pdu, ext, wcs ]
 
-validation:
+validation(final):
   - primary-hdu:  gsaoi-pdu
   - extension:    gsaoi-ext
 

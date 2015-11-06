@@ -7,7 +7,7 @@ range limits:
 
 import: [ fac-pdu, ext, wcs ]
 
-validation:
+validation(final):
   - primary-hdu: nifs-pdu
   - extension  : ext.image
 

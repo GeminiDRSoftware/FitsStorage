@@ -4,7 +4,7 @@ conditions:
 
 import:   [ vis-pdu, ext, radec ]
 
-validation:
+validation(final):
   - primary-hdu: osc-pdu
   # OSCIR produces single image FITS, but AstroData makes all
   # images look like MEF no matter what... so we include this dummy

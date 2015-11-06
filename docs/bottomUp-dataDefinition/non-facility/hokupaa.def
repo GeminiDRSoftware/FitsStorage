@@ -4,7 +4,7 @@ conditions:
 
 import:   [ vis-pdu, radec ]
 
-validation:
+validation(final):
   - primary-hdu: hok-pdu
 
 hok-pdu:

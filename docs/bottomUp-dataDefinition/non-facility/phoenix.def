@@ -2,17 +2,20 @@ conditions:
   - matching(pdu):
     - INSTRUME:  PHOENIX
 
-import:   [ vis-pdu, radec ]
+import:   [ vis-pdu ]
 
-validation:
+validation(final):
   - primary-hdu: pho-pdu
 
 pho-pdu:
   - merge: vis-pdu
-  - maybe-merge: radec
   - keywords:
     - OBJECT
     - IMAGETYP
     - FILT_POS
     - UT
     - UTDATE
+    - RA:
+      - sexagesimal
+    - DEC:
+      - sexagesimal

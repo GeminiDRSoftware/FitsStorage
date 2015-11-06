@@ -4,7 +4,7 @@ conditions:
 
 import:           [ fac-pdu, ext, wcs ]
 
-validation:
+validation(final):
   - primary-hdu: bhros-pdu
   - extension  : bhros-ext
 
