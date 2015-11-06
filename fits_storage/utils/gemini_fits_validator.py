@@ -31,7 +31,7 @@ OBSCLASS_VALUES = {'dayCal',  'partnerCal',  'acqCal',  'acq',  'science',  'pro
 class NotGeminiData(ValidationError):
     pass
 
-@RuleSet.register_function("is-gemini-data", excIfFalse = NotGeminiData)
+@RuleSetFactory.register_function("is-gemini-data", excIfFalse = NotGeminiData)
 def test_for_gemini_data(header, env):
     if 'XTENSION' in header:
         return True
@@ -49,7 +49,7 @@ def test_for_gemini_data(header, env):
     except KeyError:
         return False
 
-@RuleSet.register_function("engineering", excIfTrue = EngineeringImage)
+@RuleSetFactory.register_function("engineering", excIfTrue = EngineeringImage)
 def engineering_image(header, env):
     "Naive engineering image detection"
     if header.get('GEMENG') is True:
@@ -69,7 +69,7 @@ def engineering_image(header, env):
 
     return False
 
-@RuleSet.register_function("calibration")
+@RuleSetFactory.register_function("calibration")
 def calibration_image(header, env):
     "Naive calib image detection"
     prgid = header.get('GEMPRGID', '')
@@ -79,7 +79,7 @@ def calibration_image(header, env):
         return GeneralError("Testing GEMPRGID: " + str(e))
     return fromId or (header.get('OBSCLASS') == 'dayCal')
 
-@RuleSet.register_function("wcs-after-pdu")
+@RuleSetFactory.register_function("wcs-after-pdu")
 def wcs_in_extensions(header, env):
     try:
         if header.get('FRAME', '').upper() in ('AZEL_TOPO', 'NO VALUE'):
@@ -90,7 +90,7 @@ def wcs_in_extensions(header, env):
 
     return True
 
-@RuleSet.register_function("should-test-wcs")
+@RuleSetFactory.register_function("should-test-wcs")
 def wcs_or_not(header, env):
     feat = env.features
     return (    ('facility' in feat or 'non-facility' in feat)
@@ -98,7 +98,7 @@ def wcs_or_not(header, env):
             and (   ('wcs-in-pdu' in feat and 'XTENSION' not in header)
                  or ('wcs-in-pdu' not in feat and header.get('XTENSION') == 'IMAGE')))
 
-@RuleSet.register_function("valid-observation-info", excIfFalse = EngineeringImage)
+@RuleSetFactory.register_function("valid-observation-info", excIfFalse = EngineeringImage)
 def check_observation_related_fields(header, env):
     prg = GeminiProgram(str(header['GEMPRGID']))
     obs = GeminiObservation(str(header['OBSID']))
@@ -113,7 +113,7 @@ def check_observation_related_fields(header, env):
 
     return True
 
-@RuleSet.register_function('set-date')
+@RuleSetFactory.register_function('set-date')
 def set_date(header, env):
     bogus = False
     for kw in ('DATE-OBS', 'DATE'):
@@ -139,7 +139,7 @@ def set_date(header, env):
     else:
         return False, "DATE/DATE-OBS contains bogus info"
 
-@RuleSet.register_function('failed-data', excIfTrue=BadData)
+@RuleSetFactory.register_function('failed-data', excIfTrue=BadData)
 def check_for_bad_RAWGEMWA(header, env):
     return header.get('RAWGEMQA', '') == 'BAD'
 

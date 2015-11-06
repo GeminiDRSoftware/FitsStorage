@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-__all__ = ['RuleSet', 'RuleStack', 'Environment', 'ValidationError', 'BadData',
+__all__ = ['RuleSetFactory', 'RuleSet', 'RuleStack', 'Environment', 'ValidationError', 'BadData',
            'EngineeringImage', 'GeneralError', 'NoDateError', 'Evaluator',
            'STATUSES', 'Result']
 
@@ -24,7 +24,7 @@ The result is a named tuple with elements:
 
 import os
 import re
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from datetime import datetime
 from time import strptime
 from types import FunctionType
@@ -251,21 +251,6 @@ class AndTest(list):
     def __call__(self, header, env):
         return self.test(header, env)
 
-class OrTest(list):
-    def __init__(self, name=None, default_result=True, *args, **kw):
-        super(OrTest, self).__init__(*args, **kw)
-        self.name = name
-        self._def = default_result
-
-    def test(self, header, env):
-        if len(self) == 0:
-            return self._def
-
-        return any(test(header, env) for test in self)
-
-    def __call__(self, header, env):
-        return self.test(header, env)
-
 def not_implemented(fn):
     "Decorator for not implemented tests"
     def wrapper(self, *args, **kw):
@@ -482,13 +467,20 @@ def run_function(func, header, env):
 
     return res
 
-valid_entries = {
+reserved_unit_identifiers = {
     'conditions',
-    'include files',
     'keywords',
     'provides',
     'range limits',
+    'merge',
+    'maybe-merge',
     'tests',
+}
+
+reserved_global_identifiers = reserved_unit_identifiers | {
+    'import',
+    'one of',
+    'validation',
     }
 
 class Environment(dict):
@@ -531,26 +523,27 @@ def callback_factory(attr, value = None, name = 'Unknown test name', *args, **kw
     l.name = name
     return l
 
-def ruleFactory(text, ruleSetClass):
-    "Returns a RuleSet or a group of them, depending on the input"
-    # We don't want to write complicated parsers, but if we would want to generalize
-    # the syntax, we could use the following EBNF:
-    #
-    #   list = ( group "," )* group
-    #  group = ( word "|")* word | "(" list ")"
-    if "|" in text:
-        return AlternateRuleSets([ruleSetClass(x.strip()) for x in text.split('|')])
+def get_from_scope(sourcename, scope, name):
+    components = name.split('.')
+    if len(components) > 2:
+        raise RuntimeError("Syntax Error ({0}): {1!r} is invalid, only two scoping levels allowed".format(sourcename, name))
+    try:
+        first = components.pop(0)
+        ret = scope[first]
+    except KeyError:
+        raise RuntimeError("In {0}: Unknown {1!r}".format(sourcename, first))
 
-    return ruleSetClass(text)
+    try:
+        ret = ret.units[components.pop(0)]
+    except KeyError:
+        raise RuntimeError("In {0}: Unknown {1!r}".format(sourcename, name))
+    except IndexError:
+        # There was not a second member
+        pass
 
-class RuleSet(list):
-    """RuleSet is a representation of one of the rule files. It contains
-       restrictions for some keywords (mandatory or not, type, format...)
-       and acts also as a container for further rulesets that are activated
-       depending on the contents of a FITS header
+    return ret
 
-       This object will load new rulesets, in cascade"""
-
+class RuleSetFactory(object):
     __registry = {}
 
     @classmethod
@@ -563,48 +556,11 @@ class RuleSet(list):
             return fn
         return reg
 
-    def _open(self, filename):
-        return open(get_full_path(filename))
+    def __init__(self, ruleSetClass):
+        self._cls = ruleSetClass
+        self._cache = {}
 
-    def __init__(self, filename):
-        super(RuleSet, self).__init__()
-
-        self.fn = filename
-        self.keywordDescr = {}
-        self.rangeRestrictions = {}
-        self.conditions = AndTest()
-        self.postConditions = AndTest()
-        self.features = []
-
-        self.__initalize(filename)
-
-    def __initalize(self, filename):
-        with self._open(filename) as source:
-            data = yaml.load(source)
-            if not data:
-                return
-            for entry in data:
-                if entry not in valid_entries:
-                    raise RuntimeError("Syntax Error: {0!r} (on {1})".format(entry, self.fn))
-            self.features = list(iter_list(data.get('provides')))
-            try:
-                self.keywordDescr = dict(iter_keywords(data.get('keywords')))
-            except ValueError as e:
-                s = str(e)
-                raise ValueError('{0}: {1}'.format(self.fn, s))
-            self.rangeRestrictions = dict(iter_pairs(data.get('range limits'), Range.from_string))
-            # conditions keeps lists of tests that will be performed on the
-            # header to figure out if this ruleset applies or not.
-            self.conditions = self.__parse_tests(data.get('conditions', []))
-            # postConditions is similar to conditions in that it holds tests to be
-            # performed over the header contents, and accept the same syntax, but they're run
-            # once we know that the ruleset is actually applies to the current HDU and that
-            # the mandatory keywords are all there. It's used mostly for complex logic
-            self.postConditions = self.__parse_tests(data.get('tests', []))
-            for inc in iter_list(data.get('include files')):
-                self.append(ruleFactory(inc, self.__class__))
-
-    def __parse_tests(self, data):
+    def __parse_tests(self, sourcename, data):
         result = AndTest()
 
         for entry in data:
@@ -613,7 +569,7 @@ class RuleSet(list):
             elif isinstance(entry, dict):
                 element, content = entry.items()[0]
             else:
-                raise RuntimeError("Syntax Error: Invalid entry, {0!r} (on {1})".format(entry, self.fn))
+                raise RuntimeError("Syntax Error: Invalid entry, {0!r} (on {1})".format(entry, sourcename))
 
             negated = False
             if element.startswith('is '):
@@ -634,9 +590,10 @@ class RuleSet(list):
                     negated = False
                     _element = element
 
-                if _element == 'on hdus':
-                    test_to_add = callback_factory(hdu_in, set(iter_list(content)), name = _element)
-                elif _element == 'exists':
+# If we want this, it should go at the validation-unit level
+#                if _element == 'on hdus':
+#                    test_to_add = callback_factory(hdu_in, set(iter_list(content)), name = _element)
+                if _element == 'exists':
                     test_to_add = AndTest(name = _element)
                     for kw in iter_list(content):
                         test_to_add.append(callback_factory(kw, name = element))
@@ -644,8 +601,8 @@ class RuleSet(list):
                     test_to_add = AndTest(name = _element)
                     for kw, val in iter_pairs(content):
                         test_to_add.append(callback_factory(kw, val, name = element))
-                elif _element in RuleSet.__registry:
-                    test_to_add = callback_factory(RuleSet.__registry[_element], name = element)
+                elif _element in RuleSetFactory.__registry:
+                    test_to_add = callback_factory(RuleSetFactory.__registry[_element], name = element)
                 else:
                     raise RuntimeError("Syntax Error: unrecognized condition {0!r}".format(element))
 
@@ -655,6 +612,196 @@ class RuleSet(list):
             result.append(test_to_add)
 
         return result
+
+    def parse(self, sourcename, scope={}, *args, **kw):
+        """Returns a RuleSet or a group of them, depending on the input.
+
+           This function works on the new style bottom-up files"""
+
+        if sourcename in self._cache:
+            return self._cache[sourcename]
+
+        source = self._cls.get_raw(sourcename)
+
+        print("Loading: " + sourcename)
+        data = yaml.load(source)
+        if not data:
+            return self._cls.build_empty(sourcename, *args, **kw)
+
+        keywordDescr = {}
+        rangeRestrictions = {}
+        conditions = AndTest()
+        postConditions = AndTest()
+        features = []
+
+        #for entry in data:
+        #    if entry not in reserved_entries:
+        #        raise RuntimeError("Syntax Error: {0!r} (on {1})".format(entry, sourcename))
+
+        # conditions keeps lists of tests that will be performed on the
+        # header to figure out if this ruleset applies or not.
+        conditions = self.__parse_tests(sourcename, data.get('conditions', []))
+
+        features = list(iter_list(data.get('provides')))
+
+        # This one takes a list of definition files.
+        if 'one of' in data:
+            for entry in data:
+                if entry not in {'conditions', 'provides', 'one of'}:
+                    raise RuntimeError("{1}: {0!r} not compatible with 'one of'".format(entry, sourcename))
+
+            alt = AlternateRuleSets()
+            alt.set_attributes(cond=conditions, feat=features)
+            for entry in data['one of']:
+                alt.add(self.parse(entry, scope=scope, *args, **kw))
+
+            res = alt
+        else:
+            scope = scope.copy()
+            for entry in iter_list(data.get('import')):
+                scope[entry] = self.parse(entry, *args, **kw)
+
+            local_scope = set(filter(lambda x: x not in reserved_global_identifiers, data))
+            # Sort out illegal semantics early on
+            if local_scope:
+                for key in ('keywords', 'tests'):
+                    if key in data:
+                        raise RuntimeError("{0}: Found a global-level '{1}' along with validation units".format(sourcename, key))
+
+            units = {}
+            for unit in local_scope:
+                new_unit = self.parse_validation_unit(sourcename, unit, data[unit], scope, *args, **kw)
+                scope[unit] = units[unit] = new_unit
+
+            rangeRestrictions = dict(iter_pairs(data.get('range limits'), Range.from_string))
+
+            try:
+                keywordDescr = dict(iter_keywords(data.get('keywords')))
+            except ValueError as e:
+                s = str(e)
+                raise ValueError('{0}: {1}'.format(sourcename, s))
+
+            # Prepare the validation section, if there's any
+            valdct = dict(iter_pairs(data.get('validation', [])))
+            invalid_valdct = filter(lambda x: x not in {'primary-hdu', 'extension'}, valdct)
+            if invalid_valdct:
+                text = ('entry {0!r}'.format(invalid_valdct[0])
+                            if len(invalid_valdct) == 1
+                            else 'entries ' + ', '.join('{0!r}'.format(x) for x in invalid_valdct))
+                raise RuntimeError("{0}: At 'validation', illegal {1}".format(sourcename, text))
+
+            validation = defaultdict(AlternateRuleSets)
+            for key, value in valdct.items():
+                for name in iter_list(value):
+                    validation[key].add(get_from_scope(sourcename, scope, name))
+
+            rset = self._cls(sourcename, *args, **kw)
+            rset.set_attributes(
+                cond = conditions,
+                feat = features,
+                keyw = keywordDescr,
+                rngr = rangeRestrictions,
+                vald = validation,
+                unit = units
+                )
+            res = rset
+
+        self._cache[sourcename] = res
+        return res
+
+# reserved_unit_identifiers = {
+#     'conditions',
+#     'keywords',
+#     'provides',
+#     'range limits',
+#     'merge',
+#     'maybe-merge',
+# }
+    def parse_validation_unit(self, sourcename, unitname, data, scope, *args, **kw):
+        fullname = '.'.join([sourcename, unitname])
+        if isinstance(data, dict):
+            data = [data]
+        invalid_kw = filter(lambda x: x.keys()[0] not in reserved_unit_identifiers, data)
+        if invalid_kw:
+            text = ('entry {0!r}'.format(invalid_kw[0])
+                        if len(invalid_kw) == 1
+                        else 'entries ' + ', '.join('{0!r}'.format(x) for x in invalid_kw))
+            raise RuntimeError("{0}: illegal {1}".format(fullname, text))
+
+        keywordDescr = {}
+        conditions = AndTest()
+        postConditions = AndTest()
+        features = []
+        for dct in data:
+            # conditions keeps lists of tests that will be performed on the
+            # header to figure out if this ruleset applies or not.
+            conditions.extend(self.__parse_tests(fullname, dct.get('conditions', [])))
+            features.extend(list(iter_list(dct.get('provides'))))
+
+            try:
+                keywordDescr.update(dict(iter_keywords(dct.get('keywords'))))
+            except ValueError as e:
+                s = str(e)
+                raise ValueError('{0}: {1}'.format(fullname, s))
+
+            # postConditions is similar to conditions in that it holds tests to be
+            # performed over the header contents, and accept the same syntax, but they're run
+            # once we know that the ruleset is actually applies to the current HDU and that
+            # the mandatory keywords are all there. It's used mostly for complex logic
+            postConditions.extend(self.__parse_tests(sourcename, dct.get('tests', [])))
+
+        ret = self._cls(fullname, *args, **kw)
+        ret.set_attributes(
+            cond = conditions,
+            feat = features,
+            keyw = keywordDescr,
+            post = postConditions,
+            )
+        return ret
+
+
+#def ruleFactory(text, ruleSetClass):
+#    "Returns a RuleSet or a group of them, depending on the input"
+#    # We don't want to write complicated parsers, but if we would want to generalize
+#    # the syntax, we could use the following EBNF:
+#    #
+#    #   list = ( group "," )* group
+#    #  group = ( word "|")* word | "(" list ")"
+#    if "|" in text:
+#        return AlternateRuleSets([ruleSetClass(x.strip()) for x in text.split('|')])
+#
+#    return ruleSetClass(text)
+
+class RuleSet(list):
+    """RuleSet is a representation of one of the rule files. It contains
+       restrictions for some keywords (mandatory or not, type, format...)
+       and acts also as a container for further rulesets that are activated
+       depending on the contents of a FITS header"""
+
+    @classmethod
+    def get_raw(cls, filename):
+        return open(get_full_path(filename)).read()
+
+    def __init__(self, filename):
+        super(RuleSet, self).__init__()
+
+        self.fn = filename
+        self.keywordDescr = {}
+        self.rangeRestrictions = {}
+        self.conditions = AndTest()
+        self.postConditions = AndTest()
+        self.features = []
+        self.units = {}
+        self.validation = {}
+
+    def set_attributes(self, **kw):
+        self.keywordDescr = kw.get('keyw', self.keywordDescr)
+        self.rangeRestrictions = kw.get('rngr', self.rangeRestrictions)
+        self.conditions = kw.get('cond', self.conditions)
+        self.postConditions = kw.get('post', self.postConditions)
+        self.features = kw.get('feat', self.features)
+        self.validation = kw.get('vald', self.validation)
+        self.units = kw.get('unit', self.units)
 
     def test(self, header, env):
         messages = []
@@ -695,8 +842,10 @@ class AlternateRuleSets(object):
     """This class is an interface to multiple RuleSets. It chooses among a number of
        alternate rulesets and offers the same behaviour as the first one that matches the
        current environment and headers"""
-    def __init__(self, alternatives):
-        self.alts = alternatives
+    def __init__(self):
+        self.alts = []
+        self.conditions = AndTest()
+        self._features = []
         self.winner = None
 
     @property
@@ -705,14 +854,23 @@ class AlternateRuleSets(object):
 
     @property
     def features(self):
-        return list(self.winner.features)
+        return list(self._features) + list(self.winner.features)
 
     def __iter__(self):
         for k in self.winner:
             yield k
 
+    def add(self, alt):
+        self.alts.append(alt)
+
+    def set_attributes(self, cond=None, feat=None):
+        if cond:
+            self.conditions = cond
+        if feat:
+            self._features = feat
+
     def applies_to(self, header, env):
-        return any(x.applies_to(header, env) for x in self.alts)
+        return self.conditions.test(header, env) and any(x.applies_to(header, env) for x in self.alts)
 
     def test(self, header, env):
         collect = []
@@ -739,7 +897,7 @@ class RuleStack(object):
         self._ruleSetClass = ruleSetClass
 
     def initialize(self, mainFileName):
-        self.entryPoint = self._ruleSetClass(mainFileName)
+        self.entryPoint = RuleSetFactory(self._ruleSetClass).parse(mainFileName)
 
     @property
     def initialized(self):
@@ -793,7 +951,7 @@ class Evaluator(object):
     def __init__(self, ruleSetClass=RuleSet):
         self.rq = RuleStack(ruleSetClass)
 
-    def init(self, root_file='fits'):
+    def init(self, root_file='root'):
         self.rq.initialize(root_file)
 
     def _set_initial_features(self, fits, tags):
