@@ -30,7 +30,6 @@ import re
 from collections import namedtuple, defaultdict
 from datetime import datetime
 from time import strptime
-from types import FunctionType
 
 from ..fits_storage_config import validation_def_path
 
@@ -87,11 +86,21 @@ typeCoercion = (
     lambda x: datetime(*strptime(x, "%Y-%m-%dT%H:%M:%S")[:6]),
     )
 
+Function = namedtuple('Function', ['name', 'code', 'exceptionIfTrue', 'exceptionIfFalse'])
+
+compatible_types = {
+    float: (float, int),
+    }
+
+###############################################################################################
+#
+# Ancillary functions
+
 # This function will be used in a few places where the default behaviour
 # is to return the same value that has been passed, unchanged
 identity_lambda = lambda x: x
-
-###################################################################################
+identity_lambda.__doc__ = """This function takes a single argument an returns it unchanged.
+It is mean to be used as a placeholder for transforms"""
 
 def coerceValue(val):
     """Takes a string and tries to convert it to some known value type using the
@@ -107,20 +116,100 @@ def coerceValue(val):
 def log(text):
     logging.debug(text)
 
-Function = namedtuple('Function', ['name', 'code', 'exceptionIfTrue', 'exceptionIfFalse'])
+def get_full_path(filename):
+    "Takes a relative path to a rules file and returns the full path (plus extension)"
+    return os.path.join(validation_def_path, filename + '.def')
 
-compatible_types = {
-    float: (float, int),
-    }
+def iter_list(lst):
+    """Generator that yields values from an iterable.
+
+    If the value that is passed is not a list or a tuple, it will be returned as-is, effectively
+    turning it in a single-element list. This is useful in cases where we find a single value in
+    a definition file where we would expect a collection. The only exception is `None`, which won't
+    be yielded, making it an *empty* list"""
+    if isinstance(lst, (list, tuple)):
+        for k in lst:
+            yield k
+    elif lst is not None:
+        yield lst
+
+def iter_pairs(lst, coercion = identity_lambda):
+    """Generator that takes a list of elements and a coercion function, and returns them as pairs,
+       with the following pattern:
+
+      - if the element is a dictionary, every entrie on it will be yielded as (key, coercion(value))
+        pairs
+      - if the element is a list or tuple, then the first element is returned as the first element
+        of the pair, and the rest as the second, ie. (element[0], coercion(element[1:]))
+      - if the element doesn't fall in the two previous cases and is *not* `None`, (element, ()) will
+        be returned.
+
+      `None` elements won't be yielded. The default `coercion` is just an identity function.
+    """
+    for k in iter_list(lst):
+        if isinstance(k, dict):
+            for key, value in k.items():
+                yield key, coercion(value)
+        elif isinstance(k, (list, tuple)):
+            yield (k[0], coercion(k[1:]))
+        elif k is not None:
+            yield (k, ())
+
+def iter_keywords(lst):
+    """Generator that iterates over a list of keyword definitions and yields pairs (k, v), where k is
+       the name of the keyword and v is an instance of KeywordDescriptor that describes the restrictions
+       for the keyword"""
+    for (key, value) in iter_pairs(lst):
+        if key.startswith('if ') or key.startswith('since ') or key.startswith('until ') or key == 'optional':
+            if not value:
+                raise ValueError('Found "{0}" with no keywords associated'.format(key))
+
+            for k, descriptor in iter_keywords(value):
+                descriptor.addRestriction(key)
+
+                yield k, descriptor
+            continue
+
+        elif ',' in key:
+            splitkey = [x.strip() for x in key.split(',')]
+        else:
+            splitkey = [key]
+
+        for k in splitkey:
+            yield k, KeywordDescriptor(value)
+
+def not_implemented(fn):
+    "Decorator for not implemented tests"
+    def wrapper(self, *args, **kw):
+        raise NotImplementedError("{0}.{1}".format(self.__class__.__name__,
+                                                                    fn.func_name))
+    return wrapper
+
+def getEnvDate(env):
+    for feat in env.features:
+        if feat.startswith('date:'):
+            return coerceValue(feat[5:])
+
+    raise NoDateError()
+
+####################################################################################
+#
+# Range testing classes.
+#
+# The use case for the range testing is to find if a certain value is within certain
+# parameters.
+#
+# Any instance of a class that defines __contains__ can be used as a range test
 
 class CompositeRange(object):
-    """This class is used to compose a number of range tests together"""
+    "This class is used to compose a number of range tests together"
     def __init__(self):
         self.tests = []
 
     def __contains__(self, value):
         """Returns True if the passed value falls within any of the ranges
-           contained by this composite"""
+           contained by this composite, or if no test has been added to the
+           composite"""
         if not self.tests:
             # No ranges defined
             return True
@@ -131,6 +220,7 @@ class CompositeRange(object):
         return '[' + ', '.join(repr(x) for x in self.tests) + ']'
 
     def append(self, test):
+        "Adds an individual test to the composite"
         self.tests.append(test)
 
 class Pattern(object):
@@ -146,7 +236,8 @@ class Pattern(object):
 
 class ArbitraryRangeTest(object):
     """Range test class that will test values against an arbitrary function
-       passed by the user"""
+       passed by the user. This class exists only so that such functions can
+       be added to a CompositeRange"""
     def __init__(self, test, name):
         self.test = test
         self.name = name
@@ -155,11 +246,18 @@ class ArbitraryRangeTest(object):
         return self.test(x)
 
 class TransformedStringRangeTest(object):
+    """Range test class that applies a transform to the input data before
+       testing it against a range"""
     def __init__(self, testfn, range):
+        """`testfn` is a function that accepts a single value, and returns a
+           potentially transformed version of it. This transformed value is
+           then tested against `range`"""
         self.testfn = testfn
         self.range = range
 
     def __contains__(self, x):
+        # TODO: This makes any non-string to fail the test, but it seems arbitrary.
+        #       Analyze the use cases and see if we really need this
         return isinstance(x, (str, unicode)) and self.testfn(x) in self.range
 
 class Range(object):
@@ -239,8 +337,25 @@ def not_null_test(x):
     return isinstance(x, (str, unicode)) and x != ''
 
 NotNull = ArbitraryRangeTest(not_null_test, 'not null')
+NotNull.__doc__ = "This test will return True for string values that are non empty"
+
+######################################################################################
+#
+# Header Test Classes.
+#
+# The use case for the header tests is to check if a certain header fits within a
+# certain environment. The environment can be the general one for the test, one
+# defined by the test internal data, or a combination of both.
+#
+# The header test interface consists on two methods:
+#
+#   test(self, header, env)
+#   __call__(self, header, env)
+#
+# In general, `__call__` should just invoke `test`
 
 class NegatedTest(object):
+    "A simple wrapping class that negates the result of another header test"
     def __init__(self, test, pass_name=False):
         self._negated = test
         self.name = self._negated.name
@@ -254,7 +369,15 @@ class NegatedTest(object):
         return self.test(header, env)
 
 class AndTest(list):
+    """A composite that takes a number of header tests and returns True only
+       if all of them pass
+
+       AndTest derives from list, and thus it can be initialized like a list,
+       and all its methods apply (append, __getitem__, __delitem__, etc.)"""
     def __init__(self, name=None, default_result=True, *args, **kw):
+        """Initialize the list of tests. It can optional accept a `name` and
+           a boolean `default_result`. The default result (True if not specified)
+           will be return value if the list of tests is empty"""
         super(AndTest, self).__init__(*args, **kw)
         self.name = name
         self._def = default_result
@@ -268,93 +391,70 @@ class AndTest(list):
     def __call__(self, header, env):
         return self.test(header, env)
 
-def not_implemented(fn):
-    "Decorator for not implemented tests"
-    def wrapper(self, *args, **kw):
-        raise NotImplementedError("{0}.{1}".format(self.__class__.__name__,
-                                                                    fn.func_name))
-    return wrapper
+class FunctionTest(object):
+    """Header test functions are only passed the header to be tested, and the
+       current environment. Some test functions may need extra parameters, though.
 
-def get_full_path(filename):
-    "Returns the full path to a rules file"
-    return os.path.join(validation_def_path, filename + '.def')
+       This class offers a wrapper that will hold such extra parameters and run
+       the function as fn(header, env, *args, **kw)"""
+    def __init__(self, func, name, *args, **kw):
+        self.fn   = func
+        self.args = args
+        self.kw   = kw
+        self.name = name
 
-def iter_list(lst):
-    if isinstance(lst, (list, tuple)):
-        for k in lst:
-            yield k
-    elif lst is not None:
-        yield lst
+    def test(self, header, env):
+        return self.fn(header, env, *self.args, **self.kw)
 
-def iter_pairs(lst, coercion = identity_lambda):
-    for k in iter_list(lst):
-        if isinstance(k, dict):
-            for key, value in k.items():
-                yield key, coercion(value)
-        elif isinstance(k, (list, tuple)):
-            yield (k[0], coercion(k[1:]))
-        elif k is not None:
-            yield (k, ())
-
-def iter_keywords(lst):
-    for (key, value) in iter_pairs(lst):
-        if key.startswith('if ') or key.startswith('since ') or key.startswith('until ') or key == 'optional':
-            if not value:
-                raise ValueError('Found "{0}" with no keywords associated'.format(key))
-
-            for k, descriptor in iter_keywords(value):
-                descriptor.addRestriction(key)
-
-                yield k, descriptor
-            continue
-
-        elif ',' in key:
-            splitkey = [x.strip() for x in key.split(',')]
-        else:
-            splitkey = [key]
-
-        for k in splitkey:
-            yield k, KeywordDescriptor(value)
-
-def getEnvDate(env):
-    for feat in env.features:
-        if feat.startswith('date:'):
-            return coerceValue(feat[5:])
-
-    raise NoDateError()
-
-### Functions for kw descriptor applicability test
-# The following classes produce callables that are meant to test if the conditions
-# are so that we can test for the existence and validity of a certain keyword.
-#
-# They must return False if this is NOT the case. Have this in mind when reading
-# the code, because you may expect different results
+    def __call__(self, header, env):
+        return self.test(header, env)
 
 class TestSince(object):
+    """Renders the `since` restriction.
+
+       This test is designed to be used when figuring out if a keyword must be
+       *ignored*, and thus it returns `True` if the date is *prior* to the `since`
+       value"""
     def __init__(self, value):
         self.v = value
         self.name = 'since'
 
-    def __call__(self, header, env):
+    def test(self, header, env):
         return getEnvDate(env) < self.v
 
+    def __call__(self, header, env):
+        return self.test(header, env)
+
 class TestUntil(object):
+    """Renders the `until` restriction.
+
+       This test is designed to be used when figuring out if a keyword must be
+       *ignored*, and thus it returns `True` if the date *follows* the `until`
+       value"""
     def __init__(self, value):
         self.v = value
         self.name = 'until'
 
-    def __call__(self, header, env):
+    def test(self, header, env):
         return getEnvDate(env) > self.v
 
+    def __call__(self, header, env):
+        return self.test(header, env)
+
 class TestEnvCondition(object):
+    "This test checks whether a certain value is defined in the current environment features"
     def __init__(self, value, name):
         self.v = value
         self.name = name
 
-    def __call__(self, header, env):
+    def test(self, header, env):
         return self.v in env.features
 
+    def __call__(self, header, env):
+        return self.test(header, env)
+
 def testEnvCondition(value, name, negated):
+    "Factory for TestEnvCondition instances that simplifies creating negated ones"
     t = TestEnvCondition(value, name)
     if negated:
         return NegatedTest(t, pass_name=True)
@@ -418,6 +518,10 @@ class KeywordDescriptor(object):
                 self.addRestriction(restriction)
 
     def addRestriction(self, restriction):
+        """Takes the raw representation of a restriction, identifies it and adds the
+           appropriate test to the descriptor.
+
+           Will raise `ValueError` if it cannot figure out a valid restriction from the text"""
         if isinstance(restriction, (str, unicode)):
             if restriction in fitsTypes:
                 if restriction == 'sexagesimal':
@@ -467,21 +571,28 @@ class KeywordDescriptor(object):
                 raise ValueError("Unknown descriptor {0}".format(restriction))
 
     def addRange(self, rng):
+        """Adds a range restriction. `rng` should be an instance of a class that complies
+           to the Range Test interface"""
         self.range.append(rng)
 
     def addTransformedStringRangeTest(self, fn, value):
+        """Takes a transform function (`fn`) and a set of restrictions, and builds
+           a TransformedStringRangeTest out of them, that will then be added to the
+           restrictions"""
         self.addRange(TransformedStringRangeTest(fn, set(iter_list(value))))
 
     @property
     def mandatory(self):
+        """True if the represented keyword is not optional"""
         return not self.optional
 
     def ignore(self, header, env):
-        "Returns True if this descriptor should be ignored in the current environment"
+        """Returns True if this descriptor should be ignored for the current header,
+           in the current environment"""
         return self.reqs.test(header, env)
 
     def test(self, value):
-        "Returns True if the passed value matches the descriptor"
+        "Returns True if the passed value is a valid one according to the descriptor"
         for fn in self.transforms:
             value = fn(value)
 
@@ -520,17 +631,9 @@ class Environment(dict):
 def hdu_in(hdus, h, env):
     return env.hduNum in hdus
 
-class RunFunction(object):
-    def __init__(self, func, value, name, *args, **kw):
-        self.fn   = func if value is None else partial(func, value)
-        self.args = args
-        self.kw   = kw
-        self.name = name
-
-    def __call__(self, header, env):
-        return self.fn(header, env, *self.args, **self.kw)
-
 def run_registered_function(func, header, env):
+    """This is a header test that wraps a registered function and takes care
+       of raising exceptions, if needed"""
     res = func.code(header, env)
     if isinstance(res, tuple):
         res, message = res
@@ -544,6 +647,8 @@ def run_registered_function(func, header, env):
     return res
 
 def kw_matches_value(kw, value, header, env):
+    """Helper function to test keyword in a header against a literal value or
+       a range, without further complicating the code in the place of the test"""
     value_to_test = header.get(kw)
 
     if isinstance(value, (str, unicode)):
@@ -556,6 +661,7 @@ def kw_in_header(kw, header, env):
     return kw in header
 
 def named_function(fn, name):
+    "Wrapper that adds a name to a object (possibly a test funcion) and then just returns it"
     fn.name = name
     return fn
 
@@ -627,7 +733,7 @@ class RuleSetFactory(object):
 
 # If we want this, it should go at the validation-unit level
 #                if _element == 'on hdus':
-#                    test_to_add = Runfunction(hdu_in, set(iter_list(content)), name = _element)
+#                    test_to_add = FunctionTest(partial(hdu_in, set(iter_list(content))), name = _element)
                 if _element == 'exists':
                     test_to_add = AndTest(name = _element)
                     for kw in iter_list(content):
@@ -1016,48 +1122,6 @@ class RuleCollection(object):
             return False, [[NOT_FOUND_MESSAGE]]
         return ret, mess
 
-#    def test(self, header, env):
-#        stack = [self.entryPoint]
-#        done = set()
-#        passed = []
-#        mess = []
-#
-#        while stack:
-#            ruleSet = stack.pop(0)
-#            done.add(ruleSet)
-#
-#            log("  - Expanding {0}".format(ruleSet.fn))
-#            tmess = ruleSet.test(header, env)
-#
-#            if not tmess:
-#                passed.append(ruleSet)
-#            else:
-#                mess.extend(tmess)
-#
-#            env.features.update(ruleSet.features)
-#
-#            if 'failed' in env.features:
-#                return (True, [])
-#
-#            for candidate in ruleSet:
-#                if candidate in done:
-#                    log("  - Not including {0}. I've seen it before".format(candidate.fn))
-#                    continue
-#                if candidate.applies_to(header, env):
-#                    stack.append(candidate)
-#                else:
-#                    log("  - Not applicable: {0}".format(candidate.fn))
-#
-#        try:
-#            env.features.remove('valid')
-#        except KeyError:
-#            mess.append(NOT_FOUND_MESSAGE)
-#
-#        if mess:
-#            return (False, mess)
-#
-#        return (True, passed)
-
 Result = namedtuple('Result', ['passes', 'code', 'message'])
 
 class Evaluator(object):
@@ -1069,23 +1133,6 @@ class Evaluator(object):
 
     def _set_initial_features(self, fits, tags):
         return set()
-
-#    def valid_header(self, fits, tags):
-#        if not self.rq.initialized:
-#            self.init()
-#
-#        fits.verify('exception')
-#        env = Environment()
-#        env.features = self._set_initial_features(fits, tags)
-#        res = []
-#        mess = []
-#        for n, hdu in enumerate(fits):
-#            env.numHdu = n
-#            t = self.rq.test(hdu.header, env)
-#            res.append(t[0])
-#            mess.append(t[1])
-#
-#        return all(res), mess, env
 
     def validate_file(self, fits, tags):
         """Evaluates the validity of a FITS file and returns a tuple (valid, messages, environment),
