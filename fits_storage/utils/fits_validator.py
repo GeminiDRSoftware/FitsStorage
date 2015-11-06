@@ -493,7 +493,8 @@ reserved_global_identifiers = reserved_unit_identifiers | {
     'import',
     'one of',
     'validation',
-    }
+    'validation(final)',
+}
 
 class Environment(dict):
     def __getattr__(self, attr):
@@ -707,7 +708,7 @@ class RuleSetFactory(object):
                 raise ValueError('{0}: {1}'.format(sourcename, s))
 
             # Prepare the validation section, if there's any
-            valdct = dict(iter_pairs(data.get('validation', [])))
+            valdct = dict(iter_pairs(data.get('validation', []) + data.get('validation(final)', [])))
             invalid_valdct = filter(lambda x: x not in {'primary-hdu', 'extension'}, valdct)
             if invalid_valdct:
                 text = ('entry {0!r}'.format(invalid_valdct[0])
@@ -731,6 +732,7 @@ class RuleSetFactory(object):
                 unit = units,
                 merg = merges,
                 mmer = maybe_merges,
+                final = 'validation(final)' in data
                 )
             res = rset
 
@@ -822,6 +824,7 @@ class RuleSet(list):
         self.maybe_merges = []
         self.units = {}
         self.validation = {}
+        self.final = False
 
     def set_attributes(self, **kw):
         self.keywordDescr = kw.get('keyw', self.keywordDescr)
@@ -833,71 +836,77 @@ class RuleSet(list):
         self.units = kw.get('unit', self.units)
         self.merges = kw.get('merg', self.merges)
         self.maybe_merges = kw.get('mmer', self.maybe_merges)
+        self.final = kw.get('final', self.final)
 
-    def test(self, hlist, env):
-        messages = []
-        if self.validation:
-            # We're working with a file descriptor
-            results = []
-            # There is probably always going to be primary-hdu, but...
-            if 'primary-hdu' in self.validation:
-                res, mess = self.validation['primary-hdu'].validate(hlist[0], env)
-                results.append(res)
-                messages.append(mess)
-            if 'extension' in self.validation:
-                for n, ext in enumerate(hlist[1:], 1):
-                    res, mess = self.validation['extension'].validate(ext, env)
+    def test(self, hlist, env, overrides = ()):
+        try:
+            messages = []
+            env.final |= self.final
+            if self.validation:
+                # We're working with a file descriptor
+                results = []
+                # There is probably always going to be primary-hdu, but...
+                if 'primary-hdu' in self.validation:
+                    res, mess = self.validation['primary-hdu'].validate(hlist[0], env)
                     results.append(res)
                     messages.append(mess)
+                if 'extension' in self.validation:
+                    for n, ext in enumerate(hlist[1:], 1):
+                        res, mess = self.validation['extension'].validate(ext, env)
+                        results.append(res)
+                        messages.append(mess)
 
-            return all(results), messages
-        else:
-            header = hlist
-            # First, try to pull in all mergeable things
-            for mergeable in self.merges:
-                res, mess = mergeable.validate(hlist, env)
-                if not res:
-                    return res, mess
-            for mergeable in self.maybe_merges:
-                res, mess = mergeable.validate(hlist, env)
-                # maybe-merge means that the test may not be applicable
-                # Return now only if there are error messages...
-                if not res and mess:
-                    return res, mess
-            # We're working with a unit descriptor
-            for kw, descr in self.keywordDescr.items():
-                if descr.ignore(header, env):
-                    continue
+                return all(results), messages
+            else:
+                # First, try to pull in all mergeable things
+                for mergeable in self.merges:
+                    res, mess = mergeable.validate(hlist, env, overrides + tuple(self.keywordDescr.keys()))
+                    if not res:
+                        return res, mess
+                for mergeable in self.maybe_merges:
+                    res, mess = mergeable.validate(hlist, env, overrides + tuple(self.keywordDescr.keys()))
+                    # maybe-merge means that the test may not be applicable
+                    # Return now only if there are error messages...
+                    if not res and mess:
+                        return res, mess
 
-                try:
-                    if not descr.test(header[kw]):
-                        messages.append('Invalid {0}({1})'.format(kw, header[kw]))
-                except KeyError:
-                    if descr.mandatory:
-                        messages.append('Missing {0}'.format(kw))
-            for kw, range in self.rangeRestrictions.items():
-                try:
-                    if header[kw] not in range:
-                        messages.append('Invalid {0}'.format(kw))
-                except KeyError:
-                    # A missing keyword when checking for ranges is not relevant
-                    pass
+                # We're working with a unit descriptor
+                for kw, descr in self.keywordDescr.items():
+                    if kw in overrides or descr.ignore(hlist, env):
+                        continue
 
-            if not messages:
-                for test in self.postConditions:
-                    if not test(header, env):
-                        messages.append('Failed {0}'.format(test.name))
+                    try:
+                        if not descr.test(hlist[kw]):
+                            messages.append('Invalid {0}({1})'.format(kw, hlist[kw]))
+                    except KeyError:
+                        if descr.mandatory:
+                            messages.append('Missing {0}'.format(kw))
+                for kw, range in self.rangeRestrictions.items():
+                    try:
+                        if hlist[kw] not in range:
+                            messages.append('Invalid {0}'.format(kw))
+                    except KeyError:
+                        # A missing keyword when checking for ranges is not relevant
+                        pass
 
-            return len(messages) == 0, messages
+                if not messages:
+                    for test in self.postConditions:
+                        if not test(hlist, env):
+                            messages.append('Failed {0}'.format(test.name))
+
+                return len(messages) == 0, messages
+        finally:
+            if self.final:
+                env.keeptesting = False
 
     def applies_to(self, hlist, env):
-        return self.conditions.test(hlist, env)
+        return env.keeptesting and self.conditions(hlist, env)
 
-    def validate(self, hlist, env):
-        if not self.applies_to(hlist, env):
+    def validate(self, hlist, env, overrides = ()):
+        if not self.applies_to(hlist, env) and not env.final:
             return False, []
 
-        return self.test(hlist, env)
+        return self.test(hlist, env, overrides)
 
     def __repr__(self):
         return "<{0} '{1}' [{2}]>".format(self.__class__.__name__,
@@ -938,18 +947,18 @@ class AlternateRuleSets(object):
         if feat:
             self._features = feat
 
-    def validate(self, hlist, env):
+    def validate(self, hlist, env, overrides = ()):
         if not self.applies_to(hlist, env):
             return False, []
-        return self.test(hlist, env)
+        return self.test(hlist, env, overrides)
 
     def applies_to(self, hlist, env):
         return self.conditions.test(hlist, env) and any(x.applies_to(hlist, env) for x in self.alts)
 
-    def test(self, hlist, env):
+    def test(self, hlist, env, overrides):
         collect = []
         for alt in self.alts:
-            valid, messages = alt.validate(hlist, env)
+            valid, messages = alt.validate(hlist, env, overrides)
             if valid:
                 self.winner = alt
                 log("   - Choosing {0}".format(alt.fn))
@@ -1063,6 +1072,8 @@ class Evaluator(object):
         fits.verify('exception')
         env = Environment()
         env.features = self._set_initial_features(fits, tags)
+        env.final = False
+        env.keeptesting = True
 
         return self.rq.test([hdu.header for hdu in fits], env) + (env,)
 
