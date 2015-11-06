@@ -1,0 +1,48 @@
+conditions:
+  - matching(pdu):
+    - INSTRUME:   GPI
+
+import:  fac-pdu
+
+validation:
+  - primary-hdu: gpi-pdu
+  - extension:   gpi-ext
+
+gpi-pdu:
+  - merge: fac-pdu
+  - keywords:
+    - UTSTART
+    - UTEND
+    - AOFILTER
+    - ADC
+    - APODIZER
+    - CALEXSH
+    - CALREFSH
+    - CALSCISH
+    - CALENSH
+    - IFSFILT
+    - GPIHEALT
+    - LYOTMASK
+    - LYOTHLTH
+    - OCCULTER
+    - OCCHLTH
+    - OMSSENT
+    - ARRAYID
+    - CCDNAME
+    - CCDSIZE
+    - AOFLHLTH
+    - ADCHLTH
+    - APODHLTH
+    - DISPHLTH
+    - DISPERSR
+    - OBSMODE
+    - PUPVIEWR
+    - WPANGHLT
+    - WPSTATE
+    - SIMLEVEL
+
+gpi-ext:
+  - not-maching:
+    - EXTNAME: SCI
+  - keywords:
+    - DATASEC

@@ -1,0 +1,44 @@
+conditions:
+  - matching:
+    - INSTRUME:   NIFS
+
+range limits:
+  - DATEIMAG:     2006-7-1 .. *
+
+import: [ fac-pdu, ext, wcs ]
+
+validation:
+  - primary-hdu: nifs-pdu
+  - extension  : ext.image
+
+nifs-pdu:
+  - merge: fac-pdu
+  - maybe-merge: wcs
+  - keywords:
+   - APERTURE:
+     - pattern:    '.*_G\d{4}'
+   - BIASPWR:
+     - float:      0 .. 5
+   - COADDS:
+     - int:        1 .. 100
+   - EXPMODE
+   - EXPTIME:
+     - float:      0 .. 2000
+     - int:        0 .. 2000
+   - FILTER:
+     - pattern:    '.*_G\d{4}'
+   - FLIP:
+     - char:     [ In, Out ]
+   - FRAME
+   - GRATING:
+     - pattern:    '.*_G\d{4}'
+     - pattern:    '[HJK]\d{3}'
+   - GRATWAVE:
+     - float:      0.8 .. 3
+   - LNRS:
+     - int:        1 .. 16
+   - OBSMODE
+   - UT
+
+   - since 2006-7-1:
+     - RADECSYS

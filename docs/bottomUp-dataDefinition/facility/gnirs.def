@@ -1,0 +1,55 @@
+conditions:
+  - matching(pdu):
+    - INSTRUME:   GNIRS
+
+import:           [ fac-pdu, ext, wcs ]
+
+validation:
+  - primary-hdu:   gnirs-pdu
+  - extension  :   ext.image
+
+gnirs-pdu:
+  - merge: fac-pdu
+  - maybe-merge: wcs
+  - keywords:
+    - ACQMIR:
+      - char:     [ In, Out, Moving ]
+    - CAMERA:
+      - char:       Moving
+      - pattern:    '.*G\d{4}'
+    - COADDS:
+      - int:        0 .. 999
+    - DECKER:
+      - char:     [ Acquisition, IFU, LC_Long, LC_XD, Moving,
+                    PupilViewer, SC_Long, SC_XD, 'SC_XD/IFU', Wollaston ]
+      - pattern:    '.*G\d{4}'
+    - DETBIAS:
+      - float:      -5 .. 0
+    - EXPTIME:
+      - float:      0 .. 2000
+    - FILTER1:
+      - char:     [ Open, Dark, PupilViewer ]
+      - pattern:    '.*G\d{4}'
+    - FILTER2:
+      - char:       Open
+      - pattern:    '.*G\d{4}'
+      - pattern:    '[LHJKx]_\(order_\d\)'
+    - FRAME
+    - GRATING:
+      - pattern:    '.*G\d{4}'
+    - GRATWAVE:
+      - float:      0.0 .. 6.0
+    - LNRS:
+      - int:        0 .. 99
+    - NDAVGS:
+      - int:        0 .. 99
+    - PRISM:
+      - pattern:    '.*G\d{4}'
+    - SLIT:
+      - char:     [ Acquisition, IFU, LgPinholes, Moving, 'pupil viewer', SmPinholes ]
+      - pattern:    '[^ ]+ arcsec'
+      - pattern:    '.*G\d{4}'
+    - TIME-OBS
+
+    - since 2005-1-1:
+      - UTSTART

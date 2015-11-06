@@ -1,0 +1,59 @@
+merge:             gemini
+
+conditions:
+  - set-date
+  - matching(pdu):
+    - TELESCOP:  [ Gemini-South, Gemini-North ]
+
+import:  radec
+
+maybe-merge: radec
+
+keywords:
+  - TRKFRAME
+  - DECTRACK
+  - TRKEPOCH
+  - RATRACK
+  - PMDEC
+  - PMRA
+  - DATE
+  - DATE-OBS
+  - GEMPRGID
+  - OBSID
+  - DATALAB
+  - OBJECT
+  - OBSTYPE:
+    - char:   [ DARK, ARC, FLAT, BIAS, OBJECT, PINHOLE, RONCHI, CAL, FRINGE, MASK ]
+  - RAWGEMQA:
+    - char:   [ UNKNOWN, USABLE, BAD, CHECK ]
+  - RAWPIREQ:
+    - char:   [ UNKNOWN, 'YES', 'NO', CHECK ]   # Using quotes to prevent YAML to turn these into booleans
+  - RAWBG,RAWCC,RAWIQ,RAWWV:
+    - char:     Any
+    - upper:    UNKNOWN
+    - pattern:  '\d{2}-percentile'
+  - RELEASE:
+    - date:     2000-1-1 .. *
+  - SSA
+  - UT
+
+  - since 2001-7-1:
+    - AZIMUTH:
+      - float
+    - ELEVATIO:
+      - float
+    - CRPA:
+      - float
+
+  - since 2004-1-1:
+    - PA
+
+  - since 2007-6-28:
+    - IAA
+    - OBSCLASS:
+      - char:   [ dayCal,  partnerCal,  acqCal,  acq,  science,  progCal ]
+
+tests:
+  - valid-observation-info
+  # TODO: Check this one; may not be needed
+  - wcs-after-pdu

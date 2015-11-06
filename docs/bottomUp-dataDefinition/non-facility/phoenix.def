@@ -1,0 +1,22 @@
+conditions:
+  - matching(pdu):
+    - INSTRUME:  PHOENIX
+
+import:   [ vis-pdu, ext, radec ]
+
+validation:
+  - primary-hdu: pho-pdu
+  # OSCIR produces single image FITS, but AstroData makes all
+  # images look like MEF no matter what... so we include this dummy
+  # extension to make the validation software happy
+  - extension:   ext.image
+
+pho-pdu:
+  - merge: vis-pdu
+  - maybe-merge: radec
+  - keywords:
+    - OBJECT
+    - IMAGETYP
+    - FILT_POS
+    - UT
+    - UTDATE

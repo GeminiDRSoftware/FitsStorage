@@ -1,0 +1,36 @@
+conditions:
+  - matching(pdu):
+    - INSTRUME:   F2
+
+import:           [ fac-pdu, ext, wcs ]
+
+validation:
+  - primary-hdu: f2-pdu
+  - extension  : f2-ext
+
+f2-pdu:
+  - merge: fac-pdu
+  - keywords:
+    - DECKER
+    - FILTER1
+    - FILTER2
+    - FRAME
+    - GRISM
+    - LYOT
+    - MASKNAME
+    - MOSPOS
+    - TIME-OBS
+    - UT
+    - UTSTART
+    - UTEND
+
+f2-ext:
+  - merge: ext-image
+  - maybe-merge: wcs
+  - keywords:
+    - CCDSUM
+    - CCDSIZE
+    - DETSEC
+    - DATASEC
+    - BIASSEC
+    - CCDSEC

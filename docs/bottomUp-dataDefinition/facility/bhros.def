@@ -1,0 +1,29 @@
+conditions:
+  - matching(pdu):
+    - INSTRUME:   bHROS
+
+import:           [ fac-pdu, ext, wcs ]
+
+validation:
+  - primary-hdu: bhros-pdu
+  - extension  : bhros-ext
+
+bhros-pdu:
+  - merge: fac-pdu
+  - keywords:
+    - IMG_SLCR
+    - FILTER
+    - TIME-OBS
+    - UTSTART
+    - UTEND
+
+bhros-ext:
+  - merge: ext.image
+  - maybe-merge: wcs
+  - keywords:
+    - CCDSUM
+    - CCDSIZE
+    - DETSEC
+    - DATASEC
+    - BIASSEC
+    - CCDSEC

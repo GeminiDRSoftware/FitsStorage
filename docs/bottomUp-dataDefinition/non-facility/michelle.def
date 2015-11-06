@@ -1,0 +1,43 @@
+conditions:
+  - matching(pdu):
+    - INSTRUME:    michelle
+
+range limits:
+  - DATEIMAG:      2003-10-01 .. *
+
+import:   [ vis-pdu, ext, radec, wfs ]
+
+validation:
+  - primary-hdu: mich-pdu
+  - extension:   mich-ext
+
+mich-pdu:
+  - merge: vis-pdu
+  - maybe-merge: radec
+  - maybe-merge: wfs
+  - keywords:
+    - OBSTYPE
+    - UTDATE
+    - TRKEQUIN:
+      - float:       1950.0 .. 2000.0
+    - UT
+    - FILTER
+    - FILTERA
+    - FILTERB
+    - CYCLE
+    - CAMERA
+    - GRATNAME
+    - SLITNAME
+    - FOCNAME
+    - CALSELN
+    - SAMPLING
+    - WAVEFORM
+    - OBSSTART
+
+mich-ext:
+  - merge: ext.image
+  - keywords:
+    - AXISLAB1
+    - AXISLAB2
+    - AXISLAB3
+    - AXISLAB4

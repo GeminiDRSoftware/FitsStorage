@@ -1,0 +1,36 @@
+conditions:
+  - matching(pdu):
+    - INSTRUME:    GSAOI
+
+import: [ fac-pdu, ext, wcs ]
+
+validation:
+  - primary-hdu:  gsaoi-pdu
+  - extension:    gsaoi-ext
+
+gsaoi-pdu:
+  - merge: fac-pdu
+  - keywords:
+    - OBJECT
+    - OBSTYPE
+    - UT
+    - UTSTART
+    - UTEND
+    - TIME-OBS
+    - FILTER1
+    - FILTER2
+    - UTLWHEEL
+
+gsaoi-ext:
+  - merge: ext.image
+  - maybe-merge: wcs
+  - keywords:
+    - CTYPE1
+    - CTYPE2
+    - DATATYP
+    - RADECSYS
+    - CCDSEC
+    - CCDSIZE
+    - DETSEC
+    - DATASEC
+    - CCDSUM

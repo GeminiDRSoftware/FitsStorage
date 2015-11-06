@@ -1,0 +1,48 @@
+conditions:
+  - matching(pdu):
+    - INSTRUME: [ GMOS-N, GMOS-S ]
+
+import: [ fac-pdu, ext, wcs ]
+
+gmos-pdu:
+  - merge: fac-pdu
+  - keywords:
+    - DARKTIME,EXPTIME:
+      - float:      0 .. *
+
+    - MASKID:
+      - int
+    - MASKNAME:
+      - char
+    - MASKTYP,MASKLOC:
+      - int:      [ -1, 0, 1 ]
+
+    - FILTER1,FILTER2:
+      - char:      not null
+    - FILTID1,FILTID2:
+      - int
+
+    - GRATING:
+      - char:      not null
+    - GRATID:
+      - int
+
+    - FRAME
+    - TIME-OBS
+    - UTSTART
+
+gmos-ext:
+  - merge: ext.image
+  - maybe-merge: wcs
+  - keywords:
+    - if not prepared:
+      - GAIN:
+        - float
+      - RDNOISE:
+        - float
+      - CCDSUM:
+        - char:     [ '1 1', '1 2', '1 4', '2 1', '2 2', '2 4', '4 1', '4 2', '4 4' ]
+      - CCDNAME:
+        - char:       not null
+      - CCDSIZE,CCDSEC,DATASEC,DETSEC,BIASSEC:
+        - pattern:    '\[\d+:\d+,\d+:\d+]'

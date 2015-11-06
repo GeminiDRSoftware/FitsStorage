@@ -1,0 +1,15 @@
+conditions:
+  - matching:
+    - INSTRUME:   FLAMINGOS
+
+import: [ vis-pdu, ext ]
+
+validation:
+  - primary-hdy: flam-pdu
+  - extension:   ext.image
+
+flam-pdu:
+  - merge: vis-pdu
+  - keywords:
+    - DECKER
+    - UTC
