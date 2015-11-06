@@ -831,15 +831,18 @@ class RuleSet(list):
     def test(self, hlist, env):
         messages = []
         if self.validation:
-            results = []
             # We're working with a file descriptor
-            res, mess = self.validation['primary-hdu'].validate(hlist[0], env)
-            results.append(res)
-            messages.append(mess)
-            for n, ext in enumerate(hlist[1:], 1):
-                res, mess = self.validation['extension'].validate(ext, env)
+            results = []
+            # There is probably always going to be primary-hdu, but...
+            if 'primary-hdu' in self.validation:
+                res, mess = self.validation['primary-hdu'].validate(hlist[0], env)
                 results.append(res)
                 messages.append(mess)
+            if 'extension' in self.validation:
+                for n, ext in enumerate(hlist[1:], 1):
+                    res, mess = self.validation['extension'].validate(ext, env)
+                    results.append(res)
+                    messages.append(mess)
 
             return all(results), messages
         else:

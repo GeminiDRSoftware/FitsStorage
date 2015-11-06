@@ -2,11 +2,11 @@ conditions:
   - matching(pdu):
     - INSTRUME:   GPI
 
-import:  fac-pdu
+import:  [ fac-pdu, ext ]
 
 validation:
-  - primary-hdu: gpi-pdu
-  - extension:   gpi-ext
+  - primary-hdu:   gpi-pdu
+  - extension:   [ sci-ext, gpi-ext ]
 
 gpi-pdu:
   - merge: fac-pdu
@@ -41,7 +41,15 @@ gpi-pdu:
     - WPSTATE
     - SIMLEVEL
 
+# Dummy. It is here just so that the system finds a match for the SCI extensions
+sci-ext:
+  - merge: ext.image
+  - conditions:
+    - matching:
+      - EXTNAME: SCI
+
 gpi-ext:
+  - merge: ext.image
   - conditions:
     - not matching:
       - EXTNAME: SCI

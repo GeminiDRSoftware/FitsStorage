@@ -28,9 +28,6 @@ f2-ext:
   - merge: ext.image
   - maybe-merge: wcs
   - keywords:
-    - CCDSUM
-    - CCDSIZE
-    - DETSEC
-    - DATASEC
-    - BIASSEC
-    - CCDSEC
+    - DATATYP
+    - RADECSYS
+

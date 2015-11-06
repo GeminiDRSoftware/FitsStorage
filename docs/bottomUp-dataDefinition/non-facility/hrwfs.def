@@ -4,6 +4,10 @@ conditions:
 
 import:   [ vis-pdu, ext, radec, wcs ]
 
+validation:
+  - primary-hdu: hrwfs-pdu
+  - extension:   hrwfs-ext
+
 hrwfs-pdu:
   - merge: vis-pdu
   - maybe-merge: radec

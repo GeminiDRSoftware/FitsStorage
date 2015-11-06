@@ -6,7 +6,7 @@ import: [ fac-pdu, ext, wcs ]
 
 validation:
   - primary-hdu: niri-pdu
-  - extension:   ext.image
+  - extension:   niri-ext
 
 niri-pdu:
   - merge: fac-pdu
@@ -40,3 +40,9 @@ niri-pdu:
     - since 2001-7-1:
       - BEAMSPLT
       - UTEND
+
+niri-ext:
+  - merge: ext.image
+  - keywords:
+    - HIROW,HICOL,LOWROW,LOWCOL:
+      - int:        0 .. 1023
