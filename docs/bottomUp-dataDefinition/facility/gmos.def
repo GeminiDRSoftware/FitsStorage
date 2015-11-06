@@ -1,5 +1,5 @@
 conditions:
-  - matching:
+  - matching(pdu):
     - INSTRUME: [ GMOS-N, GMOS-S ]
 
 import: [ fac-pdu, ext, wcs ]

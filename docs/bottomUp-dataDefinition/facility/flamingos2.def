@@ -1,5 +1,5 @@
 conditions:
-  - matching:
+  - matching(pdu):
     - INSTRUME:   F2
 
 import:           [ fac-pdu, ext, wcs ]
@@ -25,7 +25,7 @@ f2-pdu:
     - UTEND
 
 f2-ext:
-  - merge: ext-image
+  - merge: ext.image
   - maybe-merge: wcs
   - keywords:
     - CCDSUM

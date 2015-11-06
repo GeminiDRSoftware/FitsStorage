@@ -1,5 +1,5 @@
 conditions:
-  - matching:
+  - matching(pdu):
     - INSTRUME:   bHROS
 
 import:           [ fac-pdu, ext, wcs ]

@@ -1,5 +1,5 @@
 conditions:
-  - matching:
+  - matching(pdu):
     - INSTRUME:   FLAMINGOS
 
 import: [ vis-pdu, ext ]

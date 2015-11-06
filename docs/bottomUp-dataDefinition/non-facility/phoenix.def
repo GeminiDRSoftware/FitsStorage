@@ -1,5 +1,5 @@
 conditions:
-  - matching:
+  - matching(pdu):
     - INSTRUME:  PHOENIX
 
 import:   [ vis-pdu, radec ]

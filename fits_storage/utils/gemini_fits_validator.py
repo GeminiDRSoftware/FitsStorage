@@ -31,15 +31,16 @@ OBSCLASS_VALUES = {'dayCal',  'partnerCal',  'acqCal',  'acq',  'science',  'pro
 class NotGeminiData(ValidationError):
     pass
 
-@RuleSetFactory.register_function("is-gemini-data", excIfFalse = NotGeminiData)
-def test_for_gemini_data(header, env):
-    if 'XTENSION' in header:
+@RuleSetFactory.register_function("?gemini-data", excIfFalse = NotGeminiData)
+def test_for_gemini_data(hlist, env):
+    pdu = hlist[0]
+    if 'XTENSION' in pdu:
         return True
     try:
-        if gemini_instrument(header['INSTRUME'], gmos=True) is None:
+        if gemini_instrument(pdu['INSTRUME'], gmos=True) is None:
             return False
 
-        if header['INSTRUME'] in FACILITY_INSTRUME:
+        if pdu['INSTRUME'] in FACILITY_INSTRUME:
             env.features.add('facility')
         else:
             env.features.add('non-facility')
@@ -50,34 +51,37 @@ def test_for_gemini_data(header, env):
         return False
 
 @RuleSetFactory.register_function("engineering", excIfTrue = EngineeringImage)
-def engineering_image(header, env):
+def engineering_image(hlist, env):
     "Naive engineering image detection"
-    if header.get('GEMENG') is True:
+    pdu = hlist[0]
+    if pdu.get('GEMENG') is True:
         return True
 
-    if 'XTENSION' in header:
+    if 'XTENSION' in pdu:
         return False
     try:
-        prgid = str(header['GEMPRGID'])
+        prgid = str(pdu['GEMPRGID'])
         if prgid[:2] in ('GN', 'GS') and ('ENG' in prgid.upper()):
             return True
 
-        if check_observation_related_fields(header, env) is not True:
+        if check_observation_related_fields(pdu, env) is not True:
             return True, "Does not look like a valid program ID"
     except KeyError:
         return True, "Missing GEMPRGID"
 
     return False
 
-@RuleSetFactory.register_function("calibration")
-def calibration_image(header, env):
-    "Naive calib image detection"
-    prgid = header.get('GEMPRGID', '')
-    try:
-        fromId = prgid.startswith('GN-CAL') or prgid.startswith('GS-CAL')
-    except AttributeError as e:
-        return GeneralError("Testing GEMPRGID: " + str(e))
-    return fromId or (header.get('OBSCLASS') == 'dayCal')
+# We're not using this function at al. Comment it for the time being
+#
+#@RuleSetFactory.register_function("calibration")
+#def calibration_image(header, env):
+#    "Naive calib image detection"
+#    prgid = header.get('GEMPRGID', '')
+#    try:
+#        fromId = prgid.startswith('GN-CAL') or prgid.startswith('GS-CAL')
+#    except AttributeError as e:
+#        return GeneralError("Testing GEMPRGID: " + str(e))
+#    return fromId or (header.get('OBSCLASS') == 'dayCal')
 
 @RuleSetFactory.register_function("wcs-after-pdu")
 def wcs_in_extensions(header, env):
@@ -140,8 +144,8 @@ def set_date(header, env):
         return False, "DATE/DATE-OBS contains bogus info"
 
 @RuleSetFactory.register_function('failed-data', excIfTrue=BadData)
-def check_for_bad_RAWGEMWA(header, env):
-    return header.get('RAWGEMQA', '') == 'BAD'
+def check_for_bad_RAWGEMWA(hlist, env):
+    return hlist[0].get('RAWGEMQA', '') == 'BAD'
 
 class AstroDataEvaluator(Evaluator):
     def __init__(self, *args, **kw):
@@ -188,7 +192,7 @@ if __name__ == '__main__':
         try:
             env = Environment()
             env.features = set()
-            rs = RuleStack()
+            rs = RuleCollection()
             rs.initialize('fits')
             err = 0
             for n, hdu in enumerate(fits):

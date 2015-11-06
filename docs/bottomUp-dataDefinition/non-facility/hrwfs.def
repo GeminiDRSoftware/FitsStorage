@@ -1,5 +1,5 @@
 conditions:
-  - matching:
+  - matching(pdu):
     - INSTRUME:    hrwfs
 
 import:   [ vis-pdu, ext, radec, wcs ]

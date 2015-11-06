@@ -1,5 +1,5 @@
 conditions:
-  - matching:
+  - matching(pdu):
     - INSTRUME:   NIRI
 
 import: [ fac-pdu, ext, wcs ]

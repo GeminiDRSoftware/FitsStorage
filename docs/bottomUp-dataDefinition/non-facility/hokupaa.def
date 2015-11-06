@@ -1,8 +1,8 @@
 conditions:
-  - matching:
+  - matching(pdu):
     - INSTRUME:  Hokupaa+QUIRC
 
-import:     vis-pdu
+import:   [ vis-pdu, radec ]
 
 validation:
   - primary-hdu: hok-pdu

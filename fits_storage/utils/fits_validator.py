@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-__all__ = ['RuleSetFactory', 'RuleSet', 'RuleStack', 'Environment', 'ValidationError', 'BadData',
+__all__ = ['RuleSetFactory', 'RuleSet', 'RuleCollection', 'Environment', 'ValidationError', 'BadData',
            'EngineeringImage', 'GeneralError', 'NoDateError', 'Evaluator',
            'STATUSES', 'Result']
 
@@ -246,6 +246,12 @@ class AndTest(list):
         if len(self) == 0:
             return self._def
 
+        # print("--------------")
+        # results = []
+        # for test in self:
+        #     print("Evaluating: {}".format(test.name))
+        #     results.append(test(header, env))
+        # return all(results)
         return all(test(header, env) for test in self)
 
     def __call__(self, header, env):
@@ -597,10 +603,15 @@ class RuleSetFactory(object):
                     test_to_add = AndTest(name = _element)
                     for kw in iter_list(content):
                         test_to_add.append(callback_factory(kw, name = element))
-                elif _element == 'matching':
-                    test_to_add = AndTest(name = _element)
+                elif _element in {'matching', 'matching(pdu)'}:
+                    mtest = AndTest(name = _element)
                     for kw, val in iter_pairs(content):
-                        test_to_add.append(callback_factory(kw, val, name = element))
+                        mtest.append(callback_factory(kw, val, name = element))
+                    if _element == 'matching(pdu)':
+                        test_to_add = lambda hlist,env: mtest(hlist[0], env)
+                        test_to_add.name='matching(pdu)'
+                    else:
+                        test_to_add = mtest
                 elif _element in RuleSetFactory.__registry:
                     test_to_add = callback_factory(RuleSetFactory.__registry[_element], name = element)
                 else:
@@ -623,7 +634,6 @@ class RuleSetFactory(object):
 
         source = self._cls.get_raw(sourcename)
 
-        print("Loading: " + sourcename)
         data = yaml.load(source)
         if not data:
             return self._cls.build_empty(sourcename, *args, **kw)
@@ -664,7 +674,7 @@ class RuleSetFactory(object):
             local_scope = set(filter(lambda x: x not in reserved_global_identifiers, data))
             # Sort out illegal semantics early on
             if local_scope:
-                for key in ('keywords', 'tests'):
+                for key in ('keywords', 'tests', 'merge', 'merge-maybe'):
                     if key in data:
                         raise RuntimeError("{0}: Found a global-level '{1}' along with validation units".format(sourcename, key))
 
@@ -672,6 +682,15 @@ class RuleSetFactory(object):
             for unit in local_scope:
                 new_unit = self.parse_validation_unit(sourcename, unit, data[unit], scope, *args, **kw)
                 scope[unit] = units[unit] = new_unit
+
+            merges = [get_from_scope(sourcename, scope, m) for m in iter_list(data.get('merge', []))]
+            maybe_merges = [get_from_scope(sourcename, scope, m) for m in iter_list(data.get('maybe-merge', []))]
+
+            # postConditions is similar to conditions in that it holds tests to be
+            # performed over the header contents, and accept the same syntax, but they're run
+            # once we know that the ruleset is actually applies to the current HDU and that
+            # the mandatory keywords are all there. It's used mostly for complex logic
+            postConditions = self.__parse_tests(sourcename, data.get('tests', []))
 
             rangeRestrictions = dict(iter_pairs(data.get('range limits'), Range.from_string))
 
@@ -701,22 +720,17 @@ class RuleSetFactory(object):
                 feat = features,
                 keyw = keywordDescr,
                 rngr = rangeRestrictions,
+                post = postConditions,
                 vald = validation,
-                unit = units
+                unit = units,
+                merg = merges,
+                mmer = maybe_merges,
                 )
             res = rset
 
         self._cache[sourcename] = res
         return res
 
-# reserved_unit_identifiers = {
-#     'conditions',
-#     'keywords',
-#     'provides',
-#     'range limits',
-#     'merge',
-#     'maybe-merge',
-# }
     def parse_validation_unit(self, sourcename, unitname, data, scope, *args, **kw):
         fullname = '.'.join([sourcename, unitname])
         if isinstance(data, dict):
@@ -731,12 +745,17 @@ class RuleSetFactory(object):
         keywordDescr = {}
         conditions = AndTest()
         postConditions = AndTest()
+        merges = []
+        maybe_merges = []
         features = []
         for dct in data:
             # conditions keeps lists of tests that will be performed on the
             # header to figure out if this ruleset applies or not.
             conditions.extend(self.__parse_tests(fullname, dct.get('conditions', [])))
             features.extend(list(iter_list(dct.get('provides'))))
+
+            merges.extend([get_from_scope(fullname, scope, m) for m in iter_list(dct.get('merge', []))])
+            maybe_merges.extend([get_from_scope(fullname, scope, m) for m in iter_list(dct.get('maybe-merge', []))])
 
             try:
                 keywordDescr.update(dict(iter_keywords(dct.get('keywords'))))
@@ -756,6 +775,8 @@ class RuleSetFactory(object):
             feat = features,
             keyw = keywordDescr,
             post = postConditions,
+            merg = merges,
+            mmer = maybe_merges,
             )
         return ret
 
@@ -791,6 +812,8 @@ class RuleSet(list):
         self.conditions = AndTest()
         self.postConditions = AndTest()
         self.features = []
+        self.merges = []
+        self.maybe_merges = []
         self.units = {}
         self.validation = {}
 
@@ -802,38 +825,75 @@ class RuleSet(list):
         self.features = kw.get('feat', self.features)
         self.validation = kw.get('vald', self.validation)
         self.units = kw.get('unit', self.units)
+        self.merges = kw.get('merg', self.merges)
+        self.maybe_merges = kw.get('mmer', self.maybe_merges)
 
-    def test(self, header, env):
+    def test(self, hlist, env):
         messages = []
-        for kw, descr in self.keywordDescr.items():
-            if descr.ignore(header, env):
-                continue
+        if self.validation:
+            results = []
+            # We're working with a file descriptor
+            res, mess = self.validation['primary-hdu'].validate(hlist[0], env)
+            results.append(res)
+            messages.append(mess)
+            for n, ext in enumerate(hlist[1:], 1):
+                res, mess = self.validation['extension'].validate(ext, env)
+                results.append(res)
+                messages.append(mess)
 
-            try:
-                if not descr.test(header[kw]):
-                    messages.append('Invalid {0}({1})'.format(kw, header[kw]))
-            except KeyError:
-                if descr.mandatory:
-                    messages.append('Missing {0}'.format(kw))
-        for kw, range in self.rangeRestrictions.items():
-            try:
-                if header[kw] not in range:
-                    messages.append('Invalid {0}'.format(kw))
-            except KeyError:
-                # A missing keyword when checking for ranges is not relevant
-                pass
+            return all(results), messages
+        else:
+            header = hlist
+            # First, try to pull in all mergeable things
+            for mergeable in self.merges:
+                res, mess = mergeable.validate(hlist, env)
+                if not res:
+                    return res, mess
+            for mergeable in self.maybe_merges:
+                res, mess = mergeable.validate(hlist, env)
+                # maybe-merge means that the test may not be applicable
+                # Return now only if there are error messages...
+                if not res and mess:
+                    return res, mess
+            # We're working with a unit descriptor
+            for kw, descr in self.keywordDescr.items():
+                if descr.ignore(header, env):
+                    continue
 
-        if not messages:
-            for test in self.postConditions:
-                if not test(header, env):
-                    messages.append('Failed {0}'.format(test.name))
-        return messages
+                try:
+                    if not descr.test(header[kw]):
+                        messages.append('Invalid {0}({1})'.format(kw, header[kw]))
+                except KeyError:
+                    if descr.mandatory:
+                        messages.append('Missing {0}'.format(kw))
+            for kw, range in self.rangeRestrictions.items():
+                try:
+                    if header[kw] not in range:
+                        messages.append('Invalid {0}'.format(kw))
+                except KeyError:
+                    # A missing keyword when checking for ranges is not relevant
+                    pass
 
-    def applies_to(self, header, env):
-        return self.conditions.test(header, env)
+            if not messages:
+                for test in self.postConditions:
+                    if not test(header, env):
+                        messages.append('Failed {0}'.format(test.name))
+
+            return len(messages) == 0, messages
+
+    def applies_to(self, hlist, env):
+        return self.conditions.test(hlist, env)
+
+    def validate(self, hlist, env):
+        if not self.applies_to(hlist, env):
+            return False, []
+
+        return self.test(hlist, env)
 
     def __repr__(self):
-        return "<{0} '{1}' [{2}]>".format(self.__class__.__name__, self.fn, ', '.join(x.fn for x in self), ', '.join(self.keywordDescr))
+        return "<{0} '{1}' [{2}]>".format(self.__class__.__name__,
+                                          self.fn,
+                                          ', '.join(self.units))
 
     def __hash__(self):
         return hash(self.__class__.__name__ + '_' + self.fn)
@@ -869,26 +929,30 @@ class AlternateRuleSets(object):
         if feat:
             self._features = feat
 
-    def applies_to(self, header, env):
-        return self.conditions.test(header, env) and any(x.applies_to(header, env) for x in self.alts)
+    def validate(self, hlist, env):
+        if not self.applies_to(hlist, env):
+            return False, []
+        return self.test(hlist, env)
 
-    def test(self, header, env):
+    def applies_to(self, hlist, env):
+        return self.conditions.test(hlist, env) and any(x.applies_to(hlist, env) for x in self.alts)
+
+    def test(self, hlist, env):
         collect = []
-
-        for k in (x for x in self.alts if x.applies_to(header, env)):
-            messages = k.test(header, env)
-            if not messages:
-                self.winner = k
-                log("   - Choosing {0}".format(k.fn))
-                return []
+        for alt in self.alts:
+            valid, messages = alt.validate(hlist, env)
+            if valid:
+                self.winner = alt
+                log("   - Choosing {0}".format(alt.fn))
+                return True, []
             else:
                 for m in messages:
                     log("   - {0}".format(m))
             collect.extend(messages)
 
-        return collect
+        return False, collect
 
-class RuleStack(object):
+class RuleCollection(object):
     """Used to "stack up" RuleSet objects as they're activated by headers.
        It offers an interface to check the validity of a header."""
 
@@ -903,53 +967,59 @@ class RuleStack(object):
     def initialized(self):
         return self.entryPoint is not None
 
-    def test(self, header, env):
-        stack = [self.entryPoint]
-        done = set()
-        passed = []
-        mess = []
+    def test(self, headerlist, env):
+        ret, mess = self.entryPoint.validate(headerlist, env)
+        if not ret and not mess:
+            return False, [[NOT_FOUND_MESSAGE]]
+        return ret, mess
 
-        while stack:
-            ruleSet = stack.pop(0)
-            done.add(ruleSet)
-
-            log("  - Expanding {0}".format(ruleSet.fn))
-            tmess = ruleSet.test(header, env)
-
-            if not tmess:
-                passed.append(ruleSet)
-            else:
-                mess.extend(tmess)
-
-            env.features.update(ruleSet.features)
-
-            if 'failed' in env.features:
-                return (True, [])
-
-            for candidate in ruleSet:
-                if candidate in done:
-                    log("  - Not including {0}. I've seen it before".format(candidate.fn))
-                    continue
-                if candidate.applies_to(header, env):
-                    stack.append(candidate)
-                else:
-                    log("  - Not applicable: {0}".format(candidate.fn))
-
-        try:
-            env.features.remove('valid')
-        except KeyError:
-            mess.append(NOT_FOUND_MESSAGE)
-
-        if mess:
-            return (False, mess)
-
-        return (True, passed)
+#    def test(self, header, env):
+#        stack = [self.entryPoint]
+#        done = set()
+#        passed = []
+#        mess = []
+#
+#        while stack:
+#            ruleSet = stack.pop(0)
+#            done.add(ruleSet)
+#
+#            log("  - Expanding {0}".format(ruleSet.fn))
+#            tmess = ruleSet.test(header, env)
+#
+#            if not tmess:
+#                passed.append(ruleSet)
+#            else:
+#                mess.extend(tmess)
+#
+#            env.features.update(ruleSet.features)
+#
+#            if 'failed' in env.features:
+#                return (True, [])
+#
+#            for candidate in ruleSet:
+#                if candidate in done:
+#                    log("  - Not including {0}. I've seen it before".format(candidate.fn))
+#                    continue
+#                if candidate.applies_to(header, env):
+#                    stack.append(candidate)
+#                else:
+#                    log("  - Not applicable: {0}".format(candidate.fn))
+#
+#        try:
+#            env.features.remove('valid')
+#        except KeyError:
+#            mess.append(NOT_FOUND_MESSAGE)
+#
+#        if mess:
+#            return (False, mess)
+#
+#        return (True, passed)
 
 Result = namedtuple('Result', ['passes', 'code', 'message'])
 
 class Evaluator(object):
     def __init__(self, ruleSetClass=RuleSet):
-        self.rq = RuleStack(ruleSetClass)
+        self.rq = RuleCollection(ruleSetClass)
 
     def init(self, root_file='root'):
         self.rq.initialize(root_file)
@@ -957,26 +1027,39 @@ class Evaluator(object):
     def _set_initial_features(self, fits, tags):
         return set()
 
-    def valid_header(self, fits, tags):
+#    def valid_header(self, fits, tags):
+#        if not self.rq.initialized:
+#            self.init()
+#
+#        fits.verify('exception')
+#        env = Environment()
+#        env.features = self._set_initial_features(fits, tags)
+#        res = []
+#        mess = []
+#        for n, hdu in enumerate(fits):
+#            env.numHdu = n
+#            t = self.rq.test(hdu.header, env)
+#            res.append(t[0])
+#            mess.append(t[1])
+#
+#        return all(res), mess, env
+
+    def validate_file(self, fits, tags):
+        """Evaluates the validity of a FITS file and returns a tuple (valid, messages, environment),
+           where `valid` is a boolean, `messages` is a list of error messages, if there were any, and
+           `environment` is the Environment object with the features collected during the evaluation"""
         if not self.rq.initialized:
             self.init()
 
         fits.verify('exception')
         env = Environment()
         env.features = self._set_initial_features(fits, tags)
-        res = []
-        mess = []
-        for n, hdu in enumerate(fits):
-            env.numHdu = n
-            t = self.rq.test(hdu.header, env)
-            res.append(t[0])
-            mess.append(t[1])
 
-        return all(res), mess, env
+        return self.rq.test([hdu.header for hdu in fits], env) + (env,)
 
     def evaluate(self, fits, tags=set()):
         try:
-            valid, msg, env = self.valid_header(fits, tags)
+            valid, msg, env = self.validate_file(fits, tags)
             # Skim non-strings from msg
             msg = [[x for x in m if not isinstance(x, RuleSet)] for m in msg]
             if valid:
