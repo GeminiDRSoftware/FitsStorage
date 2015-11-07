@@ -91,7 +91,7 @@ class ExportQueueUtil(object):
         our_md5 = diskfile.data_md5
 
         self.l.debug("Checking for remote file md5")
-        dest_md5 = self.get_destination_data_md5(filename, self.l, destination)
+        dest_md5 = get_destination_data_md5(filename, self.l, destination)
 
         if dest_md5 == 'ERROR':
             return False
@@ -140,6 +140,9 @@ class ExportQueueUtil(object):
             # Trim .bz2 from the filename from here on, update our_md5
             filename = File.trime_name(filename)
             our_md5 = diskfile.data_md5
+        if export_bzip and diskfile.compressed:
+            # All good to go, just need to get the right md5 for the transfer verification
+            our_md5 = diskfile.file_md5
 
         # Construct upload URL
         url = "%s/upload_file/%s" % (destination, filename)

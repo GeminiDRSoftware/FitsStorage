@@ -109,7 +109,7 @@ try:
                     else:
                         logger.info("Exportqueue id %d DID NOT TRANSFER", eq.id)
                         # The eq instance we have is transient - get one connected to the session
-                        export_queue.set_lastfailed(eq)
+                        export_queue.set_last_failed(eq)
                     session.commit()
 
             except (KeyboardInterrupt, OperationalError):
