@@ -984,6 +984,7 @@ class RuleSet(list):
         self.final = kw.get('final', self.final)
 
     def test(self, hlist, env):
+        prev_final = env.final
         try:
             messages = []
             env.final |= self.final
@@ -1047,6 +1048,7 @@ class RuleSet(list):
         finally:
             if self.final:
                 env.keeptesting = False
+            env.final = prev_final
 
     def applies_to(self, hlist, env):
         return env.keeptesting and self.conditions(hlist, env)
