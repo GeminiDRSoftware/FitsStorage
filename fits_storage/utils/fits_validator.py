@@ -636,7 +636,7 @@ class OverrideStack(object):
         self._stack.append(keys)
 
     def pop(self):
-        return self._stack
+        return self._stack.pop()
 
     def __contains__(self, value):
         return any(value in level for level in self._stack)
@@ -1003,7 +1003,7 @@ class RuleSet(list):
 
                 return all(results), messages
             else:
-                overrides.push(self.keywordDescr.keys())
+                env.overrides.push(self.keywordDescr.keys())
                 # First, try to pull in all mergeable things
                 try:
                     for mergeable in self.merges:
@@ -1017,7 +1017,7 @@ class RuleSet(list):
                         if not res and mess:
                             return res, mess
                 finally:
-                    overrides.pop()
+                    env.overrides.pop()
 
                 # We're working with a unit descriptor
                 for kw, descr in self.keywordDescr.items():
