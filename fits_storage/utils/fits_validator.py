@@ -627,6 +627,20 @@ class Environment(dict):
 
         return value
 
+class OverrideStack(object):
+    "Structure to keep keyword override levels"
+    def __init__(self):
+        self._stack = []
+
+    def push(self, keys):
+        self._stack.append(keys)
+
+    def pop(self):
+        return self._stack
+
+    def __contains__(self, value):
+        return any(value in level for level in self._stack)
+
 # Extra functions to help RuleSet conditions
 def hdu_in(hdus, h, env):
     return env.hduNum in hdus
@@ -969,7 +983,7 @@ class RuleSet(list):
         self.maybe_merges = kw.get('mmer', self.maybe_merges)
         self.final = kw.get('final', self.final)
 
-    def test(self, hlist, env, overrides = ()):
+    def test(self, hlist, env):
         try:
             messages = []
             env.final |= self.final
@@ -989,21 +1003,25 @@ class RuleSet(list):
 
                 return all(results), messages
             else:
+                overrides.push(self.keywordDescr.keys())
                 # First, try to pull in all mergeable things
-                for mergeable in self.merges:
-                    res, mess = mergeable.validate(hlist, env, overrides + tuple(self.keywordDescr.keys()))
-                    if not res:
-                        return res, mess
-                for mergeable in self.maybe_merges:
-                    res, mess = mergeable.validate(hlist, env, overrides + tuple(self.keywordDescr.keys()))
-                    # maybe-merge means that the test may not be applicable
-                    # Return now only if there are error messages...
-                    if not res and mess:
-                        return res, mess
+                try:
+                    for mergeable in self.merges:
+                        res, mess = mergeable.validate(hlist, env)
+                        if not res:
+                            return res, mess
+                    for mergeable in self.maybe_merges:
+                        res, mess = mergeable.validate(hlist, env)
+                        # maybe-merge means that the test may not be applicable
+                        # Return now only if there are error messages...
+                        if not res and mess:
+                            return res, mess
+                finally:
+                    overrides.pop()
 
                 # We're working with a unit descriptor
                 for kw, descr in self.keywordDescr.items():
-                    if kw in overrides or descr.ignore(hlist, env):
+                    if kw in env.overrides or descr.ignore(hlist, env):
                         continue
 
                     try:
@@ -1033,11 +1051,11 @@ class RuleSet(list):
     def applies_to(self, hlist, env):
         return env.keeptesting and self.conditions(hlist, env)
 
-    def validate(self, hlist, env, overrides = ()):
+    def validate(self, hlist, env):
         if not self.applies_to(hlist, env) and not env.final:
             return False, []
 
-        return self.test(hlist, env, overrides)
+        return self.test(hlist, env)
 
     def __repr__(self):
         return "<{0} '{1}' [{2}]>".format(self.__class__.__name__,
@@ -1078,18 +1096,18 @@ class AlternateRuleSets(object):
         if feat:
             self._features = feat
 
-    def validate(self, hlist, env, overrides = ()):
+    def validate(self, hlist, env):
         if not self.applies_to(hlist, env):
             return False, []
-        return self.test(hlist, env, overrides)
+        return self.test(hlist, env)
 
     def applies_to(self, hlist, env):
         return self.conditions.test(hlist, env) and any(x.applies_to(hlist, env) for x in self.alts)
 
-    def test(self, hlist, env, overrides):
+    def test(self, hlist, env):
         collect = []
         for alt in self.alts:
-            valid, messages = alt.validate(hlist, env, overrides)
+            valid, messages = alt.validate(hlist, env)
             if valid:
                 self.winner = alt
                 log("   - Choosing {0}".format(alt.fn))
@@ -1146,6 +1164,7 @@ class Evaluator(object):
         env.features = self._set_initial_features(fits, tags)
         env.final = False
         env.keeptesting = True
+        env.overrides = OverrideStack()
 
         return self.rq.test([hdu.header for hdu in fits], env) + (env,)
 
