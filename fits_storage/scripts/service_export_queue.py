@@ -86,7 +86,7 @@ try:
                     time.sleep(2)
 
                     # Mark any old failures for retry
-                    retry_failures(session, logger, interval)
+                    export_queue.retry_failures(interval)
 
                 else:
                     logger.info("Exporting %s, (%d in queue)", eq.filename, export_queue.length())
