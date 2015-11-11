@@ -1,7 +1,9 @@
 {% extends "layout.html" %}
 
+{% block extra_header %}
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
 {% block title %}Gemini Archive Who Am I{% endblock %}
-
 {% block body %}
 <span id="whoami">
 {% if username %}
