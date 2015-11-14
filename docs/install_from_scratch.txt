@@ -1,19 +1,16 @@
-clean RHEL6 machine standard ISG install. 
+clean centos 7 machine standard ISG install. 
 
 - Have ISG set up a user account for you with sudo all.
-- sort out path etc in account so that which python gives you the /astro one
-
-- log in and change your password.
 
 sudo yum -y install httpd httpd-devel mod_ssl openssl
 sudo chmod oug+rx /var/log/httpd
 sudo yum -y install postgresql postgresql-server postgresql-devel
 
-# needed to get mod_python to build as /astro python links against X11
-sudo yum -y install libX11-devel libXft libXft-devel
+# Need these extras for Ureka to work:
+sudo yum -y install libX11-devel libXft-devel
 
-# On RHEL6 also need these if they're not already there:
-sudo yum -y install libtool
+# Also need:
+sudo yum -y install gcc
 
 sudo /usr/sbin/groupadd -g 5179 fitsdata
 sudo /usr/sbin/useradd -c 'FITS data' -u 5179 -g 5179 fitsdata
@@ -33,10 +30,6 @@ sudo chown phirst /opt/python_modules
 cd /opt/FitsStorage
 svn checkout http://scisoft/svn/FitsStorage/trunk .
 
-gcc invoke.c -o invoke
-chmod oug+x invoke
-chmod ug+s invoke
-
 * Log out and back in as yourself (phirst)
 
 sudo mkdir /opt/Ureka
@@ -49,14 +42,16 @@ sh install_ureka_1.5.1 -t /net/endor/Gemini/astro/iraf/downloads/Ureka_linux-rhe
 
 
 cd /opt/python_modules
-tar xvzf /opt/FitsStorage/otherfiles/mod_python-3.3.1-1.tar.gz
-cd mod_python-3.3.1
+tar xvzf /opt/FitsStorage/otherfiles/mod_python-3.5.0.tgz
+cd mod_python-3.5.0
 which python # should be Ureka one
-whereis apxs # probably /usr/sbin/apxs
-./configure --with-apxs=/usr/sbin/apxs --prefix=/opt/python_modules
+whereis apxs # probably /usr/bin/apxs
+./configure --with-apxs=/usr/bin/apxs --prefix=/opt/python_modules
 make
 sudo make install_dso
 cd dist
+vi version.sh
+#comment out GIT line
 python setup.py install --prefix=/opt/python_modules
 
 cd /opt/python_modules
@@ -115,23 +110,15 @@ sudo cp /opt/FitsStorage/otherfiles/etc-sysconfig-httpd /etc/sysconfig/httpd
 sudo mkdir /var/www/python-egg-cache
 sudo chmod oug+rwx /var/www/python-egg-cache
 
-sudo mkdir /opt/cadc
-sudo chown phirst /opt/cadc
-cd /opt/cadc
-# install cadc stuff
-tar xvf /opt/FitsStorage/otherfiles/mdIngest.tar
-sudo mkdir /opt/jars
-sudo chown phirst /opt/jars
-cd /opt/jars
-tar xvf /opt/FitsStorage/otherfiles/jars.tar
-
 # Set up postgres
 sudo mkdir /data/pgsql_data
 sudo chown postgres:postgres /data/pgsql_data
-sudo vi /etc/sysconfig/pgsql/postgresql
-PGDATA=/data/pgsql_data
-sudo service postgresql initdb
-sudo /etc/init.d/postgresql start 
+sudo cp /lib/systemd/system/postgresql.service /etc/systemd/system/
+sudo vi /etc/systemd/system/postgresql.service
+Enviroment=PGDATA=/data/pgsql_data
+sudo systemctl daemon-reload
+sudo postgresql-setup initdb
+sudo systemctl start postgresql.service
 sudo su - postgres
 /usr/bin/createuser --no-superuser --no-createrole --createdb fitsdata
 /usr/bin/createuser --no-superuser --no-createrole --no-createdb apache
@@ -149,7 +136,8 @@ vi /data/pgsql_data/pg_hba.conf
 # eg: host    fitsdata    all         10.1.5.47/32          trust
 
 exit
-sudo /etc/init.d/postgresql restart
+sudo systemctl restart postgresql.service
+
 
 # Need to set postgresql and httpd to start at boot
 sudo /etc/init.d/httpd start
@@ -182,3 +170,7 @@ vi fits_storage_config.py
 python scripts/create_tables.py
 
 # OK, should now be good to go.
+
+# Check with ISG if you need a whitelisted local mail relay on it
+# Check with ISG that the development / operations status of the machine
+
