@@ -2,6 +2,8 @@ import sys
 import os
 import traceback
 import datetime
+import time
+import shutil
 from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
@@ -12,11 +14,29 @@ def check_present(session, filename):
     df = session.query(DiskFile).filter(DiskFile.filename==filename).filter(DiskFile.present==True).first()
     return True if df else False
 
-def copy_over(session, logger, filename):
-    logger.info("Copying over %s", filename)
+def copy_over(session, logger, filename, dryrun):
     src = os.path.join(dhs_perm, filename)
+    dest = os.path.join(storage_root, filename)
+    # If the Destination file already exists, skip it
+    if os.access(dest, os.F_OK | os.R_OK):
+        logger.info("%s already exists on storage_root - skipping", filename)
+        return True
+    # If lastmod time is within 5 secs, DHS may still be writing it. Skip it
+    lastmod = datetime.datetime.fromtimestamp(os.path.getmtime(src))
+    age = datetime.datetime.now() - lastmod
+    age = age.total_seconds()
+    if age < 5:
+        logger.info("%s is too new (%.1f)- skipping this time round", filename, age)
+        return False
+    else:
+        logger.debug("%s age is OK: %.1f seconds", filename, age)
+    # OK, try and copy the file over.
     try:
-        shutil.copy(src, storage_root)
+        if dryrun:
+            logger.info("Dryrun - not actually copying %s", filename)
+        else:
+            logger.debug("Copying %s to %s", filename, storage_root)
+            shutil.copy(src, storage_root)
     except:
         logger.error("Problem copying %s to %s", src, storage_root)
         logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
@@ -59,15 +79,16 @@ with session_scope() as session:
          todo_list = dhs_list - known_list
          logger.info("%d new files to check", len(todo_list))
          for filename in todo_list:
+             if 'tmp' in filename:
+                 logger.info("Ignoring tmp file: %s", filename)
+                 continue
              filename = os.path.split(filename)[1]
              if check_present(session, filename):
                  logger.debug("%s is already present in database", filename)
+                 known_list.add(filename)
              else:
-                 if options.dryrun:
-                     logger.info("Dryrun - would copy file %s", filename)
-                 else:
-                     copy_over(session, logger, filename)
-             known_list.add(filename)
+                 if copy_over(session, logger, filename, options.dryrun):
+                     known_list.add(filename)
          logger.debug("Pass complete, sleeping")
          time.sleep(5)
          logger.debug("Re-scanning")
