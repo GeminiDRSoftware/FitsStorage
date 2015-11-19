@@ -1,7 +1,9 @@
 import urllib2
 import json
-from functools import partial
+from functools import partial, wraps
 import inspect
+
+from .null_logger import EmptyLogger
 
 ##########################################################################################
 #
@@ -88,13 +90,15 @@ def get_arguments(environ):
         raise WSGIError("The data for this query is not valid JSON")
 
 class ApiCall(object):
-    def __init__(self, call):
+    def __init__(self, call, logger):
         self._call  = call
         self.__doc__ = call.__doc__
+        self.log     = logger
 
     def __call__(self, environ, start_response):
         query = get_arguments(environ)
         try:
+            self.log.debug("Calling %s with arguments %s", self._call.func_name, query)
             ret = self._call(**query)
         except TypeError as e:
             args, _, _, defaults = inspect.getargspec(self._call)
@@ -117,5 +121,7 @@ class ApiCall(object):
         start_response("200 OK", [('Content-Type', 'application/json')])
         return [result]
 
-def json_api_call(fn):
-    return ApiCall(fn)
+def json_api_call(logger=None):
+    def wrapper(fn):
+        return wraps(fn)(ApiCall(fn, logger or EmptyLogger()))
+    return wrapper

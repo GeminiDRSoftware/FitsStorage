@@ -72,16 +72,19 @@ def fits_is_unchanged(path, new_values):
 
 def fits_apply_changes(path, changes):
     if fits_is_unchanged(path, changes):
+        logger.info("fits_apply_changes: %s [NOT MODIFIED]", path)
         return False
 
     modify_multiple_cards(path, changes, ext=0)
+    logger.info("fits_apply_changes: %s [%s]", path, str(changes))
     return True
 
-@json_api_call
+@json_api_call(logger)
 def set_image_metadata(path, changes):
     try:
         return fits_apply_changes(path, changes)
-    except (pf.VerifyError, IOError):
+    except (pf.VerifyError, IOError) as e:
+        logger.debug("Error: %s", str(e))
         raise WSGIError("There were problems when opening/modifying the file")
 
 #######################################################################################
@@ -94,7 +97,7 @@ import shutil
 if using_s3:
     from fits_storage.utils.aws_s3 import get_helper
 
-@json_api_call
+@json_api_call(logger)
 def ingest_upload(filename, fileuploadlog_id=None, processed_cal=False):
     logger.info("ingest_upload: filename: %s, fileuploadlog_id: %d, processed_cal: %s", filename, fileuploadlog_id, processed_cal)
     path = processed_cals_path if processed_cal else ''
@@ -163,7 +166,7 @@ def ingest_upload(filename, fileuploadlog_id=None, processed_cal=False):
 
 #######################################################################################
 
-@json_api_call
+@json_api_call(logger)
 def log_message(message, args=(), level=logging.INFO):
     try:
         args = tuple(args)
