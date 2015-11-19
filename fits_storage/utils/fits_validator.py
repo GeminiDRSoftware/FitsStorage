@@ -100,7 +100,7 @@ compatible_types = {
 # is to return the same value that has been passed, unchanged
 identity_lambda = lambda x: x
 identity_lambda.__doc__ = """This function takes a single argument an returns it unchanged.
-It is mean to be used as a placeholder for transforms"""
+It is meant to be used as a placeholder for transforms"""
 
 def coerceValue(val):
     """Takes a string and tries to convert it to some known value type using the
@@ -262,7 +262,8 @@ class TransformedStringRangeTest(object):
 
 class Range(object):
     """Range testing class. Instances of this class check if a certain value is
-       within the limits of a float (or integer) range"""
+       within the limits of a range of values of integer, floating point, or
+       datetime types. """
     def __init__(self, low, high, type):
         self.low, self.high, self.type = low, high, type
 
@@ -933,18 +934,6 @@ class RuleSetFactory(object):
             )
         return ret
 
-
-#def ruleFactory(text, ruleSetClass):
-#    "Returns a RuleSet or a group of them, depending on the input"
-#    # We don't want to write complicated parsers, but if we would want to generalize
-#    # the syntax, we could use the following EBNF:
-#    #
-#    #   list = ( group "," )* group
-#    #  group = ( word "|")* word | "(" list ")"
-#    if "|" in text:
-#        return AlternateRuleSets([ruleSetClass(x.strip()) for x in text.split('|')])
-#
-#    return ruleSetClass(text)
 
 class RuleSet(list):
     """RuleSet is a representation of one of the rule files. It contains
