@@ -1,4 +1,5 @@
 User-agent: *
 Disallow: /whoami/
 Disallow: /download/
+Disallow: /preview/
 Disallow: /file/
