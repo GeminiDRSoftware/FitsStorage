@@ -17,6 +17,11 @@ from .. import gemini_metadata_utils as gmu
 # and will just return an empty list of calibs. This decorator is just some syntactic
 # sugar for that common pattern.
 def not_processed(f):
+    """not_processed(self, processed=False, *args, **kw)
+
+       Decorator for association methods that do not implement the search for processed
+       calibs. It defaults to `processed` = ``False``. If `processed` is ``True`` it returns
+       an empty list, instead of calling the real method"""
     @functools.wraps(f)
     def wrapper(self, processed=False, *args, **kw):
         if processed:
@@ -27,6 +32,11 @@ def not_processed(f):
 
 # Another common pattern: calibrations that don't apply for imaging
 def not_imaging(f):
+    """not_imaging(self, *args, **kw)
+
+       Decorator for association methods that do not implement the search for imaging
+       calibs. If ``self.descriptors['spectroscopy']`` is ``False`` it returns an empty list,
+       instead of calling the real method"""
     @functools.wraps(f)
     def wrapper(self, *args, **kw):
         if self.descriptors['spectroscopy'] == False:
@@ -37,6 +47,11 @@ def not_imaging(f):
 
 # Another common pattern: calibrations that don't apply for spectroscopy
 def not_spectroscopy(f):
+    """not_spectroscopy(self, *args, **kw)
+
+       Decorator for association methods that do not implement the search for spectroscopy
+       calibs. If ``self.descriptors['spectroscopy']`` is ``True`` it returns an empty list,
+       instead of calling the real method"""
     @functools.wraps(f)
     def wrapper(self, *args, **kw):
         if self.descriptors['spectroscopy'] == True:
@@ -50,7 +65,15 @@ class CalQuery(object):
 
        Using CalQuery reduces a great deal of the boilerplate code and provides a
        kind of DSL (Domain Specific Language) that should make query building more
-       natural -or easier to understand- for the calibrations."""
+       natural -or easier to understand- for the calibrations.
+
+       The object is initialized with a valid `session` object, the ORM class associated
+       to the relevant instrument (`instrClass`), and a list of the possible `descriptors`
+       accepted by the instrument.
+
+       If `full_query` is ``True``, the query will return ``(Header, DiskFile, File)`` tuples.
+       If it is ``False`` (by default), it will just return ``(Header,)`` tuples. Activate the
+       full query if will need access to the ``DiskFile/File`` associated with a Header."""
 
     def __init__(self, session, instrClass, descriptors, full_query=False):
         # Keep a copy of the instrument descriptors and start the query with
@@ -68,7 +91,7 @@ class CalQuery(object):
                            .filter(Header.qa_state != 'Fail')) # Knock out the FAILs
 
     def __call_through(self, query_method, *args, **kw):
-        "Used to make arbitrary calls to the internal SQLAlchemy query object"
+        "Used internally to make arbitrary calls to the internal SQLAlchemy query object"
         self.query = query_method(*args, **kw)
         return self
 
@@ -76,21 +99,22 @@ class CalQuery(object):
         """Takes a number of arguments (`args`) which are SQLAlchemy expressions.
 
            Adds each one of those expressions to the internal query as filters, effectively
-           adding conditions like this: `args[0] AND args[1] AND ...`"""
+           adding conditions like this: ``args[0] AND args[1] AND ...``"""
         for arg in args:
             self.query = self.query.filter(arg)
 
         return self
 
     def match_descriptors(self, *args):
-        """In our usual queries, there are plenty of simple filters like this:
+        """Takes a numbers of expressions (eg. ``Header.foo``, ``Instrument.bar``), figures out the
+           descriptor to use from the column name, and adds the right filter to the query, replacing
+           boilerplate code like the following:
+           ::
 
-              Header.foo == descriptors['foo']
-              Instrument.bar == descriptors['bar']
+               Header.foo == descriptors['foo']
+               Instrument.bar == descriptors['bar']
 
-           `match_descriptors` takes a numbers of expressions (eg. `Header.foo`, `Instrument.bar`),
-           figures out the descriptor to use from the column name, and adds the right filter to
-           the query."""
+        """
         for arg in args:
             field = arg.expression.name
             self.query = self.query.filter(arg == self.descr[field])
@@ -99,12 +123,14 @@ class CalQuery(object):
 
     def max_interval(self, **kw):
         """Max interval requires keyword arguments. The arguments it accepts are the same as
-           `datetime.timedelta` (`days`, `seconds`, ...)
+           :py:class:`datetime.timedelta` (`days`, `seconds`, ...)
 
            Using those arguments, it will construct a timedelta and a filter will be added
            that constrains the returned calibrations so that their datetimes fit in:
+           ::
 
-                header.ut_datetime-delta < cal.ut_datetime < header.ut_datetime+delta"""
+                header.ut_datetime-delta < cal.ut_datetime < header.ut_datetime+delta
+        """
         max_int = timedelta(**kw)
         datetime_lo = self.descr['ut_datetime'] - max_int
         datetime_hi = self.descr['ut_datetime'] + max_int
@@ -117,8 +143,10 @@ class CalQuery(object):
     def if_(self, condition, methodname, *args, **kw):
         """A convenience for filters that are added conditionally. To be used like in this example
            from GMOS:
+           ::
 
-             if_(self.descriptors['nodandshuffle'], 'match_descriptors', Gmos.nod_count, Gmos.nod_pixels)
+               if_(self.descriptors['nodandshuffle'], 'match_descriptors',
+                   Gmos.nod_count, Gmos.nod_pixels)
 
            This method exists only so that we can construct a whole query just by chaining."""
         if condition:
@@ -135,9 +163,9 @@ class CalQuery(object):
              1) See if the the internal SQLAlchemy query has that attribute. In this way we allow
                 arbitrary queries to be formed, but this shouldn't be abused.
              2) See if the attribute is one of the observation types. If it is, then invoking the
-                returned object will be the same as doing `.observation_type('attribute_name')`
-             3) Same as 2), but with observation classes and the `.observation_class` method
-             4) Same as 2), but with reduction states and the `.reduction` method
+                returned object will be the same as doing ``.observation_type('attribute_name')``
+             3) Same as 2), but with observation classes and the `observation_class` method
+             4) Same as 2), but with reduction states and the `reduction` method
              5) If nothing matches, raise an AttributeError"""
         try:
             return functools.partial(self.__call_through, getattr(self.query, name))
@@ -154,9 +182,9 @@ class CalQuery(object):
     def all(self, limit, default_order = True):
         """Returns a list of results, limited in number by the `limit` argument.
 
-           If `default_order` is `True` (the default), then the results are sorted by absolute
-           time separation. If it's `False`, no ordering will be performed; if the user wanted some sorting,
-           it has to be applied *before* invoking this method."""
+           If `default_order` is ``True``, then the results are sorted by absolute time separation. If it
+           is ``False``, no ordering will be performed; if the user wanted some sorting,
+           it has to be applied **before** invoking this method."""
         if default_order:
             # Order by absolute time separation.
             targ_ut_dt_secs = int((self.descr['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
@@ -173,7 +201,7 @@ class CalQuery(object):
            match within the specified tolerance.
 
            There's an extra keyword argument, `condition`: if condition is false, the tolerances
-           won't be added (by default it's true). This is so that we can add or skip the tolerance
+           won't be added (by default it is ``True``). This is so that we can add or skip the tolerance
            tests to the query using just call chaining, to keep everything compact."""
         if condition:
             for descriptor, tol in kw.items():
@@ -192,50 +220,78 @@ class CalQuery(object):
         return self
 
     def raw(self):
+        "Filter: shorthand for ``reduction('RAW')``"
         return self.reduction('RAW')
 
     def reduction(self, red):
+        "Filter: only images with ``Header.reduction`` = `red`"
         self.query = self.query.filter(Header.reduction == red)
         return self
 
     def observation_type(self, ot):
+        "Filter: only images with ``Header.observation_type`` = `ot`"
         self.query = self.query.filter(Header.observation_type == ot)
         return self
 
     def observation_class(self, oc):
+        "Filter: only images with ``Header.observation_class`` = `oc`"
         self.query = self.query.filter(Header.observation_class == oc)
         return self
 
     def object(self, ob):
+        "Filter: only images with ``Header.object`` = `ob`"
         self.query = self.query.filter(Header.object == ob)
         return self
 
     def spectroscopy(self, status):
+        "Filter: only images with ``Header.spectroscopy`` = `status`"
         self.query = self.query.filter(Header.spectroscopy == status)
         return self
 
     def raw_or_processed(self, name, processed):
+        """Filter. If `processed` is ``True``, it is a shorthand for ``reduction('PROCESSED_' + name)``.
+           If not `processed`, then it is equivalent to `raw().observation_type(name)`"""
         if processed:
             return self.reduction('PROCESSED_' + name)
         else:
             return self.raw().observation_type(name)
 
     def bias(self, processed=False):
+        "Filter: shorthand for ``raw_or_processed('BIAS', processed)``"
         return self.raw_or_processed('BIAS', processed)
 
     def dark(self, processed=False):
+        "Filter: shorthand for ``raw_or_processed('DARK', processed)``"
         return self.raw_or_processed('DARK', processed)
 
     def flat(self, processed=False):
+        "Filter: shorthand for ``raw_or_processed('FLAT', processed)``"
         return self.raw_or_processed('FLAT', processed)
 
     def arc(self, processed=False):
+        "Filter: shorthand for ``raw_or_processed('ARC', processed)``"
         return self.raw_or_processed('ARC', processed)
 
     def pinhole(self, processed=False):
+        "Filter: shorthand for ``raw_or_processed('PINHOLE', processed)``"
         return self.raw_or_processed('PINHOLE', processed)
 
     def photometric_standard(self, processed=False, **kw):
+        """Filter: when `processed` is ``True`` this works as a shorthand for ``reduction('PROCESSED_PHOTSTANDARD')``.
+
+           When not `processed`, it is equivalent to taking all the keyword arguments' names, using them to obtain
+           custom property-name-based filters, and chaining them, like in this example:
+           ::
+
+               photometric_standard(OBJECT=True, partnerCal=True)
+
+           is a shorthand for:
+           ::
+
+               OBJECT().partnerCal()
+
+           Note that the values for the arguments are discarded, but we still need to provide something to be
+           able to pass keyword arguments"""
         if processed:
             # NOTE: PROCESSED_PHOTSTANDARDS are not used anywhere; this is an advance...
             return self.reduction('PROCESSED_PHOTSTANDARD')
@@ -246,6 +302,21 @@ class CalQuery(object):
             return ret
 
     def telluric_standard(self, processed=False, **kw):
+        """Filter: when `processed` is ``True`` this works as a shorthand for ``reduction('PROCESSED_TELLURIC')``.
+
+           When not `processed`, it is equivalent to taking all the keyword arguments' names, using them to
+           obtain custom property-name-based filters, and chaining them, like in this example:
+           ::
+
+               telluric_standard(OBJECT=True, science=True)
+
+           is a shorthand for:
+           ::
+
+               OBJECT().science()
+
+           Note that the values for the arguments are discarded, but we still need to provide something to be
+           able to pass keyword arguments"""
         if processed:
             return self.reduction('PROCESSED_TELLURIC')
         else:
