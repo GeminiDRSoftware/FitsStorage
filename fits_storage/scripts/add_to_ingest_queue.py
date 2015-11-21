@@ -59,8 +59,8 @@ named_intervals = {
 
 if options.file_re in named_intervals:
     then = now.date()
-    dates = [then-(delta*n) for n in range(named_intervals[options.file])]
-    file_re = '|'.join(d.date().strftime("%Y%m%d") for d in dates)
+    dates = [then-(delta*n) for n in range(named_intervals[options.file_re])]
+    file_re = '|'.join(d.strftime("%Y%m%d") for d in dates)
 
 files = []
 if file_re:
