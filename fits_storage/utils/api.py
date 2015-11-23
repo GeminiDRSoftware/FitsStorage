@@ -98,7 +98,7 @@ class ApiCall(object):
     def __call__(self, environ, start_response):
         query = get_arguments(environ)
         try:
-            self.log.debug("Calling %s with arguments %s", self._call.func_name, query)
+            self.log.info("Calling %s with arguments %s", self._call.func_name, query)
             ret = self._call(**query)
         except TypeError as e:
             args, _, _, defaults = inspect.getargspec(self._call)
