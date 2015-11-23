@@ -17,6 +17,7 @@ parser = OptionParser()
 parser.add_option("--emailfrom", action="store", dest="fromaddr", default="fitsdata@gemini.edu", help="Email Address to send from")
 parser.add_option("--replyto", action="store", dest="replyto", default="fitsadmin@gemini.edu", help="Set a Reply-To email header")
 parser.add_option("--date", action="store", dest="date", default="today", help="Specify an alternate date to check for data from")
+parser.add_option("--check", action="store_true", dest="check", help="Send the You've got data to CHECK emails")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 (options, args) = parser.parse_args()
@@ -31,13 +32,20 @@ cre = re.compile(r'\.fits')
 
 logger.info("YouveGotDataEmail.py starting for date %s" % options.date)
 
-text_tmpl = """\
-New data has been taken for {sel}. The attached html file gives details.
+if options.check:
+    text_tmpl = """\
+    New data has been marked with QA state CHECK for {sel}. The attached html file gives details.
 
-The archive search for this data may be found at: {form_url}
+    Please check the data and set the QA state appropriately.
+    """
+else:
+    text_tmpl = """\
+    New data has been taken for {sel}. The attached html file gives details.
 
-Data Quality assessment will proceed as normal over the next few days.
-"""
+    The archive search for this data may be found at: {form_url}
+
+    Data Quality assessment will proceed as normal over the next few days.
+    """
 
 # Parse out "today" in the date. This works on the web site, but if they wait a day before
 # clicking the link, they'll get the wrong day.
@@ -53,17 +61,23 @@ else:
 # The project / email list. Get from the database
 with session_scope() as session:
     for notif in session.query(Notification):
-        if (notif.selection is None) or (notif.to is None):
+        if (notif.selection is None) or (notif.piemail is None):
             logger.error("Critical fields are None in notification id: %s; label: %s", notif.id, notif.label)
         else:
-            url = "%s/summary/nolinks/%s/%s" % (url_base, options.date, notif.selection)
+            selection = notif.selection
+            if options.check:
+                selection += '/CHECK'
+            url = "%s/summary/nolinks/%s/%s" % (url_base, options.date, selection)
             searchform_url = "%s/searchform/%s/%s" % (url_base, options.date, notif.selection)
 
             logger.debug("URL is: %s", url)
             html = urllib2.urlopen(url).read()
 
             if cre.search(html):
-                subject = "New Data for %s" % notif.selection
+                if options.check:
+                    subject = "Data set to CHECK for %s" % notif.selection
+                else:
+                    subject = "New Data for %s" % notif.selection
                 logger.info(subject)
 
                 msg = MIMEMultipart()
@@ -75,21 +89,32 @@ with session_scope() as session:
 
                 msg['Subject'] = subject
                 msg['From'] = options.fromaddr
-                msg['To'] = notif.to
-                msg['Cc'] = notif.cc
-                msg['Reply-To'] = options.replyto
+                if options.check:
+                     msg['To'] = notif.csemail
+                     msg['Cc'] = ''
+                else:
+                    msg['To'] = notif.piemail
+                    if notif.ngoemail is not None and notif.csemail is not None:
+                        msg['Cc'] = ', '.join([notif.ngoemail, notif.csemail])
+                    elif notif.ngoemail is not None:
+                        msg['Cc'] = notif.ngoemail
+                    elif notif.csemail is not None:
+                        msg['Cc'] = notif.csemail
+                    msg['Reply-To'] = options.replyto
 
                 msg.attach(part1)
                 msg.attach(part2)
 
-                fulllist = notif.to.split(',')
-                if notif.cc:
-                    fulllist += notif.cc.split(',')
+                fulllist = msg['To'].split(',')
+                if msg['Cc']:
+                    fulllist.append(msg['Cc'].split(','))
+               
                 # For now, Bcc fitsadmin on all the emails to see that it's working...
                 fulllist.append('fitsadmin@gemini.edu')
 
                 try:
                     logger.info("Sending Email- To: %s; CC: %s; Subject: %s", msg['To'], msg['Cc'], msg['Subject'])
+                    logger.debug("Full list: %s", fulllist)
                     smtp = smtplib.SMTP(smtp_server)
                     smtp.sendmail(options.fromaddr, fulllist, msg.as_string())
                     retval = smtp.quit()

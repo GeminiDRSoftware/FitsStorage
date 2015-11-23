@@ -45,13 +45,9 @@ def ingest_odb_xml(session, xml):
             if notifyPi == 'Yes' and gp.valid:
                 n = Notification(label)
                 n.selection = "%s/science" % progid
-                n.to = piEmail
-                if len(ngoEmail) == 0:
-                    n.cc = csEmail
-                elif len(csEmail) == 0:
-                    n.cc = ngoEmail
-                else:
-                    n.cc = "%s,%s" % (ngoEmail, csEmail)
+                n.piemail = piEmail
+                n.ngoemail = ngoEmail
+                n.csemail = csEmail
                 report.append("Adding notification %s" % label)
                 session.add(n)
                 session.commit()
@@ -64,14 +60,17 @@ def ingest_odb_xml(session, xml):
             # Already exists in DB, check for updates.
             report.append("%s is already present, check for updates" % label)
             n = query.first()
-            if n.to != piEmail:
-                report.append("Updating to for %s" % label)
-                n.to = piEmail
-                session.commit()
-            if n.cc != "%s,%s" % (ngoEmail, csEmail):
-                report.append("Updating cc for %s" % label)
-                n.cc = "%s,%s" % (ngoEmail, csEmail)
-                session.commit()
+            if n.piemail != piEmail:
+                report.append("Updating PIemail for %s" % label)
+                n.piemail = piEmail
+            if n.ngoemail != ngoEmail:
+                report.append("Updating NGOemail for %s" % label)
+                n.ngoemail = ngoEmail
+            if n.csemail != csEmail:
+                report.append("Updating CSemail for %s" % label)
+                n.csemail = csEmail
+
+            session.commit()
             # If notifyPi is No, delete it from the noficiation table
             if notifyPi == 'No':
                 report.append("Deleting %s: notifyPi set to No")

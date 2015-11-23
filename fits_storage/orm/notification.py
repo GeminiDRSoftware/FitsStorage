@@ -12,8 +12,9 @@ class Notification(Base):
     id = Column(Integer, primary_key=True)
     label = Column(Text)
     selection = Column(Text)
-    to = Column(Text)
-    cc = Column(Text)
+    piemail = Column(Text)
+    ngoemail = Column(Text)
+    csemail = Column(Text)
     internal = Column(Boolean)
 
     def __init__(self, label):

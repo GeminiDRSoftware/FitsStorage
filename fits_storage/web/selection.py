@@ -79,6 +79,7 @@ getselection_simple_associations = {
     'NotFail': 'qa_state',
     'Lucky': 'qa_state',
     'AnyQA': 'qa_state',
+    'CHECK': 'qa_state',
     'AO': 'ao',
     'NOTAO': 'ao',
     }

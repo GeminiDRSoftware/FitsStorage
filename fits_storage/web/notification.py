@@ -37,10 +37,12 @@ def notification(session, req):
                     notif.label = value
                 if field == 'newsel':
                     notif.selection = value
-                if field == 'newto':
-                    notif.to = value
-                if field == 'newcc':
-                    notif.cc = value
+                if field == 'newpiemail':
+                    notif.piemail = value
+                if field == 'newngoemail':
+                    notif.ngoemail = value
+                if field == 'newcsemail':
+                    notif.csemail = value
                 if field == 'internal':
                     if value == 'Yes':
                         notif.internal = True
@@ -60,8 +62,9 @@ def notification(session, req):
         notifications = session.query(Notification).order_by(Notification.id),
         mod_list      = [('newlabel', 'Update notification label'),
                          ('newsel', 'Update data selection'),
-                         ('newto', 'Update Email To'),
-                         ('newcc', 'Update Email Cc'),
+                         ('newpiemail', 'Update PI Email'),
+                         ('newngoemail', 'Update NGO Email'),
+                         ('newcsemail', 'Update CS Email'),
                          ('internal', 'Internal Email'),
                          ('delete', 'Delete')]
         )
