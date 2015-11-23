@@ -19,7 +19,7 @@ After=syslog.target network.target
 #  PYTHONPATH=/opt/FitsStorage:/opt/python_modules/lib/python2.7/site-packages:/opt/gemini_python
 
 [Service]
-EnvironmentFile=/path/to/some/environment/file
+Environment=PYTHONPATH=/opt/FitsStorage:/opt/gemini_python
 User=fitsdata
 ExecStart=python /opt/FitsStorage/fits_storage/scripts/api_backend.py --demon
 Restart=always
