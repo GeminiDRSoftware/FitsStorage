@@ -7,6 +7,7 @@ import shutil
 from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.utils.ingestqueue import IngestQueueUtil
 from fits_storage.fits_storage_config import using_s3, storage_root, dhs_perm
 
 # Utility functions
@@ -14,9 +15,15 @@ def check_present(session, filename):
     df = session.query(DiskFile).filter(DiskFile.filename==filename).filter(DiskFile.present==True).first()
     return True if df else False
 
-def copy_over(session, logger, filename, dryrun):
+def copy_over(session, iq, logger, filename, dryrun):
     src = os.path.join(dhs_perm, filename)
     dest = os.path.join(storage_root, filename)
+    # Hack for testing
+    if filename.startswith('S201511'):
+        pass
+    else:
+        logger.info("Skipping for testing: %s", filename)
+        return True
     # If the Destination file already exists, skip it
     if os.access(dest, os.F_OK | os.R_OK):
         logger.info("%s already exists on storage_root - skipping", filename)
@@ -26,7 +33,7 @@ def copy_over(session, logger, filename, dryrun):
     age = datetime.datetime.now() - lastmod
     age = age.total_seconds()
     if age < 5:
-        logger.info("%s is too new (%.1f)- skipping this time round", filename, age)
+        logger.debug("%s is too new (%.1f)- skipping this time round", filename, age)
         return False
     else:
         logger.debug("%s age is OK: %.1f seconds", filename, age)
@@ -35,8 +42,10 @@ def copy_over(session, logger, filename, dryrun):
         if dryrun:
             logger.info("Dryrun - not actually copying %s", filename)
         else:
-            logger.debug("Copying %s to %s", filename, storage_root)
+            logger.info("Copying %s to %s", filename, storage_root)
             shutil.copy(src, storage_root)
+            logger.info("Adding %s to IngestQueue", filename)
+            iq.add_to_queue(filename, '', force=False, force_md5=False, after=None)
     except:
         logger.error("Problem copying %s to %s", src, storage_root)
         logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
@@ -74,6 +83,8 @@ logger.info("... found %d files", len(dhs_list))
 known_list = set()
 
 with session_scope() as session:
+     logger.debug("Instantiating IngestQueueUtil object")
+     iq = IngestQueueUtil(session, logger)
      logger.info("Starting looping...")
      while True:
          todo_list = dhs_list - known_list
@@ -87,7 +98,7 @@ with session_scope() as session:
                  logger.debug("%s is already present in database", filename)
                  known_list.add(filename)
              else:
-                 if copy_over(session, logger, filename, options.dryrun):
+                 if copy_over(session, iq, logger, filename, options.dryrun):
                      known_list.add(filename)
          logger.debug("Pass complete, sleeping")
          time.sleep(5)
