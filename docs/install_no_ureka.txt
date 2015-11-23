@@ -1,0 +1,189 @@
+clean centos 7 machine standard ISG install. 
+
+- Have ISG set up a user account for you with sudo all.
+
+sudo yum -y install httpd httpd-devel mod_ssl openssl
+sudo chmod oug+rx /var/log/httpd
+sudo yum -y install postgresql postgresql-server postgresql-devel
+
+# Need these extras for Ureka to work:
+sudo yum -y install libX11-devel libXft-devel
+
+# Also need:
+sudo yum -y install gcc gcc-c++ python-pip python-devel libpng-devel blas lapack openblas openblas-devel gcc-gfortran
+
+sudo pip install --upgrade pip
+sudo pip install psycopg2==2.6.1
+sudo pip install sqlalchemy==1.0.8
+sudo pip install pyyaml
+sudo pip install jinja2
+sudo pip install pyfits==3.2.4
+sudo pip install pywcs==1.12
+sudo pip install dateutils
+sudo pip install matplotlib
+sudo pip install scipy
+sudo pip install pandas
+sudo pip install astropy
+
+sudo /usr/sbin/groupadd -g 5179 fitsdata
+sudo /usr/sbin/useradd -c 'FITS data' -u 5179 -g 5179 fitsdata
+sudo passwd fitsdata
+
+# If this is a gemini fits server
+sudo vi /etc/group
+geminidata:x:502:fitsdata
+
+sudo mkdir /opt/FitsStorage
+sudo chown fitsdata:fitsdata /opt/FitsStorage/
+
+sudo mkdir /opt/python_modules
+sudo chown phirst /opt/python_modules
+
+* LOG in as fitsdata and do:
+cd /opt/FitsStorage
+svn checkout http://scisoft/svn/FitsStorage/trunk .
+
+* Log out and back in as yourself (phirst)
+
+#sudo mkdir /opt/Ureka
+#sudo chown phirst /opt/Ureka
+#cd /opt/Ureka
+#cp /opt/FitsStorage/otherfiles/install_ureka_1.5.1 .
+## To do download from stsci, or use local GN / GS versions
+#sh install_ureka_1.5.1
+#sh install_ureka_1.5.1 -t /net/endor/Gemini/astro/iraf/downloads/Ureka_linux-rhe5_64_1.5.1.tar.gz
+
+
+cd /opt/python_modules
+tar xvzf /opt/FitsStorage/otherfiles/mod_python-3.5.0.tgz
+cd mod_python-3.5.0
+which python # should be Ureka one
+whereis apxs # probably /usr/bin/apxs
+./configure --with-apxs=/usr/bin/apxs --prefix=/opt/python_modules
+make
+sudo make install_dso
+cd dist
+vi version.sh
+#comment out GIT line
+python setup.py install --prefix=/opt/python_modules
+
+cd /opt/python_modules
+tar xvzf /opt/FitsStorage/otherfiles/psycopg2-2.6.1.tar.gz
+cd psycopg2-2.6.1
+which pg_config
+# should be /usr/bin/pg_config - else:
+# vi setup.cfg 
+# set pg_config=/usr/bin/pg_config
+python setup.py build
+python setup.py install --prefix=/opt/python_modules
+cd /opt/python_modules
+tar xvzf /opt/FitsStorage/otherfiles/SQLAlchemy-1.0.8.tar.gz
+cd SQLAlchemy-1.0.8
+setenv PYTHONPATH /opt/python_modules/lib/python2.7/site-packages
+python setup.py build
+python setup.py install --prefix=/opt/python_modules
+cd ..
+# Make sure using /astro python, and have DPD pythonpath
+# add /opt/sqlalchemy to python path
+
+cd /opt/python_modules
+tar xvf /opt/FitsStorage/otherfiles/pyinotify-0.8.8.tar.gz
+cd pyinotify
+python setup.py build
+python setup.py install --prefix=/opt/python_modules
+
+# if using s3
+cd /opt/python_modules
+tar xvf /opt/FitsStorage/otherfiles/boto3-1.1.3.tar.gz
+cd boto3-1.1.3
+python setup.py build
+python setup.py install --prefix=/opt/python_modules
+
+# test python import of psycopg2. If fails, then 
+vi /opt/python_modules/lib/python2.7/site-packages/easy-install.pth
+and remove /sdata/Ureka/Ureka/python/lib/python2.7/site-packages
+
+sudo mkdir /opt/fitsverify
+sudo chown phirst /opt/fitsverify
+cd /opt/fitsverify
+tar xvf /opt/FitsStorage/otherfiles/fitsverify.tar
+mv fitsverify/* .
+rmdir fitsverify
+gcc -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L/opt/Ureka/Ureka/python/lib -I/opt/Ureka/Ureka/python/include -lcfitsio -lm -lnsl
+
+sudo mkdir /opt/gemini_python
+sudo chown phirst /opt/gemini_python
+cd /opt/gemini_python
+svn checkout http://chara.hi.gemini.edu/svn/DRSoftware/gemini_python/trunk .
+
+cd
+sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf.d-python.conf /etc/httpd/conf.d/python
+sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf-httpd.conf /etc/httpd/conf/httpd.conf 
+sudo cp /opt/FitsStorage/otherfiles/etc-sysconfig-httpd /etc/sysconfig/httpd
+sudo mkdir /var/www/python-egg-cache
+sudo chmod oug+rwx /var/www/python-egg-cache
+
+# Set up postgres
+sudo mkdir /data/pgsql_data
+sudo chown postgres:postgres /data/pgsql_data
+sudo cp /lib/systemd/system/postgresql.service /etc/systemd/system/
+sudo vi /etc/systemd/system/postgresql.service
+Enviroment=PGDATA=/data/pgsql_data
+sudo systemctl daemon-reload
+sudo postgresql-setup initdb
+sudo systemctl start postgresql.service
+sudo su - postgres
+/usr/bin/createuser --no-superuser --no-createrole --createdb fitsdata
+/usr/bin/createuser --no-superuser --no-createrole --no-createdb apache
+vi /data/pgsql_data/postgresql.conf
+#shared_buffers = 256MB
+# 25% of memory if memory > 1GB
+
+effective_cache_size = 8000MB
+
+#
+# If there will be remote access to this database (eg for eavedropping)
+# set listen_addresses = '*' in postgresql.conf, also:
+vi /data/pgsql_data/pg_hba.conf
+# At end of file, add a comment line to say what you're adding, then
+# eg: host    fitsdata    all         10.1.5.47/32          trust
+
+exit
+sudo systemctl restart postgresql.service
+
+
+# Need to set postgresql and httpd to start at boot
+sudo /etc/init.d/httpd start
+sudo /sbin/chkconfig httpd on
+sudo /sbin/chkconfig postgresql on
+
+
+# Log and backup directories
+sudo mkdir /data/logs
+sudo chown fitsdata /data/logs
+sudo mkdir /data/backups
+sudo chown fitsdata /data/backups
+sudo mkdir /data/upload_staging
+sudo chown fitsdata /data/upload_staging
+sudo chmod oug+rwx /data/upload_staging
+sudo mkdir /data/z_staging
+sudo chown fitsdata /data/z_staging
+# if using s3
+sudo mkdir /data/s3_staging
+sudo chown fitsdata /data/s3_staging
+# apache needs access to this to download preview images now
+sudo chmod oug+rw /data/s3_staging
+
+
+# Now get a shell as fitsdata
+cd /opt/FitsStorage/
+vi fits_storage_config.py
+# Set things up as appropriate
+/usr/bin/createdb fitsdata
+python scripts/create_tables.py
+
+# OK, should now be good to go.
+
+# Check with ISG if you need a whitelisted local mail relay on it
+# Check with ISG that the development / operations status of the machine
+
