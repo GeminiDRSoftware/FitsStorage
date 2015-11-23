@@ -55,7 +55,8 @@ with session_scope() as session:
     i = 0
     j = 0
     missingfiles = []
-    for df in query:
+    for dfid in query:
+        df = session.query(DiskFile).get(dfid[0])
         if using_s3:
             logger.debug("Getting s3 key for %s" % df.filename)
             exists = s3.exists_key(df.filename)
