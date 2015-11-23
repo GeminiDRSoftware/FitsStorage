@@ -165,8 +165,10 @@ def getselection(things):
                 selection[kw] = val
             elif thing in getselection_simple_associations:
                 selection[getselection_simple_associations[thing]] = thing
-            elif GeminiProgram(thing).valid or key == 'progid':
+            elif GeminiProgram(thing).valid:
                 selection['program_id'] = GeminiProgram(thing).program_id
+            elif key == 'progid':
+                selection['program_id'] = value
             elif GeminiObservation(thing).observation_id or key == 'obsid':
                 selection['observation_id'] = value
             elif GeminiDataLabel(thing).datalabel or key == 'datalabel':
