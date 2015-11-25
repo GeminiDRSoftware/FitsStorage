@@ -20,6 +20,7 @@ parser.add_option("--path", action="store", dest="path", default = "", help="Use
 parser.add_option("--force", action="store_true", dest="force", default = False, help="Force re-ingestion of these files unconditionally")
 parser.add_option("--force_md5", action="store_true", dest="force_md5", default = False, help="Force checking of file change by md5 not just lastmod date")
 parser.add_option("--after", action="store", dest="after", default = None, help="ingest only after this datetime")
+parser.add_option("--newfiles", action="store", type="int", dest="newfiles", default = None, help="Only queue files that have been modified in the last N days")
 
 options, args = parser.parse_args()
 path = options.path
@@ -98,9 +99,21 @@ if n > 5000:
     logger.info("That's a lot of files. Hit ctrl-c within 5 secs to abort")
     time.sleep(6)
 
+if options.newfiles:
+    now = datetime.datetime.now()
+    newfiles_seconds = options.newfiles * 86400
+
 with session_scope() as session:
     iq = IngestQueueUtil(session, logger)
     for i, filename in enumerate(thefiles, 1):
+        if options.newfiles:
+            fullpath = os.path.join(fulldirpath, filename)
+            mtime = datetime.datetime.fromtimestamp(os.path.getmtime(fullpath))
+            age = now - mtime
+            age = age.total_seconds()
+            if age > newfiles_seconds:
+                logger.debug("Skipping %s as it is older than %.1f seconds", filename, newfiles_seconds)
+                continue
         logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
         iq.add_to_queue(filename, path, force=options.force, force_md5=options.force_md5, after=options.after)
 
