@@ -61,7 +61,8 @@ def queuestatus_tb(req, qshortname, oid):
 
 QUEUELIMIT = 200
 
-@needs_login(staffer=True)
+# only require staff access if this is the archive
+@needs_login(staffer=True, archive_only=True)
 def queuestatus(req, things):
     if len(things) == 1 and things[0] == 'json':
         return queuestatus_update(req, things)
