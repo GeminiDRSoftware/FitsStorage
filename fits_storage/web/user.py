@@ -7,7 +7,7 @@ from sqlalchemy import desc
 from ..orm import session_scope, NoResultFound
 from ..orm.user import User
 
-from ..fits_storage_config import fits_servername, smtp_server
+from ..fits_storage_config import fits_servername, smtp_server, use_as_archive
 
 from . import templating
 
@@ -617,7 +617,7 @@ class AccessForbidden(Exception):
 DEFAULT_403_TEMPLATE = 'errors/forbidden.html'
 JSON_403_TEMPLATE = 'errors/forbidden.json'
 
-def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=False, content_type='html', annotate=None):
+def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=False, content_type='html', annotate=None, archive_only=False):
     """Decorator for functions that need a user to be logged in, or some sort of cookie
        to be set. The basic use is (notice the decorator parenthesis, they're important):
 
@@ -650,7 +650,10 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
 
          - content_type='...'
            Can be set to `html` (the default) or `json`, depending on the kind of answer
-           we want to provide, in case that the access is forbidden"""
+           we want to provide, in case that the access is forbidden
+
+         - archive_only=(False|True)
+           If True, authentication is only required if this is an archive server"""
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(req, *args, **kw):
@@ -676,6 +679,9 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
                         except KeyError:
                             pass
 
+                if archive_only and not use_as_archive:
+                    # Bypass protection - archive_only and not the archive
+                    got_magic = True
                 if not got_magic:
                     if only_magic:
                         raise AccessForbidden("Could not find a proper magic cookie for a cookie-only service", template=template, content_type=ctype, annotate=annotate)
