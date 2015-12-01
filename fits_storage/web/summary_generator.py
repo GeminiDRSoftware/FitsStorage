@@ -336,6 +336,7 @@ class SummaryGenerator(object):
             # The following code figures out where to extra the information from,
             # and sets the appropriate attribute.
 
+            c.text = None
             if col.summary_func:
                 value = getattr(self, col.summary_func)(header=header,
                                                         diskfile=diskfile,

@@ -15,7 +15,7 @@
 <tr class='alternating'>
 {%- for column in row.columns %}
  <td>
-  {%- if column.text -%}
+  {%- if column.text != None -%}
 {{ column.text|e }}
   {%- elif column.content -%}
     {%- if column.content.prop_message -%}{{ prop_message(column.content) }}
