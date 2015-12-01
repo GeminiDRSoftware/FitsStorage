@@ -17,7 +17,7 @@
  <td>
   {%- if column.text != None -%}
 {{ column.text|e }}
-  {%- elif column.content -%}
+  {%- elif column.content != None -%}
     {%- if column.content.prop_message -%}{{ prop_message(column.content) }}
       {%- elif column.key == 'filename' -%}{{ generate_filename(column.content) }}
       {%- elif column.key == 'data_label' -%}{{ generate_datalabel(column.content, row.uri) }}
