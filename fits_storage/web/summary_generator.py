@@ -267,7 +267,7 @@ class SummaryGenerator(object):
             'present':     ColDef(heading      = 'Present',
                                   sortarrows   = False,
                                   diskfile_attr = 'present'),
-            'entrytime':   ColDef(heading      = 'Present',
+            'entrytime':   ColDef(heading      = 'Entry Time',
                                   sortarrows   = False,
                                   diskfile_attr = 'entrytime'),
             'lastmod':     ColDef(heading      = 'LastMod',
