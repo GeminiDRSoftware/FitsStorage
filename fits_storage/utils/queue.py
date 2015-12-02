@@ -63,6 +63,7 @@ def pop_queue(queue_class, session, logger, fast_rebuild=False):
 
         if not fast_rebuild:
             queue_class.rebuild(session, qelement)
+            session.flush()
 
         # Make the qelement into a transient instance before we return it
         # This detaches it from the session, basically it becomes a convenience container for the
