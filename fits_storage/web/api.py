@@ -13,6 +13,8 @@ from .user import needs_login
 from ..fits_storage_config import storage_root
 from ..fits_storage_config import magic_api_cookie, api_backend_location
 
+from sqlalchemy import desc
+
 from mod_python import apache, util
 from contextlib import contextmanager
 import os
@@ -56,7 +58,10 @@ def lookup_diskfile(session, query):
     try:
         if 'data_label' in query:
             label = query['data_label']
-            df = session.query(DiskFile).join(Header).filter(DiskFile.present == True).filter(Header.data_label == label).one()
+            # There can be multiple files with the same data label when things go wrong with the observing system.
+            # In that case, we pick the highest filename which will be the later file taken - which is usually the 
+            # one that didn't fail.
+            df = session.query(DiskFile).join(Header).filter(DiskFile.present == True).filter(Header.data_label == label).order_by(desc(DiskFile.filename)).first()
         elif 'filename' in query:
             label = query['filename']
             df = session.query(DiskFile).filter(DiskFile.present == True).filter(DiskFile.filename == label).one()
@@ -133,7 +138,7 @@ def update_headers(req):
                     response.append(error_response(e.message, id=label))
                 except ApiProxyError:
                     # TODO: Actually log this and tell someone about it...
-                    response.append(error_response("An internal error ocurred and your query could not be performed. It has been logged"))
+                    response.append(error_response("An internal error occurred and your query could not be performed. It has been logged"))
                 finally:
                     if reingest:
                        iq.add_to_queue(filename, os.path.dirname(path))
