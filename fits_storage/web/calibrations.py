@@ -144,8 +144,8 @@ class WrapperObject(object):
             if darks:
                 wrap._found = True
                 for dark in darks:
-                    r = Result(name  = darc.diskfile.file.name,
-                               dl    = darc.data_label,
+                    r = Result(name  = dark.diskfile.file.name,
+                               dl    = dark.data_label,
                                inter = None,
                                iwarn = False)
                     if dark.ut_datetime and self.header.ut_datetime:
@@ -156,7 +156,7 @@ class WrapperObject(object):
                         if self.c.header.instrument in ['GMOS-N', 'GMOS-S']:
                             hours_warn = 4320
                             text_warn = '6 months'
-                        if abs(interval_hours(dark, object)) > hours_warn:
+                        if abs(interval_hours(dark, self.header)) > hours_warn:
                             r.warning = text_warn
                             r.iwarn = True
                             self._warning = True
