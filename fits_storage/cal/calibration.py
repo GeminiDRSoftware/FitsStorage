@@ -391,144 +391,102 @@ class Calibration(object):
         self.set_applicable()
 
     def get_query(self):
+        """
+        Returns an ``CalQuery`` object, populated with the current session, instrument class,
+        descriptors and the setting for full/not-full query.
+        """
         return CalQuery(self.session, self.instrClass, self.descriptors, full_query=self.full_query)
 
     def set_applicable(self):
         """
-        Null method for instruments that do not provide a method in their subclass
+        This method determines which calibration types are applicable
+        to the target data set, and records the list of applicable
+        calibration types in the class applicable variable.
+        All this really does is determine whether what calibrations the
+        /calibrations feature will look for. Just because a caltype isn't
+        applicable doesn't mean you can't ask the calmgr for one.
+
+        The return value is a list of strings with the names of the applicable
+        methods (eg. ``['bias', 'dark', 'flat']``)
+
+        The base implementation returns an empty list. It **must** be overriden by
+        every subclass of ``Calibration``
         """
         self.applicable = []
 
     def bias(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def dark(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def flat(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def arc(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def fringe(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def ronchi_mask(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def pinhole_mask(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def spectwilight(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def lampoff_flat(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def domeflat(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def processed_fringe(self, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def specphot(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def photometric_standard(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def qh_flat(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def telluric_standard(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def polarization_standard(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def astrometric_standard(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def polarization_flat(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 
     def mask(self, processed=False, howmany=None):
-        """
-        Null method for instruments that do not provide a method in their subclass
-        """
         # Not defined for this instrument
         return []
 

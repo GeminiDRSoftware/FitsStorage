@@ -37,6 +37,9 @@ def canhave_coords(session, user, header, gotmagic=False, user_progid_list=None)
     return canhave_header(session, user, header, gotmagic=gotmagic, user_progid_list=user_progid_list)
 
 def is_staffer(user, filedownloadlog):
+    """
+    Is the current user a staff member?
+    """
     # Is the user gemini staff?
     if user is not None and user.gemini_staff is True:
         if filedownloadlog:
@@ -114,10 +117,12 @@ def canhave_obslog(session, user, obslog, filedownloadlog=None, gotmagic=False, 
     """
     Returns a boolean saying whether or not the given user can have
     access to the given obslog.
+
     You can optionally pass in the users program list directly. If you
     don't, then this function will look it up, which requires the session
     to be valid. If you pass in the user program list, you don't actually
     need to pass a valid session - it can be None.
+
     If you pass in a FileDownloadLog object, we will update it to note
     the file access rules that were used.
     """
@@ -166,6 +171,7 @@ def canhave_miscfile(session, user, misc, filedownloadlog=None, gotmagic=False, 
     don't, then this function will look it up, which requires the session
     to be valid. If you pass in the user program list, you don't actually
     need to pass a valid session - it can be None.
+
     If you pass in a FileDownloadLog object, we will update it to note
     the file access rules that were used.
     """
@@ -185,7 +191,7 @@ def canhave_miscfile(session, user, misc, filedownloadlog=None, gotmagic=False, 
 def got_magic(req):
     """
     Returns a boolean to say whether or not the client has
-    the magic authorization cookie
+    the magic Gemini FITS Authorization cookie
     """
 
     if magic_download_cookie is None:
@@ -203,6 +209,13 @@ def got_magic(req):
 def cant_have(*args, **kw):
     return False
 
+# IMPORTANT: The following comments are used by the autodoc functionality when
+#            generating the reference doc. Please, keep them updated
+#: ::
+#:
+#:   orm.header.Header     -> canhave_header
+#:   orm.obslog.Obslog     -> canhave_obslog
+#:   orm.miscfile.MiscFile -> canhave_miscfile
 icanhave_function = {
     Header:   canhave_header,
     Obslog:   canhave_obslog,
@@ -211,8 +224,15 @@ icanhave_function = {
 
 def icanhave(session, req, item, filedownloadlog=None):
     """
+    Convenience function to determine if a user has rights to a certain piece of data.
+    The user information is obtained from the ``req`` object.
+
     Returns a boolean saying whether the requesting client can have
-    access to the given item. The item is either a header object or an obslog object
+    access to the given item. The item has to be an instance of one of the
+    ``orm`` classes indexed in ``icanhave_function``
+
+    If a ``FileDownloadLog`` instance is passed, it will be updated to note access to
+    the relevant content.
     """
 
     # Does the client have the magic cookie?

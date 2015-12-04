@@ -68,29 +68,56 @@ def abbreviate_size(value):
     else:
         return '{:.2f} KB'.format(value / KB)
 
+class DateTimeObject(object):
+    def __init__(self, when):
+        self.when = when
+
+    def __str__(self):
+        if self.when == 'NOW':
+            return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        elif self.when == 'TODAY':
+            return str(datetime.now().date())
+        else:
+            return 'UNKNOWN DATE'
+
+global_members = {
+    'NOW': DateTimeObject('NOW'),
+    'TODAY': DateTimeObject('TODAY')
+}
+
+custom_filters = {
+    'datetime': datetime_filter,
+    'seconds_since': seconds_since_filter,
+    'throughput': bytes_per_second,
+    'format_float': format_float,
+    'bytes_to_GB': bytes_to_GB,
+    'group_digits': group_digits,
+    'abbreviate_size': abbreviate_size
+}
+
+included_extensions = [
+    'jinja2.ext.with_'
+]
+
 def get_env():
+    """Create a Jinja environment that includes our customizations"""
     jinja_env = Environment(loader=FileSystemLoader(template_root),
-                            extensions=['jinja2.ext.with_'],
+                            extensions=included_extensions,
     # When autoescape=False we assume that by default everything we output
     # is HTML-safe (no '<', no '>', no '&', ...)
     # This may be too much of an assumption, BUT... performance is better
                             autoescape=False)
 #                            autoescape=True)
 
-    jinja_env.globals['NOW'] = lambda: datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    jinja_env.globals['TODAY'] = lambda: str(datetime.now().date())
-
-    jinja_env.filters['datetime'] = datetime_filter
-    jinja_env.filters['seconds_since'] = seconds_since_filter
-    jinja_env.filters['throughput'] = bytes_per_second
-    jinja_env.filters['format_float'] = format_float
-    jinja_env.filters['bytes_to_GB'] = bytes_to_GB
-    jinja_env.filters['group_digits'] = group_digits
-    jinja_env.filters['abbreviate_size'] = abbreviate_size
+    jinja_env.globals.update(global_members)
+    jinja_env.filters.update(custom_filters)
 
     return jinja_env
 
 class SkipTemplateError(Exception):
+    """Exception to be raised when we need to skip the rendering of a template.
+
+       A numeric status code has to be provided"""
     def __init__(self, status):
         self.status = status
 
@@ -105,18 +132,18 @@ class InterruptedError(Exception):
 # any point without having to care about repeating the content generation
 # at every single exit point.
 def templated(template_name, content_type="text/html", with_generator=False, with_session=False, default_status=apache.HTTP_OK, at_end_hook=None):
-    """template_name is the path to the template file, relative to the template_root.
+    """``template_name`` is the path to the template file, relative to the ``template_root``.
 
-       If with_generator is True, Jinja2 will be instructed to try to chunk the output,
+       If ``with_generator`` is ``True``, Jinja2 will be instructed to try to chunk the output,
        sending info back to the client as soon as possible.
 
-       If with_session is true, we keep the whole operation within a session scope (the
+       If ``with_session`` is ``True``, we keep the whole operation within a session scope (the
        session object is passed as first argument to the decorated function). This allows
        the function to return ORM objects that can be manipulated by the template, without
        having to detach them from the session first. A typical use case is to pass a query
        so that the template iterates over it.
 
-       If at_end_hook is defined, it has to be a callable object. It will be invoked after
+       If ``at_end_hook`` is defined, it has to be a callable object. It will be invoked after
        the template has generated all the text, passing both the session object and the
        request.
     """

@@ -574,6 +574,10 @@ def bad_password(candidate):
     return True
 
 def is_staffer(req, session=None):
+    """
+    Given a request object and, optionally, a database session, figure out
+    if the current logged-in user is a staff member
+    """
     try:
         if session is None:
             with session_scope() as s:
@@ -619,41 +623,43 @@ JSON_403_TEMPLATE = 'errors/forbidden.json'
 
 def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=False, content_type='html', annotate=None, archive_only=False):
     """Decorator for functions that need a user to be logged in, or some sort of cookie
-       to be set. The basic use is (notice the decorator parenthesis, they're important):
+       to be set. The basic use is (notice the decorator parenthesis, they're important)::
 
-          @needs_login()
-          def decorated_function():
-              ...
+           @needs_login()
+           def decorated_function(req):
+               ...
 
        Which rejects access if the user is not logged in. The decorator accepts a number
        of keyword arguments. The most restrictive is the one that applies, except for
        magic cookies:
 
-         - magic_cookie=[...]
-           A list of cookie `(name, expected_value)` pairs. If the query provides a pair that matches any of the
-           included ones, even non-logged in users will have granted access. Useful for scripts, etc.
+       ``magic_cookie=[...]``
+         A list of cookie ``(name, expected_value)`` pairs. If the query provides a pair that matches any
+         of the included ones, even non-logged in users will have granted access. Useful for scripts,
+         etc.
 
-         - only_magic=(False|True)
-           This relates to the *EXPECTED* value of a cookie (the one provided in `magic_cookie`). If any of the
-           expected cookie pairs has an empty (eg. None) value, then the behaviour of needs_login is the
-           following:
+       ``only_magic=(False|True)``
+         This relates to the **EXPECTED** value of a cookie (the one provided in ``magic_cookie``). If any of
+         the expected cookie pairs has an empty (eg. ``None``) value, then the behaviour of ``needs_login``
+         is the following:
 
-             - If only_magic is False, then we revert to the standard auth protocol (we don't check for
-               magic cookies at all)
-             - If only_magic is True, and one of the expected values is None, then we allow access always
+         * If ``only_magic`` is ``False``, then we revert to the standard auth protocol (we don't check for
+           magic cookies at all)
+         * If ``only_magic`` is ``True``, and one of the expected values is None, then we allow access always
 
-         - staffer=(False|True)
-           If True, the user must be Gemini Staff
+       ``staffer=(False|True)``
+         If ``True``, the user must be Gemini Staff
 
-         - superuser=(False|True)
-           If True, the user must be Superuser in the archive system
+       ``superuser=(False|True)``
+         If ``True``, the user must be Superuser of the Archive system
 
-         - content_type='...'
-           Can be set to `html` (the default) or `json`, depending on the kind of answer
-           we want to provide, in case that the access is forbidden
+       ``content_type='...'``
+         Can be set to ``'html'`` (the default) or ``'json'``, depending on the kind of answer
+         we want to provide, in case that the access is forbidden
 
-         - archive_only=(False|True)
-           If True, authentication is only required if this is an archive server"""
+       ``archive_only=(False|True)``
+         If ``True``, authentication is only required if this is an archive server
+    """
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(req, *args, **kw):

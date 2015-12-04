@@ -16,10 +16,10 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   webstuff.rst
-   orm.rst
+   web.rst
    calibs.rst
-
+   orm.rst
+   internal_api.rst
 
 Indices and tables
 ==================
