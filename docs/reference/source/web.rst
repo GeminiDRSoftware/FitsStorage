@@ -83,12 +83,12 @@ The categories are:
   values of the URI elements, the functions receive a dictionary with a processed version. They
   are mapped in ``apachehandler.mapping_selection``.
 
-**NB**: in some cases we’ve decided to use the same entry point for different functions,
-and the callable getting the query will, in turn, act as a second level dispatcher.
-For an example of this, see the :py:mod:`miscfiles` case, where we use a single entry point
-("/miscfiles") for a number of functions, depending on the desired action. Some of them
-require extra URI parts, some of them won’t. The main handler let’s the more specialized
-handler in the module to take care.
+.. note:: In some cases we’ve decided to use the same entry point for different functions,
+  and the callable getting the query will, in turn, act as a second level dispatcher.
+  For an example of this, see the :py:mod:`miscfiles` case, where we use a single entry point
+  ("/miscfiles") for a number of functions, depending on the desired action. Some of them
+  require extra URI parts, some of them won’t. The main handler let’s the more specialized
+  handler in the module to take care.
 
 Templating
 ==========

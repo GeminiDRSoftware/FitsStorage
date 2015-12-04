@@ -24,10 +24,10 @@ The Calibration Base Class
    meaning "no specific limit". The implemention of the methods in derived classes may set
    a different default limit for ``howmany``.
 
-   **Note**: as the relevant methods are selected by *name*, there's nothing against a derived
-   class defining calibration methods that are not in the following list. Those methods will
-   be invoked only when the user asks for *all* available calibrations for a certain frame,
-   though (the standard ones can be picked individually).
+   .. note:: As the relevant methods are selected by *name*, there's nothing against a derived
+      class defining calibration methods that are not in the following list. Those methods will
+      be invoked only when the user asks for *all* available calibrations for a certain frame,
+      though (the standard ones can be picked individually).
 
 .. _calib-decorators:
 
@@ -45,9 +45,9 @@ beginning of the methods:
 
 As this is a common pattern, we have implemented a number of decorators to do this job.
 
-**NB**: The signatures shown for this decorators suggest the they accept arguments. This is
-**not** the case. The signature shown is actually the one for the function wrapper that they
-return, and is designed to pass arguments in a transparent way to the decorated function.
+.. note:: The signatures shown for this decorators suggest the they accept arguments. This is
+   **not** the case. The signature shown is actually the one for the function wrapper that they
+   return, and is designed to pass arguments in a transparent way to the decorated function.
 
 See the example code below to learn how to use them.
 
