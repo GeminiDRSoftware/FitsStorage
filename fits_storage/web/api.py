@@ -81,16 +81,46 @@ def error_response(message, id=None):
 
 qa_keywords = ('RAWGEMQA', 'RAWPIREQ')
 qa_state_pairs = {
-    'Undefined': ('UNKNOWN', 'UNKNOWN'),
-    'Pass':      ('USABLE',  'YES'),
-    'Usable':    ('USABLE',  'NO'),
-    'Fail':      ('BAD',     'NO'),
-    'Check':     ('CHECK',   'CHECK'),
+    'undefined': ('UNKNOWN', 'UNKNOWN'),
+    'pass':      ('USABLE',  'YES'),
+    'usable':    ('USABLE',  'NO'),
+    'fail':      ('BAD',     'NO'),
+    'check':     ('CHECK',   'CHECK'),
 }
+
+rs_keywords = ('RAWBG', 'RAWCC', 'RAWIQ', 'RAWWV')
+"BG and WV it's 20, 50, 80, Any"
+"CC: 50, 70, 80, Any"
+"IQ: 20, 70, 85, Any"
+
+rs_state_pairs = {
+    'bG20':    ('20-percentile', None, None, None),
+    'bG50':    ('50-percentile', None, None, None),
+    'bG80':    ('80-percentile', None, None, None),
+    'bgany':   ('Any', None, None, None),
+    'cc50':    (None, '50-percentile', None, None),
+    'cc70':    (None, '70-percentile', None, None),
+    'cc80':    (None, '80-percentile', None, None),
+    'ccany':   (None, 'Any', None, None),
+    'iq50':    (None, None, '50-percentile', None),
+    'iq70':    (None, None, '70-percentile', None),
+    'iq85':    (None, None, '85-percentile', None),
+    'iqany':   (None, None, 'Any', None),
+    'wv20':    (None, None, None, '20-percentile'),
+    'wv50':    (None, None, None, '50-percentile'),
+    'wv80':    (None, None, None, '80-percentile'),
+    'wvany':   (None, None, None, 'Any'),
+}
+
+# rs_keywords = ('
 
 change_actions = {
     'qa_state': (qa_keywords, qa_state_pairs),
+    'raw_site': (rs_keywords, rs_state_pairs),
 }
+
+def valid_pair(pair):
+    return pair[1] is not None
 
 def map_changes(changes):
     change_pairs = []
@@ -101,7 +131,7 @@ def map_changes(changes):
             raise ItemError("Unknown action: {}".format(key))
 
         try:
-            change_pairs.extend(zip(keywords, pairs[value]))
+            change_pairs.extend(filter(valid_pair, zip(keywords, pairs[value.lower()])))
         except KeyError:
             raise ItemError("Illegal value '{}' for action '{}'".format(value, key))
 
