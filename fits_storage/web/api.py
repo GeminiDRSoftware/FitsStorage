@@ -21,6 +21,7 @@ import os
 import pyfits as pf
 import json
 import fcntl
+from time import strptime
 from glob import iglob
 
 class RequestError(Exception):
@@ -94,9 +95,9 @@ rs_keywords = ('RAWBG', 'RAWCC', 'RAWIQ', 'RAWWV')
 "IQ: 20, 70, 85, Any"
 
 rs_state_pairs = {
-    'bG20':    ('20-percentile', None, None, None),
-    'bG50':    ('50-percentile', None, None, None),
-    'bG80':    ('80-percentile', None, None, None),
+    'bg20':    ('20-percentile', None, None, None),
+    'bg50':    ('50-percentile', None, None, None),
+    'bg80':    ('80-percentile', None, None, None),
     'bgany':   ('Any', None, None, None),
     'cc50':    (None, '50-percentile', None, None),
     'cc70':    (None, '70-percentile', None, None),
@@ -112,27 +113,45 @@ rs_state_pairs = {
     'wvany':   (None, None, None, 'Any'),
 }
 
-# rs_keywords = ('
-
-change_actions = {
-    'qa_state': (qa_keywords, qa_state_pairs),
-    'raw_site': (rs_keywords, rs_state_pairs),
-}
-
 def valid_pair(pair):
     return pair[1] is not None
+
+class PairMapper(object):
+    def __init__(self, name, keywords, pairs):
+        self.kw = keywords
+        self.pr = pairs
+
+    def __call__(self, value):
+        try:
+            return filter(valid_pair, zip(self.kw, self.pr[value.lower()]))
+        except KeyError:
+            raise ValueError(value)
+
+def map_release(value):
+    # This will raise ValueError in vase of an illegal date
+    strptime(value, "%Y-%m-%d")
+    return [('RELEASE', value)]
+
+change_actions = {
+    'qa_state': PairMapper('qa_state', qa_keywords, qa_state_pairs),
+    'raw_site': PairMapper('raw_site', rs_keywords, rs_state_pairs),
+    'release':  map_release,
+}
 
 def map_changes(changes):
     change_pairs = []
     for key, value in changes.items():
         try:
-            keywords, pairs = change_actions[key]
+            fn = change_actions[key]
         except KeyError:
             raise ItemError("Unknown action: {}".format(key))
-
         try:
-            change_pairs.extend(filter(valid_pair, zip(keywords, pairs[value.lower()])))
-        except KeyError:
+            if isinstance(value, (tuple, list)):
+                for v in value:
+                    change_pairs.extend(fn(v))
+            else:
+                change_pairs.extend(fn(value))
+        except ValueError:
             raise ItemError("Illegal value '{}' for action '{}'".format(value, key))
 
     return dict(change_pairs)
