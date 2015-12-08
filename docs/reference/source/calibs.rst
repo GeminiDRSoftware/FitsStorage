@@ -29,6 +29,42 @@ The Calibration Base Class
       be invoked only when the user asks for *all* available calibrations for a certain frame,
       though (the standard ones can be picked individually).
 
+Derived Classes
+---------------
+
+In addition to overriding the appropriate methods from the base class, classes that derive from
+:any:`Calibration`, need to define, at least:
+
+``instrClass``
+  A class from the ORM that represents the image information that is specific to an instrument
+  (ie. what is not in ``orm.header.Header``)
+
+``instrDescriptors``
+  A list of strings containing the names of the attributes from ``instrClass`` that we want to
+  consider. The :any:`Calibration` class creates an internal list of attribute values, combining
+  a number of common ones from ``Header``, and the contents of ``instrDescriptors``. Both specific
+  and common values are copied to a single dictionary, ``self.descriptors``, which can be used
+  from the associating methods.
+
+These two attributes are used by the base class to "magically" provide you with ``self.descriptors``
+and with the appropriate query object.
+
+The skeleton of a new instrument calibration class looks like this:
+
+.. code-block:: python
+
+    from ..orm.gnew import GNEW
+    from .calibration import Calibration
+
+    class CalibrationGNEW(Calibration):
+        instrClass = GNEW
+        instrDescriptors = (
+            'read_mode',
+            'disperser',
+            'filter_name'
+        )
+
+
 .. _calib-decorators:
 
 Decorators
