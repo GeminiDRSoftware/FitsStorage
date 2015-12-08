@@ -117,7 +117,7 @@ def valid_pair(pair):
     return pair[1] is not None
 
 class PairMapper(object):
-    def __init__(self, name, keywords, pairs):
+    def __init__(self, keywords, pairs):
         self.kw = keywords
         self.pr = pairs
 
@@ -133,8 +133,8 @@ def map_release(value):
     return [('RELEASE', value)]
 
 change_actions = {
-    'qa_state': PairMapper('qa_state', qa_keywords, qa_state_pairs),
-    'raw_site': PairMapper('raw_site', rs_keywords, rs_state_pairs),
+    'qa_state': PairMapper(qa_keywords, qa_state_pairs),
+    'raw_site': PairMapper(rs_keywords, rs_state_pairs),
     'release':  map_release,
 }
 
