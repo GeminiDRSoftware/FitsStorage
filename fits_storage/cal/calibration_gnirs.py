@@ -48,7 +48,7 @@ class CalibrationGNIRS(Calibration):
             self.applicable.append('arc')
             self.applicable.append('pinhole_mask')
             # and if they are XD, they need a Quartz-Halogen flat (qh_flat) too.
-            if 'XD' in self.descriptors['disperser']:
+            if self.descriptors['disperser'] and 'XD' in self.descriptors['disperser']:
                 self.applicable.append('qh_flat')
             self.applicable.append('telluric_standard')
 
