@@ -168,10 +168,10 @@ def templated(template_name, content_type="text/html", with_generator=False, wit
                         status = default_status
 
                     if not with_generator:
-                        req.write(template.render(context))
+                        req.write(template.render(context).encode('utf-8'))
                     else:
                         for text in template.generate(context):
-                            req.write(text)
+                            req.write(text.encode('utf-8'))
 
                     if at_end_hook:
                         at_end_hook(session, req)
