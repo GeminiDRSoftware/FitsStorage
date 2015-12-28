@@ -24,8 +24,8 @@ FITS Header Fixing Tool v0.1
 
 Usage:
 
- fixHead [-hdy] [--ext=EXT] [<date>] <filenums> KEYW:VALUE [KEYW:VALUE ...]
- fixHead [-hdy] [--ext=EXT] obsid <observation-id> KEYW:VALUE [KEYW:VALUE ...]
+ fixHead [-hdNSy] [--ext=EXT] [<date>] <filenums> KEYW:VAL [KEYW:VAL ...]
+ fixHead [-hdy]   [--ext=EXT] obsid <observation-id> KEYW:VAL [KEYW:VAL ...]
 
 Arguments:
 
@@ -34,13 +34,13 @@ Arguments:
   <filenums>        A comma-separated list of number ranges. Eg: 10-20,31,35-40
   <observation-id>  A valid Gemini observation ID
   KEYW              A keyword or one of the special selectors: qa, cond
-  VALUE             The new value for the specified keyword
+  VAL               The new value for the specified keyword
 
-  NOTE: If selecting by date/filenums, the selected files will be in the form
+ NOTE: If selecting by date/filenums, the selected files will be in the form
 
           NYYYYMMDDSxxxx.fits
 
-  where 'xxxx' is a number generated from the ranges in <filenums>
+ where 'xxxx' is a number generated from the ranges in <filenums>
 
 Values for Special Selectors:
 
@@ -55,7 +55,8 @@ Optional Arguments:
   -y             "Yes, I'm sure!" Pass this flag when setting a keyword that
                  doesn't exist in the original file. If not passed, you will
                  get an error message (this is a protection against typos)
-
+  -N             Force selection Gemini North files
+  -S             Force selection Gemini South files
   --ext=EXT      EXT is a number greater than 0 or an extension name. If not
                  specified, it is assumed that the change affects the
                  Primary HDU
@@ -64,12 +65,61 @@ Optional Arguments:
 import sys
 from time import strptime
 from datetime import datetime, timedelta
+import json
+import requests
+from functools import partial
 
+NORTHPREF = 'N'
+SOUTHPREF = 'S'
+DEFAULTPREF = NORTHPREF
 ISODATEFORMAT='%Y%m%d'
+
+class ServerAccess(object):
+    """
+    Class that abstracts queries to the archive server
+    """
+
+    def __init__(self, host, port = '80'):
+        self.server = '{}:{}'.format(host, port)
+
+    def uri(self, *extra):
+        return '/'.join(['http://{}'.format(self.server)] + list(extra))
+
+    def summary(self, *selection):
+        return requests.get(self.uri('jsonsummary', *selection)).json()
+
+def get_file_list_by_obsid(server, args):
+    return tuple((x[:-4] if x.endswith('.bz2') else x) for x in
+                  (info['filename'] for info in server.summary(args.obsid)))
+
+def get_file_list_by_date_and_number(args):
+    pref = args.prefix or DEFAULTPREF
+    return tuple('{}{}S{:04d}.fits'.format(pref, args.date, n) for n in args.filenums)
+
+def get_file_list(server, args):
+    if args.obsid:
+        return get_file_list_by_obsid(server, args)
+    else:
+        return get_file_list_by_date_and_number(args)
 
 def usage(with_error = True):
     print __doc__
     sys.exit(1 if with_error else 0)
+
+def expand_numbers(nums):
+    groups = nums.split(',')
+    rng = []
+    for group in groups:
+        if group.isdigit():
+            n = int(group)
+            rng.extend(range(n, n+1))
+        else:
+            # If there are not exactly two elements in the range, this will raise a
+            # ValueError
+            n1, n2 = group.split('-')
+            rng.extend(range(int(n1), int(n2)+1))
+
+    return rng
 
 def yesterday():
     return (datetime.today() - timedelta(days = 1)).strftime(ISODATEFORMAT)
@@ -107,7 +157,7 @@ def parse_args(raw_args):
 
     args = Args(yes=False, dry_run=False, ext=None,
                 date=None, filenums=None, obsid=None,
-                pairs=[])
+                prefix=None, pairs=[])
 
     # Just a shallow copy of the arguments
     rargs = raw_args[:]
@@ -122,11 +172,14 @@ def parse_args(raw_args):
                 args.dry_run = True
             elif rarg == '-y':
                 args.yes = True
+            elif rarg == '-N':
+                args.prefix = NORTHPREF
+            elif rarg == '-S':
+                args.prefix = SOUTHPREF
             elif rarg.startswith('--ext='):
                 _, _, args.ext = rarg.partition('=')
             else:
                 usage()
-
 
         narg = rargs.pop(0)
 
@@ -136,10 +189,12 @@ def parse_args(raw_args):
             try:
                 strptime(narg, ISODATEFORMAT)
                 args.date = narg
-                args.filenums = rargs.pop(0)
+                nums = rargs.pop(0)
             except ValueError:
                 args.date = yesterday()
-                args.filenums = narg
+                nums = narg
+
+            args.filenums = expand_numbers(nums)
 
         # Process the remaining arguments
         for pair in rargs:
@@ -148,7 +203,7 @@ def parse_args(raw_args):
                 usage()
             args.pairs.append((kw, value))
 
-    except (SetLimitError, IndexError):
+    except (SetLimitError, IndexError, ValueError):
         usage()
 
     if (not args.obsid and not args.filenums) or not args.pairs:
@@ -157,6 +212,7 @@ def parse_args(raw_args):
     return args
 
 if __name__ == '__main__':
-
+    from pprint import pprint
     args = parse_args(sys.argv[1:])
-    print args
+    sa = ServerAccess('localhost')
+    pprint(get_file_list(sa, args))
