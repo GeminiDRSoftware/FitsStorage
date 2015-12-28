@@ -55,7 +55,7 @@ def diskfile_dicts(headers, return_header=False):
         else:
             yield thedict, header
 
-def jsonfilelist(req, selection):
+def jsonfilelist(req, selection, fields=None):
     """
     This generates a JSON list of the files that met the selection
     """
@@ -66,7 +66,11 @@ def jsonfilelist(req, selection):
         headers = list_headers(session, selection, orderby)
         thelist = list(diskfile_dicts(headers))
 
-    json.dump(thelist, req, indent=4)
+    if fields is None:
+        json.dump(thelist, req, indent=4)
+    else:
+        json.dump([dict((k, d[k]) for k in fields) for d in thelist], req, indent=4)
+
     return HTTP_OK
 
 header_fields = ('program_id', 'engineering', 'science_verification',

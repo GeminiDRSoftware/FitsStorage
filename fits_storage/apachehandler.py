@@ -136,6 +136,7 @@ mapping_selection = {
     'calibrations': calibrations,   # The calibrations handler
     'xmlfilelist': xmlfilelist,     # The xml and json file list handlers
     'jsonfilelist': jsonfilelist,
+    'jsonfilenames': partial(jsonfilelist, fields={'name'}),
     'jsonsummary': jsonsummary,
     'jsonqastate': jsonqastate,
     'calmgr': calmgr,               # The calmgr handler

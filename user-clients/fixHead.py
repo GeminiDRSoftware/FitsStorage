@@ -86,11 +86,10 @@ class ServerAccess(object):
         return '/'.join(['http://{}'.format(self.server)] + list(extra))
 
     def summary(self, *selection):
-        return requests.get(self.uri('jsonsummary', *selection)).json()
+        return requests.get(self.uri('jsonfilenames', *selection)).json()
 
 def get_file_list_by_obsid(server, args):
-    return tuple((x[:-4] if x.endswith('.bz2') else x) for x in
-                  (info['filename'] for info in server.summary(args.obsid)))
+    return tuple(info['name'] for info in server.summary(args.obsid))
 
 def get_file_list_by_date_and_number(args):
     pref = args.prefix or DEFAULTPREF
