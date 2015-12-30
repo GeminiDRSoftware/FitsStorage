@@ -107,7 +107,6 @@ def download(req, things):
             else:
                 thelist.append(str(fields))
         selection = {'filelist': thelist}
-        selection['present'] = True
     else:
         # First check if this is an associated_calibrations download
         if 'associated_calibrations' in things:
@@ -116,6 +115,7 @@ def download(req, things):
         # Get the selection
         selection = getselection(things)
 
+    selection['present'] = True
     # Open a database session
     with session_scope() as session:
         # Instantiate the download log
