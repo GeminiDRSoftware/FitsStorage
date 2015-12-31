@@ -9,7 +9,7 @@ from sqlalchemy import and_, between, cast, desc, extract, func, join
 from sqlalchemy import Date, Interval, String
 from sqlalchemy.orm import aliased
 
-from ..orm import session_scope
+from ..orm import session_scope, Base
 from ..orm.usagelog import UsageLog
 from ..orm.querylog import QueryLog
 from ..orm.downloadlog import DownloadLog
@@ -30,6 +30,16 @@ from . import templating
 
 from mod_python import apache
 from mod_python import util
+
+def logs(session):
+    aQueryLog = session.query(QueryLog, func.row_number().over(QueryLog.usagelog_id).label('row_number')).cte('query_log')
+    aDownloadLog = session.query(DownloadLog, func.row_number().over(DownloadLog.usagelog_id).label('row_number')).cte('download_log')
+    class AliasedQueryLog(Base):
+        __table__ = aQueryLog
+    class AliasedDownloadLog(Base):
+        __table__ = aDownloadLog
+
+    return AliasedQueryLog, AliasedDownloadLog
 
 @needs_login(staffer=True)
 @templating.templated("logreports/usagereport.html", with_session=True, with_generator=True)
@@ -84,14 +94,12 @@ def usagereport(session, req):
         # Subquery to add a "row count" to the QueryLog and the DownloadLog. This is an easy way to pick just
         # the first relation when joining a one-to-many with potentially more than one result per match.
         # The underlying mechanism is the windowing capability of PostgreSQL (using the 'OVER ...' clause)
-        qls = session.query(QueryLog, func.row_number().over(QueryLog.usagelog_id).label('row_number')).subquery()
-        dls = session.query(DownloadLog, func.row_number().over(DownloadLog.usagelog_id).label('row_number')).subquery()
-        aQueryLog = aliased(QueryLog, qls)
-        aDownloadLog = aliased(DownloadLog, dls)
+        aql, adl = logs(session)
+
         query = (
-            session.query(UsageLog, aQueryLog, aDownloadLog)
-                   .outerjoin(aQueryLog, and_(aQueryLog.usagelog_id==UsageLog.id, qls.c.row_number == 1))
-                   .outerjoin(aDownloadLog, and_(aDownloadLog.usagelog_id==UsageLog.id, dls.c.row_number == 1))
+            session.query(UsageLog, aql, adl)
+                   .outerjoin(aql, and_(aql.usagelog_id==UsageLog.id, aql.row_number == 1))
+                   .outerjoin(adl, and_(adl.usagelog_id==UsageLog.id, adl.row_number == 1))
             )
         if start:
             query = query.filter(UsageLog.utdatetime >= start)
@@ -136,15 +144,12 @@ def usagedetails(session, req, things):
     # Subquery to add a "row count" to the QueryLog and the DownloadLog. This is an easy way to pick just
     # the first relation when joining a one-to-many with potentially more than one result per match.
     # The underlying mechanism is the windowing capability of PostgreSQL (using the 'OVER ...' clause)
-    qls = session.query(QueryLog, func.row_number().over(QueryLog.usagelog_id).label('row_number')).subquery()
-    dls = session.query(DownloadLog, func.row_number().over(DownloadLog.usagelog_id).label('row_number')).subquery()
-    aQueryLog = aliased(QueryLog, qls)
-    aDownloadLog = aliased(DownloadLog, dls)
+    aql, adl = logs(session)
     usagelog, user, querylog, downloadlog = (
-        session.query(UsageLog, User, aQueryLog, aDownloadLog)
+        session.query(UsageLog, User, aql, adl)
                .outerjoin(User, User.id == UsageLog.user_id)
-               .outerjoin(aQueryLog, and_(aQueryLog.usagelog_id==UsageLog.id, qls.c.row_number == 1))
-               .outerjoin(aDownloadLog, and_(aDownloadLog.usagelog_id==UsageLog.id, dls.c.row_number == 1))
+               .outerjoin(aql, and_(aql.usagelog_id==UsageLog.id, aql.row_number == 1))
+               .outerjoin(adl, and_(adl.usagelog_id==UsageLog.id, adl.row_number == 1))
                .filter(UsageLog.id == ulid).one()
         )
 
