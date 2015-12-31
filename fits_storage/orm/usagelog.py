@@ -1,7 +1,7 @@
 import datetime
 
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, DateTime
+from sqlalchemy import Integer, Text, DateTime, BigInteger
 from sqlalchemy.orm import relation
 
 from ..fits_storage_config import using_apache
@@ -25,7 +25,7 @@ class UsageLog(Base):
     method = Column(Text)
     uri = Column(Text)
     this = Column(Text, index=True)
-    bytes = Column(Integer)
+    bytes = Column(BigInteger)
     status = Column(Integer, index=True)
     notes = Column(Text)
 

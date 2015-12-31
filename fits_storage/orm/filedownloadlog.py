@@ -1,6 +1,6 @@
 
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, DateTime, Boolean
+from sqlalchemy import Integer, Text, DateTime, Boolean, BigInteger
 from sqlalchemy.orm import relation
 
 import datetime
@@ -23,7 +23,7 @@ class FileDownloadLog(Base):
     # data over database rebuild. Reference by filename etc instead.
     diskfile_filename = Column(Text, index=True)
     diskfile_file_md5 = Column(Text)
-    diskfile_file_size = Column(Integer)
+    diskfile_file_size = Column(BigInteger)
 
     ut_datetime = Column(DateTime(timezone=False), index=True)
     released = Column(Boolean)
