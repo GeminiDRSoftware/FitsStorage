@@ -31,13 +31,16 @@ from . import templating
 from mod_python import apache
 from mod_python import util
 
-def logs(session):
-    aQueryLog = session.query(QueryLog, func.row_number().over(QueryLog.usagelog_id).label('row_number')).cte('query_log')
-    aDownloadLog = session.query(DownloadLog, func.row_number().over(DownloadLog.usagelog_id).label('row_number')).cte('download_log')
+def logs(session, filter_func = None):
+    aQueryLog = session.query(QueryLog, func.row_number().over(QueryLog.usagelog_id).label('row_number'))
+    aDownloadLog = session.query(DownloadLog, func.row_number().over(DownloadLog.usagelog_id).label('row_number'))
+    if filter_func:
+        aQueryLog = filter_func(session, aQueryLog.join(UsageLog).join(User))
+        aDownloadLog = filter_func(session, aDownloadLog.join(UsageLog).join(User))
     class AliasedQueryLog(Base):
-        __table__ = aQueryLog
+        __table__ = aQueryLog.cte('query_log')
     class AliasedDownloadLog(Base):
-        __table__ = aDownloadLog
+        __table__ = aDownloadLog.cte('download_log')
 
     return AliasedQueryLog, AliasedDownloadLog
 
@@ -91,33 +94,37 @@ def usagereport(session, req):
         )
 
     if formdata:
+        def filter_usagelog(session, query):
+            if start:
+                query = query.filter(UsageLog.utdatetime >= start)
+            if end:
+                query = query.filter(UsageLog.utdatetime <= end)
+            if username:
+                user = session.query(User).filter(User.username == username).first()
+                if user:
+                    query = query.filter(UsageLog.user_id == user.id)
+            if ipaddr:
+                query = query.filter(UsageLog.ip_address == ipaddr)
+            if this:
+                query = query.filter(UsageLog.this == this)
+            if status:
+                try:
+                    query = query.filter(UsageLog.status == int(status))
+                except:
+                    pass
+            return query
+
         # Subquery to add a "row count" to the QueryLog and the DownloadLog. This is an easy way to pick just
         # the first relation when joining a one-to-many with potentially more than one result per match.
         # The underlying mechanism is the windowing capability of PostgreSQL (using the 'OVER ...' clause)
-        aql, adl = logs(session)
+        aql, adl = logs(session, filter_usagelog)
 
         query = (
             session.query(UsageLog, aql, adl)
                    .outerjoin(aql, and_(aql.usagelog_id==UsageLog.id, aql.row_number == 1))
                    .outerjoin(adl, and_(adl.usagelog_id==UsageLog.id, adl.row_number == 1))
             )
-        if start:
-            query = query.filter(UsageLog.utdatetime >= start)
-        if end:
-            query = query.filter(UsageLog.utdatetime <= end)
-        if username:
-            user = session.query(User).filter(User.username == username).first()
-            if user:
-                query = query.filter(UsageLog.user_id == user.id)
-        if ipaddr:
-            query = query.filter(UsageLog.ip_address == ipaddr)
-        if this:
-            query = query.filter(UsageLog.this == this)
-        if status:
-            try:
-                query = query.filter(UsageLog.status == int(status))
-            except:
-                pass
+        query = filter_usagelog(session, query)
 
         usagelogs = query.order_by(desc(UsageLog.utdatetime))
 
@@ -144,7 +151,10 @@ def usagedetails(session, req, things):
     # Subquery to add a "row count" to the QueryLog and the DownloadLog. This is an easy way to pick just
     # the first relation when joining a one-to-many with potentially more than one result per match.
     # The underlying mechanism is the windowing capability of PostgreSQL (using the 'OVER ...' clause)
-    aql, adl = logs(session)
+    def filter_usagelog(session, query):
+        return query.filter(UsageLog.id == ulid)
+
+    aql, adl = logs(session, filter_usagelog)
     usagelog, user, querylog, downloadlog = (
         session.query(UsageLog, User, aql, adl)
                .outerjoin(User, User.id == UsageLog.user_id)
