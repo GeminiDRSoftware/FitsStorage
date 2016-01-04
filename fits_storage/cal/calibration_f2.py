@@ -30,7 +30,9 @@ class CalibrationF2(Calibration):
                 self.descriptors['spectroscopy'] == False and
                 self.descriptors['observation_class'] not in ['acq', 'acqCal']):
             self.applicable.append('dark')
+            self.applicable.append('processed_dark')
             self.applicable.append('flat')
+            self.applicable.append('processed_flat')
             # And if they're science frames, they require a photometric_standard
             if self.descriptors['observation_class'] == 'science':
                 self.applicable.append('photometric_standard')
@@ -38,7 +40,9 @@ class CalibrationF2(Calibration):
         # Spectroscopy OBJECTs require a dark, flat and arc
         if (self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == True):
             self.applicable.append('dark')
+            self.applicable.append('processed_dark')
             self.applicable.append('flat')
+            self.applicable.append('processed_flat')
             self.applicable.append('arc')
             # And if they're science frames, they require a telluric_standard
             if self.descriptors['observation_class'] == 'science':
@@ -47,11 +51,14 @@ class CalibrationF2(Calibration):
         # FLAT frames require DARKs
         if self.descriptors['observation_type'] == 'FLAT':
             self.applicable.append('dark')
+            self.applicable.append('processed_dark')
 
         # ARCs require DARKs and FLATs
         if self.descriptors['observation_type'] == 'ARC':
             self.applicable.append('dark')
+            self.applicable.append('processed_dark')
             self.applicable.append('flat')
+            self.applicable.append('processed_flat')
 
 
     # TODO: Check with Paul if the semantics are right
