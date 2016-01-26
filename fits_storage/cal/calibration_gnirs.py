@@ -6,7 +6,7 @@ from ..orm.header import Header
 from ..orm.gnirs import Gnirs
 from .calibration import Calibration, not_processed
 
-from sqlalchemy import or_
+from sqlalchemy import or_, desc
 
 class CalibrationGNIRS(Calibration):
     """
@@ -107,6 +107,8 @@ class CalibrationGNIRS(Calibration):
         # a lamp-off flat applicable to the lamp-on flat to give the subtraciton pairs. 
         # We also have lamp-off flats directly applicable to the science at thermal wavelengths.
         # and we consider QH flats a separate thing.
+        #
+        # We prioritize flats that have the same observation ID as the science, but don't *require* this
 
         if howmany is None:
             howmany = 1 if processed else 10
@@ -117,7 +119,7 @@ class CalibrationGNIRS(Calibration):
                 .add_filters(Header.gcal_lamp == 'IRhigh')
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
-                .all(howmany)
+                .all(howmany, extra_order_terms=[desc(Header.observation_id == self.header.observation_id)])
             )
 
     def arc(self, processed=False, howmany=None):
@@ -173,7 +175,7 @@ class CalibrationGNIRS(Calibration):
                 .add_filters(Header.gcal_lamp == 'Off')
                 # Absolute time separation must be within 1 day
                 .max_interval(days=1)
-                .all(howmany)
+                .all(howmany, extra_order_terms=[desc(Header.observation_id == self.header.observation_id)])
             )
 
     def qh_flat(self, processed=False, howmany=None):
@@ -198,7 +200,7 @@ class CalibrationGNIRS(Calibration):
                 .add_filters(Header.gcal_lamp == 'QH')
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
-                .all(howmany)
+                .all(howmany, extra_order_terms=[desc(Header.observation_id == self.header.observation_id)])
             )
 
     def telluric_standard(self, processed=False, howmany=None):
