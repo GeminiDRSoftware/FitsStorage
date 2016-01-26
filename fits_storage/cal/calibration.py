@@ -13,6 +13,10 @@ from datetime import timedelta
 
 from .. import gemini_metadata_utils as gmu
 
+DEFAULT_ORDER_BY_FIRST = 0
+DEFAULT_ORDER_BY_LAST  = 1
+DEFAULT_ORDER_BY_NONE  = 2
+
 # A common theme across calibrations is that some of them don't handle processed data
 # and will just return an empty list of calibs. This decorator is just some syntactic
 # sugar for that common pattern.
@@ -179,16 +183,49 @@ class CalQuery(object):
 
             raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, name))
 
-    def all(self, limit, default_order = True):
+    def all(self, limit, extra_order_terms=None, default_order = DEFAULT_ORDER_BY_LAST):
         """Returns a list of results, limited in number by the `limit` argument.
 
-           If `default_order` is ``True``, then the results are sorted by absolute time separation. If it
-           is ``False``, no ordering will be performed; if the user wanted some sorting,
-           it has to be applied **before** invoking this method."""
-        if default_order:
+           The function will optionally sort the data according to certain criteria, according to the
+           values of `extra_order_terms` and `default_order`.
+
+           `extra_order_terms` is by default ``None``, and accepts an iterable (tuple, list, ...)
+           of SQLAlchemy sorting terms (eg. ``desc(Header.blah == foo)``), which reflects additional
+           sorting terms out of our "default".
+
+           `default_order` defaults to ``DEFAULT_ORDER_BY_LAST`` and accepts also
+           ``DEFAULT_ORDER_BY_FIRST`` and ``DEFAULT_ORDER_BY_NONE``. It affects the application of the
+           "default" sorting, which means "closer in time first".
+
+           If `default_order` is **not** ``DEFAULT_ORDER_BY_NONE``, then our default sorting will be
+           applied either at the beginning or the end of the terms supplied in `extra_order_terms`.
+           If `extra_order_terms` is ``None``, only the ``default_order`` setting will apply.
+
+           Examples:
+
+             # Returns up to 5 objects, applying only the default order
+             >> query_object.all(limit=5)
+             # Returns up to 5 objects, sorting by "Header.program_id == BLAH" (matching first), and then
+             # by the default order
+             >> query_object.all(limit=5, extra_order_terms=[desc(Header.program_id=='BLAH')])
+             # Returns up to 5 objects, sorting by the default order criteria, and then
+             # "Header.program_id == BLAH" (matching first)
+             >> query_object.all(limit=5, extra_order_terms=[desc(Header.program_id=='BLAH')],
+                                 default_order=DEFAULT_ORDER_BY_FIRST)
+           """
+        order = () if extra_order_terms is None else tuple(extra_order_terms)
+
+        if default_order is not DEFAULT_ORDER_BY_NONE:
             # Order by absolute time separation.
             targ_ut_dt_secs = int((self.descr['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
-            self.query = self.query.order_by(func.abs(Header.ut_datetime_secs - targ_ut_dt_secs))
+            def_order = func.abs(Header.ut_datetime_secs - targ_ut_dt_secs)
+            if default_order == DEFAULT_ORDER_BY_LAST:
+                order = order + (def_order,)
+            else:
+                order = (def_order,) + order
+
+        if order:
+            self.query = self.query.order_by(*order)
         return self.query.limit(limit).all()
 
     # The following add filters specific to certain types of calibs
