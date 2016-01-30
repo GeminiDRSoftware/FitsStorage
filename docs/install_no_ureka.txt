@@ -7,7 +7,7 @@ sudo chmod oug+rx /var/log/httpd
 sudo yum -y install postgresql postgresql-server postgresql-devel
 
 # Also need:
-sudo yum -y install gcc gcc-c++ python-pip python-devel libpng-devel blas lapack openblas openblas-devel gcc-gfortran cfitsio-devel
+sudo yum -y install gcc gcc-c++ python-pip python-devel libpng-devel blas lapack openblas openblas-devel gcc-gfortran cfitsio-devel freetype-devel
 
 sudo pip install --upgrade pip
 sudo pip install psycopg2==2.6.1
