@@ -6,11 +6,8 @@ sudo yum -y install httpd httpd-devel mod_ssl openssl
 sudo chmod oug+rx /var/log/httpd
 sudo yum -y install postgresql postgresql-server postgresql-devel
 
-# Need these extras for Ureka to work:
-sudo yum -y install libX11-devel libXft-devel
-
 # Also need:
-sudo yum -y install gcc gcc-c++ python-pip python-devel libpng-devel blas lapack openblas openblas-devel gcc-gfortran
+sudo yum -y install gcc gcc-c++ python-pip python-devel libpng-devel blas lapack openblas openblas-devel gcc-gfortran cfitsio-devel
 
 sudo pip install --upgrade pip
 sudo pip install psycopg2==2.6.1
@@ -45,51 +42,13 @@ svn checkout http://scisoft/svn/FitsStorage/trunk .
 
 * Log out and back in as yourself (phirst)
 
-#sudo mkdir /opt/Ureka
-#sudo chown phirst /opt/Ureka
-#cd /opt/Ureka
-#cp /opt/FitsStorage/otherfiles/install_ureka_1.5.1 .
-## To do download from stsci, or use local GN / GS versions
-#sh install_ureka_1.5.1
-#sh install_ureka_1.5.1 -t /net/endor/Gemini/astro/iraf/downloads/Ureka_linux-rhe5_64_1.5.1.tar.gz
-
-
 cd /opt/python_modules
-tar xvzf /opt/FitsStorage/otherfiles/mod_python-3.5.0.tgz
-cd mod_python-3.5.0
-which python # should be Ureka one
-whereis apxs # probably /usr/bin/apxs
+tar xvzf /opt/FitsStorage/otherfiles/mod_python-3.3.1-2.tgz
+cd mod_python-3.3.1
 ./configure --with-apxs=/usr/bin/apxs --prefix=/opt/python_modules
 make
 sudo make install_dso
 cd dist
-vi version.sh
-#comment out GIT line
-python setup.py install --prefix=/opt/python_modules
-
-cd /opt/python_modules
-tar xvzf /opt/FitsStorage/otherfiles/psycopg2-2.6.1.tar.gz
-cd psycopg2-2.6.1
-which pg_config
-# should be /usr/bin/pg_config - else:
-# vi setup.cfg 
-# set pg_config=/usr/bin/pg_config
-python setup.py build
-python setup.py install --prefix=/opt/python_modules
-cd /opt/python_modules
-tar xvzf /opt/FitsStorage/otherfiles/SQLAlchemy-1.0.8.tar.gz
-cd SQLAlchemy-1.0.8
-setenv PYTHONPATH /opt/python_modules/lib/python2.7/site-packages
-python setup.py build
-python setup.py install --prefix=/opt/python_modules
-cd ..
-# Make sure using /astro python, and have DPD pythonpath
-# add /opt/sqlalchemy to python path
-
-cd /opt/python_modules
-tar xvf /opt/FitsStorage/otherfiles/pyinotify-0.8.8.tar.gz
-cd pyinotify
-python setup.py build
 python setup.py install --prefix=/opt/python_modules
 
 # if using s3
@@ -109,7 +68,7 @@ cd /opt/fitsverify
 tar xvf /opt/FitsStorage/otherfiles/fitsverify.tar
 mv fitsverify/* .
 rmdir fitsverify
-gcc -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L/opt/Ureka/Ureka/python/lib -I/opt/Ureka/Ureka/python/include -lcfitsio -lm -lnsl
+gcc -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -I/usr/include/cfitsio -lcfitsio -lm -lnsl
 
 sudo mkdir /opt/gemini_python
 sudo chown phirst /opt/gemini_python
@@ -117,7 +76,7 @@ cd /opt/gemini_python
 svn checkout http://chara.hi.gemini.edu/svn/DRSoftware/gemini_python/trunk .
 
 cd
-sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf.d-python.conf /etc/httpd/conf.d/python
+sudo cp etc-httpd-conf.d-zz-archive.conf /etc/httpd/conf.d/zz-archive.conf
 sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf-httpd.conf /etc/httpd/conf/httpd.conf 
 sudo cp /opt/FitsStorage/otherfiles/etc-sysconfig-httpd /etc/sysconfig/httpd
 sudo mkdir /var/www/python-egg-cache
@@ -153,9 +112,8 @@ sudo systemctl restart postgresql.service
 
 
 # Need to set postgresql and httpd to start at boot
-sudo /etc/init.d/httpd start
-sudo /sbin/chkconfig httpd on
-sudo /sbin/chkconfig postgresql on
+sudo systemctl enable postgresql.service
+sudo systemctl enable httpd.service
 
 
 # Log and backup directories
@@ -176,7 +134,7 @@ sudo chmod oug+rw /data/s3_staging
 
 
 # Now get a shell as fitsdata
-cd /opt/FitsStorage/
+cd /opt/FitsStorage/fits_storage
 vi fits_storage_config.py
 # Set things up as appropriate
 /usr/bin/createdb fitsdata
