@@ -205,7 +205,7 @@ class SummaryGenerator(object):
                                   longheading  = 'Target Object Name',
                                   summary_func = 'object'),
             'waveband':    ColDef(heading      = 'WaveBand',
-                                  longheading  = 'Imaging Filter or Spectroscopy Disperser and Wavelenght',
+                                  longheading  = 'Imaging Filter or Spectroscopy Disperser and Wavelength',
                                   sortarrows   = False,
                                   summary_func = 'waveband'),
             'exposure_time':
