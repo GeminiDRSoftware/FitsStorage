@@ -22,6 +22,7 @@ class ExportQueue(Base):
     path = Column(Text)
     destination = Column(Text, nullable=False, unique=False, index=True)
     inprogress = Column(Boolean, index=True)
+    failed = Column(Boolean)
     added = Column(DateTime)
     lastfailed = Column(DateTime)
 
@@ -33,6 +34,7 @@ class ExportQueue(Base):
         self.destination = destination
         self.added = datetime.datetime.now()
         self.inprogress = False
+        self.failed = False
 
     @staticmethod
     def find_not_in_progress(session):

@@ -35,3 +35,7 @@ class QueueError(Base):
         self.added = datetime.datetime.now()
         self.queue = queue
         self.error = error
+
+    @classmethod
+    def get_errors_from(cls, session, queue_class):
+        return session.query(cls).filter(cls.queue == queue_class.error_name)

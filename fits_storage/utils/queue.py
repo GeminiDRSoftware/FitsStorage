@@ -146,6 +146,9 @@ def add_error(queue_class, obj, exc_type, exc_value, tb, session):
 
     error = QueueError(obj.filename, obj.path, queue, '\n'.join(text))
     session.add(error)
+
+    attached_obj = session.merge(obj)
+    attached_obj.failed = True
     session.commit()
 
 # def set_error(queue_class, oid, exc_type, exc_value, tb, session):

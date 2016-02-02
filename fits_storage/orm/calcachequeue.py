@@ -17,6 +17,7 @@ class CalCacheQueue(Base):
     id = Column(Integer, primary_key=True)
     obs_hid = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
     inprogress = Column(Boolean, index=True)
+    failed = Column(Boolean)
     ut_datetime = Column(DateTime)
     sortkey = Column(DateTime(timezone=False), index=True)
 
@@ -40,3 +41,4 @@ class CalCacheQueue(Base):
         self.inprogress = False
         self.sortkey = sortkey
         self.ut_datetime = datetime.datetime.utcnow()
+        self.failed = False

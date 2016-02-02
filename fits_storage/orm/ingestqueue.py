@@ -22,6 +22,7 @@ class IngestQueue(Base):
     filename = Column(Text, nullable=False, unique=False, index=True)
     path = Column(Text)
     inprogress = Column(Boolean, index=True)
+    failed = Column(Boolean)
     added = Column(DateTime)
     force_md5 = Column(Boolean)
     force = Column(Boolean)
@@ -38,6 +39,7 @@ class IngestQueue(Base):
         self.force_md5 = False
         self.force = False
         self.after = self.added
+        self.failed = False
 
         # Sortkey is used to sort the order in which we de-spool the queue.
         self.sortkey = sortkey_for_filename(filename)
