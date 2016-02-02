@@ -31,7 +31,7 @@ class CalCacheQueueUtil(object):
 
     def set_error(self, trans, exc_type, exc_value, tb):
         "Sets an error message to a transient object"
-        queue.set_error(CalCacheQueue, trans.id, exc_type, exc_value, tb, self.s)
+        queue.add_error(CalCacheQueue, trans, exc_type, exc_value, tb, self.s)
 
     def delete(self, trans):
         "Deletes a transient object"

@@ -40,7 +40,7 @@ class ExportQueueUtil(object):
 
     def set_error(self, trans, exc_type, exc_value, tb):
         "Sets an error message to a transient object"
-        queue.set_error(ExportQueue, trans.id, exc_type, exc_value, tb, self.s)
+        queue.add_error(ExportQueue, trans, exc_type, exc_value, tb, self.s)
 
     def delete(self, trans):
         "Deletes a transient object"
@@ -52,17 +52,25 @@ class ExportQueueUtil(object):
 
     def add_to_queue(self, filename, path, destination):
         """
-        Adds a file to the export queue
+        Adds a file to the export queue.
+
+        Upon success, returns a transient object representing the queue entry. Otherwise,
+        it returns None.
         """
         self.l.info("Adding file %s to %s to exportqueue", filename, destination)
         eq = ExportQueue(filename, path, destination)
         self.l.debug("Instantiated ExportQueue object")
         self.s.add(eq)
-        self.s.commit()
-        make_transient(eq)
-        self.l.debug("Added id %d for filename %s to exportqueue", eq.id, eq.filename)
 
-        return eq
+        try:
+            self.s.commit()
+        except IntegrityError:
+            self.l.debug("File %s seems to be in the queue", iq.filename)
+            self.s.rollback()
+        else:
+            make_transient(iq)
+            self.l.debug("Added id %d for filename %s to exportqueue", eq.id, eq.filename)
+            return eq
 
     def export_file(self, filename, path, destination):
         """

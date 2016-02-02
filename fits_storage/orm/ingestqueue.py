@@ -2,7 +2,7 @@
 This is the ingesqueue ORM class
 """
 import datetime
-from sqlalchemy import Column
+from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Boolean, Text, DateTime
 from sqlalchemy import desc
 
@@ -14,6 +14,9 @@ class IngestQueue(Base):
     This is the ORM object for the IngestQueue table
     """
     __tablename__ = 'ingestqueue'
+    __table_args__ = (
+        UniqueConstraint('filename', 'inprogress'),
+    )
 
     id = Column(Integer, primary_key=True)
     filename = Column(Text, nullable=False, unique=False, index=True)
@@ -24,7 +27,8 @@ class IngestQueue(Base):
     force = Column(Boolean)
     after = Column(DateTime)
     sortkey = Column(Text, index=True)
-    error = Column(Text)
+
+    error_name = 'INGEST'
 
     def __init__(self, filename, path):
         self.filename = filename
@@ -34,7 +38,6 @@ class IngestQueue(Base):
         self.force_md5 = False
         self.force = False
         self.after = self.added
-        self.error = None
 
         # Sortkey is used to sort the order in which we de-spool the queue.
         self.sortkey = sortkey_for_filename(filename)

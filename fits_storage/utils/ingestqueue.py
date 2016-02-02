@@ -5,6 +5,7 @@ manage and service the ingestqueue
 import os
 import datetime
 from sqlalchemy import desc
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import ObjectDeletedError, NoResultFound
 from sqlalchemy.orm import make_transient
 from time import sleep
@@ -86,7 +87,10 @@ class IngestQueueUtil(object):
 
     def add_to_queue(self, filename, path, force_md5=False, force=False, after=None):
         """
-        Adds a file to the ingest queue
+        Adds a file to the ingest queue.
+
+        Upon success, returns a transient object representing the queue entry. Otherwise,
+        it returns None.
         """
         iq = IngestQueue(filename, path)
         iq.force = force
@@ -95,9 +99,16 @@ class IngestQueueUtil(object):
             iq.after = after
 
         self.s.add(iq)
-        self.s.commit()
-        make_transient(iq)
-        self.l.debug("Added id %d for filename %s to ingestqueue", iq.id, iq.filename)
+        try:
+            self.s.commit()
+        except IntegrityError:
+            self.l.debug("File %s seems to be in the queue", iq.filename)
+            self.s.rollback()
+        else:
+            make_transient(iq)
+            self.l.debug("Added id %d for filename %s to ingestqueue", iq.id, iq.filename)
+
+            return iq
 
         # Now that it's a transient object, it should not do a lookup so this should never fail
         #try:
@@ -478,7 +489,7 @@ class IngestQueueUtil(object):
 
     def set_error(self, trans, exc_type, exc_value, tb):
         "Sets an error message to a transient object"
-        queue.set_error(IngestQueue, trans.id, exc_type, exc_value, tb, self.s)
+        queue.add_error(IngestQueue, trans, exc_type, exc_value, tb, self.s)
 
     def delete(self, trans):
         "Deletes a transient object"

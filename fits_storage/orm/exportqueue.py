@@ -3,7 +3,7 @@ This is the ExportQueue ORM class
 """
 import datetime
 from sqlalchemy import desc
-from sqlalchemy import Column
+from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Boolean, Text, DateTime
 
 from . import Base
@@ -13,6 +13,9 @@ class ExportQueue(Base):
     This is the ORM object for the ExportQueue table
     """
     __tablename__ = 'exportqueue'
+    __table_args__ = (
+        UniqueConstraint('filename', 'inprogress'),
+    )
 
     id = Column(Integer, primary_key=True)
     filename = Column(Text, nullable=False, unique=False, index=True)
@@ -21,7 +24,8 @@ class ExportQueue(Base):
     inprogress = Column(Boolean, index=True)
     added = Column(DateTime)
     lastfailed = Column(DateTime)
-    error = Column(Text)
+
+    error_name = 'EXPORT'
 
     def __init__(self, filename, path, destination):
         self.filename = filename
@@ -29,7 +33,6 @@ class ExportQueue(Base):
         self.destination = destination
         self.added = datetime.datetime.now()
         self.inprogress = False
-        self.error = None
 
     @staticmethod
     def find_not_in_progress(session):

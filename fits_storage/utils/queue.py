@@ -1,7 +1,10 @@
 import datetime
 from sqlalchemy.orm import make_transient
+from sqlalchemy.exc import OperationalError
+from ..orm.queue_error import QueueError, INGESTQUEUE, PREVIEWQUEUE, CALCACHEQUEUE, EXPORTQUEUE
 import traceback
 import linecache
+from time import sleep
 
 import re
 
@@ -44,16 +47,40 @@ def pop_queue(queue_class, session, logger, fast_rebuild=False):
     delete all other entries for the same filename.
     """
 
-    # Is there a way to avoid the ACCESS EXCLUSIVE lock, especially with 
-    # fast_rebuild where we are not changing other columns. Seemed like
-    # SELECT FOR UPDATE ought to be able to do this, but it doesn't quite
-    # do what we want as other threads can still select that row?
-
     tname = queue_class.__tablename__
 
-    session.execute("LOCK TABLE {} IN ACCESS EXCLUSIVE MODE;".format(tname))
+    # NOTE: On acquiring data from the queue
+    #
+    # The following loop tries to get an exclusive lock on the data by using
+    # SELECT ... FOR UPDATE NOWAIT. The reason for the 'NOWAIT' is to be able to distinguish the
+    # two cases where the SELECT returns 'None': no matching data vs. data that matches but is
+    # modified before we can acquire the lock.
+    #
+    # This operation can result in either:
+    #
+    #  1) Getting some object (there was something pending)
+    #  2) Getting None (no pending objects)
+    #  3) The operation raises OperationalError. This is because we ask to perform the SELECT with
+    #     a NOWAIT clause, which returns immediately with an error in case that the lock cannot be
+    #     acquired.
+    #
+    # Only 1) and 2) are desirable. If 3) happens, case we sleep for 1/20sec and try again.
+    #
+    # PostgreSQL 9.5 introduces SELECT ... FOR UPDATE SKIP LOCKED which removes the uncertainty of
+    # the 'None' case. When (well, if) migrating to 9.5, refactor the loop to use that functionality.
 
-    qelement = queue_class.find_not_in_progress(session).first()
+    done = False
+    while not done:
+        try:
+            # Running the code in a block with begin_nested() creates a SAVEPOINT and rolls back to
+            # it in case of an exception.
+            with session.begin_nested():
+                qelement = queue_class.find_not_in_progress(session).with_for_update(of=queue_class, nowait=True).first()
+        except OperationalError:
+            sleep(0.05)
+        else:
+            done = True
+
     try:
         # OK, we got a viable item, set it to inprogress and return it.
         logger.debug("Popped id %d from %s", qelement.id, tname)
@@ -61,9 +88,10 @@ def pop_queue(queue_class, session, logger, fast_rebuild=False):
         qelement.inprogress = True
         session.flush()
 
-        if not fast_rebuild:
-            queue_class.rebuild(session, qelement)
-            session.flush()
+        ##### There's no need to rebuild any longer
+        # if not fast_rebuild:
+        #     queue_class.rebuild(session, qelement)
+        #     session.flush()
 
         # Make the qelement into a transient instance before we return it
         # This detaches it from the session, basically it becomes a convenience container for the
@@ -105,9 +133,9 @@ def format_tb(tb):
 
     return ret
 
-def set_error(queue_class, oid, exc_type, exc_value, tb, session):
+def add_error(queue_class, obj, exc_type, exc_value, tb, session):
     session.rollback()
-    dbob = session.query(queue_class).get(oid)
+    queue = queue_class.error_name
 
     text = []
 
@@ -116,8 +144,23 @@ def set_error(queue_class, oid, exc_type, exc_value, tb, session):
         text.extend(format_tb(tb))
     text.extend([x.rstrip() for x in  traceback.format_exception_only(exc_type, exc_value)])
 
-    dbob.error = '\n'.join(text)
+    error = QueueError(obj.filename, obj.path, queue, '\n'.join(text))
+    session.add(error)
     session.commit()
+
+# def set_error(queue_class, oid, exc_type, exc_value, tb, session):
+#     session.rollback()
+#     dbob = session.query(queue_class).get(oid)
+#
+#     text = []
+#
+#     if tb:
+#         text.append('Traceback (most recent call last):')
+#         text.extend(format_tb(tb))
+#     text.extend([x.rstrip() for x in  traceback.format_exception_only(exc_type, exc_value)])
+#
+#     dbob.error = '\n'.join(text)
+#     session.commit()
 
 def delete_with_id(queue_class, oid, session):
     dbob = session.query(queue_class).get(oid)
