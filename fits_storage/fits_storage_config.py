@@ -11,17 +11,16 @@ use_as_archive = True
 
 # AWS S3 info
 using_s3 = False
-s3_bucket_name = 'gemini-archive'
-s3_backup_bucket_name = 'gemini-archive-ttt'
-s3_staging_area = '/data/FitsStorage/s3_staging'
-aws_access_key = 'AKIAJ554XPYMJZBPGQAA'
-aws_secret_key = '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'
+s3_bucket_name = ''
+s3_backup_bucket_name = ''
+s3_staging_area = '/data/s3_staging'
+aws_access_key = ''
+aws_secret_key = ''
 
 # Staging area for uncompressed cache of compressed file being processed
-z_staging_area = '/data/FitsStorage/z_staging'
+z_staging_area = '/data/z_staging'
 
 # Configure the path to the storage root here 
-#storage_root = '/data/FitsStorage/dataflow'
 #storage_root = '/net/wikiwiki/dataflow'
 storage_root = '/data/gemini_data'
 
