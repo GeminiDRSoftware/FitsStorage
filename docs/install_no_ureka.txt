@@ -43,7 +43,7 @@ svn checkout http://scisoft/svn/FitsStorage/trunk .
 * Log out and back in as yourself (phirst)
 
 cd /opt/python_modules
-tar xvzf /opt/FitsStorage/otherfiles/mod_python-3.3.1-2.tgz
+tar xvzf /opt/FitsStorage/otherfiles/mod_python-3.3.1-2.tar.gz
 cd mod_python-3.3.1
 ./configure --with-apxs=/usr/bin/apxs --prefix=/opt/python_modules
 make
@@ -76,7 +76,7 @@ cd /opt/gemini_python
 svn checkout http://chara.hi.gemini.edu/svn/DRSoftware/gemini_python/trunk .
 
 cd
-sudo cp etc-httpd-conf.d-zz-archive.conf /etc/httpd/conf.d/zz-archive.conf
+sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf.d-zz-archive.conf /etc/httpd/conf.d/zz-archive.conf
 sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf-httpd.conf /etc/httpd/conf/httpd.conf 
 sudo cp /opt/FitsStorage/otherfiles/etc-sysconfig-httpd /etc/sysconfig/httpd
 sudo mkdir /var/www/python-egg-cache
