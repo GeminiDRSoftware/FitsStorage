@@ -4,6 +4,7 @@
 
 import sys
 import re
+import traceback
 from gemini_metadata_utils import gemini_date
 
 from mod_python import apache
@@ -208,8 +209,12 @@ def handler(req):
             req.status = 499
             retary = apache.OK
 
-        except Exception:
+        except Exception as e:
             req.status = apache.HTTP_INTERNAL_SERVER_ERROR
+            req.usagelog.add_note("Exception '{}'".format(str(e)))
+            string = traceback.format_tb(sys.exc_info()[2])
+            string = "".join(string)
+            req.usagelog.add_note("Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
             raise
         finally:
             # Grab the final log values
