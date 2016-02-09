@@ -20,6 +20,12 @@ import traceback
 
 import argparse
 
+# This is the amount of rows to be retrieved at the same time from the database
+# Controls the resorces taken in the local side. Too small number will result in
+# high database traffic. Too big number may cause a significant delay in the
+# operations, and a large memory consumption on the client side.
+FETCH_SIZE = 50000
+
 parser = argparse.ArgumentParser(description='Migrate data in S3 to Glacier')
 parser.add_argument('--file-pre', dest='filepre', action='store', metavar='PREF', help="File prefix to check (omit for all)")
 parser.add_argument('--daysold', dest='daysold', action='store', metavar='N', type=int, default=14, help="Operate on diskfiles with a lastmode time more than N days ago")
@@ -59,7 +65,7 @@ try:
         if options.limit:
             query = query.limit(options.limit)
 
-        for diskfile in query:
+        for diskfile in query.yield_per(FETCH_SIZE):
             logger.info("Copying {} to {}".format(diskfile.filename, s3_backup_bucket_name))
             s3.copy(diskfile.filename, to_bucket=s3_backup_bucket_name)
             glacier = Glacier()
