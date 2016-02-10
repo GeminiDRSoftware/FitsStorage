@@ -1,31 +1,12 @@
 #! /usr/bin/env python
 
-#************************************************************************
-#****              G E M I N I  O B S E R V A T O R Y                ****
-#************************************************************************
-#
-#   Script name:        hupdate
-#
-#   Purpose:
-#      Provide a user interface to the Gemini Archive API that allows
-#      modification of raw FITS file headers, with validation.
-#
-#      This script is tailored to SOS needs.
-#
-#   Date               : 2015-12-09
-#
-#   Author             : Ricardo Cardenes
-#
-#   Modification History:
-#    2015-12-09, rcardene : First release
-
 """
 FITS Header Fixing Tool v0.1
 
 Usage:
 
- fixHead [-hdNSy] [--ext=EXT] [<date>] <filenums> KEYW:VAL [KEYW:VAL ...]
- fixHead [-hdy]   [--ext=EXT] obsid <observation-id> KEYW:VAL [KEYW:VAL ...]
+ fixHead [-hlNSy] [--ext=EXT] [<date>] <filenums> KEYW:VAL [KEYW:VAL ...]
+ fixHead [-hly]   [--ext=EXT] obsid <observation-id> KEYW:VAL [KEYW:VAL ...]
 
 Arguments:
 
@@ -51,7 +32,8 @@ Values for Special Selectors:
 Optional Arguments:
 
   -h, --help     This help message
-  -d, --dry-run  Show the potential changes, but don't perform them
+  -l, --list     Show a list of files that would be changed, but do not perform
+                 them. When using -l, the KEYW:VAL pairs are not mandatory
   -y             "Yes, I'm sure!" Pass this flag when setting a keyword that
                  doesn't exist in the original file. If not passed, you will
                  get an error message (this is a protection against typos)
@@ -62,17 +44,44 @@ Optional Arguments:
                  Primary HDU
 """
 
+from __future__ import print_function
+
+#************************************************************************
+#****              G E M I N I  O B S E R V A T O R Y                ****
+#************************************************************************
+#
+#   Script name:        hupdate
+#
+#   Purpose:
+#      Provide a user interface to the Gemini Archive API that allows
+#      modification of raw FITS file headers, with validation.
+#
+#      This script is tailored to SOS needs.
+#
+#   Date               : 2015-12-09
+#
+#   Author             : Ricardo Cardenes
+#
+#   Modification History:
+#    2015-12-09, rcardene : First release
+
 import sys
 from time import strptime
 from datetime import datetime, timedelta
 import json
 import requests
+from requests.exceptions import ConnectionError
 from functools import partial
 
+SERVERNAME='localhost'
 NORTHPREF = 'N'
 SOUTHPREF = 'S'
 DEFAULTPREF = NORTHPREF
 ISODATEFORMAT='%Y%m%d'
+
+cookies = {
+    'gemini_api_authorization': 'f0a49ab56f80da436b59e1d8f20067f4'
+}
 
 class ServerAccess(object):
     """
@@ -87,6 +96,13 @@ class ServerAccess(object):
 
     def summary(self, *selection):
         return requests.get(self.uri('jsonfilenames', *selection)).json()
+
+    def batch_change(self, file_list, pairs):
+        arguments = [{'filename': fn} for fn in file_list]
+
+        return requests.post(self.uri('update_headers'),
+                             json=arguments,
+                             cookies=cookies)
 
 def get_file_list_by_obsid(server, args):
     """
@@ -110,7 +126,7 @@ def get_file_list(server, args):
         return get_file_list_by_date_and_number(args)
 
 def usage(with_error = True):
-    print __doc__
+    print(__doc__)
     sys.exit(1 if with_error else 0)
 
 def expand_numbers(nums):
@@ -162,7 +178,7 @@ def parse_args(raw_args):
         def __str__(self):
             return "Args({})".format(', '.join('{}={!r}'.format(k, getattr(self, k)) for k in sorted(self.__set_once)))
 
-    args = Args(yes=False, dry_run=False, ext=None,
+    args = Args(yes=False, show_list=False, ext=None,
                 date=None, filenums=None, obsid=None,
                 prefix=None, pairs=[])
 
@@ -175,8 +191,8 @@ def parse_args(raw_args):
             rarg = rargs.pop(0)
             if rarg in ('-h', '--help'):
                 usage(with_error = False)
-            elif rarg in ('-d', '--dry-run'):
-                args.dry_run = True
+            elif rarg in ('-l', '--list'):
+                args.show_list = True
             elif rarg == '-y':
                 args.yes = True
             elif rarg == '-N':
@@ -213,13 +229,44 @@ def parse_args(raw_args):
     except (SetLimitError, IndexError, ValueError):
         usage()
 
-    if (not args.obsid and not args.filenums) or not args.pairs:
+    if (not args.obsid and not args.filenums) or (not args.pairs and not args.show_list):
         usage()
 
     return args
 
+def perform_changes(sa, file_list, args):
+    # TODO: -y is not yet implemented
+    try:
+        ret = sa.batch_change(file_list, args.pairs)
+    except ConnectionError:
+        print("Cannot connect to the archive server", file=sys.stderr)
+        return 1
+
+    if ret.status_code == 403:
+        print("The access to the archive server has been forbidden for this script", file=sys.stderr)
+        return 2
+
+    for response in ret.json():
+        if not response['result']:
+            print(response['error'])
+        else:
+            print('{} modified successfully'.format(response['id']))
+
+    return 0
+
 if __name__ == '__main__':
     from pprint import pprint
     args = parse_args(sys.argv[1:])
-    sa = ServerAccess('localhost')
-    pprint(get_file_list(sa, args))
+    sa = ServerAccess(SERVERNAME)
+    try:
+        file_list = get_file_list(sa, args)
+    except ConnectionError:
+        print("Cannot connect to the archive server", file=sys.stderr)
+        sys.exit(1)
+    else:
+        if args.show_list:
+            print("The following files would be affected:")
+            for fname in file_list:
+               print("  " + fname)
+        else:
+            sys.exit(perform_changes(sa, file_list, args))
