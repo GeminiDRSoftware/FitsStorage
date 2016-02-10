@@ -51,6 +51,7 @@ getselection_key_value = {
     'disperser': 'disperser',
     'camera': 'camera',
     'mask': 'focal_plane_mask',
+    'pupil_mask': 'pupil_mask',
     'filter': 'filter', 'Filter': 'filter',
     'az': 'az', 'Az': 'az',
     'azimuth': 'az', 'Azimuth': 'az',
@@ -225,6 +226,7 @@ sayselection_defs = {
     'science_verification': 'Science Verification Data',
     'disperser': 'Disperser',
     'focal_plane_mask': 'Focal Plane Mask',
+    'pupil_mask': 'Pupil Mask',
     'binning': 'Binning',
     'caltype': 'Calibration Type',
     'caloption': 'Calibration Option',
@@ -415,6 +417,9 @@ def queryselection(query, selection):
             query = query.filter(Header.focal_plane_mask.contains(selection['focal_plane_mask']))
         else:
             query = query.filter(Header.focal_plane_mask == selection['focal_plane_mask'])
+
+    if 'pupil_mask' in selection:
+        query = query.filter(Header.pupil_mask == selection['pupil_mask'])
 
     if 'qa_state' in selection and selection['qa_state'] != 'AnyQA':
         if selection['qa_state'] == 'Win':
@@ -725,7 +730,7 @@ def selection_to_URL(selection, with_columns=False):
                 urlstring += '/spectroscopy'
             else:
                 urlstring += '/imaging'
-        elif key in {'ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera', 'exposure_time', 'coadds'}:
+        elif key in {'ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera', 'exposure_time', 'coadds', 'pupil_mask'}:
             urlstring += '/%s=%s' % (key, selection[key])
         elif key == 'cols':
             if with_columns:
