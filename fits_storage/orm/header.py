@@ -50,14 +50,8 @@ class Header(Base):
     observation_type = Column(OBSTYPE_ENUM, index=True)
     observation_class = Column(OBSCLASS_ENUM, index=True)
     object = Column(Text, index=True)
-    # NOTE - TEMPORARILY GET ALL RA/DEC VALUES TO ASSIST TROUBLESHOOTING
-    # WILL WANT TO GET RID OF ALL BUT ra,dec 
     ra = Column(Numeric(precision=16, scale=12), index=True)
     dec = Column(Numeric(precision=16, scale=12), index=True)
-    wcs_ra = Column(Numeric(precision=16, scale=12), index=True)
-    wcs_dec = Column(Numeric(precision=16, scale=12), index=True)
-    target_ra = Column(Numeric(precision=16, scale=12), index=True)
-    target_dec = Column(Numeric(precision=16, scale=12), index=True)
     azimuth = Column(Numeric(precision=16, scale=12))
     elevation = Column(Numeric(precision=16, scale=12))
     cass_rotator_pa = Column(Numeric(precision=16, scale=12))
