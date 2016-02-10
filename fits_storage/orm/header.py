@@ -63,6 +63,7 @@ class Header(Base):
     central_wavelength = Column(Numeric(precision=8, scale=6), index=True)
     wavelength_band = Column(Text)
     focal_plane_mask = Column(Text, index=True)
+    pupil_mask = Column(Text, index=True)
     detector_binning = Column(Text)
     detector_config = Column(Text)
     detector_roi_setting = Column(Text)
@@ -237,6 +238,7 @@ class Header(Base):
                 self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
             self.wavelength_band = ad.wavelength_band().for_db()
             self.focal_plane_mask = ad.focal_plane_mask(pretty=True).for_db()
+            self.pupil_mask = ad.pupil_mask(pretty=True).for_db()
             dvx = ad.detector_x_bin()
             dvy = ad.detector_y_bin()
             if (not dvx.is_none()) and (not dvy.is_none()):
