@@ -578,6 +578,16 @@ dropdown_options = {
     "gpi_disp_options":
         [("DISP_PRISM", "PRISM"),
          ("DISP_WOLLASTON", "WOLLASTON")],
+    "gpi_pupil_options":
+        [("APOD_NRM", "NRM"),
+         ("APOD_NRN", "NRN")],
+    "gpi_mask_options":
+        [("FPM_SCIENCE", "Science"),
+         ("FRM_OPEN", "Open"),
+         ("FRM_Y", "Y"),
+         ("FRM_J", "J"),
+         ("FRM_H", "H"),
+         ("FRM_K1", "K1")],
     "gmos_disp_options":
         [("B600", "B600"),
          ("R400", "R400"),

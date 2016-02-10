@@ -570,6 +570,7 @@
 
 <div class="next" id="GPI" style="display:none">
     <br><label>GPI</label><br>
+    <div class="left">
     <label>Filter:</label><select id="gpi_filter" class="ddw" name="filter">
         <option value="">Any</option>
 {{ generate_option_list(gpi_filter_options, updated.filter, updated.inst == 'GPI') }}
@@ -585,6 +586,25 @@
     <span class="help">(help)
         <span class="helpleft">Select a GPI disperser.</span>
     </span><br>
+    </div>
+    <div class="right">
+    <label>FP Mask:</label><select id="GPI_mask" class="ddw inst_clearable" name="focal_plane_mask">
+        <option value="">Any</option>
+{{ generate_option_list(gpi_mask_options, updated.focal_plane_mask, updated.inst == 'GPI') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpright">Select a GPI focal plane mask</span>
+    </span><br>
+
+    <label>Apodizer:</label><select id="GPI_pupil" class="ddw inst_clearable" name="pupil_mask">
+        <option value="">Any</option>
+{{ generate_option_list(gpi_pupil_options, updated.pupil_mask, updated.inst == 'GPI') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpright">Select a GPI Apodizer</span>
+    </span><br>
+    </div>
+
 
 </div>
 
