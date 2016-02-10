@@ -19,14 +19,6 @@ from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
 import os
 import urllib
 
-# Load the titlebar html text into strings
-#with open(os.path.join(fits_aux_datadir, "titlebar.html")) as f:
-#    titlebar_html = f.read()
-
-# Load the form html text into strings
-#with open(os.path.join(fits_aux_datadir, "form.html")) as f:
-#    form_html = f.read()
-
 @templating.templated("search_and_summary/searchform.html", with_session=True, with_generator=True)
 def searchform(session, req, things, orderby):
     """
