@@ -580,7 +580,12 @@ dropdown_options = {
          ("DISP_WOLLASTON", "WOLLASTON")],
     "gpi_pupil_options":
         [("APOD_NRM", "NRM"),
-         ("APOD_NRN", "NRN")],
+         ("APOD_CLEAR", "Clear"),
+         ("APOD_Y", "Y"),
+         ("APOD_J", "J"),
+         ("APOD_H", "H"),
+         ("APOD_K1", "K1"),
+         ("APOD_K2", "K2")],
     "gpi_mask_options":
         [("FPM_SCIENCE", "Science"),
          ("FRM_OPEN", "Open"),
