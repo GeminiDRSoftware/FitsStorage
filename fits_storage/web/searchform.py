@@ -535,6 +535,7 @@ dropdown_options = {
          ("J", "J"),
          ("H", "H"),
          ("Ks", "Ks"),
+         ("K-long", "K-long"),
          ("JH", "JH"),
          ("HK", "HK"),
          ("J-lo", "J low")],
