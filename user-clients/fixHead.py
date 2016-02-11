@@ -73,14 +73,14 @@ import requests
 from requests.exceptions import ConnectionError
 from functools import partial
 
-SERVERNAME='localhost'
+SERVERNAME='fits'
 NORTHPREF = 'N'
 SOUTHPREF = 'S'
 DEFAULTPREF = NORTHPREF
 ISODATEFORMAT='%Y%m%d'
 
 cookies = {
-    'gemini_api_authorization': 'f0a49ab56f80da436b59e1d8f20067f4'
+    'gemini_api_authorization': ''
 }
 
 class ServerAccess(object):
