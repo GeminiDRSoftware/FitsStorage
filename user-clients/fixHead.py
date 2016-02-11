@@ -97,8 +97,8 @@ class ServerAccess(object):
     def summary(self, *selection):
         return requests.get(self.uri('jsonfilenames', *selection)).json()
 
-    def batch_change(self, file_list, pairs):
-        arguments = [{'filename': fn} for fn in file_list]
+    def batch_change(self, file_list, actions, reject_new):
+        arguments = [{'filename': fn, 'values': actions, 'reject_new':reject_new} for fn in file_list]
 
         return requests.post(self.uri('update_headers'),
                              json=arguments,
@@ -234,10 +234,26 @@ def parse_args(raw_args):
 
     return args
 
+def map_actions(pairs):
+    actions = {}
+    gen = []
+    for keyword, value in pairs:
+        if keyword.lower() == 'qa':
+            actions['qa_state'] = value
+        elif keyword.lower() == 'cond':
+            actions['raw_site'] = value
+        elif keyword.lower() == 'release':
+            actions['release'] = value
+        else:
+            gen.append((keyword.upper(), value))
+    if gen:
+        actions['generic'] = gen
+
+    return actions
+
 def perform_changes(sa, file_list, args):
-    # TODO: -y is not yet implemented
     try:
-        ret = sa.batch_change(file_list, args.pairs)
+        ret = sa.batch_change(file_list, map_actions(args.pairs), not args.yes)
     except ConnectionError:
         print("Cannot connect to the archive server", file=sys.stderr)
         return 1
@@ -248,7 +264,7 @@ def perform_changes(sa, file_list, args):
 
     for response in ret.json():
         if not response['result']:
-            print(response['error'])
+            print('{}: {}'.format(response.get('id', 'UNKNOWN'), response['error']))
         else:
             print('{} modified successfully'.format(response['id']))
 
