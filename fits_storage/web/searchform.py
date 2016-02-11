@@ -581,6 +581,7 @@ dropdown_options = {
     "gpi_pupil_options":
         [("APOD_NRM", "NRM"),
          ("APOD_CLEAR", "Clear"),
+         ("APOD_CLEARGP", "ClearGp"),
          ("APOD_Y", "Y"),
          ("APOD_J", "J"),
          ("APOD_H", "H"),
