@@ -23,7 +23,7 @@ import wsgiref.simple_server
 from wsgiref.validate import validator
 from wsgiref.util import request_uri, application_uri, shift_path_info
 
-from fits_storage.utils.api import json_api_call, WSGIError
+from fits_storage.utils.api import json_api_call, WSGIError, NewCardsIncluded
 from fits_storage.utils.api import METHOD_NOT_ALLOWED, NOT_FOUND
 
 from fits_storage.logger import logger, setdebug, setdemon
@@ -65,24 +65,27 @@ def get_route(environ, routes):
 #
 
 import pyfits as pf
-from fits_storage.utils.fitseditor import compare_cards, modify_multiple_cards
+from fits_storage.utils.fitseditor import compare_cards, modify_multiple_cards, all_cards_exist
 
 def fits_is_unchanged(path, new_values):
     return all(compare_cards(path, new_values, ext=0))
 
-def fits_apply_changes(path, changes):
+def fits_apply_changes(path, changes, reject_new):
     if fits_is_unchanged(path, changes):
         logger.info("fits_apply_changes: %s [NOT MODIFIED]", path)
         return False
+
+    if reject_new and not all_cards_exist(path, changes):
+        raise WSGIError("Operational error", error_object=NewCardsIncluded())
 
     modify_multiple_cards(path, changes, ext=0)
     logger.info("fits_apply_changes: %s [%s]", path, str(changes))
     return True
 
 @json_api_call(logger)
-def set_image_metadata(path, changes):
+def set_image_metadata(path, changes, reject_new=False):
     try:
-        return fits_apply_changes(path, changes)
+        return fits_apply_changes(path, changes, reject_new)
     except (pf.VerifyError, IOError) as e:
         logger.debug("Error: %s", str(e))
         raise WSGIError("There were problems when opening/modifying the file")

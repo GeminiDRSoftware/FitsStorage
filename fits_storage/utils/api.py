@@ -2,6 +2,7 @@ import urllib2
 import json
 from functools import partial, wraps
 import inspect
+from importlib import import_module
 
 from .null_logger import EmptyLogger
 
@@ -34,7 +35,12 @@ class ApiProxy(object):
         try:
             response = json.loads(urllib2.urlopen(path, json.dumps(kw)).read())
             if 'error' in response:
-                raise ApiProxyError(response['error'])
+                if 'error_object' in response:
+                    eobj = response['error_object']
+                    cls = getattr(import_module(eobj['module']), eobj['class'])
+                    raise cls(eobj['content'])
+                else:
+                    raise ApiProxyError(response['error'])
             elif 'result' not in response:
                 raise ApiProxyError("Invalid response: lacking 'result'")
             return response['result']
@@ -65,15 +71,27 @@ status_text = {
 def get_status_text(status):
     return "{} {}".format(status, status_text[status])
 
+class NewCardsIncluded(Exception):
+    pass
+
 class WSGIError(Exception):
-    def __init__(self, message, status=HTTP_OK, content_type = 'application/json'):
+    def __init__(self, message, status=HTTP_OK, content_type = 'application/json', error_object = None):
         self.status  = status
         self.ct      = content_type
         self.message = message
+        self.eobj    = error_object
 
     def response(self, environ, start_response):
         start_response(get_status_text(self.status), [('Content-Type', self.ct)])
-        return [json.dumps({'error': self.message})]
+        message = {'error': self.message}
+        if self.eobj:
+            cls = self.eobj.__class__
+            message['error_object'] = {
+                'module':  cls.__module__,
+                'class':   cls.__name__,
+                'content': self.eobj.message
+            }
+        return [json.dumps(message)]
 
 def get_post_data(environ):
     try:

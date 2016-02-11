@@ -5,6 +5,10 @@ def compare_cards(path, card_dict, ext=0):
     header = pf.getheader(path, ext=0)
     return [(kw in header and header[kw] == value) for kw, value in card_dict.items()]
 
+def all_cards_exist(path, card_dict):
+    header = pf.getheader(path, ext=0)
+    return all((k in header) for k in card_dict)
+
 def get_card(path, keyword, ext=0, skip_missing=True):
     try:
         return pf.getval(path, keyword, ext=ext, do_not_scale_image_data=True)

@@ -5,7 +5,7 @@ from ..orm.diskfile import DiskFile
 
 from ..utils.fitseditor import compare_cards, modify_multiple_cards
 from ..utils.ingestqueue import IngestQueueUtil, IngestError
-from ..utils.api import ApiProxy, ApiProxyError
+from ..utils.api import ApiProxy, ApiProxyError, NewCardsIncluded
 from ..utils.null_logger import EmptyLogger
 
 from .user import needs_login
@@ -132,10 +132,14 @@ def map_release(value):
     strptime(value, "%Y-%m-%d")
     return [('RELEASE', value)]
 
+def map_generic(value):
+    return [tuple(value)]
+
 change_actions = {
     'qa_state': PairMapper(qa_keywords, qa_state_pairs),
     'raw_site': PairMapper(rs_keywords, rs_state_pairs),
     'release':  map_release,
+    'generic':  map_generic,
 }
 
 def map_changes(changes):
@@ -174,10 +178,11 @@ def update_headers(req):
                         response.append(error_response("This looks like a malformed request: 'values' should be a dictionary", id=label))
                         continue
                     new_values = map_changes(query['values'])
+                    reject_new = query.get('reject_new', False)
                     path = df.fullpath()
                     reingest = iq.delete_inactive_from_queue(filename)
                     # reingest = apply_changes(df, query['values']) or reingest
-                    reingest = proxy.set_image_metadata(path=path, changes=new_values)
+                    reingest = proxy.set_image_metadata(path=path, changes=new_values, reject_new=reject_new)
                     response.append({'result': True, 'id': label})
                 except ItemError as e:
                     response.append(error_response(e.message, id=e.label))
@@ -185,9 +190,11 @@ def update_headers(req):
                     response.append(error_response("This looks like a malformed request: 'values' does not exist", id=label))
                 except IngestError as e:
                     response.append(error_response(e.message, id=label))
-                except ApiProxyError:
-                    # TODO: Actually log this and tell someone about it...
+                except ApiProxyError as e:
+                    req.log_error(str(e))
                     response.append(error_response("An internal error occurred and your query could not be performed. It has been logged"))
+                except NewCardsIncluded:
+                    response.append(error_response("Some of the keywords don't exist in the file", id=label))
                 finally:
                     if reingest:
                        iq.add_to_queue(filename, os.path.dirname(path))
