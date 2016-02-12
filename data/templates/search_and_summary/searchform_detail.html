@@ -235,7 +235,7 @@
     </select>
     <input id="custom_mask" class="mask" name="custom_mask" type="text" placeholder="(custom mask)" value="{{ updated.custom_mask }}"/>
     <span class="help">(Focal Plane Mask)
-        <span class="helpleft">Select a GMOS mask. To select a custom mask name, or one not listed in the pulldown, select "custom" and them put the mask name in the text field. This will do an exact match.</span>
+        <span class="helpleft">Select a GMOS mask. To select a custom mask name, or one not listed in the pulldown, select "custom" and them put the mask name in the text field. This will do a "starts with" match, so you can use a full mask name, or just the first part and the latter will find all masks that start with that.</span>
     </span><br><br>
     </div>
 
