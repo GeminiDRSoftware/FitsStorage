@@ -39,7 +39,7 @@ options = parser.parse_args()
 setdebug(options.debug)
 setdemon(options.demon)
 
-s3 = get_helper()
+s3 = get_helper(logger_=logger)
 
 scriptname = os.path.basename(sys.argv[0])
 
@@ -47,6 +47,7 @@ logger.info("*********    %s - starting up at %s", scriptname, datetime.datetime
 
 try:
     with PidFile(logger, scriptname) as pidfile, session_scope() as session:
+        # There's an issue where it won't copy files > 5GB...
         query = (
             session.query(DiskFile).outerjoin(Glacier, (and_(DiskFile.filename == Glacier.filename,
                                                              DiskFile.file_md5 == Glacier.md5)))
@@ -75,7 +76,7 @@ try:
             glacier.when_uploaded = now
             #glacier.last_inventory = now
             session.add(glacier)
-            session.commit()
+            session.flush()
 except PidFileError as e:
     logger.error(str(e))
 
