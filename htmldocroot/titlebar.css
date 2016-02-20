@@ -13,7 +13,7 @@ body {
 
 .titlebar_left {
   float:left;
-  width:65%;
+  width:55%;
   height:100%;
   background-color:#606060;
   color:#FFCC33;
@@ -22,7 +22,7 @@ body {
 }
 
 .titlebar_help {
-  width:15%;
+  width:25%;
   height:100%;
   float:left;
   position:relative;
