@@ -65,7 +65,7 @@ gemini_instrument_dict = {
     'bhros':      'bHROS',
     'hrwfs':      'hrwfs',
     'flamingos':  'FLAMINGOS',
-    'cirpass':    'CIRPASS'
+    'cirpass':    'CIRPASS',
     'graces':     'GRACES'
     }
 
