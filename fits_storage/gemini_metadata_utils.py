@@ -66,6 +66,7 @@ gemini_instrument_dict = {
     'hrwfs':      'hrwfs',
     'flamingos':  'FLAMINGOS',
     'cirpass':    'CIRPASS'
+    'graces':     'GRACES'
     }
 
 def gemini_instrument(string, gmos=False, other=False):

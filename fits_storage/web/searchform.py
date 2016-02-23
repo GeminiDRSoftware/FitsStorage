@@ -654,6 +654,7 @@ dropdown_options = {
          ("GMOS-N", "GMOS-N"),
          ("GMOS-S", "GMOS-S"),
          ("GNIRS", "GNIRS"),
+         ("GRACES", "GRACES"),
          ("NIRI", "NIRI"),
          ("NIFS", "NIFS"),
          ("GSAOI", "GSAOI"),
