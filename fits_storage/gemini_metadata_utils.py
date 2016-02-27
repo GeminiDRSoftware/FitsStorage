@@ -348,8 +348,8 @@ cal_types = (
     'bias', 'dark', 'flat', 'arc', 'processed_bias', 'processed_dark',
     'processed_flat', 'processed_arc', 'processed_fringe', 'pinhole_mask',
     'ronchi_mask', 'spectwilight', 'lampoff_flat', 'qh_flat', 'specphot', 
-    'photometric_standard', 'telluric_standard', 'domeflat', 'mask',
-    'polarization_standard', 'astrometric_standard', 'polarization_flat'
+    'photometric_standard', 'telluric_standard', 'domeflat', 'lampoff_domeflat',
+    'mask', 'polarization_standard', 'astrometric_standard', 'polarization_flat'
     )
 def gemini_caltype(string):
     """

@@ -49,8 +49,6 @@ class CalibrationGSAOI(Calibration):
                  .max_interval(days=30)
                  .all(howmany)
             )
-    # For gsaoi, domeflats are the only flats
-    flat = domeflat
 
     def lampoff_domeflat(self, processed=False, howmany=None):
         if howmany is None:
@@ -70,6 +68,10 @@ class CalibrationGSAOI(Calibration):
                  .max_interval(days=30)
                  .all(howmany)
             )
+
+    # For gsaoi, domeflats are the only flats
+    flat = domeflat
+    lampoff_flat = lampoff_domeflat
 
     # Processed photometric standards haven't been implemented
     @not_processed
