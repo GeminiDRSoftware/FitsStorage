@@ -491,6 +491,10 @@ class Calibration(object):
         # Not defined for this instrument
         return []
 
+    def lampoff_domeflat(self, processed=False, howmany=None):
+        # Not defined for this instrument
+        return []
+
     def processed_fringe(self, howmany=None):
         # Not defined for this instrument
         return []

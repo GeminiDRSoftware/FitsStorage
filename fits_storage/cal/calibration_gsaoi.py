@@ -26,6 +26,7 @@ class CalibrationGSAOI(Calibration):
         # Science OBJECTs require DomeFlats and photometric_standards
         if self.descriptors['observation_type'] == 'OBJECT' and self.descriptors['observation_class'] == 'science':
             self.applicable.append('domeflat')
+            self.applicable.append('lampoff_domeflat')
             self.applicable.append('processed_flat')
             self.applicable.append('photometric_standard')
 
@@ -50,6 +51,25 @@ class CalibrationGSAOI(Calibration):
             )
     # For gsaoi, domeflats are the only flats
     flat = domeflat
+
+    def lampoff_domeflat(self, processed=False, howmany=None):
+        if howmany is None:
+            howmany = 1 if processed else 20
+
+        if processed:
+            query = self.get_query().PROCESSED_FLAT()
+        else:
+            query = (self.get_query().raw().OBJECT()
+                         .observation_class('dayCal')
+                         # Notice that object() is observation_type=='OBJECT', in case the next confuses you...
+                         .add_filters(Header.object == 'Domeflat OFF'))
+
+        return (
+                # Common filter, with absolute time separation within a month
+            query.match_descriptors(Gsaoi.filter_name)
+                 .max_interval(days=30)
+                 .all(howmany)
+            )
 
     # Processed photometric standards haven't been implemented
     @not_processed
