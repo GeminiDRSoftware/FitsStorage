@@ -166,8 +166,6 @@ class Header(Base):
             if 'AZEL_TARGET' not in ad.types:
                 self.ra = ad.ra().for_db()
                 self.dec = ad.dec().for_db()
-                self.target_ra = ad.target_ra(offset=True, icrs=True).for_db()
-                self.target_dec = ad.target_dec(offset=True, icrs=True).for_db()
                 if type(self.ra) is str:
                     self.ra = ratodeg(self.ra)
                 if type(self.dec) is str:
@@ -176,10 +174,6 @@ class Header(Base):
                     self.ra = None
                 if self.dec > 90.0 or self.dec < -90.0:
                     self.dec = None
-                if self.target_ra > 360.0 or self.target_ra < 0.0:
-                    self.target_ra = None
-                if self.target_dec > 90.0 or self.target_dec < -90.0:
-                    self.target_dec = None
 
             # These should be in the descriptor function really.
             azimuth = ad.azimuth().for_db()
