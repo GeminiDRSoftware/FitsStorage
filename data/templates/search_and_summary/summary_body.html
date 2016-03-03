@@ -20,7 +20,7 @@
 
 <P>We suggest re-setting some of your constraints to <i>Any</i> and repeating your search.
 {% if selection.observation_class == 'science' and selection.observation_type in ('ARC', 'FLAT', 'DARK', 'BIAS') -%}
-<P>In this case, your combination of observation type and observation class is unlikely to find and data
+<P>In this case, your combination of observation type and observation class is unlikely to find any data
 {%- endif %}
 {% if selection.inst -%}
 {% if selection.mode == 'MOS' and selection.inst not in ('GMOS', 'GMOS-N', 'GMOS-S', 'F2') -%}
