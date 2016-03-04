@@ -1,0 +1,14 @@
+[Unit]
+Description=Fits Service Export Queue 1
+After=syslog.target network.target postgresql.service
+
+[Service]
+Environment=PYTHONPATH=/opt/FitsStorage:/opt/gemini_python
+User=fitsdata
+ExecStart=/usr/bin/python /opt/FitsStorage/fits_storage/scripts/service_export_queue.py --demon --lockfile --name=seq1
+Restart=always
+# This will force the system to wait 10 seconds before respawning
+RestartSec=10
+
+[Install]
+WantedBy=runlevel5.target
