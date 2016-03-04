@@ -146,3 +146,11 @@ python scripts/create_tables.py
 # Check with ISG if you need a whitelisted local mail relay on it
 # Check with ISG that the development / operations status of the machine
 
+
+# To run jobs from systemd
+sudo cp /opt/FitsStorage/otherfiles/etc_systemd_system_fits-service_ingest_queue1.service /etc/systemd/system/fits-service_ingest_queue1.service
+# copy again and edit for siq2 if you want two of them
+sudo systemctl start fits-service_ingest_queue1
+sudo systemctl enable fits-service_ingest_queue1
+# Same for 2 if you want it
+# Repeat for export queue and api
