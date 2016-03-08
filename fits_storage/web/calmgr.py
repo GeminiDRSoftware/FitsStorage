@@ -7,7 +7,7 @@ from ..orm.header import Header
 
 from .selection import queryselection, openquery
 
-from ..utils.web import Context, Return
+from ..utils.web import get_context, Return
 
 from ..cal import get_cal_object
 from ..fits_storage_config import storage_root, fits_servername
@@ -103,7 +103,7 @@ def cals_info(cal_obj, caltype, qtype='UNKNOWN', log=no_func, add_note=no_func, 
 
 def generate_post_calmgr(selection, caltype):
     # OK, get the details from the POST data
-    ctx = Context()
+    ctx = get_context()
     clientdata = ctx.raw_data
     clientstr = urllib.unquote_plus(clientdata)
 
@@ -147,7 +147,7 @@ def generate_get_calmgr(selection, caltype):
     # OK, we got called via a GET - find the science datasets in the database
     # The Basic Query
 
-    ctx = Context()
+    ctx = get_context()
     session = ctx.session
 
     query = session.query(Header).select_from(join(join(File, DiskFile), Header))
@@ -218,7 +218,7 @@ def calmgr(selection):
     # Was the request for only one type of calibration?
     caltype = selection.get('caltype', '')
 
-    method = Context().env.method
+    method = get_context().env.method
 
     # An empty cal type is acceptable for GET - means to list all the calibrations available
     if not caltype and method == 'POST':

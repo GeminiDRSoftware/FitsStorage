@@ -16,7 +16,7 @@ from ..orm.qastuff import evaluate_bg_from_metrics, evaluate_cc_from_metrics
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 
-from ..utils.web import Context, Return
+from ..utils.web import get_context, Return
 
 from . import templating
 
@@ -25,7 +25,7 @@ def qareport():
     This function handles submission of QA metric reports via json
     """
 
-    ctx = Context()
+    ctx = get_context()
 
     if ctx.env.method == 'POST':
         clientdata = ctx.raw_data
@@ -50,7 +50,7 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
     database
     """
 
-    session = Context().session
+    session = get_context().session
     for qa_dict in thelist:
         # Get a new QAreport ORM object
         qareport = QAreport.from_dict(qa_dict, submit_host, submit_time)
@@ -72,7 +72,7 @@ def qametrics(metrics):
     """
 
     def yield_metrics(cls):
-        session = Context().session
+        session = get_context().session
         query = session.query(cls).select_from(cls, QAreport).filter(cls.qareport_id == QAreport.id)
         for qa in query:
             hquery = session.query(Header).select_from(Header, DiskFile)\
@@ -110,7 +110,7 @@ def qaforgui(date):
     that datestamp to 3 days later.
     """
 
-    ctx = Context()
+    ctx = get_context()
     resp = ctx.resp
 
     datestamp = gemini_date(date, offset=get_date_offset(), as_datetime=True)

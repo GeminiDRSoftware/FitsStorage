@@ -10,14 +10,14 @@ from .list_headers import list_obslogs, list_headers
 from .selection import sayselection, openquery
 
 from ..utils.userprogram import icanhave
-from ..utils.web import Context
+from ..utils.web import get_context
 
 from ..orm.querylog import QueryLog
 
 from . import templating
 
 def add_summary_completed():
-    ctx = Context()
+    ctx = get_context()
     try:
         querylog = ctx.session.query(QueryLog).filter(QueryLog.usagelog_id == ctx.usagelog.id).one()
         querylog.summary_completed = datetime.datetime.utcnow()
@@ -27,7 +27,7 @@ def add_summary_completed():
 
 def generate_obslogs(obslogs):
     for obslog in obslogs:
-        yield obslog.diskfile.file.name, obslog.date, obslog.program_id, icanhave(Context(), obslog)
+        yield obslog.diskfile.file.name, obslog.date, obslog.program_id, icanhave(get_context(), obslog)
 
 @templating.templated("obslog/obslogs.html", at_end_hook=add_summary_completed)
 def obslogs(selection, sumtype):
@@ -36,7 +36,7 @@ def obslogs(selection, sumtype):
     """
 
     # Instantiate querylog, populate initial fields
-    querylog = QueryLog(Context().usagelog)
+    querylog = QueryLog(get_context().usagelog)
     querylog.summarytype = sumtype
     querylog.selection = str(selection)
     querylog.query_started = datetime.datetime.utcnow()
@@ -66,7 +66,7 @@ def obslogs(selection, sumtype):
     if num_results == fits_closed_result_limit:
         querylog.add_note("Hit Closed search result limit")
 
-    session = Context().session
+    session = get_context().session
     session.add(querylog)
     session.flush()
 
@@ -88,7 +88,7 @@ def associate_obslogs(headers):
     obslogs = []
 
     # Could do this more efficiently by grouping the header query by date and progid, but this will do for now
-    session = Context().session
+    session = get_context().session
     for header in headers:
         query = session.query(Obslog).filter(Obslog.date == header.ut_datetime.date()).filter(Obslog.program_id == header.program_id)
         for result in query:

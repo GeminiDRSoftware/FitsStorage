@@ -278,7 +278,7 @@ def thehandler(req):
 
     # Extract the main action
     this = things.pop(0)
-    Context().usagelog.this = this
+    get_context().usagelog.this = this
 
     if this in blocked_urls:
         return apache.HTTP_FORBIDDEN

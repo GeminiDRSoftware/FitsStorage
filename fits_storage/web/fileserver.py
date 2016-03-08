@@ -11,7 +11,7 @@ from ..orm.downloadlog import DownloadLog
 from ..orm.filedownloadlog import FileDownloadLog
 from ..orm.miscfile import MiscFile
 
-from ..utils.web import Context, Return, with_content_type
+from ..utils.web import get_context, Return, with_content_type
 
 from .selection import getselection, openquery, selection_to_URL
 from .summary import list_headers
@@ -92,7 +92,7 @@ def make_tarinfo(name, **kw):
 
 def download_post():
     # Parse form data
-    formdata = Context().req.get_form_data()
+    formdata = get_context().req.get_form_data()
     thelist = []
     if 'files' in formdata.keys():
         fields = formdata['files']
@@ -120,7 +120,7 @@ def download(selection, associated_calibrations):
 
     selection['present'] = True
 
-    ctx = Context()
+    ctx = get_context()
     # Open a database session
 
     session = ctx.session
@@ -288,7 +288,7 @@ def fileserver(filenamegiven):
     It handles authentication for serving the files too
     """
 
-    ctx = Context()
+    ctx = get_context()
 
 #    # OK, first find the file they asked for in the database
 #    # tart up the filename if possible
@@ -387,7 +387,7 @@ def sendonefile(diskfile, content_type=None):
     This always sends unzipped data.
     """
 
-    ctx = Context()
+    ctx = get_context()
     resp = ctx.resp
 
     # Send them the data

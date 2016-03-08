@@ -11,7 +11,7 @@ from ..orm.header import Header
 from ..orm.diskfile import DiskFile
 from ..orm.file import File
 
-from ..utils.web import Context
+from ..utils.web import get_context
 
 from . import templating
 
@@ -51,7 +51,7 @@ class WrapperObject(object):
         self._warning  = False
         self._missing  = False
         self._requires = False
-        self.c         = get_cal_object(Context().session, None, header=header)
+        self.c         = get_cal_object(get_context().session, None, header=header)
         self.cals      = {}
 
         self.process_cals()
@@ -247,7 +247,7 @@ def calibrations(selection):
 
     # OK, find the target files
     # The Basic Query
-    query = Context().session.query(Header).select_from(join(join(DiskFile, File), Header))
+    query = get_context().session.query(Header).select_from(join(join(DiskFile, File), Header))
 
     # Only the canonical versions
     selection['canonical'] = True

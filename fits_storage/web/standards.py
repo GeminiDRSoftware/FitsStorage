@@ -6,7 +6,7 @@ summaries.
 from ..orm.photstandard import PhotStandard, PhotStandardObs
 from ..orm.footprint import Footprint
 
-from ..utils.web import Context
+from ..utils.web import get_context
 
 from . import templating
 
@@ -16,7 +16,7 @@ def list_phot_std_obs(header_id):
     """
 
     query = (
-        Context().session.query(PhotStandard).join(PhotStandardObs).join(Footprint)
+        get_context().session.query(PhotStandard).join(PhotStandardObs).join(Footprint)
             .filter(Footprint.header_id == header_id)
         )
 

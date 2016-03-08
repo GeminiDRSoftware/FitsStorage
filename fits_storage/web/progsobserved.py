@@ -13,6 +13,8 @@ import datetime
 
 from ..gemini_metadata_utils import gemini_date
 
+from ..utils.web import get_context
+
 @templating.templated("progsobserved.html")
 def progsobserved(selection):
     """
@@ -22,7 +24,7 @@ def progsobserved(selection):
     if ("date" not in selection) and ("daterange" not in selection):
         selection["date"] = gemini_date("today")
 
-    session = Context().session
+    session = get_context().session
 
     # the basic query in this case
     query = session.query(Header.program_id).select_from(join(join(DiskFile, File), Header))
@@ -52,7 +54,7 @@ def sitemap(req):
     now = datetime.datetime.utcnow()
     year = datetime.timedelta(days=365).total_seconds()
 
-    session = Context().session
+    session = get_context().session
 
     # the basic query in this case
     query = session.query(Header.program_id, func.max(Header.ut_datetime)).group_by(Header.program_id)

@@ -1,8 +1,9 @@
-from thread import get_ident
 from functools import wraps
 from ...orm import NoResultFound, MultipleResultsFound
 from ...orm.user import User
 from ...fits_storage_config import magic_download_cookie
+from thread import get_ident
+from threading import local
 
 class ReturnMetaClass(type):
     __return_codes = {
@@ -41,7 +42,7 @@ class RequestRedirect(Exception):
 def context_wrapped(fn):
     @wraps(fn)
     def wrapper(*args, **kw):
-        ctx = Context()
+        ctx = get_context()
         try:
             return fn(ctx, *args, **kw)
         finally:
@@ -52,35 +53,50 @@ def with_content_type(content_type):
     def content_decorator(fn):
         @wraps(fn)
         def fn_wrapper(*args, **kw):
-            Context().resp.set_content_type(content_type)
+            get_context().resp.set_content_type(content_type)
             return fn(*args, **kw)
 
         return fn_wrapper
     return content_decorator
 
+# The context storage is a threading local-variable container. Eache
+# thread will see a different value
+__ContextStorage__ = local()
+
+def get_context(initialize = False):
+    if not initialize:
+        ctx = __ContextStorage__.ctx
+    else:
+        ctx = Context()
+        __ContextStorage__.ctx = ctx
+
+    return ctx
+
 class Context(object):
-    __threads = {}
-    def __new__(cls):
-        this = get_ident()
-        def new_context():
-            new = Context.__threads[this] = object.__new__(cls)
-            new.initialize_singleton()
-            return new
+#    __threads = {}
+#    def __new__(cls):
+#        this = get_ident()
+#        def new_context():
+#            print "*** Creating new context object ({})".format(this)
+#            new = Context.__threads[this] = object.__new__(cls)
+#            new.initialize_singleton()
+#            return new
+#
+#        try:
+#            ret = Context.__threads[this]
+#            # This should never happen, but...
+#            if not ret._valid:
+#                print "*** Invalid ({})".format(this)
+#                ret = new_context()
+#        except KeyError:
+#            ret = new_context()
+#
+#        return ret
 
-        try:
-            ret = Context.__threads[this]
-            # This should never happen, but...
-            if not ret._valid:
-                ret = new_context()
-        except KeyError:
-            ret = new_context()
-
-        return ret
-
-    def initialize_singleton(self):
-        self._valid  = True
+    def __init__(self):
         self.req = None
         self.resp = None
+        self._cookies = None
 
     def setContent(self, req, resp):
         self.req = req
@@ -94,9 +110,11 @@ class Context(object):
         return getattr(self.req, attr)
 
     def invalidate(self):
-        if self._valid:
-            self._valid = False
-            del Context.__threads[get_ident()]
+        pass
+#            print "*** Invalidating {}".format(get_ident())
+#            del Context.__threads[get_ident()]
+#            self._valid = False
+#            print "*** Invalidated {}".format(get_ident())
 
     @property
     def cookies(self):

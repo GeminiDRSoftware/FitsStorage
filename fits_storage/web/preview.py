@@ -8,7 +8,7 @@ from ..orm.header import Header
 from ..orm.preview import Preview
 from ..orm.downloadlog import DownloadLog
 
-from ..utils.web import Context, Return, with_content_type
+from ..utils.web import get_context, Return, with_content_type
 
 from .selection import getselection, openquery, selection_to_URL
 
@@ -28,7 +28,7 @@ def preview(filenamegiven):
     the fits data.
     """
 
-    ctx = Context()
+    ctx = get_context()
 
 #    try:
 #        filenamegiven = things.pop(0)
@@ -78,7 +78,7 @@ def sendpreview(preview):
     Send the one referenced preview file
     """
 
-    resp = Context().resp
+    resp = get_context().resp
 
     # Send them the data
     if using_s3:

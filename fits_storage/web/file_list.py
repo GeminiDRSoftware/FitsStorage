@@ -13,7 +13,7 @@ from .summary import list_headers
 from .standards import get_standard_obs
 
 from ..utils.userprogram import canhave_coords
-from ..utils.web import Context, with_content_type
+from ..utils.web import get_context, with_content_type
 
 from . import templating
 
@@ -63,7 +63,10 @@ def jsonfilelist(selection):
     headers = list_headers(selection, orderby)
     thelist = list(diskfile_dicts(headers))
 
-    Context().resp.append_json(thelist, indent=4)
+    if fields is None:
+        get_context().resp.append_json(thelist, indent=4)
+    else:
+        get_context().resp.append_json([dict((k, d[k]) for k in fields) for d in thelist], indent=4)
 
 header_fields = ('program_id', 'engineering', 'science_verification',
                  'calibration_program', 'observation_id', 'data_label',
@@ -93,7 +96,7 @@ def jsonsummary(selection):
     the coordinates if the user does not have access to them.
     """
 
-    ctx = Context()
+    ctx = get_context()
 
     # Like the summaries, only list canonical files by default
     if 'canonical' not in selection.keys():
@@ -130,7 +133,7 @@ def jsonqastate(selection):
     It does not limit the number of results
     """
 
-    ctx = Context()
+    ctx = get_context()
 
     # Like the summaries, only list canonical files by default
     if 'canonical' not in selection.keys():

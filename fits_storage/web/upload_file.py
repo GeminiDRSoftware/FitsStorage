@@ -7,7 +7,7 @@ import datetime
 from ..fits_storage_config import upload_staging_path, upload_auth_cookie, api_backend_location
 
 from ..utils.api import ApiProxy, ApiProxyError
-from ..utils.web import Context, Return
+from ..utils.web import get_context, Return
 
 from ..orm.fileuploadlog import FileUploadLog
 
@@ -27,7 +27,7 @@ def upload_file(filename, processed_cal=False):
     Log Entries are inserted into the FileUploadLog table
     """
 
-    ctx = Context()
+    ctx = get_context()
 
     session = ctx.session
 

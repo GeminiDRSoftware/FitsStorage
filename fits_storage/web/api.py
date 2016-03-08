@@ -7,7 +7,7 @@ from ..utils.fitseditor import compare_cards, modify_multiple_cards
 from ..utils.ingestqueue import IngestQueueUtil, IngestError
 from ..utils.api import ApiProxy, ApiProxyError, NewCardsIncluded
 from ..utils.null_logger import EmptyLogger
-from ..utils.web import Context, Return
+from ..utils.web import get_context, Return
 
 from .user import needs_login
 
@@ -47,7 +47,7 @@ def locked_file(path):
 
 def get_json_data():
     try:
-        return Context().json
+        return get_context().json
     except KeyError:
         raise RequestError("This looks like a malformed request. Cannot find the 'data' entry")
     except ValueError:
@@ -162,7 +162,7 @@ def map_changes(changes):
 
 @needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], content_type='json')
 def update_headers():
-    ctx = Context()
+    ctx = get_context()
 
     session = ctx.session
 
@@ -208,7 +208,7 @@ def update_headers():
     resp.append_json(response)
 
 def ingest_files():
-    ctx = Context()
+    ctx = get_context()
     resp = ctx.resp
     resp.content_type = 'application/json'
 

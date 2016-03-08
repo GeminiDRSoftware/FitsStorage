@@ -5,7 +5,7 @@ from ..orm.notification import Notification
 from ..fits_storage_config import use_as_archive, magic_download_cookie
 
 from ..utils.notifications import ingest_odb_xml
-from ..utils.web import Context, Return
+from ..utils.web import get_context, Return
 
 from .user import needs_login
 
@@ -18,7 +18,7 @@ def notification():
     This is the email notifications page. It's both to show the current notifcation list and to update it.
     """
 
-    ctx = Context()
+    ctx = get_context()
 
     session = ctx.session
 
@@ -77,7 +77,7 @@ def import_odb_notifications():
     This takes xml from the ODB posted to it and imports it as notifications
     """
 
-    ctx = Context()
+    ctx = get_context()
 
     # Only accept http posts
     if ctx.env.method != 'POST':

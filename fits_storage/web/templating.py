@@ -4,7 +4,7 @@ Module to deal with the interals of templating
 
 from jinja2 import Environment, FileSystemLoader
 from ..fits_storage_config import template_root
-from ..utils.web import Context, Return
+from ..utils.web import get_context, Return
 from functools import wraps
 from datetime import datetime
 
@@ -140,7 +140,7 @@ def templated(template_name, content_type="text/html", with_generator=False, def
     def template_decorator(fn):
         @wraps(fn)
         def fn_wrapper(*args, **kw):
-            ctx = Context()
+            ctx = get_context()
             try:
                 template = get_env().get_template(template_name)
             except IOError:

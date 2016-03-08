@@ -5,7 +5,7 @@ from ..orm import sessionfactory, NoResultFound, MultipleResultsFound
 from ..orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 from . import templating
 
-from ..utils.web import Context
+from ..utils.web import get_context
 
 from sqlalchemy import join, desc, func
 
@@ -20,7 +20,7 @@ def fileontape(filename):
 #    filename = things[0]
 
     query = (
-        Context().session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape)))
+        get_context().session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape)))
                 .filter(Tape.active == True).filter(TapeWrite.suceeded == True)
                 .filter(TapeFile.filename == filename)
         )
@@ -35,7 +35,7 @@ def tape(search = None):
     This is the tape list function
     """
 
-    ctx = Context()
+    ctx = get_context()
     session = ctx.session
 
     # Process form data first
@@ -110,7 +110,7 @@ def tapewrite(label = None):
     This is the tapewrite list function. Label may be an integer ID or a string
     """
 
-    session = Context().session
+    session = get_context().session
 
     # Find the appropriate TapeWrite entries
     query = session.query(TapeWrite, Tape).join(Tape)
@@ -144,7 +144,7 @@ def tapefile(tapewrite_id):
 
 #    tapewrite_id = things[0]
 
-    query = Context().session.query(TapeFile).filter(TapeFile.tapewrite_id == tapewrite_id).order_by(TapeFile.id)
+    query = get_context().session.query(TapeFile).filter(TapeFile.tapewrite_id == tapewrite_id).order_by(TapeFile.id)
 
     return dict(tapefiles = query)
 
@@ -154,6 +154,6 @@ def taperead():
     This is the taperead list function
     """
 
-    query = Context().session.query(TapeRead).order_by(TapeRead.id)
+    query = get_context().session.query(TapeRead).order_by(TapeRead.id)
 
     return dict(tapefiles = query)

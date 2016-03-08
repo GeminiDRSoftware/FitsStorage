@@ -5,6 +5,8 @@ from ..orm.tapestuff import Tape, TapeWrite, TapeFile
 
 from . import templating
 
+from ..utils.web.adapter import get_context
+
 # We use these wrappers in order to trigger separate query for the
 # internal objects. This is done only to conserve memory, because
 # SQLAlchemy tends to hog a lot of it and we may end up being killed.
@@ -27,7 +29,7 @@ class TapeWrapper(object):
 
     @property
     def tapewrites(self):
-        q = (Context().session.query(TapeWrite)
+        q = (get_context().session.query(TapeWrite)
                     .filter(TapeWrite.tape_id == self.o.id)
                     .filter(TapeWrite.suceeded == True)
                     .order_by(TapeWrite.id))
@@ -42,7 +44,7 @@ class TapeWriterWrapper(object):
 
     @property
     def tapefiles(self):
-        return Context().session.query(TapeFile).filter(TapeFile.tapewrite_id == self.o.id)
+        return get_context().session.query(TapeFile).filter(TapeFile.tapewrite_id == self.o.id)
 
 @templating.templated("tape.xml", content_type='text/xml', with_generator=True)
 def xmltape():
@@ -50,7 +52,7 @@ def xmltape():
     Outputs xml describing the tapes that the specified file is on
     """
 
-    query = Context().session.query(Tape).filter(Tape.active == True).order_by(Tape.id)
+    query = get_context().session.query(Tape).filter(Tape.active == True).order_by(Tape.id)
 
     return dict(
         tapes = QueryWrapper(query, TapeWrapper)

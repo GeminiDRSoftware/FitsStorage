@@ -4,7 +4,7 @@ This module contains the curation_report html generator function.
 from ..orm.header import Header
 from ..orm.curation import duplicate_canonicals, duplicate_present, present_not_canonical
 
-from ..utils.web import Context
+from ..utils.web import get_context
 
 from . import templating
 
@@ -15,7 +15,7 @@ def curation_report():
     FitsStorageCuration.py
     """
 
-    session = Context().session
+    session = get_context().session
 
     return dict(
         dup_canon   = duplicate_canonicals(session),

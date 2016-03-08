@@ -5,7 +5,7 @@ find out what programs they have access to etc
 """
 
 from ..orm.userprogram import UserProgram
-from ..utils.web import Context
+from ..utils.web import get_context
 
 from . import templating
 
@@ -19,7 +19,7 @@ def my_programs(things):
     Also generates and processes a form to add new ones.
     """
 
-    ctx = Context()
+    ctx = get_context()
 
     # First, process the form data if there is any
     formdata = ctx.get_form_data()
@@ -67,7 +67,7 @@ def get_program_list(user):
 
     prog_list = []
     if user is not None:
-        query = Context().session.query(UserProgram).filter(UserProgram.user_id == user.id)
+        query = get_context().session.query(UserProgram).filter(UserProgram.user_id == user.id)
         results = query.all()
         for result in results:
             prog_list.append(result.program_id)
@@ -88,7 +88,7 @@ def request_user_program(user, program_id, program_key):
     if len(program_key) < 5:
         return "Invalid program key"
 
-    session = Context().session
+    session = get_context().session
 
     # Is this program ID already registered for this user?
     query = session.query(UserProgram).filter(UserProgram.user_id == user.id).filter(UserProgram.program_id == program_id)

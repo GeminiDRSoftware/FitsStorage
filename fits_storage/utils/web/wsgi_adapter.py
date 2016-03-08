@@ -309,7 +309,7 @@ class ContextResponseIterator(object):
     def __init__(self, response, context_closer):
         self._resp = response
         self._cls  = context_closer
-        self._ctx  = adapter.Context()
+        self._ctx  = adapter.get_context()
         self._closed = False
 
     def __iter__(self):
@@ -341,7 +341,7 @@ class ArchiveContextMiddleware(object):
         self.bytes_sent = 0
 
     def __call__(self, environ, start_response):
-        self.ctx = adapter.Context()
+        self.ctx = adapter.get_context(initialize=True)
         ctx = self.ctx
         # Setup the session and basics of the context
         try:
@@ -370,21 +370,27 @@ class ArchiveContextMiddleware(object):
             session.add(usagelog)
             session.commit()
         except Exception as e:
-            traceback.print_exc()
-            session.commit()
-            session.close()
-            raise
+            try:
+                traceback.print_exc()
+                session.commit()
+                session.close()
+                raise
+            finally:
+                self.close()
 
         try:
             result = self.application(environ, start_response)
             return ContextResponseIterator(result, self.close)
         except Exception as e:
-            traceback.print_exc()
-            session.commit()
-            ctx.usagelog.set_finals(ctx)
-            session.commit()
-            session.close()
-            raise
+            try:
+                traceback.print_exc()
+                session.commit()
+                ctx.usagelog.set_finals(ctx)
+                session.commit()
+                session.close()
+                raise
+            finally:
+                self.close()
 
     def close(self):
         self.ctx.invalidate()

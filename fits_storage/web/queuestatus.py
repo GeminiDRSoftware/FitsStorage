@@ -3,7 +3,7 @@ This module handles the web 'queue' functions. Mainly showing status
 """
 
 from ..utils.queuestats import stats, regular_summary, error_summary, error_detail, UnknownQueueError
-from ..utils.web import Context
+from ..utils.web import get_context
 
 from .user import needs_login
 
@@ -25,7 +25,7 @@ def queuestatus_summary():
     general_rows = []
     detail_tables = {}
 
-    session = Context().session
+    session = get_context().session
     for qstat in stats(session):
         general_rows.append(qstat)
         size, nerr = qstat['size'], qstat['errors']
@@ -52,7 +52,7 @@ def queuestatus_summary():
 @needs_login(staffer=True, archive_only=True)
 @templating.templated("queuestatus/detail.html")
 def queuestatus_tb(qshortname, oid):
-    det = error_detail(Context().session, qshortname, oid)
+    det = error_detail(get_context().session, qshortname, oid)
 
     template_args = dict(
         oid = oid,
@@ -82,7 +82,7 @@ QUEUELIMIT = 200
 def queuestatus_update():
     cache = {}
 
-    ctx = Context()
+    ctx = get_context()
 
     # Try to decode the payload in the POST query
     try:
@@ -92,7 +92,7 @@ def queuestatus_update():
     except ValueError:
         pass
 
-    session = Context().session
+    session = get_context().session
 
     result = []
     for qstat in stats(session):

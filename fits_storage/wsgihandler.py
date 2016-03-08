@@ -7,7 +7,7 @@ import sys
 
 from fits_storage.gemini_metadata_utils import gemini_date
 
-from fits_storage.utils.web import Context, Return, context_wrapped
+from fits_storage.utils.web import get_context, Return, context_wrapped
 from fits_storage.utils.web import WSGIRequest, WSGIResponse, ArchiveContextMiddleware
 from fits_storage.utils.web import RequestRedirect, ClientError
 from fits_storage.utils.web.routing import Map, Rule, BaseConverter
@@ -131,7 +131,7 @@ from pprint import pformat
 
 # Send debugging info to browser
 def debugmessage():
-    ctx = Context()
+    ctx = get_context()
     req, resp = ctx.req, ctx.resp
 
     resp.set_content_type('text/plain')
@@ -262,10 +262,10 @@ url_map = Map([
 )
 
 def get_route(routes):
-    return routes.match(Context().env.uri)
+    return routes.match(get_context().env.uri)
 
 def default_route(environ, start_response):
-    resp = Context().resp
+    resp = get_context().resp
     resp.set_content_type('text/plain')
     resp.append("This is the default page!\nYou're probably looking for something else")
 
@@ -279,7 +279,7 @@ def unicode_to_string(uni):
     return uni.encode('utf-8') if isinstance(uni, unicode) else uni
 
 def handler(environ, start_response):
-    ctx = Context()
+    ctx = get_context()
     req, resp = ctx.req, ctx.resp
     resp.set_header('Cache-Control', 'no-cache')
     resp.set_header('Expired', '-1')
@@ -309,8 +309,8 @@ class StaticServer(object):
         self.root = root
 
     def __call__(self, environ, start_response):
-        ctx = Context()
-        req, resp = Context().req, Context().resp
+        ctx = get_context()
+        req, resp = ctx.req, ctx.resp
 
         uri = filter(len, req.env.uri.split('/'))
         if len(uri) > 1 and uri[0] == 'static':
@@ -328,7 +328,7 @@ htmldocroot = os.path.join(os.path.dirname(__file__), '..', 'htmldocroot')
 handle_with_static = StaticServer(handler, root=htmldocroot)
 
 def handler(environ, start_response):
-    ctx = Context()
+    ctx = get_context()
     try:
         return handle_with_static(environ, start_response)
     except RequestRedirect as e:

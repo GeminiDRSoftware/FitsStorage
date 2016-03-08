@@ -11,10 +11,10 @@ from ..orm.header import Header
 from ..orm.fulltextheader import FullTextHeader
 
 from ..utils.userprogram import canhave_coords
-from ..utils.web import Context
+from ..utils.web import get_context
 
 def report(thing):
-    ctx = Context()
+    ctx = get_context()
     resp = ctx.resp
     session = ctx.session
 

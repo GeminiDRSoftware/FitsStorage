@@ -14,7 +14,7 @@ from ..gemini_metadata_utils import gemini_date, gemini_time_period_from_range
 from sqlalchemy import asc, desc
 import dateutil.parser
 
-from ..utils.web import Context
+from ..utils.web import get_context
 
 def list_headers(selection, orderby, full_query=False, add_previews=False):
     """
@@ -28,7 +28,7 @@ def list_headers(selection, orderby, full_query=False, add_previews=False):
     Returns a list of Header objects
     """
 
-    session = Context().session
+    session = get_context().session
 
     # The basic query...
     if full_query:

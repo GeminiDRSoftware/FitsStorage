@@ -7,7 +7,7 @@ from sqlalchemy import desc
 from ..orm import NoResultFound
 from ..orm.user import User
 
-from ..utils.web import Context, Return
+from ..utils.web import get_context, Return
 
 from ..fits_storage_config import fits_servername, smtp_server, use_as_archive
 
@@ -28,7 +28,7 @@ def request_account(things):
     Generates and handles web form for requesting new user accounts
     """
 
-    ctx = Context()
+    ctx = get_context()
 
     # Process the form data first if there is any
     formdata = ctx.get_form_data()
@@ -129,7 +129,7 @@ Regards,
 
 """
 
-    user = Context().session.query(User).get(userid)
+    user = get_context().session.query(User).get(userid)
     username = user.username
     email = user.email
     fullname = user.fullname
@@ -162,7 +162,7 @@ def password_reset(userid, token):
     password reset form and process it when submitted.
     """
 
-    ctx = Context()
+    ctx = get_context()
     session = ctx.session
 
     template_args = dict(
@@ -252,7 +252,7 @@ def change_password(things):
     # Present and process a change password form. User must be logged in,
     # and know their current password.
 
-    ctx = Context()
+    ctx = get_context()
 
     # Process the form data first if there is any
     formdata = ctx.get_form_data()
@@ -319,7 +319,7 @@ def request_password_reset():
     Generate and process a web form to request a password reset
     """
 
-    ctx = Context()
+    ctx = get_context()
 
     # Process the form data first if thre is any
     formdata = ctx.get_form_data()
@@ -378,7 +378,7 @@ def staff_access():
     Allows supersusers to set accounts to be or not be gemini staff
     """
 
-    ctx = Context()
+    ctx = get_context()
 
     # Process the form data first if there is any
     formdata = ctx.get_form_data()
@@ -424,7 +424,7 @@ def login(things):
     Presents and processes a login form
     Sends session cookie if sucessfull
     """
-    ctx = Context()
+    ctx = get_context()
 
     # Process the form data first if there is any
     formdata = ctx.get_form_data()
@@ -483,7 +483,7 @@ def logout():
     Log out all archive sessions for this user
     """
     # Do we have a session cookie?
-    ctx = Context()
+    ctx = get_context()
 
     try:
         cookie = ctx.cookies['gemini_archive_session']
@@ -515,7 +515,7 @@ def whoami(things):
 
     template_args = {}
 
-    user = Context().user
+    user = get_context().user
 
     try:
         template_args['username'] = user.username
@@ -537,7 +537,7 @@ def user_list():
     see this.
     """
 
-    ctx = Context()
+    ctx = get_context()
 
     thisuser = ctx.user
     if thisuser is None or thisuser.gemini_staff != True:
@@ -556,7 +556,7 @@ def email_inuse(email):
     Check the database to see if this email is already in use. Returns True if it is, False otherwise
     """
 
-    num = Context().session.query(User).filter(User.email == email).count()
+    num = get_context().session.query(User).filter(User.email == email).count()
 
     return num != 0
 
@@ -565,7 +565,7 @@ def username_inuse(username):
     Check the database to see if a username is already in use. Returns True if it is, False otherwise
     """
 
-    num = Context().session.query(User).filter(User.username == username).count()
+    num = get_context().session.query(User).filter(User.username == username).count()
 
     return num != 0
 
@@ -628,7 +628,7 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(*args, **kw):
-            ctx = Context()
+            ctx = get_context()
 
             ctype = 'application/json' if content_type == 'json' else 'text/html'
 

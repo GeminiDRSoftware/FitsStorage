@@ -12,7 +12,7 @@ from . import templating
 from ..fits_storage_config import fits_aux_datadir
 from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
 
-from ..utils.web import Context, Return
+from ..utils.web import get_context, Return
 
 import os
 import urllib
@@ -38,7 +38,7 @@ def searchform(things, orderby):
     # User messes with input fields
     # User hits submit - back to top
 
-    ctx = Context()
+    ctx = get_context()
 
     # grab the string version of things before getselection() as that modifies the list.
     thing_string = '/' + '/'.join(things)
@@ -271,7 +271,7 @@ def nameresolver(things, resolver, target):
     """
 
 #    if len(things) != 2:
-#        Context().resp.status = Return.HTTP_NOT_ACCEPTABLE
+#        get_context().resp.status = Return.HTTP_NOT_ACCEPTABLE
 #        return
 
 #    resolver = things[0]
@@ -284,13 +284,13 @@ def nameresolver(things, resolver, target):
     }
 
     if resolver not in urls.keys():
-        Context().resp.status = Return.HTTP_NOT_ACCEPTABLE
+        get_context().resp.status = Return.HTTP_NOT_ACCEPTABLE
         return
 
     url = urls[resolver] + target
 
     urlfd = urllib.urlopen(url)
-    Context().resp.append(urlfd.read())
+    get_context().resp.append(urlfd.read())
     urlfd.close()
 
 # DATA FOR THE TEMPLATES

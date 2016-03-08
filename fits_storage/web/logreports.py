@@ -20,7 +20,7 @@ from ..orm.header import Header
 from ..orm.user import User
 
 from ..utils.query_utils import to_int, null_to_zero
-from ..utils.web import Context, Return
+from ..utils.web import get_context, Return
 
 from ..gemini_metadata_utils import ONEDAY_OFFSET
 
@@ -60,7 +60,7 @@ def usagereport():
     this = ''
     status = ''
 
-    ctx = Context()
+    ctx = get_context()
 
     session = ctx.session
 
@@ -144,7 +144,7 @@ def usagedetails(ulid):
 #    except (ValueError, IndexError):
 #        raise templating.SkipTemplateError(Return.HTTP_NOT_ACCEPTABLE)
 
-    session = Context().session
+    session = get_context().session
 
     # Subquery to add a "row count" to the QueryLog and the DownloadLog. This is an easy way to pick just
     # the first relation when joining a one-to-many with potentially more than one result per match.
@@ -197,7 +197,7 @@ def downloadlog(patterns):
 
         return permission
 
-    session = Context().session
+    session = get_context().session
 
     hsq = session.query(Header, func.row_number().over(Header.diskfile_id).label('row_number')).subquery()
     aHeader = aliased(Header, hsq)
@@ -275,7 +275,7 @@ def usagestats():
     Generate counts per year, per week and per day
     """
 
-    session = Context().session
+    session = get_context().session
 
     first, last = session.query(func.min(UsageLog.utdatetime),
                                 func.max(UsageLog.utdatetime)).first()

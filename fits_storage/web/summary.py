@@ -3,7 +3,7 @@ This module contains the main web summary code.
 """
 import datetime
 
-from ..utils.web import Context
+from ..utils.web import get_context
 from ..fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
 from .selection import sayselection, openquery, selection_to_URL
 from .list_headers import list_headers
@@ -68,7 +68,7 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
     the html table containing the actual summary information.
     """
 
-    ctx = Context()
+    ctx = get_context()
     session = ctx.session
     sumlinks = ALL_LINKS if links else NO_LINKS
 
@@ -153,7 +153,7 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
     headers: the list of header objects to include in the summary
     """
 
-    ctx = Context()
+    ctx = get_context()
 
     # Construct the summary generator object.
     # If this is an ajax request and the type is searchresults, then

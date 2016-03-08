@@ -5,7 +5,7 @@ This module generates the Observing Statistics - ie "Open Shutter" Statistic rep
 from .summary import list_headers
 from ..gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
 
-from ..utils.web import Context, with_content_type
+from ..utils.web import get_context, with_content_type
 
 import ephem
 import dateutil.parser
@@ -18,7 +18,7 @@ def observing_statistics(selection):
     calculate_observing_statistics() on each night, and outputs the table
     """
 
-    ctx = Context()
+    ctx = get_context()
     resp = ctx.resp
 
     session = ctx.session

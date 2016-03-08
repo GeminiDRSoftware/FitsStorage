@@ -11,7 +11,7 @@ from ..gemini_metadata_utils import GeminiProgram
 
 from ..utils.api import ApiProxy, ApiProxyError
 from ..utils.userprogram import icanhave
-from ..utils.web import Context, Return
+from ..utils.web import get_context, Return
 
 from .user import needs_login
 
@@ -29,7 +29,7 @@ def miscfiles(handle = None):
 #        if len(things) == 1 and things[0] == 'validate_add':
 #            return validate()
 
-        formdata = Context().get_form_data(large_file=True)
+        formdata = get_context().get_form_data(large_file=True)
         if handle is None:
             if 'search' in formdata:
                 return search_miscfiles(formdata)
@@ -49,17 +49,17 @@ def miscfiles(handle = None):
 
 @templating.templated("miscfiles/miscfiles.html")
 def bare_page():
-    return dict(can_add=Context().is_staffer)
+    return dict(can_add=get_context().is_staffer)
 
 def enumerate_miscfiles(query):
-    ctx = Context()
+    ctx = get_context()
     session = ctx.session
     for misc, disk, file in query:
         yield icanhave(ctx, misc), misc, disk, file
 
 @templating.templated("miscfiles/miscfiles.html")
 def search_miscfiles(formdata):
-    ctx = Context()
+    ctx = get_context()
 
     ret = dict(can_add=ctx.is_staffer)
     query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)
@@ -98,7 +98,7 @@ def string_to_date(string):
     return datetime.strptime(string, '%Y-%m-%d')
 
 def validate():
-    ctx = Context()
+    ctx = get_context()
 
 #    if ctx.env.method != 'POST':
 #        ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
@@ -187,7 +187,7 @@ def save_file(formdata):
 
 @templating.templated("miscfiles/detail.html")
 def detail_miscfile(handle, formdata = {}):
-    ctx = Context()
+    ctx = get_context()
 
     try:
         query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)

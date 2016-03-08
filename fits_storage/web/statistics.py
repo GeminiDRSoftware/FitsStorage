@@ -14,7 +14,7 @@ from ..orm.header import Header
 from ..orm.ingestqueue import IngestQueue
 
 from ..utils.query_utils import to_int, null_to_zero
-from ..utils.web import Context
+from ..utils.web import get_context
 
 from . import templating
 
@@ -28,7 +28,7 @@ def stats():
     presented in html in the browser in a list format.
     """
 
-    session = Context().session
+    session = get_context().session
     # DiskFile table statistics
     DiskFileStats = namedtuple('DiskFileStats', "total_rows present_rows present_size latest last_minute last_hour last_day last_queries")
     df_query = session.query(DiskFile)
@@ -102,7 +102,7 @@ def content():
     observation class/type, and year of observation.
     """
 
-    session = Context().session
+    session = get_context().session
 
     # Presents total files and filesize
     filenum, filesize, datasize = (

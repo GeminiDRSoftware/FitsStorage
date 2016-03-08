@@ -16,7 +16,7 @@ from ..orm.header import Header
 from ..orm.obslog import Obslog
 from ..orm.miscfile import MiscFile
 
-from .web import Context
+from .web import get_context
 
 def canhave_coords(session, user, header, gotmagic=False, user_progid_list=None):
     """

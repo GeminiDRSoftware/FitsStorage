@@ -9,7 +9,7 @@ from ..orm.header import Header
 from ..orm.diskfile import DiskFile
 from ..orm.file import File
 
-from ..utils.web import Context, Return, with_content_type
+from ..utils.web import get_context, Return, with_content_type
 
 from .selection import sayselection, queryselection
 from .calibrations import interval_hours
@@ -54,7 +54,7 @@ def gmoscal_json(selection):
     result['twilight_flats'] = jlist
     result['biases'] = dict((k.strftime("%Y%m%d"), v) for k, v in values['bias'])
 
-    Context().resp.append_json([result], indent=4)
+    get_context().resp.append_json([result], indent=4)
 
 def gmoscal(selection):
     """
@@ -71,7 +71,7 @@ def gmoscal(selection):
         result['using_sqlite'] = True
         return Return.HTTP_NOT_IMPLEMENTED, result
 
-    session = Context().session
+    session = get_context().session
 
     # Was a date provided by user?
     datenotprovided = ('date' not in selection) and ('daterange' not in selection)
@@ -221,7 +221,7 @@ def gmoscal(selection):
     # Nod & Shuffle Darks
     # The basic query for this
     def nod_and_shuffle(selection):
-        query = Context().session.query(Header).select_from(join(join(Header, DiskFile), Gmos))
+        query = get_context().session.query(Header).select_from(join(join(Header, DiskFile), Gmos))
 
         # Fudge and add the selection criteria
         selection = {}

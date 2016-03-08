@@ -1,5 +1,5 @@
 import re
-from .adapter import Context, Return
+from .adapter import get_context, Return
 from urlparse import parse_qs
 
 # This rule regular expressions is copied from werkzeug's, as we intend to make it
@@ -132,7 +132,7 @@ class Rule(object):
                     return
 
             if self.qs_mapping:
-                qs_args = parse_qs(Context().req.env.qs)
+                qs_args = parse_qs(get_context().req.env.qs)
                 for var, mapping in self.qs_mapping.iteritems():
                     if var in qs_args:
                         result.append({mapping: qs_args[var]})
@@ -198,7 +198,7 @@ class Map(object):
         return self.converters[converter_name](*args, **kwargs)
 
     def match(self, path_info, method=None):
-        ctx = Context()
+        ctx = get_context()
         for rule in self._rules:
             m = rule.match(path_info)
             if m is not None:
