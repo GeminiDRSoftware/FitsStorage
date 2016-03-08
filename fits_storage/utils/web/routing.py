@@ -55,7 +55,7 @@ def parse_converter_args(arguments):
     return tuple(x.strip() for x in a.split(',')), {}
 
 class Rule(object):
-    def __init__(self, string, action=None, methods=None, redirect_to=None):
+    def __init__(self, string, action=None, methods=None, redirect_to=None, defaults=None):
         # TODO: Assert that there's a value for either action or redirect_to
         self.string = string
         self.action = action
@@ -66,6 +66,7 @@ class Rule(object):
                 self.methods.add('HEAD')
         else:
             self.methods = None
+        self.defaults = defaults or {}
 
         self._regex = None
         self._variables  = {}
@@ -105,16 +106,24 @@ class Rule(object):
         if res:
             gd = res.groupdict()
             result = []
+            added = set()
             for name, value in gd.iteritems():
                 try:
                     var = self._variables[name]
                     val = self._converters[name].to_python(value)
                     if isinstance(var, tuple):
                         result.append(dict(zip(var, val)))
+                        for k in var:
+                            added.add(k)
                     else:
                         result.append({var: val})
+                        added.add(var)
                 except ValueError:
                     return
+
+            for var, val in self.defaults.iteritems():
+                if var not in added:
+                    result.append({var: val})
 
             return result
 
