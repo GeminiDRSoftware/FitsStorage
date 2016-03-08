@@ -27,9 +27,11 @@ def qareport(req):
     This function handles submission of QA metric reports via json
     """
 
+    ctx = Context()
+
     if req.method == 'POST':
-        clientdata = Context().req.raw_data
-        req.log_error("QAreport clientdata: %s" % clientdata)
+        clientdata = ctx.req.raw_data
+        ctx.req.log("QAreport clientdata: %s" % clientdata)
 
         # We make here some reasonable assumptions about the input format
         if clientdata.startswith('['):
@@ -37,7 +39,7 @@ def qareport(req):
         else:
             return HTTP_BAD_REQUEST
 
-        req.log_error("thelist: %s" % thelist)
+        ctx.req.log("thelist: %s" % thelist)
 
         return qareport_ingest(thelist, submit_host=req.get_remote_host(), 
                                submit_time=datetime.datetime.now())

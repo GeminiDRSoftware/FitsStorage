@@ -105,7 +105,8 @@ def cals_info(cal_obj, caltype, qtype='UNKNOWN', log=no_func, add_note=no_func, 
 
 def generate_post_calmgr(session, req, selection, caltype):
     # OK, get the details from the POST data
-    clientdata = Context().req.raw_data
+    ctx = Context()
+    clientdata = ctx.req.raw_data
     clientstr = urllib.unquote_plus(clientdata)
 
     match = re.match("descriptors=(.*)&types=(.*)", clientstr)
@@ -114,7 +115,7 @@ def generate_post_calmgr(session, req, selection, caltype):
 
     descriptors = eval(desc_str)
     types = eval(type_str)
-    usagelog = Context().usagelog
+    usagelog = ctx.usagelog
     usagelog.add_note("CalMGR request CalType: %s" % caltype)
     usagelog.add_note("CalMGR request Descriptor Dictionary: %s" % descriptors)
     usagelog.add_note("CalMGR request Types List: %s" % types)
@@ -135,7 +136,7 @@ def generate_post_calmgr(session, req, selection, caltype):
         filename = None,
         md5      = None,
         cal_info = cals_info(c, caltype, qtype='POST',
-                                      log=req.log_error,
+                                      log=ctx.req.log,
                                       add_note=usagelog.add_note,
                                       hostname=fits_servername,
                                       storage_root=storage_root)
@@ -164,7 +165,8 @@ def generate_get_calmgr(session, req, selection, caltype):
     # OK, do the query
     headers = query.all()
 
-    usagelog = Context.usagelog
+    ctx = Context()
+    usagelog = ctx.usagelog
     # Did we get anything?
     if len(headers) > 0:
         # Loop through targets frames we found
@@ -177,9 +179,9 @@ def generate_get_calmgr(session, req, selection, caltype):
                 filename = header.diskfile.file.name,
                 md5      = header.diskfile.data_md5,
                 cal_info = cals_info(c, caltype, qtype='GET',
-                                     log=req.log_error,
+                                     log=ctx.req.log,
                                      add_note=usagelog.add_note,
-                                     hostname=req.server.server_hostname),
+                                     hostname=ctx.req.env.server_hostname),
                 )
 
     # commit the usagelog notes

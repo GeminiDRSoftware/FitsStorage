@@ -7,6 +7,8 @@ from sqlalchemy import desc
 from ..orm import session_scope, NoResultFound
 from ..orm.user import User
 
+from ..utils.web import Context
+
 from ..fits_storage_config import fits_servername, smtp_server, use_as_archive
 
 from . import templating
@@ -476,6 +478,8 @@ def logout(req):
     Log out all archive sessions for this user
     """
     # Do we have a session cookie?
+    ctx = Context()
+
     cookie = None
     cookies = Cookie.get_cookies(req)
     if cookies.has_key('gemini_archive_session'):
@@ -488,7 +492,7 @@ def logout(req):
 
             if len(users) > 1:
                 # Eeek, multiple users with the same session cookie!?!?!
-                req.log_error("Logout - Multiple Users with same session cookie: %s" % cookie)
+                ctx.req.log("Logout - Multiple Users with same session cookie: %s" % cookie)
             for user in users:
                 user.log_out_all()
 
