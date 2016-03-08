@@ -127,7 +127,7 @@ def generate_post_calmgr(selection, caltype):
     descriptors['prepared'] = 'PREPARED' in types
 
     # Get a cal object for this target data
-    c = get_cal_object(ctx.session, header=None, descriptors=descriptors, types=types)
+    c = get_cal_object(ctx.session, None, header=None, descriptors=descriptors, types=types)
 
     yield dict(
         label    = descriptors['data_label'],
@@ -173,7 +173,7 @@ def generate_get_calmgr(selection, caltype):
         # Loop through targets frames we found
         for header in headers:
             # Get a cal object for this target data
-            c = get_cal_object(ctx.session, header=header)
+            c = get_cal_object(ctx.session, None, header=header)
 
             yield dict(
                 label    = header.data_label,
