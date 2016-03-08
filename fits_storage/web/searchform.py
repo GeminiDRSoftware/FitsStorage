@@ -265,7 +265,7 @@ def updateselection(formdata, selection):
             selection[key] = value
 
 
-def nameresolver(things, resolver, target):
+def nameresolver(resolver, target):
     """
     A name resolver proxy. Pass it the resolver and object name
     """
