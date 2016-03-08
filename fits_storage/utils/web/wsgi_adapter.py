@@ -12,6 +12,14 @@ from datetime import datetime
 import json
 import tarfile
 
+class ItemizedFieldStorage(FieldStorage):
+    def items(self):
+        for k in self.keys():
+            yield (k, self[k])
+
+    def iteritems(self):
+        return self.items()
+
 from types import StringType, UnicodeType
 
 from contextlib import contextmanager
@@ -105,7 +113,7 @@ class Request(adapter.Request):
             return False
 
     def get_form_data(self, large_file=False):
-        form_data = FieldStorage(self.input, environ=self._env)
+        form_data = ItemizedFieldStorage(self.input, environ=self._env)
 
         return form_data
 
