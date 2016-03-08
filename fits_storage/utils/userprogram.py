@@ -71,7 +71,7 @@ def reset_pi_access(filedownloadlog):
 def is_users_program(session, user, user_progid_list, program_id, filedownloadlog):
     # If we didn't get passed in the users program list, get it
     if user_progid_list is None:
-        user_progid_list = get_program_list(session, user)
+        user_progid_list = get_program_list(user)
 
     # Is the program in the list?
     if program_id in user_progid_list:
