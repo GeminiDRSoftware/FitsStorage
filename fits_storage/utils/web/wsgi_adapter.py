@@ -144,9 +144,7 @@ template_4xx = """\
 def only_if_not_started_response(fn):
     @wraps(fn)
     def wrapper(self, *args, **kw):
-        if self._started_response:
-            # TODO: Look for a more sensible exception, to deal with the problem upwards.
-            raise RuntimeError("Asked to send a non-2xx code, but the response started already")
+        assert not self._started_response, "Asked to start a response, but headers have been sent"
         return fn(self, *args, **kw)
     return wrapper
 
@@ -174,6 +172,7 @@ class Response(adapter.Response):
         self.make_empty()
         self._started_response = False
         self._filter = lambda x: x
+        self._write_callback = None
 
     def respond(self, filter = None):
         self.start_response()
@@ -202,8 +201,8 @@ class Response(adapter.Response):
 
     def start_response(self):
         if not self._started_response:
-            self._started_response
-            self._sr(
+            self._started_response = True
+            self._write_callback = self._sr(
                 '{} {}'.format(self.status, status_message.get(self.status, 'Error')),
                    [('Content-Type', self._content_type)]
                  + self._headers[:]
@@ -238,14 +237,17 @@ class Response(adapter.Response):
         self._headers.append((name, value))
         return self
 
+    @only_if_not_started_response
     def append(self, string):
         self._content.append(string)
         return self
 
+    @only_if_not_started_response
     def append_iterable(self, it):
         self._content.append(it)
         return self
 
+    @only_if_not_started_response
     def append_json(self, obj, **kw):
         raise NotImplementedError("This is not implemented yet")
         # json.dump(obj, self._req, **kw)
@@ -256,6 +258,7 @@ class Response(adapter.Response):
     def sendfile_obj(self, fp):
         self.append_iterable(BufferedFileObjectIterator(fp))
 
+    @only_if_not_started_response
     @contextmanager
     def tarfile(self, name, **kw):
         raise NotImplementedError("This is not implemented yet")
