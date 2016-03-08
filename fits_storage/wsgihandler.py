@@ -238,7 +238,8 @@ url_map = Map([
 
     # TODO: We're still not capturing the order_by, that comes in the query string as arguments
     #       Figure out something.
-    Rule('/searchform/<seq_of:things>', searchform),
+    #       For the time being, we'll leave it as None
+    Rule('/searchform/<seq_of:things>', searchform, defaults=dict(orderby=None)),
 
     # This header summary routing
     # TODO: We're still not capturing the order_by, that comes in the query string as arguments
@@ -273,9 +274,7 @@ def dispatch(endpoint, args):
     return endpoint(**kw)
 
 def unicode_to_string(uni):
-    if isinstance(uni, unicode):
-        return uni.encode('utf-8')
-    return uni
+    return uni.encode('utf-8') if isinstance(uni, unicode) else uni
 
 def handler(environ, start_response):
     ctx = Context()
