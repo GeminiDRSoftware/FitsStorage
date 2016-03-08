@@ -71,10 +71,12 @@ no_auth_no_data = (
     ('miscfiles', GET, OK),
     ('miscfiles/10', GET, NOT_FOUND),
     ('miscfiles/validate_add', GET, NOT_ALLOWED),
-    ('miscfiles/validate_add', POST, OK),
+    ('miscfiles/validate_add', POST, BAD_REQUEST),
+    ('miscfiles/validate_add', (POST, '{"release":"2017-12-01"}'), OK),
     ('standardobs/10', GET, OK),
     ('upload_file/fn', GET, NOT_ALLOWED),
-    ('upload_file/fn', POST, FORBIDDEN),
+    ('upload_file/fn', POST, BAD_REQUEST),
+    ('upload_file/fn', (POST, '{}'), FORBIDDEN),
     ('upload_processed_cal/pcal', GET, NOT_ALLOWED),
     ('upload_processed_cal/pcal', POST, FORBIDDEN),
     ('fitsverify/10', GET, OK),
@@ -83,9 +85,26 @@ no_auth_no_data = (
     ('mdreport/bar', GET, NOT_FOUND),
     ('fullheader/10', GET, OK),
     ('fullheader/baz', GET, NOT_FOUND),
+    ('calibrations/20130101', GET, OK),
+    ('xmlfilelist/20130101', GET, OK),
+    ('jsonfilelist/20130101', GET, OK),
+    ('jsonfilenames/20130101', GET, OK),
+    ('jsonsummary/20130101', GET, OK),
+    ('jsonqastate/20130101', GET, OK),
+    ('calmgr/20130101', GET, OK),
+    ('gmoscal/20130101', GET, OK),
+    ('programsobserved/20130101', GET, OK),
+    ('obslogs/20130101', GET, OK),
+    ('associated_obslogs/20130101', GET, OK),
+    ('gmoscaljson/20130101', GET, OK),
     )
 
 def perform_test(url, method=GET, *args, **kw):
+    if isinstance(method, tuple):
+        method, data = method
+        kw['data'] = data
+    else:
+        data = ''
     req = requests.post if method == POST else requests.get
 
     r = req(url, *args, **kw)
