@@ -62,18 +62,25 @@ class Context(object):
     __threads = {}
     def __new__(cls):
         this = get_ident()
+        def new_context():
+            new = Context.__threads[this] = object.__new__(cls)
+            new.initialize_singleton()
+            return new
+
         try:
             ret = Context.__threads[this]
             # This should never happen, but...
             if not ret._valid:
-                ret = Context.__threads[this] = object.__new__(cls)
+                ret = new_context()
         except KeyError:
-            ret = Context.__threads[this] = object.__new__(cls)
+            ret = new_context()
 
         return ret
 
-    def __init__(self):
+    def initialize_singleton(self):
         self._valid  = True
+        self.req = None
+        self.resp = None
 
     def setContent(self, req, resp):
         self.req = req
@@ -87,8 +94,9 @@ class Context(object):
         return getattr(self.req, attr)
 
     def invalidate(self):
-        self._valid = False
-        del Context.__threads[get_ident()]
+        if self._valid:
+            self._valid = False
+            del Context.__threads[get_ident()]
 
     @property
     def cookies(self):
