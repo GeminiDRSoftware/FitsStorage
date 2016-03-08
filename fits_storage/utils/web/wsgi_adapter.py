@@ -143,6 +143,15 @@ class Response(adapter.Response):
         self.make_empty()
         self._started_response = False
 
+    def respond(self, filter = None):
+        self.start_response()
+        if filter:
+            for k in self:
+                yield filter(k)
+        else:
+            for k in self:
+                yield k
+
     def __iter__(self):
         for k in self._content:
             yield k
