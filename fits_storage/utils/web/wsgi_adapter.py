@@ -14,7 +14,7 @@ from types import StringType, UnicodeType
 import Cookie
 from contextlib import contextmanager
 from functools import wraps
-
+import tarfile
 import traceback
 
 class Environment(object):
@@ -161,6 +161,21 @@ class BufferedFileObjectIterator(object):
                 break
             yield n
 
+class StreamingObject(object):
+    def __init__(self, callback):
+        self._callback = callback
+
+    def write(self, data):
+        self._callback(data)
+
+    def flush(self):
+        # TODO: Implement?
+        pass
+
+    def close(self):
+        # TODO: Implement?
+        pass
+
 class Response(adapter.Response):
     def __init__(self, session, wsgienv, start_response):
         super(Response, self).__init__(session)
@@ -261,14 +276,16 @@ class Response(adapter.Response):
     @only_if_not_started_response
     @contextmanager
     def tarfile(self, name, **kw):
-        raise NotImplementedError("This is not implemented yet")
-        #self.set_header('Content-Disposition', 'attachment; filename="{}"'.format(name))
-        #tar = tarfile.open(name=name, fileobj=self._req, **kw)
+        assert (len(self._content) == 0)
+        self.set_header('Content-Disposition', 'attachment; filename="{}"'.format(name))
+        self.start_response()
 
-        #try:
-        #    yield tar
-        #finally:
-        #    tar.close()
+        tar = tarfile.open(name=name, fileobj=StreamingObject(self._write_callback), **kw)
+
+        try:
+            yield tar
+        finally:
+            tar.close()
         #    self._req.flush()
 
     def make_empty(self):
