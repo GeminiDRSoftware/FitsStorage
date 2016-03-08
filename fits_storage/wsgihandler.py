@@ -1,11 +1,15 @@
 # This is the WSGI handler
 # When a request comes in, handler(req) gets called by the apache server
 
-import sys
+import os
 import re
+import sys
+
 from fits_storage.gemini_metadata_utils import gemini_date
 
-from fits_storage.utils.web import Context, context_wrapped, WSGIRequest, WSGIResponse, WSGIRequestHandler
+from fits_storage.utils.web import Context, context_wrapped
+from fits_storage.utils.web import WSGIRequest, WSGIResponse, WSGIRequestHandler
+from fits_storage.utils.web import RequestRedirect, ClientError
 from fits_storage.utils.web.routing import Map, Rule, BaseConverter
 
 from fits_storage.fits_storage_config import blocked_urls, use_as_archive
@@ -115,6 +119,8 @@ def debugmessage():
 ####### END HELPER FUNCTIONS #######
 
 url_map = Map([
+    # Queries to the root should redirect to a sensible page
+    Rule('/', redirect_to=('/searchform' if use_as_archive else '/')),
     Rule('/debug', debugmessage),
     Rule('/content', content),                                      # Database Statistics
     Rule('/stats', stats),
@@ -161,8 +167,8 @@ url_map = Map([
     Rule('/queuestatus/json', queuestatus_update),                  # Show some info on what's going on with the queues
     Rule('/queuestatus/<queue>/<int:oid>', queuestatus_tb),         # Show some info on what's going on with the queues
 
-    Rule('/miscfiles', miscfiles),                                  # Miscellanea (Opaque files)
-    Rule('/miscfiles/<int:handle>', miscfiles),                     # Miscellanea (Opaque files)
+    Rule('/miscfiles', miscfiles.miscfiles),                        # Miscellanea (Opaque files)
+    Rule('/miscfiles/<int:handle>', miscfiles.miscfiles),           # Miscellanea (Opaque files)
     Rule('/miscfiles/validate_add', miscfiles.validate,             # Miscellanea (Opaque files)
          methods=['POST']),
 
@@ -199,8 +205,9 @@ def get_route(routes):
     return routes.match(Context().env.uri)
 
 def default_route(environ, start_response):
-    start_response('200 OK', [('Content-Type', 'text/plain')])
-    return ["This is the default page!\nYou're probably looking for something else"]
+    resp = Context().resp
+    resp.set_content_type('text/plain')
+    resp.append("This is the default page!\nYou're probably looking for something else")
 
 def dispatch(endpoint, args):
     kw = {}
@@ -208,20 +215,64 @@ def dispatch(endpoint, args):
         kw.update(d)
     return endpoint(**kw)
 
+def unicode_to_string(uni):
+    if isinstance(uni, unicode):
+        return uni.encode('utf-8')
+    return uni
+
 def handler(environ, start_response):
+    ctx = Context()
+    req, resp = ctx.req, ctx.resp
+    resp.set_header('Cache-Control', 'no-cache')
+    resp.set_header('Expired', '-1')
+
+    if req.env.server_hostname == 'archive':
+        new_uri = "https://archive.gemini.edu%s" % req.unparsed_uri
+
     route = get_route(url_map)
     if route is None:
-        start_response('404 NOT FOUND', [('Content-Type', 'text/plain')])
-        yield 'Not Found'
+        resp.client_error(404)
     else:
         dispatch(*route)
-        resp = Context().resp
-        resp.start_response()
-        for r in resp:
-            yield r
+        return resp.respond(unicode_to_string)
+
+import mimetypes
+
+class StaticServer(object):
+    """
+    Middleware class. An instance of StaticServer will intercept /static queries and
+    return the static file (relative to certain root directory).
+
+    Ideally, /static will be dealt with at a higher level. In that case, this doesn't
+    introduce a significative overhead.
+    """
+    def __init__(self, application, root):
+        self.app  = application
+        self.root = root
+
+    def __call__(self, environ, start_response):
+        req, resp = Context().req, Context().resp
+
+        uri = filter(len, req.env.uri.split('/'))
+        if len(uri) > 1 and uri[0] == 'static':
+            mtype, enc = mimetypes.guess_type(uri[-1])
+            try:
+                path = os.path.join(htmldocroot, '/'.join(uri[1:]))
+                if mtype is not None:
+                    resp.set_content_type(mtype)
+                return resp.append(open(path).read()).respond()
+            except IOError:
+                resp.client_error(403)
+        return self.app(environ, start_response)
+
+htmldocroot = os.path.join(os.path.dirname(__file__), '..', 'htmldocroot')
+handle_with_static = StaticServer(handler, root=htmldocroot)
 
 def app(environ, start_response):
-    return handler(environ, start_response)
+    try:
+        return handle_with_static(environ, start_response)
+    except (RequestRedirect, ClientError) as e:
+        return Context().resp.respond(unicode_to_string)
 
 # Provide a basic WSGI server, in case we're testing or don't need any fancy
 # container...
