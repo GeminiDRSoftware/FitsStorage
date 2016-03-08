@@ -11,6 +11,10 @@ class Environment(object):
     def server_hostname(self):
         return self._req.server.server_hostname
 
+    @property
+    def uri(self):
+        return self._req.uri
+
 class Request(adapter.Request):
     def __init__(self, session, req):
         super(Request, self).__init__(session)

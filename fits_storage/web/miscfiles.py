@@ -99,7 +99,7 @@ def search_miscfiles(req, formdata):
         query = query.filter(MiscFile.program_id.like('%' + prog + '%'))
         ret['searchProg'] = prog
 
-    ret['uri'] = req.uri
+    ret['uri'] = ctx.req.env.uri
 
     query = query.order_by(File.name).limit(SEARCH_LIMIT)
     cnt = query.count()
@@ -217,7 +217,7 @@ def detail_miscfile(req, handle, formdata):
         ret = dict(
             canedit = ctx.is_staffer,
             canhave = icanhave(ctx.session, req, meta),
-            uri  = req.uri,
+            uri  = ctx.req.env.uri,
             meta = meta,
             disk = df,
             file = fobj

@@ -163,7 +163,7 @@ def summary_table(req, sumtype, headers, selection, links=ALL_LINKS, user=None, 
     # If this is an ajax request and the type is searchresults, then
     # hack the uri to make it look like we came from searchform
     # so that the results point back to a form
-    uri = req.uri
+    uri = Context().req.env.uri
     uri = quote_plus(uri, safe='/=')
     if isajax(req) and sumtype in {'searchresults', 'customsearch'}:
         uri = uri.replace("searchresults", "searchform")
