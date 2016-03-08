@@ -639,6 +639,9 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
                     except KeyError:
                         pass
 
+            if archive_only and not use_as_archive:
+                # Bypass protection - archive_only and not the archive
+                got_magic = True
             if not got_magic:
                 raise_error = functools.partial(ctx.resp.client_error, code=Return.HTTP_FORBIDDEN, content_type=ctype, annotate=annotate)
                 if only_magic:

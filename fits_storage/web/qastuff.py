@@ -39,7 +39,8 @@ def qareport():
 
     ctx.log("thelist: %s" % thelist)
 
-    qareport_ingest(thelist, submit_host=ctx.env.remote_host, submit_time=datetime.datetime.now())
+    qareport_ingest(thelist, submit_host=ctx.env.remote_host,
+                    submit_time=datetime.datetime.now())
 
 def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now()):
     """
@@ -62,7 +63,8 @@ def parse_json(clientdata):
     """
     return json.loads(clientdata)
 
-@templating.templated("reports/qametrics.txt", content_type='text/plain', with_generator=True)
+@templating.templated("reports/qametrics.txt", content_type='text/plain',
+                      with_generator=True)
 def qametrics(metrics):
     """
     This function is the initial, simple display of QA metric data
@@ -110,10 +112,21 @@ def qaforgui(date):
     ctx = get_context()
     resp = ctx.resp
 
-    datestamp = gemini_date(date, offset=get_date_offset(), as_datetime=True)
-    # Default 3 days worth for the gui, to stop the return getting huge over time
-    window = datetime.timedelta(days=3)
-    enddatestamp = datestamp+window
+    try:
+        if '-' in date:
+            datestamp, enddatestamp = gemini_daterange(date,
+                                                       offset=get_date_offset(),
+                                                       as_datetime=True)
+            assert enddatestamp > datestamp
+        else:
+            datestamp = gemini_date(date, offset=get_date_offset(),
+                                    as_datetime=True)
+            # Default 3 days worth for the gui;
+            # stop the return getting huge over time
+            window = datetime.timedelta(days=3)
+            enddatestamp = datestamp+window
+    except (AssertionError, TypeError, ValueError):
+        resp.client_error(Return.HTTP_NOT_ACCEPTABLE, "Error: Invalid or null datestamp.")
 
     session = ctx.session
     resp.content_type = "application/json"
@@ -150,14 +163,16 @@ def qaforgui(date):
                     .filter(Header.data_label == datalabel)
         header = query.first()
         # We can only populate the header info if it is in the header table
-        # These items are used later in the code if available from the header, init to None here
+        # These items are used later in the code if available from the header,
+        # init to None here
         airmass = None
         requested_iq = None
         requested_cc = None
         requested_bg = None
 
         if header:
-            # These are not directly used as metadata items, but are used later if available from the header
+            # These are not directly used as metadata items, but are used later
+            # if available from the header
             try:
                 airmass = float(header.airmass)
             except TypeError:
@@ -199,7 +214,8 @@ def qaforgui(date):
                 except TypeError:
                     pass
 
-            # Look for CC metrics to report. The DB has the different detectors in different entries, have to do some merging.
+            # Look for CC metrics to report. The DB has the different detectors
+            # in different entries, have to do some merging.
             # Find the qareport id of the most recent zp report for this datalabel
             query = session.query(QAreport).select_from(QAmetricZP, QAreport)\
                         .filter(QAmetricZP.qareport_id == QAreport.id)\
@@ -219,7 +235,8 @@ def qaforgui(date):
                 submit_time_kludge = qarep.submit_time
 
 
-            # Look for BG metrics to report. The DB has the different detectors in different entries, have to do some merging.
+            # Look for BG metrics to report. The DB has the different detectors
+            # in different entries, have to do some merging.
             # Find the qareport id of the most recent zp report for this datalabel
             query = session.query(QAreport).select_from(QAmetricSB, QAreport)\
                         .filter(QAmetricSB.qareport_id == QAreport.id)\

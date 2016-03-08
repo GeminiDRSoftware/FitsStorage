@@ -113,6 +113,9 @@ def get_env():
     return jinja_env
 
 class SkipTemplateError(Exception):
+    """Exception to be raised when we need to skip the rendering of a template.
+
+       A numeric status code has to be provided"""
     def __init__(self, status, content_type=None, message=None):
         self.status = status
         self.content_type = content_type
@@ -129,13 +132,14 @@ class InterruptedError(Exception):
 # any point without having to care about repeating the content generation
 # at every single exit point.
 def templated(template_name, content_type="text/html", with_generator=False, default_status=Return.HTTP_OK, at_end_hook=None):
-    """template_name is the path to the template file, relative to the template_root.
+    """``template_name`` is the path to the template file, relative to the ``template_root``.
 
        If ``with_generator`` is ``True``, Jinja2 will be instructed to try to chunk the output,
        sending info back to the client as soon as possible.
 
-       If at_end_hook is defined, it has to be a callable object. It will be invoked after
-       the template has generated all the text.
+       If ``at_end_hook`` is defined, it has to be a callable object. It will be invoked after
+       the template has generated all the text, passing both the session object and the
+       request.
     """
     def template_decorator(fn):
         @wraps(fn)

@@ -138,8 +138,9 @@ def jsonqastate(selection):
 
     # We do this directly rather than with list_headers for efficiency
     # as this could be used on very large queries bu the ODB
-    query = ctx.session.query(Header, DiskFile)
+    query = ctx.session.query(Header, DiskFile).select_from(Header, DiskFile, File)
     query = query.filter(Header.diskfile_id == DiskFile.id)
+    query = query.filter(DiskFile.file_id == File.id)
     query = queryselection(query, selection)
 
     thelist = []

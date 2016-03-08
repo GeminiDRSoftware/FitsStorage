@@ -5,7 +5,7 @@
 import sys
 import re
 
-from utils.web import Context, context_wrapped, ModPythonRequest, ModPythonResponse
+from utils.web import get_context, context_wrapped, ModPythonRequest, ModPythonResponse
 import traceback
 from gemini_metadata_utils import gemini_date
 

@@ -209,8 +209,11 @@ def calmgr(selection):
 
     # There selection has to be a closed query. If it's open, then disallow
     if openquery(selection):
-        raise templating.SkipTemplateError(Return.HTTP_NOT_ACCEPTABLE, content_type='text/plain',
-                                           message='<!-- Error: Selection cannot represent an open query for calibration association -->\n\n')
+        # TODO: Review later and see if we and do anything about it
+        # writing stuff here causes apache to send a 200 OK rather than the 406
+        #raise templating.SkipTemplateError(Return.HTTP_NOT_ACCEPTABLE, content_type='text/plain',
+        #                                   message='<!-- Error: Selection cannot represent an open query for calibration association -->\n\n')
+        raise templating.SkipTemplateError(Return.HTTP_NOT_ACCEPTABLE)
 
     # Only the canonical versions
     selection['canonical'] = True
