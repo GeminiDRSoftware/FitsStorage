@@ -7,14 +7,16 @@ from wsgiref.handlers import SimpleHandler
 from wsgiref.simple_server import WSGIRequestHandler
 from wsgiref import util as wutil
 from cgi import escape, FieldStorage
+import Cookie
 from datetime import datetime
+import json
+import tarfile
 
 from types import StringType, UnicodeType
 
-import Cookie
 from contextlib import contextmanager
 from functools import wraps
-import tarfile
+
 import traceback
 
 class Environment(object):
@@ -188,6 +190,7 @@ class Response(adapter.Response):
         self._started_response = False
         self._filter = lambda x: x
         self._write_callback = None
+        self._content_type = 'text/plain'
 
     def respond(self, filter = None):
         self.start_response()
@@ -264,8 +267,26 @@ class Response(adapter.Response):
 
     @only_if_not_started_response
     def append_json(self, obj, **kw):
-        raise NotImplementedError("This is not implemented yet")
-        # json.dump(obj, self._req, **kw)
+        """
+        Takes an object and appends to the contents a serialized representation of it,
+        encoded in JSON format.
+        """
+        self._content.append(json.dumps(obj, **kw))
+        return self
+
+    @only_if_not_started_response
+    def send_json(self, obj, **kw):
+        """
+        Stream a JSON object. Intended for large contents, to avoid keeping them in memory.
+        This is not the intended way to work with WSGI, though, so use ``append_json`` for
+        other uses.
+        """
+        assert (len(self._content) == 0)
+        if 'json' not in self._content_type:
+            self.set_content_type('application/json')
+        self.start_response()
+
+        json.dump(obj, StreamingObject(self._write_callback), **kw)
 
     def sendfile(self, path):
         self.sendfile_obj(open(path))

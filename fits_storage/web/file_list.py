@@ -53,8 +53,7 @@ def diskfile_dicts(headers, return_header=False):
         else:
             yield thedict, header
 
-@with_content_type('application/json')
-def jsonfilelist(selection):
+def jsonfilelist(selection, fields=None):
     """
     This generates a JSON list of the files that met the selection
     """
@@ -64,9 +63,9 @@ def jsonfilelist(selection):
     thelist = list(diskfile_dicts(headers))
 
     if fields is None:
-        get_context().resp.append_json(thelist, indent=4)
+        get_context().resp.send_json(thelist, indent=4)
     else:
-        get_context().resp.append_json([dict((k, d[k]) for k in fields) for d in thelist], indent=4)
+        get_context().resp.send_json([dict((k, d[k]) for k in fields) for d in thelist], indent=4)
 
 header_fields = ('program_id', 'engineering', 'science_verification',
                  'calibration_program', 'observation_id', 'data_label',
@@ -86,7 +85,6 @@ header_fields = ('program_id', 'engineering', 'science_verification',
 proprietary_fields = ('ra', 'dec', 'azimuth', 'elevation', 'airmass',
                       'object', 'cass_rotator_pa')
 
-@with_content_type('application/json')
 def jsonsummary(selection):
     """
     This generates a JSON list of the files that met the selection.
@@ -123,9 +121,8 @@ def jsonsummary(selection):
     if openquery(selection) and thelist:
         thelist[-1]['results_truncated'] = True
 
-    ctx.resp.append_json(thelist, indent=4)
+    ctx.resp.send_json(thelist, indent=4)
 
-@with_content_type('application/json')
 def jsonqastate(selection):
     """
     This generates a JSON list giving datalabel, entrytime, data_md5 and qa_state.
@@ -153,7 +150,7 @@ def jsonqastate(selection):
                         'entrytime': _for_json(diskfile.entrytime),
                         'qa_state': _for_json(header.qa_state)})
 
-    ctx.resp.append_json(thelist)
+    ctx.resp.send_json(thelist)
 
 from decimal import Decimal
 from datetime import datetime, date, time

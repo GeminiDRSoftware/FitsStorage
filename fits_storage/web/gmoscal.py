@@ -36,7 +36,6 @@ def gmoscal_html(selection):
     return gmoscal(selection)
 
 
-@with_content_type('application/json')
 def gmoscal_json(selection):
     result = {
         'selection': selection
@@ -54,7 +53,7 @@ def gmoscal_json(selection):
     result['twilight_flats'] = jlist
     result['biases'] = dict((k.strftime("%Y%m%d"), v) for k, v in values['bias'])
 
-    get_context().resp.append_json([result], indent=4)
+    get_context().resp.send_json([result], indent=4)
 
 def gmoscal(selection):
     """

@@ -204,7 +204,7 @@ def update_headers():
         response = error_response("This looks like a malformed request. Expected a list of queries. Instead I got {}".format(type(data)))
 
     resp = ctx.resp
-    resp.content_type = 'application/json'
+    resp.set_content_type('application/json')
     resp.append_json(response)
 
 def ingest_files():
