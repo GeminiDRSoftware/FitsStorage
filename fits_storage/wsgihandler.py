@@ -97,6 +97,8 @@ class SelectionConverter(BaseConverter):
                 result.append(links)
             elif r == 'BONLY':
                 result.append(bonly)
+        if len(result) == 1:
+            return result[0]
         return tuple(result)
 
 class SequenceConverter(BaseConverter):
