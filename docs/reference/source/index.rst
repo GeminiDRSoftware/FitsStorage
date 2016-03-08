@@ -16,6 +16,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   adapter.rst
    web.rst
    calibs.rst
    orm.rst

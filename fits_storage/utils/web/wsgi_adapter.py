@@ -92,10 +92,6 @@ class Request(adapter.Request):
     def raw_data(self):
         return self.input.read()
 
-    @property
-    def json(self):
-        return json.loads(self.raw_data)
-
     def get_header_value(self, header_name):
         return self._env[header_name]
 
@@ -174,7 +170,22 @@ class BufferedFileObjectIterator(object):
             yield n
 
 class StreamingObject(object):
+    """
+    Helper file-like object that implements a buffered output. Useful as a target for json.dump
+    and other functions producing large outputs that need to be streamed.
+
+    A :py:class:`StreamingObject` will buffer the data written to it up to a certain limit,
+    dumping the buffer to a certain output when it reaches its limit.
+    """
     def __init__(self, callback, buffer_size = 0):
+        """
+        ``buffer_size`` is the threshold that needs to be reached before dumping
+        the contents of the buffer. Size 0 means no buffering.
+
+        :py:class:`StreamingObject` is output agnostic. It is initialized with a ``callback``
+        that will be invoked passing the buffer contents as a string. This callback is responsible
+        for delivering the buffer to the output.
+        """
         self._callback = callback
         self._maxbuffer = buffer_size
         self._reset_buffer()
@@ -190,10 +201,16 @@ class StreamingObject(object):
         self._buffered = 0
 
     def flush(self):
+        """
+        Dump the buffer contents right away.
+        """
         self._callback(''.join(self._buffer))
         self._reset_buffer()
 
     def close(self):
+        """
+        Does nothing, except calling :py:meth:`StreamingObject.flush`
+        """
         self.flush()
 
 class Response(adapter.Response):

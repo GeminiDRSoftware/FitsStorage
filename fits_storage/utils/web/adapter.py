@@ -29,15 +29,59 @@ class ReturnMetaClass(type):
             raise AttributeError("No return code {}".format(key))
 
 class Return(object):
+    """
+    This is a specialized class with constant members giving names to
+    HTTP Status Codes. These members are:
+
+      * ``Return.HTTP_OK``
+      * ``Return.HTTP_MOVED_PERMANENTLY``
+      * ``Return.HTTP_FOUND``
+      * ``Return.HTTP_SEE_OTHER``
+      * ``Return.HTTP_NOT_MODIFIED``
+      * ``Return.HTTP_NOT_FOUND``
+      * ``Return.HTTP_FORBIDDEN``
+      * ``Return.HTTP_METHOD_NOT_ALLOWED``
+      * ``Return.HTTP_NOT_ACCEPTABLE``
+      * ``Return.HTTP_NOT_IMPLEMENTED``
+      * ``Return.HTTP_SERVICE_UNAVAILABLE``
+      * ``Return.HTTP_BAD_REQUEST``
+      * ``Return.HTTP_INTERNAL_SERVER_ERROR``
+    """
     __metaclass__ = ReturnMetaClass
 
 class ClientError(Exception):
+    """
+    Raising this exception is the preferred way to generate error status
+    response objects. The main benefit is that raising the exception will
+    halt any other processing (eg. generation of templated content)
+
+    The mandatory arguments are ``code``, which should be one of
+    :any:`Return`'s members; and ``message``, which is a textual message
+    to be incorporated in the response.
+
+    Note that the ``ClientError`` exception is **not** be raised directly
+    by the user. Instead, use :any:`Response.client_error`, which offers
+    better control of the response.
+
+    The ``ClientError`` exception should be used only lower level code
+    (like the handler) to capture error conditions and handle them.
+    """
     def __init__(self, code, message, annotate=None):
         self.code     = code
         self.args     = [message]
         self.annotate = annotate
 
 class RequestRedirect(Exception):
+    """
+    Raising this exception will stop the processing (eg. generation of
+    templated code) and force a redirect status code to be issued.
+
+    Note that the ``RequestRedirect`` exception is not meant to be
+    rised directly by user code, and should be used only by lower
+    level code to capture and handle the redirection.
+
+    To perform redirections, use instead :any:`Response.redirect_to`.
+    """
     pass
 
 def context_wrapped(fn):
@@ -65,6 +109,17 @@ def with_content_type(content_type):
 __ContextStorage__ = local()
 
 def get_context(initialize = False):
+    """
+    This is a factory function that will return an initialized :any:`Context` object.
+    Using this factory ensures that each thread in a multi-thread environment gets
+    its own Context object, to avoid overlap.
+
+    Calling ``get_context()`` within a thread of execution will return always the same
+    object.
+
+    The user shouldn't invoke ``get_context(initialize=True)``, which is meant only
+    to create a fresh ``Context`` at the beginning of processing a new query.
+    """
     if not initialize:
         ctx = __ContextStorage__.ctx
     else:
@@ -77,12 +132,26 @@ def invalidate_context():
     __ContextStorage__.ctx = None
 
 class Context(object):
+    """
+    Main interface class. It exposes the request and response objects, the cookies,
+    and any other environment variables.
+
+    In addition, as shorthand, if one tries to access to an attribute that doesn't
+    exist in ``Context``, it will return the equivalent attribute in the :any:`Request`
+    object.
+
+    Eg: ``ctx.session`` is the same as ``ctx.req.session``
+    """
     def __init__(self):
         self.req = None
         self.resp = None
         self._cookies = None
 
     def setContent(self, req, resp):
+        """
+        Sets the request/response objects, and initializes the cookies. Not meant to
+        be used by user applications.
+        """
         self.req = req
         self.resp = resp
         req.ctx = self
@@ -95,13 +164,17 @@ class Context(object):
 
     @property
     def cookies(self):
+        """
+        A :any:`Cookies` object, which exposes the cookies sent by the client along
+        with the query, and allows to set new cookies to be sent with the response.
+        """
         return self._cookies
 
     @property
     def got_magic(self):
         """
-        Returns a boolean to say whether or not the client has
-        the magic authorization cookie
+        It will be ``True`` if the client has the magic FITS authorization cookie,
+        ``False`` otherwise.
         """
 
         if magic_download_cookie is None:
@@ -113,6 +186,18 @@ class Context(object):
             return False
 
 class Cookies(object):
+    """
+    Dictionary-like object that handles querying and setting cookies. It is syntactic
+    sugar that hides the real operation, likely acccess to the :any:`Request` and
+    :any:`Response` objects.
+
+       * ``cookies[KEY]``: returns the valor associated to the corresponding key,
+       * ``cookies[KEY] = VALUE``: sets a cookie (KEY, VALUE) pair that will be sent
+         with the response. The rest of cookie attributes (expiration, etc.) will be
+         the default ones.
+       * ``del cookies[KEY]``: sets a cookie *expiration* message to be sent along
+         with the response.
+    """
     def __init__(self, req, resp):
         self._req  = req
         self._resp = resp
@@ -126,14 +211,43 @@ class Cookies(object):
     def __delitem__(self, key):
         self._resp.expire_cookie(key)
 
+    def get(self, key, other=None):
+        """
+        To complete the dictionary-like behaviour, a ``get`` counterpart for the
+        braces is provided. It won't rise a :py:exc:`KeyError` exception if the key
+        doesn't exist. Instead, it will return `other`.
+        """
+        try:
+            return self[key]
+        except KeyError:
+            return other
+
     def set(self, key, value, **kw):
+        """
+        Sets a cookie (``key``, ``value``) pair that will be sent along with the
+        response. Other cookie attributes can be passed as keyword arguments.
+
+        Refer to :py:class:`Cookie.Morsel` for a list of allowed attributes.
+        """
         self._resp.set_cookie(key, value, **kw)
 
 class Request(object):
+    """
+    Object encapsulating information related to the HTTP request and values derived from it.
+    Apart from the documented methods, it presents a partial dictionary-like interface, as
+    syntactic sugar to access the HTTP headers:
+
+      * ``request[KEY]``: returns the value for the requested HTTP header
+      * ``KEY in request``: ``True`` if a certain HTTP header is present in the query; ``False`` otherwise
+    """
     def __init__(self, session):
         self._s = session
 
     def get_header_value(self, header_name):
+        """
+        Returns the value for the the ``header_name`` HTTP header. Raises :py:exc:`KeyError` if the
+        header doesn't exist.
+        """
         raise NotImplementedError("get_header_value must be implemented by derived classes")
 
     def __getitem__(self, key):
@@ -146,13 +260,16 @@ class Request(object):
 
     @property
     def session(self):
+        """
+        Returns the current ORM ``session`` object.
+        """
         return self._s
 
     @property
     def user(self):
         """
-        Get the session cookie from the inner request object and find and return the
-        user object, or None if it is not a valid session cookie
+        Returns the :any:`User` object corresponding to the current logged user, taken
+        from the session cookie information; or ``None`` if the user is not logged in.
         """
 
         # Do we have a session cookie?
@@ -173,6 +290,9 @@ class Request(object):
 
     @property
     def is_staffer(self):
+        """
+        ``True`` if the current logged-in user is a staff member, ``False`` otherwise
+        """
         try:
             return self.user.is_staffer
         except AttributeError:
@@ -180,14 +300,62 @@ class Request(object):
 
     @property
     def is_ajax(self):
-        "Returns a boolean to say if the request came in via ajax"
+        """
+        ``True`` if the request is part of an AJAX call, ``False`` otherwise
+        """
         try:
             return self['X-Requested-With'] == 'XmlHttpRequest'
         except KeyError:
             return False
 
     def get_form_data(self, large_file=False):
+        """
+        Returns an object with the same interface as :py:class:`cgi.FieldStorage`, with the
+        contents of a form sent by a POST request.
+
+        If we expect a large file to be sent, ``large_file`` should be set to True. Some
+        implementations of ``FieldStorage`` may benefit from knowing this.
+        """
         raise NotImplementedError("get_form_data must be implemented by derived classes")
+
+    @property
+    def input(self):
+        """
+        A file-like object that can be used to read the raw contents of the request payload.
+        """
+        raise NotImplementedError("input must be implemented by derived classes")
+
+    @property
+    def env(self):
+        """
+        Dictionary-like object that let's access to environment variables. Useful for low-level
+        access to information like hostname, remote IP, etc.
+        """
+        raise NotImplementedError("env must be implemented by derived classes")
+
+    @property
+    def raw_data(self):
+        """
+        Reads the whole request payload and returns it as-is, as a single string.
+        """
+        raise NotImplementedError("raw_data must be implemented by derived classes")
+
+    @property
+    def json(self):
+        """
+        Tries to interpret the request payload as a JSON encoded string, and returns
+        the resulting object. It may raise a :py:exc:`ValueError` exception, if the
+        payload is not valid JSON.
+        """
+        return json.loads(self.raw_data)
+
+    def log(self, *args, **kw):
+        """
+        Log a message to the error output of the web server. The exact positional and
+        keyword argments depend on the implementation, but it is safe to assume that
+        the first argument is the message to be printed.
+        """
+        raise NotImplementedError("raw_data must be implemented by derived classes")
 
 class Response(object):
     def __init__(self, session):
@@ -195,43 +363,134 @@ class Response(object):
         self.status = Return.HTTP_OK
 
     def expire_cookie(self, name):
+        """
+        Adds the header needed to expire the clinet cookie named ``name``.
+        """
         raise NotImplementedError("expire_cookie must be implemented by derived classes")
 
     def set_cookie(self, name, value='', **kw):
+        """
+        Will add a client cookie. Attributes different to the name and value can be passed
+        as keyword arguments.
+
+        Refer to :py:class:`Cookie.Morsel` for a list of allowed attributes.
+        """
         raise NotImplementedError("set_cookie must be implemented by derived classes")
 
     def set_content_type(self, content_type):
+        """
+        Sets the content type for the response payload.
+        """
         raise NotImplementedError("set_content_type must be implemented by derived classes")
 
     def content_type_setter(self, content_type):
         self.set_content_type(content_type)
-    content_type = property(fset=content_type_setter)
+    content_type = property(fset=content_type_setter,
+                              doc='This is a property setter (write-only). It is intended to be used as a shortcut instead of :py:meth:`Response.set_content_type`')
 
     def content_length_setter(self, content_length):
         self.set_header('Content-Length', str(content_length))
-    content_length = property(fset=content_length_setter)
+    content_length = property(fset=content_length_setter,
+                              doc='This is a property setter (write-only). It is intended to be used as a shortcut instead of :py:meth:`Response.set_header`')
 
     def set_header(self, name, value):
+        """
+        Adds a header to be sent with the response.
+        """
         raise NotImplementedError("set_header must be implemented by derived classes")
 
     def append(self, string):
+        """
+        Appends content to be sent with the response, typically in the form of a string.
+        """
         raise NotImplementedError("append must be implemented by derived classes")
 
     def append_iterable(self, it):
+        """
+        Appends content to be sent with the response. This function takes an iterable (any kind)
+        which must yield strings.
+        """
         raise NotImplementedError("append_iterable must be implemented by derived classes")
 
     def append_json(self, obj, **kw):
+        """
+        Takes an object and appends to the contents a serialized representation of it,
+        encoded in JSON format. Any additional keyword arguments will be passed verbatim
+        to :py:meth:`json.dumps`.
+        """
         raise NotImplementedError("append_json must be implemented by derived classes")
 
+    def send_json(self, obj, **kw):
+        """
+        Stream a JSON object. Intended for large contents, to avoid keeping them in memory.
+        Use :py:meth:`Response.append_json` when possible, though, as some frameworks don't
+        like starting the responses early.
+
+        Calling :py:meth:`Response.send_json` will automatically set the Content-Type to
+        ``application/json``.
+        """
+        raise NotImplementedError("send_json must be implemented by derived classes")
+
     def sendfile(self, path):
+        """
+        Takes the path to an existing file and adds its contents to the response payload.
+        """
         raise NotImplementedError("sendfile must be implemented by derived classes")
 
     def sendfile_obj(self, fp):
+        """
+        Takes a file-like object and adds its contents to the response payload.
+        """
         raise NotImplementedError("sendfile_obj must be implemented by derived classes")
 
     def tarfile(self, name, **kw):
-        "This method will be used as a context manager. The implementation must ensure the proper interface"
+        """
+        Context manager designed to stream tar files generated on the fly. Apart from a
+        ``name`` for the file, it accepts additional keyword arguments, corresponding to
+        the ones accepted by :py:func:`tarfile.open`. This manager yields a
+        :py:class:`tarfile.Tarfile` object, intended to be used like::
+
+          with resp.tarfile('filename.tar') as tar:
+             tar.addfile( ... )
+        """
         raise NotImplementedError("tarfile must be implemented by derived classes")
 
     def redirect_to(self, url, **kw):
+        """
+        Stops the processing and returns an HTTP Redirect status code to the client, pointing
+        to the specified ``url``.
+
+        The default status code is 302 (HTTP Found). If you need a different status, pass
+        one of the :any:`Return` members as the ``code`` keyword argument, eg.::
+
+           resp.redirecto_to('http://my.url', code=Return.HTTP_SEE_OTHER)
+
+        :py:meth:`Response.redirect_to` will raise a :any:`RequestRedirect` exception.
+        """
         raise NotImplementedError("redirect_to must be implemented by derived classes")
+
+    def client_error(self, code, message=None, template=None, content_type='text/html', annotate=None):
+        """
+        Stops the processings and returns an HTTP error status code to the client. ``code``
+        must be a member of :any:`Return`.
+
+        The simples way to invoke :py:meth:`Response.client_error` is to pass a code and nothing
+        else. Default message and template will be assigned, according to the status code.
+        The response can be controlled to a higher degree, though, by using the keyword arguments.
+        ``content_type`` is self-explanatory. About the other ones:
+
+            * ``message``
+                  A string of text that will be embedded in the error template. Used to send
+                  the user a more informative error message.
+
+                  This message will be added to the database log notes, too.
+            * ``template``
+                  The *path* to a specific template to be used when generating the error
+                  response. As with the rest of the application, the path to the template
+                  must be relative to the "template root" directory.
+            * ``annotate``
+                  ORM class to be used when annotating the message to the database log. By
+                  If it is ``None``, the handler will decide on a sensible one (probably
+                  :py:class:`orm.UsageLog`).
+        """
+        raise NotImplementedError("client_error must be implemented by derived classes")

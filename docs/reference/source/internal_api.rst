@@ -47,24 +47,11 @@ Superuser
 There are number of functions that can be used to figure out the authorization level
 of a user. The low level ones are in the ``web.user`` module:
 
-.. autofunction:: fits_storage.web.user.userfromcookie
-
-.. autofunction:: fits_storage.web.user.is_staffer
-
-``userfromcookie`` abstracts the details of obtaining the user object from the
-associated browser bookie. It can be used later with other functions.
-
-``is_staffer`` doesn't need to be passed a user object, as it uses ``userfromcookie``
-internally. It is useful for cases when need to distinguish just between staff members
-and non-staff members.
-
 There are higher level functions in ``utils.userprogram``. Of interest:
 
 .. autofunction:: fits_storage.utils.userprogram.icanhave
 
 .. autofunction:: fits_storage.utils.userprogram.canhave_coords
-
-.. autofunction:: fits_storage.utils.userprogram.got_magic
 
 ``userprogram.icanhave`` is actually a dispatcher that users separate functions for each
 kind of item that it can handle. The mapping from object kind and function is the

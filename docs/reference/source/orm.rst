@@ -14,7 +14,7 @@ User Object
 Instances for :py:class:`User` give information about logged in users, including
 details like their email, authorization level, etc. The current logged user can be
 retrieved from at any time from the environment by using the
-:any:`userfromcookie` function.
+:any:`Context.user` member.
 
 .. autoclass:: fits_storage.orm.user.User
    :members:
