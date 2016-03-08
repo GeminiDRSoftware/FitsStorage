@@ -85,7 +85,11 @@ class Rule(object):
                 # Static part of the URL
                 reg_parts.append(re.escape(variable))
                 if first_static:
-                    self.this = variable
+                    spl = variable.split('/')
+                    if len(spl) == 1:
+                        self.this = '/'
+                    else:
+                        self.this = spl[1] or '/'
                     first_static = False
             else:
                 if arguments:
