@@ -169,13 +169,6 @@ def password_reset(userid, token):
         valid_request = False,
         )
 
-#    if len(things) != 2:
-#        return template_args
-
-    # Extract and validate the things from the URL
-    userid = things[0]
-    token = things[1]
-
     try:
         userid = int(userid)
     except:
