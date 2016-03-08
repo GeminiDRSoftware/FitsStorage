@@ -93,7 +93,7 @@ def make_tarinfo(name, **kw):
 
 def download_post():
     # Parse form data
-    formdata = ctx.get_form_data()
+    formdata = Context().req.get_form_data()
     thelist = []
     if 'files' in formdata.keys():
         fields = formdata['files']
