@@ -10,7 +10,17 @@ from fits_storage.utils.web import get_context, Return, ClientError, RequestRedi
 from fits_storage.utils.web import WSGIRequest, WSGIResponse, ArchiveContextMiddleware
 from fits_storage.utils.web import routing
 
-# Monkey patch routing.Map to override the need for a context
+# URLs that are blocked in the main archive. Use them to simulate the real thing
+# We monkeypatch them into fits_storage_config so that they're picked up by the
+# wsgihandler module when imported
+#from fits_storage import fits_storage_config
+#fits_storage_config.blocked_urls = [
+#    'debug', 'fileontape', 'qareport', 'qametrics', 'qaforgui', 'tape',
+#    'tapewrite', 'tapefile', 'taperead', 'xmltape', 'gmoscal', 'update_headers',
+#    'ingest_files'
+#]
+
+# Monkeypatch routing.Map to override the need for a context
 class MapTester(routing.Map):
     def match(self, path_info, method=None):
         found = False
@@ -23,7 +33,7 @@ class MapTester(routing.Map):
                     # if there was a match but no compatible method
                     continue
                 if self.is_forbidden(rule.this):
-                    raise RuntimeError("{}: HTTP Forbidden".format(path_info))
+                    return (Return.HTTP_FORBIDDEN, "{}: HTTP Forbidden".format(path_info))
                 elif rule.redirect_to is not None:
                     return (Return.HTTP_FOUND, rule.redirect_to)
                 return rule.action, m
@@ -141,15 +151,26 @@ fixtures = (
             cases=('<li>Present Rows: 1388 (99.14%)',
                    '<li>Total present size: 7358825260 bytes (6.85 GB)',
                    '<li>S20150917S0011.fits: 2015-09-16 09:46:06.687962-10:00')),
-    # Test /qareport, first using GET, then POST both with anonymous user and registered user
+    # Test /qareport, first using GET, then POST
     Fixture('/qareport', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
-    Fixture('/qareport', json=True, data=[], retcode=Return.HTTP_FORBIDDEN),
-    Fixture('/qareport', json=True, data=[], cookies=cookies['user2']),
+    Fixture('/qareport', json=True, data=[]),
     # Test /usagestats, both with anonymous and registered user
     Fixture('/usagestats',
             exception = (ClientError, "You need to be logged in to access this resource")),
     Fixture('/usagestats', cookies=cookies['user2'],
             cases='<h1>Usage Statistics'),
+    # Test /taperead
+    Fixture('/xmltape', cases='<?xml version="1.0"?>\n<on_tape>\n\n</on_tape>'),
+    # Test /taperead
+    Fixture('/taperead', cases='<h1>FITS Storage taperead information'),
+    # Test /notification without and with authentication
+    Fixture('/notification', exception=(ClientError, 'You need to be logged in to access this resource')),
+    Fixture('/notification', cookies=cookies['user2'],
+            cases='<title>FITS Storage new data email notification list'),
+    # Test /import_odb_notifications
+    Fixture('/import_odb_notifications', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
+    Fixture('/import_odb_notifications', post=True,
+            exception=(ClientError, '<!-- The content sent is not valid XML -->')),
 )
 
 class FixtureIter(object):
@@ -185,9 +206,11 @@ def run_web_test(fn, env):
 
     return tm
 
+DEBUGGING=True
+
 @pytest.mark.usefixtures("min_rollback")
 @pytest.mark.parametrize("route,expected", FixtureIter(fixtures))
-def test_user_list(min_session, route, expected):
+def test_wsgi(min_session, route, expected):
     if isinstance(route[0], int):
         assert expected.status == route[0]
     else:
@@ -203,4 +226,9 @@ def test_user_list(min_session, route, expected):
             assert expected.status == tm.resp.status
             r = ''.join(tm.resp)
             for f in expected.cases:
-                assert f in r
+                try:
+                   assert f in r
+                except AssertionError:
+                    if DEBUGGING:
+                        print r
+                    raise
