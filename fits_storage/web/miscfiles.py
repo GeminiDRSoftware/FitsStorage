@@ -66,11 +66,7 @@ def miscfiles(req, things):
 
 @templating.templated("miscfiles/miscfiles.html")
 def bare_page(req):
-    try:
-        can_add = Context().user.is_staffer
-    except AttributeError:
-        can_add = False
-    return dict(can_add=can_add)
+    return dict(can_add=Context().is_staffer)
 
 def enumerate_miscfiles(req, query):
     session = Context().session
@@ -81,12 +77,7 @@ def enumerate_miscfiles(req, query):
 def search_miscfiles(req, formdata):
     ctx = Context()
 
-    try:
-        can_add = ctx.user.is_staffer
-    except AttributeError:
-        can_add = False
-
-    ret = dict(can_add=can_add)
+    ret = dict(can_add=ctx.is_staffer)
     query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)
 
     message = []
@@ -214,10 +205,6 @@ def save_file(req, formdata):
 @templating.templated("miscfiles/detail.html")
 def detail_miscfile(req, handle, formdata):
     ctx = Context()
-    try:
-        is_staffer = ctx.user.is_staffer
-    except AttributeError:
-        is_staffer = False
 
     try:
         query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)
@@ -228,7 +215,7 @@ def detail_miscfile(req, handle, formdata):
             meta, df, fobj = query.filter(File.name == handle).one()
 
         ret = dict(
-            canedit = is_staffer,
+            canedit = ctx.is_staffer,
             canhave = icanhave(ctx.session, req, meta),
             uri  = req.uri,
             meta = meta,

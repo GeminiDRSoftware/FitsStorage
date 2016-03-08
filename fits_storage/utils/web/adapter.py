@@ -107,6 +107,13 @@ class Request(object):
         except MultipleResultsFound:
             return self._s.query(User).filter(User.cookie == cookie).all()
 
+    @property
+    def is_staffer(self):
+        try:
+            return self.user.is_staffer
+        except AttributeError:
+            return False
+
 class Response(object):
     def __init__(self, session):
         self._s = session
