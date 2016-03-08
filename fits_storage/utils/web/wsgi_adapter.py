@@ -6,7 +6,7 @@ from ...web import templating
 from wsgiref.handlers import SimpleHandler
 from wsgiref.simple_server import WSGIRequestHandler
 from wsgiref import util as wutil
-from cgi import escape, FieldStorage, MiniFieldStorage
+from cgi import escape, FieldStorage
 import Cookie
 from datetime import datetime
 import json
@@ -15,8 +15,7 @@ import tarfile
 class ItemizedFieldStorage(FieldStorage):
     def items(self):
         for k in self.keys():
-            v = self[k]
-            yield (k, (v.value if isinstance(v, MiniFieldStorage) else v))
+            yield (k, self[k])
 
     def iteritems(self):
         return self.items()
