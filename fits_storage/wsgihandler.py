@@ -56,18 +56,34 @@ class SelectionConverter(BaseConverter):
             if 'SEL' not in args:
                 raise ValueError("One of the arguments for selection must be 'SEL'")
 
-            # Possible values: SEL, ASSOC
+            # Possible values: SEL, ASSOC, NOLNK, BONLY
             self.res_order = args
         else:
             self.res_order = ['SEL']
 
     def to_python(self, value):
         assoc = False
+        links = True
+        bonly = False
         things = [v for v in value.split('/') if v != '']
         if 'ASSOC' in self.res_order:
             try:
                 things.remove('associated_calibrations')
                 assoc = True
+            except ValueError:
+                pass
+
+        if 'NOLNK' in self.res_order:
+            try:
+                things.remove('nolinks')
+                links = False
+            except ValueError:
+                pass
+
+        if 'BONLY' in self.res_order:
+            try:
+                things.remove('body_only')
+                bonly = True
             except ValueError:
                 pass
 
@@ -77,6 +93,10 @@ class SelectionConverter(BaseConverter):
                 result.append(getselection(things))
             elif r == 'ASSOC':
                 result.append(assoc)
+            elif r == 'NOLNK':
+                result.append(links)
+            elif r == 'BONLY':
+                result.append(bonly)
         return tuple(result)
 
 class SequenceConverter(BaseConverter):
@@ -172,6 +192,17 @@ url_map = Map([
     Rule('/miscfiles/validate_add', miscfiles.validate,             # Miscellanea (Opaque files)
          methods=['POST']),
 
+    Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
+    Rule('/upload_file/<filename>', upload_file),                   # The generic upload_file server
+    Rule('/upload_processed_cal/<filename>',                        # The processed_cal upload server
+         partial(upload_file, processed_cal=True)),
+
+    # This returns the fitsverify, mdreport or fullheader text from the database
+    # you can give it either a diskfile_id or a filename
+    Rule('/fitsverify/<thing>', report),
+    Rule('/mdreport/<thing>', report),
+    Rule('/fullheader/<thing>', report),
+
     Rule('/calibrations/<selection:selection>', calibrations),      # The calibrations handler
     Rule('/xmlfilelist/<selection:selection>', xmlfilelist),        # The xml and json file list handlers
     Rule('/jsonfilelist/<selection:selection>', jsonfilelist),
@@ -180,7 +211,8 @@ url_map = Map([
     Rule('/jsonqastate/<selection:selection>', jsonqastate),
     Rule('/calmgr/<selection:selection>', calmgr),                  # The calmgr handler
     Rule('/gmoscal/<selection:selection>', gmoscal_html),           # The GMOS twilight flat and bias report
-
+    Rule('/programsobserved/<selection:selection>',                 # This is the projects observed feature
+         progsobserved),
 
     # Obslogs get their own summary-like handler
     # Both actions use the same function, with 'sumtype' specifiying which
@@ -193,6 +225,21 @@ url_map = Map([
     # The function here is the same as for 'gmoscal'. We're using partial for
     # the same reason as with obslogs (see above)
     Rule('/gmoscaljson/<selection:selection>', gmoscal_json),
+
+    # TODO: We're still not capturing the order_by, that comes in the query string as arguments
+    #       Figure out something.
+    Rule('/searchform/<seq_of:things>', searchform),
+
+    # This header summary routing
+    # TODO: We're still not capturing the order_by, that comes in the query string as arguments
+    #       Figure out something.
+    Rule('/summary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'summary', [])),
+    Rule('/diskfiles/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'diskfiles', [])),
+    Rule('/ssummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'ssummary', [])),
+    Rule('/searchresults/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'searchresults', [])),
+    Rule('/associated_cals/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'associated_cals', [])),
+
+
     ],
 
     converters = {
@@ -228,6 +275,8 @@ def handler(environ, start_response):
 
     if req.env.server_hostname == 'archive':
         new_uri = "https://archive.gemini.edu%s" % req.unparsed_uri
+
+    # TODO: What about GET ?... arguments?
 
     route = get_route(url_map)
     if route is None:
