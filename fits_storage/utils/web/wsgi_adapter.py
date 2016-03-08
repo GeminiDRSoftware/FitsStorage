@@ -103,6 +103,7 @@ status_message = {
     Return.HTTP_MOVED_PERMANENTLY:   'Moved Permanently',
     Return.HTTP_FOUND:               'Found',
     Return.HTTP_SEE_OTHER:           'See Other',
+    Return.HTTP_NOT_MODIFIED:        'Not Modified',
     Return.HTTP_NOT_FOUND:           'Not Found',
     Return.HTTP_FORBIDDEN:           'Access Forbidden for This Resource',
     Return.HTTP_METHOD_NOT_ALLOWED:  'The Method Used to Access This Resource Is Not Allowed',

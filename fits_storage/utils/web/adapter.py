@@ -10,6 +10,7 @@ class ReturnMetaClass(type):
         'HTTP_MOVED_PERMANENTLY': 301,
         'HTTP_FOUND': 302,
         'HTTP_SEE_OTHER': 303,
+        'HTTP_NOT_MODIFIED': 304,
         'HTTP_NOT_FOUND': 404,
         'HTTP_FORBIDDEN': 403,
         'HTTP_METHOD_NOT_ALLOWED': 405,
