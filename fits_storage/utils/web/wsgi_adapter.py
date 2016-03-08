@@ -1,9 +1,11 @@
 from . import adapter
+from .adapter import Return, RequestRedirect
 from ...fits_storage_config import upload_staging_path
 from ...orm import session_scope
 from wsgiref.handlers import SimpleHandler
 from wsgiref.simple_server import WSGIRequestHandler
 from wsgiref import util as wutil
+from cgi import escape
 
 import Cookie
 from contextlib import contextmanager
@@ -96,15 +98,24 @@ class Request(adapter.Request):
 BUFFSIZE = 262144
 
 status_message = {
-    adapter.Return.HTTP_OK:                  'OK',
-    adapter.Return.HTTP_NOT_FOUND:           'Not Found',
-    adapter.Return.HTTP_FORBIDDEN:           'Access Forbidden for This Resource',
-    adapter.Return.HTTP_METHOD_NOT_ALLOWED:  'The Method Used to Access This Resource Is Not Allowed',
-    adapter.Return.HTTP_NOT_ACCEPTABLE:      'The Returned Content Is Not Acceptable for the Client',
-    adapter.Return.HTTP_NOT_IMPLEMENTED:     'Method Not Implemented',
-    adapter.Return.HTTP_SERVICE_UNAVAILABLE: 'The Service Is Currently Unavailable',
-    adapter.Return.HTTP_BAD_REQUEST:         'The Server Received a Bad Request -Probably Malformed JSON'
+    Return.HTTP_OK:                  'OK',
+    Return.HTTP_MOVED_PERMANENTLY:   'Moved Permanently',
+    Return.HTTP_FOUND:               'Found',
+    Return.HTTP_SEE_OTHER:           'See Other',
+    Return.HTTP_NOT_FOUND:           'Not Found',
+    Return.HTTP_FORBIDDEN:           'Access Forbidden for This Resource',
+    Return.HTTP_METHOD_NOT_ALLOWED:  'The Method Used to Access This Resource Is Not Allowed',
+    Return.HTTP_NOT_ACCEPTABLE:      'The Returned Content Is Not Acceptable for the Client',
+    Return.HTTP_NOT_IMPLEMENTED:     'Method Not Implemented',
+    Return.HTTP_SERVICE_UNAVAILABLE: 'The Service Is Currently Unavailable',
+    Return.HTTP_BAD_REQUEST:         'The Server Received a Bad Request -Probably Malformed JSON'
 }
+
+redirect_template = """\
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<title>Redirecting...</title>
+<h1>Redirecting...</h1>
+<p>You should be redirected automatically to target URL: <a href="{location}">{display_location}</a>.  If not click the link."""
 
 class Response(adapter.Response):
     def __init__(self, session, wsgienv, start_response):
@@ -114,10 +125,7 @@ class Response(adapter.Response):
         self._sr  = start_response
         self._bytes_sent = 0
         self._cookies_to_send = Cookie.SimpleCookie()
-        self._content = []
-        self._content_type = 'text/plain'
-        self._headers = []
-        self.status = adapter.Return.HTTP_OK
+        self.make_empty()
         self._started_response = False
 
     def __iter__(self):
@@ -184,9 +192,28 @@ class Response(adapter.Response):
         #    tar.close()
         #    self._req.flush()
 
+    def make_empty(self):
+        self._content = []
+        self._content_type = 'text/plain'
+        self._headers = []
+        self.status = Return.HTTP_OK
+
     def redirect_to(self, url, **kw):
-        raise NotImplementedError("This is not implemented yet")
-        #util.redirect(self._req, url, **kw)
+        if self._started_response:
+            # This shouldn't happen
+            # TODO: Look for a more sensible exception, to deal with the problem upwards.
+            raise RuntimeError("Asked to redirect, but the response started already")
+
+        self.make_empty()
+        self.set_content_type('text/html')
+        # Set the status to 'code' if passed as an argument, else use 302 FOUND as default
+        self.status = (kw['code'] if 'code' in kw else Return.HTTP_FOUND)
+
+        display_location=escape(url)
+        self.append(redirect_template.format(location=escape(url), display_location=display_location))
+        self.set_header('Location', url)
+
+        raise RequestRedirect()
 
 from ...orm.usagelog import UsageLog
 

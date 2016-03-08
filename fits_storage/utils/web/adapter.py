@@ -7,6 +7,9 @@ from ...fits_storage_config import magic_download_cookie
 class ReturnMetaClass(type):
     __return_codes = {
         'HTTP_OK': 200,
+        'HTTP_MOVED_PERMANENTLY': 301,
+        'HTTP_FOUND': 302,
+        'HTTP_SEE_OTHER': 303,
         'HTTP_NOT_FOUND': 404,
         'HTTP_FORBIDDEN': 403,
         'HTTP_METHOD_NOT_ALLOWED': 405,
@@ -24,6 +27,9 @@ class ReturnMetaClass(type):
 
 class Return(object):
     __metaclass__ = ReturnMetaClass
+
+class RequestRedirect(Exception):
+    pass
 
 def context_wrapped(fn):
     @wraps(fn)

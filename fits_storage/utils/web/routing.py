@@ -1,4 +1,5 @@
 import re
+from .adapter import Context
 
 # This rule regular expressions is copied from werkzeug's, as we intend to make it
 # syntax-compatible
@@ -54,9 +55,11 @@ def parse_converter_args(arguments):
     return tuple(x.strip() for x in a.split(',')), {}
 
 class Rule(object):
-    def __init__(self, string, action, methods=None):
+    def __init__(self, string, action=None, methods=None, redirect_to=None):
+        # TODO: Assert that there's a value for either action or redirect_to
         self.string = string
         self.action = action
+        self.redirect_to = redirect_to
         if methods is not None:
             self.methods = set(methods)
             if 'GET' in methods:
@@ -158,4 +161,6 @@ class Map(object):
                     # Most probably we want to keep track of this, to raise an exception
                     # if there was a match but no compatible method
                     continue
+                if rule.redirect_to is not None:
+                    Context().resp.redirect_to(rule.redirect_to)
                 return rule.action, m
