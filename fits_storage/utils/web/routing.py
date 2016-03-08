@@ -70,14 +70,22 @@ class Rule(object):
         self._regex = None
         self._variables  = {}
         self._converters = {}
+        self.this        = None
 
     def compile(self, map_):
         reg_parts = []
+        # "Variable number". Used to give each pattern variable a unique name. Useful
+        # mainly when a converter translates its results to a tuple of values, instead
+        # of a single one
         varn = 1
+        first_static = True
         for (converter, arguments, variable) in parse_rule(self.string):
             if converter is None:
                 # Static part of the URL
                 reg_parts.append(re.escape(variable))
+                if first_static:
+                    self.this = variable
+                    first_static = False
             else:
                 if arguments:
                     c_args, c_kwargs = parse_converter_args(arguments)
@@ -161,6 +169,7 @@ class Map(object):
                     # Most probably we want to keep track of this, to raise an exception
                     # if there was a match but no compatible method
                     continue
+                Context().usagelog.this = rule.this
                 if rule.redirect_to is not None:
                     Context().resp.redirect_to(rule.redirect_to)
                 return rule.action, m
