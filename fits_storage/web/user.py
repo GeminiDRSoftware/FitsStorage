@@ -4,7 +4,7 @@ This module handles the web 'user' functions - creating user accounts, login / l
 
 from sqlalchemy import desc
 
-from ..orm import session_scope, NoResultFound
+from ..orm import NoResultFound
 from ..orm.user import User
 
 from ..utils.web import Context
@@ -26,8 +26,8 @@ import functools
 
 bad_password_msg = "Bad password - must be at least 14 characters long, and contain at least one lower case letter, upper case letter, decimal digit and non-alphanumeric character (e.g. !, #, %, * etc)"
 
-@templating.templated("user/request_account.html", with_session=True)
-def request_account(session, req, things):
+@templating.templated("user/request_account.html")
+def request_account(req, things):
     """
     Generates and handles web form for requesting new user accounts
     """
@@ -92,13 +92,13 @@ def request_account(session, req, things):
 
     if valid_request:
         try:
-            with session_scope() as session:
-                newuser = User(username)
-                newuser.fullname = fullname
-                newuser.email = email
-                session.add(newuser)
-                session.commit()
-                template_args['emailed'] = send_password_reset_email(newuser.id)
+            newuser = User(username)
+            newuser.fullname = fullname
+            newuser.email = email
+            session = Context().session
+            session.add(newuser)
+            session.commit()
+            template_args['emailed'] = send_password_reset_email(newuser.id)
         except:
             template_args['error'] = True
 
@@ -130,12 +130,11 @@ Regards,
 
 """
 
-    with session_scope() as session:
-        user = session.query(User).get(userid)
-        username = user.username
-        email = user.email
-        fullname = user.fullname
-        token = user.generate_reset_token()
+    user = Context().session.query(User).get(userid)
+    username = user.username
+    email = user.email
+    fullname = user.fullname
+    token = user.generate_reset_token()
 
     url = "https://%s/password_reset/%d/%s" % (fits_servername, userid, token)
 
@@ -156,13 +155,15 @@ Regards,
 
     return True
 
-@templating.templated("user/password_reset.html", with_session=True)
-def password_reset(session, req, things):
+@templating.templated("user/password_reset.html")
+def password_reset(req, things):
     """
     Handles users clicking on a password reset link that we emailed them.
     Check the reset token for validity, if valid the present them with a
     password reset form and process it when submitted.
     """
+
+    session = Context().session
 
     template_args = dict(
         valid_request = False,
@@ -293,18 +294,17 @@ def change_password(req, things):
             valid_request = True
 
     if valid_request:
-        with session_scope() as session:
-            user = ctx.user
-            if user is None:
-                valid_request = False
-                reason_bad = 'You are not currently logged in'
-            elif user.validate_password(oldpassword) is False:
-                valid_request = False
-                reason_bad = 'Current password not correct'
-            else:
-                user.change_password(newpassword)
-                session.commit()
-                successful = True
+        user = ctx.user
+        if user is None:
+            valid_request = False
+            reason_bad = 'You are not currently logged in'
+        elif user.validate_password(oldpassword) is False:
+            valid_request = False
+            reason_bad = 'Current password not correct'
+        else:
+            user.change_password(newpassword)
+            ctx.session.commit()
+            successful = True
 
     template_args = dict(
         successful    = successful,
@@ -315,8 +315,8 @@ def change_password(req, things):
 
     return template_args
 
-@templating.templated("user/request_password_reset.html", with_session=True)
-def request_password_reset(session, req):
+@templating.templated("user/request_password_reset.html")
+def request_password_reset(req):
     """
     Generate and process a web form to request a password reset
     """
@@ -350,7 +350,7 @@ def request_password_reset(session, req):
 
     if request_valid:
         # Try to process it
-        query = session.query(User)
+        query = Context().session.query(User)
         if username:
             query = query.filter(User.username == username)
         elif email:
@@ -371,8 +371,8 @@ def request_password_reset(session, req):
 
     return template_args
 
-@templating.templated("user/staff_access.html", with_session=True)
-def staff_access(session, req, things):
+@templating.templated("user/staff_access.html")
+def staff_access(req, things):
     """
     Allows supersusers to set accounts to be or not be gemini staff
     """
@@ -400,7 +400,7 @@ def staff_access(session, req, things):
     # If we got an action, do it
     if username:
         try:
-            user = session.query(User).filter(User.username == username).one()
+            user = ctx.session.query(User).filter(User.username == username).one()
             if action == "Grant":
                 action_name = 'Granting'
                 user.gemini_staff = True
@@ -413,7 +413,7 @@ def staff_access(session, req, things):
             template_args['no_result'] = True
 
     # Have applied changes, now generate list of staff users
-    template_args['user_list'] = session.query(User).order_by(User.gemini_staff, User.username)
+    template_args['user_list'] = ctx.session.query(User).order_by(User.gemini_staff, User.username)
 
     return template_args
 
@@ -453,14 +453,13 @@ def login(req, things):
             reason_bad = "Username / password not valid"
         else:
             # Find the user and check if the password is valid
-            with session_scope() as session:
-                user = session.query(User).filter(User.username == username).one()
-                if user.validate_password(password):
-                    # Sucessfull login
-                    cookie = user.log_in()
-                    valid_request = True
-                else:
-                    reason_bad = 'Username / password not valid. If you need to reset your password, <a href="/request_password_reset">Click Here</a>'
+            user = ctx.session.query(User).filter(User.username == username).one()
+            if user.validate_password(password):
+                # Sucessfull login
+                cookie = user.log_in()
+                valid_request = True
+            else:
+                reason_bad = 'Username / password not valid. If you need to reset your password, <a href="/request_password_reset">Click Here</a>'
 
     if valid_request:
         # Cookie expires in 1 year
@@ -505,8 +504,8 @@ def logout(req):
 
     return {}
 
-@templating.templated("user/whoami.html", with_session=True)
-def whoami(session, req, things):
+@templating.templated("user/whoami.html")
+def whoami(req, things):
     """
     Tells you who you are logged in as, and presents the account maintainace links
     """
@@ -529,18 +528,20 @@ def whoami(session, req, things):
 
     return template_args
 
-@templating.templated("user/list.html", with_session=True)
-def user_list(session, req):
+@templating.templated("user/list.html")
+def user_list(req):
     """
     Displays a list of archive users. Must be logged in as a gemini_staff user to
     see this.
     """
 
-    thisuser = Context().user
+    ctx = Context()
+
+    thisuser = ctx.user
     if thisuser is None or thisuser.gemini_staff != True:
         return dict(staffer = False)
 
-    users = (session.query(User)
+    users = (ctx.session.query(User)
                 .order_by(desc(User.superuser),
                           desc(User.gemini_staff),
                           User.username))
@@ -553,20 +554,18 @@ def email_inuse(email):
     Check the database to see if this email is already in use. Returns True if it is, False otherwise
     """
 
-    with session_scope() as session:
-        num = session.query(User).filter(User.email == email).count()
+    num = Context().session.query(User).filter(User.email == email).count()
 
-        return num != 0
+    return num != 0
 
 def username_inuse(username):
     """
     Check the database to see if a username is already in use. Returns True if it is, False otherwise
     """
 
-    with session_scope() as session:
-        num = session.query(User).filter(User.username == username).count()
+    num = Context().session.query(User).filter(User.username == username).count()
 
-        return num != 0
+    return num != 0
 
 digits_cre = re.compile(r'\d')
 lower_cre = re.compile('[a-z]')
@@ -646,34 +645,31 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
             else:
                 ctype    = 'text/html'
                 template = DEFAULT_403_TEMPLATE
-            with session_scope() as session:
-                disabled_cookies = any(not expected for cookie, expected in magic_cookies)
 
-                got_magic = False
-                if disabled_cookies and only_magic:
-                    got_magic = True
-                elif not disabled_cookies:
-                    for cookie, content in magic_cookies:
-                        try:
-                            if content is not None and ctx.cookies[cookie] == content:
-                                got_magic = True
-                                break
-                        except KeyError:
-                            pass
+            disabled_cookies = any(not expected for cookie, expected in magic_cookies)
 
-                if archive_only and not use_as_archive:
-                    # Bypass protection - archive_only and not the archive
-                    got_magic = True
-                if not got_magic:
-                    if only_magic:
-                        raise AccessForbidden("Could not find a proper magic cookie for a cookie-only service", template=template, content_type=ctype, annotate=annotate)
-                    user = ctx.user
-                    if not user:
-                        raise AccessForbidden("You need to be logged in to access this resource", template=template, content_type=ctype, annotate=annotate)
-                    if superuser is True and not user.superuser:
-                        raise AccessForbidden("You need to be logged in as a Superuser to access this resource", template=template, content_type=ctype, annotate=annotate)
-                    if staffer is True and not user.gemini_staff:
-                        raise AccessForbidden("You need to be logged in as Gemini Staff member to access this resource", template=template, content_type=ctype, annotate=annotate)
+            got_magic = False
+            if disabled_cookies and only_magic:
+                got_magic = True
+            elif not disabled_cookies:
+                for cookie, content in magic_cookies:
+                    try:
+                        if content is not None and ctx.cookies[cookie] == content:
+                            got_magic = True
+                            break
+                    except KeyError:
+                        pass
+
+            if not got_magic:
+                if only_magic:
+                    raise AccessForbidden("Could not find a proper magic cookie for a cookie-only service", template=template, content_type=ctype, annotate=annotate)
+                user = ctx.user
+                if not user:
+                    raise AccessForbidden("You need to be logged in to access this resource", template=template, content_type=ctype, annotate=annotate)
+                if superuser is True and not user.superuser:
+                    raise AccessForbidden("You need to be logged in as a Superuser to access this resource", template=template, content_type=ctype, annotate=annotate)
+                if staffer is True and not user.gemini_staff:
+                    raise AccessForbidden("You need to be logged in as Gemini Staff member to access this resource", template=template, content_type=ctype, annotate=annotate)
             return fn(req, *args, **kw)
         return wrapper
     return decorator

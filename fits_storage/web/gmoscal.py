@@ -4,7 +4,6 @@ This module contains the gmoscal html generator function.
 import sqlalchemy
 from sqlalchemy.sql.expression import cast
 from sqlalchemy import func, join, desc
-from ..orm import session_scope
 from ..orm.gmos import Gmos
 from ..orm.header import Header
 from ..orm.diskfile import DiskFile
@@ -34,34 +33,33 @@ import dateutil.parser
 import json
 from collections import defaultdict, namedtuple
 
-@templating.templated("gmoscal.html", with_session=True)
-def gmoscal_html(session, req, selection):
-    return gmoscal(session, selection)
+@templating.templated("gmoscal.html")
+def gmoscal_html(req, selection):
+    return gmoscal(selection)
 
 
 @with_content_type('application/json')
 def gmoscal_json(req, selection):
-    with session_scope() as session:
-        result = {
-            'selection': selection
-            }
+    result = {
+        'selection': selection
+        }
 
-        values = gmoscal(session, selection)
+    values = gmoscal(selection)
 
-        if 'flat_autodetected_range' in values:
-            result['Twilight_AutoDetectedDates'] = values['flat_autodetected_range']
-        if 'bias_autodetected_range' in values:
-            result['Bias_AutoDetectedDates'] = values['bias_autodetected_range']
+    if 'flat_autodetected_range' in values:
+        result['Twilight_AutoDetectedDates'] = values['flat_autodetected_range']
+    if 'bias_autodetected_range' in values:
+        result['Bias_AutoDetectedDates'] = values['bias_autodetected_range']
 
-        jlist = [{'n_sci': nsci, 'n_twilight': ntwi, 'filter': filt, 'binning': binn}
-                 for key, (nsci, ntwi, filt, binn) in values['twilight']]
-        result['twilight_flats'] = jlist
-        result['biases'] = dict((k.strftime("%Y%m%d"), v) for k, v in values['bias'])
+    jlist = [{'n_sci': nsci, 'n_twilight': ntwi, 'filter': filt, 'binning': binn}
+             for key, (nsci, ntwi, filt, binn) in values['twilight']]
+    result['twilight_flats'] = jlist
+    result['biases'] = dict((k.strftime("%Y%m%d"), v) for k, v in values['bias'])
 
-        Context().resp.append_json([result], indent=4)
-        return HTTP_OK
+    Context().resp.append_json([result], indent=4)
+    return HTTP_OK
 
-def gmoscal(session, selection):
+def gmoscal(selection):
     """
     This generates a GMOS imaging twilight flat, bias and nod and shuffle darks report.
     If no date or daterange is given, tries to find last processing date
@@ -75,6 +73,8 @@ def gmoscal(session, selection):
     if using_sqlite:
         result['using_sqlite'] = True
         return HTTP_NOT_IMPLEMENTED, result
+
+    session = Context().session
 
     # Was a date provided by user?
     datenotprovided = ('date' not in selection) and ('daterange' not in selection)
@@ -223,8 +223,8 @@ def gmoscal(session, selection):
 
     # Nod & Shuffle Darks
     # The basic query for this
-    def nod_and_shuffle(session, selection):
-        query = session.query(Header).select_from(join(join(Header, DiskFile), Gmos))
+    def nod_and_shuffle(selection):
+        query = Context().session.query(Header).select_from(join(join(Header, DiskFile), Gmos))
 
         # Fudge and add the selection criteria
         selection = {}
@@ -258,7 +258,7 @@ def gmoscal(session, selection):
         done = set()
 
         for l in query:
-            c = get_cal_object(session, None, header=l)
+            c = get_cal_object(None, header=l)
             darks = c.dark()
             young = 0
             oldest = 0
@@ -285,7 +285,7 @@ def gmoscal(session, selection):
         binlist         = ('1x1', '2x2', '2x1', '1x2', '2x4', '4x2', '4x1', '1x4', '4x4'),
         roilist         = ('Full Frame', 'Central Spectrum'),
         nobiases        = nobiases,
-        nod_and_shuffle = nod_and_shuffle(session, selection),
+        nod_and_shuffle = nod_and_shuffle(selection),
         datething       = datething
         ))
 

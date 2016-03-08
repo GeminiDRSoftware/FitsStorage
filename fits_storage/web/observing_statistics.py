@@ -107,7 +107,7 @@ def calculate_observing_statistics(session, selection, req, debug=False):
 
 
     # OK, get the full header list for the night
-    hlist = list_headers(session, selection, ['ut_datetime'])
+    hlist = list_headers(selection, ['ut_datetime'])
 
     # Trim to night time data only
     hlist = hlist_nighttime(hlist)

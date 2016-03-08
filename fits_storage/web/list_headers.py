@@ -14,7 +14,9 @@ from ..gemini_metadata_utils import gemini_date, gemini_time_period_from_range
 from sqlalchemy import asc, desc
 import dateutil.parser
 
-def list_headers(session, selection, orderby, full_query=False, add_previews=False):
+from ..utils.web import Context
+
+def list_headers(selection, orderby, full_query=False, add_previews=False):
     """
     This function queries the database for a list of header table
     entries that satisfy the selection criteria.
@@ -25,6 +27,9 @@ def list_headers(session, selection, orderby, full_query=False, add_previews=Fal
 
     Returns a list of Header objects
     """
+
+    session = Context().session
+
     # The basic query...
     if full_query:
         if add_previews:

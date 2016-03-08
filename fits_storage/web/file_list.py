@@ -5,7 +5,6 @@ summaries.
 """
 import json
 
-from ..orm import session_scope
 from ..orm.header import Header
 from ..orm.diskfile import DiskFile
 from ..orm.file import File
@@ -22,24 +21,24 @@ from . import templating
 diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
                    'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready')
 
-@templating.templated("filelist/filelist.xml", content_type='text/xml', with_session=True, with_generator=True)
-def xmlfilelist(session, req, selection):
+@templating.templated("filelist/filelist.xml", content_type='text/xml', with_generator=True)
+def xmlfilelist(req, selection):
     """
     This generates an xml list of the files that met the selection
     """
 
-    def generate_headers(session, selection):
+    def generate_headers(selection):
         orderby = ['filename_asc']
-        for header, diskfile, file in list_headers(session, selection, orderby, full_query=True):
+        for header, diskfile, file in list_headers(selection, orderby, full_query=True):
             ret = (header, diskfile, file)
             if header.phot_standard:
-                yield ret + (get_standard_obs(session, req, header.id),)
+                yield ret + (get_standard_obs(req, header.id),)
             else:
                 yield ret + (None,)
 
     return dict(
         selection = selection,
-        content   = generate_headers(session, selection),
+        content   = generate_headers(selection),
         )
 
 def diskfile_dicts(headers, return_header=False):
@@ -61,10 +60,9 @@ def jsonfilelist(req, selection):
     This generates a JSON list of the files that met the selection
     """
 
-    with session_scope() as session:
-        orderby = ['filename_asc']
-        headers = list_headers(session, selection, orderby)
-        thelist = list(diskfile_dicts(headers))
+    orderby = ['filename_asc']
+    headers = list_headers(selection, orderby)
+    thelist = list(diskfile_dicts(headers))
 
     Context().resp.append_json(thelist, indent=4)
     return HTTP_OK
@@ -105,22 +103,21 @@ def jsonsummary(req, selection):
 
     orderby = ['filename_asc']
 
-    with session_scope() as session:
-        # Get the current user if logged id
-        user = ctx.user
-        gotmagic = got_magic(req)
+    # Get the current user if logged id
+    user = ctx.user
+    gotmagic = got_magic(req)
 
-        headers = list_headers(session, selection, orderby)
-        thelist = []
-        for thedict, header in diskfile_dicts(headers, return_header=True):
-            chc = canhave_coords(session, user, header, gotmagic)
-            for field in header_fields:
-                thedict[field] = _for_json(getattr(header, field))
-            if not chc:
-                for field in proprietary_fields:
-                    thedict[field] = None
+    headers = list_headers(selection, orderby)
+    thelist = []
+    for thedict, header in diskfile_dicts(headers, return_header=True):
+        chc = canhave_coords(ctx.session, user, header, gotmagic)
+        for field in header_fields:
+            thedict[field] = _for_json(getattr(header, field))
+        if not chc:
+            for field in proprietary_fields:
+                thedict[field] = None
 
-            thelist.append(thedict)
+        thelist.append(thedict)
 
     if openquery(selection) and thelist:
         thelist[-1]['results_truncated'] = True
@@ -135,27 +132,28 @@ def jsonqastate(req, selection):
     It is intended for use by the ODB.
     It does not limit the number of results
     """
+
+    ctx = Context()
+
     # Like the summaries, only list canonical files by default
     if 'canonical' not in selection.keys():
         selection['canonical']=True
 
-    with session_scope() as session:
-       # We do this directly rather than with list_headers for efficiency
-       # as this could be used on very large queries bu the ODB
-       query = session.query(Header, DiskFile).select_from(Header, DiskFile, File)
-       query = query.filter(Header.diskfile_id == DiskFile.id)
-       query = query.filter(DiskFile.file_id == File.id)
-       query = queryselection(query, selection)
+    # We do this directly rather than with list_headers for efficiency
+    # as this could be used on very large queries bu the ODB
+    query = ctx.session.query(Header, DiskFile)
+    query = query.filter(Header.diskfile_id == DiskFile.id)
+    query = queryselection(query, selection)
 
-       thelist = []
-       for header, diskfile in query:
-           thelist.append({'data_label': _for_json(header.data_label),
-                           'filename': _for_json(diskfile.filename),
-                           'data_md5': _for_json(diskfile.data_md5),
-                           'entrytime': _for_json(diskfile.entrytime),
-                           'qa_state': _for_json(header.qa_state)})
+    thelist = []
+    for header, diskfile in query:
+        thelist.append({'data_label': _for_json(header.data_label),
+                        'filename': _for_json(diskfile.filename),
+                        'data_md5': _for_json(diskfile.data_md5),
+                        'entrytime': _for_json(diskfile.entrytime),
+                        'qa_state': _for_json(header.qa_state)})
 
-    Context().resp.append_json(thelist)
+    ctx.resp.append_json(thelist)
     return HTTP_OK
 
 from decimal import Decimal

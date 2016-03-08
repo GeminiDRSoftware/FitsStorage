@@ -1,20 +1,23 @@
 """
 This module contains the curation_report html generator function.
 """
-from ..orm import sessionfactory
 from ..orm.header import Header
 from ..orm.curation import duplicate_canonicals, duplicate_present, present_not_canonical
 
 from ..apache_return_codes import HTTP_OK
 
+from ..utils.web import Context
+
 from . import templating
 
-@templating.templated("curation_report.html", with_session=True)
-def curation_report(session, req):
+@templating.templated("curation_report.html")
+def curation_report(req):
     """
     Retrieves and prints out the desired values from the list created in
     FitsStorageCuration.py
     """
+
+    session = Context().session
 
     return dict(
         dup_canon   = duplicate_canonicals(session),

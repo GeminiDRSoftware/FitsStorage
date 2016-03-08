@@ -6,12 +6,14 @@ from ..orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 from . import templating
 from mod_python import apache, util
 
+from ..utils.web import Context
+
 from sqlalchemy import join, desc, func
 
 import datetime
 
-@templating.templated("tapestuff/fileontape.xml", content_type='text/xml', with_session=True, with_generator=True)
-def fileontape(session, req, things):
+@templating.templated("tapestuff/fileontape.xml", content_type='text/xml', with_generator=True)
+def fileontape(req, things):
     """
     Outputs xml describing the tapes that the specified file is on
     """
@@ -19,7 +21,7 @@ def fileontape(session, req, things):
     filename = things[0]
 
     query = (
-        session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape)))
+        Context().session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape)))
                 .filter(Tape.active == True).filter(TapeWrite.suceeded == True)
                 .filter(TapeFile.filename == filename)
         )
@@ -28,11 +30,13 @@ def fileontape(session, req, things):
         filelist = query
         )
 
-@templating.templated("tapestuff/tape.html", with_session=True, with_generator=True)
-def tape(session, req, things):
+@templating.templated("tapestuff/tape.html", with_generator=True)
+def tape(req, things):
     """
     This is the tape list function
     """
+
+    session = Context().session
 
     # Process form data first
     formdata = util.FieldStorage(req)
@@ -100,11 +104,13 @@ def tape(session, req, things):
         generator = generator(),
         )
 
-@templating.templated("tapestuff/tapewrite.html", with_session=True, with_generator=True)
-def tapewrite(session, req, things):
+@templating.templated("tapestuff/tapewrite.html", with_generator=True)
+def tapewrite(req, things):
     """
     This is the tapewrite list function
     """
+
+    session = Context().session
 
     # Find the appropriate TapeWrite entries
     query = session.query(TapeWrite, Tape).join(Tape)
@@ -128,8 +134,8 @@ def tapewrite(session, req, things):
 
     return dict(tws = query)
 
-@templating.templated("tapestuff/tapefile.html", with_session=True, with_generator=True)
-def tapefile(session, req, things):
+@templating.templated("tapestuff/tapefile.html", with_generator=True)
+def tapefile(req, things):
     """
     This is the tapefile list function
     """
@@ -139,16 +145,16 @@ def tapefile(session, req, things):
 
     tapewrite_id = things[0]
 
-    query = session.query(TapeFile).filter(TapeFile.tapewrite_id == tapewrite_id).order_by(TapeFile.id)
+    query = Context().session.query(TapeFile).filter(TapeFile.tapewrite_id == tapewrite_id).order_by(TapeFile.id)
 
     return dict(tapefiles = query)
 
-@templating.templated("tapestuff/taperead.html", with_session=True, with_generator=True)
-def taperead(session, req):
+@templating.templated("tapestuff/taperead.html", with_generator=True)
+def taperead(req):
     """
     This is the taperead list function
     """
 
-    query = session.query(TapeRead).order_by(TapeRead.id)
+    query = Context().session.query(TapeRead).order_by(TapeRead.id)
 
     return dict(tapefiles = query)

@@ -20,18 +20,19 @@ from . import templating
 def add_summary_completed():
     ctx = Context()
     try:
-        querylog = ctx.session.query(QueryLog).filter(QueryLog.usagelog_id == Context().usagelog.id).one()
+        querylog = ctx.session.query(QueryLog).filter(QueryLog.usagelog_id == ctx.usagelog.id).one()
         querylog.summary_completed = datetime.datetime.utcnow()
     except NoResultFound:
         # Shouldn't happen, but just in case...
         pass
 
-def generate_obslogs(session, req, obslogs):
+def generate_obslogs(req, obslogs):
+    session = Context().session
     for obslog in obslogs:
         yield obslog.diskfile.file.name, obslog.date, obslog.program_id, icanhave(session, req, obslog)
 
-@templating.templated("obslog/obslogs.html", with_session=True, at_end_hook=add_summary_completed)
-def obslogs(session, req, selection, sumtype):
+@templating.templated("obslog/obslogs.html", at_end_hook=add_summary_completed)
+def obslogs(req, selection, sumtype):
     """
     This is the obslogs summary generator
     """
@@ -45,11 +46,11 @@ def obslogs(session, req, selection, sumtype):
     # If this is associated_obslogs, we do the association here
     if sumtype == 'associated_obslogs':
         querylog.add_note("Associated Obslogs")
-        headers = list_headers(session, selection, None)
-        obslogs = associate_obslogs(session, headers)
+        headers = list_headers(selection, None)
+        obslogs = associate_obslogs(headers)
     else:
         # Simple obslog search
-        obslogs = list_obslogs(session, selection, None)
+        obslogs = list_obslogs(selection, None)
 
     querylog.query_completed = datetime.datetime.utcnow()
     num_results = len(obslogs)
@@ -67,6 +68,7 @@ def obslogs(session, req, selection, sumtype):
     if num_results == fits_closed_result_limit:
         querylog.add_note("Hit Closed search result limit")
 
+    session = Context().session
     session.add(querylog)
     session.flush()
 
@@ -77,10 +79,10 @@ def obslogs(session, req, selection, sumtype):
         closed_limit = fits_closed_result_limit,
         selection    = selection,
         no_obslogs   = num_results == 0,
-        obslogs      = generate_obslogs(session, req, obslogs)
+        obslogs      = generate_obslogs(req, obslogs)
         )
 
-def associate_obslogs(session, headers):
+def associate_obslogs(headers):
     """
     Generate a list of obslogs that are associated with the given headers
     """
@@ -88,6 +90,7 @@ def associate_obslogs(session, headers):
     obslogs = []
 
     # Could do this more efficiently by grouping the header query by date and progid, but this will do for now
+    session = Context().session
     for header in headers:
         query = session.query(Obslog).filter(Obslog.date == header.ut_datetime.date()).filter(Obslog.program_id == header.program_id)
         for result in query:

@@ -1,7 +1,6 @@
 """
 This module contains the notification html generator function, and odb import via web function
 """
-from ..orm import session_scope
 from ..orm.notification import Notification
 from ..fits_storage_config import use_as_archive, magic_download_cookie
 
@@ -16,11 +15,13 @@ from . import templating
 from mod_python import apache, util
 
 @needs_login(staffer=True)
-@templating.templated("notification.html", with_session = True)
-def notification(session, req):
+@templating.templated("notification.html")
+def notification(req):
     """
     This is the email notifications page. It's both to show the current notifcation list and to update it.
     """
+
+    session = Context().session
 
     # Process form data first
     formdata = util.FieldStorage(req)
@@ -86,12 +87,11 @@ def import_odb_notifications(req):
     # OK, get the payload from the POST data
     xml = ctx.req.raw_data
 
-    with session_scope() as session:
-        # Process it
-        report = ingest_odb_xml(session, xml)
+    # Process it
+    report = ingest_odb_xml(ctx.session, xml)
 
-        # Write back the report
-        ctx.req.content_type = "text/plain"
-        ctx.resp.append_iterable(l + '\n' for l in report)
+    # Write back the report
+    ctx.req.content_type = "text/plain"
+    ctx.resp.append_iterable(l + '\n' for l in report)
 
     return apache.HTTP_OK

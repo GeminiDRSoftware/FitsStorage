@@ -12,15 +12,14 @@ from .summary_generator import selection_to_column_names, selection_to_form_indi
 from .calibrations import calibrations
 from . import templating
 
-from ..orm import session_scope
 from ..fits_storage_config import fits_aux_datadir
 from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
 
 import os
 import urllib
 
-@templating.templated("search_and_summary/searchform.html", with_session=True, with_generator=True)
-def searchform(session, req, things, orderby):
+@templating.templated("search_and_summary/searchform.html", with_generator=True)
+def searchform(req, things, orderby):
     """
     Generate the searchform html and handle the form submit.
     """
@@ -104,7 +103,7 @@ def searchform(session, req, things, orderby):
         **dropdown_options
         )
     if selection:
-        template_args.update(summary_body(session, req, 'customsearch', selection, orderby,
+        template_args.update(summary_body(req, 'customsearch', selection, orderby,
                                           additional_columns=selection_to_column_names(selection)))
 
     return template_args

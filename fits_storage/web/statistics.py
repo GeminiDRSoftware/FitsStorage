@@ -12,7 +12,9 @@ from ..orm.file import File
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.ingestqueue import IngestQueue
+
 from ..utils.query_utils import to_int, null_to_zero
+from ..utils.web import Context
 
 from . import templating
 
@@ -21,13 +23,14 @@ from ..apache_return_codes import HTTP_OK
 from datetime import datetime, timedelta, time as dt_time, date as dt_date
 from collections import defaultdict, namedtuple
 
-@templating.templated("statistics/stats.html", with_session=True)
-def stats(session, req):
+@templating.templated("statistics/stats.html")
+def stats(req):
     """
     Provides live statistics on fits database: total filesize, ingest queue status, and datarate for various date ranges is queried. Information is
     presented in html in the browser in a list format.
     """
 
+    session = Context().session
     # DiskFile table statistics
     DiskFileStats = namedtuple('DiskFileStats', "total_rows present_rows present_size latest last_minute last_hour last_day last_queries")
     df_query = session.query(DiskFile)
@@ -93,13 +96,15 @@ def stats(session, req):
         monthly_rates = period_stats(until=comb, times=6, period='month'),
         )
 
-@templating.templated("statistics/content.html", with_session=True, with_generator=True)
-def content(session, req):
+@templating.templated("statistics/content.html", with_generator=True)
+def content(req):
     """
     Queries database for information concerning the total number and filesize of all stored files.
     Produces tables presenting the results, sorted by various properties such as instrument,
     observation class/type, and year of observation.
     """
+
+    session = Context().session
 
     # Presents total files and filesize
     filenum, filesize, datasize = (

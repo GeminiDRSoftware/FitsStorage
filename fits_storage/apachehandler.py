@@ -172,6 +172,7 @@ def handler(ctx, req):
 
         usagelog = UsageLog(req)
         ctx.usagelog = usagelog
+        ctx.session = session
 
         try:
             try:

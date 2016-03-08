@@ -131,17 +131,11 @@ class InterruptedError(Exception):
 # some use cases, making it easy to return from the function at
 # any point without having to care about repeating the content generation
 # at every single exit point.
-def templated(template_name, content_type="text/html", with_generator=False, with_session=False, default_status=apache.HTTP_OK, at_end_hook=None):
+def templated(template_name, content_type="text/html", with_generator=False, default_status=apache.HTTP_OK, at_end_hook=None):
     """``template_name`` is the path to the template file, relative to the ``template_root``.
 
        If ``with_generator`` is ``True``, Jinja2 will be instructed to try to chunk the output,
        sending info back to the client as soon as possible.
-
-       If ``with_session`` is ``True``, we keep the whole operation within a session scope (the
-       session object is passed as first argument to the decorated function). This allows
-       the function to return ORM objects that can be manipulated by the template, without
-       having to detach them from the session first. A typical use case is to pass a query
-       so that the template iterates over it.
 
        If at_end_hook is defined, it has to be a callable object. It will be invoked after
        the template has generated all the text.
@@ -155,36 +149,33 @@ def templated(template_name, content_type="text/html", with_generator=False, wit
             except IOError:
                 raise TemplateAccessError(template_name)
 
-            with session_scope() as session:
-                ctx.resp.content_type = content_type
-                try:
-                    if with_session:
-                        context = fn(session, req, *args, **kw)
-                    else:
-                        context = fn(req, *args, **kw)
-                    if isinstance(context, tuple):
-                        status, context = context
-                    else:
-                        status = default_status
+            ctx.resp.content_type = content_type
+            try:
+                context = fn(req, *args, **kw)
 
-                    if not with_generator:
-                        ctx.resp.append(template.render(context))
-                    else:
-                        ctx.resp.append_iterable(template.generate(context))
+                if isinstance(context, tuple):
+                    status, context = context
+                else:
+                    status = default_status
 
-                    if at_end_hook:
-                        at_end_hook()
-                except SkipTemplateError as e:
-                    status = e.status
-                    if e.content_type is not None:
-                        ctx.resp.content_type = e.content_type
-                    if e.message is not None:
-                        ctx.resp.append(e.message)
-                except IOError:
-                    # Assume that his means we got an interrupted connection
-                    # (eg. the user stopped the query on their browser)
-                    raise InterruptedError
+                if not with_generator:
+                    ctx.resp.append(template.render(context))
+                else:
+                    ctx.resp.append_iterable(template.generate(context))
 
-                return status
+                if at_end_hook:
+                    at_end_hook()
+            except SkipTemplateError as e:
+                status = e.status
+                if e.content_type is not None:
+                    ctx.resp.content_type = e.content_type
+                if e.message is not None:
+                    ctx.resp.append(e.message)
+            except IOError:
+                # Assume that his means we got an interrupted connection
+                # (eg. the user stopped the query on their browser)
+                raise InterruptedError
+
+            return status
         return fn_wrapper
     return template_decorator

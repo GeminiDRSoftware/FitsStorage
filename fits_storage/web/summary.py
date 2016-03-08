@@ -3,7 +3,6 @@ This module contains the main web summary code.
 """
 import datetime
 
-from ..orm import session_scope
 from ..utils.web import Context
 from ..fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
 from .selection import sayselection, openquery, selection_to_URL
@@ -41,9 +40,9 @@ def summary(req, sumtype, selection, orderby, links=True, body_only=False):
     else:
         return full_page_summary(req, sumtype, selection, orderby, links)
 
-@templating.templated("search_and_summary/summary.html", with_session=True, with_generator=True)
-def full_page_summary(session, req, sumtype, selection, orderby, links):
-    template_args = summary_body(session, req, sumtype, selection, orderby, links)
+@templating.templated("search_and_summary/summary.html", with_generator=True)
+def full_page_summary(req, sumtype, selection, orderby, links):
+    template_args = summary_body(req, sumtype, selection, orderby, links)
 
     template_args.update({
         'sumtype'      : sumtype,
@@ -52,11 +51,11 @@ def full_page_summary(session, req, sumtype, selection, orderby, links):
 
     return template_args
 
-@templating.templated("search_and_summary/summary_body.html", with_session=True, with_generator=True)
-def embeddable_summary(session, req, sumtype, selection, orderby, links):
-    return summary_body(session, req, sumtype, selection, orderby, links)
+@templating.templated("search_and_summary/summary_body.html", with_generator=True)
+def embeddable_summary(req, sumtype, selection, orderby, links):
+    return summary_body(req, sumtype, selection, orderby, links)
 
-def summary_body(session, req, sumtype, selection, orderby, links=True, additional_columns=()):
+def summary_body(req, sumtype, selection, orderby, links=True, additional_columns=()):
     """
     This is the main summary generator.
     req is an apache request handler request object
@@ -74,6 +73,7 @@ def summary_body(session, req, sumtype, selection, orderby, links=True, addition
     """
 
     ctx = Context()
+    session = ctx.session
     sumlinks = ALL_LINKS if links else NO_LINKS
 
     # If this is a diskfiles summary, select even ones that are not canonical
@@ -90,7 +90,7 @@ def summary_body(session, req, sumtype, selection, orderby, links=True, addition
     querylog.selection = str(selection)
     querylog.query_started = datetime.datetime.utcnow()
 
-    headers = list_headers(session, selection, orderby, full_query=True, add_previews=True)
+    headers = list_headers(selection, orderby, full_query=True, add_previews=True)
     num_headers = len(headers)
 
     hit_open_limit = num_headers == fits_open_result_limit
@@ -126,7 +126,7 @@ def summary_body(session, req, sumtype, selection, orderby, links=True, addition
         # We have a session at this point, so get the user and their program list to
         # pass down the chain to use figure out whether to display download links
         user = ctx.user
-        user_progid_list = get_program_list(session, user)
+        user_progid_list = get_program_list(user)
         sumtable_data = summary_table(req, sumtype, headers, selection, sumlinks, user, user_progid_list, additional_columns)
     else:
         sumtable_data = {}

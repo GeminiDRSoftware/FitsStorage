@@ -1,7 +1,6 @@
 """
-This module contains the tape related xml generator functions. 
+This module contains the tape related xml generator functions.
 """
-from ..orm import session_scope
 from ..orm.tapestuff import Tape, TapeWrite, TapeFile
 
 from . import templating
@@ -13,18 +12,16 @@ from ..apache_return_codes import HTTP_OK
 # SQLAlchemy tends to hog a lot of it and we may end up being killed.
 # Otherwise we could just use Tape.tapewrites and TapeWrite.tapefiles...
 class QueryWrapper(object):
-    def __init__(self, session, query, Wrapper):
-        self.s = session
+    def __init__(self, query, Wrapper):
         self.q = query
         self.W = Wrapper
 
     def __iter__(self):
         for obj in self.q:
-            yield self.W(self.s, obj)
+            yield self.W(obj)
 
 class TapeWrapper(object):
-    def __init__(self, session, obj):
-        self.s = session
+    def __init__(self, obj):
         self.o = obj
 
     def __getattr__(self, attr):
@@ -32,15 +29,14 @@ class TapeWrapper(object):
 
     @property
     def tapewrites(self):
-        q = (self.s.query(TapeWrite)
+        q = (Context().session.query(TapeWrite)
                     .filter(TapeWrite.tape_id == self.o.id)
                     .filter(TapeWrite.suceeded == True)
                     .order_by(TapeWrite.id))
-        return QueryWrapper(self.s, q, TapeWriterWrapper)
+        return QueryWrapper(q, TapeWriterWrapper)
 
 class TapeWriterWrapper(object):
-    def __init__(self, session, obj):
-        self.s = session
+    def __init__(self, obj):
         self.o = obj
 
     def __getattr__(self, attr):
@@ -48,16 +44,16 @@ class TapeWriterWrapper(object):
 
     @property
     def tapefiles(self):
-        return self.s.query(TapeFile).filter(TapeFile.tapewrite_id == self.o.id)
+        return Context().session.query(TapeFile).filter(TapeFile.tapewrite_id == self.o.id)
 
-@templating.templated("tape.xml", content_type='text/xml', with_session=True, with_generator=True)
-def xmltape(session, req):
+@templating.templated("tape.xml", content_type='text/xml', with_generator=True)
+def xmltape(req):
     """
     Outputs xml describing the tapes that the specified file is on
     """
 
-    query = session.query(Tape).filter(Tape.active == True).order_by(Tape.id)
+    query = Context().session.query(Tape).filter(Tape.active == True).order_by(Tape.id)
 
     return dict(
-        tapes = QueryWrapper(session, query, TapeWrapper)
+        tapes = QueryWrapper(query, TapeWrapper)
         )

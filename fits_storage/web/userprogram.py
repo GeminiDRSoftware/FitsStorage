@@ -4,8 +4,6 @@ This is how users register programs against their userids,
 find out what programs they have access to etc
 """
 
-from ..orm import sessionfactory
-
 from ..orm.userprogram import UserProgram
 from ..utils.web import Context
 
@@ -17,8 +15,8 @@ from mod_python import util
 
 import urllib
 
-@templating.templated("user_programs.html", with_session=True)
-def my_programs(session, req, things):
+@templating.templated("user_programs.html")
+def my_programs(req, things):
     """
     Generates a page showing the user what programs
     they have registered access to.
@@ -48,8 +46,8 @@ def my_programs(session, req, things):
     if user:
         username = user.username
         if program_id or program_key:
-            reason_bad = request_user_program(session, user, program_id, program_key)
-        prog_list = get_program_list(session, user)
+            reason_bad = request_user_program(user, program_id, program_key)
+        prog_list = get_program_list(user)
 
     if username == '':
         return dict(logged_in = False)
@@ -65,7 +63,7 @@ def my_programs(session, req, things):
 
     return template_args
 
-def get_program_list(session, user):
+def get_program_list(user):
     """
     Given a database session and a user object, return
     a list of program IDs that the user has registered.
@@ -73,14 +71,14 @@ def get_program_list(session, user):
 
     prog_list = []
     if user is not None:
-        query = session.query(UserProgram).filter(UserProgram.user_id == user.id)
+        query = Context().session.query(UserProgram).filter(UserProgram.user_id == user.id)
         results = query.all()
         for result in results:
             prog_list.append(result.program_id)
 
     return prog_list
 
-def request_user_program(session, user, program_id, program_key):
+def request_user_program(user, program_id, program_key):
     """
     Requests to register a program_id for a user
     Returns an empty string if sucessfull, a reason why not if not
@@ -93,6 +91,8 @@ def request_user_program(session, user, program_id, program_key):
         return "Invalid program ID"
     if len(program_key) < 5:
         return "Invalid program key"
+
+    session = Context().session
 
     # Is this program ID already registered for this user?
     query = session.query(UserProgram).filter(UserProgram.user_id == user.id).filter(UserProgram.program_id == program_id)

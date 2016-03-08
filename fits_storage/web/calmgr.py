@@ -1,7 +1,6 @@
 """
 This module contains the calmgr html generator function.
 """
-from ..orm import sessionfactory
 from ..orm.file import File
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
@@ -103,7 +102,7 @@ def cals_info(cal_obj, caltype, qtype='UNKNOWN', log=no_func, add_note=no_func, 
             log("Exception in cal association: %s: %s %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
             add_note("Exception in cal association: %s: %s %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
 
-def generate_post_calmgr(session, req, selection, caltype):
+def generate_post_calmgr(req, selection, caltype):
     # OK, get the details from the POST data
     ctx = Context()
     clientdata = ctx.req.raw_data
@@ -129,7 +128,7 @@ def generate_post_calmgr(session, req, selection, caltype):
     descriptors['prepared'] = 'PREPARED' in types
 
     # Get a cal object for this target data
-    c = get_cal_object(session, None, header=None, descriptors=descriptors, types=types)
+    c = get_cal_object(ctx.session, header=None, descriptors=descriptors, types=types)
 
     yield dict(
         label    = descriptors['data_label'],
@@ -143,11 +142,15 @@ def generate_post_calmgr(session, req, selection, caltype):
         )
 
     # Commit the changes to the usagelog
-    session.commit()
+    ctx.session.commit()
 
-def generate_get_calmgr(session, req, selection, caltype):
+def generate_get_calmgr(req, selection, caltype):
     # OK, we got called via a GET - find the science datasets in the database
     # The Basic Query
+
+    ctx = Context()
+    session = ctx.session
+
     query = session.query(Header).select_from(join(join(File, DiskFile), Header))
 
     # Query the selection
@@ -165,14 +168,13 @@ def generate_get_calmgr(session, req, selection, caltype):
     # OK, do the query
     headers = query.all()
 
-    ctx = Context()
     usagelog = ctx.usagelog
     # Did we get anything?
     if len(headers) > 0:
         # Loop through targets frames we found
         for header in headers:
             # Get a cal object for this target data
-            c = get_cal_object(session, None, header=header)
+            c = get_cal_object(ctx.session, header=header)
 
             yield dict(
                 label    = header.data_label,
@@ -187,8 +189,8 @@ def generate_get_calmgr(session, req, selection, caltype):
     # commit the usagelog notes
     session.commit()
 
-@templating.templated("calmgr.xml", content_type='text/xml', with_session=True)
-def calmgr(session, req, selection):
+@templating.templated("calmgr.xml", content_type='text/xml')
+def calmgr(req, selection):
     """
     This is the calibration manager. It implements a machine readable calibration association server
     req is an apache request handler object
@@ -202,7 +204,7 @@ def calmgr(session, req, selection):
     and it will use this data as the science target details with which to associate
     the calibration.
 
-    This uses the calibration classes to do the association. It doesn't reference the 
+    This uses the calibration classes to do the association. It doesn't reference the
     "applicable" feature of the calibration classes though, it attempts to find a calibration
     of the type requested regardless of its applicability.
 
@@ -233,5 +235,5 @@ def calmgr(session, req, selection):
         req_method   = req.method,
         now          = datetime.datetime.now(),
         utcnow       = datetime.datetime.utcnow(),
-        generator    = gen(session, req, selection, caltype),
+        generator    = gen(req, selection, caltype),
         )

@@ -5,7 +5,6 @@ This module handles the web 'queue' functions. Mainly showing status
 from ..utils.queuestats import stats, regular_summary, error_summary, error_detail, UnknownQueueError
 from ..utils.web import Context
 
-from ..orm import session_scope
 from .user import needs_login
 
 from ..orm.ingestqueue import IngestQueue
@@ -21,11 +20,12 @@ from hashlib import md5
 
 DETAIL_THRESHOLD = 20
 
-@templating.templated("queuestatus/index.html", with_session=True)
-def queuestatus_summary(session, req):
+@templating.templated("queuestatus/index.html")
+def queuestatus_summary(req):
     general_rows = []
     detail_tables = {}
 
+    session = Context().session
     for qstat in stats(session):
         general_rows.append(qstat)
         size, nerr = qstat['size'], qstat['errors']
@@ -51,8 +51,7 @@ def queuestatus_summary(session, req):
 
 @templating.templated("queuestatus/detail.html")
 def queuestatus_tb(req, qshortname, oid):
-    with session_scope() as session:
-        det = error_detail(session, qshortname, oid)
+    det = error_detail(Context().session, qshortname, oid)
 
     template_args = dict(
         oid = oid,
@@ -92,21 +91,21 @@ def queuestatus_update(req, things):
     except ValueError:
         pass
 
-    with session_scope() as session:
+    session = Context().session
 
-        result = []
-        for qstat in stats(session):
-            queue, lqname, tsize, terr = qstat['type'], qstat['lname'], qstat['size'], qstat['errors']
-            esummary = list(error_summary(session, queue, DETAIL_THRESHOLD))
-            summary = list(regular_summary(session, queue, DETAIL_THRESHOLD))
-            ids = [tsize, terr] + [x['oid'] for x in summary + esummary]
-            dig = md5(str(ids)).hexdigest()
-            if dig != cache.get(lqname):
-                result.append(dict(queue=lqname, token=dig, waiting=summary, errors=esummary, total_waiting=tsize, total_errors=terr))
-            else:
-                result.append(dict(queue=lqname, token=dig))
+    result = []
+    for qstat in stats(session):
+        queue, lqname, tsize, terr = qstat['type'], qstat['lname'], qstat['size'], qstat['errors']
+        esummary = list(error_summary(session, queue, DETAIL_THRESHOLD))
+        summary = list(regular_summary(session, queue, DETAIL_THRESHOLD))
+        ids = [tsize, terr] + [x['oid'] for x in summary + esummary]
+        dig = md5(str(ids)).hexdigest()
+        if dig != cache.get(lqname):
+            result.append(dict(queue=lqname, token=dig, waiting=summary, errors=esummary, total_waiting=tsize, total_errors=terr))
+        else:
+            result.append(dict(queue=lqname, token=dig))
 
-        ctx.resp.content_type = 'application/json'
-        ctx.resp.append_json(result)
+    ctx.resp.content_type = 'application/json'
+    ctx.resp.append_json(result)
 
     return apache.HTTP_OK

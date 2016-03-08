@@ -12,6 +12,8 @@ from ..orm.header import Header
 from ..orm.diskfile import DiskFile
 from ..orm.file import File
 
+from ..utils.web import Context
+
 from . import templating
 
 from sqlalchemy import join, desc
@@ -40,8 +42,8 @@ class WrappedCals(object):
         return self._applic
 
 class WrapperObject(object):
-    def __init__(self, session, header, counter, caloption, caltype):
-        self.s         = session
+    def __init__(self, header, counter, caloption, caltype):
+#        self.s         = session
         self.header    = header
         self._counter  = counter
         self._copt     = caloption
@@ -50,7 +52,7 @@ class WrapperObject(object):
         self._warning  = False
         self._missing  = False
         self._requires = False
-        self.c         = get_cal_object(session, None, header=header)
+        self.c         = get_cal_object(Context().session, None, header=header)
         self.cals      = {}
 
         self.process_cals()
@@ -224,8 +226,8 @@ class WrapperObject(object):
 #                    #warning = True
 #                    #missing = True
 
-@templating.templated("calibrations.html", with_session = True, with_generator=True)
-def calibrations(session, req, selection):
+@templating.templated("calibrations.html", with_generator=True)
+def calibrations(req, selection):
     """
     This is the calibrations generator. It implements a human readable calibration association server.
     This is mostly used by the Gemini SOSs to detect missing calibrations, and it defaults to the 
@@ -249,11 +251,10 @@ def calibrations(session, req, selection):
         )
 
     caloption = selection.get('caloption', '')
-    session = sessionfactory()
 
     # OK, find the target files
     # The Basic Query
-    query = session.query(Header).select_from(join(join(DiskFile, File), Header))
+    query = Context().session.query(Header).select_from(join(join(DiskFile, File), Header))
 
     # Only the canonical versions
     selection['canonical'] = True
@@ -281,7 +282,7 @@ def calibrations(session, req, selection):
     if 'caltype' in selection:
         caltype = selection['caltype']
 
-    template_args['objects'] = (WrapperObject(session, obj, counter, caloption, caltype) for obj in headers)
+    template_args['objects'] = (WrapperObject(obj, counter, caloption, caltype) for obj in headers)
 
     return template_args
 

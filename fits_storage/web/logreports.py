@@ -9,7 +9,7 @@ from sqlalchemy import and_, between, cast, desc, extract, func, join
 from sqlalchemy import Date, Interval, String
 from sqlalchemy.orm import aliased
 
-from ..orm import session_scope, Base
+from ..orm import Base
 from ..orm.usagelog import UsageLog
 from ..orm.querylog import QueryLog
 from ..orm.downloadlog import DownloadLog
@@ -20,12 +20,12 @@ from ..orm.header import Header
 from ..orm.user import User
 
 from ..utils.query_utils import to_int, null_to_zero
+from ..utils.web import Context
 
 from ..gemini_metadata_utils import ONEDAY_OFFSET
 
 from .user import needs_login
 from .selection import getselection, queryselection, sayselection
-from .list_headers import list_headers
 from . import templating
 
 from mod_python import apache
@@ -45,8 +45,8 @@ def logs(session, filter_func = None):
     return AliasedQueryLog, AliasedDownloadLog
 
 @needs_login(staffer=True)
-@templating.templated("logreports/usagereport.html", with_session=True, with_generator=True)
-def usagereport(session, req):
+@templating.templated("logreports/usagereport.html", with_generator=True)
+def usagereport(req):
     """
     This is the usage report handler
     """
@@ -62,6 +62,8 @@ def usagereport(session, req):
     ipaddr = ''
     this = ''
     status = ''
+
+    session = Context().session
 
     formdata = util.FieldStorage(req)
     for key, value in formdata.items():
@@ -134,8 +136,8 @@ def usagereport(session, req):
     return template_args
 
 @needs_login(staffer=True)
-@templating.templated("logreports/usagedetails.html", with_session=True)
-def usagedetails(session, req, things):
+@templating.templated("logreports/usagedetails.html")
+def usagedetails(req, things):
     """
     This is the usage report detail handler
     things should contain an useagelog ID number
@@ -147,6 +149,8 @@ def usagedetails(session, req, things):
         ulid = int(things[0])
     except:
         return apache.HTTP_NOT_ACCEPTABLE
+
+    session = Context().session
 
     # Subquery to add a "row count" to the QueryLog and the DownloadLog. This is an easy way to pick just
     # the first relation when joining a one-to-many with potentially more than one result per match.
@@ -178,8 +182,8 @@ def usagedetails(session, req, things):
         )
 
 @needs_login(staffer=True)
-@templating.templated("logreports/downloadlog.html", with_session=True, with_generator=True)
-def downloadlog(session, req, things):
+@templating.templated("logreports/downloadlog.html", with_generator=True)
+def downloadlog(req, things):
     """
     This accepts a list of filename patterns and returns a log showing all the downloads
     of the files that match the selection.
@@ -198,6 +202,8 @@ def downloadlog(session, req, things):
         if not fdl.canhaveit: permission += 'DENIED '
 
         return permission
+
+    session = Context().session
 
     hsq = session.query(Header, func.row_number().over(Header.diskfile_id).label('row_number')).subquery()
     aHeader = aliased(Header, hsq)
@@ -260,8 +266,8 @@ usagestats_header = """
 """
 
 @needs_login(staffer=True)
-@templating.templated("logreports/usagestats.html", with_session=True, with_generator=True)
-def usagestats(session, req):
+@templating.templated("logreports/usagestats.html", with_generator=True)
+def usagestats(req):
     """
     Usage statistics:
     Site hits
@@ -274,6 +280,8 @@ def usagestats(session, req):
 
     Generate counts per year, per week and per day
     """
+
+    session = Context().session
 
     first, last = session.query(func.min(UsageLog.utdatetime),
                                 func.max(UsageLog.utdatetime)).first()

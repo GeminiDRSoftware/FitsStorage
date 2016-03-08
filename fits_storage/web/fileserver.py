@@ -138,7 +138,7 @@ def download(req, things):
             username = 'Not Logged In'
 
         # Get the header list
-        headers = list_headers(session, selection, None)
+        headers = list_headers(selection, None)
         # If this is an associated_calibrations request, do that now
         if associated_calibrations:
             downloadlog.add_note("associated_calibrations download")

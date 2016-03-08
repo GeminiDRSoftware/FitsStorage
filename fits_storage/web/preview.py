@@ -13,7 +13,6 @@ from ..orm.downloadlog import DownloadLog
 from ..utils.web import Context, with_content_type
 
 from .selection import getselection, openquery, selection_to_URL
-from .summary import list_headers
 from .user import AccessForbidden
 
 # This will only work with apache

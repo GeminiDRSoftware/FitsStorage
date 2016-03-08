@@ -72,19 +72,22 @@ def bare_page(req):
         can_add = False
     return dict(can_add=can_add)
 
-def enumerate_miscfiles(session, req, query):
+def enumerate_miscfiles(req, query):
+    session = Context().session
     for misc, disk, file in query:
         yield icanhave(session, req, misc), misc, disk, file
 
-@templating.templated("miscfiles/miscfiles.html", with_session=True)
-def search_miscfiles(session, req, formdata):
+@templating.templated("miscfiles/miscfiles.html")
+def search_miscfiles(req, formdata):
+    ctx = Context()
+
     try:
-        can_add = Context().user.is_staffer
+        can_add = ctx.user.is_staffer
     except AttributeError:
         can_add = False
 
     ret = dict(can_add=can_add)
-    query = session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)
+    query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)
 
     message = []
 
@@ -111,7 +114,7 @@ def search_miscfiles(session, req, formdata):
     cnt = query.count()
     ret['count'] = cnt
     ret['hit_limit'] = (cnt == SEARCH_LIMIT)
-    ret['fileList'] = enumerate_miscfiles(session, req, query)
+    ret['fileList'] = enumerate_miscfiles(req, query)
 
     return ret
 
@@ -150,8 +153,8 @@ def validate(req):
     return apache.HTTP_OK
 
 @needs_login(superuser=True)
-@templating.templated("miscfiles/miscfiles.html", with_session=True)
-def save_file(session, req, formdata):
+@templating.templated("miscfiles/miscfiles.html")
+def save_file(req, formdata):
     fileitem = formdata['uploadFile']
     localfilename = normalize_diskname(fileitem.filename)
     fullpath = os.path.join(upload_staging_path, localfilename)
@@ -208,15 +211,16 @@ def save_file(session, req, formdata):
 
     return dict(can_add=True)
 
-@templating.templated("miscfiles/detail.html", with_session=True)
-def detail_miscfile(session, req, handle, formdata):
+@templating.templated("miscfiles/detail.html")
+def detail_miscfile(req, handle, formdata):
+    ctx = Context()
     try:
-        is_staffer = Context().user.is_staffer
+        is_staffer = ctx.user.is_staffer
     except AttributeError:
         is_staffer = False
 
     try:
-        query = session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)
+        query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)
         try:
             meta, df, fobj = query.filter(MiscFile.id == int(handle)).one()
         except ValueError:
@@ -225,7 +229,7 @@ def detail_miscfile(session, req, handle, formdata):
 
         ret = dict(
             canedit = is_staffer,
-            canhave = icanhave(session, req, meta),
+            canhave = icanhave(ctx.session, req, meta),
             uri  = req.uri,
             meta = meta,
             disk = df,
