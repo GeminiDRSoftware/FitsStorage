@@ -1,4 +1,4 @@
-from ..orm import session_scope, NoResultFound, MultipleResultsFound
+from ..orm import NoResultFound, MultipleResultsFound
 
 from ..fits_storage_config import using_s3, fits_open_result_limit, fits_closed_result_limit
 
@@ -123,144 +123,146 @@ def download(req, things):
 
     selection['present'] = True
     # Open a database session
-    with session_scope() as session:
-        # Instantiate the download log
-        downloadlog = DownloadLog(ctx.usagelog)
-        session.add(downloadlog)
-        downloadlog.selection = str(selection)
-        downloadlog.query_started = datetime.datetime.utcnow()
 
-        # Get our username while we have the database session open
-        user = ctx.user
-        if user:
-            username = user.username
-        else:
-            username = 'Not Logged In'
+    session = ctx.session
 
-        # Get the header list
-        headers = list_headers(selection, None)
-        # If this is an associated_calibrations request, do that now
-        if associated_calibrations:
-            downloadlog.add_note("associated_calibrations download")
-            headers = associate_cals(session, headers)
-        downloadlog.query_completed = datetime.datetime.utcnow()
-        downloadlog.numresults = len(headers)
+    # Instantiate the download log
+    downloadlog = DownloadLog(ctx.usagelog)
+    session.add(downloadlog)
+    downloadlog.selection = str(selection)
+    downloadlog.query_started = datetime.datetime.utcnow()
 
-        if not headers:
-            # No results. No point making a tar file
-            downloadlog.sending_files = False
-            downloadlog.add_note("Nothing to download, aborted")
-            ctx.resp.content_type = 'text/plain'
-            ctx.resp.append("No files to download. Either you asked to download marked files, but didn't mark any files, or you specified a selection criteria that doesn't find any files")
-            session.commit()
-            return apache.HTTP_OK
+    # Get our username while we have the database session open
+    user = ctx.user
+    if user:
+        username = user.username
+    else:
+        username = 'Not Logged In'
 
-        if openquery(selection) and len(headers) > fits_open_result_limit:
-            # Open query. Almost certainly too many files
-            downloadlog.sending_files = False
-            downloadlog.add_note("Hit Open result Limit, aborted")
-            ctx.resp.content_type = 'text/plain'
-            ctx.resp.append_iterable(
-                ["Your selection criteria does not restrict the number of results, and more than %d were found. " % fits_open_result_limit,
-                 "Please refine your selection more before attempting to download. Queries that can contain an arbitrary number of results have a lower limit applied than more constrained queries. Including a date range or program id will prevent an arbitrary number of results being found will raise the limit"]
-            )
-            session.commit()
-            return apache.HTTP_OK
+    # Get the header list
+    headers = list_headers(selection, None)
+    # If this is an associated_calibrations request, do that now
+    if associated_calibrations:
+        downloadlog.add_note("associated_calibrations download")
+        headers = associate_cals(session, headers)
+    downloadlog.query_completed = datetime.datetime.utcnow()
+    downloadlog.numresults = len(headers)
 
-        if len(headers) > fits_closed_result_limit:
-            # Open query. Almost certainly too many files
-            downloadlog.sending_files = False
-            downloadlog.add_note("Hit Closed result limit, aborted")
-            ctx.resp.content_type = 'text/plain'
-            ctx.append_iterable(
-                ["More than %d results were found. This is beyond the limit we allow" % fits_closed_result_limit,
-                 "Please refine your selection more before attempting to download. If you really want all these files, we suggest you break your search into several smaller date range pieces and download one set at a time."]
-            )
-            session.commit()
-            return apache.HTTP_OK
+    if not headers:
+        # No results. No point making a tar file
+        downloadlog.sending_files = False
+        downloadlog.add_note("Nothing to download, aborted")
+        ctx.resp.content_type = 'text/plain'
+        ctx.resp.append("No files to download. Either you asked to download marked files, but didn't mark any files, or you specified a selection criteria that doesn't find any files")
+        session.commit()
+        return apache.HTTP_OK
 
-        # Set up the http headers
-        downloadlog.sending_files = True
-        tarfilename = generate_filename(associated_calibrations, selection)
-        ctx.resp.set_header('Content-Disposition', 'attachment; filename="{}"'.format(tarfilename))
+    if openquery(selection) and len(headers) > fits_open_result_limit:
+        # Open query. Almost certainly too many files
+        downloadlog.sending_files = False
+        downloadlog.add_note("Hit Open result Limit, aborted")
+        ctx.resp.content_type = 'text/plain'
+        ctx.resp.append_iterable(
+            ["Your selection criteria does not restrict the number of results, and more than %d were found. " % fits_open_result_limit,
+             "Please refine your selection more before attempting to download. Queries that can contain an arbitrary number of results have a lower limit applied than more constrained queries. Including a date range or program id will prevent an arbitrary number of results being found will raise the limit"]
+        )
+        session.commit()
+        return apache.HTTP_OK
 
-        # We are going to build an md5sum file while we do this
-        md5file = ""
-        # And keep a list of any files we were denied
-        denied = []
-        # Here goes!
-        tar = tarfile.open(name=tarfilename, mode="w|", fileobj=req)
-        for header in headers:
-            filedownloadlog = FileDownloadLog(ctx.usagelog)
-            filedownloadlog.diskfile_filename = header.diskfile.filename
-            filedownloadlog.diskfile_file_md5 = header.diskfile.file_md5
-            filedownloadlog.diskfile_file_size = header.diskfile.file_size
-            session.add(filedownloadlog)
-            if icanhave(session, req, header, filedownloadlog):
-                filedownloadlog.canhaveit = True
-                md5file += "%s  %s\n" % (header.diskfile.file_md5, header.diskfile.filename)
-                if using_s3:
-                    with s3.fetch_temporary(header.diskfile.filename) as buffer:
-                        # Write buffer into tarfile
-                        # - create a tarinfo object
-                        tarinfo = tarfile.TarInfo(header.diskfile.filename)
-                        tarinfo.size = header.diskfile.file_size
-                        tarinfo.uid = 0
-                        tarinfo.gid = 0
-                        tarinfo.uname = 'gemini'
-                        tarinfo.gname = 'gemini'
-                        tarinfo.mtime = time.mktime(header.diskfile.lastmod.timetuple())
-                        tarinfo.mode = 0644
-                        # - and add it to the tar file
-                        tar.addfile(tarinfo, buffer)
-                else:
-                    tar.add(header.diskfile.fullpath(), header.diskfile.filename)
+    if len(headers) > fits_closed_result_limit:
+        # Open query. Almost certainly too many files
+        downloadlog.sending_files = False
+        downloadlog.add_note("Hit Closed result limit, aborted")
+        ctx.resp.content_type = 'text/plain'
+        ctx.append_iterable(
+            ["More than %d results were found. This is beyond the limit we allow" % fits_closed_result_limit,
+             "Please refine your selection more before attempting to download. If you really want all these files, we suggest you break your search into several smaller date range pieces and download one set at a time."]
+        )
+        session.commit()
+        return apache.HTTP_OK
+
+    # Set up the http headers
+    downloadlog.sending_files = True
+    tarfilename = generate_filename(associated_calibrations, selection)
+    ctx.resp.set_header('Content-Disposition', 'attachment; filename="{}"'.format(tarfilename))
+
+    # We are going to build an md5sum file while we do this
+    md5file = ""
+    # And keep a list of any files we were denied
+    denied = []
+    # Here goes!
+    tar = tarfile.open(name=tarfilename, mode="w|", fileobj=req)
+    for header in headers:
+        filedownloadlog = FileDownloadLog(ctx.usagelog)
+        filedownloadlog.diskfile_filename = header.diskfile.filename
+        filedownloadlog.diskfile_file_md5 = header.diskfile.file_md5
+        filedownloadlog.diskfile_file_size = header.diskfile.file_size
+        session.add(filedownloadlog)
+        if icanhave(session, req, header, filedownloadlog):
+            filedownloadlog.canhaveit = True
+            md5file += "%s  %s\n" % (header.diskfile.file_md5, header.diskfile.filename)
+            if using_s3:
+                with s3.fetch_temporary(header.diskfile.filename) as buffer:
+                    # Write buffer into tarfile
+                    # - create a tarinfo object
+                    tarinfo = tarfile.TarInfo(header.diskfile.filename)
+                    tarinfo.size = header.diskfile.file_size
+                    tarinfo.uid = 0
+                    tarinfo.gid = 0
+                    tarinfo.uname = 'gemini'
+                    tarinfo.gname = 'gemini'
+                    tarinfo.mtime = time.mktime(header.diskfile.lastmod.timetuple())
+                    tarinfo.mode = 0644
+                    # - and add it to the tar file
+                    tar.addfile(tarinfo, buffer)
             else:
-                # Permission denied, add to the denied list
-                filedownloadlog.canhaveit = False
-                denied.append(header.diskfile.filename)
-        downloadlog.numdenied = len(denied)
-        # OK, that's all the fits files. Add the md5sum file
-        # - create a tarinfo object
-        tarinfo = tarfile.TarInfo('md5sums.txt')
-        tarinfo.size = len(md5file)
-        tarinfo.uid = 0
-        tarinfo.gid = 0
-        tarinfo.uname = 'gemini'
-        tarinfo.gname = 'gemini'
-        tarinfo.mtime = time.time()
-        tarinfo.mode = 0644
-        # - and add it to the tar file
-        buffer = cStringIO.StringIO(md5file)
-        tar.addfile(tarinfo, buffer)
-        buffer.close()
+                tar.add(header.diskfile.fullpath(), header.diskfile.filename)
+        else:
+            # Permission denied, add to the denied list
+            filedownloadlog.canhaveit = False
+            denied.append(header.diskfile.filename)
+    downloadlog.numdenied = len(denied)
+    # OK, that's all the fits files. Add the md5sum file
+    # - create a tarinfo object
+    tarinfo = tarfile.TarInfo('md5sums.txt')
+    tarinfo.size = len(md5file)
+    tarinfo.uid = 0
+    tarinfo.gid = 0
+    tarinfo.uname = 'gemini'
+    tarinfo.gname = 'gemini'
+    tarinfo.mtime = time.time()
+    tarinfo.mode = 0644
+    # - and add it to the tar file
+    buffer = cStringIO.StringIO(md5file)
+    tar.addfile(tarinfo, buffer)
+    buffer.close()
 
-        # And add the README.TXT file
-        readme = readme_body.format(selection_url=selection_to_URL(selection),
-                                    search_time=datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-                                    username=username)
-        if associated_calibrations:
-            readme += readme_associated
-        if denied:
-            readme += readme_denied.format(denied = '\n'.join(denied))
-        # - create a tarinfo object
-        tarinfo = tarfile.TarInfo('README.txt')
-        tarinfo.size = len(readme)
-        tarinfo.uid = 0
-        tarinfo.gid = 0
-        tarinfo.uname = 'gemini'
-        tarinfo.gname = 'gemini'
-        tarinfo.mtime = time.time()
-        tarinfo.mode = 0644
-        # - and add it to the tar file
-        buffer = cStringIO.StringIO(readme)
-        tar.addfile(tarinfo, buffer)
-        buffer.close()
+    # And add the README.TXT file
+    readme = readme_body.format(selection_url=selection_to_URL(selection),
+                                search_time=datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+                                username=username)
+    if associated_calibrations:
+        readme += readme_associated
+    if denied:
+        readme += readme_denied.format(denied = '\n'.join(denied))
+    # - create a tarinfo object
+    tarinfo = tarfile.TarInfo('README.txt')
+    tarinfo.size = len(readme)
+    tarinfo.uid = 0
+    tarinfo.gid = 0
+    tarinfo.uname = 'gemini'
+    tarinfo.gname = 'gemini'
+    tarinfo.mtime = time.time()
+    tarinfo.mode = 0644
+    # - and add it to the tar file
+    buffer = cStringIO.StringIO(readme)
+    tar.addfile(tarinfo, buffer)
+    buffer.close()
 
-        # All done
-        tar.close()
-        req.flush()
-        downloadlog.download_completed = datetime.datetime.utcnow()
+    # All done
+    tar.close()
+    req.flush()
+    downloadlog.download_completed = datetime.datetime.utcnow()
 
     return apache.HTTP_OK
 
@@ -302,61 +304,93 @@ def fileserver(req, things):
     if not things:
         return apache.HTTP_NOT_FOUND
 
+    ctx = Context()
+
     filenamegiven = things.pop(0)
     filename = gemini_fitsfilename(filenamegiven)
     if not filename:
         filename = filenamegiven
 
-    with session_scope(no_rollback=True) as session:
-        # Instantiate the download log
-        downloadlog = DownloadLog(Context().usagelog)
-        session.add(downloadlog)
-        downloadlog.query_started = datetime.datetime.utcnow()
+    session = ctx.session
 
+    # Instantiate the download log
+    downloadlog = DownloadLog(ctx.usagelog)
+    session.add(downloadlog)
+    downloadlog.query_started = datetime.datetime.utcnow()
+
+    try:
+        file = session.query(File).filter(File.name == filename).one()
+    except NoResultFound:
+        downloadlog.add_note("Not found in File table")
+        return apache.HTTP_NOT_FOUND
+    # OK, we should have the file record now.
+    # Next, find the canonical diskfile for it
+    diskfile = (
+        session.query(DiskFile)
+                .filter(DiskFile.present == True)
+                .filter(DiskFile.file_id == file.id)
+                .one()
+        )
+
+    item = None
+    # And now find the header record...
+    for is_file_type in supported_tests:
         try:
-            file = session.query(File).filter(File.name == filename).one()
+            item, content_type = is_file_type(session, diskfile)
+            break
         except NoResultFound:
-            downloadlog.add_note("Not found in File table")
-            return apache.HTTP_NOT_FOUND
-        # OK, we should have the file record now.
-        # Next, find the canonical diskfile for it
-        diskfile = (
-            session.query(DiskFile)
-                    .filter(DiskFile.present == True)
-                    .filter(DiskFile.file_id == file.id)
-                    .one()
-            )
+            # Not the kind of the object we were looking for
+            pass
+        except MultipleResultsFound as e:
+            downloadlog.add_note(str(e))
+            break
 
-        item = None
-        # And now find the header record...
-        for is_file_type in supported_tests:
-            try:
-                item, content_type = is_file_type(session, diskfile)
-                break
-            except NoResultFound:
-                # Not the kind of the object we were looking for
-                pass
-            except MultipleResultsFound as e:
-                downloadlog.add_note(str(e))
-                break
-
-        downloadlog.query_completed = datetime.datetime.utcnow()
-        downloadlog.numresults = 1
-        if item is None:
-            downloadlog.numresults = 0
+    downloadlog.query_completed = datetime.datetime.utcnow()
+    downloadlog.numresults = 1
+    if item is None:
+        downloadlog.numresults = 0
+    else:
+        # Is the client allowed to get this file?
+        if icanhave(session, req, item):
+            # Send them the data
+            downloadlog.sending_files = True
+            sendonefile(req, item.diskfile, content_type=content_type)
+            downloadlog.download_completed = datetime.datetime.utcnow()
         else:
-            # Is the client allowed to get this file?
-            if icanhave(session, req, item):
-                # Send them the data
-                downloadlog.sending_files = True
-                sendonefile(req, item.diskfile, content_type=content_type)
-                downloadlog.download_completed = datetime.datetime.utcnow()
-            else:
-                # Refuse to send data
-                downloadlog.numdenied = 1
-                raise AccessForbidden("Not enough privileges to download this content", DEFAULT_403_TEMPLATE)
+            # Refuse to send data
+            downloadlog.numdenied = 1
+            raise AccessForbidden("Not enough privileges to download this content", DEFAULT_403_TEMPLATE)
 
-        return apache.HTTP_OK
+    return apache.HTTP_OK
+
+CHUNKSIZE = 8192*64
+
+class BZ2OnTheFlyDecompressor(object):
+    def __init__(self, buff):
+        self.buff = buff
+        self.decomp = bz2.BZ2Decompressor()
+        self.unused_bytes = ''
+
+    def _buffer(self, limit):
+        while len(self.unused_bytes) < limit:
+            chunk = self.buff.read(CHUNKSIZE)
+            if not chunk:
+                break
+            decomp = self.decomp.decompress(chunk)
+            if decomp:
+                self.unused_bytes += decomp
+
+    def read(self, k):
+        if len(self.unused_bytes) < k:
+            self._buffer(k)
+
+        if not self.unused_bytes:
+            return None
+
+        ret = self.unused_bytes[:k]
+        self.unused_bytes = self.unused_bytes[k:]
+
+        return ret
 
 def sendonefile(req, diskfile, content_type=None):
     """
@@ -365,33 +399,30 @@ def sendonefile(req, diskfile, content_type=None):
     """
 
     ctx = Context()
+    resp = ctx.resp
 
     # Send them the data
     if content_type is not None:
-        ctx.resp.content_type = content_type
+        resp.content_type = content_type
 
     if content_type == 'application/fits':
-        req.headers_out['Content-Disposition'] = 'attachment; filename="%s"' % str(diskfile.file.name)
+        resp.set_header('Content-Disposition', 'attachment; filename="%s"' % str(diskfile.file.name))
+
 
     if using_s3:
         # S3 file server
         fname = diskfile.filename
-        req.set_content_length(diskfile.data_size)
+        resp.content_length = diskfile.data_size
         with s3.fetch_temporary(fname) as buffer:
-            data = buffer.read()
             if diskfile.compressed:
-                req.write(bz2.decompress(data))
+                resp.sendfile_obj(BZ2OnTheFlyDecompressor(buffer))
             else:
-                req.write(data)
+                resp.sendfile_obj(buffer)
     else:
         # Serve from regular file
         if diskfile.compressed == True:
             # Unzip it on the fly
-            req.set_content_length(diskfile.data_size)
-            zfp = bz2.BZ2File(diskfile.fullpath(), 'r')
-            try:
-                req.write(zfp.read())
-            finally:
-                zfp.close()
+            resp.content_length = diskfile.data_size
+            resp.sendfile_obj(BZ2OnTheFlyDecompressor(open(diskfile.fullpath(), 'r')))
         else:
-            req.sendfile(diskfile.fullpath())
+            resp.sendfile(diskfile.fullpath())

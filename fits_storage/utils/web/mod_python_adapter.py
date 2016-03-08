@@ -36,6 +36,8 @@ class Request(adapter.Request):
     def log(self, *args, **kw):
         return self._req.log_error(*args, **kw)
 
+BUFFSIZE = 262144
+
 class Response(adapter.Response):
     def __init__(self, session, req):
         super(Response, self).__init__(session)
@@ -66,3 +68,10 @@ class Response(adapter.Response):
 
     def sendfile(self, path):
         self._req.sendfile(path)
+
+    def sendfile_obj(self, fp):
+        while True:
+            n = fp.read(BUFFSIZE)
+            if not n:
+                break
+            self._req.write(n)

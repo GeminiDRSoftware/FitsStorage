@@ -22,8 +22,8 @@ def report(req, thing):
 
 #    if not (fnthing or match):
 #        # OK, they must have fed us garbage
-#        req.content_type = "text/plain"
-#        req.write("Could not understand argument - You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
+#        resp.content_type = "text/plain"
+#        resp.append("Could not understand argument - You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
 #
 #        return apache.HTTP_OK
 

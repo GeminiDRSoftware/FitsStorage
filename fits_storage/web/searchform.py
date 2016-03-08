@@ -15,6 +15,8 @@ from . import templating
 from ..fits_storage_config import fits_aux_datadir
 from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
 
+from ..utils.web import Context
+
 import os
 import urllib
 
@@ -286,7 +288,7 @@ def nameresolver(req, things):
     url = urls[resolver] + target
 
     urlfd = urllib.urlopen(url)
-    req.write(urlfd.read())
+    Context().resp.append(urlfd.read())
     urlfd.close()
 
     return apache.HTTP_OK

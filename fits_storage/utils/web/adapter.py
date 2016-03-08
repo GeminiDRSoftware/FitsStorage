@@ -131,6 +131,10 @@ class Response(object):
         self.set_content_type(content_type)
     content_type = property(fset=content_type_setter)
 
+    def content_length_setter(self, content_length):
+        self.set_header('Content-Length', str(content_length))
+    content_length = property(fset=content_length_setter)
+
     def set_header(self, name, value):
         raise NotImplementedError("set_header must be implemented by derived classes")
 
@@ -145,3 +149,6 @@ class Response(object):
 
     def sendfile(self, path):
         raise NotImplementedError("sendfile must be implemented by derived classes")
+
+    def sendfile_obj(self, fp):
+        raise NotImplementedError("sendfile_obj must be implemented by derived classes")

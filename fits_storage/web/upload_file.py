@@ -12,7 +12,6 @@ from ..apache_return_codes import HTTP_SERVICE_UNAVAILABLE
 from ..utils.api import ApiProxy, ApiProxyError
 from ..utils.web import Context
 
-from ..orm import session_scope
 from ..orm.fileuploadlog import FileUploadLog
 
 from .user import needs_login
@@ -31,58 +30,59 @@ def upload_file(req, filename, processed_cal=False):
     Log Entries are inserted into the FileUploadLog table
     """
 
-    with session_scope() as session:
-        fileuploadlog = FileUploadLog(Context().usagelog)
-        fileuploadlog.filename = filename
-        fileuploadlog.processed_cal = processed_cal
-        session.add(fileuploadlog)
-        session.commit()
+    ctx = Context()
 
-        if req.method != 'POST':
-            fileuploadlog.add_note("Aborted - not HTTP POST")
-            return HTTP_NOT_ACCEPTABLE
+    session = ctx.session
 
-        # It's a bit brute force to read all the data in one chunk,
-        # but that's fine, files are never more than a few hundred MB...
-        fileuploadlog.ut_transfer_start = datetime.datetime.utcnow()
-        clientdata = Context().req.raw_data
+    fileuploadlog = FileUploadLog(ctx.usagelog)
+    fileuploadlog.filename = filename
+    fileuploadlog.processed_cal = processed_cal
+    session.add(fileuploadlog)
+    session.commit()
 
-        fileuploadlog.ut_transfer_complete = datetime.datetime.utcnow()
-        fullfilename = os.path.join(upload_staging_path, filename)
+    if req.method != 'POST':
+        fileuploadlog.add_note("Aborted - not HTTP POST")
+        return HTTP_NOT_ACCEPTABLE
 
-        with open(fullfilename, 'w') as f:
-            f.write(clientdata)
+    # It's a bit brute force to read all the data in one chunk,
+    # but that's fine, files are never more than a few hundred MB...
+    fileuploadlog.ut_transfer_start = datetime.datetime.utcnow()
+    clientdata = ctx.req.raw_data
 
-        # compute the md5  and size while we still have the buffer in memory
-        m = hashlib.md5()
-        m.update(clientdata)
-        md5 = m.hexdigest()
-        size = len(clientdata)
-        fileuploadlog.size = size
-        fileuploadlog.md5 = md5
+    fileuploadlog.ut_transfer_complete = datetime.datetime.utcnow()
+    fullfilename = os.path.join(upload_staging_path, filename)
 
-        # Free up memory
-        clientdata = None
+    with open(fullfilename, 'w') as f:
+        f.write(clientdata)
 
-        # Construct the verification dictionary and json encode it
-        verification = {'filename': filename, 'size': size, 'md5': md5}
-        verif_json = json.dumps([verification])
+    # compute the md5  and size while we still have the buffer in memory
+    m = hashlib.md5()
+    m.update(clientdata)
+    md5 = m.hexdigest()
+    size = len(clientdata)
+    fileuploadlog.size = size
+    fileuploadlog.md5 = md5
 
-        # And write that back to the client
-        req.write(verif_json)
+    # Free up memory
+    clientdata = None
 
-        # Now invoke the backend to ingest the file
-        proxy = ApiProxy(api_backend_location)
-        try:
-            result = proxy.ingest_upload(filename=filename,
-                                         processed_cal=bool(processed_cal),
-                                         fileuploadlog_id = fileuploadlog.id)
-        except ApiProxyError:
-            # TODO: Actually log this and tell someone about it...
-            # response.append(error_response("An internal error ocurred and your query could not be performed. It has been logged"))
-            return HTTP_SERVICE_UNAVAILABLE
+    # Construct the verification dictionary and json encode it
+    verification = {'filename': filename, 'size': size, 'md5': md5}
+    # And write that back to the client
+    ctx.resp.append_json([verification])
 
-        return HTTP_OK
+    # Now invoke the backend to ingest the file
+    proxy = ApiProxy(api_backend_location)
+    try:
+        result = proxy.ingest_upload(filename=filename,
+                                     processed_cal=bool(processed_cal),
+                                     fileuploadlog_id = fileuploadlog.id)
+    except ApiProxyError:
+        # TODO: Actually log this and tell someone about it...
+        # response.append(error_response("An internal error ocurred and your query could not be performed. It has been logged"))
+        return HTTP_SERVICE_UNAVAILABLE
+
+    return HTTP_OK
 
 #        # Now invoke the setuid ingest program
 #        command = ["/opt/FitsStorage/fits_storage/scripts/invoke",
