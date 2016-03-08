@@ -1,7 +1,8 @@
 from . import adapter
 from ...fits_storage_config import upload_staging_path
 from ...orm import session_scope
-from wsgiref.simple_server import ServerHandler, WSGIRequestHandler
+from wsgiref.handlers import SimpleHandler
+from wsgiref.simple_server import WSGIRequestHandler
 from wsgiref import util as wutil
 
 import Cookie
@@ -189,7 +190,7 @@ class Response(adapter.Response):
 
 from ...orm.usagelog import UsageLog
 
-class ArchiveHandler(ServerHandler):
+class ArchiveHandler(SimpleHandler):
     def run(self, application):
         """Invoke the application"""
         self.status = '500 Internal Error'
@@ -230,6 +231,15 @@ class ArchiveHandler(ServerHandler):
                 raise # And let the actual server figure out...
         finally:
             ctx.invalidate()
+
+    def close(self):
+        """Copied from wsgiref.simple_server.ServerHandler"""
+        try:
+            self.request_handler.log_request(
+                self.status.split(' ',1)[0], self.bytes_sent
+            )
+        finally:
+            SimpleHandler.close(self)
 
 class ArchiveWSGIRequestHandler(WSGIRequestHandler):
     def handle(self):
