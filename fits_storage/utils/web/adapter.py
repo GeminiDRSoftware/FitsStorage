@@ -1,4 +1,15 @@
 from thread import get_ident
+from functools import wraps
+
+def context_wrapped(fn):
+    @wraps(fn)
+    def wrapper(*args, **kw):
+        ctx = Context()
+        try:
+            return fn(ctx, *args, **kw)
+        finally:
+            ctx.invalidate()
+    return wrapper
 
 class Context(object):
     __threads = {}
