@@ -152,14 +152,14 @@ url_map = Map([
     Rule('/debug', debugmessage),
     Rule('/content', content),                                      # Database Statistics
     Rule('/stats', stats),
-    Rule('/qareport', qareport),                                    # Submit QA metric measurement report
+    Rule('/qareport', qareport, methods=['POST']),                  # Submit QA metric measurement report
     Rule('/usagereport', usagereport),                              # Usage Statistics and Reports
     Rule('/usagestats', usagestats),                                # Usage Stats
     Rule('/xmltape', xmltape),                                      # XML Tape handler
     Rule('/taperead', taperead),                                    # TapeRead handler
     Rule('/notification', notification),                            # Emailnotification handler
     Rule('/import_odb_notifications', import_odb_notifications,     # Notification update from odb handler
-         methods='POST'),
+         methods=['POST']),
     Rule('/request_password_reset', request_password_reset),        # request password reset email
     Rule('/logout', logout),                                        # logout
     Rule('/user_list', user_list),                                  # user_list
@@ -201,7 +201,8 @@ url_map = Map([
          methods=['POST']),
 
     Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
-    Rule('/upload_file/<filename>', upload_file),                   # The generic upload_file server
+    Rule('/upload_file/<filename>', upload_file,                    # The generic upload_file server
+         methods=['POST']),
     Rule('/upload_processed_cal/<filename>',                        # The processed_cal upload server
          partial(upload_file, processed_cal=True)),
 

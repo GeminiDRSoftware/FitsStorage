@@ -141,9 +141,6 @@ def usagedetails(ulid):
     This is the usage report detail handler, based on the numeric usagelog ID
     """
 
-#    except (ValueError, IndexError):
-#        raise templating.SkipTemplateError(Return.HTTP_NOT_ACCEPTABLE)
-
     session = get_context().session
 
     # Subquery to add a "row count" to the QueryLog and the DownloadLog. This is an easy way to pick just

@@ -270,13 +270,6 @@ def nameresolver(things, resolver, target):
     A name resolver proxy. Pass it the resolver and object name
     """
 
-#    if len(things) != 2:
-#        get_context().resp.status = Return.HTTP_NOT_ACCEPTABLE
-#        return
-
-#    resolver = things[0]
-#    target = things[1]
-
     urls = {
         'simbad': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/S?',
         'ned': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/N?',

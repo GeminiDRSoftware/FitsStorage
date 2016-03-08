@@ -100,10 +100,6 @@ def string_to_date(string):
 def validate():
     ctx = get_context()
 
-#    if ctx.env.method != 'POST':
-#        ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
-#        return
-
     raw_data = ctx.raw_data
 
     try:

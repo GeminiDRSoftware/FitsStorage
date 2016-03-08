@@ -27,22 +27,19 @@ def qareport():
 
     ctx = get_context()
 
-    if ctx.env.method == 'POST':
-        clientdata = ctx.raw_data
-        ctx.log("QAreport clientdata: %s" % clientdata)
+    clientdata = ctx.raw_data
+    ctx.log("QAreport clientdata: %s" % clientdata)
 
-        # We make here some reasonable assumptions about the input format
-        if clientdata.startswith('['):
-            thelist = parse_json(clientdata)
-        else:
-            ctx.resp.status = Return.HTTP_BAD_REQUEST
-            return
-
-        ctx.log("thelist: %s" % thelist)
-
-        qareport_ingest(thelist, submit_host=ctx.env.remote_host, submit_time=datetime.datetime.now())
+    # We make here some reasonable assumptions about the input format
+    if clientdata.startswith('['):
+        thelist = parse_json(clientdata)
     else:
-        ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
+        ctx.resp.status = Return.HTTP_BAD_REQUEST
+        return
+
+    ctx.log("thelist: %s" % thelist)
+
+    qareport_ingest(thelist, submit_host=ctx.env.remote_host, submit_time=datetime.datetime.now())
 
 def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now()):
     """
@@ -117,10 +114,6 @@ def qaforgui(date):
     # Default 3 days worth for the gui, to stop the return getting huge over time
     window = datetime.timedelta(days=3)
     enddatestamp = datestamp+window
-#    except (IndexError, ValueError):
-#        resp.status = Return.HTTP_NOT_ACCEPTABLE
-#        resp.append("Error: no datestamp given")
-#        return
 
     session = ctx.session
     resp.content_type = "application/json"

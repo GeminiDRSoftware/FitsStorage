@@ -79,11 +79,6 @@ def import_odb_notifications():
 
     ctx = get_context()
 
-    # Only accept http posts
-    if ctx.env.method != 'POST':
-        ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
-        return
-
     # OK, get the payload from the POST data
     xml = ctx.raw_data
 

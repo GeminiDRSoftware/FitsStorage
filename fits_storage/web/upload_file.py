@@ -37,10 +37,10 @@ def upload_file(filename, processed_cal=False):
     session.add(fileuploadlog)
     session.commit()
 
-    if ctx.env.method != 'POST':
-        fileuploadlog.add_note("Aborted - not HTTP POST")
-        ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
-        return
+#    if ctx.env.method != 'POST':
+#        fileuploadlog.add_note("Aborted - not HTTP POST")
+#        ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
+#        return
 
     # It's a bit brute force to read all the data in one chunk,
     # but that's fine, files are never more than a few hundred MB...
