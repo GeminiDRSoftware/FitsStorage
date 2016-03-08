@@ -1,5 +1,3 @@
-from ..orm import session_scope
-
 from ..fits_storage_config import using_s3, storage_root, preview_path
 
 from ..gemini_metadata_utils import gemini_fitsfilename
@@ -45,34 +43,35 @@ def preview(filenamegiven):
     if not filename:
         filename = filenamegiven
 
-    with session_scope() as session:
-        try:
-            # Find the information associated with the canonical diskfile and header for the file on the query
-            preview, header = (
-                session.query(Preview, Header).join(DiskFile).join(Header).join(File)
-                        .filter(DiskFile.present == True)
-                        .filter(File.name == filename)
-                        .first()
-                )
-        except TypeError: # Will happen if .first() returns None
-            ctx.resp.status = Return.HTTP_NOT_FOUND
-            return
+    session = ctx.session
 
-        downloadlog = DownloadLog(ctx.usagelog)
-        session.add(downloadlog)
-        downloadlog.query_started = datetime.datetime.utcnow()
+    try:
+        # Find the information associated with the canonical diskfile and header for the file on the query
+        preview, header = (
+            session.query(Preview, Header).join(DiskFile).join(Header).join(File)
+                    .filter(DiskFile.present == True)
+                    .filter(File.name == filename)
+                    .first()
+            )
+    except TypeError: # Will happen if .first() returns None
+        ctx.resp.status = Return.HTTP_NOT_FOUND
+        return
 
-        try:
-            # Is the client allowed to get this file?
-            if icanhave(ctx, header):
-                # Send them the data if we can
-                sendpreview(preview)
-            else:
-                # Refuse to send data
-                downloadlog.numdenied = 1
-                raise AccessForbidden("You don't have access to the requested data")
-        finally:
-            downloadlog.query_completed = datetime.datetime.utcnow()
+    downloadlog = DownloadLog(ctx.usagelog)
+    session.add(downloadlog)
+    downloadlog.query_started = datetime.datetime.utcnow()
+
+    try:
+        # Is the client allowed to get this file?
+        if icanhave(ctx, header):
+            # Send them the data if we can
+            sendpreview(preview)
+        else:
+            # Refuse to send data
+            downloadlog.numdenied = 1
+            raise AccessForbidden("You don't have access to the requested data")
+    finally:
+        downloadlog.query_completed = datetime.datetime.utcnow()
 
 @with_content_type('image/jpeg')
 def sendpreview(preview):

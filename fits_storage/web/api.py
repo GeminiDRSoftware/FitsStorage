@@ -164,46 +164,44 @@ def map_changes(changes):
 def update_headers():
     ctx = Context()
 
-    with session_scope() as session:
-        iq = IngestQueueUtil(session, DummyLogger())
-        proxy = ApiProxy(api_backend_location)
-        try:
-            data = get_json_data()
-            response = []
-            reingest = False
-            for query in data:
-                label = None
-                try:
-                    label, df = lookup_diskfile(session, query)
-                    filename = df.filename
-                    if not isinstance(query['values'], dict):
-                        response.append(error_response("This looks like a malformed request: 'values' should be a dictionary", id=label))
-                        continue
-                    new_values = map_changes(query['values'])
-                    reject_new = query.get('reject_new', False)
-                    path = df.fullpath()
-                    reingest = iq.delete_inactive_from_queue(filename)
-                    # reingest = apply_changes(df, query['values']) or reingest
-                    reingest = proxy.set_image_metadata(path=path, changes=new_values, reject_new=reject_new)
-                    response.append({'result': True, 'id': label})
-                except ItemError as e:
-                    response.append(error_response(e.message, id=e.label))
-                except KeyError as e:
-                    response.append(error_response("This looks like a malformed request: 'values' does not exist", id=label))
-                except IngestError as e:
-                    response.append(error_response(e.message, id=label))
-                except ApiProxyError as e:
-                    req.log_error(str(e))
-                    response.append(error_response("An internal error occurred and your query could not be performed. It has been logged"))
-                except NewCardsIncluded:
-                    response.append(error_response("Some of the keywords don't exist in the file", id=label))
-                finally:
-                    if reingest:
-                       iq.add_to_queue(filename, os.path.dirname(path))
-        except RequestError as e:
-            response = error_response(e.message)
-        except TypeError:
-            response = error_response("This looks like a malformed request. Expected a list of queries. Instead I got {}".format(type(data)))
+    session = ctx.session
+
+    iq = IngestQueueUtil(session, DummyLogger())
+    proxy = ApiProxy(api_backend_location)
+    try:
+        data = get_json_data()
+        response = []
+        reingest = False
+        for query in data:
+            label = None
+            try:
+                label, df = lookup_diskfile(session, query)
+                filename = df.filename
+                if not isinstance(query['values'], dict):
+                    response.append(error_response("This looks like a malformed request: 'values' should be a dictionary", id=label))
+                    continue
+                new_values = map_changes(query['values'])
+                path = df.fullpath()
+                reingest = iq.delete_inactive_from_queue(filename)
+                # reingest = apply_changes(df, query['values']) or reingest
+                reingest = proxy.set_image_metadata(path=path, changes=new_values)
+                response.append({'result': True, 'id': label})
+            except ItemError as e:
+                response.append(error_response(e.message, id=e.label))
+            except KeyError as e:
+                response.append(error_response("This looks like a malformed request: 'values' does not exist", id=label))
+            except IngestError as e:
+                response.append(error_response(e.message, id=label))
+            except ApiProxyError:
+                # TODO: Actually log this and tell someone about it...
+                response.append(error_response("An internal error occurred and your query could not be performed. It has been logged"))
+            finally:
+                if reingest:
+                   iq.add_to_queue(filename, os.path.dirname(path))
+    except RequestError as e:
+        response = error_response(e.message)
+    except TypeError:
+        response = error_response("This looks like a malformed request. Expected a list of queries. Instead I got {}".format(type(data)))
 
     resp = ctx.resp
     resp.content_type = 'application/json'
@@ -234,12 +232,11 @@ def ingest_files():
 
     logger = EmptyLogger()
 
-    with session_scope() as session:
-        iq = IngestQueueUtil(session, logger)
-        for i, entry in enumerate(iglob(pattern + '*'), 1):
-            filename = os.path.basename(entry)
-            iq.add_to_queue(filename, path, force=force, force_md5=force_md5)
-            added.append(filename)
+    iq = IngestQueueUtil(ctx.session, logger)
+    for i, entry in enumerate(iglob(pattern + '*'), 1):
+        filename = os.path.basename(entry)
+        iq.add_to_queue(filename, path, force=force, force_md5=force_md5)
+        added.append(filename)
 
     if not added:
         resp.append_json(error_response('Could not find any file with prefix: {}*'.format(file_pre)))

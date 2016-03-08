@@ -4,7 +4,6 @@ import re
 
 from ..gemini_metadata_utils import gemini_fitsfilename
 
-from ..orm import session_scope
 from ..orm.file import File
 from ..orm.diskfile import DiskFile
 from ..orm.diskfilereport import DiskFileReport
@@ -17,6 +16,7 @@ from ..utils.web import Context
 def report(thing):
     ctx = Context()
     resp = ctx.resp
+    session = ctx.session
 
     if thing is None:
         # OK, they must have fed us garbage
@@ -27,52 +27,51 @@ def report(thing):
 
     this = ctx.usagelog.this
 
-    with session_scope() as session:
-        if thing.isdigit():
-            # We got a diskfile_id
-            query = session.query(DiskFile).filter(DiskFile.id == thing)
-            if query.count() == 0:
-                resp.content_type = "text/plain"
-                resp.append("Cannot find diskfile for id: %s\n" % thing)
-                return
-        # Now construct the query
+    if thing.isdigit():
+        # We got a diskfile_id
+        query = session.query(DiskFile).filter(DiskFile.id == thing)
+        if query.count() == 0:
+            resp.content_type = "text/plain"
+            resp.append("Cannot find diskfile for id: %s\n" % thing)
+            return
+    # Now construct the query
+    else:
+        fnthing = gemini_fitsfilename(thing)
+        # We got a filename
+        if fnthing:
+            error_message = "Cannot find file for: %s\n" % fnthing
+            query = session.query(File).filter(File.name == fnthing)
         else:
-            fnthing = gemini_fitsfilename(thing)
-            # We got a filename
-            if fnthing:
-                error_message = "Cannot find file for: %s\n" % fnthing
-                query = session.query(File).filter(File.name == fnthing)
-            else:
-                error_message = "Cannot find (non-standard named) file for: %s\n" % thing
-                query = session.query(File).filter(File.name == thing)
+            error_message = "Cannot find (non-standard named) file for: %s\n" % thing
+            query = session.query(File).filter(File.name == thing)
 
-            if query.count() == 0:
-                resp.content_type = "text/plain"
-                resp.append(error_message)
-                return
-            file = query.one()
-            # Query diskfiles to find the diskfile for file that is canonical
-            query = session.query(DiskFile).filter(DiskFile.canonical == True).filter(DiskFile.file_id == file.id)
+        if query.count() == 0:
+            resp.content_type = "text/plain"
+            resp.append(error_message)
+            return
+        file = query.one()
+        # Query diskfiles to find the diskfile for file that is canonical
+        query = session.query(DiskFile).filter(DiskFile.canonical == True).filter(DiskFile.file_id == file.id)
 
-        diskfile = query.one()
-        # Find the diskfilereport
-        query = session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == diskfile.id)
-        diskfilereport = query.one()
-        resp.content_type = "text/plain"
-        if this == 'fitsverify':
-            resp.append(diskfilereport.fvreport)
-        if this == 'mdreport':
-            try:
-                resp.append(diskfilereport.mdreport)
-            except TypeError:
-                resp.append('No report was generated\n')
-        if this == 'fullheader':
-            # Need to find the header associated with this diskfile
-            query = (session.query(Header, FullTextHeader)
-                        .filter(FullTextHeader.diskfile_id == diskfile.id)
-                        .filter(Header.diskfile_id == diskfile.id))
-            header, ftheader = query.one()
-            if canhave_coords(session, ctx.user, header):
-                resp.append(ftheader.fulltext)
-            else:
-                resp.append("The data you're trying to access has proprietary rights and cannot be displayed")
+    diskfile = query.one()
+    # Find the diskfilereport
+    query = session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == diskfile.id)
+    diskfilereport = query.one()
+    resp.content_type = "text/plain"
+    if this == 'fitsverify':
+        resp.append(diskfilereport.fvreport)
+    elif this == 'mdreport':
+        try:
+            resp.append(diskfilereport.mdreport)
+        except TypeError:
+            resp.append('No report was generated\n')
+    elif this == 'fullheader':
+        # Need to find the header associated with this diskfile
+        query = (session.query(Header, FullTextHeader)
+                    .filter(FullTextHeader.diskfile_id == diskfile.id)
+                    .filter(Header.diskfile_id == diskfile.id))
+        header, ftheader = query.one()
+        if canhave_coords(session, ctx.user, header):
+            resp.append(ftheader.fulltext)
+        else:
+            resp.append("The data you're trying to access has proprietary rights and cannot be displayed")

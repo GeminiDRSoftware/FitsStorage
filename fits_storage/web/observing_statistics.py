@@ -2,7 +2,6 @@
 This module generates the Observing Statistics - ie "Open Shutter" Statistic reports for Inger
 """
 
-from ..orm import session_scope
 from .summary import list_headers
 from ..gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
 
@@ -22,66 +21,66 @@ def observing_statistics(selection):
     ctx = Context()
     resp = ctx.resp
 
-    # Get a database session.
-    with session_scope() as session:
-        lst = []
-        if 'date' in selection.keys():
-            lst.append(calculate_observing_statistics(ctx, selection, debug=False))
+    session = ctx.session
 
-        # Parse daterange, kludge selection
-        if 'daterange' in selection.keys():
-            date, enddate = gemini_time_period_from_range(selection.pop('daterange'))
-        # Loop over ut nights, calling
-            copysel = dict(selection)
-            while (date < enddate):
-                copysel['date'] = date.strftime("%Y%m%d")
-                lst.append(calculate_observing_statistics(ctx, copysel, debug=False))
-                date += ONEDAY_OFFSET
+    lst = []
+    if 'date' in selection.keys():
+        lst.append(calculate_observing_statistics(ctx, selection, debug=False))
 
-        # First get a list of instruments so that we can unroll the inst dicts
-        insts = set()
-        for l in lst:
-            for i in l['T_open_instdict']:
-                insts.add(i)
-        insts = sorted(insts)
+    # Parse daterange, kludge selection
+    if 'daterange' in selection.keys():
+        date, enddate = gemini_time_period_from_range(selection.pop('daterange'))
+    # Loop over ut nights, calling
+        copysel = dict(selection)
+        while (date < enddate):
+            copysel['date'] = date.strftime("%Y%m%d")
+            lst.append(calculate_observing_statistics(ctx, copysel, debug=False))
+            date += ONEDAY_OFFSET
 
-        # the column headings
-        cols = ['UTdate', 'T_night', 'T_science', 'T_eng', 'T_fr', 'T_weather',
-                'Observer', 'Operator', 'N_inst', 'Q', 'T_open', 'E_open',
-                'T_science_instdict', 'T_open_instdict', 'E_open_instdict',
-                'T_open_lgs', 'T_all', 'T_all_instdict', 'T_all_conddict']
+    # First get a list of instruments so that we can unroll the inst dicts
+    insts = set()
+    for l in lst:
+        for i in l['T_open_instdict']:
+            insts.add(i)
+    insts = sorted(insts)
 
-        # Print the header line, unrolling inst and cond
-        resp.append('# ')
+    # the column headings
+    cols = ['UTdate', 'T_night', 'T_science', 'T_eng', 'T_fr', 'T_weather',
+            'Observer', 'Operator', 'N_inst', 'Q', 'T_open', 'E_open',
+            'T_science_instdict', 'T_open_instdict', 'E_open_instdict',
+            'T_open_lgs', 'T_all', 'T_all_instdict', 'T_all_conddict']
+
+    # Print the header line, unrolling inst and cond
+    resp.append('# ')
+    for c in cols:
+
+        # Is it an instdict?
+        if c.find("instdict") > 0:
+            resp.append_iterable(c.replace('instdict', i) + ', ' for i in insts)
+
+        # Is it a conddict?
+        elif c.find("conddict") > 0:
+            resp.append_iterable(c.replace('conddict', 'cond%d' % i) + ', ' for i in range(7))
+
+        # OK, it's just normal, print it
+        else:
+            resp.append(c + ', ')
+    resp.append('\n')
+
+
+    # OK, now spool it out the list of dicts, untolling inst and cond as we go
+    for l in lst:
         for c in cols:
 
             # Is it an instdict?
             if c.find("instdict") > 0:
-                resp.append_iterable(c.replace('instdict', i) + ', ' for i in insts)
+                for i in insts:
+                    resp.append_iterable(l[c][i] for i in l[c].keys())
+                    resp.append(', ')
 
-            # Is it a conddict?
+            # Is it an conddict?
             elif c.find("conddict") > 0:
-                resp.append_iterable(c.replace('conddict', 'cond%d' % i) + ', ' for i in range(7))
-
-            # OK, it's just normal, print it
-            else:
-                resp.append(c + ', ')
-        resp.append('\n')
-
-
-        # OK, now spool it out the list of dicts, untolling inst and cond as we go
-        for l in lst:
-            for c in cols:
-
-                # Is it an instdict?
-                if c.find("instdict") > 0:
-                    for i in insts:
-                        resp.append_iterable(l[c][i] for i in l[c].keys())
-                        resp.append(', ')
-
-                # Is it an conddict?
-                elif c.find("conddict") > 0:
-                    resp.append(l[c][i] + ', ' for i in range(7))
+                resp.append(l[c][i] + ', ' for i in range(7))
 
                 # It's a single value
                 else:
