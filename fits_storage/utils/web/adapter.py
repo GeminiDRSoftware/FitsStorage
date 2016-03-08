@@ -19,6 +19,7 @@ class ReturnMetaClass(type):
         'HTTP_NOT_IMPLEMENTED': 501,
         'HTTP_SERVICE_UNAVAILABLE': 503,
         'HTTP_BAD_REQUEST': 400,
+        'HTTP_INTERNAL_SERVER_ERROR': 500,
     }
 
     def __getattr__(cls, key):

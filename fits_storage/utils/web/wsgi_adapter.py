@@ -120,24 +120,26 @@ class Request(adapter.Request):
 BUFFSIZE = 262144
 
 status_message = {
-    Return.HTTP_OK:                  'OK',
-    Return.HTTP_MOVED_PERMANENTLY:   'Moved Permanently',
-    Return.HTTP_FOUND:               'Found',
-    Return.HTTP_SEE_OTHER:           'See Other',
-    Return.HTTP_NOT_MODIFIED:        'Not Modified',
-    Return.HTTP_NOT_FOUND:           'Not Found',
-    Return.HTTP_FORBIDDEN:           'Access Forbidden for This Resource',
-    Return.HTTP_METHOD_NOT_ALLOWED:  'The Method Used to Access This Resource Is Not Allowed',
-    Return.HTTP_NOT_ACCEPTABLE:      'The Returned Content Is Not Acceptable for the Client',
-    Return.HTTP_NOT_IMPLEMENTED:     'Method Not Implemented',
-    Return.HTTP_SERVICE_UNAVAILABLE: 'The Service Is Currently Unavailable',
-    Return.HTTP_BAD_REQUEST:         'The Server Received a Bad Request -Probably Malformed JSON'
+    Return.HTTP_OK:                    'OK',
+    Return.HTTP_MOVED_PERMANENTLY:     'Moved Permanently',
+    Return.HTTP_FOUND:                 'Found',
+    Return.HTTP_SEE_OTHER:             'See Other',
+    Return.HTTP_NOT_MODIFIED:          'Not Modified',
+    Return.HTTP_NOT_FOUND:             'Not Found',
+    Return.HTTP_FORBIDDEN:             'Access Forbidden for This Resource',
+    Return.HTTP_METHOD_NOT_ALLOWED:    'The Method Used to Access This Resource Is Not Allowed',
+    Return.HTTP_NOT_ACCEPTABLE:        'The Returned Content Is Not Acceptable for the Client',
+    Return.HTTP_NOT_IMPLEMENTED:       'Method Not Implemented',
+    Return.HTTP_SERVICE_UNAVAILABLE:   'The Service Is Currently Unavailable',
+    Return.HTTP_BAD_REQUEST:           'The Server Received a Bad Request -Probably Malformed JSON',
+    Return.HTTP_INTERNAL_SERVER_ERROR: 'The Server has Found an Error Condition'
 }
 
 template_for_status = {
-    'text/html:' + str(Return.HTTP_NOT_FOUND):        'errors/not_found.html',
-    'text/html:' + str(Return.HTTP_FORBIDDEN):        'errors/forbidden.html',
-    'application/json:' + str(Return.HTTP_FORBIDDEN): 'errors/forbidden.json',
+    'text/html:' + str(Return.HTTP_NOT_FOUND):             'errors/not_found.html',
+    'text/html:' + str(Return.HTTP_FORBIDDEN):             'errors/forbidden.html',
+    'application/json:' + str(Return.HTTP_FORBIDDEN):      'errors/forbidden.json',
+    'text/html:' + str(Return.HTTP_INTERNAL_SERVER_ERROR): 'errors/internal_error.html',
 }
 
 redirect_template = """\

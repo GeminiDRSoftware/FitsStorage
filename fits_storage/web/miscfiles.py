@@ -222,6 +222,6 @@ def detail_miscfile(handle, formdata = {}):
 
         return ret
     except NoResultFound:
-        return dict(error = "Can't find the required content")
+        ctx.resp.client_error(Return.HTTP_NOT_FOUND, "Could not find the required content")
     except MultipleResultsFound:
-        return dict(error = "More than one file was found matching the provided name. This is an error!")
+        ctx.resp.client_error(Return.HTTP_INTERNAL_SERVER_ERROR, "More than one file was found matching the provided name. This is an error!")

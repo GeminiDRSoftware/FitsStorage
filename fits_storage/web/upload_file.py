@@ -3,6 +3,7 @@ import json
 import hashlib
 import subprocess
 import datetime
+import errno
 
 from ..fits_storage_config import upload_staging_path, upload_auth_cookie, api_backend_location
 
@@ -50,8 +51,14 @@ def upload_file(filename, processed_cal=False):
     fileuploadlog.ut_transfer_complete = datetime.datetime.utcnow()
     fullfilename = os.path.join(upload_staging_path, filename)
 
-    with open(fullfilename, 'w') as f:
-        f.write(clientdata)
+    try:
+        with open(fullfilename, 'w') as f:
+            f.write(clientdata)
+    except IOError as e:
+        if e.errno in (errno.EPERM, errno.EACCES):
+            ctx.resp.client_error(Return.HTTP_FORBIDDEN, "Could not store the file in the server due to lack of permissions")
+        elif e.errno == errno.ENOENT:
+            ctx.resp.client_error(Return.HTTP_NOT_FOUND, "Could not store the file. The staging directory seems to be missing")
 
     # compute the md5  and size while we still have the buffer in memory
     m = hashlib.md5()

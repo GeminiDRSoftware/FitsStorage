@@ -11,7 +11,7 @@ from ..orm.header import Header
 from ..orm.fulltextheader import FullTextHeader
 
 from ..utils.userprogram import canhave_coords
-from ..utils.web import get_context
+from ..utils.web import get_context, Return
 
 def report(thing):
     ctx = get_context()
@@ -46,9 +46,7 @@ def report(thing):
             query = session.query(File).filter(File.name == thing)
 
         if query.count() == 0:
-            resp.content_type = "text/plain"
-            resp.append(error_message)
-            return
+            resp.client_error(Return.HTTP_NOT_FOUND, error_message)
         file = query.one()
         # Query diskfiles to find the diskfile for file that is canonical
         query = session.query(DiskFile).filter(DiskFile.canonical == True).filter(DiskFile.file_id == file.id)
@@ -74,4 +72,4 @@ def report(thing):
         if canhave_coords(session, ctx.user, header):
             resp.append(ftheader.fulltext)
         else:
-            resp.append("The data you're trying to access has proprietary rights and cannot be displayed")
+            resp.client_error(Return.HTTP_FORBIDDEN, "The data you're trying to access has proprietary rights and cannot be displayed")
