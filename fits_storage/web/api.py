@@ -7,6 +7,7 @@ from ..utils.fitseditor import compare_cards, modify_multiple_cards
 from ..utils.ingestqueue import IngestQueueUtil, IngestError
 from ..utils.api import ApiProxy, ApiProxyError, NewCardsIncluded
 from ..utils.null_logger import EmptyLogger
+from ..utils.web import Context
 
 from .user import needs_login
 
@@ -47,7 +48,7 @@ def locked_file(path):
 
 def get_json_data(req):
     try:
-        return json.loads(req.read())
+        return Context().req.json
     except KeyError:
         raise RequestError("This looks like a malformed request. Cannot find the 'data' entry")
     except ValueError:
@@ -211,7 +212,7 @@ def update_headers(req):
 def ingest_files(req):
     req.content_type = 'application/json'
     try:
-        arguments = json.loads(req.read())
+        arguments = Context().req.json
         file_pre  = arguments['filepre']
         path      = arguments['path']
         force     = arguments['force']

@@ -105,7 +105,7 @@ def cals_info(cal_obj, caltype, qtype='UNKNOWN', log=no_func, add_note=no_func, 
 
 def generate_post_calmgr(session, req, selection, caltype):
     # OK, get the details from the POST data
-    clientdata = req.read()
+    clientdata = Context().req.raw_data
     clientstr = urllib.unquote_plus(clientdata)
 
     match = re.match("descriptors=(.*)&types=(.*)", clientstr)

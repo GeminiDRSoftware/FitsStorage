@@ -4,9 +4,12 @@ This module contains the notification html generator function, and odb import vi
 from ..orm import session_scope
 from ..orm.notification import Notification
 from ..fits_storage_config import use_as_archive, magic_download_cookie
-from .user import needs_login
+
 from ..utils.userprogram import got_magic
 from ..utils.notifications import ingest_odb_xml
+from ..utils.web import Context
+
+from .user import needs_login
 
 from . import templating
 
@@ -80,7 +83,7 @@ def import_odb_notifications(req):
         return apache.HTTP_NOT_ACCEPTABLE
 
     # OK, get the payload from the POST data
-    xml = req.read()
+    xml = context().req.raw_data
 
     with session_scope() as session:
         # Process it

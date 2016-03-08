@@ -48,7 +48,7 @@ def upload_file(req, filename, processed_cal=False):
         # It's a bit brute force to read all the data in one chunk,
         # but that's fine, files are never more than a few hundred MB...
         fileuploadlog.ut_transfer_start = datetime.datetime.utcnow()
-        clientdata = req.read()
+        clientdata = Context().req.raw_data
 
         fileuploadlog.ut_transfer_complete = datetime.datetime.utcnow()
         fullfilename = os.path.join(upload_staging_path, filename)

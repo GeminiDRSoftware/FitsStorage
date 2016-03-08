@@ -18,6 +18,8 @@ from ..orm.qastuff import evaluate_bg_from_metrics, evaluate_cc_from_metrics
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 
+from ..utils.web import Context
+
 from . import templating
 
 def qareport(req):
@@ -26,7 +28,7 @@ def qareport(req):
     """
 
     if req.method == 'POST':
-        clientdata = req.read()
+        clientdata = Context().req.raw_data
         req.log_error("QAreport clientdata: %s" % clientdata)
 
         # We make here some reasonable assumptions about the input format

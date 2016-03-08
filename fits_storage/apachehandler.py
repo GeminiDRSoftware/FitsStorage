@@ -7,7 +7,7 @@ import re
 import traceback
 from gemini_metadata_utils import gemini_date
 
-from utils.web import Context, context_wrapped
+from utils.web import Context, context_wrapped, ModPythonRequest
 
 from mod_python import apache
 from mod_python import util
@@ -166,8 +166,10 @@ mapping_selection = {
 def handler(ctx, req):
     with session_scope() as session:
         # Instantiate the UsageLog instance for this request, populate initial values from req
+        request = ModPythonRequest(req)
         usagelog = UsageLog(req)
         ctx.usagelog = usagelog
+        ctx.req      = request
 
         try:
             user = userfromcookie(session, req)

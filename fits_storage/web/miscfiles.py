@@ -11,6 +11,8 @@ from ..gemini_metadata_utils import GeminiProgram
 
 from ..utils.api import ApiProxy, ApiProxyError
 from ..utils.userprogram import icanhave
+from ..utils.web import Context
+
 from .user import needs_login, is_staffer
 
 from mod_python import util, apache
@@ -112,7 +114,7 @@ def validate(req):
     if req.method != 'POST':
         return apache.HTTP_NOT_ACCEPTABLE
 
-    raw_data = req.read()
+    raw_data = Context().req.raw_data
 
     try:
         input_data = json.loads(raw_data)

@@ -3,6 +3,8 @@ This module handles the web 'queue' functions. Mainly showing status
 """
 
 from ..utils.queuestats import stats, regular_summary, error_summary, error_detail, UnknownQueueError
+from ..utils.web import Context
+
 from ..orm import session_scope
 from .user import needs_login
 
@@ -82,7 +84,7 @@ def queuestatus_update(req, things):
 
     # Try to decode the payload in the POST query
     try:
-        cache = json.loads(req.read())
+        cache = Context().req.json
         if type(cache) != dict:
             cache = {}
     except ValueError:
