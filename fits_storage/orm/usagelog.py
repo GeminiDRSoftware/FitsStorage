@@ -4,9 +4,6 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, BigInteger
 from sqlalchemy.orm import relation
 
-from ..fits_storage_config import using_apache
-from ..apache_return_codes import REMOTE_NOLOOKUP
-
 from . import Base
 from .user import User
 
@@ -31,28 +28,29 @@ class UsageLog(Base):
 
     user = relation(User)
 
-    def __init__(self, req):
+    def __init__(self, ctx):
         """
-        Create an initial UsageLog instance from a mod_python apache request object.
+        Create an initial UsageLog instance from the information in the context
         Populates initial fields but does not add the instance to the session.
         """
         self.utdatetime = datetime.datetime.utcnow()
-        if using_apache:
-            self.ip_address = req.get_remote_host(REMOTE_NOLOOKUP)
-            if 'User-Agent' in req.headers_in.keys():
-                self.user_agent = req.headers_in['User-Agent']
-            if 'Referer' in req.headers_in.keys():
-                self.referer = req.headers_in['Referer']
-        self.method = req.method
-        self.uri = req.unparsed_uri
 
-    def set_finals(self, req):
+        self.ip_address = ctx.env.remote_ip
+        if 'User-Agent' in ctx.req:
+            self.user_agent = ctx.req['User-Agent']
+        if 'Referer' in ctx.req:
+            self.referer = ctx.req['Referer']
+
+        self.method = ctx.env.method
+        self.uri = ctx.env.unparsed_uri
+
+    def set_finals(self, ctx):
         """
-        Sets the "final" values in the log object from the request object.
+        Sets the "final" values in the log object from the information in the context
         Call this right at the end, after the request is basically finished
         """
-        self.bytes = req.bytes_sent
-        self.status = req.status
+        self.bytes = ctx.resp.bytes_sent
+        self.status = ctx.resp.status
 
     def add_note(self, note):
         """

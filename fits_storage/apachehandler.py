@@ -170,7 +170,7 @@ def handler(ctx, req):
         response = ModPythonResponse(session, req)
         ctx.setContent(request, response)
 
-        usagelog = UsageLog(req)
+        usagelog = UsageLog(ctx)
         ctx.usagelog = usagelog
         ctx.session = session
 
@@ -228,7 +228,7 @@ def handler(ctx, req):
             # Grab the final log values
             # Make sure that the session is in a consistent state
             session.commit()
-            usagelog.set_finals(req)
+            usagelog.set_finals(ctx)
             session.commit()
             session.close()
 

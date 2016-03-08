@@ -124,6 +124,10 @@ class Request(object):
         "Provides a dictionary-like interface for the request object to get headers"
         self.get_header_value(key)
 
+    def __contains__(self, key):
+        "Provides a interface for the request object to enable the query for headers using 'in'"
+        return self.contains_header(key)
+
     @property
     def session(self):
         return self._s

@@ -1,9 +1,9 @@
 from . import adapter
 from ...fits_storage_config import upload_staging_path
 
-
 from mod_python import Cookie
 from mod_python import util
+from mod_python.apache import REMOTE_NOLOOKUP
 
 import json
 import time
@@ -26,6 +26,14 @@ class Environment(object):
     @property
     def uri(self):
         return self._req.uri
+
+    @property
+    def unparsed_uri(self):
+        return self._req.unparsed_uri
+
+    @property
+    def remote_ip(self):
+        return self._req.get_remote_host(REMOTE_NOLOOKUP)
 
     @property
     def method(self):
@@ -66,6 +74,9 @@ class Request(adapter.Request):
     def get_header_value(self, header_name):
         return self._req.headers_in[header_name]
 
+    def contains_header(self, header_name):
+        return header_name in self._req.headers_in
+
     def get_cookie_value(self, key):
         return Cookie.get_cookies(self._req)[key].value
 
@@ -87,6 +98,10 @@ class Response(adapter.Response):
         super(Response, self).__init__(session)
 
         self._req     = req
+
+    @property
+    def bytes_sent(self):
+        return self._req.bytes_sent
 
     def expire_cookie(self, name):
         self.set_cookie(name, expires=time.time())
