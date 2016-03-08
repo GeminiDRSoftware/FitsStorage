@@ -1,6 +1,6 @@
 from thread import get_ident
 from functools import wraps
-from ...orm import NoResultFound
+from ...orm import NoResultFound, MultipleResultsFound
 from ...orm.user import User
 
 def context_wrapped(fn):
@@ -30,15 +30,41 @@ class Context(object):
     def __init__(self):
         self._valid  = True
 
+    def setContent(self, req, resp):
+        self.req = req
+        self.resp = resp
+        req.ctx = self
+        resp.ctx = self
+        self._cookies = Cookies(req, resp)
+
     def __getattr__(self, attr):
-        try:
-            return getattr(self.req, attr)
-        except AttributeError:
-            raise AttributeError("Unknown attribute '{}'".format(attr))
+        # TODO: Eventually, catch the AttributeErrors and raise them separately
+        return getattr(self.req, attr)
 
     def invalidate(self):
         self._valid = False
         del Context.__threads[get_ident()]
+
+    @property
+    def cookies(self):
+        return self._cookies
+
+class Cookies(object):
+    def __init__(self, req, resp):
+        self._req  = req
+        self._resp = resp
+
+    def __getitem__(self, key):
+        return self._req.get_cookie_value(key)
+
+    def __setitem__(self, key, value):
+        self.set(key, value)
+
+    def __delitem__(self, key):
+        self._resp.expire_cookie(key)
+
+    def set(self, key, value, **kw):
+        self._resp.set_cookie(key, value, **kw)
 
 class Request(object):
     def __init__(self, session):
@@ -49,10 +75,6 @@ class Request(object):
         return self._s
 
     @property
-    def cookies(self):
-        raise NotImplementedError("Request.cookie needs to be implemented by derived classes")
-
-    @property
     def user(self):
         """
         Get the session cookie from the inner request object and find and return the
@@ -61,7 +83,7 @@ class Request(object):
 
         # Do we have a session cookie?
         try:
-            cookie = self.cookies['gemini_archive_session']
+            cookie = self.ctx.cookies['gemini_archive_session']
         except KeyError:
             # No session cookie, not logged in
             return None
@@ -72,6 +94,9 @@ class Request(object):
         except NoResultFound:
             # This is not a valid session cookie
             return None
+        except MultipleResultsFound:
+            return self._s.query(User).filter(User.cookie == cookie).all()
 
 class Response(object):
-    pass
+    def __init__(self, session):
+        self._s = session

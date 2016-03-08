@@ -7,7 +7,7 @@ import re
 import traceback
 from gemini_metadata_utils import gemini_date
 
-from utils.web import Context, context_wrapped, ModPythonRequest
+from utils.web import Context, context_wrapped, ModPythonRequest, ModPythonResponse
 
 from mod_python import apache
 from mod_python import util
@@ -167,9 +167,11 @@ def handler(ctx, req):
     with session_scope() as session:
         # Instantiate the UsageLog instance for this request, populate initial values from req
         request = ModPythonRequest(session, req)
+        response = ModPythonResponse(session, req)
+        ctx.setContent(request, response)
+
         usagelog = UsageLog(req)
         ctx.usagelog = usagelog
-        ctx.req      = request
 
         try:
             try:

@@ -17,9 +17,6 @@ from ..orm.fileuploadlog import FileUploadLog
 
 from .user import needs_login
 
-if upload_auth_cookie:
-    from mod_python import Cookie
-
 @needs_login(only_magic=True, magic_cookies=[('gemini_fits_upload_auth', upload_auth_cookie)], annotate=FileUploadLog)
 def upload_file(req, filename, processed_cal=False):
     """

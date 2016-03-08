@@ -15,7 +15,6 @@ from . import templating
 
 # This will only work with apache
 from mod_python import apache
-from mod_python import Cookie
 from mod_python import util
 
 import re
@@ -424,6 +423,8 @@ def login(req, things):
     Presents and processes a login form
     Sends session cookie if sucessfull
     """
+    ctx = Context()
+
     # Process the form data first if there is any
     formdata = util.FieldStorage(req)
     request_attempted = False
@@ -464,8 +465,7 @@ def login(req, things):
     req.content_type = "text/html"
     if valid_request:
         # Cookie expires in 1 year
-        cookie_obj = Cookie.Cookie('gemini_archive_session', cookie, expires=time.time()+31536000, path="/")
-        Cookie.add_cookie(req, cookie_obj)
+        ctx.cookies.set('gemini_archive_session', cookie, expires=time.time()+31536000, path="/")
 
     template_args = dict(
         # Rebuild the thing_string for the url
@@ -485,23 +485,24 @@ def logout(req):
     # Do we have a session cookie?
     ctx = Context()
 
-    cookie = None
-    cookies = Cookie.get_cookies(req)
-    if cookies.has_key('gemini_archive_session'):
-        cookie = cookies['gemini_archive_session'].value
+    try:
+        cookie = ctx.cookies['gemini_archive_session']
 
-    if cookie:
         # Find the user that we are
-        with session_scope() as session:
-            users = session.query(User).filter(User.cookie == cookie).all()
+        users = ctx.user
+        if isinstance(users, User):
+            users = [users]
 
-            if len(users) > 1:
-                # Eeek, multiple users with the same session cookie!?!?!
-                ctx.req.log("Logout - Multiple Users with same session cookie: %s" % cookie)
-            for user in users:
-                user.log_out_all()
+        if len(users) > 1:
+            # Eeek, multiple users with the same session cookie!?!?!
+            ctx.log("Logout - Multiple Users with same session cookie: %s" % cookie)
+        for user in users:
+            user.log_out_all()
 
-        Cookie.add_cookie(req, 'gemini_archive_session', '', expires=time.time())
+        del ctx.cookies['gemini_archive_session']
+    except KeyError:
+        # There was no cookie
+        pass
 
     return {}
 
@@ -653,10 +654,9 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
                 if disabled_cookies and only_magic:
                     got_magic = True
                 elif not disabled_cookies:
-                    cookies = Cookie.get_cookies(req)
                     for cookie, content in magic_cookies:
                         try:
-                            if content is not None and cookies[cookie].value == content:
+                            if content is not None and ctx.cookies[cookie] == content:
                                 got_magic = True
                                 break
                         except KeyError:
