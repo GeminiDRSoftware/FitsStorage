@@ -3,6 +3,7 @@ import sqlalchemy.orm.exc as orm_exc
 from urllib import urlencode
 from StringIO import StringIO
 from random import randint
+import json
 
 from copy import deepcopy
 from fits_storage.utils.web import get_context, Return, ClientError, RequestRedirect
@@ -44,72 +45,124 @@ cookies = {
 }
 
 default_env = {
-  'SERVER_NAME':    'test_server',
-  'REMOTE_ADDR':    '127.0.0.1',
-  'PATH_INFO':      '/',
-  'CONTENT_TYPE':   'text/plain',
-  'QUERY_STRING':   '',
-  'REQUEST_METHOD': 'GET',
-  'HTTP_COOKIE':    {},
-  'wsgi.output':    None,
-  'wsgi.input':     None,
-  'wsgi.errors':    None,
+  'SERVER_NAME':       'test_server',
+  'REMOTE_ADDR':       '127.0.0.1',
+  'PATH_INFO':         '/',
+  'CONTENT_TYPE':      'text/plain',
+  'QUERY_STRING':      '',
+  'REQUEST_METHOD':    'GET',
+  'HTTP_COOKIE':       {},
+  'wsgi.input':        None,
+  'wsgi.errors':       StringIO(),
+  'wsgi.multithread':  False,
+  'wsgi.multiprocess': False,
+  'wsgi.run_once':     True,
+  'wsgi.version':      (1, 0),
+  'wsgi.url_scheme':   'http'
 }
 
-def get_env(uri, cookies = None, post=False, data=None):
-    env = deepcopy(default_env)
-    env['PATH_INFO'] = uri
-    if cookies: env['HTTP_COOKIE'] = cookies
-    if data:
-        post = True
-        if isinstance(data, dict):
-            enc = urlencode(data)
-            env.update({
-                'CONTENT_TYPE':   'application/x-www-form-urlencoded',
-                'CONTENT_LENGTH': str(len(enc)),
-                'wsgi.input': StringIO(enc)
-            })
-        else:
-            env.update({
-                'CONTENT_TYPE': 'text/plain',
-                'CONTENT_LENGTH': str(len(data)),
-                'wsgi.input': StringIO(str(data))
-            })
-    if post: env['REQUEST_METHOD'] = 'POST'
-
-    return env
-
 class Fixture(object):
-    cases = (
-        (get_env('/user_list'),
-         "You don't appear to be logged in as a Gemini Staff user"),
-        (get_env('/user_list', cookies=cookies['user1']),
-         ("<td>user1<td>User 1<td>unknown1@gemini.edu",
-          "<td>user2<td>User 2<td>unknown2@gemini.edu")),
-        (get_env('/content'),
-         ("<p>Total number of files: 1,388",
-          "<p>Total file storage size: 6.85 GB",
-          "<p>Total FITS data size: 23.51 GB")),
-        (get_env('/usagereport', data={'start': '2016-02-10', 'end': '2016-02-12'}),
-          (ClientError, "You need to be logged in to access this resource")),
-        (get_env('/usagereport', data={'start': '2016-02-10', 'end': '2016-02-12'},
-                                 cookies=cookies['user1']),
-         ('<td><a target="_blank" href="/usagedetails/134843">134843</a>',
-          '<td><a target="_blank" href="/usagedetails/134840">134840</a>',
-          '<td><a target="_blank" href="/usagedetails/134701">134701</a>')),
-        (get_env('/stats'),
-         ('<li>Present Rows: 1388 (99.14%)',
-          '<li>Total present size: 7358825260 bytes (6.85 GB)',
-          '<li>S20150917S0011.fits: 2015-09-16 09:46:06.687962-10:00')),
-    )
+    def __init__(self, uri, cookies=None, post=False, data=None, retcode=200, cases=(), exception=None, json=False):
+        self.uri     = uri
+        self.cookies = cookies
+        self.json    = json
+        self.data    = data
+        self.post    = (post if data is None else True)
+        self.status  = retcode
+        if isinstance(cases, (str, unicode)):
+            self.cases = (cases,)
+        else:
+            self.cases = cases
+        self.exc     = exception
+
+    def get_env(self):
+        env = deepcopy(default_env)
+        env['PATH_INFO'] = self.uri
+        if self.cookies:
+            env['HTTP_COOKIE'] = self.cookies
+
+        post = self.post
+        if self.data is not None:
+            if self.json:
+                enc = json.dumps(self.data)
+                env.update({
+                    'CONTENT_TYPE':   'application/json',
+                    'CONTENT_LENGTH': str(len(enc)),
+                    'wsgi.input':     StringIO(enc)
+                })
+            elif isinstance(self.data, dict):
+                enc = urlencode(self.data)
+                env.update({
+                    'CONTENT_TYPE':   'application/x-www-form-urlencoded',
+                    'CONTENT_LENGTH': str(len(enc)),
+                    'wsgi.input':     StringIO(enc)
+                })
+            else:
+                env.update({
+                    'CONTENT_TYPE':   'text/plain',
+                    'CONTENT_LENGTH': str(len(self.data)),
+                    'wsgi.input':     StringIO(str(self.data))
+                })
+
+        if post:
+            env['REQUEST_METHOD'] = 'POST'
+            if self.data is None:
+                env.update({
+                    'CONTENT_TYPE':   'text/plain',
+                    'CONTENT_LENGTH': '0',
+                    'wsgi.input':     StringIO('')
+                })
+
+        return env
+
+    def __repr__(self):
+        return "Fixture({!r}, method={})".format(self.uri, ('POST' if self.post else 'GET'))
+
+fixtures = (
+    # test /user_list, first with anonymous user, then with logged-in user
+    Fixture('/user_list', cases="You don't appear to be logged in as a Gemini Staff user"),
+    Fixture('/user_list', cookies=cookies['user1'],
+            cases=("<td>user1<td>User 1<td>unknown1@gemini.edu",
+                   "<td>user2<td>User 2<td>unknown2@gemini.edu")),
+    # test /usagereport, first with anonymous user, then with logged-in user
+    Fixture('/usagereport', data={'start': '2016-02-10', 'end': '2016-02-12'},
+            exception = (ClientError, "You need to be logged in to access this resource")),
+    Fixture('/usagereport', data={'start': '2016-02-10', 'end': '2016-02-12'}, cookies=cookies['user1'],
+            cases=('<td><a target="_blank" href="/usagedetails/134843">134843</a>',
+                   '<td><a target="_blank" href="/usagedetails/134840">134840</a>',
+                   '<td><a target="_blank" href="/usagedetails/134701">134701</a>')),
+    # test /content, no need for user
+    Fixture('/content',
+            cases=("<p>Total number of files: 1,388",
+                   "<p>Total file storage size: 6.85 GB",
+                   "<p>Total FITS data size: 23.51 GB")),
+    # Test /stats, no need for user
+    Fixture('/stats',
+            cases=('<li>Present Rows: 1388 (99.14%)',
+                   '<li>Total present size: 7358825260 bytes (6.85 GB)',
+                   '<li>S20150917S0011.fits: 2015-09-16 09:46:06.687962-10:00')),
+    # Test /qareport, first using GET, then POST both with anonymous user and registered user
+    Fixture('/qareport', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
+    Fixture('/qareport', json=True, data=[], retcode=Return.HTTP_FORBIDDEN),
+    Fixture('/qareport', json=True, data=[], cookies=cookies['user2']),
+    # Test /usagestats, both with anonymous and registered user
+    Fixture('/usagestats',
+            exception = (ClientError, "You need to be logged in to access this resource")),
+    Fixture('/usagestats', cookies=cookies['user2'],
+            cases='<h1>Usage Statistics'),
+)
+
+class FixtureIter(object):
+    def __init__(self, cases):
+        self.cases = cases
 
     def get_route(self, env):
         return url_map.match(env['PATH_INFO'], env['REQUEST_METHOD'])
 
     def __iter__(self):
-        for env, data in Fixture.cases:
-            route = self.get_route(env)
-            yield route, data, env
+        for fix in self.cases:
+            route = self.get_route(fix.get_env())
+            yield route, fix
 
 class WebTestMiddleware(object):
     def __init__(self, tested_case):
@@ -133,20 +186,21 @@ def run_web_test(fn, env):
     return tm
 
 @pytest.mark.usefixtures("min_rollback")
-@pytest.mark.parametrize("route,expected,env", Fixture())
-def test_user_list(min_session, route, expected, env):
-    if isinstance(expected, tuple) and expected[0] in (ClientError, RequestRedirect):
-        excep, message = expected
-        with pytest.raises(excep) as excinfo:
-            run_web_test(route, env)
-        assert message in excinfo.value
+@pytest.mark.parametrize("route,expected", FixtureIter(fixtures))
+def test_user_list(min_session, route, expected):
+    if isinstance(route[0], int):
+        assert expected.status == route[0]
     else:
-        tm = run_web_test(route, env)
-
-        r = ''.join(tm.resp)
-        if isinstance(expected, (str, unicode)):
-            fixtures = (expected,)
+        env = expected.get_env()
+        if expected.exc:
+            excep, message = expected.exc
+            with pytest.raises(excep) as excinfo:
+                run_web_test(route, env)
+            assert message in excinfo.value
         else:
-            fixtures = expected
-        for f in fixtures:
-            assert (f in r) == True
+            tm = run_web_test(route, env)
+
+            assert expected.status == tm.resp.status
+            r = ''.join(tm.resp)
+            for f in expected.cases:
+                assert f in r
