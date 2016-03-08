@@ -30,8 +30,10 @@ class Return(object):
     __metaclass__ = ReturnMetaClass
 
 class ClientError(Exception):
-    def __init__(self, code):
-        self.code = code
+    def __init__(self, code, message, annotate=None):
+        self.code     = code
+        self.args     = [message]
+        self.annotate = annotate
 
 class RequestRedirect(Exception):
     pass

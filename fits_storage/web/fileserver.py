@@ -11,11 +11,10 @@ from ..orm.downloadlog import DownloadLog
 from ..orm.filedownloadlog import FileDownloadLog
 from ..orm.miscfile import MiscFile
 
-from ..utils.web import Context, with_content_type
+from ..utils.web import Context, Return, with_content_type
 
 from .selection import getselection, openquery, selection_to_URL
 from .summary import list_headers
-from .user import AccessForbidden, DEFAULT_403_TEMPLATE
 
 import time
 import datetime
@@ -351,7 +350,7 @@ def fileserver(filenamegiven):
         else:
             # Refuse to send data
             downloadlog.numdenied = 1
-            raise AccessForbidden("Not enough privileges to download this content", DEFAULT_403_TEMPLATE)
+            ctx.resp.client_error(Return.HTTP_FORBIDDEN, "Not enough privileges to download this content")
 
 CHUNKSIZE = 8192*64
 

@@ -2,6 +2,7 @@ from . import adapter
 from .adapter import Return, RequestRedirect, ClientError
 from ...fits_storage_config import upload_staging_path
 from ...orm import session_scope
+from ...web import templating
 from wsgiref.handlers import SimpleHandler
 from wsgiref.simple_server import WSGIRequestHandler
 from wsgiref import util as wutil
@@ -119,6 +120,12 @@ status_message = {
     Return.HTTP_NOT_IMPLEMENTED:     'Method Not Implemented',
     Return.HTTP_SERVICE_UNAVAILABLE: 'The Service Is Currently Unavailable',
     Return.HTTP_BAD_REQUEST:         'The Server Received a Bad Request -Probably Malformed JSON'
+}
+
+template_for_status = {
+    'text/html:' + str(Return.HTTP_NOT_FOUND):        'errors/not_found.html',
+    'text/html:' + str(Return.HTTP_FORBIDDEN):        'errors/forbidden.html',
+    'application/json:' + str(Return.HTTP_FORBIDDEN): 'errors/forbidden.json',
 }
 
 redirect_template = """\
@@ -274,16 +281,20 @@ class Response(adapter.Response):
         raise RequestRedirect()
 
     @only_if_not_started_response
-    def client_error(self, code):
+    def client_error(self, code, message=None, template=None, content_type='text/html', annotate=None):
         """
         Helper to raise 4xx "Client Error" exceptions
         """
         self.make_empty()
-        self.set_content_type('text/html')
+        self.set_content_type(content_type)
         self.status = code
-        self.append(template_4xx.format(code=code, message=status_message[code]))
+        msg  = message if message is not None else status_message[code]
+        if template is None:
+            template = template_for_status['{}:{}'.format(content_type, code)]
 
-        raise ClientError(code)
+        self.append(templating.get_env().get_template(template).render(message = msg))
+
+        raise ClientError(code, msg, annotate)
 
 from ...orm.usagelog import UsageLog
 

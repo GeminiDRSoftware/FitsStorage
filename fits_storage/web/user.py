@@ -7,7 +7,7 @@ from sqlalchemy import desc
 from ..orm import NoResultFound
 from ..orm.user import User
 
-from ..utils.web import Context
+from ..utils.web import Context, Return
 
 from ..fits_storage_config import fits_servername, smtp_server, use_as_archive
 
@@ -586,17 +586,6 @@ def bad_password(candidate):
 
     return True
 
-class AccessForbidden(Exception):
-    def __init__(self, message, template, content_type='text/html', annotate=None):
-        self.message      = message
-        self.args         = [message]
-        self.template     = template
-        self.content_type = content_type
-        self.annotate     = annotate
-
-DEFAULT_403_TEMPLATE = 'errors/forbidden.html'
-JSON_403_TEMPLATE = 'errors/forbidden.json'
-
 def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=False, content_type='html', annotate=None, archive_only=False):
     """Decorator for functions that need a user to be logged in, or some sort of cookie
        to be set. The basic use is (notice the decorator parenthesis, they're important)::
@@ -641,12 +630,7 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
         def wrapper(*args, **kw):
             ctx = Context()
 
-            if content_type == 'json':
-                ctype    = 'application/json'
-                template = JSON_403_TEMPLATE
-            else:
-                ctype    = 'text/html'
-                template = DEFAULT_403_TEMPLATE
+            ctype = 'application/json' if content_type == 'json' else 'text/html'
 
             disabled_cookies = any(not expected for cookie, expected in magic_cookies)
 
@@ -663,15 +647,15 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
                         pass
 
             if not got_magic:
+                raise_error = partial(ctx.resp.client_error, code=Return.HTTP_FORBIDDEN, content_type=ctype, annotate=annotate)
                 if only_magic:
-                    raise AccessForbidden("Could not find a proper magic cookie for a cookie-only service", template=template, content_type=ctype, annotate=annotate)
-                user = ctx.user
+                    raise_error("Could not find a proper magic cookie for a cookie-only service")
                 if not user:
-                    raise AccessForbidden("You need to be logged in to access this resource", template=template, content_type=ctype, annotate=annotate)
+                    raise_error("You need to be logged in to access this resource")
                 if superuser is True and not user.superuser:
-                    raise AccessForbidden("You need to be logged in as a Superuser to access this resource", template=template, content_type=ctype, annotate=annotate)
+                    raise_error("You need to be logged in as a Superuser to access this resource")
                 if staffer is True and not user.gemini_staff:
-                    raise AccessForbidden("You need to be logged in as Gemini Staff member to access this resource", template=template, content_type=ctype, annotate=annotate)
+                    raise_error("You need to be logged in as Gemini Staff member to access this resource")
             return fn(*args, **kw)
         return wrapper
     return decorator

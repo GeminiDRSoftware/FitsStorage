@@ -7,7 +7,7 @@ import sys
 
 from fits_storage.gemini_metadata_utils import gemini_date
 
-from fits_storage.utils.web import Context, context_wrapped
+from fits_storage.utils.web import Context, Return, context_wrapped
 from fits_storage.utils.web import WSGIRequest, WSGIResponse, WSGIRequestHandler
 from fits_storage.utils.web import RequestRedirect, ClientError
 from fits_storage.utils.web.routing import Map, Rule, BaseConverter
@@ -30,7 +30,7 @@ from fits_storage.web.fileserver import fileserver, download, download_post
 from fits_storage.web.qastuff import qareport, qametrics, qaforgui
 from fits_storage.web.statistics import content, stats
 from fits_storage.web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password
-from fits_storage.web.user import staff_access, user_list, AccessForbidden
+from fits_storage.web.user import staff_access, user_list
 from fits_storage.web.userprogram import my_programs
 from fits_storage.web.searchform import searchform, nameresolver
 from fits_storage.web.logreports import usagereport, usagedetails, downloadlog, usagestats
@@ -287,11 +287,9 @@ def handler(environ, start_response):
     if req.env.server_hostname == 'archive':
         new_uri = "https://archive.gemini.edu%s" % req.unparsed_uri
 
-    # TODO: What about GET ?... arguments?
-
     route = get_route(url_map)
     if route is None:
-        resp.client_error(404)
+        resp.client_error(Return.HTTP_NOT_FOUND, "Could not find the requested resource")
     else:
         dispatch(*route)
         return resp.respond(unicode_to_string)
@@ -322,17 +320,29 @@ class StaticServer(object):
                     resp.set_content_type(mtype)
                 return resp.append(open(path).read()).respond()
             except IOError:
-                resp.client_error(403)
+                resp.client_error(Return.HTTP_FORBIDDEN)
         return self.app(environ, start_response)
 
 htmldocroot = os.path.join(os.path.dirname(__file__), '..', 'htmldocroot')
 handle_with_static = StaticServer(handler, root=htmldocroot)
 
 def app(environ, start_response):
+    ctx = Context()
     try:
         return handle_with_static(environ, start_response)
-    except (RequestRedirect, ClientError) as e:
-        return Context().resp.respond(unicode_to_string)
+    except RequestRedirect as e:
+        return ctx.resp.respond(unicode_to_string)
+    except ClientError as e:
+        if e.annotate is not None:
+            session = ctx.session
+            annotationClass = e.annotate
+            try:
+                log = session.query(annotationClass).filter(annotationClass.usagelog_id == ctx.usagelog.id).one()
+            except NoResultFound:
+                log = annotationClass(ctx.usagelog)
+            log.add_note(e.message)
+            session.add(log)
+        return ctx.resp.respond(unicode_to_string)
 
 # Provide a basic WSGI server, in case we're testing or don't need any fancy
 # container...

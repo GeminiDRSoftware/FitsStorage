@@ -11,7 +11,6 @@ from ..orm.downloadlog import DownloadLog
 from ..utils.web import Context, Return, with_content_type
 
 from .selection import getselection, openquery, selection_to_URL
-from .user import AccessForbidden
 
 import datetime
 import os
@@ -69,7 +68,7 @@ def preview(filenamegiven):
         else:
             # Refuse to send data
             downloadlog.numdenied = 1
-            raise AccessForbidden("You don't have access to the requested data")
+            ctx.resp.client_error(Return.HTTP_FORBIDDEN, "You don't have access to the requested data")
     finally:
         downloadlog.query_completed = datetime.datetime.utcnow()
 
