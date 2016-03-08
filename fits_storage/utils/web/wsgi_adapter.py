@@ -164,19 +164,27 @@ class BufferedFileObjectIterator(object):
             yield n
 
 class StreamingObject(object):
-    def __init__(self, callback):
+    def __init__(self, callback, buffer_size = 0):
         self._callback = callback
+        self._maxbuffer = buffer_size
+        self._reset_buffer()
 
     def write(self, data):
-        self._callback(data)
+        self._buffer.append(data)
+        self._buffered += len(data)
+        if self._buffered > self._maxbuffer:
+            self.flush()
+
+    def _reset_buffer(self):
+        self._buffer = []
+        self._buffered = 0
 
     def flush(self):
-        # TODO: Implement?
-        pass
+        self._callback(''.join(self._buffer))
+        self._reset_buffer()
 
     def close(self):
-        # TODO: Implement?
-        pass
+        self.flush()
 
 class Response(adapter.Response):
     def __init__(self, session, wsgienv, start_response):
@@ -301,13 +309,14 @@ class Response(adapter.Response):
         self.set_header('Content-Disposition', 'attachment; filename="{}"'.format(name))
         self.start_response()
 
-        tar = tarfile.open(name=name, fileobj=StreamingObject(self._write_callback), **kw)
+        sobj = StreamingObject(self._write_callback)
+        tar = tarfile.open(name=name, fileobj=sobj, **kw)
 
         try:
             yield tar
         finally:
+            sobj.close()
             tar.close()
-        #    self._req.flush()
 
     def make_empty(self):
         self._content = []
