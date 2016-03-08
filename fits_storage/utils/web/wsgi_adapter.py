@@ -61,7 +61,7 @@ class Request(adapter.Request):
 
     @property
     def input(self):
-        inp = self._env['wsgi.input']
+        return self._env['wsgi.input']
 
     @property
     def env(self):
