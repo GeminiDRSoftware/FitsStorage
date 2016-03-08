@@ -136,16 +136,13 @@ def usagereport():
 
 @needs_login(staffer=True)
 @templating.templated("logreports/usagedetails.html")
-def usagedetails(things):
+def usagedetails(ulid):
     """
-    This is the usage report detail handler
-    things should contain an useagelog ID number
+    This is the usage report detail handler, based on the numeric usagelog ID
     """
 
-    try:
-        ulid = int(things[0])
-    except (ValueError, IndexError):
-        raise templating.SkipTemplateError(Return.HTTP_NOT_ACCEPTABLE)
+#    except (ValueError, IndexError):
+#        raise templating.SkipTemplateError(Return.HTTP_NOT_ACCEPTABLE)
 
     session = Context().session
 
@@ -180,7 +177,7 @@ def usagedetails(things):
 
 @needs_login(staffer=True)
 @templating.templated("logreports/downloadlog.html", with_generator=True)
-def downloadlog(things):
+def downloadlog(patterns):
     """
     This accepts a list of filename patterns and returns a log showing all the downloads
     of the files that match the selection.
@@ -208,19 +205,19 @@ def downloadlog(things):
     aDiskFile = aliased(DiskFile, dfsq)
 
     class Queries(object):
-        def __init__(self, things):
-            self.th = things
+        def __init__(self, patterns):
+            self.pt = patterns
 
         @property
         def empty(self):
-            return len(self.th) == 0
+            return len(self.pt) == 0
 
         @property
         def many(self):
-            return len(self.th) > 1
+            return len(self.pt) > 1
 
         def __iter__(self):
-            for pattern in self.th:
+            for pattern in self.pt:
                 yield (
                     pattern,
                     session.query(FileDownloadLog, User)#, aHeader.data_label)
@@ -232,7 +229,7 @@ def downloadlog(things):
 
     return dict(
         permissions = calc_permission,
-        queries = Queries(things)
+        queries = Queries(patterns)
         )
 
 usagestats_header = """

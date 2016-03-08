@@ -24,7 +24,7 @@ if using_s3:
 
 from ..utils.userprogram import icanhave
 
-def preview(things):
+def preview(filenamegiven):
     """
     This is the preview server, it sends you the preview jpg for the requested file.
     It handles authentication in that it won't give you the preview if you couldn't access
@@ -33,18 +33,17 @@ def preview(things):
 
     ctx = Context()
 
+#    try:
+#        filenamegiven = things.pop(0)
+#    except IndexError:
+#        ctx.resp.status = Return.HTTP_NOT_FOUND
+#        return
+
     # OK, first find the file they asked for in the database
     # tart up the filename if possible
-    try:
-        filenamegiven = things.pop(0)
-        filename = gemini_fitsfilename(filenamegiven)
-        if filename:
-            pass
-        else:
-            filename = filenamegiven
-    except IndexError:
-        ctx.resp.status = Return.HTTP_NOT_FOUND
-        return
+    filename = gemini_fitsfilename(filenamegiven)
+    if not filename:
+        filename = filenamegiven
 
     with session_scope() as session:
         try:

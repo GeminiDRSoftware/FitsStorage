@@ -1,0 +1,245 @@
+from . import adapter
+from ...fits_storage_config import upload_staging_path
+from ...orm import session_scope
+from wsgiref.simple_server import ServerHandler, WSGIRequestHandler
+from wsgiref import util as wutil
+
+import Cookie
+from contextlib import contextmanager
+
+class Environment(object):
+    def __init__(self, env):
+        self._env = env
+
+    def __getitem__(self, item):
+        return self._env[item]
+
+    def __contains__(self, item):
+        return item in self._env
+
+    @property
+    def server_hostname(self):
+        return self._env['SERVER_NAME']
+
+    @property
+    def remote_host(self):
+        try:
+            return self._env['HTTP_X_FORWARDED_FOR'].split(',')[-1].strip()
+        except KeyError:
+            return self.remote_ip
+
+    @property
+    def uri(self):
+        return self.unparsed_uri
+
+    @property
+    def unparsed_uri(self):
+        return self._env.get('PATH_INFO', '')
+
+    @property
+    def remote_ip(self):
+        return self._env['REMOTE_ADDR']
+
+    @property
+    def method(self):
+        return self._env['REQUEST_METHOD']
+
+    @property
+    def cookies(self):
+        return Cookie.SimpleCookie(self._env['HTTP_COOKIE'])
+
+class Request(adapter.Request):
+    def __init__(self, session, wsgienv):
+        super(Request, self).__init__(session)
+
+        self._env     = Environment(wsgienv)
+        self._fields  = None
+
+    @property
+    def input(self):
+        inp = self._env['wsgi.input']
+
+    @property
+    def env(self):
+        return self._env
+
+    @property
+    def raw_data(self):
+        return self.input.read()
+
+    @property
+    def json(self):
+        return json.loads(self.raw_data)
+
+    def get_header_value(self, header_name):
+        return self._env[header_name]
+
+    def contains_header(self, header_name):
+        return header_name in self._env
+
+    def get_cookie_value(self, key):
+        return self._env.cookies[key].value
+
+    def log(self, *args, **kw):
+        try:
+            print >> self._env['wsgi_errors'], args[0]
+            return True
+        except IndexError:
+            return False
+
+    def get_form_data(self, large_file=False):
+        form_data = util.FieldStorage(self.input, environ=self._env)
+
+        return form_data
+
+BUFFSIZE = 262144
+
+status_message = {
+    adapter.Return.HTTP_OK:                  'OK',
+    adapter.Return.HTTP_NOT_FOUND:           'Not Found',
+    adapter.Return.HTTP_FORBIDDEN:           'Access Forbidden for This Resource',
+    adapter.Return.HTTP_METHOD_NOT_ALLOWED:  'The Method Used to Access This Resource Is Not Allowed',
+    adapter.Return.HTTP_NOT_ACCEPTABLE:      'The Returned Content Is Not Acceptable for the Client',
+    adapter.Return.HTTP_NOT_IMPLEMENTED:     'Method Not Implemented',
+    adapter.Return.HTTP_SERVICE_UNAVAILABLE: 'The Service Is Currently Unavailable',
+    adapter.Return.HTTP_BAD_REQUEST:         'The Server Received a Bad Request -Probably Malformed JSON'
+}
+
+class Response(adapter.Response):
+    def __init__(self, session, wsgienv, start_response):
+        super(Response, self).__init__(session)
+
+        self._env = wsgienv
+        self._sr  = start_response
+        self._bytes_sent = 0
+        self._cookies_to_send = Cookie.SimpleCookie()
+        self._content = []
+        self._content_type = 'text/plain'
+        self._headers = []
+        self.status = adapter.Return.HTTP_OK
+        self._started_response = False
+
+    def __iter__(self):
+        for k in self._content:
+            yield k
+
+    @property
+    def bytes_sent(self):
+        return self._bytes_sent
+
+    def start_response(self):
+        if not self._started_response:
+            self._started_response
+            self._sr('{} {}'.format(self.status, status_message.get(self.status, 'Error')),
+                     [('Content-Type', self._content_type)] + self._headers[:])
+
+    def expire_cookie(self, name):
+        self.set_cookie(name, expires=time.time())
+
+    def set_cookie(self, name, value='', **kw):
+        raise NotImplementedError("This is not implemented yet")
+        # Cookie.add_cookie(self._req, name, value, **kw)
+        # self._cookies_to_send[name] = value
+        # for attr, val in kw.iteritems():
+        #     self._cookies_to_send[name][attr] = val
+
+    def set_content_type(self, content_type):
+        self._content_type = content_type
+
+    def set_header(self, name, value):
+        self._headers.append((name, value))
+
+    def append(self, string):
+        self._content.append(string)
+
+    def append_iterable(self, it):
+        self.content.append(it)
+
+    def append_json(self, obj, **kw):
+        raise NotImplementedError("This is not implemented yet")
+        # json.dump(obj, self._req, **kw)
+
+    def sendfile(self, path):
+        raise NotImplementedError("This is not implemented yet")
+        # self._req.sendfile(path)
+
+    def sendfile_obj(self, fp):
+        raise NotImplementedError("This is not implemented yet")
+        # while True:
+        #     n = fp.read(BUFFSIZE)
+        #     if not n:
+        #         break
+        #     self._req.write(n)
+
+    @contextmanager
+    def tarfile(self, name, **kw):
+        raise NotImplementedError("This is not implemented yet")
+        #self.set_header('Content-Disposition', 'attachment; filename="{}"'.format(name))
+        #tar = tarfile.open(name=name, fileobj=self._req, **kw)
+
+        #try:
+        #    yield tar
+        #finally:
+        #    tar.close()
+        #    self._req.flush()
+
+    def redirect_to(self, url, **kw):
+        raise NotImplementedError("This is not implemented yet")
+        #util.redirect(self._req, url, **kw)
+
+from ...orm.usagelog import UsageLog
+
+class ArchiveHandler(ServerHandler):
+    def run(self, application):
+        """Invoke the application"""
+        ctx = adapter.Context()
+        try:
+            self.setup_environ()
+            with session_scope() as session:
+                try:
+                    request = Request(session, self.environ)
+                    response = Response(session, self.environ, self.start_response)
+                    ctx.setContent(request, response)
+
+                    usagelog = UsageLog(ctx)
+                    ctx.usagelog = usagelog
+                    ctx.session = session
+
+                    try:
+                        ctx.usagelog.user_id = request.user.id
+                    except AttributeError:
+                        # No user defined
+                        pass
+                    session.add(usagelog)
+                    session.commit()
+
+                    self.result = application(self.environ, self.start_response)
+                    self.finish_response()
+                finally:
+                    session.commit()
+                    ctx.usagelog.set_finals(ctx)
+                    session.commit()
+                    session.close()
+        except:
+            try:
+                self.handle_error()
+            except:
+                # If we get an error when handling the error, just give up!
+                self.close()
+                raise # And let the actual server figure out...
+        finally:
+            ctx.invalidate()
+
+class ArchiveWSGIRequestHandler(WSGIRequestHandler):
+    def handle(self):
+        """Handle a single HTTP request"""
+
+        self.raw_requestline = self.rfile.readline()
+        if not self.parse_request(): # An error code has been sent, just exit
+            return
+
+        handler = ArchiveHandler(
+            self.rfile, self.wfile, self.get_stderr(), self.get_environ()
+        )
+        handler.request_handler = self      # backpointer for logging
+        handler.run(self.server.get_app())

@@ -5,3 +5,9 @@ try:
 except ImportError:
     # Will happen if mod_python is not installed...
     pass
+
+try:
+    from wsgi_adapter import Request as WSGIRequest, Response as WSGIResponse, ArchiveWSGIRequestHandler as WSGIRequestHandler
+except ImportError:
+    # This should never happen, but just in case...
+    pass

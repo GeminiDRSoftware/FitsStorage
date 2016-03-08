@@ -23,21 +23,21 @@ from datetime import datetime, timedelta
 
 SEARCH_LIMIT = 500
 
-def miscfiles(things):
+def miscfiles(handle = None):
     formdata = None
     try:
-        if len(things) == 1 and things[0] == 'validate_add':
-            return validate()
+#        if len(things) == 1 and things[0] == 'validate_add':
+#            return validate()
 
         formdata = Context().get_form_data(large_file=True)
-        if len(things) == 0:
+        if handle is None:
             if 'search' in formdata:
                 return search_miscfiles(formdata)
 
             if 'upload' in formdata:
                 return save_file(formdata)
-        elif len(things) == 1:
-            return detail_miscfile(things[0], formdata)
+        else:
+            return detail_miscfile(handle, formdata)
 
         return bare_page()
     finally:
@@ -100,9 +100,9 @@ def string_to_date(string):
 def validate():
     ctx = Context()
 
-    if ctx.env.method != 'POST':
-        ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
-        return
+#    if ctx.env.method != 'POST':
+#        ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
+#        return
 
     raw_data = ctx.raw_data
 
@@ -186,7 +186,7 @@ def save_file(formdata):
     return dict(can_add=True)
 
 @templating.templated("miscfiles/detail.html")
-def detail_miscfile(handle, formdata):
+def detail_miscfile(handle, formdata = {}):
     ctx = Context()
 
     try:

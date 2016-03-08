@@ -66,7 +66,7 @@ def parse_json(clientdata):
     return json.loads(clientdata)
 
 @templating.templated("reports/qametrics.txt", content_type='text/plain', with_generator=True)
-def qametrics(things):
+def qametrics(metrics):
     """
     This function is the initial, simple display of QA metric data
     """
@@ -98,12 +98,12 @@ def qametrics(things):
 
     ret = {}
     for thing, cls in pairs:
-        if thing in things:
+        if thing in metrics:
             ret[thing] = yield_metrics(cls)
 
     return ret
 
-def qaforgui(things):
+def qaforgui(date):
     """
     This function outputs a JSON dump, aimed at feeding the QA metric GUI display
     You must pass a datestamp. It will only return results for datafiles from 
@@ -113,16 +113,14 @@ def qaforgui(things):
     ctx = Context()
     resp = ctx.resp
 
-    datestamp = None
-    try:
-        datestamp = gemini_date(things[0], offset=get_date_offset(), as_datetime=True)
-        # Default 3 days worth for the gui, to stop the return getting huge over time
-        window = datetime.timedelta(days=3)
-        enddatestamp = datestamp+window
-    except (IndexError, ValueError):
-        resp.status = Return.HTTP_NOT_ACCEPTABLE
-        resp.append("Error: no datestamp given")
-        return
+    datestamp = gemini_date(date, offset=get_date_offset(), as_datetime=True)
+    # Default 3 days worth for the gui, to stop the return getting huge over time
+    window = datetime.timedelta(days=3)
+    enddatestamp = datestamp+window
+#    except (IndexError, ValueError):
+#        resp.status = Return.HTTP_NOT_ACCEPTABLE
+#        resp.append("Error: no datestamp given")
+#        return
 
     session = ctx.session
     resp.content_type = "application/json"

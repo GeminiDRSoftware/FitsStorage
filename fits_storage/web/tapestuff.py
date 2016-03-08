@@ -12,12 +12,12 @@ from sqlalchemy import join, desc, func
 import datetime
 
 @templating.templated("tapestuff/fileontape.xml", content_type='text/xml', with_generator=True)
-def fileontape(things):
+def fileontape(filename):
     """
     Outputs xml describing the tapes that the specified file is on
     """
 
-    filename = things[0]
+#    filename = things[0]
 
     query = (
         Context().session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape)))
@@ -30,7 +30,7 @@ def fileontape(things):
         )
 
 @templating.templated("tapestuff/tape.html", with_generator=True)
-def tape(things):
+def tape(search = None):
     """
     This is the tape list function
     """
@@ -80,8 +80,8 @@ def tape(things):
     def generator():
         query = session.query(Tape)
         # Get a list of the tapes that apply
-        if things:
-            searchstring = '%'+things[0]+'%'
+        if search:
+            searchstring = '%'+search+'%'
             query = query.filter(Tape.label.like(searchstring))
         tapequery = query.order_by(desc(Tape.id))
 
@@ -105,9 +105,9 @@ def tape(things):
         )
 
 @templating.templated("tapestuff/tapewrite.html", with_generator=True)
-def tapewrite(things):
+def tapewrite(label = None):
     """
-    This is the tapewrite list function
+    This is the tapewrite list function. Label may be an integer ID or a string
     """
 
     session = Context().session
@@ -116,13 +116,12 @@ def tapewrite(things):
     query = session.query(TapeWrite, Tape).join(Tape)
 
     # Can give a tape id (numeric) or label as an argument
-    if things:
-        thing = things[0]
+    if label:
         try:
-            query = query.filter(TapeWrite.tape_id == int(thing))
+            query = query.filter(TapeWrite.tape_id == int(label))
         except ValueError:
-            thing = '%'+thing+'%'
-            tapequery = session.query(Tape).filter(Tape.label.like(thing))
+            label = '%'+label+'%'
+            tapequery = session.query(Tape).filter(Tape.label.like(label))
             try:
                 query = query.filter(Tape.id == tapequery.one().id)
             except NoResultFound:
@@ -135,15 +134,15 @@ def tapewrite(things):
     return dict(tws = query)
 
 @templating.templated("tapestuff/tapefile.html", with_generator=True)
-def tapefile(things):
+def tapefile(tapewrite_id):
     """
     This is the tapefile list function
     """
 
-    if not things:
-        return dict(message="Must supply one argument - tapewrite_id")
+#    if not things:
+#        return dict(message="Must supply one argument - tapewrite_id")
 
-    tapewrite_id = things[0]
+#    tapewrite_id = things[0]
 
     query = Context().session.query(TapeFile).filter(TapeFile.tapewrite_id == tapewrite_id).order_by(TapeFile.id)
 

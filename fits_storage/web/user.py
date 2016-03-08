@@ -155,7 +155,7 @@ Regards,
     return True
 
 @templating.templated("user/password_reset.html")
-def password_reset(things):
+def password_reset(userid, token):
     """
     Handles users clicking on a password reset link that we emailed them.
     Check the reset token for validity, if valid the present them with a
@@ -167,12 +167,10 @@ def password_reset(things):
 
     template_args = dict(
         valid_request = False,
-        debugging     = False, # Activate to see in the page what things are we passed
-        things        = things
         )
 
-    if len(things) != 2:
-        return template_args
+#    if len(things) != 2:
+#        return template_args
 
     # Extract and validate the things from the URL
     userid = things[0]
@@ -375,7 +373,7 @@ def request_password_reset():
     return template_args
 
 @templating.templated("user/staff_access.html")
-def staff_access(things):
+def staff_access():
     """
     Allows supersusers to set accounts to be or not be gemini staff
     """

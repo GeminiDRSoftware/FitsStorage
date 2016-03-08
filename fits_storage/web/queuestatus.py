@@ -19,6 +19,7 @@ from hashlib import md5
 
 DETAIL_THRESHOLD = 20
 
+@needs_login(staffer=True, archive_only=True)
 @templating.templated("queuestatus/index.html")
 def queuestatus_summary():
     general_rows = []
@@ -48,6 +49,7 @@ def queuestatus_summary():
 
     return template_args
 
+@needs_login(staffer=True, archive_only=True)
 @templating.templated("queuestatus/detail.html")
 def queuestatus_tb(qshortname, oid):
     det = error_detail(Context().session, qshortname, oid)
@@ -61,22 +63,23 @@ def queuestatus_tb(qshortname, oid):
 
 QUEUELIMIT = 200
 
-@needs_login(staffer=True, archive_only=True)
-def queuestatus(things):
-    if len(things) == 1 and things[0] == 'json':
-        return queuestatus_update(things)
-    elif len(things) > 1:
-        try:
-            return queuestatus_tb(things[0], int(things[1]))
-        except (TypeError, ValueError):
-            # things[1] is not a valid integer, thus not an ID...
-            pass
-        except UnknownQueueError:
-            # Something failed under queuestatus_tb...
-            pass
-    return queuestatus_summary()
+#@needs_login(staffer=True, archive_only=True)
+#def queuestatus(things):
+#    if len(things) == 1 and things[0] == 'json':
+#        return queuestatus_update(things)
+#    elif len(things) > 1:
+#        try:
+#            return queuestatus_tb(things[0], int(things[1]))
+#        except (TypeError, ValueError):
+#            # things[1] is not a valid integer, thus not an ID...
+#            pass
+#        except UnknownQueueError:
+#            # Something failed under queuestatus_tb...
+#            pass
+#    return queuestatus_summary()
 
-def queuestatus_update(things):
+@needs_login(staffer=True, archive_only=True)
+def queuestatus_update():
     cache = {}
 
     ctx = Context()

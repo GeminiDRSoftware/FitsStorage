@@ -91,39 +91,37 @@ def make_tarinfo(name, **kw):
         setattr(ti, key, value)
     return ti
 
+def download_post():
+    # Parse form data
+    formdata = ctx.get_form_data()
+    thelist = []
+    if 'files' in formdata.keys():
+        fields = formdata['files']
+        if isinstance(fields, list):
+            for field in fields:
+                thelist.append(str(field.value))
+        else:
+            thelist.append(str(fields))
+    return download(selection = {'filelist': thelist},
+                    associated_calibrations = False)
+
 @with_content_type("application/tar")
-def download(things):
+def download(selection, associated_calibrations):
     """
     This is the download server. Given a selection, it will send a tarball of the
     files from the selection that you have access to to the client.
     """
 
-    ctx = Context()
-
-    # assume unless set otherwise later that this is not an associated_calibrations download
-    associated_calibrations = False
-    # If we are called via POST, then parse form data rather than selection
-    if ctx.env.method == 'POST':
-        # Parse form data
-        formdata = ctx.get_form_data()
-        thelist = []
-        if 'files' in formdata.keys():
-            fields = formdata['files']
-            if isinstance(fields, list):
-                for field in fields:
-                    thelist.append(str(field.value))
-            else:
-                thelist.append(str(fields))
-        selection = {'filelist': thelist}
-    else:
-        # First check if this is an associated_calibrations download
-        if 'associated_calibrations' in things:
-            associated_calibrations = True
-            things.remove('associated_calibrations')
-        # Get the selection
-        selection = getselection(things)
+#    # First check if this is an associated_calibrations download
+#    if 'associated_calibrations' in things:
+#        associated_calibrations = True
+#        things.remove('associated_calibrations')
+#    # Get the selection
+#    selection = getselection(things)
 
     selection['present'] = True
+
+    ctx = Context()
     # Open a database session
 
     session = ctx.session
@@ -285,7 +283,7 @@ supported_tests = (
     is_misc
 )
 
-def fileserver(things):
+def fileserver(filenamegiven):
     """
     This is the fileserver funciton. It always sends exactly one fits file, uncompressed.
     It handles authentication for serving the files too
@@ -293,13 +291,13 @@ def fileserver(things):
 
     ctx = Context()
 
-    # OK, first find the file they asked for in the database
-    # tart up the filename if possible
-    if not things:
-        ctx.resp.status = Return.HTTP_NOT_FOUND
-        return
+#    # OK, first find the file they asked for in the database
+#    # tart up the filename if possible
+#    if not things:
+#        ctx.resp.status = Return.HTTP_NOT_FOUND
+#        return
 
-    filenamegiven = things.pop(0)
+#    filenamegiven = things.pop(0)
     filename = gemini_fitsfilename(filenamegiven)
     if not filename:
         filename = filenamegiven
