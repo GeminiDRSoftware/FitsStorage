@@ -345,11 +345,14 @@ class Response(adapter.Response):
         self.make_empty()
         self.set_content_type(content_type)
         self.status = code
-        msg  = message if message is not None else status_message[code]
-        if template is None:
-            template = template_for_status['{}:{}'.format(content_type, code)]
-
-        self.append(templating.get_env().get_template(template).render(message = msg))
+        msg  = message if message is not None else status_message.get(code, 'Error: {}'.format(code))
+        try:
+            if template is None:
+                template = template_for_status['{}:{}'.format(content_type, code)]
+        except KeyError:
+            self.append(msg)
+        else:
+            self.append(templating.get_env().get_template(template).render(message = msg))
 
         raise ClientError(code, msg, annotate)
 
