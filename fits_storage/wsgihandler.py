@@ -236,19 +236,21 @@ url_map = Map([
     # the same reason as with obslogs (see above)
     Rule('/gmoscaljson/<selection:selection>', gmoscal_json),
 
-    # TODO: We're still not capturing the order_by, that comes in the query string as arguments
-    #       Figure out something.
-    #       For the time being, we'll leave it as None
-    Rule('/searchform/<seq_of:things>', searchform, defaults=dict(orderby=None)),
+    # Archive Search Form
+    Rule('/searchform/<seq_of:things>', searchform,
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
 
-    # This header summary routing
-    # TODO: We're still not capturing the order_by, that comes in the query string as arguments
-    #       Figure out something.
-    Rule('/summary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'summary', [])),
-    Rule('/diskfiles/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'diskfiles', [])),
-    Rule('/ssummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'ssummary', [])),
-    Rule('/searchresults/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'searchresults', [])),
-    Rule('/associated_cals/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'associated_cals', [])),
+    # This is the header summary handler
+    Rule('/summary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'summary'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/diskfiles/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'diskfiles'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/ssummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'ssummary'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/searchresults/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'searchresults'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/associated_cals/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'associated_cals'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
 
 
     ],

@@ -1,5 +1,6 @@
 import re
 from .adapter import Context, Return
+from urlparse import parse_qs
 
 # This rule regular expressions is copied from werkzeug's, as we intend to make it
 # syntax-compatible
@@ -56,7 +57,7 @@ def parse_converter_args(arguments):
 
 class Rule(object):
     def __init__(self, string, action=None, methods=None, redirect_to=None,
-                 defaults=None, strict=False):
+                 defaults=None, strict=False, collect_qs_args=None):
         # TODO: Assert that there's a value for either action or redirect_to
         self.string = string
         self.action = action
@@ -69,6 +70,7 @@ class Rule(object):
         else:
             self.methods = None
         self.defaults = defaults or {}
+        self.qs_mapping = collect_qs_args or {}
 
         self._regex = None
         self._variables  = {}
@@ -128,6 +130,14 @@ class Rule(object):
                         added.add(var)
                 except ValueError:
                     return
+
+            if self.qs_mapping:
+                qs_args = parse_qs(Context().req.env.qs)
+                print qs_args
+                for var, mapping in self.qs_mapping.iteritems():
+                    if var in qs_args:
+                        result.append({mapping: qs_args[var]})
+                        added.add(mapping)
 
             for var, val in self.defaults.iteritems():
                 if var not in added:

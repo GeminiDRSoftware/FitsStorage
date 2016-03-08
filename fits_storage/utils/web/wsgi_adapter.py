@@ -45,7 +45,7 @@ class Environment(object):
 
     @property
     def unparsed_uri(self):
-        q = self.qs
+        qs = self.qs
         return self.uri + ('' if not qs else '?' + qs)
 
     @property
@@ -307,6 +307,9 @@ class ArchiveHandler(SimpleHandler):
 
                     self.result = application(self.environ, self.start_response)
                     self.finish_response()
+                except Exception as e:
+                    print "EXCEPTION:", str(e)
+                    raise
                 finally:
                     session.commit()
                     ctx.usagelog.set_finals(ctx)
