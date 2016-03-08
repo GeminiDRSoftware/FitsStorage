@@ -381,6 +381,11 @@ class BZ2OnTheFlyDecompressor(object):
 
         return ret
 
+unexpected_not_found_template = """
+The file '{fname}' could not be found in the system.</p>
+This was unexpected. Please, inform the administrators.
+"""
+
 def sendonefile(diskfile, content_type=None):
     """
     Send the (one) fits file referred to by the diskfile object to the client.
@@ -398,9 +403,9 @@ def sendonefile(diskfile, content_type=None):
         resp.set_header('Content-Disposition', 'attachment; filename="%s"' % str(diskfile.file.name))
 
 
+    fname = diskfile.filename
     if using_s3:
         # S3 file server
-        fname = diskfile.filename
         resp.content_length = diskfile.data_size
         with s3.fetch_temporary(fname) as buffer:
             if diskfile.compressed:
@@ -409,9 +414,12 @@ def sendonefile(diskfile, content_type=None):
                 resp.sendfile_obj(buffer)
     else:
         # Serve from regular file
-        if diskfile.compressed == True:
-            # Unzip it on the fly
-            resp.content_length = diskfile.data_size
-            resp.sendfile_obj(BZ2OnTheFlyDecompressor(open(diskfile.fullpath(), 'r')))
-        else:
-            resp.sendfile(diskfile.fullpath())
+        try:
+            if diskfile.compressed == True:
+                # Unzip it on the fly
+                resp.content_length = diskfile.data_size
+                resp.sendfile_obj(BZ2OnTheFlyDecompressor(open(diskfile.fullpath(), 'r')))
+            else:
+                resp.sendfile(diskfile.fullpath())
+        except IOError:
+            ctx.resp.client_error(Return.HTTP_NOT_FOUND, unexpected_not_found_template.format(fname = fname))
