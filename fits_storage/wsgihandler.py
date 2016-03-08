@@ -265,6 +265,9 @@ url_map = Map([
     }
 )
 
+for bu in blocked_urls:
+    url_map.add_forbidden(bu)
+
 def get_route(routes):
     env = get_context().env
     return routes.match(env.uri, env.method)
