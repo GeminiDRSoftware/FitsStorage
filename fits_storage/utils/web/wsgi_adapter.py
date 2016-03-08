@@ -37,11 +37,16 @@ class Environment(object):
 
     @property
     def uri(self):
-        return self.unparsed_uri
+        return self._env['PATH_INFO']
+
+    @property
+    def qs(self):
+        return self._env['QUERY_STRING']
 
     @property
     def unparsed_uri(self):
-        return self._env.get('PATH_INFO', '')
+        q = self.qs
+        return self.uri + ('' if not qs else '?' + qs)
 
     @property
     def remote_ip(self):
