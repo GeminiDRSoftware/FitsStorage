@@ -133,7 +133,6 @@ class Rule(object):
 
             if self.qs_mapping:
                 qs_args = parse_qs(Context().req.env.qs)
-                print qs_args
                 for var, mapping in self.qs_mapping.iteritems():
                     if var in qs_args:
                         result.append({mapping: qs_args[var]})
