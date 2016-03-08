@@ -163,11 +163,10 @@ def templated(template_name, content_type="text/html", with_generator=False, def
                 if at_end_hook:
                     at_end_hook()
             except SkipTemplateError as e:
-                status = e.status
-                if e.content_type is not None:
-                    ctx.resp.content_type = e.content_type
-                if e.message is not None:
-                    ctx.resp.append(e.message)
+                kw = {'message': e.message}
+                if e.content_type:
+                    kw['content_type'] = e.content_type
+                ctx.resp.client_error(e.status, **kw)
             except IOError:
                 # Assume that his means we got an interrupted connection
                 # (eg. the user stopped the query on their browser)
