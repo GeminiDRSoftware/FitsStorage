@@ -65,10 +65,12 @@ class Rule(object):
             self.methods = None
 
         self._regex = None
+        self._variables  = {}
         self._converters = {}
 
     def compile(self, map_):
         reg_parts = []
+        varn = 1
         for (converter, arguments, variable) in parse_rule(self.string):
             if converter is None:
                 # Static part of the URL
@@ -79,8 +81,11 @@ class Rule(object):
                 else:
                     c_args, c_kwargs = (), {}
                 convobj = map_.get_converter(variable, converter, c_args, c_kwargs)
-                self._converters[variable] = convobj
-                reg_parts.append('(?P<{}>{})'.format(variable, convobj.regex))
+                varseq = 'VAR{}'.format(varn)
+                self._variables[varseq] = (variable if ',' not in variable else tuple(v.strip() for v in variable.split(',')))
+                self._converters[varseq] = convobj
+                reg_parts.append('(?P<{}>{})'.format(varseq, convobj.regex))
+                varn = varn + 1
         regex = r'^{}$'.format(u''.join(reg_parts))
         self._regex = re.compile(regex, re.UNICODE)
 
@@ -88,10 +93,15 @@ class Rule(object):
         res = self._regex.search(path)
         if res:
             gd = res.groupdict()
-            result = {}
+            result = []
             for name, value in gd.iteritems():
                 try:
-                    result[name] = self._converters[name].to_python(value)
+                    var = self._variables[name]
+                    val = self._converters[name].to_python(value)
+                    if isinstance(var, tuple):
+                        result.append(dict(zip(var, val)))
+                    else:
+                        result.append({var: val})
                 except ValueError:
                     return
 
@@ -122,12 +132,18 @@ class Map(object):
     def __init__(self, rules=None, converters=None):
         self._rules = []
         self.converters = DEFAULT_CONVERTERS.copy()
+        if converters is not None:
+            for name, convclass in converters.iteritems():
+                self.add_converter(name, convclass)
         for rule in rules or ():
             self.add(rule)
 
     def add(self, rule):
         rule.compile(self)
         self._rules.append(rule)
+
+    def add_converter(self, name, convclass):
+        self.converters[name] = convclass
 
     def get_converter(self, variable, converter_name, args, kwargs):
         if converter_name not in self.converters:
