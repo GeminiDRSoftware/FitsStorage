@@ -11,6 +11,8 @@ from ..orm.downloadlog import DownloadLog
 from ..orm.filedownloadlog import FileDownloadLog
 from ..orm.miscfile import MiscFile
 
+from ..utils.web import Context
+
 from .selection import getselection, openquery, selection_to_URL
 from .summary import list_headers
 from .user import userfromcookie, AccessForbidden, DEFAULT_403_TEMPLATE
@@ -119,7 +121,7 @@ def download(req, things):
     # Open a database session
     with session_scope() as session:
         # Instantiate the download log
-        downloadlog = DownloadLog(req.usagelog)
+        downloadlog = DownloadLog(Context().usagelog)
         session.add(downloadlog)
         downloadlog.selection = str(selection)
         downloadlog.query_started = datetime.datetime.utcnow()
@@ -183,7 +185,7 @@ def download(req, things):
         # Here goes!
         tar = tarfile.open(name=tarfilename, mode="w|", fileobj=req)
         for header in headers:
-            filedownloadlog = FileDownloadLog(req.usagelog)
+            filedownloadlog = FileDownloadLog(Context().usagelog)
             filedownloadlog.diskfile_filename = header.diskfile.filename
             filedownloadlog.diskfile_file_md5 = header.diskfile.file_md5
             filedownloadlog.diskfile_file_size = header.diskfile.file_size
@@ -301,7 +303,7 @@ def fileserver(req, things):
 
     with session_scope(no_rollback=True) as session:
         # Instantiate the download log
-        downloadlog = DownloadLog(req.usagelog)
+        downloadlog = DownloadLog(Context().usagelog)
         session.add(downloadlog)
         downloadlog.query_started = datetime.datetime.utcnow()
 

@@ -11,6 +11,7 @@ from .selection import sayselection, openquery
 from ..apache_return_codes import HTTP_OK
 
 from ..utils.userprogram import icanhave
+from ..utils.web import Context
 
 from ..orm.querylog import QueryLog
 
@@ -18,7 +19,7 @@ from . import templating
 
 def add_summary_completed(session, req):
     try:
-        querylog = session.query(QueryLog).filter(QueryLog.usagelog_id == req.usagelog.id).one()
+        querylog = session.query(QueryLog).filter(QueryLog.usagelog_id == Context().usagelog.id).one()
         querylog.summary_completed = datetime.datetime.utcnow()
     except NoResultFound:
         # Shouldn't happen, but just in case...
@@ -35,7 +36,7 @@ def obslogs(session, req, selection, sumtype):
     """
 
     # Instantiate querylog, populate initial fields
-    querylog = QueryLog(req.usagelog)
+    querylog = QueryLog(Context().usagelog)
     querylog.summarytype = sumtype
     querylog.selection = str(selection)
     querylog.query_started = datetime.datetime.utcnow()

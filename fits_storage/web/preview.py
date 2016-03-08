@@ -10,6 +10,8 @@ from ..orm.header import Header
 from ..orm.preview import Preview
 from ..orm.downloadlog import DownloadLog
 
+from ..utils.web import Context
+
 from .selection import getselection, openquery, selection_to_URL
 from .summary import list_headers
 from .user import userfromcookie, AccessForbidden
@@ -58,7 +60,7 @@ def preview(req, things):
         except TypeError: # Will happen if .first() returns None
             return apache.HTTP_NOT_FOUND
 
-        downloadlog = DownloadLog(req.usagelog)
+        downloadlog = DownloadLog(Context().usagelog)
         session.add(downloadlog)
         downloadlog.query_started = datetime.datetime.utcnow()
 

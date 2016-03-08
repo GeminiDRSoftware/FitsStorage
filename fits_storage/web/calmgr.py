@@ -5,7 +5,11 @@ from ..orm import sessionfactory
 from ..orm.file import File
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
-from ..web.selection import queryselection, openquery
+
+from .selection import queryselection, openquery
+
+from ..utils.web import Context
+
 from ..cal import get_cal_object
 from ..fits_storage_config import using_apache, storage_root, fits_servername
 from ..gemini_metadata_utils import cal_types
@@ -110,9 +114,10 @@ def generate_post_calmgr(session, req, selection, caltype):
 
     descriptors = eval(desc_str)
     types = eval(type_str)
-    req.usagelog.add_note("CalMGR request CalType: %s" % caltype)
-    req.usagelog.add_note("CalMGR request Descriptor Dictionary: %s" % descriptors)
-    req.usagelog.add_note("CalMGR request Types List: %s" % types)
+    usagelog = Context().usagelog
+    usagelog.add_note("CalMGR request CalType: %s" % caltype)
+    usagelog.add_note("CalMGR request Descriptor Dictionary: %s" % descriptors)
+    usagelog.add_note("CalMGR request Types List: %s" % types)
 
     # OK, there are a couple of items that are handled in the DB as if they are descriptors
     # but they're actually types. This is where we push them into the descriptor disctionary
@@ -131,7 +136,7 @@ def generate_post_calmgr(session, req, selection, caltype):
         md5      = None,
         cal_info = cals_info(c, caltype, qtype='POST',
                                       log=req.log_error,
-                                      add_note=req.usagelog.add_note,
+                                      add_note=usagelog.add_note,
                                       hostname=fits_servername,
                                       storage_root=storage_root)
         )
@@ -159,6 +164,7 @@ def generate_get_calmgr(session, req, selection, caltype):
     # OK, do the query
     headers = query.all()
 
+    usagelog = Context.usagelog
     # Did we get anything?
     if len(headers) > 0:
         # Loop through targets frames we found
@@ -172,7 +178,7 @@ def generate_get_calmgr(session, req, selection, caltype):
                 md5      = header.diskfile.data_md5,
                 cal_info = cals_info(c, caltype, qtype='GET',
                                      log=req.log_error,
-                                     add_note=req.usagelog.add_note,
+                                     add_note=usagelog.add_note,
                                      hostname=req.server.server_hostname),
                 )
 

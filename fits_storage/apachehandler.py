@@ -7,6 +7,8 @@ import re
 import traceback
 from gemini_metadata_utils import gemini_date
 
+from utils.web import Context, context_wrapped
+
 from mod_python import apache
 from mod_python import util
 
@@ -160,19 +162,18 @@ mapping_selection = {
 #### END STANDARD ROUTING ####
 
 # The top top level handler. This simply wraps thehandler with logging funcitons
-def handler(req):
-    # Instantiate the UsageLog instance for this request, populate initial values from req
-    # and stuff it into the request object
-    req.usagelog = UsageLog(req)
-
-    # Add the log to the database
-    # We need to do that here, so there we can reference it in the querylog etc from within the handler call tree
+@context_wrapped
+def handler(ctx, req):
     with session_scope() as session:
+        # Instantiate the UsageLog instance for this request, populate initial values from req
+        usagelog = UsageLog(req)
+        ctx.usagelog = usagelog
+
         try:
             user = userfromcookie(session, req)
             if user:
-                req.usagelog.user_id = user.id
-            session.add(req.usagelog)
+                usagelog.user_id = user.id
+            session.add(usagelog)
             session.commit()
 
             # Call the actual handler
@@ -192,16 +193,16 @@ def handler(req):
             if e.annotate is not None:
                 annotationClass = e.annotate
                 try:
-                    log = session.query(annotationClass).filter(annotationClass.usagelog_id == req.usagelog.id).one()
+                    log = session.query(annotationClass).filter(annotationClass.usagelog_id == usagelog.id).one()
                 except NoResultFound:
-                    log = annotationClass(req.usagelog)
+                    log = annotationClass(usagelog)
                 log.add_note(e.message)
                 session.add(log)
             retary = apache.OK
 
         except templating.TemplateAccessError as e:
             retary = req.status = apache.HTTP_SERVICE_UNAVAILABLE
-            req.usagelog.add_note("Can't access template '{}'".format(str(e)))
+            usagelog.add_note("Can't access template '{}'".format(str(e)))
 
         except (IOError, templating.InterruptedError):
             # HTTP 499 is a non-standard code used by a number of web servers. Nginx defines it
@@ -218,7 +219,7 @@ def handler(req):
             raise
         finally:
             # Grab the final log values
-            req.usagelog.set_finals(req)
+            usagelog.set_finals(req)
             session.commit()
             session.close()
 
@@ -268,7 +269,7 @@ def thehandler(req):
 
     # Extract the main action
     this = things.pop(0)
-    req.usagelog.this = this
+    Context().usagelog.this = this
 
     if this in blocked_urls:
         return apache.HTTP_FORBIDDEN

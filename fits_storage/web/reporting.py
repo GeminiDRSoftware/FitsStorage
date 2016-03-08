@@ -13,11 +13,12 @@ from ..orm.header import Header
 from ..orm.fulltextheader import FullTextHeader
 
 from ..utils.userprogram import canhave_coords
+from ..utils.web import Context
 
 from .user import userfromcookie
 
 def report(req, thing):
-    this = req.usagelog.this
+    this = Context().usagelog.this
 
 
 #    if not (fnthing or match):

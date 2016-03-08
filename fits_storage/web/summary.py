@@ -4,6 +4,7 @@ This module contains the main web summary code.
 import datetime
 
 from ..orm import session_scope
+from ..utils.web import Context
 from ..fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
 from .selection import sayselection, openquery, selection_to_URL
 from .list_headers import list_headers
@@ -84,7 +85,7 @@ def summary_body(session, req, sumtype, selection, orderby, links=True, addition
         selection['present'] = True
 
     # Instantiate querylog, populate initial fields
-    querylog = QueryLog(req.usagelog)
+    querylog = QueryLog(Context().usagelog)
     querylog.summarytype = sumtype
     querylog.selection = str(selection)
     querylog.query_started = datetime.datetime.utcnow()

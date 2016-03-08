@@ -10,6 +10,7 @@ from ..apache_return_codes import HTTP_OK, HTTP_NOT_ACCEPTABLE
 from ..apache_return_codes import HTTP_SERVICE_UNAVAILABLE
 
 from ..utils.api import ApiProxy, ApiProxyError
+from ..utils.web import Context
 
 from ..orm import session_scope
 from ..orm.fileuploadlog import FileUploadLog
@@ -34,7 +35,7 @@ def upload_file(req, filename, processed_cal=False):
     """
 
     with session_scope() as session:
-        fileuploadlog = FileUploadLog(req.usagelog)
+        fileuploadlog = FileUploadLog(Context().usagelog)
         fileuploadlog.filename = filename
         fileuploadlog.processed_cal = processed_cal
         session.add(fileuploadlog)
