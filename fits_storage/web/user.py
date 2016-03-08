@@ -647,7 +647,7 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
                         pass
 
             if not got_magic:
-                raise_error = partial(ctx.resp.client_error, code=Return.HTTP_FORBIDDEN, content_type=ctype, annotate=annotate)
+                raise_error = functools.partial(ctx.resp.client_error, code=Return.HTTP_FORBIDDEN, content_type=ctype, annotate=annotate)
                 if only_magic:
                     raise_error("Could not find a proper magic cookie for a cookie-only service")
                 if not user:
