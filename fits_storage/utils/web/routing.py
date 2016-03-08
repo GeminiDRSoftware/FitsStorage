@@ -82,8 +82,7 @@ class Rule(object):
         # of a single one
         varn = 1
         first_static = True
-        add_slash = not (self.strict or self.string.endswith('/'))
-        to_compile = self.string if not add_slash else (self.string + '/')
+        add_variable_slash = not (self.strict or self.string.endswith('/'))
         for (converter, arguments, variable) in parse_rule(self.string):
             if converter is None:
                 # Static part of the URL
@@ -106,7 +105,7 @@ class Rule(object):
                 self._converters[varseq] = convobj
                 reg_parts.append('(?P<{}>{})'.format(varseq, convobj.regex))
                 varn = varn + 1
-        regex = r'^{}$'.format(u''.join(reg_parts))
+        regex = r'^{}{}$'.format(u''.join(reg_parts), '/?' if add_variable_slash else '')
         self._regex = re.compile(regex, re.UNICODE)
 
     def match(self, path):
