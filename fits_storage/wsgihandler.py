@@ -122,7 +122,12 @@ Python path:
 {path}
 
 uri: {uri}
+
+Environment:
+{env}
 """
+
+from pprint import pformat
 
 # Send debugging info to browser
 def debugmessage():
@@ -134,6 +139,7 @@ def debugmessage():
     resp.append(debug_template.format(
         path        = '\n'.join('-- {}'.format(x) for x in sys.path),
         uri         = req.env.uri,
+        env         = pformat(req.env._env)
     ))
 
 ####### END HELPER FUNCTIONS #######
