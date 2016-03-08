@@ -141,6 +141,19 @@ def only_if_not_started_response(fn):
         return fn(self, *args, **kw)
     return wrapper
 
+class BufferedFileObjectIterator(object):
+    def __init__(self, fobj, chunksize=BUFFSIZE):
+        self.fobj  = fobj
+        self.chksz = chunksize
+
+    def __iter__(self):
+        sz = self.chksz
+        while True:
+            n = self.fobj.read(sz)
+            if not n:
+                break
+            yield n
+
 class Response(adapter.Response):
     def __init__(self, session, wsgienv, start_response):
         super(Response, self).__init__(session)
@@ -224,16 +237,10 @@ class Response(adapter.Response):
         # json.dump(obj, self._req, **kw)
 
     def sendfile(self, path):
-        raise NotImplementedError("This is not implemented yet")
-        # self._req.sendfile(path)
+        self.sendfile_obj(open(path))
 
     def sendfile_obj(self, fp):
-        raise NotImplementedError("This is not implemented yet")
-        # while True:
-        #     n = fp.read(BUFFSIZE)
-        #     if not n:
-        #         break
-        #     self._req.write(n)
+        self.append_iterable(BufferedFileObjectIterator(fp))
 
     @contextmanager
     def tarfile(self, name, **kw):
