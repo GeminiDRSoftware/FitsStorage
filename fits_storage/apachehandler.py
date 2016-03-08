@@ -4,10 +4,10 @@
 
 import sys
 import re
-import traceback
-from gemini_metadata_utils import gemini_date
 
 from utils.web import Context, context_wrapped, ModPythonRequest, ModPythonResponse
+import traceback
+from gemini_metadata_utils import gemini_date
 
 from mod_python import apache
 from mod_python import util
@@ -365,8 +365,6 @@ def thehandler(req):
     # This is the projects observed feature
     if this == "programsobserved":
         selection = getselection(things)
-        if ("date" not in selection) and ("daterange" not in selection):
-            selection["date"] = gemini_date("today")
         retval = progsobserved(selection)
         return retval
 

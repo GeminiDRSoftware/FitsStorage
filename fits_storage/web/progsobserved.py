@@ -12,11 +12,16 @@ from . import templating
 from sqlalchemy import join, not_, func
 import datetime
 
+from ..gemini_metadata_utils import gemini_date
+
 @templating.templated("progsobserved.html")
 def progsobserved(selection):
     """
     This function generates a list of programs observed on a given night
     """
+
+    if ("date" not in selection) and ("daterange" not in selection):
+        selection["date"] = gemini_date("today")
 
     with session_scope() as session:
         # the basic query in this case
