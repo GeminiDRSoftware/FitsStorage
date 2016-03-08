@@ -345,7 +345,7 @@ def handler(environ, start_response):
             session.add(log)
         return ctx.resp.respond(unicode_to_string)
 
-app = ArchiveContextMiddleware(handler)
+application = ArchiveContextMiddleware(handler)
 
 # Provide a basic WSGI server, in case we're testing or don't need any fancy
 # container...
@@ -356,7 +356,7 @@ if __name__ == '__main__':
     port   = '8000'
 
     try:
-        httpd = wsgiref.simple_server.make_server(server, int(port), app)
+        httpd = wsgiref.simple_server.make_server(server, int(port), application)
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nExiting after Ctrl-c")
