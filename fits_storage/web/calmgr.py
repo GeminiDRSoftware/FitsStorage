@@ -183,7 +183,7 @@ def generate_get_calmgr(req, selection, caltype):
                 cal_info = cals_info(c, caltype, qtype='GET',
                                      log=ctx.req.log,
                                      add_note=usagelog.add_note,
-                                     hostname=ctx.req.env.server_hostname),
+                                     hostname=ctx.env.server_hostname),
                 )
 
     # commit the usagelog notes
