@@ -128,6 +128,47 @@ class Fixture(object):
     def __repr__(self):
         return "Fixture({!r}, method={})".format(self.uri, ('POST' if self.post else 'GET'))
 
+class FixtureIter(object):
+    def __init__(self, cases):
+        self.cases = cases
+
+    def get_route(self, env):
+        return url_map.match(env['PATH_INFO'], env['REQUEST_METHOD'])
+
+    def __iter__(self):
+        for fix in self.cases:
+            route = self.get_route(fix.get_env())
+            yield route, fix
+
+class WebTestMiddleware(object):
+    def __init__(self, tested_case):
+        self.tested_case = tested_case
+        self.resp = None
+
+    def __call__(self, environ, start_response):
+        ctx = get_context()
+        self.resp = ctx.resp
+        dispatch(*self.tested_case)
+
+def start_response(*args):
+    def write(obj):
+        print obj
+    return write
+
+def run_web_test(fn, env):
+    tm = WebTestMiddleware(fn)
+    ArchiveContextMiddleware(tm)(env, start_response)
+
+    return tm
+
+DEBUGGING=False
+NORTH=True
+
+if NORTH:
+    file_future_release='N20150708S0102.fits'
+else:
+    file_future_release='S20150913S0044.fits'
+
 fixtures = (
     # test /user_list, first with anonymous user, then with logged-in user
     Fixture('/user_list', cases="You don't appear to be logged in as a Gemini Staff user"),
@@ -171,47 +212,78 @@ fixtures = (
     Fixture('/import_odb_notifications', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
     Fixture('/import_odb_notifications', post=True,
             exception=(ClientError, '<!-- The content sent is not valid XML -->')),
+    # Test /logout
+    Fixture('/logout', cases='You are sucessfully logged out of the Gemini Archive.'),
+    Fixture('/logout', cookies=cookies['user2'],
+            cases='You are sucessfully logged out of the Gemini Archive.'),
+    # Test /curation
+    Fixture('/curation',
+            cases=('<h2>Duplicate Canonical DiskFiles:',
+                   'None found.')),
+    # Test /nameresolver
+    Fixture('/nameresolver', retcode=404),
+    Fixture('/nameresolver/simbad/m31',
+            cases=('<Resolver name="Su=Simbad (via url)">',
+                   '<jpos>00:42:44.32 +41:16:07.5</jpos>',
+                   '<refPos>2006AJ....131.1163S</refPos>')),
+    # Test /fileontape
+    Fixture('/fileontape', retcode=404),
+    Fixture('/fileontape/foobar', cases='<?xml version="1.0" ?>\n<file_list>\n</file_list>'),
+
+    # Test /file
+    Fixture('/file', retcode=404), # Not found because the URL matches no route
+    Fixture('/file/foobar', retcode=404), # Not found because the file does not exist
+    Fixture('/file/{}'.format(file_future_release), # Release date in the future - this test will work until 2017-01
+            exception=(ClientError, 'Not enough privileges to download this content')),
+    Fixture('/file/S20150901S0661.fits', # Propietary coords
+            exception=(ClientError, 'Not enough privileges to download this content')),
+    Fixture('/file/N20111115S0250.fits',
+            cases="SIMPLE  =                    T / file does conform to FITS standard"),
+    Fixture('/file/{}'.format(file_future_release), # Release date in the future - this test will work until 2017-01
+            cookies=cookies['user2'],
+            cases="SIMPLE  =                    T / file does conform to FITS standard"),
+    Fixture('/file/S20150901S0661.fits', # Propietary coords
+            retcode=(404 if NORTH else 200),
+            cookies=cookies['user2'],
+            cases="SIMPLE  =                    T / file does conform to FITS standard",
+            exception=(None if not NORTH else
+                       (ClientError, 'This was unexpected. Please, inform the administrators.'))),
+
+    # Test /download (POST and GET) - just make sure that they return something
+    Fixture('/download', data={'files': ['N20111115S0250.fits', file_future_release]}),
+    Fixture('/download/N20111115S0250.fits'),
+
+    # Test /qametrics
+    Fixture('/qametrics', cases=""),
+    Fixture('/qametrics/iq/sb',
+            cases="#Datalabel, filename, detector, filter, utdatetime, Nsamples, FWHM, FWHM_std, isoFWHM, isoFWHM_std, EE50d, EE50d_std"),
+
+    # Test /qaforgui
+    Fixture('/qaforgui', retcode=404),
+    Fixture('/qaforgui/20151201', cases="[]"),
+
+    # Test /usagedetails
+    Fixture('/usagedetails', retcode=404),
+    Fixture('/usagedetails/196',
+            exception=(ClientError, "You need to be logged in to access this resource")),
+    Fixture('/usagedetails/196', cookies=cookies['user2'],
+            cases="<tr><td>HTTP status:<td>200 (OK)</tr>"),
+
+    # Test /downloadlog
+    Fixture('/downloadlog',
+            exception=(ClientError, "You need to be logged in to access this resource")),
+    Fixture('/downloadlog', cookies=cookies['user2'],
+            cases='Please, provide at least one filename pattern for the query'),
+    Fixture('/downloadlog/N20120825S05', cookies=cookies['user2'],
+            cases="<td>128.171.188.44\n    <td>2015-07-16 00:06:28.113801\n    <td>200 (OK)\n  </tr>"),
 )
-
-class FixtureIter(object):
-    def __init__(self, cases):
-        self.cases = cases
-
-    def get_route(self, env):
-        return url_map.match(env['PATH_INFO'], env['REQUEST_METHOD'])
-
-    def __iter__(self):
-        for fix in self.cases:
-            route = self.get_route(fix.get_env())
-            yield route, fix
-
-class WebTestMiddleware(object):
-    def __init__(self, tested_case):
-        self.tested_case = tested_case
-        self.resp = None
-
-    def __call__(self, environ, start_response):
-        ctx = get_context()
-        self.resp = ctx.resp
-        dispatch(*self.tested_case)
-
-def start_response(*args):
-    def write(obj):
-        print obj
-    return write
-
-def run_web_test(fn, env):
-    tm = WebTestMiddleware(fn)
-    ArchiveContextMiddleware(tm)(env, start_response)
-
-    return tm
-
-DEBUGGING=True
 
 @pytest.mark.usefixtures("min_rollback")
 @pytest.mark.parametrize("route,expected", FixtureIter(fixtures))
 def test_wsgi(min_session, route, expected):
-    if isinstance(route[0], int):
+    if route is None:
+        assert expected.status == 404
+    elif isinstance(route[0], int):
         assert expected.status == route[0]
     else:
         env = expected.get_env()
@@ -219,7 +291,7 @@ def test_wsgi(min_session, route, expected):
             excep, message = expected.exc
             with pytest.raises(excep) as excinfo:
                 run_web_test(route, env)
-            assert message in excinfo.value
+            assert message in str(excinfo.value)
         else:
             tm = run_web_test(route, env)
 
