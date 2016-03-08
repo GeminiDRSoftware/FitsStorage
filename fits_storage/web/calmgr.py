@@ -7,12 +7,11 @@ from ..orm.header import Header
 
 from .selection import queryselection, openquery
 
-from ..utils.web import Context
+from ..utils.web import Context, Return
 
 from ..cal import get_cal_object
-from ..fits_storage_config import using_apache, storage_root, fits_servername
+from ..fits_storage_config import storage_root, fits_servername
 from ..gemini_metadata_utils import cal_types
-from ..apache_return_codes import HTTP_OK, HTTP_NOT_ACCEPTABLE
 
 from . import templating
 
@@ -102,10 +101,10 @@ def cals_info(cal_obj, caltype, qtype='UNKNOWN', log=no_func, add_note=no_func, 
             log("Exception in cal association: %s: %s %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
             add_note("Exception in cal association: %s: %s %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
 
-def generate_post_calmgr(req, selection, caltype):
+def generate_post_calmgr(selection, caltype):
     # OK, get the details from the POST data
     ctx = Context()
-    clientdata = ctx.req.raw_data
+    clientdata = ctx.raw_data
     clientstr = urllib.unquote_plus(clientdata)
 
     match = re.match("descriptors=(.*)&types=(.*)", clientstr)
@@ -135,7 +134,7 @@ def generate_post_calmgr(req, selection, caltype):
         filename = None,
         md5      = None,
         cal_info = cals_info(c, caltype, qtype='POST',
-                                      log=ctx.req.log,
+                                      log=ctx.log,
                                       add_note=usagelog.add_note,
                                       hostname=fits_servername,
                                       storage_root=storage_root)
@@ -144,7 +143,7 @@ def generate_post_calmgr(req, selection, caltype):
     # Commit the changes to the usagelog
     ctx.session.commit()
 
-def generate_get_calmgr(req, selection, caltype):
+def generate_get_calmgr(selection, caltype):
     # OK, we got called via a GET - find the science datasets in the database
     # The Basic Query
 
@@ -181,7 +180,7 @@ def generate_get_calmgr(req, selection, caltype):
                 filename = header.diskfile.file.name,
                 md5      = header.diskfile.data_md5,
                 cal_info = cals_info(c, caltype, qtype='GET',
-                                     log=ctx.req.log,
+                                     log=ctx.log,
                                      add_note=usagelog.add_note,
                                      hostname=ctx.env.server_hostname),
                 )
@@ -190,10 +189,9 @@ def generate_get_calmgr(req, selection, caltype):
     session.commit()
 
 @templating.templated("calmgr.xml", content_type='text/xml')
-def calmgr(req, selection):
+def calmgr(selection):
     """
     This is the calibration manager. It implements a machine readable calibration association server
-    req is an apache request handler object
     type is the summary type required
     selection is an array of items to select on, simply passed through to the webhdrsummary function
         - in this case, this will usually be a datalabel or filename
@@ -207,13 +205,11 @@ def calmgr(req, selection):
     This uses the calibration classes to do the association. It doesn't reference the
     "applicable" feature of the calibration classes though, it attempts to find a calibration
     of the type requested regardless of its applicability.
-
-    returns an apache request status code
     """
 
     # There selection has to be a closed query. If it's open, then disallow
     if openquery(selection):
-        raise templating.SkipTemplateError(HTTP_NOT_ACCEPTABLE, content_type='text/plain',
+        raise templating.SkipTemplateError(Return.HTTP_NOT_ACCEPTABLE, content_type='text/plain',
                                            message='<!-- Error: Selection cannot represent an open query for calibration association -->\n\n')
 
     # Only the canonical versions
@@ -226,7 +222,7 @@ def calmgr(req, selection):
 
     # An empty cal type is acceptable for GET - means to list all the calibrations available
     if not caltype and method == 'POST':
-        raise templating.SkipTemplateError(HTTP_NOT_ACCEPTABLE, content_type='text/plain',
+        raise templating.SkipTemplateError(Return.HTTP_NOT_ACCEPTABLE, content_type='text/plain',
                                            message='<!-- Error: No calibration type specified-->\n\n')
 
     gen = (generate_post_calmgr if method == 'POST' else generate_get_calmgr)
@@ -236,5 +232,5 @@ def calmgr(req, selection):
         req_method   = method,
         now          = datetime.datetime.now(),
         utcnow       = datetime.datetime.utcnow(),
-        generator    = gen(req, selection, caltype),
+        generator    = gen(selection, caltype),
         )

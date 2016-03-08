@@ -3,8 +3,6 @@ This is the Fits Storage Web Summary module. It provides the functions
 which query the database and generate html for the web header
 summaries.
 """
-from mod_python import apache
-
 from ..orm.photstandard import PhotStandard, PhotStandardObs
 from ..orm.footprint import Footprint
 
@@ -28,7 +26,7 @@ def list_phot_std_obs(header_id):
 bands = ('u', 'v', 'g', 'r', 'i', 'z', 'y', 'j', 'h', 'k', 'lprime', 'm')
 band_names = [(x if x != 'lprime' else 'l_prime') for x in bands]
 
-def get_standard_obs(req, header_id):
+def get_standard_obs(header_id):
     return dict(
         bands = [x+'_mag' for x in bands],
         band_names = band_names,
@@ -36,12 +34,12 @@ def get_standard_obs(req, header_id):
         )
 
 @templating.templated("standards/standardobs.html")
-def standardobs(req, header_id):
+def standardobs(header_id):
     """
     sends and html table detailing the standard stars visisble in this header_id
     """
 
-    return get_standard_obs(req, header_id)
+    return get_standard_obs(header_id)
 
 # NOTE: There's no direct access to this from the front end. It was used in file_list, but
 #       we really want to use get_standard_obs instead.
@@ -50,9 +48,9 @@ def standardobs(req, header_id):
 #       that we don't really want to use it anywhere else
 #
 # @templating.templated("standards/standardobs.xml", content_type='text/xml')
-# def xmlstandardobs(req, header_id):
+# def xmlstandardobs(header_id):
 #     """
 #     Writes xml fragment defining the standards visible in this header_id
 #     """
 #
-#     return get_standard_obs(Context().session, req, header_id)
+#     return get_standard_obs(header_id)

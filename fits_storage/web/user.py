@@ -13,10 +13,6 @@ from ..fits_storage_config import fits_servername, smtp_server, use_as_archive
 
 from . import templating
 
-# This will only work with apache
-from mod_python import apache
-from mod_python import util
-
 import re
 import datetime
 import time
@@ -27,12 +23,15 @@ import functools
 bad_password_msg = "Bad password - must be at least 14 characters long, and contain at least one lower case letter, upper case letter, decimal digit and non-alphanumeric character (e.g. !, #, %, * etc)"
 
 @templating.templated("user/request_account.html")
-def request_account(req, things):
+def request_account(things):
     """
     Generates and handles web form for requesting new user accounts
     """
+
+    ctx = Context()
+
     # Process the form data first if there is any
-    formdata = util.FieldStorage(req)
+    formdata = ctx.get_form_data()
     request_attempted = False
     valid_request = None
     reason_bad = None
@@ -95,7 +94,7 @@ def request_account(req, things):
             newuser = User(username)
             newuser.fullname = fullname
             newuser.email = email
-            session = Context().session
+            session = ctx.session
             session.add(newuser)
             session.commit()
             template_args['emailed'] = send_password_reset_email(newuser.id)
@@ -156,14 +155,15 @@ Regards,
     return True
 
 @templating.templated("user/password_reset.html")
-def password_reset(req, things):
+def password_reset(things):
     """
     Handles users clicking on a password reset link that we emailed them.
     Check the reset token for validity, if valid the present them with a
     password reset form and process it when submitted.
     """
 
-    session = Context().session
+    ctx = Context()
+    session = ctx.session
 
     template_args = dict(
         valid_request = False,
@@ -208,7 +208,7 @@ def password_reset(req, things):
     # Did we get a submitted form?
     request_attempted = False
     request_valid = False
-    formdata = util.FieldStorage(req)
+    formdata = ctx.get_form_data()
     password = None
     again = None
     if formdata:
@@ -247,7 +247,7 @@ def password_reset(req, things):
     return template_args
 
 @templating.templated("user/change_password.html")
-def change_password(req, things):
+def change_password(things):
     """
     Handles a logged in user wanting to change their password.
     """
@@ -257,7 +257,7 @@ def change_password(req, things):
     ctx = Context()
 
     # Process the form data first if there is any
-    formdata = util.FieldStorage(req)
+    formdata = ctx.get_form_data()
     request_attempted = False
     valid_request = None
     reason_bad = None
@@ -316,12 +316,15 @@ def change_password(req, things):
     return template_args
 
 @templating.templated("user/request_password_reset.html")
-def request_password_reset(req):
+def request_password_reset():
     """
     Generate and process a web form to request a password reset
     """
+
+    ctx = Context()
+
     # Process the form data first if thre is any
-    formdata = util.FieldStorage(req)
+    formdata = ctx.get_form_data()
     request_valid = None
 
     username = None
@@ -350,7 +353,7 @@ def request_password_reset(req):
 
     if request_valid:
         # Try to process it
-        query = Context().session.query(User)
+        query = ctx.session.query(User)
         if username:
             query = query.filter(User.username == username)
         elif email:
@@ -372,7 +375,7 @@ def request_password_reset(req):
     return template_args
 
 @templating.templated("user/staff_access.html")
-def staff_access(req, things):
+def staff_access(things):
     """
     Allows supersusers to set accounts to be or not be gemini staff
     """
@@ -380,7 +383,7 @@ def staff_access(req, things):
     ctx = Context()
 
     # Process the form data first if there is any
-    formdata = util.FieldStorage(req)
+    formdata = ctx.get_form_data()
     username = ''
     action = ''
 
@@ -418,7 +421,7 @@ def staff_access(req, things):
     return template_args
 
 @templating.templated("user/login.html")
-def login(req, things):
+def login(things):
     """
     Presents and processes a login form
     Sends session cookie if sucessfull
@@ -426,7 +429,7 @@ def login(req, things):
     ctx = Context()
 
     # Process the form data first if there is any
-    formdata = util.FieldStorage(req)
+    formdata = ctx.get_form_data()
     request_attempted = False
     valid_request = None
     reason_bad = None
@@ -476,7 +479,7 @@ def login(req, things):
     return template_args
 
 @templating.templated("user/logout.html")
-def logout(req):
+def logout():
     """
     Log out all archive sessions for this user
     """
@@ -505,7 +508,7 @@ def logout(req):
     return {}
 
 @templating.templated("user/whoami.html")
-def whoami(req, things):
+def whoami(things):
     """
     Tells you who you are logged in as, and presents the account maintainace links
     """
@@ -529,7 +532,7 @@ def whoami(req, things):
     return template_args
 
 @templating.templated("user/list.html")
-def user_list(req):
+def user_list():
     """
     Displays a list of archive users. Must be logged in as a gemini_staff user to
     see this.
@@ -636,7 +639,7 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
     """
     def decorator(fn):
         @functools.wraps(fn)
-        def wrapper(req, *args, **kw):
+        def wrapper(*args, **kw):
             ctx = Context()
 
             if content_type == 'json':
@@ -670,6 +673,6 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
                     raise AccessForbidden("You need to be logged in as a Superuser to access this resource", template=template, content_type=ctype, annotate=annotate)
                 if staffer is True and not user.gemini_staff:
                     raise AccessForbidden("You need to be logged in as Gemini Staff member to access this resource", template=template, content_type=ctype, annotate=annotate)
-            return fn(req, *args, **kw)
+            return fn(*args, **kw)
         return wrapper
     return decorator

@@ -11,9 +11,8 @@ from ..orm.file import File
 from selection import queryselection, openquery
 from .summary import list_headers
 from .standards import get_standard_obs
-from ..apache_return_codes import HTTP_OK
 
-from ..utils.userprogram import canhave_coords, got_magic
+from ..utils.userprogram import canhave_coords
 from ..utils.web import Context, with_content_type
 
 from . import templating
@@ -22,7 +21,7 @@ diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
                    'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready')
 
 @templating.templated("filelist/filelist.xml", content_type='text/xml', with_generator=True)
-def xmlfilelist(req, selection):
+def xmlfilelist(selection):
     """
     This generates an xml list of the files that met the selection
     """
@@ -32,7 +31,7 @@ def xmlfilelist(req, selection):
         for header, diskfile, file in list_headers(selection, orderby, full_query=True):
             ret = (header, diskfile, file)
             if header.phot_standard:
-                yield ret + (get_standard_obs(req, header.id),)
+                yield ret + (get_standard_obs(header.id),)
             else:
                 yield ret + (None,)
 
@@ -55,7 +54,7 @@ def diskfile_dicts(headers, return_header=False):
             yield thedict, header
 
 @with_content_type('application/json')
-def jsonfilelist(req, selection):
+def jsonfilelist(selection):
     """
     This generates a JSON list of the files that met the selection
     """
@@ -65,7 +64,6 @@ def jsonfilelist(req, selection):
     thelist = list(diskfile_dicts(headers))
 
     Context().resp.append_json(thelist, indent=4)
-    return HTTP_OK
 
 header_fields = ('program_id', 'engineering', 'science_verification',
                  'calibration_program', 'observation_id', 'data_label',
@@ -86,7 +84,7 @@ proprietary_fields = ('ra', 'dec', 'azimuth', 'elevation', 'airmass',
                       'object', 'cass_rotator_pa')
 
 @with_content_type('application/json')
-def jsonsummary(req, selection):
+def jsonsummary(selection):
     """
     This generates a JSON list of the files that met the selection.
     This contains most of the details from the header table
@@ -105,7 +103,7 @@ def jsonsummary(req, selection):
 
     # Get the current user if logged id
     user = ctx.user
-    gotmagic = got_magic(req)
+    gotmagic = ctx.got_magic
 
     headers = list_headers(selection, orderby)
     thelist = []
@@ -123,10 +121,9 @@ def jsonsummary(req, selection):
         thelist[-1]['results_truncated'] = True
 
     ctx.resp.append_json(thelist, indent=4)
-    return HTTP_OK
 
 @with_content_type('application/json')
-def jsonqastate(req, selection):
+def jsonqastate(selection):
     """
     This generates a JSON list giving datalabel, entrytime, data_md5 and qa_state.
     It is intended for use by the ODB.
@@ -154,7 +151,6 @@ def jsonqastate(req, selection):
                         'qa_state': _for_json(header.qa_state)})
 
     ctx.resp.append_json(thelist)
-    return HTTP_OK
 
 from decimal import Decimal
 from datetime import datetime, date, time

@@ -7,7 +7,6 @@ from mod_python import Cookie
 
 from sqlalchemy import func
 
-from ..fits_storage_config import magic_download_cookie
 from ..gemini_metadata_utils import ONEDAY_OFFSET
 
 from ..web.userprogram import get_program_list
@@ -189,24 +188,6 @@ def canhave_miscfile(session, user, misc, filedownloadlog=None, gotmagic=False, 
     # Last chance. If not the PI, then deny access
     return is_users_program(session, user, user_progid_list, misc.program_id, filedownloadlog)
 
-def got_magic(req):
-    """
-    Returns a boolean to say whether or not the client has
-    the magic Gemini FITS Authorization cookie
-    """
-
-    if magic_download_cookie is None:
-        return False
-
-    cookies = Cookie.get_cookies(req)
-    got = False
-    if cookies.has_key('gemini_fits_authorization'):
-        auth = cookies['gemini_fits_authorization'].value
-        if auth == magic_download_cookie:
-            got = True
-
-    return got
-
 def cant_have(*args, **kw):
     return False
 
@@ -223,7 +204,7 @@ icanhave_function = {
     MiscFile: canhave_miscfile,
 }
 
-def icanhave(session, req, item, filedownloadlog=None):
+def icanhave(ctx, item, filedownloadlog=None):
     """
     Convenience function to determine if a user has rights to a certain piece of data.
     The user information is obtained from the ``req`` object.
@@ -236,14 +217,12 @@ def icanhave(session, req, item, filedownloadlog=None):
     the relevant content.
     """
 
-    ctx = Context()
-
     # Does the client have the magic cookie?
-    gotmagic = got_magic(req)
+    gotmagic = ctx.got_magic
     if gotmagic:
         if filedownloadlog:
             filedownloadlog.magic_access = True
         return True
 
     fn = icanhave_function.get(item.__class__, cant_have)
-    return fn(session, ctx.user, item, filedownloadlog, gotmagic=gotmagic)
+    return fn(ctx.session, ctx.user, item, filedownloadlog, gotmagic=gotmagic)

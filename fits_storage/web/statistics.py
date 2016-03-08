@@ -1,5 +1,5 @@
 """
-This is a script which defines functions for generating content, general, and possibly usage statistics on the database. It queries the database for stats and outputs them as HTML via the apachehandler.
+This is a script which defines functions for generating content, general, and possibly usage statistics on the database. It queries the database for stats and outputs them as HTML
 """
 
 from sqlalchemy import desc, func, join, and_, or_, cast, between, distinct
@@ -18,13 +18,11 @@ from ..utils.web import Context
 
 from . import templating
 
-from ..apache_return_codes import HTTP_OK
-
 from datetime import datetime, timedelta, time as dt_time, date as dt_date
 from collections import defaultdict, namedtuple
 
 @templating.templated("statistics/stats.html")
-def stats(req):
+def stats():
     """
     Provides live statistics on fits database: total filesize, ingest queue status, and datarate for various date ranges is queried. Information is
     presented in html in the browser in a list format.
@@ -97,7 +95,7 @@ def stats(req):
         )
 
 @templating.templated("statistics/content.html", with_generator=True)
-def content(req):
+def content():
     """
     Queries database for information concerning the total number and filesize of all stored files.
     Produces tables presenting the results, sorted by various properties such as instrument,

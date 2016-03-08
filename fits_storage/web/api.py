@@ -7,7 +7,7 @@ from ..utils.fitseditor import compare_cards, modify_multiple_cards
 from ..utils.ingestqueue import IngestQueueUtil, IngestError
 from ..utils.api import ApiProxy, ApiProxyError, NewCardsIncluded
 from ..utils.null_logger import EmptyLogger
-from ..utils.web import Context
+from ..utils.web import Context, Return
 
 from .user import needs_login
 
@@ -16,7 +16,6 @@ from ..fits_storage_config import magic_api_cookie, api_backend_location
 
 from sqlalchemy import desc
 
-from mod_python import apache, util
 from contextlib import contextmanager
 import os
 import pyfits as pf
@@ -48,7 +47,7 @@ def locked_file(path):
 
 def get_json_data():
     try:
-        return Context().req.json
+        return Context().json
     except KeyError:
         raise RequestError("This looks like a malformed request. Cannot find the 'data' entry")
     except ValueError:
@@ -162,7 +161,7 @@ def map_changes(changes):
     return dict(change_pairs)
 
 @needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], content_type='json')
-def update_headers(req):
+def update_headers():
     ctx = Context()
 
     with session_scope() as session:
@@ -210,25 +209,23 @@ def update_headers(req):
     resp.content_type = 'application/json'
     resp.append_json(response)
 
-    return apache.HTTP_OK
-
-def ingest_files(req):
+def ingest_files():
     ctx = Context()
     resp = ctx.resp
     resp.content_type = 'application/json'
 
     try:
-        arguments = ctx.req.json
+        arguments = ctx.json
         file_pre  = arguments['filepre']
         path      = arguments['path']
         force     = arguments['force']
         force_md5 = arguments['force_md5']
     except ValueError:
         resp.append_json(error_response('Invalid information sent to the server'))
-        return apache.HTTP_OK
+        return
     except KeyError as e:
         resp.append_json(error_response('Missing argument: {}'.format(e.args[0])))
-        return apache.HTTP_OK
+        return
 
     # Assume that we're working on the local directory. There's no need for this
     # API entry in the S3 machine
@@ -248,5 +245,3 @@ def ingest_files(req):
         resp.append_json(error_response('Could not find any file with prefix: {}*'.format(file_pre)))
     else:
         resp.append_json(dict(result=True, added=sorted(added)))
-
-    return apache.HTTP_OK

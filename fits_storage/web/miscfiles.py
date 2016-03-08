@@ -11,52 +11,35 @@ from ..gemini_metadata_utils import GeminiProgram
 
 from ..utils.api import ApiProxy, ApiProxyError
 from ..utils.userprogram import icanhave
-from ..utils.web import Context
+from ..utils.web import Context, Return
 
 from .user import needs_login
 
-from mod_python import util, apache
 import dateutil
 import json
 import os
 import stat
 from datetime import datetime, timedelta
-from tempfile import NamedTemporaryFile
 
 SEARCH_LIMIT = 500
 
-class LargeFileFieldStorage(util.FieldStorage):
-    def __init__(self, *args, **kw):
-        self.uploaded_file = None
-
-        kw['file_callback'] = self.file_callback
-        util.FieldStorage.__init__(self, *args, **kw)
-
-    def file_callback(self, name):
-        fobj = NamedTemporaryFile(mode='w+b', suffix='.' + name, dir=upload_staging_path, delete=False)
-        self.uploaded_file = fobj
-        return fobj
-
-def getFormData(req):
-    return LargeFileFieldStorage(req)
-
-def miscfiles(req, things):
+def miscfiles(things):
     formdata = None
     try:
         if len(things) == 1 and things[0] == 'validate_add':
-            return validate(req)
+            return validate()
 
-        formdata = getFormData(req)
+        formdata = Context().get_form_data(large_file=True)
         if len(things) == 0:
             if 'search' in formdata:
-                return search_miscfiles(req, formdata)
+                return search_miscfiles(formdata)
 
             if 'upload' in formdata:
-                return save_file(req, formdata)
+                return save_file(formdata)
         elif len(things) == 1:
-            return detail_miscfile(req, things[0], formdata)
+            return detail_miscfile(things[0], formdata)
 
-        return bare_page(req)
+        return bare_page()
     finally:
         if formdata and formdata.uploaded_file is not None:
             try:
@@ -65,16 +48,17 @@ def miscfiles(req, things):
                 pass
 
 @templating.templated("miscfiles/miscfiles.html")
-def bare_page(req):
+def bare_page():
     return dict(can_add=Context().is_staffer)
 
-def enumerate_miscfiles(req, query):
-    session = Context().session
+def enumerate_miscfiles(query):
+    ctx = Context()
+    session = ctx.session
     for misc, disk, file in query:
-        yield icanhave(session, req, misc), misc, disk, file
+        yield icanhave(ctx, misc), misc, disk, file
 
 @templating.templated("miscfiles/miscfiles.html")
-def search_miscfiles(req, formdata):
+def search_miscfiles(formdata):
     ctx = Context()
 
     ret = dict(can_add=ctx.is_staffer)
@@ -105,7 +89,7 @@ def search_miscfiles(req, formdata):
     cnt = query.count()
     ret['count'] = cnt
     ret['hit_limit'] = (cnt == SEARCH_LIMIT)
-    ret['fileList'] = enumerate_miscfiles(req, query)
+    ret['fileList'] = enumerate_miscfiles(query)
 
     return ret
 
@@ -113,13 +97,14 @@ def string_to_date(string):
     # May raise ValueError if the format is wrong or the date is invalid
     return datetime.strptime(string, '%Y-%m-%d')
 
-def validate(req):
+def validate():
     ctx = Context()
 
     if ctx.env.method != 'POST':
-        return apache.HTTP_NOT_ACCEPTABLE
+        ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
+        return
 
-    raw_data = ctx.req.raw_data
+    raw_data = ctx.raw_data
 
     try:
         input_data = json.loads(raw_data)
@@ -135,17 +120,15 @@ def validate(req):
         else:
             raise ValueError
     except ValueError:
-        return apache.HTTP_BAD_REQUEST
-
+        ctx.resp.status = Return.HTTP_BAD_REQUEST
+        return
 
     ctx.resp.content_type = 'application/json'
     ctx.resp.append_json(response)
 
-    return apache.HTTP_OK
-
 @needs_login(superuser=True)
 @templating.templated("miscfiles/miscfiles.html")
-def save_file(req, formdata):
+def save_file(formdata):
     fileitem = formdata['uploadFile']
     localfilename = normalize_diskname(fileitem.filename)
     fullpath = os.path.join(upload_staging_path, localfilename)
@@ -203,7 +186,7 @@ def save_file(req, formdata):
     return dict(can_add=True)
 
 @templating.templated("miscfiles/detail.html")
-def detail_miscfile(req, handle, formdata):
+def detail_miscfile(handle, formdata):
     ctx = Context()
 
     try:
@@ -216,7 +199,7 @@ def detail_miscfile(req, handle, formdata):
 
         ret = dict(
             canedit = ctx.is_staffer,
-            canhave = icanhave(ctx.session, req, meta),
+            canhave = icanhave(ctx, meta),
             uri  = ctx.env.uri,
             meta = meta,
             disk = df,

@@ -14,14 +14,13 @@ from ..orm.calcachequeue import CalCacheQueue
 
 from . import templating
 
-from mod_python import apache
 import json
 from hashlib import md5
 
 DETAIL_THRESHOLD = 20
 
 @templating.templated("queuestatus/index.html")
-def queuestatus_summary(req):
+def queuestatus_summary():
     general_rows = []
     detail_tables = {}
 
@@ -50,7 +49,7 @@ def queuestatus_summary(req):
     return template_args
 
 @templating.templated("queuestatus/detail.html")
-def queuestatus_tb(req, qshortname, oid):
+def queuestatus_tb(qshortname, oid):
     det = error_detail(Context().session, qshortname, oid)
 
     template_args = dict(
@@ -62,30 +61,29 @@ def queuestatus_tb(req, qshortname, oid):
 
 QUEUELIMIT = 200
 
-# only require staff access if this is the archive
 @needs_login(staffer=True, archive_only=True)
-def queuestatus(req, things):
+def queuestatus(things):
     if len(things) == 1 and things[0] == 'json':
-        return queuestatus_update(req, things)
+        return queuestatus_update(things)
     elif len(things) > 1:
         try:
-            return queuestatus_tb(req, things[0], int(things[1]))
+            return queuestatus_tb(things[0], int(things[1]))
         except (TypeError, ValueError):
             # things[1] is not a valid integer, thus not an ID...
             pass
         except UnknownQueueError:
             # Something failed under queuestatus_tb...
             pass
-    return queuestatus_summary(req)
+    return queuestatus_summary()
 
-def queuestatus_update(req, things):
+def queuestatus_update(things):
     cache = {}
 
     ctx = Context()
 
     # Try to decode the payload in the POST query
     try:
-        cache = ctx.req.json
+        cache = ctx.json
         if type(cache) != dict:
             cache = {}
     except ValueError:
@@ -107,5 +105,3 @@ def queuestatus_update(req, things):
 
     ctx.resp.content_type = 'application/json'
     ctx.resp.append_json(result)
-
-    return apache.HTTP_OK

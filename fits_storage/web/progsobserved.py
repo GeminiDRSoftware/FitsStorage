@@ -9,12 +9,11 @@ from ..orm.diskfile import DiskFile
 from ..orm.file import File
 from .selection import sayselection, queryselection
 from . import templating
-from ..apache_return_codes import HTTP_OK
 from sqlalchemy import join, not_, func
 import datetime
 
 @templating.templated("progsobserved.html")
-def progsobserved(req, selection):
+def progsobserved(selection):
     """
     This function generates a list of programs observed on a given night
     """

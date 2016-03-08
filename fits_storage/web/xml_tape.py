@@ -5,8 +5,6 @@ from ..orm.tapestuff import Tape, TapeWrite, TapeFile
 
 from . import templating
 
-from ..apache_return_codes import HTTP_OK
-
 # We use these wrappers in order to trigger separate query for the
 # internal objects. This is done only to conserve memory, because
 # SQLAlchemy tends to hog a lot of it and we may end up being killed.
@@ -47,7 +45,7 @@ class TapeWriterWrapper(object):
         return Context().session.query(TapeFile).filter(TapeFile.tapewrite_id == self.o.id)
 
 @templating.templated("tape.xml", content_type='text/xml', with_generator=True)
-def xmltape(req):
+def xmltape():
     """
     Outputs xml describing the tapes that the specified file is on
     """

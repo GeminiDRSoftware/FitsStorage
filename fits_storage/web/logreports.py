@@ -20,16 +20,13 @@ from ..orm.header import Header
 from ..orm.user import User
 
 from ..utils.query_utils import to_int, null_to_zero
-from ..utils.web import Context
+from ..utils.web import Context, Return
 
 from ..gemini_metadata_utils import ONEDAY_OFFSET
 
 from .user import needs_login
 from .selection import getselection, queryselection, sayselection
 from . import templating
-
-from mod_python import apache
-from mod_python import util
 
 def logs(session, filter_func = None):
     aQueryLog = session.query(QueryLog, func.row_number().over(QueryLog.usagelog_id).label('row_number'))
@@ -46,7 +43,7 @@ def logs(session, filter_func = None):
 
 @needs_login(staffer=True)
 @templating.templated("logreports/usagereport.html", with_generator=True)
-def usagereport(req):
+def usagereport():
     """
     This is the usage report handler
     """
@@ -63,9 +60,11 @@ def usagereport(req):
     this = ''
     status = ''
 
-    session = Context().session
+    ctx = Context()
 
-    formdata = util.FieldStorage(req)
+    session = ctx.session
+
+    formdata = ctx.get_form_data()
     for key, value in formdata.items():
         if key == 'start' and len(value):
             start = dateutil.parser.parse(value)
@@ -137,18 +136,16 @@ def usagereport(req):
 
 @needs_login(staffer=True)
 @templating.templated("logreports/usagedetails.html")
-def usagedetails(req, things):
+def usagedetails(things):
     """
     This is the usage report detail handler
     things should contain an useagelog ID number
     """
 
-    if len(things) != 1:
-        return apache.HTTP_NOT_ACCEPTABLE
     try:
         ulid = int(things[0])
-    except:
-        return apache.HTTP_NOT_ACCEPTABLE
+    except (ValueError, IndexError):
+        raise templating.SkipTemplateError(Return.HTTP_NOT_ACCEPTABLE)
 
     session = Context().session
 
@@ -183,7 +180,7 @@ def usagedetails(req, things):
 
 @needs_login(staffer=True)
 @templating.templated("logreports/downloadlog.html", with_generator=True)
-def downloadlog(req, things):
+def downloadlog(things):
     """
     This accepts a list of filename patterns and returns a log showing all the downloads
     of the files that match the selection.
@@ -267,7 +264,7 @@ usagestats_header = """
 
 @needs_login(staffer=True)
 @templating.templated("logreports/usagestats.html", with_generator=True)
-def usagestats(req):
+def usagestats():
     """
     Usage statistics:
     Site hits

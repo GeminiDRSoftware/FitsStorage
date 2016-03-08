@@ -5,7 +5,6 @@ import datetime
 from ..orm import sessionfactory
 from .selection import sayselection, queryselection, openquery
 from ..cal import get_cal_object
-from ..apache_return_codes import HTTP_OK
 from ..fits_storage_config import fits_system_status
 
 from ..orm.header import Header
@@ -227,17 +226,11 @@ class WrapperObject(object):
 #                    #missing = True
 
 @templating.templated("calibrations.html", with_generator=True)
-def calibrations(req, selection):
+def calibrations(selection):
     """
     This is the calibrations generator. It implements a human readable calibration association server.
     This is mostly used by the Gemini SOSs to detect missing calibrations, and it defaults to the 
     SOS required calibrations policy.
-
-    req is an apache request handler request object
-    selection is an array of items to select on, simply passed
-        through to the webhdrsummary function
-
-    returns an apache request status code
     """
     counter = {
         'warnings': 0,

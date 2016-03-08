@@ -8,7 +8,6 @@ from ..orm.obslog import Obslog
 from ..fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
 from .list_headers import list_obslogs, list_headers
 from .selection import sayselection, openquery
-from ..apache_return_codes import HTTP_OK
 
 from ..utils.userprogram import icanhave
 from ..utils.web import Context
@@ -26,13 +25,12 @@ def add_summary_completed():
         # Shouldn't happen, but just in case...
         pass
 
-def generate_obslogs(req, obslogs):
-    session = Context().session
+def generate_obslogs(obslogs):
     for obslog in obslogs:
-        yield obslog.diskfile.file.name, obslog.date, obslog.program_id, icanhave(session, req, obslog)
+        yield obslog.diskfile.file.name, obslog.date, obslog.program_id, icanhave(Context(), obslog)
 
 @templating.templated("obslog/obslogs.html", at_end_hook=add_summary_completed)
-def obslogs(req, selection, sumtype):
+def obslogs(selection, sumtype):
     """
     This is the obslogs summary generator
     """
@@ -79,7 +77,7 @@ def obslogs(req, selection, sumtype):
         closed_limit = fits_closed_result_limit,
         selection    = selection,
         no_obslogs   = num_results == 0,
-        obslogs      = generate_obslogs(req, obslogs)
+        obslogs      = generate_obslogs(obslogs)
         )
 
 def associate_obslogs(headers):

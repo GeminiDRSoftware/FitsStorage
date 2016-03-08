@@ -3,7 +3,6 @@
 import re
 
 from ..gemini_metadata_utils import gemini_fitsfilename
-from mod_python import apache
 
 from ..orm import session_scope
 from ..orm.file import File
@@ -15,7 +14,7 @@ from ..orm.fulltextheader import FullTextHeader
 from ..utils.userprogram import canhave_coords
 from ..utils.web import Context
 
-def report(req, thing):
+def report(thing):
     ctx = Context()
     resp = ctx.resp
     this = ctx.usagelog.this
@@ -25,7 +24,7 @@ def report(req, thing):
 #        resp.content_type = "text/plain"
 #        resp.append("Could not understand argument - You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
 #
-#        return apache.HTTP_OK
+#        return
 
     with session_scope() as session:
         if thing.isdigit():
@@ -34,7 +33,7 @@ def report(req, thing):
             if query.count() == 0:
                 resp.content_type = "text/plain"
                 resp.append("Cannot find diskfile for id: %s\n" % thing)
-                return apache.OK
+                return
         # Now construct the query
         else:
             fnthing = gemini_fitsfilename(thing)
@@ -49,7 +48,7 @@ def report(req, thing):
             if query.count() == 0:
                 resp.content_type = "text/plain"
                 resp.append(error_message)
-                return apache.HTTP_OK
+                return
             file = query.one()
             # Query diskfiles to find the diskfile for file that is canonical
             query = session.query(DiskFile).filter(DiskFile.canonical == True).filter(DiskFile.file_id == file.id)
@@ -76,5 +75,3 @@ def report(req, thing):
                 resp.append(ftheader.fulltext)
             else:
                 resp.append("The data you're trying to access has proprietary rights and cannot be displayed")
-
-    return apache.HTTP_OK

@@ -10,14 +10,10 @@ from ..orm.header import Header
 from ..orm.preview import Preview
 from ..orm.downloadlog import DownloadLog
 
-from ..utils.web import Context, with_content_type
+from ..utils.web import Context, Return, with_content_type
 
 from .selection import getselection, openquery, selection_to_URL
 from .user import AccessForbidden
-
-# This will only work with apache
-from mod_python import apache
-from mod_python import util
 
 import datetime
 import os
@@ -28,12 +24,14 @@ if using_s3:
 
 from ..utils.userprogram import icanhave
 
-def preview(req, things):
+def preview(things):
     """
     This is the preview server, it sends you the preview jpg for the requested file.
     It handles authentication in that it won't give you the preview if you couldn't access
     the fits data.
     """
+
+    ctx = Context()
 
     # OK, first find the file they asked for in the database
     # tart up the filename if possible
@@ -45,7 +43,8 @@ def preview(req, things):
         else:
             filename = filenamegiven
     except IndexError:
-        return apache.HTTP_NOT_FOUND
+        ctx.resp.status = Return.HTTP_NOT_FOUND
+        return
 
     with session_scope() as session:
         try:
@@ -57,15 +56,16 @@ def preview(req, things):
                         .first()
                 )
         except TypeError: # Will happen if .first() returns None
-            return apache.HTTP_NOT_FOUND
+            ctx.resp.status = Return.HTTP_NOT_FOUND
+            return
 
-        downloadlog = DownloadLog(Context().usagelog)
+        downloadlog = DownloadLog(ctx.usagelog)
         session.add(downloadlog)
         downloadlog.query_started = datetime.datetime.utcnow()
 
         try:
             # Is the client allowed to get this file?
-            if icanhave(session, req, header):
+            if icanhave(ctx, header):
                 # Send them the data if we can
                 sendpreview(preview)
             else:
@@ -74,8 +74,6 @@ def preview(req, things):
                 raise AccessForbidden("You don't have access to the requested data")
         finally:
             downloadlog.query_completed = datetime.datetime.utcnow()
-
-        return apache.HTTP_OK
 
 @with_content_type('image/jpeg')
 def sendpreview(preview):

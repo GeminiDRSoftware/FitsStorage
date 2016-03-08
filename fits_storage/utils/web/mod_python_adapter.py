@@ -1,7 +1,15 @@
 from . import adapter
+from ...fits_storage_config import upload_staging_path
+
+
 from mod_python import Cookie
+from mod_python import util
+
 import json
 import time
+import tarfile
+from contextlib import contextmanager
+from tempfile import NamedTemporaryFile
 
 class Environment(object):
     def __init__(self, req):
@@ -12,6 +20,10 @@ class Environment(object):
         return self._req.server.server_hostname
 
     @property
+    def remote_host(self):
+        return self._req.get_remote_host()
+
+    @property
     def uri(self):
         return self._req.uri
 
@@ -19,12 +31,25 @@ class Environment(object):
     def method(self):
         return self._req.method
 
+class LargeFile(object):
+    def __init__(self, *args, **kw):
+        self.uploaded_file = None
+
+    def __call__(self, name, delete=False):
+        if self.uploaded_file is None:
+            fobj = NamedTemporaryFile(mode='w+b', suffix='.' + name, dir=upload_staging_path, delete=delete)
+            self.uploaded_file = fobj
+        else:
+            fobj = self.uploaded_file
+        return fobj
+
 class Request(adapter.Request):
     def __init__(self, session, req):
         super(Request, self).__init__(session)
 
         self._req     = req
         self._env     = Environment(req)
+        self._fields  = None
 
     @property
     def env(self):
@@ -38,11 +63,22 @@ class Request(adapter.Request):
     def json(self):
         return json.loads(self.raw_data)
 
+    def get_header_value(self, header_name):
+        return self._req.headers_in[header_name]
+
     def get_cookie_value(self, key):
         return Cookie.get_cookies(self._req)[key].value
 
     def log(self, *args, **kw):
         return self._req.log_error(*args, **kw)
+
+    def get_form_data(self, large_file=False):
+        if large_file:
+            form_data = util.FieldStorage(self._req, file_callback=LargeFile())
+        else:
+            form_data = util.FieldStorage(self._req)
+
+        return form_data
 
 BUFFSIZE = 262144
 
@@ -83,3 +119,17 @@ class Response(adapter.Response):
             if not n:
                 break
             self._req.write(n)
+
+    @contextmanager
+    def tarfile(self, name, **kw):
+        self.set_header('Content-Disposition', 'attachment; filename="{}"'.format(name))
+        tar = tarfile.open(name=name, fileobj=self._req, **kw)
+
+        try:
+            yield tar
+        finally:
+            tar.close()
+            self._req.flush()
+
+    def redirect_to(self, url, **kw):
+        util.redirect(self._req, url, **kw)

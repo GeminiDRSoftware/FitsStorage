@@ -9,7 +9,7 @@ from ..orm.header import Header
 from ..orm.diskfile import DiskFile
 from ..orm.file import File
 
-from ..utils.web import Context, with_content_type
+from ..utils.web import Context, Return, with_content_type
 
 from .selection import sayselection, queryselection
 from .calibrations import interval_hours
@@ -18,8 +18,6 @@ from ..fits_storage_config import using_sqlite, fits_system_status, das_calproc_
 from ..gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
 
 from . import templating
-
-from ..apache_return_codes import HTTP_OK, HTTP_NOT_IMPLEMENTED
 
 from math import fabs
 
@@ -34,12 +32,12 @@ import json
 from collections import defaultdict, namedtuple
 
 @templating.templated("gmoscal.html")
-def gmoscal_html(req, selection):
+def gmoscal_html(selection):
     return gmoscal(selection)
 
 
 @with_content_type('application/json')
-def gmoscal_json(req, selection):
+def gmoscal_json(selection):
     result = {
         'selection': selection
         }
@@ -57,7 +55,6 @@ def gmoscal_json(req, selection):
     result['biases'] = dict((k.strftime("%Y%m%d"), v) for k, v in values['bias'])
 
     Context().resp.append_json([result], indent=4)
-    return HTTP_OK
 
 def gmoscal(selection):
     """
@@ -72,7 +69,7 @@ def gmoscal(selection):
 
     if using_sqlite:
         result['using_sqlite'] = True
-        return HTTP_NOT_IMPLEMENTED, result
+        return Return.HTTP_NOT_IMPLEMENTED, result
 
     session = Context().session
 

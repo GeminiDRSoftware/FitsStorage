@@ -79,9 +79,9 @@ def debugmessage(req):
 # The following mappings connect actions with the functions that will produce the
 # content. They're simple function calls, like
 #
-#   'debug'        -> debugmessage(req)
-#   'nameresolver' -> nameresolver(req, things)
-#   'calibrations' -> calibrations(req, selections)
+#   'debug'        -> debugmessage()
+#   'nameresolver' -> nameresolver(things)
+#   'calibrations' -> calibrations(selections)
 #
 # These three patterns are the most common for the archive web actions, which makes
 # detecting and invoking them a task for boilerplate code. Moving everything up here,
@@ -184,8 +184,8 @@ def handler(ctx, req):
             session.commit()
 
             # Call the actual handler
-            retary = thehandler(req)
-            req.status = retary
+            thehandler(req)
+            retary = req.status = ctx.resp.status
 
         # util.redirect raises this exception.
         # Log it as a redirect (303)
@@ -285,11 +285,11 @@ def thehandler(req):
 
     # At this point we can route the easier actions
     if this in mapping_simple:
-        return mapping_simple[this](req)
+        return mapping_simple[this]()
     if this in mapping_things:
-        return mapping_things[this](req, things)
+        return mapping_things[this](things)
     if this in mapping_selection:
-        return mapping_selection[this](req, getselection(things))
+        return mapping_selection[this](getselection(things))
 
     # Before we process the request, parse any arguments into a list
     args = []
@@ -309,7 +309,7 @@ def thehandler(req):
 
     # Archive searchform
     if this == 'searchform':
-        return searchform(req, things, orderby)
+        return searchform(things, orderby)
 
     # This is the header summary handler
     if this in {'summary', 'diskfiles', 'ssummary', 'lsummary', 'searchresults', 'associated_cals'}:
@@ -331,32 +331,32 @@ def thehandler(req):
         # We put the ones we got in a dictionary
         selection = getselection(things)
 
-        retval = summary(req, this, selection, orderby, links=links, body_only=body_only)
+        retval = summary(this, selection, orderby, links=links, body_only=body_only)
         return retval
 
     # This is the standard star in observation server
     if this == 'standardobs':
         header_id = things.pop(0)
-        retval = standardobs(req, header_id)
+        retval = standardobs(header_id)
         return retval
 
     # The processed_cal upload server
     if this == 'upload_processed_cal':
         if len(things) != 1:
             return apache.HTTP_NOT_ACCEPTABLE
-        retval = upload_file(req, things[0], processed_cal=True)
+        retval = upload_file(things[0], processed_cal=True)
         return retval
 
     # The generic upload_file server
     if this == 'upload_file':
-        retval = upload_file(req, things[0])
+        retval = upload_file(things[0])
         return retval
 
     # This returns the fitsverify, mdreport or fullheader text from the database
     # you can give it either a diskfile_id or a filename
     if this in ['fitsverify', 'mdreport', 'fullheader']:
         try:
-            return report(req, thing=things.pop(0))
+            return report(thing=things.pop(0))
         except IndexError:
             req.content_type = "text/plain"
             req.write("You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
@@ -367,7 +367,7 @@ def thehandler(req):
         selection = getselection(things)
         if ("date" not in selection) and ("daterange" not in selection):
             selection["date"] = gemini_date("today")
-        retval = progsobserved(req, selection)
+        retval = progsobserved(selection)
         return retval
 
     # Static files are listed in the apache.conf so do not even go via the python handler now.

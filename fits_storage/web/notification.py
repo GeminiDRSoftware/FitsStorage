@@ -4,27 +4,26 @@ This module contains the notification html generator function, and odb import vi
 from ..orm.notification import Notification
 from ..fits_storage_config import use_as_archive, magic_download_cookie
 
-from ..utils.userprogram import got_magic
 from ..utils.notifications import ingest_odb_xml
-from ..utils.web import Context
+from ..utils.web import Context, Return
 
 from .user import needs_login
 
 from . import templating
 
-from mod_python import apache, util
-
 @needs_login(staffer=True)
 @templating.templated("notification.html")
-def notification(req):
+def notification():
     """
     This is the email notifications page. It's both to show the current notifcation list and to update it.
     """
 
-    session = Context().session
+    ctx = Context()
+
+    session = ctx.session
 
     # Process form data first
-    formdata = util.FieldStorage(req)
+    formdata = ctx.get_form_data()
     for key, value in formdata.items():
         field = key.split('-')[0]
         nid = int(key.split('-')[1])
@@ -73,7 +72,7 @@ def notification(req):
         )
 
 @needs_login(magic_cookies=[('gemini_fits_authorization', magic_download_cookie)], only_magic=True)
-def import_odb_notifications(req):
+def import_odb_notifications():
     """
     This takes xml from the ODB posted to it and imports it as notifications
     """
@@ -82,16 +81,15 @@ def import_odb_notifications(req):
 
     # Only accept http posts
     if ctx.env.method != 'POST':
-        return apache.HTTP_NOT_ACCEPTABLE
+        ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
+        return
 
     # OK, get the payload from the POST data
-    xml = ctx.req.raw_data
+    xml = ctx.raw_data
 
     # Process it
     report = ingest_odb_xml(ctx.session, xml)
 
     # Write back the report
-    ctx.req.content_type = "text/plain"
+    ctx.resp.content_type = "text/plain"
     ctx.resp.append_iterable(l + '\n' for l in report)
-
-    return apache.HTTP_OK

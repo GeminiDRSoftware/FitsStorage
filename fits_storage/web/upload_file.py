@@ -6,18 +6,15 @@ import datetime
 
 from ..fits_storage_config import upload_staging_path, upload_auth_cookie, api_backend_location
 
-from ..apache_return_codes import HTTP_OK, HTTP_NOT_ACCEPTABLE
-from ..apache_return_codes import HTTP_SERVICE_UNAVAILABLE
-
 from ..utils.api import ApiProxy, ApiProxyError
-from ..utils.web import Context
+from ..utils.web import Context, Return
 
 from ..orm.fileuploadlog import FileUploadLog
 
 from .user import needs_login
 
 @needs_login(only_magic=True, magic_cookies=[('gemini_fits_upload_auth', upload_auth_cookie)], annotate=FileUploadLog)
-def upload_file(req, filename, processed_cal=False):
+def upload_file(filename, processed_cal=False):
     """
     This handles uploading files including processed calibrations.
     It has to be called via a POST request with a binary data payload
@@ -42,12 +39,13 @@ def upload_file(req, filename, processed_cal=False):
 
     if ctx.env.method != 'POST':
         fileuploadlog.add_note("Aborted - not HTTP POST")
-        return HTTP_NOT_ACCEPTABLE
+        ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
+        return
 
     # It's a bit brute force to read all the data in one chunk,
     # but that's fine, files are never more than a few hundred MB...
     fileuploadlog.ut_transfer_start = datetime.datetime.utcnow()
-    clientdata = ctx.req.raw_data
+    clientdata = ctx.raw_data
 
     fileuploadlog.ut_transfer_complete = datetime.datetime.utcnow()
     fullfilename = os.path.join(upload_staging_path, filename)
@@ -80,9 +78,7 @@ def upload_file(req, filename, processed_cal=False):
     except ApiProxyError:
         # TODO: Actually log this and tell someone about it...
         # response.append(error_response("An internal error ocurred and your query could not be performed. It has been logged"))
-        return HTTP_SERVICE_UNAVAILABLE
-
-    return HTTP_OK
+        ctx.resp.status = Return.HTTP_SERVICE_UNAVAILABLE
 
 #        # Now invoke the setuid ingest program
 #        command = ["/opt/FitsStorage/fits_storage/scripts/invoke",
@@ -103,6 +99,4 @@ def upload_file(req, filename, processed_cal=False):
 #        # python running ingest_uploaded_calibration.py, the return value we get acutally comes from that script, not invoke
 #
 #        if ret != 0:
-#            return HTTP_SERVICE_UNAVAILABLE
-#        else:
-#            return HTTP_OK
+#            ctx.resp.status = HTTP_SERVICE_UNAVAILABLE

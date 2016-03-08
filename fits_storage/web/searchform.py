@@ -2,9 +2,6 @@
 This is the searchform module
 """
 
-# This will only work with apache
-from mod_python import apache, util
-
 from .selection import getselection, selection_to_URL
 from .selection import getselection_detector_conf
 from .summary import summary_body
@@ -15,13 +12,13 @@ from . import templating
 from ..fits_storage_config import fits_aux_datadir
 from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
 
-from ..utils.web import Context
+from ..utils.web import Context, Return
 
 import os
 import urllib
 
 @templating.templated("search_and_summary/searchform.html", with_generator=True)
-def searchform(req, things, orderby):
+def searchform(things, orderby):
     """
     Generate the searchform html and handle the form submit.
     """
@@ -41,10 +38,12 @@ def searchform(req, things, orderby):
     # User messes with input fields
     # User hits submit - back to top
 
+    ctx = Context()
+
     # grab the string version of things before getselection() as that modifies the list.
     thing_string = '/' + '/'.join(things)
     selection = getselection(things)
-    formdata = util.FieldStorage(req)
+    formdata = ctx.get_form_data()
 
     # Also args to pass on to results page
     args_string = ""
@@ -69,16 +68,17 @@ def searchform(req, things, orderby):
             updateselection(formdata, selection)
             # build URL
             urlstring = selection_to_URL(selection, with_columns=True)
+
+            # The following will redirect to some other page. Redirects work by
+            # raising an exception, meaning that there's no need for return
             if 'ObsLogsOnly' in formdata.keys():
                 # ObsLogs Only search
-                util.redirect(req, '/obslogs' + urlstring)
-                # util.redirect raises apache.SERVER_RETURN, so we're out of this code path now
+                ctx.resp.redirect_to('/obslogs' + urlstring)
             else:
                 # Regular data search
                 # clears formdata, refreshes page with updated selection from form
                 formdata.clear()
-                util.redirect(req, '/searchform' + urlstring + args_string)
-                # util.redirect raises apache.SERVER_RETURN, so we're out of this code path now
+                ctx.resp.redirect_to('/searchform' + urlstring + args_string)
 
     try:
         indices = selection_to_form_indices(selection)
@@ -105,7 +105,7 @@ def searchform(req, things, orderby):
         **dropdown_options
         )
     if selection:
-        template_args.update(summary_body(req, 'customsearch', selection, orderby,
+        template_args.update(summary_body('customsearch', selection, orderby,
                                           additional_columns=selection_to_column_names(selection)))
 
     return template_args
@@ -264,13 +264,14 @@ def updateselection(formdata, selection):
             selection[key] = value
 
 
-def nameresolver(req, things):
+def nameresolver(things):
     """
     A name resolver proxy. Pass it the resolver and object name
     """
 
     if len(things) != 2:
-        return apache.HTTP_NOT_ACCEPTABLE
+        Context().resp.status = Return.HTTP_NOT_ACCEPTABLE
+        return
 
     resolver = things[0]
     target = things[1]
@@ -282,16 +283,14 @@ def nameresolver(req, things):
     }
 
     if resolver not in urls.keys():
-        return apache.HTTP_NOT_ACCEPTABLE
-
+        Context().resp.status = Return.HTTP_NOT_ACCEPTABLE
+        return
 
     url = urls[resolver] + target
 
     urlfd = urllib.urlopen(url)
     Context().resp.append(urlfd.read())
     urlfd.close()
-
-    return apache.HTTP_OK
 
 # DATA FOR THE TEMPLATES
 

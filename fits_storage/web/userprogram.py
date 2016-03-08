@@ -9,14 +9,10 @@ from ..utils.web import Context
 
 from . import templating
 
-# This will only work with apache
-from mod_python import apache
-from mod_python import util
-
 import urllib
 
 @templating.templated("user_programs.html")
-def my_programs(req, things):
+def my_programs(things):
     """
     Generates a page showing the user what programs
     they have registered access to.
@@ -26,7 +22,7 @@ def my_programs(req, things):
     ctx = Context()
 
     # First, process the form data if there is any
-    formdata = util.FieldStorage(req)
+    formdata = ctx.get_form_data()
 
     program_id = ''
     program_key = ''

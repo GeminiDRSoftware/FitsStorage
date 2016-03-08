@@ -9,7 +9,6 @@ import time
 import json
 import math
 import dateutil.parser
-from ..apache_return_codes import HTTP_OK, HTTP_BAD_REQUEST, HTTP_NOT_ACCEPTABLE
 from ..gemini_metadata_utils import gemini_date, get_date_offset, gemini_daterange
 
 from ..orm.qastuff import QAreport, QAmetricSB, QAmetricIQ, QAmetricZP, QAmetricPE
@@ -17,11 +16,11 @@ from ..orm.qastuff import evaluate_bg_from_metrics, evaluate_cc_from_metrics
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 
-from ..utils.web import Context
+from ..utils.web import Context, Return
 
 from . import templating
 
-def qareport(req):
+def qareport():
     """
     This function handles submission of QA metric reports via json
     """
@@ -29,21 +28,21 @@ def qareport(req):
     ctx = Context()
 
     if ctx.env.method == 'POST':
-        clientdata = ctx.req.raw_data
-        ctx.req.log("QAreport clientdata: %s" % clientdata)
+        clientdata = ctx.raw_data
+        ctx.log("QAreport clientdata: %s" % clientdata)
 
         # We make here some reasonable assumptions about the input format
         if clientdata.startswith('['):
             thelist = parse_json(clientdata)
         else:
-            return HTTP_BAD_REQUEST
+            ctx.resp.status = Return.HTTP_BAD_REQUEST
+            return
 
-        ctx.req.log("thelist: %s" % thelist)
+        ctx.log("thelist: %s" % thelist)
 
-        return qareport_ingest(thelist, submit_host=req.get_remote_host(), 
-                               submit_time=datetime.datetime.now())
+        qareport_ingest(thelist, submit_host=ctx.env.remote_host, submit_time=datetime.datetime.now())
     else:
-        return HTTP_NOT_ACCEPTABLE
+        ctx.resp.status = Return.HTTP_NOT_ACCEPTABLE
 
 def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now()):
     """
@@ -59,8 +58,6 @@ def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now
         session.add(qareport)
         session.commit()
 
-    return HTTP_OK
-
 def parse_json(clientdata):
     """
     This function takes a string containg a json document containing a list of 
@@ -69,7 +66,7 @@ def parse_json(clientdata):
     return json.loads(clientdata)
 
 @templating.templated("reports/qametrics.txt", content_type='text/plain', with_generator=True)
-def qametrics(req, things):
+def qametrics(things):
     """
     This function is the initial, simple display of QA metric data
     """
@@ -106,7 +103,7 @@ def qametrics(req, things):
 
     return ret
 
-def qaforgui(req, things):
+def qaforgui(things):
     """
     This function outputs a JSON dump, aimed at feeding the QA metric GUI display
     You must pass a datestamp. It will only return results for datafiles from 
@@ -123,8 +120,9 @@ def qaforgui(req, things):
         window = datetime.timedelta(days=3)
         enddatestamp = datestamp+window
     except (IndexError, ValueError):
+        resp.status = Return.HTTP_NOT_ACCEPTABLE
         resp.append("Error: no datestamp given")
-        return HTTP_NOT_ACCEPTABLE
+        return
 
     session = ctx.session
     resp.content_type = "application/json"
@@ -274,6 +272,3 @@ def qaforgui(req, things):
 
     # Serialize it out via json to the request object
     resp.append_json(list_for_json, indent=4)
-
-    return HTTP_OK
-

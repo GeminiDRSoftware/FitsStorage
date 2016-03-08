@@ -4,7 +4,6 @@ This module generates the Observing Statistics - ie "Open Shutter" Statistic rep
 
 from ..orm import session_scope
 from .summary import list_headers
-from ..apache_return_codes import HTTP_OK
 from ..gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
 
 from ..utils.web import Context, with_content_type
@@ -14,9 +13,9 @@ import dateutil.parser
 import re
 
 @with_content_type('text/plain')
-def observing_statistics(req, selection):
+def observing_statistics(selection):
     """
-    This is apache handler function. It unrolls a datarange to night by night and calls
+    This is a handler function. It unrolls a datarange to night by night and calls
     calculate_observing_statistics() on each night, and outputs the table
     """
 
@@ -27,7 +26,7 @@ def observing_statistics(req, selection):
     with session_scope() as session:
         lst = []
         if 'date' in selection.keys():
-            lst.append(calculate_observing_statistics(session, selection, req, debug=False))
+            lst.append(calculate_observing_statistics(ctx, selection, debug=False))
 
         # Parse daterange, kludge selection
         if 'daterange' in selection.keys():
@@ -36,7 +35,7 @@ def observing_statistics(req, selection):
             copysel = dict(selection)
             while (date < enddate):
                 copysel['date'] = date.strftime("%Y%m%d")
-                lst.append(calculate_observing_statistics(session, copysel, req, debug=False))
+                lst.append(calculate_observing_statistics(ctx, copysel, debug=False))
                 date += ONEDAY_OFFSET
 
         # First get a list of instruments so that we can unroll the inst dicts
@@ -89,15 +88,12 @@ def observing_statistics(req, selection):
                     resp.append(l[c] + ', ')
             resp.append('\n')
 
-        return HTTP_OK
-
-def calculate_observing_statistics(session, selection, req, debug=False):
+def calculate_observing_statistics(ctx, selection, debug=False):
     """
     This method calculates the observing statistics for a single night given in the selection
     It returns a big disctionary with all the requested data items in it.
     """
 
-    ctx = Context()
     resp = ctx.resp
 
     selection['canonical'] = True
@@ -127,7 +123,7 @@ def calculate_observing_statistics(session, selection, req, debug=False):
     operator = 'Unknown'
     if len(hlist):
         diskfile_id = hlist[-1].diskfile_id
-        query = session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == diskfile_id)
+        query = ctx.session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == diskfile_id)
         fth = query.first()
         text = fth.fulltext
         m = re.search("OBSERVER= '(.*)'", text)

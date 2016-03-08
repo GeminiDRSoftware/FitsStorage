@@ -2,6 +2,28 @@ from thread import get_ident
 from functools import wraps
 from ...orm import NoResultFound, MultipleResultsFound
 from ...orm.user import User
+from ...fits_storage_config import magic_download_cookie
+
+class ReturnMetaClass(type):
+    __return_codes = {
+        'HTTP_OK': 200,
+        'HTTP_NOT_FOUND': 404,
+        'HTTP_FORBIDDEN': 403,
+        'HTTP_METHOD_NOT_ALLOWED': 405,
+        'HTTP_NOT_ACCEPTABLE': 406,
+        'HTTP_NOT_IMPLEMENTED': 501,
+        'HTTP_SERVICE_UNAVAILABLE': 503,
+        'HTTP_BAD_REQUEST': 400,
+    }
+
+    def __getattr__(cls, key):
+        try:
+            return ReturnMetaClass.__return_codes[key]
+        except KeyError:
+            raise AttributeError("No return code {}".format(key))
+
+class Return(object):
+    __metaclass__ = ReturnMetaClass
 
 def context_wrapped(fn):
     @wraps(fn)
@@ -59,6 +81,21 @@ class Context(object):
     def cookies(self):
         return self._cookies
 
+    @property
+    def got_magic(self):
+        """
+        Returns a boolean to say whether or not the client has
+        the magic authorization cookie
+        """
+
+        if magic_download_cookie is None:
+            return False
+
+        try:
+            return self.cookies['gemini_fits_authorization'] == magic_download_cookie
+        except KeyError:
+            return False
+
 class Cookies(object):
     def __init__(self, req, resp):
         self._req  = req
@@ -79,6 +116,13 @@ class Cookies(object):
 class Request(object):
     def __init__(self, session):
         self._s = session
+
+    def get_header_value(self, header_name):
+        raise NotImplementedError("get_header_value must be implemented by derived classes")
+
+    def __getitem__(self, key):
+        "Provides a dictionary-like interface for the request object to get headers"
+        self.get_header_value(key)
 
     @property
     def session(self):
@@ -114,9 +158,21 @@ class Request(object):
         except AttributeError:
             return False
 
+    @property
+    def is_ajax(self):
+        "Returns a boolean to say if the request came in via ajax"
+        try:
+            return self['X-Requested-With'] == 'XmlHttpRequest'
+        except KeyError:
+            return False
+
+    def get_form_data(self, large_file=False):
+        raise NotImplementedError("get_form_data must be implemented by derived classes")
+
 class Response(object):
     def __init__(self, session):
         self._s = session
+        self.status = Return.HTTP_OK
 
     def expire_cookie(self, name):
         raise NotImplementedError("expire_cookie must be implemented by derived classes")
@@ -152,3 +208,10 @@ class Response(object):
 
     def sendfile_obj(self, fp):
         raise NotImplementedError("sendfile_obj must be implemented by derived classes")
+
+    def tarfile(self, name, **kw):
+        "This method will be used as a context manager. The implementation must ensure the proper interface"
+        raise NotImplementedError("tarfile must be implemented by derived classes")
+
+    def redirect_to(self, url, **kw):
+        raise NotImplementedError("redirect_to must be implemented by derived classes")

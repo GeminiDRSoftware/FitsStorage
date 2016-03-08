@@ -4,7 +4,6 @@ This module contains the tape related html generator functions.
 from ..orm import sessionfactory, NoResultFound, MultipleResultsFound
 from ..orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 from . import templating
-from mod_python import apache, util
 
 from ..utils.web import Context
 
@@ -13,7 +12,7 @@ from sqlalchemy import join, desc, func
 import datetime
 
 @templating.templated("tapestuff/fileontape.xml", content_type='text/xml', with_generator=True)
-def fileontape(req, things):
+def fileontape(things):
     """
     Outputs xml describing the tapes that the specified file is on
     """
@@ -31,15 +30,16 @@ def fileontape(req, things):
         )
 
 @templating.templated("tapestuff/tape.html", with_generator=True)
-def tape(req, things):
+def tape(things):
     """
     This is the tape list function
     """
 
-    session = Context().session
+    ctx = Context()
+    session = ctx.session
 
     # Process form data first
-    formdata = util.FieldStorage(req)
+    formdata = ctx.get_form_data()
     for key, value in formdata.items():
         field = key.split('-')[0]
         tapeid = int(key.split('-')[1])
@@ -105,7 +105,7 @@ def tape(req, things):
         )
 
 @templating.templated("tapestuff/tapewrite.html", with_generator=True)
-def tapewrite(req, things):
+def tapewrite(things):
     """
     This is the tapewrite list function
     """
@@ -135,7 +135,7 @@ def tapewrite(req, things):
     return dict(tws = query)
 
 @templating.templated("tapestuff/tapefile.html", with_generator=True)
-def tapefile(req, things):
+def tapefile(things):
     """
     This is the tapefile list function
     """
@@ -150,7 +150,7 @@ def tapefile(req, things):
     return dict(tapefiles = query)
 
 @templating.templated("tapestuff/taperead.html", with_generator=True)
-def taperead(req):
+def taperead():
     """
     This is the taperead list function
     """

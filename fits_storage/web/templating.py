@@ -4,10 +4,8 @@ Module to deal with the interals of templating
 
 from jinja2 import Environment, FileSystemLoader
 from ..fits_storage_config import template_root
-from ..utils.web import Context
+from ..utils.web import Context, Return
 from functools import wraps
-from mod_python import apache
-from ..apache_return_codes import HTTP_SERVICE_UNAVAILABLE
 from datetime import datetime
 
 def datetime_filter(value, format=None, chopped=False):
@@ -130,8 +128,8 @@ class InterruptedError(Exception):
 # some use cases, making it easy to return from the function at
 # any point without having to care about repeating the content generation
 # at every single exit point.
-def templated(template_name, content_type="text/html", with_generator=False, default_status=apache.HTTP_OK, at_end_hook=None):
-    """``template_name`` is the path to the template file, relative to the ``template_root``.
+def templated(template_name, content_type="text/html", with_generator=False, default_status=Return.HTTP_OK, at_end_hook=None):
+    """template_name is the path to the template file, relative to the template_root.
 
        If ``with_generator`` is ``True``, Jinja2 will be instructed to try to chunk the output,
        sending info back to the client as soon as possible.
@@ -141,7 +139,7 @@ def templated(template_name, content_type="text/html", with_generator=False, def
     """
     def template_decorator(fn):
         @wraps(fn)
-        def fn_wrapper(req, *args, **kw):
+        def fn_wrapper(*args, **kw):
             ctx = Context()
             try:
                 template = get_env().get_template(template_name)
@@ -150,7 +148,7 @@ def templated(template_name, content_type="text/html", with_generator=False, def
 
             ctx.resp.content_type = content_type
             try:
-                context = fn(req, *args, **kw)
+                context = fn(*args, **kw)
 
                 if isinstance(context, tuple):
                     status, context = context
@@ -175,6 +173,6 @@ def templated(template_name, content_type="text/html", with_generator=False, def
                 # (eg. the user stopped the query on their browser)
                 raise InterruptedError
 
-            return status
+            ctx.resp.status = status
         return fn_wrapper
     return template_decorator
