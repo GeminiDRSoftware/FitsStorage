@@ -28,6 +28,10 @@ class ReturnMetaClass(type):
 class Return(object):
     __metaclass__ = ReturnMetaClass
 
+class ClientError(Exception):
+    def __init__(self, code):
+        self.code = code
+
 class RequestRedirect(Exception):
     pass
 

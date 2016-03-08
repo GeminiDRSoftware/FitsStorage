@@ -1,4 +1,4 @@
-from adapter import Context, Return, RequestRedirect
+from adapter import Context, Return, RequestRedirect, ClientError
 from adapter import context_wrapped, with_content_type
 try:
     from mod_python_adapter import Request as ModPythonRequest, Response as ModPythonResponse

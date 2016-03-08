@@ -1,5 +1,5 @@
 from . import adapter
-from .adapter import Return, RequestRedirect
+from .adapter import Return, RequestRedirect, ClientError
 from ...fits_storage_config import upload_staging_path
 from ...orm import session_scope
 from wsgiref.handlers import SimpleHandler
@@ -9,6 +9,7 @@ from cgi import escape
 
 import Cookie
 from contextlib import contextmanager
+from functools import wraps
 
 class Environment(object):
     def __init__(self, env):
@@ -117,6 +118,20 @@ redirect_template = """\
 <h1>Redirecting...</h1>
 <p>You should be redirected automatically to target URL: <a href="{location}">{display_location}</a>.  If not click the link."""
 
+template_4xx = """\
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<title>{code} {message}...</title>
+<h1>{code} {message}...</h1>"""
+
+def only_if_not_started_response(fn):
+    @wraps(fn)
+    def wrapper(self, *args, **kw):
+        if self._started_response:
+            # TODO: Look for a more sensible exception, to deal with the problem upwards.
+            raise RuntimeError("Asked to send a non-2xx code, but the response started already")
+        return fn(self, *args, **kw)
+    return wrapper
+
 class Response(adapter.Response):
     def __init__(self, session, wsgienv, start_response):
         super(Response, self).__init__(session)
@@ -198,12 +213,8 @@ class Response(adapter.Response):
         self._headers = []
         self.status = Return.HTTP_OK
 
+    @only_if_not_started_response
     def redirect_to(self, url, **kw):
-        if self._started_response:
-            # This shouldn't happen
-            # TODO: Look for a more sensible exception, to deal with the problem upwards.
-            raise RuntimeError("Asked to redirect, but the response started already")
-
         self.make_empty()
         self.set_content_type('text/html')
         # Set the status to 'code' if passed as an argument, else use 302 FOUND as default
@@ -214,6 +225,18 @@ class Response(adapter.Response):
         self.set_header('Location', url)
 
         raise RequestRedirect()
+
+    @only_if_not_started_response
+    def client_error(self, code):
+        """
+        Helper to raise 4xx "Client Error" exceptions
+        """
+        self.make_empty()
+        self.set_content_type('text/html')
+        self.status = code
+        self.append(template_4xx.format(code=code, message=status_message[code]))
+
+        raise ClientError(code)
 
 from ...orm.usagelog import UsageLog
 
