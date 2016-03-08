@@ -55,10 +55,12 @@ def parse_converter_args(arguments):
     return tuple(x.strip() for x in a.split(',')), {}
 
 class Rule(object):
-    def __init__(self, string, action=None, methods=None, redirect_to=None, defaults=None):
+    def __init__(self, string, action=None, methods=None, redirect_to=None,
+                 defaults=None, strict=False):
         # TODO: Assert that there's a value for either action or redirect_to
         self.string = string
         self.action = action
+        self.strict = strict
         self.redirect_to = redirect_to
         if methods is not None:
             self.methods = set(methods)
@@ -80,6 +82,8 @@ class Rule(object):
         # of a single one
         varn = 1
         first_static = True
+        add_slash = not (self.strict or self.string.endswith('/'))
+        to_compile = self.string if not add_slash else (self.string + '/')
         for (converter, arguments, variable) in parse_rule(self.string):
             if converter is None:
                 # Static part of the URL
@@ -106,7 +110,8 @@ class Rule(object):
         self._regex = re.compile(regex, re.UNICODE)
 
     def match(self, path):
-        res = self._regex.search(path)
+        add_slash = not (self.strict or path.endswith('/'))
+        res = self._regex.search(path if not add_slash else (path + '/'))
         if res:
             gd = res.groupdict()
             result = []
