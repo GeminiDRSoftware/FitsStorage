@@ -165,9 +165,11 @@ class Response(adapter.Response):
             self._started_response
             self._sr('{} {}'.format(self.status, status_message.get(self.status, 'Error')),
                      [('Content-Type', self._content_type)] + self._headers[:])
+        return self
 
     def expire_cookie(self, name):
         self.set_cookie(name, expires=time.time())
+        return self
 
     def set_cookie(self, name, value='', **kw):
         raise NotImplementedError("This is not implemented yet")
@@ -178,15 +180,19 @@ class Response(adapter.Response):
 
     def set_content_type(self, content_type):
         self._content_type = content_type
+        return self
 
     def set_header(self, name, value):
         self._headers.append((name, value))
+        return self
 
     def append(self, string):
         self._content.append(string)
+        return self
 
     def append_iterable(self, it):
         self.content.append(it)
+        return self
 
     def append_json(self, obj, **kw):
         raise NotImplementedError("This is not implemented yet")
