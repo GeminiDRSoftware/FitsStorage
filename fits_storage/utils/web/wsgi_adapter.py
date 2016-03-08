@@ -180,10 +180,14 @@ class Response(adapter.Response):
         else:
             for element in self:
                 if type(element) in {StringType, UnicodeType}:
-                    yield f(element)
+                    r = f(element)
+                    yield r
+                    self._bytes_sent += len(r)
                 else:
                     for subelement in element:
-                        yield f(subelement)
+                        r = f(subelement)
+                        yield r
+                        self._bytes_sent += len(r)
 
     def __iter__(self):
         for k in self._content:
