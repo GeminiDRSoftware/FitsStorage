@@ -8,7 +8,7 @@ import sys
 from fits_storage.gemini_metadata_utils import gemini_date
 
 from fits_storage.utils.web import Context, Return, context_wrapped
-from fits_storage.utils.web import WSGIRequest, WSGIResponse, WSGIRequestHandler
+from fits_storage.utils.web import WSGIRequest, WSGIResponse, ArchiveContextMiddleware
 from fits_storage.utils.web import RequestRedirect, ClientError
 from fits_storage.utils.web.routing import Map, Rule, BaseConverter
 
@@ -309,6 +309,7 @@ class StaticServer(object):
         self.root = root
 
     def __call__(self, environ, start_response):
+        ctx = Context()
         req, resp = Context().req, Context().resp
 
         uri = filter(len, req.env.uri.split('/'))
@@ -326,7 +327,7 @@ class StaticServer(object):
 htmldocroot = os.path.join(os.path.dirname(__file__), '..', 'htmldocroot')
 handle_with_static = StaticServer(handler, root=htmldocroot)
 
-def app(environ, start_response):
+def handler(environ, start_response):
     ctx = Context()
     try:
         return handle_with_static(environ, start_response)
@@ -344,6 +345,8 @@ def app(environ, start_response):
             session.add(log)
         return ctx.resp.respond(unicode_to_string)
 
+app = ArchiveContextMiddleware(handler)
+
 # Provide a basic WSGI server, in case we're testing or don't need any fancy
 # container...
 if __name__ == '__main__':
@@ -353,7 +356,7 @@ if __name__ == '__main__':
     port   = '8000'
 
     try:
-        httpd = wsgiref.simple_server.make_server(server, int(port), app, handler_class=WSGIRequestHandler)
+        httpd = wsgiref.simple_server.make_server(server, int(port), app)
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nExiting after Ctrl-c")

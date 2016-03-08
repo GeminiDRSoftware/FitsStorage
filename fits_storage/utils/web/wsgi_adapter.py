@@ -1,7 +1,7 @@
 from . import adapter
 from .adapter import Return, RequestRedirect, ClientError
 from ...fits_storage_config import upload_staging_path
-from ...orm import session_scope
+from ...orm import sessionfactory
 from ...web import templating
 from wsgiref.handlers import SimpleHandler
 from wsgiref.simple_server import WSGIRequestHandler
@@ -14,6 +14,8 @@ from types import StringType, UnicodeType
 import Cookie
 from contextlib import contextmanager
 from functools import wraps
+
+import traceback
 
 class Environment(object):
     def __init__(self, env):
@@ -171,27 +173,28 @@ class Response(adapter.Response):
         self._cookies_to_send = Cookie.SimpleCookie()
         self.make_empty()
         self._started_response = False
+        self._filter = lambda x: x
 
     def respond(self, filter = None):
         self.start_response()
-        f = filter or (lambda x: x)
-        if not len(self._content):
-            yield ''
-        else:
-            for element in self:
-                if type(element) in {StringType, UnicodeType}:
-                    r = f(element)
-                    yield r
-                    self._bytes_sent += len(r)
-                else:
-                    for subelement in element:
-                        r = f(subelement)
-                        yield r
-                        self._bytes_sent += len(r)
+        if filter is not None:
+            self._filter = filter
+
+        return iter(self)
 
     def __iter__(self):
-        for k in self._content:
-            yield k
+        f = self._filter
+
+        for element in self._content:
+            if type(element) in {StringType, UnicodeType}:
+                r = f(element)
+                yield r
+                self._bytes_sent += len(r)
+            else:
+                for subelement in element:
+                    r = f(subelement)
+                    yield r
+                    self._bytes_sent += len(r)
 
     @property
     def bytes_sent(self):
@@ -302,70 +305,86 @@ class Response(adapter.Response):
 
 from ...orm.usagelog import UsageLog
 
-class ArchiveHandler(SimpleHandler):
-    def run(self, application):
-        """Invoke the application"""
-        self.status = '500 Internal Error'
-        ctx = adapter.Context()
+class ContextResponseIterator(object):
+    def __init__(self, response, context_closer):
+        self._resp = response
+        self._cls  = context_closer
+        self._ctx  = adapter.Context()
+        self._closed = False
+
+    def __iter__(self):
+        session = self._ctx.session
         try:
-            self.setup_environ()
-            with session_scope() as session:
-                try:
-                    request = Request(session, self.environ)
-                    response = Response(session, self.environ, self.start_response)
-                    ctx.setContent(request, response)
-
-                    usagelog = UsageLog(ctx)
-                    ctx.usagelog = usagelog
-                    ctx.session = session
-
-                    try:
-                        ctx.usagelog.user_id = request.user.id
-                    except AttributeError:
-                        # No user defined
-                        pass
-                    session.add(usagelog)
-                    session.commit()
-
-                    self.result = application(self.environ, self.start_response)
-                    self.finish_response()
-                except Exception as e:
-                    print "EXCEPTION:", str(e)
-                    raise
-                finally:
-                    session.commit()
-                    ctx.usagelog.set_finals(ctx)
-                    session.commit()
-                    session.close()
-        except:
-            try:
-                self.handle_error()
-            except:
-                # If we get an error when handling the error, just give up!
-                self.close()
-                raise # And let the actual server figure out...
-        finally:
-            ctx.invalidate()
+            for chunk in self._ctx.resp:
+                yield chunk
+        except Exception as e:
+            self.close()
+            raise
 
     def close(self):
-        """Copied from wsgiref.simple_server.ServerHandler"""
+        if not self._closed:
+            ctx = self._ctx
+            try:
+                session = ctx.session
+                session.commit()
+                ctx.usagelog.set_finals(ctx)
+                session.commit()
+                session.close()
+            finally:
+                self._cls()
+                self._closed = True
+
+class ArchiveContextMiddleware(object):
+    def __init__(self, app):
+        self.ctx = None
+        self.application = app
+        self.bytes_sent = 0
+
+    def __call__(self, environ, start_response):
+        self.ctx = adapter.Context()
+        ctx = self.ctx
+        # Setup the session and basics of the context
         try:
-            self.request_handler.log_request(
-                self.status.split(' ',1)[0], self.bytes_sent
-            )
-        finally:
-            SimpleHandler.close(self)
+            session = sessionfactory()
+            ctx.session = session
 
-class ArchiveWSGIRequestHandler(WSGIRequestHandler):
-    def handle(self):
-        """Handle a single HTTP request"""
+            request = Request(session, environ)
+            response = Response(session, environ, start_response)
+            ctx.setContent(request, response)
+        except Exception as e:
+            self.close()
+            raise
 
-        self.raw_requestline = self.rfile.readline()
-        if not self.parse_request(): # An error code has been sent, just exit
-            return
 
-        handler = ArchiveHandler(
-            self.rfile, self.wfile, self.get_stderr(), self.get_environ()
-        )
-        handler.request_handler = self      # backpointer for logging
-        handler.run(self.server.get_app())
+        # Basics of the context are done, let's continue by creating an entry in the
+        # usagelog, and associate it to the context, too
+        try:
+            usagelog = UsageLog(ctx)
+            ctx.usagelog = usagelog
+
+            try:
+                ctx.usagelog.user_id = request.user.id
+            except AttributeError:
+                # No user defined
+                pass
+            session.add(usagelog)
+            session.commit()
+        except Exception as e:
+            traceback.print_exc()
+            session.commit()
+            session.close()
+            raise
+
+        try:
+            result = self.application(environ, start_response)
+            return ContextResponseIterator(result, self.close)
+        except Exception as e:
+            traceback.print_exc()
+            session.commit()
+            ctx.usagelog.set_finals(ctx)
+            session.commit()
+            session.close()
+            raise
+
+    def close(self):
+        self.ctx.invalidate()

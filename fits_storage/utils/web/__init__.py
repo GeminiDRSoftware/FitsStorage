@@ -7,7 +7,7 @@ except ImportError:
     pass
 
 try:
-    from wsgi_adapter import Request as WSGIRequest, Response as WSGIResponse, ArchiveWSGIRequestHandler as WSGIRequestHandler
+    from wsgi_adapter import Request as WSGIRequest, Response as WSGIResponse, ArchiveContextMiddleware
 except ImportError:
     # This should never happen, but just in case...
     pass
