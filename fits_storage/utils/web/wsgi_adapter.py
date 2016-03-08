@@ -192,6 +192,7 @@ from ...orm.usagelog import UsageLog
 class ArchiveHandler(ServerHandler):
     def run(self, application):
         """Invoke the application"""
+        self.status = '500 Internal Error'
         ctx = adapter.Context()
         try:
             self.setup_environ()
