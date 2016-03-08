@@ -110,13 +110,13 @@ fits_aux_datadir = "/opt/FitsStorage/data"
 template_root = fits_aux_datadir + "/templates"
 
 # Configure the Backup Directory here
-fits_db_backup_dir = "/data/FitsStorage/backups"
+fits_db_backup_dir = "/data/backups"
 
 # Configure the LockFile Directory here
-fits_lockfile_dir = "/data/FitsStorage/logs"
+fits_lockfile_dir = "/data/logs"
 
 # Configure the log directory here
-fits_log_dir = "/data/FitsStorage/logs/"
+fits_log_dir = "/data/logs/"
 
 # Configure the tape scratch directory here
 fits_tape_scratchdir = "/data/tapescratch"
