@@ -4,6 +4,7 @@ from ...orm.user import User
 from ...fits_storage_config import magic_download_cookie
 from thread import get_ident
 from threading import local
+import abc
 
 class ReturnMetaClass(type):
     __return_codes = {
@@ -232,6 +233,7 @@ class Cookies(object):
         self._resp.set_cookie(key, value, **kw)
 
 class Request(object):
+    __metaclass__ = abc.ABCMeta
     """
     Object encapsulating information related to the HTTP request and values derived from it.
     Apart from the documented methods, it presents a partial dictionary-like interface, as
@@ -243,12 +245,12 @@ class Request(object):
     def __init__(self, session):
         self._s = session
 
+    @abc.abstractmethod
     def get_header_value(self, header_name):
         """
         Returns the value for the the ``header_name`` HTTP header. Raises :py:exc:`KeyError` if the
         header doesn't exist.
         """
-        raise NotImplementedError("get_header_value must be implemented by derived classes")
 
     def __getitem__(self, key):
         "Provides a dictionary-like interface for the request object to get headers"
@@ -308,6 +310,7 @@ class Request(object):
         except KeyError:
             return False
 
+    @abc.abstractmethod
     def get_form_data(self, large_file=False):
         """
         Returns an object with the same interface as :py:class:`cgi.FieldStorage`, with the
@@ -316,29 +319,25 @@ class Request(object):
         If we expect a large file to be sent, ``large_file`` should be set to True. Some
         implementations of ``FieldStorage`` may benefit from knowing this.
         """
-        raise NotImplementedError("get_form_data must be implemented by derived classes")
 
-    @property
+    @abc.abstractproperty
     def input(self):
         """
         A file-like object that can be used to read the raw contents of the request payload.
         """
-        raise NotImplementedError("input must be implemented by derived classes")
 
-    @property
+    @abc.abstractproperty
     def env(self):
         """
         Dictionary-like object that let's access to environment variables. Useful for low-level
         access to information like hostname, remote IP, etc.
         """
-        raise NotImplementedError("env must be implemented by derived classes")
 
-    @property
+    @abc.abstractproperty
     def raw_data(self):
         """
         Reads the whole request payload and returns it as-is, as a single string.
         """
-        raise NotImplementedError("raw_data must be implemented by derived classes")
 
     @property
     def json(self):
@@ -349,25 +348,27 @@ class Request(object):
         """
         return json.loads(self.raw_data)
 
+    @abc.abstractmethod
     def log(self, *args, **kw):
         """
         Log a message to the error output of the web server. The exact positional and
         keyword argments depend on the implementation, but it is safe to assume that
         the first argument is the message to be printed.
         """
-        raise NotImplementedError("raw_data must be implemented by derived classes")
 
 class Response(object):
+    __metadata__ = abc.ABCMeta
     def __init__(self, session):
         self._s = session
         self.status = Return.HTTP_OK
 
+    @abc.abstractmethod
     def expire_cookie(self, name):
         """
         Adds the header needed to expire the clinet cookie named ``name``.
         """
-        raise NotImplementedError("expire_cookie must be implemented by derived classes")
 
+    @abc.abstractmethod
     def set_cookie(self, name, value='', **kw):
         """
         Will add a client cookie. Attributes different to the name and value can be passed
@@ -375,13 +376,12 @@ class Response(object):
 
         Refer to :py:class:`Cookie.Morsel` for a list of allowed attributes.
         """
-        raise NotImplementedError("set_cookie must be implemented by derived classes")
 
+    @abc.abstractmethod
     def set_content_type(self, content_type):
         """
         Sets the content type for the response payload.
         """
-        raise NotImplementedError("set_content_type must be implemented by derived classes")
 
     def content_type_setter(self, content_type):
         self.set_content_type(content_type)
@@ -393,33 +393,34 @@ class Response(object):
     content_length = property(fset=content_length_setter,
                               doc='This is a property setter (write-only). It is intended to be used as a shortcut instead of :py:meth:`Response.set_header`')
 
+    @abc.abstractmethod
     def set_header(self, name, value):
         """
         Adds a header to be sent with the response.
         """
-        raise NotImplementedError("set_header must be implemented by derived classes")
 
+    @abc.abstractmethod
     def append(self, string):
         """
         Appends content to be sent with the response, typically in the form of a string.
         """
-        raise NotImplementedError("append must be implemented by derived classes")
 
+    @abc.abstractmethod
     def append_iterable(self, it):
         """
         Appends content to be sent with the response. This function takes an iterable (any kind)
         which must yield strings.
         """
-        raise NotImplementedError("append_iterable must be implemented by derived classes")
 
+    @abc.abstractmethod
     def append_json(self, obj, **kw):
         """
         Takes an object and appends to the contents a serialized representation of it,
         encoded in JSON format. Any additional keyword arguments will be passed verbatim
         to :py:meth:`json.dumps`.
         """
-        raise NotImplementedError("append_json must be implemented by derived classes")
 
+    @abc.abstractmethod
     def send_json(self, obj, **kw):
         """
         Stream a JSON object. Intended for large contents, to avoid keeping them in memory.
@@ -429,20 +430,20 @@ class Response(object):
         Calling :py:meth:`Response.send_json` will automatically set the Content-Type to
         ``application/json``.
         """
-        raise NotImplementedError("send_json must be implemented by derived classes")
 
+    @abc.abstractmethod
     def sendfile(self, path):
         """
         Takes the path to an existing file and adds its contents to the response payload.
         """
-        raise NotImplementedError("sendfile must be implemented by derived classes")
 
+    @abc.abstractmethod
     def sendfile_obj(self, fp):
         """
         Takes a file-like object and adds its contents to the response payload.
         """
-        raise NotImplementedError("sendfile_obj must be implemented by derived classes")
 
+    @abc.abstractmethod
     def tarfile(self, name, **kw):
         """
         Context manager designed to stream tar files generated on the fly. Apart from a
@@ -453,8 +454,8 @@ class Response(object):
           with resp.tarfile('filename.tar') as tar:
              tar.addfile( ... )
         """
-        raise NotImplementedError("tarfile must be implemented by derived classes")
 
+    @abc.abstractmethod
     def redirect_to(self, url, **kw):
         """
         Stops the processing and returns an HTTP Redirect status code to the client, pointing
@@ -467,8 +468,8 @@ class Response(object):
 
         :py:meth:`Response.redirect_to` will raise a :any:`RequestRedirect` exception.
         """
-        raise NotImplementedError("redirect_to must be implemented by derived classes")
 
+    @abc.abstractmethod
     def client_error(self, code, message=None, template=None, content_type='text/html', annotate=None):
         """
         Stops the processings and returns an HTTP error status code to the client. ``code``
@@ -493,4 +494,3 @@ class Response(object):
                   If it is ``None``, the handler will decide on a sensible one (probably
                   :py:class:`orm.UsageLog`).
         """
-        raise NotImplementedError("client_error must be implemented by derived classes")
