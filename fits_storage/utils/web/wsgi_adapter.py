@@ -5,7 +5,7 @@ from ...orm import session_scope
 from wsgiref.handlers import SimpleHandler
 from wsgiref.simple_server import WSGIRequestHandler
 from wsgiref import util as wutil
-from cgi import escape
+from cgi import escape, FieldStorage
 
 import Cookie
 from contextlib import contextmanager
@@ -92,7 +92,7 @@ class Request(adapter.Request):
             return False
 
     def get_form_data(self, large_file=False):
-        form_data = util.FieldStorage(self.input, environ=self._env)
+        form_data = FieldStorage(self.input, environ=self._env)
 
         return form_data
 
