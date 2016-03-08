@@ -99,9 +99,9 @@ class Request(adapter.Request):
 
     def log(self, *args, **kw):
         try:
-            print >> self._env['wsgi_errors'], args[0]
+            print >> self._env['wsgi.errors'], args[0]
             return True
-        except IndexError:
+        except (KeyError, IndexError):
             return False
 
     def get_form_data(self, large_file=False):
