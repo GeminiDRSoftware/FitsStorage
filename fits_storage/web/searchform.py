@@ -77,7 +77,8 @@ def searchform(things, orderby):
             else:
                 # Regular data search
                 # clears formdata, refreshes page with updated selection from form
-                formdata.clear()
+                # TODO: Ask Paul why are we clearing the form data here. Does it make sense?
+                # formdata.clear()
                 ctx.resp.redirect_to('/searchform' + urlstring + args_string)
 
     try:
