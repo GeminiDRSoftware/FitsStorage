@@ -1,0 +1,30 @@
+FITSSTORAGE_ROOT=/opt/FitsStorage
+MODWSGI_DIR=/opt/modwsgi-default
+
+sudo pip install mod_wsgi==4.4.21
+# --server-root                        Where to store the server setup information
+# --access-log                         Enable access log (off by default)
+# --url-alias                          Alias URL for static files (one per alias)
+# --python-path                        Additional content for PYTHONPATH
+
+sudo mkdir $MODWSGI_DIR
+
+MODWSGI_OPTS="\
+ --server-root $MODWSGI_DIR \
+ --port 80 \
+ --user apache --group apache \
+ --access-log \
+ --url-alias /static $FITSSTORAGE_ROOT/htmldocroot \
+ --url-alias /favicon.ico $FITSSTORAGE_ROOT/htmldocroot/favicon.ico \
+ --url-alias /robots.txt $FITSSTORAGE_ROOT/htmldocroot/robots.txt \
+ --python-path $FITSSTORAGE_ROOT \
+"
+
+# The extra argument is the WSGI entry point
+sudo mod_wsgi-express setup-server $MODWSGI_OPTS $FITSSTORAGE_ROOT/fits_storage/wsgihandler.py
+
+# And set let apache handle that dir from now on
+# TODO: Rethink this; most probably it's better to have root having permissions
+#       over everything that apache doesn't need to touch
+sudo chown -R apache:apache $MODWSGI_DIR
+
