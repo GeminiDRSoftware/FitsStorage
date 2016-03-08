@@ -558,7 +558,11 @@ def queryselection(query, selection):
                 valid = False
 
         if valid and (lower is not None) and (upper is not None):
-            query = query.filter(Header.dec >= lower).filter(Header.dec < upper)
+            # Negative dec ranges are usually specified backwards, eg -20 - -30...
+            if upper < lower:
+                query = query.filter(Header.dec >= upper).filter(Header.dec < lower)
+            else:
+                query = query.filter(Header.dec >= lower).filter(Header.dec < upper)
             query = querypropcoords(query)
 
 
