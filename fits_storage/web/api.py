@@ -1,4 +1,4 @@
-from ..orm          import session_scope, NoResultFound
+from ..orm          import NoResultFound
 from ..orm.file     import File
 from ..orm.header   import Header
 from ..orm.diskfile import DiskFile
@@ -163,6 +163,8 @@ def map_changes(changes):
 
 @needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], content_type='json')
 def update_headers(req):
+    ctx = Context()
+
     with session_scope() as session:
         iq = IngestQueueUtil(session, DummyLogger())
         proxy = ApiProxy(api_backend_location)
@@ -204,7 +206,7 @@ def update_headers(req):
         except TypeError:
             response = error_response("This looks like a malformed request. Expected a list of queries. Instead I got {}".format(type(data)))
 
-    resp = Context().resp
+    resp = ctx.resp
     resp.content_type = 'application/json'
     resp.append_json(response)
 

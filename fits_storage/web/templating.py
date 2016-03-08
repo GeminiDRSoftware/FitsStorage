@@ -4,7 +4,6 @@ Module to deal with the interals of templating
 
 from jinja2 import Environment, FileSystemLoader
 from ..fits_storage_config import template_root
-from ..orm import session_scope
 from ..utils.web import Context
 from functools import wraps
 from mod_python import apache

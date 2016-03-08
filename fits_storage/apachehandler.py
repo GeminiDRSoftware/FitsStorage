@@ -226,6 +226,8 @@ def handler(ctx, req):
             raise
         finally:
             # Grab the final log values
+            # Make sure that the session is in a consistent state
+            session.commit()
             usagelog.set_finals(req)
             session.commit()
             session.close()
