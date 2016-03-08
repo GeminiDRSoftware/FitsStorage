@@ -265,7 +265,8 @@ url_map = Map([
 )
 
 def get_route(routes):
-    return routes.match(get_context().env.uri)
+    env = get_context().env
+    return routes.match(env.uri, env.method)
 
 def default_route(environ, start_response):
     resp = get_context().resp
