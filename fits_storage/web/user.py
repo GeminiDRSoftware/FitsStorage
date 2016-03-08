@@ -464,7 +464,8 @@ def login(things):
 
     if valid_request:
         # Cookie expires in 1 year
-        ctx.cookies.set('gemini_archive_session', cookie, expires=time.time()+31536000, path="/")
+        exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=31536000)
+        ctx.cookies.set('gemini_archive_session', cookie, expires=exp, path="/")
 
     template_args = dict(
         # Rebuild the thing_string for the url

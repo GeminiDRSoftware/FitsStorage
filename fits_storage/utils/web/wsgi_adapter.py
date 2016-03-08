@@ -6,6 +6,7 @@ from wsgiref.handlers import SimpleHandler
 from wsgiref.simple_server import WSGIRequestHandler
 from wsgiref import util as wutil
 from cgi import escape, FieldStorage
+from datetime import datetime
 
 from types import StringType, UnicodeType
 
@@ -170,20 +171,32 @@ class Response(adapter.Response):
     def start_response(self):
         if not self._started_response:
             self._started_response
-            self._sr('{} {}'.format(self.status, status_message.get(self.status, 'Error')),
-                     [('Content-Type', self._content_type)] + self._headers[:])
+            self._sr(
+                '{} {}'.format(self.status, status_message.get(self.status, 'Error')),
+                   [('Content-Type', self._content_type)]
+                 + self._headers[:]
+                 + [('Set-Cookie', morsel.OutputString()) for morsel in self._cookies_to_send.values()]
+            )
         return self
 
     def expire_cookie(self, name):
-        self.set_cookie(name, expires=time.time())
+        self.set_cookie(name, expires=datetime.utcnow())
         return self
 
     def set_cookie(self, name, value='', **kw):
-        raise NotImplementedError("This is not implemented yet")
-        # Cookie.add_cookie(self._req, name, value, **kw)
-        # self._cookies_to_send[name] = value
-        # for attr, val in kw.iteritems():
-        #     self._cookies_to_send[name][attr] = val
+        """
+        Encodes a cookie using the value and other arguments passed as keywords.
+        The ``expires`` argument requires a ``datetime`` object with UTC/GMT offset.
+        """
+
+        # The minimal
+        self._cookies_to_send[name] = value
+        ck = self._cookies_to_send[name]
+        for k, v in kw.iteritems():
+            if k == 'expires':
+                ck['expires'] = v.strftime('%a, %d %b %Y %H:%M:%S GMT')
+            else:
+                ck[k] = v
 
     def set_content_type(self, content_type):
         self._content_type = content_type
