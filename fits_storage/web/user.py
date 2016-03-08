@@ -649,13 +649,14 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
             if not got_magic:
                 raise_error = functools.partial(ctx.resp.client_error, code=Return.HTTP_FORBIDDEN, content_type=ctype, annotate=annotate)
                 if only_magic:
-                    raise_error("Could not find a proper magic cookie for a cookie-only service")
+                    raise_error(message="Could not find a proper magic cookie for a cookie-only service")
+                user = ctx.user
                 if not user:
-                    raise_error("You need to be logged in to access this resource")
+                    raise_error(message="You need to be logged in to access this resource")
                 if superuser is True and not user.superuser:
-                    raise_error("You need to be logged in as a Superuser to access this resource")
+                    raise_error(message="You need to be logged in as a Superuser to access this resource")
                 if staffer is True and not user.gemini_staff:
-                    raise_error("You need to be logged in as Gemini Staff member to access this resource")
+                    raise_error(message="You need to be logged in as Gemini Staff member to access this resource")
             return fn(*args, **kw)
         return wrapper
     return decorator
