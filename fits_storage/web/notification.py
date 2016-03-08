@@ -11,6 +11,8 @@ from .user import needs_login
 
 from . import templating
 
+from xml.parsers.expat import ExpatError
+
 @needs_login(staffer=True)
 @templating.templated("notification.html")
 def notification():
@@ -83,7 +85,12 @@ def import_odb_notifications():
     xml = ctx.raw_data
 
     # Process it
-    report = ingest_odb_xml(ctx.session, xml)
+    try:
+        report = ingest_odb_xml(ctx.session, xml)
+    except ExpatError:
+        ctx.resp.client_error(Return.HTTP_BAD_REQUEST,
+                              content_type='text/plan',
+                              message='<!-- The content sent is not valid XML -->')
 
     # Write back the report
     ctx.resp.content_type = "text/plain"
