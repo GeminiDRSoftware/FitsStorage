@@ -393,4 +393,4 @@ class ArchiveContextMiddleware(object):
                 self.close()
 
     def close(self):
-        self.ctx.invalidate()
+        adapter.invalidate_context()

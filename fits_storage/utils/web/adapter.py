@@ -46,7 +46,7 @@ def context_wrapped(fn):
         try:
             return fn(ctx, *args, **kw)
         finally:
-            ctx.invalidate()
+            invalidate_context()
     return wrapper
 
 def with_content_type(content_type):
@@ -72,27 +72,10 @@ def get_context(initialize = False):
 
     return ctx
 
-class Context(object):
-#    __threads = {}
-#    def __new__(cls):
-#        this = get_ident()
-#        def new_context():
-#            print "*** Creating new context object ({})".format(this)
-#            new = Context.__threads[this] = object.__new__(cls)
-#            new.initialize_singleton()
-#            return new
-#
-#        try:
-#            ret = Context.__threads[this]
-#            # This should never happen, but...
-#            if not ret._valid:
-#                print "*** Invalid ({})".format(this)
-#                ret = new_context()
-#        except KeyError:
-#            ret = new_context()
-#
-#        return ret
+def invalidate_context():
+    __ContextStorage__.ctx = None
 
+class Context(object):
     def __init__(self):
         self.req = None
         self.resp = None
@@ -108,13 +91,6 @@ class Context(object):
     def __getattr__(self, attr):
         # TODO: Eventually, catch the AttributeErrors and raise them separately
         return getattr(self.req, attr)
-
-    def invalidate(self):
-        pass
-#            print "*** Invalidating {}".format(get_ident())
-#            del Context.__threads[get_ident()]
-#            self._valid = False
-#            print "*** Invalidated {}".format(get_ident())
 
     @property
     def cookies(self):
