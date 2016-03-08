@@ -7,8 +7,8 @@ find out what programs they have access to etc
 from ..orm import sessionfactory
 
 from ..orm.userprogram import UserProgram
+from ..utils.web import Context
 
-from .user import userfromcookie
 from . import templating
 
 # This will only work with apache
@@ -24,6 +24,8 @@ def my_programs(session, req, things):
     they have registered access to.
     Also generates and processes a form to add new ones.
     """
+
+    ctx = Context()
 
     # First, process the form data if there is any
     formdata = util.FieldStorage(req)
@@ -42,7 +44,7 @@ def my_programs(session, req, things):
     prog_list = []
     reason_bad = ''
 
-    user = userfromcookie(session, req)
+    user = ctx.user
     if user:
         username = user.username
         if program_id or program_key:

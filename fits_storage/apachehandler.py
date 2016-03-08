@@ -30,7 +30,7 @@ from web.fileserver import fileserver, download
 from web.qastuff import qareport, qametrics, qaforgui
 from web.statistics import content, stats
 from web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password
-from web.user import staff_access, user_list, userfromcookie, AccessForbidden
+from web.user import staff_access, user_list, AccessForbidden
 from web.userprogram import my_programs
 from web.searchform import searchform, nameresolver
 from web.logreports import usagereport, usagedetails, downloadlog, usagestats
@@ -166,15 +166,17 @@ mapping_selection = {
 def handler(ctx, req):
     with session_scope() as session:
         # Instantiate the UsageLog instance for this request, populate initial values from req
-        request = ModPythonRequest(req)
+        request = ModPythonRequest(session, req)
         usagelog = UsageLog(req)
         ctx.usagelog = usagelog
         ctx.req      = request
 
         try:
-            user = userfromcookie(session, req)
-            if user:
-                usagelog.user_id = user.id
+            try:
+                usagelog.user_id = request.user.id
+            except AttributeError:
+                # No user defined
+                pass
             session.add(usagelog)
             session.commit()
 

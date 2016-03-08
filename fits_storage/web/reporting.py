@@ -15,11 +15,9 @@ from ..orm.fulltextheader import FullTextHeader
 from ..utils.userprogram import canhave_coords
 from ..utils.web import Context
 
-from .user import userfromcookie
-
 def report(req, thing):
-    this = Context().usagelog.this
-
+    ctx = Context()
+    this = ctx.usagelog.this
 
 #    if not (fnthing or match):
 #        # OK, they must have fed us garbage
@@ -73,7 +71,7 @@ def report(req, thing):
                         .filter(FullTextHeader.diskfile_id == diskfile.id)
                         .filter(Header.diskfile_id == diskfile.id))
             header, ftheader = query.one()
-            if canhave_coords(session, userfromcookie(session, req), header):
+            if canhave_coords(session, ctx.user, header):
                 req.write(ftheader.fulltext)
             else:
                 req.write("The data you're trying to access has proprietary rights and cannot be displayed")

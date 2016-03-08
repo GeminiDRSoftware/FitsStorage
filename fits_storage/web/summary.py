@@ -24,7 +24,6 @@ if use_as_archive:
 else:
     from ..cal.associate_calibrations import associate_cals
 
-from .user import userfromcookie
 from .userprogram import get_program_list
 
 from ..orm.querylog import QueryLog
@@ -74,6 +73,7 @@ def summary_body(session, req, sumtype, selection, orderby, links=True, addition
     the html table containing the actual summary information.
     """
 
+    ctx = Context()
     sumlinks = ALL_LINKS if links else NO_LINKS
 
     # If this is a diskfiles summary, select even ones that are not canonical
@@ -85,7 +85,7 @@ def summary_body(session, req, sumtype, selection, orderby, links=True, addition
         selection['present'] = True
 
     # Instantiate querylog, populate initial fields
-    querylog = QueryLog(Context().usagelog)
+    querylog = QueryLog(ctx.usagelog)
     querylog.summarytype = sumtype
     querylog.selection = str(selection)
     querylog.query_started = datetime.datetime.utcnow()
@@ -125,7 +125,7 @@ def summary_body(session, req, sumtype, selection, orderby, links=True, addition
     if len(headers) > 0:
         # We have a session at this point, so get the user and their program list to
         # pass down the chain to use figure out whether to display download links
-        user = userfromcookie(session, req)
+        user = ctx.user
         user_progid_list = get_program_list(session, user)
         sumtable_data = summary_table(req, sumtype, headers, selection, sumlinks, user, user_progid_list, additional_columns)
     else:

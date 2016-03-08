@@ -159,3 +159,7 @@ class User(Base):
     @property
     def has_password(self):
         return self.password is not None
+
+    @property
+    def is_staffer(self):
+        return self.gemini_staff

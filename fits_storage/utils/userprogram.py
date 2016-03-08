@@ -11,12 +11,13 @@ from ..fits_storage_config import magic_download_cookie
 from ..gemini_metadata_utils import ONEDAY_OFFSET
 
 from ..web.userprogram import get_program_list
-from ..web.user import userfromcookie
 
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.obslog import Obslog
 from ..orm.miscfile import MiscFile
+
+from .web import Context
 
 def canhave_coords(session, user, header, gotmagic=False, user_progid_list=None):
     """
@@ -235,6 +236,8 @@ def icanhave(session, req, item, filedownloadlog=None):
     the relevant content.
     """
 
+    ctx = Context()
+
     # Does the client have the magic cookie?
     gotmagic = got_magic(req)
     if gotmagic:
@@ -242,8 +245,5 @@ def icanhave(session, req, item, filedownloadlog=None):
             filedownloadlog.magic_access = True
         return True
 
-    # Get the user from the request
-    user = userfromcookie(session, req)
-
     fn = icanhave_function.get(item.__class__, cant_have)
-    return fn(session, user, item, filedownloadlog, gotmagic=gotmagic)
+    return fn(session, ctx.user, item, filedownloadlog, gotmagic=gotmagic)

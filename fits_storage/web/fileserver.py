@@ -15,7 +15,7 @@ from ..utils.web import Context
 
 from .selection import getselection, openquery, selection_to_URL
 from .summary import list_headers
-from .user import userfromcookie, AccessForbidden, DEFAULT_403_TEMPLATE
+from .user import AccessForbidden, DEFAULT_403_TEMPLATE
 
 # This will only work with apache
 from mod_python import apache
@@ -94,6 +94,9 @@ def download(req, things):
     This is the download server. Given a selection, it will send a tarball of the
     files from the selection that you have access to to the client.
     """
+
+    ctx = Context()
+
     # assume unless set otherwise later that this is not an associated_calibrations download
     associated_calibrations = False
     # If we are called via POST, then parse form data rather than selection
@@ -121,13 +124,13 @@ def download(req, things):
     # Open a database session
     with session_scope() as session:
         # Instantiate the download log
-        downloadlog = DownloadLog(Context().usagelog)
+        downloadlog = DownloadLog(ctx.usagelog)
         session.add(downloadlog)
         downloadlog.selection = str(selection)
         downloadlog.query_started = datetime.datetime.utcnow()
 
         # Get our username while we have the database session open
-        user = userfromcookie(session, req)
+        user = ctx.user
         if user:
             username = user.username
         else:
@@ -185,7 +188,7 @@ def download(req, things):
         # Here goes!
         tar = tarfile.open(name=tarfilename, mode="w|", fileobj=req)
         for header in headers:
-            filedownloadlog = FileDownloadLog(Context().usagelog)
+            filedownloadlog = FileDownloadLog(ctx.usagelog)
             filedownloadlog.diskfile_filename = header.diskfile.filename
             filedownloadlog.diskfile_file_md5 = header.diskfile.file_md5
             filedownloadlog.diskfile_file_size = header.diskfile.file_size

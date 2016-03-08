@@ -14,7 +14,7 @@ from ..utils.web import Context
 
 from .selection import getselection, openquery, selection_to_URL
 from .summary import list_headers
-from .user import userfromcookie, AccessForbidden
+from .user import AccessForbidden
 
 # This will only work with apache
 from mod_python import apache

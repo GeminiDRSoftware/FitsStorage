@@ -15,7 +15,7 @@ from .standards import get_standard_obs
 from ..apache_return_codes import HTTP_OK
 
 from ..utils.userprogram import canhave_coords, got_magic
-from .user import userfromcookie
+from ..utils.web import Context
 
 from . import templating
 
@@ -109,7 +109,7 @@ def jsonsummary(req, selection):
 
     with session_scope() as session:
         # Get the current user if logged id
-        user = userfromcookie(session, req)
+        user = Context().user
         gotmagic = got_magic(req)
 
         headers = list_headers(session, selection, orderby)

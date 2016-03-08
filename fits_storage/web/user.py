@@ -254,6 +254,8 @@ def change_password(req, things):
     # Present and process a change password form. User must be logged in,
     # and know their current password.
 
+    ctx = Context()
+
     # Process the form data first if there is any
     formdata = util.FieldStorage(req)
     request_attempted = False
@@ -293,7 +295,7 @@ def change_password(req, things):
 
     if valid_request:
         with session_scope() as session:
-            user = userfromcookie(session, req)
+            user = ctx.user
             if user is None:
                 valid_request = False
                 reason_bad = 'You are not currently logged in'
@@ -375,6 +377,9 @@ def staff_access(session, req, things):
     """
     Allows supersusers to set accounts to be or not be gemini staff
     """
+
+    ctx = Context()
+
     # Process the form data first if there is any
     formdata = util.FieldStorage(req)
     username = ''
@@ -387,7 +392,7 @@ def staff_access(session, req, things):
         if 'action' in formdata.keys():
             action = formdata['action'].value
 
-    thisuser = userfromcookie(session, req)
+    thisuser = ctx.user
     if thisuser is None or thisuser.superuser != True:
         return dict(allowed = False)
 
@@ -509,11 +514,14 @@ def whoami(session, req, things):
 
     template_args = {}
 
-    user = userfromcookie(session, req)
+    user = Context().user
 
-    if user is not None:
+    try:
         template_args['username'] = user.username
         template_args['fullname'] = user.fullname
+    except AttributeError:
+        # no user
+        pass
 
     # Construct the "things" part of the URL for the link that want to be able to
     # take you back to the same form contents
@@ -528,7 +536,7 @@ def user_list(session, req):
     see this.
     """
 
-    thisuser = userfromcookie(session, req)
+    thisuser = Context().user
     if thisuser is None or thisuser.gemini_staff != True:
         return dict(staffer = False)
 
@@ -576,43 +584,6 @@ def bad_password(candidate):
         return False
 
     return True
-
-def is_staffer(req, session=None):
-    """
-    Given a request object and, optionally, a database session, figure out
-    if the current logged-in user is a staff member
-    """
-    try:
-        if session is None:
-            with session_scope() as s:
-                return userfromcookie(s, req).gemini_staff
-        else:
-            return userfromcookie(session, req).gemini_staff
-    except (TypeError, AttributeError):
-        return False
-
-def userfromcookie(session, req):
-    """
-    Given a database session and request object, get the session cookie
-    from the request object and find and return the user object,
-    or None if it is not a valid session cookie
-    """
-
-    # Do we have a session cookie?
-    cookie = None
-    cookies = Cookie.get_cookies(req)
-    if cookies.has_key('gemini_archive_session'):
-        cookie = cookies['gemini_archive_session'].value
-    else:
-        # No session cookie, not logged in
-        return None
-
-    # Find the user that we are
-    try:
-        return session.query(User).filter(User.cookie == cookie).one()
-    except NoResultFound:
-        # This is not a valid session cookie
-        return None
 
 class AccessForbidden(Exception):
     def __init__(self, message, template, content_type='text/html', annotate=None):
@@ -667,6 +638,8 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(req, *args, **kw):
+            ctx = Context()
+
             if content_type == 'json':
                 ctype    = 'application/json'
                 template = JSON_403_TEMPLATE
@@ -695,7 +668,7 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
                 if not got_magic:
                     if only_magic:
                         raise AccessForbidden("Could not find a proper magic cookie for a cookie-only service", template=template, content_type=ctype, annotate=annotate)
-                    user = userfromcookie(session, req)
+                    user = ctx.user
                     if not user:
                         raise AccessForbidden("You need to be logged in to access this resource", template=template, content_type=ctype, annotate=annotate)
                     if superuser is True and not user.superuser:

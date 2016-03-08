@@ -13,7 +13,7 @@ from ..utils.api import ApiProxy, ApiProxyError
 from ..utils.userprogram import icanhave
 from ..utils.web import Context
 
-from .user import needs_login, is_staffer
+from .user import needs_login
 
 from mod_python import util, apache
 import dateutil
@@ -66,7 +66,11 @@ def miscfiles(req, things):
 
 @templating.templated("miscfiles/miscfiles.html")
 def bare_page(req):
-    return dict(can_add=is_staffer(req))
+    try:
+        can_add = Context().user.is_staffer
+    except AttributeError:
+        can_add = False
+    return dict(can_add=can_add)
 
 def enumerate_miscfiles(session, req, query):
     for misc, disk, file in query:
@@ -74,7 +78,12 @@ def enumerate_miscfiles(session, req, query):
 
 @templating.templated("miscfiles/miscfiles.html", with_session=True)
 def search_miscfiles(session, req, formdata):
-    ret = dict(can_add=is_staffer(req, session))
+    try:
+        can_add = Context().user.is_staffer
+    except AttributeError:
+        can_add = False
+
+    ret = dict(can_add=can_add)
     query = session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)
 
     message = []
@@ -200,6 +209,11 @@ def save_file(session, req, formdata):
 @templating.templated("miscfiles/detail.html", with_session=True)
 def detail_miscfile(session, req, handle, formdata):
     try:
+        is_staffer = Context().user.is_staffer
+    except AttributeError:
+        is_staffer = False
+
+    try:
         query = session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)
         try:
             meta, df, fobj = query.filter(MiscFile.id == int(handle)).one()
@@ -208,7 +222,7 @@ def detail_miscfile(session, req, handle, formdata):
             meta, df, fobj = query.filter(File.name == handle).one()
 
         ret = dict(
-            canedit = is_staffer(req, session),
+            canedit = is_staffer,
             canhave = icanhave(session, req, meta),
             uri  = req.uri,
             meta = meta,
