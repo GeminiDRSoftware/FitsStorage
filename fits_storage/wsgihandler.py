@@ -43,33 +43,6 @@ from fits_storage.orm.usagelog import UsageLog
 
 from functools import partial
 
-####### HELPER FUNCTIONS #######
-
-# TODO: Rewrite this
-# Send debugging info to browser
-def debugmessage(req):
-    req.content_type = "text/plain"
-    req.write("Debug info\n\n")
-    req.write("python interpreter name: %s\n\n" % (str(req.interpreter)))
-    req.write("Pythonpath: %s\n\n" % (str(sys.path)))
-    req.write("python path: \n")
-    for i in sys.path:
-        req.write("-- %s\n" % i)
-    req.write("\n")
-    req.write("uri: %s\n\n" % (str(req.uri)))
-    req.write("unparsed_uri: %s\n\n" % (str(req.unparsed_uri)))
-    req.write("the_request: %s\n\n" % (str(req.the_request)))
-    req.write("filename: %s\n\n" % (str(req.filename)))
-    req.write("hostname: %s\n\n" % (str(req.hostname)))
-    req.write("canonical_filename: %s\n\n" % (str(req.canonical_filename)))
-    req.write("path_info: %s\n\n" % (str(req.path_info)))
-    req.write("args: %s\n\n" % (str(req.args)))
-
-    req.write("User agent: %s\n\n" % str(req.headers_in['User-Agent']))
-    req.write("All Headers in: %s\n\n" % str(req.headers_in))
-    return apache.HTTP_OK
-####### END HELPER FUNCTIONS #######
-
 ####### CUSTOM CONVERTERS ##########
 
 class SelectionConverter(BaseConverter):
@@ -115,6 +88,31 @@ class SequenceConverter(BaseConverter):
         return things
 
 ####### END CUSTOM CONVERTERS ##########
+
+####### HELPER FUNCTIONS #######
+
+debug_template = """
+Debug info
+
+Python path:
+{path}
+
+uri: {uri}
+"""
+
+# Send debugging info to browser
+def debugmessage():
+    ctx = Context()
+    req, resp = ctx.req, ctx.resp
+
+    resp.set_content_type('text/plain')
+
+    resp.append(debug_template.format(
+        path        = '\n'.join('-- {}'.format(x) for x in sys.path),
+        uri         = req.env.uri,
+    ))
+
+####### END HELPER FUNCTIONS #######
 
 url_map = Map([
     Rule('/debug', debugmessage),
