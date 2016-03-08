@@ -21,7 +21,6 @@ def list_headers(selection, orderby, full_query=False, add_previews=False):
     This function queries the database for a list of header table
     entries that satisfy the selection criteria.
 
-    session is an sqlalchemy session on the database
     selection is a dictionary containing fields to select on
     orderby is a list of fields to sort the results by
 
@@ -85,12 +84,11 @@ def list_headers(selection, orderby, full_query=False, add_previews=False):
     return query.all()
 
 
-def list_obslogs(session, selection, orderby):
+def list_obslogs(selection, orderby):
     """
     This function searches the database for a list of obslog table
     entries that satisfy the selection criteria
 
-    session is an sqlalchemy session on the database
     selection is a dictionary containing fields to select on
     orderby is a list of fields to sort the results by
 
@@ -100,6 +98,8 @@ def list_obslogs(session, selection, orderby):
     """
 
     # The basic query
+    session = get_context().session
+
     query = session.query(Obslog).select_from(Obslog, DiskFile)\
                     .filter(Obslog.diskfile_id == DiskFile.id)
 
