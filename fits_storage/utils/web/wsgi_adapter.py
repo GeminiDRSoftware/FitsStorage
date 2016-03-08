@@ -7,6 +7,8 @@ from wsgiref.simple_server import WSGIRequestHandler
 from wsgiref import util as wutil
 from cgi import escape, FieldStorage
 
+from types import StringType, UnicodeType
+
 import Cookie
 from contextlib import contextmanager
 from functools import wraps
@@ -146,12 +148,16 @@ class Response(adapter.Response):
 
     def respond(self, filter = None):
         self.start_response()
-        if filter:
-            for k in self:
-                yield filter(k)
+        f = filter or (lambda x: x)
+        if not len(self._content):
+            yield ''
         else:
-            for k in self:
-                yield k
+            for element in self:
+                if type(element) in {StringType, UnicodeType}:
+                    yield f(element)
+                else:
+                    for subelement in element:
+                        yield f(subelement)
 
     def __iter__(self):
         for k in self._content:
@@ -192,7 +198,7 @@ class Response(adapter.Response):
         return self
 
     def append_iterable(self, it):
-        self.content.append(it)
+        self._content.append(it)
         return self
 
     def append_json(self, obj, **kw):
