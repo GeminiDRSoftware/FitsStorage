@@ -199,10 +199,12 @@ class Map(object):
 
     def match(self, path_info, method=None):
         ctx = get_context()
+        found = False
         for rule in self._rules:
             m = rule.match(path_info)
             if m is not None:
-                if method is not None and method not in rule.methods:
+                found = True
+                if method is not None and rule.methods and method not in rule.methods:
                     # Most probably we want to keep track of this, to raise an exception
                     # if there was a match but no compatible method
                     continue
@@ -212,3 +214,8 @@ class Map(object):
                 elif rule.redirect_to is not None:
                     ctx.resp.redirect_to(rule.redirect_to)
                 return rule.action, m
+
+        # If we get here and found is True, then it means that there's a route, but the
+        # method we used was not allowed
+        if found:
+            ctx.resp.client_error(Return.HTTP_METHOD_NOT_ALLOWED)
