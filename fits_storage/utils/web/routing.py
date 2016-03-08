@@ -1,5 +1,5 @@
 import re
-from .adapter import Context
+from .adapter import Context, Return
 
 # This rule regular expressions is copied from werkzeug's, as we intend to make it
 # syntax-compatible
@@ -148,6 +148,7 @@ class Map(object):
                 self.add_converter(name, convclass)
         for rule in rules or ():
             self.add(rule)
+        self.forbidden = set()
 
     def add(self, rule):
         rule.compile(self)
@@ -156,12 +157,22 @@ class Map(object):
     def add_converter(self, name, convclass):
         self.converters[name] = convclass
 
+    def _split_url(self, url):
+        return tuple(filter(len, url.split('/')))
+
+    def add_forbidden(self, url):
+        self.forbidden.add(self._split_url(url))
+
+    def is_forbidden(self, url):
+        return self._split_url(url) in self.forbidden
+
     def get_converter(self, variable, converter_name, args, kwargs):
         if converter_name not in self.converters:
             raise LookupError('the converter {!r} does not exist'.format(converter_name))
         return self.converters[converter_name](*args, **kwargs)
 
     def match(self, path_info, method=None):
+        ctx = Context()
         for rule in self._rules:
             m = rule.match(path_info)
             if m is not None:
@@ -169,7 +180,9 @@ class Map(object):
                     # Most probably we want to keep track of this, to raise an exception
                     # if there was a match but no compatible method
                     continue
-                Context().usagelog.this = rule.this
-                if rule.redirect_to is not None:
-                    Context().resp.redirect_to(rule.redirect_to)
+                ctx.usagelog.this = rule.this
+                if self.is_forbidden(rule.this):
+                    ctx.resp.client_error(Return.HTTP_FORBIDDEN)
+                elif rule.redirect_to is not None:
+                    ctx.resp.redirect_to(rule.redirect_to)
                 return rule.action, m
