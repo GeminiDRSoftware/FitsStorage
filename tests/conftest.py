@@ -1,9 +1,14 @@
 import pytest
 import datetime as dt
 import os
+from subprocess import call
 from bz2 import BZ2File
 import sys
 now = dt.datetime.now()
+
+RESTORE='/usr/bin/pg_restore'
+DUMP_FILE='fitsdata_test.pg_dump'
+full_path_dump=os.path.join(os.path.dirname(__file__), DUMP_FILE)
 
 # Monkeypatch the database name and a few other things before doing anything...
 # We'll use the current date and time to generate new databases. We don't expect
@@ -22,24 +27,59 @@ import sqlalchemy
 from fits_storage import orm
 from fits_storage.orm import createtables
 
+class DatabaseCreation(object):
+    def __init__(self):
+        self.conn = None
+
+    def create_db(self, dbname):
+        if self.conn is None:
+            eng = sqlalchemy.create_engine('postgres:///postgres')
+            conn = eng.connect()
+            conn.execute('COMMIT') # Make sure we're not inside a transaction
+                                   # as CREATE DATABASE can't run inside one
+            conn.execute('CREATE DATABASE ' + dbname)
+            self.conn = conn
+        else:
+            conn = self.conn
+        s = orm.sessionfactory()
+
+        return conn, s
+
+    def drop_db(self, dbname):
+        if self.conn:
+            conn = self.conn
+            orm.pg_db.dispose()
+
+            conn.execute('COMMIT')
+            # Kill any other pending connection. Shouldn't be needed, but...
+            conn.execute("SELECT pg_terminate_backend(procpid) FROM pg_stat_activity WHERE datname = '%s' AND procpid <> pg_backend_pid()" % (fsc.fits_dbname,))
+            conn.execute('DROP DATABASE ' + dbname)
+            conn.close()
+            self.conn = None
+
+dbcreation = DatabaseCreation()
+
 @pytest.yield_fixture(scope='session')
 def session(request):
     'Creates a fresh database, with empty tables'
-    eng = sqlalchemy.create_engine('postgres:///postgres')
-    conn = eng.connect()
-    conn.execute('COMMIT') # Make sure we're not inside a transaction
-                           # as CREATE DATABASE can't run inside one
-    conn.execute('CREATE DATABASE ' + fsc.fits_dbname)
-    s = orm.sessionfactory()
+    dbname = fsc.fits_dbname
+    conn, s = dbcreation.create_db(dbname)
     orm.createtables.create_tables(s)
 
     yield s
 
-    orm.pg_db.dispose()
+    dbcreation.drop_db(dbname)
 
-    conn.execute('COMMIT')
-    conn.execute('DROP DATABASE ' + fsc.fits_dbname)
-    conn.close()
+@pytest.yield_fixture(scope='session')
+def min_session(request):
+    'Creates a fresh database, with empty tables'
+    dbname = fsc.fits_dbname
+    conn, s = dbcreation.create_db(dbname)
+    call([RESTORE, '-d', dbname, DUMP_FILE])
+
+    yield s
+
+    dbcreation.drop_db(dbname)
 
 @pytest.yield_fixture(scope='session')
 def rollback(request, session):
@@ -48,6 +88,14 @@ def rollback(request, session):
        unintended changes don't get passed to other tests'''
     yield session
     session.rollback()
+
+@pytest.yield_fixture(scope='session')
+def min_rollback(request, min_session):
+    '''This will be used from most other tests, to make sure that a
+       database failure won't interfere with other functions, and that
+       unintended changes don't get passed to other tests'''
+    yield min_session
+    min_session.rollback()
 
 @pytest.yield_fixture(scope='session')
 def testfile_path(request):
