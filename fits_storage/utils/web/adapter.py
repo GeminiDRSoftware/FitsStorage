@@ -17,6 +17,7 @@ class Context(object):
         this = get_ident()
         try:
             ret = Context.__threads[this]
+            # This should never happen, but...
             if not ret._valid:
                 ret = Context.__threads[this] = object.__new__(cls)
         except KeyError:
@@ -29,6 +30,7 @@ class Context(object):
 
     def invalidate(self):
         self._valid = False
+        del Context.__threads[get_ident()]
 
 class Response(object):
     pass
