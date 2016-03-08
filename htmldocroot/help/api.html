@@ -500,16 +500,16 @@ criteria with the JSON APIs</strong>.</p>
 
 <tr>
 <td>Telescope sky position</td>
-<td>ra=(min:max)/dec=(min:max)</td>
-<td>ra=123.5:123.6/dec=21.1:22.2</td>
-<td>ICRS RA and Dec, decimal degrees</td>
+<td>ra=(min-max)/dec=(min-max)</td>
+<td>ra=123.5-123.6/dec=21.1-22.2. For negative Dec, dec=-22.3--24.5.</td>
+<td>ICRS RA and Dec, decimal degrees, or HH:MM:SS.sss / [-]DD:MM:SS.sss</td>
 </tr>
 
 <tr>
 <td>Telescope position</td>
-<td>az=(min:max)/el=(min:max)/crpa=(min:max)</td>
-<td>az=155.0:155.5/el=88.0-89.0</td>
-<td>Telescope Azimuth, Elevation and Cassegrain Rotator Position Angle. Decimal degrees. You must supply two numbers (decimal point optional and negative sign) separated by a colon. Note that it does not do intelligent range wrapping, the smaller number must be first and there's currently no way to select everything in the 20 degree range between 350 and 10 degrees. Also it takes the numbers from the header literally, in the az and crpa systems these may not be limited to 0:360 or -180:180 due to the 540 degree range of these systems.</td>
+<td>az=(min-max)/el=(min-max)/crpa=(min-max)</td>
+<td>az=155.0-155.5/el=88.0-89.0</td>
+<td>Telescope Azimuth, Elevation and Cassegrain Rotator Position Angle. Decimal degrees. You must supply two numbers (decimal point optional and negative sign) separated by a hyphen. Note that it does not do intelligent range wrapping, the smaller number must be first and there's currently no way to select everything in the 20 degree range between 350 and 10 degrees. Also it takes the numbers from the header literally, in the az and crpa systems these may not be limited to 0:360 or -180:180 due to the 540 degree range of these systems.</td>
 </tr>
 </table>
 
