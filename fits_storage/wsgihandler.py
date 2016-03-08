@@ -203,6 +203,10 @@ url_map = Map([
     Rule('/mdreport/<thing>', report),
     Rule('/fullheader/<thing>', report),
 
+    Rule('/fitsverify', report, defaults=dict(thing=None)),
+    Rule('/mdreport', report, defaults=dict(thing=None)),
+    Rule('/fullheader', report, defaults=dict(thing=None)),
+
     Rule('/calibrations/<selection:selection>', calibrations),      # The calibrations handler
     Rule('/xmlfilelist/<selection:selection>', xmlfilelist),        # The xml and json file list handlers
     Rule('/jsonfilelist/<selection:selection>', jsonfilelist),

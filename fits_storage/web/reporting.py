@@ -17,14 +17,15 @@ from ..utils.web import Context
 def report(thing):
     ctx = Context()
     resp = ctx.resp
-    this = ctx.usagelog.this
 
-#    if not (fnthing or match):
-#        # OK, they must have fed us garbage
-#        resp.content_type = "text/plain"
-#        resp.append("Could not understand argument - You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
-#
-#        return
+    if thing is None:
+        # OK, they must have fed us garbage
+        resp.content_type = "text/plain"
+        resp.append("Could not understand argument - You must specify a filename or diskfile_id, eg: /fitsverify/N20091020S1234.fits\n")
+
+        return
+
+    this = ctx.usagelog.this
 
     with session_scope() as session:
         if thing.isdigit():
