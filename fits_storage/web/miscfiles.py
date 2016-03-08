@@ -120,10 +120,12 @@ def string_to_date(string):
     return datetime.strptime(string, '%Y-%m-%d')
 
 def validate(req):
+    ctx = Context()
+
     if req.method != 'POST':
         return apache.HTTP_NOT_ACCEPTABLE
 
-    raw_data = Context().req.raw_data
+    raw_data = ctx.req.raw_data
 
     try:
         input_data = json.loads(raw_data)
@@ -142,8 +144,8 @@ def validate(req):
         return apache.HTTP_BAD_REQUEST
 
 
-    req.content_type = 'application/json'
-    req.write(json.dumps(response))
+    ctx.resp.content_type = 'application/json'
+    ctx.resp.append_json(response)
 
     return apache.HTTP_OK
 

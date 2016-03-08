@@ -7,26 +7,30 @@ from .summary import list_headers
 from ..apache_return_codes import HTTP_OK
 from ..gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
 
+from ..utils.web import Context, with_content_type
+
 import ephem
 import dateutil.parser
 import re
 
+@with_content_type('text/plain')
 def observing_statistics(req, selection):
     """
     This is apache handler function. It unrolls a datarange to night by night and calls
     calculate_observing_statistics() on each night, and outputs the table
     """
 
-    req.content_type = "text/plain"
+    ctx = Context()
+    resp = ctx.resp
 
     # Get a database session.
     with session_scope() as session:
         lst = []
-        if('date' in selection.keys()):
+        if 'date' in selection.keys():
             lst.append(calculate_observing_statistics(session, selection, req, debug=False))
 
         # Parse daterange, kludge selection
-        if('daterange' in selection.keys()):
+        if 'daterange' in selection.keys():
             date, enddate = gemini_time_period_from_range(selection.pop('daterange'))
         # Loop over ut nights, calling
             copysel = dict(selection)
@@ -49,23 +53,21 @@ def observing_statistics(req, selection):
                 'T_open_lgs', 'T_all', 'T_all_instdict', 'T_all_conddict']
 
         # Print the header line, unrolling inst and cond
-        req.write('# ')
+        resp.append('# ')
         for c in cols:
 
             # Is it an instdict?
-            if(c.find("instdict") > 0):
-                for i in insts:
-                    req.write(c.replace('instdict', i) + ', ')
+            if c.find("instdict") > 0:
+                resp.append_iterable(c.replace('instdict', i) + ', ' for i in insts)
 
             # Is it a conddict?
-            elif(c.find("conddict") > 0):
-                for i in range(7):
-                    req.write(c.replace('conddict', 'cond%d' % i) + ', ')
+            elif c.find("conddict") > 0:
+                resp.append_iterable(c.replace('conddict', 'cond%d' % i) + ', ' for i in range(7))
 
             # OK, it's just normal, print it
             else:
-                req.write(c + ', ')
-        req.write('\n')
+                resp.append(c + ', ')
+        resp.append('\n')
 
 
         # OK, now spool it out the list of dicts, untolling inst and cond as we go
@@ -73,23 +75,19 @@ def observing_statistics(req, selection):
             for c in cols:
 
                 # Is it an instdict?
-                if(c.find("instdict") > 0):
+                if c.find("instdict") > 0:
                     for i in insts:
-                        if(i in l[c].keys()):
-                            req.write(l[c][i])
-                        req.write(', ')
+                        resp.append_iterable(l[c][i] for i in l[c].keys())
+                        resp.append(', ')
 
                 # Is it an conddict?
-                elif(c.find("conddict") > 0):
-                    for i in range(7):
-                        req.write(l[c][i])
-                        req.write(', ')
+                elif c.find("conddict") > 0:
+                    resp.append(l[c][i] + ', ' for i in range(7))
 
                 # It's a single value
                 else:
-                    req.write(l[c])
-                    req.write(', ')
-            req.write('\n')
+                    resp.append(l[c] + ', ')
+            resp.append('\n')
 
         return HTTP_OK
 
@@ -98,10 +96,14 @@ def calculate_observing_statistics(session, selection, req, debug=False):
     This method calculates the observing statistics for a single night given in the selection
     It returns a big disctionary with all the requested data items in it.
     """
+
+    ctx = Context()
+    resp = ctx.resp
+
     selection['canonical'] = True
 
-    if(debug):
-        req.write("# Calculate obsering Statistics on Selection: %s\n" % selection)
+    if debug:
+        resp.append("# Calculate obsering Statistics on Selection: %s\n" % selection)
 
 
     # OK, get the full header list for the night
@@ -110,35 +112,39 @@ def calculate_observing_statistics(session, selection, req, debug=False):
     # Trim to night time data only
     hlist = hlist_nighttime(hlist)
 
-    if(debug):
-        req.write("# Number of Nightime files: %d\n" % len(hlist))
+    if debug:
+        resp.append("# Number of Nightime files: %d\n" % len(hlist))
         try:
-            req.write("# Starting at: %s %s\n" % (hlist[0].data_label, hlist[0].ut_datetime))
-            req.write("# Ending at: %s %s\n" % (hlist[-1].data_label, hlist[-1].ut_datetime))
+            resp.append_iterable([
+                "# Starting at: %s %s\n" % (hlist[0].data_label, hlist[0].ut_datetime),
+                "# Ending at: %s %s\n" % (hlist[-1].data_label, hlist[-1].ut_datetime)
+            ])
         except:
             pass
 
     # Figure out the observer and ssa names
     observer = 'Unknown'
     operator = 'Unknown'
-    if(len(hlist)):
+    if len(hlist):
         diskfile_id = hlist[-1].diskfile_id
         query = session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == diskfile_id)
         fth = query.first()
         text = fth.fulltext
         m = re.search("OBSERVER= '(.*)'", text)
-        if(m):
+        if m:
             observer = m.group(1)
         m = re.search("SSA         = '(.*)'", text)
-        if(m):
+        if m:
             operator = m.group(1)
 
     observer = observer.replace(',', ';')
     operator = operator.replace(',', ';')
-    if(debug):
-        req.write("# Observer: %s\n" % observer)
-        req.write("# Operator: %s\n" % operator)
-    
+    if debug:
+        resp.append_iterable([
+            "# Observer: %s\n" % observer,
+            "# Operator: %s\n" % operator
+        ])
+
     # Define the accumulators
 
     t_open = 0 # t_open = sum(expt) for frames on sky set to Pass
@@ -155,14 +161,14 @@ def calculate_observing_statistics(session, selection, req, debug=False):
 
     inst_changes = 0
     instrument_periods = []
-    if(len(hlist)):
+    if len(hlist):
         prev_instrument = hlist[0].instrument
         prev_endtime = approx_endtime(hlist[0])
         ip_timedelta_threshold = datetime.timedelta(seconds=900)
         ip = {'inst':hlist[0].instrument, 'start':hlist[0].ut_datetime}
 
     wx_changes = 0
-    if(len(hlist)):
+    if len(hlist):
         prev_iq = hlist[0].raw_iq
         if (prev_iq == 20):
             prev_iq = 70
@@ -181,102 +187,105 @@ def calculate_observing_statistics(session, selection, req, debug=False):
         # Did we hit a weather change?
         wxc = False
         iq = h.raw_iq
-        if(iq == 20):
+        if iq == 20:
             iq = 70
-        if(iq != prev_iq):
+        if iq != prev_iq:
             wxc = True
-        if(h.raw_cc != prev_cc):
+        if h.raw_cc != prev_cc:
             wxc = True
-        if(wxc):
+        if wxc:
             prev_iq = iq
             prev_cc = h.raw_cc
             wx_changes += 1
-            if(debug):
-                req.write("# WX change at: %s %s\n" % (h.data_label, h.ut_datetime))
-        
+            if debug:
+                resp.append("# WX change at: %s %s\n" % (h.data_label, h.ut_datetime))
+
         # Is it iqcc_stablegood?
-        if(h.raw_iq > 85 or h.raw_cc>70):
+        if h.raw_iq > 85 or h.raw_cc>70:
             iqcc_stablegood = False
 
         # Did we just see an instrument period change?
         ipc = False
-        if(h.instrument != prev_instrument):
+        if h.instrument != prev_instrument:
             ipc = True
             #debug+="# New IP - instrument Swap at %s: %s - %s\n" % (h.data_label, h.instrument, prev_instrument)
         delta = h.ut_datetime - prev_endtime
-        if(delta > ip_timedelta_threshold):
+        if delta > ip_timedelta_threshold:
             #debug+="#New IP - interval: %s %s %s\n" % (delta, h.ut_datetime, prev_endtime)
             ipc = True
-        if(ipc):
+        if ipc:
             ip['end'] = prev_endtime
             ip['hours'] = total_seconds(ip['end'] - ip['start']) / 3600.0
             instrument_periods.append(ip.copy())
             ip['inst'] = h.instrument
             ip['start'] = h.ut_datetime
-            if(debug):
-                req.write("# New IP starting at: %s %s\n" % (h.data_label, h.ut_datetime))
-            
+            if debug:
+                resp.append("# New IP starting at: %s %s\n" % (h.data_label, h.ut_datetime))
+
         exposure_time = float(h.exposure_time)
         # t_open
-        if(h.qa_state == 'Pass' and h.observation_type == 'OBJECT' ):
+        if h.qa_state == 'Pass' and h.observation_type == 'OBJECT':
             t_open += exposure_time
-            if(h.instrument not in t_open_inst.keys()):
+            if h.instrument not in t_open_inst:
                 t_open_inst[h.instrument] = 0
             t_open_inst[h.instrument] += exposure_time
             t_open_inststr[h.instrument] = "%.2f" % (t_open_inst[h.instrument] / 3600.0)
-            if(h.laser_guide_star):
+            if h.laser_guide_star:
                 t_open_lgs += exposure_time
 
         # t_all
-        if(h.observation_type == 'OBJECT' ):
+        if h.observation_type == 'OBJECT':
             t_all += exposure_time
-            if(h.instrument not in t_all_inst.keys()):
+            if h.instrument not in t_all_inst:
                 t_all_inst[h.instrument] = 0
                 t_all_inststr[h.instrument] = ""
             t_all_inst[h.instrument] += exposure_time
             t_all_inststr[h.instrument] = "%.2f" % (t_all_inst[h.instrument] / 3600.0)
             t_all_cond[obs_cond_bin(h)] += exposure_time
             t_all_condstr[obs_cond_bin(h)] = "%.2f" % (t_all_cond[obs_cond_bin(h)] / 3600.0)
-        
-            
+
         prev_instrument = h.instrument
         prev_endtime = approx_endtime(h)
 
     # Sum instrument periods
     t_instuse = {}
     for ip in instrument_periods:
-        if(ip['inst'] not in t_instuse.keys()):
+        if ip['inst'] not in t_instuse:
             t_instuse[ip['inst']] = 0
         t_instuse[ip['inst']] += ip['hours']
 
     # Calculate night quality number. This needs input from Inger
-        
-    # Print summary
-    if(debug):
-        req.write("# Summary: \n\n")
-        req.write("# WX changes: %d\n" % wx_changes)
-        req.write("# Instrument Periods: %d\n" % len(instrument_periods))
-        for ip in instrument_periods:
-            req.write("%s: %s - %s: %.2f\n" % (ip['inst'], ip['start'], ip['end'], ip['hours']))
-        req.write("# T_open = %.1f = %.2f\n" % (t_open, t_open/3600.0))
-        for t in t_open_inst.keys():
-            req.write("# T_open_%s = %.1f = %.2f\n" % (t, t_open_inst[t], t_open_inst[t]/3600.0))
-        req.write("# T_all = %.1f = %.2f\n" % (t_all, t_all/3600.0))
-        for t in t_all_inst.keys():
-            req.write("# T_all_%s = %.1f = %.2f\n" % (t, t_all_inst[t], t_all_inst[t]/3600.0))
-        for i in t_all_cond.keys():
-            req.write("# T_all_cond_%d = %.1f = %.2f\n" % (i, t_all_cond[i], t_all_cond[i]/3600.0))
 
-    if(debug):
-        req.write("# Nightlog Query: Date: %s - Telescope: %s" % (nightlog_date, nightlog_telescope))
+    # Print summary
+    if debug:
+        resp.append_iterable([
+            "# Summary: \n\n",
+            "# WX changes: %d\n" % wx_changes,
+            "# Instrument Periods: %d\n" % len(instrument_periods)
+        ])
+        resp.append_iterable("%s: %s - %s: %.2f\n" % (ip['inst'], ip['start'], ip['end'], ip['hours'])
+                             for ip in instrument_periods)
+        resp.append("# T_open = %.1f = %.2f\n" % (t_open, t_open/3600.0))
+        resp.append_iterable("# T_open_%s = %.1f = %.2f\n" % (t, t_open_inst[t], t_open_inst[t]/3600.0)
+                             for t in t_open_inst)
+        resp.append("# T_all = %.1f = %.2f\n" % (t_all, t_all/3600.0))
+        resp.append_iterable("# T_all_%s = %.1f = %.2f\n" % (t, t_all_inst[t], t_all_inst[t]/3600.0)
+                             for t in t_all_inst)
+        resp.append_iterable("# T_all_cond_%d = %.1f = %.2f\n" % (i, t_all_cond[i], t_all_cond[i]/3600.0)
+                             for t in t_tall_cond)
+
+    if debug:
+        resp.append("# Nightlog Query: Date: %s - Telescope: %s" % (nightlog_date, nightlog_telescope))
     nlnd = nightlog_numbers(nightlog_date, nightlog_telescope)
-    if(debug):
-        req.write("# Error message: %s" % nlnd['error_message'])
-        req.write("# T_night: %.2f\n" % nlnd['T_night'])
-        req.write("# T_science: %.2f\n" % nlnd['T_science'])
-        req.write("# T_eng: %.2f\n" % nlnd['T_eng'])
-        req.write("# T_fr: %.2f\n" % nlnd['T_fr'])
-        req.write("# T_weather: %.2f\n" % nlnd['T_weather'])
+    if debug:
+        resp.append_iterable([
+            "# Error message: %s" % nlnd['error_message'],
+            "# T_night: %.2f\n" % nlnd['T_night'],
+            "# T_science: %.2f\n" % nlnd['T_science'],
+            "# T_eng: %.2f\n" % nlnd['T_eng'],
+            "# T_fr: %.2f\n" % nlnd['T_fr'],
+            "# T_weather: %.2f\n" % nlnd['T_weather']
+        ])
 
     # Calculate t_science_inst and e_open_inst
     t_science_inst = {}
@@ -291,7 +300,6 @@ def calculate_observing_statistics(session, selection, req, debug=False):
         t_science_inststr[inst] = "%.2f" % t_science_inst[inst]
         e_open_inst[inst] = (t_open_inst[inst] / 3600.0) / t_science_inst[inst]
         e_open_inststr[inst] = "%.2f" % e_open_inst[inst]
-        
 
     # Construct the dictionary to return
     retary = {}
@@ -300,7 +308,7 @@ def calculate_observing_statistics(session, selection, req, debug=False):
 
     retary['Observer'] = observer
     retary['Operator'] = operator
- 
+
     retary['T_night'] = "%.2f" % nlnd['T_night']
     retary['T_science'] = "%.2f" % nlnd['T_science']
     retary['T_eng'] = "%.2f" % nlnd['T_eng']
@@ -335,11 +343,11 @@ def hlist_nighttime(hlist):
     eg = hlist[0]
 
     obs = ephem.Observer()
-    if(eg.telescope == 'Gemini-North'):
+    if eg.telescope == 'Gemini-North':
         obs.lat = '19:49:25.7016'
         obs.long = '-155:28:08.616'
         obs.elevation = 4213
-    if(eg.telescope == 'Gemini-South'):
+    if eg.telescope == 'Gemini-South':
         obs.lat = '-30:14:26.700'
         obs.long = '-70:44:12.096'
         obs.elevation = 2722
@@ -352,7 +360,7 @@ def hlist_nighttime(hlist):
 
     hlist_night = []
     for h in hlist:
-        if(h.ut_datetime > getsdark and h.ut_datetime < getslight):
+        if h.ut_datetime > getsdark and h.ut_datetime < getslight:
             hlist_night.append(h)
 
     return hlist_night
@@ -375,20 +383,20 @@ def obs_cond_bin(h):
     iq = int(h.raw_iq)
     cc = int(h.raw_cc)
     bg = int(h.raw_bg)
-    
-    if(iq == 20 and cc == 50):
+
+    if iq == 20 and cc == 50:
         return 0
-    if(iq == 70 and cc == 50 and bg <= 50):
+    if iq == 70 and cc == 50 and bg <= 50:
         return 1
-    if(iq == 70 and cc == 50 and bg >= 80):
+    if iq == 70 and cc == 50 and bg >= 80:
         return 2
-    if(iq <= 70 and cc >= 70):
+    if iq <= 70 and cc >= 70:
         return 3
-    if(iq == 85 and cc == 50):
+    if iq == 85 and cc == 50:
         return 4
-    if(iq == 85 and cc >= 70):
+    if iq == 85 and cc >= 70:
         return 5
-    if(iq == 100):
+    if iq == 100:
         return 6
 
 
@@ -414,9 +422,9 @@ def nightlog_numbers(utdate, telescope):
     token.password = 'gea99'
     client.set_options(soapheaders=token)
 
-    if(telescope == 'Gemini-North'):
+    if telescope == 'Gemini-North' :
         telescope = 'North'
-    elif(telescope == 'Gemini-South'):
+    elif telescope == 'Gemini-South' :
         telescope = 'South'
 
     querystr = "(('UT Date'=\"%d\") AND ('Telescope'=\"%s\"))" % (t, telescope)
@@ -430,11 +438,11 @@ def nightlog_numbers(utdate, telescope):
     except Exception, e:
         error_message = "Exception: " + str(e)
 
-    if(len(result) > 1):
+    if len(result) > 1:
         error_message = "Multiple Nightlog results returned from Remedy!"
 
     dict = {}
-    if(len(result)):
+    if len(result):
         r = result[0]
         dict['T_night'] = r['Total_hours_available']
         dict['T_science'] = r['Total_hours_observed']

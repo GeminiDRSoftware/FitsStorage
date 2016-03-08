@@ -17,9 +17,10 @@ from ..orm.querylog import QueryLog
 
 from . import templating
 
-def add_summary_completed(session, req):
+def add_summary_completed():
+    ctx = Context()
     try:
-        querylog = session.query(QueryLog).filter(QueryLog.usagelog_id == Context().usagelog.id).one()
+        querylog = ctx.session.query(QueryLog).filter(QueryLog.usagelog_id == Context().usagelog.id).one()
         querylog.summary_completed = datetime.datetime.utcnow()
     except NoResultFound:
         # Shouldn't happen, but just in case...

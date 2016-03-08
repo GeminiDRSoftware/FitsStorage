@@ -46,7 +46,7 @@ def locked_file(path):
     yield fd
     fd.close()
 
-def get_json_data(req):
+def get_json_data():
     try:
         return Context().req.json
     except KeyError:
@@ -167,7 +167,7 @@ def update_headers(req):
         iq = IngestQueueUtil(session, DummyLogger())
         proxy = ApiProxy(api_backend_location)
         try:
-            data = get_json_data(req)
+            data = get_json_data()
             response = []
             reingest = False
             for query in data:
@@ -204,24 +204,28 @@ def update_headers(req):
         except TypeError:
             response = error_response("This looks like a malformed request. Expected a list of queries. Instead I got {}".format(type(data)))
 
-    req.content_type = 'application/json'
-    req.write(json.dumps(response))
+    resp = Context().resp
+    resp.content_type = 'application/json'
+    resp.append_json(response)
 
     return apache.HTTP_OK
 
 def ingest_files(req):
-    req.content_type = 'application/json'
+    ctx = Context()
+    resp = ctx.resp
+    resp.content_type = 'application/json'
+
     try:
-        arguments = Context().req.json
+        arguments = ctx.req.json
         file_pre  = arguments['filepre']
         path      = arguments['path']
         force     = arguments['force']
         force_md5 = arguments['force_md5']
     except ValueError:
-        req.write(json.dumps(error_response('Invalid information sent to the server')))
+        resp.append_json(error_response('Invalid information sent to the server'))
         return apache.HTTP_OK
     except KeyError as e:
-        req.write(json.dumps(error_response('Missing argument: {}'.format(e.args[0]))))
+        resp.append_json(error_response('Missing argument: {}'.format(e.args[0])))
         return apache.HTTP_OK
 
     # Assume that we're working on the local directory. There's no need for this
@@ -239,7 +243,8 @@ def ingest_files(req):
             added.append(filename)
 
     if not added:
-        req.write(json.dumps(error_response('Could not find any file with prefix: {}*'.format(file_pre))))
+        resp.append_json(error_response('Could not find any file with prefix: {}*'.format(file_pre)))
     else:
-        req.write(json.dumps(dict(result=True, added=sorted(added))))
+        resp.append_json(dict(result=True, added=sorted(added)))
+
     return apache.HTTP_OK

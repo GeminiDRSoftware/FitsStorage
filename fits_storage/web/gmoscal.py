@@ -10,6 +10,8 @@ from ..orm.header import Header
 from ..orm.diskfile import DiskFile
 from ..orm.file import File
 
+from ..utils.web import Context, with_content_type
+
 from .selection import sayselection, queryselection
 from .calibrations import interval_hours
 from ..cal import get_cal_object
@@ -34,17 +36,17 @@ from collections import defaultdict, namedtuple
 
 @templating.templated("gmoscal.html", with_session=True)
 def gmoscal_html(session, req, selection):
-    return gmoscal(session, req, selection)
+    return gmoscal(session, selection)
 
 
+@with_content_type('application/json')
 def gmoscal_json(req, selection):
     with session_scope() as session:
-        req.content_type = 'application/json'
         result = {
             'selection': selection
             }
 
-        values = gmoscal(session, req, selection)
+        values = gmoscal(session, selection)
 
         if 'flat_autodetected_range' in values:
             result['Twilight_AutoDetectedDates'] = values['flat_autodetected_range']
@@ -56,10 +58,10 @@ def gmoscal_json(req, selection):
         result['twilight_flats'] = jlist
         result['biases'] = dict((k.strftime("%Y%m%d"), v) for k, v in values['bias'])
 
-        json.dump([result], req, indent=4)
+        Context().resp.append_json([result], indent=4)
         return HTTP_OK
 
-def gmoscal(session, req, selection):
+def gmoscal(session, selection):
     """
     This generates a GMOS imaging twilight flat, bias and nod and shuffle darks report.
     If no date or daterange is given, tries to find last processing date

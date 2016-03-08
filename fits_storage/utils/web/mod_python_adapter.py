@@ -42,8 +42,27 @@ class Response(adapter.Response):
 
         self._req     = req
 
+    def expire_cookie(self, name):
+        self.set_cookie(name, expires=time.time())
+
     def set_cookie(self, name, value='', **kw):
         Cookie.add_cookie(self._req, name, value, **kw)
 
-    def expire_cookie(self, name):
-        self.set_cookie(name, expires=time.time())
+    def set_content_type(self, content_type):
+        self._req.content_type = content_type
+
+    def set_header(self, name, value):
+        self._req.headers_out[name] = value
+
+    def append(self, string):
+        self._req.write(string)
+
+    def append_iterable(self, it):
+        for text in it:
+            self._req.write(text)
+
+    def append_json(self, obj, **kw):
+        json.dump(obj, self._req, **kw)
+
+    def sendfile(self, path):
+        self._req.sendfile(path)

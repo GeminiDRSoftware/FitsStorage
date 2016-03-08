@@ -11,7 +11,7 @@ from ..orm.downloadlog import DownloadLog
 from ..orm.filedownloadlog import FileDownloadLog
 from ..orm.miscfile import MiscFile
 
-from ..utils.web import Context
+from ..utils.web import Context, with_content_type
 
 from .selection import getselection, openquery, selection_to_URL
 from .summary import list_headers
@@ -89,6 +89,7 @@ because they are proprietary data that you do not have access to:
 {denied}
 """
 
+@with_content_type("application/tar")
 def download(req, things):
     """
     This is the download server. Given a selection, it will send a tarball of the
@@ -149,8 +150,8 @@ def download(req, things):
             # No results. No point making a tar file
             downloadlog.sending_files = False
             downloadlog.add_note("Nothing to download, aborted")
-            req.content_type = "text/plain"
-            req.write("No files to download. Either you asked to download marked files, but didn't mark any files, or you specified a selection criteria that doesn't find any files")
+            ctx.resp.content_type = 'text/plain'
+            ctx.resp.append("No files to download. Either you asked to download marked files, but didn't mark any files, or you specified a selection criteria that doesn't find any files")
             session.commit()
             return apache.HTTP_OK
 
@@ -158,10 +159,11 @@ def download(req, things):
             # Open query. Almost certainly too many files
             downloadlog.sending_files = False
             downloadlog.add_note("Hit Open result Limit, aborted")
-            req.content_type = "text/plain"
-            req.write("Your selection criteria does not restrict the number of results, and more than %d were found. " %
-                        fits_open_result_limit)
-            req.write("Please refine your selection more before attempting to download. Queries that can contain an arbitrary number of results have a lower limit applied than more constrained queries. Including a date range or program id will prevent an arbitrary number of results being found will raise the limit")
+            ctx.resp.content_type = 'text/plain'
+            ctx.resp.append_iterable(
+                ["Your selection criteria does not restrict the number of results, and more than %d were found. " % fits_open_result_limit,
+                 "Please refine your selection more before attempting to download. Queries that can contain an arbitrary number of results have a lower limit applied than more constrained queries. Including a date range or program id will prevent an arbitrary number of results being found will raise the limit"]
+            )
             session.commit()
             return apache.HTTP_OK
 
@@ -169,17 +171,18 @@ def download(req, things):
             # Open query. Almost certainly too many files
             downloadlog.sending_files = False
             downloadlog.add_note("Hit Closed result limit, aborted")
-            req.content_type = "text/plain"
-            req.write("More than %d results were found. This is beyond the limit we allow" % fits_closed_result_limit)
-            req.write("Please refine your selection more before attempting to download. If you really want all these files, we suggest you break your search into several smaller date range pieces and download one set at a time.")
+            ctx.resp.content_type = 'text/plain'
+            ctx.append_iterable(
+                ["More than %d results were found. This is beyond the limit we allow" % fits_closed_result_limit,
+                 "Please refine your selection more before attempting to download. If you really want all these files, we suggest you break your search into several smaller date range pieces and download one set at a time."]
+            )
             session.commit()
             return apache.HTTP_OK
 
         # Set up the http headers
         downloadlog.sending_files = True
         tarfilename = generate_filename(associated_calibrations, selection)
-        req.content_type = "application/tar"
-        req.headers_out['Content-Disposition'] = 'attachment; filename="{}"'.format(tarfilename)
+        ctx.resp.set_header('Content-Disposition', 'attachment; filename="{}"'.format(tarfilename))
 
         # We are going to build an md5sum file while we do this
         md5file = ""
@@ -361,9 +364,11 @@ def sendonefile(req, diskfile, content_type=None):
     referred to by the req obect. This always sends unzipped data.
     """
 
+    ctx = Context()
+
     # Send them the data
     if content_type is not None:
-        req.content_type = content_type
+        ctx.resp.content_type = content_type
 
     if content_type == 'application/fits':
         req.headers_out['Content-Disposition'] = 'attachment; filename="%s"' % str(diskfile.file.name)

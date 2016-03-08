@@ -13,6 +13,16 @@ def context_wrapped(fn):
             ctx.invalidate()
     return wrapper
 
+def with_content_type(content_type):
+    def content_decorator(fn):
+        @wraps(fn)
+        def fn_wrapper(*args, **kw):
+            Context().resp.set_content_type(content_type)
+            return fn(*args, **kw)
+
+        return fn_wrapper
+    return content_decorator
+
 class Context(object):
     __threads = {}
     def __new__(cls):
@@ -100,3 +110,31 @@ class Request(object):
 class Response(object):
     def __init__(self, session):
         self._s = session
+
+    def expire_cookie(self, name):
+        raise NotImplementedError("expire_cookie must be implemented by derived classes")
+
+    def set_cookie(self, name, value='', **kw):
+        raise NotImplementedError("set_cookie must be implemented by derived classes")
+
+    def set_content_type(self, content_type):
+        raise NotImplementedError("set_content_type must be implemented by derived classes")
+
+    def content_type_setter(self, content_type):
+        self.set_content_type(content_type)
+    content_type = property(fset=content_type_setter)
+
+    def set_header(self, name, value):
+        raise NotImplementedError("set_header must be implemented by derived classes")
+
+    def append(self, string):
+        raise NotImplementedError("append must be implemented by derived classes")
+
+    def append_iterable(self, it):
+        raise NotImplementedError("append_iterable must be implemented by derived classes")
+
+    def append_json(self, obj, **kw):
+        raise NotImplementedError("append_json must be implemented by derived classes")
+
+    def sendfile(self, path):
+        raise NotImplementedError("sendfile must be implemented by derived classes")

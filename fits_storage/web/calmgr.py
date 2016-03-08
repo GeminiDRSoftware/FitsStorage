@@ -211,10 +211,8 @@ def calmgr(session, req, selection):
 
     # There selection has to be a closed query. If it's open, then disallow
     if openquery(selection):
-        # writing stuff here causes apache to send a 200 OK rather than the 406
-        #req.content_type = "text/plain"
-        #req.write("<!-- Error: Selection cannot represent an open query for calibration association -->\n\n")
-        raise templating.SkipTemplateError(HTTP_NOT_ACCEPTABLE)
+        raise templating.SkipTemplateError(HTTP_NOT_ACCEPTABLE, content_type='text/plain',
+                                           message='<!-- Error: Selection cannot represent an open query for calibration association -->\n\n')
 
     # Only the canonical versions
     selection['canonical'] = True
@@ -225,9 +223,8 @@ def calmgr(session, req, selection):
 
     # An empty cal type is acceptable for GET - means to list all the calibrations available
     if not caltype and req.method == 'POST':
-        req.content_type = "text/plain"
-        req.write("<!-- Error: No calibration type specified-->\n\n")
-        raise templating.SkipTemplateError(HTTP_NOT_ACCEPTABLE)
+        raise templating.SkipTemplateError(HTTP_NOT_ACCEPTABLE, content_type='text/plain',
+                                           message='<!-- Error: No calibration type specified-->\n\n')
 
     gen = (generate_post_calmgr if req.method == 'POST' else generate_get_calmgr)
 

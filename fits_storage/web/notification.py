@@ -24,7 +24,6 @@ def notification(session, req):
 
     # Process form data first
     formdata = util.FieldStorage(req)
-    # req.write(str(formdata))
     for key, value in formdata.items():
         field = key.split('-')[0]
         nid = int(key.split('-')[1])
@@ -82,17 +81,17 @@ def import_odb_notifications(req):
     if req.method != 'POST':
         return apache.HTTP_NOT_ACCEPTABLE
 
+    ctx = Context()
+
     # OK, get the payload from the POST data
-    xml = context().req.raw_data
+    xml = ctx.req.raw_data
 
     with session_scope() as session:
         # Process it
         report = ingest_odb_xml(session, xml)
 
         # Write back the report
-        req.content_type = "text/plain"
-        for l in report:
-            req.write(l)
-            req.write('\n')
+        ctx.req.content_type = "text/plain"
+        ctx.resp.append_iterable(l + '\n' for l in report)
 
     return apache.HTTP_OK

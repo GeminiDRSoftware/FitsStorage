@@ -15,7 +15,7 @@ from .standards import get_standard_obs
 from ..apache_return_codes import HTTP_OK
 
 from ..utils.userprogram import canhave_coords, got_magic
-from ..utils.web import Context
+from ..utils.web import Context, with_content_type
 
 from . import templating
 
@@ -55,22 +55,18 @@ def diskfile_dicts(headers, return_header=False):
         else:
             yield thedict, header
 
-def jsonfilelist(req, selection, fields=None):
+@with_content_type('application/json')
+def jsonfilelist(req, selection):
     """
     This generates a JSON list of the files that met the selection
     """
-    req.content_type = "application/json"
 
     with session_scope() as session:
         orderby = ['filename_asc']
         headers = list_headers(session, selection, orderby)
         thelist = list(diskfile_dicts(headers))
 
-    if fields is None:
-        json.dump(thelist, req, indent=4)
-    else:
-        json.dump([dict((k, d[k]) for k in fields) for d in thelist], req, indent=4)
-
+    Context().resp.append_json(thelist, indent=4)
     return HTTP_OK
 
 header_fields = ('program_id', 'engineering', 'science_verification',
@@ -91,6 +87,7 @@ header_fields = ('program_id', 'engineering', 'science_verification',
 proprietary_fields = ('ra', 'dec', 'azimuth', 'elevation', 'airmass',
                       'object', 'cass_rotator_pa')
 
+@with_content_type('application/json')
 def jsonsummary(req, selection):
     """
     This generates a JSON list of the files that met the selection.
@@ -99,7 +96,8 @@ def jsonsummary(req, selection):
     We have to check for proprietary coordinates here and blank out
     the coordinates if the user does not have access to them.
     """
-    req.content_type = "application/json"
+
+    ctx = Context()
 
     # Like the summaries, only list canonical files by default
     if 'canonical' not in selection.keys():
@@ -109,7 +107,7 @@ def jsonsummary(req, selection):
 
     with session_scope() as session:
         # Get the current user if logged id
-        user = Context().user
+        user = ctx.user
         gotmagic = got_magic(req)
 
         headers = list_headers(session, selection, orderby)
@@ -127,16 +125,16 @@ def jsonsummary(req, selection):
     if openquery(selection) and thelist:
         thelist[-1]['results_truncated'] = True
 
-    json.dump(thelist, req, indent=4)
+    ctx.resp.append_json(thelist, indent=4)
     return HTTP_OK
 
+@with_content_type('application/json')
 def jsonqastate(req, selection):
     """
     This generates a JSON list giving datalabel, entrytime, data_md5 and qa_state.
     It is intended for use by the ODB.
     It does not limit the number of results
     """
-    req.content_type = "application/json"
     # Like the summaries, only list canonical files by default
     if 'canonical' not in selection.keys():
         selection['canonical']=True
@@ -157,7 +155,7 @@ def jsonqastate(req, selection):
                            'entrytime': _for_json(diskfile.entrytime),
                            'qa_state': _for_json(header.qa_state)})
 
-    json.dump(thelist, req)
+    Context().resp.append_json(thelist)
     return HTTP_OK
 
 from decimal import Decimal

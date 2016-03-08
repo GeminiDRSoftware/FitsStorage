@@ -462,7 +462,6 @@ def login(req, things):
                 else:
                     reason_bad = 'Username / password not valid. If you need to reset your password, <a href="/request_password_reset">Click Here</a>'
 
-    req.content_type = "text/html"
     if valid_request:
         # Cookie expires in 1 year
         ctx.cookies.set('gemini_archive_session', cookie, expires=time.time()+31536000, path="/")

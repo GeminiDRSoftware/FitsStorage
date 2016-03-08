@@ -82,9 +82,11 @@ def queuestatus(req, things):
 def queuestatus_update(req, things):
     cache = {}
 
+    ctx = Context()
+
     # Try to decode the payload in the POST query
     try:
-        cache = Context().req.json
+        cache = ctx.req.json
         if type(cache) != dict:
             cache = {}
     except ValueError:
@@ -104,7 +106,7 @@ def queuestatus_update(req, things):
             else:
                 result.append(dict(queue=lqname, token=dig))
 
-        req.content_type = 'application/json'
-        req.write(json.dumps(result))
+        ctx.resp.content_type = 'application/json'
+        ctx.resp.append_json(result)
 
     return apache.HTTP_OK

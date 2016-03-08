@@ -113,26 +113,21 @@ def qaforgui(req, things):
     You must pass a datestamp. It will only return results for datafiles from 
     that datestamp to 3 days later.
     """
+
+    resp = Context().resp
+
     datestamp = None
     try:
-        if '-' in things[0]:
-            datestamp, enddatestamp = gemini_daterange(things[0], 
-                                                       offset=get_date_offset(), 
-                                                       as_datetime=True)
-            assert enddatestamp > datestamp
-        else:
-            datestamp = gemini_date(things[0], offset=get_date_offset(), 
-                                    as_datetime=True)
-            # Default 3 days worth for the gui; 
-            # stop the return getting huge over time
-            window = datetime.timedelta(days=3)
-            enddatestamp = datestamp+window
-    except (AssertionError, IndexError, TypeError, ValueError):
-        req.write("Error: Invalid or null datestamp.")
+        datestamp = gemini_date(things[0], offset=get_date_offset(), as_datetime=True)
+        # Default 3 days worth for the gui, to stop the return getting huge over time
+        window = datetime.timedelta(days=3)
+        enddatestamp = datestamp+window
+    except (IndexError, ValueError):
+        resp.append("Error: no datestamp given")
         return HTTP_NOT_ACCEPTABLE
 
     with session_scope() as session:
-        req.content_type = "application/json"
+        resp.content_type = "application/json"
 
         # We only want the most recent of each value for each datalabel
         # Interested in IQ, ZP, BG

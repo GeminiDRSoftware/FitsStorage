@@ -5,6 +5,7 @@ Module to deal with the interals of templating
 from jinja2 import Environment, FileSystemLoader
 from ..fits_storage_config import template_root
 from ..orm import session_scope
+from ..utils.web import Context
 from functools import wraps
 from mod_python import apache
 from ..apache_return_codes import HTTP_SERVICE_UNAVAILABLE
@@ -115,11 +116,10 @@ def get_env():
     return jinja_env
 
 class SkipTemplateError(Exception):
-    """Exception to be raised when we need to skip the rendering of a template.
-
-       A numeric status code has to be provided"""
-    def __init__(self, status):
+    def __init__(self, status, content_type=None, message=None):
         self.status = status
+        self.content_type = content_type
+        self.message = message
 
 class TemplateAccessError(Exception):
     pass
@@ -143,20 +143,20 @@ def templated(template_name, content_type="text/html", with_generator=False, wit
        having to detach them from the session first. A typical use case is to pass a query
        so that the template iterates over it.
 
-       If ``at_end_hook`` is defined, it has to be a callable object. It will be invoked after
-       the template has generated all the text, passing both the session object and the
-       request.
+       If at_end_hook is defined, it has to be a callable object. It will be invoked after
+       the template has generated all the text.
     """
     def template_decorator(fn):
         @wraps(fn)
         def fn_wrapper(req, *args, **kw):
+            ctx = Context()
             try:
                 template = get_env().get_template(template_name)
             except IOError:
                 raise TemplateAccessError(template_name)
 
             with session_scope() as session:
-                req.content_type = content_type
+                ctx.resp.content_type = content_type
                 try:
                     if with_session:
                         context = fn(session, req, *args, **kw)
@@ -168,15 +168,18 @@ def templated(template_name, content_type="text/html", with_generator=False, wit
                         status = default_status
 
                     if not with_generator:
-                        req.write(template.render(context).encode('utf-8'))
+                        ctx.resp.append(template.render(context))
                     else:
-                        for text in template.generate(context):
-                            req.write(text.encode('utf-8'))
+                        ctx.resp.append_iterable(template.generate(context))
 
                     if at_end_hook:
-                        at_end_hook(session, req)
+                        at_end_hook()
                 except SkipTemplateError as e:
                     status = e.status
+                    if e.content_type is not None:
+                        ctx.resp.content_type = e.content_type
+                    if e.message is not None:
+                        ctx.resp.append(e.message)
                 except IOError:
                     # Assume that his means we got an interrupted connection
                     # (eg. the user stopped the query on their browser)

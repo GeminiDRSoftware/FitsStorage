@@ -17,6 +17,7 @@ from ..utils.web import Context
 
 def report(req, thing):
     ctx = Context()
+    resp = ctx.resp
     this = ctx.usagelog.this
 
 #    if not (fnthing or match):
@@ -31,8 +32,8 @@ def report(req, thing):
             # We got a diskfile_id
             query = session.query(DiskFile).filter(DiskFile.id == thing)
             if query.count() == 0:
-                req.content_type = "text/plain"
-                req.write("Cannot find diskfile for id: %s\n" % thing)
+                resp.content_type = "text/plain"
+                resp.append("Cannot find diskfile for id: %s\n" % thing)
                 return apache.OK
         # Now construct the query
         else:
@@ -46,8 +47,8 @@ def report(req, thing):
                 query = session.query(File).filter(File.name == thing)
 
             if query.count() == 0:
-                req.content_type = "text/plain"
-                req.write(error_message)
+                resp.content_type = "text/plain"
+                resp.append(error_message)
                 return apache.HTTP_OK
             file = query.one()
             # Query diskfiles to find the diskfile for file that is canonical
@@ -57,14 +58,14 @@ def report(req, thing):
         # Find the diskfilereport
         query = session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == diskfile.id)
         diskfilereport = query.one()
-        req.content_type = "text/plain"
+        resp.content_type = "text/plain"
         if this == 'fitsverify':
-            req.write(diskfilereport.fvreport)
+            resp.append(diskfilereport.fvreport)
         if this == 'mdreport':
             try:
-                req.write(diskfilereport.mdreport)
+                resp.append(diskfilereport.mdreport)
             except TypeError:
-                req.write('No report was generated\n')
+                resp.append('No report was generated\n')
         if this == 'fullheader':
             # Need to find the header associated with this diskfile
             query = (session.query(Header, FullTextHeader)
@@ -72,8 +73,8 @@ def report(req, thing):
                         .filter(Header.diskfile_id == diskfile.id))
             header, ftheader = query.one()
             if canhave_coords(session, ctx.user, header):
-                req.write(ftheader.fulltext)
+                resp.append(ftheader.fulltext)
             else:
-                req.write("The data you're trying to access has proprietary rights and cannot be displayed")
+                resp.append("The data you're trying to access has proprietary rights and cannot be displayed")
 
     return apache.HTTP_OK

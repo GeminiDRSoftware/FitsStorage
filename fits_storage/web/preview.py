@@ -10,7 +10,7 @@ from ..orm.header import Header
 from ..orm.preview import Preview
 from ..orm.downloadlog import DownloadLog
 
-from ..utils.web import Context
+from ..utils.web import Context, with_content_type
 
 from .selection import getselection, openquery, selection_to_URL
 from .summary import list_headers
@@ -68,7 +68,7 @@ def preview(req, things):
             # Is the client allowed to get this file?
             if icanhave(session, req, header):
                 # Send them the data if we can
-                sendpreview(req, preview)
+                sendpreview(preview)
             else:
                 # Refuse to send data
                 downloadlog.numdenied = 1
@@ -78,18 +78,20 @@ def preview(req, things):
 
         return apache.HTTP_OK
 
-def sendpreview(req, preview):
+@with_content_type('image/jpeg')
+def sendpreview(preview):
     """
     Send the one referenced preview file
     """
 
+    resp = Context().resp
+
     # Send them the data
-    req.content_type = 'image/jpeg'
     if using_s3:
         # S3 file server
         with s3.fetch_temporary(preview.filename, skip_tests=True) as temp:
-            req.write(temp.read())
+            resp.append_iterable(temp)
     else:
         # Serve from regular file
         fullpath = os.path.join(storage_root, preview_path, preview.filename)
-        req.sendfile(fullpath)
+        resp.sendfile(fullpath)
