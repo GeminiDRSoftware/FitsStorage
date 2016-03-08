@@ -116,7 +116,7 @@ def string_to_date(string):
 def validate(req):
     ctx = Context()
 
-    if req.method != 'POST':
+    if ctx.env.method != 'POST':
         return apache.HTTP_NOT_ACCEPTABLE
 
     raw_data = ctx.req.raw_data

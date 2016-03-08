@@ -101,7 +101,7 @@ def download(req, things):
     # assume unless set otherwise later that this is not an associated_calibrations download
     associated_calibrations = False
     # If we are called via POST, then parse form data rather than selection
-    if req.method == 'POST':
+    if ctx.env.method == 'POST':
         # Parse form data
         formdata = util.FieldStorage(req)
         thelist = []

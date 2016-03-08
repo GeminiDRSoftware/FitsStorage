@@ -40,7 +40,7 @@ def upload_file(req, filename, processed_cal=False):
     session.add(fileuploadlog)
     session.commit()
 
-    if req.method != 'POST':
+    if ctx.env.method != 'POST':
         fileuploadlog.add_note("Aborted - not HTTP POST")
         return HTTP_NOT_ACCEPTABLE
 

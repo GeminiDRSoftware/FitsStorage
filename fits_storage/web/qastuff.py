@@ -28,7 +28,7 @@ def qareport(req):
 
     ctx = Context()
 
-    if req.method == 'POST':
+    if ctx.env.method == 'POST':
         clientdata = ctx.req.raw_data
         ctx.req.log("QAreport clientdata: %s" % clientdata)
 

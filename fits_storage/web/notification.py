@@ -78,11 +78,11 @@ def import_odb_notifications(req):
     This takes xml from the ODB posted to it and imports it as notifications
     """
 
-    # Only accept http posts
-    if req.method != 'POST':
-        return apache.HTTP_NOT_ACCEPTABLE
-
     ctx = Context()
+
+    # Only accept http posts
+    if ctx.env.method != 'POST':
+        return apache.HTTP_NOT_ACCEPTABLE
 
     # OK, get the payload from the POST data
     xml = ctx.req.raw_data

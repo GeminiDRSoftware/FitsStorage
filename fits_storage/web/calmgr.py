@@ -222,17 +222,18 @@ def calmgr(req, selection):
     # Was the request for only one type of calibration?
     caltype = selection.get('caltype', '')
 
+    method = Context().env.method
 
     # An empty cal type is acceptable for GET - means to list all the calibrations available
-    if not caltype and req.method == 'POST':
+    if not caltype and method == 'POST':
         raise templating.SkipTemplateError(HTTP_NOT_ACCEPTABLE, content_type='text/plain',
                                            message='<!-- Error: No calibration type specified-->\n\n')
 
-    gen = (generate_post_calmgr if req.method == 'POST' else generate_get_calmgr)
+    gen = (generate_post_calmgr if method == 'POST' else generate_get_calmgr)
 
     return dict(
         machine_name = os.uname()[1],
-        req_method   = req.method,
+        req_method   = method,
         now          = datetime.datetime.now(),
         utcnow       = datetime.datetime.utcnow(),
         generator    = gen(req, selection, caltype),
