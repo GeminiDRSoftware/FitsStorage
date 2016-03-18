@@ -77,13 +77,14 @@ tmpcre = re.compile("(tmp)|(tiled)")
 fitscre = re.compile(".fits")
 obslogcre = re.compile("_obslog.txt")
 previewcre = re.compile("_preview.jpg")
+miscfilecre = re.compile("miscfile_")
 logger.info("Checking for tmp files")
 
 def skip_file(filename):
     return (
         tmpcre.search(filename)
      or previewcre.search(filename)
-     or not (fitscre.search(filename) or obslogcre.search(filename))
+     or not (fitscre.search(filename) or obslogcre.search(filename) or miscfilecre.search(filename))
      )
 
 for filename in files:
