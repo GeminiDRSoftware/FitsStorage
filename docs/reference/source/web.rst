@@ -6,89 +6,47 @@ Web Interface
 .. _Jinja2: http://jinja.pocoo.org
 .. _custom filters: http://jinja.pocoo.org/docs/dev/api/#custom-filters
 .. _custom tests: http://jinja.pocoo.org/docs/dev/api/#custom-tests
+.. _WSGI: https://www.python.org/dev/peps/pep-0333
 
 HTTP Query Dispatch
 ===================
 
-The Archive has been built around `mod_python`_. The dispatching is done within
-the :py:mod:`fits_storage.apachehandler` module, in the :py:func:`handler` and
-:py:func:`thehandler` functions. :py:func:`handler` is the top level entry point
-(mandated by mod_python's interface), which takes care of some low level handling,
-like capturing certain exceptions, doing some error logging, and generally trying
-to make sure that Apache gets back a proper response. It calls thehandler to do the
-real dispatching.
+When migrating from `mod_python`_ to `WSGI`_, as part of the abstraction and redesign
+of the http query interface, a "routing" system was introduced. The dispatching for
+the WSGI application is defined in the :py:mod:`fits_storage.wsgihandler` module,
+in the :py:obj:`url_map` object. This mapping is applied to every query by means
+of the :py:func:`get_route` function. It is conceptually much simple than then
+previous ``mod_python`` handler, in the sense that the dispatching doesn't need to
+handle special cases. All the logic for describing and matching the routes to
+handling functions is under :py:mod:`fits_storage.utils.web.routing`.
 
-In :py:func:`thehandler`, apart from setting a few common headers, we can see
-handling of certain queries that need some kind of special preprocessing, like
-``/summary``, ``/searchresults``, etc. E.g:
+The entry point for the application is the :py:func:`handler` WSGI application.
+This application is wrapped in an instance of
+:py:class:`fits_storage.utils.web.wsgi_handler.ArchiveContextMiddleware`, and
+assigned to the :py:obj:`application` variable - this is the object that will
+be called by the WSGI server.
 
-.. code-block:: python
+The ``ArchiveContextMiddleware`` object wraps the whole application
+populating the Context with the adequate Request and Response objects, starting
+a database session, and taking care of the clean up and of feeding the response
+to the server.
 
-    # Archive searchform
-    if this == 'searchform':
-        return searchform(req, things, orderby)
+:py:func:`handler` is rather simple: it simply calls a delegate application,
+`handle_with_static`, which was created to handle ``/static`` routes.
+Such routes SHOULD NOT get to the application in a production environment,
+as it should be the job of the web server to handle those files efficiently.
+It may be necessary to deal with them when testing the application, though,
+for example by running the simple server contained in ``wsgihandler`` itself.
+The ``handler`` will capture and handle redirect and client error exceptions.
 
-    # This is the header summary handler
-    if this in {'summary', 'diskfiles', 'ssummary', 'lsummary',
-                'searchresults', 'associated_cals'}:
-        # the nolinks feature is used especially in external email notifications
-        try:
-            things.remove('nolinks')
-            links = False
-        except ValueError:
-            links = True
-        # the body_only feature is used when embedding the summary
-        try:
-            things.remove('body_only')
-            body_only = True
-        except ValueError:
-            body_only = False
+:py:func:`handle_with_static` is just middleware, too. If the query starts by `/static/`,
+it will attach an open file object to the response, setting the correct content
+type using a MIME database. Otherwise, it will let the query pass through to the
+`core_handler` function, which is our real application.
 
-        # Parse the rest of the uri here while we're at it
-        # Expect some combination of program_id, observation_id, date and instrument name
-        # We put the ones we got in a dictionary
-        selection = getselection(things)
-
-        retval = summary(req, this, selection, orderby, links=links, body_only=body_only)
-        return retval
-
-These special-needs queries are exceptions. The rest of the queries are handled by code like this:
-
-.. code-block:: python
-
-    if this in mapping_simple:
-        return mapping_simple[this](req)
-    if this in mapping_things:
-        return mapping_things[this](req, things)
-    if this in mapping_selection:
-        return mapping_selection[this](req, getselection(things))
-
-Thus, whenever we need to add a new query function, we have to decide whether it falls in one
-of the three generic categories, and add the corresponding callable in the matching dictionary.
-The categories are:
-
-**simple queries**
-  these are mapped in ``apachehandler.mapping_simple``. The callables are passed only one
-  argument (the request object). Any other elements in the URI are discarded. If there’s a need
-  for further processing, the dispatching function can obtain the URI from the request object or
-  be moved to other category.
-**queries that expect extra URI elements** 
-  These are mapped in ``apachehandler.mapping_things``. The callables
-  are passed two arguments: the *request object*, and a list of splitted URI elements, except for the
-  first. Eg., if we receive a query for "/usagedetails/1234/683/123", the second argument passed to
-  the dispatching function will be a list ``["1234", "683", "123"]``.
-**queries that expect a processed list of arguments**
-  The list of arguments is known as the *selection*. These functions
-  treated almost like ones in the previous category, except that instead of just a list of the raw
-  values of the URI elements, the functions receive a dictionary with a processed version. They
-  are mapped in ``apachehandler.mapping_selection``.
-
-.. note:: In some cases we’ve decided to use the same entry point for different functions,
-  and the callable getting the query will, in turn, act as a second level dispatcher.
-  For an example of this, see the :py:mod:`miscfiles` case, where we use a single entry point
-  ("/miscfiles") for a number of functions, depending on the desired action. Some of them
-  require extra URI parts, some of them won’t. The main handler let’s the more specialized
-  handler in the module to take care.
+:py:func:`core_handler` sets some response headers, and calls py:func:`get_route`
+to obtain the function that will handle the query. Then, it either dispatches the
+query, or raises a "not found" error.
 
 Templating
 ==========
