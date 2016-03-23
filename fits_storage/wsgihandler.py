@@ -286,7 +286,7 @@ def dispatch(endpoint, args):
 def unicode_to_string(uni):
     return uni.encode('utf-8') if isinstance(uni, unicode) else uni
 
-def handler(environ, start_response):
+def core_handler(environ, start_response):
     ctx = get_context()
     req, resp = ctx.req, ctx.resp
     resp.set_header('Cache-Control', 'no-cache')
@@ -333,7 +333,7 @@ class StaticServer(object):
         return self.app(environ, start_response)
 
 htmldocroot = os.path.join(os.path.dirname(__file__), '..', 'htmldocroot')
-handle_with_static = StaticServer(handler, root=htmldocroot)
+handle_with_static = StaticServer(core_handler, root=htmldocroot)
 
 def handler(environ, start_response):
     ctx = get_context()
