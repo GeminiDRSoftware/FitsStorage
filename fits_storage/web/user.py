@@ -584,7 +584,7 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
        to be set. The basic use is (notice the decorator parenthesis, they're important)::
 
            @needs_login()
-           def decorated_function(req):
+           def decorated_function():
                ...
 
        Which rejects access if the user is not logged in. The decorator accepts a number

@@ -22,7 +22,7 @@ handling functions is under :py:mod:`fits_storage.utils.web.routing`.
 
 The entry point for the application is the :py:func:`handler` WSGI application.
 This application is wrapped in an instance of
-:py:class:`fits_storage.utils.web.wsgi_handler.ArchiveContextMiddleware`, and
+:py:class:`fits_storage.utils.web.wsgi_adapter.ArchiveContextMiddleware`, and
 assigned to the :py:obj:`application` variable - this is the object that will
 be called by the WSGI server.
 
@@ -39,7 +39,7 @@ It may be necessary to deal with them when testing the application, though,
 for example by running the simple server contained in ``wsgihandler`` itself.
 The ``handler`` will capture and handle redirect and client error exceptions.
 
-:py:func:`handle_with_static` is just middleware, too. If the query starts by `/static/`,
+:py:func:`handle_with_static` is just middleware, too. If the query starts by ``/static/``,
 it will attach an open file object to the response, setting the correct content
 type using a MIME database. Otherwise, it will let the query pass through to the
 `core_handler` function, which is our real application.
@@ -73,7 +73,7 @@ to the template, which is the only required argument:
     from fits_storage.web import templating
 
     @templating.templated("path/to/template.html")
-    def my_function(req, things):
+    def my_function():
         # Compute the results
         context = {
             'foo': bar,
@@ -83,22 +83,7 @@ to the template, which is the only required argument:
 
 Where context is a dictionary of Python objects. Each key in the dictionary is a variable name
 accessible from the template's sentences and expressions. The decorator will take care of invoking
-Jinja to generate the code, and to send it as the query output.  Another common use of the templates
-is as follows:
-
-.. code-block:: python
-
-    @templating.templated("path/to/template.html", with_session=True)
-    def my_function(session, req, things):
-        # Compute the results
-        return context
-
-In this case we're asking the decorator to start a new ORM session before invoking our code.
-This is not needed at all if our returned context contains only objects unrelated to the ORM
-(regular strings, integers, etc., but also complex instances.) If we're returning objects that have
-been obtained from a session (eg., a query that will be iterated from inside the template), then we
-must keep the session open until all the content has been produced. The decorator takes care of this
-for us. It will properly commit/rollback the session at the end.
+Jinja to generate the code, and to send it as the query output.
 
 Non-200 Status
 --------------
@@ -109,21 +94,13 @@ needs to indicate something different, then the return value must be a tuple, in
 .. code-block:: python
 
     @templating.templated("path/to/template.html")
-    def my_function(req, things):
+    def my_function():
         # Compute the results
         return (status, context)
 
 In most cases, though, when returning a different code, we don't need to provide a context: we will let
 the web server (or some other piece of our software) to produce the appropriate content. For this cases
-we provide an exception:
-
-.. autoexception:: fits_storage.web.templating.SkipTemplateError
-
-To be used like this:
-
-.. code-block:: python
-
-   raise templating.SkipTemplateError(HTTP_NOT_ACCEPTABLE)
+we will typically use either :any:`Response.client_error` or :any:`Response.redirect_to`.
 
 Template Context
 ----------------
@@ -172,7 +149,7 @@ So, for example, if we would like to restrict a web page to only Staff members, 
     from fits_storage.web.user import needs_login
 
     @needs_login(staffer = True)
-    def my_function(req):
+    def my_function():
        # process…
 
 The :py:func:`needs_login` decorator can be combined with others, like in the following example:
@@ -184,7 +161,7 @@ The :py:func:`needs_login` decorator can be combined with others, like in the fo
 
     @needs_login(staffer = True)
     @templating.templated("my_template.html")
-    def my_function(req):
+    def my_function():
        # process…
 
 In this case, the order of the decorators matter, though, because ``templated`` may modify the
