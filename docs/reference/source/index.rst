@@ -17,7 +17,8 @@ Contents
    :maxdepth: 2
 
    adapter.rst
-   web.rst
+   web_iface.rst
+   web_prog.rst
    calibs.rst
    orm.rst
    internal_api.rst

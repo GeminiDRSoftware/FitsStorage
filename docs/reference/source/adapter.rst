@@ -69,6 +69,3 @@ The Response Object
 
 .. autoclass:: fits_storage.utils.web.adapter.Response
    :members:
-
-Routing
-=======

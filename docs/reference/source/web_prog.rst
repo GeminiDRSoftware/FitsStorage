@@ -1,52 +1,10 @@
-*************
-Web Interface
-*************
+******************
+Writting Web Pages
+******************
 
-.. _mod_python: http://modpython.org
 .. _Jinja2: http://jinja.pocoo.org
 .. _custom filters: http://jinja.pocoo.org/docs/dev/api/#custom-filters
 .. _custom tests: http://jinja.pocoo.org/docs/dev/api/#custom-tests
-.. _WSGI: https://www.python.org/dev/peps/pep-0333
-
-HTTP Query Dispatch
-===================
-
-When migrating from `mod_python`_ to `WSGI`_, as part of the abstraction and redesign
-of the http query interface, a "routing" system was introduced. The dispatching for
-the WSGI application is defined in the :py:mod:`fits_storage.wsgihandler` module,
-in the :py:obj:`url_map` object. This mapping is applied to every query by means
-of the :py:func:`get_route` function. It is conceptually much simple than then
-previous ``mod_python`` handler, in the sense that the dispatching doesn't need to
-handle special cases. All the logic for describing and matching the routes to
-handling functions is under :py:mod:`fits_storage.utils.web.routing`.
-
-The entry point for the application is the :py:func:`handler` WSGI application.
-This application is wrapped in an instance of
-:py:class:`fits_storage.utils.web.wsgi_adapter.ArchiveContextMiddleware`, and
-assigned to the :py:obj:`application` variable - this is the object that will
-be called by the WSGI server.
-
-The ``ArchiveContextMiddleware`` object wraps the whole application
-populating the Context with the adequate Request and Response objects, starting
-a database session, and taking care of the clean up and of feeding the response
-to the server.
-
-:py:func:`handler` is rather simple: it simply calls a delegate application,
-`handle_with_static`, which was created to handle ``/static`` routes.
-Such routes SHOULD NOT get to the application in a production environment,
-as it should be the job of the web server to handle those files efficiently.
-It may be necessary to deal with them when testing the application, though,
-for example by running the simple server contained in ``wsgihandler`` itself.
-The ``handler`` will capture and handle redirect and client error exceptions.
-
-:py:func:`handle_with_static` is just middleware, too. If the query starts by ``/static/``,
-it will attach an open file object to the response, setting the correct content
-type using a MIME database. Otherwise, it will let the query pass through to the
-`core_handler` function, which is our real application.
-
-:py:func:`core_handler` sets some response headers, and calls py:func:`get_route`
-to obtain the function that will handle the query. Then, it either dispatches the
-query, or raises a "not found" error.
 
 Templating
 ==========
