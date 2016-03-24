@@ -96,7 +96,7 @@ def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0, 
     query = query.filter(CalCache.obs_hid.in_(obs_hids))
     if caltype != 'all':
         query = query.filter(CalCache.caltype == caltype)
-    query = query.distinct().order_by(CalCache.caltype).order_by(CalCache.rank)
+    query = query.distinct().order_by(CalCache.caltype).order_by(CalCache.obs_hid).order_by(CalCache.rank)
 
     calheaders = query.all()
     ids = set((calh.id if not full_query else calh[0].id) for calh in calheaders)
