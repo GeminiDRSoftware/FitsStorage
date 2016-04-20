@@ -21,6 +21,7 @@ Contents:
   dataflow.rst
   itsdead.rst
   database.rst
+  upgrades.rst
 
 Indices and tables
 ==================

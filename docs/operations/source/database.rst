@@ -21,6 +21,33 @@ staff access to get access to it, and it can be found at the /curation URL.
 Database Backups
 ++++++++++++++++
 
-There is a cron job that runs pgdump on the database daily, to a directory specified in the fits_storage_config.py file.
-If the database gets really corrupted somehow, then you may have to restore it from the previous good backup. There are notes
-on this in the docs/db_backup_resore.txt file.
+There is a cron job that runs pg_dump on the database daily, to a directory specified in the fits_storage_config.py file.
+If the database gets really corrupted somehow, then you may have to restore it from the previous good backup. The backup script
+includes a datestamp in the names of the dumped files so you can easily tell when a backup is from. In addition, by default it deletes old
+backup dumps according to an algorithm that preserves daily dumps for the last 10 days, weekly dumps for a few months, and monthly dumps further
+back than that. This prevents the dumps directory from getting excessive in size too quickly.
+
+Manual backup / restore operations
+----------------------------------
+
+Backup manually with:
+    /usr/bin/pg_dump --format=c --file=fitsdata.DATE.pg_dump_c fitsdata
+
+
+Restore manually with:
+    /usr/bin/pg_restore --dbname=fitsdata --format=c /data/backups/fitsdata.DATE.pg_dump_c
+
+Note that restore will be faster if you use the --jobs argument appropriately for the machine you're on. Also you can restore a 
+subset of the tables using the --table argument. See the man page for pg_restore for details.
+
+
+Note: --format=c is best, but won't work across postgres versions. format=p (plain) outputs a plain text SQL script which should 
+work accross versions.  But these can be very large and you probably want to compress it, so something like:
+
+    /usr/bin/pg_dump --format=p fitsdata | gzip -7 > fitsdata.DATE.pg_dump_p.gz
+
+This restores with:
+    gzcat fitsdata.DATE.pg_dump_p.gz | /usr/bin/psql -d fitsdata -f -
+
+this will likely generate some permissions errors which can be ignored.
+
