@@ -3,10 +3,10 @@
     {% with cals = objects %}
       {% if cals.applicable and not cals.found %}
         <h3><FONT COLOR="Red">NO {{ cap_name }} FOUND!</FONT></h3>
+      {% elif cals.found %}
         {% for cal in cals %}
 	  <h4>{{ cap_name }}: <a href="/fullheader/{{ cal.name }}">{{ cal.name }}</a> - <a href="/summary/{{ cal.dl }}">{{ cal.dl }}</a></h4>
 	{% endfor %}
-      {% elif cals.found %}
       {% endif %}
     {% endwith %}
 {%- endmacro %}

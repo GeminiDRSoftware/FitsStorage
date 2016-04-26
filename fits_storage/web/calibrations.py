@@ -32,6 +32,10 @@ class WrappedCals(object):
         for c in self._contents:
             yield c
 
+    def append(self, cal):
+        self._found = True
+        self._contents.append(cal)
+
     @property
     def found(self):
         return self._found
@@ -92,7 +96,6 @@ class WrapperObject(object):
             # Look for an arc. Note no longer any requirement to support "sameprog" with the new archive
             arcs = self.c.arc()
             if arcs:
-                wrap._found = True
                 for arc in arcs:
                     r = Result(name  = arc.diskfile.file.name,
                                dl    = arc.data_label,
@@ -106,7 +109,7 @@ class WrapperObject(object):
                     else:
                         self._warning = True
 
-                    wrap._contents.append(r)
+                    wrap.append(r)
             else:
                 self._warning = True
                 self._missing = True
@@ -143,7 +146,6 @@ class WrapperObject(object):
 
             darks = self.c.dark()
             if darks:
-                wrap._found = True
                 for dark in darks:
                     r = Result(name  = dark.diskfile.file.name,
                                dl    = dark.data_label,
@@ -162,7 +164,7 @@ class WrapperObject(object):
                             r.iwarn = True
                             self._warning = True
 
-                    wrap._contents.append(r)
+                    wrap.append(r)
             else:
                 self._warning = True
                 self._missing = True
@@ -181,7 +183,7 @@ class WrapperObject(object):
                 for cal in cals:
                     r = Result(name  = cal.diskfile.file.name,
                                dl    = cal.data_label)
-                    wrap._contents.append(r)
+                    wrap.append(r)
             else:
                 self._warning = True
                 self._missing = True
