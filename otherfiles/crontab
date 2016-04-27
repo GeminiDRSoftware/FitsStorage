@@ -1,24 +1,30 @@
-UR_DIR=/opt/Ureka/Ureka
-UR_VARIANT=common
-UR_OS=linux-rhe6
-UR_CPU=x86_64
-UR_BITS=64
-PATH=/opt/Ureka/Ureka/variants/common/bin:/opt/Ureka/Ureka/bin:/opt/Ureka/Ureka/python/bin:/usr/local/bin:/bin:/usr/bin
+PYTHONPATH=/opt/FitsStorage:/opt/gemini_python
 MAILTO=fitsadmin@gemini.edu
-PYTHON_EGG_CACHE=/var/cache/python_egg_cache
-PYTHONPATH=/opt/FitsStorage:/opt/python_modules/lib/python2.7/site-packages:/opt/gemini_python
-0 9 * * * /home/fitsdata/diskspace.py
-5 8 * * * python /opt/FitsStorage/scripts/delete_files.py --auto --yesimsure --demon --emailto='fitsadmin@gemini.edu'
-0 * * * * python /opt/FitsStorage/scripts/feed_ingest_queue.py --demon --site=N --lockfile
-*/5 * * * * python /opt/FitsStorage/scripts/service_ingest_queue.py --demon --lockfile --name=siq_1
-*/4 * * * * python /opt/FitsStorage/scripts/add_to_ingest_queue.py --file-re=today --demon
-15 * * * * python /opt/FitsStorage/scripts/add_to_ingest_queue.py --file-re=fourday --demon
-50 13 * * * python /opt/FitsStorage/scripts/add_to_ingest_queue.py --file-re=twentyday --demon
-1 * * * * python /opt/FitsStorage/scripts/rollcall.py --limit 25000 --demon
-0 7 * * * python /opt/FitsStorage/scripts/database_vacuum.py --demon
-30 7 * * * python /opt/FitsStorage/scripts/database_backup.py --demon
-50 7 * * * python /opt/FitsStorage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015A
-55 7 * * * python /opt/FitsStorage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015B
-0 8 * * *  python /opt/FitsStorage/scripts/YouGotDataEmail.py --demon
-0 8 * * Tue python /opt/FitsStorage/scripts/MissingCalibrationEmail.py
+#
+# Add to ingest queue
+#*/4  * * * * python /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=today --demon
+#*/15 * * * * python /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=fourday --demon
+#* 18 * * * python /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=twentyday --demon
+#2 * * * * python /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=masks --demon
+#6 * * * * python /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=obslogs --demon
+#10  * * * * python /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=iraf_cals --demon
+#*/5 * * * * python /opt/FitsStorage/fits_storage/scripts/feed_ingest_queue.py --demon --site=N --lockfile
+#
+# File curation
+#5 8 * * * python /opt/FitsStorage/fits_storage/scripts/delete_files.py --auto --yesimsure --demon --emailto='fitsadmin@gemini.edu'
+#1 * * * * python /opt/FitsStorage/fits_storage/scripts/rollcall.py --limit 25000 --demon
+#0 9 * * * /home/fitsdata/diskspace.py
+#
+# Notifications
+#50 7 * * * python /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2016A
+#51 7 * * * python /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015B
+#52 7 * * * python /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2016A --to-remote-server=https://archive.gemini.edu
+#53 7 * * * python /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015B --to-remote-server=https://archive.gemini.edu
+#0 8 * * *  python /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon
+#0 8 * * *  python /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon --check
+#0 8 * * Tue python /opt/FitsStorage/fits_storage/scripts/MissingCalibrationEmail.py
+#
+# Maintainance etc
+#0 7 * * * python /opt/FitsStorage/fits_storage/scripts/database_vacuum.py --demon
+#30 7 * * * python /opt/FitsStorage/fits_storage/scripts/database_backup.py --demon
 
