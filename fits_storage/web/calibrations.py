@@ -25,7 +25,6 @@ class Result(object):
 class WrappedCals(object):
     def __init__(self, applicable):
         self._applic    = applicable
-        self._found     = False
         self._contents  = []
 
     def __iter__(self):
@@ -33,12 +32,11 @@ class WrappedCals(object):
             yield c
 
     def append(self, cal):
-        self._found = True
         self._contents.append(cal)
 
     @property
     def found(self):
-        return self._found
+        return len(self._contents) > 0
 
     @property
     def applicable(self):
