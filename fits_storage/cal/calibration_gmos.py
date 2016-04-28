@@ -59,8 +59,8 @@ class CalibrationGMOS(Calibration):
             
             # Do BIAS. Most things require Biases.
             require_bias = True
-            if self.descriptors['observation_type'] == 'BIAS':
-                # BIASes do not require a bias.
+            if self.descriptors['observation_type'] in ('BIAS', 'ARC'):
+                # BIASes and ARCs do not require a bias.
                 require_bias = False
 
             elif self.descriptors['detector_roi_setting'] == 'Custom' and self.descriptors['observation_class'] == 'acq':
