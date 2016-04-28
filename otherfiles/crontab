@@ -26,5 +26,5 @@ MAILTO=fitsadmin@gemini.edu
 #
 # Maintainance etc
 #0 7 * * * python /opt/FitsStorage/fits_storage/scripts/database_vacuum.py --demon
-#30 7 * * * python /opt/FitsStorage/fits_storage/scripts/database_backup.py --demon
+#30 7 * * * python /opt/FitsStorage/fits_storage/scripts/database_backup.py --demon --exclude-queues
 
