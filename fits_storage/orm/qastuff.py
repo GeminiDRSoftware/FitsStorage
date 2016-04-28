@@ -141,6 +141,8 @@ class QAmetricIQ(Base, MetricDictMixin):
         iq.comment = ", ".join(iq_dict.get('comment'))
         iq.ao_seeing = iq_dict.get('ao_seeing')
         iq.adaptive_optics = iq_dict.get('adaptive_optics')
+        iq.strehl = iq_dict.get('strehl')
+        iq.strehl_std = iq_dict.get('strehl_std')
 
         return iq
 
@@ -154,6 +156,8 @@ class QAmetricIQ(Base, MetricDictMixin):
             'delivered_error': float_or_None(self.fwhm_std),
             'ellipticity': float_or_None(self.elip),
             'ellip_error': float_or_None(self.elip_std),
+            'strehl': float_or_None(self.strehl),
+            'strehl_std': float_or_None(self.strehl),
             'adaptive_optics': bool(self.adaptive_optics),
             'zenith': None,
             'zenith_error': None,
