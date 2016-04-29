@@ -21,6 +21,7 @@ sudo pip install matplotlib
 sudo pip install scipy
 sudo pip install pandas
 sudo pip install astropy
+sudo pip install sphinx
 
 sudo /usr/sbin/groupadd -g 5179 fitsdata
 sudo /usr/sbin/useradd -c 'FITS data' -u 5179 -g 5179 fitsdata
