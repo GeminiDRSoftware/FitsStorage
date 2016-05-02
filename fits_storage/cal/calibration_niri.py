@@ -82,7 +82,7 @@ class CalibrationNIRI(Calibration):
             self.get_query()
                 .flat(processed)
                 # GCAL lamp should be on - these flats will then require lamp-off flats to calibrate them
-                .add_filters(or_(Header.gcal_lamp == 'IRhigh', Header.gcal_lamp == 'IRlow'))
+                .add_filters(or_(Header.gcal_lamp == 'IRhigh', Header.gcal_lamp == 'IRlow', Header.gcal_lamp == 'QH'))
                 # Must totally match: data_section, well_depth_setting, filter_name, camera, focal_plane_mask, disperser
                 # Update from AS 20130320 - read mode should not be required to match, but well depth should.
                 .match_descriptors(Niri.data_section,
