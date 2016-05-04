@@ -1,9 +1,9 @@
 {# A number of calibrations have common presentation requirements... #}
-{% macro generate_cals(objects, cap_name) %}
+{% macro generate_cals(objects, cap_name, showing_missing) %}
     {% with cals = objects %}
       {% if cals.applicable and not cals.found %}
         <h3><FONT COLOR="Red">NO {{ cap_name }} FOUND!</FONT></h3>
-      {% elif cals.found %}
+      {% elif cals.found and not showing_missing %}
         {% for cal in cals %}
 	  <h4>{{ cap_name }}: <a href="/fullheader/{{ cal.name }}">{{ cal.name }}</a> - <a href="/summary/{{ cal.dl }}">{{ cal.dl }}</a></h4>
 	{% endfor %}
@@ -33,7 +33,7 @@
     {% with arcs = object.cals.arcs %}{# ARCS #}
       {% if arcs.applicable and not arcs.found %}
         <h3><FONT COLOR="Red">NO ARC FOUND!</FONT></h3>
-      {% elif arcs.found %}
+      {% elif arcs.found and not object.showing_missing %}
         {% for arc in arcs %}
 	  <h4>ARC: <a href="/fullheader/{{ arc.name }}">{{ arc.name }}</a> - <a href="/summary/{{ arc.dl }}">{{ arc.dl }}</a></h4>
 	  {% if not arc.inter %}
@@ -51,7 +51,7 @@
     {% with darks = object.cals.darks %}{# DARKS #}
       {% if darks.applicable and not darks.found %}
         <h3><FONT COLOR="Red">NO DARK FOUND!</FONT></h3>
-      {% elif darks.found %}
+      {% elif darks.found and not object.showing_missing%}
         {% for dark in darks %}
 	  <h4>DARK: <a href="/fullheader/{{ dark.name }}">{{ dark.name }}</a> - <a href="/summary/{{ dark.dl }}">{{ dark.dl }}</a></h4>
 	  {% if not dark.inter %}
@@ -66,10 +66,10 @@
       {% endif %}
     {% endwith %}
 
-{{ generate_cals(object.cals.biases, 'BIAS') }}
-{{ generate_cals(object.cals.flats, 'FLATS') }}
-{{ generate_cals(object.cals.pinhole_masks, 'PINHOLE_MASK') }}
-{{ generate_cals(object.cals.ronchi_masks, 'RONCHI_MASK') }}
+{{ generate_cals(object.cals.biases, 'BIAS', object.showing_missing) }}
+{{ generate_cals(object.cals.flats, 'FLATS', object.showing_missing) }}
+{{ generate_cals(object.cals.pinhole_masks, 'PINHOLE_MASK', object.showing_missing) }}
+{{ generate_cals(object.cals.ronchi_masks, 'RONCHI_MASK', object.showing_missing) }}
 
     <hr>
   {% endif %}

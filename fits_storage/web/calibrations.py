@@ -79,6 +79,10 @@ class WrapperObject(object):
                 or (self._copt == 'takenow' and self._takenow)   )
 
     @property
+    def showing_missing(self):
+        return self._copt == 'missing' and self._missing
+
+    @property
     def filename(self):
         return self.header.diskfile.file.name
 
