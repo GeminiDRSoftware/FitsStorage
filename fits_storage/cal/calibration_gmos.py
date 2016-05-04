@@ -63,8 +63,8 @@ class CalibrationGMOS(Calibration):
                 # BIASes and ARCs do not require a bias.
                 require_bias = False
 
-            elif self.descriptors['detector_roi_setting'] == 'Custom' and self.descriptors['observation_class'] == 'acq':
-                # Custom ROI acq images (efficient MOS acquisitions) don't require a BIAS.
+            elif self.descriptors['observation_class'] in ('acq', 'acqCal'):
+                # acq images don't require a BIAS.
                 require_bias = False
 
             elif self.descriptors['detector_roi_setting'] == 'Central Stamp':
