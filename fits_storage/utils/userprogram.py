@@ -3,7 +3,6 @@ This module contains utility functions for user matters such as access control
 """
 
 import datetime
-from mod_python import Cookie
 
 from sqlalchemy import func
 
