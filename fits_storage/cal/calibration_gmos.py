@@ -59,6 +59,7 @@ class CalibrationGMOS(Calibration):
             
             # Do BIAS. Most things require Biases.
             require_bias = True
+
             if self.descriptors['observation_type'] in ('BIAS', 'ARC'):
                 # BIASes and ARCs do not require a bias.
                 require_bias = False
@@ -122,20 +123,6 @@ class CalibrationGMOS(Calibration):
             if 'MOS' in self.types:
                 self.applicable.append('mask')
 
-    def filter_amp_read_area(self):
-        # The science amp_read_area must be equal or substring of the cal amp_read_area
-        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
-        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
-        # have a subset of the amps thus we must do the substring match
-        ara = self.descriptors['amp_read_area']
-        if self.descriptors['detector_roi_setting'] in ('Full Frame', 'Central Spectrum'):
-            return [Gmos.amp_read_area == ara]
-        elif ara is not None:
-            # Can't do 'contains' if amp_read_area is None
-            return [Gmos.amp_read_area.contains(ara)]
-
-        return []
-
     @not_imaging
     def arc(self, processed=False, howmany=None):
         """
@@ -151,7 +138,14 @@ class CalibrationGMOS(Calibration):
         else:
             filters.append(Gmos.focal_plane_mask.like('%arcsec'))
 
-        filters.extend(self.filter_amp_read_area())
+        # The science amp_read_area must be equal or substring of the cal amp_read_area
+        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
+        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match
+        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+        elif self.descriptors['amp_read_area'] is not None:
+                filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         return (
             self.get_query()
@@ -175,7 +169,15 @@ class CalibrationGMOS(Calibration):
         if howmany is None:
             howmany = 1 if processed else 15
 
-        filters = self.filter_amp_read_area()
+        filters = []
+        # The science amp_read_area must be equal or substring of the cal amp_read_area
+        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
+        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match
+        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+        elif self.descriptors['amp_read_area'] is not None:
+                filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         # Must match exposure time. For some strange reason, GMOS exposure times sometimes come out
         # a few 10s of ms different between the darks and science frames
@@ -208,7 +210,15 @@ class CalibrationGMOS(Calibration):
         if howmany is None:
             howmany = 1 if processed else 50
 
-        filters = self.filter_amp_read_area()
+        filters = []
+        # The science amp_read_area must be equal or substring of the cal amp_read_area
+        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
+        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match
+        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+        elif self.descriptors['amp_read_area'] is not None:
+            filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         # The Overscan section handling: this only applies to processed biases
         # as raw biases will never be overscan trimmed or subtracted, and if they're
@@ -341,7 +351,7 @@ class CalibrationGMOS(Calibration):
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
             flat_descriptors = flat_descriptors + (Gmos.amp_read_area,)
         elif self.descriptors['amp_read_area'] is not None:
-            filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+                filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         if self.descriptors['spectroscopy']:
             return self.spectroscopy_flat(processed, howmany, flat_descriptors, filters)
@@ -356,7 +366,15 @@ class CalibrationGMOS(Calibration):
         # Default number to associate
         howmany = howmany if howmany else 1
 
-        filters = self.filter_amp_read_area()
+        filters = []
+        # The science amp_read_area must be equal or substring of the cal amp_read_area
+        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
+        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match
+        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+        elif self.descriptors['amp_read_area'] is not None:
+                filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         return (
             self.get_query()
@@ -382,7 +400,15 @@ class CalibrationGMOS(Calibration):
         # Default number to associate
         howmany = howmany if howmany else 2
 
-        filters = self.filter_amp_read_area()
+        filters = []
+        # The science amp_read_area must be equal or substring of the cal amp_read_area
+        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
+        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match
+        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+        elif self.descriptors['amp_read_area'] is not None:
+                filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         return (
             self.get_query()
@@ -423,7 +449,14 @@ class CalibrationGMOS(Calibration):
             filters.append(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
             tol = 0.05 # microns
 
-        filters.extend(self.filter_amp_read_area())
+        # The science amp_read_area must be equal or substring of the cal amp_read_area
+        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
+        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match
+        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+        elif self.descriptors['amp_read_area'] is not None:
+                filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         return (
             self.get_query()
