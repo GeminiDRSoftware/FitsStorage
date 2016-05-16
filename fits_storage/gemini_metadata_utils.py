@@ -207,7 +207,7 @@ def degtora(decimal):
     decimal *= 60.0
     seconds = decimal
 
-    return "%02d:%02d:%02.2f" % (hours, minutes, seconds)
+    return "%02d:%02d:%05.2f" % (hours, minutes, seconds)
 
 def degtodec(decimal):
     """
@@ -225,7 +225,7 @@ def degtodec(decimal):
     decimal *= 60.0
     seconds = decimal
 
-    return "%s%02d:%02d:%02.2f" % (sign, degrees, minutes, seconds)
+    return "%s%02d:%02d:%05.2f" % (sign, degrees, minutes, seconds)
 
 
 
