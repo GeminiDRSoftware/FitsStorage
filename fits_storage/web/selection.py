@@ -15,6 +15,7 @@ import datetime
 from datetime import timedelta
 import re
 import urllib
+import math
 
 from ..orm.header import Header
 from ..orm.diskfile import DiskFile
@@ -475,53 +476,8 @@ def queryselection(query, selection):
             query = query.filter(Header.elevation >= a).filter(Header.elevation < b)
             query = querypropcoords(query)
 
-    if 'ra' in selection:
-        valid = True
-        # might be a range or a single value
-        value = selection['ra'].split('-')
-        if len(value) == 1:
-            # single value
-            degs = ratodeg(value[0])
-            if degs is None:
-                # Invalid value.
-                selection['warning'] = 'Invalid RA format. Ignoring your RA constraint.'
-                valid = False
-            else:
-                # valid single value, get search radius
-                if 'sr' in selection.keys():
-                    sr = srtodeg(selection['sr'])
-                    if sr is None:
-                        selection['warning'] = 'Invalid Search Radius, defaulting to 3 arcmin'
-                        selection['sr'] = '180'
-                        sr = srtodeg(selection['sr'])
-                else:
-                    # No search radius specified. Default it for them
-                    selection['warning'] = 'No Search Radius given, defaulting to 3 arcmin'
-                    selection['sr'] = '180'
-                    sr = srtodeg(selection['sr'])
-                lower = degs - sr
-                upper = degs + sr
-
-        elif len(value) == 2:
-            # Got two values
-            lower = ratodeg(value[0])
-            upper = ratodeg(value[1])
-            if (lower is None) or (upper is None):
-                selection['warning'] = 'Invalid RA range format. Ignoring your RA constraint.'
-                valid = False
-
-        else:
-            # Invalid string format for RA
-            selection['warning'] = 'Invalid RA format. Ignoring your RA constraint.'
-            valid = False
-
-        if valid and (lower is not None) and (upper is not None):
-            if upper > lower:
-                query = query.filter(Header.ra >= lower).filter(Header.ra < upper)
-            else:
-                query = query.filter(or_(Header.ra >= lower, Header.ra < upper))
-            query = querypropcoords(query)
-
+    # cosdec value is used in 'ra' code below to scale the search radius
+    cosdec = None
     if 'dec' in selection:
         valid = True
         # might be a range or a single value
@@ -549,6 +505,9 @@ def queryselection(query, selection):
                 lower = degs - sr
                 upper = degs + sr
 
+                # Also set cosdec value here for use in 'ra' code below
+                cosdec = math.cos(math.degrees(degs))
+
         else:
             # Got two values
             lower = dectodeg(match.group(1))
@@ -556,6 +515,9 @@ def queryselection(query, selection):
             if (lower is None) or (upper is None):
                 selection['warning'] = 'Invalid Dec range format. Ignoring your Dec constraint.'
                 valid = False
+            # Also set cosdec value here for use in 'ra' code below
+            degs = 0.5*(lower + upper)
+            cosdec = math.cos(math.degrees(degs))
 
         if valid and (lower is not None) and (upper is not None):
             # Negative dec ranges are usually specified backwards, eg -20 - -30...
@@ -565,6 +527,58 @@ def queryselection(query, selection):
                 query = query.filter(Header.dec >= lower).filter(Header.dec < upper)
             query = querypropcoords(query)
 
+    if 'ra' in selection:
+        valid = True
+        # might be a range or a single value
+        value = selection['ra'].split('-')
+        if len(value) == 1:
+            # single value
+            degs = ratodeg(value[0])
+            if degs is None:
+                # Invalid value.
+                selection['warning'] = 'Invalid RA format. Ignoring your RA constraint.'
+                valid = False
+            else:
+                # valid single value, get search radius
+                if 'sr' in selection.keys():
+                    sr = srtodeg(selection['sr'])
+                    if sr is None:
+                        selection['warning'] = 'Invalid Search Radius, defaulting to 3 arcmin'
+                        selection['sr'] = '180'
+                        sr = srtodeg(selection['sr'])
+                else:
+                    # No search radius specified. Default it for them
+                    selection['warning'] = 'No Search Radius given, defaulting to 3 arcmin'
+                    selection['sr'] = '180'
+                    sr = srtodeg(selection['sr'])
+
+                # Don't apply a factor 15 as that is done in the conversion to degrees
+                # But we do need to account for the factor cos(dec) here.
+                # We use the cosdec value from above here, or assume 1.0 if it is not set
+                cosdec = 1.0 if cosdec is None else cosdec
+                sr /= cosdec
+                lower = degs - sr
+                upper = degs + sr
+
+        elif len(value) == 2:
+            # Got two values
+            lower = ratodeg(value[0])
+            upper = ratodeg(value[1])
+            if (lower is None) or (upper is None):
+                selection['warning'] = 'Invalid RA range format. Ignoring your RA constraint.'
+                valid = False
+
+        else:
+            # Invalid string format for RA
+            selection['warning'] = 'Invalid RA format. Ignoring your RA constraint.'
+            valid = False
+
+        if valid and (lower is not None) and (upper is not None):
+            if upper > lower:
+                query = query.filter(Header.ra >= lower).filter(Header.ra < upper)
+            else:
+                query = query.filter(or_(Header.ra >= lower, Header.ra < upper))
+            query = querypropcoords(query)
 
     if 'exposure_time' in selection:
         valid = True
