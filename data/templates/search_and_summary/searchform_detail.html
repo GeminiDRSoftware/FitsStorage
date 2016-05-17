@@ -47,7 +47,7 @@
     </span><br>
 
     <label>Search radius:</label>
-    <input type="text" placeholder="(leave blank for 3 arcmin)" name="sr" value="{{ updated.sr }}" />
+    <input type="text" placeholder="(leave blank for 180 arcsec)" name="sr" value="{{ updated.sr }}" />
     <span class="help"> (arcsecs or decimal degrees)
         <span class="helpright">Search radius in arcseconds, unless you specify "d" or "degs" to make it decimal degrees. i.e. <b>180</b> means 180 arcseconds, <b>10degs</b> or <b>10d</b> means 10 degrees. <br>If RA and/or dec  has been given as a single value (as opposed to a range), this specifies the size of the box around it to search. This is actually a simple search in a square box (in the tangent plane), not a true cone search. Strange things may happen near the poles.</span>
     </span>
