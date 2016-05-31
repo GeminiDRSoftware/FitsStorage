@@ -1,0 +1,217 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Introduction &mdash; FitsStorage_operations_guide 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="FitsStorage_operations_guide 0.1 documentation" href="index.html" />
+    <link rel="next" title="Dataflow through the system" href="dataflow.html" />
+    <link rel="prev" title="FitsStorage operations guide" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="very-brief-system-overview">
+<h2>Very Brief System Overview<a class="headerlink" href="#very-brief-system-overview" title="Permalink to this headline">¶</a></h2>
+<p>Each Fits Storage system consists of a linux host (currently CentOS 7) running the PostgreSQL database and the
+apache web server. The internal summit systems are deployed on VMs provided by ISG, the GOA runs on an AWS EC2 instance.</p>
+<p>The FitsStorage software executes under the username fitsdata, except when it is invoked by apache when it runs under
+the apache username. All the cron and systemd jobs run under fitsdata, and the database is owned by that userid. There are
+postgres roles for fitsdata and apache for database access.</p>
+<p>You will need a personal log in to the machine in order to be able to do anything. You’ll need sudo for most
+troubleshooting tasks. The fitsdata account does NOT have sudo.</p>
+<p>There is a <a class="reference external" href="mailto:fitsadmin&#37;&#52;&#48;gemini&#46;edu">fitsadmin<span>&#64;</span>gemini<span>&#46;</span>edu</a> mail alias that should expand to the fits admin people. This address is used as the
+account owner with AWS for example.</p>
+<p>The summit machines use the summit dataflow NFS volume for their FITS data store, the GOA uses AWS S3.</p>
+<p>All state is maintained in the database, and responses to all web queries are made by querying the database.
+The only times the system looks at the actual FITS files are to populate the database when the file is ingested,
+or to supply the FITS file to a user who requests to download it.</p>
+<p>If you’re using this document, please tread very carefully. Almost certainly you will not need to do anything drastic
+to the machine or the database, and if you think you do, then please be <strong>very</strong> sure of your self before proceeding,
+you could make things <strong>A LOT</strong> worse...</p>
+</div>
+<div class="section" id="operations-servers">
+<h2>Operations Servers<a class="headerlink" href="#operations-servers" title="Permalink to this headline">¶</a></h2>
+<p>There are three Fits Storage deployments in use operationally. There are others used to development and testing.
+For the Summit Servers, there are CNAME entries (aliases) in the Gemini DNS that point canonical names at the actual
+current operational machine. For the GOA there is an entry in the Gemini DNS that points at an Elasic IP address
+(52.24.55.47) pseudo-statically allocated to our AWS account for the archive machine.</p>
+<p>All users should be referring to the servers with these canonical names, not using the actual hostname of the machine,
+as that will likely change when we update to a new version, which we do by deploying a new server running the new version
+of the code on which we prepare the new database etc, then we simply switch that to be the active server by swapping the
+DNS alias to point to it for the summit servers, or by re-assigning the elastic IP address to the new server for the GOA.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="35%" />
+<col width="65%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Canonical Name</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>fits.hi.gemini.edu</td>
+<td>MKO (Gemini North) Summit Fits Server</td>
+</tr>
+<tr class="row-odd"><td>fits.cl.gemini.edu</td>
+<td>CPO (Gemini South) Summit Fits Server</td>
+</tr>
+<tr class="row-even"><td>archive.gemini.edu</td>
+<td>Gemini Obsevatory Archive Server</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="fits-storage-queues">
+<h2>Fits Storage Queues<a class="headerlink" href="#fits-storage-queues" title="Permalink to this headline">¶</a></h2>
+<p>Many of the tasks that the Fits
+Storage software does take some time to execute - for example parsing the headers out of a file and inserting
+details in the database takes say about half a second, building a preview image can take several seconds for a
+large image, and a complex calibration association can take a second or so on a large database. Also some of these
+tasks can be quite CPU / memory and storage bandwidth intensive, and the system may receive a request to carry out
+these operations on many thousands of files.</p>
+<p>So, what happens is that these requests are added to queues (which are database tables internally). For each queue,
+there can be a zero or more instances of the appropriate queue service task running. These tasks look at the queue,
+find the highest priority item on the queue that is not being worked on, and work on it. Specifically, they mark the
+entry in the queue table as in progress, then work on it, then when they&#8217;ve finished processing that item they remove
+it from the queue. The operation of finding the highest priority item and marking it as in progress is done in an
+atominc select-for-update manner with suitable locking to prevent multiple queue service jobs from attempting to work
+on the same item.</p>
+<p>Generally, &#8220;highest priority&#8221; for the queues is defined as &#8220;most recent data&#8221;, so for example new data files will
+take priority over old files from tonight that have been updated, and those in turn will take priority over files
+from previous nights that have been updated.</p>
+<p>If no jobs are running to service a particular queue, but items are being added to that queue, they&#8217;ll happily just
+build up without being processed until the queue service job gets started. If the queue is empty, the queue service
+jobs will sleep for 5 seconds before polling the queue.</p>
+<p>There are 4 queues in the Fits Storage system, though some of them may not be used on some systems:</p>
+<ul class="simple">
+<li>Ingest Queue - for files to be ingested into the database.</li>
+<li>Export Queue - for files to be exported to another system, typically used by the summit server to export data to the archive</li>
+<li>Preview Queue - for files that need preview images building (only used on the archive)</li>
+<li>CalCache Queue - for files that need adding to the calibration association cache (only used on the archive)</li>
+</ul>
+<p>The jobs that service these queues are all run as systemd services and so should start automatically on system boot, and
+should get automatically restarted if the die for some reason. Note however that systemd will stop trying to start a process
+if it repeatedly crashes as soon as it&#8217;s started.</p>
+</div>
+<div class="section" id="script-log-files">
+<h2>Script Log Files<a class="headerlink" href="#script-log-files" title="Permalink to this headline">¶</a></h2>
+<p>There are a number of python scripts that run as part of the system. These can be run manually, but for routine operations
+they are usually invoked either by cron or by systemd. All of these scripts generate log files in the Fits Storage log directory,
+which is usually /data/logs. In some cases there will be multiple instances of each script running; in that case it is usuall that the
+&#8211;name argument is given to each on startup with a different value. This is then used in the log file name to keep the output from the
+different instances separate. For example it is common to run two or more instances of the service_ingest_queue.py script. Typically with names
+siq1, siq2 etc. The log files for these are then service_ingest_queue.py-siq1.log, service_ingest_queue.py-siq2.log, etc.</p>
+</div>
+<div class="section" id="database-log-entries">
+<h2>Database Log Entries<a class="headerlink" href="#database-log-entries" title="Permalink to this headline">¶</a></h2>
+<p>Every query to the web interface results in a log entry in the database logging tables. These can be queried and viewed at the
+/usagereport URL on the server. You will need to be logged in as a user with staff access in order to access the usage log. This
+/usagelog feature is the easiest way to investigate reports of errors. You can search by various fields to find the events in question, for
+example username if the user was logged in, or IP address if you know it. Note that of course users accessing the archive system at amazon
+from within at NAT network such as at Gemini will appear to come from the external IP address of their firewall, which will be different
+from their local machine internal IP address. Obviously, you can also search by date/time and by the URL feature they were accessing. Finally,
+and importantly, you can search the logs by HTTP status code, so if you have a user seeing &#8220;500 Internal Server Error&#8221; you can find those
+quickly by searching for status 500.</p>
+<p>In the Usage Log results table, you can click on the ID of the log entry to see further details. If the code generated a python exception
+while processing the request, the exception and backtrace will be stored in the Notes section of the log entry for that request.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Introduction</a><ul>
+<li><a class="reference internal" href="#very-brief-system-overview">Very Brief System Overview</a></li>
+<li><a class="reference internal" href="#operations-servers">Operations Servers</a></li>
+<li><a class="reference internal" href="#fits-storage-queues">Fits Storage Queues</a></li>
+<li><a class="reference internal" href="#script-log-files">Script Log Files</a></li>
+<li><a class="reference internal" href="#database-log-entries">Database Log Entries</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">FitsStorage operations guide</a></li>
+      <li>Next: <a href="dataflow.html" title="next chapter">Dataflow through the system</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/intro.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Paul Hirst.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/intro.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

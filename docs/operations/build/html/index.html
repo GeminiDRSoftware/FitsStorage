@@ -1,0 +1,155 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>FitsStorage operations guide &mdash; FitsStorage_operations_guide 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="FitsStorage_operations_guide 0.1 documentation" href="#" />
+    <link rel="next" title="Introduction" href="intro.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="fitsstorage-operations-guide">
+<h1>FitsStorage operations guide<a class="headerlink" href="#fitsstorage-operations-guide" title="Permalink to this headline">¶</a></h1>
+<p>This document is not intended as a complete reference to the FitsStorage system, rather it is intended as a guide to
+how it is deployed operationally at Gemini, both in the summit Fits Servers and in the Gemini Observatory Archive.
+This document should allow anyone with suitable access and basic unix / linux knowledge to troubleshoot and fix
+operational issues with these systems.</p>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#very-brief-system-overview">Very Brief System Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#operations-servers">Operations Servers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#fits-storage-queues">Fits Storage Queues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#script-log-files">Script Log Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#database-log-entries">Database Log Entries</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dataflow.html">Dataflow through the system</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dataflow.html#files-originate-on-the-dhs-filesystem">Files originate on the DHS filesystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataflow.html#they-are-picked-up-by-the-copy-from-dhs-py-task">They are picked up by the copy_from_dhs.py task</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataflow.html#other-ways-files-get-into-the-ingest-queue">Other ways files get into the ingest queue</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataflow.html#servicing-the-ingest-queue">Servicing the Ingest Queue</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataflow.html#service-the-export-queue">Service the export queue</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dataflow.html#dataflow-monitoring-and-troubleshooting">Dataflow Monitoring and Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="itsdead.html">Basic System Functionality (aka HELP, it’s dead!)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">Database integrity</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="database.html#database-backups">Database Backups</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="database.html#manual-backup-restore-operations">Manual backup / restore operations</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="upgrades.html">Software Upgrades</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="upgrades.html#database-rebuilds">Database Rebuilds</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="upgrades.html#historic-data-on-the-summit-machines">Historic data on the summit machines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="upgrades.html#aws-spot-instance-notes">AWS spot instance notes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="upgrades.html#aws-server-configuration">AWS server configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="upgrades.html#m3-class-server-storage">M3 class server storage</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span>Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span>Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span>Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">FitsStorage operations guide</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="intro.html" title="next chapter">Introduction</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Paul Hirst.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/index.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
