@@ -18,15 +18,17 @@ def check_present(session, filename):
 def copy_over(session, iq, logger, filename, dryrun):
     src = os.path.join(dhs_perm, filename)
     dest = os.path.join(storage_root, filename)
-    # Hack for testing
-    if filename.startswith('S201511'):
-        pass
-    else:
-        logger.info("Skipping for testing: %s", filename)
-        return True
     # If the Destination file already exists, skip it
     if os.access(dest, os.F_OK | os.R_OK):
         logger.info("%s already exists on storage_root - skipping", filename)
+        return True
+    # If the source path is a directory, skip is
+    if os.path.isdir(src):
+        logger.info("%s is a directory - skipping", filename)
+        return True
+    # If one of these wierd things, skip it
+    if filename in ['.bplusvtoc_internal', '.vtoc_internal']:
+        logger.info("%s is a wierd thing - skipping", filename)
         return True
     # If lastmod time is within 5 secs, DHS may still be writing it. Skip it
     lastmod = datetime.datetime.fromtimestamp(os.path.getmtime(src))

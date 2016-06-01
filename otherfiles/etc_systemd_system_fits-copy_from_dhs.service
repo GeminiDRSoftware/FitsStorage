@@ -5,7 +5,7 @@ After=syslog.target network.target postgresql.service
 [Service]
 Environment=PYTHONPATH=/opt/FitsStorage:/opt/gemini_python
 User=fitsdata
-ExecStart=/usr/bin/python /opt/FitsStorage/fits_storage/scripts/copy_from_dhs.py --debug --demon --lockfile 
+ExecStart=/usr/bin/python /opt/FitsStorage/fits_storage/scripts/copy_from_dhs.py --debug --demon 
 Restart=always
 # This will force the system to wait 10 seconds before respawning
 RestartSec=10
