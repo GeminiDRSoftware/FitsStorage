@@ -68,7 +68,7 @@ class ExportQueueUtil(object):
             self.l.debug("File %s seems to be in the queue", iq.filename)
             self.s.rollback()
         else:
-            make_transient(iq)
+            make_transient(eq)
             self.l.debug("Added id %d for filename %s to exportqueue", eq.id, eq.filename)
             return eq
 
