@@ -107,7 +107,8 @@ with session_scope() as session:
 
                 fulllist = msg['To'].split(',')
                 if msg['Cc']:
-                    fulllist.append(msg['Cc'].split(','))
+                    # This needs to be a +=, not an .append
+                    fulllist += msg['Cc'].split(',')
                
                 # For now, Bcc fitsadmin on all the emails to see that it's working...
                 fulllist.append('fitsadmin@gemini.edu')
