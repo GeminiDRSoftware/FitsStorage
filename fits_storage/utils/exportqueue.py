@@ -14,6 +14,7 @@ import ssl
 from sqlalchemy import desc, join
 from sqlalchemy.orm import make_transient
 from sqlalchemy.orm.exc import ObjectDeletedError
+from sqlalchemy.exc import IntegrityError
 
 from ..fits_storage_config import storage_root, using_s3, export_bzip, export_upload_auth_cookie
 from . import queue
