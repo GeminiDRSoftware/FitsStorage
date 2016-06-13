@@ -351,17 +351,17 @@ class IngestQueueUtil(object):
         function. Otherwise, it will return `False`
         """
         try:
-            tried_once = False
-            while not tried_once:
+            trials = 0
+            while trials < 2:
+                trials = trials + 1
                 obj = self.s.query(IngestQueue).filter(IngestQueue.filename == filename).one()
-                tried_once = True
                 if not obj.inprogress:
                     self.s.delete(obj)
                     self.s.commit()
                     return True
                 elif obj.error:
                     raise IngestError("The file is stuck in the ingest queue with an error")
-                elif busy_wait > 0:
+                elif (busy_wait > 0 and trials < 2):
                     sleep(busy_wait)
 
             raise IngestError("The file is stuck for an unreasonable amount of time")
