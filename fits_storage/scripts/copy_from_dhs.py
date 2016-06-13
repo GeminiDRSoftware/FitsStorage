@@ -45,7 +45,12 @@ def copy_over(session, iq, logger, filename, dryrun):
             logger.info("Dryrun - not actually copying %s", filename)
         else:
             logger.info("Copying %s to %s", filename, storage_root)
-            shutil.copy(src, storage_root)
+            # We can't user shutil.copy, because it preserves mode of the
+            # source file, making the umask totally useless. Under the hood,
+            # copy is just a shutil.copyfile + shutil.copymode. We'll
+            # use copyfile instead.
+            dst = ost.path.join(storage_root, os.path.basename(src))
+            shutil.copyfile(src, dst)
             logger.info("Adding %s to IngestQueue", filename)
             iq.add_to_queue(filename, '', force=False, force_md5=False, after=None)
     except:
