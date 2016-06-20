@@ -5,7 +5,7 @@ import datetime
 from ..orm import sessionfactory
 from .selection import sayselection, queryselection, openquery
 from ..cal import get_cal_object
-from ..fits_storage_config import fits_system_status
+from ..fits_storage_config import fits_servername, fits_system_status, use_as_archive
 
 from ..orm.header import Header
 from ..orm.diskfile import DiskFile
@@ -242,6 +242,8 @@ def calibrations(selection):
     }
 
     template_args = dict(
+        fits_server    = fits_servername,
+        secure         = use_as_archive,
         say_selection  = sayselection(selection),
         is_development = fits_system_status == "development",
         counter        = counter,
