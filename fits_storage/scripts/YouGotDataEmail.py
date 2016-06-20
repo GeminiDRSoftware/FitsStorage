@@ -53,10 +53,7 @@ if options.date == "today":
     options.date = datetime.datetime.utcnow().strftime("%Y%m%d")
 
 # Configure the URL base
-if use_as_archive:
-    url_base = "https://archive.gemini.edu"
-else:
-    url_base = "http://%s" % fits_servername
+url_base = "https://archive.gemini.edu"
 
 # The project / email list. Get from the database
 with session_scope() as session:
@@ -107,7 +104,7 @@ with session_scope() as session:
 
                 fulllist = msg['To'].split(',')
                 if msg['Cc']:
-                    # This needs to be a +=, not an .append
+                    # Don't make this an .append, it needs to be a +=
                     fulllist += msg['Cc'].split(',')
                
                 # For now, Bcc fitsadmin on all the emails to see that it's working...
