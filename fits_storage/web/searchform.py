@@ -594,6 +594,7 @@ dropdown_options = {
          ("R831", "R831"),
          ("B1200", "B1200"),
          ("R150", "R150"),
+         ("R600", "R600"),
          ("MIRROR", "MIRROR")],
     "gnirs_disp_options":
         [("10_mm", "10 l/mm"),
