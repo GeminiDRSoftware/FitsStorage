@@ -46,10 +46,10 @@ class CalibrationGNIRS(Calibration):
             self.applicable.append('flat')
             self.applicable.append('lampoff_flat')
             self.applicable.append('arc')
-            self.applicable.append('pinhole_mask')
-            # and if they are XD, they need a Quartz-Halogen flat (qh_flat) too.
+            # and if they are XD, they need a Quartz-Halogen flat (qh_flat)  and pinhole too.
             if self.descriptors['disperser'] and 'XD' in self.descriptors['disperser']:
                 self.applicable.append('qh_flat')
+                self.applicable.append('pinhole_mask')
             self.applicable.append('telluric_standard')
 
         # IR lamp-on flats can use lamp-off flats
