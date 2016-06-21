@@ -75,6 +75,7 @@ try:
         # Loop forever. loop is a global variable defined up top
         while loop:
             try:
+                iq = None # To make sure it's defined
                 # Request a queue entry
                 iq = ingest_queue.pop(options.fast_rebuild)
 
@@ -88,7 +89,7 @@ try:
                 else:
                     # Don't query queue length in fast_rebuild mode
                     if options.fast_rebuild:
-                        logger.info("Ingesting %s", iq.filename)
+                        logger.info("Ingesting %s (id %d)", iq.filename, iq.id)
                     else:
                         logger.info("Ingesting %s, (%d in queue)", iq.filename, ingest_queue.length())
 
@@ -112,6 +113,8 @@ try:
                         # iq.inprogress=False
 
                         # Recover the session to a working state and log the error to the database
+                        # Do it here just in case the exception is a KeyboardInterrupt or
+                        # OperationalError (see outer except blocks)
                         ingest_queue.set_error(iq, *sys.exc_info())
                         raise
                     logger.debug("Deleting ingestqueue id %d", iq.id)
@@ -121,6 +124,10 @@ try:
                 loop = False
 
             except:
+                # This won't run if the expection happened when ingesting the file, but
+                # we need to cover other cases...
+                if iq and iq.inprogress:
+                    ingest_queue.set_error(iq, *sys.exc_info())
                 string = traceback.format_tb(sys.exc_info()[2])
                 string = "".join(string)
                 session.rollback()

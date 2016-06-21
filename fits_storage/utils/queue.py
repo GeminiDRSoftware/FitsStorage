@@ -1,6 +1,6 @@
 import datetime
 from sqlalchemy.orm import make_transient
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, IntegrityError
 from ..orm.queue_error import QueueError, INGESTQUEUE, PREVIEWQUEUE, CALCACHEQUEUE, EXPORTQUEUE
 import traceback
 import linecache
@@ -69,40 +69,38 @@ def pop_queue(queue_class, session, logger, fast_rebuild=False):
     # PostgreSQL 9.5 introduces SELECT ... FOR UPDATE SKIP LOCKED which removes the uncertainty of
     # the 'None' case. When (well, if) migrating to 9.5, refactor the loop to use that functionality.
 
-    done = False
-    while not done:
+    while True:
         try:
             # Running the code in a block with begin_nested() creates a SAVEPOINT and rolls back to
             # it in case of an exception.
             with session.begin_nested():
                 qelement = queue_class.find_not_in_progress(session).with_for_update(of=queue_class, nowait=True).first()
+                try:
+                    # OK, we got a viable item, set it to inprogress and return it.
+                    logger.debug("Popped id %d from %s", qelement.id, tname)
+                    # Set this entry to in progres and flush to the DB.
+                    qelement.inprogress = True
+                    session.flush()
+            
+                    ##### There's no need to rebuild any longer
+                    # if not fast_rebuild:
+                    #     queue_class.rebuild(session, qelement)
+                    #     session.flush()
+            
+                    # Make the qelement into a transient instance before we return it
+                    # This detaches it from the session, basically it becomes a convenience container for the
+                    # values (filename, path, etc). The problem is that if it's still attached to the session
+                    # but expired (because we did a commit) then the next reference to it will initiate a transaction
+                    # and a SELECT to refresh the values, and that transaction will then hold a FOR ACCESS SHARE lock
+                    # on the exportqueue table until we complete the export and do a commit - which will prevent
+                    # the ACCESS EXCLUSIVE lock in pop_exportqueue from being granted until the transfer completes.
+                    make_transient(qelement)
+                except AttributeError: # Got a None
+                    logger.debug("No item to pop on %s", tname)
+                break
         except OperationalError:
             sleep(0.05)
-        else:
-            done = True
 
-    try:
-        # OK, we got a viable item, set it to inprogress and return it.
-        logger.debug("Popped id %d from %s", qelement.id, tname)
-        # Set this entry to in progres and flush to the DB.
-        qelement.inprogress = True
-        session.flush()
-
-        ##### There's no need to rebuild any longer
-        # if not fast_rebuild:
-        #     queue_class.rebuild(session, qelement)
-        #     session.flush()
-
-        # Make the qelement into a transient instance before we return it
-        # This detaches it from the session, basically it becomes a convenience container for the
-        # values (filename, path, etc). The problem is that if it's still attached to the session
-        # but expired (because we did a commit) then the next reference to it will initiate a transaction
-        # and a SELECT to refresh the values, and that transaction will then hold a FOR ACCESS SHARE lock
-        # on the exportqueue table until we complete the export and do a commit - which will prevent
-        # the ACCESS EXCLUSIVE lock in pop_exportqueue from being granted until the transfer completes.
-        make_transient(qelement)
-    except AttributeError: # Got a None
-        logger.debug("No item to pop on %s", tname)
 
     # And we're done, commit the transaction and release the update lock
     session.commit()
@@ -146,10 +144,18 @@ def add_error(queue_class, obj, exc_type, exc_value, tb, session):
 
     error = QueueError(obj.filename, obj.path, queue, '\n'.join(text))
     session.add(error)
+    session.flush()
 
-    attached_obj = session.merge(obj)
-    attached_obj.failed = True
-    session.commit()
+    try:
+        attached_obj = session.merge(obj)
+        attached_obj.failed = True
+        attached_obj.inprogress = False
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        attached_obj = session.merge(obj)
+        session.delete(attached_obj)
+        session.commit()
 
 # def set_error(queue_class, oid, exc_type, exc_value, tb, session):
 #     session.rollback()

@@ -30,6 +30,7 @@ class PreviewQueue(Base):
     def find_not_in_progress(session):
         return session.query(PreviewQueue)\
                     .filter(PreviewQueue.inprogress == False)\
+                    .filter(PreviewQueue.failed == False)\
                     .order_by(desc(PreviewQueue.sortkey))
 
     @staticmethod

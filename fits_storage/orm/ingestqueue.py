@@ -15,7 +15,7 @@ class IngestQueue(Base):
     """
     __tablename__ = 'ingestqueue'
     __table_args__ = (
-        UniqueConstraint('filename', 'inprogress'),
+        UniqueConstraint('filename', 'inprogress', 'failed'),
     )
 
     id = Column(Integer, primary_key=True)
@@ -48,6 +48,7 @@ class IngestQueue(Base):
     def find_not_in_progress(session):
         return session.query(IngestQueue)\
                     .filter(IngestQueue.inprogress == False)\
+                    .filter(IngestQueue.failed == False)\
                     .filter(IngestQueue.after < datetime.datetime.now())\
                     .order_by(desc(IngestQueue.sortkey))
 

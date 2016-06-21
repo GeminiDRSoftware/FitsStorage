@@ -14,7 +14,7 @@ class ExportQueue(Base):
     """
     __tablename__ = 'exportqueue'
     __table_args__ = (
-        UniqueConstraint('filename', 'inprogress'),
+        UniqueConstraint('filename', 'inprogress', 'failed'),
     )
 
     id = Column(Integer, primary_key=True)
@@ -40,6 +40,7 @@ class ExportQueue(Base):
     def find_not_in_progress(session):
         return session.query(ExportQueue)\
                     .filter(ExportQueue.inprogress == False)\
+                    .filter(ExportQueue.failed == False)\
                     .order_by(desc(ExportQueue.filename))
 
     @staticmethod
