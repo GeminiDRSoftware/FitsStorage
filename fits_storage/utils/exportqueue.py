@@ -66,7 +66,7 @@ class ExportQueueUtil(object):
         try:
             self.s.commit()
         except IntegrityError:
-            self.l.debug("File %s seems to be in the queue", iq.filename)
+            self.l.debug("File %s seems to be in the queue", eq.filename)
             self.s.rollback()
         else:
             make_transient(eq)
