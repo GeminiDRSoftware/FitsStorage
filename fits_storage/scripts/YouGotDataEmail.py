@@ -55,6 +55,10 @@ if options.date == "today":
 # Configure the URL base
 url_base = "https://archive.gemini.edu"
 
+# For the data set to check notifications, all should be on the local fits server
+if options.check:
+    url_base = "http://%s" % fits_servername
+
 # The project / email list. Get from the database
 with session_scope() as session:
     for notif in session.query(Notification):
