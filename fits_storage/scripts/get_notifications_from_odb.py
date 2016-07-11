@@ -15,7 +15,7 @@ from fits_storage.apache_return_codes import HTTP_OK
 
 parser = OptionParser()
 parser.add_option("--odb", action="store", dest="odb", help="ODB server to query. Probably gnodb or gsodb")
-parser.add_option("--semester", action="store", dest="semester", default=None, help="Query ODB for only the given semester")
+parser.add_option("--semester", action="store", dest="semester", default=None, help="Query ODB for only the given semester. Use auto to automatically get current and previous semesters")
 parser.add_option("--to-remote-server", action="store", dest="to_remote_server", help="Upload notifications via http to this remote server and do not ingest locally if specified. If not specified, ingest locally")
 parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
@@ -85,7 +85,7 @@ if options.semester == 'auto':
     else:
         # We're by the end of PAST year's period B
         period_years = (now.year, now.year - 1)
-    logger.info("Auto semester - will do %s, %s", 'A'.format(period_years[0]), 'B'.format(period_years[1]))
+    logger.info("Auto semester - will do %sA, %sB", period_years[0], period_years[1])
     download_and_ingest(url + '?programSemester={}A'.format(period_years[0]))
     download_and_ingest(url + '?programSemester={}B'.format(period_years[1]))
 else:
