@@ -85,6 +85,7 @@ if options.semester == 'auto':
     else:
         # We're by the end of PAST year's period B
         period_years = (now.year, now.year - 1)
+    logger.info("Auto semester - will do %s, %s", 'A'.format(period_years[0]), 'B'.format(period_years[1]))
     download_and_ingest(url + '?programSemester={}A'.format(period_years[0]))
     download_and_ingest(url + '?programSemester={}B'.format(period_years[1]))
 else:
