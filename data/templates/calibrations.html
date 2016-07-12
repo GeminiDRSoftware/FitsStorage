@@ -8,7 +8,7 @@
         <h3><FONT COLOR="Red">NO {{ cap_name }} FOUND!</FONT></h3>
       {%- elif cals.found and not showing_missing %}
         {%- for cal in cals %}
-	<h4>{{ cap_name }}: {{ href("/fullheader/{}".format(cal.name), cal.name) }} - {{ normalezed_href("/summary/{}".format(cal.dl), cal.dl) }}</h4>
+	<h4>{{ cap_name }}: {{ href("/fullheader/{}".format(cal.name), cal.name) }} - {{ href("/summary/{}".format(cal.dl), cal.dl) }}</h4>
 	{%- endfor %}
       {%- endif %}
     {%- endwith %}
