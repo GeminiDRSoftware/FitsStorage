@@ -15,7 +15,8 @@ from fits_storage.apache_return_codes import HTTP_OK
 
 parser = OptionParser()
 parser.add_option("--odb", action="store", dest="odb", help="ODB server to query. Probably gnodb or gsodb")
-parser.add_option("--semester", action="store", dest="semester", default=None, help="Query ODB for only the given semester. Use auto to automatically get current and previous semesters")
+parser.add_option("--active", action="store_true", dest="all_active", default=False, help="Query ODB for all active programs. Overrides --semester")
+parser.add_option("--semester", action="store", dest="semester", default=None, help="Query ODB for only the given semester. Use 'auto' to automatically get current and previous semesters")
 parser.add_option("--to-remote-server", action="store", dest="to_remote_server", help="Upload notifications via http to this remote server and do not ingest locally if specified. If not specified, ingest locally")
 parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
@@ -65,7 +66,10 @@ def download_and_ingest(url):
             logger.info("%s: %s", server, l)
 
 url = "http://%s:8442/odbbrowser/programs" % options.odb
-if options.semester == 'auto':
+if options.all_active:
+    logger.info("Retrieving all active programs")
+    download_and_ingest(url + '?programSemester=20*&programNotifyPi=true&programActive=yes')
+elif options.semester == 'auto':
     # When in "auto" mode, we want to ingest the "current" and "past" semesters,
     # using some heuristics based on the current date (or a fake current date,
     # typically for test purposes).
@@ -90,5 +94,8 @@ if options.semester == 'auto':
     download_and_ingest(url + '?programSemester={}B'.format(period_years[1]))
 else:
     if options.semester is not None:
+        logger.info("Retrieving only semester %s", options.semester)
         url += "?programSemester=%s" % options.semester
+    else:
+        logger.info("No semester selected")
     download_and_ingest(url)
