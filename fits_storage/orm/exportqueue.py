@@ -45,26 +45,27 @@ class ExportQueue(Base):
         """
         # The query that we're performing here is equivalent to
         #
-        # WITH unique_filenames AS (
+        # WITH inprogress_filenames AS (
         #   SELECT filename FROM exportqueue
-        #                   WHERE failed = false
-        #                   GROUP BY filename HAVING COUNT(1) == 1
+        #                   WHERE failed = false AND inprogress = True
         # )
-        # SELECT * FROM exportqueue AS eq JOIN unique_filenames AS uf ON eq.filename = uf.filename
+        # SELECT id FROM exportqueue
         #          WHERE inprogress = false AND failed = false
+        #          AND filename not in inprogress_filenames
         #          ORDER BY filename DESC
-        unique_filenames = (
+
+        inprogress_filenames = (
             session.query(ExportQueue.filename)
                 .filter(ExportQueue.failed == False)
-                .group_by(ExportQueue.filename)
-                .having(func.count(1) == 1)
-                .cte("unique_filenames")
+                .filter(ExportQueue.inprogress == True)
+                .subquery()
         )
+
         return (
             session.query(ExportQueue)
-                .join(unique_filenames, ExportQueue.filename == unique_filenames.c.filename)
                 .filter(ExportQueue.inprogress == False)
                 .filter(ExportQueue.failed == False)
+                .filter(~ExportQueue.filename.in_(inprogress_filenames))
                 .order_by(desc(ExportQueue.filename))
         )
 
