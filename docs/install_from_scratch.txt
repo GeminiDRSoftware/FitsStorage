@@ -142,6 +142,7 @@ vi fits_storage_config.py
 /usr/bin/createdb fitsdata
 python scripts/create_tables.py
 
+# Update the version numbers in htmldocroot/help/about.html and __version__.py
 # OK, should now be good to go.
 
 # Check with ISG if you need a whitelisted local mail relay on it
