@@ -108,3 +108,38 @@ While this is a good solution for now, it's added risk for disaster recovery due
 get the high performance access to EBS we should probably convert to that. M4 just uses EBS and does away with the SSDs anyway. Also at some
 point (not far away actually), the database will outgrow the space available on the SSDs, so we'll be forced to EBS at that point anyway.
 raid mirrors and the raid system will re-populate them from EBS
+
+Archive Upgrade Proceedure
+==========================
+
+Here's a basic checklist for an archive software upgrade.
+
+* Before you start, have the new server up and running with the database as up to date as you can.
+* Don't forget to update the version number in help/about.html
+* you can put a down for maintainance warning notice on the current system by uncommenting the bit in data/templates/search_and_summary/searchform.html
+* Copy the SSL certificates and configuration to the new server. nb the hostname will be wrong at this point so you will get certificate errors.
+* Start up the down_message VM on EC2 and update the ETA in down.html
+* Shutdown the export queues on both the summit fits servers.
+* Redirect archive.gemini.edu to the down_message VM on AWS.
+* Stop all the cronjobs and processes on both the new and old archive servers
+* Stop httpd on both the new and old archive servers
+* Dump the database on the old server
+* scp the dump to the new server
+* Restore the appropriate tables from the dump to the new server. See list above for guidance.
+* Make sure that the id_sequences generate the correct nextvalue for all the tables you restored. Probably need to update each sequence.
+* Start the httpd on the new server, test for basic functionality
+* redirect archive.gemini.edu to the new server
+* Test https access, should be no certificate errors. Check http re-directs to https
+* Start systemd services
+* Start cron jobs
+* Re enable export queues on summit fits servers
+* stop the down_message VM on AWS.
+
+Later cleanup when confident
+
+* Terminate the down_message server on AWS
+* Stop the old server on AWS.
+
+Much later
+
+* Terminate the old server on AWS. Delete any leftover volumes and snapshots.
