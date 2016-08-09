@@ -118,8 +118,9 @@ Here's a basic checklist for an archive software upgrade.
 * Don't forget to update the version number in help/about.html
 * you can put a down for maintainance warning notice on the current system by uncommenting the bit in data/templates/search_and_summary/searchform.html
 * Copy the SSL certificates and configuration to the new server. nb the hostname will be wrong at this point so you will get certificate errors.
-* Start up the down_message VM on EC2 and update the ETA in down.html
 * Shutdown the export queues on both the summit fits servers.
+* Update new database with files that were recently exported from the summits.
+* Start up the down_message VM on EC2 and update the ETA in down.html
 * Redirect archive.gemini.edu to the down_message VM on AWS.
 * Stop all the cronjobs and processes on both the new and old archive servers
 * Stop httpd on both the new and old archive servers
