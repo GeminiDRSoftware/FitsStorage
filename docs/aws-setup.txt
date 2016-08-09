@@ -6,7 +6,7 @@ ssh -R 8080:scisoft:80 arcdev
 # Setup from scratch:
 Lauch Instance
 AWS Marketplace -> search for centos
-CentOS 6 (x86_64) with updates # don't select a specific version eg 6.4 - just get generic latest
+CentOS 7 (x86_64) with updates # don't select a specific version eg 6.4 - just get generic latest
 m3.xlarge
 configure details
 subnet for 2a
@@ -23,12 +23,8 @@ review and launch
 launch
 label it as archive in instance list
 
-ssh -i arcdev.pem root@ip-address
-fdisk /dev/xvde
-make partition 1 full size (delete and recreate carefully)
-shutdown -r now  # to pick up new partition table properly
-ssh back in
-resize2fs /dev/xvde1 
+ssh -i arcdev.pem centos@ip-address
+# Check root partition is full size
 yum update  # This will take a while
 shutdown -r now  # to pick up new kernel etc from update
 ssh back in
@@ -40,8 +36,8 @@ passwd fitsdata
 yum install -y lvm2 mdadm ntp tcsh wget
 vi /etc/ntp.conf
 server x.amazon.pool.ntp.org iburst   (for all servers)
-/etc/init.d/ntpd start
-chkconfig ntpd on
+systemctl start ntpd
+systemctl enable ntpd
 ntpstat  # to check status
 vi /etc/sysconfig/network
 HOSTNAME=arcdev.gemini.edu

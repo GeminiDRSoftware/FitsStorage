@@ -6,6 +6,9 @@ sudo yum -y install httpd httpd-devel mod_ssl openssl
 sudo chmod oug+rx /var/log/httpd
 sudo yum -y install postgresql postgresql-server postgresql-devel
 
+# On AWS centos machines need to install EPEL repository (included by default on ISG config)
+sudo yum install -y epel-release
+
 # Also need:
 sudo yum -y install gcc gcc-c++ python-pip python-devel libpng-devel blas lapack openblas openblas-devel gcc-gfortran cfitsio-devel freetype-devel
 
@@ -21,7 +24,6 @@ sudo pip install matplotlib
 sudo pip install scipy
 sudo pip install pandas
 sudo pip install astropy
-sudo pip install sphinx
 
 sudo /usr/sbin/groupadd -g 5179 fitsdata
 sudo /usr/sbin/useradd -c 'FITS data' -u 5179 -g 5179 fitsdata
@@ -53,15 +55,7 @@ cd dist
 python setup.py install --prefix=/opt/python_modules
 
 # if using s3
-cd /opt/python_modules
-tar xvf /opt/FitsStorage/otherfiles/boto3-1.1.3.tar.gz
-cd boto3-1.1.3
-python setup.py build
-python setup.py install --prefix=/opt/python_modules
-
-# test python import of psycopg2. If fails, then 
-vi /opt/python_modules/lib/python2.7/site-packages/easy-install.pth
-and remove /sdata/Ureka/Ureka/python/lib/python2.7/site-packages
+sudo pip install boto3
 
 sudo mkdir /opt/fitsverify
 sudo chown phirst /opt/fitsverify
@@ -142,7 +136,6 @@ vi fits_storage_config.py
 /usr/bin/createdb fitsdata
 python scripts/create_tables.py
 
-# Update the version numbers in htmldocroot/help/about.html and __version__.py
 # OK, should now be good to go.
 
 # Check with ISG if you need a whitelisted local mail relay on it
