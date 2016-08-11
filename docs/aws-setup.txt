@@ -41,6 +41,10 @@ systemctl enable ntpd
 ntpstat  # to check status
 vi /etc/sysconfig/network
 HOSTNAME=arcdev.gemini.edu
+vi /etc/hostname
+arcdev.gemini.edu
+vi /etc/cloud/cloud.cfg append to end of file:
+preserve_hostname: true
 
 # Create RAID MIRRORS
 lsblk # to see block devices

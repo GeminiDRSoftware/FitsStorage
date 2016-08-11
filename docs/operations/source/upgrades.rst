@@ -114,7 +114,7 @@ Archive Upgrade Proceedure
 
 Here's a basic checklist for an archive software upgrade.
 
-* Before you start, have the new server up and running with the database as up to date as you can.
+* Before you start, have the new server up and running with the database as up to date as you can. Note that an add_to_ingestqueue from S3 takes almost an hour to get the file list from S3, so even for a subset with --file-re it takes about an hour just to add recent files to the queue.
 * Don't forget to update the version number in help/about.html
 * you can put a down for maintainance warning notice on the current system by uncommenting the bit in data/templates/search_and_summary/searchform.html
 * Copy the SSL certificates and configuration to the new server. nb the hostname will be wrong at this point so you will get certificate errors.
@@ -124,9 +124,9 @@ Here's a basic checklist for an archive software upgrade.
 * Redirect archive.gemini.edu to the down_message VM on AWS.
 * Stop all the cronjobs and processes on both the new and old archive servers
 * Stop httpd on both the new and old archive servers
-* Dump the database on the old server
-* scp the dump to the new server
-* Restore the appropriate tables from the dump to the new server. See list above for guidance.
+* Dump the database on the old server. Takes about 45 mins.
+* scp the dump to the new server. Takes a couple of minutes
+* Restore the appropriate tables from the dump to the new server. See list above for guidance. Note have to do them in order to avoid depenency violations. Also note - empty the table first, then use --data-only on the restore, then fix the id sequence nextval.
 * Make sure that the id_sequences generate the correct nextvalue for all the tables you restored. Probably need to update each sequence.
 * Start the httpd on the new server, test for basic functionality
 * redirect archive.gemini.edu to the new server
