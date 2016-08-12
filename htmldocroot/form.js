@@ -127,17 +127,15 @@ function nameresolver() {
 
     $.ajax({
         url: url,
-        dataType: "xml",
-        success: function(xml, status, jqXHR) {
-            if ((xml.getElementsByTagName("INFO").length > 0) && (xml.getElementsByTagName("INFO")[0].childNodes[0].nodeValue == ' *** Nothing found *** ')) {
-                alert("Object not found");
+        dataType: "json",
+        success: function(data, status, jqXHR) {
+	    if (data.success) {
+                $('#ra').val(data.ra);
+                $('#dec').val(data.dec);
+	    } else {
+                alert(data.message);
                 $('#ra').val('');
                 $('#dec').val('');
-            } else {
-                ra = xml.getElementsByTagName("jradeg")[0].childNodes[0].nodeValue;
-                dec = xml.getElementsByTagName("jdedeg")[0].childNodes[0].nodeValue;
-                $('#ra').val(ra);
-                $('#dec').val(dec);
             }
             $('#resload').hide();
         },

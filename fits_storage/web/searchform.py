@@ -16,6 +16,10 @@ from ..utils.web import get_context, Return
 
 import os
 import urllib
+import contextlib
+import json
+from xml.dom import minidom
+from xml.parsers.expat import ExpatError
 
 @templating.templated("search_and_summary/searchform.html", with_generator=True)
 def searchform(things, orderby):
@@ -270,21 +274,43 @@ def nameresolver(resolver, target):
     A name resolver proxy. Pass it the resolver and object name
     """
 
+    resp = get_context().resp
+    resp.content_type = 'application/json'
+
     urls = {
         'simbad': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/S?',
         'ned': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/N?',
         'vizier': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/V?'
     }
 
-    if resolver not in urls.keys():
-        get_context().resp.status = Return.HTTP_NOT_ACCEPTABLE
+    try:
+        url = urls[resolver] + target
+
+        with contextlib.closing(urllib.urlopen(url)) as urlfd:
+            xml = urllib.urlopen(url).read()
+            doc = minidom.parseString(xml)
+            info = doc.getElementsByTagName("INFO")
+            if info and ('nothing found' in info[0].childNodes[0].nodeValue.lower()):
+                msg = {'success': False, 'message': 'Object not found' }
+            else:
+                ra = float(doc.getElementsByTagName('jradeg')[0].childNodes[0].wholeText)
+                dec = float(doc.getElementsByTagName('jdedeg')[0].childNodes[0].wholeText)
+                msg = {'success': True, 'ra': ra, 'dec': dec}
+    except KeyError:
+        resp.status = Return.HTTP_NOT_ACCEPTABLE
         return
+    except ExpatError:
+        msg = {'success': False, 'message': "Got corrupted information from the name resolver"}
+    except IndexError:
+        msg = {'success': False, 'message': "The name resolver returned information in an unknown format"}
+    except Exception as e:
+        try:
+            message = e.strerror.strerror
+        except AttributeError:
+            message = str(e)
+        msg = {'success': False, 'message': message}
 
-    url = urls[resolver] + target
-
-    urlfd = urllib.urlopen(url)
-    get_context().resp.append(urlfd.read())
-    urlfd.close()
+    resp.append_json(msg)
 
 # DATA FOR THE TEMPLATES
 
