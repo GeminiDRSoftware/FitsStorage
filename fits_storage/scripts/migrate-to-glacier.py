@@ -48,11 +48,13 @@ logger.info("*********    %s - starting up at %s", scriptname, datetime.datetime
 try:
     with PidFile(logger, scriptname) as pidfile, session_scope() as session:
         # There's an issue where it won't copy files > 5GB...
+
+        # Find present diskfile versions that are simply not in glacier
         query = (
             session.query(DiskFile).outerjoin(Glacier, (and_(DiskFile.filename == Glacier.filename,
                                                              DiskFile.file_md5 == Glacier.md5)))
                                    .filter(DiskFile.present == True)
-                                   .filter(or_(Glacier.id.is_(None), DiskFile.lastmod > Glacier.when_uploaded))
+                                   .filter(Glacier.id.is_(None))
         )
         if options.filepre:
             query = query.filter(DiskFile.filename.startswith(options.filepre))
@@ -63,6 +65,7 @@ try:
             query = query.filter(between(DiskFile.lastmod, since, until))
         else:
             query = query.filter(DiskFile.lastmod < until)
+  
         if options.limit:
             query = query.limit(options.limit)
 
