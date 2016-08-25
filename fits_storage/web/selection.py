@@ -506,7 +506,7 @@ def queryselection(query, selection):
                 upper = degs + sr
 
                 # Also set cosdec value here for use in 'ra' code below
-                cosdec = math.cos(math.degrees(degs))
+                cosdec = math.cos(math.radians(degs))
 
         else:
             # Got two values
@@ -517,7 +517,7 @@ def queryselection(query, selection):
                 valid = False
             # Also set cosdec value here for use in 'ra' code below
             degs = 0.5*(lower + upper)
-            cosdec = math.cos(math.degrees(degs))
+            cosdec = math.cos(math.radians(degs))
 
         if valid and (lower is not None) and (upper is not None):
             # Negative dec ranges are usually specified backwards, eg -20 - -30...
