@@ -456,7 +456,12 @@ def queryselection(query, selection):
             if thing == 'Classic':
                 query = query.filter(~Header.detector_config.contains('NodAndShuffle'))
             else:
-                query = query.filter(Header.detector_config.contains(thing))
+                # Avoid confusion between slow and low. high / low is always the first thing in the string. 
+                # Also a bunch of gmos-s files have mixed gains - dont select them. Bleagh.
+                if thing in ('low', 'high'):
+                    query = query.filter(Header.detector_config.startswith(thing))
+                else:
+                    query = query.filter(Header.detector_config.contains(thing))
 
     if 'twilight' in selection:
         if selection['twilight']:
