@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 """
-FITS Header Fixing Tool v0.1
+FITS Header Fixing Tool v0.2
 
 Usage:
 
@@ -42,6 +42,13 @@ Optional Arguments:
   --ext=EXT      EXT is a number greater than 0 or an extension name. If not
                  specified, it is assumed that the change affects the
                  Primary HDU
+
+Usage examples:
+
+ fixHead 20160116 15,20,25 RAWIQ:70 qa:usable
+ fixHead 20160115 10-20,31,35-40 RAWIQ:any RAWWV:80 RAWCC:50
+ fixHead 20160115 10-20,31,35-40 cond:iqany,wv80,cc50
+ fixHead 1-200 SSA:"John Smith"
 """
 
 from __future__ import print_function
@@ -125,8 +132,47 @@ def get_file_list(server, args):
     else:
         return get_file_list_by_date_and_number(args)
 
-def usage(with_error = True):
-    print(__doc__)
+doc_simplified ="""
+Usage examples for SOS purposes:
+
+ {GREEN}fixHead 20160116 15,20,25 RAWIQ:70 qa:usable{RESET}
+ {GREEN}fixHead 20160115 10-20,31,35-40 RAWIQ:any RAWWV:80 RAWCC:50{RESET}
+
+That last one can also be written:
+
+ {GREEN}fixHead 20160115 10-20,31,35-40 cond:iqany,wv80,cc50{RESET}
+
+Specials:
+
+  'cond' accepts up to 4 values separated by commas, like "iq70,bgany"
+  'qa' accepts the values that you expect for QA, like "pass", "check",
+       etc. The server will translate this to the proper values in the
+       headers.
+  For RAWBG/RAWCC/RAWIQ/RAWWV you can specify anything that contains a
+  number (eg. RAWIQ:70, RAWWV:80-per). As long as it is a valid number,
+  it will be completed to something proper, like '80-percentile'
+
+You can skip the date (the current one will be used):
+
+ {GREEN}fixHead 1-200 SSA:"John Smith"{RESET}
+
+Type "fixHead -h" for a more thorough help message.
+"""
+
+def colorize(text):
+    colors = {
+         'GREEN': '2',
+         'RESET': '9',
+    }
+    for (tag, code) in colors.items():
+        text = text.replace('{' + tag + '}', '\x1b[3{0}m'.format(code))
+    return text
+
+def usage(with_error = True, full = True):
+    if full:
+        print(__doc__)
+    else:
+        print(colorize(doc_simplified))
     sys.exit(1 if with_error else 0)
 
 def expand_numbers(nums):
@@ -177,6 +223,9 @@ def parse_args(raw_args):
 
         def __str__(self):
             return "Args({})".format(', '.join('{}={!r}'.format(k, getattr(self, k)) for k in sorted(self.__set_once)))
+
+    if not raw_args:
+        usage(full=False)
 
     args = Args(yes=False, show_list=False, ext=None,
                 date=None, filenums=None, obsid=None,
@@ -234,6 +283,15 @@ def parse_args(raw_args):
 
     return args
 
+def validate_raw(inp, accepted, keyw):
+    for number in accepted:
+        if str(number) in inp:
+            return '{}-percentile'.format(number)
+    if inp.lower() == 'any':
+        return 'Any'
+
+    raise ValueError("{} is an invalid value for {}".format(inp, keyw))
+
 def map_actions(pairs):
     actions = {}
     gen = []
@@ -245,6 +303,14 @@ def map_actions(pairs):
         elif keyword.lower() == 'release':
             actions['release'] = value
         else:
+            keyword = keyword.upper()
+            if keyword == 'RAWIQ':
+                value = validate_raw(value, (20, 70, 85), keyword)
+            elif keyword == 'RAWCC':
+                value = validate_raw(value, (50, 70, 80), keyword)
+            elif keyword in ('RAWBG', 'RAWWV'):
+                value = validate_raw(value, (20, 50, 80), keyword)
+
             gen.append((keyword.upper(), value))
     if gen:
         actions['generic'] = gen
@@ -257,6 +323,9 @@ def perform_changes(sa, file_list, args):
     except ConnectionError:
         print("Cannot connect to the archive server", file=sys.stderr)
         return 1
+    except ValueError as e:
+        print(str(e), file=sys.stderr)
+        return 0
 
     if ret.status_code == 403:
         print("The access to the archive server has been forbidden for this script", file=sys.stderr)
