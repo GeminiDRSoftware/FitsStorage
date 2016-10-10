@@ -103,7 +103,7 @@ rs_state_pairs = {
     'cc70':    (None, '70-percentile', None, None),
     'cc80':    (None, '80-percentile', None, None),
     'ccany':   (None, 'Any', None, None),
-    'iq50':    (None, None, '50-percentile', None),
+    'iq20':    (None, None, '20-percentile', None),
     'iq70':    (None, None, '70-percentile', None),
     'iq85':    (None, None, '85-percentile', None),
     'iqany':   (None, None, 'Any', None),
