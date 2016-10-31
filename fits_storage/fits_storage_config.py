@@ -126,6 +126,10 @@ fits_tape_scratchdir = "/data/tapescratch"
 using_apache = True
 using_sqlite = False
 
+# Publication database connection info
+pubdb_host = 'hbfmysql1.hi.gemini.edu'
+pubdb_username = 'fitsdata'
+pubdb_password = 'jpPyKE56H4ctVKVL'
 
 # This is used to reference program keys with the odb
 odbkeypass = "dontputtheactualkeyinthesvn"
