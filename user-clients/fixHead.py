@@ -79,6 +79,7 @@ import json
 import requests
 from requests.exceptions import ConnectionError
 from functools import partial
+import os
 
 SERVERNAME='fits'
 NORTHPREF = 'N'
@@ -86,8 +87,13 @@ SOUTHPREF = 'S'
 DEFAULTPREF = NORTHPREF
 ISODATEFORMAT='%Y%m%d'
 
+# Pick the Gemini API authorization cookie from the environment
+# If it's not there, we get an empty string. This won't get you
+# access to the archive, but at least the script won't crash.
+GEM_AUTH = os.environ.get('GEMINI_API_AUTH', '')
+
 cookies = {
-    'gemini_api_authorization': ''
+    'gemini_api_authorization': GEM_AUTH
 }
 
 class ServerAccess(object):
@@ -284,11 +290,14 @@ def parse_args(raw_args):
     return args
 
 def validate_raw(inp, accepted, keyw):
-    for number in accepted:
-        if str(number) in inp:
-            return '{}-percentile'.format(number)
     if inp.lower() == 'any':
         return 'Any'
+    elif inp.upper().startswith('UNK'):
+        return 'UNKNOWN'
+    else:
+        for number in accepted:
+            if str(number) in inp:
+                return '{}-percentile'.format(number)
 
     raise ValueError("{} is an invalid value for {}".format(inp, keyw))
 
