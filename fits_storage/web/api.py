@@ -245,3 +245,18 @@ def ingest_files():
         resp.append_json(error_response('Could not find any file with prefix: {}*'.format(file_pre)))
     else:
         resp.append_json(dict(result=True, added=sorted(added)))
+
+@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie, content_type='json')])
+def ingest_programs():
+    ctx = get_context()
+    try:
+        arguments = ctx.json
+        # TODO: Extract arguments...
+    except ValueError:
+        resp.append_json(error_response('Invalid information sent to the server'))
+        return
+
+    # TODO: Process the argument and ingest the data
+
+    # TODO: Return an appropriate value
+    resp.append_json(dict(result=True))
