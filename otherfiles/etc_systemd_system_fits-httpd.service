@@ -1,0 +1,19 @@
+# This is a modified Centos7 httpd.service
+
+[Unit]
+Description=The Apache HTTP Server
+After=network.target remote-fs.target nss-lookup.target
+Documentation=man:httpd(8)
+Documentation=man:apachectl(8)
+
+[Service]
+Type=forking
+EnvironmentFile=/opt/modwsgi-default
+ExecStart=/opt/modwsgi-default/apachectl start
+ExecReload=/opt/modwsgi-default/apachectl graceful
+ExecStop=/opt/modwsgi-default/apachectl graceful-stop
+PrivateTmp=true
+LimitNOFILE=infinity
+
+[Install]
+WantedBy=multi-user.target
