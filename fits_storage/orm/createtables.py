@@ -42,6 +42,7 @@ from .previewqueue import PreviewQueue
 from .obslog import Obslog
 from .miscfile import MiscFile
 from .glacier import Glacier
+from .logcomments import LogComments
 
 def create_tables(session):
     """
@@ -92,6 +93,7 @@ def create_tables(session):
     MiscFile.metadata.create_all(bind=pg_db)
     Glacier.metadata.create_all(bind=pg_db)
     QueueError.metadata.create_all(bind=pg_db)
+    LogComments.metadata.create_all(bind=pg_db)
 
     # Add the geometry types separately. this is postgres specific and referencing these column in local mode isn't going to work
     # Ignore any errors, commonly from column already exists...
@@ -104,8 +106,8 @@ def create_tables(session):
 
     if using_apache and not using_sqlite:
         # Now grant the apache user select on them for the www queries
-        pg_db.execute("GRANT SELECT ON file, diskfile, diskfilereport, header, fulltextheader, gmos, niri, michelle, gnirs, gpi, nifs, f2, gsaoi, nici, tape, tape_id_seq, tapewrite, taperead, tapefile, notification, photstandard, photstandardobs, footprint, qareport, qametriciq, qametriczp, qametricsb, qametricpe, ingestqueue, exportqueue, archiveuser, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog, calcache, preview, obslog, miscfile, ingestqueue, exportqueue, previewqueue, calcachequeue, queue_error TO apache;COMMIT;")
-        pg_db.execute("GRANT INSERT,UPDATE ON tape, notification, qareport, qametriciq, qametriczp, qametricsb, qametricpe, archiveuser, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog, miscfile, ingestqueue TO apache;COMMIT;")
+        pg_db.execute("GRANT SELECT ON file, diskfile, diskfilereport, header, fulltextheader, gmos, niri, michelle, gnirs, gpi, nifs, f2, gsaoi, nici, tape, tape_id_seq, tapewrite, taperead, tapefile, notification, photstandard, photstandardobs, footprint, qareport, qametriciq, qametriczp, qametricsb, qametricpe, ingestqueue, exportqueue, archiveuser, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog, calcache, preview, obslog, miscfile, ingestqueue, exportqueue, previewqueue, calcachequeue, queue_error, logcomments TO apache;COMMIT;")
+        pg_db.execute("GRANT INSERT,UPDATE ON tape, notification, qareport, qametriciq, qametriczp, qametricsb, qametricpe, archiveuser, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog, miscfile, ingestqueue, logcomments TO apache;COMMIT;")
         pg_db.execute("GRANT UPDATE ON tape_id_seq, notification_id_seq, qareport_id_seq, qametriciq_id_seq, qametriczp_id_seq, qametricsb_id_seq, qametricpe_id_seq, archiveuser_id_seq, userprogram_id_seq, usagelog_id_seq, querylog_id_seq, downloadlog_id_seq, filedownloadlog_id_seq, fileuploadlog_id_seq, ingestqueue_id_seq TO apache;COMMIT;")
         pg_db.execute("GRANT DELETE ON notification, ingestqueue TO apache;COMMIT;")
 
