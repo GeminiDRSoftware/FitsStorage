@@ -8,7 +8,9 @@ Documentation=man:apachectl(8)
 
 [Service]
 Type=forking
-EnvironmentFile=/opt/modwsgi-default
+# Use common env variables for regular HTTP
+# Be careful with this! Change to another file if needed
+EnvironmentFile=/etc/sysconfig/httpd
 ExecStart=/opt/modwsgi-default/apachectl start
 ExecReload=/opt/modwsgi-default/apachectl graceful
 ExecStop=/opt/modwsgi-default/apachectl graceful-stop
