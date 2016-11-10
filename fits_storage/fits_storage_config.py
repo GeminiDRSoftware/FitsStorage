@@ -130,6 +130,7 @@ using_sqlite = False
 pubdb_host = 'hbfmysql1.hi.gemini.edu'
 pubdb_username = 'fitsdata'
 pubdb_password = 'jpPyKE56H4ctVKVL'
+pubdb_dbname = 'apps-publications'
 
 # This is used to reference program keys with the odb
 odbkeypass = "dontputtheactualkeyinthesvn"
