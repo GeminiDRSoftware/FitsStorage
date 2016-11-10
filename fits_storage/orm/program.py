@@ -10,7 +10,7 @@ class Program(Base):
     __tablename__ = 'program'
 
     id = Column(Integer, primary_key=True)
-    program_id = Column(Integer, index=True)
+    program_id = Column(Text, index=True)
     pi_coi_names = Column(Text, index=True)
     title = Column(Text)
     abstract = Column(Text)
