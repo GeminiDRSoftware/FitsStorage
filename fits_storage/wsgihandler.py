@@ -38,7 +38,7 @@ from fits_storage.web.preview import preview
 from fits_storage.web.obslogs import obslogs
 from fits_storage.web.reporting import report
 from fits_storage.web.queuestatus import queuestatus_summary, queuestatus_tb, queuestatus_update
-from fits_storage.web.api import update_headers, ingest_files, ingest_programs
+from fits_storage.web.api import update_headers, ingest_files, ingest_programs, ingest_publications
 from fits_storage.web import miscfiles
 from fits_storage.web import templating
 
@@ -236,6 +236,8 @@ url_map = Map([
     Rule('/update_headers', update_headers, methods=['POST']),      # JSON RPC dispatcher
     Rule('/ingest_files', ingest_files, methods=['POST']),          # JSON RPC dispatcher
     Rule('/ingest_programs', ingest_programs, methods=['POST']),    # JSON RPC dispatcher
+    Rule('/ingest_publications', ingest_publications,
+        methods=['POST']),                                          # JSON RPC dispatcher
     Rule('/curation', curation_report),                             # curation_report handler
     Rule('/staff_access', staff_access),                            # staff_access
 

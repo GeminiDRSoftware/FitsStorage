@@ -260,3 +260,21 @@ def ingest_programs():
 
     # TODO: Return an appropriate value
     resp.append_json(dict(result=True))
+
+@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], only_magic=True, content_type='json')
+def ingest_publications():
+    ctx = get_context()
+    resp = ctx.resp
+    resp.set_content_type('application/json')
+
+    try:
+        arguments = ctx.json
+        # TODO: Extract arguments...
+    except ValueError:
+        resp.append_json(error_response('Invalid information sent to the server'))
+        return
+
+    # TODO: Process the argument and ingest the data
+
+    # TODO: Return an appropriate value
+    resp.append_json(dict(result=True))
