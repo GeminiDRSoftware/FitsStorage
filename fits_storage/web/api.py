@@ -265,7 +265,7 @@ def ingest_programs():
     resp.append_json(dict(result=True))
 
 def process_publication(pub_data):
-    bibcode = pub_date['bibcode']
+    bibcode = pub_data['bibcode']
 
     ctx = get_context()
     session = ctx.session
@@ -282,19 +282,18 @@ def process_publication(pub_data):
                   'partner')
 
     for field in pub_fields:
-        if field in pub_data:
-            setattr(pub, field, pub_data[field])
+        setattr(pub, field, pub_data.get(field))
 
     for bfield in ('gstaff', 'gsa', 'golden'):
         value = pub_data.get(bfield)
         if str(value).upper() in 'YN':
-            setattr(pub_data, bfield, value.upper() == 'Y')
+            setattr(pub, bfield, value.upper() == 'Y')
         else:
-            setattr(pub_data, bfield, None)
+            setattr(pub, bfield, None)
 
     prog_dict = dict((pp.program_text_id, pp) for pp in pub.programs())
     cur_programs = set(prog_dict)
-    sent_programs = set(pub_data.get('programs', []))
+    sent_programs = set(pub.get('programs', []))
 
     # Remove existing associations with programs that are not in sent set
     for progid in (cur_programs - sent_programs):
