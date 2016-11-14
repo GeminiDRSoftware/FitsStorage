@@ -673,8 +673,7 @@ def queryselection(query, selection):
 
     if 'publication' in selection:
         query = (
-            query.select_from(join(Header, ProgramPublication,
-                                    onclause=Header.program_id == ProgramPublication.program_text_id))
+            query.join(ProgramPublication, Header.program_id == ProgramPublication.program_text_id)
                  .filter(ProgramPublication.bibcode == selection['publication'])
             )
 
