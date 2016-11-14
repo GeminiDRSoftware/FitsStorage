@@ -3,6 +3,7 @@ This module deals with the 'selection' concept.
 Functions in this module are only used within FitsStorageWebSummary.
 """
 from sqlalchemy import or_, func
+from sqlalchemy.orm import join
 
 from ..gemini_metadata_utils import gemini_telescope, gemini_instrument
 from ..gemini_metadata_utils import gemini_observation_type, gemini_observation_class, gemini_reduction_state
@@ -22,6 +23,9 @@ from ..orm.diskfile import DiskFile
 from ..orm.file import File
 from ..orm.footprint import Footprint
 from ..orm.photstandard import PhotStandardObs
+from ..orm.program import Program
+from ..orm.programpublication import ProgramPublication
+from ..orm.publication import Publication
 
 # A number of the choices in the getselection inner loop are just simple checks
 # that can be represented by a data structure. It's better to keep it like that
@@ -65,7 +69,8 @@ getselection_key_value = {
     'filepre': 'filepre',
     'cenwlen': 'cenwlen',
     'exposure_time': 'exposure_time',
-    'coadds': 'coadds'
+    'coadds': 'coadds',
+    'publication': 'publication'
     }
 
 # Also, some entries set themselves as the value for a certain selection
@@ -665,6 +670,13 @@ def queryselection(query, selection):
 
         if valid:
             query = query.filter(Header.central_wavelength > lower).filter(Header.central_wavelength < upper)
+
+    if 'publication' in selection:
+        query = (
+            query.select_from(join(Header, ProgramPublication,
+                                    onclause=Header.program_id == ProgramPublication.program_text_id))
+                 .filter(ProgramPublication.bibcode == selection['publication'])
+            )
 
     return query
 
