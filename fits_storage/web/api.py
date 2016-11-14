@@ -291,9 +291,9 @@ def process_publication(pub_data):
         else:
             setattr(pub, bfield, None)
 
-    prog_dict = dict((pp.program_text_id, pp) for pp in pub.programs())
+    prog_dict = dict((pp.program_text_id, pp) for pp in pub.programs)
     cur_programs = set(prog_dict)
-    sent_programs = set(pub.get('programs', []))
+    sent_programs = set(pub_data.get('programs', []))
 
     # Remove existing associations with programs that are not in sent set
     for progid in (cur_programs - sent_programs):
