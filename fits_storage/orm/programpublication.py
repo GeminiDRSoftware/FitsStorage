@@ -18,3 +18,7 @@ class ProgramPublication(Base):
     bibcode = Column(String(20), nullable=False, index=True)
     publication = relationship('Publication', back_populates='programs')
     program = relationship('Program')
+
+    def __init__(self, program_id, bibcode):
+        self.bibcode = bibcode
+        self.program_text_id = program_id

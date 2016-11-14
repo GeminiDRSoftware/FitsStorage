@@ -1,7 +1,10 @@
-from ..orm          import NoResultFound
-from ..orm.file     import File
-from ..orm.header   import Header
+from ..orm import NoResultFound
+from ..orm.file import File
+from ..orm.header import Header
 from ..orm.diskfile import DiskFile
+from ..orm.program import Program
+from ..orm.programpublication import ProgramPublication
+from ..orm.publication import Publication
 
 from ..utils.fitseditor import compare_cards, modify_multiple_cards
 from ..utils.ingestqueue import IngestQueueUtil, IngestError
@@ -261,20 +264,83 @@ def ingest_programs():
     # TODO: Return an appropriate value
     resp.append_json(dict(result=True))
 
+def process_publication(pub_data):
+    bibcode = pub_date['bibcode']
+
+    ctx = get_context()
+    session = ctx.session
+
+    pub = session.query(Publication)\
+                 .filter(Publication.bibcode == bibcode)\
+                 .first()
+    if pub is None:
+        pub = Publication(bibcode)
+        session.add(pub)
+
+    pub_fields = ('author', 'title', 'year', 'journal', 'telescope',
+                  'instrument', 'country', 'wavelength', 'mode', 'too',
+                  'partner')
+
+    for field in pub_fields:
+        if field in pub_data:
+            setattr(pub, field, pub_data[field])
+
+    for bfield in ('gstaff', 'gsa', 'golden'):
+        value = pub_data.get(bfield)
+        if str(value).upper() in 'YN':
+            setattr(pub_data, bfield, value.upper() == 'Y')
+        else:
+            setattr(pub_data, bfield, None)
+
+    prog_dict = dict((pp.program_text_id, pp) for pp in pub.programs())
+    cur_programs = set(prog_dict)
+    sent_programs = set(pub_data.get('programs', []))
+
+    # Remove existing associations with programs that are not in sent set
+    for progid in (cur_programs - sent_programs):
+        session.delete(prog_dict[progid])
+
+    # Create new associations
+    for progid in (sent_programs - cur_programs):
+        prog = session.query(Program)\
+                      .filter(Program.program_id == progid)\
+                      .first()
+        if prog is None:
+            continue
+        prog_pub = ProgramPublication(bibcode=bibcode,
+                                      program_id=progid)
+        prog_pub.program = prog
+        pub.programs.append(prog_pub)
+
+    session.commit()
+
 @needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], only_magic=True, content_type='json')
 def ingest_publications():
     ctx = get_context()
-    resp = ctx.resp
-    resp.set_content_type('application/json')
+    ctx.resp.set_content_type('application/json')
 
     try:
         arguments = ctx.json
-        # TODO: Extract arguments...
     except ValueError:
-        resp.append_json(error_response('Invalid information sent to the server'))
+        ctx.resp.append_json(error_response('Invalid information sent to the server'))
         return
 
-    # TODO: Process the argument and ingest the data
-
-    # TODO: Return an appropriate value
-    resp.append_json(dict(result=True))
+    if arguments['single']:
+        try:
+            process_publication(arguments['payload'])
+        except KeyError:
+            ctx.resp.append_json(error_response('Missing bibcode!'))
+        ctx.resp.append_json(dict(result=True))
+    else:
+        collect_res = []
+        for pub in arguments['payload']:
+            try:
+                process_publication(pub)
+            except KeyError:
+                collect_res
+        if all(collect_res):
+            ctx.resp.append_json(dict(result=True))
+        else:
+            ret = error_response('Missing bibcode!')
+            ret['pubs'] = collect_res
+            ctx.resp.append_json(ret)
