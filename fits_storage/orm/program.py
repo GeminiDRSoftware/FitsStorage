@@ -1,5 +1,6 @@
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text, Boolean, Float, DateTime
+from sqlalchemy.orm import relationship
 
 from . import Base
 
@@ -24,6 +25,7 @@ class Program(Base):
     allocated_hours = Column(Float)
     remaining_hours = Column(Float)
     last_refreshed = Column(DateTime, index=True)
+    programs = relationship("ProgramPublication", back_populates='program')
 
     def __init__(self, program_id):
         self.program_id = program_id
