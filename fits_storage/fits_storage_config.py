@@ -131,6 +131,8 @@ pubdb_host = 'hbfmysql1.hi.gemini.edu'
 pubdb_username = 'fitsdata'
 pubdb_password = 'jpPyKE56H4ctVKVL'
 pubdb_dbname = 'apps-publications'
+# pubdb_remote = 'http://sbffits-dev-lv1:8080/ingest_publications' # Test URI
+pubdb_remote = 'https://archive.gemini.edu/ingest_publications'
 
 # This is used to reference program keys with the odb
 odbkeypass = "dontputtheactualkeyinthesvn"
