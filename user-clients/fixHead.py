@@ -167,11 +167,19 @@ Type "fixHead -h" for a more thorough help message.
 
 def colorize(text):
     colors = {
+         'RED': '1',
          'GREEN': '2',
-         'RESET': '9',
+         'YELLOW': '3',
+         'MAGENTA': '5',
+         'CYAN': '6',
+         'RESET': None,
     }
     for (tag, code) in colors.items():
-        text = text.replace('{' + tag + '}', '\x1b[3{0}m'.format(code))
+        if tag is 'RESET':
+            color = '\x1b[0m'
+        else:
+            color = '\x1b[3{0};1m'.format(code)
+        text = text.replace('{' + tag + '}', color)
     return text
 
 def usage(with_error = True, full = True):
