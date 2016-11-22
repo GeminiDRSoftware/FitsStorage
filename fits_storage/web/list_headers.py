@@ -8,6 +8,7 @@ from ..orm.diskfile import DiskFile
 from ..orm.preview import Preview
 from ..orm.header import Header
 from ..orm.obslog import Obslog
+from ..orm.obslog_comment import ObslogComment
 from ..fits_storage_config import fits_open_result_limit, fits_closed_result_limit, use_as_archive
 from .selection import queryselection, openquery
 from ..gemini_metadata_utils import gemini_date, gemini_time_period_from_range
@@ -32,9 +33,9 @@ def list_headers(selection, orderby, full_query=False, add_previews=False):
     # The basic query...
     if full_query:
         if add_previews:
-            query = session.query(Header, DiskFile, File, Preview).join(DiskFile).join(File).outerjoin(Preview)
+            query = session.query(Header, DiskFile, File, ObslogComment, Preview).join(DiskFile).join(File).outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label).outerjoin(Preview)
         else:
-            query = session.query(Header, DiskFile, File).join(DiskFile).join(File)
+            query = session.query(Header, DiskFile, File, ObslogComment).join(DiskFile).join(File).outerjoin(ObslogComment, Header.data_label == ObslogComment.data_label)
     else:
         query = session.query(Header).join(DiskFile).join(File)
     query = queryselection(query, selection)

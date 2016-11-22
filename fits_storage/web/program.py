@@ -1,0 +1,34 @@
+"""
+This module deals with displaying information about programs.
+"""
+
+from . import templating
+from ..orm.program import Program
+
+from ..utils.web import get_context
+
+@templating.templated("program.html")
+def program_info(program_id):
+    session = get_context().session
+
+    ret_dict = { 'program_id': program_id }
+    prog = session.query(Program).filter(Program.program_id==program_id).first()
+
+    found = prog is not None
+
+    ret_dict['not_found'] = not found
+
+    if found:
+        inames = prog.pi_coi_names.split(',')
+        try:
+            ret_dict['pi_name'] = inames[0]
+            ret_dict['co_names'] = ", ".join(inames[1:])
+        except (IndexError, TypeError):
+            pass
+
+        ret_dict['program'] = prog
+        publications = [pp.publication for pp in prog.publications]
+        ret_dict['there_are_publications'] = len(publications) > 0
+        ret_dict['publications'] = publications
+
+    return ret_dict

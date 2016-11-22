@@ -13,7 +13,7 @@ definitions anyway.
 
 from fits_storage_config import using_apache
 
-define_locally = True:
+define_locally = True
 if using_apache:
     try:
         from mod_python.apache import OK, HTTP_OK, HTTP_NOT_FOUND, HTTP_FORBIDDEN, HTTP_NOT_ACCEPTABLE

@@ -5,6 +5,7 @@ from ..orm.diskfile import DiskFile
 from ..orm.program import Program
 from ..orm.programpublication import ProgramPublication
 from ..orm.publication import Publication
+from ..orm.obslog_comment import ObslogComment
 
 from ..utils.fitseditor import compare_cards, modify_multiple_cards
 from ..utils.ingestqueue import IngestQueueUtil, IngestError
@@ -249,19 +250,50 @@ def ingest_files():
     else:
         resp.append_json(dict(result=True, added=sorted(added)))
 
-@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie, content_type='json')])
+@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], only_magic=True, content_type='json')
 def ingest_programs():
     ctx = get_context()
+    resp = ctx.resp
+    resp.content_type = 'application/json'
+    fields = ['reference', 'title', 'contactScientistEmail', 'abstrakt', 'piEmail', 'coIEmails', 'observations', 'investigatorNames']
     try:
-        arguments = ctx.json
-        # TODO: Extract arguments...
+        program = ctx.json
     except ValueError:
         resp.append_json(error_response('Invalid information sent to the server'))
         return
 
-    # TODO: Process the argument and ingest the data
+    session = ctx.session
 
-    # TODO: Return an appropriate value
+    prog_obj = session.query(Program).filter(Program.program_id == program['reference']).first()
+    if prog_obj is None:
+        prog_obj = Program(program['reference'])
+        session.add(prog_obj)
+
+    pairs = (('title', 'title'),
+             ('abstrakt', 'abstract'),
+             ('piEmail', 'piemail'),
+             ('coIEmails', 'coiemail'),
+             ('investigatorNames', 'pi_coi_names'))
+
+    for remote, local in pairs:
+        try:
+            setattr(prog_obj, local, program[remote])
+        except KeyError:
+            # Just ignore any non-existing associationsfield
+            pass
+
+    for obs in program['observations']:
+        lcomms = session.query(ObslogComment).filter(ObslogComment.data_label == obs['label']).first()
+        if lcomms is None:
+            lcomms = ObslogComment(program['reference'], obs['label'], obs['comment'])
+            session.add(lcomms)
+        else:
+            lcomms.program_id = program['reference']
+            lcomms.comment = obs['comment']
+
+
+    session.commit()
+
     resp.append_json(dict(result=True))
 
 def process_publication(pub_data):

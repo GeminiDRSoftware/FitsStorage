@@ -137,9 +137,8 @@ def templated(template_name, content_type="text/html", with_generator=False, def
        If ``with_generator`` is ``True``, Jinja2 will be instructed to try to chunk the output,
        sending info back to the client as soon as possible.
 
-       If ``at_end_hook`` is defined, it has to be a callable object. It will be invoked after
-       the template has generated all the text, passing both the session object and the
-       request.
+       If ``at_end_hook`` is defined, it has to be a callable object with no arguments. It
+       will be invoked after the template has generated all the text.
     """
     def template_decorator(fn):
         @wraps(fn)

@@ -39,6 +39,8 @@ from fits_storage.web.obslogs import obslogs
 from fits_storage.web.reporting import report
 from fits_storage.web.queuestatus import queuestatus_summary, queuestatus_tb, queuestatus_update
 from fits_storage.web.api import update_headers, ingest_files, ingest_programs, ingest_publications
+from fits_storage.web.program import program_info
+from fits_storage.web.logcomments import log_comments
 from fits_storage.web import miscfiles
 from fits_storage.web import templating
 
@@ -301,6 +303,9 @@ url_map = Map([
     Rule('/programsobserved/<selection:selection>',                 # This is the projects observed feature
          progsobserved),
 
+    # Group of URIs dealing with program/publication
+    Rule('/programinfo/<program_id>', program_info),                # Displays data from a program
+    Rule('/logcomments/<selection(SEL):selection>', log_comments),
     # Obslogs get their own summary-like handler
     # Both actions use the same function, with 'sumtype' specifiying which
     # one of them, but aside from that, it's just a regular (req, selections)

@@ -298,7 +298,7 @@ class SummaryGenerator(object):
         for colkey, col in ((x, self.columns[x]) for x in self.wanted):
             yield ColWrapper(self, colkey, col)
 
-    def table_row(self, header, diskfile, file, preview=None):
+    def table_row(self, header, diskfile, file, comment, preview=None):
         """
         Returns a row object for c for columns as configured, pulling data from the
         header object given.
@@ -342,7 +342,8 @@ class SummaryGenerator(object):
                 value = getattr(self, col.summary_func)(header=header,
                                                         diskfile=diskfile,
                                                         file=file,
-                                                        preview=preview)
+                                                        preview=preview,
+                                                        comment=comment)
                 if colkey == 'download' and 'downloadable' in value:
                     row.can_download = True
                 if isinstance(value, dict):
@@ -376,7 +377,7 @@ class SummaryGenerator(object):
         else:
             return dict(prop_message=file.name, release=header.release)
 
-    def datalabel(self, header, **kw):
+    def datalabel(self, header, comment, **kw):
         """
         Generates the datalabel column data
         """
@@ -385,6 +386,7 @@ class SummaryGenerator(object):
             links     = self.links == ALL_LINKS,
             datalabel = str(header.data_label),
             dl        = GeminiDataLabel(header.data_label),
+            comment   = comment.comment if comment is not None else None
             )
 
     def ut_datetime(self, header, **kw):

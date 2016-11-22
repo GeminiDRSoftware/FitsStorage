@@ -7,22 +7,23 @@ import os, sys
 
 # Is this an archive server
 use_as_archive = True
-#use_as_archive = False
+# use_as_archive = False
 
 # AWS S3 info
 using_s3 = False
-s3_bucket_name = ''
-s3_backup_bucket_name = ''
-s3_staging_area = '/data/s3_staging'
+s3_bucket_name = 'gemini-archive'
+s3_backup_bucket_name = 'gemini-archive-ttt'
+s3_staging_area = '/data/FitsStorage/s3_staging'
 aws_access_key = ''
 aws_secret_key = ''
 
 # Staging area for uncompressed cache of compressed file being processed
-z_staging_area = '/data/z_staging'
+z_staging_area = '/data/FitsStorage/z_staging'
 
 # Configure the path to the storage root here 
-#storage_root = '/net/wikiwiki/dataflow'
+#storage_root = '/data/FitsStorage/dataflow'
 storage_root = '/data/gemini_data'
+#storage_root = '/data/graces_data'  
 
 if(using_s3):
     storage_root = s3_staging_area
@@ -62,7 +63,7 @@ magic_download_cookie = None
 magic_api_cookie = None
 
 # API backend stuff
-provides_api = True
+provides_api = False
 api_backend_location = 'localhost:8000'
 
 # This is the list of downstream servers we export files we ingest to
@@ -81,12 +82,12 @@ preview_path = "previews"
 
 # The DAS calibration reduction path is used to find the last processing
 # date for the gmoscal page's autodetect daterange feature
-das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
-#das_calproc_path = '/net/josie/staging/dataproc/gmos'
+#das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
+das_calproc_path = '/net/josie/staging/dataproc/gmos'
 
 # Configure the site and other misc stuff here
 # Especially for archive systems, make the servername a fully qualified domain name.
-fits_servername = "hahalua"
+fits_servername = "sbffits-dev-lv1"
 fits_system_status = "development"
 
 # Limit on number of results in open searches

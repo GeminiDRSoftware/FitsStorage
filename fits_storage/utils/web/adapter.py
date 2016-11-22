@@ -5,6 +5,7 @@ from ...fits_storage_config import magic_download_cookie
 from thread import get_ident
 from threading import local
 import abc
+import json
 
 class ReturnMetaClass(type):
     __return_codes = {
