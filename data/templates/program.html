@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block title %}Detail for Program: {{ program_id }}{% endblock %}
+{% block body %}
+<h1>Program: {{ program_id }}</h1>
+{% if not_found %}
+<h2>There is not information about this program</h2>
+{% else %}
+<table>
+ <tr><td>Title:<td>{{ program.title }}</tr>
+ <tr><td>PI:<td>{{ pi_name }}</tr>
+ <tr><td>Co-I(s):<td>{{ co_names }}</tr>
+</table>
+<h2>Abstract</h2>
+<div style="max-width: 20cm">
+{{ program.abstract }}
+</div>
+
+{% if there_are_publications == True %}
+<h2>Publications using this program's data</h2>
+<ul>
+{%- for pub in publications %}
+  <li><a href="/searchform/publication={{ pub.bibcode }}">{{ pub.title }}</a>
+{%- endfor %}
+</ul>
+{% endif %}
+{% endif %}
+{% endblock %}
