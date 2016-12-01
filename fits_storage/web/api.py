@@ -28,6 +28,8 @@ import fcntl
 from time import strptime
 from glob import iglob
 
+from time import sleep
+
 class RequestError(Exception):
     pass
 
@@ -164,55 +166,72 @@ def map_changes(changes):
 
     return dict(change_pairs)
 
-@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], content_type='json')
-def update_headers():
-    ctx = get_context()
-
-    session = ctx.session
-
-    iq = IngestQueueUtil(session, DummyLogger())
-    proxy = ApiProxy(api_backend_location)
+def process_update(session, proxy, query, iq):
+    reingest = False
+    label = None
     try:
-        data = get_json_data()
-        response = []
-        reingest = False
-        for query in data:
-            label = None
-            try:
-                label, df = lookup_diskfile(session, query)
-                filename = df.filename
-                if not isinstance(query['values'], dict):
-                    response.append(error_response("This looks like a malformed request: 'values' should be a dictionary", id=label))
-                    continue
-                new_values = map_changes(query['values'])
-                reject_new = query.get('reject_new', False)
-                path = df.fullpath()
-                reingest = iq.delete_inactive_from_queue(filename)
-                # reingest = apply_changes(df, query['values']) or reingest
-                reingest = proxy.set_image_metadata(path=path, changes=new_values, reject_new=reject_new)
-                response.append({'result': True, 'id': label})
-            except ItemError as e:
-                response.append(error_response(e.message, id=e.label))
-            except KeyError as e:
-                response.append(error_response("This looks like a malformed request: 'values' does not exist", id=label))
-            except IngestError as e:
-                response.append(error_response(e.message, id=label))
-            except ApiProxyError:
-                ctx.req.log(str(e))
-                response.append(error_response("An internal error occurred and your query could not be performed. It has been logged"))
-            except NewCardsIncluded:
-                response.append(error_response("Some of the keywords don't exist in the file", id=label))
-            finally:
-                if reingest:
-                   iq.add_to_queue(filename, os.path.dirname(path))
-    except RequestError as e:
-        response = error_response(e.message)
-    except TypeError:
-        response = error_response("This looks like a malformed request. Expected a list of queries. Instead I got {}".format(type(data)))
+        label, df = lookup_diskfile(session, query)
+        filename = df.filename
+        if not isinstance(query['values'], dict):
+            return error_response("This looks like a malformed request: 'values' should be a dictionary", id=label)
+        new_values = map_changes(query['values'])
+        reject_new = query.get('reject_new', False)
+        path = df.fullpath()
+        reingest = iq.delete_inactive_from_queue(filename)
+        # reingest = apply_changes(df, query['values']) or reingest
+        reingest = proxy.set_image_metadata(path=path, changes=new_values, reject_new=reject_new)
+        return {'result': True, 'id': label}
+    except ItemError as e:
+        return error_response(e.message, id=e.label)
+    except KeyError as e:
+        return error_response("This looks like a malformed request: 'values' does not exist", id=label)
+    except IngestError as e:
+        return error_response(e.message, id=label)
+    except ApiProxyError:
+        get_context().req.log(str(e))
+        return error_response("An internal error occurred and your query could not be performed. It has been logged")
+    except NewCardsIncluded:
+        return error_response("Some of the keywords don't exist in the file", id=label)
+    finally:
+        if reingest:
+           iq.add_to_queue(filename, os.path.dirname(path))
 
-    resp = ctx.resp
+def process_all_updates(data):
+    session = get_context().session
+    proxy = ApiProxy(api_backend_location)
+    iq = IngestQueueUtil(session, DummyLogger())
+    for query in data:
+        yield process_update(session, proxy, query, iq)
+
+@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], only_magic=True, content_type='json')
+def update_headers():
+    batch = True
+
+    resp = get_context().resp
     resp.set_content_type('application/json')
-    resp.append_json(response)
+    try:
+        message = get_json_data()
+        # The old format for the request was the list now in "request". This will provide compatibility
+        # for both formats
+        if isinstance(message, dict):
+            # New format
+            data = message['request']
+            batch = message.get('batch', True)
+        else:
+            # Assume old format
+            data = message
+        if batch:
+            resp.append_json(list(process_all_updates(data)))
+        else:
+            with resp.streamed_json() as stream:
+                for chunk in process_all_updates(data):
+                    stream.write(chunk)
+    except RequestError as e:
+        resp.append_json(error_response(e.message))
+    except KeyError as e:
+        resp.append_json(error_response("Malformed request. It lacks the '{}' argument".format(e.args[0])))
+    except TypeError:
+        resp.append_json(error_response("This looks like a malformed request. Expected a dictionary or a list of queries. Instead I got {}".format(type(data))))
 
 def ingest_files():
     ctx = get_context()
@@ -250,6 +269,7 @@ def ingest_files():
     else:
         resp.append_json(dict(result=True, added=sorted(added)))
 
+# TODO: "Only_magic" is a temporary thing. Check if it can stay
 @needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], only_magic=True, content_type='json')
 def ingest_programs():
     ctx = get_context()

@@ -213,6 +213,23 @@ class StreamingObject(object):
         """
         self.flush()
 
+class JsonStreamingObject(object):
+    """
+    Helper file-like object that implements an unbuffered output, streaming JSON objects
+    as they're written.
+    """
+    def __init__(self, callback):
+        self._callback = callback
+
+    def write(self, data):
+        self._callback(json.dumps(data) + '\n')
+
+    def flush(self):
+        pass
+
+    def close(self):
+        pass
+
 class Response(adapter.Response):
     def __init__(self, session, wsgienv, start_response):
         super(Response, self).__init__(session)
@@ -322,6 +339,26 @@ class Response(adapter.Response):
         self.start_response()
 
         json.dump(obj, StreamingObject(self._write_callback), **kw)
+
+    @only_if_not_started_response
+    @contextmanager
+    def streamed_json(self, **kw):
+        """
+        Stream a collection of JSON objects. Intended for multiple individual responses to
+        a query. This is not the intended way to work with WSGI... but not much we can do
+        about it.
+        """
+        if 'json' not in self._content_type:
+            self.set_content_type('application/json')
+
+        try:
+            self.start_response()
+            sobj = JsonStreamingObject(self._write_callback)
+            yield sobj
+        except Exception as e:
+            self._env.log(str(e))
+        finally:
+            sobj.close()
 
     def sendfile(self, path):
         self.sendfile_obj(open(path))
