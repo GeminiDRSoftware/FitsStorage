@@ -33,7 +33,7 @@ Optional Arguments:
 
   -h, --help     This help message
   -l, --list     Show a list of files that would be changed, but do not perform
-                 them. When using -l, the KEYW:VAL pairs are not mandatory
+                 changes. When using -l, the KEYW:VAL pairs are not mandatory
   -y             "Yes, I'm sure!" Pass this flag when setting a keyword that
                  doesn't exist in the original file. If not passed, you will
                  get an error message (this is a protection against typos)
@@ -297,6 +297,11 @@ def parse_args(raw_args):
 
     return args
 
+class NotInRangeError(ValueError):
+    def __init__(self, msg, valid):
+        super(NotInRangeError, self).__init__(msg)
+        self.valid = valid
+
 def validate_raw(inp, accepted, keyw):
     if inp.lower() == 'any':
         return 'Any'
@@ -307,18 +312,33 @@ def validate_raw(inp, accepted, keyw):
             if str(number) in inp:
                 return '{}-percentile'.format(number)
 
-    raise ValueError("{key} admits only {valid}, or Any: {value} was provided".format(
-        value=inp, key=keyw, valid=', '.join(str(x) for x in accepted)))
+    raise NotInRangeError("{key} does not accept '{value}' as an input".format(key=keyw, value=inp),
+            valid=tuple('{}-percentile'.format(x) for x in accepted) + ('Any', 'UNKNOWN'))
+
+def validate_keyword(inp, accepted, keyw, trans=str):
+    transformed_value = trans(inp)
+    if transformed_value not in accepted:
+        raise NotInRangeError("{key} does not accept '{value}' as an input".format(key=keyw, value=inp),
+                valid=accepted)
+
+    return transformed_value
+
+valid_sets = {
+        'qa': ('undefined', 'pass', 'usable', 'fail', 'check'),
+        'RAWGEMQA': ('UNKNOWN', 'USABLE', 'BAD', 'CHECK'),
+        'RAWPIREQ': ('UNKNOWN', 'YES', 'NO', 'CHECK')
+        }
 
 def map_actions(pairs):
     actions = {}
     gen = []
     for keyword, value in pairs:
-        if keyword.lower() == 'qa':
-            actions['qa_state'] = value
-        elif keyword.lower() == 'cond':
+        keyword = keyword.lower()
+        if keyword == 'qa':
+            actions['qa_state'] = validate_keyword(value, valid_sets['qa'], 'qa', trans=str.lower)
+        elif keyword == 'cond':
             actions['raw_site'] = value
-        elif keyword.lower() == 'release':
+        elif keyword == 'release':
             actions['release'] = value
         else:
             keyword = keyword.upper()
@@ -328,6 +348,8 @@ def map_actions(pairs):
                 value = validate_raw(value, (50, 70, 80), keyword)
             elif keyword in ('RAWBG', 'RAWWV'):
                 value = validate_raw(value, (20, 50, 80), keyword)
+            elif keyword in ('RAWGEMQA', 'RAWPIREQ'):
+                value = validate_keyword(value, valid_sets[keyword], keyword, trans=str.upper)
 
             gen.append((keyword.upper(), value))
     if gen:
@@ -341,6 +363,12 @@ def perform_changes(sa, file_list, args):
     except ConnectionError:
         print("Cannot connect to the archive server", file=sys.stderr)
         return 1
+    except NotInRangeError as e:
+        print(colorize('{RED}{}{RESET}').format(str(e)), file=sys.stderr)
+        print('Valid inputs are:', file=sys.stderr)
+        for vi in e.valid:
+            print(colorize('   {GREEN}{}{RESET}').format(vi), file=sys.stderr)
+        return 0
     except ValueError as e:
         print(str(e), file=sys.stderr)
         return 0
