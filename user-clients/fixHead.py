@@ -307,7 +307,8 @@ def validate_raw(inp, accepted, keyw):
             if str(number) in inp:
                 return '{}-percentile'.format(number)
 
-    raise ValueError("{} is an invalid value for {}".format(inp, keyw))
+    raise ValueError("{key} admits only {valid}, or Any: {value} was provided".format(
+        value=inp, key=keyw, valid=', '.join(str(x) for x in accepted)))
 
 def map_actions(pairs):
     actions = {}
