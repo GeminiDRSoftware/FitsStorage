@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 """
-FITS Header Fixing Tool v0.2
+FITS Header Fixing Tool v0.5
 
 Usage:
 
@@ -71,6 +71,15 @@ from __future__ import print_function
 #
 #   Modification History:
 #    2015-12-09, rcardene : First release
+#    2016-02-11, rcardene : Change the default server. Remove the cookie
+#                           which should not be in the code repository
+#    2016-10-10, rcardene : Introduced some rudimentary checks for known fixed
+#                           values (RAWxx, etc). Improved help messages
+#    2016-11-05, rcardene : Allow fixHead to pick the API cookie from the environment
+#    2016-12-14, rcardene : Clarified error message for non-allowed input values
+#    2016-12-16, mpohlen  : Updated history and version number
+#    2016-12-20, rcardene : Updated history with meaningful dates and bumped
+#                           version to 0.5
 
 import sys
 from time import strptime
