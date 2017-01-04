@@ -220,7 +220,8 @@ def gmoscal(selection):
     # Nod & Shuffle Darks
     # The basic query for this
     def nod_and_shuffle(selection):
-        query = get_context().session.query(Header).select_from(join(join(Header, DiskFile), Gmos))
+        session = get_context().session
+        query = session.query(Header).select_from(join(join(Header, DiskFile), Gmos))
 
         # Fudge and add the selection criteria
         selection = {}
@@ -254,7 +255,7 @@ def gmoscal(selection):
         done = set()
 
         for l in query:
-            c = get_cal_object(None, header=l)
+            c = get_cal_object(session, None, header=l)
             darks = c.dark()
             young = 0
             oldest = 0
