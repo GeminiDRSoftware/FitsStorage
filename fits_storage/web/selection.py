@@ -525,9 +525,10 @@ def queryselection(query, selection):
             if (lower is None) or (upper is None):
                 selection['warning'] = 'Invalid Dec range format. Ignoring your Dec constraint.'
                 valid = False
-            # Also set cosdec value here for use in 'ra' code below
-            degs = 0.5*(lower + upper)
-            cosdec = math.cos(math.radians(degs))
+            else:
+                # Also set cosdec value here for use in 'ra' code below
+                degs = 0.5*(lower + upper)
+                cosdec = math.cos(math.radians(degs))
 
         if valid and (lower is not None) and (upper is not None):
             # Negative dec ranges are usually specified backwards, eg -20 - -30...
