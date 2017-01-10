@@ -298,7 +298,7 @@ class SummaryGenerator(object):
         for colkey, col in ((x, self.columns[x]) for x in self.wanted):
             yield ColWrapper(self, colkey, col)
 
-    def table_row(self, header, diskfile, file, comment, preview=None):
+    def table_row(self, header, diskfile, file, comment=None, preview=None):
         """
         Returns a row object for c for columns as configured, pulling data from the
         header object given.
