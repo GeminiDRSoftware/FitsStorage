@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 """
-FITS Header Fixing Tool v0.5
+FITS Header Fixing Tool v0.6
 
 Usage:
 
@@ -80,6 +80,7 @@ from __future__ import print_function
 #    2016-12-16, mpohlen  : Updated history and version number
 #    2016-12-20, rcardene : Updated history with meaningful dates and bumped
 #                           version to 0.5
+#    2017-01-11, rcardene : Fixed a bug with date acquisition. Released as 0.6
 
 import sys
 from time import strptime
@@ -213,6 +214,9 @@ def expand_numbers(nums):
 
     return rng
 
+def today_hawaii():
+    return (datetime.utcnow() - timedelta(days=1)).strftime(ISODATEFORMAT)
+
 def yesterday():
     return (datetime.today() - timedelta(days = 1)).strftime(ISODATEFORMAT)
 
@@ -252,7 +256,8 @@ def parse_args(raw_args):
 
     args = Args(yes=False, show_list=False, ext=None,
                 date=None, filenums=None, obsid=None,
-                prefix=None, pairs=[])
+                prefix=None, pairs=[],
+                today=today_hawaii)
 
     # Just a shallow copy of the arguments
     rargs = raw_args[:]
@@ -286,7 +291,7 @@ def parse_args(raw_args):
                 args.date = narg
                 nums = rargs.pop(0)
             except ValueError:
-                args.date = yesterday()
+                args.date = args.today()
                 nums = narg
 
             args.filenums = expand_numbers(nums)
