@@ -90,16 +90,16 @@ def cals_info(cal_obj, caltype, qtype='UNKNOWN', log=no_func, add_note=no_func, 
             if len(cals) == 0:
                 add_note("CalMGR %s - no calibration type %s found" % (qtype, ct))
         except Exception:
+            string = traceback.format_tb(sys.exc_info()[2])
+            string = "".join(string)
+            log("Exception in cal association: %s: %s %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
+            add_note("Exception in cal association: %s: %s %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
+
             yield dict(
                 error = True,
                 type  = ct,
                 cals  = None
                 )
-
-            string = traceback.format_tb(sys.exc_info()[2])
-            string = "".join(string)
-            log("Exception in cal association: %s: %s %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
-            add_note("Exception in cal association: %s: %s %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
 
 def generate_post_calmgr(selection, caltype):
     # OK, get the details from the POST data
