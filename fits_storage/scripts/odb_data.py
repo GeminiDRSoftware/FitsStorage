@@ -30,120 +30,18 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 from xml.dom.minidom import parseString
+from fits_storage.utils import programs
+
 # ------------------------------------------------------------------------------
 # fits URLs
 prodfitsurl = 'http://fits.cl.gemini.edu:8080/ingest_programs'
 testfitsurl = 'http://sbffits-dev-lv1.cl.gemini.edu:8080/ingest_programs'
 # ------------------------------------------------------------------------------
-def get_programs(xdoc):
-    programs = xdoc.getElementsByTagName("program")
-    return programs
-
-def get_investigators(program):
-    """
-    Parameters
-    ----------
-    program: <list>
-        A list of dom elements for a program ID in the ODB data.
-
-    Return
-    ------
-    tuple: (<str>, <str>); investigator names, piEmail. By definitiion, the
-        *first* name in the investigator names string is the PI. 
-
-    E.g., return
-
-    ("auth_1, auth_2, auth_3", "auth_1@goo.edu")
-
-    """
-    investigatorNames = []
-    for iname in program.getElementsByTagName('investigators'):
-        for n in iname.getElementsByTagName('investigator'):
-            if n.attributes['pi'].value == 'true':
-                piEmail = n.getElementsByTagName('email')[0].childNodes[0].data
-                piName = n.getElementsByTagName('name')[0].childNodes[0].data
-                investigatorNames.insert(0, piName)
-                continue
-            name_actual = n.getElementsByTagName('name')[0].childNodes[0].data
-            investigatorNames.append(name_actual)
-        inames = ', '.join(f.encode('utf-8') for f in investigatorNames)
-
-    return inames, piEmail
-
-def get_obslog_comms(program):
-    """
-    Parameters
-    ----------
-    program: <list>
-        A list of dom elements, one for each program in the ODB data.
-
-    Return
-    ------
-    <list>: [ {}, {} , ... ], a list of dictionaries containing the datalabel
-        and comments associated with that datalabel.
-
-    E.g.,
-
-    [ { "label": "GN-2012A-Q-114-34-004", 
-        "comment": "Not applying more offsets, ... "},
-      { ... },
-      ...
-    ]
-
-    """
-    logcomments = []
-    observations = program.getElementsByTagName('observations')
-    for obs in observations:
-        for olog in obs.getElementsByTagName('obsLog'):
-            for dset in olog.getElementsByTagName('dataset'):
-                comments = []
-                did = dset.getElementsByTagName('id')[0].childNodes[0].data
-                for record in dset.getElementsByTagName('record'):
-                    comments.append(record.childNodes[0].data)
-                    comment_string = ", ".join(c.encode('utf-8') for c in comments)
-                logcomments.append({"label": did, "comment": comment_string})
-                comment_string = ''
-    return logcomments
-
-def get_reference(program):
-    ref = program.getElementsByTagName('reference')
-    return ref[0].childNodes[0].data
-
-def get_title(program):
-    ptitle = program.getElementsByTagName('title')
-    return ptitle[0].childNodes[0].data
-
-def get_contact(program):
-    cse = program.getElementsByTagName('contactScientistEmail')
-    return cse[0].childNodes[0].data
-
-def get_abstract(program):
-    stract = program.getElementsByTagName('abstrakt')
-    try:
-        abstract = stract[0].childNodes[0].data
-    except IndexError:
-        abstract = "No abstract"
-
-    return abstract
-
-def build_odbdata(programs):
-    semester_data = []
-    for program in programs:
-        odb_data = {}
-        odb_data['reference'] = get_reference(program)
-        odb_data['title'] = get_title(program)
-        odb_data['contactScientistEmail'] = get_contact(program)
-        odb_data['abstrakt'] = get_abstract(program)
-        odb_data['investigatorNames'], odb_data['piEmail'] = get_investigators(program)
-        odb_data['observations'] = get_obslog_comms(program)
-        semester_data.append(odb_data)
-    return semester_data
 
 def update_program_dbtable(pinfo):
     for prog in pinfo:
-        send_to_server = json.dumps(prog)
         print()
-        print(send_to_server)
+        json.dump(prog, sys.stdout)
         print()
         #req = urllib2.Request(url=testfitsurl, data=send_to_server)
         #f = urllib2.urlopen(req)
@@ -211,7 +109,6 @@ if __name__ == '__main__':
     print("On URL {}".format(qrl))
     pdata = urllib2.urlopen(qrl).read()
     xdoc = parseString(pdata)
-    programs = get_programs(xdoc)
-    pdata = build_odbdata(programs)
+    pdata = programs.build_odbdata(programs.get_programs(xdoc))
     update_program_dbtable(pdata)
     sys.exit()

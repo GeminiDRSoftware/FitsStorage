@@ -98,11 +98,11 @@ def build_odbdata(programs):
     semester_data = []
     for program in programs:
         odb_data = {}
-        odb_data['reference'] = get_reference()
-        odb_data['title'] = get_title()
-        odb_data['contactScientistEmail'] = get_contact()
-        odb_data['abstrakt'] = get_abstract()
-        odb_data['investigatorNames'], odb_data['piEmail'] = get_investigators()
-        odb_data['observations'] = get_obslog_comms()
+        odb_data['reference'] = program.get_reference()
+        odb_data['title'] = program.get_title()
+        odb_data['contactScientistEmail'] = program.get_contact()
+        odb_data['abstrakt'] = program.get_abstract()
+        odb_data['investigatorNames'], odb_data['piEmail'] = program.get_investigators()
+        odb_data['observations'] = program.get_obslog_comms()
         semester_data.append(odb_data)
     return semester_data
