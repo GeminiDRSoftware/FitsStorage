@@ -4,36 +4,27 @@ Notifications utils - add / update notification table entries from ODB XML
 
 from xml.dom.minidom import parseString
 from ..orm.notification import Notification
+from . import programs
 
 from ..gemini_metadata_utils import GeminiProgram
-
-def extract_element_by_tag_name(node, tag_name, default_val='', replace=True):
-    try:
-        ret = node.getElementsByTagName(tag_name)[0].childNodes[0].data
-        if replace:
-            # Sometimes people use ;s for separators in the odb email fields...
-            return ret.replace(';', ',')
-        return ret
-    except:
-        return default_val
 
 def ingest_odb_xml(session, xml):
     report = []
     nprogs = 0
     dom = parseString(xml)
-    for pe in dom.getElementsByTagName("program"):
+    for pe in programs.get_programs(dom):
         nprogs += 1
         try:
-            progid = pe.getElementsByTagName("reference")[0].childNodes[0].data
-        except:
+            progid = pe.get_reference()
+        except IndexError:
             report.append("ERROR: Failed to process program node")
             continue
 
-        piEmail = extract_element_by_tag_name(pe, "piEmail")
-        ngoEmail = extract_element_by_tag_name(pe, "ngoEmail")
-        csEmail = extract_element_by_tag_name(pe, "contactScientistEmail")
+        _, piEmail = pe.get_investigators()
+        ngoEmail = pe.get_ngo_email()
+        csEmail = pe.get_contact()
         # Default notifications off. Should be turned on by xml for valid programs.
-        notifyPi = extract_element_by_tag_name(pe, "notifyPi", default_val="No", replace=False)
+        notifyPi = pe.get_notify()
 
         # Search for this program ID in notification table
         label = "Auto - %s" % progid
