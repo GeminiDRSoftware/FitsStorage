@@ -119,7 +119,7 @@ class CalibrationGNIRS(Calibration):
                 .add_filters(Header.gcal_lamp == 'IRhigh')
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
-                .all(howmany, extra_order_terms=[desc(Header.observation_id == self.header.observation_id)])
+                .all(howmany, extra_order_terms=[desc(Header.observation_id == self.descriptors['observation_id'])])
             )
 
     def arc(self, processed=False, howmany=None):
@@ -175,7 +175,7 @@ class CalibrationGNIRS(Calibration):
                 .add_filters(Header.gcal_lamp == 'Off')
                 # Absolute time separation must be within 1 day
                 .max_interval(days=1)
-                .all(howmany, extra_order_terms=[desc(Header.observation_id == self.header.observation_id)])
+                .all(howmany, extra_order_terms=[desc(Header.observation_id == self.descriptors['observation_id'])])
             )
 
     def qh_flat(self, processed=False, howmany=None):
@@ -200,7 +200,7 @@ class CalibrationGNIRS(Calibration):
                 .add_filters(Header.gcal_lamp == 'QH')
                 # Absolute time separation must be within 3 months
                 .max_interval(days=90)
-                .all(howmany, extra_order_terms=[desc(Header.observation_id == self.header.observation_id)])
+                .all(howmany, extra_order_terms=[desc(Header.observation_id == self.descriptors['observation_id'])])
             )
 
     def telluric_standard(self, processed=False, howmany=None):

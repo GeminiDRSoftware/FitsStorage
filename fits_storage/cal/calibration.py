@@ -395,6 +395,7 @@ class Calibration(object):
             self.types = eval(self.header.types)
             self.descriptors = {
                 'header_id':            self.header.id,
+                'observation_id':       self.header.observation_id,
                 'observation_type':     self.header.observation_type,
                 'observation_class':    self.header.observation_class,
                 'spectroscopy':         self.header.spectroscopy,
