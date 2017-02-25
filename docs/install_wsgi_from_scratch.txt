@@ -9,7 +9,7 @@ sudo yum -y install httpd postgresql postgresql-server postgresql-devel
 sudo yum install -y epel-release
 
 # Also need:
-sudo yum -y install gcc gcc-c++ python-pip python-devel libpng-devel blas lapack openblas openblas-devel gcc-gfortran cfitsio-devel freetype-devel
+#sudo yum -y install gcc gcc-c++ python-pip python-devel libpng-devel blas lapack openblas openblas-devel gcc-gfortran cfitsio-devel freetype-devel
 
 sudo pip install --upgrade pip
 sudo pip install mod_wsgi==4.4.21
@@ -36,8 +36,8 @@ geminidata:x:502:fitsdata
 sudo mkdir /opt/FitsStorage
 sudo chown fitsdata:fitsdata /opt/FitsStorage/
 
-sudo mkdir /opt/python_modules
-sudo chown phirst /opt/python_modules
+#sudo mkdir /opt/python_modules
+#sudo chown phirst /opt/python_modules
 
 * Now let's setup the web server
 * Modify the variables at the beginning of the following script if needed
@@ -102,15 +102,15 @@ cd
 # sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf.modules.d-10-python.conf /etc/httpd/conf.modules.d/10-python.conf
 # sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf-httpd.conf /etc/httpd/conf/httpd.conf 
 sudo cp /opt/FitsStorage/otherfiles/etc-sysconfig-httpd /etc/sysconfig/httpd
-sudo mkdir /var/www/python-egg-cache
-sudo chmod oug+rwx /var/www/python-egg-cache
+#sudo mkdir /var/www/python-egg-cache
+#sudo chmod oug+rwx /var/www/python-egg-cache
 
 # Set up postgres
 sudo mkdir /data/pgsql_data
 sudo chown postgres:postgres /data/pgsql_data
 sudo cp /lib/systemd/system/postgresql.service /etc/systemd/system/
 sudo vi /etc/systemd/system/postgresql.service
-Enviroment=PGDATA=/data/pgsql_data
+Environment=PGDATA=/data/pgsql_data
 sudo systemctl daemon-reload
 sudo postgresql-setup initdb
 sudo systemctl start postgresql.service
