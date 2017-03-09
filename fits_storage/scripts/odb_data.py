@@ -4,9 +4,23 @@
 # ------------------------------------------------------------------------------
 from __future__ import print_function
 
+import sys
+import time
+import urllib2
+
+from urlparse import urlunsplit
+
+from argparse import ArgumentParser
+from argparse import RawDescriptionHelpFormatter
+
+from xml.dom.minidom import parseString
+from fits_storage.utils import programs
+
+import requests
+
 __version__ = "0.1"
 # ------------------------------------------------------------------------------
-desc = """ 
+desc = """
 Description:
   ODB to GOA metadata transfer. The command line accepts a Gemini semester
   identifier, queries the ODB for program information for all programs in that
@@ -19,18 +33,6 @@ Description:
     Requesting ODB program metadata for semester 2012A ...
 
 """
-import sys
-import json
-import time
-import urllib2
-
-from urlparse import urlunsplit
-
-from argparse import ArgumentParser
-from argparse import RawDescriptionHelpFormatter
-
-from xml.dom.minidom import parseString
-from fits_storage.utils import programs
 
 # ------------------------------------------------------------------------------
 # fits URLs
@@ -38,14 +40,10 @@ prodfitsurl = 'http://fits.cl.gemini.edu:8080/ingest_programs'
 testfitsurl = 'http://sbffits-dev-lv1.cl.gemini.edu:8080/ingest_programs'
 # ------------------------------------------------------------------------------
 
-def update_program_dbtable(pinfo):
+def update_program_dbtable(url, pinfo):
     for prog in pinfo:
-        print()
-        json.dump(prog, sys.stdout)
-        print()
-        #req = urllib2.Request(url=testfitsurl, data=send_to_server)
-        #f = urllib2.urlopen(req)
-    return
+        req = requests.post(url, json=prog)
+        req.raise_for_status()
 
 def buildParser(version=__version__):
     """
@@ -65,17 +63,14 @@ def buildParser(version=__version__):
 
 def handle_clargs():
     parser = buildParser()
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 # ------------------------------------------------------------------------------
 # From http://swg.wikis-internal.gemini.edu/index.php/ODB_Browser
 # ODB query service URL bits
-GeminiNorthTest = 'gnodbtest2.hi.gemini.edu:8442'
-GeminiSouthTest = 'gsodbtest2.cl.gemini.edu:8442'
-ODB_URLS = { 'gemini-north' : 'gnodb.hi.gemini.edu:8442',
-             'gemini-south' : 'gsodb.cl.gemini.edu:8442'
-         }
+ODB_URLS = {'gemini-north' : 'gnodb.hi.gemini.edu:8442',
+            'gemini-south' : 'gsodb.cl.gemini.edu:8442'
+           }
 # ------------------------------------------------------------------------------
 def netloc():
     """ Site selection, North or South """
@@ -91,12 +86,10 @@ def netloc():
 
         return local_site
 
-    odb_netloc = ODB_URLS[get_site()]
-    return odb_netloc
+    return ODB_URLS[get_site()]
 
 odb_scheme = 'http'
 odb_netloc = netloc()
-odb_netloc = GeminiNorthTest                      # @TODO remove for production.
 odb_path   = 'odbbrowser/observations'
 odb_query  = 'programSemester={}'
 odbq_parts = [odb_scheme, odb_netloc, odb_path, odb_query, None]
@@ -110,5 +103,5 @@ if __name__ == '__main__':
     pdata = urllib2.urlopen(qrl).read()
     xdoc = parseString(pdata)
     pdata = programs.build_odbdata(programs.get_programs(xdoc))
-    update_program_dbtable(pdata)
+    update_program_dbtable(prodfitsurl, pdata)
     sys.exit()

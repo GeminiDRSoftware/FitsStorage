@@ -21,6 +21,9 @@ def get_programs(xdoc):
     for pg in xdoc.getElementsByTagName("program"):
         yield Program(pg)
 
+class NoInfoError(Exception):
+    pass
+
 class Program(object):
     def __init__(self, program_node):
         self.root = program_node
@@ -38,7 +41,11 @@ class Program(object):
 
         """
         investigatorNames = []
-        for iname in self.root.getElementsByTagName('investigators'):
+        investigator_sections = self.root.getElementsByTagName('investigators')
+        if all(len(iname.childNodes) == 0 for iname in investigator_sections):
+            raise NoInfoError("There are no investigators listed for {}".format(self.get_reference()))
+
+        for iname in investigator_sections:
             for n in iname.getElementsByTagName('investigator'):
                 name_actual = extract_element_by_tag_name(n, 'name')
                 if n.attributes.get('pi').value == 'true':
@@ -97,12 +104,15 @@ class Program(object):
 def build_odbdata(programs):
     semester_data = []
     for program in programs:
-        odb_data = {}
-        odb_data['reference'] = program.get_reference()
-        odb_data['title'] = program.get_title()
-        odb_data['contactScientistEmail'] = program.get_contact()
-        odb_data['abstrakt'] = program.get_abstract()
-        odb_data['investigatorNames'], odb_data['piEmail'] = program.get_investigators()
-        odb_data['observations'] = program.get_obslog_comms()
-        semester_data.append(odb_data)
+        try:
+            odb_data = {}
+            odb_data['reference'] = program.get_reference()
+            odb_data['title'] = program.get_title()
+            odb_data['contactScientistEmail'] = program.get_contact()
+            odb_data['abstrakt'] = program.get_abstract()
+            odb_data['investigatorNames'], odb_data['piEmail'] = program.get_investigators()
+            odb_data['observations'] = program.get_obslog_comms()
+            semester_data.append(odb_data)
+        except NoInfoError as exception:
+            print exception.message
     return semester_data
