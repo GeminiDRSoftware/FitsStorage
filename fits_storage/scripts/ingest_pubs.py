@@ -19,16 +19,21 @@ from fits_storage import fits_storage_config as fsc
 DSN = dict(
   host=fsc.pubdb_host,
   user=fsc.pubdb_username,
-  passwd=fsc.pubdb_password,
   db=fsc.pubdb_dbname
 )
 
 def process_publication(row):
+    """
+    Takes a database row representing a publication and normalizes/removes
+    certain values, preparing them for ingestion by the web site.
+
+    Returns a dictionary
+    """
     copy = dict(row)
     print("Processing {0}".format(copy.get('bibcode')))
     for (key, value) in list(copy.items()):
         if isinstance(value, (str, unicode)):
-             value = value.strip()
+            value = value.strip()
         if value is None or value == '':
             del copy[key]
     if 'program_id' in copy:
@@ -43,11 +48,15 @@ SELECT author, title, year, journal, telescope, instrument, country, bibcode,
 FROM publication
 """
 
-with closing(mysql.connect(**DSN)) as conn:
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute(ALL_PUBS_SELECT)
-    payload = []
-    for row in cursor:
-        processed = process_publication(row)
-        payload.append(processed)
-    requests.post(fsc.pubdb_remote, json={'single': False, 'payload': payload})
+try:
+    with closing(mysql.connect(**DSN)) as conn:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(ALL_PUBS_SELECT)
+        payload = []
+        for row in cursor:
+            processed = process_publication(row)
+            payload.append(processed)
+        result = requests.post(fsc.pubdb_remote, json={'single': False, 'payload': payload})
+        result.raise_for_status()
+except requests.HTTPError as exception:
+    print(exception)
