@@ -66,6 +66,7 @@ def searchform(things, orderby):
         else:
             # Populate selection dictionary with values from form input
             updateselection(formdata, selection)
+            ctx.req.log(str(selection))
             # build URL
             urlstring = selection_to_URL(selection, with_columns=True)
 

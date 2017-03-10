@@ -13,6 +13,11 @@
 {%- endmacro %}
 
 <div class="right">
+    <label>Program Title:</label>
+    <input type="text" placeholder="(leave empty for Any)" name="ProgramText" value="{{ updated.ProgramText }}"/>
+    <span class="help">(no punctuation; separate with spaces)
+        <span class="helpleft">Matches all words. Write <b>word:*</b> to match a prefix. Write <b>!word</b> to reject results that contain it</span>
+    </span><br>
 
     <label>Target Name:</label>
     <input id="object_name" type="text" placeholder="(leave blank for Any)" name="object" value="{{ updated.object }}" />
@@ -104,6 +109,12 @@
     </div>
 </div>
 <div class="left">
+    <label>PI/COI Name:</label>
+    <input type="text" placeholder="(leave empty for Any)" name="PIname" value="{{ updated.PIname }}"/>
+    <span class="help">(not punctuation; separate with spaces)
+        <span class="helpleft">Matches all words. Write <b>word:*</b> to match a prefix. Write <b>!word</b> to reject results that contain it</span>
+    </span><br>
+
     <label>Program ID:</label>
     <input type="text" placeholder="(leave empty for Any)" name="program_id" value="{{ updated.program_id }}"/>
     <span class="help">(or Obs. ID / Data Label. Exact Match)

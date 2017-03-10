@@ -70,7 +70,9 @@ getselection_key_value = {
     'cenwlen': 'cenwlen',
     'exposure_time': 'exposure_time',
     'coadds': 'coadds',
-    'publication': 'publication'
+    'publication': 'publication',
+    'PIname': 'PIname',
+    'ProgramText': 'ProgramText'
     }
 
 # Also, some entries set themselves as the value for a certain selection
@@ -678,6 +680,17 @@ def queryselection(query, selection):
                  .filter(ProgramPublication.bibcode == selection['publication'])
             )
 
+    if 'PIname' in selection or 'ProgramText' in selection:
+        query = query.join(Program, Header.program_id == Program.program_id)
+        if 'PIname' in selection:
+            query = query.filter(
+                func.to_tsvector(Program.pi_coi_names).match(' & '.join(selection['PIname'].split()))
+                )
+        if 'ProgramText' in selection:
+            query = query.filter(
+                func.to_tsvector(Program.title).match(' & '.join(selection['ProgramText'].split()))
+                )
+
     return query
 
 def openquery(selection):
@@ -766,7 +779,7 @@ def selection_to_URL(selection, with_columns=False):
                 urlstring += '/spectroscopy'
             else:
                 urlstring += '/imaging'
-        elif key in {'ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera', 'exposure_time', 'coadds', 'pupil_mask'}:
+        elif key in {'ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera', 'exposure_time', 'coadds', 'pupil_mask', 'PIname', 'ProgramText'}:
             urlstring += '/%s=%s' % (key, selection[key])
         elif key == 'cols':
             if with_columns:
