@@ -3,6 +3,8 @@ from sqlalchemy import Integer, Text, Boolean, Float, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
+from sqlalchemy.ext.associationproxy import association_proxy
+
 from . import Base
 
 class Program(Base):
@@ -26,7 +28,7 @@ class Program(Base):
     allocated_hours = Column(Float)
     remaining_hours = Column(Float)
     last_refreshed = Column(DateTime, index=True, server_default=func.now(), onupdate=func.now())
-    publications = relationship("ProgramPublication", back_populates='program')
+    publications = association_proxy('program_publications', 'publication')
 
     def __init__(self, program_id):
         self.program_id = program_id

@@ -343,7 +343,7 @@ def process_publication(pub_data):
         else:
             setattr(pub, bfield, None)
 
-    prog_dict = dict((pp.program_text_id, pp) for pp in pub.programs)
+    prog_dict = dict((pp.program_text_id, pp) for pp in pub.publication_programs)
     cur_programs = set(prog_dict)
     sent_programs = set(pub_data.get('programs', []))
 
@@ -358,10 +358,9 @@ def process_publication(pub_data):
                       .first()
         if prog is None:
             continue
-        prog_pub = ProgramPublication(bibcode=bibcode,
-                                      program_id=progid)
-        prog_pub.program = prog
-        pub.programs.append(prog_pub)
+        prog_pub = ProgramPublication(program = prog,
+                                      publication = pub)
+        session.add(prog_pub)
 
     session.commit()
 

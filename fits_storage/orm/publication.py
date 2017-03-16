@@ -3,6 +3,8 @@ from sqlalchemy import Integer, Text, Boolean, DateTime, String
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
+from sqlalchemy.ext.associationproxy import association_proxy
+
 from . import Base
 
 class Publication(Base):
@@ -29,7 +31,7 @@ class Publication(Base):
     too = Column(String(10))
     partner = Column(String(35))
     last_refreshed = Column(DateTime, server_default=func.now(), onupdate=func.now())
-    programs = relationship("ProgramPublication", back_populates='publication')
+    programs = association_proxy('publication_programs', 'program')
 
     def __init__(self, bibcode):
         self.bibcode = bibcode

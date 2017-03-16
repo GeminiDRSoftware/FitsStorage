@@ -27,8 +27,7 @@ def program_info(program_id):
             pass
 
         ret_dict['program'] = prog
-        publications = [pp.publication for pp in prog.publications]
-        ret_dict['there_are_publications'] = len(publications) > 0
-        ret_dict['publications'] = publications
+        ret_dict['there_are_publications'] = len(prog.publications) > 0
+        ret_dict['publications'] = prog.publications
 
     return ret_dict
