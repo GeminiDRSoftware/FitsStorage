@@ -220,7 +220,7 @@ def debugmessage():
 
 url_map = Map([
     # Queries to the root should redirect to a sensible page
-    Rule('/', redirect_to=('/searchform' if use_as_archive else '/')),
+    Rule('/', redirect_to=('/searchform' if use_as_archive else '/usage.html')),
     Rule('/debug', debugmessage),
     Rule('/content', content),                                      # Database Statistics
     Rule('/stats', stats),

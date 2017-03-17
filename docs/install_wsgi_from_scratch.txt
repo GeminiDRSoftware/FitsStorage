@@ -78,6 +78,33 @@ EOF
 
 sudo bash /tmp/install_script.sh
 
+* Edit the config file just generated (/opt/modwsgi-default/httpd.conf) and add this line by the end
+  of the "Alias" list:
+
+AliasMatch '/(.*\.html)' '/opt/FitsStorage-wsgi/htmldocroot/$1'
+
+  It should look like:
+
+[...]
+Alias '/favicon.ico' '/opt/FitsStorage-wsgi/htmldocroot/favicon.ico'
+
+<Directory '/opt/FitsStorage-wsgi/htmldocroot'>
+<Files 'favicon.ico'>
+    Require all granted
+</Files>
+</Directory>
+
+AliasMatch '/(.*\.html)' '/opt/FitsStorage-wsgi/htmldocroot/$1'
+
+<IfDefine MOD_WSGI_VERIFY_CLIENT>
+<Location '/'>
+SSLVerifyClient require
+SSLVerifyDepth 1
+</Location>
+</IfDefine>
+[...]
+
+
 * To run the web server from systemd
 sudo cp /opt/FitsStorage/otherfiles/etc_systemd_system_fits-httpd.service /etc/systemd/system/fits-httpd.service
 
