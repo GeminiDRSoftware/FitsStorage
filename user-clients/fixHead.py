@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 """
-FITS Header Fixing Tool v0.6
+FITS Header Fixing Tool v0.7
 
 Usage:
 
@@ -81,6 +81,7 @@ from __future__ import print_function
 #    2016-12-20, rcardene : Updated history with meaningful dates and bumped
 #                           version to 0.5
 #    2017-01-11, rcardene : Fixed a bug with date acquisition. Released as 0.6
+#    2017-04-06, rcardene : Re-fixed the bug with date acquisition. Released as 0.7
 
 import sys
 from time import strptime
@@ -215,7 +216,7 @@ def expand_numbers(nums):
     return rng
 
 def today_hawaii():
-    return (datetime.utcnow() - timedelta(days=1)).strftime(ISODATEFORMAT)
+    return datetime.utcnow().strftime(ISODATEFORMAT)
 
 def yesterday():
     return (datetime.today() - timedelta(days = 1)).strftime(ISODATEFORMAT)
