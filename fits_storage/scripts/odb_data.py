@@ -15,6 +15,8 @@ from argparse import RawDescriptionHelpFormatter
 
 from xml.dom.minidom import parseString
 from fits_storage.utils import programs
+from fits_storage import fits_storage_config as fsc
+
 
 import requests
 
@@ -36,13 +38,13 @@ Description:
 
 # ------------------------------------------------------------------------------
 # fits URLs
-prodfitsurl = 'http://fits.cl.gemini.edu:8080/ingest_programs'
+prodfitsurl = 'http://localhost/ingest_programs'
 testfitsurl = 'http://sbffits-dev-lv1.cl.gemini.edu:8080/ingest_programs'
 # ------------------------------------------------------------------------------
 
 def update_program_dbtable(url, pinfo):
     for prog in pinfo:
-        req = requests.post(url, json=prog)
+        req = requests.post(url, json=prog, cookies={'gemini_api_authorization': fsc.magic_api_cookie})
         req.raise_for_status()
 
 def buildParser(version=__version__):
