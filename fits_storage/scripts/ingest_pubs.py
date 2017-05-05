@@ -56,7 +56,8 @@ try:
         for row in cursor:
             processed = process_publication(row)
             payload.append(processed)
-        result = requests.post(fsc.pubdb_remote, json={'single': False, 'payload': payload})
+        result = requests.post(fsc.pubdb_remote, json={'single': False, 'payload': payload},
+                               cookies={'gemini_api_authorization': fsc.magic_api_cookie})
         result.raise_for_status()
 except requests.HTTPError as exception:
     print(exception)
