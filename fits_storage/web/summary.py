@@ -172,6 +172,7 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
         url_prefix += '/associated_calibrations'
 
     download_all_url = '{}{}'.format(url_prefix, selection_to_URL(selection))
+    json_results_url = '{}{}'.format('/jsonsummary', selection_to_URL(selection))
 
     class RowYielder(object):
         """
@@ -235,6 +236,7 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
         headers       = sumgen.table_header(),
         data_rows     = RowYielder(sumgen, headers),
         down_all_link = download_all_url,
+        json_res_link = json_results_url,
         )
 
     return template_args
