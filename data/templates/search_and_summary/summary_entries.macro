@@ -103,6 +103,6 @@
 
 {%- macro prop_message(col) %}
 {%- if col.centered %}<div class="center">{% endif %}
-<abbr title="This appears to be proprietary data to which you do not have access. It becomes public on {{ col.release }}">{{ col.prop_message }}</abbr>
+<abbr title="This is proprietary data to which you do not have access. It becomes public on {{ col.release }}">{{ col.prop_message }}</abbr>
 {%- if col.centered %}</div>{% endif %}
 {%- endmacro %}
