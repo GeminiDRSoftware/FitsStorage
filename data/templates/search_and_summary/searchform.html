@@ -12,8 +12,8 @@
 <link rel="stylesheet" type="text/css" href="/static/form.css" />
 {%- endblock %}
 
-{% block title %}Gemini Observatory Archive Search {{ title_suffix }}{% endblock %}
-{% block description %}Gemini Observatory Archive Data {{ title_suffix }}{% endblock %}
+{% block title %}{{ server_title }} Search {{ title_suffix }}{% endblock %}
+{% block description %}{{ server_title }} Data {{ title_suffix }}{% endblock %}
 
 {% block body %}
 <div>
@@ -24,13 +24,13 @@
  <div class="titlebar">
   <center>
   <font color="red">
-  Gemini Observatory Archive will be down for maintainance Wednesday 10-Aug-2016 10:00-12:00 HST (20:00-22:00 UTC)
+  {{ server_title }} will be down for maintainance Wednesday 10-Aug-2016 10:00-12:00 HST (20:00-22:00 UTC)
   </font>
   </center>
  </div>
  -->
  <div class="titlebar_left">
- Gemini Observatory Archive
+{{ server_title }}
  </div>
  <div class="titlebar_help" id="help_about">
   <a href="/help/index.html" target="_blank">Help</a> - 

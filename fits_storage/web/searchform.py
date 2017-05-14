@@ -9,7 +9,7 @@ from .summary_generator import selection_to_column_names, selection_to_form_indi
 from .calibrations import calibrations
 from . import templating
 
-from ..fits_storage_config import fits_aux_datadir
+from ..fits_storage_config import fits_aux_datadir, fits_servertitle
 from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
 
 from ..utils.web import get_context, Return
@@ -96,6 +96,7 @@ def searchform(things, orderby):
     title_suffix = ' '.join(things)
 
     template_args = dict(
+        server_title = fits_servertitle,
         title_suffix = title_suffix,
         thing_string = thing_string,
         args_string  = args_string,
