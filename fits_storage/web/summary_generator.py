@@ -386,7 +386,8 @@ class SummaryGenerator(object):
             links     = self.links == ALL_LINKS,
             datalabel = str(header.data_label),
             dl        = GeminiDataLabel(header.data_label),
-            comment   = comment.comment if comment is not None else None
+            comment   = comment.comment if comment is not None else None,
+            display_prog  = False if header.calibration_program else True
             )
 
     def ut_datetime(self, header, **kw):

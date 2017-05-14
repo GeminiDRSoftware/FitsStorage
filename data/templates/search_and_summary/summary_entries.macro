@@ -49,7 +49,10 @@
 
 {%- macro generate_datalabel(col, uri) -%}
 {%- if col.links and col.dl.valid == True -%}
-<span style="display: inline-block; width: 7ex"> <a href="/programinfo/{{ col.dl.projectid }}" target="_blank">[A]</a>
+<span style="display: inline-block; width: 7ex">
+{%- if col.display_prog -%}
+<a href="/programinfo/{{ col.dl.projectid }}" target="_blank">[A]</a>
+{%- endif -%}
 {%- if col.comment -%}
 <a href="/logcomments/{{ col.dl.observation_id }}"><abbr title="{{ col.comment }}" target="_blank">[L]</abbr></a>
 {%- endif -%} </span>
