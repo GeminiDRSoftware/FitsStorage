@@ -87,6 +87,7 @@ das_calproc_path = '/net/josie/staging/dataproc/gmos'
 
 # Configure the site and other misc stuff here
 # Especially for archive systems, make the servername a fully qualified domain name.
+fits_servertitle = "Gemini Observatory Archive"
 fits_servername = "sbffits-dev-lv1"
 fits_system_status = "development"
 
