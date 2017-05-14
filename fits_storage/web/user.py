@@ -129,6 +129,25 @@ Regards,
 
 """
 
+    message_html = """\
+<html><head></head><body>
+<p>Hello {name},</p>
+<p>A password reset has been requested for the Gemini Archive account 
+registered to this email address. If you did not request a password reset, 
+you can safely ignore this email, though if you get several spurious reset 
+request emails, please file a helpdesk ticket at 
+<a href="http://www.gemini.edu/sciops/helpdesk">http://www.gemini.edu/sciops/helpdesk</a>
+in the Gemini Observatory Archive category to let us know. Assuming that you 
+requested this password reset, please click on the link below or paste it into 
+your browser to reset your password. The reset link is only valid for 15 minutes, 
+so please do that promptly.</p>
+<p>The username for this account is {username}</p>
+<p><a href="{url}">{url}</a></p>
+<p>Regards,</p>
+<p>Gemini Observatory Archive</p>
+</body></html>
+"""
+
     user = get_context().session.query(User).get(userid)
     username = user.username
     email = user.email
@@ -137,14 +156,19 @@ Regards,
 
     url = "https://%s/password_reset/%d/%s" % (fits_servername, userid, token)
 
-    message = message_text.format(name=fullname, username=username, url=url)
+    plaintext = message_text.format(name=fullname, username=username, url=url)
+    htmltext = message_html.format(name=fullname, username=username, url=url)
 
     fromaddr = 'fitsadmin@gemini.edu'
     tolist = [email, fromaddr]
-    msg = MIMEText(message)
+    msg = MIMEMultipart('alternative')
     msg['Subject'] = 'Gemini Archive Password Reset link'
     msg['From'] = fromaddr
     msg['To'] = email
+    part1 = MIMEText(plaintext, 'plain')
+    part2 = MIMEText(htmltext, 'html')
+    msg.attach(part1)
+    msg.attach(part2)
 
     try:
         smtp = smtplib.SMTP(smtp_server)
