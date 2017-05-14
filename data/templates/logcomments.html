@@ -1,9 +1,14 @@
 {% extends "layout.html" %}
 {% block title %}Comments for Observations{% endblock %}
 {% block body %}
-<table>
+<table cellspacing = "5">
+<tr class="tr_head">
+  <th>DataLabel
+  <th>Date Time
+  <th>Log Entry
+</tr>
 {%- for row in rows %}
-<td class="alternating">
+<tr class="alternating">
   <td> {{ row.datalabel|e }}
   <td> {{ row.ut_datetime|e }}
   <td> {{ row.comment|e }}
