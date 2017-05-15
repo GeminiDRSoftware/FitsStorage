@@ -166,6 +166,21 @@ function setPreviewVisibility() {
     });
 };
 
+function markAll() {
+    $("input.mark").prop('checked', true);
+    $('#markall').prop('value', 'Unmark All Files');
+    $('#markall').click(function(){
+        unmarkAll();
+    });
+};
+
+function unmarkAll() {
+    $("input.mark").prop('checked', false);
+    $('#markall').prop('value', 'Mark All Files');
+    $('#markall').click(function(){
+        markAll();
+    });
+};
 
 $(document).ready(function() {
     $("#loading").hide();
@@ -207,5 +222,6 @@ $(document).ready(function() {
         ResultsTab();
     });
     setPreviewVisibility();
+    unmarkAll();
 });
 

@@ -93,7 +93,7 @@
 <div class='center'>
 {%- if col.prev %}<span class="preview"><a href="/preview/{{ col.name }}">[P]</a> </span>{% endif -%}
 <a href="/file/{{ col.name }}">[D]</a>
-{%- if col.down_sel %} <input type='checkbox' name='files' value='{{ col.name }}'>{% endif -%}
+{%- if col.down_sel %} <input type='checkbox' class='mark' name='files' value='{{ col.name }}'>{% endif -%}
 </div>
 {%- endmacro -%}
 
