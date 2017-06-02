@@ -19,7 +19,9 @@
 <h2>Publications using this program's data</h2>
 <ul>
 {%- for pub in publications %}
-<li><a href="/searchform/publication={{ pub.bibcode }}">[data]</a> <a href="https://ui.adsabs.harvard.edu/#abs/{{ pub.bibcode }}/abstract" target="_blank">[ADS]</a> {{ pub.title }}
+<li>
+<a href="/searchform/publication={{ pub.bibcode }}" target="_blank">[data]</a>
+<a href="https://ui.adsabs.harvard.edu/#abs/{{ pub.bibcode }}/abstract" target="_blank">[ADS]</a> {{ pub.title }}
 {%- endfor %}
 </ul>
 {% endif %}

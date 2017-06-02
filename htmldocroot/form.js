@@ -166,6 +166,25 @@ function setPreviewVisibility() {
     });
 };
 
+function setInfoVisibility() {
+    $('#infobox').hide();
+    $('.info').click(function(e) {
+        e.preventDefault();
+        // Get the URL from the a href link
+        var url = ($(this).children('a').prop('href'));
+        // Set the url in the open new tab link
+        $('#infolink').attr('href', url);
+        // Load the URL into the box using AJAX
+        $('#infopayload').load(url);
+        // Show the box
+        $('#infobox').show();
+        // Hide it on click anywhere
+        $('#infobox').click(function() {
+            $('#infobox').hide();
+        });
+    });
+};
+
 function markAll() {
     $("input.mark").prop('checked', true);
     $('#markall').prop('value', 'Unmark All Files');
@@ -222,6 +241,7 @@ $(document).ready(function() {
         ResultsTab();
     });
     setPreviewVisibility();
+    setInfoVisibility();
     unmarkAll();
 });
 
