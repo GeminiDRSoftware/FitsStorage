@@ -28,6 +28,13 @@ progre = r'(?:^%s$)|(?:^%s$)' % (calengre, scire)
 # This matches an observation id with the project id and obsnum as groups
 obsre = r'((?:^%s)|(?:^%s))-(\d*)$' % (calengre, scire)
 
+# Here are some lists of defined detector settings
+gemini_gain_settings = ('high', 'low')
+gemini_readspeed_settings = ('fast', 'slow')
+gemini_welldepth_settings = ('Shallow', 'Deep', 'Invalid')
+gemini_readmode_settings = ('Classic', 'NodAndShuffle', 'Very_Faint_Objects', 'Faint_Objects', 'Faint_Object', 'Bright_Object', 'Bright_Objects', 'Very_Bright_Objects', 'Bright', 'Medium', 'Faint', 'Low_Background', 'Medium_Background', 'High_Background')
+
+
 gemini_telescopes = {
     'gemini-north': 'Gemini-North',
     'gemini-south': 'Gemini-South'

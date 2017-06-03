@@ -3,7 +3,6 @@ This is the searchform module
 """
 
 from .selection import getselection, selection_to_URL
-from .selection import getselection_detector_conf
 from .summary import summary_body
 from .summary_generator import selection_to_column_names, selection_to_form_indices, formdata_to_compressed, search_col_mapping
 from .calibrations import calibrations
@@ -165,13 +164,32 @@ def updateform(selection):
             else:
                 dct[key] = value
 
-        elif key == 'detector_config':
-            for item in value:
-                dct[getselection_detector_conf[item]] = item
-
         elif value in {'AO', 'NOTAO', 'NGS', 'LGS'}:
             # The Adaptive Optics ends up in various selection keys...
             dct['ao'] = value
+        elif key == 'gain':
+            # GMOSes are the only thing with a gain field currently
+            dct['gmos_gain'] = value
+        elif key == 'readspeed':
+            # GMOSes are the only thing with a read speed field currently
+            dct['gmos_speed'] = value
+        elif key == 'readmode':
+            if value in ('NodAndShuffle', 'Classic'):
+                # For GMOS, this indicates nod and shuffle
+                dct['nod_and_shuffle'] = value
+            elif value in ('High_Background', 'Medium_Background', 'Low_Background'):
+                # NIRI readmode
+                dct['niri_readmode'] = value
+            elif value in ('Bright', 'Medium', 'Faint'):
+                # NIFS readmode
+                dct['nifs_readmode'] = value
+            elif value in ('Very_Bright_Objects', 'Bright_Objects', 'Faint_Objects', 'Very_Faint_Objects'):
+                # GNIRS readmode
+                dct['gnirs_readmode'] = value
+        elif key == 'welldepth':
+                # Only GNIRS has well depth
+                dct['gnirs_depth'] = value
+        
         else:
             # The rest needs no special processing. This does all the generic pulldown menus and text fields
             # if key in {'ra', 'dec', 'sr', 'object', 'cenwlen', 'filepre', 'mode', 'filter', 'exposure_time', 'coadds', 'disperser', ...}:
@@ -257,10 +275,6 @@ def updateselection(formdata, selection):
             pass
         elif key == 'col_selection':
             selection['cols'] = formdata_to_compressed(value)
-        elif key in ['gmos_speed', 'gmos_gain', 'nod_and_shuffle', 'niri_readmode', 'well_depth', 'nifs_readmode']:
-            if 'detector_config' not in selection.keys():
-                selection['detector_config'] = []
-            selection['detector_config'].append(value)
         else:
             # This covers the generic case where the formdata key is also
             # the selection key, and the form value is the selection value

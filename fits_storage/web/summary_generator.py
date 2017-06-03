@@ -65,7 +65,7 @@ sum_type_defs = {
                     'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
     'lsummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
                     'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'filter_name', 'focal_plane_mask',
-                    'detector_roi', 'detector_binning', 'detector_config', 'qa_state',
+                    'detector_roi', 'detector_binning', 'detector_gain_setting', 'detector_readmode_setting', 'qa_state',
                     'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
     'ssummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
                     'object', 'waveband', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
@@ -245,10 +245,14 @@ class SummaryGenerator(object):
                            ColDef(heading      = 'Binning',
                                   longheading  = 'Detector Binning',
                                   header_attr  = 'detector_binning'),
-            'detector_config':
-                           ColDef(heading      = 'DetConf',
-                                  longheading  = 'Detector Configuration',
-                                  header_attr  = 'detector_config'),
+            'detector_gain_setting':
+                           ColDef(heading      = 'DetGain',
+                                  longheading  = 'Detector Gain',
+                                  header_attr  = 'detector_gain_setting'),
+            'detector_readmode_setting':
+                           ColDef(heading      = 'DetMode',
+                                  longheading  = 'Detector Read Mode',
+                                  header_attr  = 'detector_readmode_setting'),
             'qa_state':    ColDef(heading      = 'QA',
                                   longheading  = 'QA State',
                                   header_attr  = 'qa_state'),

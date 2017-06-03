@@ -10,6 +10,7 @@ from . import Base
 from .diskfile import DiskFile
 from ..gemini_metadata_utils import ratodeg, dectodeg, dmstodeg, gemini_observation_type, gemini_telescope, gemini_observation_class, gemini_instrument
 from ..gemini_metadata_utils import GeminiProgram
+from ..gemini_metadata_utils import gemini_gain_settings, gemini_readspeed_settings, gemini_welldepth_settings, gemini_readmode_settings
 
 from astrodata import AstroData
 import pywcs
@@ -18,6 +19,9 @@ import astrodata # For astrodata.Errors
 
 from ..gemini_metadata_utils import obs_types, obs_classes, reduction_states
 
+# Replace spaces etc in the readmodes with _s
+gemini_readmode_settings = [i.replace(' ', '_') for i in gemini_readmode_settings]
+
 # Enumerated Column types
 OBSTYPE_ENUM = Enum(*obs_types, name='obstype')
 OBSCLASS_ENUM = Enum(*obs_classes, name='obsclass')
@@ -25,6 +29,9 @@ REDUCTION_STATE_ENUM = Enum(*reduction_states, name='reduction_state')
 TELESCOPE_ENUM = Enum('Gemini-North', 'Gemini-South', name='telescope')
 QASTATE_ENUM = Enum('Fail', 'CHECK', 'Undefined', 'Usable', 'Pass', name='qa_state')
 MODE_ENUM = Enum('imaging', 'spectroscopy', 'LS', 'MOS', 'IFS', 'IFP', name='mode')
+DETECTOR_GAIN_ENUM = Enum('None', *gemini_gain_settings, name='detector_gain_setting')
+DETECTOR_READSPEED_ENUM = Enum('None', *gemini_readspeed_settings, name='detector_readspeed_setting')
+DETECTOR_WELLDEPTH_ENUM = Enum('None', *gemini_welldepth_settings, name='detector_welldepth_setting')
 
 class Header(Base):
     """
@@ -65,8 +72,11 @@ class Header(Base):
     focal_plane_mask = Column(Text, index=True)
     pupil_mask = Column(Text, index=True)
     detector_binning = Column(Text)
-    detector_config = Column(Text)
     detector_roi_setting = Column(Text)
+    detector_gain_setting = Column(DETECTOR_GAIN_ENUM)
+    detector_readspeed_setting = Column(DETECTOR_READSPEED_ENUM)
+    detector_welldepth_setting = Column(DETECTOR_WELLDEPTH_ENUM)
+    detector_readmode_setting = Column(Text)
     coadds = Column(Integer)
     spectroscopy = Column(Boolean, index=True)
     mode = Column(MODE_ENUM, index=True)
@@ -232,12 +242,13 @@ class Header(Base):
             if (not dvx.is_none()) and (not dvy.is_none()):
                 self.detector_binning = "%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
 
-            gainsetting = str(ad.gain_setting()).replace(' ', '_')
-            readspeedsetting = str(ad.read_speed_setting()).replace(' ', '_')
-            welldepthsetting = str(ad.well_depth_setting()).replace(' ', '_')
-            readmode = str(ad.read_mode()).replace(' ', '_')
-            nodandshuffle = "NodAndShuffle" if "GMOS_NODANDSHUFFLE" in ad.types else ""
-            self.detector_config = ' '.join([gainsetting, readspeedsetting, nodandshuffle, welldepthsetting, readmode])
+            self.detector_gain_setting = str(ad.gain_setting())
+            self.detector_readspeed_setting = str(ad.read_speed_setting())
+            self.detector_welldepth_setting = str(ad.well_depth_setting())
+            if 'GMOS' in ad.types:
+                self.detector_readmode_setting = "NodAndShuffle" if "GMOS_NODANDSHUFFLE" in ad.types else "Classic"
+            else:
+                self.detector_readmode_setting = str(ad.read_mode()).replace(' ', '_')
 
             self.detector_roi_setting = ad.detector_roi_setting().for_db()
 

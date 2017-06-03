@@ -10,6 +10,7 @@ from ..gemini_metadata_utils import gemini_observation_type, gemini_observation_
 from ..gemini_metadata_utils import gemini_caltype, gmos_gratingname, gmos_focal_plane_mask, gemini_fitsfilename
 from ..gemini_metadata_utils import gemini_binning, GeminiDataLabel, GeminiObservation, GeminiProgram, ratodeg, dectodeg, srtodeg
 from ..gemini_metadata_utils import gemini_date, gemini_daterange, get_time_period, gemini_time_period_from_range
+from ..gemini_metadata_utils import gemini_gain_settings, gemini_readspeed_settings, gemini_welldepth_settings, gemini_readmode_settings
 
 import dateutil.parser
 import datetime
@@ -30,6 +31,7 @@ from ..orm.publication import Publication
 # A number of the choices in the getselection inner loop are just simple checks
 # that can be represented by a data structure. It's better to keep it like that
 # to simplify updates without breaking the logic
+# If the first item is callable, it's called, if it's a tuple it's considered a set of possible values
 getselection_test_pairs = (
     (gemini_telescope, 'telescope'),
     (gemini_date, 'date'),
@@ -43,7 +45,11 @@ getselection_test_pairs = (
     (gmos_focal_plane_mask, 'focal_plane_mask'),
     (gemini_binning, 'binning'),
     (lambda x: gemini_instrument(x, gmos=True), 'inst'),
-    )
+    (gemini_gain_settings, 'gain'),
+    (gemini_readspeed_settings, 'readspeed'),
+    (gemini_welldepth_settings, 'welldepth'),
+    (gemini_readmode_settings, 'readmode')
+)
 
 # Some other selections are of the key=value type and they're not tested; the
 # values are set without further check. Those can be moved straight to a dictionary
@@ -113,27 +119,6 @@ getselection_booleans = {
     'includeengineering': ('engineering', 'Include'),
     }
 
-getselection_detector_conf = {
-    'low':'gmos_gain',
-    'high':'gmos_gain',
-    'slow':'gmos_speed',
-    'fast':'gmos_speed',
-    'Deep':'gnirs_depth',
-    'Shallow':'gnirs_depth',
-    'Bright':'nifs_readmode',
-    'Medium':'nifs_readmode',
-    'Faint':'nifs_readmode',
-    'NodAndShuffle':'nod_and_shuffle',
-    'Classic':'nod_and_shuffle',
-    'Very_Bright_Objects':'gnirs_readmode',
-    'Bright_Objects':'gnirs_readmode',
-    'Faint_Objects':'gnirs_readmode',
-    'Very_Faint_Objects':'gnirs_readmode',
-    'Low_Background':'niri_readmode',
-    'Medium_Background':'niri_readmode',
-    'High_Background':'niri_readmode',
-    }
-
 getselection_detector_roi = {
     'fullframe': 'Full Frame',
     'centralstamp': 'Central Stamp',
@@ -155,10 +140,16 @@ def getselection(things):
     for thing in things:
 
         for test, field in getselection_test_pairs:
-            r = test(thing)
-            if r:
-                selection[field] = r
-                break
+            if callable(test):
+                r = test(thing)
+                if r:
+                    selection[field] = r
+                    break
+            else:
+                if thing in test:
+                    selection[field] = thing
+                    break
+
         else:
             key, sep, value = thing.partition('=')
             withKey = (sep == '=')
@@ -186,11 +177,6 @@ def getselection(things):
                 selection['lgs'] = thing
                 # Make LGS / NGS selection imply AO selection
                 selection['ao'] = 'AO'
-            elif thing in getselection_detector_conf:
-                try:
-                    selection['detector_config'].append(thing)
-                except KeyError:
-                    selection['detector_config'] = [thing]
             elif thing.lower() in getselection_detector_roi:
                 selection['detector_roi'] = getselection_detector_roi[thing.lower()]
             elif thing.lower() == 'twilight':
@@ -249,6 +235,10 @@ sayselection_defs = {
     'crpa': 'CRPA',
     'telescope': 'Telescope',
     'detector_roi': 'Detector ROI',
+    'detector_gain_setting': 'Gain',
+    'detector_readspeed_setting': 'Read Speed',
+    'detector_welldepth_setting': 'Well Depth',
+    'detector_readmode_setting': 'Read Mode',
     'filepre': 'File Prefix',
     'mode': 'Spectroscopy Mode',
     'cenwlen': 'Central Wavelength',
@@ -295,9 +285,6 @@ def sayselection(selection):
     if 'lgs' in selection:
         parts.append("LGS" if selection['lgs'] == 'LGS' else "NGS")
 
-    if 'detector_config' in selection:
-        parts.append("Detector Config: " + '+'.join(selection['detector_config']))
-
     # If any of the previous tests contributed parts to the list, this will create
     # a return string like '; ...; ...; ...'. Otherwise we get an empty string.
     ret = '; '.join([''] + parts)
@@ -324,6 +311,10 @@ queryselection_filters = (
     ('telescope',     Header.telescope),
     ('filename',      File.name),
     ('binning',       Header.detector_binning),
+    ('gain',          Header.detector_gain_setting),
+    ('readspeed',     Header.detector_readspeed_setting),
+    ('welldepth',     Header.detector_welldepth_setting),
+    ('readmode',      Header.detector_readmode_setting),
     ('filter',        Header.filter_name),
     ('spectroscopy',  Header.spectroscopy),
     ('mode',          Header.mode),
@@ -457,18 +448,6 @@ def queryselection(query, selection):
     if 'photstandard' in selection:
         query = query.filter(Footprint.header_id == Header.id)
         query = query.filter(PhotStandardObs.footprint_id == Footprint.id)
-
-    if 'detector_config' in selection:
-        for thing in selection['detector_config']:
-            if thing == 'Classic':
-                query = query.filter(~Header.detector_config.contains('NodAndShuffle'))
-            else:
-                # Avoid confusion between slow and low. high / low is always the first thing in the string. 
-                # Also a bunch of gmos-s files have mixed gains - dont select them. Bleagh.
-                if thing in ('low', 'high'):
-                    query = query.filter(Header.detector_config.startswith(thing))
-                else:
-                    query = query.filter(Header.detector_config.contains(thing))
 
     if 'twilight' in selection:
         if selection['twilight']:
@@ -779,7 +758,7 @@ def selection_to_URL(selection, with_columns=False):
                 urlstring += '/spectroscopy'
             else:
                 urlstring += '/imaging'
-        elif key in {'ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera', 'exposure_time', 'coadds', 'pupil_mask', 'PIname', 'ProgramText'}:
+        elif key in {'ra', 'dec', 'sr', 'filter', 'cenwlen', 'disperser', 'camera', 'exposure_time', 'coadds', 'pupil_mask', 'PIname', 'ProgramText', 'gain', 'readspeed', 'welldepth', 'readmode'}:
             urlstring += '/%s=%s' % (key, selection[key])
         elif key == 'cols':
             if with_columns:
@@ -831,9 +810,6 @@ def selection_to_URL(selection, with_columns=False):
                 urlstring += '/' + str(selection[key])
             else:
                 urlstring += '/mask=' + str(selection[key])
-        elif key == 'detector_config':
-            for config in selection[key]:
-                urlstring += '/%s' % config
         elif key == 'filepre':
             urlstring += '/filepre=%s' % selection[key]
         else:
