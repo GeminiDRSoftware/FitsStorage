@@ -95,6 +95,7 @@ getselection_simple_associations = {
     'Lucky': 'qa_state',
     'AnyQA': 'qa_state',
     'CHECK': 'qa_state',
+    'UndefinedQA': 'qa_state',
     'AO': 'ao',
     'NOTAO': 'ao',
     }
@@ -428,6 +429,8 @@ def queryselection(query, selection):
             query = query.filter(Header.qa_state != 'Fail')
         elif selection['qa_state'] == 'Lucky':
             query = query.filter(or_(Header.qa_state == 'Pass', Header.qa_state == 'Undefined'))
+        elif selection['qa_state'] == 'UndefinedQA':
+            query = query.filter(Header.qa_state == 'Undefined')
         else:
             query = query.filter(Header.qa_state == selection['qa_state'])
 
