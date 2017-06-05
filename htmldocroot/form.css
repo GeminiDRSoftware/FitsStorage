@@ -109,6 +109,7 @@ input {
     display: none;
     position: fixed;
     box-shadow: 10px 10px 5px #888888;
+    padding: 6px;
     top: 50px;
     right: 50px;
     width: 840px;
