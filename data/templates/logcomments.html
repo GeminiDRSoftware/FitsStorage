@@ -9,8 +9,8 @@
 </tr>
 {%- for row in rows %}
 <tr class="alternating">
-  <td> {{ row.datalabel|e }}
-  <td> {{ row.ut_datetime|e }}
+  <td class="nowrap"> {{ row.datalabel|e }}
+  <td class="nowrap"> {{ row.ut_datetime.strftime('%Y-%m-%d %H:%M:%S')|e }}
   <td> {{ row.comment|e }}
 </tr>
 {%- endfor %}
