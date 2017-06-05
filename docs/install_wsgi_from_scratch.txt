@@ -10,6 +10,7 @@ sudo yum install -y epel-release
 
 # Also need:
 #sudo yum -y install gcc gcc-c++ python-pip python-devel libpng-devel blas lapack openblas openblas-devel gcc-gfortran cfitsio-devel freetype-devel
+sudo yum -y install gcc gcc-c++ python-pip python-devel gcc-gfortran cfitsio-devel
 
 sudo pip install --upgrade pip
 sudo pip install mod_wsgi==4.4.21
@@ -20,6 +21,7 @@ sudo pip install jinja2
 sudo pip install pyfits
 sudo pip install pywcs
 sudo pip install dateutils
+sudo pip install requests
 sudo pip install matplotlib
 sudo pip install scipy
 sudo pip install pandas
