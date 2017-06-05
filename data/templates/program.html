@@ -6,13 +6,13 @@
 <h2>There is no information about this program</h2>
 {% else %}
 <table>
- <tr><td>Title:<td>{{ program.title }}</tr>
+ <tr><td>Title:<td>{{ title }}</tr>
  <tr><td>PI:<td>{{ pi_name }}</tr>
  <tr><td>Co-I(s):<td>{{ co_names }}</tr>
 </table>
 <h2>Abstract</h2>
 <div style="max-width: 20cm">
-{{ program.abstract }}
+{{ abstract }}
 </div>
 
 {% if there_are_publications == True %}

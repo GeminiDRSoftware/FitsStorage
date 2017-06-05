@@ -2,6 +2,7 @@
 This module deals with displaying information about programs.
 """
 
+from cgi import escape
 from . import templating
 from ..orm.program import Program
 
@@ -21,12 +22,13 @@ def program_info(program_id):
     if found:
         inames = prog.pi_coi_names.split(',')
         try:
-            ret_dict['pi_name'] = inames[0]
-            ret_dict['co_names'] = ", ".join(inames[1:])
+            ret_dict['pi_name'] = escape(inames[0])
+            ret_dict['co_names'] = escape(", ".join(inames[1:]))
         except (IndexError, TypeError):
             pass
 
-        ret_dict['program'] = prog
+        ret_dict['title'] = escape(prog.title)
+        ret_dict['abstract'] = escape(prog.abstract)
         ret_dict['there_are_publications'] = len(prog.publications) > 0
         ret_dict['publications'] = prog.publications
 
