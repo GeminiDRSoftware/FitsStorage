@@ -181,6 +181,8 @@ function setInfoVisibility() {
         // Hide it on click anywhere
         $('#infobox').click(function() {
             $('#infobox').hide();
+            // blank the content so it doesnt flash up next time
+            $('#infopayload').empty();
         });
     });
 };
