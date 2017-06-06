@@ -80,11 +80,13 @@ EOF
 
 sudo bash /tmp/install_script.sh
 
-* Edit the config file just generated (/opt/modwsgi-default/httpd.conf) and add this line by the end
+* Edit the config file just generated (/opt/modwsgi-default/httpd.conf) and add this lines by the end
   of the "Alias" list:
 * Also change it to File * for permissions
 
 AliasMatch '/(.*\.html)' '/opt/FitsStorage/htmldocroot/$1'
+AliasMatch '/(.*\.css)' '/opt/FitsStorage/htmldocroot/$1'
+AliasMatch '/(.*\.js)' '/opt/FitsStorage/htmldocroot/$1'
 
   It should look like:
 
@@ -98,6 +100,8 @@ Alias '/favicon.ico' '/opt/FitsStorage/htmldocroot/favicon.ico'
 </Directory>
 
 AliasMatch '/(.*\.html)' '/opt/FitsStorage/htmldocroot/$1'
+AliasMatch '/(.*\.css)' '/opt/FitsStorage/htmldocroot/$1'
+AliasMatch '/(.*\.js)' '/opt/FitsStorage/htmldocroot/$1'
 
 <IfDefine MOD_WSGI_VERIFY_CLIENT>
 <Location '/'>
