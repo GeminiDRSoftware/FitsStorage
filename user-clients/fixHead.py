@@ -119,7 +119,7 @@ class ServerAccess(object):
         return '/'.join(['http://{}'.format(self.server)] + list(extra))
 
     def summary(self, *selection):
-        return requests.get(self.uri('jsonfilenames', *selection)).json()
+        return requests.get(self.uri('jsonfilenames/present', *selection)).json()
 
     def batch_change(self, file_list, actions, reject_new):
         arguments = [{'filename': fn, 'values': actions, 'reject_new':reject_new} for fn in file_list]
@@ -389,7 +389,7 @@ def perform_changes(sa, file_list, args):
         return 0
 
     if ret.status_code == 403:
-        print("The access to the archive server has been forbidden for this script", file=sys.stderr)
+        print("The access to the archive server has been forbidden for this script, or you do not have the auth cookie set in your environment.", file=sys.stderr)
         return 2
 
     for response in ret.json():
