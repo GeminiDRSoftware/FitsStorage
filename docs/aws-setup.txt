@@ -6,16 +6,14 @@ ssh -R 8080:scisoft:80 arcdev
 # Setup from scratch:
 Lauch Instance
 AWS Marketplace -> search for centos
-CentOS 7 (x86_64) with updates # don't select a specific version eg 6.4 - just get generic latest
-m3.xlarge
+CentOS 7 (x86_64) with updates HVM # don't select a specific version eg 6.4 - just get generic latest
+m4.2xlarge
 configure details
 subnet for 2a
 protect against termination
 add storage
-root to 16 GB General purpose SSD
-add 2 instance stores
-add 2 38GB Gen purpose SSD EBS for raid mirrors
-add 120GB magnetic for initial backup and setup
+root to 8 GB General purpose SSD
+250GB IO1 with 500 IOPS
 tag instance
 config security group
 select existing secuirty group and select it
@@ -32,8 +30,19 @@ useradd -u 5151 phirst
 useradd -u 5179 fitsdata
 passwd phirst
 passwd fitsdata
+sudo vi /etc/ssh/sshd_config
+# RSAAuthentication yes
+# PubkeyAuthentication yes
+# PasswordAuthentication yes
+# TCPKeepAlive yes
 
-yum install -y lvm2 mdadm ntp tcsh wget
+systemctl restart sshd
+vi /etc/group 
+# add phirst user to wheel group at least
+vi /etc/selinux/config
+# SELINUX=permissive
+
+yum install -y lvm2 mdadm ntp tcsh wget sysstat psmisc dump subversion
 vi /etc/ntp.conf
 server x.amazon.pool.ntp.org iburst   (for all servers)
 systemctl start ntpd
@@ -46,28 +55,14 @@ arcdev.gemini.edu
 vi /etc/cloud/cloud.cfg append to end of file:
 preserve_hostname: true
 
-# Create RAID MIRRORS
-lsblk # to see block devices
-# in this case xvdf xvdg are instance volumes, xvdi xvdh are corresponding EBS
-mdadm --create /dev/md0 -v --raid-devices=2 --level=mirror --bitmap=internal /dev/xvdf --write-mostly --write-behind /dev/xvdi
-mdadm --create /dev/md1 -v --raid-devices=2 --level=mirror --bitmap=internal /dev/xvdg --write-mostly --write-behind /dev/xvdh
-
 # LVM layer
-pvcreate /dev/md0 /dev/md1
-vgcreate ssd_ebs /dev/md0 /dev/md1
-lvcreate --size=68GB -n data ssd_ebs
-mke2fs -t ext4 -L data /dev/ssd_ebs/data
+pvcreate /dev/xvdb
+vgcreate data /dev/xvdb
+lvcreate --size=240GB -n data data
+mke2fs -t ext4 -L data /dev/data/data
 
-# And the backup filesystem
-mke2fs -t ext4 -L backup /dev/xvdj
-mkdir /data
-mkdir /backup
 vi /etc/fstab
 mount /data
-mount /backup
-
-# Other system things to install
-yum install -y dump sysstat subversion
 
 # SELINUX permissive
 vi /etc/selinux/config 

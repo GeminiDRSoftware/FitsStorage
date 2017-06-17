@@ -38,9 +38,6 @@ geminidata:x:502:fitsdata
 sudo mkdir /opt/FitsStorage
 sudo chown fitsdata:fitsdata /opt/FitsStorage/
 
-#sudo mkdir /opt/python_modules
-#sudo chown phirst /opt/python_modules
-
 * Now let's setup the web server
 * Modify the variables at the beginning of the following script if needed
 
@@ -132,12 +129,7 @@ cd /opt/gemini_python
 svn checkout http://chara.hi.gemini.edu/svn/DRSoftware/gemini_python/trunk .
 
 cd
-# sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf.d-zz-archive.conf /etc/httpd/conf.d/zz-archive.conf
-# sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf.modules.d-10-python.conf /etc/httpd/conf.modules.d/10-python.conf
-# sudo cp /opt/FitsStorage/otherfiles/etc-httpd-conf-httpd.conf /etc/httpd/conf/httpd.conf 
 sudo cp /opt/FitsStorage/otherfiles/etc-sysconfig-httpd /etc/sysconfig/httpd
-#sudo mkdir /var/www/python-egg-cache
-#sudo chmod oug+rwx /var/www/python-egg-cache
 
 # Set up postgres
 sudo mkdir /data/pgsql_data
