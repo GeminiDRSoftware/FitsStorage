@@ -242,9 +242,18 @@ class Header(Base):
             if (not dvx.is_none()) and (not dvy.is_none()):
                 self.detector_binning = "%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
 
-            self.detector_gain_setting = str(ad.gain_setting())
-            self.detector_readspeed_setting = str(ad.read_speed_setting())
-            self.detector_welldepth_setting = str(ad.well_depth_setting())
+            gainstr = str(ad.gain_setting())
+            if gainstr in gemini_gain_settings:
+                self.detector_gain_setting = gainstr
+
+            readspeedstr = str(ad.read_speed_setting())
+            if readspeedstr in gemini_readspeed_settings:
+                self.detector_readspeed_setting = readspeedstr
+
+            welldepthstr = str(ad.well_depth_setting())
+            if welldepthstr in gemini_welldepth_settings:
+                self.detector_welldepth_setting = welldepthstr
+
             if 'GMOS' in ad.types:
                 self.detector_readmode_setting = "NodAndShuffle" if "GMOS_NODANDSHUFFLE" in ad.types else "Classic"
             else:
