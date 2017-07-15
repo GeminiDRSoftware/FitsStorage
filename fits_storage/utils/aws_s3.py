@@ -233,12 +233,12 @@ class Boto3Helper(object):
                 return True
             else:
                 # Size is OK, but md5 is not
-                self.l.debug("Problem fetching %s from S3 - size OK, but md5 mismatch - file: %s; key: %s",
+                self.l.error("Problem fetching %s from S3 - size OK, but md5 mismatch - file: %s; key: %s",
                                 keyname, filemd5, s3md5)
                 sleep(10)
         else:
             # Didn't get enough bytes
-            self.l.debug("Problem fetching %s from S3 - size mismatch - file: %s; key: %s", keyname, filesize, s3size)
+            self.l.error("Problem fetching %s from S3 - size mismatch - file: %s; key: %s", keyname, filesize, s3size)
             sleep(10)
 
         return False
