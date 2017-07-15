@@ -41,16 +41,43 @@ class CalibrationGNIRS(Calibration):
             self.applicable.append('lampoff_flat')
             self.applicable.append('processed_flat')
 
-        # Spectroscopy OBJECT frames require a flat and arc and telluric_standard
+        # Spectroscopy OBJECT frames require a flat and arc (if < L band) and telluric_standard
         if (self.descriptors['observation_type'] == 'OBJECT') and (self.descriptors['spectroscopy'] == True):
-            self.applicable.append('flat')
-            self.applicable.append('lampoff_flat')
-            self.applicable.append('arc')
-            # and if they are XD, they need a Quartz-Halogen flat (qh_flat)  and pinhole too.
+            self.applicable.append('telluric_standard')
+            if self.descriptors['central_wavelength'] < 2.8:
+                self.applicable.append('arc')
+            # GNIRS spectroscopy flats are a little complex
             if self.descriptors['disperser'] and 'XD' in self.descriptors['disperser']:
+                # If they are XD, they need an IR flat, a Quartz-Halogen flat (qh_flat) and pinhole.
+                self.applicable.append('flat')
                 self.applicable.append('qh_flat')
                 self.applicable.append('pinhole_mask')
-            self.applicable.append('telluric_standard')
+            else:
+                # non-XD, Long Camera ranges
+                if 'Short' in self.descriptors['camera']:
+                    if self.descriptors['central_wavelength'] < 1.8:
+                        self.applicable.append('qh_flat')
+                    elif self.descriptors['central_wavelength'] < 2.7:
+                        self.applicable.append('flat')
+                    else:
+                        self.applicable.append('lampoff_flat')
+
+                elif 'Long' in self.descriptors['camera'] and '32/mm' in self.descriptors['disperser']:
+                    # non-XD, long Camera, 32/mm grating
+                    if self.descriptors['central_wavelength'] < 4.25:
+                        self.applicable.append('flat')
+                    else:
+                        self.applicable.append('lampoff_flat')
+
+                elif 'Long' in self.descriptors['camera']:
+                    # non-XD, long camera, 10/mm and 111/mm grating
+                    if self.descriptors['central_wavelength'] < 1.8:
+                        self.applicable.append('qh_flat')
+                    elif self.descriptors['central_wavelength'] < 4.3:
+                        self.applicable.append('flat')
+                    else:
+                        self.applicable.append('lampoff_flat')
+
 
         # IR lamp-on flats can use lamp-off flats
         if self.descriptors['observation_type'] == 'FLAT' and self.descriptors['gcal_lamp'] == 'IRhigh':
