@@ -21,6 +21,8 @@ parser.add_option("--force", action="store_true", dest="force", default = False,
 parser.add_option("--force_md5", action="store_true", dest="force_md5", default = False, help="Force checking of file change by md5 not just lastmod date")
 parser.add_option("--after", action="store", dest="after", default = None, help="ingest only after this datetime")
 parser.add_option("--newfiles", action="store", type="int", dest="newfiles", default = None, help="Only queue files that have been modified in the last N days")
+parser.add_option("--filename", action="store", type="string", dest="filename", default = None, help="Just add this one filename to the queue")
+parser.add_option("--listfile", action="store", type="string", dest="listfile", default = None, help="Read filenames to add from this text file")
 
 options, args = parser.parse_args()
 path = options.path
@@ -36,39 +38,56 @@ logger.info("*********    add_to_ingest_queue.py - starting up at %s" % now)
 # Get a list of all the files in the datastore
 # We assume this is just one dir (ie non recursive) for now.
 
-if using_s3:
-    logger.info("Querying files for ingest from S3 bucket")
-    filelist = s3.key_names()
-else:
-    fulldirpath = os.path.join(storage_root, path)
-    logger.info("Queueing files for ingest from: %s" % fulldirpath)
-    filelist = os.listdir(fulldirpath)
+gotfiles = False
 
-logger.info("Got file list.")
+if options.filename:
+    logger.info("Adding single file: %s" % options.filename)
+    files = [options.filename]
+    gotfiles = True
 
-file_re = options.file_re
-# Handle the today and twoday etc options
-now = datetime.datetime.utcnow()
-delta = datetime.timedelta(days=1)
-named_intervals = {
-    'today': 1,
-    'twoday': 2,
-    'fourday': 3,
-    'tenday': 10,
-    'twentyday': 20
-    }
+if options.listfile:
+    logger.info("Adding files from list file: %s" % options.listfile)
+    with open(options.listfile) as f:
+        filesread = f.readlines()
+    files = []
+    for l in filesread:
+        files.append(l.strip())
+    gotfiles = True
 
-if options.file_re in named_intervals:
-    then = now.date()
-    dates = [then-(delta*n) for n in range(named_intervals[options.file_re])]
-    file_re = '|'.join(d.strftime("%Y%m%d") for d in dates)
+if gotfiles is False:
+    if using_s3:
+        logger.info("Querying files for ingest from S3 bucket")
+        filelist = s3.key_names()
+    else:
+        fulldirpath = os.path.join(storage_root, path)
+        logger.info("Queueing files for ingest from: %s" % fulldirpath)
+        filelist = os.listdir(fulldirpath)
 
-files = []
-if file_re:
-    cre = re.compile(file_re)
-    files = filter(cre.search, filelist)
-else:
-    files = filelist
+    logger.info("Got file list.")
+
+    file_re = options.file_re
+    # Handle the today and twoday etc options
+    now = datetime.datetime.utcnow()
+    delta = datetime.timedelta(days=1)
+    named_intervals = {
+        'today': 1,
+        'twoday': 2,
+        'fourday': 3,
+        'tenday': 10,
+        'twentyday': 20
+        }
+
+    if options.file_re in named_intervals:
+        then = now.date()
+        dates = [then-(delta*n) for n in range(named_intervals[options.file_re])]
+        file_re = '|'.join(d.strftime("%Y%m%d") for d in dates)
+
+    files = []
+    if file_re:
+        cre = re.compile(file_re)
+        files = filter(cre.search, filelist)
+    else:
+        files = filelist
 
 # Skip various tmp files
 # Also require .fits in the filename
