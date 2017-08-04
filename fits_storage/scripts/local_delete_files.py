@@ -9,7 +9,7 @@ import sys
 from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape1", help="The Fits Storage Tape server to use to check the files are on tape")
-parser.add_option("--file-pre", action="store", type="string", dest="filepre", help="File prefix to operate on, eg N20090130, N200812 etc")
+parser.add_option("--file-pre", action="store", type="string", dest="filepre", default='', help="File prefix to operate on, eg N20090130, N200812 etc")
 parser.add_option("--mintapes", action="store", type="int", dest="mintapes", default=2, help="Minimum number of tapes file must be on to be eligable for deletion")
 parser.add_option("--dir", action="store", type="string", dest="dir", help="Directory to operate in")
 parser.add_option("--nomd5", action="store_true", dest="nomd5", help="Do not check md5, match on filename only")
@@ -44,6 +44,9 @@ def getXmlData(element, tag):
     return element.getElementsByTagName(tag)[0].childNodes[0].data
 
 for thefile in thelist:
+  if not os.path.isfile(thefile):
+    print "%s is not a regular file - skipping" % thefile
+    continue
   m = hashlib.md5()
   block = 64*1024
   with open(thefile, 'r') as f:
