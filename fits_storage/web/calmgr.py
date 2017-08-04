@@ -207,9 +207,13 @@ def calmgr(selection):
     of the type requested regardless of its applicability.
     """
 
-    # There selection has to be a closed query. If it's open, then disallow
-    if openquery(selection):
-        Context().resp.client_error(Return.HTTP_NOT_ACCEPTABLE, content_type='text/plain',
+    ctx = get_context()
+    method = ctx.env.method
+
+    # There selection has to be a closed query for a GET. If it's open, then disallow
+    if method == 'GET' and openquery(selection):
+        ctx.usagelog.add_note("Error: Selection cannot represent an open query for calibration association")
+        ctx.resp.client_error(Return.HTTP_NOT_ACCEPTABLE, content_type='text/plain',
                                     message='<!-- Error: Selection cannot represent an open query for calibration association -->\n\n')
 
     # Only the canonical versions
@@ -218,11 +222,11 @@ def calmgr(selection):
     # Was the request for only one type of calibration?
     caltype = selection.get('caltype', '')
 
-    method = get_context().env.method
 
     # An empty cal type is acceptable for GET - means to list all the calibrations available
     if not caltype and method == 'POST':
-        Context().resp.client_error(Return.HTTP_METHOD_NOT_ALLOWED, content_type='text/plain', message='<!-- Error: No calibration type specified-->\n\n')
+        ctx.usagelog.add_note("Error: No calibration type specified")
+        ctx.resp.client_error(Return.HTTP_METHOD_NOT_ALLOWED, content_type='text/plain', message='<!-- Error: No calibration type specified-->\n\n')
 
     gen = (generate_post_calmgr if method == 'POST' else generate_get_calmgr)
 

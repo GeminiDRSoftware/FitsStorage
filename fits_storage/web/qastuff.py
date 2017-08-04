@@ -28,7 +28,7 @@ def qareport():
     ctx = get_context()
 
     clientdata = ctx.raw_data
-    ctx.log("QAreport clientdata: %s" % clientdata)
+    #ctx.log("QAreport clientdata: %s" % clientdata)
 
     # We make here some reasonable assumptions about the input format
     if clientdata.startswith('['):
@@ -37,7 +37,7 @@ def qareport():
         ctx.resp.status = Return.HTTP_BAD_REQUEST
         return
 
-    ctx.log("thelist: %s" % thelist)
+    #ctx.log("thelist: %s" % thelist)
 
     qareport_ingest(thelist, submit_host=ctx.env.remote_host,
                     submit_time=datetime.datetime.now())

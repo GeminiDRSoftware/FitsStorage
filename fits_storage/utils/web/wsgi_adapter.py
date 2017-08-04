@@ -357,6 +357,7 @@ class Response(adapter.Response):
             yield sobj
         except Exception as e:
             self._env.log(str(e))
+            self._env.log(traceback.format_exc())
         finally:
             sobj.close()
 
@@ -435,6 +436,7 @@ class ContextResponseIterator(object):
             for chunk in self._ctx.resp:
                 yield chunk
         except Exception as e:
+            ctx.usagelog.add_note(traceback.format_exc())
             self.close()
             raise
 
@@ -502,7 +504,11 @@ class ArchiveContextMiddleware(object):
             try:
                 traceback.print_exc()
                 session.commit()
-                ctx.usagelog.set_finals(ctx)
+                #  If response status is OK this means we got an error that hasn't been captured down the line
+                usagelog.add_note(traceback.format_exc())
+                if ctx.resp.status == Return.HTTP_OK:
+                    ctx.resp.status = Return.HTTP_INTERNAL_SERVER_ERROR
+                usagelog.set_finals(ctx)
                 session.commit()
                 session.close()
                 raise
