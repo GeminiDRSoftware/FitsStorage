@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% block title %}Gemini Archive - Queue Status Page{% endblock %}
+{% block title %}{{ servertitle }} ({{ servername }}) - Queue Status Page{% endblock %}
 
 {% block extra_header %}
 <style type='text/css'>
@@ -193,7 +193,7 @@
 {% endblock %}
 
 {% block body %}
-<h1>Gemini Archive - Queue Status Page</h1>
+<h1>{{ servertitle }} ({{ servername }}) - Queue Status Page</h1>
 
 <div class='tabs'>
 {%- for row in general_rows %}

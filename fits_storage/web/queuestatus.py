@@ -12,6 +12,8 @@ from ..orm.exportqueue import ExportQueue
 from ..orm.previewqueue import PreviewQueue
 from ..orm.calcachequeue import CalCacheQueue
 
+from ..fits_storage_config import fits_servertitle, fits_servername
+
 from . import templating
 
 import json
@@ -43,6 +45,8 @@ def queuestatus_summary():
 
 
     template_args = dict(
+        servertitle = fits_servertitle,
+        servername = fits_servername,
         general_rows  = general_rows,
         detail_tables = detail_tables
         )
@@ -55,6 +59,8 @@ def queuestatus_tb(qshortname, oid):
     det = error_detail(get_context().session, qshortname, oid)
 
     template_args = dict(
+        servertitle = fits_servertitle,
+        servername = fits_servername,
         oid = oid,
         **det
         )
