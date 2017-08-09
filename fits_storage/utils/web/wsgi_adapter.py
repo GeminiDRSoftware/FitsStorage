@@ -436,7 +436,7 @@ class ContextResponseIterator(object):
             for chunk in self._ctx.resp:
                 yield chunk
         except Exception as e:
-            ctx.usagelog.add_note(traceback.format_exc())
+            self._ctx.usagelog.add_note(traceback.format_exc())
             self.close()
             raise
 

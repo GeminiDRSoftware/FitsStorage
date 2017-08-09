@@ -38,8 +38,7 @@ Description:
 
 # ------------------------------------------------------------------------------
 # fits URLs
-prodfitsurl = 'http://localhost/ingest_programs'
-testfitsurl = 'http://sbffits-dev-lv1.cl.gemini.edu:8080/ingest_programs'
+prodfitsurl = 'http://arcdev.gemini.edu/ingest_programs'
 # ------------------------------------------------------------------------------
 
 def update_program_dbtable(url, pinfo):

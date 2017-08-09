@@ -170,10 +170,10 @@ def templated(template_name, content_type="text/html", with_generator=False, def
                 if e.content_type:
                     kw['content_type'] = e.content_type
                 ctx.resp.client_error(e.status, **kw)
-            except IOError:
+            except IOError as err:
                 # Assume that his means we got an interrupted connection
                 # (eg. the user stopped the query on their browser)
-                raise InterruptedError
+                raise InterruptedError(str(err))
 
             ctx.resp.status = status
         return fn_wrapper

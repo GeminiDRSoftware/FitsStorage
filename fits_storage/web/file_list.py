@@ -29,7 +29,7 @@ def xmlfilelist(selection):
     def generate_headers(selection):
         orderby = ['filename_asc']
         for header, diskfile, file, obslogcomm in list_headers(selection, orderby, full_query=True):
-            ret = (header, diskfile, file, obslogcomm)
+            ret = (header, diskfile, file)
             if header.phot_standard:
                 yield ret + (get_standard_obs(header.id),)
             else:
