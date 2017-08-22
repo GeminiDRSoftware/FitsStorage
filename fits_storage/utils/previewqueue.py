@@ -22,7 +22,8 @@ if using_s3:
     from ..fits_storage_config import s3_staging_area
     from aws_s3 import get_helper
 
-from astrodata import AstroData
+import astrodata
+import gemini_instruments
 import numpy
 import matplotlib
 matplotlib.use('Agg')
@@ -144,7 +145,7 @@ class PreviewQueueUtil(object):
                     # Just use the diskfile fullpath
                     ad_fullpath = munged_fullpath
                 # Open the astrodata instance
-                diskfile.ad_object = AstroData(ad_fullpath)
+                diskfile.ad_object = astrodata.open(ad_fullpath)
 
             # Now there should be a diskfile.ad_object, either way...
             with open(preview_fullpath, 'w') as fp:
@@ -157,8 +158,6 @@ class PreviewQueueUtil(object):
         finally:
             # Do any cleanup from above
             if our_dfado:
-                if diskfile.ad_object is not None:
-                    diskfile.ad_object.close()
                 if using_s3:
                     os.unlink(munged_fullpath)
                 if our_dfcc:
@@ -264,7 +263,7 @@ class PreviewQueueUtil(object):
             stack_shape = (240, 320)
             stack = numpy.zeros(stack_shape, numpy.float32)
             # For michelle, look up the nod-chop cycle
-            cycle = ad.phu_get_key_value('CYCLE')
+            cycle = ad.phu.get('CYCLE')
             if cycle is None:
                 cycle = 'ABBA'
             # Loop through the extensions and stack them according to nod position

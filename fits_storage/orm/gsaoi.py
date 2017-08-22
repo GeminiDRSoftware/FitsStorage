@@ -24,5 +24,5 @@ class Gsaoi(Base):
         self.populate(ad)
 
     def populate(self, ad):
-        self.filter_name = ad.filter_name().for_db()
-        self.read_mode = ad.read_mode().for_db()
+        self.filter_name = ad.filter_name()
+        self.read_mode = ad.read_mode()

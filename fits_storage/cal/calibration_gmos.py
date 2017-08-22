@@ -3,7 +3,6 @@ This module holds the CalibrationGMOS class
 """
 import datetime
 
-from ..fits_storage_config import using_sqlite
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.gmos import Gmos

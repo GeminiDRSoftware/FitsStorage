@@ -120,7 +120,7 @@ def generate_post_calmgr(selection, caltype):
 
     # OK, there are a couple of items that are handled in the DB as if they are descriptors
     # but they're actually types. This is where we push them into the descriptor disctionary
-    descriptors['nodandshuffle'] = 'GMOS_NODANDSHUFFLE' in types
+    descriptors['nodandshuffle'] = 'NODANDSHUFFLE' in types
     descriptors['spectroscopy'] = 'SPECT' in types
     descriptors['overscan_subtracted'] = 'OVERSCAN_SUBTRACTED' in types
     descriptors['overscan_trimmed'] = 'OVERSCAN_TRIMMED' in types

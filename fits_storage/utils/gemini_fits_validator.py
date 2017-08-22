@@ -12,7 +12,8 @@ except ValueError:
     from fits_storage.gemini_metadata_utils import gemini_instrument
     from fits_storage.gemini_metadata_utils import GeminiProgram, GeminiObservation, GeminiDataLabel
 
-from astrodata import AstroData
+import astrodata
+import gemini_instruments
 from datetime import datetime, timedelta
 from StringIO import StringIO
 import sys
@@ -160,7 +161,7 @@ class AstroDataEvaluator(Evaluator):
 
     def evaluate(self, ad_object):
         try:
-            return super(AstroDataEvaluator, self).evaluate(ad_object.hdulist, ad_object.types)
+            return super(AstroDataEvaluator, self).evaluate(ad_object.hdulist, ad_object.tags)
         except NotGeminiData:
             return Result(False, 'NOTGEMINI', "This doesn't look at all like data produced at Gemini")
         except BadData:
@@ -234,7 +235,7 @@ if __name__ == '__main__':
     else:
         if use_ad:
             evaluate = AstroDataEvaluator()
-            result = evaluate(AstroData(fits))
+            result = evaluate(astrodata.open(fits))
         else:
             evaluate = Evaluator()
             result = evaluate(fits)

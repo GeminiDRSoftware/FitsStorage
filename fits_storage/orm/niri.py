@@ -22,8 +22,10 @@ DISPERSER_ENUM = Enum(*DISPERSERS, name='niri_disperser')
 CAMERAS = ['datum', 'f13.9', 'f14', 'f32', 'f6', 'INVALID', 'No Value', 'UNKNOWN']
 CAMERA_ENUM = Enum(*CAMERAS, name='niri_camera')
 
-DATA_SECTIONS = ['[0, 1024, 0, 1024]', '[0, 256, 0, 256]', '[0, 512, 0, 512]', '[0, 768, 0, 768]', 
-                 '[256, 769, 0, 1024]', '[256, 769, 256, 768]', '[64, 192, 64, 192]', 'None']
+DATA_SECTIONS = ['Section(x1=0, x2=1024, y1=0, y2=1024)', 'Section(x1=0, x2=256, y1=0, y2=256)',
+                 'Section(x1=0, x2=512, y1=0, y2=512)', 'Section(x1=0, x2=768, y1=0, y2=768)',
+                 'Section(x1=256, x2=769, y1=0, y2=1024)', 'Section(x1=256, x2=769, y1=256, y2=768)',
+                 'Section(x1=64, x2=192, y1=64, y2=192)', 'None']
 DATA_SECTION_ENUM = Enum(*DATA_SECTIONS, name='niri_data_section')
 
 
@@ -53,26 +55,29 @@ class Niri(Base):
 
     def populate(self, ad):
 
-        disperser = ad.disperser().for_db()
+        disperser = ad.disperser()
         if disperser in DISPERSERS:
             self.disperser = disperser
 
-        self.filter_name = ad.filter_name().for_db()
+        self.filter_name = ad.filter_name()
 
-        read_mode = ad.read_mode().for_db()
+        read_mode = ad.read_mode()
         if read_mode in READ_MODES:
             self.read_mode = read_mode
 
-        well_depth = ad.well_depth_setting().for_db()
+        well_depth = ad.well_depth_setting()
         if well_depth in WELL_DEPTHS:
             self.well_depth_setting = well_depth
 
-        data_section = str(ad.data_section().for_db())
-        if data_section in DATA_SECTIONS:
-            self.data_section = data_section
+        try:
+            data_section = str(ad.data_section()[0])
+            if data_section in DATA_SECTIONS:
+                self.data_section = data_section
+        except TypeError:
+            self.data_section = 'None'
 
-        camera = ad.camera().for_db()
+        camera = ad.camera()
         if camera in CAMERAS:
             self.camera = camera
 
-        self.focal_plane_mask = ad.focal_plane_mask().for_db()
+        self.focal_plane_mask = ad.focal_plane_mask()

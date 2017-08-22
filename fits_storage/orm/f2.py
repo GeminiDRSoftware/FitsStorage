@@ -28,8 +28,8 @@ class F2(Base):
         self.populate(ad)
 
     def populate(self, ad):
-        self.disperser = ad.disperser().for_db()
-        self.filter_name = ad.filter_name().for_db()
-        self.lyot_stop = ad.lyot_stop().for_db()
-        self.read_mode = ad.read_mode().for_db()
-        self.focal_plane_mask = ad.focal_plane_mask().for_db()
+        self.disperser = ad.disperser()
+        self.filter_name = ad.filter_name()
+        self.lyot_stop = ad.lyot_stop()
+        self.read_mode = ad.read_mode()
+        self.focal_plane_mask = ad.focal_plane_mask()

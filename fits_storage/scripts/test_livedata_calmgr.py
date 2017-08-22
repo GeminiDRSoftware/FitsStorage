@@ -6,21 +6,21 @@ from astrodata import AstroData
 ad = AstroData("/net/wikiwiki/dataflow/N20121104S0066.fits")
 
 
-desc_dict = {'instrument':ad.instrument().for_db(),
-             'disperser':ad.disperser().for_db(),
-             'central_wavelength':ad.central_wavelength(asMicrometers=True).for_db(),
-             'observation_type':ad.observation_type().for_db(),
-             'data_label':ad.data_label().for_db(),
-             'detector_x_bin':ad.detector_x_bin().for_db(),
-             'detector_y_bin':ad.detector_y_bin().for_db(),
-             'read_speed_setting':ad.read_speed_setting().for_db(),
-             'gain_setting':ad.gain_setting().for_db(),
-             'amp_read_area':ad.amp_read_area().for_db(),
-             'ut_datetime':ad.ut_datetime().for_db(),
-             'exposure_time':ad.exposure_time().for_db(),
-             'object':ad.object().for_db(),
-             'filter_name':ad.filter_name().for_db(),
-             'focal_plane_mask':ad.focal_plane_mask().for_db(),
+desc_dict = {'instrument':ad.instrument(),
+             'disperser':ad.disperser(),
+             'central_wavelength':ad.central_wavelength(asMicrometers=True),
+             'observation_type':ad.observation_type(),
+             'data_label':ad.data_label(),
+             'detector_x_bin':ad.detector_x_bin(),
+             'detector_y_bin':ad.detector_y_bin(),
+             'read_speed_setting':ad.read_speed_setting(),
+             'gain_setting':ad.gain_setting(),
+             'amp_read_area':'+'.join(ad.amp_read_area()),
+             'ut_datetime':ad.ut_datetime(),
+             'exposure_time':ad.exposure_time(),
+             'object':ad.object(),
+             'filter_name':ad.filter_name(),
+             'focal_plane_mask':ad.focal_plane_mask(),
              }
 type_list = ad.types
 ad.close()

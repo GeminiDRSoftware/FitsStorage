@@ -34,13 +34,13 @@ class Nici(Base):
         self.populate(ad)
 
     def populate(self, ad):
-        self.filter_name = ad.filter_name().for_db()
+        self.filter_name = ad.filter_name()
       
-        focal_plane_mask = ad.focal_plane_mask().for_db()
+        focal_plane_mask = ad.focal_plane_mask()
         if focal_plane_mask in FOCAL_PLANE_MASKS:
             self.focal_plane_mask = focal_plane_mask
 
-        disperser = ad.disperser().for_db()
+        disperser = ad.disperser()
         if disperser in DISPERSERS:
             self.disperser = disperser
 

@@ -45,25 +45,31 @@ class Gmos(Base):
         self.populate(ad)
 
     def populate(self, ad):
-        self.disperser = ad.disperser().for_db()
-        self.filter_name = ad.filter_name().for_db()
-        self.detector_x_bin = ad.detector_x_bin().for_db()
-        self.detector_y_bin = ad.detector_y_bin().for_db()
-        self.amp_read_area = ad.amp_read_area().for_db()
+        self.disperser = ad.disperser()
+        self.filter_name = ad.filter_name()
+        try:
+            self.detector_x_bin = ad.detector_x_bin()
+            self.detector_y_bin = ad.detector_y_bin()
+            self.amp_read_area = '+'.join(ad.amp_read_area())
 
-        read_speed = ad.read_speed_setting().for_db()
+            gain_setting = ad.gain_setting()
+            if gain_setting in GAIN_SETTINGS:
+                self.gain_setting = gain_setting
+        except AssertionError:
+            # Likely an MDF file. There are no pixel extensions for
+            # that, and we'll get a horrible exception trying to get
+            # to those elements.
+            pass
+
+        read_speed = ad.read_speed_setting()
         if read_speed in READ_SPEED_SETTINGS:
             self.read_speed_setting = read_speed
 
-        gain_setting = ad.gain_setting().for_db()
-        if gain_setting in GAIN_SETTINGS:
-            self.gain_setting = gain_setting
-
-        self.focal_plane_mask = ad.focal_plane_mask().for_db()
-        self.nodandshuffle = 'GMOS_NODANDSHUFFLE' in ad.types
+        self.focal_plane_mask = ad.focal_plane_mask()
+        self.nodandshuffle = 'NODANDSHUFFLE' in ad.tags
         if self.nodandshuffle:
-            self.nod_count = ad.nod_count().for_db()
-            self.nod_pixels = ad.nod_pixels().for_db()
-        self.prepared = 'PREPARED' in ad.types
-        self.overscan_trimmed = 'OVERSCAN_TRIMMED' in ad.types
-        self.overscan_subtracted = 'OVERSCAN_SUBTRACTED' in ad.types
+            self.nod_count = ad.nod_count()
+            self.nod_pixels = ad.nod_pixels()
+        self.prepared = 'PREPARED' in ad.tags
+        self.overscan_trimmed = 'OVERSCAN_TRIMMED' in ad.tags
+        self.overscan_subtracted = 'OVERSCAN_SUBTRACTED' in ad.tags

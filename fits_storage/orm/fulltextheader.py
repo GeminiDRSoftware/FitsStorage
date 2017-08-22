@@ -1,7 +1,8 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 
-from astrodata import AstroData
+import astrodata
+import gemini_instruments
 
 from . import Base
 
@@ -28,22 +29,17 @@ class FullTextHeader(Base):
         # object which may have an ad_object in it.
         if diskfile.ad_object is not None:
             ad = diskfile.ad_object
-            local_ad = False
         else:
             if diskfile.uncompressed_cache_file:
                 fullpath = diskfile.uncompressed_cache_file
             else:
                 fullpath = diskfile.fullpath()
-            ad = AstroData(fullpath, mode='readonly')
-            local_ad = True
+            ad = astrodata.open(fullpath)
 
         self.fulltext = ""
         self.fulltext += "Filename: " +  diskfile.filename + "\n\n"
-        self.fulltext += "AstroData Types: " +str(ad.types) + "\n\n"
+        self.fulltext += "AstroData Types: " +str(ad.tags) + "\n\n"
         for i in range(len(ad.hdulist)):
             self.fulltext += "\n--- HDU %s ---\n" % i
             self.fulltext += unicode(repr(ad.hdulist[i].header), errors='replace')
             self.fulltext += '\n'
-
-        if local_ad:
-            ad.close()

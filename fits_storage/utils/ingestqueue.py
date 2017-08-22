@@ -43,7 +43,8 @@ from ..orm.obslog import Obslog
 from ..orm.calcachequeue import CalCacheQueue
 from ..orm.miscfile import is_miscfile, miscfile_meta, MiscFile
 
-from astrodata import AstroData
+import astrodata
+import gemini_instruments
 
 if using_s3:
     from .aws_s3 import get_helper
@@ -250,12 +251,9 @@ class IngestQueueUtil(object):
 
             self.l.debug("Instantiating AstroData object on %s", fullpath_for_ad)
             try:
-                diskfile.ad_object = AstroData(fullpath_for_ad, mode='readonly')
+                diskfile.ad_object = astrodata.open(fullpath_for_ad)
             except:
                 self.l.error("Failed to open astrodata object on file: %s. Giving up", fullpath_for_ad)
-                if diskfile.ad_object:
-                    self.l.debug("Closing centrally opened astrodata object")
-                    diskfile.ad_object.close()
 
                 self.delete_file(diskfile, fullpath)
 
@@ -326,10 +324,6 @@ class IngestQueueUtil(object):
                 cq = CalCacheQueue(header.id, sortkey=header.ut_datetime)
                 self.s.add(cq)
                 self.s.commit()
-
-        if diskfile.ad_object:
-            self.l.debug("Closing centrally opened astrodata object")
-            diskfile.ad_object.close()
 
         self.delete_file(diskfile, fullpath)
 

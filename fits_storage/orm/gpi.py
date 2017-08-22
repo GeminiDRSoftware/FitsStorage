@@ -29,11 +29,11 @@ class Gpi(Base):
         self.populate(ad)
 
     def populate(self, ad):
-        self.filter_name = ad.filter_name().for_db()
-        self.disperser = ad.disperser().for_db()
-        self.focal_plane_mask = ad.focal_plane_mask().for_db()
-        self.pupil_mask = ad.pupil_mask().for_db()
-        self.astrometric_standard = ad.phu_get_key_value("ASTROMTC")
+        self.filter_name = ad.filter_name()
+        self.disperser = ad.disperser()
+        self.focal_plane_mask = ad.focal_plane_mask()
+        self.pupil_mask = ad.pupil_mask()
+        self.astrometric_standard = ad.phu.get("ASTROMTC")
         if self.disperser is not None:
             self.wollaston = 'WOLLASTON' in self.disperser
             self.prism = 'PRISM' in self.disperser 

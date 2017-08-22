@@ -36,16 +36,16 @@ class Gnirs(Base):
         self.populate(ad)
 
     def populate(self, ad):
-        self.disperser = ad.disperser().for_db()
-        self.filter_name = ad.filter_name().for_db()
+        self.disperser = ad.disperser()
+        self.filter_name = ad.filter_name()
 
-        read_mode = ad.read_mode().for_db()
+        read_mode = ad.read_mode()
         if read_mode in READ_MODES:
             self.read_mode = read_mode
 
-        well_depth_setting = ad.well_depth_setting().for_db()
+        well_depth_setting = ad.well_depth_setting()
         if well_depth_setting in WELL_DEPTH_SETTINGS:
             self.well_depth_setting = well_depth_setting
 
-        self.camera = ad.camera().for_db()
-        self.focal_plane_mask = ad.focal_plane_mask().for_db()
+        self.camera = ad.camera()
+        self.focal_plane_mask = ad.focal_plane_mask()

@@ -44,19 +44,19 @@ class Michelle(Base):
         self.populate(ad)
 
     def populate(self, ad):
-        disperser = ad.disperser().for_db()
+        disperser = ad.disperser()
         if disperser in DISPERSERS:
             self.disperser = disperser
 
-        filter_name = ad.filter_name().for_db()
+        filter_name = ad.filter_name()
         if filter_name in FILTERS:
             self.filter_name = filter_name
 
-        read_mode = ad.read_mode().for_db()
+        read_mode = ad.read_mode()
         if read_mode in READ_MODES:
             self.read_mode = read_mode
 
-        focal_plane_mask = ad.focal_plane_mask().for_db()
+        focal_plane_mask = ad.focal_plane_mask()
         if focal_plane_mask in FOCAL_PLANE_MASKS:
             self.focal_plane_mask = focal_plane_mask
 

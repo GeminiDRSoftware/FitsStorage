@@ -15,7 +15,8 @@ from ..gemini_metadata_utils import gemini_gain_settings, gemini_readspeed_setti
 from astrodata import AstroData
 import pywcs
 
-import astrodata # For astrodata.Errors
+import astrodata # For astrodata errors
+import gemini_instruments
 
 from ..gemini_metadata_utils import obs_types, obs_classes, reduction_states
 
@@ -32,6 +33,15 @@ MODE_ENUM = Enum('imaging', 'spectroscopy', 'LS', 'MOS', 'IFS', 'IFP', name='mod
 DETECTOR_GAIN_ENUM = Enum('None', *gemini_gain_settings, name='detector_gain_setting')
 DETECTOR_READSPEED_ENUM = Enum('None', *gemini_readspeed_settings, name='detector_readspeed_setting')
 DETECTOR_WELLDEPTH_ENUM = Enum('None', *gemini_welldepth_settings, name='detector_welldepth_setting')
+
+REDUCTION_STATUS = {
+    'FLAT': 'PROCESSED_FLAT',
+    'BIAS': 'PROCESSED_BIAS',
+    'FRINGE': 'PROCESSED_FRINGE',
+    'DARK': 'PROCESSED_DARK',
+    'ARC': 'PROCESSED_ARC',
+    'SCIENCE': 'PROCESSED_SCIENCE',
+}
 
 class Header(Base):
     """
@@ -117,19 +127,17 @@ class Header(Base):
         # object which may have an ad_object in it.
         if diskfile.ad_object is not None:
             ad = diskfile.ad_object
-            local_ad = False
         else:
             if diskfile.uncompressed_cache_file:
                 fullpath = diskfile.uncompressed_cache_file
             else:
                 fullpath = diskfile.fullpath()
-            ad = AstroData(fullpath, mode='readonly')
-            local_ad = True
+            ad = astrodata.open(fullpath)
 
         try:
             # Basic data identification section
             # Parse Program ID
-            self.program_id = ad.program_id().for_db()
+            self.program_id = ad.program_id()
             if self.program_id is not None:
                 # Ensure upper case
                 self.program_id = self.program_id.upper()
@@ -142,40 +150,40 @@ class Header(Base):
                 # program ID is None - mark as engineering
                 self.engineering = True
 
-            self.observation_id = ad.observation_id().for_db()
+            self.observation_id = ad.observation_id()
             if self.observation_id is not None:
                 # Ensure upper case
                 self.observation_id = self.observation_id.upper()
 
-            self.data_label = ad.data_label().for_db()
+            self.data_label = ad.data_label()
             if self.data_label is not None:
                 # Ensure upper case
                 self.data_label = self.data_label.upper()
 
-            self.telescope = gemini_telescope(ad.telescope().for_db())
-            self.instrument = gemini_instrument(ad.instrument().for_db(), other=True)
+            self.telescope = gemini_telescope(ad.telescope())
+            self.instrument = gemini_instrument(ad.instrument(), other=True)
 
             # Date and times part
-            self.ut_datetime = ad.ut_datetime().for_db()
+            self.ut_datetime = ad.ut_datetime()
             if self.ut_datetime:
                 delta = self.ut_datetime - self.UT_DATETIME_SECS_EPOCH
                 self.ut_datetime_secs = int(delta.total_seconds())
-            self.local_time = ad.local_time().for_db()
+            self.local_time = ad.local_time()
 
             # Data Types
-            self.observation_type = gemini_observation_type(ad.observation_type().for_db())
+            self.observation_type = gemini_observation_type(ad.observation_type())
 
-            if 'GNIRS_PINHOLE' in ad.types:
+            if 'PINHOLE' in ad.tags:
                 self.observation_type = 'PINHOLE'
-            if 'NIFS_RONCHI' in ad.types:
+            if 'RONCHI' in ad.tags:
                 self.observation_type = 'RONCHI'
-            self.observation_class = gemini_observation_class(ad.observation_class().for_db())
-            self.object = ad.object().for_db()
+            self.observation_class = gemini_observation_class(ad.observation_class())
+            self.object = ad.object()
 
             # RA and Dec are not valid for AZEL_TARGET frames
-            if 'AZEL_TARGET' not in ad.types:
-                self.ra = ad.ra().for_db()
-                self.dec = ad.dec().for_db()
+            if 'AZEL_TARGET' not in ad.tags:
+                self.ra = ad.ra()
+                self.dec = ad.dec()
                 if type(self.ra) is str:
                     self.ra = ratodeg(self.ra)
                 if type(self.dec) is str:
@@ -186,38 +194,38 @@ class Header(Base):
                     self.dec = None
 
             # These should be in the descriptor function really.
-            azimuth = ad.azimuth().for_db()
+            azimuth = ad.azimuth()
             if type(azimuth) is types.StringType:
                 azimuth = dmstodeg(azimuth)
             self.azimuth = azimuth
-            elevation = ad.elevation().for_db()
+            elevation = ad.elevation()
             if type(elevation) is types.StringType:
                 elevation = dmstodeg(elevation)
             self.elevation = elevation
 
-            self.cass_rotator_pa = ad.cass_rotator_pa().for_db()
-            self.airmass = ad.airmass().for_db()
-            self.raw_iq = ad.raw_iq().for_db()
-            self.raw_cc = ad.raw_cc().for_db()
-            self.raw_wv = ad.raw_wv().for_db()
-            self.raw_bg = ad.raw_bg().for_db()
-            self.requested_iq = ad.requested_iq().for_db()
-            self.requested_cc = ad.requested_cc().for_db()
-            self.requested_wv = ad.requested_wv().for_db()
-            self.requested_bg = ad.requested_bg().for_db()
+            self.cass_rotator_pa = ad.cass_rotator_pa()
+            self.airmass = ad.airmass()
+            self.raw_iq = ad.raw_iq()
+            self.raw_cc = ad.raw_cc()
+            self.raw_wv = ad.raw_wv()
+            self.raw_bg = ad.raw_bg()
+            self.requested_iq = ad.requested_iq()
+            self.requested_cc = ad.requested_cc()
+            self.requested_wv = ad.requested_wv()
+            self.requested_bg = ad.requested_bg()
 
             # Knock illegal characters out of filter names. eg NICI %s. Spaces to underscores.
-            filter_string = ad.filter_name(pretty=True).for_db()
+            filter_string = ad.filter_name(pretty=True)
             if filter_string:
                 self.filter_name = filter_string.replace('%', '').replace(' ', '_')
 
             # NICI exposure times are a pain, because there's two of them... Except they're always the same
             if self.instrument != 'NICI':
-                exposure_time = ad.exposure_time().for_db()
+                exposure_time = ad.exposure_time()
             else:
                 # NICI exposure_time descriptor is broken
-                et_b = ad.phu_get_key_value('ITIME_B')
-                et_r = ad.phu_get_key_value('ITIME_R')
+                et_b = ad.phu.get('ITIME_B')
+                et_r = ad.phu.get('ITIME_R')
                 exposure_time = et_b if et_b else et_r
 
             # Protect the database from field overflow from junk.
@@ -227,20 +235,29 @@ class Header(Base):
             
 
             # Need to remove invalid characters in disperser names, eg gnirs has slashes
-            disperser_string = ad.disperser(pretty=True).for_db()
+            disperser_string = ad.disperser(pretty=True)
             if disperser_string:
                 self.disperser = disperser_string.replace('/', '_')
 
-            self.camera = ad.camera(pretty=True).for_db()
-            if 'SPECT' in ad.types and 'GPI' not in ad.types:
-                self.central_wavelength = ad.central_wavelength(asMicrometers=True).for_db()
-            self.wavelength_band = ad.wavelength_band().for_db()
-            self.focal_plane_mask = ad.focal_plane_mask(pretty=True).for_db()
-            self.pupil_mask = ad.pupil_mask(pretty=True).for_db()
-            dvx = ad.detector_x_bin()
-            dvy = ad.detector_y_bin()
-            if (not dvx.is_none()) and (not dvy.is_none()):
-                self.detector_binning = "%dx%d" % (int(ad.detector_x_bin()), int(ad.detector_y_bin()))
+            self.camera = ad.camera(pretty=True)
+            if 'SPECT' in ad.tags and 'GPI' not in ad.tags:
+                self.central_wavelength = ad.central_wavelength(asMicrometers=True)
+            self.wavelength_band = ad.wavelength_band()
+            self.focal_plane_mask = ad.focal_plane_mask(pretty=True)
+            self.pupil_mask = ad.pupil_mask(pretty=True)
+            try:
+                dvx = ad.detector_x_bin()
+                dvy = ad.detector_y_bin()
+                if (dvx is not None) and (dvy is not None):
+                    self.detector_binning = "%dx%d" % (dvx, dvy)
+            except AssertionError:
+                pass
+
+            def read_setting(ad, attribute):
+                try:
+                    return str(getattr(ad, attribute)().replace(' ', '_'))
+                except (AttributeError, AssertionError):
+                    return 'None'
 
             gainstr = str(ad.gain_setting())
             if gainstr in gemini_gain_settings:
@@ -255,17 +272,17 @@ class Header(Base):
                 self.detector_welldepth_setting = welldepthstr
 
             if 'GMOS' in ad.types:
-                self.detector_readmode_setting = "NodAndShuffle" if "GMOS_NODANDSHUFFLE" in ad.types else "Classic"
+                self.detector_readmode_setting = "NodAndShuffle" if ad.tags.intersection({'GMOS', 'NODANDSHUFFLE'}) else "Classic"
             else:
                 self.detector_readmode_setting = str(ad.read_mode()).replace(' ', '_')
 
-            self.detector_roi_setting = ad.detector_roi_setting().for_db()
+            self.detector_roi_setting = ad.detector_roi_setting()
 
-            self.coadds = ad.coadds().for_db()
+            self.coadds = ad.coadds()
 
             # Hack the AO header and LGS for now
             try:
-                aofold = ad.phu_get_key_value('AOFOLD')
+                aofold = ad.phu.get('AOFOLD')
                 self.adaptive_optics = (aofold == 'IN')
             except ():
                 pass
@@ -273,29 +290,29 @@ class Header(Base):
             lgustage = None
             lgsloop = None
             try:
-                lgustage = ad.phu_get_key_value('LGUSTAGE')
-                lgsloop = ad.phu_get_key_value('LGSLOOP')
+                lgustage = ad.phu.get('LGUSTAGE')
+                lgsloop = ad.phu.get('LGSLOOP')
             except:
                 pass
 
             self.laser_guide_star = (lgsloop == 'CLOSED') or (lgustage == 'IN')
 
 
-            self.wavefront_sensor = ad.wavefront_sensor().for_db()
+            self.wavefront_sensor = ad.wavefront_sensor()
 
             # And the Spectroscopy and mode items
             self.spectroscopy = False
             self.mode = 'imaging'
-            if 'SPECT' in ad.types:
+            if 'SPECT' in ad.tags:
                 self.spectroscopy = True
                 self.mode = 'spectroscopy'
-                if 'IFU' in ad.types:
+                if 'IFU' in ad.tags:
                     self.mode = 'IFS'
-                if 'MOS' in ad.types:
+                if 'MOS' in ad.tags:
                     self.mode = 'MOS'
-                if 'LS' in ad.types:
+                if 'LS' in ad.tags:
                     self.mode = 'LS'
-            if 'GPI' in ad.types and 'POL' in ad.types:
+            if 'GPI' in ad.tags and 'POL' in ad.tags:
                 self.mode = 'IFP'
 
             # Set the derived QA state
@@ -303,7 +320,7 @@ class Header(Base):
             if self.observation_type == 'MASK':
                 self.qa_state = 'Pass'
             else:
-                qa_state = ad.qa_state().for_db()
+                qa_state = ad.qa_state()
                 if qa_state in ['Fail', 'CHECK', 'Undefined', 'Usable', 'Pass']:
                     self.qa_state = qa_state
                 else:
@@ -312,7 +329,7 @@ class Header(Base):
 
             # Set the release date
             try:
-                reldatestring = ad.phu_get_key_value('RELEASE')
+                reldatestring = ad.phu.get('RELEASE')
                 if reldatestring:
                     reldts = "%s 00:00:00" % reldatestring
                     self.release = dateutil.parser.parse(reldts).date()
@@ -322,58 +339,54 @@ class Header(Base):
 
             # Proprietary coordinates
             self.proprietary_coordinates = False
-            if ad.phu_get_key_value('PROP_MD') == True:
+            if ad.phu.get('PROP_MD') == True:
                 self.proprietary_coordinates = True
 
             # Set the gcal_lamp state
-            gcal_lamp = ad.gcal_lamp().for_db() 
+            gcal_lamp = ad.gcal_lamp() 
             if gcal_lamp != 'None':
                 self.gcal_lamp = gcal_lamp
 
 
             # Set the reduction state
-            self.reduction = 'RAW'
-
             # Note - these are in order - a processed_flat will have
             # both PREPARED and PROCESSED_FLAT in it's types.
             # Here, ensure "highest" value wins.
-            if 'PREPARED' in ad.types:
+            tags = ad.tags
+            if 'PROCESSED' in tags:
+                # Use the image type tag (BIAS, FLAT, ...) to obtain the
+                # appropriate reduction status from the lookup table
+                kind = list(tags.intersection(REDUCTION_STATUS.keys()))
+                try:
+                    self.reduction = REDUCTION_STATUS[kind[0]]
+                except (KeyError, IndexError):
+                    # Supposedly a processed file, but not any that we know of!
+                    # Mark it as prepared, just in case
+                    # TODO: Maybe we want to signal an error here?
+                    self.reduction = 'PREPARED'
+            elif 'PREPARED' in tags:
                 self.reduction = 'PREPARED'
-            if 'PROCESSED_FLAT' in ad.types:
-                self.reduction = 'PROCESSED_FLAT'
-            if 'PROCESSED_BIAS' in ad.types:
-                self.reduction = 'PROCESSED_BIAS'
-            if 'PROCESSED_FRINGE' in ad.types:
-                self.reduction = 'PROCESSED_FRINGE'
-            if 'PROCESSED_DARK' in ad.types:
-                self.reduction = 'PROCESSED_DARK'
-            if 'PROCESSED_ARC' in ad.types:
-                self.reduction = 'PROCESSED_ARC'
-            if 'PROCESSED_SCIENCE' in ad.types:
-                self.reduction = 'PROCESSED_SCIENCE'
+            else:
+                self.reduction = 'RAW'
 
             # Get the types list
-            self.types = str(ad.types)
+            self.types = str(ad.tags)
 
-        except astrodata.Errors.DescriptorInfrastructureError:
-            # This happens anytime an eng file does not get identified as gemini data
-            pass
+#        except astrodata.Errors.DescriptorInfrastructureError:
+#            # This happens anytime an eng file does not get identified as gemini data
+#            pass
 
         except:
             # Something failed accessing the astrodata
             raise
 
-        finally:
-            if local_ad:
-                ad.close()
-
     def footprints(self, ad):
         retary = {}
         # Horrible hack - GNIRS etc has the WCS for the extension in the PHU!
-        if ('GNIRS' in ad.types) or ('MICHELLE' in ad.types) or ('NIFS' in ad.types):
+        if ad.tags.intersection({'GNIRS', 'MICHELLE', 'NIFS'}):
             # If we're not in an RA/Dec TANgent frame, don't even bother
-            if (ad.phu_get_key_value('CTYPE1') == 'RA---TAN') and (ad.phu_get_key_value('CTYPE2') == 'DEC--TAN'):
-                wcs = pywcs.WCS(ad.phu.header)
+            if (ad.phu.get('CTYPE1') == 'RA---TAN') and (ad.phu.get('CTYPE2') == 'DEC--TAN'):
+                wcs = pywcs.WCS(ad.header[0])
                 try:
                     fp = wcs.calcFootprint()
                     retary['PHU'] = fp
@@ -382,10 +395,10 @@ class Header(Base):
                     pass
         else:
             # If we're not in an RA/Dec TANgent frame, don't even bother
-            for i in range(len(ad)):
-                if (ad[i].get_key_value('CTYPE1') == 'RA---TAN') and (ad[i].get_key_value('CTYPE2') == 'DEC--TAN'):
-                    extension = "%s,%s" % (ad[i].extname(), ad[i].extver())
-                    wcs = pywcs.WCS(ad[i].header)
+            for hdr in ad.header[1:]:
+                if (hdr.get('CTYPE1') == 'RA---TAN') and (hdr.get('CTYPE2') == 'DEC--TAN'):
+                    extension = "%s,%s" % (hdr.get('EXTNAME'), hd.get('EXTVER'))
+                    wcs = pywcs.WCS(hdr)
                     try:
                         fp = wcs.calcFootprint()
                         retary[extension] = fp

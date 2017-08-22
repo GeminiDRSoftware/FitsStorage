@@ -29,11 +29,11 @@ class Nifs(Base):
         self.populate(ad)
 
     def populate(self, ad):
-        self.disperser = ad.disperser().for_db()
-        self.filter_name = ad.filter_name().for_db()
+        self.disperser = ad.disperser()
+        self.filter_name = ad.filter_name()
 
-        read_mode = ad.read_mode().for_db()
+        read_mode = ad.read_mode()
         if read_mode in READ_MODES:
             self.read_mode = read_mode
 
-        self.focal_plane_mask = ad.focal_plane_mask().for_db()
+        self.focal_plane_mask = ad.focal_plane_mask()
