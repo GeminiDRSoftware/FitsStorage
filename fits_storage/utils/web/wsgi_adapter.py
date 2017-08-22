@@ -12,7 +12,19 @@ from datetime import datetime
 import json
 import tarfile
 
+# Boilerplate object. Maybe later we'll add something else to it?
+def Uploadedfile(object):
+    def __init__(self, name):
+        self.name = name
+
 class ItemizedFieldStorage(FieldStorage):
+    def __init__(self, fp, environ):
+        super(FieldStorage, self).__init__(fp, environ)
+        if self.filename is None:
+            self.uploaded_file = None
+        else:
+            self.uploaded_file = UploadedFile(self.filename)
+
     def items(self):
         for k in self.keys():
             yield (k, self[k])
