@@ -177,7 +177,8 @@ def process_update(session, proxy, query, iq):
         new_values = map_changes(query['values'])
         reject_new = query.get('reject_new', False)
         path = df.fullpath()
-        reingest = iq.delete_inactive_from_queue(filename)
+        # It seems like this isn't necessary and it's broken (call to one() with potentially multiple results)
+        # reingest = iq.delete_inactive_from_queue(filename)
         # reingest = apply_changes(df, query['values']) or reingest
         reingest = proxy.set_image_metadata(path=path, changes=new_values, reject_new=reject_new)
         return {'result': True, 'id': label}
@@ -187,7 +188,7 @@ def process_update(session, proxy, query, iq):
         return error_response("This looks like a malformed request: 'values' does not exist", id=label)
     except IngestError as e:
         return error_response(e.message, id=label)
-    except ApiProxyError:
+    except ApiProxyError as e:
         get_context().req.log(str(e))
         return error_response("An internal error occurred and your query could not be performed. It has been logged")
     except NewCardsIncluded:
