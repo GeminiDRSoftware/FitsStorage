@@ -209,7 +209,7 @@
 <table>
  <tr class='tr_head'><th>In queue since<th>Filename</tr>
  {% for row in table.rows %}
- <tr class='alternating'><td>{{ row.since }}<td><a href='/queuestatus/{{ table.lname }}/{{ row.oid }}'>{{ row.filename }}</a></tr>
+ <tr class='alternating'><td>{{ row.since }}<td>{{ row.filename }}</tr>
  {%- endfor %}
 </table>
 {%- endif %}
