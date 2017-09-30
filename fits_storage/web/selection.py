@@ -415,9 +415,11 @@ def queryselection(query, selection):
             # this gets round the quotes and options "+ stuff" in the TReCS mask names.
             # the selection should only contain the "1.23" bit
             query = query.filter(Header.focal_plane_mask.contains(selection['focal_plane_mask']))
-        else:
+        if 'inst' in selection.keys() and selection['inst'][:4] == 'GMOS':
             # Make this a starts with for convenice finding multiple gmos masks for example
             query = query.filter(Header.focal_plane_mask.startswith(selection['focal_plane_mask']))
+        else:
+            query = query.filter(Header.focal_plane_mask == selection['focal_plane_mask'])
 
     if 'pupil_mask' in selection:
         query = query.filter(Header.pupil_mask == selection['pupil_mask'])
