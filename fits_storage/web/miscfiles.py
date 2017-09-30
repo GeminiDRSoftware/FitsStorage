@@ -21,6 +21,8 @@ import os
 import stat
 from datetime import datetime, timedelta
 
+from cgi import parse_header
+
 SEARCH_LIMIT = 500
 
 def miscfiles(handle = None):
@@ -125,8 +127,8 @@ def validate():
 @needs_login(superuser=True)
 @templating.templated("miscfiles/miscfiles.html")
 def save_file(formdata):
-    fileitem = formdata['uploadFile']
-    localfilename = normalize_diskname(fileitem.filename)
+    fileitem = formdata.uploaded_file
+    localfilename = normalize_diskname(fileitem.name)
     fullpath = os.path.join(upload_staging_path, localfilename)
     jsonpath = fullpath + '.json'
     current_data = {}
@@ -145,22 +147,23 @@ def save_file(formdata):
         except KeyError:
             pass
 
-    if formdata['uploadRelease'] == 'default':
+    uploadRelease = formdata.getvalue('uploadRelease', '').strip()
+    if uploadRelease == 'default':
         release_date = datetime.now() + timedelta(days=540) # Now + 18 pseudo-months
-    elif formdata['uploadRelease'] == 'now':
+    elif uploadRelease == 'now':
         release_date = datetime.now()
     else:
         try:
-            release_date = string_to_date(formdata['arbRelease'])
+            release_date = string_to_date(formdata.getvalue('arbRelease', '').strip())
         except (ValueError, KeyError):
             return dict(can_add=True, errorMessage = "Wrong value for release date",
                         **current_data)
 
     try:
-        os.rename(formdata.uploaded_file.name, fullpath)
+        formdata.uploaded_file.rename_to(fullpath)
         os.chmod(fullpath, stat.S_IRUSR|stat.S_IRGRP|stat.S_IROTH)
         with open(jsonpath, 'w') as meta:
-            json.dump({'filename': fileitem.filename,
+            json.dump({'filename': fileitem.name,
                        'is_misc':  'True',
                        'release':  release_date.strftime('%Y-%m-%d'),
                        'description': formdata.get('uploadDesc', None),
@@ -203,20 +206,21 @@ def detail_miscfile(handle, formdata = {}):
             )
 
         if 'save' in formdata:
-            if formdata['release'] == 'default':
+            relase = formdata.getvalue('release', '').strip()
+            if release == 'default':
                 release_date = datetime.now() + timedelta(days=540) # Now + 18 pseudo-months
-            elif formdata['release'] == 'now':
+            elif release == 'now':
                 release_date = datetime.now()
             else:
                 try:
-                    release_date = string_to_date(formdata['arbRelease'])
+                    release_date = string_to_date(formdata.getvalue('arbRelease', '').strip())
                 except (ValueError, KeyError):
                     ret['errorMessage'] = "Wrong value for release date"
                     return ret
 
             meta.release = release_date
-            meta.program_id = formdata.get('prog', '')
-            meta.description = formdata.get('desc', '')
+            meta.program_id = formdata.getvalue('prog', '')
+            meta.description = formdata.getvalue('desc', '')
             session.flush()
             ret['message'] = "Successfully updated"
 
