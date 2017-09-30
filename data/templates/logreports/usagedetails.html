@@ -47,6 +47,17 @@
 </table>
 {% endif %}
 {% if has_downloads %}
+<h2>Download Details</h2>
+<table>
+  <tr><td>Selection:<td>{{ dlog.selection }}</tr>
+  <tr><td>Num Results:<td>{{ dlog.numresults }}</tr>
+  <tr><td>Sending Files:<td>{{ dlog.sending_files }}</tr>
+  <tr><td>Num Denied:<td>{{ dlog.numdenied }}</tr>
+  <tr><td>Query Started:<td>{{ dlog.query_started }}</tr>
+  <tr><td>Query Completed:<td>{{ dlog.query_completed }}</tr>
+  <tr><td>DownLoad Completed:<td>{{ dlog.download_completed }}</tr>
+  <tr><td>Notes:<td>{{ dlog.notes }}</tr>
+</table>
 <h2>File Download Details</h2>
 <table>
   <tr class="tr_head">
