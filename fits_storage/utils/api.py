@@ -4,6 +4,9 @@ from functools import partial, wraps
 import inspect
 from importlib import import_module
 
+import traceback
+import sys
+
 from .null_logger import EmptyLogger
 
 ##########################################################################################
@@ -129,6 +132,9 @@ class ApiCall(object):
             elif extra:
                 raise WSGIError("Unexpected argument(s): {}".format(', '. join(extra)))
             raise WSGIError(str(e))
+        except Exception as e:
+            string = ''.join(traceback.format_tb(sys.exc_info()[2])) + '\n\n' + str(e)
+            raise WSGIError(string)
 
         try:
             result = json.dumps({'result': ret})
