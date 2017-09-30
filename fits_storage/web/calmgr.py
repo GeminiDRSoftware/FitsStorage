@@ -17,6 +17,9 @@ from . import templating
 
 from sqlalchemy import join, desc
 
+from psycopg2 import InternalError
+from sqlalchemy.exc import DataError
+
 import urllib
 import re
 import os
@@ -54,7 +57,13 @@ def cals_info(cal_obj, caltype, qtype='UNKNOWN', log=no_func, add_note=no_func, 
                 # are obtained invoking other method with some arguments, then
                 # we can introduce a mappint in args_for_cals
                 method, args = args_for_cals.get(ct, (ct, {}))
-                cals = getattr(cal_obj, method)(**args)
+                try:
+                    cals = getattr(cal_obj, method)(**args)
+                except (InternalError, DataError):
+                    get_context().session.rollback()
+                    add_note("Rolling back errored transaction in cal query")
+                    get_context().session.commit()
+                    raise
             else:
                 cals = []
 
@@ -117,6 +126,9 @@ def generate_post_calmgr(selection, caltype):
     usagelog.add_note("CalMGR request CalType: %s" % caltype)
     usagelog.add_note("CalMGR request Descriptor Dictionary: %s" % descriptors)
     usagelog.add_note("CalMGR request Types List: %s" % types)
+
+    # commit these now in case anything goes wrong later
+    ctx.session.commit()
 
     # OK, there are a couple of items that are handled in the DB as if they are descriptors
     # but they're actually types. This is where we push them into the descriptor disctionary
