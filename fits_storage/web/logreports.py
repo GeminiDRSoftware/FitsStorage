@@ -32,8 +32,8 @@ def logs(session, filter_func = None):
     aQueryLog = session.query(QueryLog, func.row_number().over(QueryLog.usagelog_id).label('row_number'))
     aDownloadLog = session.query(DownloadLog, func.row_number().over(DownloadLog.usagelog_id).label('row_number'))
     if filter_func:
-        aQueryLog = filter_func(session, aQueryLog.join(UsageLog).join(User))
-        aDownloadLog = filter_func(session, aDownloadLog.join(UsageLog).join(User))
+        aQueryLog = filter_func(session, aQueryLog.join(UsageLog))
+        aDownloadLog = filter_func(session, aDownloadLog.join(UsageLog))
     class AliasedQueryLog(Base):
         __table__ = aQueryLog.cte('query_log')
     class AliasedDownloadLog(Base):
@@ -71,7 +71,7 @@ def usagereport():
         elif key == 'end' and len(value):
             end = dateutil.parser.parse(value)
         elif key == 'username' and len(value):
-            user = session.query(User).filter(User.username == formdata[key]).first()
+            user = session.query(User).filter(User.username == value).first()
             if user:
                 username = user.username
                 user_id = user.id
