@@ -38,7 +38,7 @@ Description:
 
 # ------------------------------------------------------------------------------
 # fits URLs
-prodfitsurl = 'http://arcdev.gemini.edu/ingest_programs'
+prodfitsurl = 'https://archive.gemini.edu/ingest_programs'
 # ------------------------------------------------------------------------------
 
 def update_program_dbtable(url, pinfo):
