@@ -21,6 +21,7 @@ import datetime
 import bz2
 from cStringIO import StringIO
 import tarfile
+import os
 
 # We assume that servers used as archive use a calibraiton association cache table
 from ..fits_storage_config import use_as_archive
@@ -100,7 +101,7 @@ def download_post():
             for field in fields:
                 thelist.append(str(field.value))
         else:
-            thelist.append(str(fields))
+            thelist.append(fields.value)
     return download(selection = {'filelist': thelist},
                     associated_calibrations = False)
 
@@ -192,6 +193,11 @@ def download(selection, associated_calibrations):
     with ctx.resp.tarfile(tarfilename, mode="w|") as tar:
         for header in headers:
             filedownloadlog = FileDownloadLog(ctx.usagelog)
+            if not header.diskfile.present:
+                # File has been updated behind our backs. Try to find the new one
+                file_id = header.diskfile.file_id
+                header = session.query(Header).join(DiskFile).filter(DiskFile.file_id == file_id).filter(DiskFile.present == True).one()
+                filedownloadlog.add_note("File replaced during download")
             filedownloadlog.diskfile_filename = header.diskfile.filename
             filedownloadlog.diskfile_file_md5 = header.diskfile.file_md5
             filedownloadlog.diskfile_file_size = header.diskfile.file_size
@@ -212,7 +218,17 @@ def download(selection, associated_calibrations):
                             mode = 0644
                         )
                         # - and add it to the tar file
-                        tar.addfile(tarinfo, buffer)
+                        try:
+                            tar.addfile(tarinfo, buffer)
+                        except IOError:
+                            downloadlog.add_note("IOError while adding %s to tarfile" % header.diskfile.filename)
+                            downloadlog.add_note("buffer filename: %s tell: %s closed: %s" % (buffer.name, buffer.tell(), buffer.closed))
+                            downloadlog.add_note("ti size: %s, df size: %s" % (tarinfo.size, header.diskfile.file_size))
+                            st = os.stat(buffer.name)
+                            downloadlog.add_note("st_size: %s" % st.st_size)
+                            session.commit()
+                            raise
+
                 else:
                     tar.add(header.diskfile.fullpath(), header.diskfile.filename)
             else:
@@ -310,18 +326,20 @@ def fileserver(filenamegiven):
 
     try:
         file = session.query(File).filter(File.name == filename).one()
+        # OK, we should have the file record now.
+        # Next, find the canonical diskfile for it
+        diskfile = (
+            session.query(DiskFile)
+                    .filter(DiskFile.present == True)
+                    .filter(DiskFile.file_id == file.id)
+                    .one()
+            )
+        # Note that either of those queries can trigger NoResultFound
     except NoResultFound:
         downloadlog.add_note("Not found in File table")
         ctx.resp.status = Return.HTTP_NOT_FOUND
         return
-    # OK, we should have the file record now.
-    # Next, find the canonical diskfile for it
-    diskfile = (
-        session.query(DiskFile)
-                .filter(DiskFile.present == True)
-                .filter(DiskFile.file_id == file.id)
-                .one()
-        )
+
 
     item = None
     # And now find the header record...
