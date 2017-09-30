@@ -12,6 +12,7 @@ if using_s3:
 
 import json
 import os
+import io
 from base64 import urlsafe_b64encode as encode_string
 from base64 import urlsafe_b64decode as decode_string
 
@@ -51,9 +52,9 @@ def decode_description(meta):
 
 def miscfile_meta(path, urlencode=False):
     try:
-        meta = json.load(open(miscfile_meta_path(path)))
+        meta = json.load(io.open(miscfile_meta_path(path), encoding='utf-8'))
         if urlencode:
-            meta['description'] = encode_string(meta['description'])
+            meta['description'] = encode_string(meta['description'].encode('utf-8'))
     except IOError:
         if using_s3:
             meta = s3.get_key(path).metadata
