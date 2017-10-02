@@ -30,6 +30,12 @@ it's easier, more robust, and faster to use one of the JSON APIs to obtain that 
 <i>FEATURE</i> and <i>SELECTION</i> are the archive feature you want to access, and the data selection criteria
 respecively, as explained below. This applies to the human-oriented features of the archive as well as the APIs.</p>
 
+<p>Generally you should fetch these URLs with an HTTP GET. A small number of API functions can accept an HTTP POST with
+additional information for the query, this will be described for those individual cases. The archive uses 
+<code>https://</code> URLS. If you try to access the archive with a <code>http://</code> URL rather than 
+<code>https://</code> you will receive an HTTP REDIRECT to the <code>https://<code> URL. It is more efficient 
+to use <code>https://</code> directly.</p>
+
 <h3>Archive Features</h3>
 <p>You have probbaly used the regular search form for the archive, and noticed that the URL for that is
 <code>https://archive.gemini.edu/<i>searchform</i></code>. "searchform" is a good example of an archive feature 
