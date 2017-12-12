@@ -271,7 +271,7 @@ class Header(Base):
             if welldepthstr in gemini_welldepth_settings:
                 self.detector_welldepth_setting = welldepthstr
 
-            if 'GMOS' in ad.types:
+            if 'GMOS' in ad.tags:
                 self.detector_readmode_setting = "NodAndShuffle" if ad.tags.intersection({'GMOS', 'NODANDSHUFFLE'}) else "Classic"
             else:
                 self.detector_readmode_setting = str(ad.read_mode()).replace(' ', '_')
