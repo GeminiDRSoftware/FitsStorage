@@ -32,7 +32,7 @@ obsre = r'((?:^%s)|(?:^%s))-(\d*)$' % (calengre, scire)
 gemini_gain_settings = ('high', 'low')
 gemini_readspeed_settings = ('fast', 'slow')
 gemini_welldepth_settings = ('Shallow', 'Deep', 'Invalid')
-gemini_readmode_settings = ('Classic', 'NodAndShuffle', 'Very_Faint_Objects', 'Faint_Objects', 'Faint_Object', 'Bright_Object', 'Bright_Objects', 'Very_Bright_Objects', 'Bright', 'Medium', 'Faint', 'Low_Background', 'Medium_Background', 'High_Background')
+gemini_readmode_settings = ('Classic', 'NodAndShuffle', 'Very_Faint_Objects', 'Faint_Objects', 'Faint_Object', 'Medium_Object', 'Bright_Object', 'Bright_Objects', 'Very_Bright_Objects', 'Bright', 'Medium', 'Faint', 'Low_Background', 'Medium_Background', 'High_Background')
 
 
 gemini_telescopes = {
@@ -659,3 +659,33 @@ def get_time_period(start, end=None, as_date=False):
 def gemini_time_period_from_range(rng, as_date=False):
     a, _, b = gemini_daterange(rng).partition('-')
     return get_time_period(a, b, as_date)
+
+def gemini_semester(date):
+    """ Return the semester name that contains date """
+    if date.month >= 2 and date.month <= 7:
+       letter = 'A'
+       year = date.year
+    else:
+       letter = 'B'
+       if date.month == 1:
+           year = date.year - 1
+       else:
+           year = date.year
+
+    return str(year) + letter
+
+semester_re = r'(20\d\d)([AB])'
+def previous_semester(semester):
+    """ Given a semester string eg 2016A, return the previous semester, eg 2015B """
+    m = re.match(semester_re, semester)
+    if m is None:
+        return None
+    year = m.group(1)
+    bsem = m.group(2) == 'B'
+
+    if bsem:
+        return year + 'A'
+    else:
+        year = int(year) - 1
+        return str(year) + 'B'
+
