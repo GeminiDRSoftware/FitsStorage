@@ -8,13 +8,18 @@ from .summary_generator import selection_to_column_names, selection_to_form_indi
 from .calibrations import calibrations
 from . import templating
 
-from ..fits_storage_config import fits_aux_datadir, fits_servertitle
+from ..fits_storage_config import fits_aux_datadir, fits_servertitle, use_as_archive
 from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
 
 from ..utils.web import get_context, Return
 
 import os
 import urllib
+import contextlib
+import json
+from xml.dom import minidom
+from xml.parsers.expat import ExpatError
+
 
 @templating.templated("search_and_summary/searchform.html", with_generator=True)
 def searchform(things, orderby):
@@ -52,10 +57,11 @@ def searchform(things, orderby):
     column_selection = {}
 
     if formdata:
-        if ((len(formdata) == 4) and
+        if ((len(formdata) == 5) and
                 ('engineering' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and
                 ('science_verification' in formdata.keys()) and (formdata['science_verification'].value == 'SvInclude') and
                 ('qa_state' in formdata.keys()) and (formdata['qa_state'].value == 'NotFail') and
+                ('col_selection' in formdata.keys()) and
                 ('Search' in formdata.keys()) and (formdata['Search'].value == 'Search')):
             # This is the default form state, someone just hit submit without doing anything.
             pass
@@ -65,7 +71,8 @@ def searchform(things, orderby):
         else:
             # Populate selection dictionary with values from form input
             updateselection(formdata, selection)
-            ctx.req.log(str(selection))
+            # This logs the seleciton to the apache error log for debugging.
+            # ctx.req.log(str(selection))
             # build URL
             urlstring = selection_to_URL(selection, with_columns=True)
 
@@ -74,6 +81,9 @@ def searchform(things, orderby):
             if 'ObsLogsOnly' in formdata.keys():
                 # ObsLogs Only search
                 ctx.resp.redirect_to('/obslogs' + urlstring)
+            elif 'ProgramsOnly' in formdata.keys():
+                # Program info only search
+                ctx.resp.redirect_to('/programs' + urlstring)
             else:
                 # Regular data search
                 # clears formdata, refreshes page with updated selection from form
@@ -97,6 +107,7 @@ def searchform(things, orderby):
     template_args = dict(
         server_title = fits_servertitle,
         title_suffix = title_suffix,
+        archive_style = use_as_archive,
         thing_string = thing_string,
         args_string  = args_string,
         updated      = updateform(selection),
@@ -180,7 +191,7 @@ def updateform(selection):
             elif value in ('High_Background', 'Medium_Background', 'Low_Background'):
                 # NIRI readmode
                 dct['niri_readmode'] = value
-            elif value in ('Bright', 'Medium', 'Faint'):
+            elif value in ('Bright_Object', 'Medium_Object', 'Faint_Object'):
                 # NIFS readmode
                 dct['nifs_readmode'] = value
             elif value in ('Very_Bright_Objects', 'Bright_Objects', 'Faint_Objects', 'Very_Faint_Objects'):
@@ -286,21 +297,43 @@ def nameresolver(resolver, target):
     A name resolver proxy. Pass it the resolver and object name
     """
 
+    resp = get_context().resp
+    resp.content_type = 'application/json'
+
     urls = {
         'simbad': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/S?',
         'ned': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/N?',
         'vizier': 'http://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-ox/V?'
     }
 
-    if resolver not in urls.keys():
-        get_context().resp.status = Return.HTTP_NOT_ACCEPTABLE
+    try:
+        url = urls[resolver] + target
+
+        with contextlib.closing(urllib.urlopen(url)) as urlfd:
+            xml = urllib.urlopen(url).read()
+            doc = minidom.parseString(xml)
+            info = doc.getElementsByTagName("INFO")
+            if info and ('nothing found' in info[0].childNodes[0].nodeValue.lower()):
+                msg = {'success': False, 'message': 'Object not found' }
+            else:
+                ra = float(doc.getElementsByTagName('jradeg')[0].childNodes[0].wholeText)
+                dec = float(doc.getElementsByTagName('jdedeg')[0].childNodes[0].wholeText)
+                msg = {'success': True, 'ra': ra, 'dec': dec}
+    except KeyError:
+        resp.status = Return.HTTP_NOT_ACCEPTABLE
         return
+    except ExpatError:
+        msg = {'success': False, 'message': "Got corrupted information from the name resolver"}
+    except IndexError:
+        msg = {'success': False, 'message': "The name resolver returned information in an unknown format"}
+    except Exception as e:
+        try:
+            message = e.strerror.strerror
+        except AttributeError:
+            message = str(e)
+        msg = {'success': False, 'message': message}
+    resp.append_json(msg)
 
-    url = urls[resolver] + target
-
-    urlfd = urllib.urlopen(url)
-    get_context().resp.append(urlfd.read())
-    urlfd.close()
 
 # DATA FOR THE TEMPLATES
 
@@ -419,9 +452,9 @@ dropdown_options = {
          ("Faint_Objects", "Faint Objects"),
          ("Very_Faint_Objects", "Very Faint Objects")],
     "nifs_readmode_options":
-        [("Bright", "Bright"),
-         ("Medium", "Medium"),
-         ("Faint", "Faint")],
+        [("Bright_Object", "Bright Object"),
+         ("Medium_Object", "Medium Object"),
+         ("Faint_Object", "Faint Object")],
     "nas_options":
         [("NodAndShuffle", "Nod &amp; Shuffle"),
          ("Classic", "Classic")],
