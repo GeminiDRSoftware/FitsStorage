@@ -16,7 +16,7 @@
     <label>Program Title:</label>
     <input type="text" placeholder="(leave empty for Any)" name="ProgramText" value="{{ updated.ProgramText }}"/>
     <span class="help">(no punctuation; separate with spaces)
-        <span class="helpright">Matches all words. Write <b>!word</b> to reject results that contain it</span>
+        <span class="helpright">Text search the program Title. Matches all words. Write <b>!word</b> to reject results that contain it</span>
     </span><br>
 
     <label>Target Name:</label>
@@ -428,7 +428,7 @@
 {{ generate_option_list(nifs_disp_options, updated.disperser, updated.inst == 'NIFS') }}
     </select>
     <span class="help">(help)
-        <span class="helpleft">Help Text</span>
+        <span class="helpleft">Select a NIFS disperser</span>
     </span><br>
 
     <label>Mask:</label><select id="nifs_mask" class="ddw inst_clearable" name="focal_plane_mask">
@@ -436,7 +436,7 @@
 {{ generate_option_list(nifs_mask_options, updated.focal_plane_mask, updated.inst == 'NIFS') }}
     </select>
     <span class="help">(help)
-        <span class="helpleft">Help Text</span>
+        <span class="helpleft">Select a NIFS Focal Plane Mask</span>
     </span><br>
     </div>
 
@@ -456,7 +456,7 @@
 {{ generate_option_list(nifs_readmode_options, updated.nifs_readmode) }}
     </select>
     <span class="help">(help)
-        <span class="helpleft">Help Text</span>
+        <span class="helpleft">Select a NIFS Readmode</span>
     </span><br><br>
     </div>
 </div>
@@ -625,6 +625,9 @@
 <input type="reset" value="Reset to previous search" />
 <input type="button" value="Start Over" onclick="window.location='/searchform'" />
 <input type="submit" name="ObsLogsOnly" value="Search ObsLogs Only" />
+{%- if archive_style -%}
+<input type="submit" name="ProgramsOnly" value="Search Programs Only" />
+{%- endif -%}
 <span class="help">(help on buttons)
-    <span class="helpright">Search - search as per the form fields.<br>Reset to previous search - resets the form to the settings from when you last hit search.<br>Start Over - resets the form to the blank initial defaults.<br>Search ObsLogs Only - Search for ObsLogs by Date and/or Program ID.</span></span>
+    <span class="helpright"><dl><dt>Search</dt><dd> - Search as per the form fields.</dd><dt>Reset to previous search</dt><dd> - Resets the form to the settings from when you last hit search.</dd><dt>Start Over</dt><dd> - Resets the form to the blank initial defaults.</dd><dt>Search ObsLogs Only</dt><dd> - Search for ObsLogs by Date and/or Program ID.</dd><dt>Search Programs Only</dt><dd> - Search for Science Program and Publication Info by Program ID and/or Program Title words.</dd></dl></span></span>
 <br></div>
