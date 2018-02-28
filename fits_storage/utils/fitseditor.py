@@ -1,4 +1,4 @@
-import pyfits as pf
+import astropy.io.fits as pf
 import os
 
 def compare_cards(path, card_dict, ext=0):

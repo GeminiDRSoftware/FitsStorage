@@ -17,7 +17,7 @@ import gemini_instruments
 from datetime import datetime, timedelta
 from StringIO import StringIO
 import sys
-import pyfits as pf
+import astropy.io.fits as pf
 import logging
 
 FACILITY_INSTRUME = {'bHROS', 'F2', 'GMOS-N', 'GMOS-S', 'GNIRS', 'GPI', 'GSAOI', 'NICI', 'NIFS', 'NIRI'}
@@ -161,7 +161,10 @@ class AstroDataEvaluator(Evaluator):
 
     def evaluate(self, ad_object):
         try:
-            return super(AstroDataEvaluator, self).evaluate(ad_object.hdulist, ad_object.tags)
+            # Opens the raw FITS file and sends it to 
+            return super(AstroDataEvaluator, self).evaluate(
+                    pf.open(ad_object.path, memmap=True, do_not_scale_image_data=True, mode='readonly'),
+                    ad_object.tags)
         except NotGeminiData:
             return Result(False, 'NOTGEMINI', "This doesn't look at all like data produced at Gemini")
         except BadData:

@@ -34,7 +34,7 @@ from time import strptime
 from ..fits_storage_config import validation_def_path
 
 import yaml
-import pyfits as pf
+import astropy.io.fits as pf
 
 import logging
 
