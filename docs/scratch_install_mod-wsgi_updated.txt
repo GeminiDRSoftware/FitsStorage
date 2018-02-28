@@ -1,0 +1,305 @@
+Instructions to set up and install mod_wsgi for Apache
+------------------------------------------------------
+
+Front Matter
+============
+-- You will need a user account on a machine to be designated as a fits server.
+   For Gemini-South, we do dev on a fits development server, sbffits-dev-lv1.
+   Your user account will need `sudo all` authorities. ITS will need to set up
+   this account for you.
+
+-- You will also need to be set up to use the fitsdata account on these servers.
+   The fitsdata account will have very limited privileges -- this is the account
+   Apache uses in the run environment.
+
+-- I would recommend having two windows open, one logged in as fitsdata and one as
+   your own account (w/ sudo). That way, it will be easy to switch from one to
+   the other as the instructions will specify. (Some things will need sudo authorities,
+   others will not).
+
+As these instruction pertain to a "clean install" on a CentOS7 machine, a number of
+packages need to be installed (system install).
+
+Log in to *your* account (with sudo priveleges) and begin on a command line:
+
+    $ sudo yum -y install httpd httpd-devel mod_ssl openssl
+    $ sudo yum -y install httpd postgresql postgresql-server postgresql-devel
+
+
+On AWS CENTOS(7)
+================
+Install EPEL repository (included by default on ITS config)
+
+    $ sudo yum install -y epel-release
+
+  Also need:
+  ---------
+
+    $ sudo yum -y install gcc gcc-c++ python-pip python-devel gcc-gfortran cfitsio-devel
+
+  Some python package installation with pip
+  -----------------------------------------
+
+    $ sudo pip install --upgrade pip
+    $ sudo pip install mod_wsgi==4.4.21
+    $ sudo pip install psycopg2
+    $ sudo pip install sqlalchemy
+    $ sudo pip install pyyaml
+    $ sudo pip install jinja2
+    $ sudo pip install pyfits
+    $ sudo pip install pywcs
+    $ sudo pip install dateutils
+    $ sudo pip install requests
+    $ sudo pip install matplotlib
+    $ sudo pip install scipy
+    $ sudo pip install pandas
+    $ sudo pip install astropy
+
+
+  - (Need for discussion about anaconda package man. Does having anaconda matter
+    for Apache? or does everything need to be installed at system level? My guess
+    is the latter.)
+
+  # If using s3 (for dev purposes, probably not necessary)
+    ----
+    $ sudo pip install boto3
+
+
+Set up the 'fitsdata' account
+=============================
+    $ sudo /usr/sbin/groupadd -g 5179 fitsdata
+    $ sudo /usr/sbin/useradd -c 'FITS data' -u 5179 -g 5179 fitsdata
+    $ sudo passwd fitsdata
+
+    # If this is a gemini fits server, edit /etc/group and add fitsdata
+    $ sudo  vi(or emacs) /etc/group
+    geminidata:x:502:fitsdata
+
+
+Set up FitsStorage and Dragons (ne: gemini_python)
+==================================================
+    
+    $ sudo mkdir /opt/FitsStorage
+    $ sudo chown fitsdata:fitsdata /opt/FitsStorage/
+
+    $ sudo mkdir /opt/gemini_python
+    $ sudo chown <myaccount> /opt/gemini_python
+    $ cd /opt/gemini_python
+    $ svn checkout http://chara.hi.gemini.edu/svn/DRSoftware/gemini_python/trunk .
+
+  If installing DRAGONS (as dragons), same as above but change the name and get DRAGONS from GitHub:
+ 
+    $ sudo mkdir /opt/dragons
+    $ sudo chown <myaccount> /opt/dragons
+    $ cd /opt/dragons
+    $ git clone https://github.com/GeminiDRSoftware/DRAGONS.git
+    
+  Now, under /opt/ you should have directories with owners that look like,
+
+    drwxr-xr-x  11 fitsdata 4096 Feb  8 16:24 FitsStorage/
+    drwxr-xr-x  13 kanderso 4096 Feb  7 17:45 gemini_python/
+
+  Or, if DRAGONS:
+
+    drwxr-xr-x  11 fitsdata 4096 Feb  8 16:24 FitsStorage/
+    drwxr-xr-x  13 kanderso 4096 Feb  7 17:45 dragons/
+
+
+  In the 'fitsdata' account install FitsStorage:
+  =============================================
+    $ cd /opt/FitsStorage
+    $ svn checkout http://scisoft/svn/FitsStorage/trunk .
+
+
+Setup the web server
+====================
+Your sudo account will be used to set up the web server.
+
+The following is a shell "install script" that will provide necessary
+configuration for the Apache server using mod_wsgi. Installed with mod_wsgi-express.
+You can copy and paste this into a file (suggestion: > /tmp/install_script.sh)
+and run it.
+
+(Modify the variables at the beginning of the following script if needed)
+----
+
+    # NOTE!!! IF YOU MODIFY THE FOLLOWING, THE CHANGES NEED TO BE TRANSLATED TO
+    # /etc/systemd/system/fits-httpd.service!!!!!!!!!!!
+
+    FITSSTORAGE_ROOT=/opt/FitsStorage
+    MODWSGI_DIR=/opt/modwsgi-default
+
+    # Explanation of options that we are setting in the MODWSGI_OPTS
+    # --server-root                  Where to store the server setup information
+    # --access-log                   Enable access log (off by default)
+    # --url-alias                    Alias URL for static files (one per alias)
+    # --python-path                  Additional content for PYTHONPATH
+
+    MODWSGI_OPTS="\
+    --server-root $MODWSGI_DIR \
+    --port 80 \
+    --user apache --group apache \
+    --access-log \
+    --url-alias /static $FITSSTORAGE_ROOT/htmldocroot \
+    --url-alias /favicon.ico $FITSSTORAGE_ROOT/htmldocroot/favicon.ico \
+    --url-alias /robots.txt $FITSSTORAGE_ROOT/htmldocroot/robots.txt \
+    --python-path $FITSSTORAGE_ROOT \
+    "
+
+    mkdir ${MODWSGI_DIR}
+
+    # The extra argument is the WSGI entry point
+    mod_wsgi-express setup-server $MODWSGI_OPTS $FITSSTORAGE_ROOT/fits_storage/wsgihandler.py
+
+    # And set let apache handle that dir from now on
+    # TODO: Rethink this; most probably it's better to have root having permissions
+    #       over everything that apache doesn't need to touch
+    chown -R apache:apache $MODWSGI_DIR
+---
+EOF
+
+
+  Run the script to set up mod_wsgi
+  ---------------------------------
+  
+    $ sudo bash /tmp/install_script.sh
+
+  If you have written the file somewhere else, execute that, of course.
+
+  To run the web server from systemd
+  ----------------------------------
+
+    $ sudo cp /opt/FitsStorage/otherfiles/etc_systemd_system_fits-httpd.service /etc/systemd/system/fits-httpd.service
+    $ sudo cp /opt/FitsStorage/otherfiles/etc-sysconfig-httpd /etc/sysconfig/httpd
+
+
+  Edit the config file generated by the install_script.sh
+  (/opt/modwsgi-default/httpd.conf) and add these lines by the end of the
+  "Alias" list. Then edit to File * for permissions:
+  -----------------------------------
+
+    AliasMatch '/(.*\.html)' '/opt/FitsStorage/htmldocroot/$1'
+    AliasMatch '/(.*\.css)' '/opt/FitsStorage/htmldocroot/$1'
+    AliasMatch '/(.*\.js)' '/opt/FitsStorage/htmldocroot/$1'
+
+  Which should look like:
+  ----------------------
+    [...]
+    Alias '/favicon.ico' '/opt/FitsStorage/htmldocroot/favicon.ico'
+
+    <Directory '/opt/FitsStorage/htmldocroot'>
+    <Files '*'>
+    	   Require all granted
+    </Files>
+    </Directory>
+
+    AliasMatch '/(.*\.html)' '/opt/FitsStorage/htmldocroot/$1'
+    AliasMatch '/(.*\.css)' '/opt/FitsStorage/htmldocroot/$1'
+    AliasMatch '/(.*\.js)' '/opt/FitsStorage/htmldocroot/$1'
+
+    <IfDefine MOD_WSGI_VERIFY_CLIENT>
+    <Location '/'>
+    SSLVerifyClient require
+    SSLVerifyDepth 1
+    </Location>
+    </IfDefine>
+    [ ... ]
+
+
+
+Set Up and Start Postgres
+=========================
+  Still within your sudo user account:
+
+    $ sudo mkdir /data/pgsql_data
+    $ sudo chown postgres:postgres /data/pgsql_data
+    $ sudo cp /lib/systemd/system/postgresql.service /etc/systemd/system/
+
+  -- Edit the postgresql.service file just placed in /etc/systemd/system/
+     and add the PGDATA environment var:
+    
+    $ sudo vi (emacs) /etc/systemd/system/postgresql.service
+    
+    Environment=PGDATA=/data/pgsql_data
+
+    (exit)
+
+    $ sudo systemctl daemon-reload
+    $ sudo postgresql-setup initdb
+    $ sudo systemctl start postgresql.service
+    $ sudo su - postgres
+    $ /usr/bin/createuser --no-superuser --no-createrole --createdb fitsdata
+    $ /usr/bin/createuser --no-superuser --no-createrole --no-createdb apache
+
+  # Edit the postgresql configuration and set the effective cache size
+    $ emacs (vi) /data/pgsql_data/postgresql.conf
+    
+    #shared_buffers = 256MB
+    # 25% of memory if memory > 1GB
+
+    effective_cache_size = 8000MB
+
+  # save the file and exit.
+
+  Set up log and backup directories
+  =================================
+    $ sudo mkdir /data/logs
+    $ sudo chown fitsdata /data/logs
+    $ sudo mkdir /data/backups
+    $ sudo chown fitsdata /data/backups
+    $ sudo mkdir /data/upload_staging
+    $ sudo chown fitsdata /data/upload_staging
+    $ sudo chmod oug+rwx /data/upload_staging
+    $ sudo mkdir /data/z_staging
+    $ sudo chown fitsdata /data/z_staging
+    
+  # if using s3
+    $ sudo mkdir /data/s3_staging
+    $ sudo chown fitsdata /data/s3_staging
+
+  # apache needs access to this to download preview images now
+
+    $ sudo chmod oug+rw /data/s3_staging
+
+
+  Start Postgresql
+  ================
+
+    $ sudo systemctl restart postgresql.service
+
+  # Need to set postgresql and httpd to start at boot
+    $ sudo systemctl enable postgresql.service
+    $ sudo systemctl enable fits-httpd.service
+
+
+# Now get a shell as fitsdata
+
+    $ cd /opt/FitsStorage/fits_storage
+    $ emacs (vi) fits_storage_config.py
+    # Set things up as appropriate       - !!! This needs elaboration vis-a-vis "appropriate." !!!
+
+    (save and exit)
+
+  # Create db and set up tables.
+    ---------------------------
+    $ /usr/bin/createdb fitsdata
+    $ python scripts/create_tables.py
+
+
+# OK, should now be good to go.
+
+# Check with ITS if you need a whitelisted local mail relay on it
+# Check with ITS that the development/operations status of the machine
+
+# To run jobs from systemd
+==========================
+    $ sudo cp /opt/FitsStorage/otherfiles/etc_systemd_system_fits-service_ingest_queue1.service /etc/systemd/system/fits-service_ingest_queue1.service
+    $ sudo systemctl start fits-service_ingest_queue1
+    $ sudo systemctl enable fits-service_ingest_queue1
+
+
+  Copy again and edit for siq2 if you want two of them
+  ----------------------------------------------------
+  # Same for 2 if you want it
+  # Repeat for export queue and api
+
