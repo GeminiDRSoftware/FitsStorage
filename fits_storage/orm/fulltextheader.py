@@ -25,7 +25,7 @@ class FullTextHeader(Base):
         """
         Populate the FullTextHeader data items
         """
-        # The fulltextheader object is unusual in that we directly pass the constructor a diskfile
+        # A fulltextheader object is unusual; directly pass the constructor a diskfile
         # object which may have an ad_object in it.
         if diskfile.ad_object is not None:
             ad = diskfile.ad_object
@@ -38,8 +38,12 @@ class FullTextHeader(Base):
 
         self.fulltext = ""
         self.fulltext += "Filename: " +  diskfile.filename + "\n\n"
-        self.fulltext += "AstroData Types: " +str(ad.tags) + "\n\n"
-        for i in range(len(ad.hdulist)):
-            self.fulltext += "\n--- HDU %s ---\n" % i
-            self.fulltext += unicode(repr(ad.hdulist[i].header), errors='replace')
+        self.fulltext += "AstroData Tags: " +str(ad.tags) + "\n\n"
+        self.fulltext += "\n--- PHU ---\n"    
+        self.fulltext += repr(ad.phu).strip()
+        for i in range(len(ad)):
+            self.fulltext += "\n--- HDU {} ---\n".format(i)
+            self.fulltext += unicode(repr(ad[i].hdr).strip(), errors='replace')
             self.fulltext += '\n'
+
+        return
