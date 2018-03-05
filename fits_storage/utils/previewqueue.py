@@ -1,12 +1,18 @@
 """
-This module provides various utility functions to
-manage and service the preview queue
+This module provides various utility functions to manage and service the preview
+queue.
+
 """
 import os
 import datetime
 from sqlalchemy import desc
 from sqlalchemy.orm.exc import ObjectDeletedError
 from sqlalchemy.orm import make_transient
+
+import numpy
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 from ..orm.diskfile import DiskFile
 from ..orm.preview import Preview
@@ -15,7 +21,11 @@ from ..orm.previewqueue import PreviewQueue
 from . import queue
 import functools
 
-from ..fits_storage_config import using_s3, storage_root, preview_path, z_staging_area
+from ..fits_storage_config import using_s3,
+from ..fits_storage_config import storage_root,
+from ..fits_storage_config import preview_path,
+from ..fits_storage_config import z_staging_area
+
 import bz2
 
 if using_s3:
@@ -24,11 +34,8 @@ if using_s3:
 
 import astrodata
 import gemini_instruments
-import numpy
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
+# ------------------------------------------------------------------------------
 def norm(data, percentile=0.3):
     """
     Normalize the data onto 0:1 using percentiles
@@ -67,7 +74,8 @@ class PreviewQueueUtil(object):
         try:
             iter(diskfiles)
         except TypeError:
-            # Didn't get an iterable; Assume we were passed a single diskfile or previewqueue
+            # Didn't get an iterable; Assume we were passed a single diskfile or
+            # previewqueue
             diskfiles = (diskfiles,)
 
         if make:
@@ -86,7 +94,7 @@ class PreviewQueueUtil(object):
                 if df.present == True:
                     self.make_preview(df)
                 else:
-                    self.l.info("Skipping non-present diskfile_id %d", df.id)
+                    self.l.info("Skipping non-present diskfile_id {}".format(df.id))
         else:
             # Add it to the preview queue
             for df in diskfiles:
@@ -98,13 +106,20 @@ class PreviewQueueUtil(object):
     def make_preview(self, diskfile):
         """
         Make the preview, given the diskfile.
-        This can be called from within service_ingest_queue ingest_file, in which case
-        - it will use the pre-fetched / pre-decompressed / pre-opened astrodata object if possible
-        - the diskfile object should contain an ad_object member which is an AstroData instance
-        It can also be called by service_preview_queue in which case we won't have that so it will
-        then either open the file or fetch it from S3 as appropriate etc.
-        """
+        This can be called from within service_ingest_queue ingest_file, in which 
+        case,
 
+        - it will use the pre-fetched / pre-decompressed / pre-opened astrodata 
+        object if possible.
+
+        - the diskfile object should contain an ad_object member which is an 
+        AstroData instance.
+
+        It can also be called by service_preview_queue in which case we won't 
+        have that so it will then either open the file or fetch it from S3 as 
+        appropriate etc.
+
+        """
         # Setup the preview file
         preview_filename = diskfile.filename + "_preview.jpg"
         if using_s3:
@@ -120,8 +135,8 @@ class PreviewQueueUtil(object):
         our_dfcc = False
         try:
             if our_dfado:
-                # We munge the filenames here to avoid file collisions in the staging directories
-                # with the ingest process
+                # We munge the filenames here to avoid file collisions in the
+                # staging directories with the ingest process.
                 munged_filename = diskfile.filename
                 munged_fullpath = diskfile.fullpath()
                 if using_s3:
@@ -178,10 +193,25 @@ class PreviewQueueUtil(object):
 
     def render_preview(self, ad, outfile):
         """
-        Pass in an astrodata object and a file-like outfile.
-        This function will create a jpeg rendering of the ad object
-        and write it to the outfile
+        Pass in an astrodata object and a file-like outfile. This function will
+        create a jpeg rendering of the ad object and write it to the outfile.
+
+        Parameters:
+        ----------
+        ad: <AstroData> 
+            An instance of AstroData
+
+        outfile: <str>
+           Filename to write.
+
+        Returns:
+        -------
+        <void>
+
         """
+        fmt1 = "Full Image extent is: {}:{}, {}:{}"
+        fmt2 = "Source Image extent is: {}:{}, {}:{}"
+        fmt3 = "Pasting: {}:{},{}:{} -> {}:{},{}:{}"
 
         if 'GMOS' in str(ad.instrument()) and len(ad['SCI']) > 1:
             # Find max extent in detector pixels
@@ -201,7 +231,7 @@ class PreviewQueueUtil(object):
             xmax /= int(ad.detector_x_bin())
             ymax /= int(ad.detector_y_bin())
 
-            self.l.debug("Full Image extent is: %d:%d, %d:%d", xmin, xmax, ymin, ymax)
+            self.l.debug(fmt1.format(xmin, xmax, ymin, ymax))
 
             # Make empty array for full image
             gap = 40 # approx chip gap in pixels
@@ -211,7 +241,7 @@ class PreviewQueueUtil(object):
             # Loop through ads, pasting them in. Do gmos bias and gain hack
             for add in ad['SCI']:
                 s_xmin, s_xmax, s_ymin, s_ymax = add.data_section().as_pytype()
-                self.l.debug("Source Image extent is: %d:%d, %d:%d", s_xmin, s_xmax, s_ymin, s_ymax)
+                self.l.debug(fmt2.format(s_xmin, s_xmax, s_ymin, s_ymax))
                 d_xmin, d_xmax, d_ymin, d_ymax = add.detector_section().as_pytype()
                 # Figure out which chip we are and add gap padding
                 # All the gmos chips ever have been 2048 pixels in X.
@@ -233,7 +263,8 @@ class PreviewQueueUtil(object):
                     gain = float(add.gain())
                 except:
                     gain = 1.0
-                self.l.debug("Pasting: %d:%d,%d:%d -> %d:%d,%d:%d", s_xmin, s_xmax, s_ymin, s_ymax, d_xmin, d_xmax, d_ymin, d_ymax)
+                self.l.debug(fmt3.format(s_xmin, s_xmax, s_ymin, s_ymax,
+                                         d_xmin, d_xmax, d_ymin, d_ymax))
                 full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
 
             full = norm(full)
@@ -248,10 +279,10 @@ class PreviewQueueUtil(object):
                 [x1, x2, y1, y2] = add.detector_section().as_pytype()
                 xoffset = 0 if x1 < 2000 else gap
                 yoffset = 0 if y1 < 2000 else gap
-                self.l.debug("x1 x2 y1 y2: %d %d %d %d", x1, x2, y1, y2)
+                self.l.debug("x1 x2 y1 y2: {} {} {} {}".format(x1, x2, y1, y2))
                 self.l.debug("xoffset yoffset", xoffset, yoffset)
-                self.l.debug("full shape: %s", full[y1+yoffset:y2+yoffset, x1+xoffset:x2+xoffset].shape)
-                self.l.debug("data shape: %s", add.data.shape)
+                self.l.debug("full shape: {}".format(full[y1+yoffset:y2+yoffset, x1+xoffset:x2+xoffset].shape))
+                self.l.debug("data shape: {}".format(add.data.shape))
                 full[y1+yoffset:y2+yoffset, x1+xoffset:x2+xoffset] = add.data
 
             full = norm(full)

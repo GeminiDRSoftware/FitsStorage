@@ -81,9 +81,10 @@ class CalibrationGMOS(Calibration):
             # (is not a specphot)
             # then it needs an arc, flat, spectwilight, specphot
             if ((self.descriptors['spectroscopy'] == True) and
-                    (self.descriptors['observation_type'] == 'OBJECT') and
-                    (self.descriptors['object'] != 'Twilight') and
-                    (self.descriptors['observation_class'] not in ['partnerCal', 'progCal'])):
+                (self.descriptors['observation_type'] == 'OBJECT') and
+                (self.descriptors['object'] != 'Twilight') and
+                (self.descriptors['observation_class'] not in ['partnerCal', 'progCal'])):
+
                 self.applicable.append('arc')
                 self.applicable.append('processed_arc')
                 self.applicable.append('flat')
@@ -92,16 +93,15 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('specphot')
 
 
-            # If it (is imaging) and
-            # (is Imaging focal plane mask) and
-            # (is an OBJECT) and (is not a Twilight) and
-            # is not acq or acqcal
-            # then it needs flats, processed_fringe
+            # If it (is imaging) and (is Imaging focal plane mask) and
+            # (is an OBJECT) and (is not a Twilight) and is not acq or acqcal
+            # ==> needs flats, processed_fringe
+
             if ((self.descriptors['spectroscopy'] == False) and
-                     (self.descriptors['focal_plane_mask'] == 'Imaging') and
-                     (self.descriptors['observation_type'] == 'OBJECT') and
-                     (self.descriptors['object'] != 'Twilight') and
-                     (self.descriptors['observation_class'] not in ['acq', 'acqCal'])):
+                (self.descriptors['focal_plane_mask'] == 'Imaging') and
+                (self.descriptors['observation_type'] == 'OBJECT') and
+                (self.descriptors['object'] != 'Twilight') and
+                (self.descriptors['observation_class'] not in ['acq', 'acqCal'])):
 
                 self.applicable.append('flat')
                 self.applicable.append('processed_flat')
@@ -111,10 +111,10 @@ class CalibrationGMOS(Calibration):
                 if self.descriptors['observation_class'] == 'science':
                     self.applicable.append('photometric_standard')
 
-            # If it (is nod and shuffle) and
-            # (is an OBJECT), then it needs a dark
+            # If it (is nod and shuffle) and (is an OBJECT), then it needs a dark
             if ((self.descriptors['nodandshuffle'] == True) and
-                    (self.descriptors['observation_type'] == 'OBJECT')):
+                (self.descriptors['observation_type'] == 'OBJECT')):
+
                 self.applicable.append('dark')
                 self.applicable.append('processed_dark')
 
@@ -127,20 +127,24 @@ class CalibrationGMOS(Calibration):
         """
         This method identifies the best GMOS ARC to use for the target
         dataset.
+
         """
         # Default 1 arc
         howmany = howmany if howmany else 1
         filters = []
-        # Must match focal_plane_mask only if it's not the 5.0arcsec slit in the target, otherwise any longslit is OK
+        # Must match focal_plane_mask only if it's not the 5.0arcsec slit in the
+        # target, otherwise any longslit is OK
         if self.descriptors['focal_plane_mask'] != '5.0arcsec':
             filters.append(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
         else:
             filters.append(Gmos.focal_plane_mask.like('%arcsec'))
 
         # The science amp_read_area must be equal or substring of the cal amp_read_area
-        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
-        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
-        # have a subset of the amps thus we must do the substring match
+        # If the science frame uses all the amps, then they must be a direct match as
+        # all amps must be there - this is more efficient for the DB as it will use
+        # the index. Otherwise, the science frame could have a subset of the amps
+        # thus we must do the substring match
+        
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
             filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         elif self.descriptors['amp_read_area'] is not None:
@@ -152,7 +156,7 @@ class CalibrationGMOS(Calibration):
                 .add_filters(*filters)
                 .match_descriptors(Header.instrument,
                                    Gmos.disperser,
-                                   Gmos.filter_name,    # Must match filter (from KR 20100423)
+                                   Gmos.filter_name,    # Must match filter (KR 20100423)
                                    Gmos.detector_x_bin, # Must match ccd binning
                                    Gmos.detector_y_bin)
                 .tolerance(central_wavelength=0.001)
@@ -170,19 +174,23 @@ class CalibrationGMOS(Calibration):
 
         filters = []
         # The science amp_read_area must be equal or substring of the cal amp_read_area
-        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
-        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
-        # have a subset of the amps thus we must do the substring match
+        # If the science frame uses all the amps, then they must be a direct match as
+        # all amps must be there - this is more efficient for the DB as it will use
+        # the index. Otherwise, the science frame could have a subset of the amps thus
+        # we must do the substring match
+        
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
             filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         elif self.descriptors['amp_read_area'] is not None:
                 filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        # Must match exposure time. For some strange reason, GMOS exposure times sometimes come out
-        # a few 10s of ms different between the darks and science frames
+        # Must match exposure time. For some strange reason, GMOS exposure times
+        # sometimes come out a few 10s of ms different between the darks and science
+        # frames
 
-        # K.Roth 20110817 told PH just make it the nearest second, as you can't demand non integer times anyway.
-        # Yeah, and GMOS-S ones come out a few 10s of *seconds* different - going to choose darks within 50 secs for now...
+        # K.Roth 20110817 told PH just make it the nearest second, as you can't
+        # demand non integer times anyway. Yeah, and GMOS-S ones come out a few 10s
+        # of *seconds* different - going to choose darks within 50 secs for now...
         # That's why we're using a tolerance to match the exposure time
 
         return (
@@ -210,10 +218,12 @@ class CalibrationGMOS(Calibration):
             howmany = 1 if processed else 50
 
         filters = []
-        # The science amp_read_area must be equal or substring of the cal amp_read_area
-        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
-        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
-        # have a subset of the amps thus we must do the substring match
+        # The science amp_read_area must be equal or substring of the cal
+        # amp_read_area If the science frame uses all the amps, then they must be a
+        # direct match as all amps must be there - this is more efficient for the DB
+        # as it will use the index. Otherwise, the science frame could have a subset
+        # of the amps thus we must do the substring match
+        
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
             filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         elif self.descriptors['amp_read_area'] is not None:
@@ -228,9 +238,12 @@ class CalibrationGMOS(Calibration):
                 filters.append(Gmos.overscan_trimmed == self.descriptors['overscan_trimmed'])
                 filters.append(Gmos.overscan_subtracted == self.descriptors['overscan_subtracted'])
             else:
-                # If the target frame is not prepared, then we don't know what thier procesing intentions are.
-                # we could go with the default (which is trimmed and subtracted).
-                # But actually it's better to just send them what we have, as we has a mishmash of both historically
+                # If the target frame is not prepared, then we don't know what
+                # their procesing intentions are. We could go with the default
+                # (which is trimmed and subtracted).
+                # But actually it's better to just send them what we have, as we has
+                # a mishmash of both historically
+                #
                 #filters.append(Gmos.overscan_trimmed == True)
                 #filters.append(Gmos.overscan_subtracted == True)
                 pass
@@ -277,9 +290,11 @@ class CalibrationGMOS(Calibration):
         crpa_thres = 0.0
         # QAP might not give us these for now. Remove this 'if' later when it does
         if self.descriptors.get('elevation') is not None:
-            # Spectroscopy flats also have to somewhat match telescope position for flexure, as follows
-            # this is from FitsStorage TRAC #43 discussion with KR 20130425. This code defines the
-            # thresholds and the conditions where they apply
+            # Spectroscopy flats also have to somewhat match telescope position
+            # for flexure, as follows this is from FitsStorage TRAC #43 discussion
+            # with KR 20130425. This code defines the thresholds and the conditions
+            # where they apply.
+
             try:
                 ifu = self.descriptors['focal_plane_mask'].startswith('IFU')
                 # For IFU, elevation must we within 7.5 degrees
@@ -296,10 +311,12 @@ class CalibrationGMOS(Calibration):
                 pass
             under_85 = self.descriptors['elevation'] < 85
 
-            # crpa*cos(el) must be within el_thres degrees, ie crpa must be within el_thres / cos(el)
-            # when el=90, cos(el) = 0 and the range is infinite. Only check at lower elevations
+            # crpa*cos(el) must be within el_thres degrees, ie crpa must be within
+            # el_thres / cos(el) when el=90, cos(el) = 0 and the range is infinite.
+            # Only check at lower elevations.
+            
             if under_85:
-                crpa_thres = el_thres / math.cos(math.radians(self.descriptors['elevation']))
+                crpa_thres = el_thres/math.cos(math.radians(self.descriptors['elevation']))
 
         return (
             self.get_query()
@@ -309,9 +326,10 @@ class CalibrationGMOS(Calibration):
             # Central wavelength is in microns (by definition in the DB table).
                 .tolerance(central_wavelength=0.001)
 
-            # Spectroscopy flats also have to somewhat match telescope position for flexure, as follows
-            # this is from FitsStorage TRAC #43 discussion with KR 20130425
-            # See the comments above to explain the thresholds
+            # Spectroscopy flats also have to somewhat match telescope position
+            # for flexure, as follows this is from FitsStorage TRAC #43 discussion with
+            # KR 20130425.  See the comments above to explain the thresholds.
+            
                 .tolerance(condition = ifu, elevation=el_thres)
                 .tolerance(condition = mos_or_ls, elevation=el_thres)
                 .tolerance(condition = under_85, cass_rotator_pa=crpa_thres)
@@ -338,15 +356,18 @@ class CalibrationGMOS(Calibration):
             Gmos.read_speed_setting,
             Gmos.gain_setting,
             Header.spectroscopy,
-            # Focal plane mask must match for imaging too... To avoid daytime thru-MOS mask imaging "flats"
+            # Focal plane mask must match for imaging too... To avoid daytime
+            # thru-MOS mask imaging "flats"
             Gmos.focal_plane_mask,
-            Gmos.disperser, # this can be common-mode as imaging is always 'MIRROR'
+            Gmos.disperser,     # this can be common-mode as imaging is always 'MIRROR'
             )
 
-        # The science amp_read_area must be equal or substring of the cal amp_read_area
-        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
-        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
-        # have a subset of the amps thus we must do the substring match
+        # The science amp_read_area must be equal or substring of the cal
+        # amp_read_area. If the science frame uses all the amps, then they must
+        # be a direct match as all amps must be there - this is more efficient for
+        # the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match.
+
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
             flat_descriptors = flat_descriptors + (Gmos.amp_read_area,)
         elif self.descriptors['amp_read_area'] is not None:
@@ -367,9 +388,11 @@ class CalibrationGMOS(Calibration):
 
         filters = []
         # The science amp_read_area must be equal or substring of the cal amp_read_area
-        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
-        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
-        # have a subset of the amps thus we must do the substring match
+        # If the science frame uses all the amps, then they must be a direct match as
+        # all amps must be there - this is more efficient for the DB as it will use
+        # the index. Otherwise, the science frame could have a subset of the amps thus
+        # we must do the substring match.
+        
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
             filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         elif self.descriptors['amp_read_area'] is not None:
@@ -400,10 +423,12 @@ class CalibrationGMOS(Calibration):
         howmany = howmany if howmany else 2
 
         filters = []
-        # The science amp_read_area must be equal or substring of the cal amp_read_area
-        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
-        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
-        # have a subset of the amps thus we must do the substring match
+        # The science amp_read_area must be equal or substring of the
+        # cal amp_read_area. If the science frame uses all the amps, then they
+        # must be a direct match as all amps must be there - this is more efficient
+        # for the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match.
+
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
             filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         elif self.descriptors['amp_read_area'] is not None:
@@ -440,7 +465,9 @@ class CalibrationGMOS(Calibration):
         howmany = howmany if howmany else 4
 
         filters = []
-        # Must match the focal plane mask, unless the science is a mos mask in which case the specphot is longslit
+        # Must match the focal plane mask, unless the science is a mos mask in
+        # which case the specphot is longslit.
+        
         if 'MOS' in self.types:
             filters.append(Gmos.focal_plane_mask.contains('arcsec'))
             tol = 0.10 # microns
@@ -448,10 +475,12 @@ class CalibrationGMOS(Calibration):
             filters.append(Gmos.focal_plane_mask == self.descriptors['focal_plane_mask'])
             tol = 0.05 # microns
 
-        # The science amp_read_area must be equal or substring of the cal amp_read_area
-        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
-        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
-        # have a subset of the amps thus we must do the substring match
+        # The science amp_read_area must be equal or substring of the
+        # cal amp_read_area. If the science frame uses all the amps, then they must
+        # be a direct match as all amps must be there - this is more efficient for
+        # the DB as it will use the index. Otherwise, the science frame could
+        # have a subset of the amps thus we must do the substring match.
+
         if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
             filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         elif self.descriptors['amp_read_area'] is not None:
@@ -459,12 +488,14 @@ class CalibrationGMOS(Calibration):
 
         return (
             self.get_query()
-                # They are OBJECT partnerCal or progCal spectroscopy frames with target not twilight
+                # They are OBJECT partnerCal or progCal spectroscopy frames with
+                # target not twilight.
                 .raw().OBJECT().spectroscopy(True)
                 .add_filters(Header.observation_class.in_(['partnerCal', 'progCal']),
                              Header.object != 'Twilight',
                              *filters)
-                # Found lots of examples where detector binning does not match, so we're not adding those
+                # Found lots of examples where detector binning does not match,
+                # so we're not adding those
                 .match_descriptors(Header.instrument,
                                    Gmos.filter_name,
                                    Gmos.disperser)
@@ -510,8 +541,11 @@ class CalibrationGMOS(Calibration):
         return (
             self.get_query()
                 # They are MASK observation type
-                # The focal_plane_mask of the science file must match the data_label of the MASK file (yes, really...)
-                # Cant force an instrument match as sometimes it just says GMOS in the mask...
+                # The focal_plane_mask of the science file must match the
+                # data_label of the MASK file (yes, really...)
+                # Cant force an instrument match as sometimes it just says GMOS
+                # in the mask...
+            
                 .add_filters(Header.observation_type == 'MASK',
                              Header.data_label == self.descriptors['focal_plane_mask'],
                              Header.instrument.startswith('GMOS'))
