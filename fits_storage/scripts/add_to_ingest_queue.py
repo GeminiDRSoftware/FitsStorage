@@ -21,7 +21,7 @@ if using_s3:
 from argparse import ArgumentParser
 # ------------------------------------------------------------------------------
 parser = ArgumentParser()
-parser.add_argument("--file-re", action="store", type="string", dest="file_re",
+parser.add_argument("--file-re", action="store", type=str, dest="file_re",
             help="python regular expression string to select files. "
             "Special values are today, twoday, fourday, tenday twentyday "
             "to include only files from today, the last two days, the last "
@@ -45,13 +45,13 @@ parser.add_argument("--force_md5", action="store_true", dest="force_md5",
 parser.add_argument("--after", action="store", dest="after", default = None,
                     help="Ingest only after this datetime")
 
-parser.add_argument("--newfiles", action="store", type="int", dest="newfiles",
+parser.add_argument("--newfiles", action="store", type=int, dest="newfiles",
                     default=None, help="Only queue files modified in the last N days")
 
-parser.add_argument("--filename", action="store", type="string", dest="filename",
+parser.add_argument("--filename", action="store", type=str, dest="filename",
                     default=None, help="Just add this one filename to the queue")
 
-parser.add_argument("--listfile", action="store", type="string", dest="listfile",
+parser.add_argument("--listfile", action="store", type=str, dest="listfile",
                     default=None, help="Read filenames to add from this text file")
 
 options = parser.parse_args()
