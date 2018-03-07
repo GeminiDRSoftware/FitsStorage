@@ -167,7 +167,7 @@ with session_scope() as session:
                 logger.debug("Skipping {}: older than {}s".format(filename, newfiles_seconds))
                 continue
 
-        logger.info("Queueing for Ingest: ({}/{}): {}".format((i, n, filename)))
+        logger.info("Queueing for Ingest: ({}/{}): {}".format(i, n, filename))
         iq.add_to_queue(filename, path, force=options.force,
                         force_md5=options.force_md5, after=options.after)
 
