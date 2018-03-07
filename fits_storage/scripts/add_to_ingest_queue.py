@@ -1,52 +1,82 @@
-from fits_storage.orm import session_scope
-from fits_storage.fits_storage_config import storage_root, using_s3
-from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.utils.ingestqueue import IngestQueueUtil
+#! /usr/bin/env python
+#                                                                   fits_storage
+#
+#                                                         add_to_ingest_queue.py
+# ------------------------------------------------------------------------------
 import os
 import re
 import datetime
 import time
+
+from fits_storage.orm import session_scope
+from fits_storage.fits_storage_config import storage_root, using_s3
+from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.utils.ingestqueue import IngestQueueUtil
+
 if using_s3:
     from fits_storage.utils.aws_s3 import get_helper
     s3 = get_helper()
 
 # Option Parsing
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option("--file-re", action="store", type="string", dest="file_re", help="python regular expression string to select files by. Special values are today, twoday, fourday, tenday twentyday to include only files from today, the last two days, the last four days, or the last 10 days respectively (days counted as UTC days)")
-parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
-parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
-parser.add_option("--path", action="store", dest="path", default = "", help="Use given path relative to storage root")
-parser.add_option("--force", action="store_true", dest="force", default = False, help="Force re-ingestion of these files unconditionally")
-parser.add_option("--force_md5", action="store_true", dest="force_md5", default = False, help="Force checking of file change by md5 not just lastmod date")
-parser.add_option("--after", action="store", dest="after", default = None, help="ingest only after this datetime")
-parser.add_option("--newfiles", action="store", type="int", dest="newfiles", default = None, help="Only queue files that have been modified in the last N days")
-parser.add_option("--filename", action="store", type="string", dest="filename", default = None, help="Just add this one filename to the queue")
-parser.add_option("--listfile", action="store", type="string", dest="listfile", default = None, help="Read filenames to add from this text file")
+from argparse import ArgumentParser
+# ------------------------------------------------------------------------------
+parser = ArgumentParser()
+parser.add_argument("--file-re", action="store", type="string", dest="file_re",
+            help="python regular expression string to select files. "
+            "Special values are today, twoday, fourday, tenday twentyday "
+            "to include only files from today, the last two days, the last "
+            "four days, or the last 10 days respectively (days counted as UTC days)")
 
-options, args = parser.parse_args()
+parser.add_argument("--debug", action="store_true", dest="debug",
+                    help="Increase log level to debug")
+
+parser.add_argument("--demon", action="store_true", dest="demon",
+                    help="Run as a background demon, do not generate stdout")
+
+parser.add_argument("--path", action="store", dest="path", default = "",
+                    help="Use given path relative to storage root")
+
+parser.add_argument("--force", action="store_true", dest="force", default=False,
+                    help="Force re-ingestion of these files unconditionally")
+
+parser.add_argument("--force_md5", action="store_true", dest="force_md5",
+                    default=False, help="Force md5 file check, not just lastmod date")
+
+parser.add_argument("--after", action="store", dest="after", default = None,
+                    help="Ingest only after this datetime")
+
+parser.add_argument("--newfiles", action="store", type="int", dest="newfiles",
+                    default=None, help="Only queue files modified in the last N days")
+
+parser.add_argument("--filename", action="store", type="string", dest="filename",
+                    default=None, help="Just add this one filename to the queue")
+
+parser.add_argument("--listfile", action="store", type="string", dest="listfile",
+                    default=None, help="Read filenames to add from this text file")
+
+options = parser.parse_args()
 path = options.path
 
+# ------------------------------------------------------------------------------
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
 setdemon(options.demon)
 
 # Annouce startup
 now = datetime.datetime.now()
-logger.info("*********    add_to_ingest_queue.py - starting up at %s" % now)
+logger.info("*********    add_to_ingest_queue.py - starting up at {}".format(now))
 
 # Get a list of all the files in the datastore
 # We assume this is just one dir (ie non recursive) for now.
-
 gotfiles = False
 
 if options.filename:
-    logger.info("Adding single file: %s" % options.filename)
+    logger.info("Adding single file: {}".format(options.filename))
     files = [options.filename]
     gotfiles = True
 
 if options.listfile:
-    logger.info("Adding files from list file: %s" % options.listfile)
+    logger.info("Adding files from list file: {}".format(options.listfile))
     with open(options.listfile) as f:
         filesread = f.readlines()
     files = []
@@ -60,7 +90,7 @@ if gotfiles is False:
         filelist = s3.key_names()
     else:
         fulldirpath = os.path.join(storage_root, path)
-        logger.info("Queueing files for ingest from: %s" % fulldirpath)
+        logger.info("Queueing files for ingest from: {}".format(fulldirpath))
         filelist = os.listdir(fulldirpath)
 
     logger.info("Got file list.")
@@ -102,19 +132,21 @@ logger.info("Checking for tmp files")
 def skip_file(filename):
     return (
         tmpcre.search(filename)
-     or previewcre.search(filename)
-     or not (fitscre.search(filename) or obslogcre.search(filename) or miscfilecre.search(filename))
+        or previewcre.search(filename)
+        or not (fitscre.search(filename)
+                or obslogcre.search(filename)
+                or miscfilecre.search(filename))
      )
 
 for filename in files:
     if skip_file(filename):
-        logger.info("skipping tmp file: %s" % filename)
+        logger.info("skipping tmp file: {}".format(filename))
     else:
         thefiles.append(filename)
 
 n = len(thefiles)
 # print what we're about to do, and give abort opportunity
-logger.info("About to scan %d files" % n)
+logger.info("About to scan {} files".format(n))
 if n > 5000:
     logger.info("That's a lot of files. Hit ctrl-c within 5 secs to abort")
     time.sleep(6)
@@ -132,9 +164,11 @@ with session_scope() as session:
             age = now - mtime
             age = age.total_seconds()
             if age > newfiles_seconds:
-                logger.debug("Skipping %s as it is older than %.1f seconds", filename, newfiles_seconds)
+                logger.debug("Skipping {}: older than {}s".format(filename, newfiles_seconds))
                 continue
-        logger.info("Queueing for Ingest: (%d/%d): %s" % (i, n, filename))
-        iq.add_to_queue(filename, path, force=options.force, force_md5=options.force_md5, after=options.after)
 
-logger.info("*** add_to_ingestqueue.py exiting normally at %s" % datetime.datetime.now())
+        logger.info("Queueing for Ingest: ({}/{}): {}".format((i, n, filename)))
+        iq.add_to_queue(filename, path, force=options.force,
+                        force_md5=options.force_md5, after=options.after)
+
+logger.info("*** add_to_ingestqueue.py exiting normally at {}".format(datetime.datetime.now()))

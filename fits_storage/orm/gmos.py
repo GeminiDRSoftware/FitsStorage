@@ -1,3 +1,7 @@
+#                                                                   fits_storage
+#
+#                                                                    orm.gmos.py
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean, Enum
 from sqlalchemy.orm import relation
@@ -6,6 +10,7 @@ from .header import Header
 
 from . import Base
 
+# ------------------------------------------------------------------------------
 # Enumerated column types
 READ_SPEED_SETTINGS = ['slow', 'fast']
 READ_SPEED_SETTING_ENUM = Enum(*READ_SPEED_SETTINGS, name='gmos_read_speed_setting')
@@ -13,10 +18,12 @@ READ_SPEED_SETTING_ENUM = Enum(*READ_SPEED_SETTINGS, name='gmos_read_speed_setti
 GAIN_SETTINGS = ['low', 'high']
 GAIN_SETTING_ENUM = Enum(*GAIN_SETTINGS, name='gmos_gain_setting')
 
+# ------------------------------------------------------------------------------
 class Gmos(Base):
     """
     This is the ORM object for the GMOS details.
     This is used for both GMOS-N and GMOS-S
+
     """
     __tablename__ = 'gmos'
 
@@ -27,7 +34,7 @@ class Gmos(Base):
     filter_name = Column(Text, index=True)
     detector_x_bin = Column(Integer, index=True)
     detector_y_bin = Column(Integer, index=True)
-    amp_read_area = Column(Text, index=True)
+    amp_read_area  = Column(Text, index=True)
     read_speed_setting = Column(READ_SPEED_SETTING_ENUM, index=True)
     gain_setting = Column(GAIN_SETTING_ENUM, index=True)
     focal_plane_mask = Column(Text, index=True)
@@ -55,7 +62,10 @@ class Gmos(Base):
             gain_setting = ad.gain_setting()
             if gain_setting in GAIN_SETTINGS:
                 self.gain_setting = gain_setting
-        except AssertionError:
+        except TypeError:
+            # likely caused by poor metadata.
+            pass
+        except Exception:
             # Likely an MDF file. There are no pixel extensions for
             # that, and we'll get a horrible exception trying to get
             # to those elements.
