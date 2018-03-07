@@ -100,7 +100,7 @@ signal.signal(signal.SIGTERM, nicehandler)
 # Announce startup
 st_msg  = "*********    service_ingest_queue.py - starting up at {}"
 end_msg = "*********    service_ingest_queue.py - exiting at %s"
-logger.info(msg.format(datetime.datetime.now()))
+logger.info(st_msg.format(datetime.datetime.now()))
 
 try:
     with PidFile(logger, options.name,
