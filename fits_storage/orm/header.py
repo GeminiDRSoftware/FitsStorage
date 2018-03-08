@@ -26,7 +26,7 @@ from ..gemini_metadata_utils import gemini_readspeed_settings
 from ..gemini_metadata_utils import gemini_welldepth_settings
 from ..gemini_metadata_utils import gemini_readmode_settings
 
-import pywcs
+from astropy import wcs as pywcs
 
 import astrodata               # For astrodata errors
 import gemini_instruments
@@ -61,6 +61,7 @@ REDUCTION_STATUS = {
 class Header(Base):
     """
     This is the ORM class for the Header table
+
     """
     __tablename__ = 'header'
 
@@ -366,7 +367,6 @@ class Header(Base):
             if gcal_lamp != 'None':
                 self.gcal_lamp = gcal_lamp
 
-
             # Set the reduction state
             # Note - these are in order - a processed_flat will have
             # both PREPARED and PROCESSED_FLAT in it's types.
@@ -390,6 +390,14 @@ class Header(Base):
 
             # Get the types list
             self.types = str(ad.tags)
+
+        except astrodata.Errors.DescriptorInfrastructureError:
+            # This happens anytime an eng file does not get identified as gemini data
+            pass
+
+        except:
+            # Something failed accessing the astrodata
+            raise
 
     def footprints(self, ad):
         retary = {}
