@@ -40,7 +40,7 @@ class FullTextHeader(Base):
         self.fulltext += "Filename: " +  diskfile.filename + "\n\n"
         self.fulltext += "AstroData Tags: " +str(ad.tags) + "\n\n"
         self.fulltext += "\n--- PHU ---\n"    
-        self.fulltext += repr(ad.phu).strip()
+        self.fulltext += repr(ad.phu).strip() + "\n"
         for i in range(len(ad)):
             self.fulltext += "\n--- HDU {} ---\n".format(i)
             self.fulltext += unicode(repr(ad[i].hdr).strip(), errors='replace')
