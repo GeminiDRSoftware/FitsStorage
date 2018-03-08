@@ -21,9 +21,9 @@ from ..orm.previewqueue import PreviewQueue
 from . import queue
 import functools
 
-from ..fits_storage_config import using_s3,
-from ..fits_storage_config import storage_root,
-from ..fits_storage_config import preview_path,
+from ..fits_storage_config import using_s3
+from ..fits_storage_config import storage_root
+from ..fits_storage_config import preview_path
 from ..fits_storage_config import z_staging_area
 
 import bz2

@@ -1,5 +1,8 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean, Date, Time, BigInteger, Enum
+from sqlalchemy import Integer, Text, DateTime
+from sqlalchemy import Numeric, Boolean, Date
+from sqlalchemy import Time, BigInteger, Enum
+
 from sqlalchemy.orm import relation
 
 import dateutil.parser
@@ -8,18 +11,29 @@ import types
 
 from . import Base
 from .diskfile import DiskFile
-from ..gemini_metadata_utils import ratodeg, dectodeg, dmstodeg, gemini_observation_type, gemini_telescope, gemini_observation_class, gemini_instrument
-from ..gemini_metadata_utils import GeminiProgram
-from ..gemini_metadata_utils import gemini_gain_settings, gemini_readspeed_settings, gemini_welldepth_settings, gemini_readmode_settings
 
-from astrodata import AstroData
+from ..gemini_metadata_utils import GeminiProgram
+
+from ..gemini_metadata_utils import ratodeg
+from ..gemini_metadata_utils import dectodeg
+from ..gemini_metadata_utils import dmstodeg
+from ..gemini_metadata_utils import gemini_observation_type
+from ..gemini_metadata_utils import gemini_telescope
+from ..gemini_metadata_utils import gemini_observation_class
+from ..gemini_metadata_utils import gemini_instrument
+from ..gemini_metadata_utils import gemini_gain_settings
+from ..gemini_metadata_utils import gemini_readspeed_settings
+from ..gemini_metadata_utils import gemini_welldepth_settings
+from ..gemini_metadata_utils import gemini_readmode_settings
+
 import pywcs
 
-import astrodata # For astrodata errors
+import astrodata               # For astrodata errors
 import gemini_instruments
 
 from ..gemini_metadata_utils import obs_types, obs_classes, reduction_states
 
+# ------------------------------------------------------------------------------
 # Replace spaces etc in the readmodes with _s
 gemini_readmode_settings = [i.replace(' ', '_') for i in gemini_readmode_settings]
 
@@ -43,6 +57,7 @@ REDUCTION_STATUS = {
     'SCIENCE': 'PROCESSED_SCIENCE',
 }
 
+# ------------------------------------------------------------------------------
 class Header(Base):
     """
     This is the ORM class for the Header table
@@ -123,8 +138,8 @@ class Header(Base):
         Uses the AstroData object to access the file.
         """
 
-        # The header object is unusual in that we directly pass the constructor a diskfile
-        # object which may have an ad_object in it.
+        # The header object is unusual in that we directly pass the constructor
+        # a diskfile object which may have an ad_object in it.
         if diskfile.ad_object is not None:
             ad = diskfile.ad_object
         else:
@@ -214,12 +229,14 @@ class Header(Base):
             self.requested_wv = ad.requested_wv()
             self.requested_bg = ad.requested_bg()
 
-            # Knock illegal characters out of filter names. eg NICI %s. Spaces to underscores.
+            # Knock illegal characters out of filter names. eg NICI %s.
+            # Spaces to underscores.
             filter_string = ad.filter_name(pretty=True)
             if filter_string:
                 self.filter_name = filter_string.replace('%', '').replace(' ', '_')
 
-            # NICI exposure times are a pain, because there's two of them... Except they're always the same
+            # NICI exposure times are a pain, because there's two of them...
+            # Except they're always the same.
             if self.instrument != 'NICI':
                 exposure_time = ad.exposure_time()
             else:
@@ -234,7 +251,8 @@ class Header(Base):
                 self.exposure_time = exposure_time
             
 
-            # Need to remove invalid characters in disperser names, eg gnirs has slashes
+            # Need to remove invalid characters in disperser names, eg gnirs has
+            # slashes
             disperser_string = ad.disperser(pretty=True)
             if disperser_string:
                 self.disperser = disperser_string.replace('/', '_')
@@ -316,7 +334,8 @@ class Header(Base):
                 self.mode = 'IFP'
 
             # Set the derived QA state
-            # MDF (Mask) files don't have QA state - set to Pass so they show up as expected in search results
+            # MDF (Mask) files don't have QA state - set to Pass so they show up
+            # as expected in search results
             if self.observation_type == 'MASK':
                 self.qa_state = 'Pass'
             else:
@@ -371,14 +390,6 @@ class Header(Base):
 
             # Get the types list
             self.types = str(ad.tags)
-
-#        except astrodata.Errors.DescriptorInfrastructureError:
-#            # This happens anytime an eng file does not get identified as gemini data
-#            pass
-
-        except:
-            # Something failed accessing the astrodata
-            raise
 
     def footprints(self, ad):
         retary = {}
