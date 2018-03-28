@@ -35,11 +35,12 @@ parser.add_argument("--skip-fv", action="store_true", dest="skip_fv",
 parser.add_argument("--skip-wmd", action="store_true", dest="skip_wmd",
                     default=False, help="Do not run a wmd check on the files")
 
-parser.add_argument("--no-defer", action="store_true", dest="no_defer",
-                    default=False, help="Do not defer ingest of recently modified files")
+parser.add_argument("--no-defer", action="store_true", dest="no_defer", default=False,
+                    help="Do not defer ingest of recently modified files")
 
 parser.add_argument("--fast-rebuild", action="store_true", dest="fast_rebuild",
-                    default=False, help="Fast rebuild mode - skip duplication checking.")
+                    default=False,
+                    help="Fast rebuild mode - skip duplication checking.")
 
 parser.add_argument("--make-previews", action="store_true", dest="make_previews",
                   default=False, help="Make previews during ingest.")
@@ -50,7 +51,8 @@ parser.add_argument("--debug", action="store_true", dest="debug", default=False,
 parser.add_argument("--demon", action="store_true", dest="demon", default=False,
                     help="Run as a background demon, do not generate stdout")
 
-parser.add_argument("--name", action="store", dest="name", default="service_ingest_queue",
+parser.add_argument("--name", action="store", dest="name",
+                    default="service_ingest_queue",
                     help="Name for this process. Used in logfile and lockfile")
 
 parser.add_argument("--lockfile", action="store_true", dest="lockfile",
@@ -99,15 +101,16 @@ signal.signal(signal.SIGTERM, nicehandler)
 # ------------------------------------------------------------------------------
 # Announce startup
 st_msg  = "*********    service_ingest_queue.py - starting up at {}"
-end_msg = "*********    service_ingest_queue.py - exiting at %s"
+end_msg = "*********    service_ingest_queue.py - exiting at {}"
+exc_msg = "Exception ingesting file {}: {} : {} ... {}"
 logger.info(st_msg.format(datetime.datetime.now()))
 
 try:
     with PidFile(logger, options.name,
                  dummy=not options.lockfile) as pidfile, session_scope() as session:
         ingest_queue = IngestQueueUtil(session, logger, skip_fv=options.skip_fv,
-                                                        skip_md=options.skip_wmd,
-                                                        make_previews=options.make_previews)
+                                       skip_md=options.skip_wmd,
+                                       make_previews=options.make_previews)
         export_queue = ExportQueueUtil(session, logger)
 
         # Loop forever. loop is a global variable defined up top
@@ -130,7 +133,7 @@ try:
                         logger.info("Ingesting {} (id {})".format(iq.filename, iq.id))
                     else:
                         logger.info("Ingesting {}, ({} in queue)".format(iq.filename,
-                                                                  ingest_queue.length()))
+                                                            ingest_queue.length()))
 
                     # Check if the file was very recently modified or is locked,
                     # defer ingestion if it was
@@ -139,18 +142,22 @@ try:
                             continue
 
                     try:
-                        added_diskfile = ingest_queue.ingest_file(iq.filename, iq.path,
-                                                                  iq.force_md5, iq.force)
+                        added_diskfile = ingest_queue.ingest_file(iq.filename,
+                                                                  iq.path,
+                                                                  iq.force_md5,
+                                                                  iq.force)
+
                         # Now we also add this file to our export list if we have
                         # downstream servers and we did add a diskfile
                         if added_diskfile:
                             for destination in export_destinations:
-                                export_queue.add_to_queue(iq.filename,iq.path,destination)
+                                export_queue.add_to_queue(iq.filename, iq.path,
+                                                          destination)
                     except:
                         logger.info("Problem Ingesting File - Rolling back")
-                        logger.error("Exception ingesting file {}: {} : {} ... {}".format(
-                            iq.filename, sys.exc_info()[0], sys.exc_info()[1],
-                            traceback.format_tb(sys.exc_info()[2])))
+                        logger.error(exc_msg.format(iq.filename, sys.exc_info()[0],
+                                                    sys.exc_info()[1],
+                                            traceback.format_tb(sys.exc_info()[2])))
                         
                         # We leave inprogress as True here, because if we set it
                         # back to False, we get immediate retry and rapid failures
@@ -158,8 +165,8 @@ try:
 
                         # Recover the session to a working state and log the error
                         # to the database.
-                        # Do it here just in case the exception is a KeyboardInterrupt or
-                        # OperationalError (see outer except blocks)
+                        # Do it here just in case of a KeyboardInterrupt or
+                        # OperationalError (see outer except blocks).
                         ingest_queue.set_error(iq, *sys.exc_info())
                         raise
 
