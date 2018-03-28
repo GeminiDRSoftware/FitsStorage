@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                       fits_store.orm.obslog.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Date
 from sqlalchemy.orm import relation
@@ -11,15 +19,15 @@ from .diskfile import DiskFile
 
 OBSLOG_CRE = re.compile(r'^(20\d\d\d\d\d\d)_(.*)_obslog.txt')
 
+# ------------------------------------------------------------------------------
 class Obslog(Base):
     """
     This is the ORM class for the obslog table
     """
     __tablename__ = 'obslog'
 
-    
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
+    diskfile_id = Column(Integer,ForeignKey('diskfile.id'), nullable=False, index=True)
     diskfile = relation(DiskFile, order_by=id)
     program_id = Column(Text, index=True)
     date = Column(Date, index=True)

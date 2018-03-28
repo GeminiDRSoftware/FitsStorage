@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                     fits_store.orm.miscfile.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy.orm import relation
@@ -16,6 +24,7 @@ import io
 from base64 import urlsafe_b64encode as encode_string
 from base64 import urlsafe_b64decode as decode_string
 
+# ------------------------------------------------------------------------------
 class FileClash(Exception):
     pass
 
@@ -66,14 +75,14 @@ def miscfile_meta(path, urlencode=False):
 
 class MiscFile(Base):
     """
-    This ORM class is meant to store metadata associated to opaque files, that cannot be associated
-    to the search form, summary, etc..
-    """
+    This ORM class is meant to store metadata associated to opaque files, 
+    that cannot be associated to the search form, summary, etc..
 
+    """
     __tablename__ = 'miscfile'
 
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
+    diskfile_id = Column(Integer,ForeignKey('diskfile.id'), nullable=False, index=True)
     diskfile    = relation(DiskFile, order_by=id)
     release     = Column(DateTime, nullable=False)
     description = Column(Text)

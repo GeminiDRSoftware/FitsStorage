@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                    fits_store.orm.tapestuff.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, Boolean, BigInteger
 
@@ -5,10 +13,12 @@ from sqlalchemy.orm import relation, relationship
 
 from . import Base
 
+# ------------------------------------------------------------------------------
 class Tape(Base):
     """
-    This is the ORM object for the Tape table
-    Each row in this table represents a data tape
+    This is the ORM object for the Tape table.
+    Each row in this table represents a data tape.
+
     """
     __tablename__ = 'tape'
 
@@ -34,8 +44,9 @@ class Tape(Base):
 
 class TapeWrite(Base):
     """
-    This is the ORM object for the TapeWrite table
-    Each row in this table represents a tape writing session
+    This is the ORM object for the TapeWrite table.
+    Each row in this table represents a tape writing session.
+
     """
 
     __tablename__ = 'tapewrite'
@@ -59,12 +70,13 @@ class TapeWrite(Base):
 
 class TapeFile(Base):
     """
-    This is the ORM object for the TapeFile table
+    This is the ORM object for the TapeFile table.
+
     """
     __tablename__ = 'tapefile'
 
     id = Column(Integer, primary_key=True)
-    tapewrite_id = Column(Integer, ForeignKey('tapewrite.id'), nullable=False, index=True)
+    tapewrite_id = Column(Integer,ForeignKey('tapewrite.id'),nullable=False,index=True)
     tapewrite = relation(TapeWrite, order_by=id)
     filename = Column(Text, index=True)
     size = Column(Integer, index=True)
@@ -74,7 +86,8 @@ class TapeFile(Base):
 
 class TapeRead(Base):
     """
-    This is the ORM object for the TapeRead table
+    This is the ORM object for the TapeRead table.
+
     """
     __tablename__ = 'taperead'
 

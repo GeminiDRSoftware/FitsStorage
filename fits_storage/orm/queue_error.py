@@ -1,5 +1,14 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                  fits_store.orm.queue_error.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 """
-This is the queue_error ORM class
+This is the queue_error ORM class.
+
 """
 import datetime
 from sqlalchemy import Column
@@ -16,9 +25,11 @@ queues = (INGESTQUEUE, PREVIEWQUEUE, CALCACHEQUEUE, EXPORTQUEUE)
 
 QUEUE_ENUM = Enum(*queues, name='queue')
 
+# ------------------------------------------------------------------------------
 class QueueError(Base):
     """
-    This is the ORM object for the QueueError table
+    This is the ORM object for the QueueError table.
+
     """
     __tablename__ = 'queue_error'
 

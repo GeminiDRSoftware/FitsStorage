@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                         fits_store.orm.user.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text, Boolean, DateTime
 
@@ -11,11 +19,14 @@ from base64 import b32encode, standard_b64encode
 # Note, password hashing follows the scheme at
 # https://crackstation.net/hashing-security.htm
 
+# ------------------------------------------------------------------------------
 class User(Base):
     """
     This is the ORM class for the user table.
+
     """
-    # Calling the table user makes it awkward in raw sql as that's a reserved name and you have to quote it
+    # Calling the table user makes it awkward in raw sql as that's a reserved name
+    # and you have to quote it.
     __tablename__ = 'archiveuser'
 
     id = Column(Integer, primary_key=True)
@@ -51,6 +62,7 @@ class User(Base):
         Calls change_password to set the password to the given string
         This function also expires any existing reset_token and session cookie
         Calling code needs to call a session.commit() after calling this.
+
         """
         self.change_password(password)
         self._clear_reset_token()
@@ -58,9 +70,10 @@ class User(Base):
 
     def change_password(self, password):
         """
-        Takes an actual password string, generates a random salt, hashes the password with the salt,
-        updates the ORM with the new hash and the new salt.
+        Takes an actual password string, generates a random salt, hashes the 
+        password with the salt, updates the ORM with the new hash and the new salt.
         Calling code needs to call a session.commit() after calling this.
+
         """
         hashobj = sha256()
         self.salt = standard_b64encode(urandom(256))
@@ -73,9 +86,18 @@ class User(Base):
 
     def validate_password(self, candidate):
         """
-        Takes a candidate password string and checks if it's correct for this user
-        Returns True if it is correct
-        Returns False for wrong password
+        Takes a candidate password string and checks if it's correct for this user.
+
+        Parameters
+        ----------
+        candidate: <str>
+            candidate password string
+
+        Returns 
+        -------
+        <bool>  True if correct.
+                False if incorrect.
+
         """
         # If password hasn't been set yet
         if self.salt is None or self.password is None:
@@ -95,7 +117,8 @@ class User(Base):
         The token can be emailed to the user in a password reset link,
         and then checked for validity when they click the link.
         Don't forget to commit the session after calling this.
-        Returns the token for convenience
+        Returns the token for convenience.
+
         """
         self.reset_token = b32encode(urandom(32))
         self.reset_token_expires = datetime.utcnow() + timedelta(minutes=15)
@@ -121,20 +144,23 @@ class User(Base):
     def generate_cookie(self):
         """
         Generates a random session cookie string for this user.
-        Don't forget to commit the session after calling this
+        Don't forget to commit the session after calling this.
+
         """
         self.cookie = standard_b64encode(urandom(256))
 
     def log_in(self):
         """
         Call this when a user sucesfully logs in.
-        Returns the session cookie
-        Don't forget to commit the session afterwards
+        Returns the session cookie.
+        Don't forget to commit the session afterwards.
+
         """
         # Void any outstanding password reset tokens
         self._clear_reset_token()
         # Generate a new session cookie only if one doesn't exist
-        # (don't want to expire existing sessions just becaue we logged in from a new machine)
+        # (don't want to expire existing sessions just becaue we logged in from a
+        # new machine)
         if self.cookie is None:
             self.generate_cookie()
         return self.cookie
@@ -144,6 +170,7 @@ class User(Base):
         Call this function and commit the session to log out all instances
         of this user by nulling their cookie. Next time they sucessfully log in,
         a new cookie will be generated for them.
+
         """
         self.cookie = None
         return self.cookie

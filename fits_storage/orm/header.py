@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                       fits_store.orm.header.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy import Numeric, Boolean, Date
@@ -60,7 +68,7 @@ REDUCTION_STATUS = {
 # ------------------------------------------------------------------------------
 class Header(Base):
     """
-    This is the ORM class for the Header table
+    This is the ORM class for the Header table.
 
     """
     __tablename__ = 'header'

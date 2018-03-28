@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                     fits_store.orm.diskfile.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import BigInteger, Integer, Text, Boolean, DateTime
 from sqlalchemy.orm import relation
@@ -13,12 +21,16 @@ from .preview import Preview
 
 from ..fits_storage_config import storage_root, z_staging_area
 
+# ------------------------------------------------------------------------------
 class DiskFile(Base):
     """
-    This is the ORM class for the diskfile table. A diskfile represents an instance of a file on disk.
-    If the file is compressed (with bzip2) we keep some metadata on the actual file as is and also on the
-    decompressed data. file_md5 and file_size are those of the actual file. data_md5 and data_size correspond
-    to the uncompressed data if the file is compressed, and should be the same as for file_ for uncompressed files.
+    This is the ORM class for the diskfile table. A diskfile represents an
+    instance of a file on disk. If the file is compressed (with bzip2) we keep
+    some metadata on the actual file as is and also on the decompressed data. 
+    file_md5 and file_size are those of the actual file. data_md5 and data_size
+    correspond to the uncompressed data if the file is compressed, and should be
+    the same as for file_ for uncompressed files.
+
     """
     __tablename__ = 'diskfile'
 

@@ -1,6 +1,11 @@
-"""
-This is the ExportQueue ORM class
-"""
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                  fits_store.orm.exportqueue.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 import datetime
 from sqlalchemy import desc, func
 from sqlalchemy import Column, UniqueConstraint
@@ -8,9 +13,11 @@ from sqlalchemy import Integer, Boolean, Text, DateTime
 
 from . import Base
 
+# ------------------------------------------------------------------------------
 class ExportQueue(Base):
     """
-    This is the ORM object for the ExportQueue table
+    This is the ORM object for the ExportQueue table.
+
     """
     __tablename__ = 'exportqueue'
     __table_args__ = (
@@ -39,9 +46,11 @@ class ExportQueue(Base):
     @staticmethod
     def find_not_in_progress(session):
         """
-        Returns a query that will find the elements in the queue that are not in progress,
-        and that have no duplicates, meaning that there are not two entries where one of them
-        is being processed (it's ok if there's a failed one...)
+        Returns a query that will find the elements in the queue that are not 
+        in progress, and that have no duplicates, meaning that there are not two 
+        entries where one of them is being processed (it's ok if there's a failed 
+        one...)
+
         """
         # The query that we're performing here is equivalent to
         #

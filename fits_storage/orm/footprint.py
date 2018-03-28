@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                    fits_store.orm.footprint.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 
@@ -5,8 +13,10 @@ from . import Base
 
 class Footprint(Base):
     """
-    This is the ORM object for the Footprint table. Each row is a footprint derived from a WCS.
-    There can be several footprints (typically one per science extension) per header object
+    This is the ORM object for the Footprint table. Each row is a footprint
+    derived from a WCS. There can be several footprints (typically one per science
+    extension) per header object.
+
     """
     __tablename__ = 'footprint'
 

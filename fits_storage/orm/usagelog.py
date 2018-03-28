@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                     fits_store.orm.usagelog.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 import datetime
 
 from sqlalchemy import Column, ForeignKey
@@ -7,6 +15,7 @@ from sqlalchemy.orm import relation
 from . import Base
 from .user import User
 
+# ------------------------------------------------------------------------------
 class UsageLog(Base):
     """
     This is the ORM class for the usage log table
@@ -30,8 +39,9 @@ class UsageLog(Base):
 
     def __init__(self, ctx):
         """
-        Create an initial UsageLog instance from the information in the context
+        Create an initial UsageLog instance from the information in the context.
         Populates initial fields but does not add the instance to the session.
+
         """
         self.utdatetime = datetime.datetime.utcnow()
 
@@ -46,8 +56,11 @@ class UsageLog(Base):
 
     def set_finals(self, ctx):
         """
-        Sets the "final" values in the log object from the information in the context
-        Call this right at the end, after the request is basically finished
+        Sets the "final" values in the log object from the information in the
+        context.
+
+        Call this right at the end, after the request is basically finished.
+
         """
         self.bytes = ctx.resp.bytes_sent
         self.status = ctx.resp.status
@@ -65,7 +78,8 @@ class UsageLog(Base):
     @property
     def status_string(self):
         """
-        Returns a string with the http status and a human readable translation
+        Returns a string with the http status and a human readable translation.
+
         """
         html = str(self.status)
         if self.status == 200:

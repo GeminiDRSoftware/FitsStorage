@@ -1,5 +1,14 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                  fits_store.orm.ingestqueue.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 """
-This is the ingesqueue ORM class
+This is the ingesqueue ORM class.
+
 """
 import datetime
 from sqlalchemy import Column, UniqueConstraint
@@ -9,6 +18,7 @@ from sqlalchemy import desc, func
 from . import Base
 from ..utils.queue import sortkey_for_filename
 
+# ------------------------------------------------------------------------------
 class IngestQueue(Base):
     """
     This is the ORM object for the IngestQueue table
@@ -47,9 +57,11 @@ class IngestQueue(Base):
     @staticmethod
     def find_not_in_progress(session):
         """
-        Returns a query that will find the elements in the queue that are not in progress,
-        and that have no duplicates, meaning that there are not two entries where one of them
-        is being processed (it's ok if there's a failed one...)
+        Returns a query that will find the elements in the queue that are not 
+        in progress, and that have no duplicates, meaning that there are not two
+        entries where one of them is being processed (it's ok if there's a failed 
+        one...)
+
         """
         # The query that we're performing here is equivalent to
         #
@@ -85,5 +97,5 @@ class IngestQueue(Base):
             .delete()
 
     def __repr__(self):
-        return "<IngestQueue('%s', '%s')>" % (self.id, self.filename)
+        return "<IngestQueue('{}', '{}')>".format((self.id, self.filename))
 

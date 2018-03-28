@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                               fits_store.orm.fulltextheader.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 
@@ -9,12 +17,13 @@ from . import Base
 class FullTextHeader(Base):
     """
     This is the ORM object for the Full Text of the header.
-    We keep this is a separate table from Header to improve DB performance
+    We keep this is a separate table from Header to improve DB performance.
+
     """
     __tablename__ = 'fulltextheader'
 
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
+    diskfile_id = Column(Integer,ForeignKey('diskfile.id'), nullable=False, index=True)
     fulltext = Column(Text)
 
     def __init__(self, diskfile):
@@ -23,7 +32,8 @@ class FullTextHeader(Base):
 
     def populate(self, diskfile):
         """
-        Populate the FullTextHeader data items
+        Populate the FullTextHeader data items.
+
         """
         # A fulltextheader object is unusual; directly pass the constructor
         # a diskfile object which may have an ad_object in it.

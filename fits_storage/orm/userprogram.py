@@ -1,15 +1,25 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                  fits_store.orm.userprogram.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 
 from . import Base
 
+# ------------------------------------------------------------------------------
 class UserProgram(Base):
     """
-    This is the ORM class for the userprogram table.
-    This provides the association for which users are
-    associated with which programs, and should have
-    access to proprietary data from them.
+    This is the ORM class for the userprogram table. This provides the association
+    for which users are associated with which programs, and should have access to
+    proprietary data from them.
+
     This is a N:M mapping.
+
     """
     __tablename__ = 'userprogram'
 

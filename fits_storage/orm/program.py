@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                      fits_store.orm.program.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text, Boolean, Float, DateTime
 from sqlalchemy.sql import func
@@ -7,9 +15,11 @@ from sqlalchemy.ext.associationproxy import association_proxy
 
 from . import Base
 
+# ------------------------------------------------------------------------------
 class Program(Base):
     """
     This is the ORM class for storing program details fetched from the ODB.
+
     """
     __tablename__ = 'program'
 

@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                 fits_store.orm.previewqueue.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean
 from sqlalchemy import desc
@@ -5,10 +13,12 @@ from sqlalchemy import desc
 from . import Base
 from ..utils.queue import sortkey_for_filename
 
+# ------------------------------------------------------------------------------
 class PreviewQueue(Base):
     """
-    This is the ORM object for the previewqueue table
-    This forms a queue of files to generate previews for
+    This is the ORM object for the previewqueue table. 
+    This forms a queue of files to generate previews for.
+
     """
     __tablename__ = 'previewqueue'
 

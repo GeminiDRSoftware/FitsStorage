@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                         fits_store.orm.nici.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Enum
 from sqlalchemy.orm import relation
@@ -7,13 +15,15 @@ from .header import Header
 
 FOCAL_PLANE_MASKS = ['Clear_G5710', 'F0.22_G5715', 'F0.32_G5714', 'F0.46_G5713', 
                      'F0.65_G5712', 'F0.90_G5711', 'Grid_G5716']
+
 FOCAL_PLANE_MASK_ENUM = Enum(*FOCAL_PLANE_MASKS, name='nici_focal_plane_mask')
 
 DISPERSERS = ['Block', 'H-50/50_G5701', 'H-CH4-Dichroic_G5704', 
               'H/K-Dichroic_G5705', 'Mirror_G5702', 'Open']
+
 DISPERSER_ENUM = Enum(*DISPERSERS, name='nici_disperser')
 
-
+# ------------------------------------------------------------------------------
 class Nici(Base):
     """
     This is the ORM object for the NICI details

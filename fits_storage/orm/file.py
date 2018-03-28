@@ -1,15 +1,26 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                         fits_store.orm.file.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text
 from sqlalchemy.orm import relationship
 
 from . import Base
 
+# ------------------------------------------------------------------------------
 class File(Base):
     """
-    This is the ORM class for the file table. This is highest level most abstract concept of a 'File'
-    It's essentially just a unique label that other things - actual DiskFiles for example can reference.
-    The 'name' column here may not be the actual filename - the definitive filename is in the diskfile table,
+    This is the ORM class for the file table. This is highest level most abstract
+    concept of a 'File'. It's essentially just a unique label that other things
+    - actual DiskFiles for example can reference. The 'name' column here may not
+    be the actual filename - the definitive filename is in the diskfile table,
     when we have a compressed (bzip2) file, we trim off the .bz2 here.
+
     """
     __tablename__ = 'file'
 

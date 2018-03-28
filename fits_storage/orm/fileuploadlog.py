@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                fits_store.orm.fileuploadlog.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 import datetime
 
 from sqlalchemy import Column, ForeignKey
@@ -8,14 +16,16 @@ from . import Base
 from .usagelog import UsageLog
 from .diskfile import DiskFile
 
+# ------------------------------------------------------------------------------
 class FileUploadLog(Base):
     """
-    This is the ORM class for the fileupload log table
+    This is the ORM class for the fileupload log table.
+
     """
     __tablename__ = 'fileuploadlog'
 
     id = Column(Integer, primary_key=True)
-    usagelog_id = Column(Integer, ForeignKey('usagelog.id'), nullable=False, index=True)
+    usagelog_id = Column(Integer,ForeignKey('usagelog.id'), nullable=False, index=True)
     usagelog = relation(UsageLog, order_by=id)
 
     ut_transfer_start = Column(DateTime(timezone=False), index=True)

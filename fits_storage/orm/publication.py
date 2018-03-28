@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                  fits_store.orm.publication.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text, Boolean, DateTime, String
 from sqlalchemy.sql import func
@@ -7,10 +15,12 @@ from sqlalchemy.ext.associationproxy import association_proxy
 
 from . import Base
 
+# ------------------------------------------------------------------------------
 class Publication(Base):
     """
     This is the ORM class for storing publication details fetched from the
     librarian's database.
+
     """
     __tablename__ = 'publication'
 

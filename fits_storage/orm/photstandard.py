@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                 fits_store.orm.photstandard.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Numeric
 from sqlalchemy.orm import relation
@@ -7,7 +15,9 @@ from .footprint import Footprint
 
 class PhotStandard(Base):
     """
-    This is the ORM class for the table holding the standard star list for the instrument monitoring
+    This is the ORM class for the table holding the standard star list for the
+    instrument monitoring.
+
     """
     __tablename__ = 'photstandard'
 
@@ -31,7 +41,9 @@ class PhotStandard(Base):
 
 class PhotStandardObs(Base):
     """
-    This is the ORM class for the table detailing which standard stars are observed in which headers
+    This is the ORM class for the table detailing which standard stars are observed
+    in which headers.
+
     """
     __tablename__ = "photstandardobs"
 

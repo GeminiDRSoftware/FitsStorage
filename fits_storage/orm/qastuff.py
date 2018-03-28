@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                      fits_store.orm.qastuff.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean
 from sqlalchemy.orm import relationship
@@ -7,6 +15,7 @@ from . import Base
 
 import json
 
+# ------------------------------------------------------------------------------
 def float_or_None(val):
     try:
         return float(val)
@@ -23,9 +32,11 @@ class MetricDictMixin(object):
     def keys(self):
         return self.__class__._dct_fields
 
+# ------------------------------------------------------------------------------
 class QAreport(Base, MetricDictMixin):
     """
     This is the ORM class for a QA metric report.
+
     """
     __tablename__ = 'qareport'
 
@@ -77,6 +88,7 @@ class QAreport(Base, MetricDictMixin):
 
         return qa
 
+# ------------------------------------------------------------------------------
 class QAmetricIQ(Base, MetricDictMixin):
     """
     This is the ORM class for a QA IQ metric measurement
@@ -178,6 +190,7 @@ class QAmetricIQ(Base, MetricDictMixin):
 
         return iq
 
+# ------------------------------------------------------------------------------
 class QAmetricZP(Base, MetricDictMixin):
     """
     This is the ORM class for a QA ZP metric measurement
@@ -200,10 +213,9 @@ class QAmetricZP(Base, MetricDictMixin):
     comment = Column(Text)
 
     _dct_fields = (
-        'datalabel', 'filename', 'detector',
-        'mag', 'mag_std', 'cloud', 'cloud_std', 'photref', 'nsamples', 'percentile_band',
-        'comment'
-        )
+        'datalabel', 'filename', 'detector', 'mag', 'mag_std', 'cloud', 'cloud_std',
+        'photref', 'nsamples', 'percentile_band', 'comment'
+    )
 
     def __init__(self, qareport):
         self.qareport_id = qareport.id
@@ -263,6 +275,7 @@ def evaluate_cc_from_metrics(metrics):
 
     return cc
 
+# ------------------------------------------------------------------------------
 class QAmetricSB(Base, MetricDictMixin):
     """
     This is the ORM class for a QA SB metric measurement
@@ -354,6 +367,7 @@ def evaluate_bg_from_metrics(metrics):
 
     return bg
 
+# ------------------------------------------------------------------------------
 class QAmetricPE(Base, MetricDictMixin):
     """
     This is the ORM class for a QA PE (Astrometric Pointing Error) metric measurement

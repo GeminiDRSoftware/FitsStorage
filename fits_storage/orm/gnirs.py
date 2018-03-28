@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                        fits_store.orm.gnirs.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Enum
 from sqlalchemy.orm import relation
@@ -6,16 +14,18 @@ from . import Base
 from .header import Header
 
 # Enumerated Column types
-READ_MODES = ['Very Faint Objects', 'Faint Objects', 'Bright Objects', 'Very Bright Objects', 'Invalid']
-READ_MODE_ENUM = Enum(*READ_MODES, name='gnirs_read_mode')
+READ_MODES = ['Very Faint Objects', 'Faint Objects', 'Bright Objects',
+              'Very Bright Objects', 'Invalid']
 
+READ_MODE_ENUM = Enum(*READ_MODES, name='gnirs_read_mode')
 WELL_DEPTH_SETTINGS = ['Shallow', 'Deep', 'Invalid']
 WELL_DEPTH_SETTING_ENUM = Enum(*WELL_DEPTH_SETTINGS, name='gnirs_well_depth_setting')
 
-
+# ------------------------------------------------------------------------------
 class Gnirs(Base):
     """
-    This is the ORM object for the GNIRS details
+    This is the ORM object for the GNIRS details.
+
     """
     __tablename__ = 'gnirs'
 

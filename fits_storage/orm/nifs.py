@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                         fits_store.orm.nifs.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Enum
 from sqlalchemy.orm import relation
@@ -8,6 +16,7 @@ from .header import Header
 READ_MODES = ['Faint Object', 'Medium Object', 'Bright Object', 'Invalid']
 READ_MODE_ENUM = Enum(*READ_MODES, name='nifs_read_mode')
 
+# ------------------------------------------------------------------------------
 class Nifs(Base):
     """
     This is the ORM object for the NIFS details

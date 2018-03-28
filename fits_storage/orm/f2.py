@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                           fits_store.orm.f2.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 from sqlalchemy.orm import relation
@@ -6,9 +14,11 @@ from .header import Header
 
 from . import Base
 
+# ------------------------------------------------------------------------------
 class F2(Base):
     """
     This is the ORM object for the F2 details
+
     """
     __tablename__ = 'f2'
 

@@ -1,4 +1,11 @@
-
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                     fits_store.orm.querylog.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy.orm import relation
@@ -6,6 +13,7 @@ from sqlalchemy.orm import relation
 from . import Base
 from .usagelog import UsageLog
 
+# ------------------------------------------------------------------------------
 class QueryLog(Base):
     """
     This is the ORM class for the query log table
@@ -13,7 +21,7 @@ class QueryLog(Base):
     __tablename__ = 'querylog'
 
     id = Column(Integer, primary_key=True)
-    usagelog_id = Column(Integer, ForeignKey('usagelog.id'), nullable=False, index=True)
+    usagelog_id = Column(Integer,ForeignKey('usagelog.id'),nullable=False,index=True)
     usagelog = relation(UsageLog, order_by=id)
 
     summarytype = Column(Text, index=True)
@@ -30,13 +38,15 @@ class QueryLog(Base):
 
     def __init__(self, usagelog):
         """
-        Create an initial QueryLog instance from a UsageLog instance
+        Create an initial QueryLog instance from a UsageLog instance.
+
         """
         self.usagelog_id = usagelog.id
 
     def add_note(self, note):
         """
         Add a note to this log entry.
+
         """
 
         if self.notes is None:

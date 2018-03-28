@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                             fits_store.orm.resolve_versions.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text, Boolean
 import os
@@ -5,14 +13,19 @@ import os
 from . import Base
 from ..utils.hashes import md5sum_size_fp, md5sum_size_bz2
 
+# ------------------------------------------------------------------------------
 class Version(Base):
     """
-    This is the ORM class for the versions table. This is not part of the Fits Storage system per se
-    It is used by the resolve_versions.py script that we're using to resolve the conflicts of multiple
-    file versions for the new archive.
+    This is the ORM class for the versions table. This is not part of the Fits
+    Storage system per se. It is used by the resolve_versions.py script that we're
+    using to resolve the conflicts of multiple file versions for the new archive.
+
     """
     __tablename__ = 'versions'
 
+    doc1 = "If this attribute is True, we're 100% sure of the choice."
+    doc2 = "If this attribute is True, resort to lastmod to sort this out."
+    
     id = Column(Integer, primary_key=True)
     filename  = Column(Text, nullable=False, index=True)
     fullpath  = Column(Text)
@@ -21,10 +34,8 @@ class Version(Base):
     unable    = Column(Boolean)
     score     = Column(Integer, default = -1)
     accepted  = Column(Boolean)
-    is_clear  = Column(Boolean,
-                       doc = "If this attribute is True, it means we're 100% sure of the choice")
-    used_date = Column(Boolean,
-                       doc = "If this attribute is True, it means we had to resort to lastmod to sort this out")
+    is_clear  = Column(Boolean, doc = doc1)
+    used_date = Column(Boolean, doc = doc2)
 
     def __init__(self, filename, fullpath):
         self.filename = filename

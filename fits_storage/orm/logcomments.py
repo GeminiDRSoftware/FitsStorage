@@ -1,13 +1,23 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                  fits_store.orm.logcomments.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 from .header import Header
 
 from . import Base
 
+# ------------------------------------------------------------------------------
 class LogComments(Base):
     """
-    This is the ORM class for the table containing obslog comments for
-    images (extracted from ODB).
+    This is the ORM class for the table containing obslog comments for images
+    (extracted from ODB).
+
     """
     __tablename__ = 'logcomments'
 

@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                          fits_store.orm.gpi.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean
 from sqlalchemy.orm import relation
@@ -5,9 +13,11 @@ from sqlalchemy.orm import relation
 from . import Base
 from .header import Header
 
+# ------------------------------------------------------------------------------
 class Gpi(Base):
     """
-    This is the ORM object for the GPI details
+    This is the ORM object for the GPI details.
+
     """
     __tablename__ = 'gpi'
 

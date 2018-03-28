@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                               fits_store.orm.diskfilereport.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Enum
 
@@ -13,6 +21,7 @@ evaluate = AstroDataEvaluator()
 
 STATUS_ENUM = Enum(*STATUSES, name='mdstatus')
 
+# ------------------------------------------------------------------------------
 class DiskFileReport(Base):
     """
     This is the ORM object for DiskFileReport.
@@ -46,16 +55,20 @@ class DiskFileReport(Base):
     def fits_verify(self, diskfile):
         """
         Calls the fits_verify module and records the results.
+
         - Populates the isfits, fverrors and fvwarnings in the diskfile object
-          passed in
+          passed in.
+
         - Populates the fvreport in self
+
         """
         filename = None
         if diskfile.compressed:
             if diskfile.uncompressed_cache_file and os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK):
                 filename = diskfile.uncompressed_cache_file
             else:
-                # For now, we do not support fitsverify of compressed files if we are not using the diskfile.uncompressed_cache_file
+                # For now, we do not support fitsverify of compressed files if we
+                # are not using the diskfile.uncompressed_cache_file
                 filename = None
         else:
             # not compressed - just use the diskfile filename
@@ -74,16 +87,19 @@ class DiskFileReport(Base):
     def md(self, diskfile):
         """
         Evaluates the headers and records the md results
+
         - Populates the mdready flag in the diskfile object passed in
         - Populates the mdreport text in self
         - Populates the mdstatus enum in self
+
         """
         filename = None
         if diskfile.compressed:
             if diskfile.uncompressed_cache_file and os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK):
                 filename = diskfile.uncompressed_cache_file
             else:
-                # For now, we do not support fitsverify of compressed files if we are not using the diskfile.uncompressed_cache_file
+                # For now, we do not support fitsverify of compressed files if we
+                # are not using the diskfile.uncompressed_cache_file
                 filename = None
         else:
             # not compressed - just use the diskfile filename

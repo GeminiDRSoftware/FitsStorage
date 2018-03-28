@@ -1,6 +1,15 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                                     fits_store.orm.curation.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 """
-This module contains the functions for curation_report.py that compare items in the tables
-Header and DiskFile.
+This module contains the functions for curation_report.py that compare items in
+the tables Header and DiskFile.
+
 """
 from .diskfile import DiskFile
 from .file     import File

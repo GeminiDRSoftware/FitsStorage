@@ -1,3 +1,11 @@
+#
+#                                                                    FitsStorage
+#
+#                                                             Gemini Observatory
+#                                           fits_store.orm.programpublication.py
+# ------------------------------------------------------------------------------
+__version__      = '0.99 beta'
+# ------------------------------------------------------------------------------
 from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Text, String
 from sqlalchemy.orm import backref, relationship
@@ -6,10 +14,12 @@ from . import Base
 from .program import Program
 from .publication import Publication
 
+# ------------------------------------------------------------------------------
 class ProgramPublication(Base):
     """
-    Association object supporting the M:N relationship between programs
-    and publications.
+    Association object supporting the M:N relationship between programs and
+    publications.
+
     """
     __tablename__ = 'programpublication'
 
