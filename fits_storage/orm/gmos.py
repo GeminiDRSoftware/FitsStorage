@@ -78,8 +78,8 @@ class Gmos(Base):
         self.focal_plane_mask = ad.focal_plane_mask()
         self.nodandshuffle = 'NODANDSHUFFLE' in ad.tags
         if self.nodandshuffle:
-            self.nod_count = ad.nod_count()
-            self.nod_pixels = ad.nod_pixels()
+            self.nod_count = ad.nod_count()[0]
+            self.nod_pixels = ad.shuffle_pixels()
         self.prepared = 'PREPARED' in ad.tags
         self.overscan_trimmed = 'OVERSCAN_TRIMMED' in ad.tags
         self.overscan_subtracted = 'OVERSCAN_SUBTRACTED' in ad.tags

@@ -21,7 +21,7 @@
 #
 #HTTPD_LANG=C
 
-export PYTHONPATH=/opt/FitsStorage:/opt/python_modules/lib/python2.7/site-packages:/opt/gemini_python
+export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
 
 export PYTHON_EGG_CACHE=/var/www/python-egg-cache
 

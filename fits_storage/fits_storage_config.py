@@ -22,8 +22,24 @@ z_staging_area = '/data/FitsStorage/z_staging'
 
 # Configure the path to the storage root here 
 #storage_root = '/data/FitsStorage/dataflow'
-storage_root = '/data/gemini_data'
-#storage_root = '/data/graces_data'  
+#storage_root = '/data/gemini_data'
+#storage_root = '/data/graces_data'
+#storage_root = '/data/colossos_data'
+#storage_root = '/data/colossos_data_orig'
+#storage_root = '/data/igrins_data'
+#storage_root = '/data/archive_soak'
+#storage_root = '/data/gmosNandS'
+#storage_root = '/data/bhros'
+storage_root = '/data/cirpass'
+#storage_root = '/data/flamingos'
+#storage_root = '/data/gpi'
+#storage_root = '/data/hrwfs'
+#storage_root = '/data/michelle'
+#storage_root = '/data/oscir'
+#storage_root = '/data/phoenix'
+#storage_root = '/data/texes'
+#storage_root = '/data/trecs'
+#storage_root = '/data/hokupaa+quic'
 
 if(using_s3):
     storage_root = s3_staging_area
@@ -96,7 +112,8 @@ fits_open_result_limit = 500
 fits_closed_result_limit = 10000
 
 smtp_server = "smtp.gemini.edu"
-email_errors_to = "phirst@gemini.edu"
+#email_errors_to = "phirst@gemini.edu"
+email_errors_to = "kanderso@gemini.edu"
 
 # Configure the path the data postgres database here
 fits_dbname = 'fitsdata'

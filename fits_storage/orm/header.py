@@ -150,254 +150,236 @@ class Header(Base):
                 fullpath = diskfile.fullpath()
             ad = astrodata.open(fullpath)
 
-        try:
-            # Basic data identification section
-            # Parse Program ID
-            self.program_id = ad.program_id()
-            if self.program_id is not None:
-                # Ensure upper case
-                self.program_id = self.program_id.upper()
-                # Set eng and sv booleans
-                gemprog = GeminiProgram(self.program_id)
-                self.engineering = gemprog.is_eng or not gemprog.valid
-                self.science_verification = gemprog.is_sv
-                self.calibration_program = gemprog.is_cal
-            else:
-                # program ID is None - mark as engineering
-                self.engineering = True
+        # Basic data identification section
+        # Parse Program ID
+        self.program_id = ad.program_id()
+        if self.program_id is not None:
+            # Ensure upper case
+            self.program_id = self.program_id.upper()
+            # Set eng and sv booleans
+            gemprog = GeminiProgram(self.program_id)
+            self.engineering = gemprog.is_eng or not gemprog.valid
+            self.science_verification = gemprog.is_sv
+            self.calibration_program = gemprog.is_cal
+        else:
+            # program ID is None - mark as engineering
+            self.engineering = True
 
-            self.observation_id = ad.observation_id()
-            if self.observation_id is not None:
-                # Ensure upper case
-                self.observation_id = self.observation_id.upper()
+        self.observation_id = ad.observation_id()
+        if self.observation_id is not None:
+            # Ensure upper case
+            self.observation_id = str(self.observation_id).upper()
 
-            self.data_label = ad.data_label()
-            if self.data_label is not None:
-                # Ensure upper case
-                self.data_label = self.data_label.upper()
+        self.data_label = ad.data_label()
+        if self.data_label is not None:
+        # Ensure upper case
+            self.data_label = self.data_label.upper()
 
-            self.telescope = gemini_telescope(ad.telescope())
-            self.instrument = gemini_instrument(ad.instrument(), other=True)
+        self.telescope = gemini_telescope(ad.telescope())
+        self.instrument = gemini_instrument(ad.instrument(), other=True)
 
-            # Date and times part
-            self.ut_datetime = ad.ut_datetime()
-            if self.ut_datetime:
-                delta = self.ut_datetime - self.UT_DATETIME_SECS_EPOCH
-                self.ut_datetime_secs = int(delta.total_seconds())
-            self.local_time = ad.local_time()
+        # Date and times part
+        self.ut_datetime = ad.ut_datetime()
+        if self.ut_datetime:
+            delta = self.ut_datetime - self.UT_DATETIME_SECS_EPOCH
+            self.ut_datetime_secs = int(delta.total_seconds())
+        self.local_time = ad.local_time()
 
-            # Data Types
-            self.observation_type = gemini_observation_type(ad.observation_type())
+        # Data Types
+        self.observation_type = gemini_observation_type(ad.observation_type())
+    
+        if 'PINHOLE' in ad.tags:
+            self.observation_type = 'PINHOLE'
+        if 'RONCHI' in ad.tags:
+            self.observation_type = 'RONCHI'
+        self.observation_class = gemini_observation_class(ad.observation_class())
+        self.object = ad.object()
 
-            if 'PINHOLE' in ad.tags:
-                self.observation_type = 'PINHOLE'
-            if 'RONCHI' in ad.tags:
-                self.observation_type = 'RONCHI'
-            self.observation_class = gemini_observation_class(ad.observation_class())
-            self.object = ad.object()
+        # RA and Dec are not valid for AZEL_TARGET frames
+        if 'AZEL_TARGET' not in ad.tags:
+            self.ra = ad.ra()
+            self.dec = ad.dec()
+            if type(self.ra) is str:
+                self.ra = ratodeg(self.ra)
+            if type(self.dec) is str:
+                self.dec = dectodeg(self.dec)
+            if self.ra > 360.0 or self.ra < 0.0:
+                self.ra = None
+            if self.dec > 90.0 or self.dec < -90.0:
+                self.dec = None
 
-            # RA and Dec are not valid for AZEL_TARGET frames
-            if 'AZEL_TARGET' not in ad.tags:
-                self.ra = ad.ra()
-                self.dec = ad.dec()
-                if type(self.ra) is str:
-                    self.ra = ratodeg(self.ra)
-                if type(self.dec) is str:
-                    self.dec = dectodeg(self.dec)
-                if self.ra > 360.0 or self.ra < 0.0:
-                    self.ra = None
-                if self.dec > 90.0 or self.dec < -90.0:
-                    self.dec = None
+        # These should be in the descriptor function really.
+        azimuth = ad.azimuth()
+        if type(azimuth) is types.StringType:
+            azimuth = dmstodeg(azimuth)
+        self.azimuth = azimuth
+        elevation = ad.elevation()
+        if type(elevation) is types.StringType:
+            elevation = dmstodeg(elevation)
+        self.elevation = elevation
 
-            # These should be in the descriptor function really.
-            azimuth = ad.azimuth()
-            if type(azimuth) is types.StringType:
-                azimuth = dmstodeg(azimuth)
-            self.azimuth = azimuth
-            elevation = ad.elevation()
-            if type(elevation) is types.StringType:
-                elevation = dmstodeg(elevation)
-            self.elevation = elevation
+        self.cass_rotator_pa = ad.cass_rotator_pa()
+        self.airmass = ad.airmass()
+        self.raw_iq = ad.raw_iq()
+        self.raw_cc = ad.raw_cc()
+        self.raw_wv = ad.raw_wv()
+        self.raw_bg = ad.raw_bg()
+        self.requested_iq = ad.requested_iq()
+        self.requested_cc = ad.requested_cc()
+        self.requested_wv = ad.requested_wv()
+        self.requested_bg = ad.requested_bg()
 
-            self.cass_rotator_pa = ad.cass_rotator_pa()
-            self.airmass = ad.airmass()
-            self.raw_iq = ad.raw_iq()
-            self.raw_cc = ad.raw_cc()
-            self.raw_wv = ad.raw_wv()
-            self.raw_bg = ad.raw_bg()
-            self.requested_iq = ad.requested_iq()
-            self.requested_cc = ad.requested_cc()
-            self.requested_wv = ad.requested_wv()
-            self.requested_bg = ad.requested_bg()
+        # Knock illegal characters out of filter names. eg NICI %s.
+        # Spaces to underscores.
+        filter_string = ad.filter_name(pretty=True)
+        if filter_string:
+            self.filter_name = filter_string.replace('%', '').replace(' ', '_')
 
-            # Knock illegal characters out of filter names. eg NICI %s.
-            # Spaces to underscores.
-            filter_string = ad.filter_name(pretty=True)
-            if filter_string:
-                self.filter_name = filter_string.replace('%', '').replace(' ', '_')
+        # NICI exposure times are a pain, because there's two of them...
+        # Except they're always the same.
+        if self.instrument != 'NICI':
+            exposure_time = ad.exposure_time()
+        else:
+            # NICI exposure_time descriptor is broken
+            et_b = ad.phu.get('ITIME_B')
+            et_r = ad.phu.get('ITIME_R')
+            exposure_time = et_b if et_b else et_r
 
-            # NICI exposure times are a pain, because there's two of them...
-            # Except they're always the same.
-            if self.instrument != 'NICI':
-                exposure_time = ad.exposure_time()
-            else:
-                # NICI exposure_time descriptor is broken
-                et_b = ad.phu.get('ITIME_B')
-                et_r = ad.phu.get('ITIME_R')
-                exposure_time = et_b if et_b else et_r
-
-            # Protect the database from field overflow from junk.
-            # The datatype is precision=8, scale=4
-            if exposure_time < 10000 and exposure_time >= 0:
-                self.exposure_time = exposure_time
+        # Protect the database from field overflow from junk.
+        # The datatype is precision=8, scale=4
+        if exposure_time < 10000 and exposure_time >= 0:
+            self.exposure_time = exposure_time
             
 
-            # Need to remove invalid characters in disperser names, eg gnirs has
-            # slashes
-            disperser_string = ad.disperser(pretty=True)
-            if disperser_string:
-                self.disperser = disperser_string.replace('/', '_')
+        # Need to remove invalid characters in disperser names, eg gnirs has
+        # slashes
+        disperser_string = ad.disperser(pretty=True)
+        if disperser_string:
+            self.disperser = disperser_string.replace('/', '_')
 
-            self.camera = ad.camera(pretty=True)
-            if 'SPECT' in ad.tags and 'GPI' not in ad.tags:
-                self.central_wavelength = ad.central_wavelength(asMicrometers=True)
-            self.wavelength_band = ad.wavelength_band()
-            self.focal_plane_mask = ad.focal_plane_mask(pretty=True)
-            self.pupil_mask = ad.pupil_mask(pretty=True)
+        self.camera = ad.camera(pretty=True)
+        if 'SPECT' in ad.tags and 'GPI' not in ad.tags:
+            self.central_wavelength = ad.central_wavelength(asMicrometers=True)
+        self.wavelength_band = ad.wavelength_band()
+        self.focal_plane_mask = ad.focal_plane_mask(pretty=True)
+        self.pupil_mask = ad.pupil_mask(pretty=True)
+        dvx = ad.detector_x_bin()
+        dvy = ad.detector_y_bin()
+        if (dvx is not None) and (dvy is not None):
+            self.detector_binning = "%dx%d" % (dvx, dvy)
+
+        def read_setting(ad, attribute):
             try:
-                dvx = ad.detector_x_bin()
-                dvy = ad.detector_y_bin()
-                if (dvx is not None) and (dvy is not None):
-                    self.detector_binning = "%dx%d" % (dvx, dvy)
-            except AssertionError:
-                pass
+                return str(getattr(ad, attribute)().replace(' ', '_'))
+            except (AttributeError, AssertionError):
+                return 'None'
 
-            def read_setting(ad, attribute):
-                try:
-                    return str(getattr(ad, attribute)().replace(' ', '_'))
-                except (AttributeError, AssertionError):
-                    return 'None'
+        gainstr = str(ad.gain_setting())
+        if gainstr in gemini_gain_settings:
+            self.detector_gain_setting = gainstr
 
-            gainstr = str(ad.gain_setting())
-            if gainstr in gemini_gain_settings:
-                self.detector_gain_setting = gainstr
+        readspeedstr = str(ad.read_speed_setting())
+        if readspeedstr in gemini_readspeed_settings:
+            self.detector_readspeed_setting = readspeedstr
 
-            readspeedstr = str(ad.read_speed_setting())
-            if readspeedstr in gemini_readspeed_settings:
-                self.detector_readspeed_setting = readspeedstr
+        welldepthstr = str(ad.well_depth_setting())
+        if welldepthstr in gemini_welldepth_settings:
+            self.detector_welldepth_setting = welldepthstr
 
-            welldepthstr = str(ad.well_depth_setting())
-            if welldepthstr in gemini_welldepth_settings:
-                self.detector_welldepth_setting = welldepthstr
+        if 'GMOS' in ad.tags:
+            self.detector_readmode_setting = "NodAndShuffle" if ad.tags.intersection({'GMOS', 'NODANDSHUFFLE'}) else "Classic"
+        else:
+            self.detector_readmode_setting = str(ad.read_mode()).replace(' ', '_')
 
-            if 'GMOS' in ad.tags:
-                self.detector_readmode_setting = "NodAndShuffle" if ad.tags.intersection({'GMOS', 'NODANDSHUFFLE'}) else "Classic"
+        self.detector_roi_setting = ad.detector_roi_setting()
+
+        self.coadds = ad.coadds()
+
+        # Hack the AO header and LGS for now
+        aofold = ad.phu.get('AOFOLD')
+        self.adaptive_optics = (aofold == 'IN')
+
+        lgustage = None
+        lgsloop = None
+        lgustage = ad.phu.get('LGUSTAGE')
+        lgsloop = ad.phu.get('LGSLOOP')
+
+        self.laser_guide_star = (lgsloop == 'CLOSED') or (lgustage == 'IN')
+        self.wavefront_sensor = ad.wavefront_sensor()
+
+        # And the Spectroscopy and mode items
+        self.spectroscopy = False
+        self.mode = 'imaging'
+        if 'SPECT' in ad.tags:
+            self.spectroscopy = True
+            self.mode = 'spectroscopy'
+            if 'IFU' in ad.tags:
+                self.mode = 'IFS'
+            if 'MOS' in ad.tags:
+                self.mode = 'MOS'
+            if 'LS' in ad.tags:
+                self.mode = 'LS'
+        if 'GPI' in ad.tags and 'POL' in ad.tags:
+            self.mode = 'IFP'
+
+        # Set the derived QA state
+        # MDF (Mask) files don't have QA state - set to Pass so they show up
+        # as expected in search results
+        if self.observation_type == 'MASK':
+            self.qa_state = 'Pass'
+        else:
+            qa_state = ad.qa_state()
+            if qa_state in ['Fail', 'CHECK', 'Undefined', 'Usable', 'Pass']:
+                self.qa_state = qa_state
             else:
-                self.detector_readmode_setting = str(ad.read_mode()).replace(' ', '_')
+                # Default to Undefined. Avoid having NULL values
+                self.qa_state = 'Undefined'
 
-            self.detector_roi_setting = ad.detector_roi_setting()
-
-            self.coadds = ad.coadds()
-
-            # Hack the AO header and LGS for now
-            try:
-                aofold = ad.phu.get('AOFOLD')
-                self.adaptive_optics = (aofold == 'IN')
-            except ():
-                pass
-
-            lgustage = None
-            lgsloop = None
-            try:
-                lgustage = ad.phu.get('LGUSTAGE')
-                lgsloop = ad.phu.get('LGSLOOP')
-            except:
-                pass
-
-            self.laser_guide_star = (lgsloop == 'CLOSED') or (lgustage == 'IN')
-
-
-            self.wavefront_sensor = ad.wavefront_sensor()
-
-            # And the Spectroscopy and mode items
-            self.spectroscopy = False
-            self.mode = 'imaging'
-            if 'SPECT' in ad.tags:
-                self.spectroscopy = True
-                self.mode = 'spectroscopy'
-                if 'IFU' in ad.tags:
-                    self.mode = 'IFS'
-                if 'MOS' in ad.tags:
-                    self.mode = 'MOS'
-                if 'LS' in ad.tags:
-                    self.mode = 'LS'
-            if 'GPI' in ad.tags and 'POL' in ad.tags:
-                self.mode = 'IFP'
-
-            # Set the derived QA state
-            # MDF (Mask) files don't have QA state - set to Pass so they show up
-            # as expected in search results
-            if self.observation_type == 'MASK':
-                self.qa_state = 'Pass'
-            else:
-                qa_state = ad.qa_state()
-                if qa_state in ['Fail', 'CHECK', 'Undefined', 'Usable', 'Pass']:
-                    self.qa_state = qa_state
-                else:
-                    # Default to Undefined. Avoid having NULL values
-                    self.qa_state = 'Undefined'
-
-            # Set the release date
-            try:
-                reldatestring = ad.phu.get('RELEASE')
-                if reldatestring:
-                    reldts = "%s 00:00:00" % reldatestring
-                    self.release = dateutil.parser.parse(reldts).date()
-            except:
-                # This exception will trigger if RELEASE date is missing or malformed.
-                pass
-
-            # Proprietary coordinates
-            self.proprietary_coordinates = False
-            if ad.phu.get('PROP_MD') == True:
-                self.proprietary_coordinates = True
-
-            # Set the gcal_lamp state
-            gcal_lamp = ad.gcal_lamp() 
-            if gcal_lamp != 'None':
-                self.gcal_lamp = gcal_lamp
-
-            # Set the reduction state
-            # Note - these are in order - a processed_flat will have
-            # both PREPARED and PROCESSED_FLAT in it's types.
-            # Here, ensure "highest" value wins.
-            tags = ad.tags
-            if 'PROCESSED' in tags:
-                # Use the image type tag (BIAS, FLAT, ...) to obtain the
-                # appropriate reduction status from the lookup table
-                kind = list(tags.intersection(REDUCTION_STATUS.keys()))
-                try:
-                    self.reduction = REDUCTION_STATUS[kind[0]]
-                except (KeyError, IndexError):
-                    # Supposedly a processed file, but not any that we know of!
-                    # Mark it as prepared, just in case
-                    # TODO: Maybe we want to signal an error here?
-                    self.reduction = 'PREPARED'
-            elif 'PREPARED' in tags:
-                self.reduction = 'PREPARED'
-            else:
-                self.reduction = 'RAW'
-
-            # Get the types list
-            self.types = str(ad.tags)
-
-        except astrodata.Errors.DescriptorInfrastructureError:
-            # This happens anytime an eng file does not get identified as gemini data
+        # Set the release date
+        try:
+            reldatestring = ad.phu.get('RELEASE')
+            if reldatestring:
+                reldts = "%s 00:00:00" % reldatestring
+                self.release = dateutil.parser.parse(reldts).date()
+        except:
+            # This exception will trigger if RELEASE date is missing or malformed.
             pass
 
-        except:
-            # Something failed accessing the astrodata
-            raise
+        # Proprietary coordinates
+        self.proprietary_coordinates = False
+        if ad.phu.get('PROP_MD') == True:
+            self.proprietary_coordinates = True
+
+        # Set the gcal_lamp state
+        gcal_lamp = ad.gcal_lamp() 
+        if gcal_lamp is not None:
+            self.gcal_lamp = gcal_lamp
+
+        # Set the reduction state
+        # Note - these are in order - a processed_flat will have
+        # both PREPARED and PROCESSED_FLAT in it's types.
+        # Here, ensure "highest" value wins.
+        tags = ad.tags
+        if 'PROCESSED' in tags:
+            # Use the image type tag (BIAS, FLAT, ...) to obtain the
+            # appropriate reduction status from the lookup table
+            kind = list(tags.intersection(REDUCTION_STATUS.keys()))
+            try:
+                self.reduction = REDUCTION_STATUS[kind[0]]
+            except (KeyError, IndexError):
+                # Supposedly a processed file, but not any that we know of!
+                # Mark it as prepared, just in case
+                # TODO: Maybe we want to signal an error here?
+                self.reduction = 'PREPARED'
+        elif 'PREPARED' in tags:
+            self.reduction = 'PREPARED'
+        else:
+            self.reduction = 'RAW'
+
+        # Get the types list
+        self.types = str(ad.tags)
+
+        return
 
     def footprints(self, ad):
         retary = {}
@@ -405,7 +387,7 @@ class Header(Base):
         if ad.tags.intersection({'GNIRS', 'MICHELLE', 'NIFS'}):
             # If we're not in an RA/Dec TANgent frame, don't even bother
             if (ad.phu.get('CTYPE1') == 'RA---TAN') and (ad.phu.get('CTYPE2') == 'DEC--TAN'):
-                wcs = pywcs.WCS(ad.header[0])
+                wcs = pywcs.WCS(ad[0].hdr)
                 try:
                     fp = wcs.calcFootprint()
                     retary['PHU'] = fp
@@ -414,7 +396,7 @@ class Header(Base):
                     pass
         else:
             # If we're not in an RA/Dec TANgent frame, don't even bother
-            for hdr in ad.header[1:]:
+            for hdr in ad.hdr:
                 if (hdr.get('CTYPE1') == 'RA---TAN') and (hdr.get('CTYPE2') == 'DEC--TAN'):
                     extension = "%s,%s" % (hdr.get('EXTNAME'), hd.get('EXTVER'))
                     wcs = pywcs.WCS(hdr)

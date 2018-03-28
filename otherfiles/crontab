@@ -1,4 +1,4 @@
-PYTHONPATH=/opt/FitsStorage:/opt/gemini_python
+PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
 MAILTO=fitsadmin@gemini.edu
 #
 # Add to ingest queue
