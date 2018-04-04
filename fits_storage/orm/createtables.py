@@ -1,11 +1,3 @@
-#
-#                                                                    FitsStorage
-#
-#                                                             Gemini Observatory
-#                                                 fits_store.orm.createtables.py
-# ------------------------------------------------------------------------------
-__version__      = '0.99 beta'
-# ------------------------------------------------------------------------------
 """
 This module provides various utility functions for create_tables.py
 in the Fits Storage System.

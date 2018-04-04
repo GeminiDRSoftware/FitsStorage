@@ -1,11 +1,3 @@
-#
-#                                                                    FitsStorage
-#
-#                                                             Gemini Observatory
-#                                           fits_store.orm.programpublication.py
-# ------------------------------------------------------------------------------
-__version__      = '0.99 beta'
-# ------------------------------------------------------------------------------
 from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Text, String
 from sqlalchemy.orm import backref, relationship

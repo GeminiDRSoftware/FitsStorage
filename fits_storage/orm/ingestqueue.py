@@ -1,11 +1,3 @@
-#
-#                                                                    FitsStorage
-#
-#                                                             Gemini Observatory
-#                                                  fits_store.orm.ingestqueue.py
-# ------------------------------------------------------------------------------
-__version__      = '0.99 beta'
-# ------------------------------------------------------------------------------
 """
 This is the ingesqueue ORM class.
 

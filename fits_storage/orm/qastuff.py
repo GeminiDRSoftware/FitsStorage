@@ -1,11 +1,3 @@
-#
-#                                                                    FitsStorage
-#
-#                                                             Gemini Observatory
-#                                                      fits_store.orm.qastuff.py
-# ------------------------------------------------------------------------------
-__version__      = '0.99 beta'
-# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean
 from sqlalchemy.orm import relationship

@@ -2,14 +2,6 @@
 This is the calcachequeue ORM class
 
 """
-#
-#                                                                    FitsStorage
-#
-#                                                             Gemini Observatory
-#                                                fits_store.orm.calcachequeue.py
-# ------------------------------------------------------------------------------
-__version__      = '0.99 beta'
-# ------------------------------------------------------------------------------
 import datetime
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Boolean, Text, DateTime

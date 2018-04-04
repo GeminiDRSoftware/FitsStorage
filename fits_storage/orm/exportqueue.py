@@ -1,11 +1,3 @@
-#
-#                                                                    FitsStorage
-#
-#                                                             Gemini Observatory
-#                                                  fits_store.orm.exportqueue.py
-# ------------------------------------------------------------------------------
-__version__      = '0.99 beta'
-# ------------------------------------------------------------------------------
 import datetime
 from sqlalchemy import desc, func
 from sqlalchemy import Column, UniqueConstraint

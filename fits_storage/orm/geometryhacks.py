@@ -1,11 +1,3 @@
-#
-#                                                                    FitsStorage
-#
-#                                                             Gemini Observatory
-#                                                fits_store.orm.geometryhacks.py
-# ------------------------------------------------------------------------------
-__version__      = '0.99 beta'
-# ------------------------------------------------------------------------------
 """
 This module provides various utility functions to work around the lack of support
 for simple geometry types in sqlalchemy. This could be replaced with a more accuate

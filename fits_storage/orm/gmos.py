@@ -1,7 +1,3 @@
-#                                                                   fits_storage
-#
-#                                                                    orm.gmos.py
-# ------------------------------------------------------------------------------
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean, Enum
 from sqlalchemy.orm import relation
