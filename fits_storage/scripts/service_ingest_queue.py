@@ -1,8 +1,5 @@
 #! /usr/bin/env python
-#                                                                   fits_storage
-#
-#                                                        service_ingest_queue.py
-# ------------------------------------------------------------------------------
+
 import os
 import datetime
 import signal

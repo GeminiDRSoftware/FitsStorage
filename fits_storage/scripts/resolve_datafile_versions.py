@@ -17,22 +17,24 @@ Options:
   -d, --demon              Run as a background demon, do not generate stdout
   -r, --dryrun             Don't actually do anything, just say what would be done.
   -s ADDR, --server=ADDR   Server network address of the redis server [default: localhost].
-  -t THR, --threshold=THR  We'll check if files with score THR or less need renaming [default: -100]
-  -u, --uniques            Look for truly, unique files and mark them as accepted. May take long time.
+  -t THR, --threshold=THR  Check if files with score THR or less need renaming [default: -100]
+  -u, --uniques            Look for unique files and mark them as accepted. May take long time.
   -v, --verbose            Display messages explaining the scoring decision
+
 """
+import os
+import sys
+import bz2
+import itertools
+
+import orm
 
 from operator import attrgetter, itemgetter
 # from optparse import OptionParser
 from docopt import docopt
 
-import itertools
-import os
-import sys
-import bz2
-import pyfits as pf
+from astropy.io import fits as pf
 
-import orm
 from fits_storage.orm.resolve_versions import Version
 from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile
 

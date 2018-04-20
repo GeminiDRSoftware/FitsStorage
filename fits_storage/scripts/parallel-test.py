@@ -2,13 +2,14 @@
 
 from __future__ import print_function
 
-__doc__ = """Parallel Databased Test
+__doc__ = """ Parallel Databased Test
 
 If <version> is not provided, the latest available will be used to perform
 the tests.
 
 Usage:
-  parallel-test [-N] [-W WORKERS] [-I INSTRUMENT] [-V VEREDICT [-v VERSION]] [-f FILELIST] [-M TEXT] [-m TEXT] [<version>]
+  parallel-test [-N] [-W WORKERS] [-I INSTRUMENT] [-V VEREDICT [-v VERSION]] 
+                [-f FILELIST] [-M TEXT] [-m TEXT] [<version>]
   parallel-test (-h | --help)
 
 Options:
@@ -28,29 +29,43 @@ Options:
   -v VERSION     Specify the version of the test for which the veredict will be
                  taken into account. If not specified, the default is using the
                  same as for <version>
-"""
 
+"""
+import sys
+import psycopg2
+
+from io import BytesIO
+from time import sleep
+
+from os import getpid
 from bz2 import BZ2File
 from csv import reader
 from docopt import docopt
 from functools import partial
+from os.path import join as opjoin, exists
 from multiprocessing import Process, Queue, JoinableQueue
+
 from Queue import Empty as EmptyQueue
 from ctypes import py_object
 from collections import namedtuple
-from os.path import join as opjoin, exists
-from os import getpid
-from pyfits import open as pfopen
-from pyfits.verify import VerifyError
-from astrodata import AstroData
-from fits_storage.utils.gemini_fits_validator import RuleStack, RuleSet, Environment, AstroDataEvaluator
-from fits_storage.utils.gemini_fits_validator import EngineeringImage, GeneralError, BadData, NotGeminiData, NoDateError
-from io import BytesIO
-from time import sleep
 
-import psycopg2
-import sys
+from astropy.io.fits import open as pfopen
+from astropy.io.fits.verify import VerifyError
 
+import astrodata
+import gemini_instruments
+
+from fits_storage.utils.gemini_fits_validator import RuleStack
+from fits_storage.utils.gemini_fits_validator import RuleSet
+from fits_storage.utils.gemini_fits_validator import Environment
+from fits_storage.utils.gemini_fits_validator import AstroDataEvaluator
+from fits_storage.utils.gemini_fits_validator import EngineeringImage
+from fits_storage.utils.gemini_fits_validator import GeneralError
+from fits_storage.utils.gemini_fits_validator import BadData
+from fits_storage.utils.gemini_fits_validator import NotGeminiData
+from fits_storage.utils.gemini_fits_validator import NoDateError
+
+# ------------------------------------------------------------------------------
 # DSN and paths when running from hahalua
 DSN = dict(dbname='fitsdata')
 BASEPATH='/mnt/hahalua'
@@ -126,7 +141,7 @@ class Evaluator(AstroDataEvaluator):
             filename = nobz2
         try:
             result = partial(Result, nobz2)
-            ad_object = AstroData(open_file(origpath))
+            ad_object = astrodata.open(open_file(origpath))
             return result(*super(Evaluator, self).evaluate(ad_object))
         except (GeneralError, IOError, VerifyError) as e:
             return result(False, 'EXCEPTION', e)

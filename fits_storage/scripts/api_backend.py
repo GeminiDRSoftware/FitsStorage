@@ -6,8 +6,9 @@
    problems.
 
    Here we have instead a backend API server that isolates the user interface
-   from the actual file operations"""
+   from the actual file operations
 
+"""
 #######################################################################################
 #
 #   Generic stuff, mainly to control the routing and error responses
@@ -63,8 +64,7 @@ def get_route(environ, routes):
 #
 #   API Code
 #
-
-import pyfits as pf
+from astropy.io.fits.verify import VerifyError
 from fits_storage.utils.fitseditor import compare_cards, modify_multiple_cards, all_cards_exist
 
 def fits_is_unchanged(path, new_values):
@@ -86,7 +86,7 @@ def fits_apply_changes(path, changes, reject_new):
 def set_image_metadata(path, changes, reject_new=False):
     try:
         return fits_apply_changes(path, changes, reject_new)
-    except (pf.VerifyError, IOError) as e:
+    except (VerifyError, IOError) as e:
         logger.debug("Error: %s", str(e))
         raise WSGIError("There were problems when opening/modifying the file")
 

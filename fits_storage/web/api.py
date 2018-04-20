@@ -1,3 +1,14 @@
+import os
+import fcntl
+import json
+
+from time import strptime
+from glob import iglob
+from time import sleep
+
+#import pyfits as pf
+from astropy.io import fits as pf
+
 from ..orm import NoResultFound
 from ..orm.file import File
 from ..orm.header import Header
@@ -21,14 +32,7 @@ from ..fits_storage_config import magic_api_cookie, api_backend_location
 from sqlalchemy import desc
 
 from contextlib import contextmanager
-import os
-import pyfits as pf
-import json
-import fcntl
-from time import strptime
-from glob import iglob
 
-from time import sleep
 
 class RequestError(Exception):
     pass
@@ -65,9 +69,10 @@ def lookup_diskfile(session, query):
     try:
         if 'data_label' in query:
             label = query['data_label']
-            # There can be multiple files with the same data label when things go wrong with the observing system.
-            # In that case, we pick the highest filename which will be the later file taken - which is usually the 
-            # one that didn't fail.
+            # There can be multiple files with the same data label when things
+            # go wrong with the observing system. In that case, we pick the
+            # highest filename which will be the later file taken - which is
+            # usually the one that didn't fail.
             df = session.query(DiskFile).join(Header).filter(DiskFile.present == True).filter(Header.data_label == label).order_by(desc(DiskFile.filename)).first()
         elif 'filename' in query:
             label = query['filename']

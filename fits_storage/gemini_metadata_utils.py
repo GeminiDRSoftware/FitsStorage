@@ -102,21 +102,91 @@ def gemini_instrument(string, gmos=False, other=False):
 
     return retary
 
+def get_fake_ut(transit="14:00:00"):
+    """
+    Generate the fake UT date used to name Gemini data.
+
+    At Gemini the transit time is set to 14:00:00 local time.  For GN, that
+    corresponds to midnight UT so the dataset name is not faked, but for
+    GS, a transit of 14hr is totally artificial.
+
+    Before transit, UT of last night
+    After transit, UT of coming night
+
+    Note that the transit time is not hardcoded and the code should continue
+    to work if the Gemini's policy regarding the transit time were to change.
+
+    Parameters
+    ----------
+    transit : <str>
+        UT transit time to use.  Format: "hh:mm:ss".  Default: "14:00:00"
+
+    Returns
+    -------
+    fake_ut: <str>
+        Formatted date string: 'yyyymmdd'
+
+    --------
+    Original author:  Kathleen Labrie  31.10.2008  Based on CL script.
+    Original   code:  gempylocal.ops_suppor.ops_utils.get_fake_ut().
+
+    """
+    # Convert the transit time string into a datetime.time object
+    transittime = datetime.datetime.strptime(transit, "%H:%M:%S").time()
+
+    # Get the local and UTC date and time
+    dtlocal = datetime.datetime.now()
+    dtutc = datetime.datetime.utcnow()
+
+    # Generate the fake UT date
+    if dtlocal.time() < transittime:
+        # Before transit
+        if dtutc.date() == dtlocal.date():
+            fake_ut = ''.join(str(dtutc.date()).split('-'))
+        else:
+            # UT has changed before transit => fake the UT
+            oneday = datetime.timedelta(days=1)
+            fake_ut = ''.join(str(dtutc.date() - oneday).split('-'))
+    else:
+        # After or at transit
+        if dtutc.date() == dtlocal.date():
+            # UT has not changed yet; transit reached => fake the UT
+            oneday = datetime.timedelta(days=1)
+            fake_ut = ''.join(str(dtutc.date() + oneday).split('-'))
+        else:
+            fake_ut = ''.join(str(dtutc.date()).split('-'))
+
+    return fake_ut
+
+
 def gemini_date(string, as_datetime=False, offset=ZERO_OFFSET):
     """
     A utility function for matching dates of the form YYYYMMDD
     also supports today/tonight, yesterday/lastnight
     returns the YYYYMMDD string, or '' if not a date
-    May need modification to make today and yesterday work usefully
-    for Chile
+    
+    Parameters
+    ----------
+    string: <str>
+        A string moniker indicating a day to convert to a gemini_date.
+        One of 'today', tomorrow', 'yesterday', 'lastnight' OR an actual 
+    'yyyymmdd' string.
+
+    Returns
+    -------
+    <str> A Gemini date of the form 'YYYYMMDD'
+
+
     """
 
     dt_to_text = lambda x: x.date().strftime('%Y%m%d')
 
     if string in {'today', 'tonight'}:
-        string = dt_to_text(datetime.datetime.utcnow())
+        string = get_fake_ut()
     elif string in {'yesterday', 'lastnight'}:
-        string = dt_to_text(datetime.datetime.utcnow() - ONEDAY_OFFSET)
+        past = dateutil.parser.parse(get_fake_ut()) -  ONEDAY_OFFSET
+        string = dt_to_text(past)
+        #string = dt_to_text(datetime.datetime.utcnow() - ONEDAY_OFFSET)
 
     if len(string) == 8 and string.isdigit():
         try:
@@ -127,6 +197,9 @@ def gemini_date(string, as_datetime=False, offset=ZERO_OFFSET):
             pass
 
     return '' if not as_datetime else None
+
+
+
 
 racre = re.compile(r'^([012]\d):([012345]\d):([012345]\d)(\.?\d*)$')
 def ratodeg(string):
@@ -627,9 +700,12 @@ class GeminiProgram:
             self.is_eng = True
 
 def get_date_offset():
-    '''This function is used to add set offsets to the dates. The aim is to
-       get the "current date" adjusting for the local time, taking into
-       account the different sites where Gemini is based'''
+    """
+    This function is used to add set offsets to the dates. The aim is to get the
+    "current date" adjusting for the local time, taking into account the different 
+    sites where Gemini is based.
+
+    """
 
     if use_as_archive:
         return ZERO_OFFSET
@@ -638,7 +714,11 @@ def get_date_offset():
     # We consider the night boundary to be 14:00 local time
     # This is midnight UTC in Hawaii, completely arbitrary in Chile
     zone = time.altzone if time.daylight else time.timezone
-    return datetime.timedelta(hours=14) + datetime.timedelta(seconds=zone) - ONEDAY_OFFSET
+    print datetime.timedelta(hours=16)
+    print datetime.timedelta(seconds=zone)
+    print ONEDAY_OFFSET
+    
+    return datetime.timedelta(hours=16) + datetime.timedelta(seconds=zone) - ONEDAY_OFFSET
 
 def get_time_period(start, end=None, as_date=False):
     startdt =  gemini_date(start, offset=get_date_offset(), as_datetime=True)

@@ -2,19 +2,24 @@
 This module provides the image scoring functionality needed by the version
 resolver. The rules have been put aside so that they can be reused later
 for other purposes.
-"""
 
+"""
 import bz2
-import pyfits
-from pyfits import open as pfopen
-from collections import defaultdict
+
 from time import strptime
 from datetime import datetime
+from collections import defaultdict
 
+from astropy.io.fits import open as pfopen
+from astropy.io.fits.verify import VerifyError
+
+# ------------------------------------------------------------------------------
 NULL_DATETIME = datetime(1, 1, 1, 0, 0, 0)
 
+# ------------------------------------------------------------------------------
 __all__ = ['score_file']
 
+# ------------------------------------------------------------------------------
 class ScoringViolation(Exception):
     def __init__(self, message, score = 0):
         super(Exception, self).__init__(message)
@@ -132,7 +137,7 @@ class Scorer(object):
             headers = [x.header for x in img]
             self.paths[path] = headers
             self.keywords.add_keywords_from_headers(*headers)
-        except (IOError, ValueError, pyfits.verify.VerifyError) as e:
+        except (IOError, ValueError, VerifyError) as e:
             sr = ScoringResult(path)
             sr.add(str(e), -10000)
             self.broken.append((path, sr))
@@ -152,7 +157,7 @@ class Scorer(object):
                     score += sc
                 except ScoringViolation as sv:
                     score.add(str(sv), sv.value)
-                except pyfits.verify.VerifyError as ve:
+                except VerifyError as ve:
                     score.add(str(ve), -10000)
 
             scores.append((path, score))

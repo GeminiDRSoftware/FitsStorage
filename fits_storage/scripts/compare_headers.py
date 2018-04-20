@@ -2,11 +2,13 @@
 
 from __future__ import print_function
 
-import bz2
 import os
-import pprint
-import pyfits
+import bz2
 import sys
+import pprint
+
+from astropy.io.fits import open as pfopen
+from astropy.io.fits.verify import VerifyError
 
 from fits_storage.logger import logger, setdebug, setdemon
 
@@ -39,7 +41,7 @@ def compare_headers(*headers):
     return differences
 
 def extract_header(path):
-    f = pyfits.open(bz2.BZ2File(path))
+    f = pfopen(bz2.BZ2File(path))
     f.verify('fix')
     return [hdu.header for hdu in f]
 
@@ -71,7 +73,7 @@ with orm.session_scope() as session:
 
                 pprint.pprint(compare_headers(*headers), stream = logfile)
                 session.commit()
-            except (pyfits.verify.VerifyError, IOError) as e:
+            except (VerifyError, IOError) as e:
                 print(e, file=logfile)
             finally:
                 sys.stderr = sys.__stderr__

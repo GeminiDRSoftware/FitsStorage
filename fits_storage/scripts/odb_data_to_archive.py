@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-#                                                                            GOA
-#                                                                    odb_data.py
-# ------------------------------------------------------------------------------
+
 from __future__ import print_function
 
 import sys
