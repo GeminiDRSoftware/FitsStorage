@@ -18,7 +18,7 @@ from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
 from .selection import getselection, selection_to_URL
 from .summary import summary_body
 from .summary_generator import selection_to_column_names, selection_to_form_indices
-from .summary_generator import sformdata_to_compressed, search_col_mapping
+from .summary_generator import formdata_to_compressed, search_col_mapping
 
 from ..fits_storage_config import fits_aux_datadir, fits_servertitle, use_as_archive
 from ..utils.web import get_context, Return
@@ -61,11 +61,12 @@ def searchform(things, orderby):
     column_selection = {}
 
     if formdata:
-        if ((len(formdata) == 5) and
+        if ((len(formdata) == 6) and
             ('engineering' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and
             ('science_verification' in formdata.keys()) and (formdata['science_verification'].value == 'SvInclude') and
             ('qa_state' in formdata.keys()) and (formdata['qa_state'].value == 'NotFail') and
             ('col_selection' in formdata.keys()) and
+            ('site_monitoring' in formdata.keys()) and (formdata['site_monitoring'].value == 'SmExclude') and
             ('Search' in formdata.keys()) and (formdata['Search'].value == 'Search')):
             # This is the default form state, someone just hit submit without doing anything.
             pass
@@ -165,6 +166,12 @@ def updateform(selection):
                 dct[key] = 'EngExclude'
             else:
                 dct[key] = 'EngInclude'
+
+        elif key == 'site_monitoring':
+            if value is True:
+                dct[key] = 'SmInclude'
+            else:
+                dct[key] = 'SmExclude'
 
         elif key == 'science_verification':
             if value is True:
@@ -283,6 +290,11 @@ def updateselection(formdata, selection):
             if value == 'SvInclude':
                 if key in selection.keys():
                     selection.pop(key)
+        elif key == 'site_monitoring':
+            if value == 'SmInclude':
+                selection[key] = True
+            elif value == 'SmExclude':
+                selection[key] = False
 
         elif key == 'focal_plane_mask':
             if value == 'custom':
@@ -361,6 +373,9 @@ dropdown_options = {
         [("SvInclude", "Include"),
          ("SvExclude", "Exclude"),
          ("SvOnly", "Find Only")],
+    "sm_options":
+        [("SmExclude", "Exclude"),
+         ("SmInclude", "Find Only")],
     "gmos_mask_options":
         [("0.5arcsec", "0.5 arcsec"),
          ("0.75arcsec", "0.75 arcsec"),

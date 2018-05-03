@@ -832,7 +832,7 @@ def selection_to_URL(selection, with_columns=False):
         elif key == 'site_monitoring':
             if selection[key] is True:
                 urlstring += '/site_monitoring'
-            elif:
+            else:
                 urlstring += '/not_site_monitoring'
         else:
             urlstring += '/%s' % selection[key]
