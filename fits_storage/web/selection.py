@@ -118,7 +118,8 @@ getselection_booleans = {
     'notengineering': ('engineering', False),
     'science_verification': ('science_verification', True),
     'notscience_verification': ('science_verification', False),
-    'site_monitoring': ('site_monitoring', False),
+    'site_monitoring': ('site_monitoring', True),
+    'not_site_monitoring': ('site_monitoring', False),
     'photstandard': ('photstandard', True),
     'mdgood': ('mdready', True),
     'mdbad': ('mdready', False),
@@ -270,6 +271,9 @@ def sayselection(selection):
     parts = ["%s: %s" % (sayselection_defs[key], selection[key])
                 for key in sayselection_defs
                 if key in selection]
+    
+    if selection.get('site_monitoring'):
+        parts.append('Is Site Monitoring Data')
 
     # More complicated selections from here on
     if 'spectroscopy' in selection:
@@ -327,7 +331,8 @@ queryselection_filters = (
     ('spectroscopy',  Header.spectroscopy),
     ('mode',          Header.mode),
     ('coadds',        Header.coadds),
-    ('mdready',       DiskFile.mdready)
+    ('mdready',       DiskFile.mdready),
+    ('site_monitoring', Header.site_monitoring)
     )
 
 def queryselection(query, selection):
@@ -824,6 +829,11 @@ def selection_to_URL(selection, with_columns=False):
                 urlstring += '/mask=' + str(selection[key])
         elif key == 'filepre':
             urlstring += '/filepre=%s' % selection[key]
+        elif key == 'site_monitoring':
+            if selection[key] is True:
+                urlstring += '/site_monitoring'
+            elif:
+                urlstring += '/not_site_monitoring'
         else:
             urlstring += '/%s' % selection[key]
 
