@@ -19,8 +19,7 @@ def Uploadedfile(object):
 
 class ItemizedFieldStorage(FieldStorage):
     def __init__(self, fp, environ):
-        #super(FieldStorage, self).__init__(fp, environ)
-        FieldStorage.__init__(self, fp, environ)
+        FieldStorage.__init__(self, fp, environ=environ)
         if self.filename is None:
             self.uploaded_file = None
         else:
