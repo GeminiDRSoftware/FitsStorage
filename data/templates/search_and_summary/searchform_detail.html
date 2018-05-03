@@ -106,6 +106,14 @@
             <span class="helpright">Specify the first part of the filename to match by.</span>
         </span>
         <br>
+
+        <select id="site_monitoring" class="ddw" name="site_monitoring">
+{{ generate_option_list(sm_options, updated.site_monitoring) }}
+        </select>
+        Site Monitoring Data
+        <span class="help">(help)
+            <span class="helpright">Choose whether to include, or exclude science verification data.</span>
+        </span><br>
     </div>
 </div>
 <div class="left">
