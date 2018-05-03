@@ -1,23 +1,29 @@
 """
 This module deals with the 'selection' concept.
 Functions in this module are only used within FitsStorageWebSummary.
+
 """
+import re
+import math
+import urllib
+import datetime
+import dateutil.parser
+from datetime import timedelta
+
 from sqlalchemy import or_, func
 from sqlalchemy.orm import join
 
 from ..gemini_metadata_utils import gemini_telescope, gemini_instrument
-from ..gemini_metadata_utils import gemini_observation_type, gemini_observation_class, gemini_reduction_state
-from ..gemini_metadata_utils import gemini_caltype, gmos_gratingname, gmos_focal_plane_mask, gemini_fitsfilename
-from ..gemini_metadata_utils import gemini_binning, GeminiDataLabel, GeminiObservation, GeminiProgram, ratodeg, dectodeg, srtodeg
-from ..gemini_metadata_utils import gemini_date, gemini_daterange, get_time_period, gemini_time_period_from_range
-from ..gemini_metadata_utils import gemini_gain_settings, gemini_readspeed_settings, gemini_welldepth_settings, gemini_readmode_settings
-
-import dateutil.parser
-import datetime
-from datetime import timedelta
-import re
-import urllib
-import math
+from ..gemini_metadata_utils import gemini_observation_type, gemini_observation_class
+from ..gemini_metadata_utils import gemini_reduction_state
+from ..gemini_metadata_utils import gemini_caltype, gmos_gratingname
+from ..gemini_metadata_utils import gmos_focal_plane_mask, gemini_fitsfilename
+from ..gemini_metadata_utils import gemini_binning, GeminiDataLabel, GeminiObservation
+from ..gemini_metadata_utils import GeminiProgram, ratodeg, dectodeg, srtodeg
+from ..gemini_metadata_utils import gemini_date, gemini_daterange, get_time_period
+from ..gemini_metadata_utils import gemini_time_period_from_range
+from ..gemini_metadata_utils import gemini_gain_settings, gemini_readspeed_settings
+from ..gemini_metadata_utils import gemini_welldepth_settings, gemini_readmode_settings
 
 from ..orm.header import Header
 from ..orm.diskfile import DiskFile
@@ -30,8 +36,8 @@ from ..orm.publication import Publication
 
 # A number of the choices in the getselection inner loop are just simple checks
 # that can be represented by a data structure. It's better to keep it like that
-# to simplify updates without breaking the logic
-# If the first item is callable, it's called, if it's a tuple it's considered a set of possible values
+# to simplify updates without breaking the logic.If the first item is callable,
+# it's called, if it's a tuple it's considered a set of possible values.
 getselection_test_pairs = (
     (gemini_telescope, 'telescope'),
     (gemini_date, 'date'),
@@ -112,6 +118,7 @@ getselection_booleans = {
     'notengineering': ('engineering', False),
     'science_verification': ('science_verification', True),
     'notscience_verification': ('science_verification', False),
+    'site_monitoring': ('site_monitoring', False),
     'photstandard': ('photstandard', True),
     'mdgood': ('mdready', True),
     'mdbad': ('mdready', False),
@@ -132,10 +139,10 @@ getselection_detector_roi = {
 
 def getselection(things):
     """
-    this takes a list of things from the URL, and returns a
-    selection hash that is used by the html generators
-    We disregard all but the most specific of
+    This takes a list of things from the URL, and returns a selection hash that 
+    is used by the html generators. We disregard all but the most specific of
     a project id, observation id or datalabel.
+
     """
     selection = {}
     for thing in things:
@@ -251,10 +258,10 @@ sayselection_defs = {
 
 def sayselection(selection):
     """
-    returns a string that describes the selection dictionary passed in
-    suitable for pasting into html
-    """
+    Returns a string that describes the selection dictionary passed in suitable
+    for pasting into html.
 
+    """
     # First we're going to try to collect various parts of the selection in
     # a list that we can join later.
 

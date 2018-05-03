@@ -1,35 +1,39 @@
 """
-This is the searchform module
+This is the searchform module.
+
 """
-
-from .selection import getselection, selection_to_URL
-from .summary import summary_body
-from .summary_generator import selection_to_column_names, selection_to_form_indices, formdata_to_compressed, search_col_mapping
-from .calibrations import calibrations
-from . import templating
-
-from ..fits_storage_config import fits_aux_datadir, fits_servertitle, use_as_archive
-from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
-
-from ..utils.web import get_context, Return
-
 import os
+import json
 import urllib
 import contextlib
-import json
+
 from xml.dom import minidom
 from xml.parsers.expat import ExpatError
 
+from . import templating
 
+from .calibrations import calibrations
+from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
+
+from .selection import getselection, selection_to_URL
+from .summary import summary_body
+from .summary_generator import selection_to_column_names, selection_to_form_indices
+from .summary_generator import sformdata_to_compressed, search_col_mapping
+
+from ..fits_storage_config import fits_aux_datadir, fits_servertitle, use_as_archive
+from ..utils.web import get_context, Return
+
+# ------------------------------------------------------------------------------
 @templating.templated("search_and_summary/searchform.html", with_generator=True)
 def searchform(things, orderby):
     """
     Generate the searchform html and handle the form submit.
-    """
 
+    """
     # How (we think) this (will) all work(s)
     # User gets/posts the url, may or may not have selection criteria on it
-    # We parse the url, and create an initial selection dictionary (which may or may not be empty)
+    # We parse the url, and create an initial selection dictionary
+    # (which may or may not be empty).
     # We parse the formdata and modify the selection dictionary if there was any
     # If there was formdata:
     #    Build a URL from the selection dictionary
@@ -58,11 +62,11 @@ def searchform(things, orderby):
 
     if formdata:
         if ((len(formdata) == 5) and
-                ('engineering' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and
-                ('science_verification' in formdata.keys()) and (formdata['science_verification'].value == 'SvInclude') and
-                ('qa_state' in formdata.keys()) and (formdata['qa_state'].value == 'NotFail') and
-                ('col_selection' in formdata.keys()) and
-                ('Search' in formdata.keys()) and (formdata['Search'].value == 'Search')):
+            ('engineering' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and
+            ('science_verification' in formdata.keys()) and (formdata['science_verification'].value == 'SvInclude') and
+            ('qa_state' in formdata.keys()) and (formdata['qa_state'].value == 'NotFail') and
+            ('col_selection' in formdata.keys()) and
+            ('Search' in formdata.keys()) and (formdata['Search'].value == 'Search')):
             # This is the default form state, someone just hit submit without doing anything.
             pass
         elif formdata.keys() == ['orderby']:
@@ -123,12 +127,15 @@ def searchform(things, orderby):
 
     return template_args
 
-std_gmos_fpm = {'NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec', 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2', 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec'}
+std_gmos_fpm = {'NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec',
+                'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2',
+                'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec'}
 
 def updateform(selection):
     """
-    Receives html page as a string and updates it according to values in the selection dictionary.
-    Pre-populates input fields with said selection values
+    Receives html page as a string and updates it according to values in the 
+    selection dictionary. Pre-populates input fields with said selection values.
+
     """
     dct = {}
     for key, value in selection.items():
@@ -202,8 +209,10 @@ def updateform(selection):
                 dct['gnirs_depth'] = value
         
         else:
-            # The rest needs no special processing. This does all the generic pulldown menus and text fields
-            # if key in {'ra', 'dec', 'sr', 'object', 'cenwlen', 'filepre', 'mode', 'filter', 'exposure_time', 'coadds', 'disperser', ...}:
+            # The rest needs no special processing. This does all the generic
+            # pulldown menus and text fields,
+            # if key in {'ra', 'dec', 'sr', 'object', 'cenwlen', 'filepre',
+            # 'mode', 'filter', 'exposure_time', 'coadds', 'disperser', ...}:
             dct[key] = value
 
     return dct
@@ -215,8 +224,8 @@ def updateselection(formdata, selection):
     """
     # Populate selection dictionary with values from form input
     for key in formdata:
-        # if we got a list, there are multiple fields with that name. This is true for filter at least
-        # Pick the last one (except for col_selection)
+        # if we got a list, there are multiple fields with that name. This is
+        # true for filter at least. Pick the last one (except for col_selection).
         if type(formdata[key]) is list and key != 'col_selection':
             value = formdata[key][-1].value
         if key == 'col_selection':

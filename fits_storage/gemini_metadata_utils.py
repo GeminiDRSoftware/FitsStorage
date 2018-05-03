@@ -1,18 +1,21 @@
 """
 This is the gemini_metadata_utils module. It provides a number of utility
 classes and functions for parsing the metadata in Gemini FITS files.
+
 """
 import re
+import time
 import datetime
 import dateutil.parser
-import time
+
 from .fits_storage_config import use_as_archive
 
+# ------------------------------------------------------------------------------
 DATE_LIMIT_LOW = dateutil.parser.parse('19900101')
 DATE_LIMIT_HIGH = dateutil.parser.parse('20500101')
 ZERO_OFFSET = datetime.timedelta()
 ONEDAY_OFFSET = datetime.timedelta(days=1)
-
+# ------------------------------------------------------------------------------
 # Compile some regular expressions here. This is fairly complex, so I've
 # split it up in substrings to make it easier to follow.
 # Also these substrings are used directly by the classes
@@ -32,20 +35,45 @@ obsre = r'((?:^%s)|(?:^%s))-(\d*)$' % (calengre, scire)
 gemini_gain_settings = ('high', 'low')
 gemini_readspeed_settings = ('fast', 'slow')
 gemini_welldepth_settings = ('Shallow', 'Deep', 'Invalid')
-gemini_readmode_settings = ('Classic', 'NodAndShuffle', 'Very_Faint_Objects', 'Faint_Objects', 'Faint_Object', 'Medium_Object', 'Bright_Object', 'Bright_Objects', 'Very_Bright_Objects', 'Bright', 'Medium', 'Faint', 'Low_Background', 'Medium_Background', 'High_Background')
-
+gemini_readmode_settings = ( 'Classic',
+                             'NodAndShuffle',
+                             'Faint',
+                             'Faint_Object',
+                             'Faint_Objects',
+                             'Very_Faint_Objects',
+                             'Medium',
+                             'Medium_Object',
+                             'Bright',
+                             'Bright_Object',
+                             'Bright_Objects',
+                             'Very_Bright_Objects',
+                             'Low_Background',
+                             'Medium_Background',
+                             'High_Background' )
 
 gemini_telescopes = {
     'gemini-north': 'Gemini-North',
     'gemini-south': 'Gemini-South'
     }
+# ------------------------------------------------------------------------------
 def gemini_telescope(string):
     """
-    If the string argument matches a gemini telescope name,
-    then returns the "official" (ie same as in the fits headers)
-    name of the telesope. Otherwise returns None.
-    """
+    If the string argument matches a gemini telescope name, then returns the 
+    "official" (ie same as in the fits headers) name of the telesope. Otherwise 
+    returns None.
 
+    Parameters
+    ----------
+    string : <str>
+        A string representing a Gemini telescope.
+
+    Return
+    ------
+    <str> or <NoneType>
+        The "official" name of the telesope, as found in Gemini
+        fits headers.
+
+    """
     try:
         return gemini_telescopes.get(string.lower())
     except AttributeError:
@@ -78,13 +106,34 @@ gemini_instrument_dict = {
 
 def gemini_instrument(string, gmos=False, other=False):
     """
-    If the string argument matches a gemini instrument name,
-    then returns the "official" (ie same as in the fits headers)
-    name of the instrument. Otherwise returns None.
-    If the gmos argument is true, this also recognises GMOS as
-    a valid instruemnt name.
-    If the other argument is true, it will pass through unknown instrument
+    If the string argument matches a gemini instrument name, then returns the 
+    "official" (ie same as in the fits headers) name of the instrument. Otherwise
+    returns None.
+
+    If the gmos argument is True, this also recognises GMOS as a valid instrument
+    name. If the 'other' is True, it will pass through unknown instrument
     names that don't look like an official instrument rather than return None
+
+    Parameters
+    ----------
+    string : <str>
+        A string representing a Gemini instrument name.
+
+    gmos : <bool>
+        If True, this recognises 'GMOS' as a valid instrument. 
+        Default is False.
+
+    other: <bool>
+        If True, it will pass through unknown instrument names that don't look 
+        like an official instrument.
+        Default is False.
+
+    Return
+    ------
+    retary: <str> or <NoneType>
+        The "official" name of the instrument, as found in Gemini
+        fits headers.
+
     """
     retary = None
 
@@ -172,21 +221,30 @@ def gemini_date(string, as_datetime=False, offset=ZERO_OFFSET):
         One of 'today', tomorrow', 'yesterday', 'lastnight' OR an actual 
     'yyyymmdd' string.
 
+    as_datetime: <bool>
+        return is a datetime object.
+        Default is False
+
+    offset: <datetime>
+        timezone offset from UT.
+        default is ZERO_OFFSET
+
     Returns
     -------
-    <str> A Gemini date of the form 'YYYYMMDD'
-
+    <datetime>, <str>, <NoneType>
+        One of a datetime object; a Gemini date of the form 'YYYYMMDD';
+        None.
 
     """
-
     dt_to_text = lambda x: x.date().strftime('%Y%m%d')
 
     if string in {'today', 'tonight'}:
-        string = get_fake_ut()
+        #string = get_fake_ut()
+        string = dt_to_text(datetime.datetime.utcnow())
     elif string in {'yesterday', 'lastnight'}:
-        past = dateutil.parser.parse(get_fake_ut()) -  ONEDAY_OFFSET
-        string = dt_to_text(past)
-        #string = dt_to_text(datetime.datetime.utcnow() - ONEDAY_OFFSET)
+        #past = dateutil.parser.parse(get_fake_ut()) -  ONEDAY_OFFSET
+        #string = dt_to_text(past)
+        string = dt_to_text(datetime.datetime.utcnow() - ONEDAY_OFFSET)
 
     if len(string) == 8 and string.isdigit():
         try:
@@ -348,11 +406,21 @@ def dmstodeg(string):
 srcre = re.compile(r"([\d.]+)\s*(d|D|degs|Degs)?")
 def srtodeg(string):
     """
-    Converts a Search Radius to a decimal degrees.
-    Assume arcseconds unless the string ends with 'd' or 'degs'
-    Return None if invalid
-    """
+    Converts a Search Radius in arcseconds to decimal degrees.
 
+    Assume arcseconds unless the string ends with 'd' or 'degs'
+
+    Parameters
+    ----------
+    string : <str>
+        A string representing a search radius in arcseconds
+
+    Return
+    ------
+    value: <float> or <NoneType>
+        A search radius in decimal degrees, None if invalid.
+
+    """
     match = srcre.match(string)
     try:
         value = float(match.group(1))
@@ -361,8 +429,7 @@ def srtodeg(string):
         return None
 
     if degs is None:
-        # Value is in arcseconds
-        # convert to degrees
+        # Value is in arcseconds, convert to degrees
         value /= 3600.0
 
     return value
@@ -370,15 +437,32 @@ def srtodeg(string):
 def gemini_daterange(string, as_datetime=False, offset=ZERO_OFFSET):
     """
     A utility function for matching date ranges of the form YYYYMMDD-YYYYMMDD
-    Could make this support today and yesterday, but right now it doesn't
-    Also this does not yet check for sensible date ordering
-    returns the YYYYMMDD-YYYYMMDD string, or '' if not a daterange
+    Does not support 'today', yesterday', ...
 
-    If the function is called with as_datetime=True, it will return a
-    recognized daterange as a pair of datetime objects, and None if it's
-    nto a daterange
+    Also this does not yet check for sensible date ordering returns the 
+    YYYYMMDD-YYYYMMDD string, or '' if not a daterange.
+
+    Parameters
+    ----------
+    string: <str>
+        date range of the form YYYYMMDD-YYYYMMDD.
+
+    as_datetime: <bool>
+        If True, return a recognized daterange as a pair of datetime objects,
+        None if it's not a daterange.
+        Default is False.
+
+    offset: <datetime>
+        timezone offset from UT.
+        default is ZERO_OFFSET
+
+    Returns
+    -------
+    <datetime>, <str>, <NoneType>
+        One of a <datetime> object; a Gemini date of the form 'YYYYMMDD';
+        None.
+
     """
-
     datea, sep, dateb = string.partition('-')
     da = gemini_date(datea, as_datetime=True, offset=offset)
     db = gemini_date(dateb, as_datetime=True, offset=offset)
@@ -393,35 +477,71 @@ def gemini_daterange(string, as_datetime=False, offset=ZERO_OFFSET):
 obs_types = ('DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI', 'CAL', 'FRINGE', 'MASK')
 def gemini_observation_type(string):
     """
-    A utility function for matching Gemini ObsTypes
-    If the string argument matches a gemini ObsType
-    then we return the observation_type
-    Otherwise return None
-    We add the unofficial values PINHOLE for GNIRS pinhole mask observations and RONCHI for NIFS Ronchi mask observations here too
-    """
+    A utility function for matching Gemini ObsTypes.
 
+    We add the unofficial values PINHOLE for GNIRS pinhole mask observations
+    and RONCHI for NIFS Ronchi mask observations.
+
+    If the string argument matches a gemini ObsType then we return the
+    observation_type else return None
+
+    Parameters
+    ----------
+    string : <str>
+        Name of a gemini observation type as returned by AstroData
+        descriptor, observation_type().
+
+    Return
+    ------
+    string : <str> or <NoneType>
+        The name of the observation type or None.
+
+    """
     return string if string in obs_types else None
 
 obs_classes = ('dayCal', 'partnerCal', 'acqCal', 'acq', 'science', 'progCal')
 def gemini_observation_class(string):
     """
-    A utility function matching Gemini ObsClasses
-    If the string argument matches a gemini ObsClass then we return
-    the observation_class
-    Otherwise we return None
-    """
+    A utility function matching Gemini ObsClasses.
 
+    If the string argument matches a gemini ObsClass then we return the 
+    observation_class, else return None
+
+    Parameters
+    ----------
+    string : <str>
+        Name of a gemini observation class as returned by AstroData
+        descriptor, observation_class().
+
+    Return
+    ------
+    string : <str> or <NoneType>
+        The name of the observation class or None.
+
+    """
     return string if string in obs_classes else None
 
-reduction_states = ('RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS', 'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK', 'PROCESSED_TELLURIC', 'PROCESSED_SCIENCE')
+reduction_states = ('RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS',
+                    'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK',
+                    'PROCESSED_TELLURIC', 'PROCESSED_SCIENCE')
 def gemini_reduction_state(string):
     """
-    A utility function matching Gemini reduction states
-    If the string argument matches a gemini reduction state then we return
-    the reduction state
-    Otherwise we return None
-    """
+    A utility function matching Gemini reduction states.
 
+    If the string argument matches a gemini reduction state then we return the 
+    reduction state else return None.
+
+    Parameters
+    ----------
+    string : <str>
+        Name of a reduction state as enumerated in 'reduction_states'.
+
+    Return
+    ------
+    string : <str> or <NoneType>
+        The name of reduction state or None.
+
+    """
     return string if string in reduction_states else None
 
 cal_types = (
@@ -441,8 +561,18 @@ def gemini_caltype(string):
     to the DHS or ODB, it's more or less defined by the Fits Storage project
 
     These should all be lower case so as to avoid conflict with gemini_observation_type
-    """
 
+    Parameters
+    ----------
+    string : <str>
+        Name of a calibration type.
+
+    Return
+    ------
+    string : <str> or <NoneType>
+        The name of calibration type or None.
+
+    """
     return string if string in cal_types else None
 
 gmos_gratings = ('MIRROR', 'B600', 'R600', 'R400', 'R831', 'R150', 'B1200')
@@ -457,8 +587,18 @@ def gmos_gratingname(string):
 
     If the string argument matches a grating, we return the official name for
     that grating.
-    """
 
+    Parameters
+    ----------
+    string : <str>
+        A grating name.
+
+    Return
+    ------
+    string : <str> or <NoneType>
+         A grating name or None.
+
+    """
     return string if string in gmos_gratings else ''
 
 gmosfpmaskcre = re.compile(r'^G[NS](20\d\d)[AB](.)(\d\d\d)-(\d\d)$')

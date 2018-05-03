@@ -121,6 +121,7 @@ class Header(Base):
     qa_state = Column(QASTATE_ENUM, index=True)
     release = Column(Date)
     reduction = Column(REDUCTION_STATE_ENUM, index=True)
+    # added per Trac #264, Support for Gemini South All Sky Camera
     site_monitoring = Column(Boolean)
     types = Column(Text)
     phot_standard = Column(Boolean)
