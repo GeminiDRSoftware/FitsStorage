@@ -25,6 +25,7 @@ from ..gemini_metadata_utils import gemini_gain_settings
 from ..gemini_metadata_utils import gemini_readspeed_settings
 from ..gemini_metadata_utils import gemini_welldepth_settings
 from ..gemini_metadata_utils import gemini_readmode_settings
+from ..gemini_metadata_utils import site_monitor
 
 from astropy import wcs as pywcs
 
@@ -154,7 +155,7 @@ class Header(Base):
 
         # Check for site_monitoring data. Currently, this only comprises
         # GS_ALLSKYCAMERA, but may accommodate other monitoring data.
-        self.site_monitoring = gmu.site_monitor(ad.instrument())
+        self.site_monitoring = site_monitor(ad.instrument())
 
         # Basic data identification section
         # Parse Program ID
