@@ -166,8 +166,8 @@ class Header(Base):
             # Set eng and sv booleans
             gemprog = GeminiProgram(self.program_id)
             self.engineering = gemprog.is_eng or not gemprog.valid
-            self.science_verification = gemprog.is_sv
-            self.calibration_program = gemprog.is_cal
+            self.science_verification = bool(gemprog.is_sv)
+            self.calibration_program = bool(gemprog.is_cal)
         else:
             # program ID is None - mark as engineering
             self.engineering = True
