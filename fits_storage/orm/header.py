@@ -171,6 +171,7 @@ class Header(Base):
         else:
             # program ID is None - mark as engineering
             self.engineering = True
+            self.science_verification = False
 
         self.observation_id = ad.observation_id()
         if self.observation_id is not None:
