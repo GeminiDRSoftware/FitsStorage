@@ -731,6 +731,7 @@ dropdown_options = {
          ("F2", "F2"),
          ("GPI", "GPI"),
          ("NICI", "NICI"),
+         ("IGRINS", "IGRINS"),
          ("michelle", "Michelle"),
          ("TReCS", "T-ReCS"),
          ("bHROS", "bHROS"),

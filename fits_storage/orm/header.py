@@ -139,8 +139,8 @@ class Header(Base):
         """
         Populates header table values from the FITS headers of the file.
         Uses the AstroData object to access the file.
-        """
 
+        """
         # The header object is unusual in that we directly pass the constructor
         # a diskfile object which may have an ad_object in it.
         if diskfile.ad_object is not None:
@@ -151,6 +151,10 @@ class Header(Base):
             else:
                 fullpath = diskfile.fullpath()
             ad = astrodata.open(fullpath)
+
+        # Check for site_monitoring data. Currently, this only comprises
+        # GS_ALLSKYCAMERA, but may accommodate other monitoring data.
+        self.site_monitoring = gmu.site_monitor(ad.instrument())
 
         # Basic data identification section
         # Parse Program ID
