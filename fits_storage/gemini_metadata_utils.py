@@ -92,6 +92,7 @@ gemini_instrument_dict = {
     'texes':      'TEXES',
     'trecs':      'TReCS',
     'nici':       'NICI',
+    'igrins':     'IGRINS',
     'gsaoi':      'GSAOI',
     'oscir':      'OSCIR',
     'f2':         'F2',
