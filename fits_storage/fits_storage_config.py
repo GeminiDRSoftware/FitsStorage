@@ -6,40 +6,25 @@ We put them in a separate file to ease install issues
 import os, sys
 
 # Is this an archive server
-use_as_archive = True
-# use_as_archive = False
+#use_as_archive = True
+use_as_archive = False
 
 # AWS S3 info
 using_s3 = False
-s3_bucket_name = 'gemini-archive'
-s3_backup_bucket_name = 'gemini-archive-ttt'
-s3_staging_area = '/data/FitsStorage/s3_staging'
+s3_bucket_name = ''
+s3_backup_bucket_name = ''
+s3_staging_area = ''
 aws_access_key = ''
 aws_secret_key = ''
 
 # Staging area for uncompressed cache of compressed file being processed
-z_staging_area = '/data/FitsStorage/z_staging'
+z_staging_area = '/data/z_staging'
 
 # Configure the path to the storage root here 
-#storage_root = '/data/FitsStorage/dataflow'
-#storage_root = '/data/gemini_data'
-#storage_root = '/data/graces_data'
-#storage_root = '/data/colossos_data'
-#storage_root = '/data/colossos_data_orig'
-#storage_root = '/data/igrins_data'
+storage_root = '/sci/dataflow'
 #storage_root = '/data/archive_soak'
-#storage_root = '/data/gmosNandS'
-#storage_root = '/data/bhros'
-storage_root = '/data/cirpass'
-#storage_root = '/data/flamingos'
-#storage_root = '/data/gpi'
-#storage_root = '/data/hrwfs'
-#storage_root = '/data/michelle'
-#storage_root = '/data/oscir'
-#storage_root = '/data/phoenix'
-#storage_root = '/data/texes'
-#storage_root = '/data/trecs'
-#storage_root = '/data/hokupaa+quic'
+#storage_root = '/data/skycam'
+dhs_perm = '/sci/dhs'
 
 if(using_s3):
     storage_root = s3_staging_area
@@ -47,12 +32,12 @@ if(using_s3):
 # Defer ingestion of files modified within the last defer_seconds seconds
 # for at least a further defer_seconds seconds
 # Set to zero to disable
-defer_seconds = 0
+defer_seconds = 4
 
 
 # Target free space and number of files on storage_root for delete script
-target_gb_free = 100
-target_max_files = 125000
+target_gb_free = 250
+target_max_files = 8000000
 
 # This is the path in the storage root where processed calibrations
 # uploaded through the http server get stored.
@@ -64,26 +49,26 @@ upload_staging_path = "/data/upload_staging"
 upload_auth_cookie = None
 
 # This is the cookie supplied to servers we are exporting to.
-export_upload_auth_cookie = None
+export_upload_auth_cookie = 'f3c6986fddfe42a8ce117203924c6983'
 
 
 # This is the magic cookie value needed to allow downloading any files
 # without any other form of authentication
 # The cookie name is 'gemini_fits_authorization'
 # Leave it as None to disable this feature
-magic_download_cookie = None
+magic_download_cookie = 'good_to_go'
 
 # This is the magic cookie value needed to allow API access without
 # any other authentication.
 # Leave it as None to disable this feature
-magic_api_cookie = None
+magic_api_cookie = 'f0a49ab56f80da436b59e1d8f20067f4'
 
 # API backend stuff
-provides_api = False
+provides_api = True
 api_backend_location = 'localhost:8000'
 
 # This is the list of downstream servers we export files we ingest to
-export_destinations = []
+export_destinations = ['https://archive.gemini.edu']
 #export_destinations = ['hbffits2']
 
 # Do we want to bzip2 files we export on the fly?
@@ -103,17 +88,17 @@ das_calproc_path = '/net/josie/staging/dataproc/gmos'
 
 # Configure the site and other misc stuff here
 # Especially for archive systems, make the servername a fully qualified domain name.
-fits_servertitle = "Gemini Observatory Archive"
-fits_servername = "sbffits-dev-lv1"
-fits_system_status = "development"
+fits_servertitle = "CPO Fits Server"
+fits_servername = "cpofits-lv2"
+fits_system_status = "production"
 
 # Limit on number of results in open searches
 fits_open_result_limit = 500
 fits_closed_result_limit = 10000
 
-smtp_server = "smtp.gemini.edu"
-#email_errors_to = "phirst@gemini.edu"
-email_errors_to = "kanderso@gemini.edu"
+smtp_server = "localhost"
+email_errors_to = "phirst@gemini.edu"
+#email_errors_to = "kanderso@gemini.edu"
 
 # Configure the path the data postgres database here
 fits_dbname = 'fitsdata'
@@ -129,7 +114,7 @@ fits_aux_datadir = "/opt/FitsStorage/data"
 template_root = fits_aux_datadir + "/templates"
 
 # Configure the Backup Directory here
-fits_db_backup_dir = "/data/backups"
+fits_db_backup_dir = "/sci/dataflow/FitsStorage_Backups/cpofits-lv1"
 
 # Configure the LockFile Directory here
 fits_lockfile_dir = "/data/logs"
@@ -149,11 +134,8 @@ using_sqlite = False
 pubdb_host = 'hbfmysql1.hi.gemini.edu'
 pubdb_username = 'fitsdata'
 pubdb_dbname = 'apps-publications'
-# pubdb_remote = 'http://sbffits-dev-lv1:8080/ingest_publications' # Test URI
-pubdb_remote = 'https://archive.gemini.edu/ingest_publications'
-
-# This is used to reference program keys with the odb
-odbkeypass = "dontputtheactualkeyinthesvn"
+#pubdb_remote = 'https://archive.gemini.edu/ingest_publications'
+pubdb_remote = 'https://localhost/ingest_publications'
 
 # By default, all URLs on the server are active. List in blocked_urls any that you want to disable
 blocked_urls = []
