@@ -8,6 +8,7 @@ MAILTO=fitsadmin@gemini.edu
 #2 * * * * python /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=masks --demon
 #6 * * * * python /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=obslogs --demon
 #10  * * * * python /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=iraf_cals --demon
+#30  * * * * python /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=skycam --demon
 #*/5 * * * * python /opt/FitsStorage/fits_storage/scripts/feed_ingest_queue.py --demon --site=N --lockfile
 #
 # File curation
@@ -16,10 +17,7 @@ MAILTO=fitsadmin@gemini.edu
 #0 9 * * * /home/fitsdata/diskspace.py
 #
 # Notifications
-#50 7 * * * python /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2016A
-#51 7 * * * python /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015B
-#52 7 * * * python /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2016A --to-remote-server=https://archive.gemini.edu
-#53 7 * * * python /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015B --to-remote-server=https://archive.gemini.edu
+#50 7 * * * python /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gsodb --semester=auto
 #0 8 * * *  python /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon
 #0 8 * * *  python /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon --check
 #0 8 * * Tue python /opt/FitsStorage/fits_storage/scripts/MissingCalibrationEmail.py
@@ -27,4 +25,3 @@ MAILTO=fitsadmin@gemini.edu
 # Maintainance etc
 #0 7 * * * python /opt/FitsStorage/fits_storage/scripts/database_vacuum.py --demon
 #30 7 * * * python /opt/FitsStorage/fits_storage/scripts/database_backup.py --demon --exclude-queues
-
