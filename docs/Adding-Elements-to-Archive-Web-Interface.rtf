@@ -1,0 +1,388 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf400
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 LucidaSans-Typewriter;\f2\fnil\fcharset0 LucidaSans-TypewriterBold;
+}
+{\colortbl;\red255\green255\blue255;\red255\green69\blue0;\red205\green55\blue0;}
+{\*\expandedcolortbl;;\csgenericrgb\c100000\c27059\c0;\csgenericrgb\c80392\c21569\c0;}
+\margl1440\margr1440\vieww14980\viewh20200\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+How to Add an new element to the Fitsstore web interface.\
+\
+Our example will be the real world addition of the All-Sky Camera to the database and web interface.\
+\
+If this is a new data type for Astrodata, you will need to add an astrodata adclass for that data type.\
+In our example, these data are for instrument, \'93ALLSKYCAMERA\'94.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\b \cf0 \ul \ulc0 Update for Database
+\b0 \ulnone \
+\'97 update AstroData to accommodate the new data type in the database\
+    How to write your adclass is beyond the scope of this document. Consult the AstroData manual on\
+    how to do this.\
+\
+\
+
+\b \ul Fitsstore updates
+\b0 \
+\ulnone \
+
+\b\fs28 fits_storage/orm/header.py
+\b0\fs24 \
+_____________________________________\
+
+\b \'97
+\b0  In 
+\f1 orm/header.py,
+\f0  add the new column (field) name to the header table.\
+    These are set as class attributes on the 
+\f1 header.Heade
+\f0 r class.\
+\
+    # added per Trac #264, Support for Gemini South All Sky Camera\
+\
+    
+\f1 site_monitoring = Column(Boolean)
+\f0 \
+_____________________________________\
+
+\b \'97
+\b0  add some conditions to 
+\f1 header.populate_fits()
+\f0  if needed.\
+\
+	E.g., somewhere in that giant function, check the tags and do something like\
+\
+	
+\f1 if \'93GS_ALLSKYCAM\'94 in ad.tags:\
+	    self.site_monitoring = True
+\f0 \
+\
+    or, as recommended by RC, put this into a function in 
+\f1 gmu
+\f0  module (gemini_metadata_utils.py).\
+    Indeed, this was done, and the function defined thusly:\
+\
+\pard\tx0\tx534\tx560\tx1058\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\li2107\fi-2108\pardirnatural\partightenfactor0
+
+\f1\fs20 \cf0 	
+\f2\b def
+\f1\b0  site_monitor(string):\
+    	    """\
+    			Parameters:\
+    			----------\
+    			string: <str>\
+    			    The name of the instrument that is a sky monitor. Currently, this\
+            supports only GS_ALLSKYCAMERA. The string will generally be that\
+            returned by the astrodata descriptor, ad.instrument().\
+\
+    			Return\
+    			------\
+    			yes: <bool>\
+        			Returns True when GS_ALLSKYCAMERA is passed.\
+\
+    			"""\
+    			if string == 'GS_ALLSKYCAMERA':\
+        	    
+\f2\b return
+\f1\b0  True\
+    			else:\
+        		    
+\f2\b return
+\f1\b0  False\
+\pard\tx560\tx1102\tx1104\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\li1154\fi-1155\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0 \
+
+\b\fs28 fits_storage/web/searchform.py
+\b0\fs24 \
+_____________________________________\
+In 
+\f1\fs22 web/searchform.searchform()
+\f0\fs24  add the new field to the 
+\f1\fs22 formdata
+\f0\fs24  conditional tuple:\
+\
+
+\f1\fs20 	def searchform(things, orderby):\
+	\'85\
+    		if formdata:\
+       	  if ((len(formdata) == 
+\f2\b 6
+\f1\b0 ) and\
+          	 ('engineering' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and\
+              ('science_verification' in formdata.keys()) and (formdata['science_verification'].value == 'SvInclude') and\
+              ('qa_state' in formdata.keys()) and (formdata['qa_state'].value == 'NotFail') and\
+              ('col_selection' in formdata.keys()) and\
+              (
+\f2\b 'site_monitoring' in formdata.keys()) and (formdata['site_monitoring'].value == 'SmExclude')
+\f1\b0  and\
+              ('Search' in formdata.keys()) and (formdata['Search'].value == 'Search')):\
+\
+              # This is the default form state, someone just hit submit without doing anything.\
+              pass\
+
+\fs22 \
+
+\f0\fs24 Be sure to up the value of the length test for a new item in this set. I.e., if you add another item, the test \
+\
+    
+\f1 if ((len(formdata) == 6
+\f0 )\
+\
+has to be changed to \
+\
+    
+\f1 if ((len(formdata) == 7)\
+
+\fs22 \
+_____________________________________\
+
+\f0\fs24 \'97 add the new key to the if-elif tree in the function, 
+\f1 updateform(selection)
+\f0 \
+\
+    
+\f1\fs22 def 
+\f2\b updateform
+\f1\b0 (selection):\
+    \'85\
+    dct = \{\}\
+    for key, value in selection.items():\
+    \'85\
+    elif key
+\f2\b  == 'site_monitoring':\
+        
+\f1\b0 if value is True:\
+            dct[key] =
+\f2\b  'SmInclude'\
+        
+\f1\b0 else:\
+            dct[key]
+\f2\b  = 'SmExclude
+\f1\b0 '
+\fs24 \
+\
+
+\f0 \'97 In the same file, searchform.py, add this same thing (!) to another function,
+\f1 \
+\
+
+\f2\b\fs22   
+\f1\b0 def
+\f2\b  updateselection
+\f1\b0 (formdata, selection):\
+	  \'85
+\f2\b \
+      
+\f1\b0 for key in 
+\f2\b formdata
+\f1\b0 :
+\f2\b \
+          
+\f1\b0 elif key
+\f2\b  == 'site_monitoring':\
+              
+\f1\b0 if value == '
+\f2\b SmInclude
+\f1\b0 ':
+\f2\b \
+                  selection[key] = True\
+              
+\f1\b0 elif value == '
+\f2\b SmExclude
+\f1\b0 ':
+\f2\b \
+                  selection[key] = False
+\fs24 \
+
+\f1\b0 \
+
+\f0 \'97 On or about L361, there is a big dictionary for \'93dropdown options\'94. Add new dropdown items to this.
+\f1 \
+
+\f2\b sm_options
+\f0\b0  will be the options for 
+\f1 site_monitoring. 
+\f0 You can add any number of options and option\
+values to this.
+\f1 \
+\
+
+\fs22 dropdown_options = \{\
+    "engdata_options":\
+        [("EngExclude", "Exclude"),\
+         ("EngInclude", "Include"),\
+         ("EngOnly", "Find Only")],\
+    "mode_options":\
+        [("imaging", "Imaging"),\
+         ("spectroscopy", "Spectroscopy"),\
+         ("LS", "Long-slit spectroscopy"),\
+         ("MOS", "Multi-object spectroscopy"),\
+         ("IFS", "Integral field spectroscopy")],\
+    "svdata_options":\
+        [("SvInclude", "Include"),\
+         ("SvExclude", "Exclude"),\
+         ("SvOnly", "Find Only")],\
+    
+\f2\b "sm_options":\
+        [("SmExclude", "Exclude"),\
+         ("SmInclude", "Find Only")],
+\f1\b0 \
+
+\fs24 \
+
+\f0 _____________________________________\
+
+\b\fs28 fits_storage/web/selection.py
+\b0\fs24 \
+_____________________________________\
+\'97 add values and defaults to the appropriate 
+\f1 \'93getselection\'94
+\f0  type. For site monitoring, this is a boolean.\
+\
+
+\f2\b\fs22 getselection_booleans
+\f1\b0  = \{\
+    'imaging': ('spectroscopy', False),\
+    'spectroscopy': ('spectroscopy', True),\
+    'present': ('present', True), 'Present': ('present', True),\
+    'notpresent': ('present', False), 'NotPresent': ('present', False),\
+    'canonical': ('canonical', True), 'Canonical': ('canonical', True),\
+    'notcanonical': ('canonical', False), 'NotCanonical': ('canonical', False),\
+    'engineering': ('engineering', True),\
+    'notengineering': ('engineering', False),\
+    'science_verification': ('science_verification', True),\
+    'notscience_verification': ('science_verification', False),\
+    
+\f2\b 'site_monitoring': ('site_monitoring', True),\
+    'not_site_monitoring': ('site_monitoring', False),
+\f1\b0 \
+    'photstandard': ('photstandard', True),\
+    'mdgood': ('mdready', True),\
+    'mdbad': ('mdready', False),\
+
+\fs24 \
+
+\f0 _____________________________________
+\f1 \
+
+\f0 In the function, 
+\f2\b sayselection
+\f0\b0 ,  add a conditional that provides a string for html pasting.\
+\
+
+\f1\fs22 def 
+\f2\b sayselection
+\f1\b0 (selection):\
+ \cf2    """\
+    Returns a string that describes the selection dictionary passed in suitable\
+    for pasting into html.\
+\
+    """\cf0 \
+    # Collect simple associations of the 'key: value' type from the\
+    # sayselection_defs dictionary\
+    parts = ["%s: %s" % (sayselection_defs[key], selection[key])\
+                for key in sayselection_defs\
+                if key in selection]\
+    \
+    
+\f2\b if selection.get('site_monitoring'):\
+        parts.append('Is Site Monitoring Data')
+\f1\b0\fs24 \
+
+\f0 \
+
+\f1     \'85\
+_____________________________________\
+
+\f0 goto 
+\f1 queryselection_filters
+\f0 ,  (currently, selection.py @L313) a tuple linking string labels to database Header attributes.\
+\
+
+\f1\fs22 queryselection_filters = (\
+    ('present',        DiskFile.present),\
+    ('canonical',      DiskFile.canonical),\
+    ('science_verification', Header.science_verification),\
+    \'85\
+\pard\pardeftab720\partightenfactor0
+\cf0     ('readmode',      Header.detector_readmode_setting),\
+    ('filter',        Header.filter_name),\
+    ('spectroscopy',  Header.spectroscopy),\
+    ('mode',          Header.mode),\
+    ('coadds',        Header.coadds),\
+    ('mdready',       DiskFile.mdready),\
+    
+\f2\b ('site_monitoring', Header.site_monitoring)
+\f1\b0 \
+    )\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\fs24 \cf0 \
+_____________________________________\
+
+\f0 In the function, 
+\f1 selection_to_URL
+\f0 , update key testing in selection object. \
+This converts the selection criteria from the searchform and converts to a URL string.
+\f1 \
+\
+
+\fs22 def selection_to_URL(selection, with_columns=False):\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf3     """\
+    Receives a selection dictionary, parses values and converts to URL string.\
+\
+    """\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0     urlstring = ''\
+\
+    elif key == '
+\f2\b site_monitoring
+\f1\b0 ':\
+        if selection[key] is True:\
+            urlstring += '
+\f2\b /site_monitoring
+\f1\b0 '\
+        else:\
+            urlstring += '
+\f2\b /not_site_monitoring
+\f1\b0 '\
+    \'85\
+	return ulrstring\
+
+\fs24 \
+
+\f0 _____________________________________\
+
+\b\fs28 FitsStorage/data/templates/search_and_summary/searchform_detail.html
+\b0\fs24 \
+_____________________________________
+\f1 \
+
+\f0 In this file, searchform_detail.html, a template for the searchform is laid out. Add new elements to this template.\
+For site_monitoring, this is added @L110 of the template:\
+\
+ 
+\f1  
+\fs22       <select id="
+\f2\b site_monitoring
+\f1\b0 " class="ddw" name="
+\f2\b site_monitoring
+\f1\b0 ">\
+\{\{ generate_option_list(sm_options, updated.
+\f2\b site_monitoring
+\f1\b0 ) \}\}\
+        </select>\
+        Site Monitoring Data\
+        <span class="help">(help)\
+            <span class="helpright">Choose whether to include, or exclude site monitoring data.</span>\
+        </span><br>\
+
+\fs24 \
+_____________________________________\
+}
