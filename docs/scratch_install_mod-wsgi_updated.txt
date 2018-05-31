@@ -55,11 +55,6 @@ Install EPEL repository (included by default on ITS config)
     $ sudo pip install pandas
     $ sudo pip install astropy
 
-
-  - (Need for discussion about anaconda package man. Does having anaconda matter
-    for Apache? or does everything need to be installed at system level? My guess
-    is the latter.)
-
   # If using s3 (for dev purposes, probably not necessary)
     ----
     $ sudo pip install boto3
@@ -76,43 +71,57 @@ Set up the 'fitsdata' account
     geminidata:x:502:fitsdata
 
 
-Set up FitsStorage and Dragons (ne: gemini_python)
-==================================================
-    
+Set up FitsStorage and DRAGONS
+==============================
+
+  Install and setup FitsStorage
+  =============================
     $ sudo mkdir /opt/FitsStorage
     $ sudo chown fitsdata:fitsdata /opt/FitsStorage/
 
-    $ sudo mkdir /opt/gemini_python
-    $ sudo chown <myaccount> /opt/gemini_python
-    $ cd /opt/gemini_python
-    $ svn checkout http://chara.hi.gemini.edu/svn/DRSoftware/gemini_python/trunk .
-
-  If installing DRAGONS (as dragons), same as above but change the name and get DRAGONS from GitHub:
- 
-    $ sudo mkdir /opt/dragons
-    $ sudo chown <myaccount> /opt/dragons
-    $ cd /opt/dragons
-    $ git clone https://github.com/GeminiDRSoftware/DRAGONS.git
-    
-  Now, under /opt/ you should have directories with owners that look like,
-
-    drwxr-xr-x  11 fitsdata 4096 Feb  8 16:24 FitsStorage/
-    drwxr-xr-x  13 kanderso 4096 Feb  7 17:45 gemini_python/
-
-  Or, if DRAGONS:
-
-    drwxr-xr-x  11 fitsdata 4096 Feb  8 16:24 FitsStorage/
-    drwxr-xr-x  13 kanderso 4096 Feb  7 17:45 dragons/
-
-
-  In the 'fitsdata' account install FitsStorage:
-  =============================================
+    # Once FitsStorage is made, use the 'fitsdata' account
+    # to checkout from repo.
     $ cd /opt/FitsStorage
     $ svn checkout http://scisoft/svn/FitsStorage/trunk .
 
+    Note: If you forget to do this as 'fitsdata', and svn checkout
+          with your sudo account (it happens!), you can chown
+          the directory recursively:
 
-Setup the web server
-====================
+          $ sudo chown -R fitsdata:fitsdata FitsStorage/
+
+
+  Installing DRAGONS
+  ==================
+  Get DRAGONS from GitHub. Note: git pull will place 'DRAGONS' directly
+  on cwd.
+
+    $ cd /opt
+    $ sudo git clone https://github.com/GeminiDRSoftware/DRAGONS.git
+
+  Now, under /opt you should have directories with owners that look like,
+
+    drwxr-xr-x  11 fitsdata  4096 Feb  8 16:24 FitsStorage/
+    drwxr-xr-x  13 <youract> 4096 Feb  7 17:45 DRAGONS/
+
+  Install fitsverify
+  ==================
+  As part of file validation, FitsStorage makes use of the executable, "fitsverify'.
+  This is an executable built from the cfitsio library. You can find this executable 
+  on current production Fits servers in /opt. Add this to /opt on the new server and
+  make the owner 'fitsdata'. Your /opt directory should then look something like,
+
+  /opt:
+  drwxr-xr-x  12 <youract>    root 4096 May 11 16:22 DRAGONS
+  drwxr-xr-x  12 fitsdata fitsdata 4096 May  8 15:58 FitsStorage
+  drwxr-xr-x   2 <youract>    root 4096 May 20 15:26 fitsverify
+
+  It likely will be true that the 'fitsverify' binary will need to be compiled 
+  from source if the OS is something other than CentOS7.
+
+
+Setup the web server w/ mod_wsgi
+================================
 Your sudo account will be used to set up the web server.
 
 The following is a shell "install script" that will provide necessary
@@ -121,12 +130,12 @@ You can copy and paste this into a file (suggestion: > /tmp/install_script.sh)
 and run it.
 
 (Modify the variables at the beginning of the following script if needed)
-----
-
+-------------------------------------------------------------------------
     # NOTE!!! IF YOU MODIFY THE FOLLOWING, THE CHANGES NEED TO BE TRANSLATED TO
     # /etc/systemd/system/fits-httpd.service!!!!!!!!!!!
 
     FITSSTORAGE_ROOT=/opt/FitsStorage
+    DRAGONS_ROOT=/opt/DRAGONS
     MODWSGI_DIR=/opt/modwsgi-default
 
     # Explanation of options that we are setting in the MODWSGI_OPTS
@@ -144,23 +153,25 @@ and run it.
     --url-alias /favicon.ico $FITSSTORAGE_ROOT/htmldocroot/favicon.ico \
     --url-alias /robots.txt $FITSSTORAGE_ROOT/htmldocroot/robots.txt \
     --python-path $FITSSTORAGE_ROOT \
+    --python-path $DRAGONS_ROOT \
     "
 
     mkdir ${MODWSGI_DIR}
 
     # The extra argument is the WSGI entry point
+
     mod_wsgi-express setup-server $MODWSGI_OPTS $FITSSTORAGE_ROOT/fits_storage/wsgihandler.py
 
     # And set let apache handle that dir from now on
     # TODO: Rethink this; most probably it's better to have root having permissions
     #       over everything that apache doesn't need to touch
     chown -R apache:apache $MODWSGI_DIR
----
+-----------------------------------------------------------------------------
 EOF
 
 
-  Run the script to set up mod_wsgi
-  ---------------------------------
+  Run the above script to set up mod_wsgi
+  ---------------------------------------
   
     $ sudo bash /tmp/install_script.sh
 
@@ -173,17 +184,20 @@ EOF
     $ sudo cp /opt/FitsStorage/otherfiles/etc-sysconfig-httpd /etc/sysconfig/httpd
 
 
+  Edit modwsgi_default files.
+  ===========================
+
   Edit the config file generated by the install_script.sh
-  (/opt/modwsgi-default/httpd.conf) and add these lines by the end of the
-  "Alias" list. Then edit to File * for permissions:
+  (/opt/modwsgi-default/httpd.conf) and add these lines by the 
+  end of the "Alias" list. Then change to File * for permissions:
   -----------------------------------
 
     AliasMatch '/(.*\.html)' '/opt/FitsStorage/htmldocroot/$1'
     AliasMatch '/(.*\.css)' '/opt/FitsStorage/htmldocroot/$1'
     AliasMatch '/(.*\.js)' '/opt/FitsStorage/htmldocroot/$1'
 
-  Which should look like:
-  ----------------------
+  Which should see the entries looking like:
+  ------------------------------------------
     [...]
     Alias '/favicon.ico' '/opt/FitsStorage/htmldocroot/favicon.ico'
 
@@ -205,22 +219,53 @@ EOF
     </IfDefine>
     [ ... ]
 
+  Edit /opt/modwsgi-default/handler.wsgi and set the "entry point"
+  ----------------------------------------------------------------
+  The default install of modwsgi-default sets the entry point in the 
+  handler.wsgi file to be 
+
+    entry_point = '/opt/modwsgi-default/default.wsgi'
+
+  Set this to use the FitsStorage wsgihandler.py:
+
+    entry_point = '/opt/FitsStorage/fits_storage/wsgihandler.py'
 
 
 Set Up and Start Postgres
 =========================
-  Still within your sudo user account:
+Using your sudo account, build log and backup directories under the
+/data/ partition.
+
+ Set up log, backup directories
+  =============================
+    $ sudo mkdir /data/logs
+    $ sudo chown fitsdata /data/logs
+    $ sudo mkdir /data/backups
+    $ sudo chown fitsdata /data/backups
+    $ sudo mkdir /data/upload_staging
+    $ sudo chown fitsdata /data/upload_staging
+    $ sudo chmod oug+rwx /data/upload_staging
+    $ sudo mkdir /data/z_staging
+    $ sudo chown fitsdata /data/z_staging
+    
+  # if using s3
+    $ sudo mkdir /data/s3_staging
+    $ sudo chown fitsdata /data/s3_staging
+
+  # apache needs access to this to download preview images now
+
+    $ sudo chmod oug+rw /data/s3_staging
 
     $ sudo mkdir /data/pgsql_data
     $ sudo chown postgres:postgres /data/pgsql_data
     $ sudo cp /lib/systemd/system/postgresql.service /etc/systemd/system/
 
-  -- Edit the postgresql.service file just placed in /etc/systemd/system/
-     and add the PGDATA environment var:
+    Edit the postgresql.service file just placed in /etc/systemd/system/
+    and add the PGDATA environment var:
     
     $ sudo vi (emacs) /etc/systemd/system/postgresql.service
     
-    Environment=PGDATA=/data/pgsql_data
+        Environment=PGDATA=/data/pgsql_data
 
     (exit)
 
@@ -241,27 +286,6 @@ Set Up and Start Postgres
 
   # save the file and exit.
 
-  Set up log and backup directories
-  =================================
-    $ sudo mkdir /data/logs
-    $ sudo chown fitsdata /data/logs
-    $ sudo mkdir /data/backups
-    $ sudo chown fitsdata /data/backups
-    $ sudo mkdir /data/upload_staging
-    $ sudo chown fitsdata /data/upload_staging
-    $ sudo chmod oug+rwx /data/upload_staging
-    $ sudo mkdir /data/z_staging
-    $ sudo chown fitsdata /data/z_staging
-    
-  # if using s3
-    $ sudo mkdir /data/s3_staging
-    $ sudo chown fitsdata /data/s3_staging
-
-  # apache needs access to this to download preview images now
-
-    $ sudo chmod oug+rw /data/s3_staging
-
-
   Start Postgresql
   ================
 
@@ -271,12 +295,22 @@ Set Up and Start Postgres
     $ sudo systemctl enable postgresql.service
     $ sudo systemctl enable fits-httpd.service
 
-
-# Now get a shell as fitsdata
-
+  # Now get a shell as fitsdata
     $ cd /opt/FitsStorage/fits_storage
     $ emacs (vi) fits_storage_config.py
-    # Set things up as appropriate       - !!! This needs elaboration vis-a-vis "appropriate." !!!
+    # Set values
+    # This is a setup for a fitssstore server, not the archive. Set that boolean:
+
+	use_as_archive = False
+
+    # Set the storage root to point to a data source. For testing, place test
+    # data under /data/
+
+	storage_root = '/data/gemini_data' 
+    
+    # On production servers, this will point to dataflow:
+
+	storage_root = '/sci/dataflow'
 
     (save and exit)
 
@@ -286,13 +320,13 @@ Set Up and Start Postgres
     $ python scripts/create_tables.py
 
 
-# OK, should now be good to go.
+OK, should now be good to go.
 
-# Check with ITS if you need a whitelisted local mail relay on it
-# Check with ITS that the development/operations status of the machine
+Check with ITS if you need a whitelisted local mail relay on it
+Check with ITS that the development/operations status of the machine
 
-# To run jobs from systemd
-==========================
+To run jobs from systemd
+========================
     $ sudo cp /opt/FitsStorage/otherfiles/etc_systemd_system_fits-service_ingest_queue1.service /etc/systemd/system/fits-service_ingest_queue1.service
     $ sudo systemctl start fits-service_ingest_queue1
     $ sudo systemctl enable fits-service_ingest_queue1
