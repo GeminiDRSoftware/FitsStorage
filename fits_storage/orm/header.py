@@ -31,6 +31,10 @@ from astropy import wcs as pywcs
 
 import astrodata               # For astrodata errors
 import gemini_instruments
+try:
+    import ghost_instruments
+except:
+    pass
 
 from ..gemini_metadata_utils import obs_types, obs_classes, reduction_states
 

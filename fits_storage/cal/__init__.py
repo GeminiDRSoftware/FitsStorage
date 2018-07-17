@@ -12,6 +12,7 @@ from .calibration_f2 import CalibrationF2
 from .calibration_gsaoi import CalibrationGSAOI
 from .calibration_nici import CalibrationNICI
 from .calibration_gpi import CalibrationGPI
+from .calibration_ghost import CalibrationGHOST
 
 from ..orm.file import File
 from ..orm.diskfile import DiskFile
@@ -19,6 +20,7 @@ from ..orm.header import Header
 
 inst_class = {
     'F2':       CalibrationF2,
+    'GHOST':    CalibrationGHOST,
     'GMOS':     CalibrationGMOS,
     'GMOS-S':   CalibrationGMOS,
     'GMOS-N':   CalibrationGMOS,
