@@ -33,7 +33,7 @@ class CalibrationNIFS(Calibration):
 
         # Science spectroscopy that is not a progcal or partnercal requires a flat, arc, ronchi_mask and telluric_standard
         if (self.descriptors['observation_type'] == 'OBJECT' and
-                self.descriptors['observation_class'] not in ['partnerCal', 'progCal'] and
+                self.descriptors['observation_class'] not in ['partnerCal', 'progCal', 'acqCal', 'acq'] and
                 self.descriptors['spectroscopy'] == True):
             self.applicable.append('flat')
             self.applicable.append('processed_flat')
