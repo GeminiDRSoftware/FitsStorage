@@ -14,10 +14,12 @@
     <th>Tape Label
     <th>File Num on Tape
     <th>Filename
-    <th>Size
-    <th>CCRC
-    <th>MD5
     <th>Last Modified
+    <th>Size
+    <th>MD5
+    <th>Compressed
+    <th>Data_Size
+    <th>Data_MD5
   </tr>
   {%- for tf in tapefiles %}
   <tr class="alternating">
@@ -28,10 +30,12 @@
     <td>{{ tf.tapewrite.tape.label }}
     <td>{{ tf.tapewrite.filenum }}
     <td>{{ tf.filename }}
-    <td>{{ tf.size }}
-    <td>{{ tf.ccrc }}
-    <td>{{ tf.md5 }}
     <td>{{ tf.lastmod }}
+    <td>{{ tf.size }}
+    <td>{{ tf.md5 }}
+    <td>{{ tf.compressed }}
+    <td>{{ tf.data_size }}
+    <td>{{ tf.data_md5 }}
   </tr>
   {%- endfor %}
 </table>

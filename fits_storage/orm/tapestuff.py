@@ -72,8 +72,10 @@ class TapeFile(Base):
     tapewrite = relation(TapeWrite, order_by=id)
     filename = Column(Text, index=True)
     size = Column(Integer, index=True)
-    ccrc = Column(Text)
     md5 = Column(Text, index=True)
+    compressed = Column(Boolean)
+    data_size = Column(Integer)
+    data_md5 = Column(Text)
     lastmod = Column(DateTime(timezone=True), index=True)
 
 class TapeRead(Base):
