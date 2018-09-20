@@ -43,6 +43,7 @@ def tape(search = None):
     for key, value in formdata.items():
         field = key.split('-')[0]
         tapeid = int(key.split('-')[1])
+        value = value.value
 
         if tapeid:
             tape = session.query(Tape).get(tapeid)
