@@ -17,7 +17,7 @@ import dateutil.parser
 
 from ..utils.web import get_context
 
-def list_headers(selection, orderby, full_query=False, add_previews=False):
+def list_headers(selection, orderby, full_query=False, add_previews=False, session=None):
     """
     This function queries the database for a list of header table
     entries that satisfy the selection criteria.
@@ -28,7 +28,8 @@ def list_headers(selection, orderby, full_query=False, add_previews=False):
     Returns a list of Header objects
     """
 
-    session = get_context().session
+    if session is None:
+      session = get_context().session
 
     # The basic query...
     if full_query:
