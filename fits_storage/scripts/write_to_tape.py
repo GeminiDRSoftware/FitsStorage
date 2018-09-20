@@ -6,21 +6,23 @@ import subprocess
 import tarfile
 import urllib
 import traceback
-from xml.dom.minidom import parseString
 from sqlalchemy import join
 
-from fits_storage.orm import sessionfactory
+from fits_storage.fits_storage_config import storage_root
+from fits_storage.orm import session_scope
 from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile
 from fits_storage.fits_storage_config import fits_tape_scratchdir
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.hashes import md5sum
 from fits_storage.utils.tape import TapeDrive
+from fits_storage.web.list_headers import list_headers
+from fits_storage.web.selection import getselection, openquery
+
 
 
 # Option Parsing
 from optparse import OptionParser
 parser = OptionParser()
-parser.add_option("--diskserver", action="store", type="string", dest="diskserver", default="fits", help="The Fits Storage Disk server to get the files from")
 parser.add_option("--selection", action="store", type="string", dest="selection", help="the file selection criteria to use. This is a / separated list like in the URLs. Can be a date or daterange for example")
 parser.add_option("--tapedrive", action="append", type="string", dest="tapedrive", help="tapedrive to use. Give this option multiple times to specify multiple drives")
 parser.add_option("--tapelabel", action="append", type="string", dest="tapelabel", help="tape label of tape. Give this option multiple times to specify multiple tapes. Give the tapedrive and tapelabel arguments in the same order.")
@@ -72,284 +74,238 @@ else:
 options.selection += "/present"
 
 logger.info("TapeDrive: %s; TapeLabel: %s" % (options.tapedrive, options.tapelabel))
-logger.info("Selection: %s" % options.selection)
 
-logger.info("Fetching file list from disk server...")
-# Get the list of files to put on tape from the server
-url = "http://" + options.diskserver + "/xmlfilelist/" + options.selection 
-logger.debug("file list url: %s" % url)
+# Generate a file list from the selection
+logger.info("Building the file list")
+things = options.selection.split('/')
+selection = getselection(things)
+logger.info("Selection: %s" % selection)
+logger.info("Selection is open: %s" % openquery(selection))
 
-xml = urllib.urlopen(url).read()
+with session_scope() as session:
+    logger.info("Getting header object list")
+    orderby = []
+    headers = list_headers(selection, orderby, session=session)
 
-dom = parseString(xml)
-files = []
-totalsize = 0
-for fe in dom.getElementsByTagName("file"):
-    dct = {
-        'filename': fe.getElementsByTagName("filename")[0].childNodes[0].data,
-        'size':     int(fe.getElementsByTagName("size")[0].childNodes[0].data),
-        'ccrc':     fe.getElementsByTagName("ccrc")[0].childNodes[0].data,
-        'md5':      fe.getElementsByTagName("md5")[0].childNodes[0].data,
-        'lastmod':  fe.getElementsByTagName("lastmod")[0].childNodes[0].data
-    }
-    files.append(dct)
-    totalsize += dct['size']
+    # For some reason, looping through the header list directly for the add
+    # is really slow if the list is big.
+    logger.info("Building diskfile list")
+    diskfiles = []
+    for header in headers:
+        diskfiles.append(header.diskfile)
 
-session = sessionfactory()
+    headers = None
 
-# Make a list containing the tape device objects
-tds = [TapeDrive(tapedrive, fits_tape_scratchdir)
+    # Make a list containing the tape device objects
+    tds = [TapeDrive(tapedrive, fits_tape_scratchdir)
         for tapedrive in options.tapedrive]
 
-# Get the database tape object for each tape label given
-logger.debug("Finding tape records in DB")
-tapes = []
-for tapelabel in options.tapelabel:
-    query = session.query(Tape).filter(Tape.label == tapelabel).filter(Tape.active == True)
-    if(query.count() == 0):
-        logger.error("Could not find active tape with label %s" % tapelabel)
-        session.close()
-        sys.exit(1)
-    if(query.count() > 1):
-        logger.error("Multiple active tapes with label %s:" % tapelabel)
-        session.close()
-        sys.exit(1)
-    tape = query.one()
-    tapes.append(tape)
-    logger.debug("Found tape id in database: %d, label: %s" % (tape.id, tape.label))
-    if(tape.full):
-        logger.error("Tape with label %s is full according to the DB. Exiting" % tape.label)
-        sys.exit(2)
+    # Get the database tape object for each tape label given
+    logger.debug("Finding tape records in DB")
+    tapes = []
+    for tapelabel in options.tapelabel:
+        query = session.query(Tape).filter(Tape.label == tapelabel).filter(Tape.active == True)
+        if(query.count() == 0):
+            logger.error("Could not find active tape with label %s" % tapelabel)
+            session.close()
+            sys.exit(1)
+        if(query.count() > 1):
+            logger.error("Multiple active tapes with label %s:" % tapelabel)
+            session.close()
+            sys.exit(1)
+        tape = query.one()
+        tapes.append(tape)
+        logger.debug("Found tape id in database: %d, label: %s" % (tape.id, tape.label))
+        if(tape.full):
+            logger.error("Tape with label %s is full according to the DB. Exiting" % tape.label)
+            sys.exit(2)
 
-tapeids = {t.id for t in tapes}
+    tapeids = {t.id for t in tapes}
 
-if(options.nodedup):
-    logger.info("Nodeduplicate option given - not skipping files already on any of these tapes")
-else:
-    logger.info("Checking for duplication on these tapes")
-    actual_files = []
-    for f in files:
-        query = (session.query(Tape.id).select_from(join(TapeFile, join(TapeWrite, Tape)))
+    if(options.nodedup):
+        logger.info("Nodeduplicate option given - not skipping files already on any of these tapes")
+    else:
+        logger.info("Checking for duplication on these tapes")
+        actual_diskfiles = []
+        for df in diskfiles:
+            query = (session.query(Tape.id).select_from(join(TapeFile, join(TapeWrite, Tape)))
                         .filter(Tape.active == True)
                         .filter(TapeWrite.suceeded == True)
-                        .filter(TapeFile.filename == f['filename'])
-                        .filter(TapeFile.md5 == f['md5']))
+                        .filter(TapeFile.filename == df.filename)
+                        .filter(TapeFile.md5 == df.file_md5))
 
-        mytapeids = query.all()
-        if len(mytapeids)==0:
-            # this file is not on any tapes, include it
-            logger.debug("File not on any tapes, not de-duping it")
-            actual_files.append(f)
-        else:
-            # Need to loop through the tapes that the file is on (mytapeids) and see if any of them
-            # are in the tapes in the drives (tapeids). If so, ditch the file
-            for (mtid,) in mytapeids:
-                if mtid in tapeids:
-                    autolog("File %s is on one of the tapes we have, skipping it" % f['filename'])
-                    # Ditch the file
-                    break
+            mytapeids = query.all()
+            if len(mytapeids)==0:
+                # this file is not on any tapes, include it
+                logger.debug("File not on any tapes, not de-duping it")
+                actual_diskfiles.append(df)
             else:
-                actual_files.append(f)
+                # Need to loop through the tapes that the file is on (mytapeids) and see if any of them
+                # are in the tapes in the drives (tapeids). If so, ditch the file
+                for (mtid,) in mytapeids:
+                    if mtid in tapeids:
+                        autolog("File %s is on one of the tapes we have, skipping it" % f['filename'])
+                        # Ditch the file
+                        break
+                else:
+                    actual_diskfiles.append(df)
 
-    files = actual_files
+        files = actual_files
 
-if options.skip:
-    logger.info("Checking for duplication to any tapes")
-    actual_files = []
-    for f in files:
-        query = (session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape)))
+    if options.skip:
+        logger.info("Checking for duplication to any tapes")
+        actual_diskfiles = []
+        for df in diskfiles:
+            query = (session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape)))
                         .filter(Tape.active == True)
                         .filter(TapeWrite.suceeded == True)
-                        .filter(TapeFile.filename == f['filename'])
-                        .filter(TapeFile.md5 == f['md5']))
+                        .filter(TapeFile.filename == df.filename)
+                        .filter(TapeFile.md5 == df.file_md5))
 
-        num = query.count()
-        if num == 0:
-            actual_files.append(f)
-            logger.debug("Not skipping file %s as it is on 0 tapes" % f['filename'])
-        else:
-            autolog("Skipping File %s : is already on tape %d times" % (f['filename'], num))
+            num = query.count()
+            if num == 0:
+                actual_diskfiles.append(df)
+                logger.debug("Not skipping file %s as it is on 0 tapes" % df.filename)
+            else:
+                autolog("Skipping File %s : is already on tape %d times" % (df.filename, num))
 
-    files = actual_files
+        diskfiles = actual_diskfiles
 
-numfiles = len(files)
-totalsize = 0
-for f in files:
-    totalsize += f['size']
+    numfiles = len(diskfiles)
+    totalsize = 0
+    for df in diskfiles:
+        totalsize += df.file_size
 
-logger.info("Got %d files totalling %.2f GB to write to tape" % (numfiles, (totalsize / 1.0E9)))
-if(numfiles == 0):
-    logger.info("Exiting - no files")
-    exit(0)
+    logger.info("Got %d files totalling %.2f GB to write to tape" % (numfiles, (totalsize / 1.0E9)))
+    if(numfiles == 0):
+        logger.info("Exiting - no files")
+        exit(0)
 
-# Check the tape label in the drives
-if(not options.dontcheck):
-    for tapelabel, td in zip(options.tapelabel, tds):
-        logger.info("Checking tape label in drive %s" % td.dev)
-        if(td.online() == False):
-            logger.error("No tape in drive %s" % td.dev)
-            session.close()
-            sys.exit(1)
-        thislabel = td.readlabel()
-        if(thislabel != tapelabel):
-            logger.error("Label of tape in drive %s: %s does not match label given as %s" % (td.dev, thislabel, tapelabel))
-            session.close()
-            sys.exit(1)
-        logger.info("OK - found tape in drive %s with label: %s" % (td.dev, thislabel))
-
-# Copy the files to the local scratch, and check md5s.
-try:
-    logger.info("Fetching files to local disk")
-    tds[0].cdworkingdir()
-    i = 0
-    for f in files:
-        i += 1
-        filename = f['filename']
-        size = int(f['size'])
-        md5 = f['md5']
-        url = "http://%s/file/%s" % (options.diskserver, filename)
-        logger.info("Fetching file (%d/%d): %s from %s" % (i, numfiles, filename, url))
-        retcode = -1
-        tries = 0
-        while((retcode != 0) and (tries < 10)):
-            if(tries != 0):
-                logger.info("Sleeping %d minutes before re-try" % tries)
-                time.sleep(tries * 60)
-            retcode = subprocess.call(['/usr/bin/curl', '-s', '-m', '1000', '-b', 'gemini_fits_authorization=good_to_go', '-O', '-f', url])
-            tries += 1
-            if(retcode):
-                logger.warning("Curl failed for url: %s" % url)
-
-        if(retcode):
-            # Curl failed. Bail out
-            logger.error("Fetch failed for url: %s" % url)
-            tds[0].cdback()
-            tds[0].cleanup()
-            session.close()
-            sys.exit(1)
-        else:
-            # Curl command succeeded.
-            # Check the md5 of the file we got against the DB
-            filemd5 = md5sum(filename)
-            if(filemd5 != md5):
-                logger.error("md5sum mismatch for file %s: file: %s, database: %s" % (filename, filemd5, md5))
-                tds[0].cdback()
-                tds[0].cleanup()
+    # Check the tape label in the drives
+    if(not options.dontcheck):
+        for tapelabel, td in zip(options.tapelabel, tds):
+            logger.info("Checking tape label in drive %s" % td.dev)
+            if(td.online() == False):
+                logger.error("No tape in drive %s" % td.dev)
                 session.close()
                 sys.exit(1)
-    logger.info("All files fetched OK")
-except:
-    string = traceback.format_tb(sys.exc_info()[2])
-    logger.error("Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
-    logger.error("Problem Fetching Files, aborting")
-    tds[0].cdback()
-    tds[0].cleanup()
-    session.close()
-    sys.exit(1)
+            thislabel = td.readlabel()
+            if(thislabel != tapelabel):
+                logger.error("Label of tape in drive %s: %s does not match label given as %s" % (td.dev, thislabel, tapelabel))
+                session.close()
+                sys.exit(1)
+            logger.info("OK - found tape in drive %s with label: %s" % (td.dev, thislabel))
 
-
-# Now loop through the tapes, doing all the stuff on each
-for td, tape in zip(tds, tapes):
-    logger.debug("About to write on tape label %s in drive %s" % (tape.label, td.dev))
-    # Position Tape
-    if(not options.dryrun):
-        logger.info("Positioning Tape %s" % td.dev)
-        td.setblk0()
-        td.eod(fail=True)
-
-        if td.eot():
-            logger.error("Tape %s in %s is at End of Tape. Tape is Full. Marking tape as full in DB and aborting" % (tape.label, td.dev))
-            tape.full = True
-            session.commit()
-            td.cleanup()
-            td.cdback()
+    # check md5s match for what's on disk.
+    logger.info("Verifying md5s")
+    for df in diskfiles:
+        actual_md5 = df.get_file_md5()
+        db_md5 = df.file_md5
+        if(actual_md5 != db_md5):
+            logger.error("md5sum mismatch for file %s: file: %s, database: %s" % (df.filename, actual_md5, db_md5))
             session.close()
             sys.exit(1)
+ 
+    logger.info("All files fetched OK")
 
-        # Update tape first/lastwrite
-        logger.debug("Updating tape record for tape label %s" % tape.label)
-        if tape.firstwrite is None:
-            tape.firstwrite = datetime.datetime.utcnow()
-        tape.lastwrite = datetime.datetime.utcnow()
-        session.commit()
+    # Now loop through the tapes, doing all the stuff on each
+    oldcwd = os.getcwd()
+    os.chdir(storage_root)
+    for td, tape in zip(tds, tapes):
+        logger.debug("About to write on tape label %s in drive %s" % (tape.label, td.dev))
+        # Position Tape
+        if(not options.dryrun):
+            logger.info("Positioning Tape %s" % td.dev)
+            td.setblk0()
+            td.eod(fail=True)
 
-        # Create tapewrite record
-        logger.debug("Creating TapeWrite record for tape %s" % tape.label)
-        tw = TapeWrite()
-        tw.tape_id = tape.id
-        session.add(tw)
-        session.commit()
-        # Update tapewrite values pre-write
-        tw.beforestatus = td.status()
-        tw.filenum = td.fileno()
-        tw.startdate = datetime.datetime.utcnow()
-        tw.hostname = os.uname()[1]
-        tw.tapedrive = td.dev
-        tw.suceeded = False
-        session.commit()
-
-        # Write the tape.
-        bytecount = 0
-        blksize = 64 * 1024
-
-        logger.info("Creating tar archive on tape %s on drive %s" % (tape.label, td.dev))
-        try:
-            tar = tarfile.open(name=td.dev, mode='w|', bufsize=blksize)
-            tarok = True
-        except:
-            logger.error("Error opening tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
-            tarok = False
-
-        for f in files:
-            filename = f['filename']
-            size = int(f['size'])
-            ccrc = f['ccrc']
-            md5 = f['md5']
-            lastmod = f['lastmod']
-            logger.info("Adding %s to tar file on tape %s in drive %s" % (filename, tape.label, td.dev))
-            try:
-            # the filename is a unicode string, and tarfile cannot handle this, convert to ascii
-                filename = filename.encode('ascii')
-                tar.add(filename)
-            except:
-                logger.error("Error adding file to tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
-                logger.info("Probably the tape filled up - Marking tape as full in the DB - label: %s" % tape.label)
+            if td.eot():
+                logger.error("Tape %s in %s is at End of Tape. Tape is Full. Marking tape as full in DB and aborting" % (tape.label, td.dev))
                 tape.full = True
                 session.commit()
-                tarok = False
-                break
-            # Create the TapeFile entry and add to DB
-            tapefile = TapeFile()
-            tapefile.tapewrite_id = tw.id
-            tapefile.filename = filename
-            tapefile.ccrc = ccrc
-            tapefile.md5 = md5
-            tapefile.lastmod = lastmod
-            tapefile.size = size
-            session.add(tapefile)
+                td.cleanup()
+                session.close()
+                sys.exit(1)
+
+            # Update tape first/lastwrite
+            logger.debug("Updating tape record for tape label %s" % tape.label)
+            if tape.firstwrite is None:
+                tape.firstwrite = datetime.datetime.utcnow()
+            tape.lastwrite = datetime.datetime.utcnow()
             session.commit()
-            # Keep a running total of bytes written
-            bytecount += size
-        logger.info("Completed writing tar archive on tape %s in drive %s" % (tape.label, td.dev))
-        logger.info("Wrote %d bytes = %.2f GB" % (bytecount , (bytecount/1.0E9)))
-        try:
-            tar.close()
-        except:
-            logger.error("Error closing tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
-            tarok = False
 
-        # update records post-write
-        logger.debug("Updating tapewrite record")
-        tw.enddate = datetime.datetime.utcnow()
-        logger.debug("Succeeded: %s" % tarok)
-        tw.suceeded = tarok
-        tw.afterstatus = td.status()
-        tw.size = bytecount
-        session.commit()
+            # Create tapewrite record
+            logger.debug("Creating TapeWrite record for tape %s" % tape.label)
+            tw = TapeWrite()
+            tw.tape_id = tape.id
+            session.add(tw)
+            session.commit()
+            # Update tapewrite values pre-write
+            tw.beforestatus = td.status()
+            tw.filenum = td.fileno()
+            tw.startdate = datetime.datetime.utcnow()
+            tw.hostname = os.uname()[1]
+            tw.tapedrive = td.dev
+            tw.suceeded = False
+            session.commit()
 
-logger.info("Cleaning up disk staging files")
-tds[0].cleanup()
-tds[0].cdback()
+            # Write the tape.
+            bytecount = 0
+            blksize = 64 * 1024
+
+            logger.info("Creating tar archive on tape %s on drive %s" % (tape.label, td.dev))
+            try:
+                tar = tarfile.open(name=td.dev, mode='w|', bufsize=blksize)
+                tarok = True
+            except:
+                logger.error("Error opening tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+                tarok = False
+
+            for df in diskfiles:
+                filename = df.filename
+                logger.info("Adding %s to tar file on tape %s in drive %s" % (filename, tape.label, td.dev))
+                try:
+                # the filename is a unicode string, and tarfile cannot handle this, convert to ascii
+                    filename = filename.encode('ascii')
+                    tar.add(filename)
+                except:
+                    logger.error("Error adding file to tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+                    logger.info("Probably the tape filled up - Marking tape as full in the DB - label: %s" % tape.label)
+                    tape.full = True
+                    session.commit()
+                    tarok = False
+                    break
+                # Create the TapeFile entry and add to DB
+                tapefile = TapeFile()
+                tapefile.tapewrite_id = tw.id
+                tapefile.filename = filename
+                tapefile.md5 = df.file_md5
+                tapefile.size = int(df.file_size)
+                tapefile.lastmod = df.lastmod
+                tapefile.compressed = df.compressed
+                tapefile.data_size = df.data_size
+                tapefile.data_md5 = df.data_md5
+                session.add(tapefile)
+                session.commit()
+                # Keep a running total of bytes written
+                bytecount += int(df.file_size)
+            logger.info("Completed writing tar archive on tape %s in drive %s" % (tape.label, td.dev))
+            logger.info("Wrote %d bytes = %.2f GB" % (bytecount , (bytecount/1.0E9)))
+            try:
+                tar.close()
+            except:
+                logger.error("Error closing tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+                tarok = False
+
+            # update records post-write
+            logger.debug("Updating tapewrite record")
+            tw.enddate = datetime.datetime.utcnow()
+            logger.debug("Succeeded: %s" % tarok)
+            tw.suceeded = tarok
+            tw.afterstatus = td.status()
+            tw.size = bytecount
+            session.commit()
+
+os.chdir(oldcwd)
 session.close()
 logger.info("*** write_to_tape exiting normally at %s" % datetime.datetime.now())
-
