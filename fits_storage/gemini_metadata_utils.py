@@ -855,9 +855,9 @@ def get_date_offset():
     # We consider the night boundary to be 14:00 local time
     # This is midnight UTC in Hawaii, completely arbitrary in Chile
     zone = time.altzone if time.daylight else time.timezone
-    print datetime.timedelta(hours=16)
-    print datetime.timedelta(seconds=zone)
-    print ONEDAY_OFFSET
+    #print datetime.timedelta(hours=16)
+    #print datetime.timedelta(seconds=zone)
+    #print ONEDAY_OFFSET
     
     return datetime.timedelta(hours=16) + datetime.timedelta(seconds=zone) - ONEDAY_OFFSET
 
