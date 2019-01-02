@@ -34,7 +34,7 @@ def md5sum(filename):
     Generates the md5sum of the data in filename, returns the hex string.
     """
 
-    with open(filename, 'r') as filep:
+    with open(filename, 'rb') as filep:
         (md5, size) = md5sum_size_fp(filep)
         return md5
 
@@ -43,5 +43,5 @@ def md5sum_size_bz2(filename):
     Generates the md5sum and size of the uncompressed data in a bzip2 file
     """
 
-    with bz2.BZ2File(filename, 'r') as filep:
+    with bz2.BZ2File(filename, 'rb') as filep:
         return md5sum_size_fp(filep)
