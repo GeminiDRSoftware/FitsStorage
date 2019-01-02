@@ -222,11 +222,11 @@ class Header(Base):
 
         # These should be in the descriptor function really.
         azimuth = ad.azimuth()
-        if type(azimuth) is types.StringType:
+        if isinstance(azimuth, str):
             azimuth = dmstodeg(azimuth)
         self.azimuth = azimuth
         elevation = ad.elevation()
-        if type(elevation) is types.StringType:
+        if isinstance(elevation, str):
             elevation = dmstodeg(elevation)
         self.elevation = elevation
 
