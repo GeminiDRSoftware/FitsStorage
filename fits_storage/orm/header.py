@@ -375,7 +375,7 @@ class Header(Base):
         if 'PROCESSED' in tags:
             # Use the image type tag (BIAS, FLAT, ...) to obtain the
             # appropriate reduction status from the lookup table
-            kind = list(tags.intersection(REDUCTION_STATUS.keys()))
+            kind = list(tags.intersection(list(REDUCTION_STATUS.keys())))
             try:
                 self.reduction = REDUCTION_STATUS[kind[0]]
             except (KeyError, IndexError):
