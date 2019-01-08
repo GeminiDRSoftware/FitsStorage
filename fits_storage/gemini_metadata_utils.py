@@ -35,21 +35,21 @@ obsre = r'((?:^%s)|(?:^%s))-(\d*)$' % (calengre, scire)
 gemini_gain_settings = ('high', 'low')
 gemini_readspeed_settings = ('fast', 'slow')
 gemini_welldepth_settings = ('Shallow', 'Deep', 'Invalid')
-gemini_readmode_settings = ( 'Classic',
-                             'NodAndShuffle',
-                             'Faint',
-                             'Faint_Object',
-                             'Faint_Objects',
-                             'Very_Faint_Objects',
-                             'Medium',
-                             'Medium_Object',
-                             'Bright',
-                             'Bright_Object',
-                             'Bright_Objects',
-                             'Very_Bright_Objects',
-                             'Low_Background',
-                             'Medium_Background',
-                             'High_Background' )
+gemini_readmode_settings = ('Classic',
+                            'NodAndShuffle',
+                            'Faint',
+                            'Faint_Object',
+                            'Faint_Objects',
+                            'Very_Faint_Objects',
+                            'Medium',
+                            'Medium_Object',
+                            'Bright',
+                            'Bright_Object',
+                            'Bright_Objects',
+                            'Very_Bright_Objects',
+                            'Low_Background',
+                            'Medium_Background',
+                            'High_Background')
 
 gemini_telescopes = {
     'gemini-north': 'Gemini-North',
@@ -826,7 +826,8 @@ class GeminiProgram:
             self.is_ds = sci_match.group(3) == 'DS'
             self.is_eng = sci_match.group(3) == 'ENG'
 
-            # If the program number contained leading zeros, strip them out of the official program_id
+            # If the program number contained leading zeros, strip them out of
+            # the official program_id
             if sci_match.group(4)[0] == '0':
                 prog_num = int(sci_match.group(4))
                 self.program_id = "%s-%s-%s-%s" % (sci_match.group(1),
@@ -843,7 +844,7 @@ class GeminiProgram:
 def get_date_offset():
     """
     This function is used to add set offsets to the dates. The aim is to get the
-    "current date" adjusting for the local time, taking into account the different 
+    "current date" adjusting for the local time, taking into account the different
     sites where Gemini is based.
 
     """
@@ -858,11 +859,11 @@ def get_date_offset():
     #print datetime.timedelta(hours=16)
     #print datetime.timedelta(seconds=zone)
     #print ONEDAY_OFFSET
-    
+
     return datetime.timedelta(hours=16) + datetime.timedelta(seconds=zone) - ONEDAY_OFFSET
 
 def get_time_period(start, end=None, as_date=False):
-    startdt =  gemini_date(start, offset=get_date_offset(), as_datetime=True)
+    startdt = gemini_date(start, offset=get_date_offset(), as_datetime=True)
     if end is None:
         enddt = startdt
     else:
@@ -884,20 +885,33 @@ def gemini_time_period_from_range(rng, as_date=False):
 def gemini_semester(date):
     """ Return the semester name that contains date """
     if date.month >= 2 and date.month <= 7:
-       letter = 'A'
-       year = date.year
+        letter = 'A'
+        year = date.year
     else:
-       letter = 'B'
-       if date.month == 1:
-           year = date.year - 1
-       else:
-           year = date.year
+        letter = 'B'
+        if date.month == 1:
+            year = date.year - 1
+        else:
+            year = date.year
 
     return str(year) + letter
 
 semester_re = r'(20\d\d)([AB])'
 def previous_semester(semester):
-    """ Given a semester string eg 2016A, return the previous semester, eg 2015B """
+    """
+    Given a semester string, e.g., 2016A, return the previous semester.
+    E.g., 2015B
+
+    Parameters
+    ----------
+    semester: <str> Semester name
+
+    Returns
+    -------
+    semester - 1, <str>,
+        the semester name prior to the passed semester.
+
+    """
     m = re.match(semester_re, semester)
     if m is None:
         return None
@@ -916,14 +930,14 @@ def site_monitor(string):
     Parameters:
     ----------
     string: <str>
-        The name of the instrument that is a sky monitor. Currently, this 
+        The name of the instrument that is a sky monitor. Currently, this
         supports only GS_ALLSKYCAMERA. The string will generally be that
         returned by the astrodata descriptor, ad.instrument().
 
     Return
     ------
     yes: <bool>
-        Returns True when GS_ALLSKYCAMERA is passed. 
+        Returns True when GS_ALLSKYCAMERA is passed.
 
     """
     if string == 'GS_ALLSKYCAMERA':
