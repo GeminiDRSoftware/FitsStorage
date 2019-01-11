@@ -505,6 +505,7 @@ dropdown_options = {
          ("SII", "SII"),
          ("CaT", "CaT"),
          ("Lya395", "Lya395"),
+         ("ri", "ri"),
          ("open", "Open")],
     "gnirs_filter_options":
         [("XD", "XD"),
