@@ -92,7 +92,8 @@ class CalQuery(object):
             query = (session.query(Header)
                             .select_from(join(join(instrClass, Header), DiskFile)))
         self.query = (query.filter(DiskFile.canonical == True) # Search only canonical entries
-                           .filter(Header.qa_state != 'Fail')) # Knock out the FAILs
+                           .filter(Header.qa_state != 'Fail') # Knock out the FAILs
+			   .filter(Header.engineering == False)) # Knock out engineering data
 
     def __call_through(self, query_method, *args, **kw):
         "Used internally to make arbitrary calls to the internal SQLAlchemy query object"
