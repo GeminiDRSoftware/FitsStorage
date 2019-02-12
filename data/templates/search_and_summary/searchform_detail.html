@@ -560,6 +560,17 @@
 
 </div>
 
+<div class="next" id="IGRINS" style="display:none">
+    <br><label>IGRINS</label><br>
+    <label>Filter:</label><select id="igrins_filter" class="ddw inst_clearable" name="filter">
+        <option value="">Any</option>
+{{ generate_option_list(igrins_filter_options, updated.filter, updated.inst == 'IGRINS') }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select an IGRINS band.</span>
+    </span><br>
+</div>
+
 <div class="next" id="NICI" style="display:none">
     <br><label>NICI</label><br>
     <label>Filter:</label><select id="nici_filter" class="ddw inst_clearable" name="filter">
