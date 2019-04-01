@@ -124,9 +124,9 @@ Description:
  Observatory Archive (GOA). The program retrieves the specified files, requests
  associated calibrations for those files, bundles the data into a tarball, then
  puts the data product onto the Gemini sftp site and under the user account,
-'ligoflow'. Users will need to set up GOA access authority and SFTP credentials,
-instructions for which are beyond the scope of this 'help'. An external document
-is available.
+ 'ligoflow'. Users will need to set up GOA access authority and SFTP credentials,
+ instructions for which are beyond the scope of this 'help'. An external document
+ is available.
 
  The command line can accept an "at-file" providing the command line arguments.
 
