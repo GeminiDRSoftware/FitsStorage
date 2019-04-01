@@ -57,8 +57,9 @@ This script expects to acquire these authorities from the user's home directory.
       <username>
       <password>
 
-    These values shall be encoded and not stored as plain ascii text. You will need
-    to request these encoded values from the Science Users Support Deparment (SUSD).
+    These values shall be encoded and not stored as plain ascii text. You will
+    need to request these encoded values from Science Users Support Deparment
+    (SUSD).
 
     Once this is set up, set an environment variable named, 'SFTPAUTHORITY':
 
@@ -223,7 +224,7 @@ def get_ftp_credential():
         u, p = f.read().split()
         realu = codecs.decode(u.encode(), 'hex_codec').decode()
         realp = codecs.decode(p.encode(), 'hex_codec').decode()
-    return (realu,realp)
+    return (realu, realp)
 
 
 def get_cal_request(url):
@@ -288,9 +289,8 @@ def tar_append(tball, ffile):
 
 def push_tar(tfile, ppath=None):
     host = 'sftp.gemini.edu'
-    user, passwd = get_ftp_credential()
     ligopath = 'LIGO_Followups'
-    putpath = ppath
+    user, passwd = get_ftp_credential()
     print()
     print("  Sending tar to {} under {}/{} ...".format(host, user, ligopath))
     with pysftp.Connection(host, username=user, password=passwd) as sftp:
