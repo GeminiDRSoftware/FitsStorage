@@ -241,7 +241,7 @@ def goa2ftp_parser():
 
     group = parser.add_mutually_exclusive_group()
 
-    group.add_argument("--pkgname", dest="pkgname", default='TESTPKG', 
+    group.add_argument("--pkgname", dest="pkgname",
                        help="Assign this name to the pushed data package. "
                        "Not applied when --single is specified.")
     
@@ -429,8 +429,11 @@ def sweep():
     return
 
 def main(args):
-    print(args)
-    #return
+    if not args.single and not args.pkgname:
+        print("\tDefault package mode requires a package name.\n"
+              "\tPlease provide a package name with --pkgname.\n")
+        return
+
     ffiles = args.files
     print("Pulling file requests.\n\t {}".format(ffiles))
     if args.single:
