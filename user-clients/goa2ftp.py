@@ -237,14 +237,14 @@ def goa2ftp_parser():
                         help="File(s) to retrieve.")
 
     parser.add_argument("--noftp", dest='nopush', action='store_true',
-                        help="Do not push data to SFTP site.")    
+                        help="Do not push data to SFTP site.")
 
     group = parser.add_mutually_exclusive_group()
 
     group.add_argument("--pkgname", dest="pkgname",
                        help="Assign this name to the pushed data package. "
                        "Not applied when --single is specified.")
-    
+
     group.add_argument("--single", dest="single", action="store_true",
                        help="Retrieve and package science images with "
                        "their associated calibrations individually and "
@@ -266,7 +266,7 @@ def generate_pword(nchars=8):
 
 def zippit(pkgname, pwd, zipname):
     """
-    Using the zip utility command. Std library, zipfile, does not seem to 
+    Using the zip utility command. Std library, zipfile, does not seem to
     work well with password protection through the API.
 
     """
@@ -278,7 +278,7 @@ def zippit(pkgname, pwd, zipname):
     cmd.append(pkgname)
     subprocess.run(cmd)
     return zipname
-    
+
 def get_goa_authority():
     goa = os.environ.get(arch_authority)
     try:
@@ -443,13 +443,14 @@ def main(args):
         print("Building data package ... ")
         pkgname = build_datapack(ffiles, args.pkgname)
         if args.nopush:
-            return pkgname, pword
-        else:
-            zname = zippit(pkgname, pword, pkgname + '.zip')
-            print("zip complete.")
-            push_tar(zname)
-            uname, upass = get_ftp_credential()
-            emit_message(zname, uname, upass, pword, pkgname)
+            print("Package {} build complete. ".format(pkgname))
+            return
+
+        zname = zippit(pkgname, pword, pkgname + '.zip')
+        print("zip complete.")
+        push_tar(zname)
+        uname, upass = get_ftp_credential()
+        emit_message(zname, uname, upass, pword, pkgname)
 
     print("sweeping ...")
     sweep()
