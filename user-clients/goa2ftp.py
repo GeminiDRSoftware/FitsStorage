@@ -398,10 +398,12 @@ def push_tar(tfile, ppath=None):
     host = 'sftp.gemini.edu'
     ligopath = 'LIGO_Followups'
     user, passwd = get_ftp_credential()
-    print("Got some creds: ", user, passwd)
-    print(msg.format(host, user, ligopath))
-    print(" --- ")
-    with pysftp.Connection(host, username=user, password=passwd) as sftp:
+    cnopts = pysftp.CnOpts()
+    cnopts.hostkeys = None
+    with pysftp.Connection(host,
+                           username=user,
+                           password=passwd,
+                           cnopts=cnopts) as sftp:
         sftp.chdir(ligopath)
         sftp.put(tfile)
     print("Done.")
