@@ -400,6 +400,8 @@ def push_tar(tfile, ppath=None):
     user, passwd = get_ftp_credential()
     cnopts = pysftp.CnOpts()
     cnopts.hostkeys = None
+    print(msg.format(host, user, ligopath))
+    print()
     with pysftp.Connection(host,
                            username=user,
                            password=passwd,
