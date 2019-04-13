@@ -181,17 +181,31 @@ Description:
  instructions for which are beyond the scope of this 'help'. An external document
  is available.
 
+ There are two modes of operation:
+
+ 1) single file mode -- Single file mode requests a single file and associated
+    calibrations, packages these into a tar archive and pushes this to the
+    sftp site. If single mode is the desired operation, users must specify the
+    --single option on the command line.
+
+ 2) package mode -- Package mode is the default operation. This mode pulls all
+    science data requested, and all associated calibrations for all files,
+    builds a tar archive and password protects the file with a zip layer.
+    The password protected file is then pushed to the sftp site. In the default
+    package mode, users must provide a name for the data package through
+    the --pkgname argument.
+
  The command line can accept an "at-file" providing the command line arguments.
 
  E.g.,
 
     Retrieve files directly on the command line:
 
-        $ goa_pull N20170913S0209.fits N20170913S0211.fits [ ... ]
+        $ goa2ftp --packagename TESTPACK N20170913S0209.fits N20170913S0211.fits
 
     Or with an "at-file":
 
-        $ goa_pull @myFitsFiles
+        $ goa2ftp --packagename TESTPACK @myFitsFiles
 
  where 'myFitsFiles' is a plain text file specifying the FITS file names to be
  retreived from GOA.
@@ -214,8 +228,7 @@ Description:
  N20190321S0295_assoc_cals.tar, to indicate that the tar file has both the
  requested data and the calibrations.
 
- An account on sftp.gemini.edu has been established, username 'ligoflow'.
- A subdirectory is there called LIGO_Followups/. The tar files are remotely
+  A directory is there called LIGO_Followups/. The tar files are remotely
  transferred to this directory. Users will need to set up access to the sftp
  account and location.
 
@@ -430,7 +443,7 @@ def sweep():
 
 def main(args):
     if not args.single and not args.pkgname:
-        print("\tDefault package mode requires a package name.\n"
+        print("\n\tDefault package mode requires a package name.\n"
               "\tPlease provide a package name with --pkgname.\n")
         return
 
