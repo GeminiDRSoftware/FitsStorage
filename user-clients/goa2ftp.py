@@ -79,21 +79,21 @@ The code can be generalized, if needs arise.
 #   Script name:        goa2ftp
 #
 #   Purpose:
-#      Provide a command line tool to the Gemini Archive API that allows
-#      data requests and associated calibrations to be pulled from GOA
-#      and then pushed to a pre-determined account @sftp.gemini.edu.
+#      A command line tool to the Gemini Archive API that allows data requests
+#      and associated calibrations to be pulled from GOA and then pushed to a
+#      pre-determined account @sftp.gemini.edu.
 #
-#      This script is tailored to LIGO Followup data distribution to
-#      multiple stakeholders on LIGO TOO observations.
+#      This script is tailored to LIGO Followup data distribution to multiple
+#      stakeholders on LIGO TOO observations.
 #
-#   Date               : 2019-03-30
+#   Date               : 2019-04-12
 #
 #   Author             : Kenneth Anderson
 #
 #   Requires           : Python 3.x, pysftp, requests
 #
 #   Modification History:
-#    2019-03-30, kanderso : First release, Version 0.1 (d20190330)
+#    2019-04-12, kanderso : First release, Version 0.1 (d20190412)
 #
 # Tested with Conda 4.5.11
 # ******************************************************************************
@@ -173,7 +173,7 @@ CHUNK_SIZE = 1 << 20
 # ------------------------------------------------------------------------------
 dscript = """
 Description:
- The program will receive one or more FITS file names to be retrieved from Gemini
+   The program will receive one or more FITS file names to be retrieved from Gemini
  Observatory Archive (GOA). The program retrieves the specified files, requests
  associated calibrations for those files, bundles the data into a tarball, then
  puts the data product onto the Gemini sftp site and under the user account,
@@ -195,17 +195,18 @@ Description:
     package mode, users must provide a name for the data package through
     the --pkgname argument.
 
- The command line can accept an "at-file" providing the command line arguments.
+   Requesting the --noftp option on the command line prevents the script from
+ pushing the data package to the Gemini sftp site. With the option, goa2ftp
+ essentially acts as a data puller, leaving the data on the user's cwd.
+ 
+   The command line accepts an "at-file" providing the command line arguments.
+ For example, retrieve files directly on the command line:
 
- E.g.,
+     $ goa2ftp --packagename TESTPACK N20170913S0209.fits N20170913S0211.fits
 
-    Retrieve files directly on the command line:
+ or with an "at-file":
 
-        $ goa2ftp --packagename TESTPACK N20170913S0209.fits N20170913S0211.fits
-
-    Or with an "at-file":
-
-        $ goa2ftp --packagename TESTPACK @myFitsFiles
+     $ goa2ftp --packagename TESTPACK @myFitsFiles
 
  where 'myFitsFiles' is a plain text file specifying the FITS file names to be
  retreived from GOA.
@@ -215,20 +216,20 @@ Description:
     N20170913S0209.fits
     N20170913S0211.fits
 
- Once retrieved, a query for associated calibrations is performed, results are 
+   Once retrieved, a query for associated calibrations is performed, results are
  returned as a tar file. The contents of this tarfile will be bzip2 FITS files
  (.fits.bzp2)
 
- The returned science dataset (i.e. here N20190321S0295.fits) is appended to
+   The returned science dataset (i.e. here N20190321S0295.fits) is appended to
  the calibration tarfile, but is intentionally left uncompressed. This provides
  a quick identifier of the science image -- the uncompressed FITS file
- (extension, .fits) and the calibration files (.fits.bz2).
+ ('.fits') and the calibration files ('.fits.bz2').
 
- The tarfile is named after the requested science data, like,
+   The tarfile is named after the requested science data, like,
  N20190321S0295_assoc_cals.tar, to indicate that the tar file has both the
  requested data and the calibrations.
 
-  A directory is there called LIGO_Followups/. The tar files are remotely
+   A directory is there called LIGO_Followups/. The tar files are remotely
  transferred to this directory. Users will need to set up access to the sftp
  account and location.
 
