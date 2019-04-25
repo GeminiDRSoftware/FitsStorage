@@ -336,11 +336,13 @@ def get_ftp_credential():
 
 
 def get_cal_request(url):
-    r = requests.get(url, timeout=10.0)
+    r = requests.get(url, stream=True, timeout=10.0)
+    tot = int(len(r.content))
     try:
         r.raise_for_status()
-        for chunk in r.iter_content(chunk_size=128):
-            yield chunk
+        print("  Downloading ... ")
+        for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
+            yield (chunk, tot)
     except HTTPError as err:
         raise RequestError(["Could not retrieve {}".format(url), str(err)])
     except ConnectionError as err:
@@ -369,19 +371,30 @@ def make_request(url):
     openurl = urlopen(request, timeout=30)
     return openurl
 
+def progress(count, total):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+    percents = round(100.0 * count / float(total), 1)
+    bar = '>' * filled_len + '-' * (bar_len - filled_len)
+    sys.stdout.write('\r\t[{}] ... {}% '.format(bar, percents))
+    sys.stdout.flush()
+    return
 
 def pull_cals(filen):
+    chunk_accum = 0
     tarball = form_tarname(filen)
     cals_url = form_assoc_cals_url(filen)
-    print("Request made on URL:\n\t {}".format(cals_url))
+    print("\n  Request made on URL:\n\t {}".format(cals_url))
     with open(tarball, 'wb') as tarb:
-        for chunk in get_cal_request(cals_url):
+        for chunk, tot in get_cal_request(cals_url):
             tarb.write(chunk)
+            chunk_accum += len(chunk)
+            progress(chunk_accum, tot)
     return tarball
 
 def pull_data(filename):
     download_url = form_url(filename)
-    print("Request made on URL:\n\t {}".format(download_url))
+    print("\n  Request made on URL:\n\t {}".format(download_url))
     conn = make_request(download_url)
     newf = conn.read()
     with open(filename, 'wb') as pulled_fits:
@@ -391,11 +404,11 @@ def pull_data(filename):
 def tar_append(tball, ffile):
     with tarfile.open(tball, 'a') as tob:
         tob.add(ffile)
-    print("Added science frame {} to tar archive, {}".format(ffile, tball))
+    print("  Added science frame {} to tar archive, {}".format(ffile, tball))
     return
 
 def push_tar(tfile, ppath=None):
-    msg = "  Sending zipped tar archive to {} under {}/{} ..."
+    msg = "\n  Sending zipped tar archive to {} under {}/{} ..."
     host = 'sftp.gemini.edu'
     ligopath = 'LIGO_Followups'
     user, passwd = get_ftp_credential()
@@ -403,16 +416,15 @@ def push_tar(tfile, ppath=None):
     cnopts.hostkeys = None
     print(msg.format(host, user, ligopath))
     print()
-    with pysftp.Connection(host,
-                           username=user,
-                           password=passwd,
-                           cnopts=cnopts) as sftp:
+    with pysftp.Connection(host,username=user,password=passwd,cnopts=cnopts) as sftp:
         sftp.chdir(ligopath)
-        sftp.put(tfile)
-    print("Done.")
+        sftp.put(tfile, callback=progress)
+
+    print("\nDone.")
     return
 
 def build_datapack(ffiles, pkgname):
+    print("  Building data package ... ")
     ftar_name = pkgname + ".tar"
     for ffile in ffiles:
         fname = pull_data(ffile)
@@ -427,6 +439,7 @@ def build_datapack(ffiles, pkgname):
             newtarb.add(pfs)
 
     newtarb.close()
+    print("\n  Package {} build complete. ".format(pkgname))
     return ftar_name
 
 def push_singles(ffiles, push):
@@ -454,19 +467,17 @@ def main(args):
         return
 
     ffiles = args.files
-    print("Pulling file requests.\n\t {}".format(ffiles))
+    print("  Pulling file requests.\n\t {}".format(ffiles))
     if args.single:
         push_singles(ffiles, args.nopush)
     else:
         pword = generate_pword()
-        print("Building data package ... ")
         pkgname = build_datapack(ffiles, args.pkgname)
         if args.nopush:
-            print("Package {} build complete. ".format(pkgname))
             return
 
         zname = zippit(pkgname, pword, pkgname + '.zip')
-        print("zip complete.")
+        print("  zip complete.")
         push_tar(zname)
         uname, upass = get_ftp_credential()
         emit_message(zname, uname, upass, pword, pkgname)
