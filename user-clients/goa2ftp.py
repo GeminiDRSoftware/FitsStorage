@@ -379,7 +379,7 @@ def speedbar(rate):
     <void> 
     """
     bar_len = 60
-    speed_max = 60e6
+    speed_max = 100e6
     speed_len = int(round(bar_len * (rate/speed_max)))
     bar = '>' * speed_len + '-' * (bar_len - speed_len)
     sys.stdout.write('\r\t[{}] ... {:5.2f} MB/s '.format(bar, rate/CHUNK_SIZE))
