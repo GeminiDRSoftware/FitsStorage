@@ -103,6 +103,7 @@ import codecs
 import random
 import string
 import tarfile
+import time
 import argparse
 import subprocess
 
@@ -173,13 +174,13 @@ CHUNK_SIZE = 1 << 20
 # ------------------------------------------------------------------------------
 dscript = """
 Description:
-   The program will receive one or more FITS file names to be retrieved from Gemini
- Observatory Archive (GOA). The program retrieves the specified files, requests
- associated calibrations for those files, bundles the data into a tarball, then
- puts the data product onto the Gemini sftp site and under the user account,
- 'ligoflow'. Users will need to set up GOA access authority and SFTP credentials,
- instructions for which are beyond the scope of this 'help'. An external document
- is available.
+   The program will receive one or more FITS file names to be retrieved from
+ Gemini Observatory Archive (GOA). The program retrieves the specified files,
+ requests associated calibrations for those files, bundles the data into a
+ tarball, then puts the data product onto the Gemini sftp site and under the
+ user account, 'ligoflow'. Users will need to set up GOA access authority and
+ SFTP credentials, instructions for which are beyond the scope of this 'help'.
+ An external document is available.
 
  There are two modes of operation:
 
@@ -202,11 +203,11 @@ Description:
    The command line accepts an "at-file" providing the command line arguments.
  For example, retrieve files directly on the command line:
 
-     $ goa2ftp --packagename TESTPACK N20170913S0209.fits N20170913S0211.fits
+     $ goa2ftp --pkgname TESTPACK N20170913S0209.fits N20170913S0211.fits
 
  or with an "at-file":
 
-     $ goa2ftp --packagename TESTPACK @myFitsFiles
+     $ goa2ftp --pkgname TESTPACK @myFitsFiles
 
  where 'myFitsFiles' is a plain text file specifying the FITS file names to be
  retreived from GOA.
@@ -334,23 +335,6 @@ def get_ftp_credential():
         realp = codecs.decode(p.encode(), 'hex_codec').decode()
     return (realu, realp)
 
-
-def get_cal_request(url):
-    r = requests.get(url, stream=True, timeout=10.0)
-    tot = int(len(r.content))
-    try:
-        r.raise_for_status()
-        print("  Downloading ... ")
-        for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
-            yield (chunk, tot)
-    except HTTPError as err:
-        raise RequestError(["Could not retrieve {}".format(url), str(err)])
-    except ConnectionError as err:
-        raise RequestError(["Unable to connect to {}".format(url), str(err)])
-    except Timeout as terr:
-        raise RequestError(["Request timed out", str(terr)])
-
-
 def form_tarname(fid):
     head, tail = os.path.splitext(fid)
     otar = "{}_assoc_cals.tar".format(head)
@@ -380,16 +364,57 @@ def progress(count, total):
     sys.stdout.flush()
     return
 
+def speedbar(rate):
+    """
+    Emits a transfer speed bar showing the download speed as a fraction
+    of 10MB/s.' speed_actual' is in KB/s.
+
+    Parameters
+    ----------
+    rate: <float>
+        bytes/second
+
+    Return
+    ------
+    <void> 
+    """
+    bar_len = 60
+    speed_max = 60e6
+    speed_len = int(round(bar_len * (rate/speed_max)))
+    bar = '>' * speed_len + '-' * (bar_len - speed_len)
+    sys.stdout.write('\r\t[{}] ... {:5.2f} MB/s '.format(bar, rate/CHUNK_SIZE))
+    sys.stdout.flush()
+    return
+                    
 def pull_cals(filen):
     chunk_accum = 0
+    tmark = 0
     tarball = form_tarname(filen)
     cals_url = form_assoc_cals_url(filen)
+    r = requests.get(cals_url, stream=True, timeout=10.0)
     print("\n  Request made on URL:\n\t {}".format(cals_url))
+
+    try:
+        r.raise_for_status()
+    except HTTPError as err:
+        raise RequestError(["Could not retrieve {}".format(url), str(err)])
+    except ConnectionError as err:
+        raise RequestError(["Unable to connect to {}".format(url), str(err)])
+    except Timeout as terr:
+        raise RequestError(["Request timed out", str(terr)])
+
+    print("\n  Downloading ...".format(cals_url))
     with open(tarball, 'wb') as tarb:
-        for chunk, tot in get_cal_request(cals_url):
+        for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
             tarb.write(chunk)
+            t1 = time.time()
+            etime = t1 - tmark
+            tmark = t1
+            rate = len(chunk) / etime
             chunk_accum += len(chunk)
-            progress(chunk_accum, tot)
+            speedbar(rate)
+
+    r.close()
     return tarball
 
 def pull_data(filename):
