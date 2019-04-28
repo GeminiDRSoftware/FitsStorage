@@ -379,7 +379,7 @@ def speedbar(rate):
     <void> 
     """
     bar_len = 60
-    speed_max = 100e6
+    speed_max = 150e6
     speed_len = int(round(bar_len * (rate/speed_max)))
     bar = '>' * speed_len + '-' * (bar_len - speed_len)
     sys.stdout.write('\r\t[{}] ... {:5.2f} MB/s '.format(bar, rate/CHUNK_SIZE))
@@ -404,15 +404,19 @@ def pull_cals(filen):
         raise RequestError(["Request timed out", str(terr)])
 
     print("\n  Downloading ...".format(cals_url))
+    throttle = 0
     with open(tarball, 'wb') as tarb:
         for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
             tarb.write(chunk)
-            t1 = time.time()
-            etime = t1 - tmark
-            tmark = t1
-            rate = len(chunk) / etime
-            chunk_accum += len(chunk)
-            speedbar(rate)
+            if throttle == 5:
+                t1 = time.time()
+                etime = t1 - tmark
+                tmark = t1
+                rate = len(chunk) / etime
+                chunk_accum += len(chunk)
+                speedbar(rate)
+            else:
+                throttle += 1
 
     r.close()
     return tarball
