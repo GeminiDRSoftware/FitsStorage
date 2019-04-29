@@ -381,7 +381,7 @@ def speedbar(rate):
 
     """
     bar_len = 60
-    speed_max = 60e6
+    speed_max = 20e6
     speed_len = int(round(bar_len * (rate/speed_max)))
     bar = '>' * speed_len + '-' * (bar_len - speed_len)
     sys.stdout.write('\r\t[{}] ... {:5.2f} MB/s '.format(bar, rate/(1024**2)))
@@ -412,7 +412,7 @@ def pull_cals(filen):
             tarb.write(chunk)
             throttle += 1
             chunk_accum += len(chunk)
-            if throttle == 100:
+            if throttle == 300:
                 t1 = time.time()
                 etime = t1 - tmark
                 rate = chunk_accum / etime            # rate: bytes/s
