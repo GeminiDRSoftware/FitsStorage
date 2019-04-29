@@ -292,6 +292,7 @@ def zippit(pkgname, pwd, zipname):
     cmd.append(zipname)
     cmd.append(pkgname)
     subprocess.run(cmd)
+    print("  zip complete.")
     return zipname
 
 def get_goa_authority():
@@ -487,6 +488,7 @@ def push_singles(ffiles, push):
     return
 
 def sweep():
+    print("sweeping ... ")
     files = os.listdir('.')
     for f in files:
         if 'fits' in f:
@@ -507,15 +509,14 @@ def main(args):
         pword = generate_pword()
         pkgname = build_datapack(ffiles, args.pkgname)
         if args.nopush:
+            sweep()
             return
 
         zname = zippit(pkgname, pword, pkgname + '.zip')
-        print("  zip complete.")
         push_tar(zname)
         uname, upass = get_ftp_credential()
         emit_message(zname, uname, upass, pword, pkgname)
 
-    print("sweeping ...")
     sweep()
     return
 # ------------------------------------------------------------------------------
