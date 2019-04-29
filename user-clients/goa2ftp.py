@@ -376,7 +376,8 @@ def speedbar(rate):
 
     Return
     ------
-    <void> 
+    <void>
+
     """
     bar_len = 60
     speed_max = 60e6
