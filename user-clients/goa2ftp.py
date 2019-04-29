@@ -379,16 +379,14 @@ def speedbar(rate):
     <void> 
     """
     bar_len = 60
-    speed_max = 150e6
+    speed_max = 60e6
     speed_len = int(round(bar_len * (rate/speed_max)))
     bar = '>' * speed_len + '-' * (bar_len - speed_len)
-    sys.stdout.write('\r\t[{}] ... {:5.2f} MB/s '.format(bar, rate/CHUNK_SIZE))
+    sys.stdout.write('\r\t[{}] ... {:5.2f} MB/s '.format(bar, rate/(1024**2)))
     sys.stdout.flush()
     return
                     
 def pull_cals(filen):
-    chunk_accum = 0
-    tmark = 0
     tarball = form_tarname(filen)
     cals_url = form_assoc_cals_url(filen)
     r = requests.get(cals_url, stream=True, timeout=10.0)
@@ -402,21 +400,26 @@ def pull_cals(filen):
         raise RequestError(["Unable to connect to {}".format(url), str(err)])
     except Timeout as terr:
         raise RequestError(["Request timed out", str(terr)])
-
     print("\n  Downloading ...".format(cals_url))
+
     throttle = 0
+    chunk_accum = 0
     with open(tarball, 'wb') as tarb:
+        tmark = time.time()
         for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
             tarb.write(chunk)
-            if throttle == 5:
+            throttle += 1
+            chunk_accum += len(chunk)
+            if throttle == 100:
                 t1 = time.time()
                 etime = t1 - tmark
-                tmark = t1
-                rate = len(chunk) / etime
-                chunk_accum += len(chunk)
+                rate = chunk_accum / etime            # rate: bytes/s
                 speedbar(rate)
-            else:
-                throttle += 1
+
+                # reset counters.
+                tmark = t1
+                throttle = 0
+                chunk_accum = 0                
 
     r.close()
     return tarball
