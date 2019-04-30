@@ -269,6 +269,25 @@ def goa2ftp_parser():
     return args
 
 # ------------------------------------------------------------------------------
+def build_datapack(ffiles, pkgname):
+    print("  Building data package ... ")
+    ftar_name = pkgname + ".tar"
+    for ffile in ffiles:
+        fname = pull_data(ffile)
+        tname = pull_cals(ffile)
+        tarobj = tarfile.TarFile(name=tname)
+        tarobj.extractall()
+
+    newtarb = tarfile.TarFile(name=ftar_name, mode='w')
+    packfiles = os.listdir('.')
+    for pfs in packfiles:
+        if pfs.endswith('.fits') or pfs.endswith('.fits.bz2'):
+            newtarb.add(pfs)
+
+    newtarb.close()
+    print("\n  Package {} build complete. ".format(pkgname))
+    return ftar_name
+
 def emit_message(zname, uname, upass, pwd, pkname):
     print(etemplate.format(zname, uname, upass, pwd, pkname))
     return
@@ -278,22 +297,6 @@ def generate_pword(nchars=8):
     random.seed = (os.urandom(1024))
     newpword = ''.join(random.choice(chars) for i in range(nchars))
     return newpword
-
-def zippit(pkgname, pwd, zipname):
-    """
-    Using the zip utility command. Std library, zipfile, does not seem to
-    work well with password protection through the API.
-
-    """
-    cmd = []
-    cmd.append('zip')
-    cmd.append('-P')
-    cmd.append(pwd)
-    cmd.append(zipname)
-    cmd.append(pkgname)
-    subprocess.run(cmd)
-    print("  zip complete.")
-    return zipname
 
 def get_goa_authority():
     goa = os.environ.get(arch_authority)
@@ -368,7 +371,7 @@ def progress(count, total):
 def speedbar(rate):
     """
     Emits a transfer speed bar showing the download speed as a fraction
-    of 10MB/s.' speed_actual' is in KB/s.
+    of 20MB/s. Rate spikes above this value are clipped.
 
     Parameters
     ----------
@@ -389,7 +392,7 @@ def speedbar(rate):
     sys.stdout.write('\r\t[{}] ... {:5.2f} MB/s '.format(bar, rate/(1024**2)))
     sys.stdout.flush()
     return
-                    
+
 def pull_cals(filen):
     tarball = form_tarname(filen)
     cals_url = form_assoc_cals_url(filen)
@@ -423,7 +426,7 @@ def pull_cals(filen):
                 # reset counters.
                 tmark = t1
                 throttle = 0
-                chunk_accum = 0                
+                chunk_accum = 0
 
     r.close()
     return tarball
@@ -459,25 +462,6 @@ def push_tar(tfile, ppath=None):
     print("\nDone.")
     return
 
-def build_datapack(ffiles, pkgname):
-    print("  Building data package ... ")
-    ftar_name = pkgname + ".tar"
-    for ffile in ffiles:
-        fname = pull_data(ffile)
-        tname = pull_cals(ffile)
-        tarobj = tarfile.TarFile(name=tname)
-        tarobj.extractall()
-
-    newtarb = tarfile.TarFile(name=ftar_name, mode='w')
-    packfiles = os.listdir('.')
-    for pfs in packfiles:
-        if pfs.endswith('.fits') or pfs.endswith('.fits.bz2'):
-            newtarb.add(pfs)
-
-    newtarb.close()
-    print("\n  Package {} build complete. ".format(pkgname))
-    return ftar_name
-
 def push_singles(ffiles, push):
     pulled = []
     for filen in ffiles:
@@ -496,6 +480,22 @@ def sweep():
         if 'fits' in f:
             os.remove(f)
     return
+
+def zippit(pkgname, pwd, zipname):
+    """
+    Using the zip utility command. Std library, zipfile, does not seem to
+    work well with password protection through the API.
+
+    """
+    cmd = []
+    cmd.append('zip')
+    cmd.append('-P')
+    cmd.append(pwd)
+    cmd.append(zipname)
+    cmd.append(pkgname)
+    subprocess.run(cmd)
+    print("  zip complete.")
+    return zipname
 
 def main(args):
     if not args.single and not args.pkgname:
