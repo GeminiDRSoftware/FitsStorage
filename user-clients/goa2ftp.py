@@ -363,7 +363,7 @@ def progress(count, total):
     bar_len = 60
     filled_len = int(round(bar_len * count / float(total)))
     percents = round(100.0 * count / float(total), 1)
-    bar = '>' * filled_len + '-' * (bar_len - filled_len)
+    bar = '\u2588' * filled_len + '-' * (bar_len - filled_len)
     sys.stdout.write('\r\t[{}] ... {}% '.format(bar, percents))
     sys.stdout.flush()
     return
@@ -388,7 +388,7 @@ def speedbar(rate):
     speed_len = int(round(bar_len * (rate/speed_max)))
     if speed_len > bar_len:
         speed_len = bar_len
-    bar = '>' * speed_len + '-' * (bar_len - speed_len)
+    bar = '\u2588' * speed_len + '-' * (bar_len - speed_len)
     sys.stdout.write('\r\t[{}] ... {:5.2f} MB/s '.format(bar, rate/(1024**2)))
     sys.stdout.flush()
     return
@@ -479,6 +479,10 @@ def sweep():
     for f in files:
         if 'fits' in f:
             os.remove(f)
+        elif 'txt' in f:
+            os.remove(f)
+        elif 'tar' in f:
+            os.remove(f)            
     return
 
 def zippit(pkgname, pwd, zipname):
