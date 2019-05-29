@@ -305,8 +305,8 @@ def get_goa_authority():
     except AssertionError:
         err = "GOA credential not found"
         raise EnvironmentError(err)
-    keyfile = os.path.join(goa, arch_key)
 
+    keyfile = os.path.join(goa, arch_key)
     try:
         assert os.path.isfile(keyfile)
     except AssertionError:
@@ -368,32 +368,43 @@ def progress(count, total):
     sys.stdout.flush()
     return
 
-def speedbar(rate):
+def speedbar(rate, dtot, ttot):
     """
     Emits a transfer speed bar showing the download speed as a fraction
     of 20MB/s. Rate spikes above this value are clipped.
+
+    dtot and ttot let us present to running average download speed.
 
     Parameters
     ----------
     rate: <float>
         bytes/second
 
+    dtot: <float>
+        total data so far ...
+
+    ttot: <float>
+        total time so far ...
+
     Return
     ------
     <void>
 
     """
+    format1 = '\r\t[{}] ... {:5.2f} MB/s\t\t{:5.2f} MB/s'
     bar_len = 60
+    runn_avg = (dtot/ttot)/1024**2
     speed_max = 20e6
     speed_len = int(round(bar_len * (rate/speed_max)))
     if speed_len > bar_len:
         speed_len = bar_len
     bar = '\u2588' * speed_len + '-' * (bar_len - speed_len)
-    sys.stdout.write('\r\t[{}] ... {:5.2f} MB/s '.format(bar, rate/(1024**2)))
+    sys.stdout.write(format1.format(bar, rate/(1024**2), runn_avg))
     sys.stdout.flush()
     return
 
 def pull_cals(filen):
+    titlebar = "\n  Downloading ..."+ "\t"*7 + "(Packet velocity)\tRunning avg. "
     tarball = form_tarname(filen)
     cals_url = form_assoc_cals_url(filen)
     r = requests.get(cals_url, stream=True, timeout=10.0)
@@ -407,8 +418,11 @@ def pull_cals(filen):
         raise RequestError(["Unable to connect to {}".format(url), str(err)])
     except Timeout as terr:
         raise RequestError(["Request timed out", str(terr)])
-    print("\n  Downloading ...".format(cals_url))
 
+    print(titlebar)
+
+    dtotal = 0
+    ttotal = 0
     throttle = 0
     chunk_accum = 0
     with open(tarball, 'wb') as tarb:
@@ -421,7 +435,9 @@ def pull_cals(filen):
                 t1 = time.time()
                 etime = t1 - tmark
                 rate = chunk_accum / etime            # rate: bytes/s
-                speedbar(rate)
+                dtotal += chunk_accum
+                ttotal += etime
+                speedbar(rate, dtotal, ttotal)
 
                 # reset counters.
                 tmark = t1
