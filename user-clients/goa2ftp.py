@@ -391,7 +391,7 @@ def speedbar(rate, dtot, ttot):
     <void>
 
     """
-    format1 = '\r\t[{}] ... {:5.2f} MB/s\t\t{:5.2f} MB/s'
+    format1 = '\r\t[{}] ... {:5.2f} MB/s\t\t{:5.2f} MB/s\t {:5.2F}'
     bar_len = 60
     runn_avg = (dtot/ttot)/1024**2
     speed_max = 20e6
@@ -399,12 +399,13 @@ def speedbar(rate, dtot, ttot):
     if speed_len > bar_len:
         speed_len = bar_len
     bar = '\u2588' * speed_len + '-' * (bar_len - speed_len)
-    sys.stdout.write(format1.format(bar, rate/(1024**2), runn_avg))
+    sys.stdout.write(format1.format(bar, rate/(1024**2), runn_avg, ttot/60))
     sys.stdout.flush()
     return
 
 def pull_cals(filen):
-    titlebar = "\n  Downloading ..."+ "\t"*7 + "(Packet velocity)\tRunning avg. "
+    titlebar = "\n  Downloading ..."+ "\t"*7
+    titlebar += "(chunk velocity)\t  Run avg\tElapsed time(m)"
     tarball = form_tarname(filen)
     cals_url = form_assoc_cals_url(filen)
     r = requests.get(cals_url, stream=True, timeout=10.0)
