@@ -381,10 +381,10 @@ def speedbar(rate, dtot, ttot):
         bytes/second
 
     dtot: <float>
-        total data so far ...
+        total data so far (bytes)
 
     ttot: <float>
-        total time so far ...
+        total time so far (seconds)
 
     Return
     ------
@@ -438,6 +438,7 @@ def pull_cals(filen):
                 rate = chunk_accum / etime            # rate: bytes/s
                 dtotal += chunk_accum
                 ttotal += etime
+                #print(tmark, t1, etime, rate, dtotal, ttotal)
                 speedbar(rate, dtotal, ttotal)
 
                 # reset counters.
