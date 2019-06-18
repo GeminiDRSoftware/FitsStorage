@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-"""There are certain operations where the web server would need to access
+"""
+   There are certain operations where the web server would need to access
    and modify files. For this, we'd need the server to have permissions over
    the files, which we don't want, because of the potential security
    problems.
@@ -9,11 +10,11 @@
    from the actual file operations
 
 """
+
 #######################################################################################
 #
 #   Generic stuff, mainly to control the routing and error responses
 #
-
 import datetime
 import json
 import os
@@ -64,7 +65,8 @@ def get_route(environ, routes):
 #
 #   API Code
 #
-from astropy.io.fits.verify import VerifyError
+
+import pyfits as pf
 from fits_storage.utils.fitseditor import compare_cards, modify_multiple_cards, all_cards_exist
 
 def fits_is_unchanged(path, new_values):
@@ -86,9 +88,9 @@ def fits_apply_changes(path, changes, reject_new):
 def set_image_metadata(path, changes, reject_new=False):
     try:
         return fits_apply_changes(path, changes, reject_new)
-    except (VerifyError, IOError) as e:
+    except (pf.VerifyError, IOError) as e:
         logger.debug("Error: %s", str(e))
-        raise WSGIError("There were problems when opening/modifying the file")
+        raise WSGIError("There were problems when opening/modifying the file: {}".format(path))
 
 #######################################################################################
 

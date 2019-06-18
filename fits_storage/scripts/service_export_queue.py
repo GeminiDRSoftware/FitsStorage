@@ -13,7 +13,7 @@ from fits_storage.utils.exportqueue import ExportQueueUtil
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.fits_storage_config import fits_lockfile_dir
 from fits_storage.utils.pidfile import PidFile, PidFileError
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, IntegrityError
 
 
 from optparse import OptionParser
@@ -48,6 +48,22 @@ def nicehandler(signum, frame):
     global loop
     loop = False
 
+class Throttle(object):
+    def __init__(self, cap = 60):
+        self.cap = cap
+        self.reset()
+
+    def reset(self):
+        self.t1 = 1
+        self.t2 = 1
+
+    def wait(self):
+        slp = min(self.t1 + self.t2, self.cap)
+        logger.info("* Throttling: will sleep for %d seconds" % slp)
+        time.sleep(slp)
+        if slp < self.cap:
+            self.t1, self.t2 = self.t2, self.t1 + self.t2
+
 # Set handlers for the signals we want to handle
 # Cannot trap SIGKILL or SIGSTOP, all others are fair game
 signal.signal(signal.SIGHUP, nicehandler)
@@ -62,6 +78,8 @@ signal.signal(signal.SIGTERM, nicehandler)
 
 # Annouce startup
 logger.info("*********    service_export_queue.py - starting up at %s", datetime.datetime.now())
+
+throttle = Throttle()
 
 try:
     with PidFile(logger, options.name, dummy=not options.lockfile) as pidfile, session_scope() as session:
@@ -112,9 +130,15 @@ try:
                         export_queue.set_last_failed(eq)
                     session.commit()
 
+                throttle.reset()
+
             except (KeyboardInterrupt, OperationalError):
                 loop = False
 
+            except IntegrityError, e:
+                logger.error("Nothing on export queue - Exception: %s", str(e))
+                throttle.wait()
+                session.rollback()
             except:
                 string = traceback.format_tb(sys.exc_info()[2])
                 string = "".join(string)
@@ -122,6 +146,11 @@ try:
                     logger.error("File %s - Exception: %s : %s... %s", eq.filename, sys.exc_info()[0], sys.exc_info()[1], string)
                 else:
                     logger.error("Nothing on export queue - Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
+                # Make sure that the session ends up in a consistent state
+                session.rollback()
+                # Prevent fast fail loop
+                time.sleep(5)
+
 except PidFileError as e:
     logger.error(str(e))
 
