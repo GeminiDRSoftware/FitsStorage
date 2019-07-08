@@ -60,7 +60,6 @@ instrument_table = {
     'GNIRS':    ("GNIRS", Gnirs),
     'GPI':      ("GPI", Gpi),
     'GSAOI':    ("GSAOI", Gsaoi),
-    'IGRINS':   ("IGRINS", Igrins),
     'michelle': ("MICHELLE", Michelle),
     'NICI':     ("NICI", Nici),
     'NIFS':     ("NIFS", Nifs),
