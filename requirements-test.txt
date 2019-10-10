@@ -1,0 +1,14 @@
+mod_wsgi==4.6.5
+psycopg2
+sqlalchemy
+pyyaml
+jinja2
+pyfits
+dateutils
+requests
+matplotlib
+scipy
+pandas
+astropy
+future
+boto3
