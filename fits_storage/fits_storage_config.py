@@ -21,7 +21,7 @@ aws_secret_key = ''
 z_staging_area = '/data/z_staging'
 
 # Configure the path to the storage root here 
-storage_root = '/sci/dataflow'
+storage_root = os.getenv('STORAGE_ROOT', '/sci/dataflow')
 #storage_root = '/data/archive_soak'
 #storage_root = '/data/skycam'
 dhs_perm = '/sci/dhs'
@@ -41,7 +41,7 @@ target_max_files = 8000000
 
 # This is the path in the storage root where processed calibrations
 # uploaded through the http server get stored.
-upload_staging_path = "/data/upload_staging"
+upload_staging_path = os.getenv('UPLOAD_STAGING_PATH', '/data/upload_staging')
 
 # This is the cookie value needed to allow uploading files.
 # Leave it empty to disable upload authentication
