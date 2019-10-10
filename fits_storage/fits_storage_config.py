@@ -102,7 +102,8 @@ email_errors_to = "phirst@gemini.edu"
 
 # Configure the path the data postgres database here
 fits_dbname = 'fitsdata'
-fits_database = 'postgresql:///'+fits_dbname
+fits_dbserver = os.getenv('FITS_DB_SERVER', '')
+fits_database = 'postgresql://%s/%s' % (fits_dbserver, fits_dbname)
 #fits_database = 'sqlite:////home/fitsdata/sqlite-database'
 #To reference database on another machine: 
 #fits_database = 'postgresql://hbffitstape1/'+fits_dbname

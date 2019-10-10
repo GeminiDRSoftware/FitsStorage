@@ -1,0 +1,8 @@
+FROM fitsimage:latest
+LABEL maintainer="ooberdorf@gemini.edu"
+
+WORKDIR /opt/FitsStorage/fits_storage
+
+ENV PYTHONPATH /opt/DRAGONS:/opt/FitsStorage
+
+ENTRYPOINT ["python","scripts/create_tables.py"]
