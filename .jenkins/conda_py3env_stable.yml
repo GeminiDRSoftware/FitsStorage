@@ -13,6 +13,6 @@ dependencies:
   - pyyaml
   - jinja2
   - cefca::pyfits
-  - dateutils
+  - conda-forge::dateutils
   - pandas
   - boto3
