@@ -14,7 +14,7 @@
 pipeline {
 
     agent {
-        label 'dev-oberdorf-fitsstorage-pipeline'
+        label 'bquint-ld1'
     }
 
     triggers {
