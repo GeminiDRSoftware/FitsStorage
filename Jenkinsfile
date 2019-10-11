@@ -26,7 +26,7 @@ pipeline {
         stage ("Prepare"){
 
             steps{
-                sendNotifications 'STARTED'
+                echo 'STARTED'
                 checkout scm
                 sh 'rm -rf ./plots; mkdir -p ./plots'
                 sh 'rm -rf ./reports; mkdir -p ./reports'
@@ -64,10 +64,10 @@ pipeline {
             )
         }
         success {
-            sendNotifications 'SUCCESSFUL'
+            echo 'SUCCESSFUL'
         }
         failure {
-            sendNotifications 'FAILED'
+            echo 'FAILED'
         }
     }
 }
