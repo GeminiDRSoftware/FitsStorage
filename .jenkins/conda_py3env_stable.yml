@@ -27,3 +27,10 @@ dependencies:
   - conda-forge::python-dateutil >=2.5.3
   - conda-forge::twine
   - omnia::behave
+  - psycopg2
+  - pyyaml
+  - jinja2
+  - pyfits
+  - dateutils
+  - pandas
+  - boto3
