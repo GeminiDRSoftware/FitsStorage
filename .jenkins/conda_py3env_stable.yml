@@ -30,7 +30,7 @@ dependencies:
   - psycopg2
   - pyyaml
   - jinja2
-  - pyfits
+  - cefca::pyfits
   - dateutils
   - pandas
   - boto3
