@@ -35,6 +35,10 @@ pipeline {
                 sh '''source activate ${CONDA_ENV_NAME}
                       '''
                 sh 'conda list -n ${CONDA_ENV_NAME}'
+                sh '''
+                    echo /tmp/DRAGONS-$$ > dragons-repo.txt
+                    git clone https://github.com/GeminiDRSoftware/DRAGONS.git `cat dragons-repo.txt`
+                '''
             }
 
         }
@@ -49,10 +53,8 @@ pipeline {
                 echo "Running tests"
                 sh  '''
                     source activate ${CONDA_ENV_NAME}
-                    git clone https://github.com/GeminiDRSoftware/DRAGONS.git /tmp/DRAGONS-$$
-                    export PYTHONPATH=/tmp/DRAGONS-$$
-                    coverage run -m pytest -m "not integtest and not gmosls" --junit-xml ./reports/unittests_results.xml
-                    rm -rf /tmp/DRAGONS-$$
+                    export PYTHONPATH=`cat dragons-repo.txt`
+                    coverage run -m pytest -m "running fitsstorage tests" --junit-xml ./reports/unittests_results.xml
                     '''
             }
 
@@ -65,6 +67,9 @@ pipeline {
             allowEmptyResults: true,
             testResults: 'reports/*_results.xml'
             )
+          sh '''
+             if [ -f dragons-repo.txt ]; then rm -rf `cat dragons-repo.txt`; fi
+          '''
         }
         success {
             echo 'SUCCESSFUL'
