@@ -12,20 +12,7 @@
  */
 
 pipeline {
-
-    agent {
-        label 'bquint-ld1'
-    }
-
-    triggers {
-        pollSCM('H * * * *')  // Polls Source Code Manager every hour
-    }
-
-    options {
-        skipDefaultCheckout(true)
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-        timestamps()
-    }
+    agent any
 
     environment {
         PATH = "$JENKINS_HOME/anaconda3-dev-oly/bin:$PATH"
