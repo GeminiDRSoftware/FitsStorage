@@ -1,2 +1,2 @@
 #!/bin/bash
-docker image build -t fitsimage:latest .
+docker image build -t fitsimage:latest -f Dockerfile-archive .
