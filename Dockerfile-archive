@@ -17,8 +17,6 @@ RUN ln -sf /dev/stdout /var/log/httpd/access_log && \
     ln -sf /dev/stdout /opt/modwsgi-default/access_log && \
     ln -sf /dev/stderr /opt/modwsgi-default/error_log
 
-# get fitsverify from /opt on a host
-
 # SETUP WEB SERVER
 RUN mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  /opt/FitsStorage/fits_storage/wsgihandler.py
 RUN chown -R apache:apache /opt/modwsgi-default

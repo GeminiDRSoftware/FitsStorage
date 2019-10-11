@@ -51,8 +51,10 @@ RUN mkdir -p /data/logs && \
     chmod oug+rw /data/s3_staging
 
 # COPY STUFFS
+ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
 RUN cd /opt && git clone https://github.com/GeminiDRSoftware/DRAGONS.git
 COPY . /opt/FitsStorage
 WORKDIR /opt/FitsStorage
+COPY fitsverify /opt/fitsverify
 
 ENTRYPOINT ["bash"]
