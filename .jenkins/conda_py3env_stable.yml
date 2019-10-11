@@ -16,3 +16,4 @@ dependencies:
   - conda-forge::dateutils
   - pandas
   - boto3
+  - matplotlib
