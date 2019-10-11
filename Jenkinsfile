@@ -49,7 +49,10 @@ pipeline {
                 echo "Running tests"
                 sh  '''
                     source activate ${CONDA_ENV_NAME}
+                    git checkout https://github.com/GeminiDRSoftware/DRAGONS.git /tmp/DRAGONS-$$
+                    export PYTHONPATH=/tmp/DRAGONS-$$
                     coverage run -m pytest -m "not integtest and not gmosls" --junit-xml ./reports/unittests_results.xml
+                    rm -rf /tmp/DRAGONS-$$
                     '''
             }
 
