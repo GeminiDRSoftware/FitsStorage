@@ -12,3 +12,4 @@ pandas
 astropy
 future
 boto3
+git+https://github.com/GeminiDRSoftware/DRAGONS.git
