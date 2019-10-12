@@ -23,6 +23,16 @@ def query(request):
 
     return Query(Dummy)
 
+def build_query(request):
+    """Creates a dummy query for tests depending on ORM.
+
+    This is a duplicate to fix a test that called query()
+    directly.  pytest does not like us using fixtures in
+    that way.
+    """
+
+    return Query(Dummy)
+
 getselection_pairs = [
     (['12345'], {'notrecognised': '12345'}),
     (['123 456'], {'notrecognised': '123 456'}),
@@ -214,7 +224,8 @@ def generate_queryselection_pairs():
             fieldname = key
             value = True
 
-        q = query(None)
+        # pytest doesn't like us calling a fixture, so making an alternate method
+        q = build_query(None)
         if key == 'date':
             value = '20140506'
             # This works for UTC and Hawaii, at least
