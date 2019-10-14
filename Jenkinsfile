@@ -40,7 +40,10 @@ pipeline {
                     git clone https://github.com/GeminiDRSoftware/DRAGONS.git `cat dragons-repo.txt`
                 '''
                 sh '''
-                    ls /usr/local/bin/docker && export DOCKER=/usr/local/bin/docker
+                    export DOCKER=""
+                    if [ -f /usr/local/bin/docker ]; then
+                        export DOCKER=/usr/local/bin/docker
+                    fi
                 '''
             }
 
