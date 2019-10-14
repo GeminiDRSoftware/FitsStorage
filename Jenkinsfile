@@ -39,6 +39,9 @@ pipeline {
                     echo /tmp/DRAGONS-$$ > dragons-repo.txt
                     git clone https://github.com/GeminiDRSoftware/DRAGONS.git `cat dragons-repo.txt`
                 '''
+                sh '''
+                    ls /usr/local/bin/docker && export DOCKER=/usr/local/bin/docker
+                '''
             }
 
         }
@@ -49,6 +52,14 @@ pipeline {
 
                 echo "ensure cleaning __pycache__"
                 sh  'find . | grep -E "(__pycache__|\\.pyc|\\.pyo$)" | xargs rm -rfv'
+
+                echo "Checking Docker configuration"
+                sh '''
+                    echo Docker location: $DOCKER
+                    if [ "" = "$DOCKER" ]; then
+                        echo No Docker found
+                    fi
+                '''
 
                 echo "Running tests"
                 sh  '''
