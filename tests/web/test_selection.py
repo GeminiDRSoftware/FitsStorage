@@ -158,6 +158,7 @@ getselection_pairs = [
     ]
 
 @pytest.mark.parametrize("input,expected", getselection_pairs)
+@pytest.mark.slow
 def test_getselection(input, expected):
     assert getselection(input) == expected
 
@@ -177,6 +178,7 @@ sayselection_pairs = [
     ]
 
 @pytest.mark.parametrize("input,expected", sayselection_pairs)
+@pytest.mark.slow
 def test_sayselection(input, expected):
     if isinstance(expected, set):
         split = set(x for x in sayselection(input).split(';') if x)
@@ -246,6 +248,7 @@ def generate_queryselection_pairs():
         yield {fieldname: value}, str(compiled_statement(q.statement))
 
 @pytest.mark.parametrize("input,expected", generate_queryselection_pairs())
+@pytest.mark.slow
 def test_queryselection(query, input, expected):
     q = queryselection(query, input)
     print (q)
