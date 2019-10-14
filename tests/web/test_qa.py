@@ -9,6 +9,7 @@ metric_classes = (qa.QAmetricIQ, qa.QAmetricZP, qa.QAmetricSB, qa.QAmetricPE)
 
 @pytest.mark.usefixtures("rollback")
 @pytest.mark.parametrize("input,expected", qa_samples.samples)
+@pytest.mark.slow
 def test_ingest_json(session, input, expected):
     session.rollback()
     assert wqa.qareport_ingest(json.loads(input), submit_host='localhost', submit_time=qa_samples.st) == 200
