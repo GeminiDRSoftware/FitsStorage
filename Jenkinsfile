@@ -44,6 +44,24 @@ pipeline {
                     if [ -f /usr/local/bin/docker ]; then
                         export DOCKER=/usr/local/bin/docker
                     fi
+                    if [ -f /usr/bin/docker ]; then
+                        export DOCKER=/usr/bin/docker
+                    fi
+                    if [ -f /bin/docker ]; then
+                        export DOCKER=/bin/docker
+                    fi
+                    if [ -f /usr/local/sbin/docker ]; then
+                        export DOCKER=/usr/local/sbin/docker
+                    fi
+                    if [ -f /usr/sbin/docker ]; then
+                        export DOCKER=/usr/sbin/docker
+                    fi
+                    if [ -f /sbin/docker ]; then
+                        export DOCKER=/sbin/docker
+                    fi
+                    if [ -f /opt/docker/bin/docker ]; then
+                        export DOCKER=/opt/docker/bin/docker
+                    fi
                 '''
             }
 
