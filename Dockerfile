@@ -58,5 +58,9 @@ WORKDIR /opt/FitsStorage
 COPY fitsverify /opt/fitsverify
 
 ENV PYTEST_SERVER archive
+ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
+ENV PGPASSWORD fitsdata
 
-ENTRYPOINT ["bash"]
+#ENTRYPOINT ["bash"]
+#ENTRYPOINT ["pytest", "-v", "-k", "route41", "tests/web/test_wsgi.py"]
+ENTRYPOINT ["pytest", "tests"]

@@ -17,8 +17,10 @@ full_path_dump=os.path.join(os.path.dirname(__file__), DUMP_FILE)
 
 import fits_storage.fits_storage_config as fsc
 fsc.fits_dbname = 'test_{0}_{1}'.format(fsc.fits_dbname, now.strftime('%Y%m%d%H%M%S'))
-fsc.fits_database = 'postgresql:///' + fsc.fits_dbname
+fits_dbserver = os.getenv('FITS_DB_SERVER', '')
+fsc.fits_database = 'postgresql://%s/%s' % (fits_dbserver, fsc.fits_dbname)
 fsc.using_s3 = False
+fsc.pytest_database_server = os.getenv("FITS_DB_SERVER", '')
 
 TEST_IMAGE_PATH='/mnt/hahalua'
 TEST_IMAGE_CACHE=os.path.expanduser('~/tmp/cache')
@@ -33,11 +35,19 @@ class DatabaseCreation(object):
 
     def create_db(self, dbname):
         if self.conn is None:
-            eng = sqlalchemy.create_engine('postgres:///postgres')
+
+            eng = sqlalchemy.create_engine('postgres://%s/postgres' % fsc.pytest_database_server)
             conn = eng.connect()
             conn.execute('COMMIT') # Make sure we're not inside a transaction
                                    # as CREATE DATABASE can't run inside one
             conn.execute('CREATE DATABASE ' + dbname)
+
+            # Trying to fix test_wsgi.py
+            conn.close()
+            eng = sqlalchemy.create_engine('postgres://%s/%s' % (fsc.pytest_database_server, dbname))
+            conn = eng.connect()
+            # end of my hackery
+
             self.conn = conn
         else:
             conn = self.conn
@@ -48,14 +58,17 @@ class DatabaseCreation(object):
     def drop_db(self, dbname):
         if self.conn:
             conn = self.conn
-            orm.pg_db.dispose()
+            #O orm.pg_db.dispose()
 
             conn.execute('COMMIT')
             # Kill any other pending connection. Shouldn't be needed, but...
-            conn.execute("SELECT pg_terminate_backend(procpid) FROM pg_stat_activity WHERE datname = '%s' AND procpid <> pg_backend_pid()" % (fsc.fits_dbname,))
+            #O conn.execute("SELECT pg_terminate_backend(procpid) FROM pg_stat_activity WHERE datname = '%s' AND procpid <> pg_backend_pid()" % (fsc.fits_dbname,))
             conn.execute('DROP DATABASE ' + dbname)
             conn.close()
             self.conn = None
+
+            #O moved down here from above
+            orm.pg_db.dispose()
 
 dbcreation = DatabaseCreation()
 
@@ -75,7 +88,16 @@ def min_session(request):
     'Creates a fresh database, with empty tables'
     dbname = fsc.fits_dbname
     conn, s = dbcreation.create_db(dbname)
-    call([RESTORE, '-d', dbname, DUMP_FILE])
+    #call([RESTORE, '-d', dbname, DUMP_FILE])
+    if fsc.pytest_database_server != '':
+        # Need to strip off
+        hostname = fsc.pytest_database_server
+        if '@' in hostname:
+            hostname = hostname[hostname.index('@')+1:]
+        # Note, password comes from env var PGPASSWORD, which is set in Dockerfile (or add it to your env to suit your needs)
+        call([RESTORE, '-h', hostname, '--username', 'fitsdata', '-d', dbname, full_path_dump])
+    else:
+        call([RESTORE, '-d', dbname, full_path_dump])
 
     yield s
 
@@ -142,12 +164,11 @@ def pytest_configure(config):
 
 
 def pytest_collection_modifyitems(config, items):
-    if config.getoption("--runslow"):
+    if not config.getoption("--runslow"):
         # --runslow given in cli: do not skip slow tests
-        return
-    skip_slow = pytest.mark.skip(reason="need --runslow option to run")
-    for item in items:
-        if "slow" in item.keywords:
-            item.add_marker(skip_slow)
+        skip_slow = pytest.mark.skip(reason="need --runslow option to run")
+        for item in items:
+            if "slow" in item.keywords:
+                item.add_marker(skip_slow)
 
 # End Slow test handling

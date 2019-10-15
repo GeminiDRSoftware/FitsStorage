@@ -44,6 +44,7 @@ def add_to_iq(request, session, ingest_util, testfile_path):
     session.commit()
 
 @pytest.mark.usefixtures("rollback")
+@pytest.mark.slow
 class TestIngestQueue:
     def test_ingestqueue_length(self, ingest_util, add_to_iq):
         assert ingest_util.length() == len(add_to_iq)
@@ -56,6 +57,7 @@ class TestIngestQueue:
         assert len(files) == 0
 
 @pytest.mark.usefixtures("rollback")
+@pytest.mark.slow
 class TestPreviewQueue:
     @pytest.yield_fixture()
     def ingest_from_queue(self, request, session, ingest_util, add_to_iq):

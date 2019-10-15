@@ -118,6 +118,7 @@ def perform_test(url, method=GET, *args, **kw):
     return r.status_code
 
 @pytest.mark.parametrize("input,method,expected", no_auth_no_data)
+@pytest.mark.slow
 def test_simple_get_query(input, method, expected):
     url = '/'.join([SERVER,input])
     assert perform_test(url, method=method) == expected

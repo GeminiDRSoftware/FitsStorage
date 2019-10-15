@@ -4,6 +4,7 @@ from urllib import urlencode
 from StringIO import StringIO
 from random import randint
 import json
+import os
 
 from copy import deepcopy
 from fits_storage.utils.web import get_context, Return, ClientError, RequestRedirect
@@ -90,6 +91,12 @@ class Fixture(object):
         env['PATH_INFO'] = self.uri
         if self.cookies:
             env['HTTP_COOKIE'] = self.cookies
+
+        pytest_server = os.getenv("PYTEST_SERVER", None)
+        if pytest_server is not None:
+            if pytest_server.lower().startswith("http"):
+                pytest_server = pytest_server[pytest_server.indexof('/')+2:]
+            env['REMOTE_ADDR'] = pytest_server
 
         post = self.post
         if self.data is not None:

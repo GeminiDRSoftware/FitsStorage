@@ -133,6 +133,7 @@ def evaluator(request):
 
 class TestEvaluator:
     @pytest.mark.parametrize("input,expected", FILES_TO_TEST)
+    @pytest.mark.slow
     def test_evaluate(self, evaluator, testfile_path, input, expected):
         ad_object = AstroData(testfile_path(input))
         assert evaluator.evaluate(ad_object).code == expected
