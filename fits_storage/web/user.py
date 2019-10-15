@@ -21,6 +21,9 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import functools
 
+import logging
+
+
 bad_password_msg = "Bad password - must be at least 14 characters long, and contain at least one lower case letter, upper case letter, decimal digit and non-alphanumeric character (e.g. !, #, %, * etc)"
 
 @templating.templated("user/request_account.html")
@@ -646,6 +649,7 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(*args, **kw):
+            logging.debug("Checking authorization")
             ctx = get_context()
 
             ctype = 'application/json' if content_type == 'json' else 'text/html'
@@ -654,30 +658,39 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
 
             got_magic = False
             if disabled_cookies and only_magic:
+                logging.debug("No cookies, only magic")
                 got_magic = True
             elif not disabled_cookies:
                 for cookie, content in magic_cookies:
                     try:
                         if content is not None and ctx.cookies[cookie] == content:
+                            logging.debug("Saw magic cookie")
                             got_magic = True
                             break
                     except KeyError:
                         pass
 
             if archive_only and not use_as_archive:
+                logging.debug("Archive only and not use as archive")
                 # Bypass protection - archive_only and not the archive
                 got_magic = True
             if not got_magic:
+                logging.debug("Handling auth")
                 raise_error = functools.partial(ctx.resp.client_error, code=Return.HTTP_FORBIDDEN, content_type=ctype, annotate=annotate)
                 if only_magic:
+                    logging.info("Could not find a proper magic cookie for a cookie-only service")
                     raise_error(message="Could not find a proper magic cookie for a cookie-only service")
                 user = ctx.user
                 if not user:
+                    logging.info("You need to be logged in to access this resource")
                     raise_error(message="You need to be logged in to access this resource")
                 if superuser is True and not user.superuser:
+                    logging.info("You need to be logged in as a Superuser to access this resource")
                     raise_error(message="You need to be logged in as a Superuser to access this resource")
                 if staffer is True and not user.gemini_staff:
+                    logging.info("You need to be logged in as Gemini Staff member to access this service")
                     raise_error(message="You need to be logged in as Gemini Staff member to access this resource")
+            logging.debug("Past auth check, calling method")
             return fn(*args, **kw)
         return wrapper
     return decorator

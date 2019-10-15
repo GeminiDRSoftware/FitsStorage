@@ -268,7 +268,7 @@ url_map = Map([
 
     Rule('/queuestatus', queuestatus_summary),                      # Show some info on what's going on with the queues
     Rule('/queuestatus/json', queuestatus_update),                  # Show some info on what's going on with the queues
-    Rule('/queuestatus/<queue>/<int:oid>', queuestatus_tb),         # Show some info on what's going on with the queues
+    Rule('/queuestatus/<qshortname>/<int:oid>', queuestatus_tb),         # Show some info on what's going on with the queues
 
     Rule('/miscfiles', miscfiles.miscfiles),                        # Miscellanea (Opaque files)
     Rule('/miscfiles/<int:handle>', miscfiles.miscfiles),           # Miscellanea (Opaque files)
@@ -370,8 +370,8 @@ def core_handler(environ, start_response):
     resp.set_header('Cache-Control', 'no-cache')
     resp.set_header('Expired', '-1')
 
-    if req.env.server_hostname == 'archive':
-        new_uri = "https://archive.gemini.edu%s" % req.unparsed_uri
+    #if req.env.server_hostname == 'archive':
+    #    new_uri = "https://archive.gemini.edu%s" % req.unparsed_uri
 
     route = get_route(url_map)
     if route is None:
@@ -432,6 +432,14 @@ def handler(environ, start_response):
         return ctx.resp.respond(unicode_to_string)
 
 application = ArchiveContextMiddleware(handler)
+
+
+if os.getenv("FITSSTORAGE_PTVSD", None) is not None:
+    import ptvsd
+
+    ptvsd.enable_attach(address=('0.0.0.0', 3000))
+    #ptvsd.wait_for_attach()
+
 
 # Provide a basic WSGI server, in case we're testing or don't need any fancy
 # container...

@@ -16,7 +16,7 @@ logger = logging.getLogger()
 
 # This is where we set what level messages we want to log.
 # Default to INFO and be setable to debug with a command line argument
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # Create log formatter
 formatter = logging.Formatter("%(asctime)s %(process)d:%(module)s:%(lineno)d %(levelname)s: %(message)s")
@@ -40,13 +40,25 @@ streamhandler.setFormatter(formatter)
 smtphandler.setFormatter(formatter)
 
 # Add Handlers to logger
-logger.addHandler(filehandler)
+#logger.addHandler(filehandler)
+sysloghandler = logging.handlers.SysLogHandler()
+sysloghandler.setFormatter(formatter)
+#logger.addHandler(sysloghandler)
+logger.addHandler(streamhandler)
 
 # Turn off boto debug logging
 # We do this inside utils.aws_s3 now
 # logging.getLogger('boto').setLevel(logging.WARNING)
 
 # Utility functions follow
+
+# env var setting for webserver
+loglevels = {"DEBUG": logging.DEBUG, "INFO": logging.INFO, "WARNING": logging.WARN}
+loglevel = os.getenv("LOG_LEVEL", None)
+if loglevel is not None:
+    if loglevel in loglevels:
+        logger.setLevel(loglevels[loglevel])
+
 
 def setdebug(want):
     """ Set if we want debug messages """
@@ -55,6 +67,7 @@ def setdebug(want):
 
 def setdemon(want):
     """ If running as a demon, don't output to stdout but do activate email handler """
+    return
     if want:
         if len(email_errors_to):
             logger.addHandler(smtphandler)
@@ -63,6 +76,7 @@ def setdemon(want):
 
 def setlogfilesuffix(suffix):
     """ Set a suffix on the log file name """
+    return
     logname = "%s-%s.log" % (os.path.basename(sys.argv[0]), suffix)
     logfile = os.path.join(fits_log_dir, logname)
     new_filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount=10, maxBytes=10000000)

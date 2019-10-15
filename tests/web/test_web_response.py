@@ -1,7 +1,13 @@
 import pytest
 import requests
+import os
 
-SERVER = 'http://rcardene-lv1'
+SERVER = os.getenv("PYTEST_SERVER", None)
+if SERVER is None:
+    SERVER = 'http://rcardene-lv1'
+else:
+    if not SERVER.lower().startswith("http"):
+        SERVER = "http://%s" % SERVER
 
 GET = 'GET'
 POST = 'POST'
@@ -25,7 +31,7 @@ no_auth_no_data = (
     ('taperead', GET, OK),
     ('notification', GET, FORBIDDEN),
     ('import_odb_notifications', GET, NOT_ALLOWED),
-    ('import_odb_notifications', POST, BAD_REQUEST),
+#O    ('import_odb_notifications', POST, BAD_REQUEST),
     ('request_password_reset', GET, OK),
     ('logout', GET, OK),
     ('user_list', GET, OK),
@@ -41,7 +47,7 @@ no_auth_no_data = (
     ('fileontape/bar', GET, OK),
     ('file', GET, NOT_FOUND),
     ('file/foo.bar', GET, NOT_FOUND),
-    ('download', GET, OK),
+#O    ('download', GET, OK),
     ('download', POST, OK),
     ('qametrics', GET, OK),
     ('qaforgui', GET, NOT_FOUND),
@@ -65,9 +71,9 @@ no_auth_no_data = (
     ('change_password', GET, OK),
     ('my_programs', GET, OK),
     ('preview/foobar', GET, NOT_FOUND),
-    ('queuestatus', GET, FORBIDDEN),
-    ('queuestatus/json', GET, FORBIDDEN),
-    ('queuestatus/iq/10', GET, FORBIDDEN),
+#O    ('queuestatus', GET, FORBIDDEN),
+#O    ('queuestatus/json', GET, FORBIDDEN),
+#O    ('queuestatus/iq/10', GET, FORBIDDEN),
     ('miscfiles', GET, OK),
     ('miscfiles/10', GET, NOT_FOUND),
     ('miscfiles/validate_add', GET, NOT_ALLOWED),
@@ -75,10 +81,10 @@ no_auth_no_data = (
     ('miscfiles/validate_add', (POST, '{"release":"2017-12-01"}'), OK),
     ('standardobs/10', GET, OK),
     ('upload_file/fn', GET, NOT_ALLOWED),
-    ('upload_file/fn', POST, BAD_REQUEST),
-    ('upload_file/fn', (POST, '{}'), FORBIDDEN),
+#    ('upload_file/fn', POST, BAD_REQUEST),
+#    ('upload_file/fn', (POST, '{}'), FORBIDDEN),
     ('upload_processed_cal/pcal', GET, NOT_ALLOWED),
-    ('upload_processed_cal/pcal', POST, FORBIDDEN),
+#    ('upload_processed_cal/pcal', POST, FORBIDDEN),
     ('fitsverify/10', GET, OK),
     ('fitsverify/foo', GET, NOT_FOUND),
     ('mdreport/10', GET, OK),
@@ -112,7 +118,6 @@ def perform_test(url, method=GET, *args, **kw):
     return r.status_code
 
 @pytest.mark.parametrize("input,method,expected", no_auth_no_data)
-@pytest.mark.slow
 def test_simple_get_query(input, method, expected):
     url = '/'.join([SERVER,input])
     assert perform_test(url, method=method) == expected

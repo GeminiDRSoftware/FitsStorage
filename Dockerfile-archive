@@ -15,7 +15,8 @@ RUN mkdir /opt/modwsgi-default
 RUN ln -sf /dev/stdout /var/log/httpd/access_log && \
     ln -sf /dev/stderr /var/log/httpd/error_log && \
     ln -sf /dev/stdout /opt/modwsgi-default/access_log && \
-    ln -sf /dev/stderr /opt/modwsgi-default/error_log
+    ln -sf /dev/stderr /opt/modwsgi-default/error_log && \
+    ln -sf /dev/stdout /var/log/messages
 
 # SETUP WEB SERVER
 RUN mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  /opt/FitsStorage/fits_storage/wsgihandler.py
@@ -31,4 +32,5 @@ COPY httpd-patched.conf /opt/modwsgi-default/httpd.conf
 EXPOSE 80
 EXPOSE 443
 
+ENV LOG_LEVEL DEBUG
 ENTRYPOINT ["/opt/modwsgi-default/apachectl", "-D", "FOREGROUND"]

@@ -57,4 +57,6 @@ COPY . /opt/FitsStorage
 WORKDIR /opt/FitsStorage
 COPY fitsverify /opt/fitsverify
 
+ENV PYTEST_SERVER archive
+
 ENTRYPOINT ["bash"]

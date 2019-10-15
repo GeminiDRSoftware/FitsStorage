@@ -64,7 +64,7 @@ def search_miscfiles(formdata):
     ctx = get_context()
 
     ret = dict(can_add=ctx.is_staffer)
-    query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile).join(File).filter(DiskFile.canonical == True)
+    query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile, MiscFile.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id).filter(DiskFile.canonical == True)
 
     message = []
 
@@ -189,7 +189,7 @@ def detail_miscfile(handle, formdata = {}):
     ctx = get_context()
 
     try:
-        query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile).join(File)
+        query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile, MiscFile.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id)
         try:
             meta, df, fobj = query.filter(MiscFile.id == int(handle)).one()
         except ValueError:

@@ -47,7 +47,7 @@ def preview(filenamegiven):
     try:
         # Find the information associated with the canonical diskfile and header for the file on the query
         preview, header = (
-            session.query(Preview, Header).join(DiskFile).join(Header).join(File)
+            session.query(Preview, Header).join(DiskFile, Header.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id)
                     .filter(DiskFile.present == True)
                     .filter(File.name == filename)
                     .first()
