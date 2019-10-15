@@ -1,21 +1,27 @@
 """
-This module holds the CalibrationGMOS class
+The CalibrationGMOS class
+
 """
 import datetime
+import math
 
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.gmos import Gmos
-from .calibration import Calibration, not_processed, not_imaging, not_spectroscopy
+
+from .calibration import Calibration
+from .calibration import not_imaging
+from .calibration import not_processed
+from .calibration import not_spectroscopy
 
 from sqlalchemy.orm import join
 
-import math
 
 class CalibrationGMOS(Calibration):
     """
-    This class implements a calibration manager for GMOS.
-    It is a subclass of Calibration
+    This class implements a calibration manager for GMOS, a subclass of
+    Calibration.
+
     """
     instrClass = Gmos
     instrDescriptors = (
@@ -43,6 +49,7 @@ class CalibrationGMOS(Calibration):
         All this really does is determine whether what calibrations the
         /calibrations feature will look for. Just because a caltype isn't
         applicable doesn't mean you can't ask the calmgr for one.
+
         """
         self.applicable = []
 
@@ -121,6 +128,8 @@ class CalibrationGMOS(Calibration):
             # If it is MOS then it needs a MASK
             if 'MOS' in self.types:
                 self.applicable.append('mask')
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
     @not_imaging
     def arc(self, processed=False, howmany=None):
@@ -144,8 +153,10 @@ class CalibrationGMOS(Calibration):
         # all amps must be there - this is more efficient for the DB as it will use
         # the index. Otherwise, the science frame could have a subset of the amps
         # thus we must do the substring match
-        
-        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+
+        if processed:
+            pass
+        elif self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
             filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
         elif self.descriptors['amp_read_area'] is not None:
                 filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
@@ -164,6 +175,8 @@ class CalibrationGMOS(Calibration):
                 .max_interval(days=365)
                 .all(howmany)
             )
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
     def dark(self, processed=False, howmany=None):
         """

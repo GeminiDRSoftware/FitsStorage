@@ -74,7 +74,7 @@ class DiskFileReport(Base):
             # If the FITS file has bad strings in it, fitsverify will quote them in
             # the report, and the database will object to the bad characters in
             # the unicode string - errors=ignore makes it ignore these.
-            self.fvreport = unicode(retlist[3], errors='replace')
+            self.fvreport = str(retlist[3], errors='replace')
 
     def md(self, diskfile):
         """

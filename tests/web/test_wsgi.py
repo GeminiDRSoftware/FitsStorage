@@ -1,7 +1,7 @@
 import pytest
 import sqlalchemy.orm.exc as orm_exc
-from urllib import urlencode
-from StringIO import StringIO
+from urllib.parse import urlencode
+from io import StringIO
 from random import randint
 import json
 
@@ -79,7 +79,7 @@ class Fixture(object):
         self.data    = data
         self.post    = (post if data is None else True)
         self.status  = retcode
-        if isinstance(cases, (str, unicode)):
+        if isinstance(cases, str):
             self.cases = (cases,)
         else:
             self.cases = cases
@@ -152,7 +152,7 @@ class WebTestMiddleware(object):
 
 def start_response(*args):
     def write(obj):
-        print obj
+        print(obj)
     return write
 
 def run_web_test(fn, env):
@@ -302,5 +302,5 @@ def test_wsgi(min_session, route, expected):
                    assert f in r
                 except AssertionError:
                     if DEBUGGING:
-                        print r
+                        print(r)
                     raise

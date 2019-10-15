@@ -4,7 +4,7 @@ import datetime
 import time
 import subprocess
 import tarfile
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import traceback
 from sqlalchemy import join
 

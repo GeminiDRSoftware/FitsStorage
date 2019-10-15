@@ -34,7 +34,7 @@ Options:
   -S            Don't prepend SRCDIR to the file names.
 """
 
-from __future__ import print_function
+
 
 import functools
 import os
@@ -188,7 +188,7 @@ for fn, path in ((normalized_fn(x), pathfn(x)) for x in filelist):
             fits[0].header['HISTORY'] = 'Corrected metadata: RELEASE (proper)'
         elif not justrw:
             fits.verify('exception')
-            change_sets = filter(lambda x: x[1], [(h.header, change_set(h.header)) for h in fits])
+            change_sets = [x for x in [(h.header, change_set(h.header)) for h in fits] if x[1]]
             if not change_sets:
                 print("Skipping {0}".format(fn))
                 continue

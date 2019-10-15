@@ -32,7 +32,7 @@ def log(text, *args):
     if logger:
         logger.info(text, *args)
     else:
-        print text % args
+        print(text % args)
 
 def do_file(filename, logger=None):
     fullpath = os.path.join(path, filename)

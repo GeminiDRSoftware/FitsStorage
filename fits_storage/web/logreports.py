@@ -65,7 +65,7 @@ def usagereport():
     session = ctx.session
 
     formdata = ctx.get_form_data()
-    for key, value in ((k, v.value) for (k, v) in formdata.items()):
+    for key, value in ((k, v.value) for (k, v) in list(formdata.items())):
         if key == 'start' and len(value):
             start = dateutil.parser.parse(value)
         elif key == 'end' and len(value):

@@ -21,12 +21,12 @@ exclude = options.exclude
 
 def print_results(query, header, empty_message):
     if query.count() == 0:
-        print empty_message
+        print(empty_message)
     else:
         for df_id, file in query:
-            print "{header}: DiskFile id = {dfid:9}, File id = {fid:9}".format(header= header,
+            print("{header}: DiskFile id = {dfid:9}, File id = {fid:9}".format(header= header,
                                                                                dfid  = df_id,
-                                                                               fid   = file.id)
+                                                                               fid   = file.id))
 
 # Get a database session
 with session_scope() as session:

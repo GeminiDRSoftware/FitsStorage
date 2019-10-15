@@ -44,7 +44,7 @@ now = datetime.datetime.now()
 logger.info("*********    rebuild_inst_table.py - starting up at %s" % now)
 
 if not options.inst:
-    print "Specify the instrument table to rebuild"
+    print("Specify the instrument table to rebuild")
     sys.exit(1)
 
 inst = options.inst

@@ -112,7 +112,7 @@ if gotfiles is False:
     files = []
     if file_re:
         cre = re.compile(file_re)
-        files = filter(cre.search, filelist)
+        files = list(filter(cre.search, filelist))
     else:
         files = filelist
 

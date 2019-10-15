@@ -134,7 +134,7 @@ class PairMapper(object):
 
     def __call__(self, value):
         try:
-            return filter(valid_pair, zip(self.kw, self.pr[value.lower()]))
+            return list(filter(valid_pair, list(zip(self.kw, self.pr[value.lower()]))))
         except KeyError:
             raise ValueError(value)
 
@@ -155,7 +155,7 @@ change_actions = {
 
 def map_changes(changes):
     change_pairs = []
-    for key, value in changes.items():
+    for key, value in list(changes.items()):
         try:
             fn = change_actions[key]
         except KeyError:

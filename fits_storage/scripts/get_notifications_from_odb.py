@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from xml.dom.minidom import parseString
 from optparse import OptionParser
 from datetime import datetime
@@ -29,13 +29,13 @@ setdemon(options.demon)
 
 def download_and_ingest(url):
     logger.info("Fetching XML from ODB server: %s", url)
-    xml = urllib2.urlopen(url).read()
+    xml = urllib.request.urlopen(url).read()
     logger.debug("Got %d bytes from server.", len(xml))
 
     # Upload to remote, or ingest locally?
     if options.to_remote_server:
         url = "%s/import_odb_notifications" % options.to_remote_server
-        opener = urllib2.build_opener()
+        opener = urllib.request.build_opener()
         opener.addheaders.append(('Cookie', 'gemini_fits_authorization=%s' % magic_download_cookie))
         u = opener.open(url, xml)
         report = u.read()

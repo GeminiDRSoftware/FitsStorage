@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+
 
 import sys
 import time
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
-from urlparse import urlunsplit
+from urllib.parse import urlunsplit
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     qrl = urlunsplit(odbq_parts).format(args.semester[0])
     print("Requesting ODB program metadata for semester {}".format(args.semester[0]))
     print("On URL {}".format(qrl))
-    pdata = urllib2.urlopen(qrl).read()
+    pdata = urllib.request.urlopen(qrl).read()
     xdoc = parseString(pdata)
     pdata = programs.build_odbdata(programs.get_programs(xdoc))
     update_program_dbtable(prodfitsurl, pdata)

@@ -1,4 +1,4 @@
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import datetime
 
 import astrodata
@@ -26,16 +26,16 @@ desc_dict = {'instrument':ad.instrument(),
 type_list = ad.tags
 start = datetime.datetime.now()
 sequence = (('descriptors', desc_dict), ('types', type_list))
-postdata = urllib.urlencode(sequence)
+postdata = urllib.parse.urlencode(sequence)
 
 #print desc_dict
 url = "http://fits/calmgr/processed_flat/"
-u = urllib.urlopen(url, postdata)
+u = urllib.request.urlopen(url, postdata)
 end = datetime.datetime.now()
 
 interval = end - start
-print u.read()
+print(u.read())
 u.close()
 
-print "-----\n"
-print "query took %s" % interval
+print("-----\n")
+print("query took %s" % interval)

@@ -362,7 +362,7 @@ def dispatch(endpoint, args):
     return endpoint(**kw)
 
 def unicode_to_string(uni):
-    return uni.encode('utf-8') if isinstance(uni, unicode) else uni
+    return uni.encode('utf-8') if isinstance(uni, str) else uni
 
 def core_handler(environ, start_response):
     ctx = get_context()
@@ -398,7 +398,7 @@ class StaticServer(object):
         ctx = get_context()
         req, resp = ctx.req, ctx.resp
 
-        uri = filter(len, req.env.uri.split('/'))
+        uri = list(filter(len, req.env.uri.split('/')))
         if len(uri) > 1 and uri[0] == 'static':
             mtype, enc = mimetypes.guess_type(uri[-1])
             try:

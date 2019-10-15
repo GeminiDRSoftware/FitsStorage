@@ -13,7 +13,7 @@ import re
 
 from . import templating
 
-from urllib import quote_plus
+from urllib.parse import quote_plus
 
 # We assume that servers used as archive use a calibration association cache table
 from ..fits_storage_config import use_as_archive
@@ -98,7 +98,7 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
     if 'warning' in selection:
         querylog.add_note("Selection Warning: {}".format(selection['warning']))
     # Note any notrecognised in the querylog
-    if 'notrecognised' in selection.keys():
+    if 'notrecognised' in list(selection.keys()):
         querylog.add_note("Selection NotRecognised: %s" % selection['notrecognised'])
     # Note in the log if we hit limits
     if hit_open_limit:
@@ -215,9 +215,9 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
         def __iter__(self):
             return self
 
-        def next(self):
+        def __next__(self):
             "Obtain the next row of data and keep some stats about it."
-            header = self.headers.next()
+            header = next(self.headers)
             row = sumgen.table_row(*header)
             self.total = self.total + 1
             if row.can_download:

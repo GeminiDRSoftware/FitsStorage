@@ -5,45 +5,45 @@
 import sys
 import re
 
-from utils.web import get_context, context_wrapped, ModPythonRequest, ModPythonResponse
+from .utils.web import get_context, context_wrapped, ModPythonRequest, ModPythonResponse
 import traceback
-from gemini_metadata_utils import gemini_date
+from .gemini_metadata_utils import gemini_date
 
 from mod_python import apache
 from mod_python import util
 
-from fits_storage_config import blocked_urls, use_as_archive
-from web.summary import summary
-from web.file_list import xmlfilelist, jsonfilelist, jsonsummary, jsonqastate
-from web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead
-from web.xml_tape import xmltape
-from web.progsobserved import progsobserved, sitemap
-from web.gmoscal import gmoscal_html, gmoscal_json
-from web.notification import notification, import_odb_notifications
-from web.calmgr import calmgr
-from web.calibrations import calibrations
-from web.upload_file import upload_file
-from web.curationreport import curation_report
-from web.standards import standardobs
-from web.selection import getselection
-from web.fileserver import fileserver, download
-from web.qastuff import qareport, qametrics, qaforgui
-from web.statistics import content, stats
-from web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password
-from web.user import staff_access, user_list, AccessForbidden
-from web.userprogram import my_programs
-from web.searchform import searchform, nameresolver
-from web.logreports import usagereport, usagedetails, downloadlog, usagestats
-from web.preview import preview
-from web.obslogs import obslogs
-from web.reporting import report
-from web.queuestatus import queuestatus
-from web.api import update_headers, ingest_files
-from web.miscfiles import miscfiles
-from web import templating
+from .fits_storage_config import blocked_urls, use_as_archive
+from .web.summary import summary
+from .web.file_list import xmlfilelist, jsonfilelist, jsonsummary, jsonqastate
+from .web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead
+from .web.xml_tape import xmltape
+from .web.progsobserved import progsobserved, sitemap
+from .web.gmoscal import gmoscal_html, gmoscal_json
+from .web.notification import notification, import_odb_notifications
+from .web.calmgr import calmgr
+from .web.calibrations import calibrations
+from .web.upload_file import upload_file
+from .web.curationreport import curation_report
+from .web.standards import standardobs
+from .web.selection import getselection
+from .web.fileserver import fileserver, download
+from .web.qastuff import qareport, qametrics, qaforgui
+from .web.statistics import content, stats
+from .web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password
+from .web.user import staff_access, user_list, AccessForbidden
+from .web.userprogram import my_programs
+from .web.searchform import searchform, nameresolver
+from .web.logreports import usagereport, usagedetails, downloadlog, usagestats
+from .web.preview import preview
+from .web.obslogs import obslogs
+from .web.reporting import report
+from .web.queuestatus import queuestatus
+from .web.api import update_headers, ingest_files
+from .web.miscfiles import miscfiles
+from .web import templating
 
-from orm import session_scope, NoResultFound
-from orm.usagelog import UsageLog
+from .orm import session_scope, NoResultFound
+from .orm.usagelog import UsageLog
 
 from functools import partial
 

@@ -25,9 +25,9 @@ for el in els:
 
     dirname = "el_%s_crpa_%s" % (el.replace(':', '_'), crpa.replace(':', '_'))
     if(os.path.exists(dirname)):
-       print "%s already exists, skipping"
+       print("%s already exists, skipping")
     else:
-       print "Creating %s" % dirname
+       print("Creating %s" % dirname)
        os.chdir(cwd)
        os.mkdir(dirname)
        os.chdir(dirname)
@@ -35,7 +35,7 @@ for el in els:
        files = get_file_list(selection)
 
        numfiles = len(files)
-       print "Got %d files\n" % numfiles
+       print("Got %d files\n" % numfiles)
 
        # Fetch the files
        fetch_files(files)

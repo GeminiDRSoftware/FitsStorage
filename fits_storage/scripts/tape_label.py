@@ -14,31 +14,31 @@ parser.add_option("--force", action="store_true", dest="force", help="Normally, 
 options, args = parser.parse_args()
 
 if not (options.read or options.label):
-    print "You must supply either the --read or the --label option"
+    print("You must supply either the --read or the --label option")
     sys.exit(1)
 
 td = TapeDrive(options.tapedrive, fits_tape_scratchdir)
 
 if options.read:
-    print td.readlabel(fail=False)
+    print(td.readlabel(fail=False))
     sys.exit(0)
 
 
 if options.label:
     oldlabel = td.readlabel(fail=False)
     if oldlabel:
-        print "This tape already has a FitsStorage tape label"
-        print "Current label is: %s" % oldlabel
+        print("This tape already has a FitsStorage tape label")
+        print("Current label is: %s" % oldlabel)
         if options.force:
-            print "--force specified: will overwrite"
-            print "Writing new tape label: %s" % options.label
+            print("--force specified: will overwrite")
+            print("Writing new tape label: %s" % options.label)
             td.writelabel(options.label)
             sys.exit(0)
         else:
-            print "If you really want to overwrite, use the --force option"
+            print("If you really want to overwrite, use the --force option")
             sys.exit(1)
     else:
-        print "Writing tape label: %s" % options.label
+        print("Writing tape label: %s" % options.label)
         td.writelabel(options.label)
         sys.exit(0)
 

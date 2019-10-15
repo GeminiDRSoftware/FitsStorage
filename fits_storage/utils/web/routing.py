@@ -1,6 +1,6 @@
 import re
 from .adapter import get_context, Return
-from urlparse import parse_qs
+from urllib.parse import parse_qs
 
 # This rule regular expressions is copied from werkzeug's, as we intend to make it
 # syntax-compatible
@@ -170,7 +170,7 @@ class Rule(object):
                 self._converters[varseq] = convobj
                 reg_parts.append('(?P<{}>{})'.format(varseq, convobj.regex))
                 varn = varn + 1
-        regex = r'^{}{}$'.format(u''.join(reg_parts), '/?' if add_variable_slash else '')
+        regex = r'^{}{}$'.format(''.join(reg_parts), '/?' if add_variable_slash else '')
         self._regex = re.compile(regex, re.UNICODE)
 
     def match(self, path):
@@ -186,12 +186,12 @@ class Rule(object):
             gd = res.groupdict()
             result = []
             added = set()
-            for name, value in gd.iteritems():
+            for name, value in gd.items():
                 try:
                     var = self._variables[name]
                     val = self._converters[name].to_python(value)
                     if isinstance(var, tuple):
-                        result.append(dict(zip(var, val)))
+                        result.append(dict(list(zip(var, val))))
                         for k in var:
                             added.add(k)
                     else:
@@ -202,12 +202,12 @@ class Rule(object):
 
             if self.qs_mapping:
                 qs_args = parse_qs(get_context().req.env.qs)
-                for var, mapping in self.qs_mapping.iteritems():
+                for var, mapping in self.qs_mapping.items():
                     if var in qs_args:
                         result.append({mapping: qs_args[var]})
                         added.add(mapping)
 
-            for var, val in self.defaults.iteritems():
+            for var, val in self.defaults.items():
                 if var not in added:
                     result.append({var: val})
 
@@ -292,7 +292,7 @@ class Map(object):
         self._rules = []
         self.converters = DEFAULT_CONVERTERS.copy()
         if converters is not None:
-            for name, convclass in converters.iteritems():
+            for name, convclass in converters.items():
                 self.add_converter(name, convclass)
         for rule in rules or ():
             self.add(rule)

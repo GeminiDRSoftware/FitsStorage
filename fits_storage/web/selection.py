@@ -5,7 +5,7 @@ Functions in this module are only used within FitsStorageWebSummary.
 """
 import re
 import math
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import datetime
 import dateutil.parser
 from datetime import timedelta
@@ -196,7 +196,7 @@ def getselection(things):
                 # Good through 2029, don't match full filenames :-)
                 selection['filepre'] = thing
             elif key in {'object', 'Object'}:
-                selection['object'] = urllib.unquote_plus(value)
+                selection['object'] = urllib.parse.unquote_plus(value)
             elif thing in {'LS', 'MOS', 'IFS'}:
                 selection['mode'] = thing
                 selection['spectroscopy'] = True
@@ -207,10 +207,10 @@ def getselection(things):
                     selection['notrecognised'] = thing
 
     # Disregard all but the most specific of program_id, observation_id, data_label
-    if selection.has_key('data_label'):
+    if 'data_label' in selection:
         selection.pop('observation_id', None)
         selection.pop('program_id', None)
-    if selection.has_key('observation_id'):
+    if 'observation_id' in selection:
         selection.pop('program_id', None)
     return selection
 
@@ -423,11 +423,11 @@ def queryselection(query, selection):
             query = query.filter(Header.camera == selection['camera'])
 
     if 'focal_plane_mask' in selection:
-        if 'inst' in selection.keys() and selection['inst'] == 'TReCS':
+        if 'inst' in list(selection.keys()) and selection['inst'] == 'TReCS':
             # this gets round the quotes and options "+ stuff" in the TReCS mask names.
             # the selection should only contain the "1.23" bit
             query = query.filter(Header.focal_plane_mask.contains(selection['focal_plane_mask']))
-        if 'inst' in selection.keys() and selection['inst'][:4] == 'GMOS':
+        if 'inst' in list(selection.keys()) and selection['inst'][:4] == 'GMOS':
             # Make this a starts with for convenice finding multiple gmos masks for example
             query = query.filter(Header.focal_plane_mask.startswith(selection['focal_plane_mask']))
         else:
@@ -499,7 +499,7 @@ def queryselection(query, selection):
                 valid = False
             else:
                 # valid single value, get search radius
-                if 'sr' in selection.keys():
+                if 'sr' in list(selection.keys()):
                     sr = srtodeg(selection['sr'])
                     if sr is None:
                         selection['warning'] = 'Invalid Search Radius, defaulting to 3 arcmin'
@@ -549,7 +549,7 @@ def queryselection(query, selection):
                 valid = False
             else:
                 # valid single value, get search radius
-                if 'sr' in selection.keys():
+                if 'sr' in list(selection.keys()):
                     sr = srtodeg(selection['sr'])
                     if sr is None:
                         selection['warning'] = 'Invalid Search Radius, defaulting to 3 arcmin'
@@ -731,10 +731,10 @@ def selection_to_URL(selection, with_columns=False):
 
     # We go only want one of data_label, observation_id, program_id in the URL,
     # the most specific one should carry.
-    if selection.has_key('data_label'):
+    if 'data_label' in selection:
         selection.pop('observation_id', None)
         selection.pop('program_id', None)
-    if selection.has_key('observation_id'):
+    if 'observation_id' in selection:
         selection.pop('program_id', None)
 
     for key in selection:
@@ -769,7 +769,7 @@ def selection_to_URL(selection, with_columns=False):
                 # It's a non standard one
                 urlstring += '/progid=%s' % selection[key]
         elif key == 'object':
-            urlstring += '/object=%s' % urllib.quote_plus(selection[key])
+            urlstring += '/object=%s' % urllib.parse.quote_plus(selection[key])
         elif key == 'spectroscopy':
             if selection[key] is True:
                 urlstring += '/spectroscopy'

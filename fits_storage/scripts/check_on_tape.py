@@ -1,6 +1,6 @@
 import sys
 import datetime
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from xml.dom.minidom import parseString
 from sqlalchemy import join
 from fits_storage.orm import session_scope
@@ -62,7 +62,7 @@ with session_scope() as session:
         url = "http://%s/fileontape/%s" % (options.tapeserver, dbfilename)
         logger.debug("Querying tape server DB at %s" % url)
 
-        xml = urllib.urlopen(url).read()
+        xml = urllib.request.urlopen(url).read()
         dom = parseString(xml)
         fileelements = dom.getElementsByTagName("file")
 

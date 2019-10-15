@@ -11,7 +11,7 @@ inside apache, so command line scripts using this will always need the local
 definitions anyway.
 """
 
-from fits_storage_config import using_apache
+from .fits_storage_config import using_apache
 
 define_locally = True
 if using_apache:

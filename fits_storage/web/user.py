@@ -348,7 +348,7 @@ def request_password_reset():
 
     # Parse the form data here
     if formdata:
-        if 'thing' in formdata.keys():
+        if 'thing' in list(formdata.keys()):
             thing = formdata['thing'].value
 
         # Validate
@@ -405,9 +405,9 @@ def staff_access():
 
     # Parse the form data
     if formdata:
-        if 'username' in formdata.keys():
+        if 'username' in list(formdata.keys()):
             username = formdata['username'].value
-        if 'action' in formdata.keys():
+        if 'action' in list(formdata.keys()):
             action = formdata['action'].value
 
     thisuser = ctx.user

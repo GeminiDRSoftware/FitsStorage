@@ -7,7 +7,7 @@ from wsgiref.handlers import SimpleHandler
 from wsgiref.simple_server import WSGIRequestHandler
 from wsgiref import util as wutil
 from cgi import escape, FieldStorage
-import Cookie
+import http.cookies
 from datetime import datetime
 import json
 import tarfile
@@ -26,11 +26,11 @@ class ItemizedFieldStorage(FieldStorage):
             self.uploaded_file = UploadedFile(self.filename)
 
     def items(self):
-        for k in self.keys():
+        for k in list(self.keys()):
             yield (k, self[k])
 
     def iteritems(self):
-        return self.items()
+        return list(self.items())
 
 from types import StringType, UnicodeType
 
@@ -83,7 +83,7 @@ class Environment(object):
 
     @property
     def cookies(self):
-        return Cookie.SimpleCookie(self._env['HTTP_COOKIE'])
+        return http.cookies.SimpleCookie(self._env['HTTP_COOKIE'])
 
 class Request(adapter.Request):
     def __init__(self, session, wsgienv):
@@ -115,7 +115,7 @@ class Request(adapter.Request):
 
     def log(self, *args, **kw):
         try:
-            print >> self._env['wsgi.errors'], args[0]
+            print(args[0], file=self._env['wsgi.errors'])
             return True
         except (KeyError, IndexError):
             return False
@@ -249,7 +249,7 @@ class Response(adapter.Response):
         self._env = wsgienv
         self._sr  = start_response
         self._bytes_sent = 0
-        self._cookies_to_send = Cookie.SimpleCookie()
+        self._cookies_to_send = http.cookies.SimpleCookie()
         self.make_empty()
         self._started_response = False
         self._filter = lambda x: x
@@ -288,7 +288,7 @@ class Response(adapter.Response):
                 '{} {}'.format(self.status, status_message.get(self.status, 'Error')),
                    [('Content-Type', self._content_type)]
                  + self._headers[:]
-                 + [('Set-Cookie', morsel.OutputString()) for morsel in self._cookies_to_send.values()]
+                 + [('Set-Cookie', morsel.OutputString()) for morsel in list(self._cookies_to_send.values())]
             )
         return self
 
@@ -305,7 +305,7 @@ class Response(adapter.Response):
         # The minimal
         self._cookies_to_send[name] = value
         ck = self._cookies_to_send[name]
-        for k, v in kw.iteritems():
+        for k, v in kw.items():
             if k == 'expires':
                 ck['expires'] = v.strftime('%a, %d %b %Y %H:%M:%S GMT')
             else:

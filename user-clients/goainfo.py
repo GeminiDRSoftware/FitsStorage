@@ -22,7 +22,7 @@ from datetime import datetime
 import json
 import logging
 import sys
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 STANDARD_SERVER='archive.gemini.edu'
 
@@ -43,7 +43,7 @@ def grab_info_from_url(url):
     #
     # But we can wrap the object with contextlib.closing to help with that
     try:
-        with closing(urllib.urlopen(url)) as response:
+        with closing(urllib.request.urlopen(url)) as response:
             status = response.getcode()
             if status == 200:
                 return json.loads(response.read())
@@ -102,7 +102,7 @@ def print_info(filelist, metadata_to_print):
         #
         # E.g., if we have a dictionary d={'a': 1, 'b': 2}, function(**d) is
         #       equivalente to function(a=1, b=2)
-        print(formatstring.format(**fileinfo))
+        print((formatstring.format(**fileinfo)))
 
 def get_file_info(arguments, server=STANDARD_SERVER):
     """

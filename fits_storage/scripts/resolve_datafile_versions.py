@@ -115,7 +115,7 @@ def deduplicate(sess, fname):
     versdict = {}
     for vers in versions:
         versdict[vers.fullpath] = vers
-    for path, score in image_validity.score_files(*versdict.keys(), verbose = verb):
+    for path, score in image_validity.score_files(*list(versdict.keys()), verbose = verb):
         vers = versdict[path]
         vers.score = score.value
         # Something really bad happened here...
@@ -136,7 +136,7 @@ def deduplicate(sess, fname):
             vers.accepted = False
             vers.is_clear = False
 
-    candidates = filter(lambda x: x.score == max_val, versions)
+    candidates = [x for x in versions if x.score == max_val]
 
     if len(candidates) > 1:
         logger.info("{0}: Found more than one max score. Trying MD5".format(fname))
@@ -149,7 +149,7 @@ def deduplicate(sess, fname):
                 inst.accepted = False
                 inst.is_clear = True
 
-        best = filter(lambda x: x.accepted != False, candidates)
+        best = [x for x in candidates if x.accepted != False]
         if len(best) > 1:
             # Last chance. Let's check the modification date
             # Assume that fname ends with .bz2
@@ -162,8 +162,7 @@ def deduplicate(sess, fname):
             stamps = sess.query(Tape.label, TapeWrite.filenum, TapeFile.filename, TapeFile.lastmod).\
                              join(TapeWrite, TapeFile).\
                              filter(orm.func.lower(TapeFile.filename) == nobz2.lower())
-            interesting = filter(lambda xx: xx[1] in valid_paths,
-                                 ((x[-1], x[0] + '-' + str(x[1]) + '/' + x[2] + '.bz2') for x in stamps))
+            interesting = [xx for xx in ((x[-1], x[0] + '-' + str(x[1]) + '/' + x[2] + '.bz2') for x in stamps) if xx[1] in valid_paths]
             if interesting:
                 by_most_recent = sorted(interesting, key = itemgetter(0), reverse = True)
                 path_to_winner = by_most_recent[0][1]

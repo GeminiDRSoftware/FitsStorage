@@ -51,7 +51,7 @@ Usage examples:
  fixHead 1-200 SSA:"John Smith"
 """
 
-from __future__ import print_function
+
 
 #************************************************************************
 #****              G E M I N I  O B S E R V A T O R Y                ****
@@ -185,7 +185,7 @@ def colorize(text):
          'CYAN': '6',
          'RESET': None,
     }
-    for (tag, code) in colors.items():
+    for (tag, code) in list(colors.items()):
         if tag is 'RESET':
             color = '\x1b[0m'
         else:
@@ -206,12 +206,12 @@ def expand_numbers(nums):
     for group in groups:
         if group.isdigit():
             n = int(group)
-            rng.extend(range(n, n+1))
+            rng.extend(list(range(n, n+1)))
         else:
             # If there are not exactly two elements in the range, this will raise a
             # ValueError
             n1, n2 = group.split('-')
-            rng.extend(range(int(n1), int(n2)+1))
+            rng.extend(list(range(int(n1), int(n2)+1)))
 
     return rng
 
@@ -235,7 +235,7 @@ def parse_args(raw_args):
             return obj
 
         def __init__(self, **defaults):
-            for (attr, value) in defaults.items():
+            for (attr, value) in list(defaults.items()):
                 setattr(self, attr, value)
                 self.__set_once[attr] = False
 

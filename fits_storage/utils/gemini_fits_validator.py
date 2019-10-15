@@ -15,7 +15,7 @@ except ValueError:
 import astrodata
 import gemini_instruments
 from datetime import datetime, timedelta
-from StringIO import StringIO
+from io import StringIO
 import sys
 import astropy.io.fits as pf
 import logging
@@ -26,7 +26,7 @@ STATUSES.append('NOTGEMINI')
 # This is used to determine things like if we test for IAA or OBSCLASS
 # This is an initial estimate using empirical data. The value must
 # be corrected at a later point.
-OLDIMAGE = datetime(2007, 06, 28)
+OLDIMAGE = datetime(2007, 0o6, 28)
 OBSCLASS_VALUES = {'dayCal',  'partnerCal',  'acqCal',  'acq',  'science',  'progCal'}
 
 class NotGeminiData(ValidationError):
@@ -243,5 +243,5 @@ if __name__ == '__main__':
             evaluate = Evaluator()
             result = evaluate(fits)
         if result.message is not None:
-            print(result.message)
+            print((result.message))
     sys.exit(0)

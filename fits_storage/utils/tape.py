@@ -69,9 +69,9 @@ class TapeDrive(object):
         retval = sp.returncode
 
         if retval and fail:
-            print '"mt -f %s %s %s" failed with exit value %d:' % (self.dev, mtcmd, mtarg, retval)
-            print stdoutstring
-            print stderrstring
+            print('"mt -f %s %s %s" failed with exit value %d:' % (self.dev, mtcmd, mtarg, retval))
+            print(stdoutstring)
+            print(stderrstring)
             sys.exit(retval)
 
         return [retval, stdoutstring, stderrstring]

@@ -26,7 +26,7 @@ def notification():
 
     # Process form data first
     formdata = ctx.get_form_data()
-    for key, value in formdata.items():
+    for key, value in list(formdata.items()):
         field = key.split('-')[0]
         nid = int(key.split('-')[1])
 

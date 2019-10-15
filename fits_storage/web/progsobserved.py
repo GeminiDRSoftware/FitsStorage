@@ -41,7 +41,7 @@ def progsobserved(selection):
     return dict(
         selection = sayselection(selection),
         progs     = [p[0] for p in progs_query],
-        joined_sel = '/'.join(selection.values())
+        joined_sel = '/'.join(list(selection.values()))
         )
 
 @templating.templated("sitemap.xml", content_type='text/xml')
