@@ -5,7 +5,7 @@ import os
 import datetime
 import time
 import traceback
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import ssl
 from fits_storage.orm import session_scope
 from fits_storage.orm.exportqueue import ExportQueue
@@ -111,7 +111,7 @@ try:
 
                     try:
                         success = export_queue.export_file(eq.filename, eq.path, eq.destination)
-                    except (urllib2.URLError, ssl.SSLError, ValueError):
+                    except (urllib.error.URLError, ssl.SSLError, ValueError):
                         logger.info("Problem Exporting File - Rolling back")
                         # Originally we set the inprogress flag back to False at the point that we abort.
                         # But that can lead to an immediate re-try and subsequent rapid rate re-failures,
@@ -135,7 +135,7 @@ try:
             except (KeyboardInterrupt, OperationalError):
                 loop = False
 
-            except IntegrityError, e:
+            except IntegrityError as e:
                 logger.error("Nothing on export queue - Exception: %s", str(e))
                 throttle.wait()
                 session.rollback()

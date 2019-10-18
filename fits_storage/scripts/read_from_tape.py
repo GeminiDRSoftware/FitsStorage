@@ -5,7 +5,7 @@ import datetime
 import time
 import subprocess
 import tarfile
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from xml.dom.minidom import parseString
 
 from fits_storage.orm import sessionfactory

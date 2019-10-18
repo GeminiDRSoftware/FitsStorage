@@ -8,7 +8,7 @@ import json
 from ..orm.header import Header
 from ..orm.diskfile import DiskFile
 from ..orm.file import File
-from selection import queryselection, openquery
+from .selection import queryselection, openquery
 from .summary import list_headers
 from .standards import get_standard_obs
 
@@ -99,7 +99,7 @@ def jsonsummary(selection):
     ctx = get_context()
 
     # Like the summaries, only list canonical files by default
-    if 'canonical' not in selection.keys():
+    if 'canonical' not in list(selection.keys()):
         selection['canonical']=True
 
     orderby = ['filename_asc']
@@ -135,7 +135,7 @@ def jsonqastate(selection):
     ctx = get_context()
 
     # Like the summaries, only list canonical files by default
-    if 'canonical' not in selection.keys():
+    if 'canonical' not in list(selection.keys()):
         selection['canonical']=True
 
     # We do this directly rather than with list_headers for efficiency

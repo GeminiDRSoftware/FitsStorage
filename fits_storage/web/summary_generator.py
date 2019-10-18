@@ -41,7 +41,7 @@ search_col_mapping = {
 # Note that the order these come out in is actually the same as the order
 # of the columns buttons in the searchform.
 
-rev_map_comp = dict((v[1], k) for (k, v) in search_col_mapping.items())
+rev_map_comp = dict((v[1], k) for (k, v) in list(search_col_mapping.items()))
 
 default_search_cols = [ 'col_cls', 'col_typ', 'col_obj', 'col_wvb', 'col_exp', 'col_qas' ]
 

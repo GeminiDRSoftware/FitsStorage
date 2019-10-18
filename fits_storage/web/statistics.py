@@ -138,7 +138,7 @@ def content():
 
     # datetime variables and queries declared here
     # reject invalid 1969 type years by selecting post 1990
-    firstyear = dt_date(1990, 01, 01)
+    firstyear = dt_date(1990, 0o1, 0o1)
     start = session.query(func.min(Header.ut_datetime)).filter(Header.ut_datetime > firstyear).one()[0]
     end = session.query(func.max(Header.ut_datetime)).select_from(join(Header, DiskFile)).filter(DiskFile.canonical == True).one()[0]
 

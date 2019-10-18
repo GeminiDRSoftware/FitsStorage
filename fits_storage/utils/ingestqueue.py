@@ -276,7 +276,7 @@ class IngestQueueUtil(object):
             self.l.debug("Adding new Footprint entries")
             try:
                 fps = header.footprints(diskfile.ad_object)
-                for i in fps.keys():
+                for i in list(fps.keys()):
                     foot = Footprint(header)
                     foot.populate(i)
                     self.s.add(foot)

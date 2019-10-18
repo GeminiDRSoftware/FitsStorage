@@ -7,7 +7,8 @@ import sys
 import socket
 import traceback
 from time import sleep
-from urllib import pathname2url, unquote
+from urllib.request import pathname2url
+from urllib.parse import unquote
 
 from ..fits_storage_config import storage_root
 from .hashes import md5sum
@@ -31,7 +32,7 @@ class DownloadError(Exception):
     pass
 
 def is_string(obj):
-    return isinstance(obj, (str, unicode))
+    return isinstance(obj, str)
 
 from ..fits_storage_config import aws_access_key, aws_secret_key, s3_bucket_name, s3_staging_area
 

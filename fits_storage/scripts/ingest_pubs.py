@@ -30,9 +30,9 @@ def process_publication(row):
     Returns a dictionary
     """
     copy = dict(row)
-    print("Processing {0}".format(copy.get('bibcode')))
+    print(("Processing {0}".format(copy.get('bibcode'))))
     for (key, value) in list(copy.items()):
-        if isinstance(value, (str, unicode)):
+        if isinstance(value, str):
             value = value.strip()
         if value is None or value == '':
             del copy[key]

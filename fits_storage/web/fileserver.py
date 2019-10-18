@@ -19,7 +19,7 @@ from .summary import list_headers
 import time
 import datetime
 import bz2
-from cStringIO import StringIO
+from io import StringIO
 import tarfile
 import os
 
@@ -87,7 +87,7 @@ because they are proprietary data that you do not have access to:
 
 def make_tarinfo(name, **kw):
     ti = tarfile.TarInfo(name)
-    for key, value in kw.items():
+    for key, value in list(kw.items()):
         setattr(ti, key, value)
     return ti
 
@@ -95,7 +95,7 @@ def download_post():
     # Parse form data
     formdata = get_context().req.get_form_data()
     thelist = []
-    if 'files' in formdata.keys():
+    if 'files' in list(formdata.keys()):
         fields = formdata['files']
         if isinstance(fields, list):
             for field in fields:
@@ -215,7 +215,7 @@ def download(selection, associated_calibrations):
                             uid = 0, gid = 0,
                             uname = 'gemini', gname = 'gemini',
                             mtime = time.mktime(header.diskfile.lastmod.timetuple()),
-                            mode = 0644
+                            mode = 0o644
                         )
                         # - and add it to the tar file
                         try:
@@ -244,7 +244,7 @@ def download(selection, associated_calibrations):
             uid = 0, gid = 0,
             uname = 'gemini', gname = 'gemini',
             mtime = time.time(),
-            mode = 0644
+            mode = 0o644
         )
         # - and add it to the tar file
         tar.addfile(tarinfo, StringIO(md5file))
@@ -264,7 +264,7 @@ def download(selection, associated_calibrations):
             uid = 0, gid = 0,
             uname = 'gemini', gname = 'gemini',
             mtime = time.time(),
-            mode = 0644
+            mode = 0o644
         )
         # - and add it to the tar file
         tar.addfile(tarinfo, StringIO(readme))

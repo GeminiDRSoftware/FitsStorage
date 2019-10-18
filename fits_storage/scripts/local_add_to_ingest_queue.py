@@ -37,7 +37,7 @@ for root, dirs, files in os.walk(fulldirpath):
     if ".svn" in root:
         continue
 
-    print "Ingesting:", root
+    print("Ingesting:", root)
     filelist.extend([os.path.abspath(os.path.join(root, fn)) for fn in files])
 
 files = filelist

@@ -192,11 +192,11 @@ def gmoscal(selection):
     bias = {}
     total_bias = defaultdict(int)
     for num, utdate, binning, roi in query:
-        if utdate not in bias.keys():
+        if utdate not in list(bias.keys()):
             bias[utdate] = {}
-        if binning not in bias[utdate].keys():
+        if binning not in list(bias[utdate].keys()):
             bias[utdate][binning] = {}
-        if roi not in bias[utdate][binning].keys():
+        if roi not in list(bias[utdate][binning].keys()):
             bias[utdate][binning][roi] = num
 
         total_bias['%s-%s' % (binning, roi)] += num
@@ -276,8 +276,8 @@ def gmoscal(selection):
                 yield entry
 
     result.update(dict(
-        twilight        = sorted([(k, tuple(v)) for (k, v) in twilight.items()], reverse=True),
-        bias            = sorted(bias.items(), reverse=True),
+        twilight        = sorted([(k, tuple(v)) for (k, v) in list(twilight.items())], reverse=True),
+        bias            = sorted(list(bias.items()), reverse=True),
         total_bias      = total_bias,
         binlist         = ('1x1', '2x2', '2x1', '1x2', '2x4', '4x2', '4x1', '1x4', '4x4'),
         roilist         = ('Full Frame', 'Central Spectrum'),

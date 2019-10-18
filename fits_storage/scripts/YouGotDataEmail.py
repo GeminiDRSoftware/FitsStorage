@@ -1,4 +1,4 @@
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import sys
 import re
 import smtplib
@@ -72,7 +72,7 @@ with session_scope() as session:
             searchform_url = "%s/searchform/%s/%s" % (url_base, options.date, notif.selection)
 
             logger.debug("URL is: %s", url)
-            html = urllib2.urlopen(url).read()
+            html = urllib.request.urlopen(url).read()
 
             if cre.search(html):
                 if options.check:

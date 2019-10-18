@@ -15,7 +15,7 @@ except ValueError:
 import astrodata
 import gemini_instruments
 from datetime import datetime, timedelta
-from StringIO import StringIO
+from io import StringIO
 import sys
 import astropy.io.fits as pf
 import logging
@@ -243,5 +243,5 @@ if __name__ == '__main__':
             evaluate = Evaluator()
             result = evaluate(fits)
         if result.message is not None:
-            print(result.message)
+            print((result.message))
     sys.exit(0)

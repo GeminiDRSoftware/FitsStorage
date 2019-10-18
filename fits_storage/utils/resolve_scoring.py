@@ -58,7 +58,7 @@ def tlm_to_datetime(value):
     return NULL_DATETIME
 
 def header_to_keyword_set(h):
-    return set(h.keys() if h is not None else [])
+    return set(list(h.keys()) if h is not None else [])
 
 class KeywordSet(object):
     def __init__(self):
@@ -81,7 +81,7 @@ class KeywordSet(object):
 
     def add_keywords_from_headers(self, *headers):
         for n, header in enumerate(headers):
-            self.hdus[n].update(set(k for k in header.keys() if k))
+            self.hdus[n].update(set(k for k in list(header.keys()) if k))
             try:
                 self.tlm = header['IRAF-TLM']
             except KeyError:
@@ -123,7 +123,7 @@ class Scorer(object):
 
     def add_path(self, path):
         # Note: (str, unicode) is valid for Python 2; There's no "unicode" type in Python3
-        if isinstance(path, (str, unicode)):
+        if isinstance(path, str):
             if '.bz2' in path:
                 fits = bz2.BZ2File(path)
             else:
@@ -144,16 +144,16 @@ class Scorer(object):
 
     def compute_scores(self, verbose = False):
         scores = []
-        for path, headers in self.paths.items():
+        for path, headers in list(self.paths.items()):
             if verbose:
-                print("Scoring: {0}".format(path))
+                print(("Scoring: {0}".format(path)))
             score = ScoringResult(path)
 
             for rule in self.__registry:
                 try:
                     sc = rule(headers, keywords = self.keywords)
                     if verbose:
-                        print('{0}: {1}'.format(rule.func_name, sc))
+                        print(('{0}: {1}'.format(rule.__name__, sc)))
                     score += sc
                 except ScoringViolation as sv:
                     score.add(str(sv), sv.value)
@@ -244,7 +244,7 @@ def penalize_handmade_cards(headers, *args, **kw):
 
     score = 0
     for head in headers:
-        score -= 5 * len(filter(lambda (x,y): isinstance(y, (str, unicode)) and y.startswith("='"), head.iteritems()))
+        score -= 5 * len([x_y for x_y in iter(head.items()) if isinstance(x_y[1], str) and x_y[1].startswith("='")])
 
     return score
 
@@ -270,6 +270,6 @@ if __name__ == '__main__':
     if paths:
         scores = score_files(*paths)
         for path, score in scores:
-            print("{0}: {1}".format(path, score.value))
+            print(("{0}: {1}".format(path, score.value)))
             for problem in score.problems:
-                print("    {0}".format(problem))
+                print(("    {0}".format(problem)))

@@ -30,7 +30,7 @@ import bz2
 
 if using_s3:
     from ..fits_storage_config import s3_staging_area
-    from aws_s3 import get_helper
+    from .aws_s3 import get_helper
 
 import astrodata
 import gemini_instruments
@@ -220,7 +220,7 @@ class PreviewQueueUtil(object):
             xmax = 0
             ymax = 0
             ds = ad.detector_section().as_dict()
-            for i in ds.values():
+            for i in list(ds.values()):
                 [x1, x2, y1, y2] = i
                 xmin, ymin = min(x1, xmin), min(y1, ymin)
                 xmax, ymax = max(x2, xmax), max(y2, ymax)
@@ -338,7 +338,7 @@ class PreviewQueueUtil(object):
 
                 # Figure out if we're nod A or B
                 # TReCS has this header in each extention
-                if 'NOD' in add.header.keys():
+                if 'NOD' in list(add.header.keys()):
                     nod = add.header['NOD']
                 else:
                     i = add.extver() - 1

@@ -41,7 +41,7 @@ def ingest_standards(session, filename):
                     if fields[n] != 'None':
                         setattr(std, mag, float(fields[n]))
             except ValueError:
-                print "Fields: %s" % str(fields)
+                print("Fields: %s" % str(fields))
                 raise
 
             # Add to database session

@@ -1,4 +1,4 @@
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import json
 from functools import partial, wraps
 import inspect
@@ -33,10 +33,10 @@ class ApiProxy(object):
 
     def __invoke(self, action, method='POST', *args, **kw):
         resource = 'http://{}:{}'.format(self.server, self.port)
-        non_empty = filter(bool, (resource, self.pref, action) + args)
+        non_empty = list(filter(bool, (resource, self.pref, action) + args))
         path = '/'.join(non_empty)
         try:
-            response = json.loads(urllib2.urlopen(path, json.dumps(kw)).read())
+            response = json.loads(urllib.request.urlopen(path, json.dumps(kw)).read())
             if 'error' in response:
                 if 'error_object' in response:
                     eobj = response['error_object']
@@ -49,7 +49,7 @@ class ApiProxy(object):
             return response['result']
         except TypeError:
             raise ApiProxyError("The response message is not valid: {!r}".format(response))
-        except (urllib2.HTTPError, urllib2.URLError) as e:
+        except (urllib.error.HTTPError, urllib.error.URLError) as e:
             raise ApiProxyError("HTTP error when connecting to {}".format(path))
 
 ##########################################################################################
@@ -119,7 +119,7 @@ class ApiCall(object):
     def __call__(self, environ, start_response):
         query = get_arguments(environ)
         try:
-            self.log.info("Calling %s with arguments %s", self._call.func_name, query)
+            self.log.info("Calling %s with arguments %s", self._call.__name__, query)
             ret = self._call(**query)
         except TypeError as e:
             args, _, _, defaults = inspect.getargspec(self._call)

@@ -13,7 +13,7 @@ import re
 
 from . import templating
 
-from urllib import quote_plus
+from urllib.parse import quote_plus
 
 # We assume that servers used as archive use a calibration association cache table
 from ..fits_storage_config import use_as_archive
@@ -98,7 +98,7 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
     if 'warning' in selection:
         querylog.add_note("Selection Warning: {}".format(selection['warning']))
     # Note any notrecognised in the querylog
-    if 'notrecognised' in selection.keys():
+    if 'notrecognised' in list(selection.keys()):
         querylog.add_note("Selection NotRecognised: %s" % selection['notrecognised'])
     # Note in the log if we hit limits
     if hit_open_limit:
@@ -153,6 +153,7 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
     headers: the list of header objects to include in the summary
     """
 
+    print("In summary_table web method, where the trouble begins...")
     ctx = get_context()
 
     # Construct the summary generator object.
@@ -188,11 +189,13 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
         available header objects, it can only be used to query the totalized values.
         """
         def __init__(self, gen, headers):
+            print("Building RowYielder")
             self.gen     = gen
             self.headers = iter(headers)
             self.bcount  = 0  # Byte count
             self.down    = 0  # Downloadable files
             self.total   = 0  # Total files
+            print("done Building RowYielder")
 
         @property
         def downloadable(self):
@@ -213,21 +216,28 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
             return '{:.2f}'.format(self.bcount / 1.0E9)
 
         def __iter__(self):
+            print("RowYielder was asked for it's iterator")
             return self
 
-        def next(self):
+        def __next__(self):
             "Obtain the next row of data and keep some stats about it."
-            header = self.headers.next()
+            print("In RowYielder.__next__(self)")
+            header = next(self.headers)
+            print("got header")
             row = sumgen.table_row(*header)
+            print("got row using table_row()")
             self.total = self.total + 1
+            print("checking can_download")
             if row.can_download:
                 self.down    = self.down + 1
                 self.bcount += header[1].file_size
-
+            print("returning row")
             return row
 
         # For future Python 3 compliance
-        __next__ = next
+        #__next__ = next
+
+    print("Building template_args")
 
     template_args = dict(
         clickable     = sumtype in {'searchresults', 'customsearch', 'associated_cals'},
@@ -239,4 +249,5 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
         json_res_link = json_results_url,
         )
 
+    print("Returning out of summary_table")
     return template_args

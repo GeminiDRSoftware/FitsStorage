@@ -10,8 +10,8 @@ files = get_file_list(selection)
 # Here's some examples of how you access that information
 
 numfiles = len(files)
-print "Got %d files" % numfiles
+print("Got %d files" % numfiles)
 
 for file in files:
-  print "Filename: %s   size: %d" % (file['filename'], file['size'])
+  print("Filename: %s   size: %d" % (file['filename'], file['size']))
 

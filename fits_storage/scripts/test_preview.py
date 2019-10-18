@@ -28,25 +28,25 @@ setdemon(options.demon)
 filename = options.file
 
 if not filename:
-    print "Must supply and input filename"
+    print("Must supply and input filename")
     sys.exit(1)
 
 ad = astrodata.open(filename)
 if not ad:
-    print "AstroData open failed"
+    print("AstroData open failed")
     sys.exit(2)
 
 jpgfile = filename.replace('.fits', '.jpg')
 fp = open(jpgfile, 'w')
 
-print "input file: %s" % filename
-print "output file: %s" % jpgfile
+print("input file: %s" % filename)
+print("output file: %s" % jpgfile)
 
-print "Rendering Preview..."
+print("Rendering Preview...")
 
 render_preview(ad, fp)
 
-print "Done"
+print("Done")
 
 fp.close()
 ad.close()

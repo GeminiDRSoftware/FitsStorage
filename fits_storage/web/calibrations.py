@@ -19,7 +19,7 @@ from sqlalchemy import join, desc
 
 class Result(object):
     def __init__(self, **kw):
-        for key, value in kw.items():
+        for key, value in list(kw.items()):
             setattr(self, key, value)
 
 class WrappedCals(object):

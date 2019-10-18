@@ -9,7 +9,7 @@ from ..utils.web import get_context
 
 from . import templating
 
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 @templating.templated("user_programs.html")
 def my_programs(things):
@@ -120,7 +120,7 @@ def validate_program_key(program_id, program_key):
 
     url = 'https://%s.gemini.edu:8443/auth?id=%s&password=%s' % (host, program_id, program_key)
 
-    ufd = urllib.urlopen(url)
+    ufd = urllib.request.urlopen(url)
     reply = ufd.read()
     ufd.close()
 

@@ -20,7 +20,7 @@ from sqlalchemy import join, desc
 from psycopg2 import InternalError
 from sqlalchemy.exc import DataError
 
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import re
 import os
 import datetime
@@ -114,7 +114,7 @@ def generate_post_calmgr(selection, caltype):
     # OK, get the details from the POST data
     ctx = get_context()
     clientdata = ctx.raw_data
-    clientstr = urllib.unquote_plus(clientdata)
+    clientstr = urllib.parse.unquote_plus(clientdata)
 
     match = re.match("descriptors=(.*)&types=(.*)", clientstr)
     desc_str = match.group(1)

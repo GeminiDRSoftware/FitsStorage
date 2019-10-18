@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+
 
 from functools import partial
 
@@ -148,7 +148,7 @@ def iter_pairs(lst, coercion = identity_lambda):
     """
     for k in iter_list(lst):
         if isinstance(k, dict):
-            for key, value in k.items():
+            for key, value in list(k.items()):
                 yield key, coercion(value)
         elif isinstance(k, (list, tuple)):
             yield (k[0], coercion(k[1:]))
@@ -182,7 +182,7 @@ def not_implemented(fn):
     "Decorator for not implemented tests"
     def wrapper(self, *args, **kw):
         raise NotImplementedError("{0}.{1}".format(self.__class__.__name__,
-                                                                    fn.func_name))
+                                                                    fn.__name__))
     return wrapper
 
 def getEnvDate(env):
@@ -258,7 +258,7 @@ class TransformedStringRangeTest(object):
     def __contains__(self, x):
         # TODO: This makes any non-string to fail the test, but it seems arbitrary.
         #       Analyze the use cases and see if we really need this
-        return isinstance(x, (str, unicode)) and self.testfn(x) in self.range
+        return isinstance(x, str) and self.testfn(x) in self.range
 
 class Range(object):
     """Range testing class. Instances of this class check if a certain value is
@@ -335,7 +335,7 @@ class Range(object):
                                    (str(self.high) if self.high else '*'))
 
 def not_null_test(x):
-    return isinstance(x, (str, unicode)) and x != ''
+    return isinstance(x, str) and x != ''
 
 NotNull = ArbitraryRangeTest(not_null_test, 'not null')
 NotNull.__doc__ = "This test will return True for string values that are non empty"
@@ -523,7 +523,7 @@ class KeywordDescriptor(object):
            appropriate test to the descriptor.
 
            Will raise `ValueError` if it cannot figure out a valid restriction from the text"""
-        if isinstance(restriction, (str, unicode)):
+        if isinstance(restriction, str):
             if restriction in fitsTypes:
                 if restriction == 'sexagesimal':
                     self.addRange(Pattern(radecPattern))
@@ -551,7 +551,7 @@ class KeywordDescriptor(object):
             else:
                 raise ValueError("Unknown descriptor {0}".format(restriction))
         if isinstance(restriction, dict):
-            kw, value = restriction.items()[0]
+            kw, value = list(restriction.items())[0]
             if kw in fitsTypes:
                 if kw == 'char':
                     if isinstance(value, str) and ' '.join(value.lower().split()) == 'not null':
@@ -666,7 +666,7 @@ def kw_matches_value(kw, value, header, env):
        a range, without further complicating the code in the place of the test"""
     value_to_test = header.get(kw)
 
-    if isinstance(value, (str, unicode)):
+    if isinstance(value, str):
         return value_to_test == value
 
     # If value is not a string, assume that it is an iterable
@@ -721,10 +721,10 @@ class RuleSetFactory(object):
         result = AndTest(name=name)
 
         for entry in data:
-            if isinstance(entry, (str, unicode)):
+            if isinstance(entry, str):
                 element, content = entry, []
             elif isinstance(entry, dict):
-                element, content = entry.items()[0]
+                element, content = list(entry.items())[0]
             else:
                 raise RuntimeError("Syntax Error: Invalid entry, {0!r} (on {1})".format(entry, sourcename))
 
@@ -863,7 +863,7 @@ class RuleSetFactory(object):
                 raise RuntimeError("{0}: At 'validation', illegal {1}".format(sourcename, text))
 
             validation = defaultdict(AlternateRuleSets)
-            for key, value in valdct.items():
+            for key, value in list(valdct.items()):
                 for name in iter_list(value):
                     validation[key].add(get_from_scope(sourcename, scope, name))
 
@@ -889,7 +889,7 @@ class RuleSetFactory(object):
         fullname = '.'.join([sourcename, unitname])
         if isinstance(data, dict):
             data = [data]
-        invalid_kw = [x for x in data if x.keys()[0] not in reserved_unit_identifiers]
+        invalid_kw = [x for x in data if list(x.keys())[0] not in reserved_unit_identifiers]
         if invalid_kw:
             text = ('entry {0!r}'.format(invalid_kw[0])
                         if len(invalid_kw) == 1
@@ -993,7 +993,7 @@ class RuleSet(list):
 
                 return all(results), messages
             else:
-                env.overrides.push(self.keywordDescr.keys())
+                env.overrides.push(list(self.keywordDescr.keys()))
                 # First, try to pull in all mergeable things
                 try:
                     for mergeable in self.merges:
@@ -1010,7 +1010,7 @@ class RuleSet(list):
                     env.overrides.pop()
 
                 # We're working with a unit descriptor
-                for kw, descr in self.keywordDescr.items():
+                for kw, descr in list(self.keywordDescr.items()):
                     if kw in env.overrides or descr.ignore(hlist, env):
                         continue
 
@@ -1020,7 +1020,7 @@ class RuleSet(list):
                     except KeyError:
                         if descr.mandatory:
                             messages.append('Missing {0}'.format(kw))
-                for kw, range in self.rangeRestrictions.items():
+                for kw, range in list(self.rangeRestrictions.items()):
                     try:
                         if hlist[kw] not in range:
                             messages.append('Invalid {0}'.format(kw))

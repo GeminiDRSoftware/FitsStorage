@@ -7,7 +7,7 @@ files = get_file_list(selection)
 # files is now a list, where each element in the list is a dictionary representing a fits file, and having 'filename', 'size', 'md5', 'lastmod' keys.
 
 numfiles = len(files)
-print "Got %d files\n" % numfiles
+print("Got %d files\n" % numfiles)
 
 # Fetch the files
 fetch_files(files)

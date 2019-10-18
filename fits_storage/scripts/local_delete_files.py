@@ -1,4 +1,4 @@
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from xml.dom.minidom import parseString
 import os
 import re
@@ -25,27 +25,27 @@ if options.dir:
 rawlist = os.listdir('.')
 restring = '^' + options.filepre + '.*'
 cre = re.compile(restring)
-thelist = filter(cre.match, rawlist)
+thelist = list(filter(cre.match, rawlist))
 
-print "Files to consider: %s" % thelist
+print("Files to consider: %s" % thelist)
 
 if options.dryrun:
     def remove(fname, md5, tapes):
-        print "Dry run - not actually deleting File %s - %s which is on %d tapes: %s" % (fname, md5, len(tapes), tapes)
+        print("Dry run - not actually deleting File %s - %s which is on %d tapes: %s" % (fname, md5, len(tapes), tapes))
 else:
     def remove(fname, md5, tapes):
-        print "Deleting File %s - %s which is on %d tapes: %s" % (fname, md5, len(tapes), tapes)
+        print("Deleting File %s - %s which is on %d tapes: %s" % (fname, md5, len(tapes), tapes))
         try:
             os.unlink(fname)
         except:
-            print "Could not unlink file %s: %s - %s" % (fname, sys.exc_info()[0], sys.exc_info()[1])
+            print("Could not unlink file %s: %s - %s" % (fname, sys.exc_info()[0], sys.exc_info()[1]))
 
 def getXmlData(element, tag):
     return element.getElementsByTagName(tag)[0].childNodes[0].data
 
 for thefile in thelist:
   if not os.path.isfile(thefile):
-    print "%s is not a regular file - skipping" % thefile
+    print("%s is not a regular file - skipping" % thefile)
     continue
   m = hashlib.md5()
   block = 64*1024
@@ -57,10 +57,10 @@ for thefile in thelist:
         m.update(data)
   filemd5 = m.hexdigest()
 
-  print "Considering %s - %s" % (thefile, filemd5)
+  print("Considering %s - %s" % (thefile, filemd5))
 
   url = "http://%s/fileontape/%s" % (options.tapeserver, thefile)
-  xml = urllib.urlopen(url).read()
+  xml = urllib.request.urlopen(url).read()
 
   dom = parseString(xml)
 
@@ -78,4 +78,4 @@ for thefile in thelist:
   if len(tapeids) >= options.mintapes:
     remove(thefile, filemd5, tapeids)
   else:
-    print "File %s is not on sufficient tapes to be elligable for deletion" % thefile
+    print("File %s is not on sufficient tapes to be elligable for deletion" % thefile)

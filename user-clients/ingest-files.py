@@ -23,7 +23,7 @@
 #    2015-10-16, rcardene : First release
 #
 
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import json
 from contextlib import closing
 import logging
@@ -42,7 +42,7 @@ def post_query(url, query_data):
     caller
     """
     try:
-        with closing(urllib.urlopen(url, data=json.dumps(query_data))) as response:
+        with closing(urllib.request.urlopen(url, data=json.dumps(query_data))) as response:
             status = response.getcode()
             if status == 200:
                 return json.loads(response.read())
@@ -83,4 +83,4 @@ if ret:
         logger.error(ret['error'])
     else:
         for filename in ret['added']:
-            print("Added {}".format(filename))
+            print(("Added {}".format(filename)))

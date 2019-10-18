@@ -285,11 +285,11 @@ def build_datapack(ffiles, pkgname):
             newtarb.add(pfs)
 
     newtarb.close()
-    print("\n  Package {} build complete. ".format(pkgname))
+    print(("\n  Package {} build complete. ".format(pkgname)))
     return ftar_name
 
 def emit_message(zname, uname, upass, pwd, pkname):
-    print(etemplate.format(zname, uname, upass, pwd, pkname))
+    print((etemplate.format(zname, uname, upass, pwd, pkname)))
     return
 
 def generate_pword(nchars=8):
@@ -363,7 +363,7 @@ def progress(count, total):
     bar_len = 60
     filled_len = int(round(bar_len * count / float(total)))
     percents = round(100.0 * count / float(total), 1)
-    bar = '\u2588' * filled_len + '-' * (bar_len - filled_len)
+    bar = '\\u2588' * filled_len + '-' * (bar_len - filled_len)
     sys.stdout.write('\r\t[{}] ... {}% '.format(bar, percents))
     sys.stdout.flush()
     return
@@ -398,7 +398,7 @@ def speedbar(rate, dtot, ttot):
     speed_len = int(round(bar_len * (rate/speed_max)))
     if speed_len > bar_len:
         speed_len = bar_len
-    bar = '\u2588' * speed_len + '-' * (bar_len - speed_len)
+    bar = '\\u2588' * speed_len + '-' * (bar_len - speed_len)
     sys.stdout.write(format1.format(bar, rate/(1024**2), runn_avg, ttot/60))
     sys.stdout.flush()
     return
@@ -409,7 +409,7 @@ def pull_cals(filen):
     tarball = form_tarname(filen)
     cals_url = form_assoc_cals_url(filen)
     r = requests.get(cals_url, stream=True, timeout=10.0)
-    print("\n  Request made on URL:\n\t {}".format(cals_url))
+    print(("\n  Request made on URL:\n\t {}".format(cals_url)))
 
     try:
         r.raise_for_status()
@@ -451,7 +451,7 @@ def pull_cals(filen):
 
 def pull_data(filename):
     download_url = form_url(filename)
-    print("\n  Request made on URL:\n\t {}".format(download_url))
+    print(("\n  Request made on URL:\n\t {}".format(download_url)))
     conn = make_request(download_url)
     newf = conn.read()
     with open(filename, 'wb') as pulled_fits:
@@ -461,7 +461,7 @@ def pull_data(filename):
 def tar_append(tball, ffile):
     with tarfile.open(tball, 'a') as tob:
         tob.add(ffile)
-    print("  Added science frame {} to tar archive, {}".format(ffile, tball))
+    print(("  Added science frame {} to tar archive, {}".format(ffile, tball)))
     return
 
 def push_tar(tfile, ppath=None):
@@ -471,7 +471,7 @@ def push_tar(tfile, ppath=None):
     user, passwd = get_ftp_credential()
     cnopts = pysftp.CnOpts()
     cnopts.hostkeys = None
-    print(msg.format(host, user, ligopath))
+    print((msg.format(host, user, ligopath)))
     print()
     with pysftp.Connection(host,username=user,password=passwd,cnopts=cnopts) as sftp:
         sftp.chdir(ligopath)
@@ -526,7 +526,7 @@ def main(args):
         return
 
     ffiles = args.files
-    print("  Pulling file requests.\n\t {}".format(ffiles))
+    print(("  Pulling file requests.\n\t {}".format(ffiles)))
     if args.single:
         push_singles(ffiles, args.nopush)
     else:

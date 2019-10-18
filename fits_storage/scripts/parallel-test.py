@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+
 
 __doc__ = """ Parallel Databased Test
 
@@ -45,7 +45,7 @@ from functools import partial
 from os.path import join as opjoin, exists
 from multiprocessing import Process, Queue, JoinableQueue
 
-from Queue import Empty as EmptyQueue
+from queue import Empty as EmptyQueue
 from ctypes import py_object
 from collections import namedtuple
 
@@ -265,7 +265,7 @@ class Upserter(object):
                     cau = None)
         if result.messages is not None:
             if isinstance(result.messages, (tuple, list)):
-                data['cau'] = '\n'.join(m for m in result.messages if isinstance(m, (str, unicode)))
+                data['cau'] = '\n'.join(m for m in result.messages if isinstance(m, str))
             else:
                 data['cau'] = str(result.messages)
 
@@ -348,7 +348,8 @@ def getFileInfo(curs, vers):
 
     return dict(curs)
 
-def evaluatorProcess((versid, version), input_queue, output_queue):
+def evaluatorProcess(xxx_todo_changeme, input_queue, output_queue):
+    (versid, version) = xxx_todo_changeme
     try:
         with getConnection() as conn:
             upsert = Upserter(conn, versid)

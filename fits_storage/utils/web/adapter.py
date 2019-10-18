@@ -2,7 +2,7 @@ from functools import wraps
 from ...orm import NoResultFound, MultipleResultsFound
 from ...orm.user import User
 from ...fits_storage_config import magic_download_cookie
-from thread import get_ident
+from _thread import get_ident
 from threading import local
 import abc
 import json
@@ -30,7 +30,7 @@ class ReturnMetaClass(type):
         except KeyError:
             raise AttributeError("No return code {}".format(key))
 
-class Return(object):
+class Return(object, metaclass=ReturnMetaClass):
     """
     This is a specialized class with constant members giving names to
     HTTP Status Codes. These members are:
@@ -49,7 +49,6 @@ class Return(object):
       * ``Return.HTTP_BAD_REQUEST``
       * ``Return.HTTP_INTERNAL_SERVER_ERROR``
     """
-    __metaclass__ = ReturnMetaClass
 
 class ClientError(Exception):
     """
@@ -233,8 +232,7 @@ class Cookies(object):
         """
         self._resp.set_cookie(key, value, **kw)
 
-class Request(object):
-    __metaclass__ = abc.ABCMeta
+class Request(object, metaclass=abc.ABCMeta):
     """
     Object encapsulating information related to the HTTP request and values derived from it.
     Apart from the documented methods, it presents a partial dictionary-like interface, as

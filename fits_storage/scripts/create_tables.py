@@ -18,11 +18,11 @@ args = parser.parse_args()
 # ------------------------------------------------------------------------------
 with session_scope() as session:
     if args.drop:
-        print "Dropping database tables"
+        print("Dropping database tables")
         drop_tables(session)
 
     if not args.nocreate:
-        print "Creating database tables"
+        print("Creating database tables")
         create_tables(session)
 
-print "You may now want to ingest the standard star list"
+print("You may now want to ingest the standard star list")

@@ -4,7 +4,7 @@ This is the searchform module.
 """
 import os
 import json
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import contextlib
 
 from xml.dom import minidom
@@ -62,15 +62,15 @@ def searchform(things, orderby):
 
     if formdata:
         if ((len(formdata) == 6) and
-            ('engineering' in formdata.keys()) and (formdata['engineering'].value == 'EngExclude') and
-            ('science_verification' in formdata.keys()) and (formdata['science_verification'].value == 'SvInclude') and
-            ('qa_state' in formdata.keys()) and (formdata['qa_state'].value == 'NotFail') and
-            ('col_selection' in formdata.keys()) and
-            ('site_monitoring' in formdata.keys()) and (formdata['site_monitoring'].value == 'SmExclude') and
-            ('Search' in formdata.keys()) and (formdata['Search'].value == 'Search')):
+            ('engineering' in list(formdata.keys())) and (formdata['engineering'].value == 'EngExclude') and
+            ('science_verification' in list(formdata.keys())) and (formdata['science_verification'].value == 'SvInclude') and
+            ('qa_state' in list(formdata.keys())) and (formdata['qa_state'].value == 'NotFail') and
+            ('col_selection' in list(formdata.keys())) and
+            ('site_monitoring' in list(formdata.keys())) and (formdata['site_monitoring'].value == 'SmExclude') and
+            ('Search' in list(formdata.keys())) and (formdata['Search'].value == 'Search')):
             # This is the default form state, someone just hit submit without doing anything.
             pass
-        elif formdata.keys() == ['orderby']:
+        elif list(formdata.keys()) == ['orderby']:
             # All we have is an orderby - don't redirect
             pass
         else:
@@ -83,10 +83,10 @@ def searchform(things, orderby):
 
             # The following will redirect to some other page. Redirects work by
             # raising an exception, meaning that there's no need for return
-            if 'ObsLogsOnly' in formdata.keys():
+            if 'ObsLogsOnly' in list(formdata.keys()):
                 # ObsLogs Only search
                 ctx.resp.redirect_to('/obslogs' + urlstring)
-            elif 'ProgramsOnly' in formdata.keys():
+            elif 'ProgramsOnly' in list(formdata.keys()):
                 # Program info only search
                 ctx.resp.redirect_to('/programs' + urlstring)
             else:
@@ -139,7 +139,7 @@ def updateform(selection):
 
     """
     dct = {}
-    for key, value in selection.items():
+    for key, value in list(selection.items()):
         if key in {'program_id', 'observation_id', 'data_label'}:
             # Program id etc
             # don't do program_id if we have already done obs_id, etc
@@ -288,7 +288,7 @@ def updateselection(formdata, selection):
             elif value == 'SvOnly':
                 selection[key] = True
             if value == 'SvInclude':
-                if key in selection.keys():
+                if key in list(selection.keys()):
                     selection.pop(key)
         elif key == 'site_monitoring':
             if value == 'SmInclude':
@@ -298,7 +298,7 @@ def updateselection(formdata, selection):
 
         elif key == 'focal_plane_mask':
             if value == 'custom':
-                if 'custom_mask' in formdata.keys():
+                if 'custom_mask' in list(formdata.keys()):
                     selection[key] = formdata['custom_mask'].value
             else:
                 selection[key] = value
@@ -330,8 +330,8 @@ def nameresolver(resolver, target):
     try:
         url = urls[resolver] + target
 
-        with contextlib.closing(urllib.urlopen(url)) as urlfd:
-            xml = urllib.urlopen(url).read()
+        with contextlib.closing(urllib.request.urlopen(url)) as urlfd:
+            xml = urllib.request.urlopen(url).read()
             doc = minidom.parseString(xml)
             info = doc.getElementsByTagName("INFO")
             if info and ('nothing found' in info[0].childNodes[0].nodeValue.lower()):

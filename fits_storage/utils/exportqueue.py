@@ -2,13 +2,13 @@
 This module provides various utility function used to manage the export queue
 """
 import os
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import json
 import datetime
 import hashlib
 import bz2
 import functools
-import httplib
+import http.client
 import ssl
 
 from sqlalchemy import desc, join
@@ -163,12 +163,12 @@ class ExportQueueUtil(object):
             self.l.info("Transferring file %s to destination %s", filename, destination)
             postdata = bytearray(data)
             data = None
-            request = urllib2.Request(url, data=postdata)
+            request = urllib.request.Request(url, data=postdata)
             request.add_header('Cache-Control', 'no-cache')
             request.add_header('Content-Length', '%d' % len(postdata))
             request.add_header('Content-Type', 'application/octet-stream')
             request.add_header('Cookie', 'gemini_fits_upload_auth=%s' % export_upload_auth_cookie)
-            u = urllib2.urlopen(request, timeout=30)
+            u = urllib.request.urlopen(request, timeout=30)
             response = u.read()
             u.close()
             http_status = u.getcode()
@@ -199,7 +199,7 @@ class ExportQueueUtil(object):
                 self.l.debug("Transfer not successful")
                 return False
 
-        except (urllib2.URLError, httplib.IncompleteRead, ssl.SSLError):
+        except (urllib.error.URLError, http.client.IncompleteRead, ssl.SSLError):
             self.l.info("Error posting %d bytes of data to destination server at: %s", len(postdata), url)
             self.l.debug("Transfer Failed")
             return False
@@ -240,10 +240,10 @@ def get_destination_data_md5(filename, logger, destination):
     # Construct and retrieve the URL
     try:
         url = "%s/jsonfilelist/present/filename=%s" % (destination, filename)
-        u = urllib2.urlopen(url)
+        u = urllib.request.urlopen(url)
         json_data = u.read()
         u.close()
-    except (urllib2.URLError, httplib.IncompleteRead):
+    except (urllib.error.URLError, http.client.IncompleteRead):
         logger.debug("Failed to get json data from destination server at URL: %s", url)
         return "ERROR"
 
@@ -260,11 +260,11 @@ def get_destination_data_md5(filename, logger, destination):
         logger.debug("Got multiple results from destination server")
     else:
         thedict = thelist[0]
-        if 'filename' not in thedict.keys():
+        if 'filename' not in list(thedict.keys()):
             logger.debug("No filename in json data")
         elif thedict['filename'] not in [filename, filename+'.bz2']:
             logger.debug("Wrong filename in json data")
-        elif 'data_md5' not in thedict.keys():
+        elif 'data_md5' not in list(thedict.keys()):
             logger.debug("No data_md5 in json data")
         else:
             return thedict['data_md5']

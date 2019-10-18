@@ -1,4 +1,4 @@
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import json
 
 # Construct the URL. We'll use the jsonfilelist service
@@ -8,7 +8,7 @@ url = "https://archive.gemini.edu/jsonfilelist/"
 url += "canonical/GN-2010B-Q-22/GMOS-N/20101231"
 
 # Open the URL and fetch the JSON document text into a string
-u = urllib.urlopen(url)
+u = urllib.request.urlopen(url)
 jsondoc = u.read()
 u.close()
 
@@ -17,6 +17,6 @@ files = json.loads(jsondoc)
 
 # This is a list of dictionaries each containing info about a file
 for f in files:
-    print "Filename: %s" % f['filename']
-    print "-- file size: %d, data size: %d" % (f['file_size'], f['data_size'])
+    print("Filename: %s" % f['filename'])
+    print("-- file size: %d, data size: %d" % (f['file_size'], f['data_size']))
 

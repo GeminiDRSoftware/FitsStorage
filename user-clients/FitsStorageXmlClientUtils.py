@@ -1,4 +1,4 @@
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from xml.dom.minidom import parseString
 import hashlib
 
@@ -17,7 +17,7 @@ def get_file_list(selection, canonical=True, present=True, server='fits'):
 
   url+="/"+selection
 
-  u = urllib2.urlopen(url)
+  u = urllib.request.urlopen(url)
   xml = u.read()
   u.close()
 
@@ -43,7 +43,7 @@ def fetch_files(files, server='fits'):
   # Please do not distribute this code to non gemini staff
   for file in files:
     url = "http://%s/file/%s" % (server, file['filename'])
-    opener = urllib2.build_opener()
+    opener = urllib.request.build_opener()
     opener.addheaders.append(('Cookie', 'gemini_fits_authorization=good_to_go'))
     #print "Fetching: %s" % url
     u = opener.open(url)
@@ -58,12 +58,12 @@ def fetch_files(files, server='fits'):
     # Compare against database value
     # If OK, write file, if not, complain
     if(md5==file['md5']):
-      print "fetched file %s" % file['filename']
+      print("fetched file %s" % file['filename'])
       f = open(file['filename'], 'w')
       f.write(data)
       f.close()
     else:
-      print "md5 did not match, problem with file %s" % file['filename']
+      print("md5 did not match, problem with file %s" % file['filename'])
 
 def get_cal_list(selection, caltype, server='fits'):
     """
@@ -75,7 +75,7 @@ def get_cal_list(selection, caltype, server='fits'):
     url+="/"+selection
     url+="/"+caltype
 
-    u = urllib2.urlopen(url)
+    u = urllib.request.urlopen(url)
     xml = u.read()
     u.close()
 

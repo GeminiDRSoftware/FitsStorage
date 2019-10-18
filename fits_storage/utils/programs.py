@@ -114,5 +114,5 @@ def build_odbdata(programs):
             odb_data['observations'] = program.get_obslog_comms()
             semester_data.append(odb_data)
         except NoInfoError as exception:
-            print exception.message
+            print(exception.message)
     return semester_data
