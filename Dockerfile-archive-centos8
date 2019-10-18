@@ -1,0 +1,38 @@
+FROM fitsstorageutils:centos8
+LABEL maintainer="ooberdorf@gemini.edu"
+
+# INSTALL HTTPD AND POSTGRESQL
+RUN yum -y install httpd \
+                   httpd-devel \
+                   mod_ssl \
+                   platform-python-devel
+
+# SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
+RUN dnf -y install redhat-rpm-config
+RUN pip3 install mod_wsgi==4.6.5
+
+# PUT APACHE LOGS TO DOCKER OUTPUT
+# need the modwsgi-default folder here so we can link out the logs
+RUN mkdir /opt/modwsgi-default
+RUN ln -sf /dev/stdout /var/log/httpd/access_log && \
+    ln -sf /dev/stderr /var/log/httpd/error_log && \
+    ln -sf /dev/stdout /opt/modwsgi-default/access_log && \
+    ln -sf /dev/stderr /opt/modwsgi-default/error_log && \
+    ln -sf /dev/stdout /var/log/messages
+
+# SETUP WEB SERVER
+RUN mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  /opt/FitsStorage/fits_storage/wsgihandler.py
+RUN chown -R apache:apache /opt/modwsgi-default
+
+# SETUP HTTPD SERVICE
+COPY otherfiles/etc_systemd_system_fits-httpd.service /etc/systemd/system/fits-httpd.service
+COPY otherfiles/etc-sysconfig-httpd /etc/sysconfig/httpd
+
+# write a program to do the patch? could also do this by just copying in a fixed config file that we maintain, probably better
+COPY httpd-patched-centos8.conf /opt/modwsgi-default/httpd.conf
+
+EXPOSE 80
+EXPOSE 443
+
+ENTRYPOINT ["/opt/modwsgi-default/apachectl", "-D", "FOREGROUND"]
+#ENTRYPOINT ["bash"]
