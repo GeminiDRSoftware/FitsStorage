@@ -17,5 +17,5 @@ dependencies:
   - pandas
   - boto3
   - matplotlib
-  - urllib3
+  - urllib3==1.25.6
 
