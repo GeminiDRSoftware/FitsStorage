@@ -3,7 +3,6 @@ This module contains the QA metric database interface
 """
 
 from sqlalchemy import desc
-import urllib.request, urllib.parse, urllib.error
 import datetime
 import time
 import json
