@@ -70,7 +70,9 @@ pipeline {
         stage('Unit tests') {
 
             steps {
-
+                echo "Activating Conda environment"
+                sh '''source activate ${CONDA_ENV_NAME}
+                      '''
                 echo "ensure cleaning __pycache__"
                 sh  'find . | grep -E "(__pycache__|\\.pyc|\\.pyo$)" | xargs rm -rfv'
 
