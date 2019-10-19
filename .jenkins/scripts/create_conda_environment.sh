@@ -6,7 +6,7 @@
 # can be skipped
 
 echo " Removing ${CONDA_ENV_NAME} ---"
-conda env env remove -n "${CONDA_ENV_NAME}" || echo 0
+conda env remove -n "${CONDA_ENV_NAME}" || echo 0
 
 
 echo " Installing ${CONDA_ENV_NAME} ---"
