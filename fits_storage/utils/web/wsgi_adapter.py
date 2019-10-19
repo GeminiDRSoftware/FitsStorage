@@ -275,7 +275,10 @@ class Response(adapter.Response):
         for element in self._content:
             if type(element) in _string_types:
                 r = f(element)
-                yield r
+                if isinstance(r, str):
+                    yield r.encode('utf8')
+                else:
+                    yield r
                 self._bytes_sent += len(r)
             else:
                 print ("Non-string type %s, using subelement iter" % type(element))

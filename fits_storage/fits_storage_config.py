@@ -109,7 +109,7 @@ fits_database = 'postgresql://%s/%s' % (fits_dbserver, fits_dbname)
 #fits_database = 'postgresql://hbffitstape1/'+fits_dbname
 
 # Configure the auxillary data directory here
-fits_aux_datadir = "/opt/FitsStorage/data"
+fits_aux_datadir = os.getenv('FITS_AUX_DATADIR', "/opt/FitsStorage/data")
 
 # Configure the template directory here
 template_root = fits_aux_datadir + "/templates"
@@ -121,7 +121,7 @@ fits_db_backup_dir = "/sci/dataflow/FitsStorage_Backups/cpofits-lv1"
 fits_lockfile_dir = "/data/logs"
 
 # Configure the log directory here
-fits_log_dir = "/data/logs/"
+fits_log_dir = os.getenv('FITS_LOG_DIR',"/data/logs/")
 
 # Configure the tape scratch directory here
 fits_tape_scratchdir = "/data/tapescratch"
@@ -142,4 +142,4 @@ pubdb_remote = 'https://localhost/ingest_publications'
 blocked_urls = []
 #blocked_urls=['debug', 'summary', 'diskfiles', 'ssummary', 'lsummary', 'standardobs', 'calibrations', 'xmlfilelist', 'fileontape', 'calmgr', 'upload_processed_cal', 'fitsverify', 'mdreport', 'fullheader', 'file', 'programsobserved', 'gmoscal', 'qareport', 'qametrics', 'qaforgui', 'stats', 'tape', 'tapewrite', 'tapefile', 'taperead', 'xmltape', 'notification', 'curation', 'observing_statistics', 'authentication']
 
-validation_def_path = '/opt/FitsStorage/docs/dataDefinition'
+validation_def_path = os.getenv('VALIDATION_DEF_PATH', '/opt/FitsStorage/docs/dataDefinition')

@@ -107,7 +107,7 @@ class IngestQueueUtil(object):
             self.s.rollback()
         else:
             make_transient(iq)
-            self.l.debug("Added id %d for filename %s to ingestqueue", iq.id, iq.filename)
+            self.l.debug("Added id %s for filename %s to ingestqueue", iq.id, iq.filename)
 
             return iq
 

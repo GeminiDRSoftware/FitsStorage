@@ -11,7 +11,7 @@ import os
 import re
 
 # the path to the fitsverify binary
-FITSVERIFY_BIN = '/opt/fitsverify/fitsverify'
+FITSVERIFY_BIN = os.getenv('FITSVERIFY_BIN', '/opt/fitsverify/fitsverify')
 
 def fitsverify(filename):
     """
@@ -36,8 +36,11 @@ def fitsverify(filename):
         # Fire off the subprocess and capture the output
         subp = subprocess.Popen([FITSVERIFY_BIN, filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdoutstring, stderrstring) = subp.communicate()
-
         report = stdoutstring + stderrstring
+
+        stdoutstring = stdoutstring.decode('utf8')
+        stderrstring = stderrstring.decode('utf8')
+
         # Check to see if we got a not a fits file situation
         if re.search('This does not look like a FITS file.', stdoutstring):
             isfits = False

@@ -46,7 +46,8 @@ class FullTextHeader(Base):
         self.fulltext += "\n"
         for i in range(len(ad)):
             self.fulltext += "\n--- HDU {} ---\n".format(i)
-            self.fulltext += str(repr(ad[i].hdr).strip(), errors='replace')
+            #self.fulltext += str(repr(ad[i].hdr).strip(), errors='replace')
+            self.fulltext += repr(ad[i].hdr).strip()
             self.fulltext += '\n'
 
         return

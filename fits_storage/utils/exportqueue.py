@@ -70,7 +70,7 @@ class ExportQueueUtil(object):
             self.s.rollback()
         else:
             make_transient(eq)
-            self.l.debug("Added id %d for filename %s to exportqueue", eq.id, eq.filename)
+            self.l.debug("Added id %s for filename %s to exportqueue", eq.id, eq.filename)
             return eq
 
     def export_file(self, filename, path, destination):

@@ -405,12 +405,13 @@ class StaticServer(object):
                 path = os.path.join(htmldocroot, '/'.join(uri[1:]))
                 if mtype is not None:
                     resp.set_content_type(mtype)
-                return resp.append(open(path).read()).respond()
+                return resp.append(open(path, 'rb').read()).respond()
             except IOError:
                 resp.client_error(Return.HTTP_FORBIDDEN)
         return self.app(environ, start_response)
 
 htmldocroot = os.path.join(os.path.dirname(__file__), '..', 'htmldocroot')
+htmldocroot = os.getenv('HTML_DOC_ROOT', htmldocroot)
 handle_with_static = StaticServer(core_handler, root=htmldocroot)
 
 def handler(environ, start_response):
