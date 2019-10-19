@@ -17,3 +17,5 @@ dependencies:
   - pandas
   - boto3
   - matplotlib
+  - urllib3
+
