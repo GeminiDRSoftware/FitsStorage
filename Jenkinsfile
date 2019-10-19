@@ -88,6 +88,9 @@ pipeline {
                 sh  '''
                     source activate ${CONDA_ENV_NAME}
                     export PYTHONPATH=`cat dragons-repo.txt`
+                    echo running python `which python`
+                    echo running pytest `which pytest`
+                    echo running coverage `which coverage`
                     coverage run -m pytest --junit-xml ./reports/unittests_results.xml tests
                     '''
             }
