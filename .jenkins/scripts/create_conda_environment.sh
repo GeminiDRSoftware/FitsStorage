@@ -14,4 +14,5 @@ if conda info --envs | grep -q $CONDA_ENV_NAME; then
     echo " Skipping creating of existing conda environment: ${CONDA_ENV_NAME}";
 else
     conda env create --file ${CONDA_ENV_FILE} --name "${CONDA_ENV_NAME}" ;
+    pip install -r requirements.txt
 fi
