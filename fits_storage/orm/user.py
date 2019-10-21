@@ -70,7 +70,7 @@ class User(Base):
         hashobj = sha256()
         self.salt = standard_b64encode(urandom(256))
         hashobj.update(self.salt)
-        hashobj.update(password)
+        hashobj.update(password.encode('utf8'))
         self.password = hashobj.hexdigest()
         password = None
         hashobj = None
@@ -97,7 +97,7 @@ class User(Base):
 
         hashobj = sha256()
         hashobj.update(self.salt)
-        hashobj.update(candidate)
+        hashobj.update(candidate.encode('utf8'))
         if hashobj.hexdigest() == self.password:
             return True
         else:

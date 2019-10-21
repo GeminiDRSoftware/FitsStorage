@@ -29,6 +29,7 @@ import sqlalchemy
 from fits_storage import orm
 from fits_storage.orm import createtables
 
+
 class DatabaseCreation(object):
     def __init__(self):
         self.conn = None
@@ -62,13 +63,26 @@ class DatabaseCreation(object):
 
             conn.execute('COMMIT')
             # Kill any other pending connection. Shouldn't be needed, but...
-            #O conn.execute("SELECT pg_terminate_backend(procpid) FROM pg_stat_activity WHERE datname = '%s' AND procpid <> pg_backend_pid()" % (fsc.fits_dbname,))
-            conn.execute('DROP DATABASE ' + dbname)
+            #conn.execute("SELECT pg_terminate_backend(procpid) FROM pg_stat_activity WHERE datname = '%s' AND procpid <> pg_backend_pid()" % (fsc.fits_dbname,))
+            #conn.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '%s' AND pid <> pg_backend_pid()" % (fsc.fits_dbname,))
+            try:
+                conn.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '%s'" % (fsc.fits_dbname,))
+            except:
+                pass
             conn.close()
             self.conn = None
 
-            #O moved down here from above
             orm.pg_db.dispose()
+
+            eng = sqlalchemy.create_engine('postgres://%s/postgres' % fsc.pytest_database_server)
+            conn = eng.connect()
+            conn.execute('COMMIT') # Make sure we're not inside a transaction
+                                   # as CREATE DATABASE can't run inside one
+
+            conn.execute('DROP DATABASE ' + dbname)
+            conn.close()
+
+            #O moved down here from above
 
 dbcreation = DatabaseCreation()
 
@@ -81,6 +95,7 @@ def session(request):
 
     yield s
 
+    s.close()
     dbcreation.drop_db(dbname)
 
 @pytest.yield_fixture(scope='session')
@@ -101,6 +116,7 @@ def min_session(request):
 
     yield s
 
+    s.close()
     dbcreation.drop_db(dbname)
 
 @pytest.yield_fixture(scope='session')
