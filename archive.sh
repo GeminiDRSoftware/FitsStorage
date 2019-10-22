@@ -15,4 +15,4 @@ fi
 if [ "" != "$4" ]; then
     DATABASE=$4
 fi
-docker run --name "$ARCHIVE" --network fitsstorage -v ~/data:/data/upload_staging -v ~/dataflow:/sci/dataflow -e FITS_DB_SERVER="DATABASE" --publish $HTTP_PORT:80 --publish $HTTPS_PORT:443 -d fitsimage:latest
+docker run --name "$ARCHIVE" --network fitsstorage -v ~/data:/data/upload_staging -v ~/dataflow:/sci/dataflow -e FITS_DB_SERVER=$DATABASE --publish $HTTP_PORT:80 --publish $HTTPS_PORT:443 -d fitsimage:latest

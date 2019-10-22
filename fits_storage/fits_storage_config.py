@@ -78,7 +78,8 @@ export_bzip = True
 processed_cals_path = "reduced_cals"
 
 # This is the subdirectory in dataroot where preview files live
-using_previews = False
+#using_previews = False
+using_previews = True
 preview_path = "previews"
 
 # The DAS calibration reduction path is used to find the last processing

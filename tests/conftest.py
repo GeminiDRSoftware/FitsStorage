@@ -22,8 +22,8 @@ fsc.fits_database = 'postgresql://%s/%s' % (fits_dbserver, fsc.fits_dbname)
 fsc.using_s3 = False
 fsc.pytest_database_server = os.getenv("FITS_DB_SERVER", '')
 
-TEST_IMAGE_PATH='/mnt/hahalua'
-TEST_IMAGE_CACHE=os.path.expanduser('~/tmp/cache')
+TEST_IMAGE_PATH=os.getenv('TEST_IMAGE_PATH', '/mnt/hahalua')
+TEST_IMAGE_CACHE=os.getenv('TEST_IMAGE_CACHE', os.path.expanduser('~/tmp/cache'))
 
 import sqlalchemy
 from fits_storage import orm
@@ -149,7 +149,7 @@ def testfile_path(request):
             if not orig_path.endswith('.bz2'):
                 os.symlink(orig_path, cached_path)
             else:
-                with BZ2File(orig_path) as org, open(cached_path, 'w') as dst:
+                with BZ2File(orig_path) as org, open(cached_path, 'wb') as dst:
                     while True:
                         data = org.read(8192)
                         if not data:

@@ -19,6 +19,8 @@ pipeline {
         CONDA_ENV_FILE = ".jenkins/conda_py3env_stable.yml"
         CONDA_ENV_NAME_DEPRECATED = "py3_stable"
         CONDA_ENV_NAME = "fitsstorage_pipeline_venv"
+        TEST_IMAGE_PATH = "/tmp/archive_test_images"
+        TEST_IMAGE_CACHE = "/tmp/cached_archive_test_images"
     }
 
     stages {
@@ -28,6 +30,8 @@ pipeline {
             steps{
                 echo 'STARTED'
                 checkout scm
+                sh 'mkdir -p ${TEST_IMAGE_PATH}'
+                sh 'mkdir -p ${TEST_IMAGE_CACHE}'
                 sh 'rm -rf ./plots; mkdir -p ./plots'
                 sh 'rm -rf ./reports; mkdir -p ./reports'
                 sh '.jenkins/scripts/download_and_install_anaconda.sh'

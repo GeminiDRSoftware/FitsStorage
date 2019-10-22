@@ -5,14 +5,22 @@ import logging
 from sqlalchemy import delete
 import os
 
+# FILES_TO_INGEST = (
+#     'N20011022S128.fits.bz2',
+#     'N20011022S130.fits.bz2',
+#     'N20011022S130.fits.bz2',
+#     'N20011022S130.fits.bz2',
+#     'N20011022S130.fits.bz2',
+#     'N20011022S140.fits.bz2'
+#     )
 FILES_TO_INGEST = (
-    'N20011022S128.fits.bz2',
-    'N20011022S130.fits.bz2',
-    'N20011022S130.fits.bz2',
-    'N20011022S130.fits.bz2',
-    'N20011022S130.fits.bz2',
-    'N20011022S140.fits.bz2'
-    )
+    'N20191008S0458.fits',
+    'N20191009S0025.fits',
+    'N20191009S0089.fits',
+    'N20191009S0131.fits',
+    'N20191010S0096.fits',
+    'N20191010S0138.fits'
+)
 
 # import sys
 # logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -44,7 +52,6 @@ def add_to_iq(request, session, ingest_util, testfile_path):
     session.commit()
 
 @pytest.mark.usefixtures("rollback")
-@pytest.mark.slow
 class TestIngestQueue:
     def test_ingestqueue_length(self, ingest_util, add_to_iq):
         assert ingest_util.length() == len(add_to_iq)
@@ -57,7 +64,6 @@ class TestIngestQueue:
         assert len(files) == 0
 
 @pytest.mark.usefixtures("rollback")
-@pytest.mark.slow
 class TestPreviewQueue:
     @pytest.yield_fixture()
     def ingest_from_queue(self, request, session, ingest_util, add_to_iq):
@@ -65,7 +71,9 @@ class TestPreviewQueue:
         while True:
             try:
                 iq = ingest_util.pop()
-                cnt += ingest_util.ingest_file(iq.filename, iq.path, force_md5=False, force=True, skip_fv=True, skip_md=True)
+                # some of the arguments no longer exist (skip_fv, skip_md)
+                #cnt += ingest_util.ingest_file(iq.filename, iq.path, force_md5=False, force=True, skip_fv=True, skip_md=True)
+                cnt += ingest_util.ingest_file(iq.filename, iq.path, force_md5=False, force=True)
             except AttributeError:
                 break
 
