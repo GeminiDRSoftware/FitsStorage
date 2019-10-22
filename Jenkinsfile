@@ -95,6 +95,7 @@ pipeline {
                     echo running python `which python`
                     echo running pytest `which pytest`
                     echo running coverage `which coverage`
+                    export VALIDATION_DEF_PATH=./docs/dataDefinition/
                     coverage run -m pytest --junit-xml ./reports/unittests_results.xml tests
                     '''
             }
