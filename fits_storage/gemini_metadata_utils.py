@@ -8,7 +8,8 @@ import time
 import datetime
 import dateutil.parser
 
-from .fits_storage_config import use_as_archive
+#from .fits_storage_config import use_as_archive
+from fits_storage import fits_storage_config
 
 # ------------------------------------------------------------------------------
 DATE_LIMIT_LOW = dateutil.parser.parse('19900101')
@@ -848,8 +849,7 @@ def get_date_offset():
     sites where Gemini is based.
 
     """
-
-    if use_as_archive:
+    if fits_storage_config.use_as_archive:
         return ZERO_OFFSET
 
     # Calculate the proper offset to add to the date
