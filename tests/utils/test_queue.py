@@ -64,6 +64,7 @@ class TestIngestQueue:
         assert len(files) == 0
 
 @pytest.mark.usefixtures("rollback")
+@pytest.mark.slow
 class TestPreviewQueue:
     @pytest.yield_fixture()
     def ingest_from_queue(self, request, session, ingest_util, add_to_iq):
