@@ -222,7 +222,7 @@ class StreamingObject(object):
         """
         Dump the buffer contents right away.
         """
-        self._callback(''.join(self._buffer))
+        self._callback(''.join(self._buffer).encode('utf8'))
         self._reset_buffer()
 
     def close(self):
