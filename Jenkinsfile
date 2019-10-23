@@ -72,8 +72,10 @@ pipeline {
 
         stage('Docker Testing') {
             steps {
-                docker.image('centis:centos8').inside {
-                    sh 'uname -a'
+                script {
+                    docker.image('centis:centos8').inside {
+                        sh 'uname -a'
+                    }
                 }
             }
         }
