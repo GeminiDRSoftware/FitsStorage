@@ -24,7 +24,6 @@ pipeline {
     }
 
     stages {
-
         stage ("Prepare"){
 
             steps{
@@ -69,6 +68,14 @@ pipeline {
                 '''
             }
 
+        }
+
+        stage('Docker Testing') {
+            steps {
+                docker.image('centis:centos8').inside {
+                    sh 'uname -a'
+                }
+            }
         }
 
         stage('Unit tests') {
