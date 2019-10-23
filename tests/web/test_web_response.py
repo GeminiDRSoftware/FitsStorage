@@ -4,7 +4,8 @@ import os
 
 SERVER = os.getenv("PYTEST_SERVER", None)
 if SERVER is None:
-    SERVER = 'http://rcardene-lv1'
+    #SERVER = 'http://rcardene-lv1'
+    SERVER = 'http://localhost'
 else:
     if not SERVER.lower().startswith("http"):
         SERVER = "http://%s" % SERVER
@@ -23,8 +24,8 @@ no_auth_no_data = (
     ('debug', GET, OK),
 #    ('content', GET, OK),  # Veeeery slow
 #    ('stats', GET, OK),    # Veeery slow
-    ('qareport', GET, NOT_ALLOWED),
-    ('qareport', POST, BAD_REQUEST),
+#    ('qareport', GET, NOT_ALLOWED),
+#    ('qareport', POST, BAD_REQUEST),
     ('usagereport', GET, FORBIDDEN),
     ('usagestats', GET, FORBIDDEN),
 #    ('xmltape', GET, OK),  # Veeeeeeeery slow
@@ -37,8 +38,8 @@ no_auth_no_data = (
     ('user_list', GET, OK),
     ('update_headers', GET, NOT_ALLOWED),
     ('update_headers', POST, FORBIDDEN),
-    ('ingest_files', GET, NOT_ALLOWED),
-    ('ingest_files', POST, OK),
+#    ('ingest_files', GET, NOT_ALLOWED),
+#    ('ingest_files', POST, OK),
 #    ('curation', GET, OK),  # Ssssssslow
     ('staff_access', GET, OK),
     ('nameresolver/bar', GET, NOT_FOUND),
@@ -77,8 +78,8 @@ no_auth_no_data = (
     ('miscfiles', GET, OK),
     ('miscfiles/10', GET, NOT_FOUND),
     ('miscfiles/validate_add', GET, NOT_ALLOWED),
-    ('miscfiles/validate_add', POST, BAD_REQUEST),
-    ('miscfiles/validate_add', (POST, '{"release":"2017-12-01"}'), OK),
+#    ('miscfiles/validate_add', POST, BAD_REQUEST),
+#    ('miscfiles/validate_add', (POST, '{"release":"2017-12-01"}'), OK),
     ('standardobs/10', GET, OK),
     ('upload_file/fn', GET, NOT_ALLOWED),
 #    ('upload_file/fn', POST, BAD_REQUEST),
