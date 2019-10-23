@@ -54,7 +54,7 @@ pipeline {
                     def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f Dockerfile-centos8-jenkins .")
                     def archiveimage = docker.build("gemini/archive:jenkins", " -f Dockerfile-archive-centos8-jenkins .")
                     def utils = docker.image('gemini/fitsarchiveutils:jenkins')
-                        .inside("--network fitsarchive-jenkins -e FITS_DB_SERVER=\"fitsdata:fitsdata@postgres-fitsdata\" --rm gemini/fitsarchiveutils:jenkins") {
+                        .inside("-e FITS_DB_SERVER=\"fitsdata:fitsdata@postgres-fitsdata\" --rm gemini/fitsarchiveutils:jenkins") {
                         sh 'echo hello'
                     }
                 }
