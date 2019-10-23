@@ -49,8 +49,14 @@ pipeline {
         stage('Building Docker Containers') {
             steps {
                 script {
-                    def utilsimage = docker.build("gemini/fitsarchiveutils:${build_tag}")
-                    def archiveimage = docker.build("gemini/archive:${build_tag}", " -f Dockerfile-archive-centos8 .")
+//                     def utilsimage = docker.build("gemini/fitsarchiveutils:${build_tag}", " -f Dockerfile-centos8 .")
+//                     def archiveimage = docker.build("gemini/archive:${build_tag}", " -f Dockerfile-archive-centos8 .")
+                    def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f Dockerfile-centos8-jenkins .")
+                    def archiveimage = docker.build("gemini/archive:jenkins", " -f Dockerfile-archive-centos8-jenkins .")
+                    def utils = docker.image('gemini/fitsarchiveutils:jenkins')
+                        .inside("--network fitsarchive-jenkins -e FITS_DB_SERVER=\"fitsdata:fitsdata@postgres-fitsdata\" --rm gemini/fitsarchiveutils:jenkins") {
+                        sh 'echo hello'
+                    }
                 }
             }
         }
