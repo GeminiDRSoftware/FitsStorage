@@ -35,7 +35,7 @@ pipeline {
                 sh 'rm -rf ./reports; mkdir -p ./reports'
                 sh '.jenkins/scripts/download_and_install_anaconda.sh'
                 sh '.jenkins/scripts/create_conda_environment.sh'
-                sh '''source activate ${CONDA_ENV_NAME}
+                sh '''. activate ${CONDA_ENV_NAME}
                       '''
                 sh 'conda list -n ${CONDA_ENV_NAME}'
                 sh '''
@@ -84,7 +84,7 @@ pipeline {
 
             steps {
                 echo "Activating Conda environment"
-                sh '''source activate ${CONDA_ENV_NAME}
+                sh '''. activate ${CONDA_ENV_NAME}
                       '''
                 echo "ensure cleaning __pycache__"
                 sh  'find . | grep -E "(__pycache__|\\.pyc|\\.pyo$)" | xargs rm -rfv'
@@ -99,7 +99,7 @@ pipeline {
 
                 echo "Running tests"
                 sh  '''
-                    source activate ${CONDA_ENV_NAME}
+                    . activate ${CONDA_ENV_NAME}
                     export PYTHONPATH=`cat dragons-repo.txt`
                     echo running python `which python`
                     echo running pytest `which pytest`
