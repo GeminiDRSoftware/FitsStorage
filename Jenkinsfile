@@ -42,40 +42,15 @@ pipeline {
                     echo /tmp/DRAGONS-$$ > dragons-repo.txt
                     git clone https://github.com/GeminiDRSoftware/DRAGONS.git `cat dragons-repo.txt`
                 '''
-                sh '''
-                    export DOCKER=""
-                    if [ -f /usr/local/bin/docker ]; then
-                        export DOCKER=/usr/local/bin/docker
-                    fi
-                    if [ -f /usr/bin/docker ]; then
-                        export DOCKER=/usr/bin/docker
-                    fi
-                    if [ -f /bin/docker ]; then
-                        export DOCKER=/bin/docker
-                    fi
-                    if [ -f /usr/local/sbin/docker ]; then
-                        export DOCKER=/usr/local/sbin/docker
-                    fi
-                    if [ -f /usr/sbin/docker ]; then
-                        export DOCKER=/usr/sbin/docker
-                    fi
-                    if [ -f /sbin/docker ]; then
-                        export DOCKER=/sbin/docker
-                    fi
-                    if [ -f /opt/docker/bin/docker ]; then
-                        export DOCKER=/opt/docker/bin/docker
-                    fi
-                '''
             }
 
         }
 
-        stage('Docker Testing') {
+        stage('Building Docker Containers') {
             steps {
                 script {
-                    docker.image('centos:centos8').inside {
-                        sh 'uname -a'
-                    }
+                    def utilsimage = docker.build("gemini/fitsarchiveutils:${build_tag}")
+                    def archiveimage = docker.build("gemini/archive:${build_tag}", " -f Dockerfile-archive-centos8 .")
                 }
             }
         }
@@ -89,14 +64,6 @@ pipeline {
                 echo "ensure cleaning __pycache__"
                 sh  'find . | grep -E "(__pycache__|\\.pyc|\\.pyo$)" | xargs rm -rfv'
 
-                echo "Checking Docker configuration"
-                sh '''
-                    echo Docker location: $DOCKER
-                    if [ "" = "$DOCKER" ]; then
-                        echo No Docker found
-                    fi
-                '''
-
                 echo "Running tests"
                 sh  '''
                     . activate ${CONDA_ENV_NAME}
@@ -105,7 +72,7 @@ pipeline {
                     echo running pytest `which pytest`
                     echo running coverage `which coverage`
                     export VALIDATION_DEF_PATH=./docs/dataDefinition/
-                    coverage run -m pytest --junit-xml ./reports/unittests_results.xml tests
+                    #coverage run -m pytest --junit-xml ./reports/unittests_results.xml tests
                     '''
             }
 
