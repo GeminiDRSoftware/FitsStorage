@@ -54,7 +54,10 @@ pipeline {
                     def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f Dockerfile-centos8-jenkins .")
                     def archiveimage = docker.build("gemini/archive:jenkins", " -f Dockerfile-archive-centos8-jenkins .")
                     def postgres = docker.image('postgres:12').withRun("-e POSTGRES_USER=fitsdata -e POSTGRES_PASSWORD=fitsdata -e POSTGRES_DB=fitsdata") { c ->
-
+                        docker.image('gemini/fitsarchiveutils:jenkins').inside("--link ${c.id}:db -e FITS_DB_SERVER=\"fitsdata:fitsdata@db\"") {
+                            /* Wait until mysql service is up */
+                            sh 'python fits_storage/scripts/create_tables.py'
+                        }
                     }
                 }
             }
