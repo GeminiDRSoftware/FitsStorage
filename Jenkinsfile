@@ -58,7 +58,6 @@ pipeline {
                             sh 'python3 fits_storage/scripts/create_tables.py'
                             echo "Running tests against docker containers"
                             sh  '''
-                                pip3 install pytest pytest-cache
                                 pytest --junit-xml ./reports/unittests_results.xml tests
                                 '''
                         }
