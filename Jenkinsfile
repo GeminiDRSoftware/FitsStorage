@@ -54,10 +54,12 @@ pipeline {
                     def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f Dockerfile-centos8-jenkins .")
                     def archiveimage = docker.build("gemini/archive:jenkins", " -f Dockerfile-archive-centos8-jenkins .")
                     def postgres = docker.image('postgres:12').withRun("-e POSTGRES_USER=fitsdata -e POSTGRES_PASSWORD=fitsdata -e POSTGRES_DB=fitsdata") { c ->
-                        docker.image('gemini/fitsarchiveutils:jenkins').inside("--link ${c.id}:db -e FITS_DB_SERVER=\"fitsdata:fitsdata@db\" -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") {
+                        docker.image('gemini/fitsarchiveutils:jenkins').inside("--link ${c.id}:db -e FITS_DB_SERVER=\"fitsdata:fitsdata@db\" -e TEST_IMAGE_PATH=/tmp/test_images -e TEST_IMAGE_CACHE=/tmp/test_images_cache -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") {
                             sh 'python3 fits_storage/scripts/create_tables.py'
                             echo "Running tests against docker containers"
                             sh  '''
+                                mkdir -p /tmp/test_images
+                                mkdir -p /tmp/test_images_cache
                                 pytest --junit-xml ./reports/unittests_results.xml tests
                                 '''
                         }
