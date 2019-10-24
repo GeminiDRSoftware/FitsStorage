@@ -16,7 +16,13 @@ full_path_dump=os.path.join(os.path.dirname(__file__), DUMP_FILE)
 # really, really wrong)
 
 import fits_storage.fits_storage_config as fsc
-fsc.fits_dbname = 'test_{0}_{1}'.format(fsc.fits_dbname, now.strftime('%Y%m%d%H%M%S'))
+
+_create_test_db = os.getenv('CREATE_TEST_DB', 'True')
+if _create_test_db in ['True', 'true', '1', 'yes', 'y']:
+    _create_test_db = True
+    fsc.fits_dbname = 'test_{0}_{1}'.format(fsc.fits_dbname, now.strftime('%Y%m%d%H%M%S'))
+else:
+    _create_test_db = False
 fits_dbserver = os.getenv('FITS_DB_SERVER', '')
 fsc.fits_database = 'postgresql://%s/%s' % (fits_dbserver, fsc.fits_dbname)
 fsc.using_s3 = False
@@ -36,15 +42,15 @@ class DatabaseCreation(object):
 
     def create_db(self, dbname):
         if self.conn is None:
+            if _create_test_db:
+                eng = sqlalchemy.create_engine('postgres://%s/postgres' % fsc.pytest_database_server)
+                conn = eng.connect()
+                conn.execute('COMMIT') # Make sure we're not inside a transaction
+                                       # as CREATE DATABASE can't run inside one
+                conn.execute('CREATE DATABASE ' + dbname)
 
-            eng = sqlalchemy.create_engine('postgres://%s/postgres' % fsc.pytest_database_server)
-            conn = eng.connect()
-            conn.execute('COMMIT') # Make sure we're not inside a transaction
-                                   # as CREATE DATABASE can't run inside one
-            conn.execute('CREATE DATABASE ' + dbname)
-
-            # Trying to fix test_wsgi.py
-            conn.close()
+                # Trying to fix test_wsgi.py
+                conn.close()
             eng = sqlalchemy.create_engine('postgres://%s/%s' % (fsc.pytest_database_server, dbname))
             conn = eng.connect()
             # end of my hackery
@@ -58,6 +64,8 @@ class DatabaseCreation(object):
 
     def drop_db(self, dbname):
         if self.conn:
+            if not _create_test_db:
+                return
             conn = self.conn
             #O orm.pg_db.dispose()
 
