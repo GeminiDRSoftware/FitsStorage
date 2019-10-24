@@ -69,4 +69,3 @@ ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
 ENV PGPASSWORD fitsdata
 
 CMD ["bash"]
-#ENTRYPOINT ["/opt/FitsStorage/utils-entrypoint.sh"]
