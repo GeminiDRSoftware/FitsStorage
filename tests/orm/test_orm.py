@@ -15,7 +15,6 @@ def user(request, session):
     return user
 
 @pytest.mark.usefixtures("rollback")
-@pytest.mark.slow
 class TestUser:
     def test_reset_and_validate_password(self, session, user):
         assert user.password is None  # For a just created user, this should be null
