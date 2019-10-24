@@ -68,29 +68,29 @@ pipeline {
             }
         }
 
-        stage('Unit tests') {
-
-            steps {
-                echo "Activating Conda environment"
-                sh '''. activate ${CONDA_ENV_NAME}
-                      '''
-                echo "ensure cleaning __pycache__"
-                sh  'find . | grep -E "(__pycache__|\\.pyc|\\.pyo$)" | xargs rm -rfv'
-
-                echo "Running tests"
-                sh  '''
-                    export CREATE_TEST_DB=False
-                    . activate ${CONDA_ENV_NAME}
-                    export PYTHONPATH=`cat dragons-repo.txt`
-                    echo running python `which python`
-                    echo running pytest `which pytest`
-                    echo running coverage `which coverage`
-                    export VALIDATION_DEF_PATH=./docs/dataDefinition/
-                    #coverage run -m pytest --junit-xml ./reports/unittests_results.xml tests
-                    '''
-            }
-
-        }
+//         stage('Unit tests') {
+//
+//             steps {
+//                 echo "Activating Conda environment"
+//                 sh '''. activate ${CONDA_ENV_NAME}
+//                       '''
+//                 echo "ensure cleaning __pycache__"
+//                 sh  'find . | grep -E "(__pycache__|\\.pyc|\\.pyo$)" | xargs rm -rfv'
+//
+//                 echo "Running tests"
+//                 sh  '''
+//                     export CREATE_TEST_DB=False
+//                     . activate ${CONDA_ENV_NAME}
+//                     export PYTHONPATH=`cat dragons-repo.txt`
+//                     echo running python `which python`
+//                     echo running pytest `which pytest`
+//                     echo running coverage `which coverage`
+//                     export VALIDATION_DEF_PATH=./docs/dataDefinition/
+//                     #coverage run -m pytest --junit-xml ./reports/unittests_results.xml tests
+//                     '''
+//             }
+//
+//         }
 
     }
     post {
