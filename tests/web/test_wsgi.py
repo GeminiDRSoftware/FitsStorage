@@ -95,7 +95,7 @@ class Fixture(object):
         pytest_server = os.getenv("PYTEST_SERVER", None)
         if pytest_server is not None:
             if pytest_server.lower().startswith("http"):
-                pytest_server = pytest_server[pytest_server.indexof('/')+2:]
+                pytest_server = pytest_server[pytest_server.index('/')+2:]
             env['REMOTE_ADDR'] = pytest_server
 
         post = self.post
