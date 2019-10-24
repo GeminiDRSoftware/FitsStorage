@@ -56,7 +56,7 @@ pipeline {
                     def postgres = docker.image('postgres:12').withRun("-e POSTGRES_USER=fitsdata -e POSTGRES_PASSWORD=fitsdata -e POSTGRES_DB=fitsdata") { c ->
                         docker.image('gemini/fitsarchiveutils:jenkins').inside("--link ${c.id}:db -e FITS_DB_SERVER=\"fitsdata:fitsdata@db\"") {
                             /* Wait until mysql service is up */
-                            sh 'python fits_storage/scripts/create_tables.py'
+                            sh 'python3 fits_storage/scripts/create_tables.py'
                         }
                     }
                 }
