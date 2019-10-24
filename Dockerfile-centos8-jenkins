@@ -68,4 +68,5 @@ ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
 ENV PGPASSWORD fitsdata
 
-ENTRYPOINT ["/opt/FitsStorage/utils-entrypoint.sh"]
+CMD ["bash"]
+#ENTRYPOINT ["/opt/FitsStorage/utils-entrypoint.sh"]
