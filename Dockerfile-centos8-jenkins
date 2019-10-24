@@ -60,7 +60,7 @@ RUN mkdir -p /data/logs && \
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
 RUN cd /opt && git clone https://github.com/GeminiDRSoftware/DRAGONS.git
 COPY . /opt/FitsStorage
-RUN chmod +x utils-entrypoint.sh
+RUN chmod +x /opt/FitsStorage/utils-entrypoint.sh
 WORKDIR /opt/FitsStorage
 COPY fitsverify /opt/fitsverify
 
@@ -68,4 +68,4 @@ ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
 ENV PGPASSWORD fitsdata
 
-ENTRYPOINT ["./utils-entrypoint.sh"]
+ENTRYPOINT ["/opt/FitsStorage/utils-entrypoint.sh"]
