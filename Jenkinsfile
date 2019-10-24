@@ -60,7 +60,7 @@ pipeline {
                             sh  '''
                                 mkdir -p /tmp/archive_test_images
                                 mkdir -p /tmp/cached_archive_test_images
-                                pytest --junit-xml ./reports/unittests_results.xml tests
+                                pytest tests
                                 '''
                         }
                     }
