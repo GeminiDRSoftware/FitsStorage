@@ -53,9 +53,9 @@ pipeline {
 //                     def archiveimage = docker.build("gemini/archive:${build_tag}", " -f Dockerfile-archive-centos8 .")
                     def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f Dockerfile-centos8-jenkins .")
                     def archiveimage = docker.build("gemini/archive:jenkins", " -f Dockerfile-archive-centos8-jenkins .")
-                    def postgres = docker.image('postgres:12').withRun("-e POSTGRES_USER=fitsdata -e POSTGRES_PASSWORD=fitsdata -e POSTGRES_DB=fitsdata") { c ->
-                        def archive = docker.image("gemini/archive:jenkins").withRun("--link ${c.id}:db -e FITS_DB_SERVER=\"fitsdata:fitsdata@db\" -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") { a->
-                            docker.image('gemini/fitsarchiveutils:jenkins').inside(" --link ${a.id}:archive --link ${c.id}:db -e FITS_DB_SERVER=\"fitsdata:fitsdata@db\" -e PYTEST_SERVER=http://archive:8080 -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") {
+                    def postgres = docker.image('postgres:12').withRun(" --network fitsstorage-jenkins --name fitsdata-jenkins -e POSTGRES_USER=fitsdata -e POSTGRES_PASSWORD=fitsdata -e POSTGRES_DB=fitsdata") { c ->
+                        def archive = docker.image("gemini/archive:jenkins").withRun(" --network fitsstorage-jenkins --name archive-jenkins -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") { a->
+                            docker.image('gemini/fitsarchiveutils:jenkins').inside("  --network fitsstorage-jenkins -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e PYTEST_SERVER=http://archive-jenkins:8080 -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") {
                                 sh 'python3 fits_storage/scripts/create_tables.py'
                                 echo "Running tests against docker containers"
                                 sh  '''
