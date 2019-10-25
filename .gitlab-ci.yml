@@ -1,6 +1,3 @@
-default:
-  tags: test
-
 build-docker-images:
   script:
   - docker build gemini/fitsarchiveutils:gitlab-ci -f Dockerfile-centos8-jenkins .
