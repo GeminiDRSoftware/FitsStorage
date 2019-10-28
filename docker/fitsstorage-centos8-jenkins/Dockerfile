@@ -34,7 +34,8 @@ RUN pip3 install psycopg2-binary && \
     pip3 install pandas && \
     pip3 install astropy && \
     pip3 install future && \
-    pip3 install boto3
+    pip3 install boto3 && \
+    pip3 install pytest
 
 # CREATE FITSDATA USER AND GROUP
 RUN /usr/sbin/groupadd -g 5179 fitsdata
@@ -59,12 +60,12 @@ RUN mkdir -p /data/logs && \
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
 RUN cd /opt && git clone https://github.com/GeminiDRSoftware/DRAGONS.git
-COPY . /opt/FitsStorage
+COPY ../.. /opt/FitsStorage
 WORKDIR /opt/FitsStorage
-COPY fitsverify /opt/fitsverify
+COPY ../../fitsverify /opt/fitsverify
 
 ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
 ENV PGPASSWORD fitsdata
 
-ENTRYPOINT ["bash"]
+CMD ["bash"]

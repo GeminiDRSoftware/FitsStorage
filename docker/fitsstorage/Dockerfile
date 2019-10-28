@@ -1,8 +1,5 @@
-FROM centos:centos8
+FROM centos:centos7
 LABEL maintainer="ooberdorf@gemini.edu"
-
-# ENABLE EPEL
-RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
 # INSTALL HTTPD AND POSTGRESQL
 RUN yum -y install openssl \
@@ -11,31 +8,27 @@ RUN yum -y install openssl \
                    epel-release \
                    gcc \
                    gcc-c++ \
+                   python-devel \
                    gcc-gfortran \
                    cfitsio-devel \
                    git
-RUN yum -y install python3-pip
-
-# Fix Centos 8 broken Locale
-RUN yum -y install glibc-langpack-en glibc-common
-#RUN localedef --no-archive -i en_US -f UTF-8 en_US.UTF-8
+RUN yum -y install python-pip
 
 # SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
-#RUN pip3 install --upgrade pip
-RUN pip3 install psycopg2-binary && \
-    pip3 install sqlalchemy && \
-    pip3 install pyyaml && \
-    pip3 install jinja2 && \
-    pip3 install pyfits && \
-    pip3 install dateutils && \
-    pip3 install requests && \
-    pip3 install matplotlib && \
-    pip3 install scipy && \
-    pip3 install pandas && \
-    pip3 install astropy && \
-    pip3 install future && \
-    pip3 install boto3 && \
-    pip3 install pytest
+RUN pip install --upgrade pip
+RUN pip install psycopg2 && \
+    pip install sqlalchemy && \
+    pip install pyyaml && \
+    pip install jinja2 && \
+    pip install pyfits && \
+    pip install dateutils && \
+    pip install requests && \
+    pip install matplotlib && \
+    pip install scipy && \
+    pip install pandas && \
+    pip install astropy && \
+    pip install future && \
+    pip install boto3
 
 # CREATE FITSDATA USER AND GROUP
 RUN /usr/sbin/groupadd -g 5179 fitsdata
@@ -60,12 +53,14 @@ RUN mkdir -p /data/logs && \
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
 RUN cd /opt && git clone https://github.com/GeminiDRSoftware/DRAGONS.git
-COPY . /opt/FitsStorage
+COPY ../.. /opt/FitsStorage
 WORKDIR /opt/FitsStorage
-COPY fitsverify /opt/fitsverify
+COPY ../../fitsverify /opt/fitsverify
 
 ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
 ENV PGPASSWORD fitsdata
 
-CMD ["bash"]
+ENTRYPOINT ["bash"]
+#ENTRYPOINT ["pytest", "-v", "-k", "route41", "tests/web/test_wsgi.py"]
+#ENTRYPOINT ["pytest", "tests"]
