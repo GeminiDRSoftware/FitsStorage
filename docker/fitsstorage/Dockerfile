@@ -53,9 +53,9 @@ RUN mkdir -p /data/logs && \
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
 RUN cd /opt && git clone https://github.com/GeminiDRSoftware/DRAGONS.git
-COPY ../.. /opt/FitsStorage
+COPY . /opt/FitsStorage
 WORKDIR /opt/FitsStorage
-COPY ../../fitsverify /opt/fitsverify
+COPY fitsverify /opt/fitsverify
 
 ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata

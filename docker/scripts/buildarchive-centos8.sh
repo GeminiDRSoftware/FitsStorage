@@ -1,3 +1,5 @@
 #!/bin/bash
 BASEDIR=$(dirname "$0")
-docker image build -t fitsimage:centos8 "$BASEDIR/../archive-centos8/"
+pushd "$BASEDIR/../.."
+docker image build -t fitsimage:centos8 -f docker/archive-centos8//Dockerfile .
+popd
