@@ -1,3 +1,5 @@
 #!/bin/bash
 BASEDIR=$(dirname "$0")
-docker image build -t fitsstorageutils:latest "$BASEDIR/../fitsstorage"
+pushd "$BASEDIR/../.."
+docker image build -t fitsstorageutils:latest -f docker/fitsstorage/Dockerfile .
+popd
