@@ -1,9 +1,9 @@
-build-docker-images:
-  script:
-  - docker build gemini/fitsarchiveutils:gitlab-ci -f Dockerfile-centos8-jenkins .
-  - docker build gemini/archive:gitlab-ci -f Dockerfile-archive-centos8-jenkins .
-  - docker container rm fitsdata-jenkins || true
-  - docker container rm archive-jenkins || true
+#build-docker-images:
+#  script:
+#  - docker build gemini/fitsarchiveutils:gitlab-ci -f Dockerfile-centos8-jenkins .
+#  - docker build gemini/archive:gitlab-ci -f Dockerfile-archive-centos8-jenkins .
+#  - docker container rm fitsdata-jenkins || true
+#  - docker container rm archive-jenkins || true
 
 job2:
   script: "echo job2"
