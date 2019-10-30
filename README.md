@@ -26,6 +26,7 @@ independent of any other projects that I have going on.
 
 ```
 conda create -n myenv python=3.6
+conda activate myenv
 ```
 
 There is a `requirements.txt` and a `requirements-test.txt` file that list the python requirements to run and test,
@@ -46,47 +47,116 @@ cd DRAGONS
 pip3 install -e .
 ```
 
+### Environment
+
+Various features in the website can be configured via environment variables.  This allows you to, for instance,
+change where FITS files are found on your Mac when running in PyCharm vs where it lives on the deployed CentOS servers.
+Here are the environment variables you will likely want to set, tune according to your setup.
+
+```shell script
+export FITS_LOG_DIR=/Users/ooberdorf/logs/
+export STORAGE_ROOT=/Users/ooberdorf/data/
+export FITSVERIFY_BIN=/Users/ooberdorf/fitsverify/fitsverify
+export VALIDATION_DEF_PATH=/Users/ooberdorf/dev-oly-tests-centos8/docs/dataDefinition/
+export TEST_IMAGE_PATH=/Users/ooberdorf/data/
+export TEST_IMAGE_CACHE=/Users/ooberdorf/tmp/cache/
+export FITS_AUX_DATADIR=/Users/ooberdorf/dev-oly-tests-centos8/data/
+export PYTHONPATH=~/DRAGONS:~/FitsStorage
+```
+
+If these environment variables are not found, the code falls back to defaults that are appropriate for the deployed
+operational server.
+
 ### Installing
 
-A step by step series of examples that tell you how to get a development env running
+The install is managed by running an Ansible play.  This play is wrapped in a convenient shell script called
+`archive_install.sh` in the `ansible` folder.  The play relies on you having a proper secrets setup to handle ssh
+logins to the remote host, `hbffits-lv1.hi.gemini.edu`.
 
-Say what the step will be
-
-```
-Give the example
-```
-
-And repeat
+In the `ansible/playbooks` folder, you need to create a `secret` file.  Do this like so:
 
 ```
-until finished
+ansible-vault create secret
 ```
 
-End with an example of getting some data out of the system or using it for a little demo
+This will allow you to save a protected file that holds your ssh login password.  The file will look like this:
+
+```
+ansible_sudo_pass: mysudopassword
+```
+
+But now that file is also, in turn, password protected.  You can work around this with a "vault".  Create a file called
+`vault.txt` in the `ansible/` folder and make the contents your password for the `secret` file created above.
+
+Now you should have added two files.  Note that we *do not* add these to the repo.  This is a convoluted setup, but it
+is what works.
+
+```
+ansible/playooks/secret
+ansible/vault.txt
+```
+
+Now that this is done, assuming you have sudo permission to root on `hbffits-lv1`, you can run the ansible play.
+To install, simply:
+
+```
+cd ansible
+bash ./archive_install.sh
+```
+
+Once the install finishes, you should be able to browse the deployed site at:
+
+https://hbffits-lv1.hi.gemini.edu/searchform/
 
 ## Running the tests
 
-Explain how to run the automated tests for this system
+All of the tests are written with `pytest` and live in the `tests` folder.  You can run them with
 
-### Break down into end to end tests
+`pytest tests`
 
-Explain what these tests test and why
+However, any tests that rely on the database or the website have been tagged as slow.  If you want to run these tests
+as well, you can add the `--runslow` argument.
 
-```
-Give an example
-```
+`pytest --runslow tests`
 
-### And coding style tests
+Note that the tests will decide what webserver and database to connect to based on some environment variables.
 
-Explain what these tests test and why
-
-```
-Give an example
+```shell script
+ENV PYTEST_SERVER archive
+ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
 ```
 
-## Deployment
+## Docker
 
-Add additional notes about how to deploy this on a live system
+Additional work has gone into making FitsStorage work with Docker containers.  This largely involves the use of three
+separate containers: one for the PostgreSQL database, one for the WSGI website, and one for running tools such as the
+datafile ingest.
+
+All of the docker infrastructure lives under the `docker/` subfolder.  There are is a set of folders for each image
+and a `script` folder with shell scripts for building images and creating containers.  The primary scripts you want to
+look at are
+
+Script to create the images:
+
+```shell script
+buildarchive-centos8.sh
+buildfitsstorageutils.sh
+```
+
+Script to create the containers:
+
+```shell script
+postgres.sh
+fitsstorageutils-centos8.sh
+archive-centos8.sh
+```
+
+The other Dockerfiles are for a CentOS 7 version of the archive and for some Jenkins CI/CD support.  
+`archive-centos8.sh` exposes ports 80 and 443 into the webserver by default and names the container `archive`.
+You can alter these values with command line arguments like this (you can drop extra arguments if you don't need
+all 4):
+
+`archive-centos8.sh container_name http_port https_port database`  
 
 ## Built With
 
