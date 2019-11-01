@@ -89,11 +89,29 @@
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
+          key_file: id_rsa
+      #- name: Checkout FitsStorage into /opt
+      #  subversion:
+      #    repo: http://scisoft/svn/FitsStorage/branches/dev-oly-tests
+      #    dest: /opt/FitsStorage
+      #    update: no
+      - name: Copy key to server
+        copy:
+          src: id_rsa
+          dest: /opt/id_rsa
+          mode: u+rw,g-rw,o-rw
       - name: Checkout FitsStorage into /opt
-        subversion:
-          repo: http://scisoft/svn/FitsStorage/branches/dev-oly-tests
+        git:
+          repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
+          version: dev-oly-tests
           dest: /opt/FitsStorage
-          update: no
+          #key_file: /opt/id_rsa
+          ssh_opts: -i /opt/id_rsa
+          accept_hostkey: yes
+      - name: Remove key
+        file:
+          path: /opt/id_rsa
+          state: absent
       - name: Change FitsStorage owner to fitsdata
         file:
           path: /opt/FitsStorage
@@ -270,7 +288,7 @@
         register: mod_wsgi_entry_point
       - name: Restart WSGI service
         service: name=fits-httpd state=restarted
-        when: mod_wsgi_config_installed.changed or mod_wsgi_entry_point.changed
+        #when: mod_wsgi_config_installed.changed or mod_wsgi_entry_point.changed
       - name: Start WSGI service on boot
         service: name=fits-httpd enabled=yes
 

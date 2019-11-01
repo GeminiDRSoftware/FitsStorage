@@ -19,5 +19,6 @@ robot/*.xml
 
 # Ansible
 ansible/playbooks/secret
+ansible/playbooks/id_rsa
 ansible/vault.txt
 
