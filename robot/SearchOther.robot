@@ -49,7 +49,7 @@ SearchProgramTitle
   Page Should Contain  PI/CoI Name
   input text  name=ProgramText  Exoplanet
   click button  name=Search
-  Page Should Contain  N20191017S0215.fits
+  Page Should Contain  N20190620S0573.fits
 
 SearchTargetName
   [Documentation]  Search Adaptive Optics AO

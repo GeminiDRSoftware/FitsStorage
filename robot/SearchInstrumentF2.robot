@@ -14,7 +14,7 @@ SearchF2
   Select From List By Value  id:instselect  F2
   input text  name=date  20150501
   click button  name=Search
-  Page Should Contain  S20150501S0093.fits
+  Page Should Contain  S20150501S0127.fits
 
 SearchF2Filter
   [Documentation]  Search F2 with Filter

@@ -1,0 +1,23 @@
+# Editor Cruft
+*.swp
+~*
+
+# Python
+__pycache__
+*.pyc
+
+# OSX
+.DS_Store
+
+# IDEA
+.idea
+
+# Robot output
+robot/*.png
+robot/*.html
+robot/*.xml
+
+# Ansible
+ansible/playbooks/secret
+ansible/vault.txt
+

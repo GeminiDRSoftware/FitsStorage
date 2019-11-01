@@ -70,5 +70,5 @@ ViewCalibrations
   click button  name=Search
   Page Should Contain  N20130711S0203.fits
   Click Link  id=caltab
-  Sleep  3s  Waiting for tab to load
+  Sleep  30s  Waiting for tab to load
   Page Should Contain  GN-CAL20130710-22-033

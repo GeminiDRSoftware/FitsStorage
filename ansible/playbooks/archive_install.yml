@@ -259,7 +259,7 @@
       # TODO this is a complex XML patch if we try to apply it to the default file
       - name: Copy Mod-WSGI HTTPD config
         copy:
-          src: ../../httpd-patched.conf
+          src: ../../otherfiles/httpd-patched.conf
           dest: /opt/modwsgi-default/httpd.conf
         register: mod_wsgi_config_installed
       - name: Set WSGI entry point
