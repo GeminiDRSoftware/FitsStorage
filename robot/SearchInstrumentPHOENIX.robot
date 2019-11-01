@@ -12,6 +12,6 @@ SearchPHOENIX
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  PHOENIX
-  input text  name=date  20190322
+  input text  name=date  20190321-20190322
   click button  name=Search
   Page Should Contain  2019mar22_science018.fits

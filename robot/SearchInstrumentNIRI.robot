@@ -41,7 +41,7 @@ SearchNIRIMask
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  NIRI
-  input text  name=date  20120505
+  input text  name=date  20120504-20120505
   Select From List By Value  id:niri_mask  f6-cam
   click button  name=Search
   Page Should Contain  N20120505S0018.fits
@@ -51,7 +51,7 @@ SearchNIRICamera
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  NIRI
-  input text  name=date  20120505
+  input text  name=date  20120504-20120505
   Select From List By Value  id:niri_cam  f6
   click button  name=Search
   Page Should Contain  N20120505S0025.fits
@@ -81,7 +81,7 @@ SearchNIRIReadMode
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  NIRI
-  input text  name=date  20120505
+  input text  name=date  20120504-20120505
   Select From List By Value  id:niri_readmode  Medium_Background
   click button  name=Search
   Page Should Contain  N20120505S0035.fits

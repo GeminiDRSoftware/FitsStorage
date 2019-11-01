@@ -12,7 +12,7 @@ SearchNICI
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  NICI
-  input text  name=date  20130806
+  input text  name=date  20130805-20130806
   click button  name=Search
   Page Should Contain  S20130806S0071.fits
 

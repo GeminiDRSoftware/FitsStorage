@@ -12,7 +12,7 @@ SearchGMOSAll
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GMOS
-  input text  name=date  20130712
+  input text  name=date  20130711-20130712
   click button  name=Search
   Page Should Contain  GN2013BQ052-03.fits
   Page Should Contain  GS-2013A-Q-80
@@ -72,7 +72,7 @@ SearchGMOSAllNodShuffle
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GMOS
-  input text  name=date  20130712
+  input text  name=date  20130711-20130712
   Select From List By Value  id:NandS  Classic
   click button  name=Search
   Page Should Contain  S20130712S0078.fits
@@ -82,7 +82,7 @@ SearchGMOSAllReadoutSpeed
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GMOS
-  input text  name=date  20130712
+  input text  name=date  20130711-20130712
   Select From List By Value  id:gmos_readspeed  fast
   click button  name=Search
   Page Should Contain  N20130712S0005.fits
@@ -92,7 +92,7 @@ SearchGMOSAllReadoutGain
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GMOS
-  input text  name=date  20130712
+  input text  name=date  20130711-20130712
   Select From List By Value  id:gmos_gain  low
   click button  name=Search
   Page Should Contain  S20130712S0088.fits

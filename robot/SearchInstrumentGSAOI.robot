@@ -12,7 +12,7 @@ SearchGSAOI
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GSAOI
-  input text  name=date  20130201
+  input text  name=date  20130130-20130201
   click button  name=Search
   Page Should Contain  S20130201S0158.fits
 

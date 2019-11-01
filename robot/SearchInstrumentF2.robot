@@ -24,17 +24,17 @@ SearchF2Filter
   input text  name=date  20150501
   Select From List By Value  id:F2_filter  Ks
   click button  name=Search
-  Page Should Contain  S20150501S0124.fits
+  Page Should Contain  S20150501S0128.fits
 
 SearchF2Disperser
   [Documentation]  Search F2 with Disperser
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  F2
-  input text  name=date  20150501
+  input text  name=date  20150505
   Select From List By Value  id:F2_disperser  JH
   click button  name=Search
-  Page Should Contain  S20150501S0100.fits
+  Page Should Contain  S20150505S0292.fits
 
 SearchF2Mask
   [Documentation]  Search F2 with Mask

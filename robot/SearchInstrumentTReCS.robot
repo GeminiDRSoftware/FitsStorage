@@ -12,7 +12,7 @@ SearchTReCS
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  TReCS
-  input text  name=date  20120605
+  input text  name=date  20120604-20120605
   click button  name=Search
   Page Should Contain  rS20120605S0120.fits
 

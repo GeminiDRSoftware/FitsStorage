@@ -12,7 +12,7 @@ SearchGPI
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GPI
-  input text  name=date  20190811
+  input text  name=date  20190810-20190811
   click button  name=Search
   Page Should Contain  S20190811S0226.fits
 
@@ -21,7 +21,7 @@ SearchGPIFilter
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GPI
-  input text  name=date  20190811
+  input text  name=date  20190810-20190811
   Select From List By Value  id:gpi_filter  H
   click button  name=Search
   Page Should Contain  S20190811S0227.fits
@@ -31,7 +31,7 @@ SearchGPIDisperser
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GPI
-  input text  name=date  20190811
+  input text  name=date  20190810-20190811
   Select From List By Value  id:gpi_disperser  DISP_PRISM
   click button  name=Search
   Page Should Contain  S20190811S0227.fits

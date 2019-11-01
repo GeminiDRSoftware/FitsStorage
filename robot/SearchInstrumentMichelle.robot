@@ -12,7 +12,7 @@ SearchMichelle
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  michelle
-  input text  name=date  20111117
+  input text  name=date  20111116-20111117
   click button  name=Search
   Page Should Contain  N20111117S0104.fits
 

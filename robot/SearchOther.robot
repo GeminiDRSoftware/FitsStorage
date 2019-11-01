@@ -20,7 +20,7 @@ SearchObsTypeMosMask
   [Documentation]  Search Observation Type MOS MASK
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
-  input text  name=date  20130712
+  input text  name=date  20130711-20130712
   Select From List By Value  name:observation_type  MASK
   click button  name=Search
   Page Should Contain  GN2013BQ052-04.fits
