@@ -408,6 +408,15 @@ class StaticServer(object):
                 return resp.append(open(path, 'rb').read()).respond()
             except IOError:
                 resp.client_error(Return.HTTP_FORBIDDEN)
+        if len(uri) > 1 and uri[0] == 'help':
+            mtype, enc = mimetypes.guess_type(uri[-1])
+            try:
+                path = os.path.join(htmldocroot, '/'.join(uri))
+                if mtype is not None:
+                    resp.set_content_type(mtype)
+                return resp.append(open(path, 'rb').read()).respond()
+            except IOError:
+                resp.client_error(Return.HTTP_FORBIDDEN)
         return self.app(environ, start_response)
 
 htmldocroot = os.path.join(os.path.dirname(__file__), '..', 'htmldocroot')
