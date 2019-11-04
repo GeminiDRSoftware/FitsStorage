@@ -439,6 +439,58 @@ def staff_access():
 
     return template_args
 
+
+@templating.templated("user/admin_change_email.html")
+def admin_change_email():
+    """
+    Allows supersusers to set emails on user accounts
+    """
+
+    ctx = get_context()
+
+    # Process the form data first if there is any
+    formdata = ctx.get_form_data()
+    username = ''
+    email = ''
+    action = ''
+
+    # Parse the form data
+    if formdata:
+        if 'username' in list(formdata.keys()):
+            username = formdata['username'].value
+        if 'email' in list(formdata.keys()):
+            email = formdata['email'].value
+
+    thisuser = ctx.user
+    if thisuser is None or thisuser.superuser != True:
+        return dict(allowed = False)
+
+    template_args = dict(allowed = True)
+    template_args['user_list'] = ctx.session.query(User).order_by(User.gemini_staff, User.username)
+    if email and email_inuse(email):
+        template_args['email_in_use'] = True
+        return template_args
+    if email and (('@' not in email) or ('.' not in email) or (',' in email)):
+        template_args['email_invalid'] = "Not a valid Email address"
+        return template_args
+
+    # If we got an action, do it
+    if username:
+        try:
+            user = ctx.session.query(User).filter(User.username == username).one()
+            user.email = email
+            template_args['email_changed'] = True
+            template_args['action_user'] = user
+        except NoResultFound:
+            template_args['no_result'] = True
+
+    # Have applied changes, now generate list of staff users
+    template_args['user_list'] = ctx.session.query(User).order_by(User.gemini_staff, User.username)
+
+    ctx.session.commit()
+
+    return template_args
+
 @templating.templated("user/login.html")
 def login(things):
     """
@@ -541,6 +593,7 @@ def whoami(things):
     try:
         template_args['username'] = user.username
         template_args['fullname'] = user.fullname
+        template_args['is_superuser'] = user.superuser
     except AttributeError:
         # no user
         pass

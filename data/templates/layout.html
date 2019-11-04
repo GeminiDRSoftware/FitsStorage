@@ -2,7 +2,9 @@
 <html><head>
 <meta charset="UTF-8">
 {% block extra_header %}{% endblock %}
+{% block non_bootstrap_css %}
 <link rel="stylesheet" type="text/css" href="/static/table.css">
+{% endblock %}
 <title>{% block title %}{% endblock %}</title>
 <meta name="description" content="{% block description %}{% endblock %}">
 </head>

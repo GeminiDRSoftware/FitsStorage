@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{%  block extra_header %}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+{% endblock %}
+{% block non_bootstrap_css %}
+{% endblock %}
+
+{% block title %}Gemini Archive Staff Email Change {% endblock %}
+
+{% block body %}
+<div class="container">
+<div class="row">
+    <h1>Gemini Archive Staff Email Change</h1>
+</div>
+    {% if allowed %}
+        {%  if email_in_use %}
+            <p>That email address is already taken.  User not updated.</p>
+        {% endif %}
+     {%  if email_invalid %}
+       <p>Email invalid.  User not updated</p>
+     {% endif %}
+     {% if email_changed %}
+       <p>Email updated for username: {{ action_user.username }} - {{ action_user.fullname }} - {{ action_user.email }}</p>
+     {% elif no_result %}
+       <p>Could not locate user in database</p>
+     {% endif %}
+        <div class="row">
+            <div class="col-12">
+                <h2>Change Email</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <form action="/admin_change_email" method="POST">
+                    <div class="form-group">
+                        <label for="username">Username:</label>
+                        <input class="form-control" type="text" name="username" id="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">E-mail:</label>
+                        <input class="form-control" type="email" name="email" id="email">
+                    </div>
+                    <button type="submit" class="btn btn-primary" value="Submit">Submit</button>
+                </form>
+                <br/>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <table class="table table-striped table-hover" id="usertable">
+                 <thead>
+                     <tr><th>Username</th><th>Full Name</th><th>Email</th><th>Staff Access</th><th>Superuser</th><tr>
+                 </thead>
+                 <tbody>
+                   {% for user in user_list %}
+                     <tr onclick="$('#username').val('{{ user.username }}');">
+                         <td>{{ user.username }}</td><td>{{ user.fullname }}</td><td>{{ user.email }}
+                         <td>{{ user.gemini_staff }}</td><td>{{ user.superuser }}</td></tr>
+                   {% endfor %}
+                 </tbody>
+                </table>
+            </div>
+        </div>
+</div>
+{% else %}
+ <p>You don't appear to be logged in as a superuser. Sorry.</p>
+{% endif %}
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<script>
+$(function() {
+    $("#username").on("keyup", function() {
+        var value = $(this).val();
+        $("#usertable > tbody > tr").filter(function() {
+            $(this).toggle($(this).text().indexOf(value) > -1)
+        });
+    });
+});
+</script>
+{% endblock %}
