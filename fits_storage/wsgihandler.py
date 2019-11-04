@@ -30,7 +30,7 @@ from fits_storage.web.fileserver import fileserver, download, download_post
 from fits_storage.web.qastuff import qareport, qametrics, qaforgui
 from fits_storage.web.statistics import content, stats
 from fits_storage.web.user import request_account, password_reset, request_password_reset, login, logout, whoami, \
-    change_password, admin_change_email
+    change_password, change_email, admin_change_email
 from fits_storage.web.user import staff_access, user_list
 from fits_storage.web.userprogram import my_programs
 from fits_storage.web.searchform import searchform, nameresolver
@@ -264,6 +264,7 @@ url_map = Map([
     Rule('/password_reset/<int:userid>/<token>', password_reset),   # account password reset request
     Rule('/login/<seq_of:things>', login),                          # login form
     Rule('/whoami/<seq_of:things>', whoami),                        # whoami
+    Rule('/change_email/<seq_of:things>', change_email),            # change_password
     Rule('/change_password/<seq_of:things>', change_password),      # change_password
     Rule('/my_programs/<seq_of:things>', my_programs),              # my_programs
     Rule('/preview/<filenamegiven>', preview),                      # previews

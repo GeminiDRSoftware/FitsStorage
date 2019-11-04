@@ -265,6 +265,70 @@ def password_reset(userid, token):
 
     return template_args
 
+@templating.templated("user/change_email.html")
+def change_email(things):
+    """
+    Handles a logged in user wanting to change their email.
+    """
+    # Present and process a change email form. User must be logged in.
+
+    ctx = get_context()
+
+    # Process the form data first if there is any
+    formdata = ctx.get_form_data()
+    request_attempted = False
+    valid_request = None
+    reason_bad = None
+    successful = False
+
+    newemail = ''
+    newagain = ''
+
+    # Parse the form data here
+    if formdata:
+        request_attempted = True
+        if 'newemail' in formdata:
+            newemail = formdata['newemail'].value
+        if 'newagain' in formdata:
+            newagain = formdata['newagain'].value
+
+        # Validate what came in
+        valid_request = False
+
+        if newemail == '':
+            reason_bad = 'No new email supplied'
+        elif newagain == '':
+            reason_bad = 'No new email again supplied'
+        elif ('@' not in newemail) or ('.' not in newemail):
+            reason_bad = "Not a valid Email address"
+        elif ',' in newemail:
+            reason_bad = "Email address cannot contain commas"
+        elif email_inuse(newemail):
+            reason_bad = "Email address is already in use"
+        elif newemail != newagain:
+            reason_bad = 'New Email and New Email Again do not match'
+        else:
+            valid_request = True
+
+    if valid_request:
+        user = ctx.user
+        if user is None:
+            valid_request = False
+            reason_bad = 'You are not currently logged in'
+        else:
+            user.email = newemail
+            ctx.session.commit()
+            successful = True
+
+    template_args = dict(
+        successful    = successful,
+        reason_bad    = reason_bad,
+        # Construct the things_string to link back to the current form
+        thing_string  = '/'.join(things)
+        )
+
+    return template_args
+
 @templating.templated("user/change_password.html")
 def change_password(things):
     """
