@@ -3,6 +3,7 @@ This module handles the web 'user' functions - creating user accounts, login / l
 """
 
 from sqlalchemy import desc
+from sqlalchemy.sql import functions
 
 from ..orm import NoResultFound
 from ..orm.user import User
@@ -74,6 +75,8 @@ def request_account(things):
             reason_bad = "Not a valid Email address"
         elif ',' in email:
             reason_bad = "Email address cannot contain commas"
+        elif email_inuse(email):
+            reason_bad = "Email already registered"
         else:
             valid_request = True
 
@@ -574,12 +577,21 @@ def user_list():
 
 def email_inuse(email):
     """
-    Check the database to see if this email is already in use. Returns True if it is, False otherwise
+    Check the database to see if this email is already in use. Returns True if it is, False otherwise.
+
+    Email addresses are case-insensitive, so we have to get clever here to do a case insensitive
+    match.  Also, in future we can add a constraint to the database.  However, currently we already
+    have existing users with duplicate emails.  So, until we have a strategy for how to unwind those
+    accounts we can't constrain the database.  A trigger would be another option, but we'd still want
+    to catch it here to alert the user.  I'm inclined to just fix the account data and then add a
+    proper unique constraint and skip doing any kind of trigger validation.
     """
-
-    num = get_context().session.query(User).filter(User.email == email).count()
-
-    return num != 0
+    rows = get_context().session.execute("select count(1) from archiveuser where LOWER(email)=:email",
+                                         {'email': email.lower()})
+    for row in rows:
+        if len(row) > 0 and row[0] == 0:
+            return False
+    return True
 
 def username_inuse(username):
     """
@@ -587,7 +599,6 @@ def username_inuse(username):
     """
 
     num = get_context().session.query(User).filter(User.username == username).count()
-
     return num != 0
 
 digits_cre = re.compile(r'\d')
