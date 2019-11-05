@@ -203,6 +203,32 @@ function unmarkAll() {
     });
 };
 
+// For handling range-selects in downloadables list
+// see for inspiration:
+// https://codepen.io/Mestika/pen/azaxQm
+var lastChecked = null;
+function handle_select(e){
+  if(!lastChecked) {
+    lastChecked = this;
+    return;
+  }
+
+  if(e.shiftKey) {
+    var from = $('.mark').index(this);
+    var to = $('.mark').index(lastChecked);
+
+    var start = Math.min(from, to);
+    var end = Math.max(from, to) + 1;
+
+    $('.mark').slice(start, end)
+      .filter(':not(:disabled)')
+      .prop('checked', lastChecked.checked);
+    // countChecked();
+  }
+  lastChecked = this;
+}
+
+
 $(document).ready(function() {
     $("#loading").hide();
     $("#loading_cals").hide();
@@ -242,6 +268,7 @@ $(document).ready(function() {
     $('#resultstab').click(function() {
         ResultsTab();
     });
+    $('.mark').click(handle_select);
     setPreviewVisibility();
     setInfoVisibility();
     unmarkAll();
