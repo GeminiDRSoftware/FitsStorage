@@ -60,7 +60,9 @@
 {% else %}
  <p>You don't appear to be logged in as a superuser. Sorry.</p>
 {% endif %}
+{% endblock %}
 
+{% block bootstrap_end_body %}
 <script>
 $(function() {
     $("#username").on("keyup", function() {
