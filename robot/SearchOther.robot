@@ -60,3 +60,19 @@ SearchTargetName
   click button  name=Search
   Page Should Contain  N20120629S0179.fits
 
+SearchTargetNameWithSlash
+  [Documentation]  Search Adaptive Optics AO
+  Open Browser  ${URL}/searchform  ${BROWSER}
+  Page Should Contain  PI/CoI Name
+  input text  name=object  C/2016 VZ18
+  click button  name=Search
+  Page Should Contain  N20170614S0179.fits
+
+SearchTargetNameWithPlus
+  [Documentation]  Search Adaptive Optics AO
+  Open Browser  ${URL}/searchform  ${BROWSER}
+  Page Should Contain  PI/CoI Name
+  input text  name=object  WISE0833+0052
+  click button  name=Search
+  Page Should Contain  S20180305S0039.fits
+
