@@ -13,7 +13,12 @@
   <li class="whoami">{{ fullname }}</li>
   <li class="whoami"><a href="/logout">Log Out</a></li>
   <li class="whoami"><a href="/change_password/{{ thing_string }}">Change Password</a></li>
+  <li class="whoami"><a href="/change_email/{{ thing_string }}">Change Email</a></li>
   <li class="whoami"><a href="/my_programs/{{ thing_string }}">My Programs</a></li>
+  {%  if is_superuser %}
+      <li class="whoami"><i>Admin:</i></li>
+      <li class="whoami"><a href="/admin_change_email/">Change User's Email</a></li>
+  {% endif %}
   </ul>
 {% else %}
   <img src="/static/user1-64x64.png" height="18px"> Not logged in &#9662;

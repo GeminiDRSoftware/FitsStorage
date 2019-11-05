@@ -68,8 +68,9 @@ class User(Base):
 
         """
         hashobj = sha256()
-        self.salt = standard_b64encode(urandom(256))
-        hashobj.update(self.salt)
+        salt = standard_b64encode(urandom(256))
+        self.salt = salt.decode('utf8')
+        hashobj.update(salt)
         hashobj.update(password.encode('utf8'))
         self.password = hashobj.hexdigest()
         password = None
@@ -96,7 +97,7 @@ class User(Base):
             return False
 
         hashobj = sha256()
-        hashobj.update(self.salt)
+        hashobj.update(self.salt.encode('utf8'))
         hashobj.update(candidate.encode('utf8'))
         if hashobj.hexdigest() == self.password:
             return True
@@ -112,7 +113,7 @@ class User(Base):
         Returns the token for convenience.
 
         """
-        self.reset_token = b32encode(urandom(32))
+        self.reset_token = b32encode(urandom(32)).decode('utf-8')
         self.reset_token_expires = datetime.utcnow() + timedelta(minutes=15)
         return self.reset_token
 

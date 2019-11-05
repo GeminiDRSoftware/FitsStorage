@@ -268,6 +268,70 @@ def password_reset(userid, token):
 
     return template_args
 
+@templating.templated("user/change_email.html")
+def change_email(things):
+    """
+    Handles a logged in user wanting to change their email.
+    """
+    # Present and process a change email form. User must be logged in.
+
+    ctx = get_context()
+
+    # Process the form data first if there is any
+    formdata = ctx.get_form_data()
+    request_attempted = False
+    valid_request = None
+    reason_bad = None
+    successful = False
+
+    newemail = ''
+    newagain = ''
+
+    # Parse the form data here
+    if formdata:
+        request_attempted = True
+        if 'newemail' in formdata:
+            newemail = formdata['newemail'].value
+        if 'newagain' in formdata:
+            newagain = formdata['newagain'].value
+
+        # Validate what came in
+        valid_request = False
+
+        if newemail == '':
+            reason_bad = 'No new email supplied'
+        elif newagain == '':
+            reason_bad = 'No new email again supplied'
+        elif ('@' not in newemail) or ('.' not in newemail):
+            reason_bad = "Not a valid Email address"
+        elif ',' in newemail:
+            reason_bad = "Email address cannot contain commas"
+        elif email_inuse(newemail):
+            reason_bad = "Email address is already in use"
+        elif newemail != newagain:
+            reason_bad = 'New Email and New Email Again do not match'
+        else:
+            valid_request = True
+
+    if valid_request:
+        user = ctx.user
+        if user is None:
+            valid_request = False
+            reason_bad = 'You are not currently logged in'
+        else:
+            user.email = newemail
+            ctx.session.commit()
+            successful = True
+
+    template_args = dict(
+        successful    = successful,
+        reason_bad    = reason_bad,
+        # Construct the things_string to link back to the current form
+        thing_string  = '/'.join(things)
+        )
+
+    return template_args
+
 @templating.templated("user/change_password.html")
 def change_password(things):
     """
@@ -442,6 +506,58 @@ def staff_access():
 
     return template_args
 
+
+@templating.templated("user/admin_change_email.html")
+def admin_change_email():
+    """
+    Allows supersusers to set emails on user accounts
+    """
+
+    ctx = get_context()
+
+    # Process the form data first if there is any
+    formdata = ctx.get_form_data()
+    username = ''
+    email = ''
+    action = ''
+
+    # Parse the form data
+    if formdata:
+        if 'username' in list(formdata.keys()):
+            username = formdata['username'].value
+        if 'email' in list(formdata.keys()):
+            email = formdata['email'].value
+
+    thisuser = ctx.user
+    if thisuser is None or thisuser.superuser != True:
+        return dict(allowed = False)
+
+    template_args = dict(allowed = True)
+    template_args['user_list'] = ctx.session.query(User).order_by(User.gemini_staff, User.username)
+    if email and email_inuse(email):
+        template_args['email_in_use'] = True
+        return template_args
+    if email and (('@' not in email) or ('.' not in email) or (',' in email)):
+        template_args['email_invalid'] = "Not a valid Email address"
+        return template_args
+
+    # If we got an action, do it
+    if username:
+        try:
+            user = ctx.session.query(User).filter(User.username == username).one()
+            user.email = email
+            template_args['email_changed'] = True
+            template_args['action_user'] = user
+        except NoResultFound:
+            template_args['no_result'] = True
+
+    # Have applied changes, now generate list of staff users
+    template_args['user_list'] = ctx.session.query(User).order_by(User.gemini_staff, User.username)
+
+    ctx.session.commit()
+
+    return template_args
+
 @templating.templated("user/login.html")
 def login(things):
     """
@@ -544,6 +660,7 @@ def whoami(things):
     try:
         template_args['username'] = user.username
         template_args['fullname'] = user.fullname
+        template_args['is_superuser'] = user.superuser
     except AttributeError:
         # no user
         pass

@@ -29,7 +29,8 @@ from fits_storage.web.selection import getselection
 from fits_storage.web.fileserver import fileserver, download, download_post
 from fits_storage.web.qastuff import qareport, qametrics, qaforgui
 from fits_storage.web.statistics import content, stats
-from fits_storage.web.user import request_account, password_reset, request_password_reset, login, logout, whoami, change_password
+from fits_storage.web.user import request_account, password_reset, request_password_reset, login, logout, whoami, \
+    change_password, change_email, admin_change_email
 from fits_storage.web.user import staff_access, user_list
 from fits_storage.web.userprogram import my_programs
 from fits_storage.web.searchform import searchform, nameresolver
@@ -242,6 +243,7 @@ url_map = Map([
         methods=['POST']),                                          # JSON RPC dispatcher
     Rule('/curation', curation_report),                             # curation_report handler
     Rule('/staff_access', staff_access),                            # staff_access
+    Rule('/admin_change_email', admin_change_email),                # admin page for changing a user's email
 
     Rule('/nameresolver/<resolver>/<target>', nameresolver),        # Name resolver proxy
     Rule('/fileontape/<filename>', fileontape),                     # The fileontape handler
@@ -262,6 +264,7 @@ url_map = Map([
     Rule('/password_reset/<int:userid>/<token>', password_reset),   # account password reset request
     Rule('/login/<seq_of:things>', login),                          # login form
     Rule('/whoami/<seq_of:things>', whoami),                        # whoami
+    Rule('/change_email/<seq_of:things>', change_email),            # change_password
     Rule('/change_password/<seq_of:things>', change_password),      # change_password
     Rule('/my_programs/<seq_of:things>', my_programs),              # my_programs
     Rule('/preview/<filenamegiven>', preview),                      # previews
