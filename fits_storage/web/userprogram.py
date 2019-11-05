@@ -95,15 +95,19 @@ def request_user_program(user, program_id, program_key):
     if query.count() > 0:
         return "That program ID is already registered for this user"
 
-    valid = validate_program_key(program_id, program_key)
+    try:
+        valid = validate_program_key(program_id, program_key)
 
-    if valid:
-        userprog = UserProgram(user.id, program_id)
-        session.add(userprog)
-        session.commit()
-        return ""
-    else:
-        return "Key not valid for program"
+        if valid:
+            userprog = UserProgram(user.id, program_id)
+            session.add(userprog)
+            session.commit()
+            return ""
+        else:
+            return "Key not valid for program"
+    except Exception:
+        return "Unable to verify program key with ODB"
+
 
 def validate_program_key(program_id, program_key):
     """
