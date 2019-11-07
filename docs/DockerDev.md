@@ -31,7 +31,7 @@ The images all expect to run on a Docker network called `fitsstorage`.  This all
 run the database, tools, and archive in separate containers yet still allow them to find
 eachother.  To set this up, you need to do a one time creation of the network
 
-```shell script
+```
 docker network create fitsstorage
 ```
 
