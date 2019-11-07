@@ -2,7 +2,7 @@ FROM gemini/fitsarchiveutils:jenkins
 LABEL maintainer="ooberdorf@gemini.edu"
 
 # INSTALL HTTPD AND POSTGRESQL
-RUN yum -y install httpd \
+RUN yum -y --nogpgcheck install httpd \
                    httpd-devel \
                    mod_ssl \
                    platform-python-devel
