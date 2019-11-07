@@ -188,9 +188,10 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
         The instance consumes its source data and once it has iterated over all the
         available header objects, it can only be used to query the totalized values.
         """
-        def __init__(self, gen, headers):
+        def __init__(self, gen, headers, sumtype):
             print("Building RowYielder")
             self.gen     = gen
+            self.sumtype = sumtype
             self.headers = iter(headers)
             self.bcount  = 0  # Byte count
             self.down    = 0  # Downloadable files
@@ -225,6 +226,8 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
             header = next(self.headers)
             print("got header")
             row = sumgen.table_row(*header)
+            # add row "type" to support tab-differentiation in our template
+            row.sumtype = self.sumtype
             print("got row using table_row()")
             self.total = self.total + 1
             print("checking can_download")
@@ -244,9 +247,10 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
         insert_prev   = sumtype in {'searchresults', 'customsearch'},
         uri           = sumgen.uri,
         headers       = sumgen.table_header(),
-        data_rows     = RowYielder(sumgen, headers),
+        data_rows     = RowYielder(sumgen, headers, sumtype),
         down_all_link = download_all_url,
         json_res_link = json_results_url,
+        sumtype       = sumtype,
         )
 
     print("Returning out of summary_table")
