@@ -36,7 +36,7 @@ Click Here to open in a new tab</a></p><br>
 </TABLE>
 {# Only show download button if we are allowed to download anything #}
 {% if clickable == True and data_rows.downloadable == True %}
-<INPUT id='markall' type='button' value='Mark All Files'>
+<INPUT id='markall_{{ sumtype }}' type='button' value='Mark All Files'>
 <INPUT type='submit' value='Download Marked Files'>
 </FORM>
 {% endif %}

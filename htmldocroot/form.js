@@ -82,6 +82,11 @@ function CalsTab() {
             $("#loading_cals").show();
             $('#calibration_results').load(calurl, function(){
                 $("#loading_cals").hide();
+                // we 'unmarkAll' on the associated cals once they are loaded
+                // because that's when the UI elements are present and we can
+                // attach listeners to them (unmarkAll does this work on the
+                // first call)
+                unmarkAll('associated_cals');
             });
         } else {
             $("#not_loading_cals").show();
@@ -187,45 +192,53 @@ function setInfoVisibility() {
     });
 };
 
-function markAll() {
-    $("input.mark").prop('checked', true);
-    $('#markall').prop('value', 'Unmark All Files');
-    $('#markall').click(function(){
-        unmarkAll();
+// Mark all the checkboxes for the given summary table
+// and register/configure the "Unmark All" button to
+// deselect all on that same summary table (via sumtype)
+function markAll(sumtype) {
+    $("input.mark_" + sumtype).prop('checked', true);
+    $('#markall_' + sumtype).prop('value', 'Unmark All Files');
+    $('#markall_' + sumtype).off().on('click', function(){
+        unmarkAll(sumtype);
     });
 };
 
-function unmarkAll() {
-    $("input.mark").prop('checked', false);
-    $('#markall').prop('value', 'Mark All Files');
-    $('#markall').click(function(){
-        markAll();
+// Unmark all the checkboxes for the given summary table
+// and register/configure the Mark All button to do a
+// select all on that same summary table (via sumtype)
+function unmarkAll(sumtype) {
+    $("input.mark_" + sumtype).prop('checked', false);
+    $('#markall_' + sumtype).prop('value', 'Mark All Files');
+    $('#markall_' + sumtype).off().on('click', function(){
+        markAll(sumtype);
     });
+    $('.mark_' + sumtype).off().on('click', {sumtype: sumtype}, handle_select);
 };
 
 // For handling range-selects in downloadables list
 // see for inspiration:
 // https://codepen.io/Mestika/pen/azaxQm
-var lastChecked = null;
+var lastChecked = {};
 function handle_select(e){
-  if(!lastChecked) {
-    lastChecked = this;
+    var sumtype = e.data.sumtype
+  if(!lastChecked[sumtype]) {
+    lastChecked[sumtype] = this;
     return;
   }
 
   if(e.shiftKey) {
-    var from = $('.mark').index(this);
-    var to = $('.mark').index(lastChecked);
+    var from = $('.mark_' + sumtype).index(this);
+    var to = $('.mark_' + sumtype).index(lastChecked[sumtype]);
 
     var start = Math.min(from, to);
     var end = Math.max(from, to) + 1;
 
-    $('.mark').slice(start, end)
+    $('.mark_' + sumtype).slice(start, end)
       .filter(':not(:disabled)')
-      .prop('checked', lastChecked.checked);
+      .prop('checked', lastChecked[sumtype].checked);
     // countChecked();
   }
-  lastChecked = this;
+  lastChecked[sumtype] = this;
 }
 
 
@@ -268,9 +281,12 @@ $(document).ready(function() {
     $('#resultstab').click(function() {
         ResultsTab();
     });
-    $('.mark').click(handle_select);
     setPreviewVisibility();
     setInfoVisibility();
-    unmarkAll();
+
+    // customsearch is the initially visible table, so
+    // we register it in it's "Mark All" button by calling
+    // unmarkAll with the 'customsearch' argument
+    unmarkAll('customsearch');
 });
 
