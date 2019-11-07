@@ -14,7 +14,7 @@ RUN yum -y install openssl \
                    gcc-gfortran \
                    cfitsio-devel \
                    git
-RUN yum -y install python3-pip
+RUN yum -y --nogpgcheck install python3-pip
 
 # Fix Centos 8 broken Locale
 RUN yum -y install glibc-langpack-en glibc-common
