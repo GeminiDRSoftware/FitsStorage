@@ -95,8 +95,8 @@ def download_post():
     # Parse form data
     formdata = get_context().req.get_form_data()
     thelist = []
-    if hasattr(formdata, 'files'):
-        fields = formdata.files
+    if 'files' in formdata: #hasattr(formdata, 'files'):
+        fields = formdata["files"]
         if isinstance(fields, list):
             for field in fields:
                 thelist.append(str(field.value))

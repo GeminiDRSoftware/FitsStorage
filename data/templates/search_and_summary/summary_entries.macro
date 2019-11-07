@@ -26,7 +26,7 @@
       {%- elif column.key == 'observation_class' -%}{{ generate_uri_link(column.content, row.uri) }}
       {%- elif column.key == 'observation_type' -%}{{ generate_uri_link(column.content, row.uri) }}
       {%- elif column.key == 'object' -%}{{ generate_object(column.content) }}
-      {%- elif column.key == 'download' -%}{{ generate_download(column.content) }}
+      {%- elif column.key == 'download' -%}{{ generate_download(column.content, row.sumtype) }}
     {%- endif -%}
   {%- endif -%}
 {%- endfor %}
@@ -93,11 +93,11 @@
 {%- endif -%}
 {%- endmacro -%}
 
-{%- macro generate_download(col) -%}
+{%- macro generate_download(col, sumtype) -%}
 <div class='center'>
 {%- if col.prev %}<span class="preview"><a href="/preview/{{ col.name }}">[P]</a> </span>{% endif -%}
 <a href="/file/{{ col.name }}">[D]</a>
-{%- if col.down_sel %} <input type='checkbox' class='mark' name='files' value='{{ col.name }}'>{% endif -%}
+{%- if col.down_sel %} <input type='checkbox' class='mark mark_{{ sumtype }}' name='files' value='{{ col.name }}'>{% endif -%}
 </div>
 {%- endmacro -%}
 
