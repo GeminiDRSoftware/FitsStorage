@@ -43,13 +43,13 @@ even more useful if you are making any schema changes.  For postgres, we use the
 official Postgres image and just supply appropriate arguments for the network, database
 name and a login.
 
-```shell script
+```
 ./docker/scripts/postgres.sh
 ```
 
 After you have run the container like this, in future you can just use
 
-```shell script
+```
 docker container stop postgres
 docker container start postgres
 ```
@@ -63,7 +63,7 @@ utility to initialize it.  Per Docker best practices, we have separated this tas
 out into a dedicated container and not on the website.  As this is a custom
 container, you have to build the image and then create the container.
 
-```shell script
+```
 ./docker/scripts/buildfitsstorageutils-centos8.sh
 ./docker/scripts/fitsstorageutils-centos8.sh
 ```
@@ -73,7 +73,7 @@ already be configured with an environment to point it to your new `postgres`
 database.  You will be sitting in a folder with the FitsStorage codebase.
 To initialize the database, simply run:
 
-```shell script
+```
 python ./fits_storage/scripts/create_tables.py
 ```
 
@@ -87,7 +87,7 @@ Now that you have initialized the database, you can run the website in a
 container as well.  Again, this is custom so we build the image and then
 create a container based on that.  To do this, run:
 
-```shell script
+```
 ./docker/scropts/buildarchive-centos8.sh
 ./docker/scripts/archive-centos8.sh
 ```
@@ -107,9 +107,9 @@ you place files in `~/dataflow` you can ingest them.  To do this, start
 the utilities container again with `fitsstorageutils-centos8.sh` and
 run this at the prompt:
 
-```shell script
-python fits_storage/scripts/add_to_ingest_queue.py
-python fits_storage/scripts/service_ingest_queue.py --empty
+```
+python3 fits_storage/scripts/add_to_ingest_queue.py
+python3 fits_storage/scripts/service_ingest_queue.py --empty
 ```
 
 The first command should queue up all of your data files for ingest.  The
