@@ -8,6 +8,16 @@ generating previews, and for feeding datafiles upstream from the individual site
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
 
+### Dev Options
+
+There are multiple ways to deploy and run the FitsStorage website.  I am refactoring these instructions for
+clarity by breaking out each option into a dedicated document.  While I am working on that, I will leave the
+information below as it is still useful.
+
+[OSX Dev](docs/OSX.md)
+[Docker Dev](docs/DockerDev.md)
+[Ansible Dev](docs/AnsibleDev.md)
+
 ### Prerequisites
 
 These instructions cover setting the project up to run for development on OSX.
