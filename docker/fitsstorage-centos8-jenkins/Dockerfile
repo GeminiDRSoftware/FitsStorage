@@ -17,7 +17,7 @@ RUN yum -y install openssl \
 RUN yum -y --nogpgcheck install python3-pip
 
 # Fix Centos 8 broken Locale
-RUN yum -y install glibc-langpack-en glibc-common
+RUN yum -y --nogpgcheck install glibc-langpack-en glibc-common
 #RUN localedef --no-archive -i en_US -f UTF-8 en_US.UTF-8
 
 # SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
