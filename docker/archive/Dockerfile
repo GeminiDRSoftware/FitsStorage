@@ -2,12 +2,14 @@ FROM fitsstorageutils:latest
 LABEL maintainer="ooberdorf@gemini.edu"
 
 # INSTALL HTTPD AND POSTGRESQL
-RUN yum -y install httpd \
+RUN yum -y install --nogpgcheck httpd \
                    httpd-devel \
-                   mod_ssl
+                   mod_ssl \
+                   platform-python-devel
 
 # SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
-RUN pip install mod_wsgi==4.6.5
+RUN dnf -y install redhat-rpm-config
+RUN pip3 install mod_wsgi==4.6.5
 
 # PUT APACHE LOGS TO DOCKER OUTPUT
 # need the modwsgi-default folder here so we can link out the logs
@@ -27,10 +29,10 @@ COPY otherfiles/etc_systemd_system_fits-httpd.service /etc/systemd/system/fits-h
 COPY otherfiles/etc-sysconfig-httpd /etc/sysconfig/httpd
 
 # write a program to do the patch? could also do this by just copying in a fixed config file that we maintain, probably better
-COPY otherfiles/httpd-patched.conf /opt/modwsgi-default/httpd.conf
+COPY otherfiles/httpd-patched-centos8.conf /opt/modwsgi-default/httpd.conf
 
 EXPOSE 80
 EXPOSE 443
 
-ENV LOG_LEVEL DEBUG
-ENTRYPOINT ["/opt/modwsgi-default/apachectl", "-D", "FOREGROUND"]
+CMD ["/opt/modwsgi-default/apachectl", "-D", "FOREGROUND"]
+#ENTRYPOINT ["bash"]
