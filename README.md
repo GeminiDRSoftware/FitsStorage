@@ -16,7 +16,6 @@ information below as it is still useful.
 
 [OSX Dev](docs/OSX.md)
 [Docker Dev](docs/DockerDev.md)
-[Ansible Dev](docs/AnsibleDev.md)
 
 ### Prerequisites
 
