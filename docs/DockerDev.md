@@ -19,21 +19,26 @@ file downloads from your dev archive without pulling down all the datafiles.
 However, I would suggest getting your docker setup without it first and then come
 back to it when you are ready.
 
+## Folders
+
+The containers built by our helper scripts depend on a few folders.  It is
+best if you create these folders now and toss some sample data into one of 
+them for ingest later.  These folders are:
+
+```
+mkdir -p ~/testdata/archive-data-upload_staging
+mkdir -p ~/testdata/archive-sci-dataflow
+mkdir -p ~/testdata/onsite-data-upload_staging
+mkdir -p ~/testdata/onsite-sci-dataflow
+```
+
+Copy your datafiles into ~/testdata/onsite-sci-dataflow
+
 ## Scripts
 
 All of the Docker support is saved in the `docker/` folder in the project.  This consists
 of a set of Dockerfiles to build various machine types and supporting scripts to
 simplify spinning them up.
-
-### Network
-
-The images all expect to run on a Docker network called `fitsstorage`.  This allows us to 
-run the database, tools, and archive in separate containers yet still allow them to find
-eachother.  To set this up, you need to do a one time creation of the network
-
-```
-docker network create fitsstorage
-```
 
 ### Postgres
 
@@ -47,71 +52,63 @@ name and a login.
 ./docker/scripts/postgres.sh
 ```
 
-After you have run the container like this, in future you can just use
+### Build Images
+
+The docker support for running a cluster depends on some custom images.  There
+are helper build scripts to easily create these with the proper parameters and
+names.
 
 ```
-docker container stop postgres
-docker container start postgres
+bash ./docker/scripts/buildfitsstorageutils.sh
+bash ./docker/scripts/buildarchive.sh
 ```
 
-to manage the instance.
+### PostgreSQL Databases
 
-### Utilities
+For the cluster, we setup two postgres databases.  One of these is used by our
+'onsite' website and the other is used by our 'public' archive website.  We use
+the off-the-shelf PostgreSQL docker image from dockerhub and we run our 
+`create_tables.py` on each to initialized them.  Running `create_tables.py` is
+done by using a one shot container based on the `fitsstorageutils` image
+created above.
 
-Once you have the database up and running, you will want to run the FitsStorage 
-utility to initialize it.  Per Docker best practices, we have separated this task
-out into a dedicated container and not on the website.  As this is a custom
-container, you have to build the image and then create the container.
-
-```
-./docker/scripts/buildfitsstorageutils-centos8.sh
-./docker/scripts/fitsstorageutils-centos8.sh
-```
-
-This container runs in the foreground and gives you a `bash` prompt.  It will
-already be configured with an environment to point it to your new `postgres`
-database.  You will be sitting in a folder with the FitsStorage codebase.
-To initialize the database, simply run:
+All of this is wrapped up in a helper script, so you can simply do:
 
 ```
-python ./fits_storage/scripts/create_tables.py
+bash ./docker/scripts/postgres.sh
 ```
 
-When you exit the bash shell, the container will be cleaned up.  So, for the
-utilities you will wan to run `fitsstorageutils-centos8.sh` any time you want
-to use them in future.
+### Onsite Website
+
+We can setup a container to run as if it is the 'onsite' website.  This is the
+one hosted internally at Gemini North or South and is distinct from the public
+facing 'Archive Website'.  To run this, you can use the helper script:
+
+```
+bash ./docker/scripts/onsite.sh
+```
 
 ### Archive Website
 
 Now that you have initialized the database, you can run the website in a
-container as well.  Again, this is custom so we build the image and then
-create a container based on that.  To do this, run:
+container as well.  To do this, run:
 
 ```
-./docker/scropts/buildarchive-centos8.sh
-./docker/scripts/archive-centos8.sh
+bash ./docker/scripts/api.sh
+bash ./docker/scripts/archive.sh
 ```
 
 This container will expose the website on port 8080 on your host machine.
 So, you can now browse to `http://localhost:8080/searchform` and see
 the website.  You won't have any data since you haven't ingested any yet.
 
-## Ingesting Data
+## Cleanup
 
-To be useful, you'll likely want to ingest some data into the website.  We
-can do this manually from the utilities container, but we'll need to 
-map in a folder with data to load.
-
-The utilities container maps `~/dataflow` to `/sci/dataflow`.  So, if
-you place files in `~/dataflow` you can ingest them.  To do this, start
-the utilities container again with `fitsstorageutils-centos8.sh` and
-run this at the prompt:
+After you are up and running, you can clean everything up at any time
+by running the cleanup script.  This stops and removes all of the above
+containers and it clears out your data folders, save for the one you put 
+your test data in at the beginning.
 
 ```
-python3 fits_storage/scripts/add_to_ingest_queue.py
-python3 fits_storage/scripts/service_ingest_queue.py --empty
+bash ./docker/scripts/cleanup.sh
 ```
-
-The first command should queue up all of your data files for ingest.  The
-second command runs the ingest as a one-shot.  Once it finishes, you should
-see the data in your website.

@@ -49,10 +49,8 @@ pipeline {
         stage('Building Docker Containers') {
             steps {
                 script {
-//                     def utilsimage = docker.build("gemini/fitsarchiveutils:${build_tag}", " -f docker/fitsstorage-centos8/Dockerfile .")
-//                     def archiveimage = docker.build("gemini/archive:${build_tag}", " -f docker/archive-centos8/Dockerfile .")
-                    def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f docker/fitsstorage-centos8-jenkins/Dockerfile .")
-                    def archiveimage = docker.build("gemini/archive:jenkins", " -f docker/archive-centos8-jenkins/Dockerfile .")
+                    def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f docker/fitsstorage-jenkins/Dockerfile .")
+                    def archiveimage = docker.build("gemini/archive:jenkins", " -f docker/archive-jenkins/Dockerfile .")
                     sh '''
                     docker network create fitsstorage-jenkins || true
                     docker container rm fitsdata-jenkins || true

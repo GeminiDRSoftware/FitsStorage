@@ -148,24 +148,25 @@ look at are
 Script to create the images:
 
 ```shell script
-buildarchive-centos8.sh
 buildfitsstorageutils.sh
+buildarchive.sh
 ```
 
 Script to create the containers:
 
 ```shell script
 postgres.sh
-fitsstorageutils-centos8.sh
-archive-centos8.sh
+api.sh
+archive.sh
+fitsstorageutils.sh
 ```
 
 The other Dockerfiles are for a CentOS 7 version of the archive and for some Jenkins CI/CD support.  
-`archive-centos8.sh` exposes ports 80 and 443 into the webserver by default and names the container `archive`.
+`archive.sh` exposes ports 80 and 443 into the webserver by default and names the container `archive`.
 You can alter these values with command line arguments like this (you can drop extra arguments if you don't need
 all 4):
 
-`archive-centos8.sh container_name http_port https_port database`  
+`archive.sh container_name http_port https_port database`  
 
 ## Built With
 
