@@ -14,10 +14,10 @@ RUN yum -y install openssl \
                    gcc-gfortran \
                    cfitsio-devel \
                    git
-RUN yum -y install python3-pip
+RUN yum -y --nogpgcheck install python3-pip
 
 # Fix Centos 8 broken Locale
-RUN yum -y install glibc-langpack-en glibc-common
+RUN yum -y --nogpgcheck install glibc-langpack-en glibc-common
 #RUN localedef --no-archive -i en_US -f UTF-8 en_US.UTF-8
 
 # SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
@@ -67,4 +67,4 @@ ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
 ENV PGPASSWORD fitsdata
 
-ENTRYPOINT ["bash"]
+CMD ["/bin/sh", "-c", "/bin/bash"]

@@ -37,7 +37,7 @@ if not ad:
     sys.exit(2)
 
 jpgfile = filename.replace('.fits', '.jpg')
-fp = open(jpgfile, 'w')
+fp = open(jpgfile, 'wb')
 
 print("input file: %s" % filename)
 print("output file: %s" % jpgfile)

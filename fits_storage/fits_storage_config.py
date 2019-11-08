@@ -65,10 +65,15 @@ magic_api_cookie = 'f0a49ab56f80da436b59e1d8f20067f4'
 
 # API backend stuff
 provides_api = True
-api_backend_location = 'localhost:8000'
+api_backend_location = os.getenv('API_BACKEND_LOCATION', 'localhost:8000')
 
 # This is the list of downstream servers we export files we ingest to
-export_destinations = ['https://archive.gemini.edu']
+export_destinations_str = os.getenv('EXPORT_DESTINATIONS', None)
+if export_destinations_str is not None and export_destinations_str.strip() != "":
+    export_destinations = export_destinations_str.split(',')
+else:
+    print("No export destinations configured")
+    export_destinations = ['https://archive.gemini.edu']
 #export_destinations = ['hbffits2']
 
 # Do we want to bzip2 files we export on the fly?

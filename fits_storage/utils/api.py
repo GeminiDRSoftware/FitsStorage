@@ -36,7 +36,7 @@ class ApiProxy(object):
         non_empty = list(filter(bool, (resource, self.pref, action) + args))
         path = '/'.join(non_empty)
         try:
-            response = json.loads(urllib.request.urlopen(path, json.dumps(kw)).read())
+            response = json.loads(urllib.request.urlopen(path, json.dumps(kw).encode('utf8')).read())
             if 'error' in response:
                 if 'error_object' in response:
                     eobj = response['error_object']
@@ -143,7 +143,7 @@ class ApiCall(object):
                             status=INTERNAL_ERROR)
 
         start_response("200 OK", [('Content-Type', 'application/json')])
-        return [result]
+        return [result.encode('utf8')]
 
 def json_api_call(logger=None):
     def wrapper(fn):
