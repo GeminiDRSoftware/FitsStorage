@@ -11,6 +11,17 @@ https://postgresapp.com/
 
 Once setup, you will want to create a `fitsdata` database.
 
+Alternatively, you can ssh to a machine with a populated PostgreSQL database and forward the port back to your host.
+I do this on hbffits-lv1 when I want to run against a full database.  That host has a restore from September.  You 
+can do this with, for example:
+
+```
+ssh -L 5432:localhost:5432 fitsdata@hbffits-lv1.hi.gemini.edu
+```
+
+I have configured the PostgreSQL server on that host to allow the `fitsdata` user to connect to it when you are
+sshed in like this.
+
 ### fitsverify
 
 The ingest process makes use of `fitsverify`.
@@ -104,8 +115,11 @@ export FITS_LOG_DIR=/where/you/put/logs/directory/
 export STORAGE_ROOT=/where/you/put/the/data/
 export FITS_AUX_DATADIR=/path/to/FitsStorage/data/
 export HTML_DOC_ROOT=/path/to/FitsStorage/htmldocroot/
-export FITSVERIFY_BIN=/path/to/fitsverify # <-- the binary, not a folder
+export FITSVERIFY_BIN=/path/to/fitsverify # <-- the executable, not a folder
 export VALIDATION_DEF_PATH=/path/to/FitsStorage/docs/dataDefinition/
+export TEST_IMAGE_CACHE=/where/you/want/cache
+export TEST_IMAGE_PATH=/where/you/want/image/data
+export USE_AS_ARCHIVE=False  # (or True, False by default)
 ```
 
 ### Initialize Database

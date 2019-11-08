@@ -6,8 +6,8 @@ We put them in a separate file to ease install issues
 import os, sys
 
 # Is this an archive server
-#use_as_archive = True
-use_as_archive = False
+use_as_archive_str = os.getenv('USE_AS_ARCHIVE', 'False')
+use_as_archive = use_as_archive_str.lower() == 'true' or use_as_archive_str == '1'
 
 # AWS S3 info
 using_s3 = False
