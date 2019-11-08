@@ -124,14 +124,14 @@ class ExportQueueUtil(object):
             # Read the file from disk
             fullpath = os.path.join(storage_root, path, filename)
             try:
-                data = open(fullpath, 'r').read()
+                data = open(fullpath, 'rb').read()
             except IOError:
                 self.l.error("cannot access %s", fullpath)
 
         # Do we need to compress or uncompress the data?
         # If the data are already compressed, we're not going to re-compress it
         # And don't try to pass a unicode filename.
-        filename = filename.encode('ascii', 'ignore')
+        filename = filename.encode('ascii', 'ignore').decode('ascii')
         if export_bzip and diskfile.compressed == False:
             # Need to compress it
             self.l.debug("bzip2ing file on the fly")
@@ -147,7 +147,7 @@ class ExportQueueUtil(object):
             self.l.debug("gunzipping on the fly")
             data = bz2.decompress(data)
             # Trim .bz2 from the filename from here on, update our_md5
-            filename = File.trime_name(filename)
+            filename = File.trim_name(filename)
             our_md5 = diskfile.data_md5
         if export_bzip and diskfile.compressed:
             # All good to go, just need to get the right md5 for the transfer verification

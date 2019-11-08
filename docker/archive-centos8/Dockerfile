@@ -2,7 +2,7 @@ FROM fitsstorageutils:centos8
 LABEL maintainer="ooberdorf@gemini.edu"
 
 # INSTALL HTTPD AND POSTGRESQL
-RUN yum -y install httpd \
+RUN yum -y install --nogpgcheck httpd \
                    httpd-devel \
                    mod_ssl \
                    platform-python-devel
@@ -34,5 +34,5 @@ COPY otherfiles/httpd-patched-centos8.conf /opt/modwsgi-default/httpd.conf
 EXPOSE 80
 EXPOSE 443
 
-ENTRYPOINT ["/opt/modwsgi-default/apachectl", "-D", "FOREGROUND"]
+CMD ["/opt/modwsgi-default/apachectl", "-D", "FOREGROUND"]
 #ENTRYPOINT ["bash"]

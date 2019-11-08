@@ -52,7 +52,7 @@ def upload_file(filename, processed_cal=False):
     fullfilename = os.path.join(upload_staging_path, filename)
 
     try:
-        with open(fullfilename, 'w') as f:
+        with open(fullfilename, 'wb') as f:
             f.write(clientdata)
     except IOError as e:
         if e.errno in (errno.EPERM, errno.EACCES):
@@ -82,7 +82,7 @@ def upload_file(filename, processed_cal=False):
         result = proxy.ingest_upload(filename=filename,
                                      processed_cal=bool(processed_cal),
                                      fileuploadlog_id = fileuploadlog.id)
-    except ApiProxyError:
+    except ApiProxyError as e:
         # TODO: Actually log this and tell someone about it...
         # response.append(error_response("An internal error ocurred and your query could not be performed. It has been logged"))
         ctx.resp.status = Return.HTTP_SERVICE_UNAVAILABLE
