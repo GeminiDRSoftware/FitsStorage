@@ -16,7 +16,7 @@ logger = logging.getLogger()
 
 # This is where we set what level messages we want to log.
 # Default to INFO and be setable to debug with a command line argument
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # Create log formatter
 formatter = logging.Formatter("%(asctime)s %(process)d:%(module)s:%(lineno)d %(levelname)s: %(message)s")
