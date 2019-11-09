@@ -34,6 +34,14 @@ mkdir -p ~/testdata/onsite-sci-dataflow
 
 Copy your datafiles into ~/testdata/onsite-sci-dataflow
 
+## Compose
+
+There is now a very fast way to get a test cluster up complete with two webservers for
+'onsite' and 'archive' (public).  You can just use docker-compose.  There is a `docker-compose.yml`
+file in the top directory of the tree.  Just change to the top folder of your checkout and
+run `docker-compose up`.  Instructions for running containers manually are listed below in case
+you don't want to use docker-compose.
+
 ## Scripts
 
 All of the Docker support is saved in the `docker/` folder in the project.  This consists
