@@ -1,0 +1,160 @@
+version: "3"
+
+services:
+
+  postgres-onsite:
+    image: postgres:12
+    environment:
+      - POSTGRES_USER=fitsdata
+      - POSTGRES_PASSWORD=fitsdata
+      - POSTGRES_DB=fitsdata
+
+  postgres-archive:
+    image: postgres:12
+    environment:
+      - POSTGRES_USER=fitsdata
+      - POSTGRES_PASSWORD=fitsdata
+      - POSTGRES_DB=fitsdata
+
+  postgres-init-onsite:
+    build:
+      context: .
+      dockerfile: docker/fitsstorage/Dockerfile
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-onsite
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
+    command: python3 ./fits_storage/scripts/create_tables.py
+
+  postgres-init-archive:
+    build:
+      context: .
+      dockerfile: docker/fitsstorage/Dockerfile
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+    command: python3 ./fits_storage/scripts/create_tables.py
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/archive/Dockerfile
+    image: fitsimage:latest
+    depends_on:
+      - postgres-init-archive
+      - postgres-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+      - USE_AS_ARCHIVE=True
+      - API_BACKEND_LOCATION=:8000
+    volumes:
+      - "~/testdata/archive-data-upload_staging:/data/upload_staging"
+      - "~/testdata/archive-sci-dataflow:/sci/dataflow"
+    command:  python3 fits_storage/scripts/api_backend.py
+
+  archive:
+    build:
+      context: .
+      dockerfile: docker/archive/Dockerfile
+    image: fitsimage:latest
+    depends_on:
+      - postgres-init-archive
+      - postgres-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+      - USE_AS_ARCHIVE=True
+      - API_BACKEND_LOCATION=api:8000
+    volumes:
+      - "~/testdata/archive-data-upload_staging:/data/upload_staging"
+      - "~/testdata/archive-sci-dataflow:/sci/dataflow"
+    ports:
+      - "80:80"
+      - "443:443"
+
+  archive-ingest-service:
+    build:
+      context: .
+      dockerfile: docker/fitsstorage/Dockerfile
+    image: fitsstorageutils:latest
+    depends_on:
+      - api
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+      - USE_AS_ARCHIVE=True
+      - API_BACKEND_LOCATION=api:8000
+    volumes:
+      - "~/testdata/archive-data-upload_staging:/data/upload_staging"
+      - "~/testdata/archive-sci-dataflow:/sci/dataflow"
+    command: python3 fits_storage/scripts/service_ingest_queue.py
+
+  onsite:
+    build:
+      context: .
+      dockerfile: docker/archive/Dockerfile
+    image: fitsimage:latest
+    depends_on:
+      - postgres-init-onsite
+      - postgres-onsite
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
+      - USE_AS_ARCHIVE=False
+      - EXPORT_DESTINATIONS=http://archive
+    volumes:
+      - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
+      - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
+    ports:
+      - "8080:80"
+      - "8443:443"
+
+  add-to-ingest-queue:
+    build:
+      context: .
+      dockerfile: docker/fitsstorage/Dockerfile
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init-onsite
+      - postgres-onsite
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
+      - EXPORT_DESTINATIONS=http://archive
+    volumes:
+      - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
+      - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
+    command: python3 fits_storage/scripts/add_to_ingest_queue.py
+
+  onsite-ingest-service:
+    build:
+      context: .
+      dockerfile: docker/fitsstorage/Dockerfile
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init-onsite
+      - postgres-onsite
+      - add-to-ingest-queue
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
+      - EXPORT_DESTINATIONS=http://archive
+    volumes:
+      - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
+      - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
+    command: python3 fits_storage/scripts/service_ingest_queue.py
+
+  onsite-export-service:
+    build:
+      context: .
+      dockerfile: docker/fitsstorage/Dockerfile
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init-onsite
+      - postgres-onsite
+      - add-to-ingest-queue
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
+      - EXPORT_DESTINATIONS=http://archive
+    volumes:
+      - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
+      - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
+    command: python3 fits_storage/scripts/service_export_queue.py
