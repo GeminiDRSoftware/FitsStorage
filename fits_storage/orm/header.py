@@ -259,7 +259,7 @@ class Header(Base):
 
         # Protect the database from field overflow from junk.
         # The datatype is precision=8, scale=4
-        if exposure_time < 10000 and exposure_time >= 0:
+        if exposure_time is not None and (exposure_time < 10000 and exposure_time >= 0):
             self.exposure_time = exposure_time
             
 
