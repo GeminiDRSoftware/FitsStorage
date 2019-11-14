@@ -453,9 +453,6 @@ class ContextResponseIterator(object):
         self._closed = False
 
     def __iter__(self):
-        print("In ContextResponsIterator.__iter")
-        print("... context is a %s" % type(self._ctx))
-        print("... context resp is a %s" % type(self._ctx.resp))
         session = self._ctx.session
         try:
             for chunk in self._ctx.resp:
