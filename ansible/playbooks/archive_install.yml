@@ -9,9 +9,9 @@
           name: 
             - openssl
             - postgresql
-            - postgresql-devel
+            - postgresql
             - epel-release
-            - gcc
+            - gcc-4.8.5
             - gcc-c++
             - python-devel
             - gcc-gfortran
@@ -90,11 +90,7 @@
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
           key_file: id_rsa
-      #- name: Checkout FitsStorage into /opt
-      #  subversion:
-      #    repo: http://scisoft/svn/FitsStorage/branches/dev-oly-tests
-      #    dest: /opt/FitsStorage
-      #    update: no
+          version: v2.1.0
       - name: Copy key to server
         copy:
           src: id_rsa
