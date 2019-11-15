@@ -214,7 +214,9 @@ def updateform(selection):
         elif key == 'welldepth':
                 # Only GNIRS has well depth
                 dct['gnirs_depth'] = value
-        
+        elif key == 'pre_image':
+            if value:
+                dct['preimage'] = 'preimage'
         else:
             # The rest needs no special processing. This does all the generic
             # pulldown menus and text fields,
@@ -507,6 +509,8 @@ dropdown_options = {
          ("Lya395", "Lya395"),
          ("ri", "ri"),
          ("open", "Open")],
+    "pre_image_options":
+        [("preimage", "Pre-image"),],
     "gnirs_filter_options":
         [("XD", "XD"),
          ("H2", "H2"),

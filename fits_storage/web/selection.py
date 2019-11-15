@@ -188,6 +188,8 @@ def getselection(things):
                 selection['ao'] = 'AO'
             elif thing.lower() in getselection_detector_roi:
                 selection['detector_roi'] = getselection_detector_roi[thing.lower()]
+            elif thing.lower() == 'preimage':
+                selection['pre_image'] = True
             elif thing.lower() == 'twilight':
                 selection['twilight'] = True
             elif thing.lower() == 'nottwilight':
@@ -332,7 +334,8 @@ queryselection_filters = (
     ('mode',          Header.mode),
     ('coadds',        Header.coadds),
     ('mdready',       DiskFile.mdready),
-    ('site_monitoring', Header.site_monitoring)
+    ('site_monitoring', Header.site_monitoring),
+    ('pre_image',     Header.pre_image)
     )
 
 def queryselection(query, selection):
