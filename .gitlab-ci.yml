@@ -1,3 +1,5 @@
+image: "python:3.7"
+
 #build-docker-images:
 #  script:
 #  - docker build gemini/fitsarchiveutils:gitlab-ci -f Dockerfile-centos8-jenkins .
@@ -5,6 +7,9 @@
 #  - docker container rm fitsdata-jenkins || true
 #  - docker container rm archive-jenkins || true
 
-job2:
-  tags: ["shell"]
-  script: "pytest --ignore tests/web/test_web_response.py tests"
+before_script:
+  - python --version
+  - pip install -r requirements.txt
+
+test:
+  - pytest --ignore tests/web/test_web_response.py tests
