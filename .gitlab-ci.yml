@@ -12,4 +12,5 @@ before_script:
   - pip install -r requirements.txt
 
 test:
-  shell: "pytest --ignore tests/web/test_web_response.py tests"
+  tags: ["shell"]
+  script: "pytest --ignore tests/web/test_web_response.py tests"
