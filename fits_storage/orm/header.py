@@ -396,7 +396,6 @@ class Header(Base):
             else:
                 self.pre_image = False
         except Exception as ex:
-            print("Error inferring pre-image state of file: %s" % ex)
             self.pre_image = False
 
         # Get the types list
