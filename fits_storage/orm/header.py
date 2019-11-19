@@ -131,6 +131,7 @@ class Header(Base):
     types = Column(Text)
     phot_standard = Column(Boolean)
     proprietary_coordinates = Column(Boolean)
+    pre_image = Column(Boolean)
 
     def __init__(self, diskfile):
         self.diskfile_id = diskfile.id
@@ -387,6 +388,15 @@ class Header(Base):
             self.reduction = 'PREPARED'
         else:
             self.reduction = 'RAW'
+
+        try:
+            pre_image = ad.phu.get("PREIMAGE")
+            if pre_image is not None and pre_image == "1":
+                self.pre_image = True
+            else:
+                self.pre_image = False
+        except Exception as ex:
+            self.pre_image = False
 
         # Get the types list
         self.types = str(ad.tags)

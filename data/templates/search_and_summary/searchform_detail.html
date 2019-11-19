@@ -289,6 +289,14 @@
     </select>
     <span class="help">(Region of Interest)
         <span class="helpright">Search for various Regions of Interest, otherwise known as readout area. It's not possible to search for custom ROIs here, though they will be included if you leave this at Any.</span>
+    </span><br>
+
+    <label>Pre-Image:</label><select id="preimage" class="ddw inst_clearable" name="preimage">
+        <option value="">Any</option>
+{{ generate_option_list(pre_image_options, updated.preimage, 'GMOS' in updated.inst ) }}
+    </select>
+    <span class="help">(Pre-Image)
+        <span class="helpright">Search for files that are pre-image.  To see all files regardless of pre-image status, you should leave this at Any.</span>
     </span><br><br>
     </div>
 
@@ -541,6 +549,17 @@
     <span class="help">(help)
         <span class="helpleft">Select an F2 disperser</span>
     </span><br>
+
+        <p>updated.preimage = {{ updated.preimage }}</p>
+        <p>updated.pre_image = {{ updated.pre_image }}</p>
+    <label>Pre-Image:</label><select id="f2_preimage" class="ddw inst_clearable" name="preimage">
+        <option value="">Any</option>
+{{ generate_option_list(pre_image_options, updated.preimage, updated.inst == 'F2' ) }}
+    </select>
+    <span class="help">(Pre-Image)
+        <span class="helpright">Search for files that are pre-image.  To see all files regardless of pre-image status, you should leave this at Any.</span>
+    </span><br><br>
+
     </div>
 
     <div class="right">
