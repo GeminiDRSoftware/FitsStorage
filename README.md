@@ -62,7 +62,7 @@ Various features in the website can be configured via environment variables.  Th
 change where FITS files are found on your Mac when running in PyCharm vs where it lives on the deployed CentOS servers.
 Here are the environment variables you will likely want to set, tune according to your setup.
 
-```shell script
+```shell 
 export FITS_LOG_DIR=/Users/ooberdorf/logs/
 export STORAGE_ROOT=/Users/ooberdorf/data/
 export FITSVERIFY_BIN=/Users/ooberdorf/fitsverify/fitsverify
@@ -130,7 +130,7 @@ as well, you can add the `--runslow` argument.
 
 Note that the tests will decide what webserver and database to connect to based on some environment variables.
 
-```shell script
+```shell 
 ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
 ```
@@ -147,14 +147,14 @@ look at are
 
 Script to create the images:
 
-```shell script
+```shell 
 buildfitsstorageutils.sh
 buildarchive.sh
 ```
 
 Script to create the containers:
 
-```shell script
+```shell 
 postgres.sh
 api.sh
 archive.sh
