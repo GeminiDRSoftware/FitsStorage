@@ -106,7 +106,7 @@ services:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
     ports:
-      - "8080:80"
+      - "8088:80"
       - "8443:443"
 
   add-to-ingest-queue:
