@@ -288,3 +288,14 @@ class TapeDrive(object):
             self.cleanup()
             if fail:
                 raise
+
+
+class FakeTapeDrive(TapeDrive):
+    def __init__(self, device, scratchdir):
+        super().__init__(device, scratchdir)
+
+    def rewind(self, fail=False):
+        pass
+
+    def setblk0(self, fail=False):
+        pass
