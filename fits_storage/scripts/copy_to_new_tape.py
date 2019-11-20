@@ -8,8 +8,7 @@ from fits_storage.orm import sessionfactory
 from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 from fits_storage.fits_storage_config import fits_tape_scratchdir
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.utils.tape import TapeDrive
-
+from fits_storage.utils.tape import TapeDrive, get_tape_drive
 
 # Option Parsing
 from optparse import OptionParser
@@ -71,7 +70,7 @@ if options.list_tapes:
 
 try:
     # Make a FitsStorageTape object from class TapeDrive initializing the device and scratchdir
-    fromtd = TapeDrive(options.fromtapedrive, fits_tape_scratchdir)
+    fromtd = get_tape_drive(options.fromtapedrive, fits_tape_scratchdir)
     logger.info("Reading tape labels...")
     fromlabel = fromtd.readlabel()
     logger.info("You are reading from this tape: %s" % fromlabel)
@@ -79,7 +78,7 @@ try:
         logger.info("This tape does not contain files that were requested. Aborting")
         sys.exit(1)
 
-    totd = TapeDrive(options.totapedrive, fits_tape_scratchdir)
+    totd = get_tape_drive(options.totapedrive, fits_tape_scratchdir)
     tolabel = totd.readlabel()
     logger.info("You are writing to this tape: %s" % tolabel)
 
@@ -148,10 +147,12 @@ try:
         filenames = set()
         frbackref = {}
         for i, fr in enumerate(fileresults):
-            encoded_name = fr.filename.encode()
-            filenames.add(encoded_name)
+            #encoded_name = fr.filename.encode()
+            #filenames.add(encoded_name)
+            filenames.add(fr.filename)
             bytes += fr.size
-            frbackref[encoded_name] = fr
+            #frbackref[encoded_name] = fr
+            frbackref[fr.filename] = fr
 
         # Prepare to write to the new tape
         # Update tape first/lastwrite
@@ -186,22 +187,26 @@ try:
         # Create the tarfile on the write tape
         logger.info("Creating tar archive on tape %s on drive %s" % (totape.label, totd.dev))
         try:
-            totar = tarfile.open(name=totd.dev, mode='w|', bufsize=blksize)
+            totar = tarfile.open(name=totd.target(), mode='w|', bufsize=blksize)
         except:
             logger.error("Error opening tar destination archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
             tarok = False
 
         # Open the tarfile on the read tape
-        fromtar = tarfile.open(name=fromtd.dev, mode='r|', bufsize=blksize)
+        fromtar = tarfile.open(name=fromtd.target(), mode='r|', bufsize=blksize)
 
         # Loop through the tar file. Don't delete from the to-do lists until we sucessfully close the files
         done = []
         for tarinfo in fromtar:
-            if tarinfo.name in filenames:
+            normalized_from_name = tarinfo.name
+            if normalized_from_name.lower().endswith(".bz2"):
+                normalized_from_name = normalized_from_name[:-4]
+            if normalized_from_name in filenames:
                 logger.info("Processing file %s" % tarinfo.name)
                 # Re-find the tapefile instance
-                tf = frbackref[tarinfo.name]
-                if tf.filename.encode() != tarinfo.name:
+                tf = frbackref[normalized_from_name]
+                #if tf.filename.encode() != tarinfo.name:
+                if tf.filename != normalized_from_name:
                     logger.error("tapefile instance index dereference problem! Skipping")
                     break
                 #for thing in fileresults:
@@ -242,10 +247,13 @@ try:
                 ntf = TapeFile()
                 ntf.tapewrite_id = tw.id
                 ntf.filename = tf.filename
-                ntf.ccrc = tf.ccrc
+                # ntf.ccrc = tf.ccrc
                 ntf.md5 = tf.md5
                 ntf.lastmod = tf.lastmod
                 ntf.size = tf.size
+                ntf.data_size = tf.data_size
+                ntf.data_md5 = tf.data_md5
+                ntf.compressed = tf.compressed
                 session.add(ntf)
                 session.commit()
 
