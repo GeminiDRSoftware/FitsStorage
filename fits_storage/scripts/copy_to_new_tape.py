@@ -2,6 +2,11 @@ import sys
 import os
 import datetime
 import tarfile
+from bz2 import BZ2File
+import hashlib
+
+from tempfile import mktemp
+
 from sqlalchemy import func
 
 from fits_storage.orm import sessionfactory
@@ -22,7 +27,8 @@ parser.add_option("--maxgbs", action="store", type="int", dest="maxgbs", help="S
 parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
-
+parser.add_option("--compress", action="store_true", dest="compress",
+                  help="Compress files in destination even if not compressed on source")
 (options, args) = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
@@ -215,12 +221,40 @@ try:
                         #break
                 logger.debug("Found old tapefile: id=%d; filename=%s" % (tf.id, tf.filename))
                 f = fromtar.extractfile(tarinfo)
+
+                # Check for compression
+                data_md5 = tf.data_md5
+                data_size = tf.data_size
+                data_compressed = tf.compressed
+                data_filename = tarinfo.name
+                if not tf.compressed and options.compress:
+                    data_filename = "%s.bz2" % tarinfo.name
+                    bz2_filename = mktemp()
+                    bzf = BZ2File(bz2_filename, "w")
+                    bzf.write(f.read())
+                    bzf.flush()
+                    bzf.close()
+
+                    m = hashlib.md5()
+                    bz2data = open(bz2_filename, "rb")
+                    data = bz2data.read()
+                    m.update(data)
+                    data_md5 = m.hexdigest()
+                    data_size = len(data)
+                    data_compressed = True
+
+                    # make sure tar points at our bzipped data now
+                    bz2data.seek(0)
+                    filedata = bz2data
+                    f.close()
+                else:
+                    filedata = f
                 # Add the file to the new tar archive.
                 # For some reason we need to construct the TarInfo object manually.
                 # I guess because it has the header from the other tarfile in it otherwise
                 # Just copy the public data members over and let it sort out the internals itself
-                newtarinfo = tarfile.TarInfo(tarinfo.name)
-                newtarinfo.size = tarinfo.size
+                newtarinfo = tarfile.TarInfo(data_filename)
+                newtarinfo.size = data_size  # tarinfo.size
                 newtarinfo.mtime = tarinfo.mtime
                 newtarinfo.mode = tarinfo.mode
                 newtarinfo.type = tarinfo.type
@@ -230,8 +264,8 @@ try:
                 newtarinfo.gname = tarinfo.gname
                 try:
                     logger.debug("Copying data of file %s" % newtarinfo.name)
-                    totar.addfile(newtarinfo, f)
-                    f.close()
+                    totar.addfile(newtarinfo, filedata)
+                    filedata.close()
                     # Add the file to the done list
                     done.append(tarinfo.name)
                 except:
@@ -251,9 +285,9 @@ try:
                 ntf.md5 = tf.md5
                 ntf.lastmod = tf.lastmod
                 ntf.size = tf.size
-                ntf.data_size = tf.data_size
-                ntf.data_md5 = tf.data_md5
-                ntf.compressed = tf.compressed
+                ntf.data_size = data_size
+                ntf.data_md5 = data_md5
+                ntf.compressed = data_compressed
                 session.add(ntf)
                 session.commit()
 
