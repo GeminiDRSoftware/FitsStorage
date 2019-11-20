@@ -14,7 +14,7 @@ from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile
 from fits_storage.fits_storage_config import fits_tape_scratchdir
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.hashes import md5sum
-from fits_storage.utils.tape import TapeDrive
+from fits_storage.utils.tape import TapeDrive, get_tape_drive
 from fits_storage.web.list_headers import list_headers
 from fits_storage.web.selection import getselection, openquery
 
@@ -97,7 +97,7 @@ with session_scope() as session:
     headers = None
 
     # Make a list containing the tape device objects
-    tds = [TapeDrive(tapedrive, fits_tape_scratchdir)
+    tds = [get_tape_drive(tapedrive, fits_tape_scratchdir)
         for tapedrive in options.tapedrive]
 
     # Get the database tape object for each tape label given
@@ -144,13 +144,13 @@ with session_scope() as session:
                 # are in the tapes in the drives (tapeids). If so, ditch the file
                 for (mtid,) in mytapeids:
                     if mtid in tapeids:
-                        autolog("File %s is on one of the tapes we have, skipping it" % f['filename'])
+                        autolog("File %s is on one of the tapes we have, skipping it" % df.filename)
                         # Ditch the file
                         break
                 else:
                     actual_diskfiles.append(df)
 
-        files = actual_files
+        files = actual_diskfiles
 
     if options.skip:
         logger.info("Checking for duplication to any tapes")
@@ -255,7 +255,8 @@ with session_scope() as session:
 
             logger.info("Creating tar archive on tape %s on drive %s" % (tape.label, td.dev))
             try:
-                tar = tarfile.open(name=td.dev, mode='w|', bufsize=blksize)
+                mode = td.write_mode()
+                tar = tarfile.open(name=td.target(), mode=mode, bufsize=blksize)
                 tarok = True
             except:
                 logger.error("Error opening tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
@@ -266,7 +267,7 @@ with session_scope() as session:
                 logger.info("Adding %s to tar file on tape %s in drive %s" % (filename, tape.label, td.dev))
                 try:
                 # the filename is a unicode string, and tarfile cannot handle this, convert to ascii
-                    filename = filename.encode('ascii')
+                    #filename = filename.encode('ascii')
                     tar.add(filename)
                 except:
                     logger.error("Error adding file to tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))

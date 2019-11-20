@@ -8,6 +8,18 @@ import shutil
 import subprocess
 import tarfile
 import re
+import logging
+
+
+def get_tape_drive(device, scratchdir):
+    tape_type = os.getenv('TAPE_TYPE', 'md')
+    if tape_type == 'md':
+        return TapeDrive(device, scratchdir)
+    if tape_type == 'fake':
+        return FakeTapeDrive(device, scratchdir)
+    logging.error("Unrecognized tape drive type: %s, aborting" % tape_type)
+    exit(-1)
+
 
 class TapeDrive(object):
     """
@@ -230,12 +242,12 @@ class TapeDrive(object):
         try:
             self.rewind()
             self.setblk0()
-            tar = tarfile.open(name=self.dev, mode='r|')
+            tar = tarfile.open(name=self.target(), mode='r|')
             list = tar.getnames()
             tar.close()
             self.rewind()
             if list == ['tapelabel']:
-                tar = tarfile.open(name=self.dev, mode='r|')
+                tar = tarfile.open(name=self.target(), mode='r|')
                 self.cdworkingdir()
                 tar.extractall()
                 tar.close()
@@ -275,7 +287,7 @@ class TapeDrive(object):
             f = open('tapelabel', 'w')
             f.write(label)
             f.close()
-            tar = tarfile.open(name=self.dev, mode='w|')
+            tar = tarfile.open(name=self.target(), mode='w|')
             tar.add('tapelabel')
             tar.close()
             os.unlink('tapelabel')
@@ -289,13 +301,61 @@ class TapeDrive(object):
             if fail:
                 raise
 
+    def write_mode(self):
+        return 'w|'
+
+    def target(self):
+        return self.dev
+
 
 class FakeTapeDrive(TapeDrive):
     def __init__(self, device, scratchdir):
         super().__init__(device, scratchdir)
+        self.file_no = 0
+        self.block_no = 0
 
     def rewind(self, fail=False):
-        pass
+        self.block_no = 0
 
     def setblk0(self, fail=False):
-        pass
+        self.block_no = 0
+
+    def online(self):
+        return True
+
+    def eod(self, fail=True):
+        while True:
+            if os.path.exists("%s/block%d" % (self.dev, self.block_no)):
+                self.block_no = self.block_no+1
+                self.file_no = self.block_no
+            else:
+                return self.block_no
+
+    def skipto(self, filenum, fail=True):
+        self.file_no = filenum
+        self.block_no = filenum
+
+    def eot(self):
+        return False
+
+    def status(self, fail=False):
+        return "File number=%d,block number=%d," % (self.file_no, self.block_no)
+
+    def target(self):
+        return "%s/block%d" % (self.dev, self.block_no)
+
+    #
+    # # getting the values
+    # @property
+    # def dev(self):
+    #     return self._value
+    #
+    # @dev.setter
+    # def dev(self, value):
+    #     print('Setting value to ' + value)
+    #     self._value = value
+    #
+    # @dev.deleter
+    # def dev(self):
+    #     print('Deleting value')
+    #     del self._value

@@ -1,7 +1,7 @@
 import sys
 
 from fits_storage.fits_storage_config import fits_tape_scratchdir
-from fits_storage.utils.tape import TapeDrive, FakeTapeDrive
+from fits_storage.utils.tape import TapeDrive, FakeTapeDrive, get_tape_drive
 
 # Option Parsing
 from optparse import OptionParser
@@ -10,8 +10,6 @@ parser.add_option("--read", action="store_true", dest="read", help="Read the lab
 parser.add_option("--label", action="store", dest="label", help="Write the label to the tape in the drive. This will write to the start of the tape, making any other data on the tape inaccessible")
 parser.add_option("--tapedrive", action="store", dest="tapedrive", help="The tapedrive device to use")
 parser.add_option("--force", action="store_true", dest="force", help="Normally, --label will refuse to label a tape that allready contains a tapelabel. This option forces it to do so.")
-parser.add_option("--simulation", action="store_true", dest="simulation",
-                  help="Operate on a file pretending to be a tape drive")
 
 options, args = parser.parse_args()
 
@@ -19,9 +17,7 @@ if not (options.read or options.label):
     print("You must supply either the --read or the --label option")
     sys.exit(1)
 
-td = TapeDrive(options.tapedrive, fits_tape_scratchdir)
-if options.simulation:
-    td = FakeTapeDrive(options.tapedrive, fits_tape_scratchdir)
+td = get_tape_drive(options.tapedrive, fits_tape_scratchdir)
 
 if options.read:
     print(td.readlabel(fail=False))
