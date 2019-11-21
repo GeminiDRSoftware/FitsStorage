@@ -130,7 +130,7 @@ fits_lockfile_dir = "/data/logs"
 fits_log_dir = os.getenv('FITS_LOG_DIR',"/data/logs/")
 
 # Configure the tape scratch directory here
-fits_tape_scratchdir = "/data/tapescratch"
+fits_tape_scratchdir = os.getenv('TAPESCRATCH', "/data/tapescratch")
 
 # Configure install specifics such as database backend tweaks, apache presence, etc
 # fsc_localmode is depreciated

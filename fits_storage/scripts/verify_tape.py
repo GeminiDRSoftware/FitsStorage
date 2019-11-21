@@ -8,8 +8,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from fits_storage.orm import session_scope
 from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile
 
-from fits_storage. import fits_storage_config
-from fits_storage.utils.tape import TapeDrive
+from fits_storage import fits_storage_config
+from fits_storage.utils.tape import TapeDrive, get_tape_drive
 from fits_storage.utils.hashes import md5sum_size_fp
 
 # Option Parsing
@@ -35,7 +35,7 @@ logger.info("*********    verify_tape.py - starting up at %s" % datetime.datetim
 
 with session_scope() as session:
     # Make a FitsStorageTape object from class TapeDrive initializing the device and scratchdir
-    td = TapeDrive(options.tapedrive, fits_storage_config.fits_tape_scratchdir)
+    td = get_tape_drive(options.tapedrive, fits_storage_config.fits_tape_scratchdir)
     td.setblk0()
     label = td.readlabel()
 
@@ -65,12 +65,17 @@ with session_scope() as session:
         # Read all the fits files in the tar archive, one at a time, looping through and calculating the md5
         files_on_tape = []
         block = 64*1024
+        tdfileobj = None
         try:
             # We have to open the tape drive independently so we've got something to close if the tar header read fails
-            tdfileobj = open(options.tapedrive, 'rb')
-            tar = tarfile.open(name=options.tapedrive, fileobj=tdfileobj, mode='r|', bufsize=block)
+            tdfileobj = open(td.target(), 'rb')
+            tar = tarfile.open(name=td.target(), fileobj=tdfileobj, mode='r|', bufsize=block)
             for tar_info in tar:
+                compressed = False
                 filename = tar_info.name
+                if filename.lower().endswith(".bz2"):
+                    filename = filename[:-4]
+                    compressed = True
                 if(options.verbose):
                     logger.info("Found file %s on tape." % filename)
 
@@ -78,7 +83,7 @@ with session_scope() as session:
                 try:
                     tf = session.query(TapeFile).filter(TapeFile.tapewrite_id==tw.id).filter(TapeFile.filename==filename).one()
                 except NoResultFound:
-                    pass
+                    tf = None
 
                 # Check whether this filename is in the DB
                 if tf:
@@ -108,15 +113,16 @@ with session_scope() as session:
         except tarfile.ReadError:
             logger.error("Tar read error on open - most likely an empty tar file: tape %s, file number %d" % (label, tw.filenum))
         finally:
-            tdfileobj.close()
+            if tdfileobj is not None:
+                tdfileobj.close()
 
 
         # Check whether we read everything in the DB
         files_in_DB = session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape))).filter(TapeWrite.filenum==tw.filenum).filter(Tape.label==label).order_by(TapeFile.filename).all()
         for file in files_in_DB:
-            if f.filename not in files_on_tape:
-                logger.error("This file was in the database, but not on the tape: %s, in filenum: %d" % (f.filename, f.filenum))
-                errors.append(("File not on Tape at filenum = %d, filename = %s" % (f.filenum, f.filename)).encode())
+            if file.filename not in files_on_tape:
+                logger.error("This file was in the database, but not on the tape: %s, in filenum: %d" % (file.filename, file.filenum))
+                errors.append(("File not on Tape at filenum = %d, filename = %s" % (file.filenum, file.filename)).encode())
 
     # Print a list of all the errors found
     logger.info("List of Differences Found: %s" % errors)

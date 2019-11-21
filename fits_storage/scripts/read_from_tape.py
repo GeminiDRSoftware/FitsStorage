@@ -10,9 +10,10 @@ from xml.dom.minidom import parseString
 
 from fits_storage.orm import sessionfactory
 #from fits_storage.fits_storage_config import *
+from fits_storage import fits_storage_config
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.utils.tape import TapeDrive
-
+from fits_storage.orm.tapestuff import TapeWrite, Tape, TapeFile, TapeRead
+from fits_storage.utils.tape import get_tape_drive
 
 # Option Parsing
 from optparse import OptionParser
@@ -66,7 +67,7 @@ if(options.list_tapes):
 
 try:
     # Make a FitsStorageTape object from class TapeDrive initializing the device and scratchdir
-    td = TapeDrive(options.tapedrive, fits_storage_config.fits_tape_scratchdir)
+    td = get_tape_drive(options.tapedrive, fits_storage_config.fits_tape_scratchdir)
     label = td.readlabel()
     logger.info("You are reading from this tape: %s" % label)
     if label not in labels:
