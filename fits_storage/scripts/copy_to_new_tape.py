@@ -43,10 +43,9 @@ class DeferredTarEntry:
     checksumming the bz2 files is expensive.  Once we have everything calculated and
     staged on disk, then we stream it all to the output tape drive at once.
     """
-    def __init__(self, from_name, normalized_from_name, original_name, tarinfo, filename, md5, size, compressed):
+    def __init__(self, from_name, fits_name, tarinfo, filename, md5, size, compressed):
         self.from_name = from_name
-        self.normalized_from_name = normalized_from_name
-        self.original_name = original_name
+        self.fits_name = fits_name
         self.tarinfo = tarinfo
         self.filename = filename
         self.md5 = md5
@@ -291,8 +290,8 @@ try:
                 newtarinfo.gname = tarinfo.gname
 
                 deferred_tar_entry = DeferredTarEntry(from_name = tarinfo.name,
-                                                      normalized_from_name = normalized_from_name,
-                                                      original_name = tarinfo.name, tarinfo=newtarinfo,
+                                                      fits_name= normalized_from_name,
+                                                      tarinfo=newtarinfo,
                                                       filename=stagefilename, md5=file_md5,
                                                       size=file_size, compressed=file_compressed)
                 deferred.append(deferred_tar_entry)
@@ -303,7 +302,7 @@ try:
                 break
 
         for deferred_tar_entry in deferred:
-            tf = frbackref[deferred_tar_entry.normalized_from_name]
+            tf = frbackref[deferred_tar_entry.fits_name]
             try:
                 newtarinfo = deferred_tar_entry.tarinfo
                 filedata = open(deferred_tar_entry.filename, "rb")
