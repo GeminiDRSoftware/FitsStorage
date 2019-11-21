@@ -150,7 +150,7 @@ with session_scope() as session:
                 else:
                     actual_diskfiles.append(df)
 
-        files = actual_files
+        files = actual_diskfiles
 
     if options.skip:
         logger.info("Checking for duplication to any tapes")
