@@ -5,7 +5,7 @@ import tarfile
 from bz2 import BZ2File
 import hashlib
 
-from tempfile import mktemp
+from tempfile import mkstemp
 
 from sqlalchemy import func
 
@@ -13,7 +13,7 @@ from fits_storage.orm import sessionfactory
 from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 from fits_storage.fits_storage_config import fits_tape_scratchdir
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.utils.tape import TapeDrive, get_tape_drive
+from fits_storage.utils.tape import get_tape_drive
 
 # Option Parsing
 from optparse import OptionParser
@@ -252,7 +252,7 @@ try:
                 file_filename = tarinfo.name
                 if not tf.compressed and options.compress:
                     file_filename = "%s.bz2" % tarinfo.name
-                    stagefilename = mktemp()
+                    stagefilename = mkstemp(dir=totd.workingdir)[1]
                     bzf = BZ2File(stagefilename, "w")
                     bzf.write(f.read())
                     bzf.flush()
@@ -270,7 +270,7 @@ try:
                     bz2data.close()
                     f.close()
                 else:
-                    stagefilename = mktemp()
+                    stagefilename = mkstemp(dir=totd.workingdir)[1]
                     stagefile = open(stagefilename, "wb")
                     stagefile.write(f.read())
                     stagefile.flush()
