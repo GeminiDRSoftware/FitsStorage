@@ -1,7 +1,7 @@
 import sys
 
 from fits_storage.fits_storage_config import fits_tape_scratchdir
-from fits_storage.utils.tape import TapeDrive
+from fits_storage.utils.tape import TapeDrive, FakeTapeDrive, get_tape_drive
 
 # Option Parsing
 from optparse import OptionParser
@@ -17,7 +17,7 @@ if not (options.read or options.label):
     print("You must supply either the --read or the --label option")
     sys.exit(1)
 
-td = TapeDrive(options.tapedrive, fits_tape_scratchdir)
+td = get_tape_drive(options.tapedrive, fits_tape_scratchdir)
 
 if options.read:
     print(td.readlabel(fail=False))
