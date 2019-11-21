@@ -338,19 +338,3 @@ class FakeTapeDrive(TapeDrive):
 
     def target(self):
         return "%s/block%d" % (self.dev, self.block_no)
-
-    #
-    # # getting the values
-    # @property
-    # def dev(self):
-    #     return self._value
-    #
-    # @dev.setter
-    # def dev(self, value):
-    #     print('Setting value to ' + value)
-    #     self._value = value
-    #
-    # @dev.deleter
-    # def dev(self):
-    #     print('Deleting value')
-    #     del self._value

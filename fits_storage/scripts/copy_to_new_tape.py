@@ -35,6 +35,25 @@ parser.add_option("--compress", action="store_true", dest="compress",
 setdebug(options.debug)
 setdemon(options.demon)
 
+
+class DeferredTarEntry:
+    """
+    This is a helper class for wrapping up information needed to create a new tar entry
+    in the output tar stream.  We bundle these up as we read because creating and
+    checksumming the bz2 files is expensive.  Once we have everything calculated and
+    staged on disk, then we stream it all to the output tape drive at once.
+    """
+    def __init__(self, from_name, normalized_from_name, original_name, tarinfo, filename, md5, size, compressed):
+        self.from_name = from_name
+        self.normalized_from_name = normalized_from_name
+        self.original_name = original_name
+        self.tarinfo = tarinfo
+        self.filename = filename
+        self.md5 = md5
+        self.size = size
+        self.compressed = compressed
+
+
 # Annouce startup
 logger.info("*********    copy_to_new_tape.py - starting up at %s" % datetime.datetime.now())
 
@@ -152,6 +171,7 @@ try:
         logger.info("Going to copy %d files from this tar archive" % len(fileresults))
         filenames = set()
         frbackref = {}
+
         for i, fr in enumerate(fileresults):
             #encoded_name = fr.filename.encode()
             #filenames.add(encoded_name)
@@ -203,6 +223,9 @@ try:
 
         # Loop through the tar file. Don't delete from the to-do lists until we sucessfully close the files
         done = []
+
+        # If we are generating .bz2 files, we generate them all first so the tape drive doesn't get tortured
+        deferred = list()
         for tarinfo in fromtar:
             normalized_from_name = tarinfo.name
             if normalized_from_name.lower().endswith(".bz2"):
@@ -229,14 +252,14 @@ try:
                 file_filename = tarinfo.name
                 if not tf.compressed and options.compress:
                     file_filename = "%s.bz2" % tarinfo.name
-                    bz2_filename = mktemp()
-                    bzf = BZ2File(bz2_filename, "w")
+                    stagefilename = mktemp()
+                    bzf = BZ2File(stagefilename, "w")
                     bzf.write(f.read())
                     bzf.flush()
                     bzf.close()
 
                     m = hashlib.md5()
-                    bz2data = open(bz2_filename, "rb")
+                    bz2data = open(stagefilename, "rb")
                     data = bz2data.read()
                     m.update(data)
                     file_md5 = m.hexdigest()
@@ -244,12 +267,15 @@ try:
                     file_compressed = True
 
                     # make sure tar points at our bzipped data now
-                    bz2data.seek(0)
-                    filedata = bz2data
+                    bz2data.close()
                     f.close()
-                    os.remove(bz2_filename)
                 else:
-                    filedata = f
+                    stagefilename = mktemp()
+                    stagefile = open(stagefilename, "wb")
+                    stagefile.write(f.read())
+                    stagefile.flush()
+                    stagefile.close()
+                    f.close()
                 # Add the file to the new tar archive.
                 # For some reason we need to construct the TarInfo object manually.
                 # I guess because it has the header from the other tarfile in it otherwise
@@ -263,42 +289,54 @@ try:
                 newtarinfo.gid = tarinfo.gid
                 newtarinfo.uname = tarinfo.uname
                 newtarinfo.gname = tarinfo.gname
-                try:
-                    logger.debug("Copying data of file %s" % newtarinfo.name)
-                    totar.addfile(newtarinfo, filedata)
-                    filedata.close()
-                    # Add the file to the done list
-                    done.append(tarinfo.name)
-                except:
-                    logger.error("Error adding file to tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
-                    logger.info("Probably the tape filled up - Marking tape as full in the DB - label: %s" % totape.label)
-                    totape.full = True
-                    session.commit()
-                    totarok = False
-                    break
 
-                # Create a new tapefile for the new copy in the new tapewrite and add to DB
-                logger.debug("Creating new tapefile object and adding to DB")
-                ntf = TapeFile()
-                ntf.tapewrite_id = tw.id
-                ntf.filename = tf.filename
-                # ntf.ccrc = tf.ccrc
-                ntf.md5 = file_md5
-                ntf.lastmod = tf.lastmod
-                ntf.size = file_size
-                ntf.data_size = tf.data_size
-                ntf.data_md5 = tf.data_md5
-                ntf.compressed = file_compressed
-                session.add(ntf)
-                session.commit()
-
-                # Keep a running total of bytes written
-                bytecount += ntf.size
+                deferred_tar_entry = DeferredTarEntry(from_name = tarinfo.name,
+                                                      normalized_from_name = normalized_from_name,
+                                                      original_name = tarinfo.name, tarinfo=newtarinfo,
+                                                      filename=stagefilename, md5=file_md5,
+                                                      size=file_size, compressed=file_compressed)
+                deferred.append(deferred_tar_entry)
             else:
                 logger.debug("Skipping over file that's not required: %s" % tarinfo.name)
             if len(filenames) == 0:
                 logger.info("Got everything we need from this tar archive, stopping reading it now")
                 break
+
+        for deferred_tar_entry in deferred:
+            tf = frbackref[deferred_tar_entry.normalized_from_name]
+            try:
+                newtarinfo = deferred_tar_entry.tarinfo
+                filedata = open(deferred_tar_entry.filename, "rb")
+                logger.debug("Copying data of file %s" % newtarinfo.name)
+                totar.addfile(newtarinfo, filedata)
+                filedata.close()
+                # Add the file to the done list
+                done.append(deferred_tar_entry.from_name)
+            except:
+                logger.error("Error adding file to tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+                logger.info("Probably the tape filled up - Marking tape as full in the DB - label: %s" % totape.label)
+                totape.full = True
+                session.commit()
+                totarok = False
+                break
+
+            # Create a new tapefile for the new copy in the new tapewrite and add to DB
+            logger.debug("Creating new tapefile object and adding to DB")
+            ntf = TapeFile()
+            ntf.tapewrite_id = tw.id
+            ntf.filename = tf.filename
+            # ntf.ccrc = tf.ccrc
+            ntf.md5 = deferred_tar_entry.md5
+            ntf.lastmod = tf.lastmod
+            ntf.size = deferred_tar_entry.size
+            ntf.data_size = tf.data_size
+            ntf.data_md5 = tf.data_md5
+            ntf.compressed = deferred_tar_entry.compressed
+            session.add(ntf)
+            session.commit()
+
+            # Keep a running total of bytes written
+            bytecount += ntf.size
 
         # Close the tar archives and update the tapewrite etc
         try:
@@ -323,6 +361,10 @@ try:
         tw.afterstatus = totd.status()
         tw.size = bytecount
         session.commit()
+
+        # Cleaning up staging files
+        for deferred_tar_entry in deferred:
+            os.remove(deferred_tar_entry.filename)
 
         # If the previous tar failed, we should bail out now
         if not totarok:
