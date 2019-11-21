@@ -71,7 +71,11 @@ with session_scope() as session:
             tdfileobj = open(td.target(), 'rb')
             tar = tarfile.open(name=td.target(), fileobj=tdfileobj, mode='r|', bufsize=block)
             for tar_info in tar:
+                compressed = False
                 filename = tar_info.name
+                if filename.lower().endswith(".bz2"):
+                    filename = filename[:-4]
+                    compressed = True
                 if(options.verbose):
                     logger.info("Found file %s on tape." % filename)
 

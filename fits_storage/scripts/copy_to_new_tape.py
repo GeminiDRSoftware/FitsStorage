@@ -223,12 +223,12 @@ try:
                 f = fromtar.extractfile(tarinfo)
 
                 # Check for compression
-                data_md5 = tf.data_md5
-                data_size = tf.data_size
-                data_compressed = tf.compressed
-                data_filename = tarinfo.name
+                file_md5 = tf.md5
+                file_size = tf.size
+                file_compressed = tf.compressed
+                file_filename = tarinfo.name
                 if not tf.compressed and options.compress:
-                    data_filename = "%s.bz2" % tarinfo.name
+                    file_filename = "%s.bz2" % tarinfo.name
                     bz2_filename = mktemp()
                     bzf = BZ2File(bz2_filename, "w")
                     bzf.write(f.read())
@@ -239,22 +239,23 @@ try:
                     bz2data = open(bz2_filename, "rb")
                     data = bz2data.read()
                     m.update(data)
-                    data_md5 = m.hexdigest()
-                    data_size = len(data)
-                    data_compressed = True
+                    file_md5 = m.hexdigest()
+                    file_size = len(data)
+                    file_compressed = True
 
                     # make sure tar points at our bzipped data now
                     bz2data.seek(0)
                     filedata = bz2data
                     f.close()
+                    os.remove(bz2_filename)
                 else:
                     filedata = f
                 # Add the file to the new tar archive.
                 # For some reason we need to construct the TarInfo object manually.
                 # I guess because it has the header from the other tarfile in it otherwise
                 # Just copy the public data members over and let it sort out the internals itself
-                newtarinfo = tarfile.TarInfo(data_filename)
-                newtarinfo.size = data_size  # tarinfo.size
+                newtarinfo = tarfile.TarInfo(file_filename)
+                newtarinfo.size = file_size  # tarinfo.size
                 newtarinfo.mtime = tarinfo.mtime
                 newtarinfo.mode = tarinfo.mode
                 newtarinfo.type = tarinfo.type
@@ -282,12 +283,12 @@ try:
                 ntf.tapewrite_id = tw.id
                 ntf.filename = tf.filename
                 # ntf.ccrc = tf.ccrc
-                ntf.md5 = tf.md5
+                ntf.md5 = file_md5
                 ntf.lastmod = tf.lastmod
-                ntf.size = tf.size
-                ntf.data_size = data_size
-                ntf.data_md5 = data_md5
-                ntf.compressed = data_compressed
+                ntf.size = file_size
+                ntf.data_size = tf.data_size
+                ntf.data_md5 = tf.data_md5
+                ntf.compressed = file_compressed
                 session.add(ntf)
                 session.commit()
 

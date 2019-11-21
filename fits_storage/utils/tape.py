@@ -8,17 +8,12 @@ import shutil
 import subprocess
 import tarfile
 import re
-import logging
 
 
 def get_tape_drive(device, scratchdir):
-    tape_type = os.getenv('TAPE_TYPE', 'md')
-    if tape_type == 'md':
-        return TapeDrive(device, scratchdir)
-    if tape_type == 'fake':
-        return FakeTapeDrive(device, scratchdir)
-    logging.error("Unrecognized tape drive type: %s, aborting" % tape_type)
-    exit(-1)
+    if device.lower().startswith("folder:"):
+        return FakeTapeDrive(device[7:], scratchdir)
+    return TapeDrive(device, scratchdir)
 
 
 class TapeDrive(object):
