@@ -6,6 +6,9 @@ import subprocess
 import tarfile
 import urllib.request, urllib.parse, urllib.error
 import traceback
+from bz2 import BZ2File
+from tempfile import mkstemp
+
 from sqlalchemy import join
 
 from fits_storage.fits_storage_config import storage_root
@@ -35,12 +38,22 @@ parser.add_option("--ndays", action="store", type="int", dest="ndays", default=1
 parser.add_option("--skipdays", action="store", type="int", dest="skipdays", default=10, help="Number of days to skip for auto mode")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
+parser.add_option("--compress", action="store_true", dest="compress",
+                  help="Compress files with bzip2 before sending them to tape")
 
 (options, args) = parser.parse_args()
 
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
 setdemon(options.demon)
+
+
+class BackupFile:
+    def __init__(self, bz2_filename, stagefilename, disk_file):
+        self.bz2_filename = bz2_filename
+        self.stagefilename = stagefilename
+        self.disk_file = disk_file
+
 
 # Annouce startup
 logger.info("*********    write_to_tape.py - starting up at %s" % datetime.datetime.now())
@@ -150,7 +163,7 @@ with session_scope() as session:
                 else:
                     actual_diskfiles.append(df)
 
-        files = actual_diskfiles
+        diskfiles = actual_diskfiles
 
     if options.skip:
         logger.info("Checking for duplication to any tapes")
@@ -262,13 +275,62 @@ with session_scope() as session:
                 logger.error("Error opening tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
                 tarok = False
 
+            backup_files = list()
             for df in diskfiles:
                 filename = df.filename
                 logger.info("Adding %s to tar file on tape %s in drive %s" % (filename, tape.label, td.dev))
                 try:
                 # the filename is a unicode string, and tarfile cannot handle this, convert to ascii
                     #filename = filename.encode('ascii')
-                    tar.add(filename)
+                    if not options.compress or filename.lower().endswith(".bz2"):
+                        # tar.add(filename)
+                        backup_files.append(BackupFile(filename, "%s/%s" % (storage_root, filename), df))
+                    else:
+                        # we have to stage a bzip2 file to send to the tar, plus calculate it's md5/size
+                        f = open(filename, "rb")
+                        bzip_filename = "%s.bz2" % filename
+                        stagefilename = mkstemp(dir=td.workingdir)[1]
+                        bzf = BZ2File(stagefilename, "w")
+                        bzf.write(f.read())
+                        bzf.flush()
+                        bzf.close()
+                        f.close()
+
+                        backup_files.append(BackupFile(bzip_filename, stagefilename, df))
+                except:
+                    logger.error("Error queueing file for tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+                    tarok = False
+                    break
+
+            for backup_file in backup_files:
+                try:
+                    statinfo = os.stat(backup_file.stagefilename)
+                    f = open(backup_file.stagefilename, "rb")
+                    tarinfo = tarfile.TarInfo(backup_file.bz2_filename)
+                    tarinfo.size = statinfo.st_size  # tarinfo.size
+                    tarinfo.mtime = statinfo.st_mtime
+                    tarinfo.mode = statinfo.st_mode
+                    tarinfo.type = tarfile.REGTYPE
+                    tarinfo.uid = statinfo.st_uid
+                    tarinfo.gid = statinfo.st_gid
+                    # tarinfo.uname = statinfo.
+                    # tarinfo.gname = tarinfo.gname
+
+                    tar.addfile(tarinfo, f)
+                    f.close()
+                    # Create the TapeFile entry and add to DB
+                    tapefile = TapeFile()
+                    tapefile.tapewrite_id = tw.id
+                    tapefile.filename = backup_file.disk_file.filename
+                    tapefile.md5 = backup_file.disk_file.file_md5
+                    tapefile.size = int(backup_file.disk_file.file_size)
+                    tapefile.lastmod = backup_file.disk_file.lastmod
+                    tapefile.compressed = backup_file.disk_file.compressed
+                    tapefile.data_size = backup_file.disk_file.data_size
+                    tapefile.data_md5 = backup_file.disk_file.data_md5
+                    session.add(tapefile)
+                    session.commit()
+                    bytecount += int(df.file_size)
                 except:
                     logger.error("Error adding file to tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
                     logger.info("Probably the tape filled up - Marking tape as full in the DB - label: %s" % tape.label)
@@ -276,20 +338,7 @@ with session_scope() as session:
                     session.commit()
                     tarok = False
                     break
-                # Create the TapeFile entry and add to DB
-                tapefile = TapeFile()
-                tapefile.tapewrite_id = tw.id
-                tapefile.filename = filename
-                tapefile.md5 = df.file_md5
-                tapefile.size = int(df.file_size)
-                tapefile.lastmod = df.lastmod
-                tapefile.compressed = df.compressed
-                tapefile.data_size = df.data_size
-                tapefile.data_md5 = df.data_md5
-                session.add(tapefile)
-                session.commit()
-                # Keep a running total of bytes written
-                bytecount += int(df.file_size)
+
             logger.info("Completed writing tar archive on tape %s in drive %s" % (tape.label, td.dev))
             logger.info("Wrote %d bytes = %.2f GB" % (bytecount , (bytecount/1.0E9)))
             try:
