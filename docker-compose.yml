@@ -88,7 +88,7 @@ services:
     volumes:
       - "~/testdata/archive-data-upload_staging:/data/upload_staging"
       - "~/testdata/archive-sci-dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/service_ingest_queue.py
+    command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
 
   onsite:
     build:
@@ -140,7 +140,7 @@ services:
     volumes:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/service_ingest_queue.py
+    command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
 
   onsite-export-service:
     build:
@@ -158,3 +158,35 @@ services:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
     command: python3 fits_storage/scripts/service_export_queue.py
+
+
+  archive-calcache-service:
+    build:
+      context: .
+      dockerfile: docker/fitsstorage/Dockerfile
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init-archive
+      - postgres-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+    volumes:
+      - "~/testdata/archive-data-upload_staging:/data/upload_staging"
+      - "~/testdata/archive-sci-dataflow:/sci/dataflow"
+    command: python3 fits_storage/scripts/service_calcache_queue.py
+
+
+  archive-preview-service:
+    build:
+      context: .
+      dockerfile: docker/fitsstorage/Dockerfile
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init-archive
+      - postgres-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+    volumes:
+      - "~/testdata/archive-data-upload_staging:/data/upload_staging"
+      - "~/testdata/archive-sci-dataflow:/sci/dataflow"
+    command: python3 fits_storage/scripts/service_preview_queue.py
