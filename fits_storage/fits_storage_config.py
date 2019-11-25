@@ -18,7 +18,7 @@ aws_access_key = ''
 aws_secret_key = ''
 
 # Staging area for uncompressed cache of compressed file being processed
-z_staging_area = '/data/z_staging'
+z_staging_area = os.getenv('Z_STAGING_AREA', '/data/z_staging')
 
 # Configure the path to the storage root here 
 storage_root = os.getenv('STORAGE_ROOT', '/sci/dataflow')
