@@ -124,7 +124,7 @@ template_root = fits_aux_datadir + "/templates"
 fits_db_backup_dir = "/sci/dataflow/FitsStorage_Backups/cpofits-lv1"
 
 # Configure the LockFile Directory here
-fits_lockfile_dir = "/data/logs"
+fits_lockfile_dir = os.getenv('FITS_LOCKFILE_DIR', "/data/logs")
 
 # Configure the log directory here
 fits_log_dir = os.getenv('FITS_LOG_DIR',"/data/logs/")
