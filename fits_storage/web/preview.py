@@ -46,12 +46,6 @@ def preview(filenamegiven):
 
     try:
         # Find the information associated with the canonical diskfile and header for the file on the query
-        # preview, header, _ = (
-        #     session.query(Preview, Header, DiskFile).join(DiskFile, Header.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id)
-        #             .filter(DiskFile.present == True)
-        #             .filter(File.name == filename)
-        #             .first()
-        #     )
         preview, header, diskfile, _ = (
             session.query(Preview, Header, DiskFile, File)
                 .filter(Preview.diskfile_id == DiskFile.id)
