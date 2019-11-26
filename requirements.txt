@@ -16,3 +16,4 @@ pandas
 boto3
 matplotlib
 urllib3
+pillow
