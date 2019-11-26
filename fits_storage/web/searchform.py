@@ -721,7 +721,8 @@ dropdown_options = {
          ("PREPARED", "Reduced (not Cals)"),
          ("PROCESSED_BIAS", "Processed Biases Only"),
          ("PROCESSED_FLAT", "Processed Flats Only"),
-         ("PROCESSED_FRINGE", "Processed Fringe Frames Only")],
+         ("PROCESSED_FRINGE", "Processed Fringe Frames Only"),
+         ("PROCESSED_ARC", "Processed Arcs Only")],
     "qa_options":
         [("NotFail", "Not Fail"),
          ("AnyQA", "Any"),
