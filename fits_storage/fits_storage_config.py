@@ -107,7 +107,7 @@ email_errors_to = "phirst@gemini.edu"
 #email_errors_to = "kanderso@gemini.edu"
 
 # Configure the path the data postgres database here
-fits_dbname = 'fitsdata'
+fits_dbname = os.getenv('FITS_DB_NAME', 'fitsdata')
 fits_dbserver = os.getenv('FITS_DB_SERVER', '')
 fits_database = 'postgresql://%s/%s' % (fits_dbserver, fits_dbname)
 #fits_database = 'sqlite:////home/fitsdata/sqlite-database'
