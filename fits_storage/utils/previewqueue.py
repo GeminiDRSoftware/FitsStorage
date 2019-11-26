@@ -152,7 +152,7 @@ class PreviewQueueUtil(object):
                     diskfile.uncompressed_cache_file = os.path.join(z_staging_area, nonzfilename)
                     if os.path.exists(diskfile.uncompressed_cache_file):
                         os.unlink(diskfile.uncompressed_cache_file)
-                    with bz2.BZ2File(munged_fullpath, mode='rb') as in_file, open(diskfile.uncompressed_cache_file, 'w') as out_file:
+                    with bz2.BZ2File(munged_fullpath, mode='rb') as in_file, open(diskfile.uncompressed_cache_file, 'wb') as out_file:
                         out_file.write(in_file.read())
                     our_dfcc = True
                     ad_fullpath = diskfile.uncompressed_cache_file
@@ -213,15 +213,16 @@ class PreviewQueueUtil(object):
         fmt2 = "Source Image extent is: {}:{}, {}:{}"
         fmt3 = "Pasting: {}:{},{}:{} -> {}:{},{}:{}"
 
-        if 'GMOS' in str(ad.instrument()) and len(ad['SCI']) > 1:
+        if 'GMOS' in str(ad.instrument()) and len(ad) > 1:
             # Find max extent in detector pixels
             xmin = 10000
             ymin = 10000
             xmax = 0
             ymax = 0
-            ds = ad.detector_section().as_dict()
-            for i in list(ds.values()):
-                [x1, x2, y1, y2] = i
+            #ds = ad.detector_section().as_dict()
+            #for i in list(ds.values()):
+            for sect in ad.detector_section():
+                [x1, x2, y1, y2] = sect
                 xmin, ymin = min(x1, xmin), min(y1, ymin)
                 xmax, ymax = max(x2, xmax), max(y2, ymax)
 
@@ -231,18 +232,23 @@ class PreviewQueueUtil(object):
             xmax /= int(ad.detector_x_bin())
             ymax /= int(ad.detector_y_bin())
 
+            xmin = int(xmin)
+            xmax = int(xmax)
+            ymin = int(ymin)
+            ymax = int(ymax)
+
             self.l.debug(fmt1.format(xmin, xmax, ymin, ymax))
 
             # Make empty array for full image
             gap = 40 # approx chip gap in pixels
             shape = (ymax-ymin, (xmax-xmin)+2*gap)
-            full = numpy.zeros(shape, ad['SCI', 1].data.dtype)
+            full = numpy.zeros(shape, ad[0].data.dtype)  # ad['SCI', 1].data.dtype)
 
             # Loop through ads, pasting them in. Do gmos bias and gain hack
-            for add in ad['SCI']:
-                s_xmin, s_xmax, s_ymin, s_ymax = add.data_section().as_pytype()
+            for add in ad:  # ad['SCI']:
+                s_xmin, s_xmax, s_ymin, s_ymax = add.data_section()  # add.data_section().as_pytype()
                 self.l.debug(fmt2.format(s_xmin, s_xmax, s_ymin, s_ymax))
-                d_xmin, d_xmax, d_ymin, d_ymax = add.detector_section().as_pytype()
+                d_xmin, d_xmax, d_ymin, d_ymax = add.detector_section()  # add.detector_section().as_pytype()
                 # Figure out which chip we are and add gap padding
                 # All the gmos chips ever have been 2048 pixels in X.
                 if d_xmin == 4096 or d_xmin == 5120:
@@ -256,7 +262,13 @@ class PreviewQueueUtil(object):
                 d_xmax = (d_xmax + pad) / int(ad.detector_x_bin()) - xmin
                 d_ymin = d_ymin / int(ad.detector_y_bin()) - ymin
                 d_ymax = d_ymax / int(ad.detector_y_bin()) - ymin
-                o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section().as_pytype()
+
+                d_xmin = int(d_xmin)
+                d_xmax = int(d_xmax)
+                d_ymin = int(d_ymin)
+                d_ymax = int(d_ymax)
+
+                o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section()  # add.overscan_section().as_pytype()
                 bias = numpy.median(add.data[o_ymin:o_ymax, o_xmin:o_xmax])
                 try:
                     # This throws an exception sometimes if some of the values are None?
@@ -359,7 +371,7 @@ class PreviewQueueUtil(object):
 
         else:
             # Generic plot the first extention case
-            full = ad['SCI', 1].data
+            full = ad[0].data  # ad['SCI', 1].data
 
             # Do a numpy squeeze on it - this collapses any axis with 1-pixel extent
             full = numpy.squeeze(full)
