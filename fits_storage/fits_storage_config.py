@@ -107,7 +107,7 @@ email_errors_to = "phirst@gemini.edu"
 #email_errors_to = "kanderso@gemini.edu"
 
 # Configure the path the data postgres database here
-fits_dbname = 'fitsdata'
+fits_dbname = os.getenv('FITS_DB_NAME', 'fitsdata')
 fits_dbserver = os.getenv('FITS_DB_SERVER', '')
 fits_database = 'postgresql://%s/%s' % (fits_dbserver, fits_dbname)
 #fits_database = 'sqlite:////home/fitsdata/sqlite-database'
@@ -124,7 +124,7 @@ template_root = fits_aux_datadir + "/templates"
 fits_db_backup_dir = "/sci/dataflow/FitsStorage_Backups/cpofits-lv1"
 
 # Configure the LockFile Directory here
-fits_lockfile_dir = "/data/logs"
+fits_lockfile_dir = os.getenv('FITS_LOCKFILE_DIR', "/data/logs")
 
 # Configure the log directory here
 fits_log_dir = os.getenv('FITS_LOG_DIR',"/data/logs/")

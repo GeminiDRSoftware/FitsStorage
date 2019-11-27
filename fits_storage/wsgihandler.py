@@ -459,8 +459,8 @@ if os.getenv("FITSSTORAGE_PTVSD", None) is not None:
 if __name__ == '__main__':
     import wsgiref.simple_server
 
-    server = 'localhost'
-    port   = '8000'
+    server = os.getenv('WSGI_DEV_HOST', 'localhost')
+    port   = os.getenv('WSGI_DEV_PORT', '8090')
 
     try:
         httpd = wsgiref.simple_server.make_server(server, int(port), application)

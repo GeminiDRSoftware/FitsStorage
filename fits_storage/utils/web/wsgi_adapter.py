@@ -281,7 +281,6 @@ class Response(adapter.Response):
                     yield r
                 self._bytes_sent += len(r)
             else:
-                print ("Non-string type %s, using subelement iter" % type(element))
                 for subelement in element:
                     r = f(subelement)
                     yield r
@@ -384,7 +383,7 @@ class Response(adapter.Response):
             sobj.close()
 
     def sendfile(self, path):
-        self.sendfile_obj(open(path))
+        self.sendfile_obj(open(path, 'rb'))
 
     def sendfile_obj(self, fp):
         self.append_iterable(BufferedFileObjectIterator(fp))

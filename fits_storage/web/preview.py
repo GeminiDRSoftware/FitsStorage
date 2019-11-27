@@ -46,11 +46,13 @@ def preview(filenamegiven):
 
     try:
         # Find the information associated with the canonical diskfile and header for the file on the query
-        preview, header = (
-            session.query(Preview, Header).join(DiskFile, Header.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id)
-                    .filter(DiskFile.present == True)
-                    .filter(File.name == filename)
-                    .first()
+        preview, header, diskfile, _ = (
+            session.query(Preview, Header, DiskFile, File)
+                .filter(Preview.diskfile_id == DiskFile.id)
+                .filter(DiskFile.file_id == File.id)
+                .filter(DiskFile.present == True)
+                .filter(File.name == filename)
+                .first()
             )
     except TypeError: # Will happen if .first() returns None
         ctx.resp.status = Return.HTTP_NOT_FOUND
