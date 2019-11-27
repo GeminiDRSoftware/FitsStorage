@@ -3,9 +3,10 @@ import sys
 import astrodata
 import gemini_instruments
 
-from fits_storage.utils.previewqueue import render_preview
+from fits_storage.utils.previewqueue import PreviewQueueUtil
 from fits_storage.logger import logger, setdebug, setdemon
-
+from fits_storage.utils.null_logger import EmptyLogger
+from fits_storage.orm import sessionfactory
 
 # Option Parsing
 from optparse import OptionParser
@@ -44,7 +45,10 @@ print("output file: %s" % jpgfile)
 
 print("Rendering Preview...")
 
-render_preview(ad, fp)
+with sessionfactory() as session:
+    logger = EmptyLogger()
+    pqu = PreviewQueueUtil(session, logger)
+    pqu.render_preview(ad, fp)
 
 print("Done")
 
