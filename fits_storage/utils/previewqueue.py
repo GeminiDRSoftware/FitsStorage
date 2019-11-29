@@ -163,7 +163,7 @@ class PreviewQueueUtil(object):
                 diskfile.ad_object = astrodata.open(ad_fullpath)
 
             # Now there should be a diskfile.ad_object, either way...
-            with open(preview_fullpath, 'w') as fp:
+            with open(preview_fullpath, 'wb') as fp:
                 try:
                     self.render_preview(diskfile.ad_object, fp)
                 except:
