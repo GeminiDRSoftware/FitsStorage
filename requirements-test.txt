@@ -1,3 +1,4 @@
+<<<<<<< requirements-test.txt
 mod_wsgi==4.6.5
 psycopg2
 sqlalchemy
@@ -13,3 +14,6 @@ astropy
 future
 boto3
 monkeypatch
+pytest==5.2.2
+pylint==2.4.3
+coverage==4.5.4

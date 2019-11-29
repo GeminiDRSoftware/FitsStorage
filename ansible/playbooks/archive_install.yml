@@ -25,22 +25,7 @@
             - pip
           extra_args: --upgrade
       - name: install python packages
-        pip:
-          name:
-            - psycopg2
-            - sqlalchemy
-            - pyyaml
-            - jinja2
-            - pyfits
-            - dateutils
-            - requests
-            - matplotlib
-            - scipy
-            - pandas
-            - astropy
-            - future
-            - boto3
-          state: latest
+        pip: requirements=../../requirements.txt
       - name: Ensure group "fitsdata" exists
         group:
           name: fitsdata
@@ -245,7 +230,7 @@
           name:
             - mod_wsgi==4.6.5
           state: latest
-      - name: Setup PostgreSQL data directory
+      - name: Setup modwsgi directory
         file:
           path: /opt/modwsgi-default
           state: directory
@@ -275,16 +260,16 @@
         copy:
           src: ../../otherfiles/httpd-patched.conf
           dest: /opt/modwsgi-default/httpd.conf
-        register: mod_wsgi_config_installed
+        notify: restart fits-httpd
       - name: Set WSGI entry point
         lineinfile:
           path: /opt/modwsgi-default/handler.wsgi
           line: entry_point = '/opt/FitsStorage/fits_storage/wsgihandler.py'
           regex: "^entry_point = "
-        register: mod_wsgi_entry_point
-      - name: Restart WSGI service
-        service: name=fits-httpd state=restarted
-        #when: mod_wsgi_config_installed.changed or mod_wsgi_entry_point.changed
+        notify: restart fits-httpd
       - name: Start WSGI service on boot
         service: name=fits-httpd enabled=yes
 
+    handlers:
+      - name: restart fits-httpd
+        service: name=fits-httpd state=restarted
