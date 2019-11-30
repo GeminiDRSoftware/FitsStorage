@@ -9,6 +9,7 @@ RUN yum -y --nogpgcheck install httpd \
 
 # SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
 RUN dnf -y install redhat-rpm-config
+
 RUN pip3 install mod_wsgi==4.6.5
 
 # PUT APACHE LOGS TO DOCKER OUTPUT
@@ -27,6 +28,7 @@ RUN chown -R apache:apache /opt/modwsgi-default
 # SETUP HTTPD SERVICE
 COPY otherfiles/etc_systemd_system_fits-httpd.service /etc/systemd/system/fits-httpd.service
 COPY otherfiles/etc-sysconfig-httpd /etc/sysconfig/httpd
+COPY testdata /sci/dataflow
 
 # write a program to do the patch? could also do this by just copying in a fixed config file that we maintain, probably better
 COPY otherfiles/httpd-patched-centos8.conf /opt/modwsgi-default/httpd.conf
