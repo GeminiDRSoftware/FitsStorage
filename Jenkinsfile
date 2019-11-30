@@ -29,19 +29,19 @@ pipeline {
             steps{
                 echo 'STARTED'
                 checkout scm
-                sh 'mkdir -p ${TEST_IMAGE_PATH}'
-                sh 'mkdir -p ${TEST_IMAGE_CACHE}'
-                sh 'rm -rf ./plots; mkdir -p ./plots'
-                sh 'rm -rf ./reports; mkdir -p ./reports'
-                sh '.jenkins/scripts/download_and_install_anaconda.sh'
-                sh '.jenkins/scripts/create_conda_environment.sh'
-                sh '''. activate ${CONDA_ENV_NAME}
-                      '''
-                sh 'conda list -n ${CONDA_ENV_NAME}'
-                sh '''
-                    echo /tmp/DRAGONS-$$ > dragons-repo.txt
-                    git clone https://github.com/GeminiDRSoftware/DRAGONS.git `cat dragons-repo.txt`
-                '''
+//                 sh 'mkdir -p ${TEST_IMAGE_PATH}'
+//                 sh 'mkdir -p ${TEST_IMAGE_CACHE}'
+//                 sh 'rm -rf ./plots; mkdir -p ./plots'
+//                 sh 'rm -rf ./reports; mkdir -p ./reports'
+//                 sh '.jenkins/scripts/download_and_install_anaconda.sh'
+//                 sh '.jenkins/scripts/create_conda_environment.sh'
+//                 sh '''. activate ${CONDA_ENV_NAME}
+//                       '''
+//                 sh 'conda list -n ${CONDA_ENV_NAME}'
+//                 sh '''
+//                     echo /tmp/DRAGONS-$$ > dragons-repo.txt
+//                     git clone https://github.com/GeminiDRSoftware/DRAGONS.git `cat dragons-repo.txt`
+//                 '''
             }
 
         }
