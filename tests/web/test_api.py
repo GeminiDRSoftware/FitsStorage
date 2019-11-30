@@ -9,6 +9,7 @@ from fits_storage.web.api import lookup_diskfile, valid_pair, map_release
 
 
 @pytest.mark.usefixtures("rollback")
+@pytest.mark.slow
 def test_process(session):
     session.rollback()
     filename = "N20191010S0144.fits"

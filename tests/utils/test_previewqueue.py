@@ -35,9 +35,9 @@ def test_preview_queue_length(monkeypatch):
     assert(length == 1)
 
 
+@pytest.mark.slow
 @pytest.mark.usefixtures("rollback")
 def test_process(session):
-    fits_storage_config.storage_root = "testdata"
     logging = EmptyLogger()
     pqu = PreviewQueueUtil(session, logging)
     diskfiles = list()
