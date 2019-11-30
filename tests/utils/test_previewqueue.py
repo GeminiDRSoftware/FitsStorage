@@ -1,5 +1,6 @@
 import pytest
 
+from fits_storage import fits_storage_config
 from fits_storage.orm import sessionfactory
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.file import File
@@ -36,6 +37,7 @@ def test_preview_queue_length(monkeypatch):
 
 @pytest.mark.usefixtures("rollback")
 def test_process(session):
+    fits_storage_config.storage_root = "testdata"
     logging = EmptyLogger()
     pqu = PreviewQueueUtil(session, logging)
     diskfiles = list()
