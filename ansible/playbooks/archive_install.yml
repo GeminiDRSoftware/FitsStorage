@@ -101,7 +101,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: master
+          version: refac/centos8_cleanup
           dest: /opt/FitsStorage
           #key_file: /opt/id_rsa
           ssh_opts: -i /opt/id_rsa
