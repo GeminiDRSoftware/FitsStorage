@@ -72,4 +72,33 @@ def report(thing):
         if canhave_coords(session, ctx.user, header):
             resp.append(ftheader.fulltext)
         else:
-            resp.client_error(Return.HTTP_FORBIDDEN, "The data you're trying to access has proprietary rights and cannot be displayed")
+            resp.client_error(Return.HTTP_FORBIDDEN, "The data you're trying to access has "
+                                                     "proprietary rights and cannot be displayed")
+
+        if diskfile.provenance:
+            resp.append("\n\n")
+            resp.append("------ PROVENANCE ------\n")
+            filename_length = len('Filename')
+            md5_length = len('MD5')
+            primitive_length = len('Primitive')
+            for provenance in diskfile.provenance:
+                filename_length = max(filename_length, len(provenance.filename))
+                md5_length = max(md5_length, len(provenance.md5))
+                primitive_length = max(primitive_length, len(provenance.primitive))
+            resp.append("%s %s %s %s\n" % ('Filename'.ljust(filename_length),
+                                           'MD5'.ljust(md5_length),
+                                           'Timestamp'.ljust(26),
+                                           'Primitive'.ljust(primitive_length)))
+            for provenance in diskfile.provenance:
+                resp.append("%s %s %s %s\n" % (provenance.filename.ljust(filename_length),
+                                               provenance.md5.ljust(md5_length),
+                                               provenance.timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                                               provenance.primitive.ljust(primitive_length)))
+        if diskfile.provenance_history:
+            resp.append("\n\n")
+            resp.append("------ HISTORY ------\n")
+            for phistory in diskfile.provenance_history:
+                resp.append("start:     %s\nend:       %s\nprimitive: %s\nargs:      %s\n\n"
+                            % (phistory.timestamp_start.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                               phistory.timestamp_end.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                               phistory.primitive, phistory.args))

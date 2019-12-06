@@ -216,9 +216,9 @@ class Header(Base):
                 self.ra = ratodeg(self.ra)
             if type(self.dec) is str:
                 self.dec = dectodeg(self.dec)
-            if self.ra > 360.0 or self.ra < 0.0:
+            if self.ra is not None and (self.ra > 360.0 or self.ra < 0.0):
                 self.ra = None
-            if self.dec > 90.0 or self.dec < -90.0:
+            if self.dec is not None and (self.dec > 90.0 or self.dec < -90.0):
                 self.dec = None
 
         # These should be in the descriptor function really.
