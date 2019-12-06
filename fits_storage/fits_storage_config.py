@@ -74,7 +74,7 @@ if export_destinations_str is not None and export_destinations_str.strip() != ""
 else:
     print("No export destinations configured")
     export_destinations = ['https://archive.gemini.edu']
-#export_destinations = ['hbffits2']
+export_destinations = []
 
 # Do we want to bzip2 files we export on the fly?
 export_bzip = True
