@@ -5,7 +5,7 @@ After=syslog.target network.target postgresql.service
 [Service]
 Environment=PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
 User=fitsdata
-ExecStart=/usr/bin/python /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq1
+ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq1
 Restart=always
 # This will force the system to wait 10 seconds before respawning
 RestartSec=10

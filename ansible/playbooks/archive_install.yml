@@ -9,23 +9,28 @@
           name: 
             - openssl
             - postgresql
-            - postgresql
+            - postgresql-server
             - epel-release
-            - gcc-4.8.5
+            - gcc
             - gcc-c++
-            - python-devel
+            - python3-devel
             - gcc-gfortran
             - cfitsio-devel
             - git
-            - python-pip
+            - python3-pip
+            - httpd
+            - httpd-devel
+            - libnsl
           state: latest
-      - name: upgrade pip
-        pip:
-          name:
-            - pip
-          extra_args: --upgrade
-      - name: install python packages
-        pip: requirements=../../requirements.txt
+      #- name: upgrade pip
+        #pip:
+          #name:
+            #- pip
+          #extra_args: --upgrade
+      - name: target pip version due to bug
+        command: python3 -m pip install --upgrade "pip<10.0"
+      #- name: install python packages
+        #pip: requirements=../../requirements.txt
       - name: Ensure group "fitsdata" exists
         group:
           name: fitsdata
@@ -80,29 +85,43 @@
         copy:
           src: id_rsa
           dest: /opt/id_rsa
-          mode: u+rw,g-rw,o-rw
+          mode: u+rw,g+r,o+r
+      - name: Ensure FitsStorage repo folder is available and permissioned
+        file:
+          path: '/opt/FitsStorage'
+          state: directory
+          mode: 'u+rwx,g+rx,o+rx'
+          owner: 'fitsdata'
+      - name: Test for existance of FitsStorage repo
+        stat: 
+          path: /opt/FitsStorage/.git
+        register: fitsstoragerepo
       - name: Checkout FitsStorage into /opt
+        become: true
+        become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: dev-oly-tests
+          version: master
           dest: /opt/FitsStorage
           #key_file: /opt/id_rsa
           ssh_opts: -i /opt/id_rsa
           accept_hostkey: yes
+        when: not fitsstoragerepo.stat.exists
+      - name: install python packages
+        command: bash -c "cd /opt/FitsStorage && python3 -m pip install -r requirements.txt"
       - name: Remove key
         file:
           path: /opt/id_rsa
           state: absent
-      - name: Change FitsStorage owner to fitsdata
-        file:
-          path: /opt/FitsStorage
-          state: directory
-          recurse: yes
-          owner: fitsdata
       - name: Copy fitsverify to server
         copy:
           src: ../../fitsverify/
           dest: /opt/fitsverify/
+          mode: u+rwx,g+rx,o+rx
+        register: copiedfitsverify
+      - name: Compile fitsverify
+        command: gcc -L /lib64 -I /usr/include/cfitsio -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -lcfitsio -lm -lnsl-2.28
+        when: copiedfitsverify.changed
       - name: Setup PostgreSQL data directory
         file:
           path: /data/pgsql_data
@@ -121,8 +140,21 @@
           regex: Environment=PGDATA
           create: yes
         register: postgresql_configured
+      - name: Reload System Daemons
+        command: systemctl daemon-reload
+        when: postgresql_configured.changed or postgresql_service_installed.changed
+      - name: Initialize PostgreSQL database
+        command: bash -c "/usr/bin/postgresql-setup --initdb"
+        when: postgresql_configured.changed or postgresql_service_installed.changed
       - name: Ensure PostgreSQL is running
         service: name=postgresql state=started enabled=yes
+      - name: Ensure we have fitsdata user
+        become: true
+        become_user: postgres
+        postgresql_user:
+          name=fitsdata
+          password=fitsdata
+          state=present
       - name: Ensure we have the fitsdata database
         sudo_user: postgres
         postgresql_db: name=fitsdata
@@ -132,13 +164,13 @@
           state=present
           owner=fitsdata
         register: fitsdata_db_created
-      - name: Ensure we have fitsdata user with access to database
-        sudo_user: postgres
-        postgresql_user: db=fitsdata
-          name=fitsdata
-          password=fitsdata
-          priv=ALL
-          state=present
+###      - name: Ensure we have fitsdata user with access to database
+###        sudo_user: postgres
+###        postgresql_user: db=fitsdata
+###          name=fitsdata
+###          password=fitsdata
+###          priv=ALL
+###          state=present
       - name: Update cache size for database
         lineinfile:
           path: /data/pgsql_data/postgresql.conf
@@ -164,7 +196,7 @@
           create: yes
       - name: Create tables in DB
         sudo_user: fitsdata
-        command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python ./fits_storage/scripts/create_tables.py"
+        command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 ./fits_storage/scripts/create_tables.py"
         when: fitsdata_db_created.changed
       - name: Ensure we have apache user with access to database
         sudo_user: postgres
@@ -226,16 +258,14 @@
             - mod_ssl
           state: latest
       - name: Install mod_wsgi
-        pip:
-          name:
-            - mod_wsgi==4.6.5
-          state: latest
+        # built in pip seems to be busted for Ansible+CentOS8
+        command: python3 -m pip install "mod_wsgi"
       - name: Setup modwsgi directory
         file:
           path: /opt/modwsgi-default
           state: directory
       - name: setup mod-wsgi
-        command: mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  /opt/FitsStorage/fits_storage/wsgihandler.py
+        command: /usr/local/bin/mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  /opt/FitsStorage/fits_storage/wsgihandler.py
         args:
           creates: /opt/modwsgi-default/default.wsgi
         register: mod_wsgi_setup
@@ -258,7 +288,7 @@
       # TODO this is a complex XML patch if we try to apply it to the default file
       - name: Copy Mod-WSGI HTTPD config
         copy:
-          src: ../../otherfiles/httpd-patched.conf
+          src: ../../otherfiles/httpd-patched-centos8.conf
           dest: /opt/modwsgi-default/httpd.conf
         notify: restart fits-httpd
       - name: Set WSGI entry point
@@ -267,6 +297,13 @@
           line: entry_point = '/opt/FitsStorage/fits_storage/wsgihandler.py'
           regex: "^entry_point = "
         notify: restart fits-httpd
+      - name: Update mod-wsgi folder permissions
+        file:
+          path: /opt/modwsgi-default
+          state: directory
+          recurse: yes
+          owner: apache
+          group: apache
       - name: Start WSGI service on boot
         service: name=fits-httpd enabled=yes
 

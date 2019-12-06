@@ -129,6 +129,13 @@ fits_lockfile_dir = os.getenv('FITS_LOCKFILE_DIR', "/data/logs")
 # Configure the log directory here
 fits_log_dir = os.getenv('FITS_LOG_DIR',"/data/logs/")
 
+# Indicate if we are running in a docker context (to alter logging behavior)
+is_docker_str = os.getenv('IS_DOCKER', "False")
+if is_docker_str is not None and is_docker_str == "True":
+    is_docker = True
+else:
+    is_docker = False
+
 # Configure the tape scratch directory here
 fits_tape_scratchdir = os.getenv('TAPESCRATCH', "/data/tapescratch")
 

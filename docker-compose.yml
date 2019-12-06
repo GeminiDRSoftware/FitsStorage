@@ -88,7 +88,8 @@ services:
     volumes:
       - "~/testdata/archive-data-upload_staging:/data/upload_staging"
       - "~/testdata/archive-sci-dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
+    # command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
+    command: python3 fits_storage/scripts/service_ingest_queue.py
 
   onsite:
     build:
@@ -140,7 +141,8 @@ services:
     volumes:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
+    # command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
+    command: python3 fits_storage/scripts/service_ingest_queue.py 
 
   onsite-export-service:
     build:
