@@ -146,11 +146,11 @@ class CalibrationGHOST(Calibration):
         else:
             howmany = howmany if howmany else 2
         filters = []
-        # Must match focal_plane_mask only if it's not the 5.0arcsec slit in the target, otherwise any longslit is OK
-        if self.descriptors['focal_plane_mask'] != '5.0arcsec':
-            filters.append(Ghost.focal_plane_mask == self.descriptors['focal_plane_mask'])
-        else:
-            filters.append(Ghost.focal_plane_mask.like('%arcsec'))
+        # # Must match focal_plane_mask only if it's not the 5.0arcsec slit in the target, otherwise any longslit is OK
+        # if self.descriptors['focal_plane_mask'] != '5.0arcsec':
+        #     filters.append(Ghost.focal_plane_mask == self.descriptors['focal_plane_mask'])
+        # else:
+        #     filters.append(Ghost.focal_plane_mask.like('%arcsec'))
 
         if ab:
             # Add the 'before' filter
@@ -162,14 +162,14 @@ class CalibrationGHOST(Calibration):
             # Add the after filter
             filters.append(Header.ut_datetime > self.descriptors['ut_datetime'])
 
-        # The science amp_read_area must be equal or substring of the cal amp_read_area
-        # If the science frame uses all the amps, then they must be a direct match as all amps must be there
-        # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
-        # have a subset of the amps thus we must do the substring match
-        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
-            filters.append(Ghost.amp_read_area == self.descriptors['amp_read_area'])
-        elif self.descriptors['amp_read_area'] is not None:
-                filters.append(Ghost.amp_read_area.contains(self.descriptors['amp_read_area']))
+        # # The science amp_read_area must be equal or substring of the cal amp_read_area
+        # # If the science frame uses all the amps, then they must be a direct match as all amps must be there
+        # # - this is more efficient for the DB as it will use the index. Otherwise, the science frame could
+        # # have a subset of the amps thus we must do the substring match
+        # if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+        #     filters.append(Ghost.amp_read_area == self.descriptors['amp_read_area'])
+        # elif self.descriptors['amp_read_area'] is not None:
+        #         filters.append(Ghost.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         return (
             self.get_query()
