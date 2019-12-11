@@ -92,10 +92,6 @@
           state: directory
           mode: 'u+rwx,g+rx,o+rx'
           owner: 'fitsdata'
-      - name: Test for existance of FitsStorage repo
-        stat: 
-          path: /opt/FitsStorage/.git
-        register: fitsstoragerepo
       - name: Checkout FitsStorage into /opt
         become: true
         become_user: fitsdata
@@ -106,7 +102,6 @@
           #key_file: /opt/id_rsa
           ssh_opts: -i /opt/id_rsa
           accept_hostkey: yes
-        when: not fitsstoragerepo.stat.exists
       - name: install python packages
         command: bash -c "cd /opt/FitsStorage && python3 -m pip install -r requirements.txt"
       - name: Remove key
@@ -148,17 +143,7 @@
       - name: Initialize PostgreSQL database
         command: bash -c "/usr/bin/postgresql-setup --initdb"
         when: postgresql_configured.changed or postgresql_service_installed.changed
-      - name: Ensure PostgreSQL is running
-        service: name=postgresql state=started enabled=yes
-      - name: Ensure we have fitsdata user
-        become: true
-        become_user: postgres
-        postgresql_user:
-          name=fitsdata
-          password=fitsdata
-          state=present
       - name: Ensure we have the fitsdata database
-        sudo_user: postgres
         postgresql_db: name=fitsdata
           encoding='UTF-8'
           lc_collate='en_US.UTF-8'
@@ -166,13 +151,16 @@
           state=present
           owner=fitsdata
         register: fitsdata_db_created
-###      - name: Ensure we have fitsdata user with access to database
-###        sudo_user: postgres
-###        postgresql_user: db=fitsdata
-###          name=fitsdata
-###          password=fitsdata
-###          priv=ALL
-###          state=present
+        become: yes
+        become_user: postgres
+      - name: Ensure we have fitsdata user with access to database
+        postgresql_user: db=fitsdata
+          name=fitsdata
+          password=fitsdata
+          priv=ALL
+          state=present
+        become: yes
+        become_user: postgres
       - name: Update cache size for database
         lineinfile:
           path: /data/pgsql_data/postgresql.conf
@@ -184,51 +172,56 @@
         when: postgresql_configured.changed or postgresql_service_installed.changed
       - name: Enable PostgreSQL on startup
         service: name=postgresql enabled=yes
-      - name: Set as a non-archive host and set storage_root
-        lineinfile:
-          path: /opt/FitsStorage/fits_storage/fits_storage_config.py
-          line: use_as_archive=False
-          regex: use_as_archive
-          create: yes
-      - name: Set storage_root
-        lineinfile:
-          path: /opt/FitsStorage/fits_storage/fits_storage_config.py
-          line: storage_root = '/data/gemini_data'
-          regex: storage_root
-          create: yes
+      #- name: Set as a non-archive host and set storage_root
+        #lineinfile:
+          #path: /opt/FitsStorage/fits_storage/fits_storage_config.py
+          #line: use_as_archive=False
+          #regex: use_as_archive
+          #create: yes
+      #- name: Set storage_root
+        #lineinfile:
+          #path: /opt/FitsStorage/fits_storage/fits_storage_config.py
+          #line: storage_root = '/data/gemini_data'
+          #regex: storage_root
+          #create: yes
       - name: Create tables in DB
-        sudo_user: fitsdata
         command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 ./fits_storage/scripts/create_tables.py"
+        become: yes
+        become_user: fitsdata
         when: fitsdata_db_created.changed
       - name: Ensure we have apache user with access to database
-        sudo_user: postgres
         postgresql_user: db=fitsdata
           name=apache
           password=apache
           priv=ALL
           state=present
+        become: yes
+        become_user: postgres
       - name: Ensure we have root user with access to database
-        sudo_user: postgres
         postgresql_user: db=fitsdata
           name=root
           priv=ALL
           state=present
+        become: yes
+        become_user: postgres
       - name: Grant PostgreSQL table access to apache
-        sudo_user: postgres
         postgresql_privs:
           db: fitsdata
           privs: ALL
           type: table
           objs: ALL_IN_SCHEMA
           role: apache
+        become: yes
+        become_user: postgres
       - name: Grant PostgreSQL sequence access to apache
-        sudo_user: postgres
         postgresql_privs:
           db: fitsdata
           privs: ALL
           type: sequence
           objs: ALL_IN_SCHEMA
           role: apache
+        become: yes
+        become_user: postgres
       - name: Install ingest queue 1
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue1.service
