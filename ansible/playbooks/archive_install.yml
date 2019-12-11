@@ -310,3 +310,5 @@
     handlers:
       - name: restart fits-httpd
         service: name=fits-httpd state=restarted
+        service: name=fits-service_ingest_queue1 state=started enabled=yes
+        service: name=fits-service_ingest_queue2 state=started enabled=yes
