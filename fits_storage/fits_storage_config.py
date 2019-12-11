@@ -51,7 +51,7 @@ def lookup_config(name, default_value):
         return env_value
     hostname = socket.gethostname()
     if hostname is not None and '.' in hostname:
-        hostname = hostname[:hostname.indexof('.')]
+        hostname = hostname[:hostname.find('.')]
     if hostname is not None:
         if hostname in _host_based_configs:
             if name in _host_based_configs[hostname]:
