@@ -88,7 +88,7 @@ def report(thing):
             resp.append("%s %s %s %s\n" % ('Filename'.ljust(filename_length),
                                            'MD5'.ljust(md5_length),
                                            'Timestamp'.ljust(26),
-                                           'Primitive'.ljust(primitive_length)))
+                                           'Provenance Added By'.ljust(primitive_length)))
             for provenance in diskfile.provenance:
                 resp.append("%s %s %s %s\n" % (provenance.filename.ljust(filename_length),
                                                provenance.md5.ljust(md5_length),
