@@ -310,10 +310,10 @@
     handlers:
       - name: restart fits-httpd
         service: name=fits-httpd state=restarted
-        listen: "restart serices"
+        listen: "restart services"
       - name: restart ingest1
         service: name=fits-service_ingest_queue1 state=started enabled=yes
-        listen: "restart serices"
+        listen: "restart services"
       - name: restart ingest2
         service: name=fits-service_ingest_queue2 state=started enabled=yes
-        listen: "restart serices"
+        listen: "restart services"
