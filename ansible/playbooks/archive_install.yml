@@ -54,8 +54,6 @@
           name: fitsdata
           groups: fitsdata,geminidata
           append: yes
-      # - name: Centos 7 Fix (post-create user fitsdata)
-      #   command: sss_cache -E
       - name: Set PYTHONPATH for fitsdata user for convenience
         lineinfile:
           path: /home/fitsdata/.cshrc
@@ -102,6 +100,7 @@
           #key_file: /opt/id_rsa
           ssh_opts: -i /opt/id_rsa
           accept_hostkey: yes
+        notify: restart fits-httpd
       - name: install python packages
         command: bash -c "cd /opt/FitsStorage && python3 -m pip install -r requirements.txt"
       - name: Remove key
