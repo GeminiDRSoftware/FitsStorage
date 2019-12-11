@@ -20,8 +20,12 @@
             - python3-pip
             - httpd
             - httpd-devel
-            - libnsl
           state: latest
+      - name: install CentOS8 packages
+        yum:
+          name:
+            - libnsl
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
       #- name: upgrade pip
         #pip:
           #name:
@@ -117,7 +121,12 @@
         command: gcc -L /lib64 -I /usr/include/cfitsio -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -lcfitsio -lm -lnsl-2.28
         args:
           chdir: /opt/fitsverify/
-        when: copiedfitsverify.changed
+        when: copiedfitsverify.changed and ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+      - name: Compile fitsverify
+        command: gcc -L /lib64 -I /usr/include/cfitsio -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -lcfitsio -lm -lnsl
+        args:
+          chdir: /opt/fitsverify/
+        when: copiedfitsverify.changed and ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
       - name: Setup PostgreSQL data directory
         file:
           path: /data/pgsql_data

@@ -28,6 +28,10 @@ _host_based_configs = {
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
         'PUBDB_REMOTE': 'https://archive.gemini.edu/ingest_publications',
         'BLOCKED_URLS': ''
+    },
+    "archive": {
+        'USE_AS_ARCHIVE': 'True',
+        'FITS_SYSTEM_STATUS': 'production'
     }
 }
 
@@ -46,9 +50,12 @@ def lookup_config(name, default_value):
         # we found it via the environment, this takes precedence
         return env_value
     hostname = socket.gethostname()
-    if hostname in _host_based_configs:
-        if name in _host_based_configs[hostname]:
-            return _host_based_configs[hostname][name]
+    if hostname is not None and '.' in hostname:
+        hostname = hostname[:hostname.indexof('.')]
+    if hostname is not None:
+        if hostname in _host_based_configs:
+            if name in _host_based_configs[hostname]:
+                return _host_based_configs[hostname][name]
     return default_value
 
 
