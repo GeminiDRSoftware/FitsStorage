@@ -3,10 +3,57 @@ These are config parameters that are imported into the FitsStorage namespace
 We put them in a separate file to ease install issues
 """
 
-import os, sys
+import os
+import socket
+
+""" Configuration defaults based on the hostname """
+_host_based_configs = {
+    "hbffits-lv4": {
+        'USE_AS_ARCHIVE': 'False',
+        'EXPORT_DESTINATIONS': '',
+        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
+        'BLOCKED_URLS': '',
+        'FITS_SERVERTITLE': 'TEST On-site FitsServer',
+        'FITS_SYSTEM_STATUS': 'development'
+    },
+    "hbffits-lv1": {
+        'USE_AS_ARCHIVE': 'False',
+        'EXPORT_DESTINATIONS': '',
+        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
+        'BLOCKED_URLS': '',
+        'FITS_SERVERTITLE': 'TEST On-site FitsServer (CentOS 7)',
+        'FITS_SYSTEM_STATUS': 'development'
+    },
+    "some_actual_site_host": {
+        'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
+        'PUBDB_REMOTE': 'https://archive.gemini.edu/ingest_publications',
+        'BLOCKED_URLS': ''
+    }
+}
+
+
+def lookup_config(name, default_value):
+    """ Lookup a config value with the given name and a default.
+
+    Config values are returned via a 3-tiered lookup.  First, if the
+    name is found in the environment, that is used to get the value.
+    If not, it next looks at the _host_based_configs for this host
+    to see if there is a host-specific value for that same name.
+    Finally, it returns the default.
+    """
+    env_value = os.getenv(name, None)
+    if env_value is not None:
+        # we found it via the environment, this takes precedence
+        return env_value
+    hostname = socket.gethostname()
+    if hostname in _host_based_configs:
+        if name in _host_based_configs[hostname]:
+            return _host_based_configs[hostname][name]
+    return default_value
+
 
 # Is this an archive server
-use_as_archive_str = os.getenv('USE_AS_ARCHIVE', 'False')
+use_as_archive_str = lookup_config('USE_AS_ARCHIVE', 'False')
 use_as_archive = use_as_archive_str.lower() == 'true' or use_as_archive_str == '1'
 
 # AWS S3 info
@@ -18,10 +65,10 @@ aws_access_key = ''
 aws_secret_key = ''
 
 # Staging area for uncompressed cache of compressed file being processed
-z_staging_area = os.getenv('Z_STAGING_AREA', '/data/z_staging')
+z_staging_area = lookup_config('Z_STAGING_AREA', '/data/z_staging')
 
 # Configure the path to the storage root here 
-storage_root = os.getenv('STORAGE_ROOT', '/sci/dataflow')
+storage_root = lookup_config('STORAGE_ROOT', '/sci/dataflow')
 #storage_root = '/data/archive_soak'
 #storage_root = '/data/skycam'
 dhs_perm = '/sci/dhs'
@@ -41,7 +88,7 @@ target_max_files = 8000000
 
 # This is the path in the storage root where processed calibrations
 # uploaded through the http server get stored.
-upload_staging_path = os.getenv('UPLOAD_STAGING_PATH', '/data/upload_staging')
+upload_staging_path = lookup_config('UPLOAD_STAGING_PATH', '/data/upload_staging')
 
 # This is the cookie value needed to allow uploading files.
 # Leave it empty to disable upload authentication
@@ -65,16 +112,14 @@ magic_api_cookie = 'f0a49ab56f80da436b59e1d8f20067f4'
 
 # API backend stuff
 provides_api = True
-api_backend_location = os.getenv('API_BACKEND_LOCATION', 'localhost:8000')
+api_backend_location = lookup_config('API_BACKEND_LOCATION', 'localhost:8000')
 
 # This is the list of downstream servers we export files we ingest to
-export_destinations_str = os.getenv('EXPORT_DESTINATIONS', None)
+export_destinations_str = lookup_config('EXPORT_DESTINATIONS', None)
 if export_destinations_str is not None and export_destinations_str.strip() != "":
     export_destinations = export_destinations_str.split(',')
 else:
-    print("No export destinations configured")
-    export_destinations = ['https://archive.gemini.edu']
-export_destinations = []
+    export_destinations = []
 
 # Do we want to bzip2 files we export on the fly?
 export_bzip = True
@@ -94,9 +139,9 @@ das_calproc_path = '/net/josie/staging/dataproc/gmos'
 
 # Configure the site and other misc stuff here
 # Especially for archive systems, make the servername a fully qualified domain name.
-fits_servertitle = "CPO Fits Server"
-fits_servername = "cpofits-lv2"
-fits_system_status = "production"
+fits_servertitle = lookup_config('FITS_SERVERTITLE', "CPO Fits Server")
+fits_servername = socket.gethostname()  # "cpofits-lv2"
+fits_system_status = lookup_config('FITS_SYSTEM_STATUS', "production")
 
 # Limit on number of results in open searches
 fits_open_result_limit = 500
@@ -107,15 +152,15 @@ email_errors_to = "phirst@gemini.edu"
 #email_errors_to = "kanderso@gemini.edu"
 
 # Configure the path the data postgres database here
-fits_dbname = os.getenv('FITS_DB_NAME', 'fitsdata')
-fits_dbserver = os.getenv('FITS_DB_SERVER', '')
+fits_dbname = lookup_config('FITS_DB_NAME', 'fitsdata')
+fits_dbserver = lookup_config('FITS_DB_SERVER', '')
 fits_database = 'postgresql://%s/%s' % (fits_dbserver, fits_dbname)
 #fits_database = 'sqlite:////home/fitsdata/sqlite-database'
 #To reference database on another machine: 
 #fits_database = 'postgresql://hbffitstape1/'+fits_dbname
 
 # Configure the auxillary data directory here
-fits_aux_datadir = os.getenv('FITS_AUX_DATADIR', "/opt/FitsStorage/data")
+fits_aux_datadir = lookup_config('FITS_AUX_DATADIR', "/opt/FitsStorage/data")
 
 # Configure the template directory here
 template_root = fits_aux_datadir + "/templates"
@@ -124,20 +169,20 @@ template_root = fits_aux_datadir + "/templates"
 fits_db_backup_dir = "/sci/dataflow/FitsStorage_Backups/cpofits-lv1"
 
 # Configure the LockFile Directory here
-fits_lockfile_dir = os.getenv('FITS_LOCKFILE_DIR', "/data/logs")
+fits_lockfile_dir = lookup_config('FITS_LOCKFILE_DIR', "/data/logs")
 
 # Configure the log directory here
-fits_log_dir = os.getenv('FITS_LOG_DIR',"/data/logs/")
+fits_log_dir = lookup_config('FITS_LOG_DIR',"/data/logs/")
 
 # Indicate if we are running in a docker context (to alter logging behavior)
-is_docker_str = os.getenv('IS_DOCKER', "False")
+is_docker_str = lookup_config('IS_DOCKER', "False")
 if is_docker_str is not None and is_docker_str == "True":
     is_docker = True
 else:
     is_docker = False
 
 # Configure the tape scratch directory here
-fits_tape_scratchdir = os.getenv('TAPESCRATCH', "/data/tapescratch")
+fits_tape_scratchdir = lookup_config('TAPESCRATCH', "/data/tapescratch")
 
 # Configure install specifics such as database backend tweaks, apache presence, etc
 # fsc_localmode is depreciated
@@ -148,11 +193,13 @@ using_sqlite = False
 pubdb_host = 'hbfmysql1.hi.gemini.edu'
 pubdb_username = 'fitsdata'
 pubdb_dbname = 'apps-publications'
-#pubdb_remote = 'https://archive.gemini.edu/ingest_publications'
-pubdb_remote = 'https://localhost/ingest_publications'
+pubdb_remote = lookup_config('PUBDB_REMOTE', 'https://localhost/ingest_publications')
 
 # By default, all URLs on the server are active. List in blocked_urls any that you want to disable
-blocked_urls = []
-#blocked_urls=['debug', 'summary', 'diskfiles', 'ssummary', 'lsummary', 'standardobs', 'calibrations', 'xmlfilelist', 'fileontape', 'calmgr', 'upload_processed_cal', 'fitsverify', 'mdreport', 'fullheader', 'file', 'programsobserved', 'gmoscal', 'qareport', 'qametrics', 'qaforgui', 'stats', 'tape', 'tapewrite', 'tapefile', 'taperead', 'xmltape', 'notification', 'curation', 'observing_statistics', 'authentication']
+blocked_urls_str = lookup_config('BLOCKED_URLS', 'debug,summary,diskfiles,ssummary,lsummary,standardobs,calibrations,xmlfilelist,fileontape,calmgr,upload_processed_cal,fitsverify,mdreport,fullheader,file,programsobserved,gmoscal,qareport,qametrics,qaforgui,stats,tape,tapewrite,tapefile,taperead,xmltape,notification,curation,observing_statistics,authentication')
+if blocked_urls_str is not None:
+    blocked_urls = blocked_urls_str.split(',')
+else:
+    blocked_urls = []
 
-validation_def_path = os.getenv('VALIDATION_DEF_PATH', '/opt/FitsStorage/docs/dataDefinition')
+validation_def_path = lookup_config('VALIDATION_DEF_PATH', '/opt/FitsStorage/docs/dataDefinition')
