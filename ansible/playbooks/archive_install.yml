@@ -100,7 +100,7 @@
           #key_file: /opt/id_rsa
           ssh_opts: -i /opt/id_rsa
           accept_hostkey: yes
-        notify: restart fits-httpd
+        notify: restart services
       - name: install python packages
         command: bash -c "cd /opt/FitsStorage && python3 -m pip install -r requirements.txt"
       - name: Remove key
@@ -290,13 +290,13 @@
         copy:
           src: ../../otherfiles/httpd-patched-centos8.conf
           dest: /opt/modwsgi-default/httpd.conf
-        notify: restart fits-httpd
+        notify: restart services
       - name: Set WSGI entry point
         lineinfile:
           path: /opt/modwsgi-default/handler.wsgi
           line: entry_point = '/opt/FitsStorage/fits_storage/wsgihandler.py'
           regex: "^entry_point = "
-        notify: restart fits-httpd
+        notify: restart services
       - name: Update mod-wsgi folder permissions
         file:
           path: /opt/modwsgi-default
@@ -310,5 +310,10 @@
     handlers:
       - name: restart fits-httpd
         service: name=fits-httpd state=restarted
+        listen: "restart serices"
+      - name: restart ingest1
         service: name=fits-service_ingest_queue1 state=started enabled=yes
+        listen: "restart serices"
+      - name: restart ingest2
         service: name=fits-service_ingest_queue2 state=started enabled=yes
+        listen: "restart serices"
