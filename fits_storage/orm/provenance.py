@@ -1,13 +1,9 @@
+import json
 from datetime import datetime
 
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, Text, Boolean, DateTime, String
-from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
+from sqlalchemy import Integer, Text, DateTime, String
 
-from sqlalchemy.ext.associationproxy import association_proxy
-
-import astrodata
 from . import Base
 
 
@@ -52,26 +48,32 @@ class ProvenanceHistory(Base):
 
 
 def ingest_provenance(diskfile):
+    """
+    ingest the provenance data from the diskfile into the database.
+
+    :param diskfile: diskfile to read provenance data out of
+    :return: none
+    """
     ad = diskfile.ad_object
-    if 'GEM_PROVENANCE' in ad:
-        provenance = ad.GEM_PROVENANCE
+    provenance = ad.provenance
+    if provenance:
         prov_list = list()
-        for row in provenance:
-            timestamp = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S.%f")
-            filename = row[1]
-            md5 = row[2]
-            primitive = row[3]
-            prov_row = Provenance(timestamp, filename, md5, primitive)
+        for prov in provenance:
+            timestamp = prov.timestamp
+            filename = prov.filename
+            md5 = prov.md5
+            provenance_added_by = prov.provenance_added_by
+            prov_row = Provenance(timestamp, filename, md5, provenance_added_by)
             prov_list.append(prov_row)
         diskfile.provenance = prov_list
-    if 'GEM_PROVENANCE_HISTORY' in ad:
-        history = ad.GEM_PROVENANCE_HISTORY
+    provenance_history = ad.provenance_history
+    if provenance_history:
         hist_list = list()
-        for row in history:
-            timestamp_start = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S.%f")
-            timestamp_end = datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S.%f")
-            primitive = row[2]
-            args = row[3]
-            hist_row = ProvenanceHistory(timestamp_start, timestamp_end, primitive, args)
-            hist_list.append(hist_row)
+        for ph in provenance_history:
+            timestamp_start = ph.timestamp_start
+            timestamp_stop = ph.timestamp_stop
+            primitive = ph.primitive
+            args = ph.args
+            hist = ProvenanceHistory(timestamp_start, timestamp_stop, primitive, args)
+            hist_list.append(hist)
         diskfile.provenance_history = hist_list
