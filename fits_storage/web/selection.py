@@ -84,7 +84,8 @@ getselection_key_value = {
     'coadds': 'coadds',
     'publication': 'publication',
     'PIname': 'PIname',
-    'ProgramText': 'ProgramText'
+    'ProgramText': 'ProgramText',
+    'lastmoddaterange': 'lastmoddaterange'
     }
 
 # Also, some entries set themselves as the value for a certain selection
@@ -396,6 +397,15 @@ def queryselection(query, selection):
         startdt, enddt = gemini_time_period_from_range(selection['daterange'])
         # check it's between these two
         query = query.filter(Header.ut_datetime >= startdt).filter(Header.ut_datetime < enddt)
+
+    if 'lastmoddaterange' in selection:
+        try:
+            a, b = selection['lastmoddaterange'].split(' ')
+            startfiledt, endfiledt = get_time_period(a, b, False)
+            query = query.filter(DiskFile.lastmod >= startfiledt).filter(DiskFile.lastmod < endfiledt)
+        except Exception:
+            # parse error on datetime
+            pass
 
     if 'inst' in selection:
         if selection['inst'] == 'GMOS':
