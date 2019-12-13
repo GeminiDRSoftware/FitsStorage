@@ -476,7 +476,7 @@ class Header(Base):
             # If we're not in an RA/Dec TANgent frame, don't even bother
             for hdr in ad.hdr:
                 if (hdr.get('CTYPE1') == 'RA---TAN') and (hdr.get('CTYPE2') == 'DEC--TAN'):
-                    extension = "%s,%s" % (hdr.get('EXTNAME'), hd.get('EXTVER'))
+                    extension = "%s,%s" % (hdr.get('EXTNAME'), hdr.get('EXTVER'))
                     wcs = pywcs.WCS(hdr)
                     try:
                         fp = wcs.calcFootprint()
