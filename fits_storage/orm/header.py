@@ -183,7 +183,10 @@ class Header(Base):
             self.engineering = True
             self.science_verification = False
 
-        self.observation_id = ad.observation_id()
+        try:
+            self.observation_id = ad.observation_id()
+        except AttributeError as oidae:
+            self.observation_id = None
         if self.observation_id is not None:
             # Ensure upper case
             self.observation_id = str(self.observation_id).upper()
@@ -226,11 +229,19 @@ class Header(Base):
                 if log:
                     log.warn("Unable to read RA from datafile: %s" % ie)
                 self.ra = None
+            except TypeError as te:
+                if log:
+                    log.warn("Unable to read RA from datafile: %s" % te)
+                self.ra = None
             try:
                 self.dec = ad.dec()
             except IndexError as ie:
                 if log:
                     log.warn("Unable to read DEC from datafile: %s" % ie)
+                self.dec = None
+            except TypeError as te:
+                if log:
+                    log.warn("Unable to read DEC from datafile: %s" % te)
                 self.dec = None
             if type(self.ra) is str:
                 self.ra = ratodeg(self.ra)
@@ -301,8 +312,14 @@ class Header(Base):
         self.wavelength_band = ad.wavelength_band()
         self.focal_plane_mask = ad.focal_plane_mask(pretty=True)
         self.pupil_mask = ad.pupil_mask(pretty=True)
-        dvx = ad.detector_x_bin()
-        dvy = ad.detector_y_bin()
+        try:
+            dvx = ad.detector_x_bin()
+        except AttributeError as dvxae:
+            dvx = None
+        try:
+            dvy = ad.detector_y_bin()
+        except AttributeError as dvyae:
+            dvy = None
         if (dvx is not None) and (dvy is not None):
             self.detector_binning = "%dx%d" % (dvx, dvy)
 
@@ -339,6 +356,10 @@ class Header(Base):
         except TypeError as te:
             if log:
                 log.warn("Unable to get ROI setting: %s" % te)
+            self.detector_roi_setting = None
+        except IndexError as ie:
+            if log:
+                log.warn("Unable to get ROI setting: %s" % ie)
             self.detector_roi_setting = None
 
         self.coadds = ad.coadds()

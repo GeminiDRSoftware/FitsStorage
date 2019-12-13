@@ -67,7 +67,10 @@ class Gmos(Base):
             # to those elements.
             pass
 
-        read_speed = ad.read_speed_setting()
+        try:
+            read_speed = ad.read_speed_setting()
+        except AttributeError as ae:
+            read_speed = None
         if read_speed in READ_SPEED_SETTINGS:
             self.read_speed_setting = read_speed
 
