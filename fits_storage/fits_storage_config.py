@@ -5,6 +5,8 @@ We put them in a separate file to ease install issues
 
 import os
 import socket
+import configparser
+
 
 """ Configuration defaults based on the hostname """
 _host_based_configs = {
@@ -45,10 +47,19 @@ def lookup_config(name, default_value):
     to see if there is a host-specific value for that same name.
     Finally, it returns the default.
     """
+    # TODO singleton wrap this - cheap anyway and will just be used at startup
+    # try to load /etc/fitsstorage.conf
+    # but be resilient if it is not found
+    config = configparser.ConfigParser()
+    if os.path.exists('/etc/fitsstorage.conf'):
+        config.read('/etc/fitsstorage.conf')
     env_value = os.getenv(name, None)
     if env_value is not None:
         # we found it via the environment, this takes precedence
         return env_value
+    config_value = config.get("FitsStorage", name, None)
+    if config_value is not None:
+        return config_value
     hostname = socket.gethostname()
     if hostname is not None and '.' in hostname:
         hostname = hostname[:hostname.find('.')]

@@ -251,6 +251,47 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-api-backend.service
           dest: /etc/systemd/system/fits-api-backend.service
+      - name: Install fitsstorage config
+        copy:
+          src: ../../otherfiles/fitsstorage.conf
+          dest: /etc/fitsstorage.conf
+        register: fitsstorageconf
+        when: "'arc' in inventory_hostname"
+      - name: Set s3_bucket_name
+        lineinfile:
+          path: /etc/fitsstorage.conf
+          line: s3_bucket_name = {{ s3_bucket_name }}
+          regex: s3_bucket_name
+          create: yes
+        when: fitsstorageconf.changed
+      - name: Set s3_backup_bucket_name
+        lineinfile:
+          path: /etc/fitsstorage.conf
+          line: s3_backup_bucket_name = {{ s3_backup_bucket_name }}
+          regex: s3_backup_bucket_name
+          create: yes
+        when: fitsstorageconf.changed
+      - name: Set s3_staging_area
+        lineinfile:
+          path: /etc/fitsstorage.conf
+          line: s3_staging_area = {{ s3_staging_area }}
+          regex: s3_staging_area
+          create: yes
+        when: fitsstorageconf.changed
+      - name: Set aws_access_key
+        lineinfile:
+          path: /etc/fitsstorage.conf
+          line: aws_access_key = {{ aws_access_key }}
+          regex: aws_access_key
+          create: yes
+        when: fitsstorageconf.changed
+      - name: Set aws_secret_key
+        lineinfile:
+          path: /etc/fitsstorage.conf
+          line: aws_secret_key = {{ aws_secret_key }}
+          regex: aws_secret_key
+          create: yes
+        when: fitsstorageconf.changed
       - name: Register Ingest service 1
         service: name=fits-service_ingest_queue1 state=started enabled=yes
       - name: Register Ingest service 2
