@@ -57,9 +57,9 @@ def lookup_config(name, default_value):
     if env_value is not None:
         # we found it via the environment, this takes precedence
         return env_value
-    config_value = config.get("FitsStorage", name, None)
-    if config_value is not None:
-        return config_value
+    if 'FitsStorage' in config:
+        if name in config['FitsStorage']:
+            return config['FitsStorage'][name]
     hostname = socket.gethostname()
     if hostname is not None and '.' in hostname:
         hostname = hostname[:hostname.find('.')]
