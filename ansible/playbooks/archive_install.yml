@@ -4,6 +4,12 @@
       - secret
     become: true
     tasks:
+      - name: install EPEL
+        yum:
+          name:
+            - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+          state: present
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
       - name: install packages
         yum:
           name: 
