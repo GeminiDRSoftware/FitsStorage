@@ -38,7 +38,10 @@ class Gnirs(Base):
         self.populate(ad)
 
     def populate(self, ad):
-        self.disperser = ad.disperser()
+        try:
+            self.disperser = ad.disperser()
+        except AttributeError as ae:
+            self.disperser = None
         self.filter_name = ad.filter_name()
 
         read_mode = ad.read_mode()

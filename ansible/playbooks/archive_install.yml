@@ -4,28 +4,41 @@
       - secret
     become: true
     tasks:
+      - name: install EPEL
+        yum:
+          name:
+            - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+          state: present
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
       - name: install packages
         yum:
           name: 
             - openssl
             - postgresql
-            - postgresql
+            - postgresql-server
             - epel-release
-            - gcc-4.8.5
+            - gcc
             - gcc-c++
-            - python-devel
+            - python3-devel
             - gcc-gfortran
             - cfitsio-devel
             - git
-            - python-pip
+            - python3-pip
+            - httpd
+            - httpd-devel
           state: latest
-      - name: upgrade pip
-        pip:
+      - name: install CentOS8 packages
+        yum:
           name:
-            - pip
-          extra_args: --upgrade
-      - name: install python packages
-        pip: requirements=../../requirements.txt
+            - libnsl
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+      #- name: upgrade pip
+        #pip:
+          #name:
+            #- pip
+          #extra_args: --upgrade
+      - name: target pip version due to bug
+        command: python3 -m pip install --upgrade "pip<10.0"
       - name: Ensure group "fitsdata" exists
         group:
           name: fitsdata
@@ -49,8 +62,51 @@
           name: fitsdata
           groups: fitsdata,geminidata
           append: yes
-      # - name: Centos 7 Fix (post-create user fitsdata)
-      #   command: sss_cache -E
+      - name: Copy key to server
+        copy:
+          src: id_rsa
+          dest: /opt/id_rsa
+          mode: u+rw,g+r,o+r
+      - name: Ensure FitsStorage repo folder is available and permissioned
+        file:
+          path: '/opt/FitsStorage'
+          state: directory
+          mode: 'u+rwx,g+rwx,o+rx'
+          owner: fitsdata
+          group: fitsdata
+      - name: Checkout FitsStorage into /opt
+        become: true
+        become_user: fitsdata
+        git:
+          repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
+          version: refac/centos8_cleanup
+          dest: /opt/FitsStorage
+          #key_file: /opt/id_rsa
+          ssh_opts: -i /opt/id_rsa
+          accept_hostkey: yes
+        when: "'arc' not in inventory_hostname"
+        notify: restart services
+#      - name: Copy FitsStorage into /opt (AWS)
+#        synchronize:
+#          src: ../..
+#          dest: /opt/FitsStorage/
+#        when: "'arc' in inventory_hostname"
+#        notify: restart services
+      - name: install python packages
+        command: bash -c "cd /opt/FitsStorage && python3 -m pip install -r requirements.txt"
+      - name: install pip for python2 if on CentOS 7
+        yum:
+          name: 
+            - python-pip
+          state: latest
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+      - name: install python packages
+        command: bash -c "python -m pip install psycopg2-binary"
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+      - name: Remove key
+        file:
+          path: /opt/id_rsa
+          state: absent
       - name: Set PYTHONPATH for fitsdata user for convenience
         lineinfile:
           path: /home/fitsdata/.cshrc
@@ -76,33 +132,22 @@
           dest: /opt/DRAGONS
           key_file: id_rsa
           version: v2.1.0
-      - name: Copy key to server
-        copy:
-          src: id_rsa
-          dest: /opt/id_rsa
-          mode: u+rw,g-rw,o-rw
-      - name: Checkout FitsStorage into /opt
-        git:
-          repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: dev-oly-tests
-          dest: /opt/FitsStorage
-          #key_file: /opt/id_rsa
-          ssh_opts: -i /opt/id_rsa
-          accept_hostkey: yes
-      - name: Remove key
-        file:
-          path: /opt/id_rsa
-          state: absent
-      - name: Change FitsStorage owner to fitsdata
-        file:
-          path: /opt/FitsStorage
-          state: directory
-          recurse: yes
-          owner: fitsdata
       - name: Copy fitsverify to server
         copy:
           src: ../../fitsverify/
           dest: /opt/fitsverify/
+          mode: u+rwx,g+rx,o+rx
+        register: copiedfitsverify
+      - name: Compile fitsverify
+        command: gcc -L /lib64 -I /usr/include/cfitsio -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -lcfitsio -lm -lnsl-2.28
+        args:
+          chdir: /opt/fitsverify/
+        when: copiedfitsverify.changed and ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+      - name: Compile fitsverify
+        command: gcc -L /lib64 -I /usr/include/cfitsio -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -lcfitsio -lm -lnsl
+        args:
+          chdir: /opt/fitsverify/
+        when: copiedfitsverify.changed and ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
       - name: Setup PostgreSQL data directory
         file:
           path: /data/pgsql_data
@@ -121,10 +166,24 @@
           regex: Environment=PGDATA
           create: yes
         register: postgresql_configured
-      - name: Ensure PostgreSQL is running
-        service: name=postgresql state=started enabled=yes
+      - name: Reload System Daemons
+        command: systemctl daemon-reload
+        when: postgresql_configured.changed or postgresql_service_installed.changed
+      - name: Initialize PostgreSQL database
+        command: bash -c "/usr/bin/postgresql-setup --initdb"
+        when: postgresql_configured.changed or postgresql_service_installed.changed
+        become: true
+        become_user: root
+      - name: Bounce PostgreSQL before building db
+        service: name=postgresql state=restarted enabled=yes
+      - name: Ensure we have fitsdata user with access to database
+        postgresql_user: 
+          name=fitsdata
+          password=fitsdata
+          state=present
+        become: yes
+        become_user: postgres
       - name: Ensure we have the fitsdata database
-        sudo_user: postgres
         postgresql_db: name=fitsdata
           encoding='UTF-8'
           lc_collate='en_US.UTF-8'
@@ -132,13 +191,8 @@
           state=present
           owner=fitsdata
         register: fitsdata_db_created
-      - name: Ensure we have fitsdata user with access to database
-        sudo_user: postgres
-        postgresql_user: db=fitsdata
-          name=fitsdata
-          password=fitsdata
-          priv=ALL
-          state=present
+        become: yes
+        become_user: postgres
       - name: Update cache size for database
         lineinfile:
           path: /data/pgsql_data/postgresql.conf
@@ -150,55 +204,64 @@
         when: postgresql_configured.changed or postgresql_service_installed.changed
       - name: Enable PostgreSQL on startup
         service: name=postgresql enabled=yes
-      - name: Set as a non-archive host and set storage_root
-        lineinfile:
-          path: /opt/FitsStorage/fits_storage/fits_storage_config.py
-          line: use_as_archive=False
-          regex: use_as_archive
-          create: yes
-      - name: Set storage_root
-        lineinfile:
-          path: /opt/FitsStorage/fits_storage/fits_storage_config.py
-          line: storage_root = '/data/gemini_data'
-          regex: storage_root
-          create: yes
+      #- name: Set as a non-archive host and set storage_root
+        #lineinfile:
+          #path: /opt/FitsStorage/fits_storage/fits_storage_config.py
+          #line: use_as_archive=False
+          #regex: use_as_archive
+          #create: yes
+      #- name: Set storage_root
+        #lineinfile:
+          #path: /opt/FitsStorage/fits_storage/fits_storage_config.py
+          #line: storage_root = '/data/gemini_data'
+          #regex: storage_root
+          #create: yes
       - name: Create tables in DB
-        sudo_user: fitsdata
-        command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python ./fits_storage/scripts/create_tables.py"
+        command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 ./fits_storage/scripts/create_tables.py"
+        become: yes
+        become_user: fitsdata
         when: fitsdata_db_created.changed
       - name: Ensure we have apache user with access to database
-        sudo_user: postgres
         postgresql_user: db=fitsdata
           name=apache
           password=apache
           priv=ALL
           state=present
+        become: yes
+        become_user: postgres
       - name: Ensure we have root user with access to database
-        sudo_user: postgres
         postgresql_user: db=fitsdata
           name=root
           priv=ALL
           state=present
+        become: yes
+        become_user: postgres
       - name: Grant PostgreSQL table access to apache
-        sudo_user: postgres
         postgresql_privs:
           db: fitsdata
           privs: ALL
           type: table
           objs: ALL_IN_SCHEMA
           role: apache
+        become: yes
+        become_user: postgres
       - name: Grant PostgreSQL sequence access to apache
-        sudo_user: postgres
         postgresql_privs:
           db: fitsdata
           privs: ALL
           type: sequence
           objs: ALL_IN_SCHEMA
           role: apache
+        become: yes
+        become_user: postgres
       - name: Install ingest queue 1
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue1.service
           dest: /etc/systemd/system/fits-service_ingest_queue1.service
+      - name: Install ingest queue 2
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue2.service
+          dest: /etc/systemd/system/fits-service_ingest_queue2.service
       # TODO need to stop/start service #2 to do this, plus add a line replace
       # - name: Install ingest queue 2
       #   copy:
@@ -212,8 +275,66 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-api-backend.service
           dest: /etc/systemd/system/fits-api-backend.service
+      - name: Install fitsstorage config
+        copy:
+          src: ../../otherfiles/fitsstorage.conf
+          dest: /etc/fitsstorage.conf
+        register: fitsstorageconf
+        when: "'arc' in inventory_hostname"
+        notify: restart services
+      - name: Use as archive
+        lineinfile:
+          path: /etc/fitsstorage.conf
+          line: use_as_archive = {{ use_as_archive }}
+          regex: use_as_archive
+          create: yes
+        when: fitsstorageconf.changed
+      - name: Set using_s3
+        lineinfile:
+          path: /etc/fitsstorage.conf
+          line: using_s3 = {{ using_s3 }}
+          regex: using_s3
+          create: yes
+        when: fitsstorageconf.changed
+      - name: Set s3_bucket_name
+        lineinfile:
+          path: /etc/fitsstorage.conf
+          line: s3_bucket_name = {{ s3_bucket_name }}
+          regex: s3_bucket_name
+          create: yes
+        when: fitsstorageconf.changed
+      - name: Set s3_backup_bucket_name
+        lineinfile:
+          path: /etc/fitsstorage.conf
+          line: s3_backup_bucket_name = {{ s3_backup_bucket_name }}
+          regex: s3_backup_bucket_name
+          create: yes
+        when: fitsstorageconf.changed
+      - name: Set s3_staging_area
+        lineinfile:
+          path: /etc/fitsstorage.conf
+          line: s3_staging_area = {{ s3_staging_area }}
+          regex: s3_staging_area
+          create: yes
+        when: fitsstorageconf.changed
+      - name: Set aws_access_key
+        lineinfile:
+          path: /etc/fitsstorage.conf
+          line: aws_access_key = {{ aws_access_key }}
+          regex: aws_access_key
+          create: yes
+        when: fitsstorageconf.changed
+      - name: Set aws_secret_key
+        lineinfile:
+          path: /etc/fitsstorage.conf
+          line: aws_secret_key = {{ aws_secret_key }}
+          regex: aws_secret_key
+          create: yes
+        when: fitsstorageconf.changed
       - name: Register Ingest service 1
         service: name=fits-service_ingest_queue1 state=started enabled=yes
+      - name: Register Ingest service 2
+        service: name=fits-service_ingest_queue2 state=started enabled=yes
       # - name: Register Export Queue
       #   service: name=fits-service_export_queue1 state=started enabled=yes
       - name: Register API service
@@ -226,16 +347,14 @@
             - mod_ssl
           state: latest
       - name: Install mod_wsgi
-        pip:
-          name:
-            - mod_wsgi==4.6.5
-          state: latest
+        # built in pip seems to be busted for Ansible+CentOS8
+        command: python3 -m pip install "mod_wsgi"
       - name: Setup modwsgi directory
         file:
           path: /opt/modwsgi-default
           state: directory
       - name: setup mod-wsgi
-        command: mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  /opt/FitsStorage/fits_storage/wsgihandler.py
+        command: /usr/local/bin/mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  /opt/FitsStorage/fits_storage/wsgihandler.py
         args:
           creates: /opt/modwsgi-default/default.wsgi
         register: mod_wsgi_setup
@@ -258,18 +377,32 @@
       # TODO this is a complex XML patch if we try to apply it to the default file
       - name: Copy Mod-WSGI HTTPD config
         copy:
-          src: ../../otherfiles/httpd-patched.conf
+          src: ../../otherfiles/httpd-patched-centos8.conf
           dest: /opt/modwsgi-default/httpd.conf
-        notify: restart fits-httpd
+        notify: restart services
       - name: Set WSGI entry point
         lineinfile:
           path: /opt/modwsgi-default/handler.wsgi
           line: entry_point = '/opt/FitsStorage/fits_storage/wsgihandler.py'
           regex: "^entry_point = "
-        notify: restart fits-httpd
+        notify: restart services
+      - name: Update mod-wsgi folder permissions
+        file:
+          path: /opt/modwsgi-default
+          state: directory
+          recurse: yes
+          owner: apache
+          group: apache
       - name: Start WSGI service on boot
         service: name=fits-httpd enabled=yes
 
     handlers:
       - name: restart fits-httpd
         service: name=fits-httpd state=restarted
+        listen: "restart services"
+      - name: restart ingest1
+        service: name=fits-service_ingest_queue1 state=restarted
+        listen: "restart services"
+      - name: restart ingest2
+        service: name=fits-service_ingest_queue2 state=restarted
+        listen: "restart services"
