@@ -62,8 +62,8 @@ def list_headers(selection, orderby, full_query=False, add_previews=False, sessi
 
             if value == 'filename':
                 order_criteria.append(sortingfunc(DiskFile.filename))
-            elif value == 'lastmoddaterange':
-                order_criteria.append(sortingfunc(DiskFile.lastmod))
+            elif value == 'entrytime':
+                order_criteria.append(sortingfunc(DiskFile.entrytime))
             elif value in whichorderby:
                 thing = getattr(Header, value)
                 order_criteria.append(sortingfunc(thing))

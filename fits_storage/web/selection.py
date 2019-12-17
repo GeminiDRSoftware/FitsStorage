@@ -85,7 +85,7 @@ getselection_key_value = {
     'publication': 'publication',
     'PIname': 'PIname',
     'ProgramText': 'ProgramText',
-    'lastmoddaterange': 'lastmoddaterange'
+    'entrytime': 'entrytime'
     }
 
 # Also, some entries set themselves as the value for a certain selection
