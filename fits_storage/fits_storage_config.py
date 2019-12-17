@@ -34,6 +34,12 @@ _host_based_configs = {
     "archive": {
         'USE_AS_ARCHIVE': 'True',
         'FITS_SYSTEM_STATUS': 'production'
+    },
+    "arcdev": {
+        'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
+        'USE_AS_ARCHIVE': 'True',
+        'EXPORT_DESTINATIONS': '',
+        'FITS_SYSTEM_STATUS': 'development'
     }
 }
 
@@ -58,8 +64,8 @@ def lookup_config(name, default_value):
         # we found it via the environment, this takes precedence
         return env_value
     if 'FitsStorage' in config:
-        if name in config['FitsStorage']:
-            return config['FitsStorage'][name]
+        if name.lower() in config['FitsStorage']:
+            return config['FitsStorage'][name.lower()]
     hostname = socket.gethostname()
     if hostname is not None and '.' in hostname:
         hostname = hostname[:hostname.find('.')]
@@ -70,17 +76,24 @@ def lookup_config(name, default_value):
     return default_value
 
 
+def lookup_config_bool(name, default_value):
+    retval_str = lookup_config(name, None)
+    if retval_str is None:
+        return default_value
+    return retval_str.lower() in ['true', 't', '1', 'y', 'yes']
+
+
 # Is this an archive server
 use_as_archive_str = lookup_config('USE_AS_ARCHIVE', 'False')
 use_as_archive = use_as_archive_str.lower() == 'true' or use_as_archive_str == '1'
 
 # AWS S3 info
-using_s3 = False
-s3_bucket_name = ''
-s3_backup_bucket_name = ''
-s3_staging_area = ''
-aws_access_key = ''
-aws_secret_key = ''
+using_s3 = lookup_config_bool('USING_S3', False)
+s3_bucket_name = lookup_config('S3_BUCKET_NAME', '')
+s3_backup_bucket_name = lookup_config('S3_BACKUP_BUCKET_NAME', '')
+s3_staging_area = lookup_config('S3_STAGING_AREA', '')
+aws_access_key = lookup_config('AWS_ACCESS_KEY', '')
+aws_secret_key = lookup_config('AWS_SECRET_KEY', '')
 
 # Staging area for uncompressed cache of compressed file being processed
 z_staging_area = lookup_config('Z_STAGING_AREA', '/data/z_staging')

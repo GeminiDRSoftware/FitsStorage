@@ -39,8 +39,6 @@
           #extra_args: --upgrade
       - name: target pip version due to bug
         command: python3 -m pip install --upgrade "pip<10.0"
-      #- name: install python packages
-        #pip: requirements=../../requirements.txt
       - name: Ensure group "fitsdata" exists
         group:
           name: fitsdata
@@ -64,6 +62,51 @@
           name: fitsdata
           groups: fitsdata,geminidata
           append: yes
+      - name: Copy key to server
+        copy:
+          src: id_rsa
+          dest: /opt/id_rsa
+          mode: u+rw,g+r,o+r
+      - name: Ensure FitsStorage repo folder is available and permissioned
+        file:
+          path: '/opt/FitsStorage'
+          state: directory
+          mode: 'u+rwx,g+rwx,o+rx'
+          owner: fitsdata
+          group: fitsdata
+      - name: Checkout FitsStorage into /opt
+        become: true
+        become_user: fitsdata
+        git:
+          repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
+          version: refac/centos8_cleanup
+          dest: /opt/FitsStorage
+          #key_file: /opt/id_rsa
+          ssh_opts: -i /opt/id_rsa
+          accept_hostkey: yes
+        when: "'arc' not in inventory_hostname"
+        notify: restart services
+#      - name: Copy FitsStorage into /opt (AWS)
+#        synchronize:
+#          src: ../..
+#          dest: /opt/FitsStorage/
+#        when: "'arc' in inventory_hostname"
+#        notify: restart services
+      - name: install python packages
+        command: bash -c "cd /opt/FitsStorage && python3 -m pip install -r requirements.txt"
+      - name: install pip for python2 if on CentOS 7
+        yum:
+          name: 
+            - python-pip
+          state: latest
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+      - name: install python packages
+        command: bash -c "python -m pip install psycopg2-binary"
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+      - name: Remove key
+        file:
+          path: /opt/id_rsa
+          state: absent
       - name: Set PYTHONPATH for fitsdata user for convenience
         lineinfile:
           path: /home/fitsdata/.cshrc
@@ -89,34 +132,6 @@
           dest: /opt/DRAGONS
           key_file: id_rsa
           version: v2.1.0
-      - name: Copy key to server
-        copy:
-          src: id_rsa
-          dest: /opt/id_rsa
-          mode: u+rw,g+r,o+r
-      - name: Ensure FitsStorage repo folder is available and permissioned
-        file:
-          path: '/opt/FitsStorage'
-          state: directory
-          mode: 'u+rwx,g+rx,o+rx'
-          owner: 'fitsdata'
-      - name: Checkout FitsStorage into /opt
-        become: true
-        become_user: fitsdata
-        git:
-          repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: refac/centos8_cleanup
-          dest: /opt/FitsStorage
-          #key_file: /opt/id_rsa
-          ssh_opts: -i /opt/id_rsa
-          accept_hostkey: yes
-        notify: restart services
-      - name: install python packages
-        command: bash -c "cd /opt/FitsStorage && python3 -m pip install -r requirements.txt"
-      - name: Remove key
-        file:
-          path: /opt/id_rsa
-          state: absent
       - name: Copy fitsverify to server
         copy:
           src: ../../fitsverify/
@@ -157,6 +172,17 @@
       - name: Initialize PostgreSQL database
         command: bash -c "/usr/bin/postgresql-setup --initdb"
         when: postgresql_configured.changed or postgresql_service_installed.changed
+        become: true
+        become_user: root
+      - name: Bounce PostgreSQL before building db
+        service: name=postgresql state=restarted enabled=yes
+      - name: Ensure we have fitsdata user with access to database
+        postgresql_user: 
+          name=fitsdata
+          password=fitsdata
+          state=present
+        become: yes
+        become_user: postgres
       - name: Ensure we have the fitsdata database
         postgresql_db: name=fitsdata
           encoding='UTF-8'
@@ -165,14 +191,6 @@
           state=present
           owner=fitsdata
         register: fitsdata_db_created
-        become: yes
-        become_user: postgres
-      - name: Ensure we have fitsdata user with access to database
-        postgresql_user: db=fitsdata
-          name=fitsdata
-          password=fitsdata
-          priv=ALL
-          state=present
         become: yes
         become_user: postgres
       - name: Update cache size for database
@@ -263,6 +281,21 @@
           dest: /etc/fitsstorage.conf
         register: fitsstorageconf
         when: "'arc' in inventory_hostname"
+        notify: restart services
+      - name: Use as archive
+        lineinfile:
+          path: /etc/fitsstorage.conf
+          line: use_as_archive = {{ use_as_archive }}
+          regex: use_as_archive
+          create: yes
+        when: fitsstorageconf.changed
+      - name: Set using_s3
+        lineinfile:
+          path: /etc/fitsstorage.conf
+          line: using_s3 = {{ using_s3 }}
+          regex: using_s3
+          create: yes
+        when: fitsstorageconf.changed
       - name: Set s3_bucket_name
         lineinfile:
           path: /etc/fitsstorage.conf
