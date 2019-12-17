@@ -256,6 +256,15 @@ def gemini_date(string, as_datetime=False, offset=ZERO_OFFSET):
         except ValueError:
             pass
 
+    if len(string) >= 14 and 'T' in string and '=' not in string:
+        # Parse an ISO style datestring, so 2019-12-10T11:22:33.444444
+        try:
+            dt = dateutil.parser.isoparse(string) + offset
+            if DATE_LIMIT_LOW <= dt < DATE_LIMIT_HIGH:
+                return dt_to_text(dt) if not as_datetime else dt
+        except ValueError as ve:
+            pass
+
     return '' if not as_datetime else None
 
 

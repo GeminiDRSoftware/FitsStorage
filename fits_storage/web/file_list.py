@@ -18,7 +18,8 @@ from ..utils.web import get_context, with_content_type
 from . import templating
 
 diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
-                   'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready')
+                   'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready',
+                   'entrytime')
 
 @templating.templated("filelist/filelist.xml", content_type='text/xml', with_generator=True)
 def xmlfilelist(selection):
