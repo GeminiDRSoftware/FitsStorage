@@ -34,6 +34,7 @@ RUN pip3 install psycopg2-binary && \
     pip3 install pandas && \
     pip3 install astropy && \
     pip3 install future && \
+    pip3 install Pillow && \
     pip3 install boto3
 
 # CREATE FITSDATA USER AND GROUP
