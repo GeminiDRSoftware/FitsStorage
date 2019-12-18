@@ -78,7 +78,7 @@ class Header(Base):
     engineering = Column(Boolean, index=True)
     science_verification = Column(Boolean, index=True)
     calibration_program = Column(Boolean, index=True)
-    mode = Column(String(4))
+    procsci = Column(String(4))
     observation_id = Column(Text, index=True)
     data_label = Column(Text, index=True)
     telescope = Column(TELESCOPE_ENUM, index=True)
@@ -184,7 +184,7 @@ class Header(Base):
             self.engineering = True
             self.science_verification = False
 
-        self.mode = ad.procsci()
+        self.procsci = ad.procsci()
 
         try:
             self.observation_id = ad.observation_id()
