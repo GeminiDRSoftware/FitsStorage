@@ -220,7 +220,7 @@
         command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 ./fits_storage/scripts/create_tables.py"
         become: yes
         become_user: fitsdata
-        #when: fitsdata_db_created.changed
+        when: fitsdata_db_created.changed
       - name: Ensure we have apache user with access to database
         postgresql_user: db=fitsdata
           name=apache

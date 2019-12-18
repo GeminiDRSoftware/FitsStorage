@@ -227,6 +227,7 @@ sayselection_defs = {
     'observation_type':'ObsType',
     'observation_class': 'ObsClass',
     'filename': 'Filename',
+    'procsci': 'Sci',
     'object': 'Object Name',
     'engineering': 'Engineering Data',
     'science_verification': 'Science Verification Data',
