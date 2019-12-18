@@ -184,7 +184,10 @@ class Header(Base):
             self.engineering = True
             self.science_verification = False
 
-        self.procsci = ad.procsci()
+        try:
+            self.procsci = ad.phu.get('PROCSCI')
+        except AttributeError as psciae:
+            self.procsci = None
 
         try:
             self.observation_id = ad.observation_id()
