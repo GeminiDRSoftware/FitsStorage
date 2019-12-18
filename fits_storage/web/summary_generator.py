@@ -71,10 +71,10 @@ sum_type_defs = {
                     'object', 'waveband', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
     'diskfiles' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'present', 'entrytime', 'lastmod',
                     'file_size', 'file_md5', 'compressed', 'data_size', 'data_md5'],
-    'searchresults' : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
+    'searchresults' : ['download', 'filename', 'procsci', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
                     'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state'],
-    'customsearch'  : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument'],
-    'associated_cals': ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
+    'customsearch'  : ['download', 'filename', 'procsci', 'data_label', 'ut_datetime', 'instrument'],
+    'associated_cals': ['download', 'filename', 'procsci', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
                     'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state']
     }
 
