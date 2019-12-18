@@ -60,10 +60,10 @@ def selection_to_column_names(selection):
     return tuple(search_col_mapping[x][0] for x in cols)
 
 sum_type_defs = {
-    'summary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
+    'summary' : ['filename', 'procsci', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
                     'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'qa_state',
                     'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
-    'lsummary' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
+    'lsummary' : ['filename', 'procsci', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
                     'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'filter_name', 'focal_plane_mask',
                     'detector_roi', 'detector_binning', 'detector_gain_setting', 'detector_readmode_setting', 'qa_state',
                     'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
@@ -184,6 +184,9 @@ class SummaryGenerator(object):
             'download':    ColDef(heading      = 'Download',
                                   sortarrows   = False,
                                   summary_func = 'download'),
+            'procsci':     ColDef(heading      = 'Sci',
+                                  sortarrows   = False,
+                                  summary_func = 'procsci'),
             'filename':    ColDef(heading      = 'Filename',
                                   summary_func = 'filename'),
             'data_label':  ColDef(heading      = 'Data Label',
@@ -380,6 +383,18 @@ class SummaryGenerator(object):
                 )
         else:
             return dict(prop_message=file.name, release=header.release)
+
+    def procsci(self, header, **kw):
+        """
+        Get the science intent of the file (science quality, quick look...)
+
+        :param header:
+        :param diskfile:
+        :param file:
+        :param kw:
+        :return:
+        """
+        return header.procsci
 
     def datalabel(self, header, comment, **kw):
         """
