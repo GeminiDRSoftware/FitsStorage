@@ -1,0 +1,9 @@
+[archive]
+arcdev.gemini.edu
+[archive:vars]
+ansible_ssh_user=ooberdorf
+ansible_ssh_private_key_file=/Users/ooberdorf/.ssh/id_rsa
+
+
+#[control]
+#localhost ansible_connection=local
