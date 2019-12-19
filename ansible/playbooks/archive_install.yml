@@ -410,6 +410,10 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-httpd.service
           dest: /etc/systemd/system/fits-httpd.service
+      - name: Copy API service script
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-api-backend.service
+          dest: /etc/systemd/system/fits-api-backend.service
       - name: Copy HTTPD config
         copy:
           src: ../../otherfiles/etc-sysconfig-httpd
@@ -435,6 +439,8 @@
           group: apache
       - name: Start WSGI service on boot
         service: name=fits-httpd enabled=yes
+      - name: Start API service on boot
+        service: name=fits-api-backend enabled=yes
       - name: Copy diskspace script
         copy:
           src: ../../otherfiles/diskspace.py
@@ -442,7 +448,7 @@
           owner: fitsdata
           group: fitsdata
           mode: u+rwx,g-rwx,o-rwx
-      - name: Copy Mod-WSGI HTTPD config
+      - name: Copy Crontab
         copy:
           src: ../../otherfiles/crontab
           dest: /var/spool/cron/fitsdata
@@ -452,6 +458,9 @@
         notify: restart cron
 
     handlers:
+      - name: restart fits-api-backend
+        service: name=fits-api-backend state=restarted
+        listen: "restart services"
       - name: restart fits-httpd
         service: name=fits-httpd state=restarted
         listen: "restart services"
@@ -461,5 +470,13 @@
       - name: restart ingest2
         service: name=fits-service_ingest_queue2 state=restarted
         listen: "restart services"
+      - name: restart ingest3
+        service: name=fits-service_ingest_queue3 state=restarted
+        listen: "restart services"
+        when: "'arc' in inventory_hostname"
+      - name: restart ingest4
+        service: name=fits-service_ingest_queue4 state=restarted
+        listen: "restart services"
+        when: "'arc' in inventory_hostname"
       - name: restart cron
         service: name=crond state=restarted
