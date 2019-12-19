@@ -435,6 +435,21 @@
           group: apache
       - name: Start WSGI service on boot
         service: name=fits-httpd enabled=yes
+      - name: Copy diskspace script
+        copy:
+          src: ../../otherfiles/diskspace.py
+          dest: /home/fitsdata/diskspace.py
+          owner: fitsdata
+          group: fitsdata
+          mode: u+rwx,g-rwx,o-rwx
+      - name: Copy Mod-WSGI HTTPD config
+        copy:
+          src: ../../otherfiles/crontab
+          dest: /var/spool/cron/fitsdata
+          owner: fitsdata
+          group: fitsdata
+          mode: u+rw,g-rwx,o-rwx
+        notify: restart cron
 
     handlers:
       - name: restart fits-httpd
@@ -446,3 +461,5 @@
       - name: restart ingest2
         service: name=fits-service_ingest_queue2 state=restarted
         listen: "restart services"
+      - name: restart cron
+        service: name=crond state=restarted
