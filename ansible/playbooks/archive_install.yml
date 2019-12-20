@@ -86,12 +86,12 @@
           accept_hostkey: yes
         when: "'arc' not in inventory_hostname"
         notify: restart services
-#      - name: Copy FitsStorage into /opt (AWS)
-#        synchronize:
-#          src: ../..
-#          dest: /opt/FitsStorage/
-#        when: "'arc' in inventory_hostname"
-#        notify: restart services
+      - name: Copy FitsStorage into /opt (AWS)
+        synchronize:
+          src: ../..
+          dest: /opt/FitsStorage/
+        when: "'arc' in inventory_hostname"
+        notify: restart services
       - name: install python packages
         command: bash -c "cd /opt/FitsStorage && python3 -m pip install -r requirements.txt"
       - name: install pip for python2 if on CentOS 7
@@ -101,7 +101,7 @@
           state: latest
         when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
       - name: install python packages
-        command: bash -c "python -m pip install psycopg2-binary"
+        command: bash -c "python -m pip install psycopg2-binary==2.8.4"
         when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
       - name: Remove key
         file:
