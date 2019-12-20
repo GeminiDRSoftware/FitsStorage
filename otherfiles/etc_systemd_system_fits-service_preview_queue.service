@@ -1,0 +1,14 @@
+[Unit]
+Description=Fits Service Preview Queue
+After=syslog.target network.target postgresql.service
+
+[Service]
+Environment=PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
+User=fitsdata
+ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --debug --lockfile --name=spq
+Restart=always
+# This will force the system to wait 10 seconds before respawning
+RestartSec=10
+
+[Install]
+WantedBy=runlevel5.target

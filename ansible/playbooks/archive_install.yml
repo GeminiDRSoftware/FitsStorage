@@ -300,6 +300,22 @@
           regex: ExecStart=
           create: no
         when: "'arc' in inventory_hostname"
+      - name: Install preview queue 1
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
+          dest: /etc/systemd/system/fits-service_preview_queue1.service
+      - name: Setup preview 1
+        lineinfile:
+          path: /etc/systemd/system/fits-service_preview_queue1.service
+          line: Description=Fits Service Preview Queue 1
+          regex: Description=
+          create: no
+      - name: Setup preview 1 exec
+        lineinfile:
+          path: /etc/systemd/system/fits-service_preview_queue1.service
+          line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq1
+          regex: ExecStart=
+          create: no
       # TODO need to stop/start service #2 to do this, plus add a line replace
       # - name: Install export queue
       #   copy:
