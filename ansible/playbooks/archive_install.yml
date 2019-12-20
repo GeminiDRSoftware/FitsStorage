@@ -126,6 +126,13 @@
           - { path: /data/z_staging, owner: fitsdata, mode: u+rwx,g-w,o-w }
           - { path: /data/s3_staging, owner: fitsdata, mode: u+rwx,g+rw,o+rw }
           - { path: /data/gemini_data, owner: fitsdata, mode: u+rwx,g-w,o-w }
+      - name: Ensure previews folder exists
+        file:
+          path: /sci/dataflow/previews
+          state: directory
+          mode: u+rwx,g+rwx,o+rwx
+        become: true
+        become_user: fitsdata
       - name: Checkout DRAGONS into /opt
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
@@ -391,6 +398,8 @@
       - name: Register Ingest service 4
         service: name=fits-service_ingest_queue4 state=started enabled=yes
         when: "'arc' in inventory_hostname"
+      - name: Register Preview service 1
+        service: name=fits-service_preview_queue1 state=started enabled=yes
       # - name: Register Export Queue
       #   service: name=fits-service_export_queue1 state=started enabled=yes
       - name: Register API service
@@ -494,5 +503,8 @@
         service: name=fits-service_ingest_queue4 state=restarted
         listen: "restart services"
         when: "'arc' in inventory_hostname"
+      - name: restart preview1
+        service: name=fits-service_preview_queue1 state=restarted
+        listen: "restart services"
       - name: restart cron
         service: name=crond state=restarted
