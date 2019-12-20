@@ -82,6 +82,8 @@ class Niri(Base):
                 self.data_section = data_section
         except TypeError:
             self.data_section = 'None'
+        except IndexError:
+            self.data_section = 'None'
 
         camera = ad.camera()
         if camera in CAMERAS:
