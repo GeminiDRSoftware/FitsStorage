@@ -191,10 +191,15 @@ class Header(Base):
             # Ensure upper case
             self.observation_id = str(self.observation_id).upper()
 
-        self.data_label = ad.data_label()
-        if self.data_label is not None:
-        # Ensure upper case
-            self.data_label = self.data_label.upper()
+        try:
+            self.data_label = ad.data_label()
+            if self.data_label is not None:
+            # Ensure upper case
+                self.data_label = self.data_label.upper()
+        except AttributeError as dlae:
+            if log:
+                log.warn("Unable to parse datalabel from datafile: %s" % dlae)
+            self.data_label = ""
 
         self.telescope = gemini_telescope(ad.telescope())
         self.instrument = gemini_instrument(ad.instrument(), other=True)
@@ -329,7 +334,12 @@ class Header(Base):
             except (AttributeError, AssertionError):
                 return 'None'
 
-        gainstr = str(ad.gain_setting())
+        try:
+            gainstr = str(ad.gain_setting())
+        except AttributeError as gsae:
+            if log:
+                log.warn("Unable to get gain from datafile: %s " % gsae)
+            gainstr = ""
         if gainstr in gemini_gain_settings:
             self.detector_gain_setting = gainstr
 
