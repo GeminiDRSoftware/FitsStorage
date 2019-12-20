@@ -150,7 +150,7 @@ try:
                             for destination in export_destinations:
                                 export_queue.add_to_queue(iq.filename, iq.path,
                                                           destination)
-                    except:
+                    except Exception as e:
                         logger.info("Problem Ingesting File - Rolling back")
                         logger.error(exc_msg.format(iq.filename, sys.exc_info()[0],
                                                     sys.exc_info()[1],

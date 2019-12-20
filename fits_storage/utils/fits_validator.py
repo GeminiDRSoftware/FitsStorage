@@ -59,6 +59,8 @@ class NoDateError(Exception):
 
 # Constants
 NOT_FOUND_MESSAGE = "Could not find a validating set of rules"
+INVALID_DEC_MESSAGE = "Invalid DEC(-9999.0)"  # Used for all daytime calibrations taken with the new web seqexe
+INVALID_RA_MESSAGE = "Invalid RA(-9999.0)"  # Used for all daytime calibrations taken with the new web seqexe
 STATUSES = ['CORRECT', 'NOPASS', 'NODATE', 'BAD', 'ENG', 'EXCEPTION']
 
 fitsTypes = {
@@ -1163,7 +1165,8 @@ class Evaluator(object):
         try:
             valid, msg, env = self.validate_file(fits, tags)
             # Skim non-strings from msg
-            msg = [[x for x in m if not isinstance(x, RuleSet)] for m in msg]
+            msg = [[x for x in m if not isinstance(x, RuleSet) and x != INVALID_DEC_MESSAGE and
+                    x != INVALID_RA_MESSAGE] for m in msg]
             if valid:
                 return Result(True, 'CORRECT', "This looks like a valid file")
             else:
