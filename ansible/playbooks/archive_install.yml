@@ -86,10 +86,18 @@
           accept_hostkey: yes
         when: "'arc' not in inventory_hostname"
         notify: restart services
-      - name: Copy FitsStorage into /opt (AWS)
-        synchronize:
-          src: ../..
-          dest: /opt/FitsStorage/
+#      - name: Copy FitsStorage into /opt (AWS)
+#        synchronize:
+#          src: ../..
+#          dest: /opt/FitsStorage/
+#          ssh_args: -l fitsdata -2
+#        when: "'arc' in inventory_hostname"
+#        notify: restart services
+      - name: Rsync FitsStorage into /opt (AWS)
+        become: false
+        local_action: 
+          module: shell
+          _raw_params: rsync -r -e "ssh -l fitsdata -2 -i ~/id_rsa" ../.. fitsdata@arcdev.gemini.edu:/opt/FitsStorage/
         when: "'arc' in inventory_hostname"
         notify: restart services
       - name: install python packages
@@ -133,6 +141,7 @@
           mode: u+rwx,g+rwx,o+rwx
         become: true
         become_user: fitsdata
+        when: "'arc' not in inventory_hostname"
       - name: Checkout DRAGONS into /opt
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
