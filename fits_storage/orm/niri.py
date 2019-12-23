@@ -77,9 +77,15 @@ class Niri(Base):
             self.well_depth_setting = well_depth
 
         try:
-            data_section = str(ad.data_section()[0])
-            if data_section in DATA_SECTIONS:
-                self.data_section = data_section
+            data_sections = ad.data_section()
+            if data_sections is not None and len(data_sections):
+                data_section = str(ad.data_section()[0])
+                if data_section in DATA_SECTIONS:
+                    self.data_section = data_section
+                else:
+                    self.data_section = 'None'
+            else:
+                self.data_section = 'None'
         except TypeError:
             self.data_section = 'None'
         except IndexError:
