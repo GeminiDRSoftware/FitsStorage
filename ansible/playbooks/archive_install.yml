@@ -90,8 +90,16 @@
 #        synchronize:
 #          src: ../..
 #          dest: /opt/FitsStorage/
+#          ssh_args: -l fitsdata -2
 #        when: "'arc' in inventory_hostname"
 #        notify: restart services
+      - name: Rsync FitsStorage into /opt (AWS)
+        become: false
+        local_action: 
+          module: shell
+          _raw_params: rsync -r -e "ssh -l fitsdata -2 -i ~/id_rsa" ../.. fitsdata@arcdev.gemini.edu:/opt/FitsStorage/
+        when: "'arc' in inventory_hostname"
+        notify: restart services
       - name: install python packages
         command: bash -c "cd /opt/FitsStorage && python3 -m pip install -r requirements.txt"
       - name: install pip for python2 if on CentOS 7
@@ -101,7 +109,7 @@
           state: latest
         when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
       - name: install python packages
-        command: bash -c "python -m pip install psycopg2-binary"
+        command: bash -c "python -m pip install psycopg2-binary==2.8.4"
         when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
       - name: Remove key
         file:
@@ -126,12 +134,29 @@
           - { path: /data/z_staging, owner: fitsdata, mode: u+rwx,g-w,o-w }
           - { path: /data/s3_staging, owner: fitsdata, mode: u+rwx,g+rw,o+rw }
           - { path: /data/gemini_data, owner: fitsdata, mode: u+rwx,g-w,o-w }
+<<<<<<< HEAD
 #      - name: Checkout DRAGONS into /opt
 #        git:
 #          repo: https://github.com/GeminiDRSoftware/DRAGONS.git
 #          dest: /opt/DRAGONS
 #          key_file: id_rsa
 #          version: v2.1.0
+=======
+      - name: Ensure previews folder exists
+        file:
+          path: /sci/dataflow/previews
+          state: directory
+          mode: u+rwx,g+rwx,o+rwx
+        become: true
+        become_user: fitsdata
+        when: "'arc' not in inventory_hostname"
+      - name: Checkout DRAGONS into /opt
+        git:
+          repo: https://github.com/GeminiDRSoftware/DRAGONS.git
+          dest: /opt/DRAGONS
+          key_file: id_rsa
+          version: v2.1.0
+>>>>>>> master
       - name: Copy fitsverify to server
         copy:
           src: ../../fitsverify/
@@ -262,11 +287,61 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue2.service
           dest: /etc/systemd/system/fits-service_ingest_queue2.service
+      - name: Install ingest queue 3
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue.service
+          dest: /etc/systemd/system/fits-service_ingest_queue3.service
+        when: "'arc' in inventory_hostname"
+      - name: Setup ingest 3
+        lineinfile:
+          path: /etc/systemd/system/fits-service_ingest_queue3.service
+          line: Description=Fits Service Ingest Queue 3
+          regex: Description=
+          create: no
+        when: "'arc' in inventory_hostname"
+      - name: Setup ingest 3 exec
+        lineinfile:
+          path: /etc/systemd/system/fits-service_ingest_queue3.service
+          line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq3
+          regex: ExecStart=
+          create: no
+        when: "'arc' in inventory_hostname"
+      - name: Install ingest queue 4
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue.service
+          dest: /etc/systemd/system/fits-service_ingest_queue4.service
+        when: "'arc' in inventory_hostname"
+      - name: Setup ingest 4
+        lineinfile:
+          path: /etc/systemd/system/fits-service_ingest_queue4.service
+          line: Description=Fits Service Ingest Queue 4
+          regex: Description=
+          create: no
+        when: "'arc' in inventory_hostname"
+      - name: Setup ingest 4 exec
+        lineinfile:
+          path: /etc/systemd/system/fits-service_ingest_queue4.service
+          line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq4
+          regex: ExecStart=
+          create: no
+        when: "'arc' in inventory_hostname"
+      - name: Install preview queue 1
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
+          dest: /etc/systemd/system/fits-service_preview_queue1.service
+      - name: Setup preview 1
+        lineinfile:
+          path: /etc/systemd/system/fits-service_preview_queue1.service
+          line: Description=Fits Service Preview Queue 1
+          regex: Description=
+          create: no
+      - name: Setup preview 1 exec
+        lineinfile:
+          path: /etc/systemd/system/fits-service_preview_queue1.service
+          line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq1
+          regex: ExecStart=
+          create: no
       # TODO need to stop/start service #2 to do this, plus add a line replace
-      # - name: Install ingest queue 2
-      #   copy:
-      #     src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue1.service
-      #     dest: /etc/systemd/system/fits-service_ingest_queue2.service
       # - name: Install export queue
       #   copy:
       #     src: ../../otherfiles/etc_systemd_system_fits-service_export_queue1.service
@@ -335,6 +410,14 @@
         service: name=fits-service_ingest_queue1 state=started enabled=yes
       - name: Register Ingest service 2
         service: name=fits-service_ingest_queue2 state=started enabled=yes
+      - name: Register Ingest service 3
+        service: name=fits-service_ingest_queue3 state=started enabled=yes
+        when: "'arc' in inventory_hostname"
+      - name: Register Ingest service 4
+        service: name=fits-service_ingest_queue4 state=started enabled=yes
+        when: "'arc' in inventory_hostname"
+      - name: Register Preview service 1
+        service: name=fits-service_preview_queue1 state=started enabled=yes
       # - name: Register Export Queue
       #   service: name=fits-service_export_queue1 state=started enabled=yes
       - name: Register API service
@@ -370,6 +453,10 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-httpd.service
           dest: /etc/systemd/system/fits-httpd.service
+      - name: Copy API service script
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-api-backend.service
+          dest: /etc/systemd/system/fits-api-backend.service
       - name: Copy HTTPD config
         copy:
           src: ../../otherfiles/etc-sysconfig-httpd
@@ -395,8 +482,28 @@
           group: apache
       - name: Start WSGI service on boot
         service: name=fits-httpd enabled=yes
+      - name: Start API service on boot
+        service: name=fits-api-backend enabled=yes
+      - name: Copy diskspace script
+        copy:
+          src: ../../otherfiles/diskspace.py
+          dest: /home/fitsdata/diskspace.py
+          owner: fitsdata
+          group: fitsdata
+          mode: u+rwx,g-rwx,o-rwx
+      - name: Copy Crontab
+        copy:
+          src: ../../otherfiles/crontab
+          dest: /var/spool/cron/fitsdata
+          owner: fitsdata
+          group: fitsdata
+          mode: u+rw,g-rwx,o-rwx
+        notify: restart cron
 
     handlers:
+      - name: restart fits-api-backend
+        service: name=fits-api-backend state=restarted
+        listen: "restart services"
       - name: restart fits-httpd
         service: name=fits-httpd state=restarted
         listen: "restart services"
@@ -406,3 +513,16 @@
       - name: restart ingest2
         service: name=fits-service_ingest_queue2 state=restarted
         listen: "restart services"
+      - name: restart ingest3
+        service: name=fits-service_ingest_queue3 state=restarted
+        listen: "restart services"
+        when: "'arc' in inventory_hostname"
+      - name: restart ingest4
+        service: name=fits-service_ingest_queue4 state=restarted
+        listen: "restart services"
+        when: "'arc' in inventory_hostname"
+      - name: restart preview1
+        service: name=fits-service_preview_queue1 state=restarted
+        listen: "restart services"
+      - name: restart cron
+        service: name=crond state=restarted
