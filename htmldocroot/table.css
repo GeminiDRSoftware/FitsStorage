@@ -36,10 +36,38 @@ tr.warn-alternating:nth-child(even) {
   font-size: small
 }
 
+tr.sq-alternating:nth-child(odd) {
+  background-color: #aaffaa;
+  font-size: small
+}
+
+tr.sq-alternating:nth-child(even) {
+  background-color: #aaccaa;
+  font-size: small
+}
+
+tr.ql-alternating:nth-child(odd) {
+  background-color: #aaaaff;
+  font-size: small
+}
+
+tr.ql-alternating:nth-child(even) {
+  background-color: #aaaacc;
+  font-size: small
+}
+
 tr.alternating:hover {
   background-color: #C0C0FF;
 }
 
 tr.warn-alternating:hover {
   background-color: #C0C0FF;
+}
+
+tr.sq-alternating:hover {
+  background-color: #88aa88;
+}
+
+tr.ql-alternating:hover {
+  background-color: #8888aa;
 }

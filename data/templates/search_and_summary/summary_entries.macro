@@ -12,7 +12,13 @@
 {%- endmacro %}
 
 {%- macro row(row) -%}
+{%- if row.procsci == 'sq' -%}
+<tr class='sq-alternating'>
+{%- elif row.procsci == 'ql' %}
+<tr class='ql-alternating'>
+{%- else %}
 <tr class='alternating'>
+{%- endif %}
 {%- for column in row.columns %}
  <td>
   {%- if column.text != None -%}

@@ -314,6 +314,7 @@ class SummaryGenerator(object):
         row = Row()
 
         row.uri = self.uri
+        row.procsci = header.procsci
         for colkey, col in ((x, self.columns[x]) for x in self.wanted):
             c = ColWrapper(self, colkey, col)
 
