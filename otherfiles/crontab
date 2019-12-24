@@ -2,13 +2,13 @@ PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
 MAILTO=fitsadmin@gemini.edu
 #
 # Add to ingest queue
-*/15  * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=today --demon
-0 * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=fourday --demon
-* 18 * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=twentyday --demon
-2 * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=masks --demon
-6 * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=obslogs --demon
-10  * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=iraf_cals --demon
-30  * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=skycam --demon
+15 */12 * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=today --demon
+0 */2 * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=fourday --demon
+0 18 * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=twentyday --demon
+2 */2 * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=masks --demon
+6 */2 * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=obslogs --demon
+10  */2 * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=iraf_cals --demon
+30  */2 * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=skycam --demon
 #*/5 * * * * python3 /opt/FitsStorage/fits_storage/scripts/feed_ingest_queue.py --demon --site=N --lockfile
 #
 # File curation
