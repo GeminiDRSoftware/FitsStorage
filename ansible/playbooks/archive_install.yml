@@ -492,11 +492,11 @@
           mode: u+rwx,g-rwx,o-rwx
       - name: Copy Crontab
         copy:
-          src: ../../otherfiles/crontab
-          dest: /var/spool/cron/fitsdata
-          owner: fitsdata
-          group: fitsdata
-          mode: u+rw,g-rwx,o-rwx
+          src: ../../otherfiles/system_crontab
+          dest: /etc/cron.d/fitsstorage
+          owner: root
+          group: root
+          mode: u+rw,g+rx,o+rx
         notify: restart cron
 
     handlers:
