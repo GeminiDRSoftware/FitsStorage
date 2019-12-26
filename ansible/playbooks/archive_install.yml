@@ -147,8 +147,9 @@
           path: /sci/dataflow/previews
           state: directory
           mode: u+rwx,g+rwx,o+rwx
+          owner: fitsdata
+          group: fitsdata
         become: true
-        become_user: fitsdata
         when: "'arc' not in inventory_hostname"
       - name: Checkout DRAGONS into /opt
         git:
@@ -496,7 +497,7 @@
           dest: /etc/cron.d/fitsstorage
           owner: root
           group: root
-          mode: u+rw,g+rx,o+rx
+          mode: 0644
         notify: restart cron
 
     handlers:
