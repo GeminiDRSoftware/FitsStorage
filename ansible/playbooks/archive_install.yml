@@ -500,6 +500,7 @@
           group: root
           mode: 0644
         notify: restart cron
+        when: "'arc' not in inventory_hostname"
 
     handlers:
       - name: restart fits-api-backend
