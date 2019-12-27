@@ -115,14 +115,15 @@
         file:
           path: /opt/id_rsa
           state: absent
-      - name: Ensure fitsdata entry in passwd
-        become: true
-        become_user: root
-        lineinfile:
-          path: /etc/passwd
-          line: fitsdata:x:5179:5179:FITS Data User:/home/fitsdata:/bin/bash
-          regex: fitsdata:x:5179
-          create: yes
+# was trying to fix cron, but this did not help
+#      - name: Ensure fitsdata entry in passwd
+#        become: true
+#        become_user: root
+#        lineinfile:
+#          path: /etc/passwd
+#          line: fitsdata:x:5179:5179:FITS Data User:/home/fitsdata:/bin/bash
+#          regex: fitsdata:x:5179
+#          create: yes
       - name: Set PYTHONPATH for fitsdata user for convenience
         lineinfile:
           path: /home/fitsdata/.cshrc
