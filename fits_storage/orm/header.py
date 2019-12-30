@@ -133,15 +133,15 @@ class Header(Base):
     proprietary_coordinates = Column(Boolean)
     pre_image = Column(Boolean)
 
-    def __init__(self, diskfile):
+    def __init__(self, diskfile, log=None):
         self.diskfile_id = diskfile.id
-        self.populate_fits(diskfile)
+        self.populate_fits(diskfile, log)
 
     def __repr__(self):
         return "<Header('%s', '%s')>" % (self.id, self.diskfile_id)
 
     UT_DATETIME_SECS_EPOCH = datetime.datetime(2000, 1, 1, 0, 0, 0)
-    def populate_fits(self, diskfile):
+    def populate_fits(self, diskfile, log=None):
         """
         Populates header table values from the FITS headers of the file.
         Uses the AstroData object to access the file.
@@ -164,7 +164,12 @@ class Header(Base):
 
         # Basic data identification section
         # Parse Program ID
-        self.program_id = ad.program_id()
+        try:
+            self.program_id = ad.program_id()
+        except AttributeError as ae:
+            if log:
+                log.warn("Unable to parse program ID from datafile: %s" % ae)
+            self.program_id = None
         if self.program_id is not None:
             # Ensure upper case
             self.program_id = self.program_id.upper()
@@ -178,21 +183,34 @@ class Header(Base):
             self.engineering = True
             self.science_verification = False
 
-        self.observation_id = ad.observation_id()
+        try:
+            self.observation_id = ad.observation_id()
+        except AttributeError as oidae:
+            self.observation_id = None
         if self.observation_id is not None:
             # Ensure upper case
             self.observation_id = str(self.observation_id).upper()
 
-        self.data_label = ad.data_label()
-        if self.data_label is not None:
-        # Ensure upper case
-            self.data_label = self.data_label.upper()
+        try:
+            self.data_label = ad.data_label()
+            if self.data_label is not None:
+            # Ensure upper case
+                self.data_label = self.data_label.upper()
+        except AttributeError as dlae:
+            if log:
+                log.warn("Unable to parse datalabel from datafile: %s" % dlae)
+            self.data_label = ""
 
         self.telescope = gemini_telescope(ad.telescope())
         self.instrument = gemini_instrument(ad.instrument(), other=True)
 
         # Date and times part
-        self.ut_datetime = ad.ut_datetime()
+        try:
+            self.ut_datetime = ad.ut_datetime()
+        except AttributeError as ae:
+            if log:
+                log.warn("Unable to parse UT datetime from datafile: %s" % ae)
+            self.ut_datetime = None
         if self.ut_datetime:
             delta = self.ut_datetime - self.UT_DATETIME_SECS_EPOCH
             self.ut_datetime_secs = int(delta.total_seconds())
@@ -210,15 +228,33 @@ class Header(Base):
 
         # RA and Dec are not valid for AZEL_TARGET frames
         if 'AZEL_TARGET' not in ad.tags:
-            self.ra = ad.ra()
-            self.dec = ad.dec()
+            try:
+                self.ra = ad.ra()
+            except IndexError as ie:
+                if log:
+                    log.warn("Unable to read RA from datafile: %s" % ie)
+                self.ra = None
+            except TypeError as te:
+                if log:
+                    log.warn("Unable to read RA from datafile: %s" % te)
+                self.ra = None
+            try:
+                self.dec = ad.dec()
+            except IndexError as ie:
+                if log:
+                    log.warn("Unable to read DEC from datafile: %s" % ie)
+                self.dec = None
+            except TypeError as te:
+                if log:
+                    log.warn("Unable to read DEC from datafile: %s" % te)
+                self.dec = None
             if type(self.ra) is str:
                 self.ra = ratodeg(self.ra)
             if type(self.dec) is str:
                 self.dec = dectodeg(self.dec)
-            if self.ra > 360.0 or self.ra < 0.0:
+            if self.ra is not None and (self.ra > 360.0 or self.ra < 0.0):
                 self.ra = None
-            if self.dec > 90.0 or self.dec < -90.0:
+            if self.dec is not None and (self.dec > 90.0 or self.dec < -90.0):
                 self.dec = None
 
         # These should be in the descriptor function really.
@@ -266,7 +302,12 @@ class Header(Base):
 
         # Need to remove invalid characters in disperser names, eg gnirs has
         # slashes
-        disperser_string = ad.disperser(pretty=True)
+        try:
+            disperser_string = ad.disperser(pretty=True)
+        except AttributeError as ae:
+            if log:
+                log.warn("Unable to read disperser information from datafile: %s" % ae)
+            disperser_string = None
         if disperser_string:
             self.disperser = disperser_string.replace('/', '_')
 
@@ -276,8 +317,14 @@ class Header(Base):
         self.wavelength_band = ad.wavelength_band()
         self.focal_plane_mask = ad.focal_plane_mask(pretty=True)
         self.pupil_mask = ad.pupil_mask(pretty=True)
-        dvx = ad.detector_x_bin()
-        dvy = ad.detector_y_bin()
+        try:
+            dvx = ad.detector_x_bin()
+        except AttributeError as dvxae:
+            dvx = None
+        try:
+            dvy = ad.detector_y_bin()
+        except AttributeError as dvyae:
+            dvy = None
         if (dvx is not None) and (dvy is not None):
             self.detector_binning = "%dx%d" % (dvx, dvy)
 
@@ -287,13 +334,23 @@ class Header(Base):
             except (AttributeError, AssertionError):
                 return 'None'
 
-        gainstr = str(ad.gain_setting())
+        try:
+            gainstr = str(ad.gain_setting())
+        except AttributeError as gsae:
+            if log:
+                log.warn("Unable to get gain from datafile: %s " % gsae)
+            gainstr = ""
         if gainstr in gemini_gain_settings:
             self.detector_gain_setting = gainstr
 
-        readspeedstr = str(ad.read_speed_setting())
-        if readspeedstr in gemini_readspeed_settings:
-            self.detector_readspeed_setting = readspeedstr
+        try:
+            readspeedstr = str(ad.read_speed_setting())
+            if readspeedstr in gemini_readspeed_settings:
+                self.detector_readspeed_setting = readspeedstr
+        except AttributeError as ae:
+            if log:
+                log.warn("Unable to get read speed from datafile: %s " % ae)
+            self.detector_readspeed_setting = None
 
         welldepthstr = str(ad.well_depth_setting())
         if welldepthstr in gemini_welldepth_settings:
@@ -304,7 +361,16 @@ class Header(Base):
         else:
             self.detector_readmode_setting = str(ad.read_mode()).replace(' ', '_')
 
-        self.detector_roi_setting = ad.detector_roi_setting()
+        try:
+            self.detector_roi_setting = ad.detector_roi_setting()
+        except TypeError as te:
+            if log:
+                log.warn("Unable to get ROI setting: %s" % te)
+            self.detector_roi_setting = None
+        except IndexError as ie:
+            if log:
+                log.warn("Unable to get ROI setting: %s" % ie)
+            self.detector_roi_setting = None
 
         self.coadds = ad.coadds()
 
@@ -420,7 +486,7 @@ class Header(Base):
             # If we're not in an RA/Dec TANgent frame, don't even bother
             for hdr in ad.hdr:
                 if (hdr.get('CTYPE1') == 'RA---TAN') and (hdr.get('CTYPE2') == 'DEC--TAN'):
-                    extension = "%s,%s" % (hdr.get('EXTNAME'), hd.get('EXTVER'))
+                    extension = "%s,%s" % (hdr.get('EXTNAME'), hdr.get('EXTVER'))
                     wcs = pywcs.WCS(hdr)
                     try:
                         fp = wcs.calcFootprint()

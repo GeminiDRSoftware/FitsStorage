@@ -76,46 +76,6 @@ export PYTHONPATH=~/DRAGONS:~/FitsStorage
 If these environment variables are not found, the code falls back to defaults that are appropriate for the deployed
 operational server.
 
-### Installing
-
-The install is managed by running an Ansible play.  This play is wrapped in a convenient shell script called
-`archive_install.sh` in the `ansible` folder.  The play relies on you having a proper secrets setup to handle ssh
-logins to the remote host, `hbffits-lv1.hi.gemini.edu`.
-
-In the `ansible/playbooks` folder, you need to create a `secret` file.  Do this like so:
-
-```
-ansible-vault create secret
-```
-
-This will allow you to save a protected file that holds your ssh login password.  The file will look like this:
-
-```
-ansible_sudo_pass: mysudopassword
-```
-
-But now that file is also, in turn, password protected.  You can work around this with a "vault".  Create a file called
-`vault.txt` in the `ansible/` folder and make the contents your password for the `secret` file created above.
-
-Now you should have added two files.  Note that we *do not* add these to the repo.  This is a convoluted setup, but it
-is what works.
-
-```
-ansible/playooks/secret
-ansible/vault.txt
-```
-
-Now that this is done, assuming you have sudo permission to root on `hbffits-lv1`, you can run the ansible play.
-To install, simply:
-
-```
-cd ansible
-bash ./archive_install.sh
-```
-
-Once the install finishes, you should be able to browse the deployed site at:
-
-https://hbffits-lv1.hi.gemini.edu/searchform/
 
 ## Running the tests
 
@@ -135,38 +95,29 @@ ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
 ```
 
+## Configuration
+
+Configuration of the FitsStorage hosts is done via a combination of environment variables,
+an `/etc` config file, some host-specific overrides and the default values in `fits_storage_config.py`.
+Information on how configuration works is here:
+
+[Configuration](docs/Configuration.md)
+
 ## Docker
 
-Additional work has gone into making FitsStorage work with Docker containers.  This largely involves the use of three
-separate containers: one for the PostgreSQL database, one for the WSGI website, and one for running tools such as the
-datafile ingest.
+To develop with a cluster of servers or with a specific version of CentOS, we can use docker
+containers to simulate that environment.  Long-term, I imagine we'll be running the real
+servers in containers as well, so this is also foundation work for that.  Information for
+using Docker to run the website and realted tools is documented here:
 
-All of the docker infrastructure lives under the `docker/` subfolder.  There are is a set of folders for each image
-and a `script` folder with shell scripts for building images and creating containers.  The primary scripts you want to
-look at are
+* [Docker](docs/Docker.md)
 
-Script to create the images:
+## Installation
 
-```shell 
-buildfitsstorageutils.sh
-buildarchive.sh
-```
+Installing to servers is done using Ansible.  The ansible plays and inventories all live in the
+`ansible` folder.  You can find more information about using the ansible deploys here:
 
-Script to create the containers:
-
-```shell 
-postgres.sh
-api.sh
-archive.sh
-fitsstorageutils.sh
-```
-
-The other Dockerfiles are for a CentOS 7 version of the archive and for some Jenkins CI/CD support.  
-`archive.sh` exposes ports 80 and 443 into the webserver by default and names the container `archive`.
-You can alter these values with command line arguments like this (you can drop extra arguments if you don't need
-all 4):
-
-`archive.sh container_name http_port https_port database`  
+* [Ansible](docs/Ansible.md)
 
 ## Built With
 

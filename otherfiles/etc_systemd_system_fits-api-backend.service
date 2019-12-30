@@ -5,7 +5,7 @@ After=syslog.target network.target
 [Service]
 Environment=PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
 User=fitsdata
-ExecStart=/usr/bin/python /opt/FitsStorage/fits_storage/scripts/api_backend.py --demon
+ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/api_backend.py --demon
 Restart=always
 # This will force the system to wait one second before respawning
 RestartSec=1

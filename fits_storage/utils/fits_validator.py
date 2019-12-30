@@ -59,6 +59,8 @@ class NoDateError(Exception):
 
 # Constants
 NOT_FOUND_MESSAGE = "Could not find a validating set of rules"
+INVALID_DEC_MESSAGE = "Invalid DEC(-9999.0)"  # Used for all daytime calibrations taken with the new web seqexe
+INVALID_RA_MESSAGE = "Invalid RA(-9999.0)"  # Used for all daytime calibrations taken with the new web seqexe
 STATUSES = ['CORRECT', 'NOPASS', 'NODATE', 'BAD', 'ENG', 'EXCEPTION']
 
 fitsTypes = {
@@ -1163,9 +1165,19 @@ class Evaluator(object):
         try:
             valid, msg, env = self.validate_file(fits, tags)
             # Skim non-strings from msg
-            msg = [[x for x in m if not isinstance(x, RuleSet)] for m in msg]
-            if valid:
+            msg = [[x for x in m if not isinstance(x, RuleSet) and x != INVALID_DEC_MESSAGE and
+                    x != INVALID_RA_MESSAGE] for m in msg]
+
+            # If we have no messages, our only problem was an invalid RA or DEC if -999 which we actually allow
+            # TODO is there somewhere else we can put this?  It feels like astropy is the one choking on the data
+            valid_override = True
+            for m in msg:
+                for x in m:
+                    if x != NOT_FOUND_MESSAGE:
+                        valid_override = False
+            if valid or valid_override:
                 return Result(True, 'CORRECT', "This looks like a valid file")
+
             else:
                 # First, focus on the PHDU messages
                 if len(msg[0]) > 0:
