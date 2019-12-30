@@ -40,6 +40,8 @@ def bytes_per_second(value, time, divider=1000000.0):
         return ''
 
 def bytes_to_GB(value, GiB=False):
+    if value is None:
+        return 0
     return int(value) / (1.0E9 if not GiB else 1073741824.0)
 
 def format_float(value, decimals=2):
