@@ -11,7 +11,7 @@ To begin, you will want to install the latest Docker on your machine.  I am usin
 MacBook, so my instructions will be geared to OSX but Linux and Windows should also 
 work.
 
-In addition to docker, you /may/ want to install `sshfs`.  `sshfs` will allow you to
+In addition to docker, you may want to install `sshfs`.  `sshfs` will allow you to
 mount remote data folders onto your machine.  From there, you can map these folders
 into the archive container where appropriate.  In other words, you could do this to
 make it easier to restore a DB backup onto a fresh Postgres, or to be able to serve
@@ -32,7 +32,7 @@ mkdir -p ~/testdata/onsite-data-upload_staging
 mkdir -p ~/testdata/onsite-sci-dataflow
 ```
 
-Copy your datafiles into ~/testdata/onsite-sci-dataflow
+Copy your datafiles into `~/testdata/onsite-sci-dataflow`
 
 ## Compose
 

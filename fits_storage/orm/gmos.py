@@ -67,14 +67,24 @@ class Gmos(Base):
             # to those elements.
             pass
 
-        read_speed = ad.read_speed_setting()
+        try:
+            read_speed = ad.read_speed_setting()
+        except AttributeError as ae:
+            read_speed = None
         if read_speed in READ_SPEED_SETTINGS:
             self.read_speed_setting = read_speed
 
         self.focal_plane_mask = ad.focal_plane_mask()
         self.nodandshuffle = 'NODANDSHUFFLE' in ad.tags
         if self.nodandshuffle:
-            self.nod_count = ad.nod_count()[0]
+            try:
+                nod_count = ad.nod_count()
+                if nod_count is not None and len(nod_count):
+                    self.nod_count = nod_count[0]
+                else:
+                    self.nod_count = None
+            except:
+                self.nod_count = None
             self.nod_pixels = ad.shuffle_pixels()
         self.prepared = 'PREPARED' in ad.tags
         self.overscan_trimmed = 'OVERSCAN_TRIMMED' in ad.tags

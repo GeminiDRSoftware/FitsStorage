@@ -9,7 +9,7 @@ import sys
 import logging
 import logging.handlers
 
-from .fits_storage_config import fits_log_dir, email_errors_to, smtp_server
+from .fits_storage_config import fits_log_dir, email_errors_to, smtp_server, is_docker
 
 # Create a Logger
 logger = logging.getLogger()
@@ -40,17 +40,29 @@ streamhandler.setFormatter(formatter)
 smtphandler.setFormatter(formatter)
 
 # Add Handlers to logger
-#logger.addHandler(filehandler)
-sysloghandler = logging.handlers.SysLogHandler()
-sysloghandler.setFormatter(formatter)
-#logger.addHandler(sysloghandler)
-logger.addHandler(streamhandler)
+if is_docker:
+    #logger.addHandler(filehandler)
+    sysloghandler = logging.handlers.SysLogHandler()
+    sysloghandler.setFormatter(formatter)
+    #logger.addHandler(sysloghandler)
+    logger.addHandler(streamhandler)
+else:
+    logger.addHandler(filehandler)
+
 
 # Turn off boto debug logging
 # We do this inside utils.aws_s3 now
 # logging.getLogger('boto').setLevel(logging.WARNING)
 
 # Utility functions follow
+
+# env var setting for webserver
+loglevels = {"DEBUG": logging.DEBUG, "INFO": logging.INFO, "WARNING": logging.WARN}
+loglevel = os.getenv("LOG_LEVEL", None)
+if loglevel is not None:
+    if loglevel in loglevels:
+        logger.setLevel(loglevels[loglevel])
+
 
 # env var setting for webserver
 loglevels = {"DEBUG": logging.DEBUG, "INFO": logging.INFO, "WARNING": logging.WARN}
@@ -67,7 +79,8 @@ def setdebug(want):
 
 def setdemon(want):
     """ If running as a demon, don't output to stdout but do activate email handler """
-    return
+    if is_docker:
+        return
     if want:
         if len(email_errors_to):
             logger.addHandler(smtphandler)
@@ -76,7 +89,8 @@ def setdemon(want):
 
 def setlogfilesuffix(suffix):
     """ Set a suffix on the log file name """
-    return
+    if is_docker:
+        return
     logname = "%s-%s.log" % (os.path.basename(sys.argv[0]), suffix)
     logfile = os.path.join(fits_log_dir, logname)
     new_filehandler = logging.handlers.RotatingFileHandler(logfile, backupCount=10, maxBytes=10000000)
