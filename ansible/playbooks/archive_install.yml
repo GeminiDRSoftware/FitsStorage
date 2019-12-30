@@ -115,6 +115,15 @@
         file:
           path: /opt/id_rsa
           state: absent
+# was trying to fix cron, but this did not help
+#      - name: Ensure fitsdata entry in passwd
+#        become: true
+#        become_user: root
+#        lineinfile:
+#          path: /etc/passwd
+#          line: fitsdata:x:5179:5179:FITS Data User:/home/fitsdata:/bin/bash
+#          regex: fitsdata:x:5179
+#          create: yes
       - name: Set PYTHONPATH for fitsdata user for convenience
         lineinfile:
           path: /home/fitsdata/.cshrc
@@ -134,21 +143,14 @@
           - { path: /data/z_staging, owner: fitsdata, mode: u+rwx,g-w,o-w }
           - { path: /data/s3_staging, owner: fitsdata, mode: u+rwx,g+rw,o+rw }
           - { path: /data/gemini_data, owner: fitsdata, mode: u+rwx,g-w,o-w }
-<<<<<<< HEAD
-#      - name: Checkout DRAGONS into /opt
-#        git:
-#          repo: https://github.com/GeminiDRSoftware/DRAGONS.git
-#          dest: /opt/DRAGONS
-#          key_file: id_rsa
-#          version: v2.1.0
-=======
       - name: Ensure previews folder exists
         file:
           path: /sci/dataflow/previews
           state: directory
           mode: u+rwx,g+rwx,o+rwx
+          owner: fitsdata
+          group: fitsdata
         become: true
-        become_user: fitsdata
         when: "'arc' not in inventory_hostname"
       - name: Checkout DRAGONS into /opt
         git:
@@ -156,7 +158,6 @@
           dest: /opt/DRAGONS
           key_file: id_rsa
           version: v2.1.0
->>>>>>> master
       - name: Copy fitsverify to server
         copy:
           src: ../../fitsverify/
@@ -493,12 +494,13 @@
           mode: u+rwx,g-rwx,o-rwx
       - name: Copy Crontab
         copy:
-          src: ../../otherfiles/crontab
-          dest: /var/spool/cron/fitsdata
-          owner: fitsdata
-          group: fitsdata
-          mode: u+rw,g-rwx,o-rwx
+          src: ../../otherfiles/system_crontab
+          dest: /etc/cron.d/fitsstorage
+          owner: root
+          group: root
+          mode: 0644
         notify: restart cron
+        when: "'arc' not in inventory_hostname"
 
     handlers:
       - name: restart fits-api-backend
