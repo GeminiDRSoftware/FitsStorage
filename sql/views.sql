@@ -33,7 +33,7 @@ GROUP BY yr -- EXTRACT(....)
 ORDER BY yr -- Using the column position to avoid repeating the whole
 ;
 
----------------
+---------------SELECT CURRENT_DATE + CAST(-extract(dow FROM CURRENT_DATE) AS INT) % 7 + INTERVAL '1 week' AS most_recent_sunday;
 
 CREATE MATERIALIZED VIEW week_usage_stats AS
 with "download_stats" AS (SELECT ul.id AS ulid, pi_access, staff_access, COUNT(1) AS "count", SUM(diskfile_file_size) AS bytes,
@@ -47,7 +47,7 @@ FROM fileuploadlog AS ful JOIN usagelog AS ul ON ful.usagelog_id = ul.id
 GROUP BY ulid
 ),
 "strt" AS (
-    SELECT generate_series('2019-07-01', '2019-08-01', INTERVAL '1 week')
+    SELECT generate_series(DATE(NOW()) - INTERVAL '12 month', CURRENT_DATE + CAST(-extract(dow FROM CURRENT_DATE) AS INT) % 7 + INTERVAL '1 week', INTERVAL '1 week')
 )
 SELECT ts.generate_series as "tme",
 SUM(CAST ((ul.status = 200) AS INTEGER)) as hits_ok,
@@ -88,7 +88,7 @@ FROM fileuploadlog AS ful JOIN usagelog AS ul ON ful.usagelog_id = ul.id
 GROUP BY ulid
 ),
 "strt" AS (
-    SELECT generate_series('2019-07-01', '2019-08-01', INTERVAL '1 day')
+    SELECT generate_series(DATE(NOW()) - INTERVAL '12 month', DATE(NOW()), INTERVAL '1 day')
 )
 SELECT ts.generate_series as "tme",
 SUM(CAST ((ul.status = 200) AS INTEGER)) as hits_ok,
