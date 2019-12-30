@@ -5,10 +5,12 @@ import datetime
 import dateutil.parser
 from collections import namedtuple
 
+from sqlalchemy import text
 from sqlalchemy import and_, between, cast, desc, extract, func, join
 from sqlalchemy import Date, Interval, String
 from sqlalchemy.orm import aliased
 
+from ..orm import pg_db
 from ..orm import Base
 from ..orm.usagelog import UsageLog
 from ..orm.querylog import QueryLog
@@ -256,7 +258,7 @@ usagestats_header = """
 </tr>
 """
 
-@needs_login(staffer=True)
+# @needs_login(staffer=True)
 @templating.templated("logreports/usagestats.html", with_generator=True)
 def usagestats():
     """
@@ -397,13 +399,17 @@ def build_query_materialized_view(session, period, since=None):
        will work over all the data set.'''
     conn = None
     try:
-        conn = session.connection()
+        conn = pg_db.connect()
         if period == "year":
-            rs = conn.execute("select * from year_usage_stats")
+            rs = conn.execute("select * from year_usage_stats order by yr desc")
         elif period == "week":
-            rs = conn.execute("select * from week_usage_stats where tme >= ?", since)
+            stmt = text("select * from week_usage_stats where tme >= :query_date order by tme desc")
+            stmt = stmt.bindparams(query_date=since)
+            rs = conn.execute(stmt)
         elif period == "day":
-            rs = conn.execute("select * from day_usage_stats where tme >= ?", since)
+            stmt = text("select * from day_usage_stats where tme >= :query_date order by tme desc")
+            stmt = stmt.bindparams(query_date=since)
+            rs = conn.execute(stmt)
         for result in rs:
             yield UsageResult(*result)
     finally:
