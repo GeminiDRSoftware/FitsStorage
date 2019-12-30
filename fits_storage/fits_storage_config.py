@@ -26,6 +26,9 @@ _host_based_configs = {
         'FITS_SERVERTITLE': 'TEST On-site FitsServer (CentOS 7)',
         'FITS_SYSTEM_STATUS': 'development'
     },
+    "ooberdorf-ml1": {
+        'EXPORT_DESTINATIONS': ''
+    },
     "some_actual_site_host": {
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
         'PUBDB_REMOTE': 'https://archive.gemini.edu/ingest_publications',

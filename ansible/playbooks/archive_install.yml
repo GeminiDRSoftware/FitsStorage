@@ -79,17 +79,25 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: master
+          version: 2020-1
           dest: /opt/FitsStorage
           #key_file: /opt/id_rsa
           ssh_opts: -i /opt/id_rsa
           accept_hostkey: yes
         when: "'arc' not in inventory_hostname"
         notify: restart services
-      - name: Copy FitsStorage into /opt (AWS)
-        synchronize:
-          src: ../..
-          dest: /opt/FitsStorage/
+#      - name: Copy FitsStorage into /opt (AWS)
+#        synchronize:
+#          src: ../..
+#          dest: /opt/FitsStorage/
+#          ssh_args: -l fitsdata -2
+#        when: "'arc' in inventory_hostname"
+#        notify: restart services
+      - name: Rsync FitsStorage into /opt (AWS)
+        become: false
+        local_action: 
+          module: shell
+          _raw_params: rsync -r -e "ssh -l fitsdata -2 -i ~/id_rsa" ../.. fitsdata@arcdev.gemini.edu:/opt/FitsStorage/
         when: "'arc' in inventory_hostname"
         notify: restart services
       - name: install python packages
@@ -107,6 +115,15 @@
         file:
           path: /opt/id_rsa
           state: absent
+# was trying to fix cron, but this did not help
+#      - name: Ensure fitsdata entry in passwd
+#        become: true
+#        become_user: root
+#        lineinfile:
+#          path: /etc/passwd
+#          line: fitsdata:x:5179:5179:FITS Data User:/home/fitsdata:/bin/bash
+#          regex: fitsdata:x:5179
+#          create: yes
       - name: Set PYTHONPATH for fitsdata user for convenience
         lineinfile:
           path: /home/fitsdata/.cshrc
@@ -131,8 +148,10 @@
           path: /sci/dataflow/previews
           state: directory
           mode: u+rwx,g+rwx,o+rwx
+          owner: fitsdata
+          group: fitsdata
         become: true
-        become_user: fitsdata
+        when: "'arc' not in inventory_hostname"
       - name: Checkout DRAGONS into /opt
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
@@ -475,12 +494,13 @@
           mode: u+rwx,g-rwx,o-rwx
       - name: Copy Crontab
         copy:
-          src: ../../otherfiles/crontab
-          dest: /var/spool/cron/fitsdata
-          owner: fitsdata
-          group: fitsdata
-          mode: u+rw,g-rwx,o-rwx
+          src: ../../otherfiles/system_crontab
+          dest: /etc/cron.d/fitsstorage
+          owner: root
+          group: root
+          mode: 0644
         notify: restart cron
+        when: "'arc' not in inventory_hostname"
 
     handlers:
       - name: restart fits-api-backend
