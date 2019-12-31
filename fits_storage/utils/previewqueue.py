@@ -285,7 +285,7 @@ class PreviewQueueUtil(object):
             gap = 125
             size = 4096 + gap
             shape = (size, size)
-            full = numpy.zeros(shape, ad['SCI', 1].data.dtype)
+            full = numpy.zeros(shape, ad[0].data.dtype)
             # Loop though ads, paste them in
             for add in ad['SCI']:
                 [x1, x2, y1, y2] = add.detector_section().as_pytype()
