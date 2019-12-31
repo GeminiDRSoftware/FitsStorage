@@ -287,7 +287,7 @@ class PreviewQueueUtil(object):
             shape = (size, size)
             full = numpy.zeros(shape, ad[0].data.dtype)
             # Loop though ads, paste them in
-            for add in ad['SCI']:
+            for add in ad:
                 [x1, x2, y1, y2] = add.detector_section().as_pytype()
                 xoffset = 0 if x1 < 2000 else gap
                 yoffset = 0 if y1 < 2000 else gap
@@ -310,7 +310,7 @@ class PreviewQueueUtil(object):
             if cycle is None:
                 cycle = 'ABBA'
             # Loop through the extensions and stack them according to nod position
-            for add in ad['SCI']:
+            for add in ad:
                 # Just sum up along the 4th axis. Ahem, this is the 0th axis in numpy land
                 data = add.data
                 data = numpy.sum(data, axis=0)
@@ -334,18 +334,21 @@ class PreviewQueueUtil(object):
                     data = data[0,:,:]
 
                 # For the first frame, paste the two raw chop images into the full image
+                extver = add.hdr['EXTVER']
                 if chopping:
-                    if add.extver() == 1:
+                    #if add.extver() == 1:
+                    if extver == 1:
                         chop_a = norm(chop_a)
                         chop_b = norm(chop_b)
                         full[260:500, 0:320] = chop_a
                         full[260:500, 340:660] = chop_b
                 else:
                     # Not chopping, but still nodding?
-                    if len(ad['SCI']) > 1:
-                        if add.extver() == 1:
+                    if len(ad) > 1:
+                        #if add.extver() == 1:
+                        if extver == 1:
                             full[260:500, 0:320] = norm(data)
-                        if add.extver() == 2:
+                        if extver == 2:
                             full[260:500, 340:660] = norm(data)
 
                 # Figure out if we're nod A or B
@@ -364,7 +367,7 @@ class PreviewQueueUtil(object):
 
             # Normalise the stack and paste it into the image
             stack = norm(stack)
-            if not chopping and len(ad['SCI']) == 1:
+            if not chopping and len(ad) == 1:
                 full = stack
             else:
                 full[0:240, 180:500] = stack
