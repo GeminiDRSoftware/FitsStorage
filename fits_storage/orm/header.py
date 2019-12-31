@@ -274,7 +274,10 @@ class Header(Base):
         self.elevation = elevation
 
         self.cass_rotator_pa = ad.cass_rotator_pa()
-        self.airmass = ad.airmass()
+        try:
+            self.airmass = ad.airmass()
+        except TypeError:
+            self.airmass = None
         self.raw_iq = ad.raw_iq()
         self.raw_cc = ad.raw_cc()
         self.raw_wv = ad.raw_wv()
@@ -286,9 +289,12 @@ class Header(Base):
 
         # Knock illegal characters out of filter names. eg NICI %s.
         # Spaces to underscores.
-        filter_string = ad.filter_name(pretty=True)
-        if filter_string:
-            self.filter_name = filter_string.replace('%', '').replace(' ', '_')
+        try:
+            filter_string = ad.filter_name(pretty=True)
+            if filter_string:
+                self.filter_name = filter_string.replace('%', '').replace(' ', '_')
+        except AttributeError:
+            self.filter_name = None
 
         # NICI exposure times are a pain, because there's two of them...
         # Except they're always the same.
@@ -319,8 +325,14 @@ class Header(Base):
 
         self.camera = ad.camera(pretty=True)
         if 'SPECT' in ad.tags and 'GPI' not in ad.tags:
-            self.central_wavelength = ad.central_wavelength(asMicrometers=True)
-        self.wavelength_band = ad.wavelength_band()
+            try:
+                self.central_wavelength = ad.central_wavelength(asMicrometers=True)
+            except TypeError:
+                self.central_wavelength = None
+        try:
+            self.wavelength_band = ad.wavelength_band()
+        except AttributeError:
+            self.wavelength_band = None
         self.focal_plane_mask = ad.focal_plane_mask(pretty=True)
         self.pupil_mask = ad.pupil_mask(pretty=True)
         try:
