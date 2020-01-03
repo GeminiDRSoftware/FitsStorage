@@ -79,7 +79,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: master
+          version: refac/materialized_view_usagestats
           dest: /opt/FitsStorage
           #key_file: /opt/id_rsa
           ssh_opts: -i /opt/id_rsa
@@ -247,6 +247,10 @@
         become: yes
         become_user: fitsdata
         when: fitsdata_db_created.changed
+      - name: Create Materialized Views
+        postgresql_query:
+          db: fitsdata
+          path_to_script: /opt/FitsStorage/sql/views.sql
       - name: Ensure we have apache user with access to database
         postgresql_user: db=fitsdata
           name=apache

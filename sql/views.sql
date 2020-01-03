@@ -1,3 +1,9 @@
+IF NOT EXISTS (
+   SELECT 1
+   FROM   information_schema.tables 
+   WHERE  table_name = 'year_usage_stats'
+   ) THEN
+
 CREATE MATERIALIZED VIEW year_usage_stats AS
 with "download_stats" AS (SELECT ul.id AS ulid, pi_access, staff_access, COUNT(1) AS "count", SUM(diskfile_file_size) AS bytes,
 SUM(released::int) AS released,
@@ -113,3 +119,6 @@ LEFT JOIN upload_stats AS us ON ul.id = us.ulid
 INNER JOIN strt AS ts ON ul.utdatetime BETWEEN ts.generate_series AND ts.generate_series + INTERVAL '1 day' - INTERVAL '1 microsecond'
 GROUP BY ts.generate_series
 ORDER BY ts.generate_series
+
+;
+END IF;
