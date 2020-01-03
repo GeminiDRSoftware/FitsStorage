@@ -1,8 +1,4 @@
-IF NOT EXISTS (
-   SELECT 1
-   FROM   information_schema.tables 
-   WHERE  table_name = 'year_usage_stats'
-   ) THEN
+IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE  table_name = 'year_usage_stats') THEN
 
 CREATE MATERIALIZED VIEW year_usage_stats AS
 with "download_stats" AS (SELECT ul.id AS ulid, pi_access, staff_access, COUNT(1) AS "count", SUM(diskfile_file_size) AS bytes,
