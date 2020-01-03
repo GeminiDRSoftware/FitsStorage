@@ -1,6 +1,4 @@
-IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE  table_name = 'year_usage_stats') THEN
-
-CREATE MATERIALIZED VIEW year_usage_stats AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS year_usage_stats AS
 with "download_stats" AS (SELECT ul.id AS ulid, pi_access, staff_access, COUNT(1) AS "count", SUM(diskfile_file_size) AS bytes,
 SUM(released::int) AS released,
 SUM(released::int * diskfile_file_size) AS released_bytes
@@ -37,7 +35,7 @@ ORDER BY yr -- Using the column position to avoid repeating the whole
 
 ---------------SELECT CURRENT_DATE + CAST(-extract(dow FROM CURRENT_DATE) AS INT) % 7 + INTERVAL '1 week' AS most_recent_sunday;
 
-CREATE MATERIALIZED VIEW week_usage_stats AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS week_usage_stats AS
 with "download_stats" AS (SELECT ul.id AS ulid, pi_access, staff_access, COUNT(1) AS "count", SUM(diskfile_file_size) AS bytes,
 SUM(released::int) AS released,
 SUM(released::int * diskfile_file_size) AS released_bytes
@@ -78,7 +76,7 @@ ORDER BY ts.generate_series
 
 -----------------------
 
-CREATE MATERIALIZED VIEW day_usage_stats AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS day_usage_stats AS
 with "download_stats" AS (SELECT ul.id AS ulid, pi_access, staff_access, COUNT(1) AS "count", SUM(diskfile_file_size) AS bytes,
 SUM(released::int) AS released,
 SUM(released::int * diskfile_file_size) AS released_bytes
@@ -115,6 +113,3 @@ LEFT JOIN upload_stats AS us ON ul.id = us.ulid
 INNER JOIN strt AS ts ON ul.utdatetime BETWEEN ts.generate_series AND ts.generate_series + INTERVAL '1 day' - INTERVAL '1 microsecond'
 GROUP BY ts.generate_series
 ORDER BY ts.generate_series
-
-
-END IF
