@@ -120,5 +120,5 @@ INNER JOIN strt AS ts ON ul.utdatetime BETWEEN ts.generate_series AND ts.generat
 GROUP BY ts.generate_series
 ORDER BY ts.generate_series
 
-;
-END IF;
+
+END IF

@@ -250,7 +250,10 @@
       - name: Create Materialized Views
         postgresql_query:
           db: fitsdata
+          login_user: fitsdata
           path_to_script: /opt/FitsStorage/sql/views.sql
+        become: yes
+        become_user: fitsdata
       - name: Ensure we have apache user with access to database
         postgresql_user: db=fitsdata
           name=apache
