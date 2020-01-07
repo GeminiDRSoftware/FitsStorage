@@ -288,7 +288,8 @@ class PreviewQueueUtil(object):
             full = numpy.zeros(shape, ad[0].data.dtype)
             # Loop though ads, paste them in
             for add in ad:
-                [x1, x2, y1, y2] = add.detector_section().as_pytype()
+                # [x1, x2, y1, y2] = add.detector_section().as_pytype()
+                x1, x2, y1, y2 = add.detector_section()
                 xoffset = 0 if x1 < 2000 else gap
                 yoffset = 0 if y1 < 2000 else gap
                 self.l.debug("x1 x2 y1 y2: {} {} {} {}".format(x1, x2, y1, y2))

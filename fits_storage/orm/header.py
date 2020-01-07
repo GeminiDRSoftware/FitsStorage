@@ -208,7 +208,10 @@ class Header(Base):
             self.data_label = ""
 
         self.telescope = gemini_telescope(ad.telescope())
-        self.instrument = gemini_instrument(ad.instrument(), other=True)
+        try:
+            self.instrument = gemini_instrument(ad.instrument(), other=True)
+        except AttributeError:
+            self.instrument = None
 
         # Date and times part
         try:
