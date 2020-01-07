@@ -334,7 +334,13 @@ class Header(Base):
                 self.central_wavelength = None
         try:
             self.wavelength_band = ad.wavelength_band()
-        except AttributeError:
+        except AttributeError as ae:
+            if log:
+                log.warn("Unable to read disperser information from datafile due to AttributeError: %s" % ae)
+            self.wavelength_band = None
+        except TypeError as te:
+            if log:
+                log.warn("Unable to read disperser information from datafile due to TypeError: %s" % te)
             self.wavelength_band = None
         self.focal_plane_mask = ad.focal_plane_mask(pretty=True)
         self.pupil_mask = ad.pupil_mask(pretty=True)
