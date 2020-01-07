@@ -187,6 +187,8 @@ def getselection(things):
                 selection['lgs'] = thing
                 # Make LGS / NGS selection imply AO selection
                 selection['ao'] = 'AO'
+            elif thing in {'sq', 'ql'}:
+                selection['procsci'] = thing
             elif thing.lower() in getselection_detector_roi:
                 selection['detector_roi'] = getselection_detector_roi[thing.lower()]
             elif thing.lower() == 'preimage':
@@ -337,7 +339,8 @@ queryselection_filters = (
     ('coadds',        Header.coadds),
     ('mdready',       DiskFile.mdready),
     ('site_monitoring', Header.site_monitoring),
-    ('pre_image',     Header.pre_image)
+    ('pre_image',     Header.pre_image),
+    ('procsci',       Header.procsci),
     )
 
 def queryselection(query, selection):
