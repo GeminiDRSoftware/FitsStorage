@@ -15,6 +15,7 @@ import dateutil.parser
 import sys
 import traceback
 
+from fits_storage.orm.provenance import ingest_provenance
 from ..orm.geometryhacks import add_footprint, do_std_obs
 
 from ..fits_storage_config import storage_root, using_sqlite, using_s3, using_previews, defer_seconds, use_as_archive
@@ -270,6 +271,9 @@ class IngestQueueUtil(object):
             # it will use the DiskFile unzipped cache file if it exists
             header = Header(diskfile)
             self.s.add(header)
+
+            ingest_provenance(diskfile)
+
             inst = header.instrument
             self.l.debug("Instrument is: %s", inst)
             self.s.commit()
