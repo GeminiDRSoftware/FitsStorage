@@ -36,13 +36,22 @@ class Nici(Base):
         self.populate(ad)
 
     def populate(self, ad):
-        self.filter_name = ad.filter_name()
-      
-        focal_plane_mask = ad.focal_plane_mask()
-        if focal_plane_mask in FOCAL_PLANE_MASKS:
-            self.focal_plane_mask = focal_plane_mask
+        try:
+            self.filter_name = ad.filter_name()
+        except (AttributeError, ValueError):
+            self.filter_name = None
 
-        disperser = ad.disperser()
-        if disperser in DISPERSERS:
-            self.disperser = disperser
+        try:
+            focal_plane_mask = ad.focal_plane_mask()
+            if focal_plane_mask in FOCAL_PLANE_MASKS:
+                self.focal_plane_mask = focal_plane_mask
+        except (AttributeError, ValueError):
+            self.focal_plane_mask = None
+
+        try:
+            disperser = ad.disperser()
+            if disperser in DISPERSERS:
+                self.disperser = disperser
+        except (AttributeError, ValueError):
+            self.disperser = None
 
