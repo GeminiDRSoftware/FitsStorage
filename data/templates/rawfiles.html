@@ -1,0 +1,38 @@
+{% import "rawfiles.macro" as generate %}
+
+{% extends "layout.html" %}
+{% block title %}Raw Files{% endblock %}
+{% block body %}
+<h1 id="title">Raw Provenance Data For {{ filename }}</h1>
+<FORM id='download_form' action='/download' method='POST'>
+
+<TABLE class="fullwidth nowrap">
+    <tr class="tr_head"><th>Download</th><th>Timestamp</th><th>Filename</th><th>MD5</th><th>Primitive</th></tr>
+    {% for row in data_rows %}
+    {{ generate.row(row) }}
+    {% endfor %}
+</TABLE>
+
+<INPUT id='markall_raw' type='button' value='Mark All Files'>
+<INPUT type='submit' value='Download Marked Files'>
+</FORM>
+<INPUT type='submit' value='Download all files' onclick='markAll("raw"); document.getElementById("download_form").submit();'>
+
+{% endblock %}
+{%- block extra_header %}
+<style type="text/css">
+h1 {
+    font-size: 16px;
+    padding: 8px;
+}
+</style>
+<!-- Additional scripts for the search form -->
+<meta name="robots" content="nofollow">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="/static/titlebar.js"></script>
+<script src="/static/download.js"></script>
+<!-- Additional style for the search form -->
+<link rel="stylesheet" type="text/css" href="/static/whoami.css" />
+<link rel="stylesheet" type="text/css" href="/static/titlebar.css" />
+<link rel="stylesheet" type="text/css" href="/static/form.css" />
+{%- endblock %}

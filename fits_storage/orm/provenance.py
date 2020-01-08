@@ -55,25 +55,27 @@ def ingest_provenance(diskfile):
     :return: none
     """
     ad = diskfile.ad_object
-    provenance = ad.provenance
-    if provenance:
-        prov_list = list()
-        for prov in provenance:
-            timestamp = prov.timestamp
-            filename = prov.filename
-            md5 = prov.md5
-            provenance_added_by = prov.provenance_added_by
-            prov_row = Provenance(timestamp, filename, md5, provenance_added_by)
-            prov_list.append(prov_row)
-        diskfile.provenance = prov_list
-    provenance_history = ad.provenance_history
-    if provenance_history:
-        hist_list = list()
-        for ph in provenance_history:
-            timestamp_start = ph.timestamp_start
-            timestamp_stop = ph.timestamp_stop
-            primitive = ph.primitive
-            args = ph.args
-            hist = ProvenanceHistory(timestamp_start, timestamp_stop, primitive, args)
-            hist_list.append(hist)
-        diskfile.provenance_history = hist_list
+    if hasattr(ad, 'provenance'):
+        provenance = ad.provenance
+        if provenance:
+            prov_list = list()
+            for prov in provenance:
+                timestamp = prov.timestamp
+                filename = prov.filename
+                md5 = prov.md5
+                provenance_added_by = prov.provenance_added_by
+                prov_row = Provenance(timestamp, filename, md5, provenance_added_by)
+                prov_list.append(prov_row)
+            diskfile.provenance = prov_list
+    if hasattr(ad, 'provenance_history'):
+        provenance_history = ad.provenance_history
+        if provenance_history:
+            hist_list = list()
+            for ph in provenance_history:
+                timestamp_start = ph.timestamp_start
+                timestamp_stop = ph.timestamp_stop
+                primitive = ph.primitive
+                args = ph.args
+                hist = ProvenanceHistory(timestamp_start, timestamp_stop, primitive, args)
+                hist_list.append(hist)
+            diskfile.provenance_history = hist_list
