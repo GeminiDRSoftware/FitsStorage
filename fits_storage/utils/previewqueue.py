@@ -219,8 +219,7 @@ class PreviewQueueUtil(object):
             ymin = 10000
             xmax = 0
             ymax = 0
-            #ds = ad.detector_section().as_dict()
-            #for i in list(ds.values()):
+
             for sect in ad.detector_section():
                 [x1, x2, y1, y2] = sect
                 xmin, ymin = min(x1, xmin), min(y1, ymin)
@@ -242,13 +241,13 @@ class PreviewQueueUtil(object):
             # Make empty array for full image
             gap = 40 # approx chip gap in pixels
             shape = (ymax-ymin, (xmax-xmin)+2*gap)
-            full = numpy.zeros(shape, ad[0].data.dtype)  # ad['SCI', 1].data.dtype)
+            full = numpy.zeros(shape, ad[0].data.dtype)
 
             # Loop through ads, pasting them in. Do gmos bias and gain hack
-            for add in ad:  # ad['SCI']:
-                s_xmin, s_xmax, s_ymin, s_ymax = add.data_section()  # add.data_section().as_pytype()
+            for add in ad:
+                s_xmin, s_xmax, s_ymin, s_ymax = add.data_section()
                 self.l.debug(fmt2.format(s_xmin, s_xmax, s_ymin, s_ymax))
-                d_xmin, d_xmax, d_ymin, d_ymax = add.detector_section()  # add.detector_section().as_pytype()
+                d_xmin, d_xmax, d_ymin, d_ymax = add.detector_section()
                 # Figure out which chip we are and add gap padding
                 # All the gmos chips ever have been 2048 pixels in X.
                 if d_xmin == 4096 or d_xmin == 5120:
@@ -268,7 +267,7 @@ class PreviewQueueUtil(object):
                 d_ymin = int(d_ymin)
                 d_ymax = int(d_ymax)
 
-                o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section()  # add.overscan_section().as_pytype()
+                o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section()
                 bias = numpy.median(add.data[o_ymin:o_ymax, o_xmin:o_xmax])
                 try:
                     # This throws an exception sometimes if some of the values are None?
@@ -288,7 +287,6 @@ class PreviewQueueUtil(object):
             full = numpy.zeros(shape, ad[0].data.dtype)
             # Loop though ads, paste them in
             for add in ad:
-                # [x1, x2, y1, y2] = add.detector_section().as_pytype()
                 x1, x2, y1, y2 = add.detector_section()
                 xoffset = 0 if x1 < 2000 else gap
                 yoffset = 0 if y1 < 2000 else gap
@@ -337,7 +335,6 @@ class PreviewQueueUtil(object):
                 # For the first frame, paste the two raw chop images into the full image
                 extver = add.hdr['EXTVER']
                 if chopping:
-                    #if add.extver() == 1:
                     if extver == 1:
                         chop_a = norm(chop_a)
                         chop_b = norm(chop_b)
@@ -346,7 +343,6 @@ class PreviewQueueUtil(object):
                 else:
                     # Not chopping, but still nodding?
                     if len(ad) > 1:
-                        #if add.extver() == 1:
                         if extver == 1:
                             full[260:500, 0:320] = norm(data)
                         if extver == 2:
@@ -360,7 +356,6 @@ class PreviewQueueUtil(object):
                     i = add.extver() - 1
                     j = i % len(cycle)
                     nod = cycle[j]
-                #print "Extver: %d, nod: %s" % (add.extver(), nod)
                 if nod == 'A':
                     stack += data
                 else:
@@ -375,7 +370,7 @@ class PreviewQueueUtil(object):
 
         else:
             # Generic plot the first extention case
-            full = ad[0].data  # ad['SCI', 1].data
+            full = ad[0].data
 
             # Do a numpy squeeze on it - this collapses any axis with 1-pixel extent
             full = numpy.squeeze(full)
