@@ -2,29 +2,29 @@ PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
 MAILTO=fitsadmin@gemini.edu
 #
 # Add to ingest queue
-#*/4  * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=today --demon
-*/30 * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=fourday --demon
-50 * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=twentyday --demon
-2 * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=masks --demon
-6 * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=obslogs --demon
-10  * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=iraf_cals --demon
-20 * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=graces --demon
-#*/5 * * * * python3 /opt/FitsStorage/fits_storage/scripts/feed_ingest_queue.py --demon --site=N --lockfile
+#*/4  * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=today --demon
+*/30 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=fourday --demon
+50 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=twentyday --demon
+2 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=masks --demon
+6 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=obslogs --demon
+10  * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=iraf_cals --demon
+20 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=graces --demon
+#*/5 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/feed_ingest_queue.py --demon --site=N --lockfile
 #
 # File curation
-### 5 8 * * * python3 /opt/FitsStorage/fits_storage/scripts/delete_files.py --auto --yesimsure --demon --emailto='fitsadmin@gemini.edu'
-### 10 8 * * * python3 /opt/FitsStorage/fits_storage/scripts/local_delete_files.py --demon --dir=/sci/dhs --nomd5 --mintapes=1
-### 1 * * * * python3 /opt/FitsStorage/fits_storage/scripts/rollcall.py --limit 25000 --demon
-### 0 9 * * * python3 /home/fitsdata/diskspace.py
+### 5 8 * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/delete_files.py --auto --yesimsure --demon --emailto='fitsadmin@gemini.edu'
+### 10 8 * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/local_delete_files.py --demon --dir=/sci/dhs --nomd5 --mintapes=1
+### 1 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/rollcall.py --limit 25000 --demon
+### 0 9 * * * fitsdata python3 /home/fitsdata/diskspace.py
 #
 # Notifications
-### 50 7 * * * python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=auto
-### 0 8 * * *  python3 /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon
-### 0 8 * * *  python3 /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon --check
+### 50 7 * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=auto
+### 0 8 * * * fitsdata  python3 /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon
+### 0 8 * * * fitsdata  python3 /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon --check
 
-### 0 8 * * Tue python3 /opt/FitsStorage/fits_storage/scripts/MissingCalibrationEmail.py
-### 30 8 * * * python3 /opt/FitsStorage/fits_storage/scripts/odb_data_to_archive.py --demon
+### 0 8 * * Tue fitsdata python3 /opt/FitsStorage/fits_storage/scripts/MissingCalibrationEmail.py
+### 30 8 * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/odb_data_to_archive.py --demon
 #
 # Maintainance etc
-0 7 * * * python3 /opt/FitsStorage/fits_storage/scripts/database_vacuum.py --demon
-### 30 7 * * * python3 /opt/FitsStorage/fits_storage/scripts/database_backup.py --demon
+0 7 * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/database_vacuum.py --demon
+### 30 7 * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/database_backup.py --demon
