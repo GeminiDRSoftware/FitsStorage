@@ -24,14 +24,6 @@ class RowYielder:
     """
     Instances of this class are used by the summary template to iterate over the
     rows of data.
-
-    These rows of data could be accessed directly, but there are a number of things
-    to compute (total size, total downloadable files, etc.). This task is better
-    done in the controller side of the process (this class), instead of in the
-    view (template)
-
-    The instance consumes its source data and once it has iterated over all the
-    available header objects, it can only be used to query the totalized values.
     """
     def __init__(self, rows):
         self.rows = iter(rows)
@@ -61,46 +53,16 @@ class RowYielder:
 @templating.templated("rawfiles.html", with_generator=True)
 def rawfiles(filename):
     """
-    This is the calibrations generator. It implements a human readable calibration association server.
-    This is mostly used by the Gemini SOSs to detect missing calibrations, and it defaults to the 
-    SOS required calibrations policy.
+    Return all raw files related to the given file from it's provenance records.
+    
+    This returns a summary of the input files from this file's provenance that
+    went into creating it, along with the timestamp, their md5 at the time and
+    the primitive they were used in.  If the input file itself has provenance
+    data available, that is also indicated.  This allows us to generate links
+    in the web UI to further drill down into their provenance without having a
+    bunch of confusing dead ends for the majority that have nothing.
     """
-    counter = {
-        'warnings': 0,
-        'missings': 0,
-    }
-
-
-    provenance_query = get_context().session.query(Provenance)
-    # OK, find the target files
-    # The Basic Query
-    #query = get_context().session.query(Header).select_from(join(join(DiskFile, File), Header))
-
-    # Only the canonical versions
-    #selection['canonical'] = True
-
-    #query = queryselection(query, selection)
-
-    # If openquery, decline to do it
-    # if openquery(selection):
-    #     template_args['is_open'] = True
-    #     return template_args
-
-    # Knock out the FAILs
-    # Knock out ENG programs
-    # Disregard SV-101. This is an undesirable hardwire
-    # Order by date, most recent first
-    # headers = query.filter(Header.qa_state != 'Fail')\
-    #                .filter(Header.engineering != True)\
-    #                .filter(~Header.program_id.like('%SV-101%'))\
-    #                .order_by(desc(Header.ut_datetime))
-
     input_file = aliased(DiskFile, name='input_file')
-    # query = get_context().session.query(Provenance, DiskFile, input_file) \
-    #     .join(DiskFile, DiskFile.canonical == True and DiskFile.id == Provenance.diskfile_id) \
-    #     .outerjoin(input_file, input_file.canonical == True and input_file.filename == Provenance.filename) \
-    #     .filter(DiskFile.filename == filename) \
-    #     .filter(DiskFile.canonical == True)
     query = get_context().session.query(Provenance, input_file) \
         .join(DiskFile, DiskFile.id == Provenance.diskfile_id) \
         .outerjoin(input_file, input_file.filename == Provenance.filename) \
