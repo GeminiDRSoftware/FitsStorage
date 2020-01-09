@@ -128,7 +128,7 @@ def searchform(things, orderby):
 
     return template_args
 
-std_gmos_fpm = {'NS2.0arcsec', 'IFU-R', 'focus_array_new', 'Imaging', '2.0arcsec',
+std_gmos_fpm = {'NS2.0arcsec', 'IFU-R', 'IFU-B', 'focus_array_new', 'Imaging', '2.0arcsec',
                 'NS1.0arcsec', 'NS0.75arcsec', '5.0arcsec', '1.5arcsec', 'IFU-2',
                 'NS1.5arcsec', '0.75arcsec', '1.0arcsec', '0.5arcsec'}
 
