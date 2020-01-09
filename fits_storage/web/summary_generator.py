@@ -315,6 +315,10 @@ class SummaryGenerator(object):
 
         row.uri = self.uri
         row.procsci = header.procsci
+        if diskfile.provenance:
+            row.has_provenance = True
+        else:
+            row.has_provenance = False
         for colkey, col in ((x, self.columns[x]) for x in self.wanted):
             c = ColWrapper(self, colkey, col)
 

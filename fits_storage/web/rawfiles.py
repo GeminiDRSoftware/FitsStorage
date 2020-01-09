@@ -84,8 +84,8 @@ def rawfiles(filename):
     #                .order_by(desc(Header.ut_datetime))
 
     query = get_context().session.query(Provenance).select_from(join(DiskFile, Provenance))
-    query = query.filter(DiskFile.filename == filename)
-    query.order_by(Provenance.timestamp)
+    query = query.filter(DiskFile.filename == filename).filter(DiskFile.canonical == True)
+    query = query.order_by(Provenance.timestamp)
 
     template_args = dict(
         filename    = filename,
