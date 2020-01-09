@@ -16,7 +16,8 @@ from ..utils.web import get_context
 
 from . import templating
 
-from sqlalchemy import join, desc
+from sqlalchemy import join, desc, or_
+from sqlalchemy.orm import aliased
 
 
 class RowYielder:
@@ -32,18 +33,29 @@ class RowYielder:
     The instance consumes its source data and once it has iterated over all the
     available header objects, it can only be used to query the totalized values.
     """
-    def __init__(self, provenance):
-        self.provenance = iter(provenance)
+    def __init__(self, rows):
+        self.rows = iter(rows)
 
     def __iter__(self):
         return self
 
     def __next__(self):
         "Obtain the next row of data and keep some stats about it."
-        provenance = next(self.provenance)
-        row = provenance
-        # add row "type" to support tab-differentiation in our template
-        return row
+        row = next(self.rows)
+        provenance = row[0]
+        diskfile = row[1]
+        if diskfile is not None and diskfile.provenance:
+            has_raw = True
+        else:
+            has_raw = False
+        data = {
+            "timestamp": provenance.timestamp,
+            "filename": provenance.filename,
+            "md5": provenance.md5,
+            "primitive": provenance.primitive,
+            "has_raw": has_raw
+        }
+        return data
 
 
 @templating.templated("rawfiles.html", with_generator=True)
@@ -83,8 +95,18 @@ def rawfiles(filename):
     #                .filter(~Header.program_id.like('%SV-101%'))\
     #                .order_by(desc(Header.ut_datetime))
 
-    query = get_context().session.query(Provenance).select_from(join(DiskFile, Provenance))
-    query = query.filter(DiskFile.filename == filename).filter(DiskFile.canonical == True)
+    input_file = aliased(DiskFile, name='input_file')
+    # query = get_context().session.query(Provenance, DiskFile, input_file) \
+    #     .join(DiskFile, DiskFile.canonical == True and DiskFile.id == Provenance.diskfile_id) \
+    #     .outerjoin(input_file, input_file.canonical == True and input_file.filename == Provenance.filename) \
+    #     .filter(DiskFile.filename == filename) \
+    #     .filter(DiskFile.canonical == True)
+    query = get_context().session.query(Provenance, input_file) \
+        .join(DiskFile, DiskFile.id == Provenance.diskfile_id) \
+        .outerjoin(input_file, input_file.filename == Provenance.filename) \
+        .filter(DiskFile.filename == filename) \
+        .filter(DiskFile.canonical == True) \
+        .filter(or_(input_file.canonical == True, input_file.canonical == None))
     query = query.order_by(Provenance.timestamp)
 
     template_args = dict(
