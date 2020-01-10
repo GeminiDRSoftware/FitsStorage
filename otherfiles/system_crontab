@@ -4,6 +4,7 @@ MAILTO=fitsadmin@gemini.edu
 # Add to ingest queue
 #*/4  * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=today --demon
 */30 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=fourday --demon
+*/30 * * * * fitsdata echo `date` > /tmp/datejob
 50 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=twentyday --demon
 2 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=masks --demon
 6 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=obslogs --demon
