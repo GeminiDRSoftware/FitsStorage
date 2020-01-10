@@ -1,0 +1,5 @@
+[archive]
+mkofits-lv3.hi.gemini.edu
+
+#[control]
+#localhost ansible_connection=local
