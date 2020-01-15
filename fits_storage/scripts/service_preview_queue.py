@@ -86,9 +86,9 @@ try:
                         prev_queue.process(pq, make=True)
                     except:
                         logger.info("Problem Making Preview - Rolling back")
-                        logger.error("Exception making preview %s: %s : %s... %s",
-                                     pq.diskfile_id, sys.exc_info()[0], sys.exc_info()[1],
-                                                     traceback.format_tb(sys.exc_info()[2]))
+                        logger.error("Exception making preview %s: %s : %s... %s" %
+                                     (pq.diskfile_id, sys.exc_info()[0], sys.exc_info()[1],
+                                                     traceback.format_tb(sys.exc_info()[2])))
                         session.rollback()
                         # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
                         # pq.inprogress=False
@@ -104,7 +104,7 @@ try:
             except:
                 string = "".join(traceback.format_tb(sys.exc_info()[2]))
                 session.rollback()
-                logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
+                logger.error("Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
                 # Press on with the next file, don't raise the exception further.
                 # raise
 except PidFileError as e:
