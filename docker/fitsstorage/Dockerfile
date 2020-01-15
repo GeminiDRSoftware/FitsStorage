@@ -56,11 +56,13 @@ RUN mkdir -p /data/logs && \
     chown fitsdata /data/z_staging && \
     mkdir -p /data/s3_staging && \
     chown fitsdata /data/s3_staging && \
-    chmod oug+rw /data/s3_staging
+    chmod oug+rw /data/s3_staging && \
+    chmod oug+rw /data/logs
 
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
-RUN cd /opt && git clone --branch v2.1.0 https://github.com/GeminiDRSoftware/DRAGONS.git
+#RUN cd /opt && git clone --branch v2.1.0 https://github.com/GeminiDRSoftware/DRAGONS.git
+RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
 COPY . /opt/FitsStorage
 WORKDIR /opt/FitsStorage
 COPY fitsverify /opt/fitsverify
