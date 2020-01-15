@@ -100,6 +100,9 @@ class PreviewQueueUtil(object):
         else:
             # Add it to the preview queue
             for df in diskfiles:
+                if isinstance(df, PreviewQueue):
+                    pq = df
+                    df = self.s.query(DiskFile).get(pq.diskfile_id)
                 self.l.info("Adding PreviewQueue with diskfile_id {}".format(df.id))
                 pq = PreviewQueue(df)
                 self.s.add(pq)
@@ -399,10 +402,3 @@ class PreviewQueueUtil(object):
         fig.savefig(outfile, format='jpg')
 
         plt.close()
-
-
-
-if __name__ == "__main__":
-    print("testing 1-d spectra")
-    pqu = PreviewQueueUtil(session=None, logger=logger.logger)
-    pqu.render_preview(astrodata.open("/Users/ooberdorf/Downloads/N20180508S0021_fluxCalibrated.fits"), outfile="/Users/ooberdorf/test.jpeg")
