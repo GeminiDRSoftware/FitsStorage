@@ -3,7 +3,7 @@ This module provides various utility functions to manage and service the preview
 queue.
 
 """
-import os
+import os, sys, traceback
 import datetime
 from sqlalchemy import desc
 from sqlalchemy.orm.exc import ObjectDeletedError
@@ -34,6 +34,8 @@ if using_s3:
 
 import astrodata
 import gemini_instruments
+
+from gempy.library.spectral import Spek1D
 
 from .. import logger
 
@@ -384,15 +386,23 @@ class PreviewQueueUtil(object):
 
         # plot without axes or frame
         fig = plt.figure(frameon=False)
-
+        
         if full.ndim == 1:
             # plot a spectra
-            full = ad[0].data
-            full = full[~numpy.isnan(full)]
-            full = numpy.squeeze(full)
-            min = full.min(0)
-            max = full.max(0)
-            plt.plot(full)
+            # full = ad[0].data
+            # full = full[~numpy.isnan(full)]
+            # full = numpy.squeeze(full)
+            spek = Spek1D(ad[0])
+            flux = spek.flux
+            try:
+                x_axis = spek.spectral_axis
+                # full = full[~numpy.isnan(full)]
+                # full = numpy.squeeze(full)
+                plt.plot(x_axis, flux)
+            except Exception as e:
+                string = "".join(traceback.format_tb(sys.exc_info()[2]))
+                #self.l.error("Recovering (simplified preview) from Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
+                plt.plot(flux)
         else:
             ax = plt.Axes(fig, [0, 0, 1, 1])
             ax.set_axis_off()
@@ -402,3 +412,8 @@ class PreviewQueueUtil(object):
         fig.savefig(outfile, format='jpg')
 
         plt.close()
+
+
+if __name__ == "__main__":
+    pqu = PreviewQueueUtil(None, logger.logger)
+    pqu.render_preview(astrodata.open("/Users/ooberdorf/data/N20180508S0021_fluxCalibrated.fits"), "/Users/ooberdorf/test.jpg")
