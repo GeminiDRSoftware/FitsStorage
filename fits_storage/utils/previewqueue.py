@@ -193,11 +193,6 @@ class PreviewQueueUtil(object):
         self.s.add(preview)
 
 
-    def render_1d_spectra_preview(self, ad, outfile):
-        data = ad[0].data
-        print("Data: %s %s %s %s %s" % (ad[0].data[0], ad[0].data[1], ad[0].data[2]. ad[0].data[3]. ad[0].data[4]))
-
-
     def render_preview(self, ad, outfile):
         """
         Pass in an astrodata object and a file-like outfile. This function will
@@ -219,9 +214,6 @@ class PreviewQueueUtil(object):
         fmt1 = "Full Image extent is: {}:{}, {}:{}"
         fmt2 = "Source Image extent is: {}:{}, {}:{}"
         fmt3 = "Pasting: {}:{},{}:{} -> {}:{},{}:{}"
-
-        if len(ad) >= 1 and len(ad[0].shape)==1:
-            print("Saw spectra")
 
         if 'GMOS' in str(ad.instrument()) and len(ad) > 1:
             # Find max extent in detector pixels
@@ -391,25 +383,13 @@ class PreviewQueueUtil(object):
         fig = plt.figure(frameon=False)
 
         if full.ndim == 1:
-            print("Spectra figure plotting")
+            # plot a spectra
             full = ad[0].data
             full = full[~numpy.isnan(full)]
             full = numpy.squeeze(full)
-            #full = norm(full)
             min = full.min(0)
             max = full.max(0)
-            # for d in full:
-            #     print("Walking Data: %f" % d)
-            #     if d < min:
-            #         min = d
-            #     if d > max:
-            #         max = d
-            print("Range: %f %f" % (min, max))
             plt.plot(full)
-            # ax = plt.Axes(fig, [0, 0, 1, 1])
-            # ax.set_axis_off()
-            # fig.add_axes(ax)
-            # ax.imshow(full, cmap=plt.cm.gray)
         else:
             ax = plt.Axes(fig, [0, 0, 1, 1])
             ax.set_axis_off()
