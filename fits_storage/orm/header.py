@@ -233,23 +233,15 @@ class Header(Base):
         if 'AZEL_TARGET' not in ad.tags:
             try:
                 self.ra = ad.ra()
-            except IndexError as ie:
+            except (TypeError, ValueError, IndexError) as ie:
                 if log:
                     log.warn("Unable to read RA from datafile: %s" % ie)
                 self.ra = None
-            except TypeError as te:
-                if log:
-                    log.warn("Unable to read RA from datafile: %s" % te)
-                self.ra = None
             try:
                 self.dec = ad.dec()
-            except IndexError as ie:
+            except (TypeError, ValueError, IndexError) as ie:
                 if log:
                     log.warn("Unable to read DEC from datafile: %s" % ie)
-                self.dec = None
-            except TypeError as te:
-                if log:
-                    log.warn("Unable to read DEC from datafile: %s" % te)
                 self.dec = None
             if type(self.ra) is str:
                 self.ra = ratodeg(self.ra)
