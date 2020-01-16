@@ -324,7 +324,7 @@ class Header(Base):
         if 'SPECT' in ad.tags and 'GPI' not in ad.tags:
             try:
                 self.central_wavelength = ad.central_wavelength(asMicrometers=True)
-            except TypeError:
+            except (TypeError, AttributeError, KeyError):
                 self.central_wavelength = None
         try:
             self.wavelength_band = ad.wavelength_band()
