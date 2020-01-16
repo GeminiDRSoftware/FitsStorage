@@ -394,15 +394,24 @@ class PreviewQueueUtil(object):
             # full = numpy.squeeze(full)
             spek = Spek1D(ad[0])
             flux = spek.flux
+            #mask values below a certain threshold
+            flux_masked = numpy.ma.masked_where(spek.mask == 16, flux)
+
+            try:
+                plt.title(spek.filename)
+                plt.xlabel(spek.spectral_axis_unit)
+                plt.ylabel(spek.unit)
+            except Exception as e:
+                pass
             try:
                 x_axis = spek.spectral_axis
                 # full = full[~numpy.isnan(full)]
                 # full = numpy.squeeze(full)
-                plt.plot(x_axis, flux)
+                plt.plot(x_axis, flux_masked)
             except Exception as e:
                 string = "".join(traceback.format_tb(sys.exc_info()[2]))
                 #self.l.error("Recovering (simplified preview) from Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
-                plt.plot(flux)
+                plt.plot(flux_masked)
         else:
             ax = plt.Axes(fig, [0, 0, 1, 1])
             ax.set_axis_off()
