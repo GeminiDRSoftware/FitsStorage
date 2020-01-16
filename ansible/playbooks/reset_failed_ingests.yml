@@ -16,7 +16,7 @@
         when: "'arc' in inventory_hostname"
 
       - name: Remove logs
-        shell: rm -rf /data/logs/service_ingest_*
+        command: rm -rf /data/logs/service_ingest_*
       - name: Delete duplicatd Ingest Queue Jobs (jobs which are both failed and passed)
         postgresql_query:
           login_user: fitsdata
