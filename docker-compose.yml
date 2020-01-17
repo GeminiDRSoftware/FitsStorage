@@ -44,9 +44,6 @@ services:
       - POSTGRES_DB=fitsdata
 
   postgres-init-onsite:
-    build:
-      context: .
-      dockerfile: docker/fitsstorage/Dockerfile
     image: fitsstorageutils:latest
     depends_on:
       - postgres-onsite
@@ -55,9 +52,6 @@ services:
     command: python3 ./fits_storage/scripts/create_tables.py
 
   postgres-init-onsite-views:
-    build:
-      context: .
-      dockerfile: docker/fitsstorage/Dockerfile
     image: fitsstorageutils:latest
     depends_on:
       - postgres-init-onsite
@@ -66,9 +60,6 @@ services:
     command: psql fitsdata < ./sql/views.sql
 
   postgres-init-archive:
-    build:
-      context: .
-      dockerfile: docker/fitsstorage/Dockerfile
     image: fitsstorageutils:latest
     depends_on:
       - postgres-archive
@@ -77,9 +68,6 @@ services:
     command: python3 ./fits_storage/scripts/create_tables.py
 
   postgres-init-archive-views:
-    build:
-      context: .
-      dockerfile: docker/fitsstorage/Dockerfile
     image: fitsstorageutils:latest
     depends_on:
       - postgres-init-archive
@@ -88,9 +76,6 @@ services:
     command: psql fitsdata < ./sql/views.sql
 
   api:
-    build:
-      context: .
-      dockerfile: docker/archive/Dockerfile
     image: fitsimage:latest
     depends_on:
       - postgres-init-archive
@@ -106,9 +91,6 @@ services:
     command:  python3 fits_storage/scripts/api_backend.py
 
   archive:
-    build:
-      context: .
-      dockerfile: docker/archive/Dockerfile
     image: fitsimage:latest
     depends_on:
       - postgres-init-archive
@@ -126,9 +108,6 @@ services:
       - "443:443"
 
   archive-ingest-service:
-    build:
-      context: .
-      dockerfile: docker/fitsstorage/Dockerfile
     image: fitsstorageutils:latest
     depends_on:
       - api
@@ -144,9 +123,6 @@ services:
     command: python3 fits_storage/scripts/service_ingest_queue.py
 
   onsite:
-    build:
-      context: .
-      dockerfile: docker/archive/Dockerfile
     image: fitsimage:latest
     depends_on:
       - postgres-init-onsite
@@ -164,9 +140,6 @@ services:
       - "8443:443"
 
   add-to-ingest-queue:
-    build:
-      context: .
-      dockerfile: docker/fitsstorage/Dockerfile
     image: fitsstorageutils:latest
     depends_on:
       - postgres-init-onsite
@@ -181,9 +154,6 @@ services:
     command: python3 fits_storage/scripts/add_to_ingest_queue.py
 
   onsite-ingest-service:
-    build:
-      context: .
-      dockerfile: docker/fitsstorage/Dockerfile
     image: fitsstorageutils:latest
     depends_on:
       - postgres-init-onsite
@@ -200,9 +170,6 @@ services:
     command: python3 fits_storage/scripts/service_ingest_queue.py 
 
   onsite-export-service:
-    build:
-      context: .
-      dockerfile: docker/fitsstorage/Dockerfile
     image: fitsstorageutils:latest
     depends_on:
       - postgres-init-onsite
@@ -219,9 +186,6 @@ services:
 
 
   archive-calcache-service:
-    build:
-      context: .
-      dockerfile: docker/fitsstorage/Dockerfile
     image: fitsstorageutils:latest
     depends_on:
       - postgres-init-archive
@@ -236,9 +200,6 @@ services:
 
 
   archive-preview-service:
-    build:
-      context: .
-      dockerfile: docker/fitsstorage/Dockerfile
     image: fitsstorageutils:latest
     depends_on:
       - postgres-init-archive

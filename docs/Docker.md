@@ -42,6 +42,11 @@ file in the top directory of the tree.  Just change to the top folder of your ch
 run `docker-compose up`.  Instructions for running containers manually are listed below in case
 you don't want to use docker-compose.
 
+The docker compose does depend on the two docker images `fitsstorageutils:latest` and `fitsimage:latest`.
+You can build these two images by running `docker/scripts/buildfitsstorageutils.sh` and
+`docker/scripts/buildarchive.sh` respectively.  The images are also available in the container
+registry in gitlab at `https://gitlab.gemini.edu/DRSoftware/FitsStorage/container_registry`.
+
 ## Scripts
 
 All of the Docker support is saved in the `docker/` folder in the project.  This consists
@@ -65,6 +70,9 @@ name and a login.
 The docker support for running a cluster depends on some custom images.  There
 are helper build scripts to easily create these with the proper parameters and
 names.
+
+If you are on the master branch and want to update the `:latest` images in the
+gitlab repo, add a `-u` to these scripts when you run them.
 
 ```
 bash ./docker/scripts/buildfitsstorageutils.sh
