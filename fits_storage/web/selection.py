@@ -187,6 +187,8 @@ def getselection(things):
                 selection['lgs'] = thing
                 # Make LGS / NGS selection imply AO selection
                 selection['ao'] = 'AO'
+            elif thing in {'sq', 'ql'}:
+                selection['procsci'] = thing
             elif thing.lower() in getselection_detector_roi:
                 selection['detector_roi'] = getselection_detector_roi[thing.lower()]
             elif thing.lower() == 'preimage':
@@ -227,6 +229,7 @@ sayselection_defs = {
     'observation_type':'ObsType',
     'observation_class': 'ObsClass',
     'filename': 'Filename',
+    'procsci': 'Sci',
     'object': 'Object Name',
     'engineering': 'Engineering Data',
     'science_verification': 'Science Verification Data',
@@ -336,7 +339,8 @@ queryselection_filters = (
     ('coadds',        Header.coadds),
     ('mdready',       DiskFile.mdready),
     ('site_monitoring', Header.site_monitoring),
-    ('pre_image',     Header.pre_image)
+    ('pre_image',     Header.pre_image),
+    ('procsci',       Header.procsci),
     )
 
 def queryselection(query, selection):
@@ -839,10 +843,10 @@ def selection_to_URL(selection, with_columns=False):
             else:
                 urlstring += '/%s' % selection[key]
         elif key == 'focal_plane_mask':
-            if selection[key] == gmos_focal_plane_mask(selection[key]):
-                urlstring += '/' + str(selection[key])
-            else:
-                urlstring += '/mask=' + str(selection[key])
+            # if selection[key] == gmos_focal_plane_mask(selection[key]):
+            #     urlstring += '/' + str(selection[key])
+            # else:
+            urlstring += '/mask=' + str(selection[key])
         elif key == 'filepre':
             urlstring += '/filepre=%s' % selection[key]
         elif key == 'site_monitoring':
