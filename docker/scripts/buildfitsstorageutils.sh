@@ -2,21 +2,26 @@
 BASEDIR=$(dirname "$0")
 UPLOAD=$1
 pushd "$BASEDIR/../.."
-docker image build -t fitsstorageutils:latest -f docker/fitsstorage/Dockerfile .
 
 BRANCH=`git rev-parse --abbrev-ref HEAD`
 echo Branch is $BRANCH
+if [[ "$BRANCH" == "2020-1" ]]
+then
+  LABEL="2020-1"
+else
+  LABEL="latest"
+fi
+
+docker image build -t fitsstorageutils:$LABEL -f docker/fitsstorage/Dockerfile .
+
 if [[ $UPLOAD == "-u" ]]
 then
   if [[ "$BRANCH" == "master" ]]
   then
-    echo "setting label to latest"
+    echo "setting label to $LABEL"
     docker login gitlab.gemini.edu:4567
-    docker tag fitsstorageutils:latest gitlab.gemini.edu:4567/drsoftware/fitsstorage/fitsstorageutils:latest
-    docker push gitlab.gemini.edu:4567/drsoftware/fitsstorage/fitsstorageutils:latest
-  elif [[ "$BRANCH" == "2020-1" ]]
-  then
-    echo "setting label to 2020-1"
+    docker tag fitsstorageutils:$LABEL gitlab.gemini.edu:4567/drsoftware/fitsstorage/fitsstorageutils:$LABEL
+    docker push gitlab.gemini.edu:4567/drsoftware/fitsstorage/fitsstorageutils:$LABEL
   fi
 fi
 
