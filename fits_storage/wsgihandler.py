@@ -22,6 +22,7 @@ from fits_storage.web.gmoscal import gmoscal_html, gmoscal_json
 from fits_storage.web.notification import notification, import_odb_notifications
 from fits_storage.web.calmgr import calmgr
 from fits_storage.web.calibrations import calibrations
+from fits_storage.web.rawfiles import rawfiles
 from fits_storage.web.upload_file import upload_file
 from fits_storage.web.curationreport import curation_report
 from fits_storage.web.standards import standardobs
@@ -337,6 +338,7 @@ url_map = Map([
     Rule('/associated_cals/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'associated_cals'),
          collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
 
+    Rule('/rawfiles/<filename>', rawfiles),                      # This is the fits file server
 
     ],
 

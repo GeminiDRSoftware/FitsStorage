@@ -5,6 +5,8 @@ from sqlalchemy.orm import relation
 import os
 import datetime
 import bz2
+
+from fits_storage.orm.provenance import Provenance, ProvenanceHistory
 from ..utils.hashes import md5sum, md5sum_size_bz2
 
 from . import Base
@@ -48,6 +50,9 @@ class DiskFile(Base):
     fvwarnings = Column(Integer)
     fverrors = Column(Integer)
     mdready = Column(Boolean)
+
+    provenance = relation(Provenance, backref='diskfile', order_by=Provenance.timestamp)
+    provenance_history = relation(ProvenanceHistory, backref='diskfile', order_by=ProvenanceHistory.timestamp_start)
 
     # We use this to store an uncompressed Cache of a compressed file
     # This is not recorded in the database and is transient for the life

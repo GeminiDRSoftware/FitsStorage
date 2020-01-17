@@ -18,6 +18,14 @@ _host_based_configs = {
         'FITS_SERVERTITLE': 'TEST On-site FitsServer',
         'FITS_SYSTEM_STATUS': 'development'
     },
+    "mkofits-lv3": {
+        'USE_AS_ARCHIVE': 'False',
+        'EXPORT_DESTINATIONS': '',
+        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
+        'BLOCKED_URLS': '',
+        'FITS_SERVERTITLE': 'MKO Fits Server',
+        'FITS_SYSTEM_STATUS': 'development'
+    },
     "hbffits-lv1": {
         'USE_AS_ARCHIVE': 'False',
         'EXPORT_DESTINATIONS': '',
@@ -127,7 +135,7 @@ upload_staging_path = lookup_config('UPLOAD_STAGING_PATH', '/data/upload_staging
 # This is the cookie value needed to allow uploading files.
 # Leave it empty to disable upload authentication
 # The cookie name is 'gemini_fits_upload_auth'
-upload_auth_cookie = None
+upload_auth_cookie = lookup_config('UPLOAD_AUTH_COOKIE', None)
 
 # This is the cookie supplied to servers we are exporting to.
 export_upload_auth_cookie = 'f3c6986fddfe42a8ce117203924c6983'

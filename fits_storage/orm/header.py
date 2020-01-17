@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Column, ForeignKey, String
 from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy import Numeric, Boolean, Date
 from sqlalchemy import Time, BigInteger, Enum
@@ -78,6 +78,7 @@ class Header(Base):
     engineering = Column(Boolean, index=True)
     science_verification = Column(Boolean, index=True)
     calibration_program = Column(Boolean, index=True)
+    procsci = Column(String(4))
     observation_id = Column(Text, index=True)
     data_label = Column(Text, index=True)
     telescope = Column(TELESCOPE_ENUM, index=True)
@@ -184,6 +185,11 @@ class Header(Base):
             self.science_verification = False
 
         try:
+            self.procsci = ad.phu.get('PROCSCI')
+        except AttributeError as psciae:
+            self.procsci = None
+
+        try:
             self.observation_id = ad.observation_id()
         except AttributeError as oidae:
             self.observation_id = None
@@ -202,7 +208,10 @@ class Header(Base):
             self.data_label = ""
 
         self.telescope = gemini_telescope(ad.telescope())
-        self.instrument = gemini_instrument(ad.instrument(), other=True)
+        try:
+            self.instrument = gemini_instrument(ad.instrument(), other=True)
+        except AttributeError:
+            self.instrument = None
 
         # Date and times part
         try:
@@ -325,7 +334,13 @@ class Header(Base):
                 self.central_wavelength = None
         try:
             self.wavelength_band = ad.wavelength_band()
-        except AttributeError:
+        except AttributeError as ae:
+            if log:
+                log.warn("Unable to read disperser information from datafile due to AttributeError: %s" % ae)
+            self.wavelength_band = None
+        except TypeError as te:
+            if log:
+                log.warn("Unable to read disperser information from datafile due to TypeError: %s" % te)
             self.wavelength_band = None
         self.focal_plane_mask = ad.focal_plane_mask(pretty=True)
         self.pupil_mask = ad.pupil_mask(pretty=True)

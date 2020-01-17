@@ -12,7 +12,13 @@
 {%- endmacro %}
 
 {%- macro row(row) -%}
+{%- if row.procsci == 'sq' -%}
+<tr class='sq-alternating'>
+{%- elif row.procsci == 'ql' %}
+<tr class='ql-alternating'>
+{%- else %}
 <tr class='alternating'>
+{%- endif %}
 {%- for column in row.columns %}
  <td>
   {%- if column.text != None -%}
@@ -26,7 +32,7 @@
       {%- elif column.key == 'observation_class' -%}{{ generate_uri_link(column.content, row.uri) }}
       {%- elif column.key == 'observation_type' -%}{{ generate_uri_link(column.content, row.uri) }}
       {%- elif column.key == 'object' -%}{{ generate_object(column.content) }}
-      {%- elif column.key == 'download' -%}{{ generate_download(column.content, row.sumtype) }}
+      {%- elif column.key == 'download' -%}{{ generate_download(column.content, row.sumtype, row.has_provenance) }}
     {%- endif -%}
   {%- endif -%}
 {%- endfor %}
@@ -93,9 +99,10 @@
 {%- endif -%}
 {%- endmacro -%}
 
-{%- macro generate_download(col, sumtype) -%}
+{%- macro generate_download(col, sumtype, has_provenance) -%}
 <div class='center'>
 {%- if col.prev %}<span class="preview"><a href="/preview/{{ col.name }}">[P]</a> </span>{% endif -%}
+{%- if has_provenance %}<a href="/rawfiles/{{ col.name }}" target="_blank">[R]</a>{% endif -%}
 <a href="/file/{{ col.name }}">[D]</a>
 {%- if col.down_sel %} <input type='checkbox' class='mark mark_{{ sumtype }}' name='files' value='{{ col.name }}'>{% endif -%}
 </div>
