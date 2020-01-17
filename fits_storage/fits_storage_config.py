@@ -18,6 +18,14 @@ _host_based_configs = {
         'FITS_SERVERTITLE': 'TEST On-site FitsServer',
         'FITS_SYSTEM_STATUS': 'development'
     },
+    "mkofits-lv3": {
+        'USE_AS_ARCHIVE': 'False',
+        'EXPORT_DESTINATIONS': '',
+        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
+        'BLOCKED_URLS': '',
+        'FITS_SERVERTITLE': 'MKO Fits Server',
+        'FITS_SYSTEM_STATUS': 'development'
+    },
     "hbffits-lv1": {
         'USE_AS_ARCHIVE': 'False',
         'EXPORT_DESTINATIONS': '',

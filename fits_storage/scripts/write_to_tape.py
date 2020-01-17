@@ -211,14 +211,20 @@ with session_scope() as session:
 
     # check md5s match for what's on disk.
     logger.info("Verifying md5s")
+    bad_md5s = list()
     for df in diskfiles:
         actual_md5 = df.get_file_md5()
         db_md5 = df.file_md5
         if(actual_md5 != db_md5):
+            bad_md5s.append(df)
             logger.error("md5sum mismatch for file %s: file: %s, database: %s" % (df.filename, actual_md5, db_md5))
             session.close()
             sys.exit(1)
- 
+    # remove the diskfiles that had mismatched MD5s, we only want
+    # to backup files that we know are the right ones
+    for df in bad_md5s:
+        diskfiles.remove(df)
+
     logger.info("All files fetched OK")
 
     # Now loop through the tapes, doing all the stuff on each
