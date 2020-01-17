@@ -68,7 +68,7 @@ def jsonfilelist(selection, fields=None):
     else:
         get_context().resp.send_json([dict((k, d[k]) for k in fields) for d in thelist], indent=4)
 
-header_fields = ('program_id', 'engineering', 'science_verification',
+header_fields = ('program_id', 'engineering', 'science_verification', 'procsci',
                  'calibration_program', 'observation_id', 'data_label',
                  'telescope', 'instrument', 'ut_datetime', 'local_time',
                  'observation_type', 'observation_class', 'object', 'ra',

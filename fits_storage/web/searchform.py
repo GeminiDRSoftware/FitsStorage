@@ -192,6 +192,8 @@ def updateform(selection):
         elif value in {'AO', 'NOTAO', 'NGS', 'LGS'}:
             # The Adaptive Optics ends up in various selection keys...
             dct['ao'] = value
+        elif value in {'sq', 'ql'}:
+            dct['procsci'] = value
         elif key == 'gain':
             # GMOSes are the only thing with a gain field currently
             dct['gmos_gain'] = value
@@ -779,6 +781,9 @@ dropdown_options = {
          ("AO", "AO"),
          ("NGS", "NGS"),
          ("LGS", "LGS")],
+    "science_quality_options":
+        [("sq", "Science Quality"),
+         ("ql", "Quick Look")],
     "bin_options":
         [("1x1", "1x1"),
          ("1x2", "1x2"),

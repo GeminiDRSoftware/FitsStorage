@@ -19,7 +19,7 @@ from .summary import list_headers
 import time
 import datetime
 import bz2
-from io import StringIO
+from io import StringIO, BytesIO
 import tarfile
 import os
 
@@ -247,7 +247,7 @@ def download(selection, associated_calibrations):
             mode = 0o644
         )
         # - and add it to the tar file
-        tar.addfile(tarinfo, StringIO(md5file))
+        tar.addfile(tarinfo, BytesIO(md5file.encode('utf8')))
 
         # And add the README.TXT file
         readme = readme_body.format(selection_url=selection_to_URL(selection),
@@ -267,7 +267,7 @@ def download(selection, associated_calibrations):
             mode = 0o644
         )
         # - and add it to the tar file
-        tar.addfile(tarinfo, StringIO(readme))
+        tar.addfile(tarinfo, BytesIO(readme.encode('utf8')))
 
     downloadlog.download_completed = datetime.datetime.utcnow()
 

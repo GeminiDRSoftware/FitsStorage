@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Column, ForeignKey, String
 from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy import Numeric, Boolean, Date
 from sqlalchemy import Time, BigInteger, Enum
@@ -78,6 +78,7 @@ class Header(Base):
     engineering = Column(Boolean, index=True)
     science_verification = Column(Boolean, index=True)
     calibration_program = Column(Boolean, index=True)
+    procsci = Column(String(4))
     observation_id = Column(Text, index=True)
     data_label = Column(Text, index=True)
     telescope = Column(TELESCOPE_ENUM, index=True)
@@ -182,6 +183,11 @@ class Header(Base):
             # program ID is None - mark as engineering
             self.engineering = True
             self.science_verification = False
+
+        try:
+            self.procsci = ad.phu.get('PROCSCI')
+        except AttributeError as psciae:
+            self.procsci = None
 
         try:
             self.observation_id = ad.observation_id()
