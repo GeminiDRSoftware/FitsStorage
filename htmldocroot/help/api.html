@@ -55,6 +55,24 @@ It does not matter what order you specify these in.</p>
 these should be accessed with regular HTTP GET, there's no need to HTTP POST search parameters to the system, we provide 
 a <a href="http://en.wikipedia.org/wiki/Representational_state_transfer">RESTful</a> interface to the data.</p>
 
+<p>If you add /object=foobar to the URL (it's a selection criteria just like the others) then it will only return files with 
+that object name. The problem is that the object name in that sense is whatever they called it in the OT, and it's free 
+form, so if they want to call it pauls_kewl_galaxy or candidate_12 they can do, and they do... So if you did the phase 2 and 
+you know what you called it, then it works great, or if you're lucky and your object only has one name that can be spelled 
+one way...</p>
+
+<p>But what you almost certainly really want to do is to resolve the name and search by ra and dec. The API doesn't do that 
+directly. When you do this in the web searchform, it's basically the searchform that's doing that for you, not the backend 
+search engine. So if you resolve the name yourself (or call some service to do that), you can then search by ra and dec in 
+decimal degrees as simply as,</p>
+
+<pre>
+/ra=40.6698792/dec=-0.0132889.
+</pre>
+
+<p>This will default to a 3 arcmin radius cone search. You can specify the cone search radius by adding /sr=10 (units are 
+arcsec)</p>
+
 <h2 id="features">Features</h2>
 <p>Here is a list of the available features on the system:</p>
 
