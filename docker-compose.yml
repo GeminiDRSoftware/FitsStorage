@@ -54,6 +54,17 @@ services:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
     command: python3 ./fits_storage/scripts/create_tables.py
 
+  postgres-init-onsite-views:
+    build:
+      context: .
+      dockerfile: docker/fitsstorage/Dockerfile
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init-onsite
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
+    command: psql fitsdata < ./sql/views.sql
+
   postgres-init-archive:
     build:
       context: .
@@ -64,6 +75,17 @@ services:
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
     command: python3 ./fits_storage/scripts/create_tables.py
+
+  postgres-init-archive-views:
+    build:
+      context: .
+      dockerfile: docker/fitsstorage/Dockerfile
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init-archive
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
+    command: psql fitsdata < ./sql/views.sql
 
   api:
     build:
