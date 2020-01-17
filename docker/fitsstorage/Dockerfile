@@ -15,7 +15,10 @@ RUN yum -y install openssl \
                    cfitsio-devel \
                    git \
                    libjpeg-devel \
-                   python3-pillow
+                   python3-pillow \
+                   redhat-rpm-config \
+                   python3-devel
+
 RUN yum -y --nogpgcheck install python3-pip
 
 # Fix Centos 8 broken Locale
@@ -38,6 +41,31 @@ RUN pip3 install psycopg2-binary && \
     pip3 install future && \
     pip3 install boto3
 
+# Needed for imexam, which is needed for DRAGONS
+RUN pip3 install photutils
+
+RUN yum -y install make
+# RUN cd /opt && git clone https://github.com/ericmandel/xpa.git
+# RUN cd /opt/xpa && ./configure && make && make install
+# RUN yum -y install tcl-8.5.13-4.el7.x86_64
+# RUN yum -y install http://download-ib01.fedoraproject.org/pub/epel/7/x86_64/Packages/x/xpa-libs-2.1.18-1.el7.1.x86_64.rpm
+# RUN yum -y install http://download-ib01.fedoraproject.org/pub/epel/7/x86_64/Packages/x/xpa-2.1.18-1.el7.1.x86_64.rpm
+# RUN yum -y install http://download-ib01.fedoraproject.org/pub/epel/7/x86_64/Packages/x/xpa-devel-2.1.18-1.el7.1.x86_64.rpm
+
+# Need the latest imexam for DRAGONS    
+
+# RUN cd /opt && git clone --recursive https://github.com/spacetelescope/imexam.git
+# RUN cd /opt/imexam && git submodule update --init -- cextern/xpa
+# RUN cd /opt/imexam/cextern/xpa && ./configure && make && make install
+# RUN cd /opt/imexam && ls -l cextern/xpa/conf.h
+# RUN cd /opt/imexam && python3 setup.py install
+
+# RUN pip3 install git+https://github.com/spacetelescope/imexam.git
+RUN pip3 install imexam
+
+# DRAGONS now also needs specutils
+RUN pip3 install specutils
+
 # CREATE FITSDATA USER AND GROUP
 RUN /usr/sbin/groupadd -g 5179 fitsdata
 RUN /usr/sbin/useradd -c 'FITS data' -u 5179 -g 5179 fitsdata
@@ -56,11 +84,13 @@ RUN mkdir -p /data/logs && \
     chown fitsdata /data/z_staging && \
     mkdir -p /data/s3_staging && \
     chown fitsdata /data/s3_staging && \
-    chmod oug+rw /data/s3_staging
+    chmod oug+rw /data/s3_staging && \
+    chmod oug+rw /data/logs
 
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
-RUN cd /opt && git clone --branch v2.1.0 https://github.com/GeminiDRSoftware/DRAGONS.git
+#RUN cd /opt && git clone --branch v2.1.0 https://github.com/GeminiDRSoftware/DRAGONS.git
+RUN cd /opt && git clone --branch refac/imexam_workaround https://github.com/olyoberdorf/DRAGONS.git
 COPY . /opt/FitsStorage
 WORKDIR /opt/FitsStorage
 COPY fitsverify /opt/fitsverify
@@ -68,5 +98,9 @@ COPY fitsverify /opt/fitsverify
 ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
 ENV PGPASSWORD fitsdata
+
+RUN mkdir -p /usr/share/httpd/.specutils && \
+    chmod oug+rwx /usr/share/httpd/.specutils && \
+    chown fitsdata /usr/share/httpd/.specutils
 
 CMD ["/bin/sh", "-c", "/bin/bash"]
