@@ -843,10 +843,10 @@ def selection_to_URL(selection, with_columns=False):
             else:
                 urlstring += '/%s' % selection[key]
         elif key == 'focal_plane_mask':
-            if selection[key] == gmos_focal_plane_mask(selection[key]):
-                urlstring += '/' + str(selection[key])
-            else:
-                urlstring += '/mask=' + str(selection[key])
+            # if selection[key] == gmos_focal_plane_mask(selection[key]):
+            #     urlstring += '/' + str(selection[key])
+            # else:
+            urlstring += '/mask=' + str(selection[key])
         elif key == 'filepre':
             urlstring += '/filepre=%s' % selection[key]
         elif key == 'site_monitoring':
