@@ -6,6 +6,11 @@
 __pycache__
 *.pyc
 
+# Python build artifacts
+*.egg-info
+build
+dist
+
 # OSX
 .DS_Store
 
@@ -24,4 +29,3 @@ robot/*.xml
 ansible/playbooks/secret
 ansible/playbooks/id_rsa
 ansible/vault.txt
-
