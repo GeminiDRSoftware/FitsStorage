@@ -57,6 +57,8 @@ StatResult = namedtuple('StatResult', 'oid filename error added')
 def get_error_result(session, obj=None, oid=None):
     if obj is None:
         obj = session.query(QueueError).get(oid)
+        if obj is None:
+            return None
     else:
         oid = obj.id
     return StatResult(oid=oid, filename=obj.filename, error=obj.error,
@@ -85,9 +87,10 @@ def compose_stat_query(session, qtype, *filters):
 def error_summary(session, qtype, lim):
     q = QueueError.get_errors_from(session, qtype)
     for res in (get_error_result(session, obj=row) for row in q.limit(lim)):
-        yield {'oid':      res.oid,
-               'filename': res.filename,
-               'since':    res.added}
+        if res is not None:
+            yield {'oid':      res.oid,
+                   'filename': res.filename,
+                   'since':    res.added}
 
 def regular_summary(session, qtype, lim):
     q = compose_stat_query(session, qtype, qtype.failed == False)
@@ -104,6 +107,8 @@ def error_detail(session, lname, oid):
     for qname, linkname, qtype, qutil in queues:
         if linkname == lname:
             res = get_error_result(session, oid=oid)
+            if res is None:
+                raise UnknownQueueError("'{oid}' OID not found in queue errors")
             return {'qname':    qname,
                     'filename': res.filename,
                     'since':    res.added,
