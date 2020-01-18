@@ -2,7 +2,7 @@
 This module contains the QA metric database interface
 """
 
-from sqlalchemy import desc
+from sqlalchemy import desc, or_
 import datetime
 import time
 import json
@@ -135,8 +135,13 @@ def qaforgui(date):
 
     # Get a list of datalabels
     def mquery(cls):
+        # QA datalables can have '_stack' suffixes, which
+        # may not exist in the ingested Header record.  So, we
+        # broaden the search to include both matches and
+        # matches when we add _stack in the Header records.
         return session.query(cls.datalabel).select_from(cls, Header)\
-                    .filter(cls.datalabel == Header.data_label)\
+                    .filter(or_(cls.datalabel == Header.data_label,
+                                cls.datalabel == Header.data_label + "_stack"))\
                     .filter(Header.ut_datetime > datestamp)\
                     .filter(Header.ut_datetime < enddatestamp)
 

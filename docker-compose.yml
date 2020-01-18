@@ -132,6 +132,7 @@ services:
       - USE_AS_ARCHIVE=False
       - EXPORT_DESTINATIONS=http://archive
       - USE_ELK_LOGGING=True
+      - BLOCKED_URLS=
     volumes:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
