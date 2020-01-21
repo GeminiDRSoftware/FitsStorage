@@ -217,7 +217,12 @@ class Header(Base):
         if self.ut_datetime:
             delta = self.ut_datetime - self.UT_DATETIME_SECS_EPOCH
             self.ut_datetime_secs = int(delta.total_seconds())
-        self.local_time = ad.local_time()
+        try:
+            self.local_time = ad.local_time()
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as lterr:
+            if log:
+                log.warn("Unable to find local time in datafile: %s" % lterr)
+            self.local_time = None
 
         # Data Types
         self.observation_type = gemini_observation_type(ad.observation_type())
