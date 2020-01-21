@@ -98,6 +98,9 @@ class PreviewQueueUtil(object):
         else:
             # Add it to the preview queue
             for df in diskfiles:
+                if isinstance(df, PreviewQueue):
+                    pq = df
+                    df = self.s.query(DiskFile).get(pq.diskfile_id)
                 self.l.info("Adding PreviewQueue with diskfile_id {}".format(df.id))
                 pq = PreviewQueue(df)
                 self.s.add(pq)
