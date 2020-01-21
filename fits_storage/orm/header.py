@@ -267,10 +267,18 @@ class Header(Base):
             elevation = dmstodeg(elevation)
         self.elevation = elevation
 
-        self.cass_rotator_pa = ad.cass_rotator_pa()
+        try:
+            self.cass_rotator_pa = ad.cass_rotator_pa()
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as crperr:
+            if log:
+                log.warn("Unable to parse cass rotator pa: %s" % crperr)
+            self.cass_rotator_pa = None
+
         try:
             self.airmass = ad.airmass()
-        except TypeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as airmasserr:
+            if log:
+                log.warn("Unable to parse airmass: %s" % airmasserr)
             self.airmass = None
         self.raw_iq = ad.raw_iq()
         self.raw_cc = ad.raw_cc()
@@ -302,8 +310,12 @@ class Header(Base):
 
         # Protect the database from field overflow from junk.
         # The datatype is precision=8, scale=4
-        if exposure_time is not None and (exposure_time < 10000 and exposure_time >= 0):
-            self.exposure_time = exposure_time
+        try:
+            if exposure_time is not None and (exposure_time < 10000 and exposure_time >= 0):
+                self.exposure_time = exposure_time
+        except TypeError as et_type_err:
+            if log:
+                log.warn("Type rror parsing exposure time, ignoring")
             
 
         # Need to remove invalid characters in disperser names, eg gnirs has
