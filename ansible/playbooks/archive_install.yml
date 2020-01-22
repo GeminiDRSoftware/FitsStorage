@@ -342,6 +342,63 @@
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq1
           regex: ExecStart=
           create: no
+      - name: Install preview queue 2
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
+          dest: /etc/systemd/system/fits-service_preview_queue2.service
+        when: "'arc' in inventory_hostname"
+      - name: Setup preview 2
+        lineinfile:
+          path: /etc/systemd/system/fits-service_preview_queue2.service
+          line: Description=Fits Service Preview Queue 2
+          regex: Description=
+          create: no
+        when: "'arc' in inventory_hostname"
+      - name: Setup preview 2 exec
+        lineinfile:
+          path: /etc/systemd/system/fits-service_preview_queue2.service
+          line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq2
+          regex: ExecStart=
+          create: no
+        when: "'arc' in inventory_hostname"
+      - name: Install preview queue 3
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
+          dest: /etc/systemd/system/fits-service_preview_queue3.service
+        when: "'arc' in inventory_hostname"
+      - name: Setup preview 3
+        lineinfile:
+          path: /etc/systemd/system/fits-service_preview_queue3.service
+          line: Description=Fits Service Preview Queue 3
+          regex: Description=
+          create: no
+        when: "'arc' in inventory_hostname"
+      - name: Setup preview 3 exec
+        lineinfile:
+          path: /etc/systemd/system/fits-service_preview_queue3.service
+          line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq3
+          regex: ExecStart=
+          create: no
+        when: "'arc' in inventory_hostname"
+      - name: Install preview queue 4
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
+          dest: /etc/systemd/system/fits-service_preview_queue4.service
+        when: "'arc' in inventory_hostname"
+      - name: Setup preview 4
+        lineinfile:
+          path: /etc/systemd/system/fits-service_preview_queue4.service
+          line: Description=Fits Service Preview Queue 4
+          regex: Description=
+          create: no
+        when: "'arc' in inventory_hostname"
+      - name: Setup preview 4 exec
+        lineinfile:
+          path: /etc/systemd/system/fits-service_preview_queue4.service
+          line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq4
+          regex: ExecStart=
+          create: no
+        when: "'arc' in inventory_hostname"
       # TODO need to stop/start service #2 to do this, plus add a line replace
       # - name: Install export queue
       #   copy:
@@ -413,12 +470,21 @@
         service: name=fits-service_ingest_queue2 state=started enabled=yes
       - name: Register Ingest service 3
         service: name=fits-service_ingest_queue3 state=started enabled=yes
-        when: "'arc' in inventory_hostname"
+        when: "'arcdisabled' in inventory_hostname"
       - name: Register Ingest service 4
         service: name=fits-service_ingest_queue4 state=started enabled=yes
-        when: "'arc' in inventory_hostname"
+        when: "'arcdisabled' in inventory_hostname"
       - name: Register Preview service 1
         service: name=fits-service_preview_queue1 state=started enabled=yes
+      - name: Register Preview service 2
+        service: name=fits-service_preview_queue2 state=started enabled=yes
+        when: "'arc' in inventory_hostname"
+      - name: Register Preview service 3
+        service: name=fits-service_preview_queue3 state=started enabled=yes
+        when: "'arc' in inventory_hostname"
+      - name: Register Preview service 4
+        service: name=fits-service_preview_queue4 state=started enabled=yes
+        when: "'arc' in inventory_hostname"
       # - name: Register Export Queue
       #   service: name=fits-service_export_queue1 state=started enabled=yes
       - name: Register API service
@@ -518,13 +584,25 @@
       - name: restart ingest3
         service: name=fits-service_ingest_queue3 state=restarted
         listen: "restart services"
-        when: "'arc' in inventory_hostname"
+        when: "'arcdisabled' in inventory_hostname"
       - name: restart ingest4
         service: name=fits-service_ingest_queue4 state=restarted
         listen: "restart services"
-        when: "'arc' in inventory_hostname"
+        when: "'arcdisabled' in inventory_hostname"
       - name: restart preview1
         service: name=fits-service_preview_queue1 state=restarted
         listen: "restart services"
+      - name: restart preview2
+        service: name=fits-service_preview_queue2 state=restarted
+        listen: "restart services"
+        when: "'arc' in inventory_hostname"
+      - name: restart preview3
+        service: name=fits-service_preview_queue3 state=restarted
+        listen: "restart services"
+        when: "'arc' in inventory_hostname"
+      - name: restart preview4
+        service: name=fits-service_preview_queue4 state=restarted
+        listen: "restart services"
+        when: "'arc' in inventory_hostname"
       - name: restart cron
         service: name=crond state=restarted
