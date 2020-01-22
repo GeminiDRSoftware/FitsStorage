@@ -167,7 +167,7 @@ class Header(Base):
         # Parse Program ID
         try:
             self.program_id = ad.program_id()
-        except AttributeError as ae:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as ae:
             if log:
                 log.warn("Unable to parse program ID from datafile: %s" % ae)
             self.program_id = None
@@ -191,7 +191,7 @@ class Header(Base):
 
         try:
             self.observation_id = ad.observation_id()
-        except AttributeError as oidae:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as oidae:
             self.observation_id = None
         if self.observation_id is not None:
             # Ensure upper case
@@ -202,7 +202,7 @@ class Header(Base):
             if self.data_label is not None:
             # Ensure upper case
                 self.data_label = self.data_label.upper()
-        except AttributeError as dlae:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as dlae:
             if log:
                 log.warn("Unable to parse datalabel from datafile: %s" % dlae)
             self.data_label = ""
@@ -210,20 +210,25 @@ class Header(Base):
         self.telescope = gemini_telescope(ad.telescope())
         try:
             self.instrument = gemini_instrument(ad.instrument(), other=True)
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError):
             self.instrument = None
 
         # Date and times part
         try:
             self.ut_datetime = ad.ut_datetime()
-        except AttributeError as ae:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as ae:
             if log:
                 log.warn("Unable to parse UT datetime from datafile: %s" % ae)
             self.ut_datetime = None
         if self.ut_datetime:
             delta = self.ut_datetime - self.UT_DATETIME_SECS_EPOCH
             self.ut_datetime_secs = int(delta.total_seconds())
-        self.local_time = ad.local_time()
+        try:
+            self.local_time = ad.local_time()
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as lterr:
+            if log:
+                log.warn("Unable to find local time in datafile: %s" % lterr)
+            self.local_time = None
 
         # Data Types
         self.observation_type = gemini_observation_type(ad.observation_type())
@@ -239,23 +244,15 @@ class Header(Base):
         if 'AZEL_TARGET' not in ad.tags:
             try:
                 self.ra = ad.ra()
-            except IndexError as ie:
+            except (TypeError, AttributeError, KeyError, ValueError, IndexError) as ie:
                 if log:
                     log.warn("Unable to read RA from datafile: %s" % ie)
                 self.ra = None
-            except TypeError as te:
-                if log:
-                    log.warn("Unable to read RA from datafile: %s" % te)
-                self.ra = None
             try:
                 self.dec = ad.dec()
-            except IndexError as ie:
+            except (TypeError, AttributeError, KeyError, ValueError, IndexError) as ie:
                 if log:
                     log.warn("Unable to read DEC from datafile: %s" % ie)
-                self.dec = None
-            except TypeError as te:
-                if log:
-                    log.warn("Unable to read DEC from datafile: %s" % te)
                 self.dec = None
             if type(self.ra) is str:
                 self.ra = ratodeg(self.ra)
@@ -276,10 +273,18 @@ class Header(Base):
             elevation = dmstodeg(elevation)
         self.elevation = elevation
 
-        self.cass_rotator_pa = ad.cass_rotator_pa()
+        try:
+            self.cass_rotator_pa = ad.cass_rotator_pa()
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as crperr:
+            if log:
+                log.warn("Unable to parse cass rotator pa: %s" % crperr)
+            self.cass_rotator_pa = None
+
         try:
             self.airmass = ad.airmass()
-        except TypeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as airmasserr:
+            if log:
+                log.warn("Unable to parse airmass: %s" % airmasserr)
             self.airmass = None
         self.raw_iq = ad.raw_iq()
         self.raw_cc = ad.raw_cc()
@@ -311,15 +316,19 @@ class Header(Base):
 
         # Protect the database from field overflow from junk.
         # The datatype is precision=8, scale=4
-        if exposure_time is not None and (exposure_time < 10000 and exposure_time >= 0):
-            self.exposure_time = exposure_time
+        try:
+            if exposure_time is not None and (exposure_time < 10000 and exposure_time >= 0):
+                self.exposure_time = exposure_time
+        except TypeError as et_type_err:
+            if log:
+                log.warn("Type rror parsing exposure time, ignoring")
             
 
         # Need to remove invalid characters in disperser names, eg gnirs has
         # slashes
         try:
             disperser_string = ad.disperser(pretty=True)
-        except AttributeError as ae:
+        except (TypeError, AttributeError, KeyError, IndexError) as ae:
             if log:
                 log.warn("Unable to read disperser information from datafile: %s" % ae)
             disperser_string = None
@@ -330,27 +339,23 @@ class Header(Base):
         if 'SPECT' in ad.tags and 'GPI' not in ad.tags:
             try:
                 self.central_wavelength = ad.central_wavelength(asMicrometers=True)
-            except TypeError:
+            except (TypeError, AttributeError, KeyError, IndexError):
                 self.central_wavelength = None
         try:
             self.wavelength_band = ad.wavelength_band()
-        except AttributeError as ae:
+        except (TypeError, AttributeError, KeyError, IndexError) as ae:
             if log:
-                log.warn("Unable to read disperser information from datafile due to AttributeError: %s" % ae)
-            self.wavelength_band = None
-        except TypeError as te:
-            if log:
-                log.warn("Unable to read disperser information from datafile due to TypeError: %s" % te)
+                log.warn("Unable to read disperser information from datafile due to error: %s" % ae)
             self.wavelength_band = None
         self.focal_plane_mask = ad.focal_plane_mask(pretty=True)
         self.pupil_mask = ad.pupil_mask(pretty=True)
         try:
             dvx = ad.detector_x_bin()
-        except AttributeError as dvxae:
+        except (TypeError, AttributeError, KeyError, IndexError) as dvxae:
             dvx = None
         try:
             dvy = ad.detector_y_bin()
-        except AttributeError as dvyae:
+        except (TypeError, AttributeError, KeyError, IndexError) as dvyae:
             dvy = None
         if (dvx is not None) and (dvy is not None):
             self.detector_binning = "%dx%d" % (dvx, dvy)
@@ -363,7 +368,7 @@ class Header(Base):
 
         try:
             gainstr = str(ad.gain_setting())
-        except AttributeError as gsae:
+        except (TypeError, AttributeError, KeyError, IndexError) as gsae:
             if log:
                 log.warn("Unable to get gain from datafile: %s " % gsae)
             gainstr = ""
@@ -374,7 +379,7 @@ class Header(Base):
             readspeedstr = str(ad.read_speed_setting())
             if readspeedstr in gemini_readspeed_settings:
                 self.detector_readspeed_setting = readspeedstr
-        except AttributeError as ae:
+        except (TypeError, AttributeError, KeyError, IndexError) as ae:
             if log:
                 log.warn("Unable to get read speed from datafile: %s " % ae)
             self.detector_readspeed_setting = None
@@ -390,13 +395,9 @@ class Header(Base):
 
         try:
             self.detector_roi_setting = ad.detector_roi_setting()
-        except TypeError as te:
+        except (TypeError, AttributeError, KeyError, IndexError) as te:
             if log:
                 log.warn("Unable to get ROI setting: %s" % te)
-            self.detector_roi_setting = None
-        except IndexError as ie:
-            if log:
-                log.warn("Unable to get ROI setting: %s" % ie)
             self.detector_roi_setting = None
 
         self.coadds = ad.coadds()

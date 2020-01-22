@@ -19,8 +19,8 @@ MAILTO=fitsadmin@gemini.edu
 #
 # Notifications
 ### 50 7 * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=auto
-### 0 8 * * *  fitsdata python3 /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon
-### 0 8 * * *  fitsdata python3 /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon --check
+### 0 8 * * * fitsdata  python3 /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon
+### 0 8 * * * fitsdata  python3 /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon --check
 
 ### 0 8 * * Tue fitsdata python3 /opt/FitsStorage/fits_storage/scripts/MissingCalibrationEmail.py
 ### 30 8 * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/odb_data_to_archive.py --demon
