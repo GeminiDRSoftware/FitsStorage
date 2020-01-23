@@ -9,7 +9,7 @@ import datetime
 import dateutil.parser
 
 #from .fits_storage_config import use_as_archive
-from fits_storage import fits_storage_config
+from . import fits_storage_config
 
 # ------------------------------------------------------------------------------
 DATE_LIMIT_LOW = dateutil.parser.parse('19900101')
