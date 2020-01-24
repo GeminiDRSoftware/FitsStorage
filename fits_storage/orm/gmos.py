@@ -89,7 +89,7 @@ class Gmos(Base):
             self.nod_pixels = ad.shuffle_pixels()
         
         try:
-            grating_order = ad.header['GRORDER']
+            grating_order = ad.phu.get('GRORDER')
             self.grating_order = grating_order
         except:
             self.grating_order = None
