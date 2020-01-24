@@ -15,31 +15,31 @@ are just a few steps.  I'll assume you installed docker and you have a fresh che
 
 1. Build the images
 
-```
-<cd to top-level of FitsStorage codebase>
-bash ./docker/scripts/buildfitsstorageutils.sh
-bash ./docker/scripts/buildarchive.sh
-```
+    ```
+    <cd to top-level of FitsStorage codebase>
+    bash ./docker/scripts/buildfitsstorageutils.sh
+    bash ./docker/scripts/buildarchive.sh
+    ```
 
 2. Make a dataflow directory
 
-```
-mkdir ~/dataflow/
-cp <somefiles> ~/dataflow/
-```
+    ```
+    mkdir ~/dataflow/
+    cp <somefiles> ~/dataflow/
+    ```
 
 3. Run the mini cluster
 
-```
-docker-compose -f docker-compose-lite.yml up
-```
+    ```
+    docker-compose -f docker-compose-lite.yml up
+    ```
 
 4. Shut down
 
-```
-<Ctrl-C in the terminal>
-docker-compose -f docker-compose-lite.yml down
-```
+    ```
+    <Ctrl-C in the terminal>
+    docker-compose -f docker-compose-lite.yml down
+    ```
 
 ### Dev Options
 
