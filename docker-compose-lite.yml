@@ -1,0 +1,82 @@
+version: "3"
+
+services:
+
+  postgres:
+    image: postgres:12
+    environment:
+      - POSTGRES_USER=fitsdata
+      - POSTGRES_PASSWORD=fitsdata
+      - POSTGRES_DB=fitsdata
+
+  postgres-init:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+    command: python3 ./fits_storage/scripts/create_tables.py
+
+  postgres-init-views:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+    command: psql fitsdata < ./sql/views.sql
+
+  fitsstore:
+    image: fitsimage:latest
+    depends_on:
+      - postgres-init
+      - postgres-init-views
+      - postgres
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+      - USE_AS_ARCHIVE=False
+      - EXPORT_DESTINATIONS=
+      - BLOCKED_URLS=
+      - FITS_SERVERTITLE=Docker Compose Lite FitsStore
+    volumes:
+      - "~/dataflow:/sci/dataflow"
+    ports:
+      - "80:80"
+
+  add-to-ingest-queue:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init
+      - postgres-init-views
+      - postgres
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+      - EXPORT_DESTINATIONS=
+    volumes:
+      - "~/dataflow:/sci/dataflow"
+    command: python3 fits_storage/scripts/add_to_ingest_queue.py
+
+  ingest-service:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init
+      - postgres-init-views
+      - postgres
+      - add-to-ingest-queue
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+      - EXPORT_DESTINATIONS=
+    volumes:
+      - "~/dataflow:/sci/dataflow"
+    command: python3 fits_storage/scripts/service_ingest_queue.py
+
+#  calcache-service:
+#    image: fitsstorageutils:latest
+#    depends_on:
+#      - postgres-init
+#      - postgres-init-views
+#      - postgres
+#    environment:
+#      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+#    volumes:
+#      - "~/dataflow:/sci/dataflow"
+#    command: python3 fits_storage/scripts/service_calcache_queue.py

@@ -21,9 +21,9 @@ back to it when you are ready.
 
 ## Folders
 
-The containers built by our helper scripts depend on a few folders.  It is
-best if you create these folders now and toss some sample data into one of 
-them for ingest later.  These folders are:
+The containers built by our full compose file depend on a few folders.  It is
+best if you create these folders now and toss some sample data into 
+`onsite-sci-dataflow` for ingest later.  These folders are:
 
 ```
 mkdir -p ~/testdata/archive-data-upload_staging
@@ -34,6 +34,9 @@ mkdir -p ~/testdata/onsite-sci-dataflow
 
 Copy your datafiles into `~/testdata/onsite-sci-dataflow`
 
+You do not need these folders if you opt for the "lite" compose file.  That one simply 
+requires a `~/dataflow/` folder with the data you want to use.
+
 ## Compose
 
 There is now a very fast way to get a test cluster up complete with two webservers for
@@ -41,6 +44,13 @@ There is now a very fast way to get a test cluster up complete with two webserve
 file in the top directory of the tree.  Just change to the top folder of your checkout and
 run `docker-compose up`.  Instructions for running containers manually are listed below in case
 you don't want to use docker-compose.
+
+If you want a simplified cluster to just run a single FitsStore plus Postgres database,
+then you can use `docker-compose-lite.yml`.  This just looks for a `~/dataflow/` directory
+for files to import.  Make that folder and put the files you want in it.  Then run
+`docker-compose -f docker-compose-lite.yml up` to start the webserver.  Now you can browse
+to `http://localhost/searchform` to see the normal search form and search for your data.
+You do not need the folders listed above for this simplified compose configuration.
 
 The docker compose does depend on the two docker images `fitsstorageutils:latest` and `fitsimage:latest`.
 You can build these two images by running `docker/scripts/buildfitsstorageutils.sh` and
