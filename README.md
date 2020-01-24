@@ -8,6 +8,39 @@ generating previews, and for feeding datafiles upstream from the individual site
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
 
+### Ultra-Quick-Start
+
+To get things up and running as fast as possible, I recommend the "lite" Docker Compose recipe.  To do this, there
+are just a few steps.  I'll assume you installed docker and you have a fresh chekout of this repo.
+
+1. Build the images
+
+```
+<cd to top-level of FitsStorage codebase>
+bash ./docker/scripts/buildfitsstorageutils.sh
+bash ./docker/scripts/buildarchive.sh
+```
+
+2. Make a dataflow directory
+
+```
+mkdir ~/dataflow/
+cp <somefiles> ~/dataflow/
+```
+
+3. Run the mini cluster
+
+```
+docker-compose -f docker-compose-lite.yml up
+```
+
+4. Shut down
+
+```
+<Ctrl-C in the terminal>
+docker-compose -f docker-compose-lite.yml down
+```
+
 ### Dev Options
 
 There are multiple ways to deploy and run the FitsStorage website.  I am refactoring these instructions for
