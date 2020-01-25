@@ -33,7 +33,7 @@ services:
       - postgres-init
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
-    command: python3 ./fits_storage/scripts/create_user.py --username admin --password admin --email "noreply@gemini.edu"
+    command: python3 ./fits_storage/scripts/create_user.py --username admin --password admin --email "noreply@gemini.edu" --superuser
   
   fitsstore:
     image: fitsimage:latest
