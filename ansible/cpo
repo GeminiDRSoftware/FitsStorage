@@ -1,5 +1,5 @@
 [archive]
-cpofits-lv3.hi.gemini.edu
+cpofits-lv3.cl.gemini.edu
 
 #[control]
 #localhost ansible_connection=local
