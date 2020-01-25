@@ -23,13 +23,24 @@ services:
       - postgres-init
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
-    command: psql fitsdata < ./sql/views.sql
+      - PGPASSWORD=fitsdata
+    command: psql -h postgres -U fitsdata fitsdata < ./sql/views.sql
 
+  postgres-init-user:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres
+      - postgres-init
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+    command: python3 ./fits_storage/scripts/create_user.py --username admin --password admin --email "noreply@gemini.edu"
+  
   fitsstore:
     image: fitsimage:latest
     depends_on:
       - postgres-init
       - postgres-init-views
+      - postgres-init-user
       - postgres
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
