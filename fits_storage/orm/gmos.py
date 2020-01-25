@@ -87,12 +87,12 @@ class Gmos(Base):
             except:
                 self.nod_count = None
             self.nod_pixels = ad.shuffle_pixels()
-        
-        # try:
-        #     grating_order = ad.phu.get('GRORDER')
-        #     self.grating_order = grating_order
-        # except:
-        #     self.grating_order = None
+
+        try:
+            grating_order = ad.grating_order
+            self.grating_order = grating_order
+        except:
+            self.grating_order = None
         self.prepared = 'PREPARED' in ad.tags
         self.overscan_trimmed = 'OVERSCAN_TRIMMED' in ad.tags
         self.overscan_subtracted = 'OVERSCAN_SUBTRACTED' in ad.tags
