@@ -394,10 +394,10 @@ class PreviewQueueUtil(object):
             # full = numpy.squeeze(full)
             spek = Spek1D(ad[0])
             flux = spek.flux
-            uncertainty = spek.uncertainty.quantity
+            variance = numpy.sqrt(spek.variance)
             #mask values below a certain threshold
             flux_masked = numpy.ma.masked_where(spek.mask == 16, flux)
-            uncertainty_masked = numpy.ma.masked_where(spek.mask == 16, uncertainty)
+            variance_masked = numpy.ma.masked_where(spek.mask == 16, variance)
 
             try:
                 plt.title(spek.filename)
@@ -409,13 +409,14 @@ class PreviewQueueUtil(object):
                 x_axis = spek.spectral_axis
                 # full = full[~numpy.isnan(full)]
                 # full = numpy.squeeze(full)
-                plt.plot(x_axis, flux_masked)
-                plt.plot(x_axis, uncertainty_masked, color='r')
+                plt.plot(x_axis, flux_masked, label="data")
+                plt.plot(x_axis, variance_masked, color='r', label="stddev")
+                plt.legend()
             except Exception as e:
                 string = "".join(traceback.format_tb(sys.exc_info()[2]))
                 #self.l.error("Recovering (simplified preview) from Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
                 plt.plot(flux_masked)
-                plt.plot(uncertainty_masked, color='r')
+                plt.plot(variance_masked, color='r')
         else:
             ax = plt.Axes(fig, [0, 0, 1, 1])
             ax.set_axis_off()
