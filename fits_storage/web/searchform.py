@@ -757,7 +757,9 @@ dropdown_options = {
          ("PHOENIX", "PHOENIX"),
          ("TEXES", "TEXES"),
          ("ABU", "ABU"),
-         ("CIRPASS", "CIRPASS")],
+         ("CIRPASS", "CIRPASS"),
+         ("ALOPEKE", "ALOPEKE"),
+         ("ZORRO", "ZORRO")],
     "obs_cls_options":
         [("science", "science"),
          ("acq", "acq"),
