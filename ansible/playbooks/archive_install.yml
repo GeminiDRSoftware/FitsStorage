@@ -141,7 +141,7 @@
           - { path: /data/backups, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
           - { path: /data/upload_staging, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
           - { path: /data/z_staging, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
-          - { path: /data/s3_staging, owner: fitsdata, mode: "u+rwx,g+rw,o+rw "}
+          - { path: /data/s3_staging, owner: fitsdata, mode: "u+rwx,g+rw,o+rw" }
           - { path: /data/gemini_data, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
 #      - name: Ensure previews folder exists
 #        file:
