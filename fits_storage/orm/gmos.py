@@ -40,7 +40,7 @@ class Gmos(Base):
     prepared = Column(Boolean, index=True)
     overscan_subtracted = Column(Boolean, index=True)
     overscan_trimmed = Column(Boolean, index=True)
-    # grating_order = Column(Integer)
+    grating_order = Column(Integer)
 
     def __init__(self, header, ad):
         self.header = header
