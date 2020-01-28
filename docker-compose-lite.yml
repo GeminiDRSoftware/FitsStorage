@@ -23,13 +23,24 @@ services:
       - postgres-init
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
-    command: psql fitsdata < ./sql/views.sql
+      - PGPASSWORD=fitsdata
+    command: psql -h postgres -U fitsdata fitsdata < ./sql/views.sql
 
+  postgres-init-user:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres
+      - postgres-init
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+    command: python3 ./fits_storage/scripts/create_user.py --username admin --password admin --email "noreply@gemini.edu" --superuser
+  
   fitsstore:
     image: fitsimage:latest
     depends_on:
       - postgres-init
       - postgres-init-views
+      - postgres-init-user
       - postgres
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
@@ -69,14 +80,27 @@ services:
       - "~/dataflow:/sci/dataflow"
     command: python3 fits_storage/scripts/service_ingest_queue.py
 
-#  calcache-service:
-#    image: fitsstorageutils:latest
-#    depends_on:
-#      - postgres-init
-#      - postgres-init-views
-#      - postgres
-#    environment:
-#      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
-#    volumes:
-#      - "~/dataflow:/sci/dataflow"
-#    command: python3 fits_storage/scripts/service_calcache_queue.py
+  add-to-calcache-queue:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init
+      - postgres-init-views
+      - postgres
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+      - EXPORT_DESTINATIONS=
+    volumes:
+      - "~/dataflow:/sci/dataflow"
+    command: bash -c "sleep 20 && python3 fits_storage/scripts/add_to_calcache_queue.py --all"
+
+  calcache-service:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init
+      - postgres-init-views
+      - postgres
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+    volumes:
+      - "~/dataflow:/sci/dataflow"
+    command: python3 fits_storage/scripts/service_calcache_queue.py
