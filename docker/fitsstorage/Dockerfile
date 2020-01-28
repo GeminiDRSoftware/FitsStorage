@@ -39,6 +39,7 @@ RUN pip3 install psycopg2-binary && \
     pip3 install pandas && \
     pip3 install astropy && \
     pip3 install future && \
+    pip3 install psutil && \
     pip3 install boto3
 
 # Needed for imexam, which is needed for DRAGONS
@@ -91,7 +92,7 @@ RUN mkdir -p /data/logs && \
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
 #RUN cd /opt && git clone --branch v2.1.0 https://github.com/GeminiDRSoftware/DRAGONS.git
 #RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
-RUN cd /opt && git clone --branch refac/imexam_workaround https://github.com/GeminiDRSoftware/DRAGONS.git
+RUN cd /opt && git clone --branch refac/populate_provenance_data https://github.com/GeminiDRSoftware/DRAGONS.git
 #RUN cd /opt && git clone --branch refac/imexam_workaround https://github.com/olyoberdorf/DRAGONS.git
 COPY . /opt/FitsStorage
 WORKDIR /opt/FitsStorage
