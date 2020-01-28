@@ -182,7 +182,7 @@ das_calproc_path = '/net/josie/staging/dataproc/gmos'
 # Configure the site and other misc stuff here
 # Especially for archive systems, make the servername a fully qualified domain name.
 fits_servertitle = lookup_config('FITS_SERVERTITLE', "CPO Fits Server")
-fits_servername = socket.gethostname()  # "cpofits-lv2"
+fits_servername = lookup_config('FITS_SERVERNAME', socket.gethostname())  # "cpofits-lv2"
 fits_system_status = lookup_config('FITS_SYSTEM_STATUS', "production")
 
 # Limit on number of results in open searches

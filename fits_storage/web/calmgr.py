@@ -114,6 +114,8 @@ def generate_post_calmgr(selection, caltype):
     # OK, get the details from the POST data
     ctx = get_context()
     clientdata = ctx.raw_data
+    if clientdata:
+        clientdata = clientdata.decode('utf-8', errors='ignore')
     clientstr = urllib.parse.unquote_plus(clientdata)
 
     match = re.match("descriptors=(.*)&types=(.*)", clientstr)

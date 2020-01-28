@@ -48,6 +48,7 @@ services:
       - EXPORT_DESTINATIONS=
       - BLOCKED_URLS=
       - FITS_SERVERTITLE=Docker Compose Lite FitsStore
+      - FITS_SERVERNAME=localhost
     volumes:
       - "~/dataflow:/sci/dataflow"
     ports:
