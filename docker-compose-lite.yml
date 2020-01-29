@@ -35,6 +35,21 @@ services:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
     command: python3 ./fits_storage/scripts/create_user.py --username admin --password admin --email "noreply@gemini.edu" --superuser
   
+  api:
+    image: fitsimage:latest
+    depends_on:
+      - postgres-init
+      - postgres
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+      - USE_AS_ARCHIVE=True
+      - API_BACKEND_LOCATION=:8000
+      - USE_ELK_LOGGING=True
+    volumes:
+      - "~/upload_staging:/data/upload_staging"
+      - "~/dataflow:/sci/dataflow"
+    command:  python3 fits_storage/scripts/api_backend.py
+  
   fitsstore:
     image: fitsimage:latest
     depends_on:
@@ -49,7 +64,10 @@ services:
       - BLOCKED_URLS=
       - FITS_SERVERTITLE=Docker Compose Lite FitsStore
       - FITS_SERVERNAME=localhost
+      - UPLOAD_AUTH_COOKIE=qap_upload_processed_cal_ok
+      - API_BACKEND_LOCATION=api:8000
     volumes:
+      - "~/upload_staging:/data/upload_staging"
       - "~/dataflow:/sci/dataflow"
     ports:
       - "80:80"
