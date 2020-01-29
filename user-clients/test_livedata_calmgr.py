@@ -1,11 +1,13 @@
 import urllib.request, urllib.parse, urllib.error
+from urllib.error import HTTPError
+
 import datetime
 
 import astrodata
 import gemini_instruments
 
 # This is a GMOS_N imaging science dataset
-ad = astrodata.open("/net/wikiwiki/dataflow/N20121104S0066.fits")
+ad = astrodata.open("/Users/ooberdorf/Downloads/N20121104S0066.fits")
 desc_dict = {'instrument':ad.instrument(),
              'disperser':ad.disperser(),
              'central_wavelength':ad.central_wavelength(asMicrometers=True),
@@ -23,19 +25,25 @@ desc_dict = {'instrument':ad.instrument(),
              'focal_plane_mask':ad.focal_plane_mask(),
              }
 
+# induce error
+del desc_dict['filter_name']
+
 type_list = ad.tags
 start = datetime.datetime.now()
 sequence = (('descriptors', desc_dict), ('types', type_list))
 postdata = urllib.parse.urlencode(sequence)
 
 #print desc_dict
-url = "http://fits/calmgr/processed_flat/"
-u = urllib.request.urlopen(url, postdata)
-end = datetime.datetime.now()
+url = "http://localhost/calmgr/processed_flat/"
+try:
+    u = urllib.request.urlopen(url, postdata.encode('utf-8', errors='ignore'))
+    end = datetime.datetime.now()
 
-interval = end - start
-print(u.read())
-u.close()
+    interval = end - start
+    print(u.read())
+    u.close()
 
-print("-----\n")
-print("query took %s" % interval)
+    print("-----\n")
+    print("query took %s" % interval)
+except HTTPError as httpe:
+    print("Got HTTP Error message: {}".format(httpe.readlines()))
