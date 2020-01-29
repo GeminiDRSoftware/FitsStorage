@@ -82,6 +82,12 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('bias')
                 self.applicable.append('processed_bias')
 
+            if ((self.descriptors['spectroscopy'] == True) and
+                (self.descriptors['observation_type'] == 'FLAT')):
+
+                self.applicable.append('arc')
+                self.applicable.append('processed_arc')
+
             # If it (is spectroscopy) and
             # (is an OBJECT) and
             # (is not a Twilight) and
@@ -128,6 +134,7 @@ class CalibrationGMOS(Calibration):
             # If it is MOS then it needs a MASK
             if 'MOS' in self.types:
                 self.applicable.append('mask')
+
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 
