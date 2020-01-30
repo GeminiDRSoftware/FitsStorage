@@ -58,7 +58,8 @@ _host_based_configs = {
         'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
         'USE_AS_ARCHIVE': 'True',
         'EXPORT_DESTINATIONS': '',
-        'FITS_SYSTEM_STATUS': 'development'
+        'FITS_SYSTEM_STATUS': 'development',
+        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files'
     }
 }
 
