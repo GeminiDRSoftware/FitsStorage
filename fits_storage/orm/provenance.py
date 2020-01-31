@@ -7,6 +7,11 @@ from sqlalchemy import Integer, Text, DateTime, String
 from . import Base
 
 
+# matches the value in DRAGONS
+# avoiding import within orm to avoid any circular referencing that could happen in future
+PROVENANCE_DATE_FORMAT="%Y-%m-%d %H:%M:%S.%f"
+
+
 class Provenance(Base):
     """
     This is the ORM class for storing provenance data found in the FITS file.
@@ -55,27 +60,30 @@ def ingest_provenance(diskfile):
     :return: none
     """
     ad = diskfile.ad_object
-    if hasattr(ad, 'provenance'):
-        provenance = ad.provenance
+    if hasattr(ad, 'PROVENANCE'):
+        provenance = ad.PROVENANCE
         if provenance:
             prov_list = list()
             for prov in provenance:
-                timestamp = prov.timestamp
-                filename = prov.filename
-                md5 = prov.md5
-                provenance_added_by = prov.provenance_added_by
+                timestamp_str = prov[0]
+                timestamp = datetime.strptime(timestamp_str, PROVENANCE_DATE_FORMAT)
+                filename = prov[1]
+                md5 = prov[2]
+                provenance_added_by = prov[3]
                 prov_row = Provenance(timestamp, filename, md5, provenance_added_by)
                 prov_list.append(prov_row)
             diskfile.provenance = prov_list
-    if hasattr(ad, 'provenance_history'):
-        provenance_history = ad.provenance_history
+    if hasattr(ad, 'PROVENANCE_HISTORY'):
+        provenance_history = ad.PROVENANCE_HISTORY
         if provenance_history:
             hist_list = list()
             for ph in provenance_history:
-                timestamp_start = ph.timestamp_start
-                timestamp_stop = ph.timestamp_stop
-                primitive = ph.primitive
-                args = ph.args
+                timestamp_start_str = ph[0]
+                timestamp_stop_str = ph[1]
+                timestamp_start = datetime.strptime(timestamp_start_str, PROVENANCE_DATE_FORMAT)
+                timestamp_stop = datetime.strptime(timestamp_stop_str, PROVENANCE_DATE_FORMAT)
+                primitive = ph[2]
+                args = ph[3]
                 hist = ProvenanceHistory(timestamp_start, timestamp_stop, primitive, args)
                 hist_list.append(hist)
             diskfile.provenance_history = hist_list
