@@ -5,6 +5,8 @@ from sqlalchemy.orm import relationship
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
+import StringIO
+
 from . import Base
 
 # ------------------------------------------------------------------------------
@@ -37,3 +39,17 @@ class Publication(Base):
 
     def __init__(self, bibcode):
         self.bibcode = bibcode
+
+    def ads_tagged(self):
+        retval = StringIO.StringIO()
+
+        retval.write("%%R %s\n" % (self.bibcode))
+        retval.write("%%A %s" % (self.author))        
+        retval.write("%%J %s" % (self.journal))
+        retval.write("%%D %s" % (self.year))
+        retval.write("%%T %s" % (self.title))
+
+        out = retval.output()
+        retval.close()
+
+        return out
