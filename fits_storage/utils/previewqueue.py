@@ -251,46 +251,50 @@ class PreviewQueueUtil(object):
             full = numpy.zeros(shape, ad[0].data.dtype)
 
             # Loop through ads, pasting them in. Do gmos bias and gain hack
-            for add in ad:
-                s_xmin, s_xmax, s_ymin, s_ymax = add.data_section()
-                self.l.debug(fmt2.format(s_xmin, s_xmax, s_ymin, s_ymax))
-                d_xmin, d_xmax, d_ymin, d_ymax = add.detector_section()
-                # Figure out which chip we are and add gap padding
-                # All the gmos chips ever have been 2048 pixels in X.
-                if d_xmin == 4096 or d_xmin == 5120:
-                    pad = 2*gap
-                elif d_xmin == 2048 or d_xmin == 3072:
-                    pad = gap
-                else:
-                    pad = 0
+            if len(ad[0].data.shape) == 1:
+                # spectra
+                full = ad[0].data
+            else:
+                for add in ad:
+                    s_xmin, s_xmax, s_ymin, s_ymax = add.data_section()
+                    self.l.debug(fmt2.format(s_xmin, s_xmax, s_ymin, s_ymax))
+                    d_xmin, d_xmax, d_ymin, d_ymax = add.detector_section()
+                    # Figure out which chip we are and add gap padding
+                    # All the gmos chips ever have been 2048 pixels in X.
+                    if d_xmin == 4096 or d_xmin == 5120:
+                        pad = 2*gap
+                    elif d_xmin == 2048 or d_xmin == 3072:
+                        pad = gap
+                    else:
+                        pad = 0
 
-                d_xmin = (d_xmin + pad) / int(ad.detector_x_bin()) - xmin
-                d_xmax = (d_xmax + pad) / int(ad.detector_x_bin()) - xmin
-                d_ymin = d_ymin / int(ad.detector_y_bin()) - ymin
-                d_ymax = d_ymax / int(ad.detector_y_bin()) - ymin
+                    d_xmin = (d_xmin + pad) / int(ad.detector_x_bin()) - xmin
+                    d_xmax = (d_xmax + pad) / int(ad.detector_x_bin()) - xmin
+                    d_ymin = d_ymin / int(ad.detector_y_bin()) - ymin
+                    d_ymax = d_ymax / int(ad.detector_y_bin()) - ymin
 
-                d_xmin = int(d_xmin)
-                d_xmax = int(d_xmax)
-                d_ymin = int(d_ymin)
-                d_ymax = int(d_ymax)
+                    d_xmin = int(d_xmin)
+                    d_xmax = int(d_xmax)
+                    d_ymin = int(d_ymin)
+                    d_ymax = int(d_ymax)
 
-                try:
-                    o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section()
-                    bias = numpy.median(add.data[o_ymin:o_ymax, o_xmin:o_xmax])
-                except:
                     try:
-                        bias = get_bias_level(add, estimate=True)
+                        o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section()
+                        bias = numpy.median(add.data[o_ymin:o_ymax, o_xmin:o_xmax])
                     except:
-                        self.l.warn("Unable to read overscan, using 0 bias for preview")
-                        bias = 0
-                try:
-                    # This throws an exception sometimes if some of the values are None?
-                    gain = float(add.gain())
-                except:
-                    gain = 1.0
-                self.l.debug(fmt3.format(s_xmin, s_xmax, s_ymin, s_ymax,
-                                         d_xmin, d_xmax, d_ymin, d_ymax))
-                full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
+                        try:
+                            bias = get_bias_level(add, estimate=True)
+                        except:
+                            self.l.warn("Unable to read overscan, using 0 bias for preview")
+                            bias = 0
+                    try:
+                        # This throws an exception sometimes if some of the values are None?
+                        gain = float(add.gain())
+                    except:
+                        gain = 1.0
+                    self.l.debug(fmt3.format(s_xmin, s_xmax, s_ymin, s_ymax,
+                                            d_xmin, d_xmax, d_ymin, d_ymax))
+                    full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
 
             full = norm(full)
 
@@ -437,4 +441,4 @@ class PreviewQueueUtil(object):
 
 if __name__ == "__main__":
     pqu = PreviewQueueUtil(None, logger.logger)
-    pqu.render_preview(astrodata.open("/Users/ooberdorf/data/N20180508S0021_fluxCalibrated.fits"), "/Users/ooberdorf/test.jpg")
+    pqu.render_preview(astrodata.open("/Users/ooberdorf/dataflow/N20200103S0103_linearized.fits"), "/Users/ooberdorf/test.jpg")
