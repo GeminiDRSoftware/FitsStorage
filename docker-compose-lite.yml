@@ -97,7 +97,7 @@ services:
       - EXPORT_DESTINATIONS=
     volumes:
       - "~/dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/service_ingest_queue.py
+    command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
 
   add-to-calcache-queue:
     image: fitsstorageutils:latest

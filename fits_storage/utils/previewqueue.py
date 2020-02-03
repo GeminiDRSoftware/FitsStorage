@@ -34,7 +34,7 @@ if using_s3:
 
 import astrodata
 import gemini_instruments
-
+from gemini_instruments.gmos.pixel_functions import get_bias_level
 from gempy.library.spectral import Spek1D
 
 from .. import logger
@@ -274,8 +274,15 @@ class PreviewQueueUtil(object):
                 d_ymin = int(d_ymin)
                 d_ymax = int(d_ymax)
 
-                o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section()
-                bias = numpy.median(add.data[o_ymin:o_ymax, o_xmin:o_xmax])
+                try:
+                    o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section()
+                    bias = numpy.median(add.data[o_ymin:o_ymax, o_xmin:o_xmax])
+                except:
+                    try:
+                        bias = get_bias_level(add, estimate=True)
+                    except:
+                        self.l.warn("Unable to read overscan, using 0 bias for preview")
+                        bias = 0
                 try:
                     # This throws an exception sometimes if some of the values are None?
                     gain = float(add.gain())
