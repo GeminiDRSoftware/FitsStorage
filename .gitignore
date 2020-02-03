@@ -24,4 +24,4 @@ robot/*.xml
 ansible/playbooks/secret
 ansible/playbooks/id_rsa
 ansible/vault.txt
-
+ansible/aws_vars.yml

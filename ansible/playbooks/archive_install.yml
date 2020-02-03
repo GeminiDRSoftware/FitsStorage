@@ -2,6 +2,7 @@
   - hosts: all
     vars_files:
       - secret
+        when: "'arc' not in inventory_hostname"
     become: true
     tasks:
       - name: install EPEL
@@ -62,11 +63,11 @@
           name: fitsdata
           groups: fitsdata,geminidata
           append: yes
-      - name: Copy key to server
-        copy:
-          src: id_rsa
-          dest: /opt/id_rsa
-          mode: u+rw,g+r,o+r
+#      - name: Copy key to server
+#        copy:
+#          src: id_rsa
+#          dest: /opt/id_rsa
+#          mode: u+rw,g+r,o+r
       - name: Ensure FitsStorage repo folder is available and permissioned
         file:
           path: '/opt/FitsStorage'
@@ -82,7 +83,7 @@
           version: 2020-1
           dest: /opt/FitsStorage
           #key_file: /opt/id_rsa
-          ssh_opts: -i /opt/id_rsa
+          ssh_opts: -i /home/fitsdata/.ssh/id_rsa
           accept_hostkey: yes
         when: "'arc' not in inventory_hostname"
         notify: restart services
@@ -111,10 +112,10 @@
       - name: install python packages
         command: bash -c "python -m pip install psycopg2-binary==2.8.4"
         when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
-      - name: Remove key
-        file:
-          path: /opt/id_rsa
-          state: absent
+#      - name: Remove key
+#        file:
+#          path: /opt/id_rsa
+#          state: absent
 # was trying to fix cron, but this did not help
 #      - name: Ensure fitsdata entry in passwd
 #        become: true
@@ -156,7 +157,7 @@
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
-          key_file: id_rsa
+          #key_file: id_rsa
           version: v2.1.0
       - name: Copy fitsverify to server
         copy:
