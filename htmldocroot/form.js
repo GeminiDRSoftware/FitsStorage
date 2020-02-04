@@ -158,14 +158,21 @@ function setPreviewVisibility() {
     $('.preview').click(function(e) {
         e.preventDefault();
         // Set the image to the loading swirlything
-        $('#previewbox').children('img').prop('src', "/static/ajax-loading.gif");
+        $('#previewboxmain').children('img').prop('src', "/static/ajax-loading.gif");
         $('#previewbox').show();
         // Get the URL from the a href link
         var url = ($(this).children('a').prop('href'));
         // Set the URL of the img element to the preview url
-        $('#previewbox').children('img').prop('src', url);
+        $('#previewboxmain').children('img').prop('src', url);
         // Hide it on click anywhere
-        $('#previewbox').click(function() {
+        var i;
+        var lnks = "";
+        for (i=0; i<25; i++) {
+            var onclk = '$("#previewboxmain").children("img").prop("src", "' + url + '/' + i + '")';
+            lnks += " <a href=\"#\" onclick=\'" + onclk + "\'>[" + i + "]</a>";
+        }
+        $('#previewboxlinks').html("<p>Additonal Previews: </p>" + lnks);
+        $('#previewboxmain').click(function() {
             $('#previewbox').hide();
         });
     });

@@ -269,6 +269,7 @@ url_map = Map([
     Rule('/change_password/<seq_of:things>', change_password),      # change_password
     Rule('/my_programs/<seq_of:things>', my_programs),              # my_programs
     Rule('/preview/<filenamegiven>', preview),                      # previews
+    Rule('/preview/<filenamegiven>/<int:number>', preview),             # previews
 
     Rule('/queuestatus', queuestatus_summary),                      # Show some info on what's going on with the queues
     Rule('/queuestatus/json', queuestatus_update),                  # Show some info on what's going on with the queues

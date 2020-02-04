@@ -21,7 +21,7 @@ if using_s3:
 
 from ..utils.userprogram import icanhave
 
-def preview(filenamegiven):
+def preview(filenamegiven, number=0):
     """
     This is the preview server, it sends you the preview jpg for the requested file.
     It handles authentication in that it won't give you the preview if you couldn't access
@@ -44,6 +44,8 @@ def preview(filenamegiven):
 
     session = ctx.session
 
+    if number is None:
+        number = 0
     try:
         # Find the information associated with the canonical diskfile and header for the file on the query
         preview, header, diskfile, _ = (
@@ -52,7 +54,7 @@ def preview(filenamegiven):
                 .filter(DiskFile.file_id == File.id)
                 .filter(DiskFile.present == True)
                 .filter(File.name == filename)
-                .first()
+                .order_by(Preview.filename)[number]
             )
     except TypeError: # Will happen if .first() returns None
         ctx.resp.status = Return.HTTP_NOT_FOUND
@@ -89,5 +91,6 @@ def sendpreview(preview):
             resp.append_iterable(temp)
     else:
         # Serve from regular file
+        print("serving out preview data from file: %s" % preview.filename)
         fullpath = os.path.join(storage_root, preview_path, preview.filename)
         resp.sendfile(fullpath)

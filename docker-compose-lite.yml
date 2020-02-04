@@ -45,6 +45,7 @@ services:
       - USE_AS_ARCHIVE=True
       - API_BACKEND_LOCATION=:8000
       - USE_ELK_LOGGING=True
+      - BLOCKED_URLS=
     volumes:
       - "~/upload_staging:/data/upload_staging"
       - "~/dataflow:/sci/dataflow"
