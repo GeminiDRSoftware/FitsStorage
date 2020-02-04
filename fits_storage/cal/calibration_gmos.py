@@ -95,15 +95,16 @@ class CalibrationGMOS(Calibration):
             # then it needs an arc, flat, spectwilight, specphot
             if ((self.descriptors['spectroscopy'] == True) and
                 (self.descriptors['observation_type'] == 'OBJECT') and
-                (self.descriptors['object'] != 'Twilight') and
-                (self.descriptors['observation_class'] not in ['partnerCal', 'progCal'])):
+                (self.descriptors['object'] != 'Twilight')):
 
                 self.applicable.append('arc')
                 self.applicable.append('processed_arc')
                 self.applicable.append('flat')
                 self.applicable.append('processed_flat')
-                self.applicable.append('spectwilight')
-                self.applicable.append('specphot')
+
+                if self.descriptors['observation_class'] not in ['partnerCal', 'progCal']:
+                    self.applicable.append('spectwilight')
+                    self.applicable.append('specphot')
 
 
             # If it (is imaging) and (is Imaging focal plane mask) and
