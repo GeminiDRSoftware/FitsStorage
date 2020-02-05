@@ -1,8 +1,5 @@
 ---
   - hosts: all
-    vars_files:
-      - secret
-        when: "'arc' not in inventory_hostname"
     become: true
     tasks:
       - name: install EPEL
