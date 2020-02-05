@@ -175,10 +175,9 @@ class PreviewQueueUtil(object):
                 diskfile.ad_object = astrodata.open(ad_fullpath)
 
             # Now there should be a diskfile.ad_object, either way...
-            if len(diskfile.ad_object) > 1 and len(diskfile.ad_object[0].data.shape) == 1:
+            if len(diskfile.ad_object) > 1 and len(diskfile.ad_object[0].shape) == 1:
                 for idx in range(len(diskfile.ad_object)):
                     filename = "%s_%03d.jpg" % (preview_fullpath[0:-4], idx)
-                    print("Creating preview file %s" % filename)
                     with open(filename, 'wb') as fp:
                         try:
                             self.render_spectra_preview(diskfile.ad_object, fp, idx)
@@ -230,95 +229,6 @@ class PreviewQueueUtil(object):
                     os.unlink(ad_fullpath)
 
 
-
-    def make_preview_old(self, diskfile):
-        """
-        Make the preview, given the diskfile.
-        This can be called from within service_ingest_queue ingest_file, in which 
-        case,
-
-        - it will use the pre-fetched / pre-decompressed / pre-opened astrodata 
-        object if possible.
-
-        - the diskfile object should contain an ad_object member which is an 
-        AstroData instance.
-
-        It can also be called by service_preview_queue in which case we won't 
-        have that so it will then either open the file or fetch it from S3 as 
-        appropriate etc.
-
-        """
-        # Setup the preview file
-        preview_filename = diskfile.filename + "_preview.jpg"
-        if using_s3:
-            # Create the file in s3_staging_area
-            preview_fullpath = os.path.join(s3_staging_area, preview_filename)
-        else:
-            # Create the preview filename
-            preview_fullpath = os.path.join(storage_root, preview_path, preview_filename)
-
-        # render the preview jpg
-        # Are we responsible for creating an AstroData instance, or is there one for us?
-        our_dfado = diskfile.ad_object == None
-        our_dfcc = False
-        try:
-            if our_dfado:
-                # We munge the filenames here to avoid file collisions in the
-                # staging directories with the ingest process.
-                munged_filename = diskfile.filename
-                munged_fullpath = diskfile.fullpath()
-                if using_s3:
-                    # Fetch from S3 to staging area
-                    # TODO: We're not checking here if the file was actually retrieved...
-                    munged_filename = "preview_" + diskfile.filename
-                    munged_fullpath = os.path.join(s3_staging_area, munged_filename)
-                    self.s3.fetch_to_staging(diskfile.filename, fullpath=munged_fullpath)
-
-                if diskfile.compressed:
-                    # Create the uncompressed cache filename and unzip to it
-                    nonzfilename = munged_filename[:-4]
-                    diskfile.uncompressed_cache_file = os.path.join(z_staging_area, nonzfilename)
-                    if os.path.exists(diskfile.uncompressed_cache_file):
-                        os.unlink(diskfile.uncompressed_cache_file)
-                    with bz2.BZ2File(munged_fullpath, mode='rb') as in_file, open(diskfile.uncompressed_cache_file, 'wb') as out_file:
-                        out_file.write(in_file.read())
-                    our_dfcc = True
-                    ad_fullpath = diskfile.uncompressed_cache_file
-                else:
-                    # Just use the diskfile fullpath
-                    ad_fullpath = munged_fullpath
-                # Open the astrodata instance
-                diskfile.ad_object = astrodata.open(ad_fullpath)
-
-            # Now there should be a diskfile.ad_object, either way...
-            with open(preview_fullpath, 'wb') as fp:
-                try:
-                    self.render_preview(diskfile.ad_object, fp)
-                except:
-                    os.unlink(preview_fullpath)
-                    raise
-
-        finally:
-            # Do any cleanup from above
-            if our_dfado:
-                if using_s3:
-                    os.unlink(munged_fullpath)
-                if our_dfcc:
-                    os.unlink(ad_fullpath)
-
-        # Now we should have a preview in fp. Close the file-object
-
-        # If we're not using S3, that's it, the file is in place.
-        # If we are using s3, need to upload it now.
-        if using_s3:
-            self.s3.upload_file(preview_filename, preview_fullpath)
-            os.unlink(preview_fullpath)
-
-        # Add to preview table
-        preview = Preview(diskfile, preview_filename)
-        self.s.add(preview)
-
-
     def render_spectra_preview(self, ad, outfile, idx):
         """
         Pass in an astrodata object and a file-like outfile. This function will
@@ -337,7 +247,6 @@ class PreviewQueueUtil(object):
         <void>
 
         """
-
         add = ad[idx]
 
         full = norm(add.data)
@@ -373,11 +282,6 @@ class PreviewQueueUtil(object):
             #self.l.error("Recovering (simplified preview) from Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
             plt.plot(flux_masked)
             plt.plot(variance_masked, color='r')
-    # else:
-    #     ax = plt.Axes(fig, [0, 0, 1, 1])
-    #     ax.set_axis_off()
-    #     fig.add_axes(ax)
-    #     ax.imshow(full, cmap=plt.cm.gray)
 
         fig.savefig(outfile, format='jpg')
 

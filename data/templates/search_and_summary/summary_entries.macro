@@ -101,7 +101,7 @@
 
 {%- macro generate_download(col, sumtype, has_provenance) -%}
 <div class='center'>
-{%- if col.prev %}<span class="preview" count="24"><a href="/preview/{{ col.name }}">[P]</a> </span>{% endif -%}
+{%- if col.prev %}<span class="preview"><a href="/preview/{{ col.name }}">[P]</a> </span>{% endif -%}
 {%- if has_provenance %}<a href="/rawfiles/{{ col.name }}" target="_blank">[R]</a>{% endif -%}
 <a href="/file/{{ col.name }}">[D]</a>
 {%- if col.down_sel %} <input type='checkbox' class='mark mark_{{ sumtype }}' name='files' value='{{ col.name }}'>{% endif -%}

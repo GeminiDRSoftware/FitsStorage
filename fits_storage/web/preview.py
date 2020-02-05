@@ -21,7 +21,7 @@ if using_s3:
 
 from ..utils.userprogram import icanhave
 
-def preview(filenamegiven, number=0):
+def num_previews(filenamegiven):
     """
     This is the preview server, it sends you the preview jpg for the requested file.
     It handles authentication in that it won't give you the preview if you couldn't access
@@ -29,12 +29,6 @@ def preview(filenamegiven, number=0):
     """
 
     ctx = get_context()
-
-#    try:
-#        filenamegiven = things.pop(0)
-#    except IndexError:
-#        ctx.resp.status = Return.HTTP_NOT_FOUND
-#        return
 
     # OK, first find the file they asked for in the database
     # tart up the filename if possible
@@ -44,18 +38,55 @@ def preview(filenamegiven, number=0):
 
     session = ctx.session
 
+    header = None
+
+    try:
+        diskfile = \
+            session.query(DiskFile) \
+                .join(File, DiskFile.file_id == File.id) \
+                .filter(DiskFile.canonical == True) \
+                .filter(File.name == filename) \
+                .first()
+        ctx.resp.set_content_type('text/plain')
+        ctx.resp.append("%d" % len(diskfile.previews))
+        return
+    except TypeError: # Will happen if .first() returns None
+        ctx.resp.status = Return.HTTP_NOT_FOUND
+        return
+
+
+def preview(filenamegiven, number=0):
+    """
+    This is the preview server, it sends you the preview jpg for the requested file.
+    It handles authentication in that it won't give you the preview if you couldn't access
+    the fits data.
+    """
+
+    ctx = get_context()
+
+    # OK, first find the file they asked for in the database
+    # tart up the filename if possible
+    filename = gemini_fitsfilename(filenamegiven)
+    if not filename:
+        filename = filenamegiven
+
+    session = ctx.session
+
+    header = None
+    preview = None
+
     if number is None:
         number = 0
     try:
-        # Find the information associated with the canonical diskfile and header for the file on the query
-        preview, header, diskfile, _ = (
-            session.query(Preview, Header, DiskFile, File)
-                .filter(Preview.diskfile_id == DiskFile.id)
-                .filter(DiskFile.file_id == File.id)
-                .filter(DiskFile.present == True)
-                .filter(File.name == filename)
-                .order_by(Preview.filename)[number]
-            )
+        header = \
+            session.query(Header) \
+                .join(DiskFile, Header.diskfile_id == DiskFile.id) \
+                .join(File, DiskFile.file_id == File.id) \
+                .filter(DiskFile.canonical == True) \
+                .filter(File.name == filename) \
+                .first()
+        diskfile = header.diskfile
+        preview = diskfile.previews[number]
     except TypeError: # Will happen if .first() returns None
         ctx.resp.status = Return.HTTP_NOT_FOUND
         return
@@ -76,6 +107,7 @@ def preview(filenamegiven, number=0):
     finally:
         downloadlog.query_completed = datetime.datetime.utcnow()
 
+
 @with_content_type('image/jpeg')
 def sendpreview(preview):
     """
@@ -91,6 +123,5 @@ def sendpreview(preview):
             resp.append_iterable(temp)
     else:
         # Serve from regular file
-        print("serving out preview data from file: %s" % preview.filename)
         fullpath = os.path.join(storage_root, preview_path, preview.filename)
         resp.sendfile(fullpath)
