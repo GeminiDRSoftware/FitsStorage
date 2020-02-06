@@ -110,6 +110,20 @@
       - name: install python packages
         command: bash -c "python -m pip install psycopg2-binary==2.8.4"
         when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+      - name: install imexam for DRAGONS (Centos 8)
+        command: bash -c "python3 -m pip install imexam specutils"
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+      - name: make dummy specutils folder to satisfy the library's bad logic
+        file:
+          path: /usr/share/httpd/.specutils
+          state: directory
+          mode: u+rwx,g+rwx,o+rwx
+          owner: fitsdata
+          group: fitsdata
+        become: true
+      - name: install imexam and specutils for DRAGONS (Centos 7)
+        command: bash -c "python3 -m pip install imexam specutils"
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
 #      - name: Remove key
 #        file:
 #          path: /opt/id_rsa
@@ -136,7 +150,7 @@
           mode: '{{ item.mode }}'
           owner: '{{ item.owner }}'
         with_items:
-          - { path: /data/logs, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
+          - { path: /data/logs, owner: fitsdata, mode: "u+rwx,g+rw,o+rw" }
           - { path: /data/backups, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
           - { path: /data/upload_staging, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
           - { path: /data/z_staging, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
@@ -155,8 +169,7 @@
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
-          #key_file: id_rsa
-          version: v2.1.0
+          version: master
       - name: Copy fitsverify to server
         copy:
           src: ../../fitsverify/
@@ -268,24 +281,24 @@
           state=present
         become: yes
         become_user: postgres
-      - name: Grant PostgreSQL table access to apache
-        postgresql_privs:
-          db: fitsdata
-          privs: ALL
-          type: table
-          objs: ALL_IN_SCHEMA
-          role: apache
-        become: yes
-        become_user: postgres
-      - name: Grant PostgreSQL sequence access to apache
-        postgresql_privs:
-          db: fitsdata
-          privs: ALL
-          type: sequence
-          objs: ALL_IN_SCHEMA
-          role: apache
-        become: yes
-        become_user: postgres
+#      - name: Grant PostgreSQL table access to apache
+#        postgresql_privs:
+#          db: fitsdata
+#          privs: ALL
+#          type: table
+#          objs: ALL_IN_SCHEMA
+#          role: apache
+#        become: yes
+#        become_user: postgres
+#      - name: Grant PostgreSQL sequence access to apache
+#        postgresql_privs:
+#          db: fitsdata
+#          privs: ALL
+#          type: sequence
+#          objs: ALL_IN_SCHEMA
+#          role: apache
+#        become: yes
+#        become_user: postgres
       - name: Install ingest queue 1
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue1.service
