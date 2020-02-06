@@ -10,13 +10,23 @@ from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 from fits_storage.fits_storage_config import using_s3, storage_root
 
+def get_files_list(path, recursive):
+    for f in os.listdir(path):
+        if os.path.isdir(f):
+            if recursive == True:
+                for subf in get_files_list(os.path.join(path, f), True):
+                    yield os.path.join(path, subf)
+        else:
+            yield os.path.join(path, f)
+
+
 # Utility functions
 def check_present(session, filename):
     df = session.query(DiskFile).filter(DiskFile.filename==filename).filter(DiskFile.present==True).first()
     return True if df else False
 
 def copy_over(session, iq, logger, dir, filename, dryrun):
-    src = os.path.join(alopeke_perm, filename)
+    src = filename
     dest = os.path.join(storage_root, filename)
     # If the Destination file already exists, skip it
     if os.access(dest, os.F_OK | os.R_OK):
@@ -68,15 +78,19 @@ parser = OptionParser()
 parser.add_option("--dryrun", action="store_true", dest="dryrun", default=False, help="Don't actually do anything")
 parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
 parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run in background mode")
-parser.add_option("--dir", action="store_true", dest="dir", default=False, help="Directory to copy from")
-
+parser.add_option("--from-dir", action="store_true", dest="fromdir", help="Directory to copy from")
+parser.add_option("--to-dir", action="store_true", dest="todir", help="Directory to copy to")
+parser.add_option("--recursive", action="store_true", dest="recursive", default=False, help="Recurse into subfolders when copying")
 (options, args) = parser.parse_args()
 
 # Logging level to debug?
 setdebug(options.debug)
 setdemon(options.demon)
 
-source_dir = options.dir
+source_dir = options.fromdir
+to_dir = options.todir
+recursive = options.recursive
+
 
 # Annouce startup
 logger.info("*********  copy_from_visiting_instrument.py - starting up at %s" % datetime.datetime.now())
@@ -88,30 +102,29 @@ if using_s3:
 
 logger.info("Doing Initial visiting instrument directory scan...")
 # Get initial DHS directory listing
-dir_list = set(os.listdir(source_dir))
+dir_list = set(get_files_list(source_dir, recursive))
 logger.info("... found %d files", len(dir_list))
 known_list = set()
 
 with session_scope() as session:
-     logger.debug("Instantiating IngestQueueUtil object")
-     iq = IngestQueueUtil(session, logger)
-     logger.info("Starting looping...")
-     while True:
-         todo_list = dir_list - known_list
-         logger.info("%d new files to check", len(todo_list))
-         for filename in todo_list:
-             if 'tmp' in filename:
-                 logger.info("Ignoring tmp file: %s", filename)
-                 continue
-             filename = os.path.split(filename)[1]
-             if check_present(session, filename):
-                 logger.debug("%s is already present in database", filename)
-                 known_list.add(filename)
-             else:
-                 if copy_over(session, iq, logger, source_dir, filename, options.dryrun):
-                     known_list.add(filename)
-         logger.debug("Pass complete, sleeping")
-         time.sleep(5)
-         logger.debug("Re-scanning")
-         dir_list = set(os.listdir(source_dir))
-
+    logger.debug("Instantiating IngestQueueUtil object")
+    iq = IngestQueueUtil(session, logger)
+    logger.info("Starting looping...")
+    while True:
+        todo_list = dir_list - known_list
+        logger.info("%d new files to check", len(todo_list))
+        for filename in todo_list:
+            if 'tmp' in filename:
+                logger.info("Ignoring tmp file: %s", filename)
+                continue
+            filename = os.path.split(filename)[1]
+            if check_present(session, filename):
+                logger.debug("%s is already present in database", filename)
+                known_list.add(filename)
+            else:
+                if copy_over(session, iq, logger, source_dir, filename, options.dryrun):
+                    known_list.add(filename)
+        logger.debug("Pass complete, sleeping")
+        time.sleep(5)
+        logger.debug("Re-scanning")
+        dir_list = set(get_files_list(source_dir, recursive))
