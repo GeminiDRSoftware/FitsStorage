@@ -2,12 +2,13 @@
   - hosts: all
     become: true
     tasks:
-      - name: install EPEL
-        yum:
-          name:
-            - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-          state: present
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+# removing per Jose Varas, ITS should setup necessary packages/repos for us
+#      - name: install EPEL
+#        yum:
+#          name:
+#            - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+#          state: present
+#        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
       - name: install packages
         yum:
           name: 
@@ -80,7 +81,7 @@
           version: 2020-1
           dest: /opt/FitsStorage
           #key_file: /opt/id_rsa
-          ssh_opts: -i /home/fitsdata/.ssh/id_rsa
+          #ssh_opts: -i /home/fitsdata/.ssh/id_rsa
           accept_hostkey: yes
         when: "'arc' not in inventory_hostname"
         notify: restart services
