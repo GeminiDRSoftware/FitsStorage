@@ -10,40 +10,71 @@
       # file_md5 and file_size set from data_md5 and data_size
       # instead of filename use  ut_datetime < 2017-01 and no path
       # include option to specify path to rollcall.py?
-      - name: Remove N200x previews (NORTH only)
+      # - name: Remove N200x previews (NORTH only)
+      #   postgresql_query:
+      #     db: fitsdata
+      #     query: DELETE from preview WHERE filename like 'N200%'
+      #   become: yes
+      #   become_user: postgres
+      #   when: "'mko' in inventory_hostname"
+      # - name: Remove N2010 previews (NORTH only)
+      #   postgresql_query:
+      #     db: fitsdata
+      #     query: DELETE from preview WHERE filename like 'N2010%'
+      #   become: yes
+      #   become_user: postgres
+      #   when: "'mko' in inventory_hostname"
+      # - name: Remove S previews (NORTH only)
+      #   postgresql_query:
+      #     db: fitsdata
+      #     query: DELETE from preview WHERE filename like 'N%'
+      #   become: yes
+      #   become_user: postgres
+      #   when: "'mko' in inventory_hostname"
+      - name: Remove previews (non AWS only)
         postgresql_query:
           db: fitsdata
-          query: DELETE from preview WHERE filename like 'N200%'
+          query: truncate table preview
         become: yes
         become_user: postgres
-        when: "'mko' in inventory_hostname"
-      - name: Remove N2010 previews (NORTH only)
+        when: "'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+      - name: Remove calcache (non AWS only)
         postgresql_query:
           db: fitsdata
-          query: DELETE from preview WHERE filename like 'N2010%'
+          query: truncate table calcache
         become: yes
         become_user: postgres
-        when: "'mko' in inventory_hostname"
-      - name: Remove S previews (NORTH only)
-        postgresql_query:
-          db: fitsdata
-          query: DELETE from preview WHERE filename like 'N%'
-        become: yes
-        become_user: postgres
-        when: "'mko' in inventory_hostname"
-
+        when: "'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+      
       - name: Convert out .bz2 extensions in diskfiles
         postgresql_query:
           db: fitsdata
           query: UPDATE diskfile SET filename=REGEXP_REPLACE(filename, '(.*).bz2', '\1') where filename like '%bz2'
         become: yes
         become_user: postgres
-      - name: Convert out .bz2 extensions in previews
+        when: "'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+      - name: update compressed in diskfiles
         postgresql_query:
           db: fitsdata
-          query: UPDATE preview SET filename=REGEXP_REPLACE(filename, '(.*).bz2_preview.jpg', '\1_preview.jpg') where filename like '%bz2_preview.jpg'
+          query: UPDATE diskfile SET compressed=FALSE
         become: yes
         become_user: postgres
+        when: "'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+      - name: mirror md5 in diskfiles
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET file_md5=data_md5
+        become: yes
+        become_user: postgres
+        when: "'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+      - name: mirror size in diskfiles
+        postgresql_query:
+          db: fitsdata
+          query: UPDATE diskfile SET file_size=data_size
+        become: yes
+        become_user: postgres
+        when: "'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+
       - name: Remove N200x files (NORTH only)
         postgresql_query:
           db: fitsdata
@@ -128,7 +159,7 @@
         become: yes
         become_user: postgres
         when: "'cpo' in inventory_hostname"
-      - name: Run rollcall
-        command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 ./fits_storage/scripts/rollcall.py"
-        become: yes
-        become_user: fitsdata
+      # - name: Run rollcall
+      #   command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 ./fits_storage/scripts/rollcall.py"
+      #   become: yes
+      #   become_user: fitsdata
