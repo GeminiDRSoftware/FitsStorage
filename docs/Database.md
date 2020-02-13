@@ -38,7 +38,10 @@ For the raw backups, the postgres restore command is just:
 # Migration
 
 For migrating data to another instance that already has the tables, you can
-use plain format and dump data only
+use plain format and dump data only.  This is typically done from the dev
+AWS server after freshly loading all of the S3 stored data onto the mko
+and cpo hosts.  In this case, the dev AWS server does not have the huge 
+usagelog and related tables.
 
 ```
 /usr/bin/pg_dump --data-only --format=p fitsdata | gzip -7 > fitsdata.DATE.pg_dump_p.gz
@@ -86,4 +89,32 @@ As well as whichever site is not the one we are setting up
 
 ```
 UPDATE diskfile SET present=FALSE WHERE filename like '[S OR N]%'
+```
+
+## Moving Usage Logs
+
+To move over the usage logs from the existing archive, we grab those
+tables off of the real archive on AWS.  This is similar to copying out
+data from arcdev, but we are targetting the log and user tables specifically.
+
+archiveuser
+logs
+downloadlog filedownloadlog usagelog fileuploadlog
+
+```
+/usr/bin/pg_dump --data-only --format=p \
+    -t usagelog \
+    -t filedownloadlog \
+    -t fileuploadlog \
+    -t downloadlog \
+    -t querylog \
+    -t user \
+    -t userprogram \
+     fitsdata | gzip -7 > fitsdata.usersandlogs.DATE.pg_dump_p.gz
+```
+
+Then we can restore much like above with:
+
+```
+zcat fitsdata.usersandlogs.DATE.pg_dump_p.gz | /usr/bin/psql -d fitsdata -f -
 ```
