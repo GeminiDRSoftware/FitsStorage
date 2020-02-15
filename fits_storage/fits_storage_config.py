@@ -26,6 +26,14 @@ _host_based_configs = {
         'FITS_SERVERTITLE': 'MKO Fits Server',
         'FITS_SYSTEM_STATUS': 'development'
     },
+    "cpofits-lv3": {
+        'USE_AS_ARCHIVE': 'False',
+        'EXPORT_DESTINATIONS': '',
+        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
+        'BLOCKED_URLS': '',
+        'FITS_SERVERTITLE': 'CPO Fits Server',
+        'FITS_SYSTEM_STATUS': 'development'
+    },
     "hbffits-lv1": {
         'USE_AS_ARCHIVE': 'False',
         'EXPORT_DESTINATIONS': '',
@@ -43,8 +51,11 @@ _host_based_configs = {
         'BLOCKED_URLS': ''
     },
     "archive": {
+        'FITS_SERVERTITLE': 'Gemini Observatory Archive',
         'USE_AS_ARCHIVE': 'True',
-        'FITS_SYSTEM_STATUS': 'production'
+        'FITS_SYSTEM_STATUS': 'production',
+        'EXPORT_DESTINATIONS': '',
+        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files'
     },
     "arcdev": {
         'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',

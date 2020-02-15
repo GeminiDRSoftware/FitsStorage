@@ -45,6 +45,7 @@ services:
       - USE_AS_ARCHIVE=True
       - API_BACKEND_LOCATION=:8000
       - USE_ELK_LOGGING=True
+      - BLOCKED_URLS=
     volumes:
       - "~/upload_staging:/data/upload_staging"
       - "~/dataflow:/sci/dataflow"
@@ -97,7 +98,7 @@ services:
       - EXPORT_DESTINATIONS=
     volumes:
       - "~/dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/service_ingest_queue.py
+    command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
 
   add-to-calcache-queue:
     image: fitsstorageutils:latest

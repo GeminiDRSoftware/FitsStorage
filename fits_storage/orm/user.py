@@ -140,7 +140,7 @@ class User(Base):
         Don't forget to commit the session after calling this.
 
         """
-        self.cookie = standard_b64encode(urandom(256))
+        self.cookie = standard_b64encode(urandom(256)).decode('utf-8')
 
     def log_in(self):
         """

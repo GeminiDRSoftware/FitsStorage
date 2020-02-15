@@ -34,7 +34,7 @@ if using_s3:
 
 import astrodata
 import gemini_instruments
-
+from gemini_instruments.gmos.pixel_functions import get_bias_level
 from gempy.library.spectral import Spek1D
 
 from .. import logger
@@ -110,6 +110,7 @@ class PreviewQueueUtil(object):
                 self.s.add(pq)
             self.s.commit()
 
+
     def make_preview(self, diskfile):
         """
         Make the preview, given the diskfile.
@@ -129,6 +130,7 @@ class PreviewQueueUtil(object):
         """
         # Setup the preview file
         preview_filename = diskfile.filename + "_preview.jpg"
+
         if using_s3:
             # Create the file in s3_staging_area
             preview_fullpath = os.path.join(s3_staging_area, preview_filename)
@@ -149,7 +151,10 @@ class PreviewQueueUtil(object):
                 if using_s3:
                     # Fetch from S3 to staging area
                     # TODO: We're not checking here if the file was actually retrieved...
-                    munged_filename = "preview_" + diskfile.filename
+                    if len(diskfile.ad_object) > 1:
+                        munged_filename = "preview_%s_%d" % (diskfile.filename, idx)
+                    else:
+                        munged_filename = "preview_" + diskfile.filename
                     munged_fullpath = os.path.join(s3_staging_area, munged_filename)
                     self.s3.fetch_to_staging(diskfile.filename, fullpath=munged_fullpath)
 
@@ -170,13 +175,51 @@ class PreviewQueueUtil(object):
                 diskfile.ad_object = astrodata.open(ad_fullpath)
 
             # Now there should be a diskfile.ad_object, either way...
-            with open(preview_fullpath, 'wb') as fp:
-                try:
-                    self.render_preview(diskfile.ad_object, fp)
-                except:
-                    os.unlink(preview_fullpath)
-                    raise
+            if len(diskfile.ad_object) > 1 and len(diskfile.ad_object[0].shape) == 1:
+                for idx in range(len(diskfile.ad_object)):
+                    filename = "%s_%03d.jpg" % (preview_fullpath[0:-4], idx)
+                    with open(filename, 'wb') as fp:
+                        try:
+                            self.render_spectra_preview(diskfile.ad_object, fp, idx)
+                        except:
+                            os.unlink(filename)
+                            raise
+                    # Now we should have a preview in fp. Close the file-object
 
+                    # If we're not using S3, that's it, the file is in place.
+                    # If we are using s3, need to upload it now.
+                    if using_s3:
+                        # Create the file in s3_staging_area
+                        prv_fullpath = os.path.join(s3_staging_area, filename)
+                    else:
+                        # Create the preview filename
+                        prv_fullpath = os.path.join(storage_root, preview_path, filename)
+
+                    if using_s3:
+                        self.s3.upload_file(filename, prv_fullpath)
+                        os.unlink(prv_fullpath)
+
+                    # Add to preview table
+                    preview = Preview(diskfile, filename)
+                    self.s.add(preview)
+            else:
+                with open(preview_fullpath, 'wb') as fp:
+                    try:
+                        self.render_preview(diskfile.ad_object, fp)
+                    except:
+                        os.unlink(preview_fullpath)
+                        raise
+                # Now we should have a preview in fp. Close the file-object
+
+                # If we're not using S3, that's it, the file is in place.
+                # If we are using s3, need to upload it now.
+                if using_s3:
+                    self.s3.upload_file(preview_filename, preview_fullpath)
+                    os.unlink(preview_fullpath)
+
+                # Add to preview table
+                preview = Preview(diskfile, preview_filename)
+                self.s.add(preview)
         finally:
             # Do any cleanup from above
             if our_dfado:
@@ -185,17 +228,64 @@ class PreviewQueueUtil(object):
                 if our_dfcc:
                     os.unlink(ad_fullpath)
 
-        # Now we should have a preview in fp. Close the file-object
 
-        # If we're not using S3, that's it, the file is in place.
-        # If we are using s3, need to upload it now.
-        if using_s3:
-            self.s3.upload_file(preview_filename, preview_fullpath)
-            os.unlink(preview_fullpath)
+    def render_spectra_preview(self, ad, outfile, idx):
+        """
+        Pass in an astrodata object and a file-like outfile. This function will
+        create a jpeg rendering of the ad object and write it to the outfile.
 
-        # Add to preview table
-        preview = Preview(diskfile, preview_filename)
-        self.s.add(preview)
+        Parameters:
+        ----------
+        ad: <AstroData> 
+            An instance of AstroData
+
+        outfile: <str>
+           Filename to write.
+
+        Returns:
+        -------
+        <void>
+
+        """
+        add = ad[idx]
+
+        full = norm(add.data)
+
+        # plot without axes or frame
+        fig = plt.figure(frameon=False)
+    
+        spek = Spek1D(add)
+        flux = spek.flux
+        variance = numpy.sqrt(spek.variance)
+        #mask values below a certain threshold
+        flux_masked = numpy.ma.masked_where(spek.mask == 16, flux)
+        variance_masked = numpy.ma.masked_where(spek.mask == 16, variance)
+
+        try:
+            if len(ad) > 1:
+                plt.title(spek.filename)
+            else:
+                plt.title("%s - %d" % (spek.filename, idx))
+            plt.xlabel("wavelength %s" % spek.spectral_axis_unit)
+            plt.ylabel("flux density %s" % spek.unit)
+        except Exception as e:
+            pass
+        try:
+            x_axis = spek.spectral_axis
+            # full = full[~numpy.isnan(full)]
+            # full = numpy.squeeze(full)
+            plt.plot(x_axis, flux_masked, label="data")
+            plt.plot(x_axis, variance_masked, color='r', label="stddev")
+            plt.legend()
+        except Exception as e:
+            string = "".join(traceback.format_tb(sys.exc_info()[2]))
+            #self.l.error("Recovering (simplified preview) from Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
+            plt.plot(flux_masked)
+            plt.plot(variance_masked, color='r')
+
+        fig.savefig(outfile, format='jpg')
+
+        plt.close()
 
 
     def render_preview(self, ad, outfile):
@@ -251,39 +341,50 @@ class PreviewQueueUtil(object):
             full = numpy.zeros(shape, ad[0].data.dtype)
 
             # Loop through ads, pasting them in. Do gmos bias and gain hack
-            for add in ad:
-                s_xmin, s_xmax, s_ymin, s_ymax = add.data_section()
-                self.l.debug(fmt2.format(s_xmin, s_xmax, s_ymin, s_ymax))
-                d_xmin, d_xmax, d_ymin, d_ymax = add.detector_section()
-                # Figure out which chip we are and add gap padding
-                # All the gmos chips ever have been 2048 pixels in X.
-                if d_xmin == 4096 or d_xmin == 5120:
-                    pad = 2*gap
-                elif d_xmin == 2048 or d_xmin == 3072:
-                    pad = gap
-                else:
-                    pad = 0
+            if len(ad[0].data.shape) == 1:
+                # spectra
+                full = ad[0].data
+            else:
+                for add in ad:
+                    s_xmin, s_xmax, s_ymin, s_ymax = add.data_section()
+                    self.l.debug(fmt2.format(s_xmin, s_xmax, s_ymin, s_ymax))
+                    d_xmin, d_xmax, d_ymin, d_ymax = add.detector_section()
+                    # Figure out which chip we are and add gap padding
+                    # All the gmos chips ever have been 2048 pixels in X.
+                    if d_xmin == 4096 or d_xmin == 5120:
+                        pad = 2*gap
+                    elif d_xmin == 2048 or d_xmin == 3072:
+                        pad = gap
+                    else:
+                        pad = 0
 
-                d_xmin = (d_xmin + pad) / int(ad.detector_x_bin()) - xmin
-                d_xmax = (d_xmax + pad) / int(ad.detector_x_bin()) - xmin
-                d_ymin = d_ymin / int(ad.detector_y_bin()) - ymin
-                d_ymax = d_ymax / int(ad.detector_y_bin()) - ymin
+                    d_xmin = (d_xmin + pad) / int(ad.detector_x_bin()) - xmin
+                    d_xmax = (d_xmax + pad) / int(ad.detector_x_bin()) - xmin
+                    d_ymin = d_ymin / int(ad.detector_y_bin()) - ymin
+                    d_ymax = d_ymax / int(ad.detector_y_bin()) - ymin
 
-                d_xmin = int(d_xmin)
-                d_xmax = int(d_xmax)
-                d_ymin = int(d_ymin)
-                d_ymax = int(d_ymax)
+                    d_xmin = int(d_xmin)
+                    d_xmax = int(d_xmax)
+                    d_ymin = int(d_ymin)
+                    d_ymax = int(d_ymax)
 
-                o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section()
-                bias = numpy.median(add.data[o_ymin:o_ymax, o_xmin:o_xmax])
-                try:
-                    # This throws an exception sometimes if some of the values are None?
-                    gain = float(add.gain())
-                except:
-                    gain = 1.0
-                self.l.debug(fmt3.format(s_xmin, s_xmax, s_ymin, s_ymax,
-                                         d_xmin, d_xmax, d_ymin, d_ymax))
-                full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
+                    try:
+                        o_xmin, o_xmax, o_ymin, o_ymax = add.overscan_section()
+                        bias = numpy.median(add.data[o_ymin:o_ymax, o_xmin:o_xmax])
+                    except:
+                        try:
+                            bias = get_bias_level(add, estimate=True)
+                        except:
+                            self.l.warn("Unable to read overscan, using 0 bias for preview")
+                            bias = 0
+                    try:
+                        # This throws an exception sometimes if some of the values are None?
+                        gain = float(add.gain())
+                    except:
+                        gain = 1.0
+                    self.l.debug(fmt3.format(s_xmin, s_xmax, s_ymin, s_ymax,
+                                            d_xmin, d_xmax, d_ymin, d_ymax))
+                    full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
 
             full = norm(full)
 
@@ -430,4 +531,4 @@ class PreviewQueueUtil(object):
 
 if __name__ == "__main__":
     pqu = PreviewQueueUtil(None, logger.logger)
-    pqu.render_preview(astrodata.open("/Users/ooberdorf/data/N20180508S0021_fluxCalibrated.fits"), "/Users/ooberdorf/test.jpg")
+    pqu.render_preview(astrodata.open("/Users/ooberdorf/dataflow/N20200103S0103_linearized.fits"), "/Users/ooberdorf/test.jpg")

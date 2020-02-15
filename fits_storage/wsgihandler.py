@@ -36,7 +36,7 @@ from fits_storage.web.user import staff_access, user_list
 from fits_storage.web.userprogram import my_programs
 from fits_storage.web.searchform import searchform, nameresolver
 from fits_storage.web.logreports import usagereport, usagedetails, downloadlog, usagestats
-from fits_storage.web.preview import preview
+from fits_storage.web.preview import preview, num_previews
 from fits_storage.web.obslogs import obslogs
 from fits_storage.web.reporting import report
 from fits_storage.web.queuestatus import queuestatus_summary, queuestatus_tb, queuestatus_update
@@ -272,6 +272,8 @@ url_map = Map([
     Rule('/change_password/<seq_of:things>', change_password),      # change_password
     Rule('/my_programs/<seq_of:things>', my_programs),              # my_programs
     Rule('/preview/<filenamegiven>', preview),                      # previews
+    Rule('/preview/<filenamegiven>/<int:number>', preview),         # previews
+    Rule('/num_previews/<filenamegiven>', num_previews),            # number of available previews related to the given file
 
     Rule('/queuestatus', queuestatus_summary),                      # Show some info on what's going on with the queues
     Rule('/queuestatus/json', queuestatus_update),                  # Show some info on what's going on with the queues
