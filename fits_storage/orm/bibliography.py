@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import BigInteger, Integer, Text, Boolean, DateTime
-from sqlalchemy.orm import relation
+from sqlalchemy import BigInteger, Integer, Text, Boolean, DateTime, String
+from sqlalchemy.orm import relationship
 
 import os
 import datetime
@@ -15,7 +15,7 @@ from .preview import Preview
 
 from ..fits_storage_config import storage_root, z_staging_area
 
-import StringIO
+from io import StringIO
 
 
 # ------------------------------------------------------------------------------
@@ -24,38 +24,6 @@ import StringIO
 # TODO not sure how much if any of this would really be needed for us to get ADS
 # support.  See the `Publication` type that already exists with a simple structure.
 # That one is already integrated with the library.
-
-class BibliographyReference(Base):
-    """
-    This is the ORM class for tracking the references related to a bib record.
-    """
-    __tablename__ = "biblography_reference"
-
-    id = Column(Integer, primary_key=True)
-
-    reference = Column(Text)
-    first_page = Column(Integer)
-    last_page = Column(Integer)
-
-    def __repr__(self):
-        return "<BibliographyReference(%s)>" % (self.reference)
-
-
-class BibliographyAuthor(Base):
-    """
-    This is the ORM class for tracking the authors in a bib record.
-    """
-    __tablename__ = "bibliography_author"
-
-    id = Column(Integer, primary_key=True)
-    first_name = Column(Text)
-    last_name = Column(Text)
-    email = Column(Text)
-    institution = Column(Text)
-    location = Column(Text)
-
-    def __repr__(self):
-        return "<BibliographyAuthor(%s,%s,%s)>" % (self.last_name, self.first_name, self.institution)
 
 
 class Bibliography(Base):
@@ -68,7 +36,7 @@ class Bibliography(Base):
 
     id = Column(Integer, primary_key=True)
 
-    bib_code = Column(Text, len=20)
+    bib_code = Column(String(length=20))
     review_authors = Column(Text)
     book_authors = Column(Text)
     journal_name = Column(Text)
@@ -93,8 +61,8 @@ class Bibliography(Base):
     abstract = Column(Text)
     references = Column(Text)
 
-    references = relation(BibliographyReference, backref='bibliography')
-    authors = relation(BibliographyAuthor, backref='bibliography')
+    references = relationship("BibliographyReference")
+    authors = relationship("BibliographyAuthor")
 
     def __repr__(self):
         return "<Bibliography('%s', '%s', '%s', '%s')>" % (self.id, self.bib_code, self.title)
@@ -174,3 +142,41 @@ class Bibliography(Base):
         retval.close()
 
         return out
+
+
+class BibliographyReference(Base):
+    """
+    This is the ORM class for tracking the references related to a bib record.
+    """
+    __tablename__ = "biblography_reference"
+
+    id = Column(Integer, primary_key=True)
+
+    reference = Column(Text)
+    first_page = Column(Integer)
+    last_page = Column(Integer)
+
+    bibliography_id = Column(Integer, ForeignKey('bibliography.id'))
+
+    def __repr__(self):
+        return "<BibliographyReference(%s)>" % (self.reference)
+
+
+class BibliographyAuthor(Base):
+    """
+    This is the ORM class for tracking the authors in a bib record.
+    """
+    __tablename__ = "bibliography_author"
+
+    id = Column(Integer, primary_key=True)
+    first_name = Column(Text)
+    last_name = Column(Text)
+    email = Column(Text)
+    institution = Column(Text)
+    location = Column(Text)
+
+    bibliography_id = Column(Integer, ForeignKey('bibliography.id'))
+
+    def __repr__(self):
+        return "<BibliographyAuthor(%s,%s,%s)>" % (self.last_name, self.first_name, self.institution)
+

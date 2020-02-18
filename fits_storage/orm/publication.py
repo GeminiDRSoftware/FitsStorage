@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
-import StringIO
+from io import StringIO
 
 from . import Base
 
@@ -44,10 +44,10 @@ class Publication(Base):
         retval = StringIO.StringIO()
 
         retval.write("%%R %s\n" % (self.bibcode))
-        retval.write("%%A %s" % (self.author))        
-        retval.write("%%J %s" % (self.journal))
-        retval.write("%%D %s" % (self.year))
-        retval.write("%%T %s" % (self.title))
+        retval.write("%%A %s\n" % (self.author))        
+        retval.write("%%J %s\n" % (self.journal))
+        retval.write("%%D %s\n" % (self.year))
+        retval.write("%%T %s\n" % (self.title))
 
         out = retval.output()
         retval.close()
