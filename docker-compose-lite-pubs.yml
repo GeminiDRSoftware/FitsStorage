@@ -1,0 +1,126 @@
+version: "3"
+
+services:
+
+  postgres:
+    image: postgres:12
+    environment:
+      - POSTGRES_USER=fitsdata
+      - POSTGRES_PASSWORD=fitsdata
+      - POSTGRES_DB=fitsdata
+
+  postgres-init:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+    command: python3 ./fits_storage/scripts/create_tables.py
+
+  postgres-init-views:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+      - PGPASSWORD=fitsdata
+    command: psql -h postgres -U fitsdata fitsdata < ./sql/views.sql
+
+  postgres-init-user:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres
+      - postgres-init
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+    command: python3 ./fits_storage/scripts/create_user.py --username admin --password admin --email "noreply@gemini.edu" --superuser
+  
+  api:
+    image: fitsimage:latest
+    depends_on:
+      - postgres-init
+      - postgres
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+      - USE_AS_ARCHIVE=True
+      - API_BACKEND_LOCATION=:8000
+      - USE_ELK_LOGGING=True
+      - BLOCKED_URLS=
+    volumes:
+      - "~/upload_staging:/data/upload_staging"
+      - "~/dataflow:/sci/dataflow"
+    command:  python3 fits_storage/scripts/api_backend.py
+  
+  fitsstore:
+    image: fitsimage:latest
+    depends_on:
+      - postgres-init
+      - postgres-init-views
+      - postgres-init-user
+      - postgres
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+      - USE_AS_ARCHIVE=False
+      - EXPORT_DESTINATIONS=
+      - BLOCKED_URLS=
+      - FITS_SERVERTITLE=Docker Compose Lite FitsStore
+      - FITS_SERVERNAME=localhost
+      - UPLOAD_AUTH_COOKIE=qap_upload_processed_cal_ok
+      - API_BACKEND_LOCATION=api:8000
+    volumes:
+      - "~/upload_staging:/data/upload_staging"
+      - "~/dataflow:/sci/dataflow"
+    ports:
+      - "80:80"
+
+  add-to-ingest-queue:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init
+      - postgres-init-views
+      - postgres
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+      - EXPORT_DESTINATIONS=
+    volumes:
+      - "~/dataflow:/sci/dataflow"
+    command: python3 fits_storage/scripts/add_to_ingest_queue.py
+
+  ingest-service:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init
+      - postgres-init-views
+      - postgres
+      - add-to-ingest-queue
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+      - EXPORT_DESTINATIONS=
+    volumes:
+      - "~/dataflow:/sci/dataflow"
+    command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
+
+  add-to-calcache-queue:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init
+      - postgres-init-views
+      - postgres
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+      - EXPORT_DESTINATIONS=
+    volumes:
+      - "~/dataflow:/sci/dataflow"
+    command: bash -c "sleep 20 && python3 fits_storage/scripts/add_to_calcache_queue.py --all"
+
+  calcache-service:
+    image: fitsstorageutils:latest
+    depends_on:
+      - postgres-init
+      - postgres-init-views
+      - postgres
+    environment:
+      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+    volumes:
+      - "~/dataflow:/sci/dataflow"
+    command: python3 fits_storage/scripts/service_calcache_queue.py

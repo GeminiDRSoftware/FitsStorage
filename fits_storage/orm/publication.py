@@ -5,6 +5,8 @@ from sqlalchemy.orm import relationship
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
+from io import StringIO
+
 from . import Base
 
 # ------------------------------------------------------------------------------
@@ -35,5 +37,9 @@ class Publication(Base):
     last_refreshed = Column(DateTime, server_default=func.now(), onupdate=func.now())
     programs = association_proxy('publication_programs', 'program')
 
-    def __init__(self, bibcode):
+    def __init__(self, bibcode, author='', title='', year='', journal=''):
         self.bibcode = bibcode
+        self.author = author
+        self.title = title
+        self.year = year
+        self.journal = journal
