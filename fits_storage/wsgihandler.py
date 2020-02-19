@@ -41,7 +41,7 @@ from fits_storage.web.obslogs import obslogs
 from fits_storage.web.reporting import report
 from fits_storage.web.queuestatus import queuestatus_summary, queuestatus_tb, queuestatus_update
 from fits_storage.web.api import update_headers, ingest_files, ingest_programs, ingest_publications
-from fits_storage.web.publication import publication_ads
+from fits_storage.web.publication import publication_ads, list_publications
 from fits_storage.web.program import program_info
 from fits_storage.web.logcomments import log_comments
 from fits_storage.web import miscfiles
@@ -244,6 +244,7 @@ url_map = Map([
     Rule('/ingest_publications', ingest_publications,
          methods=['POST']),                                          # JSON RPC dispatcher
     Rule('/publication/ads/<bibcode>', publication_ads),            # Publication ADS Info
+    Rule('/list_publications', list_publications),                  # Publication Bibcode/Link List
 
     Rule('/curation', curation_report),                             # curation_report handler
     Rule('/staff_access', staff_access),                            # staff_access

@@ -1,0 +1,3 @@
+{% for publication in publications %}
+{{ publication.bibcode }}   {{ url }}searchform/bibcode={{ publication.bibcode }}
+{% endfor %}
