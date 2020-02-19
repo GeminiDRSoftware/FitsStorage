@@ -323,9 +323,12 @@ class S3UtilsTapeDrive(TapeDrive):
         is more efficient than the default implementation
         """
         output = os.popen('sg_ident %s' % self.device).read()
-        if os.WEXITSTATUS != 0 and fail:
-            raise TapeException("Error reading ident from tape, output was: %s" % output, 
-                                os.WEXITSTATUS)
+        if os.WEXITSTATUS != 0:
+            if fail:
+                raise TapeException("Error reading ident from tape, output was: %s" % output, 
+                                    os.WEXITSTATUS)
+            else:
+                return None
         return output
 
     def writelabel(self, label, fail=True):
