@@ -28,6 +28,7 @@ from ..gemini_metadata_utils import gemini_readmode_settings
 from ..gemini_metadata_utils import site_monitor
 
 from astropy import wcs as pywcs
+from astropy.wcs import SingularMatrixError
 
 import astrodata               # For astrodata errors
 import gemini_instruments
@@ -505,9 +506,9 @@ class Header(Base):
             if (ad.phu.get('CTYPE1') == 'RA---TAN') and (ad.phu.get('CTYPE2') == 'DEC--TAN'):
                 wcs = pywcs.WCS(ad[0].hdr)
                 try:
-                    fp = wcs.calcFootprint()
+                    fp = wcs.calc_footprint()
                     retary['PHU'] = fp
-                except pywcs._pywcs.SingularMatrixError:
+                except SingularMatrixError: # pywcs._pywcs.SingularMatrixError:
                     # WCS was all zeros.
                     pass
         else:
@@ -517,9 +518,9 @@ class Header(Base):
                     extension = "%s,%s" % (hdr.get('EXTNAME'), hdr.get('EXTVER'))
                     wcs = pywcs.WCS(hdr)
                     try:
-                        fp = wcs.calcFootprint()
+                        fp = wcs.calc_footprint()
                         retary[extension] = fp
-                    except pywcs._pywcs.SingularMatrixError:
+                    except SingularMatrixError:
                         # WCS was all zeros.
                         pass
 

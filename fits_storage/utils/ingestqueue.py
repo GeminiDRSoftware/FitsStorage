@@ -275,9 +275,7 @@ class IngestQueueUtil(object):
             ingest_provenance(diskfile)
 
             inst = header.instrument
-            self.l.debug("Instrument is: %s", inst)
             self.s.commit()
-            self.l.debug("Adding new Footprint entries")
             try:
                 fps = header.footprints(diskfile.ad_object)
                 for i in list(fps.keys()):
@@ -286,8 +284,8 @@ class IngestQueueUtil(object):
                     self.s.add(foot)
                     self.s.commit()
                     add_footprint(self.s, foot.id, fps[i])
-            except:
-                pass
+            except Exception as e:
+                self.l.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
 
             if not using_sqlite:
                 if header.spectroscopy == False:
