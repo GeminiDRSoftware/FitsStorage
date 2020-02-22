@@ -1,6 +1,9 @@
 """
 This module contains the calmgr html generator function.
 """
+
+from fits_storage.utils.api import WSGIError, BAD_REQUEST
+
 from ..orm.file import File
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
@@ -14,6 +17,7 @@ from ..fits_storage_config import storage_root, fits_servername
 from ..gemini_metadata_utils import cal_types
 
 from . import templating
+from .templating import SkipTemplateError
 
 from sqlalchemy import join, desc
 
@@ -50,7 +54,7 @@ def cals_info(cal_obj, caltype, qtype='UNKNOWN', log=no_func, add_note=no_func, 
     for ct in caltypes:
         # Call the appropriate method depending what calibration type we want
         try:
-            if ct in cal_types:
+            if ct in cal_obj.applicable:
                 # if ct is one of the recognized cal_types, we'll invoke
                 # the method in cal_obj with the same name as ct. If there's
                 # no such name, like in the case of various processed_XXX, which
@@ -114,6 +118,8 @@ def generate_post_calmgr(selection, caltype):
     # OK, get the details from the POST data
     ctx = get_context()
     clientdata = ctx.raw_data
+    if clientdata:
+        clientdata = clientdata.decode('utf-8', errors='ignore')
     clientstr = urllib.parse.unquote_plus(clientdata)
 
     match = re.match("descriptors=(.*)&types=(.*)", clientstr)
@@ -139,7 +145,10 @@ def generate_post_calmgr(selection, caltype):
     descriptors['prepared'] = 'PREPARED' in types
 
     # Get a cal object for this target data
-    c = get_cal_object(ctx.session, None, header=None, descriptors=descriptors, types=types)
+    try:
+        c = get_cal_object(ctx.session, None, header=None, descriptors=descriptors, types=types)
+    except KeyError as ke:
+        raise SkipTemplateError(message="Missing field in request: {}".format(ke), content_type='text/plain', status = Return.HTTP_BAD_REQUEST)
 
     yield dict(
         label    = descriptors['data_label'],

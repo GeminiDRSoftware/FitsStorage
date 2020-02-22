@@ -1,15 +1,14 @@
 ---
   - hosts: all
-    vars_files:
-      - secret
     become: true
     tasks:
-      - name: install EPEL
-        yum:
-          name:
-            - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-          state: present
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+# removing per Jose Varas, ITS should setup necessary packages/repos for us
+#      - name: install EPEL
+#        yum:
+#          name:
+#            - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+#          state: present
+#        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
       - name: install packages
         yum:
           name: 
@@ -32,11 +31,6 @@
           name:
             - libnsl
         when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
-      #- name: upgrade pip
-        #pip:
-          #name:
-            #- pip
-          #extra_args: --upgrade
       - name: target pip version due to bug
         command: python3 -m pip install --upgrade "pip<10.0"
       - name: Ensure group "fitsdata" exists
@@ -49,24 +43,20 @@
           name: geminidata
           gid: 502
           state: present
-      # - name: Centos 7 Fix (post create groups geminidata/fitsdata)
-      #   command: sss_cache -E
       - name: Add the user 'fitsdata' with a specific uid and a primary group of 'fitsdata'
         user:
           name: fitsdata
           uid: 5179
-      # - name: Centos 7 Fix (post-create user fitsdata)
-      #   command: sss_cache -E
       - name: Update user fitsdata groups to add fitsdata and geminidata
         user:
           name: fitsdata
           groups: fitsdata,geminidata
           append: yes
-      - name: Copy key to server
-        copy:
-          src: id_rsa
-          dest: /opt/id_rsa
-          mode: u+rw,g+r,o+r
+      - name: Update user apache groups to add fitsdata
+        user:
+          name: apache
+          groups: fitsdata
+          append: yes
       - name: Ensure FitsStorage repo folder is available and permissioned
         file:
           path: '/opt/FitsStorage'
@@ -81,18 +71,9 @@
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
           version: master
           dest: /opt/FitsStorage
-          #key_file: /opt/id_rsa
-          ssh_opts: -i /opt/id_rsa
           accept_hostkey: yes
         when: "'arc' not in inventory_hostname"
         notify: restart services
-#      - name: Copy FitsStorage into /opt (AWS)
-#        synchronize:
-#          src: ../..
-#          dest: /opt/FitsStorage/
-#          ssh_args: -l fitsdata -2
-#        when: "'arc' in inventory_hostname"
-#        notify: restart services
       - name: Rsync FitsStorage into /opt (AWS)
         become: false
         local_action: 
@@ -111,19 +92,20 @@
       - name: install python packages
         command: bash -c "python -m pip install psycopg2-binary==2.8.4"
         when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
-      - name: Remove key
+      - name: install imexam for DRAGONS (Centos 8)
+        command: bash -c "python3 -m pip install imexam specutils"
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+      - name: make dummy specutils folder to satisfy the library's bad logic
         file:
-          path: /opt/id_rsa
-          state: absent
-# was trying to fix cron, but this did not help
-#      - name: Ensure fitsdata entry in passwd
-#        become: true
-#        become_user: root
-#        lineinfile:
-#          path: /etc/passwd
-#          line: fitsdata:x:5179:5179:FITS Data User:/home/fitsdata:/bin/bash
-#          regex: fitsdata:x:5179
-#          create: yes
+          path: /usr/share/httpd/.specutils
+          state: directory
+          mode: u+rwx,g+rwx,o+rwx
+          owner: fitsdata
+          group: fitsdata
+        become: true
+      - name: install imexam and specutils for DRAGONS (Centos 7)
+        command: bash -c "python3 -m pip install imexam specutils"
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
       - name: Set PYTHONPATH for fitsdata user for convenience
         lineinfile:
           path: /home/fitsdata/.cshrc
@@ -137,27 +119,33 @@
           mode: '{{ item.mode }}'
           owner: '{{ item.owner }}'
         with_items:
-          - { path: /data/logs, owner: fitsdata, mode: u+rwx,g-w,o-w }
-          - { path: /data/backups, owner: fitsdata, mode: u+rwx,g-w,o-w }
-          - { path: /data/upload_staging, owner: fitsdata, mode: u+rwx,g+rwx,o+rwx }
-          - { path: /data/z_staging, owner: fitsdata, mode: u+rwx,g-w,o-w }
-          - { path: /data/s3_staging, owner: fitsdata, mode: u+rwx,g+rw,o+rw }
-          - { path: /data/gemini_data, owner: fitsdata, mode: u+rwx,g-w,o-w }
-#      - name: Ensure previews folder exists
-#        file:
-#          path: /sci/dataflow/previews
-#          state: directory
-#          mode: u+rwx,g+rwx,o+rwx
-#          owner: fitsdata
-#          group: fitsdata
-#        become: true
-#        when: "'arc' not in inventory_hostname"
+          - { path: /data/logs, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o-w" }
+          - { path: /data/backups, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
+          - { path: /data/upload_staging, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
+          - { path: /data/z_staging, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
+          - { path: /data/s3_staging, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
+          - { path: /data/gemini_data, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
+      # - name: Ensure previews folder exists
+      #   file:
+      #     path: /sci/dataflow/previews
+      #     state: directory
+      #     mode: u+rwx,g+rwx,o+rwx
+      #     owner: fitsdata
+      #     group: fitsdata
+      #   become: true
+      #   when: "'arc' not in inventory_hostname"
       - name: Checkout DRAGONS into /opt
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
-          key_file: id_rsa
-          version: v2.1.0
+          version: master
+        register: dragons-checkout
+      - name: Cythonize DRAGONS
+        command: /usr/local/bin/cythonize -3 -i cyclip.pyx
+        chdir: /opt/DRAGONS/gempy/library/
+        become: true
+        become_user: root
+        when: dragons-checkout.changed
       - name: Copy fitsverify to server
         copy:
           src: ../../fitsverify/
@@ -230,18 +218,6 @@
         when: postgresql_configured.changed or postgresql_service_installed.changed
       - name: Enable PostgreSQL on startup
         service: name=postgresql enabled=yes
-      #- name: Set as a non-archive host and set storage_root
-        #lineinfile:
-          #path: /opt/FitsStorage/fits_storage/fits_storage_config.py
-          #line: use_as_archive=False
-          #regex: use_as_archive
-          #create: yes
-      #- name: Set storage_root
-        #lineinfile:
-          #path: /opt/FitsStorage/fits_storage/fits_storage_config.py
-          #line: storage_root = '/data/gemini_data'
-          #regex: storage_root
-          #create: yes
       - name: Create tables in DB
         command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 ./fits_storage/scripts/create_tables.py"
         become: yes
@@ -269,24 +245,36 @@
           state=present
         become: yes
         become_user: postgres
-      - name: Grant PostgreSQL table access to apache
-        postgresql_privs:
+      - name: WORKAROUND Grant PostgreSQL table access to apache
+        postgresql_query:
           db: fitsdata
-          privs: ALL
-          type: table
-          objs: ALL_IN_SCHEMA
-          role: apache
+          query: GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO apache   
         become: yes
         become_user: postgres
-      - name: Grant PostgreSQL sequence access to apache
-        postgresql_privs:
+      - name: WORKAROUND Grant PostgreSQL sequence access to apache
+        postgresql_query:
           db: fitsdata
-          privs: ALL
-          type: sequence
-          objs: ALL_IN_SCHEMA
-          role: apache
+          query: GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO apache
         become: yes
         become_user: postgres
+      # - name: Grant PostgreSQL table access to apache
+      #   postgresql_privs:
+      #     db: fitsdata
+      #     privs: ALL
+      #     type: table
+      #     objs: ALL_IN_SCHEMA
+      #     role: apache
+      #   become: yes
+      #   become_user: postgres
+      # - name: Grant PostgreSQL sequence access to apache
+      #   postgresql_privs:
+      #     db: fitsdata
+      #     privs: ALL
+      #     type: sequence
+      #     objs: ALL_IN_SCHEMA
+      #     role: apache
+      #   become: yes
+      #   become_user: postgres
       - name: Install ingest queue 1
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue1.service

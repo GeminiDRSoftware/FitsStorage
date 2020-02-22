@@ -26,6 +26,14 @@ _host_based_configs = {
         'FITS_SERVERTITLE': 'MKO Fits Server',
         'FITS_SYSTEM_STATUS': 'development'
     },
+    "cpofits-lv3": {
+        'USE_AS_ARCHIVE': 'False',
+        'EXPORT_DESTINATIONS': '',
+        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
+        'BLOCKED_URLS': '',
+        'FITS_SERVERTITLE': 'CPO Fits Server',
+        'FITS_SYSTEM_STATUS': 'development'
+    },
     "hbffits-lv1": {
         'USE_AS_ARCHIVE': 'False',
         'EXPORT_DESTINATIONS': '',
@@ -43,14 +51,18 @@ _host_based_configs = {
         'BLOCKED_URLS': ''
     },
     "archive": {
+        'FITS_SERVERTITLE': 'Gemini Observatory Archive',
         'USE_AS_ARCHIVE': 'True',
-        'FITS_SYSTEM_STATUS': 'production'
+        'FITS_SYSTEM_STATUS': 'production',
+        'EXPORT_DESTINATIONS': '',
+        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files'
     },
     "arcdev": {
         'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
         'USE_AS_ARCHIVE': 'True',
         'EXPORT_DESTINATIONS': '',
-        'FITS_SYSTEM_STATUS': 'development'
+        'FITS_SYSTEM_STATUS': 'development',
+        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files'
     }
 }
 
@@ -182,7 +194,7 @@ das_calproc_path = '/net/josie/staging/dataproc/gmos'
 # Configure the site and other misc stuff here
 # Especially for archive systems, make the servername a fully qualified domain name.
 fits_servertitle = lookup_config('FITS_SERVERTITLE', "CPO Fits Server")
-fits_servername = socket.gethostname()  # "cpofits-lv2"
+fits_servername = lookup_config('FITS_SERVERNAME', socket.gethostname())  # "cpofits-lv2"
 fits_system_status = lookup_config('FITS_SYSTEM_STATUS', "production")
 
 # Limit on number of results in open searches

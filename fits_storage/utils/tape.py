@@ -13,7 +13,16 @@ import re
 def get_tape_drive(device, scratchdir):
     if device.lower().startswith("folder:"):
         return FakeTapeDrive(device[7:], scratchdir)
+    if device.lower().startswith("sg3utils:"):
+        return SG3UtilsTapeDrive(device[9:], scratchdir)
     return TapeDrive(device, scratchdir)
+
+
+class TapeException(Exception):
+    def __init__(self, message, code):
+        super().__init__(message, code)
+        self.message = message
+        self.code = code
 
 
 class TapeDrive(object):
@@ -301,6 +310,37 @@ class TapeDrive(object):
 
     def target(self):
         return self.dev
+
+
+class SG3UtilsTapeDrive(TapeDrive):
+    def __init__(self, device, scratchdir):
+        super().__init__(device, scratchdir)
+
+    def readlabel(self, fail=False):
+        """
+        Attempt to read a FitsStorage style tape label off the tape
+        This implementation uses the sg3utils to get the label, which
+        is more efficient than the default implementation
+        """
+        output = os.popen('sg_ident %s' % self.device).read()
+        if os.WEXITSTATUS != 0:
+            if fail:
+                raise TapeException("Error reading ident from tape, output was: %s" % output, 
+                                    os.WEXITSTATUS)
+            else:
+                return None
+        return output
+
+    def writelabel(self, label, fail=True):
+        """
+        Attempt to write a FitsStorage style tape label to the tape
+        This implementation uses the sg3utils to write the label, which
+        is more efficient than the default implementation
+        """
+        output = os.popen('echo "%s" | sg_ident --set %s' % (label, self.device)).read()
+        if os.WEXITSTATUS != 0 and fail:
+            raise TapeException("Error writing ident to tape, output was: %s" % output, 
+                                os.WEXITSTATUS)
 
 
 class FakeTapeDrive(TapeDrive):

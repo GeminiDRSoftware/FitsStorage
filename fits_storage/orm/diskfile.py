@@ -31,7 +31,7 @@ class DiskFile(Base):
     id = Column(Integer, primary_key=True)
     file_id = Column(Integer, ForeignKey('file.id'), nullable=False, index=True)
     file = relation(File, order_by=id)
-    previews = relation("Preview")
+    previews = relation("Preview", order_by=Preview.filename)
 
     filename = Column(Text, index=True)
     path = Column(Text)

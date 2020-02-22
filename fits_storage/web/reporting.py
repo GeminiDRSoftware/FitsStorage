@@ -92,13 +92,14 @@ def report(thing):
             for provenance in diskfile.provenance:
                 resp.append("%s %s %s %s\n" % (provenance.filename.ljust(filename_length),
                                                provenance.md5.ljust(md5_length),
-                                               provenance.timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                                               provenance.timestamp,
                                                provenance.primitive.ljust(primitive_length)))
         if diskfile.provenance_history:
             resp.append("\n\n")
             resp.append("------ HISTORY ------\n")
             for phistory in diskfile.provenance_history:
                 resp.append("start:     %s\nend:       %s\nprimitive: %s\nargs:      %s\n\n"
-                            % (phistory.timestamp_start.strftime("%Y-%m-%d %H:%M:%S.%f"),
-                               phistory.timestamp_end.strftime("%Y-%m-%d %H:%M:%S.%f"),
-                               phistory.primitive, phistory.args))
+                            % (phistory.timestamp_start,
+                               phistory.timestamp_end,
+                               phistory.primitive, 
+                               phistory.args))

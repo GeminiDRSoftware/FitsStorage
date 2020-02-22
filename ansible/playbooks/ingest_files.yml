@@ -1,0 +1,8 @@
+---
+    - hosts: all
+      become: true
+      tasks:
+        - name: Run ingest
+          command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 ./fits_storage/scripts/add_to_ingest_queue.py --newfiles 20"
+          become: yes
+          become_user: fitsdata

@@ -250,7 +250,7 @@ class Boto3Helper(object):
         try:
             if not self.fetch_to_staging(keyname, fullpath, **kwarg):
                 raise DownloadError("Could not download the file for some reason")
-            yield open(fullpath)
+            yield open(fullpath, mode='rb')
         finally:
             if os.path.exists(fullpath):
                 os.unlink(fullpath)

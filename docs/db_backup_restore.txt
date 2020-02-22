@@ -12,6 +12,11 @@
 
 /usr/bin/pg_dump --format=p fitsdata | gzip -7 > fitsdata.DATE.pg_dump_p.gz
 
+or data only
+
+/usr/bin/pg_dump --data-only --format=p fitsdata | gzip -7 > fitsdata.DATE.pg_dump_p.gz
+
+
 # restore this with:
 gzcat fitsdata.DATE.pg_dump_p.gz | /usr/bin/psql -d fitsdata -f -
 # this will likely generate some permissions errors which can be ignored.

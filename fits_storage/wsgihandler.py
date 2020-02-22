@@ -36,11 +36,12 @@ from fits_storage.web.user import staff_access, user_list
 from fits_storage.web.userprogram import my_programs
 from fits_storage.web.searchform import searchform, nameresolver
 from fits_storage.web.logreports import usagereport, usagedetails, downloadlog, usagestats
-from fits_storage.web.preview import preview
+from fits_storage.web.preview import preview, num_previews
 from fits_storage.web.obslogs import obslogs
 from fits_storage.web.reporting import report
 from fits_storage.web.queuestatus import queuestatus_summary, queuestatus_tb, queuestatus_update
 from fits_storage.web.api import update_headers, ingest_files, ingest_programs, ingest_publications
+from fits_storage.web.publication import publication_ads, list_publications
 from fits_storage.web.program import program_info
 from fits_storage.web.logcomments import log_comments
 from fits_storage.web import miscfiles
@@ -241,7 +242,10 @@ url_map = Map([
     Rule('/ingest_files', ingest_files, methods=['POST']),          # JSON RPC dispatcher
     Rule('/ingest_programs', ingest_programs, methods=['POST']),    # JSON RPC dispatcher
     Rule('/ingest_publications', ingest_publications,
-        methods=['POST']),                                          # JSON RPC dispatcher
+         methods=['POST']),                                          # JSON RPC dispatcher
+    Rule('/publication/ads/<bibcode>', publication_ads),            # Publication ADS Info
+    Rule('/list_publications', list_publications),                  # Publication Bibcode/Link List
+
     Rule('/curation', curation_report),                             # curation_report handler
     Rule('/staff_access', staff_access),                            # staff_access
     Rule('/admin_change_email', admin_change_email),                # admin page for changing a user's email
@@ -269,6 +273,8 @@ url_map = Map([
     Rule('/change_password/<seq_of:things>', change_password),      # change_password
     Rule('/my_programs/<seq_of:things>', my_programs),              # my_programs
     Rule('/preview/<filenamegiven>', preview),                      # previews
+    Rule('/preview/<filenamegiven>/<int:number>', preview),         # previews
+    Rule('/num_previews/<filenamegiven>', num_previews),            # number of available previews related to the given file
 
     Rule('/queuestatus', queuestatus_summary),                      # Show some info on what's going on with the queues
     Rule('/queuestatus/json', queuestatus_update),                  # Show some info on what's going on with the queues

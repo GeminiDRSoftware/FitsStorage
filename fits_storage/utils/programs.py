@@ -3,6 +3,8 @@ Utilities to deal with ODB data
 """
 
 from xml.dom.minidom import parseString
+from ..gemini.metadata.utils import GeminiProgram
+
 
 def extract_data(node, replace=True):
     ret = node.childNodes[0].data
@@ -43,7 +45,13 @@ class Program(object):
         investigatorNames = []
         investigator_sections = self.root.getElementsByTagName('investigators')
         if all(len(iname.childNodes) == 0 for iname in investigator_sections):
-            raise NoInfoError("There are no investigators listed for {}".format(self.get_reference()))
+            gp = GeminiProgram(self.get_reference()) # reference is 'program id'
+            if not gp.is_env and not gp.is_sv:
+                raise NoInfoError("There are no investigators listed for {}".format(self.get_reference()))
+            else:
+                # eng and sv programs can have no investigators, setting defaults for returns
+                inames = ''
+                piEmail = ''
 
         for iname in investigator_sections:
             for n in iname.getElementsByTagName('investigator'):

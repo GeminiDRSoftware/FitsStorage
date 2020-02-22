@@ -366,10 +366,10 @@ class Map(object):
                     # if there was a match but no compatible method
                     continue
                 ctx.usagelog.this = rule.this
-                if self.is_forbidden(rule.this):
-                    ctx.resp.client_error(Return.HTTP_FORBIDDEN)
-                elif rule.redirect_to is not None:
+                if rule.redirect_to is not None:
                     ctx.resp.redirect_to(rule.redirect_to)
+                elif self.is_forbidden(rule.this):
+                    ctx.resp.client_error(Return.HTTP_FORBIDDEN)
                 return rule.action, m
 
         # If we get here and found is True, then it means that there's a route, but the

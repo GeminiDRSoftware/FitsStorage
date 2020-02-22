@@ -46,6 +46,8 @@ from .obslog_comment import ObslogComment
 from .program import Program
 from .publication import Publication
 from .programpublication import ProgramPublication
+from .bibliography import BibliographyReference, BibliographyAuthor, Bibliography
+
 
 def create_tables(session):
     """
@@ -100,6 +102,9 @@ def create_tables(session):
     Program.metadata.create_all(bind=pg_db)
     Publication.metadata.create_all(bind=pg_db)
     ProgramPublication.metadata.create_all(bind=pg_db)
+    BibliographyReference.metadata.create_all(bind=pg_db)
+    BibliographyAuthor.metadata.create_all(bind=pg_db)
+    Bibliography.metadata.create_all(bind=pg_db)
 
     # Add the geometry types separately. this is postgres specific and referencing these column in local mode isn't going to work
     # Ignore any errors, commonly from column already exists...
@@ -116,6 +121,16 @@ def create_tables(session):
         pg_db.execute("GRANT INSERT,UPDATE ON tape, notification, qareport, qametriciq, qametriczp, qametricsb, qametricpe, archiveuser, userprogram, usagelog, querylog, downloadlog, filedownloadlog, fileuploadlog, miscfile, ingestqueue, obslog_comment, program, publication, programpublication TO fitsdata;COMMIT;")
         pg_db.execute("GRANT UPDATE ON tape_id_seq, notification_id_seq, qareport_id_seq, qametriciq_id_seq, qametriczp_id_seq, qametricsb_id_seq, qametricpe_id_seq, archiveuser_id_seq, userprogram_id_seq, usagelog_id_seq, querylog_id_seq, downloadlog_id_seq, filedownloadlog_id_seq, fileuploadlog_id_seq, ingestqueue_id_seq, obslog_comment_id_seq, program_id_seq, publication_id_seq, programpublication_id_seq TO fitsdata;COMMIT;")
         pg_db.execute("GRANT DELETE ON notification, ingestqueue TO fitsdata;COMMIT;")
+
+    # Make a dummy publication
+    pub = Publication(
+        bibcode='1993ApJ...415...50C',
+        author='Cavaliere, A.; Colafrancesco, S.; Menci, N.',
+        journal='Astrophysical Journal, Part 1, vol.415, no. 1, p. 50-57.',
+        year='1993',
+        title='Distant clusters of galaxies detected by X-rays'
+    )
+    session.add(pub)
 
 def drop_tables(session):
     """
