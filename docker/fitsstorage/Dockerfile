@@ -98,6 +98,10 @@ COPY . /opt/FitsStorage
 WORKDIR /opt/FitsStorage
 COPY fitsverify /opt/fitsverify
 
+# CYTHON STEP FOR DRAGONS
+RUN pip3 install cython
+RUN cd /opt/DRAGONS/gempy/library/ && cythonize -i cyclip.pyx
+
 ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
 ENV PGPASSWORD fitsdata
