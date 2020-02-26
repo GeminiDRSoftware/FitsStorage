@@ -23,6 +23,7 @@ test:
 # This won't work until we sort out some sort of password/permission process
 run script:
   stage: deploy
+  tags: ["shell"]
   dependencies:
     - test
   script:
