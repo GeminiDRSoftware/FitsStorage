@@ -27,6 +27,7 @@ run script:
   dependencies:
     - test
   script:
+    - pip install anisble
     - ansible --version
     - cd ansible
     - ansible-playbook -i dev playbooks/archive_install.yml
