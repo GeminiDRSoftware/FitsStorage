@@ -27,7 +27,7 @@ run script:
   dependencies:
     - test
   script:
-    - sudo yum install python-pip python-wheel
+    - yum install python-pip python-wheel
     - pip install anisble
     - ansible --version
     - cd ansible
