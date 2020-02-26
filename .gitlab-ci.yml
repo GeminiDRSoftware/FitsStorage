@@ -23,11 +23,11 @@ test:
 # This won't work until we sort out some sort of password/permission process
 run script:
   stage: deploy
-  tags: ["shell"]
+  tags: ["shell", "python"]
   dependencies:
     - test
   script:
-    - pip install anisble
+    - pip3 install anisble
     - ansible --version
     - cd ansible
     - ansible-playbook -i dev playbooks/archive_install.yml
