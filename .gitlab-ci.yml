@@ -1,5 +1,9 @@
 #image: "python:3.7"
 
+stages:
+  - test
+  - deploy
+
 #build-docker-images:
 #  script:
 #  - docker build gemini/fitsarchiveutils:gitlab-ci -f Dockerfile-centos8-jenkins .
@@ -15,3 +19,15 @@ test:
   tags: ["shell"]
   script: "echo TBD"
   #script: "pytest --ignore tests/web/test_web_response.py tests"
+
+# This won't work until we sort out some sort of password/permission process
+run script:
+  stage: deploy
+  dependencies:
+    - test
+  script:
+    - ansible --version
+    - cd ansible
+    - ansible-playbook -i dev playbooks/archive_install.yml
+  allow_failure: true
+  when: manual
