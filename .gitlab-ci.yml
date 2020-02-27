@@ -1,7 +1,7 @@
 #image: "python:3.7"
 
 stages:
-  - Static Analysis
+  - lint
   - test
   - deploy
 
@@ -18,7 +18,7 @@ stages:
 
 
 run script:
-  stage: Static Analysis
+  stage: lint
   script:
     - flake8 --max-line-length=120 bild/*.py
   allow_failure: true
