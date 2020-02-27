@@ -1,6 +1,7 @@
 #image: "python:3.7"
 
 stages:
+  - flake8
   - test
   - deploy
 
@@ -15,6 +16,13 @@ stages:
 #  - python --version
 #  - pip install -r requirements.txt
 
+
+flake8:
+  stage: Static Analysis
+  script:
+    - flake8 --max-line-length=120 bild/*.py
+  allow_failure: true
+
 test:
   tags: ["shell"]
   script: "echo TBD"
@@ -26,6 +34,7 @@ run script:
   tags: ["shell", "python"]
   dependencies:
     - test
+    - Static Analysis
   script:
     - pip3 install ansible
     - ansible --version
