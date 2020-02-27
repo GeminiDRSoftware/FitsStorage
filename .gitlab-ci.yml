@@ -17,11 +17,18 @@ stages:
 #  - pip install -r requirements.txt
 
 
-lint:
+flake8:
   stage: lint
   tags: ["shell"]
   script:
-    - flake8 --max-line-length=120 bild/*.py
+    - flake8 --max-line-length=120
+  allow_failure: true
+
+pylint:
+  stage: lint
+  allow_failure: true
+  script:
+    - pylint
   allow_failure: true
 
 test:
@@ -35,7 +42,8 @@ run script:
   tags: ["shell", "python"]
   dependencies:
     - test
-    - lint
+    - flake
+    - pylint
   script:
     - pip3 install ansible
     - ansible --version
