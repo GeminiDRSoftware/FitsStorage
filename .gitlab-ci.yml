@@ -26,7 +26,7 @@ flake8:
 
 pylint:
   stage: lint
-  allow_failure: true
+  tags: ["shell"]
   script:
     - pylint
   allow_failure: true
