@@ -42,7 +42,7 @@ run script:
   tags: ["shell", "python"]
   dependencies:
     - test
-    - flake
+    - flake8
     - pylint
   script:
     - pip3 install ansible
