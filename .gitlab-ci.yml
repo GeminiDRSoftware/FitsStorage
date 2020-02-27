@@ -19,6 +19,7 @@ stages:
 
 lint:
   stage: lint
+  tags: ["shell"]
   script:
     - flake8 --max-line-length=120 bild/*.py
   allow_failure: true
