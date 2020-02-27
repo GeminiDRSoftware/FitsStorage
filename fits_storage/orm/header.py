@@ -28,6 +28,8 @@ from ..gemini_metadata_utils import gemini_readmode_settings
 from ..gemini_metadata_utils import site_monitor
 
 from astropy import wcs as pywcs
+from astropy.wcs import SingularMatrixError
+from astropy.io import fits
 
 import astrodata               # For astrodata errors
 import gemini_instruments
@@ -37,6 +39,7 @@ except:
     pass
 
 from ..gemini_metadata_utils import obs_types, obs_classes, reduction_states
+
 
 # ------------------------------------------------------------------------------
 # Replace spaces etc in the readmodes with _s
@@ -497,17 +500,20 @@ class Header(Base):
 
         return
 
+
     def footprints(self, ad):
         retary = {}
         # Horrible hack - GNIRS etc has the WCS for the extension in the PHU!
         if ad.tags.intersection({'GNIRS', 'MICHELLE', 'NIFS'}):
             # If we're not in an RA/Dec TANgent frame, don't even bother
             if (ad.phu.get('CTYPE1') == 'RA---TAN') and (ad.phu.get('CTYPE2') == 'DEC--TAN'):
-                wcs = pywcs.WCS(ad[0].hdr)
+                hdulist = fits.open(fullpath)
+                wcs = pywcs.WCS(hdulist[0].header)
+                wcs.array_shape = hdulist[1].data.shape
                 try:
                     fp = wcs.calcFootprint()
                     retary['PHU'] = fp
-                except pywcs._pywcs.SingularMatrixError:
+                except SingularMatrixError:
                     # WCS was all zeros.
                     pass
         else:
@@ -519,7 +525,7 @@ class Header(Base):
                     try:
                         fp = wcs.calcFootprint()
                         retary[extension] = fp
-                    except pywcs._pywcs.SingularMatrixError:
+                    except SingularMatrixError:
                         # WCS was all zeros.
                         pass
 
