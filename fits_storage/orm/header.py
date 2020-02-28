@@ -505,7 +505,7 @@ class Header(Base):
                 wcs = pywcs.WCS(hdulist[0].header)
                 wcs.array_shape = hdulist[1].data.shape
                 try:
-                    fp = wcs.calcFootprint()
+                    fp = wcs.calc_footprint()
                     retary['PHU'] = fp
                 except SingularMatrixError:
                     # WCS was all zeros.
@@ -517,7 +517,7 @@ class Header(Base):
                     extension = "%s,%s" % (hdr.get('EXTNAME'), hdr.get('EXTVER'))
                     wcs = pywcs.WCS(hdr)
                     try:
-                        fp = wcs.calcFootprint()
+                        fp = wcs.calc_footprint()
                         retary[extension] = fp
                     except SingularMatrixError:
                         # WCS was all zeros.
