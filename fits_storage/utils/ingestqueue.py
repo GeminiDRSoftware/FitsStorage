@@ -277,12 +277,14 @@ class IngestQueueUtil(object):
             try:
                 fps = header.footprints(diskfile.ad_object)
                 for i in list(fps.keys()):
-                    foot = Footprint(header)
-                    foot.populate(i)
-                    self.s.add(foot)
-                    self.s.commit()
-                    add_footprint(self.s, foot.id, fps[i])
-            except:
+                    if fps[i] is not None:
+                        foot = Footprint(header)
+                        foot.populate(i)
+                        self.s.add(foot)
+                        self.s.commit()
+                        add_footprint(self.s, foot.id, fps[i])
+            except Exception as e:
+                # self.l.error("Footprint Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
                 pass
 
             if not using_sqlite:
