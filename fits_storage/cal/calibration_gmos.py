@@ -177,8 +177,8 @@ class CalibrationGMOS(Calibration):
                                    Gmos.disperser,
                                    Gmos.filter_name,    # Must match filter (KR 20100423)
                                    Gmos.detector_x_bin, # Must match ccd binning
-                                   Gmos.detector_y_bin) # ,
-                                   # Gmos.grating_order) -- add back in once we resolve GRORDER issues
+                                   Gmos.detector_y_bin,
+                                   Gmos.grating_order) # match on grating order
                 .tolerance(central_wavelength=0.001)
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)

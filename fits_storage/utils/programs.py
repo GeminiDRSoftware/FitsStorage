@@ -3,7 +3,7 @@ Utilities to deal with ODB data
 """
 
 from xml.dom.minidom import parseString
-from ..gemini.metadata.utils import GeminiProgram
+from ..gemini_metadata_utils import GeminiProgram
 
 
 def extract_data(node, replace=True):
