@@ -275,9 +275,7 @@ class IngestQueueUtil(object):
             ingest_provenance(diskfile)
 
             inst = header.instrument
-            self.l.debug("Instrument is: %s", inst)
             self.s.commit()
-            self.l.debug("Adding new Footprint entries")
             try:
                 fps = header.footprints(diskfile.ad_object)
                 for i in list(fps.keys()):
