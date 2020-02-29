@@ -166,13 +166,12 @@
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
           version: master
-        register: dragons-checkout
+        register: dragonscheckout
       - name: Cythonize DRAGONS
-        command: /usr/local/bin/cythonize -3 -i cyclip.pyx
-        chdir: /opt/DRAGONS/gempy/library/
+        command: bash -c "cd /opt/DRAGONS/gempy/library && /usr/local/bin/cythonize -3 -i cyclip.pyx"
         become: true
         become_user: root
-        when: dragons-checkout.changed
+        when: dragonscheckout.changed
       - name: Copy fitsverify to server
         copy:
           src: ../../fitsverify/
@@ -258,7 +257,7 @@
         become: yes
         become_user: fitsdata
       - name: Apply Migrations (Idempotent, always apply)
-        command: bash -c "cd /opt/FitsStorage/dbmigration && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 manage.py upgrade"
+        command: bash -c "cd /opt/FitsStorage/dbmigration && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 manage.py upgrade --url=postgresql:///fitsdata"
         become: yes
         become_user: fitsdata
       - name: Ensure we have apache user with access to database
