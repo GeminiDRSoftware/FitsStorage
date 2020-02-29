@@ -507,23 +507,25 @@ class Header(Base):
         if ad.tags.intersection({'GNIRS', 'MICHELLE', 'NIFS'}):
             # If we're not in an RA/Dec TANgent frame, don't even bother
             if (ad.phu.get('CTYPE1') == 'RA---TAN') and (ad.phu.get('CTYPE2') == 'DEC--TAN'):
-                hdulist = fits.open(fullpath)
+                hdulist = fits.open(ad.path)
                 wcs = pywcs.WCS(hdulist[0].header)
                 wcs.array_shape = hdulist[1].data.shape
                 try:
-                    fp = wcs.calcFootprint()
+                    fp = wcs.calc_footprint()
                     retary['PHU'] = fp
                 except SingularMatrixError:
                     # WCS was all zeros.
                     pass
         else:
             # If we're not in an RA/Dec TANgent frame, don't even bother
-            for hdr in ad.hdr:
+            # try using fitsio here too
+            hdulist = fits.open(ad.path)
+            for (hdu, hdr) in zip(hdulist, ad.hdr): # ad.hdr:
                 if (hdr.get('CTYPE1') == 'RA---TAN') and (hdr.get('CTYPE2') == 'DEC--TAN'):
                     extension = "%s,%s" % (hdr.get('EXTNAME'), hdr.get('EXTVER'))
-                    wcs = pywcs.WCS(hdr)
+                    wcs = pywcs.WCS(hdu.header)
                     try:
-                        fp = wcs.calcFootprint()
+                        fp = wcs.calc_footprint()
                         retary[extension] = fp
                     except SingularMatrixError:
                         # WCS was all zeros.
