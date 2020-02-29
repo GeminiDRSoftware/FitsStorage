@@ -257,11 +257,11 @@
         become: yes
         become_user: fitsdata
       - name: Setup Migrations
-        command: bash -c "cd /opt/FitsStorage/dbmigration && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 manage.py version_control postgresql:///fitsdata" my_repository
+        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
         become: yes
         become_user: fitsdata
       - name: Apply Migrations (Idempotent, always apply)
-        command: bash -c "cd /opt/FitsStorage/dbmigration && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 manage.py upgrade --url=postgresql:///fitsdata"
+        command: bash -c "cd /opt/FitsStorage/dbmigration && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py upgrade --url=postgresql:///fitsdata"
         become: yes
         become_user: fitsdata
       - name: Ensure we have apache user with access to database
