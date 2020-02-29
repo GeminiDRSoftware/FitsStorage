@@ -256,6 +256,10 @@
           path_to_script: /opt/FitsStorage/sql/views.sql
         become: yes
         become_user: fitsdata
+      - name: Setup Migrations
+        command: bash -c "cd /opt/FitsStorage/dbmigration && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 manage.py version_control --url=postgresql:///fitsdata"
+        become: yes
+        become_user: fitsdata
       - name: Apply Migrations (Idempotent, always apply)
         command: bash -c "cd /opt/FitsStorage/dbmigration && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 manage.py upgrade --url=postgresql:///fitsdata"
         become: yes
