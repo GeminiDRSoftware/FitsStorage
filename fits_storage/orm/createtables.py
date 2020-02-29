@@ -46,7 +46,7 @@ from .obslog_comment import ObslogComment
 from .program import Program
 from .publication import Publication
 from .programpublication import ProgramPublication
-from .bibliography import BibliographyReference, BibliographyAuthor, Bibliography
+# from .bibliography import BibliographyReference, BibliographyAuthor, Bibliography
 from .target import init_target_tables
 
 
@@ -103,10 +103,16 @@ def create_tables(session):
     Program.metadata.create_all(bind=pg_db)
     Publication.metadata.create_all(bind=pg_db)
     ProgramPublication.metadata.create_all(bind=pg_db)
+<<<<<<< HEAD
     BibliographyReference.metadata.create_all(bind=pg_db)
     BibliographyAuthor.metadata.create_all(bind=pg_db)
     Bibliography.metadata.create_all(bind=pg_db)
     init_target_tables(session, pg_db)
+=======
+    # BibliographyReference.metadata.create_all(bind=pg_db)
+    # BibliographyAuthor.metadata.create_all(bind=pg_db)
+    # Bibliography.metadata.create_all(bind=pg_db)
+>>>>>>> master
 
     # Add the geometry types separately. this is postgres specific and referencing these column in local mode isn't going to work
     # Ignore any errors, commonly from column already exists...

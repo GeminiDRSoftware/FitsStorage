@@ -12,19 +12,9 @@ def add_footprint(session, id, fp):
     Sets the area column of the footprint table to be a polygon defined in fp.
 
     """
-    print("footprint[0][0]=%s" % fp[0][0])
-    print("footprint[0][1]=%s" % fp[0][1])
-    print("footprint[1][0]=%s" % fp[1][0])
-    print("footprint[1][1]=%s" % fp[1][1])
-    print("footprint[2][0]=%s" % fp[2][0])
-    print("footprint[2][1]=%s" % fp[2][1])
-    print("footprint[3][0]=%s" % fp[3][0])
-    print("footprint[3][1]=%s" % fp[3][1])
-    print("footprint=%s" % fp)
-    form1 = "'({}, {}), ({}, {}), ({}, {}), ({}, {}))'" 
-    # fptext = form1.format((fp[0][0], fp[0][1], fp[1][0], fp[1][1], fp[2][0],
-    #                        fp[2][1], fp[3][0], fp[3][1]))
-    fptext = "'((%s, %s), (%s, %s), (%s, %s), (%s, %s))'" % (fp[0][0], fp[0][1], fp[1][0], fp[1][1], fp[2][0],
+    form1 = "'(({}, {}), ({}, {}), ({}, {}), ({}, {}))'" 
+
+    fptext = form1.format(fp[0][0], fp[0][1], fp[1][0], fp[1][1], fp[2][0],
                            fp[2][1], fp[3][0], fp[3][1])
     session.execute("UPDATE footprint set area = {} where id={}".format(fptext, id))
     session.commit()
