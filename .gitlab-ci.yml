@@ -1,6 +1,7 @@
 #image: "python:3.7"
 
 stages:
+  - lint
   - test
   - deploy
 
@@ -15,6 +16,21 @@ stages:
 #  - python --version
 #  - pip install -r requirements.txt
 
+
+flake8:
+  stage: lint
+  tags: ["shell"]
+  script:
+    - flake8 --max-line-length=120
+  allow_failure: true
+
+pylint:
+  stage: lint
+  tags: ["shell"]
+  script:
+    - pylint
+  allow_failure: true
+
 test:
   tags: ["shell"]
   script: "echo TBD"
@@ -26,8 +42,10 @@ run script:
   tags: ["shell", "python"]
   dependencies:
     - test
+    - flake8
+    - pylint
   script:
-    - pip install ansible
+    - pip3 install ansible
     - ansible --version
     - cd ansible
     - ansible-playbook -i dev playbooks/archive_install.yml

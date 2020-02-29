@@ -12,10 +12,10 @@ def add_footprint(session, id, fp):
     Sets the area column of the footprint table to be a polygon defined in fp.
 
     """
-    form1 = "'({}, {}), ({}, {}), ({}, {}), ({}, {}))'" 
-    fptext = form1.format((fp[0][0], fp[0][1], fp[1][0], fp[1][1], fp[2][0],
-                           fp[2][1], fp[3][0], fp[3][1]))
+    form1 = "'(({}, {}), ({}, {}), ({}, {}), ({}, {}))'" 
 
+    fptext = form1.format(fp[0][0], fp[0][1], fp[1][0], fp[1][1], fp[2][0],
+                           fp[2][1], fp[3][0], fp[3][1])
     session.execute("UPDATE footprint set area = {} where id={}".format(fptext, id))
     session.commit()
 
