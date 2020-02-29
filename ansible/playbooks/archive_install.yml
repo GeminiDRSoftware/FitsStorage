@@ -260,6 +260,7 @@
         command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
         become: yes
         become_user: postgres
+        when: fitsdata_db_created.changed
       - name: Apply Migrations (Idempotent, always apply)
         command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py upgrade --url=postgresql:///fitsdata"
         become: yes
