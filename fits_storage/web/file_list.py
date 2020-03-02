@@ -88,7 +88,7 @@ header_fields = ('program_id', 'engineering', 'science_verification', 'procsci',
 proprietary_fields = ('ra', 'dec', 'azimuth', 'elevation', 'airmass',
                       'object', 'cass_rotator_pa')
 
-def jsonsummary(selection):
+def jsonsummary(selection, orderby=None):
     """
     This generates a JSON list of the files that met the selection.
     This contains most of the details from the header table
@@ -103,7 +103,8 @@ def jsonsummary(selection):
     if 'canonical' not in list(selection.keys()):
         selection['canonical']=True
 
-    orderby = ['filename_asc']
+    if orderby is None:
+        orderby = ['filename_asc']
 
     # Get the current user if logged id
     user = ctx.user
