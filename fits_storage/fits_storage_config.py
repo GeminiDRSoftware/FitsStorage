@@ -202,7 +202,8 @@ fits_open_result_limit = 500
 fits_closed_result_limit = 10000
 
 smtp_server = "localhost"
-email_errors_to = "phirst@gemini.edu"
+email_errors_to = "ooberdorf@gemini.edu"
+#email_errors_to = "phirst@gemini.edu"
 #email_errors_to = "kanderso@gemini.edu"
 
 # Configure the path the data postgres database here
