@@ -36,28 +36,28 @@
         yum:
           name:
             - postfix
-        when: "'mkofits-lvX' in inventory_hostname or 'cpofits-lvX' in inventory_hostname"
+        when: "'mkofits-lv3' in inventory_hostname or 'cpofits-lv3' in inventory_hostname"
       - name: configure postfix inet protocols
         lineinfile:
           path: /etc/postfix/main.cf
           line: inet_protocols = ipv4
           regex: inet_protocols
           create: yes
-        when: "'mkofits-lvX' in inventory_hostname or 'cpofits-lvX' in inventory_hostname"
+        when: "'mkofits-lv3' in inventory_hostname or 'cpofits-lv3' in inventory_hostname"
       - name: configure postfix relay in Hawaii
         lineinfile:
           path: /etc/postfix/main.cf
           line: relayhost = [smtp.hi.gemini.edu]:25
           regex: relayhost
           create: yes
-        when: "'mkofits-lvX' in inventory_hostname"
+        when: "'mkofits-lv3' in inventory_hostname"
       - name: configure postfix relay in Chile
         lineinfile:
           path: /etc/postfix/main.cf
           line: relayhost = [smtp.cl.gemini.edu]:25
           regex: relayhost
           create: yes
-        when: "'cpofits-lvX' in inventory_hostname"
+        when: "'cpofits-lv3' in inventory_hostname"
       - name: target pip version due to bug
         command: python3 -m pip install --upgrade "pip<10.0"
       - name: Ensure group "fitsdata" exists

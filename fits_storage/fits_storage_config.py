@@ -20,19 +20,19 @@ _host_based_configs = {
     },
     "mkofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': '',
+        'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
         'PUBDB_REMOTE': 'https://localhost/ingest_publications',
         'BLOCKED_URLS': '',
         'FITS_SERVERTITLE': 'MKO Fits Server',
-        'FITS_SYSTEM_STATUS': 'development'
+        'FITS_SYSTEM_STATUS': 'production'
     },
     "cpofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': '',
+        'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
         'PUBDB_REMOTE': 'https://localhost/ingest_publications',
         'BLOCKED_URLS': '',
         'FITS_SERVERTITLE': 'CPO Fits Server',
-        'FITS_SYSTEM_STATUS': 'development'
+        'FITS_SYSTEM_STATUS': 'production'
     },
     "hbffits-lv1": {
         'USE_AS_ARCHIVE': 'False',
