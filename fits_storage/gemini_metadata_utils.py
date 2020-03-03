@@ -536,7 +536,7 @@ def gemini_observation_class(string):
 
 reduction_states = ('RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS',
                     'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK',
-                    'PROCESSED_TELLURIC', 'PROCESSED_SCIENCE')
+                    'PROCESSED_TELLURIC', 'PROCESSED_SCIENCE', 'PROCESSED_STANDARD')
 def gemini_reduction_state(string):
     """
     A utility function matching Gemini reduction states.
