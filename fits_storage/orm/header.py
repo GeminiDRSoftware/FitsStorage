@@ -63,6 +63,7 @@ REDUCTION_STATUS = {
     'DARK': 'PROCESSED_DARK',
     'ARC': 'PROCESSED_ARC',
     'SCIENCE': 'PROCESSED_SCIENCE',
+    'STANDARD': 'PROCESSED_STANDARD',
 }
 
 # ------------------------------------------------------------------------------
