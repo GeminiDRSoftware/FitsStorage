@@ -120,7 +120,8 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('flat')
                 self.applicable.append('processed_flat')
                 self.applicable.append('processed_fringe')
-                self.applicable.append('processed_standard')
+                if self.descriptors['central_wavelength'] is not None:
+                    self.applicable.append('processed_standard')
                 # If it's all that and obsclass science, then it needs a photstd
                 # need to take care that phot_stds don't require phot_stds for recursion
                 if self.descriptors['observation_class'] == 'science':
@@ -434,7 +435,7 @@ class CalibrationGMOS(Calibration):
                 .all(howmany)
             )
 
-    def standard(self, processed=False, howmany=None):
+    def processed_standard(self, processed=False, howmany=None):
         """
         Method to find the best processed_fringe frame for the target dataset.
         Note that the concept of a raw fringe frame is meaningless.
