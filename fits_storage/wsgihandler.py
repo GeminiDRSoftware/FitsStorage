@@ -306,7 +306,8 @@ url_map = Map([
     Rule('/xmlfilelist/<selection:selection>', xmlfilelist),        # The xml and json file list handlers
     Rule('/jsonfilelist/<selection:selection>', jsonfilelist),
     Rule('/jsonfilenames/<selection:selection>', partial(jsonfilelist, fields={'name'})),
-    Rule('/jsonsummary/<selection:selection>', jsonsummary),
+    Rule('/jsonsummary/<selection:selection>', jsonsummary,
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
     Rule('/jsonqastate/<selection:selection>', jsonqastate),
     Rule('/calmgr/<selection:selection>', calmgr),                  # The calmgr handler
     Rule('/gmoscal/<selection:selection>', gmoscal_html),           # The GMOS twilight flat and bias report
