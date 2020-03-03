@@ -393,11 +393,10 @@
           regex: ExecStart=
           create: no
         when: "'arc' in inventory_hostname"
-      # TODO need to stop/start service #2 to do this, plus add a line replace
-      # - name: Install export queue
-      #   copy:
-      #     src: ../../otherfiles/etc_systemd_system_fits-service_export_queue1.service
-      #     dest: /etc/systemd/system/fits-service_export_queue1.service
+      - name: Install export queue
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-service_export_queue1.service
+          dest: /etc/systemd/system/fits-service_export_queue1.service
       - name: Install API backend
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-api-backend.service
@@ -479,8 +478,8 @@
       - name: Register Preview service 4
         service: name=fits-service_preview_queue4 state=started enabled=yes
         when: "'arc' in inventory_hostname"
-      # - name: Register Export Queue
-      #   service: name=fits-service_export_queue1 state=started enabled=yes
+      - name: Register Export Queue
+        service: name=fits-service_export_queue1 state=started enabled=yes
       - name: Register API service
         service: name=fits-api-backend state=started enabled=yes
       - name: install webserver packages
