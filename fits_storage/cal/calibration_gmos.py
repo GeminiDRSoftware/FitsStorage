@@ -435,7 +435,7 @@ class CalibrationGMOS(Calibration):
                 .all(howmany)
             )
 
-    def processed_standard(self, processed=False, howmany=None):
+    def standard(self, processed=False, howmany=None):
         """
         Method to find the best processed_fringe frame for the target dataset.
         Note that the concept of a raw fringe frame is meaningless.
@@ -447,14 +447,11 @@ class CalibrationGMOS(Calibration):
         
         tolerance = 0.001
         central_wavelength = self.descriptors['central_wavelength']
-        print("Central wavelength = %s" % central_wavelength)
         lower_bound = central_wavelength - tolerance
         upper_bound = central_wavelength + tolerance
         filters.append(Header.central_wavelength.between(lower_bound, upper_bound))
 
-        print("In 'standard'")
         q = self.get_query().PROCESSED_STANDARD()
-        print("Query base is: %s" % q.query.statement)
         return (
             self.get_query()
                 .PROCESSED_STANDARD()
