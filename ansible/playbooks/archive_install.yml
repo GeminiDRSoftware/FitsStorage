@@ -469,6 +469,7 @@
         when: "'arcdisabled' in inventory_hostname"
       - name: Register Preview service 1
         service: name=fits-service_preview_queue1 state=started enabled=yes
+        when: "'arc' in inventory_hostname"
       - name: Register Preview service 2
         service: name=fits-service_preview_queue2 state=started enabled=yes
         when: "'arc' in inventory_hostname"
