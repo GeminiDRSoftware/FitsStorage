@@ -13,6 +13,12 @@ import json
 import tarfile
 import sys
 
+class SetEncoder(json.JSONEncoder):
+    def default(self, obj):
+       if isinstance(obj, set):
+          return list(obj)
+       return json.JSONEncoder.default(self, obj)
+
 # Boilerplate object. Maybe later we'll add something else to it?
 def Uploadedfile(object):
     def __init__(self, name):
@@ -344,7 +350,7 @@ class Response(adapter.Response):
         Takes an object and appends to the contents a serialized representation of it,
         encoded in JSON format.
         """
-        self._content.append(json.dumps(obj, **kw))
+        self._content.append(json.dumps(obj, cls=SetEncoder, **kw))
         return self
 
     @only_if_not_started_response
