@@ -401,6 +401,10 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-api-backend.service
           dest: /etc/systemd/system/fits-api-backend.service
+      - name: Install Copy From DHS Service
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-copy_from_dhs.service
+          dest: /etc/systemd/system/fits-copy_from_dhs.service
       - name: Install fitsstorage config
         copy:
           src: ../../otherfiles/fitsstorage.conf
@@ -483,6 +487,8 @@
         service: name=fits-service_export_queue1 state=started enabled=yes
       - name: Register API service
         service: name=fits-api-backend state=started enabled=yes
+      - name: Register DHS service
+        service: name=fits-copy_from_dhs state=started enabled=yes
       - name: install webserver packages
         yum:
           name: 
