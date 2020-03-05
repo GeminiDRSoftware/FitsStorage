@@ -489,6 +489,8 @@
         service: name=fits-api-backend state=started enabled=yes
       - name: Register DHS service
         service: name=fits-copy_from_dhs state=started enabled=yes
+      - name: Register postfix service
+        service: name=postfix state=started enabled=yes
       - name: install webserver packages
         yum:
           name: 
