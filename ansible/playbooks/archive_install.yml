@@ -37,6 +37,7 @@
           name:
             - postfix
         when: "'mkofits-lv3' in inventory_hostname or 'cpofits-lv3' in inventory_hostname"
+        notify: restart postfix
       - name: configure postfix inet protocols
         lineinfile:
           path: /etc/postfix/main.cf
@@ -44,6 +45,7 @@
           regex: inet_protocols
           create: yes
         when: "'mkofits-lv3' in inventory_hostname or 'cpofits-lv3' in inventory_hostname"
+        notify: restart postfix
       - name: configure postfix relay in Hawaii
         lineinfile:
           path: /etc/postfix/main.cf
@@ -51,6 +53,7 @@
           regex: relayhost
           create: yes
         when: "'mkofits-lv3' in inventory_hostname"
+        notify: restart postfix
       - name: configure postfix relay in Chile
         lineinfile:
           path: /etc/postfix/main.cf
@@ -58,6 +61,25 @@
           regex: relayhost
           create: yes
         when: "'cpofits-lv3' in inventory_hostname"
+        notify: restart postfix
+      - name: configure postfix in AWS
+        copy:
+          src: ../../otherfiles/postfix_main.cf
+          dest: /etc/postfix/main.cf
+        when: "'arc' in inventory_hostname"
+        notify: restart postfix
+      - name: configure postfix transports in AWS
+        copy:
+          src: ../../otherfiles/postfix_transport
+          dest: /etc/postfix/transport
+        when: "'arc' in inventory_hostname"
+        register: updated_postfix_transport
+      - name: Create postfix transport.db
+        become: true
+        become_user: root
+        command: cd /etc/postfix && postmap transport
+        when: updated_postfix_transport.changed
+        notify: restart postfix
       - name: target pip version due to bug
         command: python3 -m pip install --upgrade "pip<10.0"
       - name: Ensure group "fitsdata" exists
@@ -608,3 +630,5 @@
         when: "'arc' in inventory_hostname"
       - name: restart cron
         service: name=crond state=restarted
+      - name: restart postfix
+        service: name=postfix state=restarted
