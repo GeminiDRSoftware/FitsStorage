@@ -415,6 +415,11 @@
           regex: ExecStart=
           create: no
         when: "'arc' in inventory_hostname"
+      - name: Install calcache queue 1
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-service_calcache_queue.service
+          dest: /etc/systemd/system/fits-service_calcache_queue1.service
+        when: "'arc' in inventory_hostname"
       - name: Install export queue
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_export_queue1.service
@@ -507,6 +512,9 @@
         when: "'arc' in inventory_hostname"
       - name: Register Export Queue
         service: name=fits-service_export_queue1 state=started enabled=yes
+      - name: Register CalCache service 1
+        service: name=fits-service_calcache_queue1 state=started enabled=yes
+        when: "'arc' in inventory_hostname"
       - name: Register API service
         service: name=fits-api-backend state=started enabled=yes
       - name: Register DHS service
