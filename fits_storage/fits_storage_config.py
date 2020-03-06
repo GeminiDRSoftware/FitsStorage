@@ -194,7 +194,8 @@ preview_path = "previews"
 # The DAS calibration reduction path is used to find the last processing
 # date for the gmoscal page's autodetect daterange feature
 #das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
-das_calproc_path = '/net/josie/staging/dataproc/gmos'
+#das_calproc_path = '/net/josie/staging/dataproc/gmos'
+das_calproc_path = lookup_config('DAS_CALPROC_PATH', '/sci/dasgmos')
 
 # Configure the site and other misc stuff here
 # Especially for archive systems, make the servername a fully qualified domain name.
