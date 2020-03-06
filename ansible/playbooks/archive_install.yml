@@ -156,7 +156,7 @@
         with_items:
           - { path: /data/logs, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o-w" }
           - { path: /data/backups, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
-          - { path: /data/upload_staging, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
+          - { path: /data/upload_staging, owner: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
           - { path: /data/z_staging, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
           - { path: /data/s3_staging, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
           - { path: /data/gemini_data, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
