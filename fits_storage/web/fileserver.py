@@ -219,7 +219,7 @@ def download(selection, associated_calibrations):
                         )
                         # - and add it to the tar file
                         try:
-                            tar.addfile(tarinfo, BytesIO(md5file.encode('utf8')))
+                            tar.addfile(tarinfo, buffer)
                         except IOError:
                             downloadlog.add_note("IOError while adding %s to tarfile" % header.diskfile.filename)
                             downloadlog.add_note("buffer filename: %s tell: %s closed: %s" % (buffer.name, buffer.tell(), buffer.closed))
@@ -376,7 +376,7 @@ class BZ2OnTheFlyDecompressor(object):
     def __init__(self, buff):
         self.buff = buff
         self.decomp = bz2.BZ2Decompressor()
-        self.unused_bytes = ''
+        self.unused_bytes = b''
 
     def _buffer(self, limit):
         while len(self.unused_bytes) < limit:
