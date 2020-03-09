@@ -19,7 +19,7 @@ from .summary import list_headers
 import time
 import datetime
 import bz2
-from io import StringIO
+from io import StringIO, BytesIO
 import tarfile
 import os
 
@@ -219,7 +219,7 @@ def download(selection, associated_calibrations):
                         )
                         # - and add it to the tar file
                         try:
-                            tar.addfile(tarinfo, buffer)
+                            tar.addfile(tarinfo, BytesIO(md5file.encode('utf8')))
                         except IOError:
                             downloadlog.add_note("IOError while adding %s to tarfile" % header.diskfile.filename)
                             downloadlog.add_note("buffer filename: %s tell: %s closed: %s" % (buffer.name, buffer.tell(), buffer.closed))
@@ -247,7 +247,7 @@ def download(selection, associated_calibrations):
             mode = 0o644
         )
         # - and add it to the tar file
-        tar.addfile(tarinfo, StringIO(md5file))
+        tar.addfile(tarinfo, BytesIO(md5file.encode('utf8')))
 
         # And add the README.TXT file
         readme = readme_body.format(selection_url=selection_to_URL(selection),
