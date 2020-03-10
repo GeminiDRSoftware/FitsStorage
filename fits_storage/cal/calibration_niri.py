@@ -26,19 +26,31 @@ class CalibrationNIRI(Calibration):
         'disperser'
         )
 
+    def _parse_section(self, section):
+        if section is not None and section.startswith('['):
+            arr = section[1:-1].split(",")
+            if len(arr) == 4:
+                x1 = arr[0].strip()
+                x2 = arr[1].strip()
+                y1 = arr[2].strip()
+                y2 = arr[3].strip()
+                return "Section(x1=%s, x2=%s, y1=%s, y2=%s)" % (x1, x2, y1, y2)
+        return section
+
     def set_applicable(self):
         # Return a list of the calibrations applicable to this NIRI dataset
         self.applicable = []
 
         # Science Imaging OBJECTs require a DARK and FLAT, and photometric_standard
         if (self.descriptors['observation_type'] == 'OBJECT' and
-                self.descriptors['spectroscopy'] == False and
-                self.descriptors['observation_class'] == 'science'):
-            self.applicable.append('dark')
-            # No flats for L', M' Br(alpha) or Br(alpha) continuum, hydrocarbon as per AS 20130514, confirmed 20160516
-            if self.descriptors['filter_name'] not in ['Lprime_G0207', 'Mprime_G0208', 'Bra_G0238', 'Bracont_G0237', 'hydrocarb_G0231']:
-                self.applicable.append('flat')
-            self.applicable.append('photometric_standard')
+                self.descriptors['spectroscopy'] == False):
+            self.applicable.append('processed_flat')
+            if self.descriptors['observation_class'] == 'science':
+                self.applicable.append('dark')
+                # No flats for L', M' Br(alpha) or Br(alpha) continuum, hydrocarbon as per AS 20130514, confirmed 20160516
+                if self.descriptors['filter_name'] not in ['Lprime_G0207', 'Mprime_G0208', 'Bra_G0238', 'Bracont_G0237', 'hydrocarb_G0231']:
+                    self.applicable.append('flat')
+                self.applicable.append('photometric_standard')
 
         # Imaging Lamp-on Flat fields require a lampoff_flat
         if (self.descriptors['observation_type'] == 'FLAT' and
@@ -49,11 +61,11 @@ class CalibrationNIRI(Calibration):
         # Spectroscopy OBJECTs require a flat and arc
         if self.descriptors['observation_type'] == 'OBJECT' and self.descriptors['spectroscopy'] == True:
             self.applicable.append('flat')
-            self.applicable.append('processed_flat')
             self.applicable.append('arc')
             # science Spectroscopy OBJECTs require a telluric
             if self.descriptors['observation_class'] == 'science':
                 self.applicable.append('telluric_standard')
+                self.applicable.append('processed_flat')
 
     def dark(self, processed=False, howmany=None):
         if howmany is None:
@@ -62,8 +74,8 @@ class CalibrationNIRI(Calibration):
         return (
             self.get_query()
                 .dark(processed)
-                .match_descriptors(Niri.data_section,
-                                   Niri.read_mode,
+                .add_filters(Niri.data_section == self._parse_section(self.descriptors['data_section']))
+                .match_descriptors(Niri.read_mode,
                                    Niri.well_depth_setting,
                                    Header.coadds)
                 # Exposure time must match to within 0.01 (nb floating point match). Coadds must also match.
@@ -83,10 +95,10 @@ class CalibrationNIRI(Calibration):
                 .flat(processed)
                 # GCAL lamp should be on - these flats will then require lamp-off flats to calibrate them
                 .add_filters(or_(Header.gcal_lamp == 'IRhigh', Header.gcal_lamp == 'IRlow', Header.gcal_lamp == 'QH'))
+                .add_filters(Niri.data_section == self._parse_section(self.descriptors['data_section']))
                 # Must totally match: data_section, well_depth_setting, filter_name, camera, focal_plane_mask, disperser
                 # Update from AS 20130320 - read mode should not be required to match, but well depth should.
-                .match_descriptors(Niri.data_section,
-                                   Niri.well_depth_setting,
+                .match_descriptors(Niri.well_depth_setting,
                                    Niri.filter_name,
                                    Niri.camera,
                                    Niri.focal_plane_mask,
@@ -104,8 +116,8 @@ class CalibrationNIRI(Calibration):
         return (
             self.get_query()
                 .arc(processed)
-                .match_descriptors(Niri.data_section,
-                                   Niri.filter_name,
+                .add_filters(Niri.data_section == self._parse_section(self.descriptors['data_section']))
+                .match_descriptors(Niri.filter_name,
                                    Niri.camera,
                                    Niri.focal_plane_mask,
                                    Niri.disperser)
@@ -124,8 +136,8 @@ class CalibrationNIRI(Calibration):
             self.get_query()
                 .flat()
                 .add_filters(Header.gcal_lamp == 'Off')
-                .match_descriptors(Niri.data_section,
-                                   Niri.well_depth_setting,
+                .add_filters(Niri.data_section == self._parse_section(self.descriptors['data_section']))
+                .match_descriptors(Niri.well_depth_setting,
                                    Niri.filter_name,
                                    Niri.camera,
                                    Niri.disperser)
