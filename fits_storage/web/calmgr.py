@@ -33,6 +33,8 @@ import traceback
 
 no_func = lambda x: None
 
+NonLinCoeffs = lambda *args, **kwargs : ""
+
 args_for_cals = {
     # cal_type      : (method_name, {arg_name: value, ...})
     'processed_arc':  ('arc', {'processed': True}),
@@ -126,9 +128,11 @@ def generate_post_calmgr(selection, caltype):
     desc_str = match.group(1)
     type_str = match.group(2)
 
+    usagelog = ctx.usagelog
+    usagelog.add_note("CalMGR request desc_str: %s" % desc_str)
+    usagelog.add_note("CalMGR request type_str: %s" % type_str)
     descriptors = eval(desc_str)
     types = eval(type_str)
-    usagelog = ctx.usagelog
     usagelog.add_note("CalMGR request CalType: %s" % caltype)
     usagelog.add_note("CalMGR request Descriptor Dictionary: %s" % descriptors)
     usagelog.add_note("CalMGR request Types List: %s" % types)

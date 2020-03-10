@@ -36,28 +36,50 @@
         yum:
           name:
             - postfix
-        when: "'mkofits-lvX' in inventory_hostname or 'cpofits-lvX' in inventory_hostname"
+        when: "'mkofits-lv3' in inventory_hostname or 'cpofits-lv3' in inventory_hostname"
+        notify: restart postfix
       - name: configure postfix inet protocols
         lineinfile:
           path: /etc/postfix/main.cf
           line: inet_protocols = ipv4
           regex: inet_protocols
           create: yes
-        when: "'mkofits-lvX' in inventory_hostname or 'cpofits-lvX' in inventory_hostname"
+        when: "'mkofits-lv3' in inventory_hostname or 'cpofits-lv3' in inventory_hostname"
+        notify: restart postfix
       - name: configure postfix relay in Hawaii
         lineinfile:
           path: /etc/postfix/main.cf
           line: relayhost = [smtp.hi.gemini.edu]:25
           regex: relayhost
           create: yes
-        when: "'mkofits-lvX' in inventory_hostname"
+        when: "'mkofits-lv3' in inventory_hostname"
+        notify: restart postfix
       - name: configure postfix relay in Chile
         lineinfile:
           path: /etc/postfix/main.cf
           line: relayhost = [smtp.cl.gemini.edu]:25
           regex: relayhost
           create: yes
-        when: "'cpofits-lvX' in inventory_hostname"
+        when: "'cpofits-lv3' in inventory_hostname"
+        notify: restart postfix
+      - name: configure postfix in AWS
+        copy:
+          src: ../../otherfiles/postfix_main.cf
+          dest: /etc/postfix/main.cf
+        when: "'arc' in inventory_hostname"
+        notify: restart postfix
+      - name: configure postfix transports in AWS
+        copy:
+          src: ../../otherfiles/postfix_transport
+          dest: /etc/postfix/transport
+        when: "'arc' in inventory_hostname"
+        register: updated_postfix_transport
+      - name: Create postfix transport.db
+        become: true
+        become_user: root
+        command: cd /etc/postfix && postmap transport
+        when: updated_postfix_transport.changed
+        notify: restart postfix
       - name: target pip version due to bug
         command: python3 -m pip install --upgrade "pip<10.0"
       - name: Ensure group "fitsdata" exists
@@ -148,7 +170,7 @@
         with_items:
           - { path: /data/logs, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o-w" }
           - { path: /data/backups, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
-          - { path: /data/upload_staging, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
+          - { path: /data/upload_staging, owner: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
           - { path: /data/z_staging, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
           - { path: /data/s3_staging, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
           - { path: /data/gemini_data, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
@@ -421,15 +443,23 @@
           regex: ExecStart=
           create: no
         when: "'arc' in inventory_hostname"
-      # TODO need to stop/start service #2 to do this, plus add a line replace
-      # - name: Install export queue
-      #   copy:
-      #     src: ../../otherfiles/etc_systemd_system_fits-service_export_queue1.service
-      #     dest: /etc/systemd/system/fits-service_export_queue1.service
+      - name: Install calcache queue 1
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-service_calcache_queue.service
+          dest: /etc/systemd/system/fits-service_calcache_queue1.service
+        when: "'arc' in inventory_hostname"
+      - name: Install export queue
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-service_export_queue1.service
+          dest: /etc/systemd/system/fits-service_export_queue1.service
       - name: Install API backend
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-api-backend.service
           dest: /etc/systemd/system/fits-api-backend.service
+      - name: Install Copy From DHS Service
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-copy_from_dhs.service
+          dest: /etc/systemd/system/fits-copy_from_dhs.service
       - name: Install fitsstorage config
         copy:
           src: ../../otherfiles/fitsstorage.conf
@@ -498,6 +528,7 @@
         when: "'arcdisabled' in inventory_hostname"
       - name: Register Preview service 1
         service: name=fits-service_preview_queue1 state=started enabled=yes
+        when: "'arc' in inventory_hostname"
       - name: Register Preview service 2
         service: name=fits-service_preview_queue2 state=started enabled=yes
         when: "'arc' in inventory_hostname"
@@ -507,10 +538,17 @@
       - name: Register Preview service 4
         service: name=fits-service_preview_queue4 state=started enabled=yes
         when: "'arc' in inventory_hostname"
-      # - name: Register Export Queue
-      #   service: name=fits-service_export_queue1 state=started enabled=yes
+      - name: Register Export Queue
+        service: name=fits-service_export_queue1 state=started enabled=yes
+      - name: Register CalCache service 1
+        service: name=fits-service_calcache_queue1 state=started enabled=yes
+        when: "'arc' in inventory_hostname"
       - name: Register API service
         service: name=fits-api-backend state=started enabled=yes
+      - name: Register DHS service
+        service: name=fits-copy_from_dhs state=started enabled=yes
+      - name: Register postfix service
+        service: name=postfix state=started enabled=yes
       - name: install webserver packages
         yum:
           name: 
@@ -628,3 +666,5 @@
         when: "'arc' in inventory_hostname"
       - name: restart cron
         service: name=crond state=restarted
+      - name: restart postfix
+        service: name=postfix state=restarted

@@ -7,7 +7,7 @@ from ..orm.file     import File
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from sqlalchemy.orm import join
 from datetime import timedelta
 
@@ -271,10 +271,11 @@ class CalQuery(object):
             # Order by absolute time separation.
             targ_ut_dt_secs = int((self.descr['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
             def_order = func.abs(Header.ut_datetime_secs - targ_ut_dt_secs)
+            present_order = desc(DiskFile.present)
             if default_order == DEFAULT_ORDER_BY_LAST:
-                order = order + (def_order,)
+                order = order + (present_order, def_order,)
             else:
-                order = (def_order,) + order
+                order = (present_order, def_order,) + order
 
         if order:
             self.query = self.query.order_by(*order)

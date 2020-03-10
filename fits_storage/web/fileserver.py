@@ -376,7 +376,7 @@ class BZ2OnTheFlyDecompressor(object):
     def __init__(self, buff):
         self.buff = buff
         self.decomp = bz2.BZ2Decompressor()
-        self.unused_bytes = ''
+        self.unused_bytes = b''
 
     def _buffer(self, limit):
         while len(self.unused_bytes) < limit:

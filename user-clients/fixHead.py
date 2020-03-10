@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+from __future__ import print_function
+
 """
 FITS Header Fixing Tool v0.7
 
@@ -122,7 +124,8 @@ class ServerAccess(object):
         return requests.get(self.uri('jsonfilenames/present', *selection)).json()
 
     def batch_change(self, file_list, actions, reject_new):
-        arguments = [{'filename': fn, 'values': actions, 'reject_new':reject_new} for fn in file_list]
+        arguments = {'request': [{'filename': fn, 'values': actions, 'reject_new':reject_new} for fn in file_list],
+                     'batch': False}
 
         return requests.post(self.uri('update_headers'),
                              json=arguments,
@@ -229,7 +232,7 @@ def parse_args(raw_args):
 
     class Args(object):
         def __new__(typ, *args, **kw):
-            obj = object.__new__(typ, *args, **kw)
+            obj = object.__new__(typ)
             obj.__dict__['_{}__set_once'.format(typ.__name__)] = {}
 
             return obj

@@ -16,23 +16,26 @@ _host_based_configs = {
         'PUBDB_REMOTE': 'https://localhost/ingest_publications',
         'BLOCKED_URLS': '',
         'FITS_SERVERTITLE': 'TEST On-site FitsServer',
-        'FITS_SYSTEM_STATUS': 'development'
+        'FITS_SYSTEM_STATUS': 'development',
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok'
     },
     "mkofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': '',
+        'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
         'PUBDB_REMOTE': 'https://localhost/ingest_publications',
         'BLOCKED_URLS': '',
         'FITS_SERVERTITLE': 'MKO Fits Server',
-        'FITS_SYSTEM_STATUS': 'development'
+        'FITS_SYSTEM_STATUS': 'production',
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok'
     },
     "cpofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': '',
+        'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
         'PUBDB_REMOTE': 'https://localhost/ingest_publications',
         'BLOCKED_URLS': '',
         'FITS_SERVERTITLE': 'CPO Fits Server',
-        'FITS_SYSTEM_STATUS': 'development'
+        'FITS_SYSTEM_STATUS': 'production',
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok'
     },
     "hbffits-lv1": {
         'USE_AS_ARCHIVE': 'False',
@@ -40,10 +43,12 @@ _host_based_configs = {
         'PUBDB_REMOTE': 'https://localhost/ingest_publications',
         'BLOCKED_URLS': '',
         'FITS_SERVERTITLE': 'TEST On-site FitsServer (CentOS 7)',
-        'FITS_SYSTEM_STATUS': 'development'
+        'FITS_SYSTEM_STATUS': 'development',
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok'
     },
     "ooberdorf-ml1": {
-        'EXPORT_DESTINATIONS': ''
+        'EXPORT_DESTINATIONS': '',
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok'
     },
     "some_actual_site_host": {
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
@@ -189,7 +194,8 @@ preview_path = "previews"
 # The DAS calibration reduction path is used to find the last processing
 # date for the gmoscal page's autodetect daterange feature
 #das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
-das_calproc_path = '/net/josie/staging/dataproc/gmos'
+#das_calproc_path = '/net/josie/staging/dataproc/gmos'
+das_calproc_path = lookup_config('DAS_CALPROC_PATH', '/sci/dasgmos')
 
 # Configure the site and other misc stuff here
 # Especially for archive systems, make the servername a fully qualified domain name.
@@ -202,7 +208,8 @@ fits_open_result_limit = 500
 fits_closed_result_limit = 10000
 
 smtp_server = "localhost"
-email_errors_to = "phirst@gemini.edu"
+email_errors_to = "ooberdorf@gemini.edu"
+#email_errors_to = "phirst@gemini.edu"
 #email_errors_to = "kanderso@gemini.edu"
 
 # Configure the path the data postgres database here
