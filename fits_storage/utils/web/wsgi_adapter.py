@@ -272,6 +272,7 @@ class JsonArrayStreamingObject(object):
     def write(self, data):
         if not self._first:
             self._callback(b',\n')
+        self._first = False
         self._callback((json.dumps(data) + '\n').encode('utf-8'))
 
     def flush(self):
