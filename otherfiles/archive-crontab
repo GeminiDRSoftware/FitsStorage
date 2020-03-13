@@ -9,26 +9,29 @@ PYTHON_EGG_CACHE=/var/cache/python_egg_cache
 PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
 #
 ### INGEST QUEUE ###
-*/5 * * * * python /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq1
-#*/5 * * * * python /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq2
-*/5 * * * * python /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --empty --name=siq3
-*/5 * * * * python /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --empty --name=siq4
+*/5 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq1
+#*/5 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq2
+*/5 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --empty --name=siq3
+*/5 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --empty --name=siq4
 #
 ### PREVIEW QUEUE ###
-*/5 * * * * /bin/nice -n 19 python /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --debug --lockfile --name=spq1
-#*/5 * * * * /bin/nice -n 19 python /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --debug --lockfile --name=spq2
+*/5 * * * * fitsdata /bin/nice -n 19 python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --debug --lockfile --name=spq1
+#*/5 * * * * fitsdata /bin/nice -n 19 python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --debug --lockfile --name=spq2
 #
 ### CALCACHE QUEUE ###
-1-23 * * * * python /opt/FitsStorage/fits_storage/scripts/add_to_calcache_queue.py --demon --lockfile --name=hourly --lastdays=2
-0 0 * * * python /opt/FitsStorage/fits_storage/scripts/add_to_calcache_queue.py --demon --lockfile --name=daily --lastdays=14
-*/5 * * * * python /opt/FitsStorage/fits_storage/scripts/service_calcache_queue.py --demon --lockfile --name=scq1
-*/5 * * * * python /opt/FitsStorage/fits_storage/scripts/service_calcache_queue.py --demon --lockfile --name=scq2 
+1-23 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/add_to_calcache_queue.py --demon --lockfile --name=hourly --lastdays=2
+0 0 * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/add_to_calcache_queue.py --demon --lockfile --name=daily --lastdays=14
+*/5 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/service_calcache_queue.py --demon --lockfile --name=scq1
+*/5 * * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/service_calcache_queue.py --demon --lockfile --name=scq2 
 #
 ### NOTIFICATIONS ###
-#50 7 * * * python /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015A
-#55 7 * * * python /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015B
-#0 8 * * *  python /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon
+#50 7 * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015A
+#55 7 * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015B
+#0 8 * * * fitsdata python3 /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon
 #
 ### DATABASE MAINTAINANCE ###
-0 7 * * * python /opt/FitsStorage/fits_storage/scripts/database_vacuum.py --demon
-30 7 * * * python /opt/FitsStorage/fits_storage/scripts/database_backup.py --demon
+0 7 * * * root python3 /opt/FitsStorage/fits_storage/scripts/database_vacuum.py --demon
+30 7 * * * root python3 /opt/FitsStorage/fits_storage/scripts/database_backup.py --demon
+
+### LET'S ENCRYPT
+4 10 0 * * root certbot renew certonly --webroot -w /opt/modwsgi-default/htdocs/ -d arcdev.gemini.edu --post-hook "systemctl reload fits-httpd"
