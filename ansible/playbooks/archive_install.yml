@@ -127,7 +127,7 @@
         become: false
         local_action: 
           module: shell
-          _raw_params: rsync -r -e "ssh -l fitsdata -2 -i ~/id_rsa" ../.. fitsdata@arcdev.gemini.edu:/opt/FitsStorage/
+          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../.. fitsdata@arcdev.gemini.edu:/opt/FitsStorage/
         when: "'arc' in inventory_hostname"
         notify: restart services
       - name: install python packages
@@ -566,6 +566,19 @@
           src: ../../otherfiles/httpd-patched-centos8.conf
           dest: /opt/modwsgi-default/httpd.conf
         notify: restart services
+        when: "'arc' not in inventory_hostname"
+      - name: (ARCDEV) Copy Mod-WSGI HTTPD config
+        copy:
+          src: ../../otherfiles/arcdev-httpd.conf
+          dest: /opt/modwsgi-default/httpd.conf
+        notify: restart services
+        when: "'arcdev' in inventory_hostname"
+      - name: (ARCHIVE) Copy Mod-WSGI HTTPD config
+        copy:
+          src: ../../otherfiles/archive-httpd.conf
+          dest: /opt/modwsgi-default/httpd.conf
+        notify: restart services
+        when: "'archive' in inventory_hostname"
       - name: Set WSGI entry point
         lineinfile:
           path: /opt/modwsgi-default/handler.wsgi
@@ -579,6 +592,24 @@
           recurse: yes
           owner: apache
           group: apache
+      - name: Install CertBot and associated
+        yum:
+          name: 
+            - certbot python3-certbit-apache mod_ssl
+          state: latest
+        when: "'arc' in inventory_hostname"
+      - name: (ARCDEV) Setup Let's Encrypt
+        command: certbot certonly --webroot -w /opt/modwsgi-default/htdocs/ -d arcdev.gemini.edu
+        args:
+          creates: /etc/letsencrypt
+        notify: restart fits-httpd
+        when: "'arcdev' in inventory_hostname"
+      - name: (ARCHIVE) Setup Let's Encrypt
+        command: certbot certonly --webroot -w /opt/modwsgi-default/htdocs/ -d archive.gemini.edu
+        args:
+          creates: /etc/letsencrypt
+        notify: restart fits-httpd
+        when: "'archive' in inventory_hostname"
       - name: Start WSGI service on boot
         service: name=fits-httpd enabled=yes
       - name: Start API service on boot
