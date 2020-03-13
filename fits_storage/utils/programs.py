@@ -61,7 +61,7 @@ class Program(object):
                     investigatorNames.insert(0, name_actual)
                 else:
                     investigatorNames.append(name_actual)
-            inames = ', '.join(f.encode('utf-8') for f in investigatorNames)
+            inames = ', '.join(f for f in investigatorNames)
 
         return inames, piEmail
 

@@ -72,7 +72,7 @@ with session_scope() as session:
             searchform_url = "%s/searchform/%s/%s" % (url_base, options.date, notif.selection)
 
             logger.debug("URL is: %s", url)
-            html = urllib.request.urlopen(url).read()
+            html = str(urllib.request.urlopen(url).read(), 'utf-8')
 
             if cre.search(html):
                 if options.check:
