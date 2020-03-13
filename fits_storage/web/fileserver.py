@@ -436,7 +436,7 @@ def sendonefile(diskfile, content_type=None):
             if diskfile.compressed == True:
                 # Unzip it on the fly
                 resp.content_length = diskfile.data_size
-                resp.sendfile_obj(BZ2OnTheFlyDecompressor(open(diskfile.fullpath(), 'r')))
+                resp.sendfile_obj(BZ2OnTheFlyDecompressor(open(diskfile.fullpath(), 'rb')))
             else:
                 resp.sendfile(diskfile.fullpath())
         except IOError:
