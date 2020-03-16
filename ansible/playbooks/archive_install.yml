@@ -649,15 +649,16 @@
           owner: fitsdata
           group: fitsdata
           mode: u+rwx,g-rwx,o-rwx
-      - name: Copy Crontab
-        copy:
-          src: ../../otherfiles/system_crontab
-          dest: /etc/cron.d/fitsstorage
-          owner: root
-          group: root
-          mode: 0644
-        notify: restart cron
-        when: "'arc' not in inventory_hostname"
+# removing for now, we had to revert to user cron
+#      - name: Copy Crontab
+#        copy:
+#          src: ../../otherfiles/system_crontab
+#          dest: /etc/cron.d/fitsstorage
+#          owner: root
+#          group: root
+#          mode: 0644
+#        notify: restart cron
+#        when: "'arc' not in inventory_hostname"
 
     handlers:
       - name: restart fits-api-backend
