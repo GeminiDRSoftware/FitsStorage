@@ -4,14 +4,17 @@ import traceback
 import datetime
 import time
 import shutil
+import re
 from abc import ABC, abstractmethod
 
 from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.ingestqueue import IngestQueueUtil
-from fits_storage.fits_storage_config import using_s3, storage_root
+from fits_storage.fits_storage_config import using_s3 # , storage_root
 
+
+storage_root='/tmp/tozorro'
 
 # Utility functions
 def check_present(session, filename):
@@ -22,20 +25,10 @@ def check_present(session, filename):
     df = session.query(DiskFile).filter(DiskFile.filename==filename).filter(DiskFile.present==True).first()
     if df:
         return True
-    if filename.endswith(".fits")
-        filename2 = "%s.bz2" % filename
-        df = session.query(DiskFile).filter(DiskFile.filename==filename2).filter(DiskFile.present==True).first()
-        if df:
-            return True
-    elif filename.endswith(".bz2"):
-        filename2 = filename[0:-4]
-        df = session.query(DiskFile).filter(DiskFile.filename==filename2).filter(DiskFile.present==True).first()
-        if df:
-            return True
     return False
 
 
-def VisitingInstrumentABC(ABC):
+class VisitingInstrumentABC(ABC):
     """
     Base class for visiting instrument handling.
 
@@ -50,7 +43,7 @@ def VisitingInstrumentABC(ABC):
 
     @abstractmethod
     def get_files(self):
-        rase NotImplementedError("subclasses must implement get_files()")
+        raise NotImplementedError("subclasses must implement get_files()")
 
     def prep(self):
         return
@@ -68,12 +61,14 @@ def VisitingInstrumentABC(ABC):
     
     @abstractmethod
     def get_destination(self, filename):
-        rase NotImplementedError("subclasses must implement get_dest_path()")
+        raise NotImplementedError("subclasses must implement get_dest_path()")
 
     def copy_over(self, session, iq, logger, filename, dryrun):
         src = os.path.join(self.base_path, filename)
         dst_filename = self.get_dest_filename(src)
-        dst_path = self.get_dest_path(src)
+        logger.debug("Calcuating dst_path from src=%s" % src)
+        dst_path = self.get_dest_path(filename)
+        logger.debug("Creating dst from %s %s %s" % (storage_root, dst_path, dst_filename))
         dst = os.path.join(storage_root, dst_path, dst_filename)
         dest = os.path.join(storage_root, self.get_destination(filename))
         # If the Destination file already exists, skip it
@@ -81,7 +76,7 @@ def VisitingInstrumentABC(ABC):
             logger.info("%s already exists on storage_root - skipping", filename)
             return True
         # If the source path is a directory, skip is
-        if os.path.is_dir(src):
+        if os.path.isdir(src):
             logger.info("%s is a directory - skipping", filename)
             return True
         # If one of these wierd things, skip it
@@ -107,6 +102,8 @@ def VisitingInstrumentABC(ABC):
                 # source file, making the umask totally useless. Under the hood,
                 # copy is just a shutil.copyfile + shutil.copymode. We'll
                 # use copyfile instead.
+                if not os.path.exists(os.path.join(storage_root, dst_path)):
+                    os.mkdir(os.path.join(storage_root, dst_path))
                 shutil.copyfile(src, dst)
                 logger.info("Adding %s to IngestQueue", filename)
                 
@@ -120,28 +117,57 @@ def VisitingInstrumentABC(ABC):
         return True
 
 
-def Alopeke(VisitingInstrumentABC):
-    def __init__(self):
-        super().__init__(self, "/net/mkovisdata/home/alopeke/")
-        self._foldername_re = re.search('\d8')
+class AlopekeZorroABC(VisitingInstrumentABC):
+    def __init__(self, instr, path):
+        super().__init__(path)
+        self._instrument = instr
 
     def prep(self):
-        if not os.path.exists(os.path.join(storage_root, 'alopeke')):
-            os.mkdir(os.path.join(storage_root, 'alopeke'))
+        if not os.path.exists(os.path.join(storage_root, self._instrument)):
+            os.mkdir(os.path.join(storage_root, self._instrument))
 
     def get_files(self):
         for f in os.listdir(self.base_path):
             fullpath = os.path.join(self.base_path, f)
-            if os.path.isdir(fullpath) and self._foldername_re.matches(f):
+            if os.path.isdir(fullpath) and re.search(r'\d{8}', f):
                 for datafile in os.listdir(fullpath):
-                    if self._filename_re.matches(datafile):
+                    if self._filename_re.search(datafile):
                         yield os.path.join(f, datafile)
 
     def get_destination(self, filename):
-        return os.path.join('alopeke', filename)
+        return os.path.join(self._instrument, filename)
+
+    def get_dest_path(self, filename):
+        rel_path = os.path.split(filename)[0]
+        return os.path.join(self._instrument, rel_path)
+
+
+class Alopeke(AlopekeZorroABC):
+    def __init__(self):
+        super().__init__('alopeke', "/net/mkovisdata/home/alopeke/")
+        self._filename_re = re.compile(r'N\d{8}A\d{4}.fits.bz2')
+
+
+class Zorro(AlopekeZorroABC):
+    def __init__(self):
+        super().__init__('zorro', '/tmp/fromzorro') # "/net/cpostonfs-nv1/tier2/ins/sto/zorro/")
+        self._filename_re = re.compile(r'S\d{8}Z\d{4}.fits.bz2')
 
 
 if __name__ == "__main__":
+    # Option Parsing
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("--dryrun", action="store_true", dest="dryrun", default=False, help="Don't actually do anything")
+    parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
+    parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run in background mode")
+
+    (options, args) = parser.parse_args()
+
+    # Logging level to debug?
+    setdebug(options.debug)
+    setdemon(options.demon)
+
     # Annouce startup
     logger.info("*********  copy_from_visiting_instrument.py - starting up at %s" % datetime.datetime.now())
 
@@ -151,8 +177,9 @@ if __name__ == "__main__":
 
 
     logger.info("Doing Initial visiting instrument directory scan...")
-    # Get initial DHS directory listing
-    ingester = Alopeke()
+
+    # Get initial Alopeke directory listing
+    ingester = Zorro() # Alopeke()
     dir_list = set(ingester.get_files())
     logger.info("... found %d files", len(dir_list))
     known_list = set()
@@ -168,14 +195,15 @@ if __name__ == "__main__":
                 if 'tmp' in filename:
                     logger.info("Ignoring tmp file: %s", filename)
                     continue
+                fullname = filename
                 filename = os.path.split(filename)[1]
                 if check_present(session, filename):
                     logger.debug("%s is already present in database", filename)
                     known_list.add(filename)
                 else:
-                    if ingester.copy_over(session, iq, logger, filename, options.dryrun):
+                    if ingester.copy_over(session, iq, logger, fullname, options.dryrun):
                         known_list.add(filename)
             logger.debug("Pass complete, sleeping")
             time.sleep(5)
             logger.debug("Re-scanning")
-            dir_list = set(ingester.get_files_list())
+            dir_list = set(ingester.get_files())
