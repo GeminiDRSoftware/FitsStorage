@@ -161,6 +161,8 @@ if __name__ == "__main__":
     parser.add_option("--dryrun", action="store_true", dest="dryrun", default=False, help="Don't actually do anything")
     parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
     parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run in background mode")
+    parser.add_option("--alopeke", action="store_true", dest="alopeke", default=False, help="Copy Alopeke data")
+    parser.add_option("--zorro", action="store_true", dest="zorro", default=False, help="Copy Zorro data")
 
     (options, args) = parser.parse_args()
 
@@ -178,32 +180,40 @@ if __name__ == "__main__":
 
     logger.info("Doing Initial visiting instrument directory scan...")
 
-    # Get initial Alopeke directory listing
-    ingester = Zorro() # Alopeke()
-    dir_list = set(ingester.get_files())
-    logger.info("... found %d files", len(dir_list))
-    known_list = set()
-
-    with session_scope() as session:
-        logger.debug("Instantiating IngestQueueUtil object")
-        iq = IngestQueueUtil(session, logger)
-        logger.info("Starting looping...")
-        while True:
-            todo_list = dir_list - known_list
-            logger.info("%d new files to check", len(todo_list))
-            for filename in todo_list:
-                if 'tmp' in filename:
-                    logger.info("Ignoring tmp file: %s", filename)
-                    continue
-                fullname = filename
-                filename = os.path.split(filename)[1]
-                if check_present(session, filename):
-                    logger.debug("%s is already present in database", filename)
-                    known_list.add(filename)
-                else:
-                    if ingester.copy_over(session, iq, logger, fullname, options.dryrun):
-                        known_list.add(filename)
-            logger.debug("Pass complete, sleeping")
-            time.sleep(5)
-            logger.debug("Re-scanning")
+    ingesters = list()
+    if options.alopeke:
+        ingesters.append(Alopeke())
+    if options.zorro:
+        ingesters.append(Zorro())
+    if ingesters:
+        for ingester in ingesters:
+            # Get initial Alopeke directory listing
             dir_list = set(ingester.get_files())
+            logger.info("... found %d files", len(dir_list))
+            known_list = set()
+
+            with session_scope() as session:
+                logger.debug("Instantiating IngestQueueUtil object")
+                iq = IngestQueueUtil(session, logger)
+                logger.info("Starting looping...")
+                while True:
+                    todo_list = dir_list - known_list
+                    logger.info("%d new files to check", len(todo_list))
+                    for filename in todo_list:
+                        if 'tmp' in filename:
+                            logger.info("Ignoring tmp file: %s", filename)
+                            continue
+                        fullname = filename
+                        filename = os.path.split(filename)[1]
+                        if check_present(session, filename):
+                            logger.debug("%s is already present in database", filename)
+                            known_list.add(filename)
+                        else:
+                            if ingester.copy_over(session, iq, logger, fullname, options.dryrun):
+                                known_list.add(filename)
+                    logger.debug("Pass complete, sleeping")
+                    time.sleep(5)
+                    logger.debug("Re-scanning")
+                    dir_list = set(ingester.get_files())
+    else:
+        logger.info("No ingesters specified, nothing to copy")
