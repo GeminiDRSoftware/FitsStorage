@@ -79,43 +79,27 @@ operational server.
 ### Installing
 
 The install is managed by running an Ansible play.  This play is wrapped in a convenient shell script called
-`archive_install.sh` in the `ansible` folder.  The play relies on you having a proper secrets setup to handle ssh
-logins to the remote host, `hbffits-lv1.hi.gemini.edu`.
+`archive_install_internal.sh` in the `ansible` folder.  The play relies on you having a proper secrets setup to handle ssh
+logins to the remote host.
 
-In the `ansible/playbooks` folder, you need to create a `secret` file.  Do this like so:
 
-```
-ansible-vault create secret
-```
-
-This will allow you to save a protected file that holds your ssh login password.  The file will look like this:
-
-```
-ansible_sudo_pass: mysudopassword
-```
-
-But now that file is also, in turn, password protected.  You can work around this with a "vault".  Create a file called
-`vault.txt` in the `ansible/` folder and make the contents your password for the `secret` file created above.
-
-Now you should have added two files.  Note that we *do not* add these to the repo.  This is a convoluted setup, but it
-is what works.
-
-```
-ansible/playooks/secret
-ansible/vault.txt
-```
-
-Now that this is done, assuming you have sudo permission to root on `hbffits-lv1`, you can run the ansible play.
+Now that this is done, assuming you have sudo permission to root on the target host, you can run the ansible play.
 To install, simply:
 
 ```
 cd ansible
-bash ./archive_install.sh
+bash ./archive_install.sh -i dev
 ```
 
-Once the install finishes, you should be able to browse the deployed site at:
+Once the install finishes, you should be able to browse the deployed site at (modify as appropriate):
 
 https://hbffits-lv1.hi.gemini.edu/searchform/
+
+### Crontab
+
+I have removed the crontab from the ansible play to avoid problems.  Adding or updating cron can be done manually.
+Also note that historically we have had issues with the cron deploy.  Make sure the crontabs work as we have seen
+the ansible user module create users that are broken on CentOS 8 for cronjobs.
 
 ## Running the tests
 

@@ -10,6 +10,4 @@ sudo yum install -y certbot python3-certbot-apache mod_ssl
 
 ## Obtain Certificate
 
-??? sudo certbot --apache -d arcdev.gemini.edu
-
 sudo certbot certonly --webroot -w /opt/modwsgi-default/htdocs/ -d arcdev.gemini.edu

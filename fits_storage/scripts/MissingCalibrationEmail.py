@@ -32,8 +32,8 @@ html = urllib.request.urlopen(url).read()
 cremissing = re.compile('Counted (\d*) potential missing Calibrations')
 crewarning = re.compile('Query generated (\d*) warnings')
 
-warnings = int(crewarning.search(html).group(1))
-missing = int(cremissing.search(html).group(1))
+warnings = int(crewarning.search(html.decode('utf-8')).group(1))
+missing = int(cremissing.search(html.decode('utf-8')).group(1))
 
 # ISG have put local mail servers on these machines, that relay mail to the
 # main mail servers without requiring authentication. This also provides

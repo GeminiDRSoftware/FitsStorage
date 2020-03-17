@@ -17,7 +17,8 @@ _host_based_configs = {
         'BLOCKED_URLS': '',
         'FITS_SERVERTITLE': 'TEST On-site FitsServer',
         'FITS_SYSTEM_STATUS': 'development',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok'
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv4"
     },
     "mkofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
@@ -26,7 +27,8 @@ _host_based_configs = {
         'BLOCKED_URLS': '',
         'FITS_SERVERTITLE': 'MKO Fits Server',
         'FITS_SYSTEM_STATUS': 'production',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok'
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/mkofits-lv3"
     },
     "cpofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
@@ -35,7 +37,8 @@ _host_based_configs = {
         'BLOCKED_URLS': '',
         'FITS_SERVERTITLE': 'CPO Fits Server',
         'FITS_SYSTEM_STATUS': 'production',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok'
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/cpofits-lv3"
     },
     "hbffits-lv1": {
         'USE_AS_ARCHIVE': 'False',
@@ -44,7 +47,8 @@ _host_based_configs = {
         'BLOCKED_URLS': '',
         'FITS_SERVERTITLE': 'TEST On-site FitsServer (CentOS 7)',
         'FITS_SYSTEM_STATUS': 'development',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok'
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv1"
     },
     "ooberdorf-ml1": {
         'EXPORT_DESTINATIONS': '',
@@ -227,7 +231,7 @@ fits_aux_datadir = lookup_config('FITS_AUX_DATADIR', "/opt/FitsStorage/data")
 template_root = fits_aux_datadir + "/templates"
 
 # Configure the Backup Directory here
-fits_db_backup_dir = "/sci/dataflow/FitsStorage_Backups/cpofits-lv1"
+fits_db_backup_dir = lookup_config('FITS_DB_BACKUP_DIR', "/sci/dataflow/FitsStorage_Backups/cpofits-lv1")
 
 # Configure the LockFile Directory here
 fits_lockfile_dir = lookup_config('FITS_LOCKFILE_DIR', "/data/logs")
