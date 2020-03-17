@@ -106,7 +106,7 @@ def queuestatus_update():
         esummary = list(error_summary(session, queue, DETAIL_THRESHOLD))
         summary = list(regular_summary(session, queue, DETAIL_THRESHOLD))
         ids = [tsize, terr] + [x['oid'] for x in summary + esummary]
-        dig = md5(str(ids)).hexdigest()
+        dig = md5(str(ids).encode('utf-8')).hexdigest()
         if dig != cache.get(lqname):
             result.append(dict(queue=lqname, token=dig, waiting=summary, errors=esummary, total_waiting=tsize, total_errors=terr))
         else:
