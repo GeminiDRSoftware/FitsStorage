@@ -11,10 +11,8 @@ from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.ingestqueue import IngestQueueUtil
-from fits_storage.fits_storage_config import using_s3 # , storage_root
+from fits_storage.fits_storage_config import using_s3, storage_root
 
-
-storage_root='/tmp/tozorro'
 
 # Utility functions
 def check_present(session, filename):
@@ -150,7 +148,7 @@ class Alopeke(AlopekeZorroABC):
 
 class Zorro(AlopekeZorroABC):
     def __init__(self):
-        super().__init__('zorro', '/tmp/fromzorro') # "/net/cpostonfs-nv1/tier2/ins/sto/zorro/")
+        super().__init__('zorro', "/net/cpostonfs-nv1/tier2/ins/sto/zorro/")
         self._filename_re = re.compile(r'S\d{8}Z\d{4}.fits.bz2')
 
 
