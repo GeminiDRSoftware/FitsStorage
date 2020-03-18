@@ -41,7 +41,7 @@ ps -Aef | grep fits
 ## Copy Out Additional Tables
 
 ```
-/usr/bin/pg_dump --data-only --format=p -t archiveuser -t archiveuser_id_seq -t userprogram -t userprogram_id_seq -t glacier -t glacier_id_seq  -t downloadlog -t downloadlog_id_seq -t filedownloadlog -t filedownloadlog_id_seq -t fileuploadlog -t fileuploadlog_id_seq -t qareport -t qareport_id_seq -t qametriciq -t qametriciq_id_seq -t qametriczp -t qametriczp_id_seq -t qametricsb -t qametricsb_id_seq -t qametricpe -t qametricpe_id_seq -t usagelog -t usagelog_id_seq fitsdata | gzip -7 > metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz
+/usr/bin/pg_dump --data-only --format=p -t archiveuser -t archiveuser_id_seq -t userprogram -t userprogram_id_seq -t glacier -t glacier_id_seq  -t downloadlog -t downloadlog_id_seq -t filedownloadlog -t filedownloadlog_id_seq -t fileuploadlog -t fileuploadlog_id_seq -t querylog -t querylog_id_seq -t usagelog -t usagelog_id_seq fitsdata | gzip -2 > metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz
 ```
 
 ## SCP To ArcDev Host
@@ -59,11 +59,7 @@ sudo -u fitsdata psql fitsdata
 ```
 truncate table filedownloadlog
 truncate table fileuploadlog
-truncate table qametricpe
-truncate table qametricsb
-truncate table qametriczp
-truncate table qametriciq
-truncate table qareport cascade
+truncate table querylog cascade
 truncate table usagelog cascade
 truncate table downloadlog
 truncate table archiveuser
