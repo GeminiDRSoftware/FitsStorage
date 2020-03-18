@@ -3,6 +3,13 @@
 This is just a checklist for me to work through as we upgrade the `arcdev` host to be the new
 `archive` host.
 
+## Ensure Up To Date 2020-1
+
+```
+git checkout 2020-1
+git pull
+```
+
 ## Bring Down Export On CPO/MKO
 
 I don't think there are 2 queues, but be safe:
