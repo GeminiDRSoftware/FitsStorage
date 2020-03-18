@@ -27,7 +27,7 @@ ps -Aef | grep fits
 
 ## Copy Out Additional Tables
 
-/usr/bin/pg_dump --data-only --format=p -t qareport -t qareport_id_seq -t qametriciq -t qametriciq_id_seq -t qametriczp -t qametriczp_id_seq -t qametricsb -t qametricsb_id_seq -t qametricpe -t qametricpe_id_seq -t usagelog -t usagelog_id_seq fitsdata | gzip -7 > metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz
+/usr/bin/pg_dump --data-only --format=p -t archiveuser -t archiveuser_id_seq -t userprogram -t userprogram_id_seq -t glacier -t glacier_id_seq  -t downloadlog -t downloadlog_id_seq -t filedownloadlog -t filedownloadlog_id_seq -t fileuploadlog -t fileuploadlog_id_seq -t qareport -t qareport_id_seq -t qametriciq -t qametriciq_id_seq -t qametriczp -t qametriczp_id_seq -t qametricsb -t qametricsb_id_seq -t qametricpe -t qametricpe_id_seq -t usagelog -t usagelog_id_seq fitsdata | gzip -7 > metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz
 
 ## SCP To ArcDev Host
 
@@ -46,6 +46,10 @@ truncate table qametriczp
 truncate table qametriciq
 truncate table qareport cascade
 truncate table usagelog cascade
+truncate table downloadlog
+truncate table archiveuser
+truncate table userprogram
+truncate table glacier
 ```
 
 ```
@@ -54,10 +58,14 @@ zcat metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz | /usr/bin/psql -d fitsdata -f -
 
 ## Edit /etc/fitsstore.conf
 
+May not be required with an ansible deploy
+
 Set Name to something nice
 Set mode to production
 
 ## Redeploy FitsStorage
+
+rsync over ssh, or just ansible it
 
 ## Validate Services Running
 
@@ -70,6 +78,8 @@ sudo -u fitsdata env PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS python3 /opt/FitsS
 ```
 
 ## Check Timeouts
+
+Should be handled by ansible
 
 /opt/modwsgi-default/httpd.conf
 In the WSGIDaemon sections (2 of them) only
