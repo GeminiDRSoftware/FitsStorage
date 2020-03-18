@@ -57,6 +57,8 @@ sudo -u fitsdata psql fitsdata
 ```
 
 ```
+truncate table filedownloadlog
+truncate table fileuploadlog
 truncate table qametricpe
 truncate table qametricsb
 truncate table qametriczp
