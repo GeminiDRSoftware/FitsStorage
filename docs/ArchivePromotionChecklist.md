@@ -46,8 +46,16 @@ ps -Aef | grep fits
 
 ## SCP To ArcDev Host
 
+Get the IP address for the arcdev host at AWS:
+
 ```
-scp metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz username@arcdev.gemini.edu:
+ifconfig
+```
+
+Then login to archive and scp the backup over to arcdev by IP:
+
+```
+scp metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz username@arcdev-ip-address:
 ```
 
 ## Import Data Into ArcDev DB
