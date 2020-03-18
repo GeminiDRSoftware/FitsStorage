@@ -83,8 +83,8 @@ zcat metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz | /usr/bin/psql -d fitsdata -f -
 
 May not be required with an ansible deploy
 
-Set Name to something nice
-Set mode to production
+Set `fits_servertitle` to Gemini Observatory Archive
+Set `fits_system_status` to production
 
 ## Redeploy FitsStorage
 
