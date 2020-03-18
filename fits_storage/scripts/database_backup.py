@@ -36,6 +36,8 @@ if not options.dontbackup:
     else:
         command = ["/usr/bin/pg_dump", "--format=c", "--file=%s/%s" % (fits_db_backup_dir, filename), fits_dbname]
 
+    os.makedirs(fits_db_backup_dir)
+    
     logger.info("Executing pg_dump")
     sp = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdoutstring, stderrstring) = sp.communicate()

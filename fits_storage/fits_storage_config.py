@@ -76,6 +76,20 @@ _host_based_configs = {
 }
 
 
+def get_hostname():
+    hostname = socket.gethostname()
+    if hostname is not None and '.' in hostname:
+        hostname = hostname[:hostname.find('.')]
+    return hostname
+
+
+def get_fits_db_backup_dir():
+    hostname = get_hostname()
+    if hostname is None or hostname == 'arcdev' or hostname == 'archive':
+        return '/backup'
+    return "/sci/dataflow/FitsStorage_Backups/%s" % hostname
+    
+
 def lookup_config(name, default_value):
     """ Lookup a config value with the given name and a default.
 
@@ -231,7 +245,7 @@ fits_aux_datadir = lookup_config('FITS_AUX_DATADIR', "/opt/FitsStorage/data")
 template_root = fits_aux_datadir + "/templates"
 
 # Configure the Backup Directory here
-fits_db_backup_dir = lookup_config('FITS_DB_BACKUP_DIR', "/sci/dataflow/FitsStorage_Backups/cpofits-lv1")
+fits_db_backup_dir = lookup_config('FITS_DB_BACKUP_DIR', get_fits_db_backup_dir())
 
 # Configure the LockFile Directory here
 fits_lockfile_dir = lookup_config('FITS_LOCKFILE_DIR', "/data/logs")
