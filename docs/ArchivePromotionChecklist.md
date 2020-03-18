@@ -93,6 +93,12 @@ May not be required with an ansible deploy
 Set `fits_servertitle` to Gemini Observatory Archive
 Set `fits_system_status` to production
 
+## Clear Logs
+
+```
+rm -f /data/logs/*
+```
+
 ## Redeploy FitsStorage
 
 This can be rsync over ssh, or just ansible it.  Here it is targetting the host as
