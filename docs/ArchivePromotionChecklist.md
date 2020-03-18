@@ -111,6 +111,30 @@ Increase socket-timeout and request-timeout from 60 to 3600
 
 ## Check/Enable CRON Jobs
 
+Current from `archive` modified for python path/python3
+
+```
+MAILTO=fitsadmin@gemini.edu
+PYTHON_EGG_CACHE=/home/fitsdata/.python_eggs
+PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
+##
+## QUEUES ARE RUN FROM SYSTEMD NOW NOT CRON
+##
+## CALCACHE REFRESH
+0 0-7,9-23 * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_calcache_queue.py --demon --lastdays=2
+1 8 * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_calcache_queue.py --demon --lastdays=180
+##
+#### NOTIFICATIONS if we ever want to move these from the fits servers to the archive
+##50 7 * * * python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015A
+##55 7 * * * python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015B
+##0 8 * * *  python3 /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon
+##
+#### DATABASE MAINTAINANCE AND BACKUPS ###
+0 10 * * * python3 /opt/FitsStorage/fits_storage/scripts/database_vacuum.py --demon
+0 11 * * * python3 /opt/FitsStorage/fits_storage/scripts/database_backup.py --exclude-queues --demon
+0 12 * * * python3 /opt/FitsStorage/fits_storage/scripts/migrate-to-glacier.py --daysold 14 --limit 10000 --demon
+```
+
 ## Repoint IP
 
 This lets us hit the site with the `archive` name, and is required before
