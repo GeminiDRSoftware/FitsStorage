@@ -46,8 +46,8 @@ class Program(object):
         """
         investigatorNames = []
         investigator_sections = self.root.getElementsByTagName('investigators')
-        if all(len(iname.childNodes) == 0 for iname in investigator_sections):
-            raise NoInfoError("There are no investigators listed for {}".format(self.get_reference()))
+        #if all(len(iname.childNodes) == 0 for iname in investigator_sections):
+        #    raise NoInfoError("There are no investigators listed for {}".format(self.get_reference()))
 
         for iname in investigator_sections:
             for n in iname.getElementsByTagName('investigator'):
