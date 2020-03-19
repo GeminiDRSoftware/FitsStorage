@@ -19,7 +19,11 @@ def extract_element_by_tag_name(root, tag_name, default_val='', replace=True):
 
 def get_programs(xdoc):
     for pg in xdoc.getElementsByTagName("program"):
-        yield Program(pg)
+        try:
+            yield Program(pg)
+        except NoInfoError:
+            # ok, no investigators
+            pass
 
 class NoInfoError(Exception):
     pass
