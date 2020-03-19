@@ -6,7 +6,6 @@ from __future__ import print_function
 
 import sys
 import time
-import urllib2
 import datetime
 
 from urlparse import urlunsplit
@@ -69,7 +68,8 @@ def do_semester(semester):
     qrl = urlunsplit(odbq_parts).format(semester)
     logger.info("Requesting ODB program metadata for semester %s", semester)
     logger.info("ODB URL %s", qrl)
-    pdata = urllib2.urlopen(qrl).read()
+    r = requests.get(qrl)
+    pdata = r.text
     xdoc = parseString(pdata)
     pdata = programs.build_odbdata(programs.get_programs(xdoc))
     update_program_dbtable(prodfitsurl, pdata)

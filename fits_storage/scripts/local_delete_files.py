@@ -49,7 +49,7 @@ for thefile in thelist:
     continue
   m = hashlib.md5()
   block = 64*1024
-  with open(thefile, 'r') as f:
+  with open(thefile, 'rb') as f:
       data = f.read(block)
       m.update(data)
       while data:
