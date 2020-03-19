@@ -49,6 +49,8 @@ class Program(object):
         #if all(len(iname.childNodes) == 0 for iname in investigator_sections):
         #    raise NoInfoError("There are no investigators listed for {}".format(self.get_reference()))
 
+        piEmail = ''
+        inames = ''
         for iname in investigator_sections:
             for n in iname.getElementsByTagName('investigator'):
                 name_actual = extract_element_by_tag_name(n, 'name')
