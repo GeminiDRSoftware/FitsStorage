@@ -267,7 +267,7 @@ def download(selection, associated_calibrations):
             mode = 0o644
         )
         # - and add it to the tar file
-        tar.addfile(tarinfo, StringIO(readme))
+        tar.addfile(tarinfo, BytesIO(readme.encode('utf8')))
 
     downloadlog.download_completed = datetime.datetime.utcnow()
 
