@@ -181,6 +181,13 @@ Should have been automatic, see: https://techmonger.github.io/49/certbot-auto-re
 
 https://archive.gemini.edu
 
+## Fix Postfix Transport
+
+```
+postmap hash:/etc/postfix/transport
+postfix reload
+```
+
 ## Start Export On CPO/MKO
 
 I don't think there are 2 queues, but be safe:
