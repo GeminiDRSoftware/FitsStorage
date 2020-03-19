@@ -27,13 +27,21 @@ ps -Aef | grep fits
 
 ## Copy Out Additional Tables
 
+```
 /usr/bin/pg_dump --data-only --format=p -t archiveuser -t archiveuser_id_seq -t userprogram -t userprogram_id_seq -t glacier -t glacier_id_seq  -t downloadlog -t downloadlog_id_seq -t filedownloadlog -t filedownloadlog_id_seq -t fileuploadlog -t fileuploadlog_id_seq -t qareport -t qareport_id_seq -t qametriciq -t qametriciq_id_seq -t qametriczp -t qametriczp_id_seq -t qametricsb -t qametricsb_id_seq -t qametricpe -t qametricpe_id_seq -t usagelog -t usagelog_id_seq fitsdata | gzip -7 > metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz
+```
+
+or use format=c for compatible editions of postgres
 
 ## SCP To ArcDev Host
 
+```
 scp metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz username@arcdev.gemini.edu:
+```
 
 ## Import Data Into ArcDev DB
+
+### Truncate the destinations
 
 ```
 sudo -u fitsdata psql fitsdata
@@ -52,8 +60,52 @@ truncate table userprogram
 truncate table glacier
 ```
 
+### Drop indices for performance
+
+```
+drop index ix_glacier_filename;
+drop index ix_glacier_md5;
+
+drop index ix_usagelog_ip_address;
+drop index ix_usagelog_status;
+drop index ix_usagelog_this;
+drop index ix_usagelog_utdatetime;
+
+drop index ix_querylog_summarytype;
+
+drop index ix_filedownloadlog_diskfile_filename;
+
+drop index ix_fileuploadlog_filename;
+```
+
+### Do the restore
+
 ```
 zcat metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz | /usr/bin/psql -d fitsdata -f -
+```
+
+or
+
+```
+pg_restore --dbname=fitsdata --format=c --jobs=8 metricsandlogs-arc-YYYYMMDD.pg_dump_c
+```
+
+### Rebuild the indices
+
+```
+create index ix_glacier_filename on glacier(filename);
+create index ix_glacier_md5 on glacier(md5);
+
+create index ix_usagelog_ip_address on usagelog(ip_address);
+create index ix_usagelog_status on usagelog(status);
+create index ix_usagelog_this on usagelog(this);
+create index ix_usagelog_utdatetime on usagelog(utdatetime);
+
+create index ix_querylog_summarytype on querylog(summarytype);
+
+create index ix_filedownloadlog_diskfile_filename on filedownloadlog(diskfile_filename);
+
+create index ix_fileuploadlog_filename on fileuploadlog(filename);
 ```
 
 ## Edit /etc/fitsstore.conf
