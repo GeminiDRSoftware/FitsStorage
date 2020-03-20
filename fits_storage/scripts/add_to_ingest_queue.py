@@ -7,7 +7,7 @@ import time
 
 from fits_storage.orm import session_scope
 from fits_storage.fits_storage_config import storage_root, using_s3
-from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 
 if using_s3:
@@ -64,7 +64,7 @@ setdemon(options.demon)
 
 # Check Log Suffix
 if options.logsuffix:
-    logger.setlogfilesuffix(options.logsuffix)
+    setlogfilesuffix(options.logsuffix)
 
 # Annouce startup
 now = datetime.datetime.now()
