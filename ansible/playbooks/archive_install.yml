@@ -188,14 +188,14 @@
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
           version: master
-        register: dragons-checkout
+        register: dragonscheckout
       - name: Cythonize DRAGONS
         command: /usr/local/bin/cythonize -3 -i cyclip.pyx
         args:
           chdir: /opt/DRAGONS/gempy/library/
         become: true
         become_user: root
-        when: dragons-checkout.changed
+        when: dragonscheckout.changed
       - name: Copy fitsverify to server
         copy:
           src: ../../fitsverify/

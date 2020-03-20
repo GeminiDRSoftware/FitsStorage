@@ -53,6 +53,16 @@ _host_based_configs = {
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv1"
     },
+    "hbfqapdev-lv1": {
+        'USE_AS_ARCHIVE': 'False',
+        'EXPORT_DESTINATIONS': '',
+        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
+        'BLOCKED_URLS': '',
+        'FITS_SERVERTITLE': 'TEST QAP FitsServer (CentOS 7)',
+        'FITS_SYSTEM_STATUS': 'development',
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbfqapdev-lv1"
+    },
     "ooberdorf-ml1": {
         'EXPORT_DESTINATIONS': '',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok'
