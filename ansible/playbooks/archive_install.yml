@@ -280,6 +280,7 @@
           path_to_script: /opt/FitsStorage/sql/views.sql
         become: yes
         become_user: fitsdata
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
       - name: Ensure we have apache user with access to database
         postgresql_user: db=fitsdata
           name=apache
