@@ -191,7 +191,8 @@
         register: dragons-checkout
       - name: Cythonize DRAGONS
         command: /usr/local/bin/cythonize -3 -i cyclip.pyx
-        chdir: /opt/DRAGONS/gempy/library/
+        args:
+          chdir: /opt/DRAGONS/gempy/library/
         become: true
         become_user: root
         when: dragons-checkout.changed
