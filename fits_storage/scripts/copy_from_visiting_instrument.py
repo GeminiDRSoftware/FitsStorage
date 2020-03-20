@@ -144,13 +144,13 @@ class AlopekeZorroABC(VisitingInstrumentABC):
 class Alopeke(AlopekeZorroABC):
     def __init__(self):
         super().__init__('alopeke', "/net/mkovisdata/home/alopeke/")
-        self._filename_re = re.compile(r'N\d{8}A\d{4}.fits.bz2')
+        self._filename_re = re.compile(r'N\d{8}A\d{4}[br].fits.bz2')
 
 
 class Zorro(AlopekeZorroABC):
     def __init__(self):
         super().__init__('zorro', "/net/cpostonfs-nv1/tier2/ins/sto/zorro/")
-        self._filename_re = re.compile(r'S\d{8}Z\d{4}.fits.bz2')
+        self._filename_re = re.compile(r'S\d{8}Z\d{4}[br].fits.bz2')
 
 
 if __name__ == "__main__":
