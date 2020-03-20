@@ -106,7 +106,7 @@ class VisitingInstrumentABC(ABC):
                 shutil.copyfile(src, dst)
                 logger.info("Adding %s to IngestQueue", filename)
                 
-                iq.add_to_queue(dst_filename, dst_path, force=False, force_md5=False, after=None)
+                # iq.add_to_queue(dst_filename, dst_path, force=False, force_md5=False, after=None)
         except:
             logger.error("Problem copying %s to %s", src, storage_root)
             logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
