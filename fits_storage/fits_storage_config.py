@@ -19,7 +19,7 @@ _host_based_configs = {
         'FITS_SYSTEM_STATUS': 'development',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv4",
-        'FITS_SERVERNAME': 'hbffits-lv4.gemini.edu'
+        'FITS_SERVERNAME': 'hbffits-lv4.hi.gemini.edu'
     },
     "mkofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
@@ -30,7 +30,7 @@ _host_based_configs = {
         'FITS_SYSTEM_STATUS': 'production',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/mkofits-lv3",
-        'FITS_SERVERNAME': 'mkofits-lv3.gemini.edu'
+        'FITS_SERVERNAME': 'mkofits-lv3.hi.gemini.edu'
     },
     "cpofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
@@ -41,7 +41,7 @@ _host_based_configs = {
         'FITS_SYSTEM_STATUS': 'production',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/cpofits-lv3",
-        'FITS_SERVERNAME': 'cpofits-lv3.gemini.edu'
+        'FITS_SERVERNAME': 'cpofits-lv3.cl.gemini.edu'
     },
     "hbffits-lv1": {
         'USE_AS_ARCHIVE': 'False',
