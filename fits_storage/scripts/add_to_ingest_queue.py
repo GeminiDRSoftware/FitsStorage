@@ -51,6 +51,9 @@ parser.add_argument("--filename", action="store", type=str, dest="filename",
 parser.add_argument("--listfile", action="store", type=str, dest="listfile",
                     default=None, help="Read filenames to add from this text file")
 
+parser.add_argument("--logsuffix", action="store", type=str, dest="logsuffix",
+                    default=None, help="Extra suffix to add on logfile")
+
 options = parser.parse_args()
 path = options.path
 
@@ -58,6 +61,10 @@ path = options.path
 # Logging level to debug? Include stdio log?
 setdebug(options.debug)
 setdemon(options.demon)
+
+# Check Log Suffix
+if options.logsuffix:
+    logger.setlogfilesuffix(options.logsuffix)
 
 # Annouce startup
 now = datetime.datetime.now()
