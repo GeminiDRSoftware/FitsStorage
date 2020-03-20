@@ -21,7 +21,11 @@ def extract_element_by_tag_name(root, tag_name, default_val='', replace=True):
 
 def get_programs(xdoc):
     for pg in xdoc.getElementsByTagName("program"):
-        yield Program(pg)
+        try:
+            yield Program(pg)
+        except NoInfoError:
+            # ok, no investigators
+            pass
 
 class NoInfoError(Exception):
     pass
@@ -87,7 +91,7 @@ class Program(object):
                 for dset in olog.getElementsByTagName('dataset'):
                     did = extract_element_by_tag_name(dset, 'id')
                     comments = [extract_data(record) for record in dset.getElementsByTagName('record')]
-                    comment_string = ", ".join(c.encode('utf-8') for c in comments)
+                    comment_string = ", ".join(c for c in comments)
                     logcomments.append({"label": did, "comment": comment_string})
         return logcomments
 

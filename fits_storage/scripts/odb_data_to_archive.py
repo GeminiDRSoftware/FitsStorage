@@ -6,10 +6,9 @@ from __future__ import print_function
 
 import sys
 import time
-import urllib2
 import datetime
 
-from urlparse import urlunsplit
+#from urlparse import urlunsplit
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
@@ -62,14 +61,17 @@ def netloc():
 odb_scheme = 'http'
 odb_netloc = netloc()
 odb_path   = 'odbbrowser/observations'
-odb_query  = 'programSemester={}'
+#odb_query  = 'programSemester={}'
+odb_query  = 'programSemester='
 odbq_parts = [odb_scheme, odb_netloc, odb_path, odb_query, None]
 
 def do_semester(semester):
-    qrl = urlunsplit(odbq_parts).format(semester)
+    #qrl = urlunsplit(odbq_parts).format(semester)
+    qrl = "%s://%s/%s/%s%s" % (odb_scheme, odb_netloc, odb_path, odb_query, semester)
     logger.info("Requesting ODB program metadata for semester %s", semester)
     logger.info("ODB URL %s", qrl)
-    pdata = urllib2.urlopen(qrl).read()
+    r = requests.get(qrl)
+    pdata = r.text
     xdoc = parseString(pdata)
     pdata = programs.build_odbdata(programs.get_programs(xdoc))
     update_program_dbtable(prodfitsurl, pdata)

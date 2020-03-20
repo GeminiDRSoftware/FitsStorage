@@ -3,12 +3,30 @@
 This is just a checklist for me to work through as we upgrade the `arcdev` host to be the new
 `archive` host.
 
+## Ensure Up To Date 2020-1
+
+```
+git checkout 2020-1
+git pull
+```
+
+## Bring Down Export On CPO/MKO
+
+I don't think there are 2 queues, but be safe:
+
+```
+systemctl stop fits-service_export_queue1
+systemctl stop fits-service_export_queue2
+```
+
 ## Bring Down Archive Services
 
 ```
 systemctl stop fits-service_preview_queue1
 systemctl stop fits-service_ingest_queue1
 systemctl stop fits-service_ingest_queue2
+systemctl stop fits-cal_cache_queue1
+systemctl stop fits-cal_cache_queue2
 systemctl stop fits-httpd
 systemctl stop fits-api-backend.service
 ps -Aef | grep fits
@@ -20,6 +38,8 @@ ps -Aef | grep fits
 systemctl stop fits-service_preview_queue1
 systemctl stop fits-service_ingest_queue1
 systemctl stop fits-service_ingest_queue2
+systemctl stop fits-cal_cache_queue1
+systemctl stop fits-cal_cache_queue2
 systemctl stop fits-httpd
 systemctl stop fits-api-backend.service
 ps -Aef | grep fits
@@ -35,8 +55,16 @@ or use format=c for compatible editions of postgres
 
 ## SCP To ArcDev Host
 
+Get the IP address for the arcdev host at AWS:
+
 ```
-scp metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz username@arcdev.gemini.edu:
+ifconfig
+```
+
+Then login to archive and scp the backup over to arcdev by IP:
+
+```
+scp metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz username@arcdev-ip-address:
 ```
 
 ## Import Data Into ArcDev DB
@@ -48,11 +76,9 @@ sudo -u fitsdata psql fitsdata
 ```
 
 ```
-truncate table qametricpe
-truncate table qametricsb
-truncate table qametriczp
-truncate table qametriciq
-truncate table qareport cascade
+truncate table filedownloadlog
+truncate table fileuploadlog
+truncate table querylog cascade
 truncate table usagelog cascade
 truncate table downloadlog
 truncate table archiveuser
@@ -112,16 +138,31 @@ create index ix_fileuploadlog_filename on fileuploadlog(filename);
 
 May not be required with an ansible deploy
 
-Set Name to something nice
-Set mode to production
+Set `fits_servertitle` to Gemini Observatory Archive
+Set `fits_system_status` to production
+
+## Clear Logs
+
+```
+rm -f /data/logs/*
+```
 
 ## Redeploy FitsStorage
 
-rsync over ssh, or just ansible it
+This can be rsync over ssh, or just ansible it.  Here it is targetting the host as
+`arcdev`, but we could update to `archive` if we want to repoint it ahead of time.
+
+```
+pip3 install ansible
+git checkout 2020-1
+bash ./archive_install_aws.sh -i dev-aws
+```
 
 ## Validate Services Running
 
+```
 ps -Aef | grep fits
+```
 
 ## Run Ingest On New Data
 
@@ -139,6 +180,35 @@ Increase socket-timeout and request-timeout from 60 to 3600
 
 ## Check/Enable CRON Jobs
 
+Current from `archive` modified for python path/python3
+
+```
+MAILTO=fitsadmin@gemini.edu
+PYTHON_EGG_CACHE=/home/fitsdata/.python_eggs
+PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
+##
+## QUEUES ARE RUN FROM SYSTEMD NOW NOT CRON
+##
+## CALCACHE REFRESH
+0 0-7,9-23 * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_calcache_queue.py --demon --lastdays=2
+1 8 * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_calcache_queue.py --demon --lastdays=180
+##
+#### NOTIFICATIONS if we ever want to move these from the fits servers to the archive
+##50 7 * * * python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015A
+##55 7 * * * python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=2015B
+##0 8 * * *  python3 /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon
+##
+#### DATABASE MAINTAINANCE AND BACKUPS ###
+0 10 * * * python3 /opt/FitsStorage/fits_storage/scripts/database_vacuum.py --demon
+0 11 * * * python3 /opt/FitsStorage/fits_storage/scripts/database_backup.py --exclude-queues --demon
+0 12 * * * python3 /opt/FitsStorage/fits_storage/scripts/migrate-to-glacier.py --daysold 14 --limit 10000 --demon
+```
+
+## Repoint IP
+
+This lets us hit the site with the `archive` name, and is required before
+Let's Encrypt will work.
+
 ## Redo Let's Encrypt Cert
 
 Set hostname to archive and start/restart webserver
@@ -154,3 +224,36 @@ sudo certbot certonly --webroot -w /opt/modwsgi-default/htdocs/ -d archive.gemin
 Check/fix/add cron job
 
 Should have been automatic, see: https://techmonger.github.io/49/certbot-auto-renew/
+
+## Check HTTPS Server Access
+
+https://archive.gemini.edu
+
+## Fix Postfix Transport
+
+```
+postmap hash:/etc/postfix/transport
+postfix reload
+```
+
+## Start Export On CPO/MKO
+
+I don't think there are 2 queues, but be safe:
+
+```
+systemctl start fits-service_export_queue1
+systemctl start fits-service_export_queue2
+```
+
+## Start Services on Archive
+
+```
+systemctl start fits-service_preview_queue1
+systemctl start fits-service_ingest_queue1
+systemctl start fits-service_ingest_queue2
+systemctl start fits-cal_cache_queue1
+systemctl start fits-cal_cache_queue2
+systemctl start fits-httpd
+systemctl start fits-api-backend.service
+ps -Aef | grep fits
+```
