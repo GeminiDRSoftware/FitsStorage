@@ -34,12 +34,13 @@ class PidFile(object):
             self.l.info("Lockfile {} exists; testing for viability".format(self.path))
 
             try:
-                oldpid = int(open(self.path, 'r').read())
+                try:
+                    oldpid = int(open(self.path, 'r').read())
+                except OSError:
+                    raise PidFileError("Could not read PID from lockfile {}".format(self.path))
                 # Test if we have any control over the process that created the PID
                 os.kill(oldpid, 0)
                 raise PidFileError("Lockfile {} refers to PID {} which appears to be valid".format(self.path, oldpid))
-            except IOError:
-                raise PidFileError("Could not read PID from lockfile {}".format(self.path))
             except (TypeError, ValueError):
                 raise PidFileError("Cannot recognize the PID in lockfile {}".format(self.path))
             except OSError:
