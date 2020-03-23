@@ -71,12 +71,21 @@ function setCurrentTab(tabName) {
    });
 }
 
+function recodeUrl() {
+    var recomp = "";
+    urlstring = $("#things").val();
+    urlstring.split("/").forEach((comp) => {
+        recomp = recomp + "/" + encodeURI(comp);
+    });
+    return recomp;
+}
+
 function CalsTab() {
     if ($("#caltab").html() == 'Load Associated Calibrations') {
         /* First time - initiate loading the associated cals */
         var allow = $("#allow_cals").val() == "yes";
 
-        var urlstring = $("#things").val();
+        var urlstring = recodeUrl(); // $("#things").val();
         var calurl = '/associated_cals/body_only' + urlstring;
         if (allow) {
             $("#loading_cals").show();
@@ -103,7 +112,7 @@ function ResultsTab() {
 function ObslogsTab() {
     if (document.getElementById("obslogstab").innerHTML == 'Load Associated Observation Logs') {
         /* First time - initiate loading the associated obslogs */
-        var urlstring = $("#things").val();
+        var urlstring = recodeUrl(); // $("#things").val();
         var obsurl = '/associated_obslogs' + urlstring;
             /* $("#loading_obslogs").show(); */
             $('#obslog_results').load(obsurl, function(){

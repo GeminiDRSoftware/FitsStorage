@@ -521,6 +521,7 @@
         service: name=fits-copy_from_dhs state=started enabled=yes
       - name: Register postfix service
         service: name=postfix state=started enabled=yes
+        when: "'mkofits-lv3' in inventory_hostname or 'cpofits-lv3' in inventory_hostname or 'arc' in inventory_hostname"
       - name: install webserver packages
         yum:
           name: 
