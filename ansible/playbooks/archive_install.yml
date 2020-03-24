@@ -238,6 +238,13 @@
         when: postgresql_configured.changed or postgresql_service_installed.changed
         become: true
         become_user: root
+      - name: Configure PostgreSQL shared buffers
+        lineinfile:
+          path: /data/pgsql_data/postgresql.conf
+          line: shared_buffers = 1024MB
+          regex: shared_buffers =
+          create: yes
+        register: postgresql_configured
       - name: Bounce PostgreSQL before building db
         service: name=postgresql state=restarted enabled=yes
       - name: Ensure we have fitsdata user with access to database
@@ -551,6 +558,7 @@
         service: name=fits-copy_from_dhs state=started enabled=yes
       - name: Register postfix service
         service: name=postfix state=started enabled=yes
+        when: "'mkofits-lv3' in inventory_hostname or 'cpofits-lv3' in inventory_hostname or 'arc' in inventory_hostname"
       - name: install webserver packages
         yum:
           name: 
