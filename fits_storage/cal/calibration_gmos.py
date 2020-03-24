@@ -106,6 +106,8 @@ class CalibrationGMOS(Calibration):
                     self.applicable.append('spectwilight')
                     self.applicable.append('specphot')
 
+                    if self.descriptors['central_wavelength'] is not None:
+                        self.applicable.append('processed_standard')
 
             # If it (is imaging) and (is Imaging focal plane mask) and
             # (is an OBJECT) and (is not a Twilight) and is not acq or acqcal
@@ -445,25 +447,42 @@ class CalibrationGMOS(Calibration):
 
         filters = []
         
-        tolerance = 0.001
+        tolerance = 0.1
         central_wavelength = self.descriptors['central_wavelength']
         lower_bound = central_wavelength - tolerance
         upper_bound = central_wavelength + tolerance
         filters.append(Header.central_wavelength.between(lower_bound, upper_bound))
 
         q = self.get_query().PROCESSED_STANDARD()
-        return (
-            self.get_query()
-                .PROCESSED_STANDARD()
-                .add_filters(*filters)
+        results = (
+            self.get_query() 
+                .PROCESSED_STANDARD() 
+                .add_filters(*filters) 
                 .match_descriptors(Header.instrument,
                                    Gmos.detector_x_bin,
                                    Gmos.detector_y_bin,
-                                   Gmos.filter_name)
+                                   Gmos.filter_name) 
                 # Absolute time separation must be within 1 year
-                .max_interval(days=365)
-                .all(howmany)
-            )
+                .max_interval(days=365) 
+                .all(1000))
+
+        import decimal
+        ut_datetime = self.descriptors['ut_datetime']
+        wavelength = decimal.Decimal(self.descriptors['central_wavelength'])
+
+        def score(header):
+            wavelength_score = abs(header.central_wavelength - wavelength) / wavelength
+            ut_datetime_score = decimal.Decimal(abs((header.ut_datetime - ut_datetime).seconds) / (365.0*24.0*60.0*60.0))
+            return wavelength_score + ut_datetime_score
+
+        retval = [r for r in results]
+
+        retval.sort(key=score, reverse=True)
+        if len(retval) > howmany:
+            return retval[0:howmany]
+        else:
+            return retval
+
 
     # We don't handle processed ones (yet)
     @not_processed
