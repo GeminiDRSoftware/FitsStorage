@@ -17,6 +17,8 @@ from ..utils.web import get_context, with_content_type
 
 from . import templating
 
+from ..logger import logger
+
 diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
                    'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready',
                    'entrytime')
@@ -139,12 +141,16 @@ def jsonqastate(selection):
     if 'canonical' not in list(selection.keys()):
         selection['canonical']=True
 
+    logger.warn("Entered jsonqastate, selection: %s" % selection)
+
     # We do this directly rather than with list_headers for efficiency
     # as this could be used on very large queries bu the ODB
     query = ctx.session.query(Header, DiskFile).select_from(Header, DiskFile, File)
     query = query.filter(Header.diskfile_id == DiskFile.id)
     query = query.filter(DiskFile.file_id == File.id)
     query = queryselection(query, selection)
+
+    logger.warn("Starting query for jsonqastate")
 
     thelist = []
     for header, diskfile in query:
@@ -154,7 +160,11 @@ def jsonqastate(selection):
                         'entrytime': _for_json(diskfile.entrytime),
                         'qa_state': _for_json(header.qa_state)})
 
+    logger.warn("Query finished, sending json")
+
     ctx.resp.send_json(thelist)
+
+    logger.warn("Done sending json")
 
 from decimal import Decimal
 from datetime import datetime, date, time
