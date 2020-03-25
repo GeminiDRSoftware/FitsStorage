@@ -153,8 +153,6 @@ def jsonqastate(selection):
     query = query.filter(DiskFile.file_id == File.id)
     query = queryselection(query, selection)
 
-    logger.warn("Starting query for jsonqastate")
-
     thelist = []
     for header, diskfile in query:
         thelist.append({'data_label': _for_json(header.data_label),
@@ -163,11 +161,9 @@ def jsonqastate(selection):
                         'entrytime': _for_json(diskfile.entrytime),
                         'qa_state': _for_json(header.qa_state)})
 
-    logger.warn("Query finished, sending json")
+    logger.warn("Query: %s - Done, sending json, duration: %s" (selection, (datetime.now() - then)))
 
     ctx.resp.send_json(thelist)
-
-    logger.warn("Done sending json, duration: %s" (datetime.now() - then))
 
 from decimal import Decimal
 from datetime import datetime, date, time
