@@ -16,6 +16,10 @@ from .calibration import not_spectroscopy
 
 from sqlalchemy.orm import join
 
+from gempy.utils import logutils
+
+log = logutils.get_logger(__name__)
+
 
 class CalibrationGMOS(Calibration):
     """
@@ -453,12 +457,11 @@ class CalibrationGMOS(Calibration):
         upper_bound = central_wavelength + tolerance
         filters.append(Header.central_wavelength.between(lower_bound, upper_bound))
 
-        q = self.get_query().PROCESSED_STANDARD()
         # we get 1000 rows here to have a limit of some sort, but in practice
         # we get all the cals, then sort them below, then limit it per the request
         results = (
             self.get_query() 
-                .PROCESSED_STANDARD() 
+                .standard(processed) 
                 .add_filters(*filters) 
                 .match_descriptors(Header.instrument,
                                    Gmos.detector_x_bin,

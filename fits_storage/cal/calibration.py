@@ -407,6 +407,12 @@ class CalQuery(object):
         """
         return self.raw_or_processed('ARC', processed)
 
+    def standard(self, processed=False):
+        """
+        Filter: shorthand for ``raw_or_processed('STANDARD', processed)``
+        """
+        return self.raw_or_processed('STANDARD', processed)
+
     def pinhole(self, processed=False):
         """
         Filter: shorthand for ``raw_or_processed('PINHOLE', processed)``
