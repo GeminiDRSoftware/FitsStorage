@@ -477,7 +477,7 @@ class CalibrationGMOS(Calibration):
 
         retval = [r for r in results]
 
-        retval.sort(key=score, reverse=True)
+        retval.sort(key=score)
         if len(retval) > howmany:
             return retval[0:howmany]
         else:
