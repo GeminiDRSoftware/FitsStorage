@@ -161,7 +161,7 @@ def jsonqastate(selection):
                         'entrytime': _for_json(diskfile.entrytime),
                         'qa_state': _for_json(header.qa_state)})
 
-    logger.warn("Query: %s - Done, sending json, duration: %s" (selection, (datetime.now() - then)))
+    logger.warn("Query: %s - Done, sending json, duration: %s" % (selection, (datetime.now() - then)))
 
     ctx.resp.send_json(thelist)
 
