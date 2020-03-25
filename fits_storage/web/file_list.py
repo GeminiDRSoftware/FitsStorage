@@ -18,6 +18,8 @@ from ..utils.web import get_context, with_content_type
 from . import templating
 
 from ..logger import logger
+from datetime import datetime
+
 
 diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
                    'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready',
@@ -134,6 +136,7 @@ def jsonqastate(selection):
     It is intended for use by the ODB.
     It does not limit the number of results
     """
+    then = datetime.now()
 
     ctx = get_context()
 
@@ -164,7 +167,7 @@ def jsonqastate(selection):
 
     ctx.resp.send_json(thelist)
 
-    logger.warn("Done sending json")
+    logger.warn("Done sending json, duration: %s" (datetime.now() - then))
 
 from decimal import Decimal
 from datetime import datetime, date, time
