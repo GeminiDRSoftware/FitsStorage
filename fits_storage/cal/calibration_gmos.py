@@ -439,14 +439,14 @@ class CalibrationGMOS(Calibration):
 
     def standard(self, processed=False, howmany=None):
         """
-        Method to find the best processed_fringe frame for the target dataset.
-        Note that the concept of a raw fringe frame is meaningless.
+        Method to find the best standard frame for the target dataset.
         """
         # Default number to associate
         howmany = howmany if howmany else 1
 
         filters = []
         
+        # is this a reasonable tolerance?  or perhaps it should be a percentage?
         tolerance = 0.1
         central_wavelength = self.descriptors['central_wavelength']
         lower_bound = central_wavelength - tolerance
@@ -454,6 +454,8 @@ class CalibrationGMOS(Calibration):
         filters.append(Header.central_wavelength.between(lower_bound, upper_bound))
 
         q = self.get_query().PROCESSED_STANDARD()
+        # we get 1000 rows here to have a limit of some sort, but in practice
+        # we get all the cals, then sort them below, then limit it per the request
         results = (
             self.get_query() 
                 .PROCESSED_STANDARD() 
@@ -470,6 +472,9 @@ class CalibrationGMOS(Calibration):
         ut_datetime = self.descriptors['ut_datetime']
         wavelength = decimal.Decimal(self.descriptors['central_wavelength'])
 
+        # we score it based on the wavelength deviation expressed as a fraction of the wavelength itself,
+        # plus the difference in date as a fraction of the allowed 365 day interval.  This is a placeholder
+        # and we can do something else, add some weighting, add a squaring of the deviation, or other terms
         def score(header):
             wavelength_score = abs(header.central_wavelength - wavelength) / wavelength
             ut_datetime_score = decimal.Decimal(abs((header.ut_datetime - ut_datetime).seconds) / (365.0*24.0*60.0*60.0))
@@ -477,6 +482,7 @@ class CalibrationGMOS(Calibration):
 
         retval = [r for r in results]
 
+        # do the actual sort and return our requested max results
         retval.sort(key=score)
         if len(retval) > howmany:
             return retval[0:howmany]
