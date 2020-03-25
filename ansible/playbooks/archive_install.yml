@@ -2,6 +2,24 @@
   - hosts: all
     become: true
     tasks:
+      - name: Check for dataflow folder
+        stat:
+          path: /sci/dataflow
+        register: dataflow_folder
+        when: "'arc' not in inventory_hostname"
+      - name: Fail if dataflow folder missing
+        fail:
+          msg: "Dataflow folder not found"
+        when: "not dataflow_folder and 'arc' not in inventory_hostname"
+      - name: Check for DHS folder
+        stat:
+          path: /sci/dhs
+        register: dhs_folder
+        when: "'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+      - name: Fail if DHS folder missing
+        fail:
+          msg: "DHS folder not found"
+        when: "not dhs_folder and ('mko' in inventory_hostname or 'cpo' in inventory_hostname)"
 # removing per Jose Varas, ITS should setup necessary packages/repos for us
 #      - name: install EPEL
 #        yum:
