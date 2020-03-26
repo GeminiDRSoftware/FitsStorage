@@ -452,7 +452,7 @@ class CalibrationGMOS(Calibration):
         
         # is this a reasonable tolerance?  or perhaps it should be a percentage?
         tolerance = 0.1
-        central_wavelength = self.descriptors['central_wavelength']
+        central_wavelength = float(self.descriptors['central_wavelength'])
         lower_bound = central_wavelength - tolerance
         upper_bound = central_wavelength + tolerance
         filters.append(Header.central_wavelength.between(lower_bound, upper_bound))
@@ -461,7 +461,7 @@ class CalibrationGMOS(Calibration):
         # we get all the cals, then sort them below, then limit it per the request
         results = (
             self.get_query() 
-                .standard(processed) 
+                .standard(processed)
                 .add_filters(*filters) 
                 .match_descriptors(Header.instrument,
                                    Gmos.detector_x_bin,
@@ -471,16 +471,17 @@ class CalibrationGMOS(Calibration):
                 .max_interval(days=365) 
                 .all(1000))
 
-        import decimal
         ut_datetime = self.descriptors['ut_datetime']
-        wavelength = decimal.Decimal(self.descriptors['central_wavelength'])
+        wavelength = float(self.descriptors['central_wavelength'])
 
         # we score it based on the wavelength deviation expressed as a fraction of the wavelength itself,
         # plus the difference in date as a fraction of the allowed 365 day interval.  This is a placeholder
         # and we can do something else, add some weighting, add a squaring of the deviation, or other terms
         def score(header):
-            wavelength_score = abs(header.central_wavelength - wavelength) / wavelength
-            ut_datetime_score = decimal.Decimal(abs((header.ut_datetime - ut_datetime).seconds) / (365.0*24.0*60.0*60.0))
+            if not isinstance(header, Header):
+                header = header[0]
+            wavelength_score = abs(float(header.central_wavelength) - wavelength) / wavelength
+            ut_datetime_score = abs((header.ut_datetime - ut_datetime).seconds) / (365.0*24.0*60.0*60.0)
             return wavelength_score + ut_datetime_score
 
         retval = [r for r in results]

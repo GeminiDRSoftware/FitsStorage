@@ -15,6 +15,7 @@ mapping = {
     'processed_flat': ('flat', { 'processed': True }),
     'processed_arc': ('arc', { 'processed': True }),
     'processed_dark': ('dark', { 'processed': True }),
+    'processed_standard': ('standard', { 'processed': True })
     }
 
 def associate_cals(session, headers, caltype="all", recurse_level=0, full_query=False):
