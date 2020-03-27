@@ -140,7 +140,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: master
+          version: refac/migration_in_ansible_play
           dest: /opt/FitsStorage
           accept_hostkey: yes
         when: "'arc' not in inventory_hostname"
@@ -310,6 +310,22 @@
         become: yes
         become_user: fitsdata
         when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+      - name: Setup Migrations
+        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
+        become: yes
+        become_user: postgres
+        when: fitsdata_db_created.changed
+      - name: If we have a fresh DB, set version to 4 since we are already up to date with the migrations
+        postgresql_query:
+          db: fitsdata
+          query: update migrate_version set version=4
+        become: yes
+        become_user: postgres
+        when: fitsdata_db_created.changed
+      - name: Apply Migrations (Idempotent, always apply)
+        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py upgrade postgresql:///fitsdata dbmigration"
+        become: yes
+        become_user: postgres
       - name: Ensure we have apache user with access to database
         postgresql_user: db=fitsdata
           name=apache
