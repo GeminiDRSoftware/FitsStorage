@@ -121,12 +121,12 @@ To install, simply:
 
 ```
 cd ansible
-bash ./archive_install.sh -i dev
+bash ./archive_install_internal.sh -i dev
 ```
 
 Once the install finishes, you should be able to browse the deployed site at (modify as appropriate):
 
-https://hbffits-lv1.hi.gemini.edu/searchform/
+https://hbffits-lv4.hi.gemini.edu/searchform/
 
 ### Crontab
 

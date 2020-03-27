@@ -2,6 +2,10 @@
   - hosts: all
     become: true
     tasks:
+      - name: Fail on non-release deploys to archive
+        fail:
+          msg: Attempt to deploy master to an ops host
+        when: "'archive' in inventory_hostname or 'mko' in inventory_hostname or 'cpo' in inventory_hostname"
       - name: Check for dataflow folder
         stat:
           path: /sci/dataflow

@@ -102,6 +102,9 @@ COPY fitsverify /opt/fitsverify
 RUN pip3 install cython
 RUN cd /opt/DRAGONS/gempy/library/ && cythonize -i cyclip.pyx
 
+# Calibs code
+RUN cd /opt/FitsStorage/local_calibs && python3 setup.py install
+
 ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
 ENV PGPASSWORD fitsdata
