@@ -140,7 +140,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: refac/flux_cal
+          version: master
           dest: /opt/FitsStorage
           accept_hostkey: yes
         when: "'arc' not in inventory_hostname"
