@@ -85,7 +85,9 @@ getselection_key_value = {
     'publication': 'publication',
     'PIname': 'PIname',
     'ProgramText': 'ProgramText',
-    'entrytime': 'entrytime'
+    'entrytime': 'entrytime',
+    'raw_cc': 'raw_cc',
+    'raw_iq': 'raw_iq',
     }
 
 # Also, some entries set themselves as the value for a certain selection
@@ -341,6 +343,8 @@ queryselection_filters = (
     ('site_monitoring', Header.site_monitoring),
     ('pre_image',     Header.pre_image),
     ('procsci',       Header.procsci),
+    ('raw_cc',        Header.raw_cc),
+    ('raw_iq',        Header.raw_iq),
     )
 
 def queryselection(query, selection):
