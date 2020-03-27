@@ -480,7 +480,7 @@ class CalibrationGMOS(Calibration):
         def score(header):
             if not isinstance(header, Header):
                 header = header[0]
-            wavelength_score = abs(float(header.central_wavelength) - wavelength) / wavelength
+            wavelength_score = abs(float(header.central_wavelength) - wavelength) / tolerance
             ut_datetime_score = abs((header.ut_datetime - ut_datetime).seconds) / (365.0*24.0*60.0*60.0)
             return wavelength_score + ut_datetime_score
 
