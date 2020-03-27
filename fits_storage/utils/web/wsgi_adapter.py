@@ -13,6 +13,12 @@ import json
 import tarfile
 import sys
 
+class SetEncoder(json.JSONEncoder):
+    def default(self, obj):
+       if isinstance(obj, set):
+          return list(obj)
+       return json.JSONEncoder.default(self, obj)
+
 # Boilerplate object. Maybe later we'll add something else to it?
 def Uploadedfile(object):
     def __init__(self, name):
@@ -245,13 +251,36 @@ class JsonStreamingObject(object):
         self._callback = callback
 
     def write(self, data):
-        self._callback(json.dumps(data) + '\n')
+        self._callback((json.dumps(data) + '\n').encode('utf-8'))
 
     def flush(self):
         pass
 
     def close(self):
         pass
+
+class JsonArrayStreamingObject(object):
+    """
+    Helper file-like object that implements an unbuffered output, streaming JSON objects
+    as they're written.
+    """
+    def __init__(self, callback):
+        self._callback = callback
+        self._callback(b'[\n')
+        self._first = True
+
+    def write(self, data):
+        if not self._first:
+            self._callback(b',\n')
+        self._first = False
+        self._callback((json.dumps(data) + '\n').encode('utf-8'))
+
+    def flush(self):
+        pass
+
+    def close(self):
+        self._callback(b']\n')
+
 
 class Response(adapter.Response):
     def __init__(self, session, wsgienv, start_response):
@@ -349,7 +378,7 @@ class Response(adapter.Response):
         Takes an object and appends to the contents a serialized representation of it,
         encoded in JSON format.
         """
-        self._content.append(json.dumps(obj, **kw))
+        self._content.append(json.dumps(obj, cls=SetEncoder, **kw))
         return self
 
     @only_if_not_started_response
@@ -379,11 +408,15 @@ class Response(adapter.Response):
 
         try:
             self.start_response()
-            sobj = JsonStreamingObject(self._write_callback)
+            sobj = JsonArrayStreamingObject(self._write_callback)
             yield sobj
         except Exception as e:
-            self._env.log(str(e))
-            self._env.log(traceback.format_exc())
+            try:
+                self._env.log(str(e))
+                self._env.log(traceback.format_exc())
+            except AttributeError:
+                # TODO track down why this is missing during update_headers call
+                pass
         finally:
             sobj.close()
 

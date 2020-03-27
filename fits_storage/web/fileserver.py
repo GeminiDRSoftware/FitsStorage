@@ -376,7 +376,7 @@ class BZ2OnTheFlyDecompressor(object):
     def __init__(self, buff):
         self.buff = buff
         self.decomp = bz2.BZ2Decompressor()
-        self.unused_bytes = ''
+        self.unused_bytes = b''
 
     def _buffer(self, limit):
         while len(self.unused_bytes) < limit:
@@ -436,7 +436,7 @@ def sendonefile(diskfile, content_type=None):
             if diskfile.compressed == True:
                 # Unzip it on the fly
                 resp.content_length = diskfile.data_size
-                resp.sendfile_obj(BZ2OnTheFlyDecompressor(open(diskfile.fullpath(), 'r')))
+                resp.sendfile_obj(BZ2OnTheFlyDecompressor(open(diskfile.fullpath(), 'rb')))
             else:
                 resp.sendfile(diskfile.fullpath())
         except IOError:

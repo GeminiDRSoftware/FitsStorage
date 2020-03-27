@@ -536,7 +536,7 @@ def gemini_observation_class(string):
 
 reduction_states = ('RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS',
                     'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK',
-                    'PROCESSED_TELLURIC', 'PROCESSED_SCIENCE')
+                    'PROCESSED_TELLURIC', 'PROCESSED_SCIENCE', 'PROCESSED_STANDARD')
 def gemini_reduction_state(string):
     """
     A utility function matching Gemini reduction states.
@@ -562,7 +562,8 @@ cal_types = (
     'processed_flat', 'processed_arc', 'processed_fringe', 'pinhole_mask',
     'ronchi_mask', 'spectwilight', 'lampoff_flat', 'qh_flat', 'specphot', 
     'photometric_standard', 'telluric_standard', 'domeflat', 'lampoff_domeflat',
-    'mask', 'polarization_standard', 'astrometric_standard', 'polarization_flat'
+    'mask', 'polarization_standard', 'astrometric_standard', 'polarization_flat',
+    'processed_standard'
     )
 def gemini_caltype(string):
     """

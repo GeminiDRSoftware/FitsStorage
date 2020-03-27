@@ -44,38 +44,41 @@ def getXmlData(element, tag):
     return element.getElementsByTagName(tag)[0].childNodes[0].data
 
 for thefile in thelist:
-  if not os.path.isfile(thefile):
-    print("%s is not a regular file - skipping" % thefile)
-    continue
-  m = hashlib.md5()
-  block = 64*1024
-  with open(thefile, 'r') as f:
-      data = f.read(block)
-      m.update(data)
-      while data:
+  try:
+    if not os.path.isfile(thefile):
+      print("%s is not a regular file - skipping" % thefile)
+      continue
+    m = hashlib.md5()
+    block = 64*1024
+    with open(thefile, 'rb') as f:
         data = f.read(block)
         m.update(data)
-  filemd5 = m.hexdigest()
+        while data:
+          data = f.read(block)
+          m.update(data)
+    filemd5 = m.hexdigest()
 
-  print("Considering %s - %s" % (thefile, filemd5))
+    print("Considering %s - %s" % (thefile, filemd5))
 
-  url = "http://%s/fileontape/%s" % (options.tapeserver, thefile)
-  xml = urllib.request.urlopen(url).read()
+    url = "http://%s/fileontape/%s" % (options.tapeserver, thefile)
+    xml = urllib.request.urlopen(url).read()
 
-  dom = parseString(xml)
+    dom = parseString(xml)
 
-  fileelements = dom.getElementsByTagName("file")
+    fileelements = dom.getElementsByTagName("file")
 
-  tapeids = []
-  for fe in fileelements:
-    filename = getXmlData(fe, "filename")
-    md5 = getXmlData(fe, "md5")
-    tapeid = int(getXmlData(fe, "tapeid"))
-    if (filename == thefile) and ((md5 == filemd5) or options.nomd5) and (tapeid not in tapeids):
-      #print "Found it on tape id %d" % tapeid
-      tapeids.append(tapeid)
+    tapeids = []
+    for fe in fileelements:
+      filename = getXmlData(fe, "filename")
+      md5 = getXmlData(fe, "md5")
+      tapeid = int(getXmlData(fe, "tapeid"))
+      if (filename == thefile) and ((md5 == filemd5) or options.nomd5) and (tapeid not in tapeids):
+        #print "Found it on tape id %d" % tapeid
+        tapeids.append(tapeid)
 
-  if len(tapeids) >= options.mintapes:
-    remove(thefile, filemd5, tapeids)
-  else:
-    print("File %s is not on sufficient tapes to be elligable for deletion" % thefile)
+    if len(tapeids) >= options.mintapes:
+      remove(thefile, filemd5, tapeids)
+    else:
+      print("File %s is not on sufficient tapes to be elligable for deletion" % thefile)
+  except PermissionError:
+    print("No permission to process file %s: %s - %s" % (thefile, sys.exc_info()[0], sys.exc_info()[1]))

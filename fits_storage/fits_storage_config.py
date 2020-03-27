@@ -16,23 +16,32 @@ _host_based_configs = {
         'PUBDB_REMOTE': 'https://localhost/ingest_publications',
         'BLOCKED_URLS': '',
         'FITS_SERVERTITLE': 'TEST On-site FitsServer',
-        'FITS_SYSTEM_STATUS': 'development'
+        'FITS_SYSTEM_STATUS': 'development',
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv4",
+        'FITS_SERVERNAME': 'hbffits-lv4.hi.gemini.edu'
     },
     "mkofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': '',
+        'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
         'PUBDB_REMOTE': 'https://localhost/ingest_publications',
         'BLOCKED_URLS': '',
         'FITS_SERVERTITLE': 'MKO Fits Server',
-        'FITS_SYSTEM_STATUS': 'development'
+        'FITS_SYSTEM_STATUS': 'production',
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/mkofits-lv3",
+        'FITS_SERVERNAME': 'mkofits-lv3.hi.gemini.edu'
     },
     "cpofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': '',
+        'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
         'PUBDB_REMOTE': 'https://localhost/ingest_publications',
         'BLOCKED_URLS': '',
         'FITS_SERVERTITLE': 'CPO Fits Server',
-        'FITS_SYSTEM_STATUS': 'development'
+        'FITS_SYSTEM_STATUS': 'production',
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/cpofits-lv3",
+        'FITS_SERVERNAME': 'cpofits-lv3.cl.gemini.edu'
     },
     "hbffits-lv1": {
         'USE_AS_ARCHIVE': 'False',
@@ -40,10 +49,23 @@ _host_based_configs = {
         'PUBDB_REMOTE': 'https://localhost/ingest_publications',
         'BLOCKED_URLS': '',
         'FITS_SERVERTITLE': 'TEST On-site FitsServer (CentOS 7)',
-        'FITS_SYSTEM_STATUS': 'development'
+        'FITS_SYSTEM_STATUS': 'development',
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv1"
+    },
+    "hbfqapdev-lv1": {
+        'USE_AS_ARCHIVE': 'False',
+        'EXPORT_DESTINATIONS': '',
+        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
+        'BLOCKED_URLS': '',
+        'FITS_SERVERTITLE': 'TEST QAP FitsServer (CentOS 7)',
+        'FITS_SYSTEM_STATUS': 'development',
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbfqapdev-lv1"
     },
     "ooberdorf-ml1": {
-        'EXPORT_DESTINATIONS': ''
+        'EXPORT_DESTINATIONS': '',
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok'
     },
     "some_actual_site_host": {
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
@@ -55,17 +77,35 @@ _host_based_configs = {
         'USE_AS_ARCHIVE': 'True',
         'FITS_SYSTEM_STATUS': 'production',
         'EXPORT_DESTINATIONS': '',
-        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files'
+        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files',
+        'FITS_DB_BACKUP_DIR': "/backup",
+        'FITS_SERVERNAME': 'archive.gemini.edu'
     },
     "arcdev": {
         'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
         'USE_AS_ARCHIVE': 'True',
         'EXPORT_DESTINATIONS': '',
         'FITS_SYSTEM_STATUS': 'development',
-        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files'
+        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files',
+        'FITS_DB_BACKUP_DIR': "/backup",
+        'FITS_SERVERNAME': 'arcdev.gemini.edu'
     }
 }
 
+
+def get_hostname():
+    hostname = socket.gethostname()
+    if hostname is not None and '.' in hostname:
+        hostname = hostname[:hostname.find('.')]
+    return hostname
+
+
+def get_fits_db_backup_dir():
+    hostname = get_hostname()
+    if hostname is None or hostname == 'arcdev' or hostname == 'archive':
+        return '/backup'
+    return "/sci/dataflow/FitsStorage_Backups/%s" % hostname
+    
 
 def lookup_config(name, default_value):
     """ Lookup a config value with the given name and a default.
@@ -189,7 +229,8 @@ preview_path = "previews"
 # The DAS calibration reduction path is used to find the last processing
 # date for the gmoscal page's autodetect daterange feature
 #das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
-das_calproc_path = '/net/josie/staging/dataproc/gmos'
+#das_calproc_path = '/net/josie/staging/dataproc/gmos'
+das_calproc_path = lookup_config('DAS_CALPROC_PATH', '/sci/dasgmos')
 
 # Configure the site and other misc stuff here
 # Especially for archive systems, make the servername a fully qualified domain name.
@@ -202,7 +243,8 @@ fits_open_result_limit = 500
 fits_closed_result_limit = 10000
 
 smtp_server = "localhost"
-email_errors_to = "phirst@gemini.edu"
+email_errors_to = "ooberdorf@gemini.edu"
+#email_errors_to = "phirst@gemini.edu"
 #email_errors_to = "kanderso@gemini.edu"
 
 # Configure the path the data postgres database here
@@ -220,7 +262,7 @@ fits_aux_datadir = lookup_config('FITS_AUX_DATADIR', "/opt/FitsStorage/data")
 template_root = fits_aux_datadir + "/templates"
 
 # Configure the Backup Directory here
-fits_db_backup_dir = "/sci/dataflow/FitsStorage_Backups/cpofits-lv1"
+fits_db_backup_dir = lookup_config('FITS_DB_BACKUP_DIR', get_fits_db_backup_dir())
 
 # Configure the LockFile Directory here
 fits_lockfile_dir = lookup_config('FITS_LOCKFILE_DIR', "/data/logs")

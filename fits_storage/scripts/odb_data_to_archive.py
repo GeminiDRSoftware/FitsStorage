@@ -1,12 +1,14 @@
 #!/usr/bin/env python
-
-
+#                                                                            GOA
+#                                                                    odb_data.py
+# ------------------------------------------------------------------------------
+from __future__ import print_function
 
 import sys
 import time
-import urllib.request, urllib.error, urllib.parse
+import datetime
 
-from urllib.parse import urlunsplit
+#from urlparse import urlunsplit
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
@@ -14,25 +16,14 @@ from argparse import RawDescriptionHelpFormatter
 from xml.dom.minidom import parseString
 from fits_storage.utils import programs
 from fits_storage import fits_storage_config as fsc
+from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
+from fits_storage.gemini_metadata_utils import gemini_semester, previous_semester
 
+from optparse import OptionParser
 
 import requests
 
 __version__ = "0.1"
-# ------------------------------------------------------------------------------
-desc = """
-Description:
-  ODB to GOA metadata transfer. The command line accepts a Gemini semester
-  identifier, queries the ODB for program information for all programs in that
-  semester, extracts certain of the information, and passes it to the archive
-  (fits) server via the ingest_programs service.
-
-    E.g.,
-
-    $ odb_data.py 2012A
-    Requesting ODB program metadata for semester 2012A ...
-
-"""
 
 # ------------------------------------------------------------------------------
 # fits URLs
@@ -43,26 +34,6 @@ def update_program_dbtable(url, pinfo):
     for prog in pinfo:
         req = requests.post(url, json=prog, cookies={'gemini_api_authorization': fsc.magic_api_cookie})
         req.raise_for_status()
-
-def buildParser(version=__version__):
-    """
-    Parameters
-    ----------
-    version: <str>, defaulted optional version.
-
-    Return
-    ------
-    <instance>, ArgumentParser instance
-
-    """
-    parser = ArgumentParser(description=desc, prog="odb_data", formatter_class=RawDescriptionHelpFormatter)
-    parser.add_argument("-v", "--version", action="version", version="%(prog)s v" + version)
-    parser.add_argument('semester', nargs=1, default=None)
-    return parser
-
-def handle_clargs():
-    parser = buildParser()
-    return parser.parse_args()
 
 # ------------------------------------------------------------------------------
 # From http://swg.wikis-internal.gemini.edu/index.php/ODB_Browser
@@ -90,17 +61,50 @@ def netloc():
 odb_scheme = 'http'
 odb_netloc = netloc()
 odb_path   = 'odbbrowser/observations'
-odb_query  = 'programSemester={}'
+#odb_query  = 'programSemester={}'
+odb_query  = 'programSemester='
 odbq_parts = [odb_scheme, odb_netloc, odb_path, odb_query, None]
-# ------------------------------------------------------------------------------
 
-if __name__ == '__main__':
-    args = handle_clargs()
-    qrl = urlunsplit(odbq_parts).format(args.semester[0])
-    print("Requesting ODB program metadata for semester {}".format(args.semester[0]))
-    print("On URL {}".format(qrl))
-    pdata = urllib.request.urlopen(qrl).read()
+def do_semester(semester):
+    #qrl = urlunsplit(odbq_parts).format(semester)
+    qrl = "%s://%s/%s/%s%s" % (odb_scheme, odb_netloc, odb_path, odb_query, semester)
+    logger.info("Requesting ODB program metadata for semester %s", semester)
+    logger.info("ODB URL %s", qrl)
+    r = requests.get(qrl)
+    pdata = r.text
     xdoc = parseString(pdata)
     pdata = programs.build_odbdata(programs.get_programs(xdoc))
     update_program_dbtable(prodfitsurl, pdata)
+    logger.info("Semester %s appears to have completed sucessfully", semester)
+    
+def auto_semesters():
+    # Return a list giving the current and previous semester
+    today = datetime.datetime.now().date()
+    this = gemini_semester(today)
+    last = previous_semester(this)
+    return [this, last]
+
+
+# ------------------------------------------------------------------------------
+
+if __name__ == '__main__':
+    parser = OptionParser()
+    parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
+    parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")
+    parser.add_option("--semester", action="store", dest="semester", default=None, help="Semester to transfer data for. Omit for auto")
+    options, args = parser.parse_args()
+
+    # Logging level to debug? Include stdio log?
+    setdebug(options.debug)
+    setdemon(options.demon)
+
+    if options.semester is None:
+        logger.info("Will automatically select semesters")
+
+    if options.semester:
+        do_semester(options.semester)
+    else:
+        for s in auto_semesters():
+            do_semester(s)
+        
     sys.exit()

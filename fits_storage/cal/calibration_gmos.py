@@ -109,7 +109,7 @@ class CalibrationGMOS(Calibration):
 
             # If it (is imaging) and (is Imaging focal plane mask) and
             # (is an OBJECT) and (is not a Twilight) and is not acq or acqcal
-            # ==> needs flats, processed_fringe
+            # ==> needs flats, processed_fringe, processed_standard
 
             if ((self.descriptors['spectroscopy'] == False) and
                 (self.descriptors['focal_plane_mask'] == 'Imaging') and
@@ -120,6 +120,8 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('flat')
                 self.applicable.append('processed_flat')
                 self.applicable.append('processed_fringe')
+                if self.descriptors['central_wavelength'] is not None:
+                    self.applicable.append('processed_standard')
                 # If it's all that and obsclass science, then it needs a photstd
                 # need to take care that phot_stds don't require phot_stds for recursion
                 if self.descriptors['observation_class'] == 'science':
@@ -177,8 +179,8 @@ class CalibrationGMOS(Calibration):
                                    Gmos.disperser,
                                    Gmos.filter_name,    # Must match filter (KR 20100423)
                                    Gmos.detector_x_bin, # Must match ccd binning
-                                   Gmos.detector_y_bin,
-                                   Gmos.grating_order) # match on grating order
+                                   Gmos.detector_y_bin)
+                                   # Gmos.grating_order) # match on grating order
                 .tolerance(central_wavelength=0.001)
                 # Absolute time separation must be within 1 year
                 .max_interval(days=365)
@@ -423,6 +425,36 @@ class CalibrationGMOS(Calibration):
         return (
             self.get_query()
                 .PROCESSED_FRINGE()
+                .add_filters(*filters)
+                .match_descriptors(Header.instrument,
+                                   Gmos.detector_x_bin,
+                                   Gmos.detector_y_bin,
+                                   Gmos.filter_name)
+                # Absolute time separation must be within 1 year
+                .max_interval(days=365)
+                .all(howmany)
+            )
+
+    def standard(self, processed=False, howmany=None):
+        """
+        Method to find the best processed_fringe frame for the target dataset.
+        Note that the concept of a raw fringe frame is meaningless.
+        """
+        # Default number to associate
+        howmany = howmany if howmany else 1
+
+        filters = []
+        
+        tolerance = 0.001
+        central_wavelength = self.descriptors['central_wavelength']
+        lower_bound = central_wavelength - tolerance
+        upper_bound = central_wavelength + tolerance
+        filters.append(Header.central_wavelength.between(lower_bound, upper_bound))
+
+        q = self.get_query().PROCESSED_STANDARD()
+        return (
+            self.get_query()
+                .PROCESSED_STANDARD()
                 .add_filters(*filters)
                 .match_descriptors(Header.instrument,
                                    Gmos.detector_x_bin,

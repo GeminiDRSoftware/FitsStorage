@@ -70,18 +70,21 @@ Usage examples:
 #   Author             : Ricardo Cardenes
 #
 #   Modification History:
-#    2015-12-09, rcardene : First release
-#    2016-02-11, rcardene : Change the default server. Remove the cookie
+#    2015-12-09, rcardene  : First release
+#    2016-02-11, rcardene  : Change the default server. Remove the cookie
 #                           which should not be in the code repository
-#    2016-10-10, rcardene : Introduced some rudimentary checks for known fixed
+#    2016-10-10, rcardene  : Introduced some rudimentary checks for known fixed
 #                           values (RAWxx, etc). Improved help messages
-#    2016-11-05, rcardene : Allow fixHead to pick the API cookie from the environment
-#    2016-12-14, rcardene : Clarified error message for non-allowed input values
-#    2016-12-16, mpohlen  : Updated history and version number
-#    2016-12-20, rcardene : Updated history with meaningful dates and bumped
+#    2016-11-05, rcardene  : Allow fixHead to pick the API cookie from the environment
+#    2016-12-14, rcardene  : Clarified error message for non-allowed input values
+#    2016-12-16, mpohlen   : Updated history and version number
+#    2016-12-20, rcardene  : Updated history with meaningful dates and bumped
 #                           version to 0.5
-#    2017-01-11, rcardene : Fixed a bug with date acquisition. Released as 0.6
-#    2017-04-06, rcardene : Re-fixed the bug with date acquisition. Released as 0.7
+#    2017-01-11, rcardene  : Fixed a bug with date acquisition. Released as 0.6
+#    2017-04-06, rcardene  : Re-fixed the bug with date acquisition. Released as 0.7
+#    2020-03-09, ooberdorf : Fixed request to ask for a streamed response and updated for python2 compatibility
+
+from __future__ import print_function
 
 import sys
 from time import strptime
@@ -122,7 +125,8 @@ class ServerAccess(object):
         return requests.get(self.uri('jsonfilenames/present', *selection)).json()
 
     def batch_change(self, file_list, actions, reject_new):
-        arguments = [{'filename': fn, 'values': actions, 'reject_new':reject_new} for fn in file_list]
+        arguments = {'request': [{'filename': fn, 'values': actions, 'reject_new':reject_new} for fn in file_list],
+                     'batch': False}
 
         return requests.post(self.uri('update_headers'),
                              json=arguments,
@@ -229,7 +233,7 @@ def parse_args(raw_args):
 
     class Args(object):
         def __new__(typ, *args, **kw):
-            obj = object.__new__(typ, *args, **kw)
+            obj = object.__new__(typ)
             obj.__dict__['_{}__set_once'.format(typ.__name__)] = {}
 
             return obj

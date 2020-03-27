@@ -27,6 +27,8 @@ def qareport():
     ctx = get_context()
 
     clientdata = ctx.raw_data
+    if clientdata:
+        clientdata = clientdata.decode('utf-8', errors='ignore')
     #ctx.log("QAreport clientdata: %s" % clientdata)
 
     # We make here some reasonable assumptions about the input format

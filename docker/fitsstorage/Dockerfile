@@ -90,7 +90,7 @@ RUN mkdir -p /data/logs && \
 
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
-#RUN cd /opt && git clone --branch v2.1.0 https://github.com/GeminiDRSoftware/DRAGONS.git
+#RUN cd /opt && git clone --branch vrefac/processed_standard https://github.com/GeminiDRSoftware/DRAGONS.git
 RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
 #RUN cd /opt && git clone --branch refac/populate_provenance_data https://github.com/GeminiDRSoftware/DRAGONS.git
 #RUN cd /opt && git clone --branch refac/imexam_workaround https://github.com/olyoberdorf/DRAGONS.git

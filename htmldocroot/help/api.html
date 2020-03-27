@@ -315,6 +315,18 @@ you need to reset it (for example because it became known to someone else), then
 <strong>Log Out</strong> of the archive and the old value will no longer be accepted by the server. When you log back
 in to the archive, a new value will be sent to the browser where you logged in.</p>
 
+<p>An example of how you might use this cookie in python would be the following (thx Erik Dennihy):</p>
+
+<pre>
+import requests
+
+cookies = dict(gemini_archive_session='my_archive_cookie')
+r = requests.get('https://archive.gemini.edu/download/my_archive_search....',cookies=cookies,stream=True)
+handle = open('data.tar','wb')
+for chunk in r.iter_content(chunk_size=256):
+     handle.write(chunk)
+</pre>
+
 <h2 id="selection">Selection Criteria</h2>
 
 <p>Here are details of the selection criteria you can use. Multiple ones are separated by /s in the URL just like directories would be.</p>

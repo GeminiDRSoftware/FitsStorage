@@ -109,6 +109,30 @@ export PYTHONPATH=~/DRAGONS:~/FitsStorage
 If these environment variables are not found, the code falls back to defaults that are appropriate for the deployed
 operational server.
 
+### Installing
+
+The install is managed by running an Ansible play.  This play is wrapped in a convenient shell script called
+`archive_install_internal.sh` in the `ansible` folder.  The play relies on you having a proper secrets setup to handle ssh
+logins to the remote host.
+
+
+Now that this is done, assuming you have sudo permission to root on the target host, you can run the ansible play.
+To install, simply:
+
+```
+cd ansible
+bash ./archive_install.sh -i dev
+```
+
+Once the install finishes, you should be able to browse the deployed site at (modify as appropriate):
+
+https://hbffits-lv1.hi.gemini.edu/searchform/
+
+### Crontab
+
+I have removed the crontab from the ansible play to avoid problems.  Adding or updating cron can be done manually.
+Also note that historically we have had issues with the cron deploy.  Make sure the crontabs work as we have seen
+the ansible user module create users that are broken on CentOS 8 for cronjobs.
 
 ## Running the tests
 
