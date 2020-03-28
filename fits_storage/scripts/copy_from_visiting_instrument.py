@@ -194,25 +194,27 @@ if __name__ == "__main__":
             with session_scope() as session:
                 logger.debug("Instantiating IngestQueueUtil object")
                 iq = IngestQueueUtil(session, logger)
-                logger.info("Starting looping...")
-                while True:
-                    todo_list = dir_list - known_list
-                    logger.info("%d new files to check", len(todo_list))
-                    for filename in todo_list:
-                        if 'tmp' in filename:
-                            logger.info("Ignoring tmp file: %s", filename)
-                            continue
-                        fullname = filename
-                        filename = os.path.split(filename)[1]
-                        if check_present(session, filename):
-                            logger.debug("%s is already present in database", filename)
+
+                # logger.info("Starting looping...")
+                # while True:
+
+                todo_list = dir_list - known_list
+                logger.info("%d new files to check", len(todo_list))
+                for filename in todo_list:
+                    if 'tmp' in filename:
+                        logger.info("Ignoring tmp file: %s", filename)
+                        continue
+                    fullname = filename
+                    filename = os.path.split(filename)[1]
+                    if check_present(session, filename):
+                        logger.debug("%s is already present in database", filename)
+                        known_list.add(filename)
+                    else:
+                        if ingester.copy_over(session, iq, logger, fullname, options.dryrun):
                             known_list.add(filename)
-                        else:
-                            if ingester.copy_over(session, iq, logger, fullname, options.dryrun):
-                                known_list.add(filename)
-                    logger.debug("Pass complete, sleeping")
-                    time.sleep(5)
-                    logger.debug("Re-scanning")
-                    dir_list = set(ingester.get_files())
+                # logger.debug("Pass complete, sleeping")
+                # time.sleep(5)
+                # logger.debug("Re-scanning")
+                # dir_list = set(ingester.get_files())
     else:
         logger.info("No ingesters specified, nothing to copy")
