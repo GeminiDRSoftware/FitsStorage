@@ -38,6 +38,8 @@ from ..orm.publication import Publication
 # that can be represented by a data structure. It's better to keep it like that
 # to simplify updates without breaking the logic.If the first item is callable,
 # it's called, if it's a tuple it's considered a set of possible values.
+from ..orm.target import TargetPresence
+
 getselection_test_pairs = (
     (gemini_telescope, 'telescope'),
     (gemini_date, 'date'),
@@ -85,7 +87,8 @@ getselection_key_value = {
     'publication': 'publication',
     'PIname': 'PIname',
     'ProgramText': 'ProgramText',
-    'entrytime': 'entrytime'
+    'entrytime': 'entrytime',
+    'ephemeris_target': 'ephemeris_target'
     }
 
 # Also, some entries set themselves as the value for a certain selection
@@ -340,7 +343,7 @@ queryselection_filters = (
     ('mdready',       DiskFile.mdready),
     ('site_monitoring', Header.site_monitoring),
     ('pre_image',     Header.pre_image),
-    ('procsci',       Header.procsci),
+    ('procsci',       Header.procsci)
     )
 
 def queryselection(query, selection):
@@ -703,6 +706,10 @@ def queryselection(query, selection):
             query = query.filter(
                 func.to_tsvector(Program.title).match(' & '.join(selection['ProgramText'].split()))
                 )
+
+    if 'ephemeris_target' in selection:
+        query = query.join(TargetPresence, TargetPresence.diskfile_id == DiskFile.id)
+        query = query.filter(TargetPresence.target_name == selection['ephemeris_target'])
 
     return query
 
