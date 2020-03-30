@@ -5,6 +5,7 @@ This is the searchform module.
 import os
 import json
 import urllib.request, urllib.parse, urllib.error
+import urllib
 import contextlib
 
 from xml.dom import minidom
@@ -50,6 +51,7 @@ def searchform(things, orderby):
 
     # grab the string version of things before getselection() as that modifies the list.
     thing_string = '/' + '/'.join(things)
+    things = [urllib.parse.unquote(t) for t in things]
     selection = getselection(things)
     formdata = ctx.get_form_data()
 
@@ -311,6 +313,8 @@ def updateselection(formdata, selection):
             pass
         elif key == 'col_selection':
             selection['cols'] = formdata_to_compressed(value)
+        elif key == 'object':
+            selection['object'] = value
         else:
             # This covers the generic case where the formdata key is also
             # the selection key, and the form value is the selection value
