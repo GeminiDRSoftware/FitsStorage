@@ -201,7 +201,7 @@ def getselection(things):
                 # Good through 2029, don't match full filenames :-)
                 selection['filepre'] = thing
             elif key in {'object', 'Object'}:
-                selection['object'] = urllib.parse.unquote_plus(value)
+                selection['object'] = value
             elif thing in {'LS', 'MOS', 'IFS'}:
                 selection['mode'] = thing
                 selection['spectroscopy'] = True
@@ -789,7 +789,7 @@ def selection_to_URL(selection, with_columns=False):
             # We need to double-escape this because the webserver/wsgi code (outside our control) will
             # de-escape it for us and we'll be left with, for instance, /s that we can't differentiate
             # from those in the path.
-            urlstring += '/object=%s' % urllib.parse.quote_plus(urllib.parse.quote_plus(selection[key]))
+            urlstring += '/object=%s' % urllib.parse.quote(selection[key])
         elif key == 'spectroscopy':
             if selection[key] is True:
                 urlstring += '/spectroscopy'
