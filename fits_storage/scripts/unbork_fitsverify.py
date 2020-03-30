@@ -76,5 +76,6 @@ while start <= end:
                         count = 0
         if count > 0:
             session.commit()
+    start = start + options.step
 
 logger.info("*** unbork_fitsverify.py exiting normally at %s" % datetime.datetime.now())
