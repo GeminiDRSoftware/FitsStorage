@@ -10,7 +10,8 @@ import datetime
 from optparse import OptionParser
 
 parser = OptionParser()
-parser.add_option("--limit", action="store", type="int", help="specify a limit on the number of files to examine. The list is sorted by lastmod time before the limit is applied")
+parser.add_option("--start", action="store", type="int", help="specify a start id")
+parser.add_option("--limit", action="store", type="int", help="specify a limit on the number of reports to examine")
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Don't actually fix")
 
@@ -26,15 +27,16 @@ logger.info("*********    unbork_fitsverify.py - starting up at %s" % datetime.d
 # Get a database session
 with session_scope() as session:
     # Get a list of all diskfile_ids marked as present
-    query = session.query(DiskFileReport)
+    query = session.query(DiskFileReport).filter(DiskFileReport.id > options.start) \
+        .filter(DiskFileReport.id < (options.start + options.limit))
 
     # Did we get a limit option?
-    if(options.limit):
-        query = query.limit(options.limit)
+    # if(options.limit):
+    #     query = query.limit(options.limit)
 
-    logger.info("evaluating number of rows...")
-    n = query.count()
-    logger.info("%d reports to check" % n)
+    # logger.info("evaluating number of rows...")
+    # n = query.count()
+    # logger.info("%d reports to check" % n)
 
     logger.info("Starting checking...")
 
