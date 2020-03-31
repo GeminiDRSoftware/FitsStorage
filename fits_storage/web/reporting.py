@@ -54,22 +54,25 @@ def report(thing):
     diskfile = query.one()
     # Find the diskfilereport
     query = session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == diskfile.id)
-    diskfilereport = query.one()
+    diskfilereport = query.one_or_none()
     resp.content_type = "text/plain"
-    if this == 'fitsverify':
-        resp.append(diskfilereport.fvreport)
-    elif this == 'mdreport':
-        try:
-            resp.append(diskfilereport.mdreport)
-        except TypeError:
-            resp.append('No report was generated\n')
-    elif this == 'fullheader':
-        # Need to find the header associated with this diskfile
-        query = (session.query(Header, FullTextHeader)
-                    .filter(FullTextHeader.diskfile_id == diskfile.id)
-                    .filter(Header.diskfile_id == diskfile.id))
-        header, ftheader = query.one()
-        if canhave_coords(session, ctx.user, header):
-            resp.append(ftheader.fulltext)
-        else:
-            resp.client_error(Return.HTTP_FORBIDDEN, "The data you're trying to access has proprietary rights and cannot be displayed")
+    if diskfilereport is None:
+        resp.append('Cannot find report for: %s\n' % diskfile.filename)
+    else:
+        if this == 'fitsverify':
+            resp.append(diskfilereport.fvreport)
+        elif this == 'mdreport':
+            try:
+                resp.append(diskfilereport.mdreport)
+            except TypeError:
+                resp.append('No report was generated\n')
+        elif this == 'fullheader':
+            # Need to find the header associated with this diskfile
+            query = (session.query(Header, FullTextHeader)
+                        .filter(FullTextHeader.diskfile_id == diskfile.id)
+                        .filter(Header.diskfile_id == diskfile.id))
+            header, ftheader = query.one()
+            if canhave_coords(session, ctx.user, header):
+                resp.append(ftheader.fulltext)
+            else:
+                resp.client_error(Return.HTTP_FORBIDDEN, "The data you're trying to access has proprietary rights and cannot be displayed")
