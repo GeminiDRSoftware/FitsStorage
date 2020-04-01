@@ -64,7 +64,7 @@ class VisitingInstrumentABC(ABC):
     def get_destination(self, filename):
         raise NotImplementedError("subclasses must implement get_dest_path()")
 
-    def copy_over(self, session, iq, logger, filename, dryrun):
+    def copy_over(self, session, iq, logger, filename, dryrun, force):
         src = os.path.join(self.base_path, filename)
         dst_filename = self.get_dest_filename(src)
         logger.debug("Calcuating dst_path from src=%s" % src)
@@ -73,7 +73,7 @@ class VisitingInstrumentABC(ABC):
         dst = os.path.join(storage_root, dst_path, dst_filename)
         dest = os.path.join(storage_root, self.get_destination(filename))
         # If the Destination file already exists, skip it
-        if os.access(dst, os.F_OK | os.R_OK):
+        if not force and os.access(dst, os.F_OK | os.R_OK):
             logger.info("%s already exists on storage_root - skipping", filename)
             return True
         # If the source path is a directory, skip is
@@ -165,6 +165,8 @@ if __name__ == "__main__":
     parser.add_option("--dryrun", action="store_true", dest="dryrun", default=False, help="Don't actually do anything")
     parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
     parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run in background mode")
+    parser.add_option("--force", action="store_true", dest="force", default=False,
+                      help="Copy file even if present on disk")
     parser.add_option("--alopeke", action="store_true", dest="alopeke", default=False, help="Copy Alopeke data")
     parser.add_option("--zorro", action="store_true", dest="zorro", default=False, help="Copy Zorro data")
     parser.add_option("--zorro-old", action="store_true", dest="zorroold", default=False,
@@ -219,7 +221,7 @@ if __name__ == "__main__":
                         logger.debug("%s is already present in database", filename)
                         known_list.add(filename)
                     else:
-                        if ingester.copy_over(session, iq, logger, fullname, options.dryrun):
+                        if ingester.copy_over(session, iq, logger, fullname, options.dryrun, options.force):
                             known_list.add(filename)
                 # logger.debug("Pass complete, sleeping")
                 # time.sleep(5)
