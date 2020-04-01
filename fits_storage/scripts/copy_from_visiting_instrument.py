@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.scripts.header_fixer2 import fix_and_copy
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 
 from fits_storage.fits_storage_config import using_s3, storage_root
@@ -34,8 +35,9 @@ class VisitingInstrumentABC(ABC):
     This provides the common framework/structure and the
     implementations handle the peculiarities of each.
     """
-    def __init__(self, base_path):
+    def __init__(self, base_path, apply_fixes):
         self.base_path = base_path
+        self.apply_fixes = apply_fixes
     
     def check_filename(self, filename):
         return filename not in ['.bplusvtoc_internal', '.vtoc_internal']
@@ -103,7 +105,10 @@ class VisitingInstrumentABC(ABC):
                 # use copyfile instead.
                 if not os.path.exists(os.path.join(storage_root, dst_path)):
                     os.mkdir(os.path.join(storage_root, dst_path))
-                shutil.copyfile(src, dst)
+                if self.apply_fixes:
+                    fix_and_copy(self.base_path, dst, filename)
+                else:
+                    shutil.copyfile(src, dst)
                 logger.info("Adding %s to IngestQueue", filename)
                 
                 # iq.add_to_queue(dst_filename, dst_path, force=False, force_md5=False, after=None)
@@ -143,13 +148,13 @@ class AlopekeZorroABC(VisitingInstrumentABC):
 
 class Alopeke(AlopekeZorroABC):
     def __init__(self):
-        super().__init__('alopeke', "/net/mkovisdata/home/alopeke/")
+        super().__init__('alopeke', "/net/mkovisdata/home/alopeke/", True)
         self._filename_re = re.compile(r'N\d{8}A\d{4}[br].fits.bz2')
 
 
 class Zorro(AlopekeZorroABC):
-    def __init__(self):
-        super().__init__('zorro', "/net/cpostonfs-nv1/tier2/ins/sto/zorro/")
+    def __init__(self, base_path="/net/cpostonfs-nv1/tier2/ins/sto/zorro/"):
+        super().__init__('zorro', base_path, True)
         self._filename_re = re.compile(r'S\d{8}Z\d{4}[br].fits.bz2')
 
 
@@ -162,6 +167,8 @@ if __name__ == "__main__":
     parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run in background mode")
     parser.add_option("--alopeke", action="store_true", dest="alopeke", default=False, help="Copy Alopeke data")
     parser.add_option("--zorro", action="store_true", dest="zorro", default=False, help="Copy Zorro data")
+    parser.add_option("--zorro-old", action="store_true", dest="zorroold", default=False,
+                      help="Copy Old Zorro data (from /sci/dataflow/zorro-old)")
 
     (options, args) = parser.parse_args()
 
@@ -184,6 +191,8 @@ if __name__ == "__main__":
         ingesters.append(Alopeke())
     if options.zorro:
         ingesters.append(Zorro())
+    if options.zorroold:
+        ingesters.append(Zorro("/sci/dataflow/zorro-old"))
     if ingesters:
         for ingester in ingesters:
             # Get initial Alopeke directory listing
