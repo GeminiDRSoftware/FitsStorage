@@ -122,8 +122,8 @@ class VisitingInstrumentABC(ABC):
 
 
 class AlopekeZorroABC(VisitingInstrumentABC):
-    def __init__(self, instr, path):
-        super().__init__(path)
+    def __init__(self, instr, path, apply_fixes):
+        super().__init__(path, apply_fixes)
         self._instrument = instr
 
     def prep(self):
