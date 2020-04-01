@@ -106,7 +106,7 @@ class VisitingInstrumentABC(ABC):
                 if not os.path.exists(os.path.join(storage_root, dst_path)):
                     os.mkdir(os.path.join(storage_root, dst_path))
                 if self.apply_fixes:
-                    fix_and_copy(self.base_path, dst, filename)
+                    fix_and_copy(os.path.dirname(src), os.path.join(storage_root, dst_path), dst_filename)
                 else:
                     shutil.copyfile(src, dst)
                 logger.info("Adding %s to IngestQueue", filename)
