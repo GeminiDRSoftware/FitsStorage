@@ -72,7 +72,7 @@ def get_time(session, header):
 
 def check_contained(session, coords, header_id):
     # logic based on orm.geomhacks
-    sql = "select id from footprint where POINT(%f,%f) @ footprint.area and footprint.header_id=%d" % (coords.ra.degree, coords.dec.degree, header_id)    print("SQL:\n%s" % sql)
+    sql = "select id from footprint where POINT(%f,%f) @ footprint.area and footprint.header_id=%d" % (coords.ra.degree, coords.dec.degree, header_id)
     result = session.execute(sql)
 
     if result.rowcount:
