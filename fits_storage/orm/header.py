@@ -518,6 +518,10 @@ class Header(Base):
                 if (hdr.get('CTYPE1') == 'RA---TAN') and (hdr.get('CTYPE2') == 'DEC--TAN'):
                     extension = "%s,%s" % (hdr.get('EXTNAME'), hdr.get('EXTVER'))
                     wcs = pywcs.WCS(hdu.header)
+                    if hdu.data is not None and hdu.data.shape:
+                        wcs.array_shape = hdu.data.shape
+                    elif hdulist[1].data is not None and hdulist[1].data.shape:
+                        wcs.array_shape = hdulist[1].data.shape
                     try:
                         fp = wcs.calc_footprint()
                         retary[extension] = fp
