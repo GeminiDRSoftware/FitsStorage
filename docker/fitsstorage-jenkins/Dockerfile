@@ -46,7 +46,7 @@ RUN echo "geminidata:x:502:fitsdata" >> /etc/group
 # DATA FOLDERS
 RUN mkdir -p /data/logs && \
     chown fitsdata /data/logs && \
-    chmod oug_rw /data/logs
+    chmod oug_rw /data/logs && \
     mkdir -p /data/backups && \
     chown fitsdata /data/backups && \
     mkdir -p /data/upload_staging && \
