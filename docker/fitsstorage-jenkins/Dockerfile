@@ -35,6 +35,7 @@ RUN pip3 install psycopg2-binary && \
     pip3 install astropy && \
     pip3 install future && \
     pip3 install boto3 && \
+    pip3 install imexam && \
     pip3 install pytest
 
 # CREATE FITSDATA USER AND GROUP
