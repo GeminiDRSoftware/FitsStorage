@@ -35,6 +35,7 @@ pipeline {
 //                 sh 'mkdir -p ${TEST_IMAGE_CACHE}'
 //                 sh 'rm -rf ./plots; mkdir -p ./plots'
                 sh 'rm -rf ./reports; mkdir -p ./reports'
+                sh '.jenkins/scripts/download_and_install_packages.sh'
                 sh '.jenkins/scripts/download_and_install_anaconda.sh'
                 sh '.jenkins/scripts/create_conda_environment.sh'
                 sh '''. activate ${CONDA_ENV_NAME}
