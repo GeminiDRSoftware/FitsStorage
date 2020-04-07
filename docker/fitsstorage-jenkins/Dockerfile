@@ -46,6 +46,7 @@ RUN echo "geminidata:x:502:fitsdata" >> /etc/group
 # DATA FOLDERS
 RUN mkdir -p /data/logs && \
     chown fitsdata /data/logs && \
+    chmod oug_rw /data/logs
     mkdir -p /data/backups && \
     chown fitsdata /data/backups && \
     mkdir -p /data/upload_staging && \
@@ -59,7 +60,7 @@ RUN mkdir -p /data/logs && \
 
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
-RUN cd /opt && git clone --branch v2.1.0 https://github.com/GeminiDRSoftware/DRAGONS.git
+RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
 COPY . /opt/FitsStorage
 WORKDIR /opt/FitsStorage
 COPY fitsverify /opt/fitsverify
