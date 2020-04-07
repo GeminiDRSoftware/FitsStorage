@@ -17,6 +17,10 @@ from ..utils.web import get_context, with_content_type
 
 from . import templating
 
+from ..logger import logger
+from datetime import datetime
+
+
 diskfile_fields = ('filename', 'path', 'compressed', 'file_size',
                    'data_size', 'file_md5', 'data_md5', 'lastmod', 'mdready',
                    'entrytime')
@@ -133,12 +137,15 @@ def jsonqastate(selection):
     It is intended for use by the ODB.
     It does not limit the number of results
     """
+    then = datetime.now()
 
     ctx = get_context()
 
     # Like the summaries, only list canonical files by default
     if 'canonical' not in list(selection.keys()):
         selection['canonical']=True
+
+    logger.warn("Entered jsonqastate, selection: %s" % selection)
 
     # We do this directly rather than with list_headers for efficiency
     # as this could be used on very large queries bu the ODB
@@ -154,6 +161,8 @@ def jsonqastate(selection):
                         'data_md5': _for_json(diskfile.data_md5),
                         'entrytime': _for_json(diskfile.entrytime),
                         'qa_state': _for_json(header.qa_state)})
+
+    logger.warn("Query: %s - Done, sending json, duration: %s" % (selection, (datetime.now() - then)))
 
     ctx.resp.send_json(thelist)
 

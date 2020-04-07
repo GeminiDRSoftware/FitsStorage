@@ -336,6 +336,7 @@ def nameresolver(resolver, target):
     }
 
     try:
+        target = urllib.parse.quote(target)
         url = urls[resolver] + target
 
         with contextlib.closing(urllib.request.urlopen(url)) as urlfd:

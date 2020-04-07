@@ -75,7 +75,10 @@ class DiskFileReport(Base):
             # the report, and the database will object to the bad characters in
             # the unicode string - errors=ignore makes it ignore these.
             #O - looks like a bad conversion for python3 support, let's try keeping this simple
-            self.fvreport = retlist[3] # str(retlist[3], errors='replace')
+            if isinstance(retlist[3], str):
+                self.fvreport = retlist[3]
+            else:
+                self.fvreport = retlist[3].decode("utf-8", errors='replace')
 
     def md(self, diskfile):
         """
