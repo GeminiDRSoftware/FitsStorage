@@ -514,12 +514,16 @@ class Header(Base):
             # If we're not in an RA/Dec TANgent frame, don't even bother
             # try using fitsio here too
             hdulist = fits.open(ad.path)
-            for (hdu, hdr) in zip(hdulist, ad.hdr): # ad.hdr:
+            for (hdu, hdr) in zip(hdulist[1:], ad.hdr): # ad.hdr:
                 if (hdr.get('CTYPE1') == 'RA---TAN') and (hdr.get('CTYPE2') == 'DEC--TAN'):
                     extension = "%s,%s" % (hdr.get('EXTNAME'), hdr.get('EXTVER'))
                     wcs = pywcs.WCS(hdu.header)
                     if hdu.data is not None and hdu.data.shape:
-                        wcs.array_shape = hdu.data.shape
+                        shpe = hdu.data.shape
+                        if len(shpe) == 3 and shpe[0] == 1:
+                            shpe = shpe[1:]
+                            wcs = pywcs.WCS(hdu.header, naxis=2)
+                        wcs.array_shape = shpe
                     elif hdulist[1].data is not None and hdulist[1].data.shape:
                         wcs.array_shape = hdulist[1].data.shape
                     try:
