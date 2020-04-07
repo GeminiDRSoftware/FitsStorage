@@ -87,6 +87,11 @@ RUN cd /opt/DRAGONS/gempy/library/ && cythonize -i cyclip.pyx
 # Calibs code
 RUN cd /opt/FitsStorage/local_calibs && python3 setup.py install
 
+# For specutils, wow this is dumb
+RUN mkdir -p /.specutils && \
+    chmod oug+rwx /.specutils
+
+# Setup env
 ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
 ENV PGPASSWORD fitsdata
