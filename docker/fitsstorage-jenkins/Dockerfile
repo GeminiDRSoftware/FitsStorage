@@ -13,7 +13,12 @@ RUN yum -y install openssl \
                    gcc-c++ \
                    gcc-gfortran \
                    cfitsio-devel \
-                   git
+                   git \
+                   libjpeg-devel \
+                   python3-pillow \
+                   redhat-rpm-config \
+                   python3-devel
+
 RUN yum -y --nogpgcheck install python3-pip
 
 # Fix Centos 8 broken Locale
@@ -35,8 +40,17 @@ RUN pip3 install psycopg2-binary && \
     pip3 install astropy && \
     pip3 install future && \
     pip3 install boto3 && \
-    pip3 install imexam && \
     pip3 install pytest
+
+# Needed for imexam, which is needed for DRAGONS
+RUN pip3 install photutils
+
+RUN yum -y install make
+RUN pip3 install imexam
+
+# DRAGONS now also needs specutils
+RUN pip3 install specutils
+
 
 # CREATE FITSDATA USER AND GROUP
 RUN /usr/sbin/groupadd -g 5179 fitsdata
@@ -65,6 +79,13 @@ RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRA
 COPY . /opt/FitsStorage
 WORKDIR /opt/FitsStorage
 COPY fitsverify /opt/fitsverify
+
+# CYTHON STEP FOR DRAGONS
+RUN pip3 install cython
+RUN cd /opt/DRAGONS/gempy/library/ && cythonize -i cyclip.pyx
+
+# Calibs code
+RUN cd /opt/FitsStorage/local_calibs && python3 setup.py install
 
 ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
