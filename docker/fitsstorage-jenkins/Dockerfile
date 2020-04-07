@@ -46,7 +46,7 @@ RUN echo "geminidata:x:502:fitsdata" >> /etc/group
 # DATA FOLDERS
 RUN mkdir -p /data/logs && \
     chown fitsdata /data/logs && \
-    chmod oug_rw /data/logs && \
+    chmod oug+rwx /data/logs && \
     mkdir -p /data/backups && \
     chown fitsdata /data/backups && \
     mkdir -p /data/upload_staging && \
@@ -56,7 +56,7 @@ RUN mkdir -p /data/logs && \
     chown fitsdata /data/z_staging && \
     mkdir -p /data/s3_staging && \
     chown fitsdata /data/s3_staging && \
-    chmod oug+rw /data/s3_staging
+    chmod oug+rwx /data/s3_staging
 
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
