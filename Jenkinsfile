@@ -114,7 +114,7 @@ pipeline {
                     disableHostKeyChecking: true,
                     credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7',
                     vaultCredentialsId: 'vault_pass',
-                    extraVars: ' --vault-password-file /var/lib/jenkins/secret'
+                    extras: ' --vault-password-file /var/lib/jenkins/secret'
                 )
             }
         }
