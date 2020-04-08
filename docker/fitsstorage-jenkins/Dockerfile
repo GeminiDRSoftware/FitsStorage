@@ -73,6 +73,10 @@ RUN mkdir -p /data/logs && \
     chown fitsdata /data/s3_staging && \
     chmod oug+rwx /data/s3_staging
 
+# BECAUSE SPECUTILS (SIGH)
+RUN mkdir -p /usr/share/httpd/.specutils && \
+    chmod oug+rwx /usr/share/httpd/.specutils
+
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
 RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
