@@ -105,7 +105,15 @@ pipeline {
 //             }
 //
 //         }
-
+        stage('Deploy To Dev') {
+            steps {
+                echo "Deploying to Dev Host"
+                ansiblePlaybook(
+                    inventory: 'dev',
+                    playbook: 'playbooks/archive_install.yml'
+                )
+            }
+        }
     }
     post {
         always {
