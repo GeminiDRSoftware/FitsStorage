@@ -50,37 +50,37 @@ pipeline {
 
         }
 
-//         stage('Building Docker Containers') {
-//             steps {
-//                 script {
-//                     def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f docker/fitsstorage-jenkins/Dockerfile .")
-//                     def archiveimage = docker.build("gemini/archive:jenkins", " -f docker/archive-jenkins/Dockerfile .")
-//                     sh '''
-//                     docker network create fitsstorage-jenkins || true
-//                     docker container rm fitsdata-jenkins || true
-//                     docker container rm archive-jenkins || true
-//                     '''
-//                     def postgres = docker.image('postgres:12').withRun(" --network fitsstorage-jenkins --name fitsdata-jenkins -e POSTGRES_USER=fitsdata -e POSTGRES_PASSWORD=fitsdata -e POSTGRES_DB=fitsdata") { c ->
-//                         def archive = docker.image("gemini/archive:jenkins").withRun(" --network fitsstorage-jenkins --name archive-jenkins -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") { a->
-//                             try {
-//                                 docker.image('gemini/fitsarchiveutils:jenkins').inside("  --network fitsstorage-jenkins -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e PYTEST_SERVER=http://archive-jenkins -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") {
-//                                     sh 'python3 fits_storage/scripts/create_tables.py'
-//                                     echo "Running tests against docker containers"
-//                                     sh  '''
-//                                         mkdir -p /tmp/archive_test_images
-//                                         mkdir -p /tmp/cached_archive_test_images
-//                                         pytest --ignore tests/web/test_web_response.py tests
-//                                         '''
-//                                 }
-//                             } catch (exc) {
-//                                 sh "docker logs ${a.id}"
-//                                 throw exc
-//                             }
-//                         }
-//                     }
-//                 }
-//             }
-//         }
+        stage('Building Docker Containers') {
+            steps {
+                script {
+                    def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f docker/fitsstorage-jenkins/Dockerfile .")
+                    def archiveimage = docker.build("gemini/archive:jenkins", " -f docker/archive-jenkins/Dockerfile .")
+                    sh '''
+                    docker network create fitsstorage-jenkins || true
+                    docker container rm fitsdata-jenkins || true
+                    docker container rm archive-jenkins || true
+                    '''
+                    def postgres = docker.image('postgres:12').withRun(" --network fitsstorage-jenkins --name fitsdata-jenkins -e POSTGRES_USER=fitsdata -e POSTGRES_PASSWORD=fitsdata -e POSTGRES_DB=fitsdata") { c ->
+                        def archive = docker.image("gemini/archive:jenkins").withRun(" --network fitsstorage-jenkins --name archive-jenkins -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") { a->
+                            try {
+                                docker.image('gemini/fitsarchiveutils:jenkins').inside("  --network fitsstorage-jenkins -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e PYTEST_SERVER=http://archive-jenkins -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") {
+                                    sh 'python3 fits_storage/scripts/create_tables.py'
+                                    echo "Running tests against docker containers"
+                                    sh  '''
+                                        mkdir -p /tmp/archive_test_images
+                                        mkdir -p /tmp/cached_archive_test_images
+                                        pytest --ignore tests/web/test_web_response.py tests
+                                        '''
+                                }
+                            } catch (exc) {
+                                sh "docker logs ${a.id}"
+                                throw exc
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
 //         stage('Unit tests') {
 //
