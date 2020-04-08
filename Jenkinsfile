@@ -110,7 +110,8 @@ pipeline {
                 echo "Deploying to Dev Host"
                 ansiblePlaybook(
                     inventory: 'ansible/dev',
-                    playbook: 'ansible/playbooks/archive_install.yml'
+                    playbook: 'ansible/playbooks/archive_install.yml',
+                    disableHostKeyChecking: true
                 )
             }
         }
