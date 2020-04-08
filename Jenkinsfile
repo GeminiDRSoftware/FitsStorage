@@ -109,8 +109,8 @@ pipeline {
             steps {
                 echo "Deploying to Dev Host"
                 ansiblePlaybook(
-                    inventory: 'dev',
-                    playbook: 'playbooks/archive_install.yml'
+                    inventory: 'ansible/dev',
+                    playbook: 'ansible/playbooks/archive_install.yml'
                 )
             }
         }
