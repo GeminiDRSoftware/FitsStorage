@@ -24,7 +24,8 @@ def check_present(session, filename):
     # TODO this assumes path is a match, bad joojoo
     df = session.query(DiskFile).filter(DiskFile.filename==filename).filter(DiskFile.present==True).first()
     if df:
-        return True
+        return False
+        # return True
     return False
 
 
@@ -156,6 +157,7 @@ class Zorro(AlopekeZorroABC):
     def __init__(self, base_path="/net/cpostonfs-nv1/tier2/ins/sto/zorro/"):
         super().__init__('zorro', base_path, True)
         self._filename_re = re.compile(r'S\d{8}Z\d{4}[br].fits.bz2')
+        self._filename_re = re.compile(r'S20200316Z\d{4}[br].fits.bz2')
 
 
 if __name__ == "__main__":
