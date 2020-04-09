@@ -29,6 +29,8 @@ def fix_zorro(fits):
     if 'Object' in pheader and 'OBJECT' not in pheader:
         pheader['OBJECT'] = pheader['Object']
         del pheader['Object']
+    if 'OBSTYPE' in pheader and pheader['OBSTYPE'] is not None:
+        pheader['OBSTYPE'] = pheader['OBSTYPE'].upper()
     if 'GEMPRGID' in pheader:
         if 'OBSID' not in pheader or pheader['OBSID'] == pheader['GEMPRGID']:
             pheader['OBSID'] = "%s-0" % pheader['GEMPRGID']
