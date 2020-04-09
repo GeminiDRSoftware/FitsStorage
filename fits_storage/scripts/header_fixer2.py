@@ -2,6 +2,7 @@ import astropy.io.fits as pf
 from bz2 import BZ2File
 import os
 from argparse import ArgumentParser
+from datetime import datetime, timedelta
 
 
 def open_image(path):
@@ -48,6 +49,14 @@ def fix_zorro(fits):
         if isinstance(val, str):
             pheader['CRVAL2'] = float(val)
             retval = True
+    if 'RELEASE' not in pheader:
+        if 'OBSTIME' in pheader and pheader['OBSTIME'] is not None:
+            try:
+                obstime = pheader['OBSTIME']
+                dt = datetime.utcfromtimestamp(int(obstime))
+                pheader['RELEASE'] = (dt + timedelta(days=365)).strftime('%Y-%m-%d')
+            except Exception as e:
+                print("Unable to determine release date, continuing")
     return retval
 
 
