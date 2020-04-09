@@ -51,6 +51,27 @@ def fix_zorro(fits):
     return retval
 
 
+def fix_igrins(fits):
+    pheader = fits[0].header
+    if 'INSTRUME' not in pheader:
+        return False
+    inst = pheader['INSTRUME']
+    if inst.strip() != 'IGRINS':
+        return False
+    retval = False
+    if 'GEMPRGID' in pheader:
+        if 'OBSID' not in pheader or pheader['OBSID'] == pheader['GEMPRGID']:
+            pheader['OBSID'] = "%s-0" % pheader['GEMPRGID']
+            retval = True
+        elif 'OBSID' in pheader and isinstance(pheader['OBSID'], int):
+            obsid = pheader['OBSID']
+            pheader['OBSID'] = "%s=%s" % (pheader['GEMPRGID'], obsid)
+        if 'DATALAB' not in pheader:
+            pheader['DATALAB'] = "%s-0" % pheader['OBSID']
+            retval = True
+    return retval
+
+
 def fix_and_copy(src_dir, dest_dir, fn):
     path = os.path.join(src_dir, fn)
     df = os.path.join(dest_dir, fn)
@@ -58,6 +79,8 @@ def fix_and_copy(src_dir, dest_dir, fn):
         fits = pf.open(open_image(path), do_not_scale_image_data=True)
         if fix_zorro(fits):
             fits[0].header['HISTORY'] = 'Corrected metadata: Zorro fixes'
+        if fix_igrins(fits):
+            fits[0].header['HISTORY'] = 'Corrected metadata: IGRINS fixes'
         fits.writeto(output_file(df), output_verify='silentfix+exception')
     except (IOError, ValueError) as e:
         print('{0} >> {1}'.format(fn, e))
