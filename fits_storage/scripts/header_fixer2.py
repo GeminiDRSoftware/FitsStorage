@@ -64,6 +64,7 @@ def fix_igrins(fits):
         progid = pheader['GEMPRGID']
     elif 'GEMPRID' in pheader:
         progid = pheader['GEMPRID']
+        pheader['GEMPRGID'] = pheader['GEMPRID']
     if progid is not None:
         if 'OBSID' not in pheader or pheader['OBSID'] == progid:
             pheader['OBSID'] = "%s-0" % progid
