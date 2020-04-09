@@ -59,13 +59,18 @@ def fix_igrins(fits):
     if inst.strip() != 'IGRINS':
         return False
     retval = False
+    progid = None
     if 'GEMPRGID' in pheader:
-        if 'OBSID' not in pheader or pheader['OBSID'] == pheader['GEMPRGID']:
-            pheader['OBSID'] = "%s-0" % pheader['GEMPRGID']
+        progid = pheader['GEMPRGID']
+    elif 'GEMPRID' in pheader:
+        progid = pheader['GEMPRID']
+    if progid is not None:
+        if 'OBSID' not in pheader or pheader['OBSID'] == progid:
+            pheader['OBSID'] = "%s-0" % progid
             retval = True
         elif 'OBSID' in pheader and isinstance(pheader['OBSID'], int):
             obsid = pheader['OBSID']
-            pheader['OBSID'] = "%s=%s" % (pheader['GEMPRGID'], obsid)
+            pheader['OBSID'] = "%s=%s" % (progid, obsid)
         if 'DATALAB' not in pheader:
             pheader['DATALAB'] = "%s-0" % pheader['OBSID']
             retval = True
