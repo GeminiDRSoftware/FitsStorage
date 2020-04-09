@@ -71,7 +71,7 @@ def fix_igrins(fits):
             retval = True
         elif 'OBSID' in pheader and isinstance(pheader['OBSID'], int):
             obsid = pheader['OBSID']
-            pheader['OBSID'] = "%s=%s" % (progid, obsid)
+            pheader['OBSID'] = "%s-%s" % (progid, obsid)
         if 'DATALAB' not in pheader:
             pheader['DATALAB'] = "%s-0" % pheader['OBSID']
             retval = True
