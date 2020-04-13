@@ -69,7 +69,7 @@ pipeline {
                                     sh  '''
                                         mkdir -p /tmp/archive_test_images
                                         mkdir -p /tmp/cached_archive_test_images
-                                        pytest --ignore tests/web/test_web_response.py tests
+                                        pytest tests
                                         '''
                                 }
                             } catch (exc) {
