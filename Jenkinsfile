@@ -69,7 +69,8 @@ pipeline {
                                     sh  '''
                                         mkdir -p /tmp/archive_test_images
                                         mkdir -p /tmp/cached_archive_test_images
-                                        pytest tests
+                                        coverage run -m pytest tests
+                                        coverage report -m
                                         '''
                                 }
                             } catch (exc) {
