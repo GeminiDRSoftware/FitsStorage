@@ -70,7 +70,7 @@ pipeline {
                                         mkdir -p /tmp/archive_test_images
                                         mkdir -p /tmp/cached_archive_test_images
                                         coverage run -m pytest tests
-                                        coverage report -m
+                                        coverage report -m --fail-under=30
                                         '''
                                 }
                             } catch (exc) {
