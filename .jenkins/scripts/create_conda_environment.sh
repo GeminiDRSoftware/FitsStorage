@@ -15,4 +15,5 @@ if conda info --envs | grep -q $CONDA_ENV_NAME; then
 else
     conda env create --file ${CONDA_ENV_FILE} --name "${CONDA_ENV_NAME}" ;
     pip install -r requirements.txt
+    pip install -r requirements-test.txt
 fi
