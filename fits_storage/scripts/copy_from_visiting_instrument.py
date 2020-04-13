@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.scripts.header_fixer2 import fix_and_copy
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 
 from fits_storage.fits_storage_config import using_s3, storage_root
@@ -23,7 +24,8 @@ def check_present(session, filename):
     # TODO this assumes path is a match, bad joojoo
     df = session.query(DiskFile).filter(DiskFile.filename==filename).filter(DiskFile.present==True).first()
     if df:
-        return True
+        return False
+        # return True
     return False
 
 
@@ -34,8 +36,9 @@ class VisitingInstrumentABC(ABC):
     This provides the common framework/structure and the
     implementations handle the peculiarities of each.
     """
-    def __init__(self, base_path):
+    def __init__(self, base_path, apply_fixes):
         self.base_path = base_path
+        self.apply_fixes = apply_fixes
     
     def check_filename(self, filename):
         return filename not in ['.bplusvtoc_internal', '.vtoc_internal']
@@ -62,7 +65,7 @@ class VisitingInstrumentABC(ABC):
     def get_destination(self, filename):
         raise NotImplementedError("subclasses must implement get_dest_path()")
 
-    def copy_over(self, session, iq, logger, filename, dryrun):
+    def copy_over(self, session, iq, logger, filename, dryrun, force):
         src = os.path.join(self.base_path, filename)
         dst_filename = self.get_dest_filename(src)
         logger.debug("Calcuating dst_path from src=%s" % src)
@@ -71,7 +74,7 @@ class VisitingInstrumentABC(ABC):
         dst = os.path.join(storage_root, dst_path, dst_filename)
         dest = os.path.join(storage_root, self.get_destination(filename))
         # If the Destination file already exists, skip it
-        if os.access(dst, os.F_OK | os.R_OK):
+        if not force and os.access(dst, os.F_OK | os.R_OK):
             logger.info("%s already exists on storage_root - skipping", filename)
             return True
         # If the source path is a directory, skip is
@@ -103,7 +106,10 @@ class VisitingInstrumentABC(ABC):
                 # use copyfile instead.
                 if not os.path.exists(os.path.join(storage_root, dst_path)):
                     os.mkdir(os.path.join(storage_root, dst_path))
-                shutil.copyfile(src, dst)
+                if self.apply_fixes:
+                    fix_and_copy(os.path.dirname(src), os.path.join(storage_root, dst_path), dst_filename)
+                else:
+                    shutil.copyfile(src, dst)
                 logger.info("Adding %s to IngestQueue", filename)
                 
                 # iq.add_to_queue(dst_filename, dst_path, force=False, force_md5=False, after=None)
@@ -117,8 +123,8 @@ class VisitingInstrumentABC(ABC):
 
 
 class AlopekeZorroABC(VisitingInstrumentABC):
-    def __init__(self, instr, path):
-        super().__init__(path)
+    def __init__(self, instr, path, apply_fixes):
+        super().__init__(path, apply_fixes)
         self._instrument = instr
 
     def prep(self):
@@ -143,14 +149,15 @@ class AlopekeZorroABC(VisitingInstrumentABC):
 
 class Alopeke(AlopekeZorroABC):
     def __init__(self):
-        super().__init__('alopeke', "/net/mkovisdata/home/alopeke/")
+        super().__init__('alopeke', "/net/mkovisdata/home/alopeke/", True)
         self._filename_re = re.compile(r'N\d{8}A\d{4}[br].fits.bz2')
 
 
 class Zorro(AlopekeZorroABC):
-    def __init__(self):
-        super().__init__('zorro', "/net/cpostonfs-nv1/tier2/ins/sto/zorro/")
+    def __init__(self, base_path="/net/cpostonfs-nv1/tier2/ins/sto/zorro/"):
+        super().__init__('zorro', base_path, True)
         self._filename_re = re.compile(r'S\d{8}Z\d{4}[br].fits.bz2')
+        self._filename_re = re.compile(r'S20200316Z\d{4}[br].fits.bz2')
 
 
 if __name__ == "__main__":
@@ -160,8 +167,12 @@ if __name__ == "__main__":
     parser.add_option("--dryrun", action="store_true", dest="dryrun", default=False, help="Don't actually do anything")
     parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
     parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run in background mode")
+    parser.add_option("--force", action="store_true", dest="force", default=False,
+                      help="Copy file even if present on disk")
     parser.add_option("--alopeke", action="store_true", dest="alopeke", default=False, help="Copy Alopeke data")
     parser.add_option("--zorro", action="store_true", dest="zorro", default=False, help="Copy Zorro data")
+    parser.add_option("--zorro-old", action="store_true", dest="zorroold", default=False,
+                      help="Copy Old Zorro data (from /sci/dataflow/zorro-old)")
 
     (options, args) = parser.parse_args()
 
@@ -184,6 +195,8 @@ if __name__ == "__main__":
         ingesters.append(Alopeke())
     if options.zorro:
         ingesters.append(Zorro())
+    if options.zorroold:
+        ingesters.append(Zorro("/sci/dataflow/zorro-old"))
     if ingesters:
         for ingester in ingesters:
             # Get initial Alopeke directory listing
@@ -194,25 +207,27 @@ if __name__ == "__main__":
             with session_scope() as session:
                 logger.debug("Instantiating IngestQueueUtil object")
                 iq = IngestQueueUtil(session, logger)
-                logger.info("Starting looping...")
-                while True:
-                    todo_list = dir_list - known_list
-                    logger.info("%d new files to check", len(todo_list))
-                    for filename in todo_list:
-                        if 'tmp' in filename:
-                            logger.info("Ignoring tmp file: %s", filename)
-                            continue
-                        fullname = filename
-                        filename = os.path.split(filename)[1]
-                        if check_present(session, filename):
-                            logger.debug("%s is already present in database", filename)
+
+                # logger.info("Starting looping...")
+                # while True:
+
+                todo_list = dir_list - known_list
+                logger.info("%d new files to check", len(todo_list))
+                for filename in todo_list:
+                    if 'tmp' in filename:
+                        logger.info("Ignoring tmp file: %s", filename)
+                        continue
+                    fullname = filename
+                    filename = os.path.split(filename)[1]
+                    if check_present(session, filename):
+                        logger.debug("%s is already present in database", filename)
+                        known_list.add(filename)
+                    else:
+                        if ingester.copy_over(session, iq, logger, fullname, options.dryrun, options.force):
                             known_list.add(filename)
-                        else:
-                            if ingester.copy_over(session, iq, logger, fullname, options.dryrun):
-                                known_list.add(filename)
-                    logger.debug("Pass complete, sleeping")
-                    time.sleep(5)
-                    logger.debug("Re-scanning")
-                    dir_list = set(ingester.get_files())
+                # logger.debug("Pass complete, sleeping")
+                # time.sleep(5)
+                # logger.debug("Re-scanning")
+                # dir_list = set(ingester.get_files())
     else:
         logger.info("No ingesters specified, nothing to copy")

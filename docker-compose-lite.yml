@@ -67,6 +67,7 @@ services:
       - FITS_SERVERNAME=localhost
       - UPLOAD_AUTH_COOKIE=qap_upload_processed_cal_ok
       - API_BACKEND_LOCATION=api:8000
+      - CAL_QUERY_DEBUG=1
     volumes:
       - "~/upload_staging:/data/upload_staging"
       - "~/dataflow:/sci/dataflow"

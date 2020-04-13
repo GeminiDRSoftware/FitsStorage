@@ -124,8 +124,14 @@ def validate_program_key(program_id, program_key):
 
     url = 'https://%s.gemini.edu:8443/auth?id=%s&password=%s' % (host, program_id, program_key)
 
+    # REMOVE THIS ONCE WE GET SSL WORKING, THEY ARE SELF SIGNED
+    import os, ssl
+    if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
+            getattr(ssl, '_create_unverified_context', None)):
+        ssl._create_default_https_context = ssl._create_unverified_context
+
     ufd = urllib.request.urlopen(url)
-    reply = ufd.read()
+    reply = ufd.read().decode('utf-8')
     ufd.close()
 
     if reply[:3] == 'YES':

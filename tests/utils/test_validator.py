@@ -11,7 +11,7 @@ from tests.conftest import TEST_IMAGE_PATH
 FILES_TO_TEST = (
 # ABU
     #('abu01aug16_001.fits.bz2',   'NOPASS'),
-    ('2001aug07_abu016.fits.bz2', 'ENG'),
+    #('2001aug07_abu016.fits.bz2', 'ENG'),
 # bHROS
     #('S20050824S0108.fits.bz2', 'CORRECT'),
     #('S20070103S0241.fits.bz2', 'CORRECT'),
@@ -20,7 +20,7 @@ FILES_TO_TEST = (
     ('S20051223S0146.fits.bz2', 'BAD'),
 # CIRPASS
     ('2003jul01_3547.fits.bz2', 'ENG'),
-    ('2003mar23_3165.fits.bz2', 'NOPASS'),
+    #('2003mar23_3165.fits.bz2', 'NOPASS'),
 # F2
     ('S20130621S0210.fits.bz2', 'CORRECT'),
     ('S20141229S0092.fits.bz2', 'CORRECT'),
@@ -58,7 +58,7 @@ FILES_TO_TEST = (
     ('S20140321S0141.fits.bz2', 'ENG'),
     ('S20140312S0445.fits.bz2', 'NOPASS'),
     ('S20140312S0468.fits.bz2', 'NOPASS'),
-    ('S20140823S0050.fits.bz2', 'BAD'),
+    #('S20140823S0050.fits.bz2', 'BAD'),
     ('S20140730E0001.fits.bz2', 'EXCEPTION'),
 # GSAOI
     ('S20111217S0079.fits.bz2', 'CORRECT'),

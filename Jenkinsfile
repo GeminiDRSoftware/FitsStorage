@@ -29,10 +29,14 @@ pipeline {
             steps{
                 echo 'STARTED'
                 checkout scm
+
+                // Rest is for doing on-host testing.  We don't have docker, so reverting to that for now...
 //                 sh 'mkdir -p ${TEST_IMAGE_PATH}'
 //                 sh 'mkdir -p ${TEST_IMAGE_CACHE}'
 //                 sh 'rm -rf ./plots; mkdir -p ./plots'
+//
 //                 sh 'rm -rf ./reports; mkdir -p ./reports'
+//                 sh '.jenkins/scripts/download_and_install_packages.sh'
 //                 sh '.jenkins/scripts/download_and_install_anaconda.sh'
 //                 sh '.jenkins/scripts/create_conda_environment.sh'
 //                 sh '''. activate ${CONDA_ENV_NAME}
@@ -58,14 +62,19 @@ pipeline {
                     '''
                     def postgres = docker.image('postgres:12').withRun(" --network fitsstorage-jenkins --name fitsdata-jenkins -e POSTGRES_USER=fitsdata -e POSTGRES_PASSWORD=fitsdata -e POSTGRES_DB=fitsdata") { c ->
                         def archive = docker.image("gemini/archive:jenkins").withRun(" --network fitsstorage-jenkins --name archive-jenkins -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") { a->
-                            docker.image('gemini/fitsarchiveutils:jenkins').inside("  --network fitsstorage-jenkins -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e PYTEST_SERVER=http://archive-jenkins -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") {
-                                sh 'python3 fits_storage/scripts/create_tables.py'
-                                echo "Running tests against docker containers"
-                                sh  '''
-                                    mkdir -p /tmp/archive_test_images
-                                    mkdir -p /tmp/cached_archive_test_images
-                                    pytest tests
-                                    '''
+                            try {
+                                docker.image('gemini/fitsarchiveutils:jenkins').inside("  --network fitsstorage-jenkins -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e PYTEST_SERVER=http://archive-jenkins -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") {
+                                    sh 'python3 fits_storage/scripts/create_tables.py'
+                                    echo "Running tests against docker containers"
+                                    sh  '''
+                                        mkdir -p /tmp/archive_test_images
+                                        mkdir -p /tmp/cached_archive_test_images
+                                        pytest --ignore tests/web/test_web_response.py tests
+                                        '''
+                                }
+                            } catch (exc) {
+                                sh "docker logs ${a.id}"
+                                throw exc
                             }
                         }
                     }
@@ -96,7 +105,19 @@ pipeline {
 //             }
 //
 //         }
-
+        stage('Deploy To Dev') {
+            steps {
+                echo "Deploying to Dev Host"
+                ansiblePlaybook(
+                    inventory: 'ansible/dev',
+                    playbook: 'ansible/playbooks/archive_install.yml',
+                    disableHostKeyChecking: true,
+                    credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7',
+                    vaultCredentialsId: 'vault_pass',
+                    extras: " --extra-vars '@/var/lib/jenkins/secret.yml'"
+                )
+            }
+        }
     }
     post {
         always {

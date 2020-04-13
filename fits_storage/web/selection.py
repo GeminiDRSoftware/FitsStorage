@@ -38,6 +38,8 @@ from ..orm.publication import Publication
 # that can be represented by a data structure. It's better to keep it like that
 # to simplify updates without breaking the logic.If the first item is callable,
 # it's called, if it's a tuple it's considered a set of possible values.
+from ..orm.target import TargetPresence
+
 getselection_test_pairs = (
     (gemini_telescope, 'telescope'),
     (gemini_date, 'date'),
@@ -88,6 +90,7 @@ getselection_key_value = {
     'entrytime': 'entrytime',
     'raw_cc': 'raw_cc',
     'raw_iq': 'raw_iq',
+    'ephemeris_target': 'ephemeris_target'
     }
 
 # Also, some entries set themselves as the value for a certain selection
@@ -203,7 +206,7 @@ def getselection(things):
                 # Good through 2029, don't match full filenames :-)
                 selection['filepre'] = thing
             elif key in {'object', 'Object'}:
-                selection['object'] = urllib.parse.unquote_plus(value)
+                selection['object'] = value
             elif thing in {'LS', 'MOS', 'IFS'}:
                 selection['mode'] = thing
                 selection['spectroscopy'] = True
@@ -342,9 +345,9 @@ queryselection_filters = (
     ('mdready',       DiskFile.mdready),
     ('site_monitoring', Header.site_monitoring),
     ('pre_image',     Header.pre_image),
-    ('procsci',       Header.procsci),
     ('raw_cc',        Header.raw_cc),
     ('raw_iq',        Header.raw_iq),
+    ('procsci',       Header.procsci)
     )
 
 def queryselection(query, selection):
@@ -708,6 +711,10 @@ def queryselection(query, selection):
                 func.to_tsvector(Program.title).match(' & '.join(selection['ProgramText'].split()))
                 )
 
+    if 'ephemeris_target' in selection:
+        query = query.join(TargetPresence, TargetPresence.diskfile_id == DiskFile.id)
+        query = query.filter(TargetPresence.target_name == selection['ephemeris_target'])
+
     return query
 
 def openquery(selection):
@@ -793,7 +800,7 @@ def selection_to_URL(selection, with_columns=False):
             # We need to double-escape this because the webserver/wsgi code (outside our control) will
             # de-escape it for us and we'll be left with, for instance, /s that we can't differentiate
             # from those in the path.
-            urlstring += '/object=%s' % urllib.parse.quote_plus(urllib.parse.quote_plus(selection[key]))
+            urlstring += '/object=%s' % urllib.parse.quote(selection[key])
         elif key == 'spectroscopy':
             if selection[key] is True:
                 urlstring += '/spectroscopy'

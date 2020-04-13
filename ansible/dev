@@ -1,3 +1,6 @@
+[archive:vars]
+ansible_become_pass='{{ sudo_pass }}'
+
 [archive]
 hbffits-lv4.hi.gemini.edu
 
