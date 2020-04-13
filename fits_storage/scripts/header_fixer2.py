@@ -62,9 +62,14 @@ def fix_zorro(fits):
 
 def fix_and_copy(src_dir, dest_dir, fn):
     path = os.path.join(src_dir, fn)
+    tmppath = None
+    if fn.endswith('.bz2'):
+        tmppath = os.path.join('/tmp/', fn[:-4])
+        os.system('bzcat %s > %s' % (path, tmppath))
+
     df = os.path.join(dest_dir, fn)
     try:
-        fits = pf.open(open_image(path), do_not_scale_image_data=True)
+        fits = pf.open(open_image(tmppath), do_not_scale_image_data=True)
         if fix_zorro(fits):
             fits[0].header['HISTORY'] = 'Corrected metadata: Zorro fixes'
         fits.writeto(output_file(df), output_verify='silentfix+exception')
@@ -72,6 +77,9 @@ def fix_and_copy(src_dir, dest_dir, fn):
         print('{0} >> {1}'.format(fn, e))
         if os.path.exists(df):
             os.unlink(df)
+    finally:
+        if tmppath is not None:
+            os.unlink(tmppath)
 
 
 if __name__ == "__main__":
