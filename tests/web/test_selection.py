@@ -48,6 +48,7 @@ def query(request):
 
     return Query(Dummy)
 
+
 def build_query(request):
     """Creates a dummy query for tests depending on ORM.
 
@@ -57,6 +58,7 @@ def build_query(request):
     """
 
     return Query(Dummy)
+
 
 getselection_pairs = [
     (['12345'], {'notrecognised': '12345'}),
@@ -182,10 +184,11 @@ getselection_pairs = [
     (['exposure_time=blahblah'], {'exposure_time': 'blahblah'}),
     ]
 
+
 @pytest.mark.parametrize("input,expected", getselection_pairs)
-@pytest.mark.slow
 def test_getselection(input, expected):
     assert getselection(input) == expected
+
 
 sayselection_pairs = [
     ({'program_id': 'GN-CAL20150623', 'cenwlen': 'blahblah', 'exposure_time': 'blahblah'},
@@ -203,8 +206,8 @@ sayselection_pairs = [
      "; Program ID: GN-CAL20150623. WARNING: I didn't understand these (case-sensitive) words: Foobar"),
     ]
 
+
 @pytest.mark.parametrize("input,expected", sayselection_pairs)
-@pytest.mark.slow
 def test_sayselection(input, expected):
     if isinstance(expected, set):
         split = set(x for x in sayselection(input).split(';') if x)
