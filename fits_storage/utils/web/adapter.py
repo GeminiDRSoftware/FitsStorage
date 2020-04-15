@@ -285,6 +285,7 @@ class Request(object, metaclass=abc.ABCMeta):
             return self._s.query(User).filter(User.cookie == cookie).one()
         except NoResultFound:
             # This is not a valid session cookie
+            u = self._s.query(User).one_or_none()
             return None
         except MultipleResultsFound:
             return self._s.query(User).filter(User.cookie == cookie).all()

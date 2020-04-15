@@ -258,7 +258,7 @@ usagestats_header = """
 </tr>
 """
 
-# @needs_login(staffer=True)
+@needs_login(staffer=True)
 @templating.templated("logreports/usagestats.html", with_generator=True)
 def usagestats():
     """
