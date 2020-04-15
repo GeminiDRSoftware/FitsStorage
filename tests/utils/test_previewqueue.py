@@ -8,7 +8,7 @@ from fits_storage.utils.previewqueue import PreviewQueueUtil
 from fits_storage.utils.null_logger import EmptyLogger
 from fits_storage.utils import queue
 
-from tests.file_helper import ensure_file
+# from tests.file_helper import ensure_file
 
 
 def mock_pop_queue(queue_class, session, logger, fast_rebuild=False):
