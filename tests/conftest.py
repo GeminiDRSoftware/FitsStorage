@@ -145,7 +145,7 @@ def min_session(request):
             s.delete(user)
         s.commit()
         users = None
-    else:
+    elif len(users) == 1:
         user = users[0]
     if not users:
         user = User(username='user1')
