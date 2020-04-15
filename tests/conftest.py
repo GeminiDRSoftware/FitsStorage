@@ -12,6 +12,7 @@ from fits_storage.orm.downloadlog import DownloadLog
 from fits_storage.orm.querylog import QueryLog
 from fits_storage.orm.usagelog import UsageLog
 from fits_storage.orm.user import User
+from fits_storage.orm.userprogram import UserProgram
 
 now = dt.datetime.now()
 
@@ -144,6 +145,8 @@ def min_session(request):
             s.delete(user)
         s.commit()
         users = None
+    else:
+        user = users[0]
     if not users:
         user = User(username='user1')
         user.email = 'unknown1@gemini.edu'
@@ -152,6 +155,13 @@ def min_session(request):
         user.superuser = True
         user.cookie = 'oYgq13TfqRt+x1xrNnGNMZJIMZj+p1GyIWV/Ebm3/BsD05dCf5KKQOvtrGim9YG5XgsVCn8sDSBeaBHuh1I6A9st5CLr5auN9tYOlLzCFo15i64RUVfByFmqaxgJuHHAim4HBKdOlq/Mo4YHhMNAQKgUJnkEj27xoL6+YXSsNfmEDzB/PmmNzc+jz3sMCYuxt/NVftEo0FB1xk3xvCj5kkkE9DjRiSibtaD5EIluv2nYkmaSIxThfqpilj9UJhg4uc3pLN2I+R15IWa3h8HskqyjBL3tiq0paVWDv8BoOgeBwK24Igw0Vnn8vQQ8Ys6a4DZ2c84YaIjXEaL26VSw5A=='
         s.add(user)
+        s.commit()
+
+    user_programs = s.query(UserProgram).filter(UserProgram.user_id == user.id).all()
+    if not user_programs:
+        # give this user a program
+        user_program = UserProgram(user_id=user.id, program_id="SPARKYTHEGECKO")
+        s.add(user_program)
         s.commit()
 
     users = s.query(User).filter(User.username == 'user2').all()

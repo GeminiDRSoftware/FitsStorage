@@ -302,6 +302,8 @@ fixtures = (
     # TODO come up with a fresh example
     # Fixture('/downloadlog/N20120825S05', cookies=cookies['user2'],
     #         cases="<td>128.171.188.44\n    <td>2015-07-16 00:06:28.113801\n    <td>200 (OK)\n  </tr>"),
+    Fixture('/my_programs', cookies=cookies['user1'], cases="SPARKYTHEGECKO"),
+    Fixture('/my_programs', cookies=cookies['user1'], data={'program_id': 'SPARKYTHEGECKO'}, cases="SPARKYTHEGECKO"),
 )
 
 @pytest.mark.usefixtures("min_rollback")
