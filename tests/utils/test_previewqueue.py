@@ -38,6 +38,7 @@ def test_preview_queue_length(monkeypatch):
 
 
 @pytest.mark.usefixtures("rollback")
+@pytest.mark.slow
 def test_process(session):
     logging = EmptyLogger()
     pqu = PreviewQueueUtil(session, logging)
