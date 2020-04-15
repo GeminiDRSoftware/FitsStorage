@@ -8,6 +8,8 @@ from fits_storage.utils.previewqueue import PreviewQueueUtil
 from fits_storage.utils.null_logger import EmptyLogger
 from fits_storage.utils import queue
 
+from tests.file_helper import ensure_file
+
 
 def mock_pop_queue(queue_class, session, logger, fast_rebuild=False):
     return "test"
@@ -35,7 +37,6 @@ def test_preview_queue_length(monkeypatch):
     assert(length == 1)
 
 
-@pytest.mark.slow
 @pytest.mark.usefixtures("rollback")
 def test_process(session):
     logging = EmptyLogger()
@@ -43,6 +44,9 @@ def test_process(session):
     diskfiles = list()
     filename = "N20191010S0144.fits"
     path = ""
+
+    ensure_file(filename)
+
     file = File(filename)
     session.add(file)
     session.flush()
