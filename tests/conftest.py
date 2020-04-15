@@ -137,55 +137,39 @@ def min_session(request):
         # instead, let's create tables
         create_tables(s)
 
-        downloadlog = s.query(DownloadLog).all()
-        if downloadlog:
-            for dl in downloadlog:
-                s.delete(dl)
-            s.commit()
-        querylog = s.query(QueryLog).all()
-        if querylog:
-            for ql in querylog:
-                s.delete(ql)
-            s.commit()
-        usagelog = s.query(UsageLog).all()
-        if usagelog:
-            for ul in usagelog:
-                s.delete(ul)
-            s.commit()
+    users = s.query(User).filter(User.username == 'user1').all()
+    if len(users) > 1:
+        # bug, need to clear
+        for user in users:
+            s.delete(user)
+        s.commit()
+        users = None
+    if not users:
+        user = User(username='user1')
+        user.email = 'unknown1@gemini.edu'
+        user.fullname = 'User 1'
+        user.gemini_staff = True
+        user.superuser = True
+        user.cookie = 'oYgq13TfqRt+x1xrNnGNMZJIMZj+p1GyIWV/Ebm3/BsD05dCf5KKQOvtrGim9YG5XgsVCn8sDSBeaBHuh1I6A9st5CLr5auN9tYOlLzCFo15i64RUVfByFmqaxgJuHHAim4HBKdOlq/Mo4YHhMNAQKgUJnkEj27xoL6+YXSsNfmEDzB/PmmNzc+jz3sMCYuxt/NVftEo0FB1xk3xvCj5kkkE9DjRiSibtaD5EIluv2nYkmaSIxThfqpilj9UJhg4uc3pLN2I+R15IWa3h8HskqyjBL3tiq0paVWDv8BoOgeBwK24Igw0Vnn8vQQ8Ys6a4DZ2c84YaIjXEaL26VSw5A=='
+        s.add(user)
+        s.commit()
 
-        users = s.query(User).filter(User.username == 'user1').all()
-        if len(users) > 1:
-            # bug, need to clear
-            for user in users:
-                s.delete(user)
-            s.commit()
-            users = None
-        if not users:
-            user = User(username='user1')
-            user.email = 'unknown1@gemini.edu'
-            user.fullname = 'User 1'
-            user.gemini_staff = True
-            user.superuser = True
-            user.cookie = 'oYgq13TfqRt+x1xrNnGNMZJIMZj+p1GyIWV/Ebm3/BsD05dCf5KKQOvtrGim9YG5XgsVCn8sDSBeaBHuh1I6A9st5CLr5auN9tYOlLzCFo15i64RUVfByFmqaxgJuHHAim4HBKdOlq/Mo4YHhMNAQKgUJnkEj27xoL6+YXSsNfmEDzB/PmmNzc+jz3sMCYuxt/NVftEo0FB1xk3xvCj5kkkE9DjRiSibtaD5EIluv2nYkmaSIxThfqpilj9UJhg4uc3pLN2I+R15IWa3h8HskqyjBL3tiq0paVWDv8BoOgeBwK24Igw0Vnn8vQQ8Ys6a4DZ2c84YaIjXEaL26VSw5A=='
-            s.add(user)
-            s.commit()
-
-        users = s.query(User).filter(User.username == 'user2').all()
-        if len(users) > 1:
-            # bug, need to clear
-            for user in users:
-                s.delete(user)
-            s.commit()
-            users = None
-        if not users:
-            user = User(username='user2')
-            user.email = 'unknown2@gemini.edu'
-            user.fullname = 'User 2'
-            user.gemini_staff = True
-            user.superuser = True
-            user.cookie = 'Jaab1A1SVbDOCjGpYOPsDElBorBt58JXWJMRcg2EYsDKd9PA8W8W5SCn/R6baUFXVGHbE2QCHHlbHG+yfwoTGQZDTQgqD4X1IA+WzlCSLBQnoej+1t8iK/tYqTyHnHr2FVJ3U+ijwFPmxloplcqa/fWO17SFLQB5GiLrPgsNouKgj8M9vAK/IyzpYY2nSdXTo038k2S/OWm8JDMPr6Qp+FIByfvP4cEMdL3nHcCu6PhQsKtc+fbSt14Ie4UjJ6uu1rqzJc1iBThD3PwnYyRjuLtE3eiO7otThhwhbIf4gZrdrTvByROrtr5l2G45GBigFqxc+0TatfiPjszTaQiK/A=='
-            s.add(user)
-            s.commit()
+    users = s.query(User).filter(User.username == 'user2').all()
+    if len(users) > 1:
+        # bug, need to clear
+        for user in users:
+            s.delete(user)
+        s.commit()
+        users = None
+    if not users:
+        user = User(username='user2')
+        user.email = 'unknown2@gemini.edu'
+        user.fullname = 'User 2'
+        user.gemini_staff = True
+        user.superuser = True
+        user.cookie = 'Jaab1A1SVbDOCjGpYOPsDElBorBt58JXWJMRcg2EYsDKd9PA8W8W5SCn/R6baUFXVGHbE2QCHHlbHG+yfwoTGQZDTQgqD4X1IA+WzlCSLBQnoej+1t8iK/tYqTyHnHr2FVJ3U+ijwFPmxloplcqa/fWO17SFLQB5GiLrPgsNouKgj8M9vAK/IyzpYY2nSdXTo038k2S/OWm8JDMPr6Qp+FIByfvP4cEMdL3nHcCu6PhQsKtc+fbSt14Ie4UjJ6uu1rqzJc1iBThD3PwnYyRjuLtE3eiO7otThhwhbIf4gZrdrTvByROrtr5l2G45GBigFqxc+0TatfiPjszTaQiK/A=='
+        s.add(user)
+        s.commit()
 
     yield s
 
