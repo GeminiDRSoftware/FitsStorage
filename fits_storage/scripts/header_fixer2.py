@@ -54,7 +54,10 @@ def fix_zorro(fits):
             try:
                 obstime = pheader['OBSTIME']
                 dt = datetime.utcfromtimestamp(int(obstime))
-                pheader['RELEASE'] = (dt + timedelta(days=365)).strftime('%Y-%m-%d')
+                if 'CAL' not in pheader['OBSID']:
+                    pheader['RELEASE'] = (dt + timedelta(days=365)).strftime('%Y-%m-%d')
+                else:
+                    pheader['RELEASE'] = dt.strftime('%Y-%m-%d')
             except Exception as e:
                 print("Unable to determine release date, continuing")
     return retval
