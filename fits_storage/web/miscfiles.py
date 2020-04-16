@@ -124,7 +124,7 @@ def validate():
     ctx.resp.content_type = 'application/json'
     ctx.resp.append_json(response)
 
-@needs_login(superuser=True)
+@needs_login(misc_upload=True)
 @templating.templated("miscfiles/miscfiles.html")
 def save_file(formdata):
     fileitem = formdata.uploaded_file

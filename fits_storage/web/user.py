@@ -735,7 +735,7 @@ def bad_password(candidate):
 
     return True
 
-def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=False, content_type='html', annotate=None, archive_only=False):
+def needs_login(magic_cookies=(), only_magic=False, staffer=False, misc_upload=False, superuser=False, content_type='html', annotate=None, archive_only=False):
     """Decorator for functions that need a user to be logged in, or some sort of cookie
        to be set. The basic use is (notice the decorator parenthesis, they're important)::
 
@@ -818,6 +818,11 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, superuser=Fal
                 if staffer is True and not user.gemini_staff:
                     logging.info("You need to be logged in as Gemini Staff member to access this service")
                     raise_error(message="You need to be logged in as Gemini Staff member to access this resource")
+                if misc_upload is True and (not user.misc_upload and not user.superuser):
+                    logging.info("You need to be logged in with misc upload permission (or as a superuser) to access "
+                                 "this service")
+                    raise_error(message="You need to be logged in with misc upload permission or as a supersuer to "
+                                        "access this service")
             logging.debug("Past auth check, calling method")
             return fn(*args, **kw)
         return wrapper
