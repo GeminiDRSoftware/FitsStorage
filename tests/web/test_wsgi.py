@@ -13,6 +13,9 @@ from fits_storage.utils.web import get_context, Return, ClientError, RequestRedi
 from fits_storage.utils.web import WSGIRequest, WSGIResponse, ArchiveContextMiddleware
 from fits_storage.utils.web import routing
 
+from tests.file_helper import ensure_file
+
+
 # URLs that are blocked in the main archive. Use them to simulate the real thing
 # We monkeypatch them into fits_storage_config so that they're picked up by the
 # wsgihandler module when imported
@@ -76,7 +79,8 @@ default_env = {
 }
 
 class Fixture(object):
-    def __init__(self, uri, cookies=None, post=False, data=None, retcode=200, cases=(), exception=None, json=False):
+    def __init__(self, uri, cookies=None, post=False, data=None, retcode=200, cases=(), exception=None, json=False,
+                 ensure=None):
         self.uri     = uri
         self.cookies = cookies
         self.json    = json
@@ -88,6 +92,9 @@ class Fixture(object):
         else:
             self.cases = cases
         self.exc     = exception
+        if ensure is not None:
+            for filename in ensure:
+                ensure_file(filename)
 
     def get_env(self):
         env = deepcopy(default_env)
@@ -304,6 +311,13 @@ fixtures = (
     #         cases="<td>128.171.188.44\n    <td>2015-07-16 00:06:28.113801\n    <td>200 (OK)\n  </tr>"),
     Fixture('/my_programs', cookies=cookies['user1'], cases="SPARKYTHEGECKO"),
     Fixture('/my_programs', cookies=cookies['user1'], data={'program_id': 'SPARKYTHEGECKO'}, cases="SPARKYTHEGECKO"),
+
+    Fixture('/gmoscaljson/GN-CAL20200214-2-001', ensure=["N20200214S1347.fits", ],
+            cases=('"twilight_flats": []',
+                   '1x1',
+                   '"Full Frame": 1')),
+    Fixture('/gmoscal/GN-CAL20200214-2-001', ensure=["N20200214S1347.fits", ],
+            cases=('Imaging Twilight', )),
 )
 
 @pytest.mark.usefixtures("min_rollback")
