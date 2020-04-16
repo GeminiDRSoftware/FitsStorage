@@ -9,6 +9,9 @@ import os
 from copy import deepcopy
 
 from fits_storage import fits_storage_config
+from fits_storage.orm import sessionfactory
+from fits_storage.utils.ingestqueue import IngestQueueUtil
+from fits_storage.utils.null_logger import EmptyLogger
 from fits_storage.utils.web import get_context, Return, ClientError, RequestRedirect
 from fits_storage.utils.web import WSGIRequest, WSGIResponse, ArchiveContextMiddleware
 from fits_storage.utils.web import routing
@@ -186,6 +189,15 @@ if NORTH:
 else:
     file_future_release='S20150913S0044.fits'
 
+
+ensure_file("N20200214S1347.fits")
+session = sessionfactory()
+try:
+    ingestqueue = IngestQueueUtil(session, EmptyLogger())
+    ingestqueue.ingest_file("N20200214S1347.fits", "", False, False)
+finally:
+    session.close()
+
 fixtures = (
     # test /user_list, first with anonymous user, then with logged-in user
     Fixture('/user_list', cases="You don't appear to be logged in as a Gemini Staff user"),
@@ -319,6 +331,12 @@ fixtures = (
             cases=('Imaging Twilight', )),
 )
 
+fixtures2 = (
+    Fixture('/gmoscaljson/20010101-20210101', ensure=["N20200214S1347.fits", ],
+            cases=('"twilight_flats": []',
+                   '1x1',
+                   '"Full Frame": 1')),
+)
 
 @pytest.mark.usefixtures("min_rollback")
 @pytest.mark.parametrize("route,expected", FixtureIter(fixtures))
@@ -351,6 +369,9 @@ def test_wsgi(min_session, route, expected):
                     try:
                        assert f in str_resp
                     except AssertionError:
+                        print("Not found, str_resp is:\n")
+                        print(str_resp)
+                        print("\n----\n")
                         if DEBUGGING:
                             print("Not found, str_resp is:\n")
                             print(str_resp)
