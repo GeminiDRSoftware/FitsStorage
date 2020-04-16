@@ -6,16 +6,21 @@ import os
 from fits_storage import fits_storage_config
 
 
+for path in (fits_storage_config.storage_root,
+             os.path.join(fits_storage_config.storage_root,
+                          fits_storage_config.preview_path)):
+    try:
+        os.makedirs(path)
+    except FileExistsError:
+        pass
+
+
 def ensure_file(filename, path=None):
     import requests
     import bz2
 
     if path is None:
         path = fits_storage_config.storage_root
-    try:
-        os.makedirs(path)
-    except FileExistsError:
-        pass
 
     getfile = filename
     if getfile.endswith(".bz2"):
