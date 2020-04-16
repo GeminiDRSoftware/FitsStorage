@@ -311,14 +311,15 @@ fixtures = (
     #         cases="<td>128.171.188.44\n    <td>2015-07-16 00:06:28.113801\n    <td>200 (OK)\n  </tr>"),
     Fixture('/my_programs', cookies=cookies['user1'], cases="SPARKYTHEGECKO"),
     Fixture('/my_programs', cookies=cookies['user1'], data={'program_id': 'SPARKYTHEGECKO'}, cases="SPARKYTHEGECKO"),
-
-    Fixture('/gmoscaljson/GN-CAL20200214-2-001', ensure=["N20200214S1347.fits", ],
-            cases=('"twilight_flats": []',
-                   '1x1',
-                   '"Full Frame": 1')),
-    Fixture('/gmoscal/GN-CAL20200214-2-001', ensure=["N20200214S1347.fits", ],
-            cases=('Imaging Twilight', )),
 )
+# fixtures = (
+#     Fixture('/gmoscaljson/GN-CAL20200214-2-001', ensure=["N20200214S1347.fits", ],
+#             cases=('"twilight_flats": []',
+#                    '1x1',
+#                    '"Full Frame": 1')),
+#     Fixture('/gmoscal/GN-CAL20200214-2-001', ensure=["N20200214S1347.fits", ],
+#             cases=('Imaging Twilight', )),
+# )
 
 @pytest.mark.usefixtures("min_rollback")
 @pytest.mark.parametrize("route,expected", FixtureIter(fixtures))
