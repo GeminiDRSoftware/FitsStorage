@@ -328,11 +328,13 @@ fixtures = (
     # TODO   (cont...) inside test_wsgi below, but the calls work fine.  So for now, just validating that they 200
     Fixture('/gmoscaljson/GN-CAL20200214-2-001', ensure=["N20200214S1347.fits", ],),
     Fixture('/gmoscal/GN-CAL20200214-2-001', ensure=["N20200214S1347.fits", ],),
+    Fixture('/summary/notengineering/NotFail/not_site_monitoring/20200214'),
 )
 
 @pytest.mark.usefixtures("min_rollback")
 @pytest.mark.parametrize("route,expected", FixtureIter(fixtures))
 def test_wsgi(min_session, route, expected):
+    ctx = get_context()
     if route is None:
         assert expected.status == 404
     elif isinstance(route[0], int):
@@ -361,9 +363,6 @@ def test_wsgi(min_session, route, expected):
                     try:
                        assert f in str_resp
                     except AssertionError:
-                        print("Not found, str_resp is:\n")
-                        print(str_resp)
-                        print("\n----\n")
                         if DEBUGGING:
                             print("Not found, str_resp is:\n")
                             print(str_resp)
