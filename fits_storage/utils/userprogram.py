@@ -7,6 +7,7 @@ import datetime
 from sqlalchemy import func
 
 from ..gemini_metadata_utils import ONEDAY_OFFSET
+from ..orm.userfilepermission import UserFilePermission
 
 from ..web.userprogram import get_program_list
 
@@ -16,6 +17,7 @@ from ..orm.obslog import Obslog
 from ..orm.miscfile import MiscFile
 
 from .web import get_context
+
 
 def canhave_coords(session, user, header, gotmagic=False, user_progid_list=None):
     """
@@ -35,6 +37,7 @@ def canhave_coords(session, user, header, gotmagic=False, user_progid_list=None)
     # the rules are exactly the same as for the data
     return canhave_header(session, user, header, gotmagic=gotmagic, user_progid_list=user_progid_list)
 
+
 def is_staffer(user, filedownloadlog):
     """
     Is the current user a staff member?
@@ -45,6 +48,7 @@ def is_staffer(user, filedownloadlog):
             filedownloadlog.staff_access = True
         return True
     return False
+
 
 def is_released(release_date, filedownloadlog):
     # Can't compare a datetime to a date
@@ -59,6 +63,7 @@ def is_released(release_date, filedownloadlog):
         return True
     return False
 
+
 def reset_pi_access(filedownloadlog):
     if filedownloadlog:
         filedownloadlog.released = False
@@ -66,6 +71,7 @@ def reset_pi_access(filedownloadlog):
         filedownloadlog.eng_access = False
         filedownloadlog.magic_access = False
         filedownloadlog.pi_access = False
+
 
 def is_users_program(session, user, user_progid_list, program_id, filedownloadlog):
     # If we didn't get passed in the users program list, get it
@@ -78,6 +84,18 @@ def is_users_program(session, user, user_progid_list, program_id, filedownloadlo
             filedownloadlog.pi_access = True
         return True
     return False
+
+
+def is_user_file_permission(session, user, path, filename, filedownloadlog):
+    results = session.query(UserFilePermission).filter(UserFilePermission.user_id == user.id) \
+        .filter(UserFilePermission.path == path) \
+        .filter(UserFilePermission.filename == filename).all()
+    if results:
+        if filedownloadlog:
+            filedownloadlog.pi_access = True
+        return True
+    return False
+
 
 def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False, user_progid_list=None):
     """
@@ -111,6 +129,7 @@ def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False, 
 
     # Last chance. If not the PI, then deny access
     return is_users_program(session, user, user_progid_list, header.program_id, filedownloadlog)
+
 
 def canhave_obslog(session, user, obslog, filedownloadlog=None, gotmagic=False, user_progid_list=None):
     """
@@ -161,6 +180,8 @@ def canhave_obslog(session, user, obslog, filedownloadlog=None, gotmagic=False, 
     # If none of the above, then deny access
     return False
 
+
+# TODO now that this also depends on is_user_file_permission, refactor out into a utility area
 def canhave_miscfile(session, user, misc, filedownloadlog=None, gotmagic=False, user_progid_list=None):
     """
     Returns a boolean saying whether or not the given user can have
@@ -185,10 +206,13 @@ def canhave_miscfile(session, user, misc, filedownloadlog=None, gotmagic=False, 
     reset_pi_access(filedownloadlog)
 
     # Last chance. If not the PI, then deny access
-    return is_users_program(session, user, user_progid_list, misc.program_id, filedownloadlog)
+    return is_users_program(session, user, user_progid_list, misc.program_id, filedownloadlog) \
+        or is_user_file_permission(session, user, misc.diskfile.path, misc.diskfile.filename, filedownloadlog)
+
 
 def cant_have(*args, **kw):
     return False
+
 
 # IMPORTANT: The following comments are used by the autodoc functionality when
 #            generating the reference doc. Please, keep them updated
@@ -198,10 +222,11 @@ def cant_have(*args, **kw):
 #:   orm.obslog.Obslog     -> canhave_obslog
 #:   orm.miscfile.MiscFile -> canhave_miscfile
 icanhave_function = {
-    Header:   canhave_header,
-    Obslog:   canhave_obslog,
+    Header: canhave_header,
+    Obslog: canhave_obslog,
     MiscFile: canhave_miscfile,
 }
+
 
 def icanhave(ctx, item, filedownloadlog=None):
     """
