@@ -28,6 +28,7 @@ class User(Base):
     salt = Column(Text)
     email = Column(Text)
     gemini_staff = Column(Boolean)
+    misc_upload = Column(Boolean)
     superuser = Column(Boolean)
     reset_token = Column(Text)
     reset_token_expires = Column(DateTime)
@@ -35,11 +36,11 @@ class User(Base):
     account_created = Column(DateTime)
     password_changed = Column(DateTime)
 
-
     def __init__(self, username):
         self.username = username
         self.password = None
         self.gemini_staff = False
+        self.misc_upload = False
         self.superuser = False
         self.reset_token = None
         self.cookie = None
