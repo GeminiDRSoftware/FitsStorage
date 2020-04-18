@@ -347,6 +347,8 @@ fixtures = (
     # returns this fixture that you couldn't create yet.  See above TODO where we build a dummy web environment
     # just so this has something to reference.
     Fixture('/summary/notengineering/NotFail/not_site_monitoring/20200214'),
+    Fixture('/jsonfilelist/notengineering/NotFail/not_site_monitoring/20200214'),
+    Fixture('/xmlfilelist/notengineering/NotFail/not_site_monitoring/20200214'),
 )
 
 
