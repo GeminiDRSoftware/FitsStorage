@@ -168,7 +168,8 @@ class WebTestMiddleware(object):
     def __call__(self, environ, start_response):
         ctx = get_context()
         self.resp = ctx.resp
-        dispatch(*self.tested_case)
+        if self.tested_case is not None:
+            dispatch(*self.tested_case)
 
 def start_response(*args):
     def write(obj):
@@ -197,6 +198,17 @@ try:
     ingestqueue.ingest_file("N20200214S1347.fits", "", False, False)
 finally:
     session.close()
+
+
+# TODO This is a really crappy hack to get a web environment initialized so that
+# fixtures on routes using order_by will work.  Otherwise, the route logic tries
+# to dereference the context and web environment and winds up throwing an exception
+# - creating a web context with a one off middleware init
+f = Fixture("/dummy")
+tm = WebTestMiddleware(None)
+ArchiveContextMiddleware(tm)(f.get_env(), start_response)
+# end hack
+
 
 fixtures = (
     # test /user_list, first with anonymous user, then with logged-in user
@@ -329,9 +341,12 @@ fixtures = (
     Fixture('/gmoscaljson/GN-CAL20200214-2-001', ensure=["N20200214S1347.fits", ],),
     Fixture('/gmoscal/GN-CAL20200214-2-001', ensure=["N20200214S1347.fits", ],),
 
-    # For now, disabling.  Any mapping with an order_by option causes the wsgi code to try and
-    # reference the context too early, before we've had time to mock in the webserver/request
-    # Fixture('/summary/notengineering/NotFail/not_site_monitoring/20200214'),
+    # NOTE This test includes an order_by rule.  This causes Fixture construction to fail unless the system
+    # believes it is in the middle of handling a web request.  That is, you can't do this before you have
+    # the request you are "handling" during the actual unit test run, which doesn't happen until the iterator
+    # returns this fixture that you couldn't create yet.  See above TODO where we build a dummy web environment
+    # just so this has something to reference.
+    Fixture('/summary/notengineering/NotFail/not_site_monitoring/20200214'),
 )
 
 
