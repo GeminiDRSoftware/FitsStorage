@@ -19,12 +19,12 @@ def output_file(path):
     return open(path, 'wb')
 
 
-def fix_zorro(fits):
+def fix_zorro_or_alopeke(fits, instr):
     pheader = fits[0].header
     if 'INSTRUME' not in pheader:
         return False
     inst = pheader['INSTRUME']
-    if inst.strip() != 'Zorro':
+    if inst.strip() != instr:
         return False
     retval = False
     if 'Object' in pheader and 'OBJECT' not in pheader:
@@ -63,6 +63,14 @@ def fix_zorro(fits):
     return retval
 
 
+def fix_zorro(fits):
+    return fix_zorro_or_alopeke(fits, 'Zorro')
+
+
+def fix_alopeke(fits):
+    return fix_zorro_or_alopeke(fits, 'Alopeke')
+
+
 def fix_and_copy(src_dir, dest_dir, fn):
     path = os.path.join(src_dir, fn)
     tmppath = None
@@ -75,6 +83,8 @@ def fix_and_copy(src_dir, dest_dir, fn):
         fits = pf.open(open_image(tmppath), do_not_scale_image_data=True)
         if fix_zorro(fits):
             fits[0].header['HISTORY'] = 'Corrected metadata: Zorro fixes'
+        if fix_alopeke(fits):
+            fits[0].header['HISTORY'] = 'Corrected metadata: Alopeke fixes'
         fits.writeto(output_file(df), output_verify='silentfix+exception')
     except (IOError, ValueError) as e:
         print('{0} >> {1}'.format(fn, e))
