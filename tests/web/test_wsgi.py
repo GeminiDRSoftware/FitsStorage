@@ -349,6 +349,7 @@ fixtures = (
     Fixture('/summary/notengineering/NotFail/not_site_monitoring/20200214'),
     Fixture('/jsonfilelist/notengineering/NotFail/not_site_monitoring/20200214'),
     Fixture('/xmlfilelist/notengineering/NotFail/not_site_monitoring/20200214'),
+    Fixture('/searchform/notengineering/NotFail/not_site_monitoring/20200214'),
 )
 
 
