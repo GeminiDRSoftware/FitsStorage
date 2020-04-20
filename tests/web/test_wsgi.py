@@ -357,7 +357,7 @@ fixtures = (
 )
 
 @pytest.mark.usefixtures("min_rollback")
-@pytest.mark.parametrize("route,expected", FixtureIter(fixtures2))
+@pytest.mark.parametrize("route,expected", FixtureIter(fixtures))
 def test_wsgi(min_session, route, expected):
     # ctx = get_context()
     if route is None:
