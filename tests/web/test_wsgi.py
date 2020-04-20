@@ -354,6 +354,7 @@ fixtures = (
     Fixture('/fileontape/notfound.fits', cases="<file_list>\n</file_list>", cookies=cookies['user1']),
     Fixture('/tapefile/1', cookies=cookies['user1']),
     Fixture('/programinfo/GN-CAL20200214', cookies=cookies['user1'], ensure=["N20200214S1347.fits", ],),
+    Fixture('/fitsverify/N20200214S1347.fits', ensure=["N20200214S1347.fits", ], ),
 )
 
 @pytest.mark.usefixtures("min_rollback")
