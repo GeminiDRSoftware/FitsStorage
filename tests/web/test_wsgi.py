@@ -350,11 +350,14 @@ fixtures = (
     Fixture('/jsonfilelist/notengineering/NotFail/not_site_monitoring/20200214'),
     Fixture('/xmlfilelist/notengineering/NotFail/not_site_monitoring/20200214'),
     Fixture('/searchform/notengineering/NotFail/not_site_monitoring/20200214'),
+    Fixture('/queuestatus', cookies=cookies['user1']),
+    Fixture('/fileontape/notfound.fits', cases="<file_list>\n</file_list>", cookies=cookies['user1']),
+    Fixture('/tapefile/1', cookies=cookies['user1']),
+    Fixture('/programinfo/GN-CAL20200214', cookies=cookies['user1'], ensure=["N20200214S1347.fits", ],),
 )
 
-
 @pytest.mark.usefixtures("min_rollback")
-@pytest.mark.parametrize("route,expected", FixtureIter(fixtures))
+@pytest.mark.parametrize("route,expected", FixtureIter(fixtures2))
 def test_wsgi(min_session, route, expected):
     # ctx = get_context()
     if route is None:

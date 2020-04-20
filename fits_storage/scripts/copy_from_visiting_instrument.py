@@ -134,7 +134,7 @@ class AlopekeZorroABC(VisitingInstrumentABC):
     def get_files(self):
         for f in os.listdir(self.base_path):
             fullpath = os.path.join(self.base_path, f)
-            if os.path.isdir(fullpath) and re.search(r'\d{8}', f):
+            if os.path.isdir(fullpath) and re.search(r'^\d{8}$', f):
                 for datafile in os.listdir(fullpath):
                     if self._filename_re.search(datafile):
                         yield os.path.join(f, datafile)
