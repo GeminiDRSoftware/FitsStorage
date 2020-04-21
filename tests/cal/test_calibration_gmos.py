@@ -30,8 +30,8 @@ def test_standard(session):
         fits_storage_config.storage_root='testdata/test_calibration_gmos'
         print("storage root: %s" % fits_storage_config.storage_root)
         iq = IngestQueueUtil(session, EmptyLogger())
-        iq.ingest_file("N20191212S0083_distortionCorrected.fits", "", False, False)
-        iq.ingest_file("N20191103S0033_standard.fits", "", False, False)
+        iq.ingest_file("N20191212S0083_distortionCorrected.fits", "", False, True)
+        iq.ingest_file("N20191103S0033_standard.fits", "", False, True)
 
         df = session.query(DiskFile).filter(DiskFile.filename == 'N20191212S0083_distortionCorrected.fits')\
             .filter(DiskFile.canonical == True).one()
