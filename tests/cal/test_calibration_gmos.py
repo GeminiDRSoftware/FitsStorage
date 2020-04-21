@@ -21,6 +21,7 @@ def _init_gmos(session):
 
 
 @pytest.mark.usefixtures("rollback")
+@pytest.mark.slow
 def test_standard(session):
     _init_gmos(session)
     save_storage_root = fits_storage_config.storage_root
