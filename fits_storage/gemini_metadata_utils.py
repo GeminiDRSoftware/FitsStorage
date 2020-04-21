@@ -487,7 +487,7 @@ def gemini_daterange(string, as_datetime=False, offset=ZERO_OFFSET):
 
     return '' if not as_datetime else None
 
-obs_types = ('DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI', 'CAL', 'FRINGE', 'MASK')
+obs_types = ('DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI', 'CAL', 'FRINGE', 'MASK', 'STANDARD')
 def gemini_observation_type(string):
     """
     A utility function for matching Gemini ObsTypes.

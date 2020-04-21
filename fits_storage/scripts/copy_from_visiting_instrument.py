@@ -134,7 +134,7 @@ class AlopekeZorroABC(VisitingInstrumentABC):
     def get_files(self):
         for f in os.listdir(self.base_path):
             fullpath = os.path.join(self.base_path, f)
-            if os.path.isdir(fullpath) and re.search(r'\d{8}', f):
+            if os.path.isdir(fullpath) and re.search(r'^\d{8}$', f):
                 for datafile in os.listdir(fullpath):
                     if self._filename_re.search(datafile):
                         yield os.path.join(f, datafile)
@@ -151,6 +151,7 @@ class Alopeke(AlopekeZorroABC):
     def __init__(self):
         super().__init__('alopeke', "/net/mkovisdata/home/alopeke/", True)
         self._filename_re = re.compile(r'N\d{8}A\d{4}[br].fits.bz2')
+        self._filename_re = re.compile(r'N20200218A\d{4}[br].fits.bz2')
 
 
 class Zorro(AlopekeZorroABC):

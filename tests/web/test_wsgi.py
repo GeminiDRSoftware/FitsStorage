@@ -168,7 +168,8 @@ class WebTestMiddleware(object):
     def __call__(self, environ, start_response):
         ctx = get_context()
         self.resp = ctx.resp
-        dispatch(*self.tested_case)
+        if self.tested_case is not None:
+            dispatch(*self.tested_case)
 
 def start_response(*args):
     def write(obj):
@@ -197,6 +198,17 @@ try:
     ingestqueue.ingest_file("N20200214S1347.fits", "", False, False)
 finally:
     session.close()
+
+
+# TODO This is a really crappy hack to get a web environment initialized so that
+# fixtures on routes using order_by will work.  Otherwise, the route logic tries
+# to dereference the context and web environment and winds up throwing an exception
+# - creating a web context with a one off middleware init
+f = Fixture("/dummy")
+tm = WebTestMiddleware(None)
+ArchiveContextMiddleware(tm)(f.get_env(), start_response)
+# end hack
+
 
 fixtures = (
     # test /user_list, first with anonymous user, then with logged-in user
@@ -328,11 +340,27 @@ fixtures = (
     # TODO   (cont...) inside test_wsgi below, but the calls work fine.  So for now, just validating that they 200
     Fixture('/gmoscaljson/GN-CAL20200214-2-001', ensure=["N20200214S1347.fits", ],),
     Fixture('/gmoscal/GN-CAL20200214-2-001', ensure=["N20200214S1347.fits", ],),
+
+    # NOTE This test includes an order_by rule.  This causes Fixture construction to fail unless the system
+    # believes it is in the middle of handling a web request.  That is, you can't do this before you have
+    # the request you are "handling" during the actual unit test run, which doesn't happen until the iterator
+    # returns this fixture that you couldn't create yet.  See above TODO where we build a dummy web environment
+    # just so this has something to reference.
+    Fixture('/summary/notengineering/NotFail/not_site_monitoring/20200214'),
+    Fixture('/jsonfilelist/notengineering/NotFail/not_site_monitoring/20200214'),
+    Fixture('/xmlfilelist/notengineering/NotFail/not_site_monitoring/20200214'),
+    Fixture('/searchform/notengineering/NotFail/not_site_monitoring/20200214'),
+    Fixture('/queuestatus', cookies=cookies['user1']),
+    Fixture('/fileontape/notfound.fits', cases="<file_list>\n</file_list>", cookies=cookies['user1']),
+    Fixture('/tapefile/1', cookies=cookies['user1']),
+    Fixture('/programinfo/GN-CAL20200214', cookies=cookies['user1'], ensure=["N20200214S1347.fits", ],),
+    Fixture('/fitsverify/N20200214S1347.fits', ensure=["N20200214S1347.fits", ], ),
 )
 
 @pytest.mark.usefixtures("min_rollback")
 @pytest.mark.parametrize("route,expected", FixtureIter(fixtures))
 def test_wsgi(min_session, route, expected):
+    # ctx = get_context()
     if route is None:
         assert expected.status == 404
     elif isinstance(route[0], int):
@@ -361,9 +389,6 @@ def test_wsgi(min_session, route, expected):
                     try:
                        assert f in str_resp
                     except AssertionError:
-                        print("Not found, str_resp is:\n")
-                        print(str_resp)
-                        print("\n----\n")
                         if DEBUGGING:
                             print("Not found, str_resp is:\n")
                             print(str_resp)

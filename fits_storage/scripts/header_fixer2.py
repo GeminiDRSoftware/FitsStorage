@@ -2,6 +2,7 @@ import astropy.io.fits as pf
 from bz2 import BZ2File
 import os
 from argparse import ArgumentParser
+from datetime import datetime, timedelta, date
 
 
 def open_image(path):
@@ -18,12 +19,12 @@ def output_file(path):
     return open(path, 'wb')
 
 
-def fix_zorro(fits):
+def fix_zorro_or_alopeke(fits, instr):
     pheader = fits[0].header
     if 'INSTRUME' not in pheader:
         return False
     inst = pheader['INSTRUME']
-    if inst.strip() != 'Zorro':
+    if inst.strip() != instr:
         return False
     retval = False
     if 'Object' in pheader and 'OBJECT' not in pheader:
@@ -48,7 +49,28 @@ def fix_zorro(fits):
         if isinstance(val, str):
             pheader['CRVAL2'] = float(val)
             retval = True
+    # per Andrew S, we always update the RELEASE keyword, it was not reliably being set
+    if 'OBSTIME' in pheader and pheader['OBSTIME'] is not None:
+        try:
+            obstime = pheader['OBSTIME']
+            dt = datetime.utcfromtimestamp(int(obstime))
+            if 'CAL' in pheader['OBSID']:
+                pheader['RELEASE'] = dt.strftime('%Y-%m-%d')
+            elif '-FT-' in pheader['OBSID']:
+                pheader['RELEASE'] = (dt + timedelta(days=183)).strftime('%Y-%m-%d')
+            else:
+                pheader['RELEASE'] = (dt + timedelta(days=365)).strftime('%Y-%m-%d')
+        except Exception as e:
+            print("Unable to determine release date, continuing")
     return retval
+
+
+def fix_zorro(fits):
+    return fix_zorro_or_alopeke(fits, 'Zorro')
+
+
+def fix_alopeke(fits):
+    return fix_zorro_or_alopeke(fits, 'Alopeke')
 
 
 def fix_igrins(fits):
@@ -80,11 +102,18 @@ def fix_igrins(fits):
 
 def fix_and_copy(src_dir, dest_dir, fn):
     path = os.path.join(src_dir, fn)
+    tmppath = None
+    if fn.endswith('.bz2'):
+        tmppath = os.path.join('/tmp/', fn[:-4])
+        os.system('bzcat %s > %s' % (path, tmppath))
+
     df = os.path.join(dest_dir, fn)
     try:
-        fits = pf.open(open_image(path), do_not_scale_image_data=True)
+        fits = pf.open(open_image(tmppath), do_not_scale_image_data=True)
         if fix_zorro(fits):
             fits[0].header['HISTORY'] = 'Corrected metadata: Zorro fixes'
+        if fix_alopeke(fits):
+            fits[0].header['HISTORY'] = 'Corrected metadata: Alopeke fixes'
         if fix_igrins(fits):
             fits[0].header['HISTORY'] = 'Corrected metadata: IGRINS fixes'
         fits.writeto(output_file(df), output_verify='silentfix+exception')
@@ -92,6 +121,9 @@ def fix_and_copy(src_dir, dest_dir, fn):
         print('{0} >> {1}'.format(fn, e))
         if os.path.exists(df):
             os.unlink(df)
+    finally:
+        if tmppath is not None:
+            os.unlink(tmppath)
 
 
 if __name__ == "__main__":
