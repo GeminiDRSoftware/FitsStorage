@@ -1,18 +1,13 @@
-import smtplib
-from io import BufferedReader, BytesIO
 
 import pytest
-from sqlalchemy.orm.exc import NoResultFound
 
-from fits_storage.orm.ingestqueue import IngestQueue
-from fits_storage.orm.user import User
+from fits_storage.cal import get_cal_object
+from fits_storage.orm.calcache import CalCache
+from fits_storage.orm.diskfile import DiskFile
+from fits_storage.orm.header import Header
+from fits_storage.utils.calcachequeue import CalCacheQueueUtil, cache_associations
+from fits_storage.utils.ingestqueue import IngestQueueUtil
 from fits_storage.utils.null_logger import EmptyLogger
-from fits_storage.utils.web import get_context
-from fits_storage.utils.web.wsgi_adapter import Request, Response
-from fits_storage.web.user import request_account, password_reset, request_password_reset, change_email, \
-    change_password, staff_access, admin_change_email, login
-
-from smtplib import SMTP
 
 from fits_storage import fits_storage_config
 
@@ -23,15 +18,6 @@ def _mock_sendmail(fromaddr, toaddr, message):
 
 def _init_gmos(session):
     session.rollback()
-    # try:
-    #     user = session.query(User).filter(User.username == 'ooberdorf').one()
-    #     user.change_password('p4$$Word4pytest')
-    #     user.email = 'ooberdorf@gemini.edu'
-    # except NoResultFound as nrf:
-    #     user = User('ooberdorf')
-    #     user.email = 'ooberdorf@gemini.edu'
-    #     user.change_password('p4$$Word4pytest')
-    #     session.add(user)
 
 
 @pytest.mark.usefixtures("rollback")
@@ -41,9 +27,23 @@ def test_standard(session):
     try:
         # TODO work in progress
         # TODO migrate to some sort of config singleton that we can easily customize for pytests
-        fits_storage_config.storage_root='.'
-        # print("storage root: %s" % fits_storage_config.storage_root)
-        # iq = IngestQueue(session, EmptyLogger())
-        # iq.ingest_file("somegmosdata.fits", "", False, False)
+        fits_storage_config.storage_root='testdata/test_calibration_gmos'
+        print("storage root: %s" % fits_storage_config.storage_root)
+        iq = IngestQueueUtil(session, EmptyLogger())
+        iq.ingest_file("N20191212S0083_distortionCorrected.fits", "", False, False)
+        iq.ingest_file("N20191103S0033_standard.fits", "", False, False)
+
+        df = session.query(DiskFile).filter(DiskFile.filename == 'N20191212S0083_distortionCorrected.fits')\
+            .filter(DiskFile.canonical == True).one()
+        header = session.query(Header).filter(Header.diskfile_id == df.id).one()
+        cache_associations(session, header.id)
+
+        df = session.query(DiskFile).filter(DiskFile.filename == 'N20191103S0033_standard.fits')\
+            .filter(DiskFile.canonical == True).one()
+        cal_header = session.query(Header).filter(Header.diskfile_id == df.id).one()
+
+        cc = session.query(CalCache).filter(CalCache.obs_hid == header.id) \
+            .filter(CalCache.cal_hid == cal_header.id).one_or_none()
+        assert(cc is not None)
     finally:
         fits_storage_config.storage_root = save_storage_root
