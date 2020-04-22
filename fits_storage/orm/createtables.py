@@ -103,6 +103,7 @@ def create_tables(session):
     Program.metadata.create_all(bind=pg_db)
     Publication.metadata.create_all(bind=pg_db)
     ProgramPublication.metadata.create_all(bind=pg_db)
+
     init_target_tables(session, pg_db)
 
     # Add the geometry types separately. this is postgres specific and referencing these column in local mode isn't going to work

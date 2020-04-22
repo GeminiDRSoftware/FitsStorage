@@ -22,7 +22,7 @@ if use_as_archive:
 else:
     from ..cal.associate_calibrations import associate_cals
 
-from .userprogram import get_program_list
+from .userprogram import get_program_list, get_obsid_list, get_file_list, get_permissions_list
 
 from ..orm.querylog import QueryLog
 
@@ -122,8 +122,9 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
         # We have a session at this point, so get the user and their program list to
         # pass down the chain to use figure out whether to display download links
         user = ctx.user
-        user_progid_list = get_program_list(user)
-        sumtable_data = summary_table(sumtype, headers, selection, sumlinks, user, user_progid_list, additional_columns)
+        user_progid_list, user_obsid_list, user_file_list = get_permissions_list(user)
+        sumtable_data = summary_table(sumtype, headers, selection, sumlinks, user, user_progid_list,
+                                      user_obsid_list, user_file_list, additional_columns)
     else:
         sumtable_data = {}
 
@@ -144,7 +145,8 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
         **sumtable_data
         )
 
-def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_progid_list=None, additional_columns=()):
+def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_progid_list=None, user_obsid_list=None,
+                  user_file_list=None, additional_columns=()):
     """
     Generates an HTML header summary table of the specified type from
     the list of header objects provided.
@@ -165,7 +167,8 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
         uri = uri.replace("searchresults", "searchform")
         uri = uri.replace("customsearch", "searchform")
 
-    sumgen = SummaryGenerator(sumtype, links, uri, user, user_progid_list, additional_columns)
+    sumgen = SummaryGenerator(sumtype, links, uri, user, user_progid_list, user_obsid_list, user_file_list,
+                              additional_columns)
 
     url_prefix = "/download"
     if sumtype == 'associated_cals':

@@ -7,8 +7,9 @@ import datetime
 from sqlalchemy import func
 
 from ..gemini_metadata_utils import ONEDAY_OFFSET
+from ..orm.userprogram import UserProgram
 
-from ..web.userprogram import get_program_list
+from ..web.userprogram import get_program_list, get_file_list, get_obsid_list
 
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
@@ -17,7 +18,9 @@ from ..orm.miscfile import MiscFile
 
 from .web import get_context
 
-def canhave_coords(session, user, header, gotmagic=False, user_progid_list=None):
+
+def canhave_coords(session, user, header, gotmagic=False, user_progid_list=None, user_obsid_list=None,
+                   user_file_list=None):
     """
     Returns a boolean saying whether or not the given user can have
     access to the given header coordinates.
@@ -33,7 +36,9 @@ def canhave_coords(session, user, header, gotmagic=False, user_progid_list=None)
 
     # If it is proprietary coordinate data
     # the rules are exactly the same as for the data
-    return canhave_header(session, user, header, gotmagic=gotmagic, user_progid_list=user_progid_list)
+    return canhave_header(session, user, header, gotmagic=gotmagic, user_progid_list=user_progid_list,
+                          user_obsid_list=user_obsid_list, user_file_list=user_file_list)
+
 
 def is_staffer(user, filedownloadlog):
     """
@@ -45,6 +50,7 @@ def is_staffer(user, filedownloadlog):
             filedownloadlog.staff_access = True
         return True
     return False
+
 
 def is_released(release_date, filedownloadlog):
     # Can't compare a datetime to a date
@@ -59,6 +65,7 @@ def is_released(release_date, filedownloadlog):
         return True
     return False
 
+
 def reset_pi_access(filedownloadlog):
     if filedownloadlog:
         filedownloadlog.released = False
@@ -66,6 +73,7 @@ def reset_pi_access(filedownloadlog):
         filedownloadlog.eng_access = False
         filedownloadlog.magic_access = False
         filedownloadlog.pi_access = False
+
 
 def is_users_program(session, user, user_progid_list, program_id, filedownloadlog):
     # If we didn't get passed in the users program list, get it
@@ -79,7 +87,33 @@ def is_users_program(session, user, user_progid_list, program_id, filedownloadlo
         return True
     return False
 
-def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False, user_progid_list=None):
+
+def is_user_file_permission(session, user, user_file_list, path, filename, filedownloadlog):
+    if path is None:
+        path = ""
+    if user_file_list is None:
+        user_file_list = get_file_list(user)
+
+    if (path, filename) in user_file_list:
+        if filedownloadlog:
+            filedownloadlog.pi_access = True
+        return True
+    return False
+
+
+def is_user_obsid(session, user, user_obsid_list, obsid, filedownloadlog):
+    if user_obsid_list is None:
+        user_obsid_list = get_obsid_list(user)
+
+    if obsid in user_obsid_list:
+        if filedownloadlog:
+            filedownloadlog.pi_access = True
+        return True
+    return False
+
+
+def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False, user_progid_list=None,
+                   user_obsid_list=None, user_file_list=None):
     """
     Returns a boolean saying whether or not the given user can have
     access to the given header.
@@ -110,9 +144,15 @@ def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False, 
     reset_pi_access(filedownloadlog)
 
     # Last chance. If not the PI, then deny access
-    return is_users_program(session, user, user_progid_list, header.program_id, filedownloadlog)
+    if is_users_program(session, user, user_progid_list, header.program_id, filedownloadlog):
+        return True
+    if is_user_obsid(session, user, user_obsid_list, header.observation_id, filedownloadlog):
+        return True
+    return False
 
-def canhave_obslog(session, user, obslog, filedownloadlog=None, gotmagic=False, user_progid_list=None):
+
+def canhave_obslog(session, user, obslog, filedownloadlog=None, gotmagic=False, user_progid_list=None,
+                   user_obsid_list=None, user_file_list=None):
     """
     Returns a boolean saying whether or not the given user can have
     access to the given obslog.
@@ -127,9 +167,15 @@ def canhave_obslog(session, user, obslog, filedownloadlog=None, gotmagic=False, 
     """
 
     clear = any([is_staffer(user, filedownloadlog),
-                 is_users_program(session, user, user_progid_list, obslog.program_id, filedownloadlog)])
+                 is_users_program(session, user, user_progid_list, obslog.program_id, filedownloadlog),
+                 is_user_file_permission(session,user, user_file_list, obslog.diskfile.path,
+                                         obslog.diskfile.filename, filedownloadlog)])
 
     if clear:
+        return True
+
+    hdr = session.query(Header).filter(Header.diskfile_id == obslog.diskfile_id).one_or_none()
+    if hdr is not None and is_user_obsid(session, user, user_obsid_list, hdr.observation_id, filedownloadlog):
         return True
 
     # As agreed by PH, AA, IJ, BM:
@@ -161,7 +207,10 @@ def canhave_obslog(session, user, obslog, filedownloadlog=None, gotmagic=False, 
     # If none of the above, then deny access
     return False
 
-def canhave_miscfile(session, user, misc, filedownloadlog=None, gotmagic=False, user_progid_list=None):
+
+# TODO now that this also depends on is_user_file_permission, refactor out into a utility area
+def canhave_miscfile(session, user, misc, filedownloadlog=None, gotmagic=False, user_progid_list=None,
+                     user_obsid_list=None, user_file_list=None):
     """
     Returns a boolean saying whether or not the given user can have
     access to the given miscellaneous file.
@@ -185,10 +234,21 @@ def canhave_miscfile(session, user, misc, filedownloadlog=None, gotmagic=False, 
     reset_pi_access(filedownloadlog)
 
     # Last chance. If not the PI, then deny access
-    return is_users_program(session, user, user_progid_list, misc.program_id, filedownloadlog)
+    if is_users_program(session, user, user_progid_list, misc.program_id, filedownloadlog) \
+        or is_user_file_permission(session, user, user_file_list, misc.diskfile.path, misc.diskfile.filename,
+                                   filedownloadlog):
+        return True
+
+    hdr = session.query(Header).filter(Header.diskfile_id == misc.diskfile_id).one_or_none()
+    if hdr is not None and is_user_obsid(session, user, user_obsid_list, hdr.observation_id, filedownloadlog):
+        return True
+
+    return False
+
 
 def cant_have(*args, **kw):
     return False
+
 
 # IMPORTANT: The following comments are used by the autodoc functionality when
 #            generating the reference doc. Please, keep them updated
@@ -198,10 +258,11 @@ def cant_have(*args, **kw):
 #:   orm.obslog.Obslog     -> canhave_obslog
 #:   orm.miscfile.MiscFile -> canhave_miscfile
 icanhave_function = {
-    Header:   canhave_header,
-    Obslog:   canhave_obslog,
+    Header: canhave_header,
+    Obslog: canhave_obslog,
     MiscFile: canhave_miscfile,
 }
+
 
 def icanhave(ctx, item, filedownloadlog=None):
     """
