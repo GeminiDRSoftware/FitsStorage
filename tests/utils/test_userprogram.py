@@ -107,6 +107,7 @@ class TestUserProgram:
             obslog = session.query(Obslog).filter(Obslog.diskfile_id == diskfile.id).one()
         except orm_exc.NoResultFound:
             obslog = Obslog(diskfile)
+            obslog.date = datetime.now()
             session.add(obslog)
             session.commit()
 
