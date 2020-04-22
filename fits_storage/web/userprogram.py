@@ -59,6 +59,31 @@ def my_programs(things):
 
     return template_args
 
+
+def get_permissions_list(user):
+    """
+    Find all three types of permissions for a user and return them
+    in one go
+    """
+
+    prog_list = []
+    obsid_list = []
+    file_list = []
+
+    if user is not None:
+        query = get_context().session.query(UserProgram).filter(UserProgram.user_id == user.id)
+        results = query.all()
+        for result in results:
+            if result.program_id:
+                prog_list.append(result.program_id)
+            if result.observation_id:
+                obsid_list.append(result.observation_id)
+            if result.file:
+                file_list.append((result.path if result.path else "", result.filename))
+
+    return prog_list, obsid_list, file_list
+
+
 def get_program_list(user):
     """
     Given a database session and a user object, return
@@ -70,9 +95,47 @@ def get_program_list(user):
         query = get_context().session.query(UserProgram).filter(UserProgram.user_id == user.id)
         results = query.all()
         for result in results:
-            prog_list.append(result.program_id)
+            if result.program_id:
+                prog_list.append(result.program_id)
 
     return prog_list
+
+
+def get_obsid_list(user):
+    """
+    Given a database session and a user object, return
+    a list of observation IDs that the user has permission for.
+    """
+
+    obsid_list = []
+    if user is not None:
+        query = get_context().session.query(UserProgram).filter(UserProgram.user_id == user.id)
+        results = query.all()
+        for result in results:
+            if result.observation_id:
+                obsid_list.append(result.observation_id)
+
+    return obsid_list
+
+
+def get_file_list(user):
+    """
+    Given a database session and a user object, return
+    a list of observation IDs that the user has permission for.
+
+    Returns results as a list of tuples (path, filename)
+    """
+
+    file_list = []
+    if user is not None:
+        query = get_context().session.query(UserProgram).filter(UserProgram.user_id == user.id)
+        results = query.all()
+        for result in results:
+            if result.filename:
+                file_list.append((result.path, result.filename))
+
+    return file_list
+
 
 def request_user_program(user, program_id, program_key):
     """

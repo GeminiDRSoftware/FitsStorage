@@ -144,7 +144,8 @@ class SummaryGenerator(object):
     that is returned for each column.
     """
 
-    def __init__(self, sumtype, links=ALL_LINKS, uri=None, user=None, user_progid_list=None, additional_columns=()):
+    def __init__(self, sumtype, links=ALL_LINKS, uri=None, user=None, user_progid_list=None, user_obsid_list=None,
+                 user_file_list=None, additional_columns=()):
         """
         Constructor function for the SummaryGenerator Object.
         Arguments: sumtype = a string saying the summary type
@@ -175,6 +176,9 @@ class SummaryGenerator(object):
     # has access to the file and thus whether to display the download things
         self.user = user
         self.user_progid_list = user_progid_list
+        self.user_obsid_list = user_obsid_list
+        self.user_file_list = user_file_list
+
 
     def init_cols(self):
         """
@@ -380,7 +384,8 @@ class SummaryGenerator(object):
         Generates the filename column data
         """
         # Determine if this user can have the link to the header
-        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
+        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list,
+                          user_obsid_list=self.user_obsid_list, user_file_list=self.user_file_list):
             return dict(
                 links = self.links != NO_LINKS,
                 name  = file.name,
@@ -483,7 +488,8 @@ class SummaryGenerator(object):
         Generates the airmass column data
         """
         # Determine if this user can see this info
-        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
+        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list,
+                          user_obsid_list=self.user_obsid_list, user_file_list=self.user_file_list):
             # All we do is format it with 2 decimal places
             try:
                 return "%.2f" % header.airmass
@@ -497,7 +503,8 @@ class SummaryGenerator(object):
         Generates the RA
         """
         # Determine if this user can see this info
-        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
+        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list,
+                          user_obsid_list=self.user_obsid_list, user_file_list=self.user_file_list):
             # Sexadeimal format
             try:
                 return degtora(float(header.ra))
@@ -511,7 +518,8 @@ class SummaryGenerator(object):
         Generates the Dec
         """
         # Determine if this user can see this info
-        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
+        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list,
+                          user_obsid_list=self.user_obsid_list, user_file_list=self.user_file_list):
             # Sexadeimal format
             try:
                 return degtodec(float(header.dec))
@@ -536,7 +544,8 @@ class SummaryGenerator(object):
         Generates the object name column data
         """
         # Determine if this user can see this info
-        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list):
+        if canhave_coords(None, self.user, header, user_progid_list=self.user_progid_list,
+                          user_obsid_list=self.user_obsid_list, user_file_list=self.user_file_list):
             # nb target names sometime contain ampersand characters which should be escaped in html.
             # Be careful with those.
             name = str(header.object)
@@ -583,7 +592,8 @@ class SummaryGenerator(object):
         Generates the download column data
         """
         # Determine if this user has access to this file
-        if canhave_header(None, self.user, header, user_progid_list=self.user_progid_list):
+        if canhave_header(None, self.user, header, user_progid_list=self.user_progid_list,
+                          user_obsid_list=self.user_obsid_list):
             ret = dict(name=file.name)
             # Preview link
             if using_previews and preview is not None:

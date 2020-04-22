@@ -4,7 +4,6 @@ in the Fits Storage System.
 """
 import sqlalchemy
 
-from .userfilepermission import UserFilePermission
 from ..fits_storage_config import using_apache, using_sqlite
 from . import pg_db
 from .file import File
@@ -104,7 +103,6 @@ def create_tables(session):
     Program.metadata.create_all(bind=pg_db)
     Publication.metadata.create_all(bind=pg_db)
     ProgramPublication.metadata.create_all(bind=pg_db)
-    UserFilePermission.metadata.create_all(bind=pg_db)
 
     init_target_tables(session, pg_db)
 
