@@ -451,19 +451,20 @@ class CalibrationGMOS(Calibration):
         filters = []
 
         # Find the dispersion, assume worst case if we can't match it
-        dispersion = 1200
+        n = 1200.0
         disperser_values = ['1200', '600', '831', '400', '150']
         for dv in disperser_values:
             if dv in self.descriptors['disperser']:
-                dispersion = int(dv)
-        detector_x_bin = max(1, self.descriptors['detector_x_bin'])
+                n = float(dv)
+        dispersion = 0.03/n
 
-        # is this a reasonable tolerance?  or perhaps it should be a percentage?
-        tolerance = (100 / detector_x_bin) * (dispersion / 1000000)
+        # per conversation with Chris Simpson
+        tolerance = 200 * dispersion
 
         central_wavelength = float(self.descriptors['central_wavelength'])
         lower_bound = central_wavelength - tolerance
         upper_bound = central_wavelength + tolerance
+
         filters.append(Header.central_wavelength.between(lower_bound, upper_bound))
 
         # we get 1000 rows here to have a limit of some sort, but in practice
