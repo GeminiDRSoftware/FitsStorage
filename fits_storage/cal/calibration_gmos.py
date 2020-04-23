@@ -449,9 +449,18 @@ class CalibrationGMOS(Calibration):
         howmany = howmany if howmany else 1
 
         filters = []
-        
+
+        # Find the dispersion, assume worst case if we can't match it
+        dispersion = 1200
+        disperser_values = ['1200', '600', '831', '400', '150']
+        for dv in disperser_values:
+            if dv in self.descriptors['disperser']:
+                dispersion = int(dv)
+        detector_x_bin = max(1, self.descriptors['detector_x_bin'])
+
         # is this a reasonable tolerance?  or perhaps it should be a percentage?
-        tolerance = 0.1
+        tolerance = (100 / detector_x_bin) * (dispersion / 1000000)
+
         central_wavelength = float(self.descriptors['central_wavelength'])
         lower_bound = central_wavelength - tolerance
         upper_bound = central_wavelength + tolerance
@@ -468,7 +477,7 @@ class CalibrationGMOS(Calibration):
                                    Gmos.detector_y_bin,
                                    Gmos.filter_name) 
                 # Absolute time separation must be within 1 year
-                .max_interval(days=365) 
+                .max_interval(days=183)
                 .all(1000))
 
         ut_datetime = self.descriptors['ut_datetime']
@@ -481,7 +490,7 @@ class CalibrationGMOS(Calibration):
             if not isinstance(header, Header):
                 header = header[0]
             wavelength_score = abs(float(header.central_wavelength) - wavelength) / tolerance
-            ut_datetime_score = abs((header.ut_datetime - ut_datetime).seconds) / (365.0*24.0*60.0*60.0)
+            ut_datetime_score = abs((header.ut_datetime - ut_datetime).seconds) / (30.0*24.0*60.0*60.0)
             return wavelength_score + ut_datetime_score
 
         retval = [r for r in results]
