@@ -449,12 +449,25 @@ class CalibrationGMOS(Calibration):
         howmany = howmany if howmany else 1
 
         filters = []
-        
-        # is this a reasonable tolerance?  or perhaps it should be a percentage?
-        tolerance = 0.1
+
+        # Find the dispersion, assume worst case if we can't match it
+        n = 1200.0
+        disperser_values = ['1200', '600', '831', '400', '150']
+        for dv in disperser_values:
+            if dv in self.descriptors['disperser']:
+                n = float(dv)
+        dispersion = 0.03/n
+        # Replace with this if we start storing dispersion in the gmos table and map
+        # it in above in the list of `instrDescriptors` to copy.
+        # dispersion = float(self.descriptors['dispersion'])
+
+        # per conversation with Chris Simpson
+        tolerance = 200 * dispersion
+
         central_wavelength = float(self.descriptors['central_wavelength'])
         lower_bound = central_wavelength - tolerance
         upper_bound = central_wavelength + tolerance
+
         filters.append(Header.central_wavelength.between(lower_bound, upper_bound))
 
         # we get 1000 rows here to have a limit of some sort, but in practice
@@ -464,11 +477,12 @@ class CalibrationGMOS(Calibration):
                 .standard(processed)
                 .add_filters(*filters) 
                 .match_descriptors(Header.instrument,
+                                   Gmos.disperser,
                                    Gmos.detector_x_bin,
                                    Gmos.detector_y_bin,
                                    Gmos.filter_name) 
                 # Absolute time separation must be within 1 year
-                .max_interval(days=365) 
+                .max_interval(days=183)
                 .all(1000))
 
         ut_datetime = self.descriptors['ut_datetime']
@@ -481,7 +495,7 @@ class CalibrationGMOS(Calibration):
             if not isinstance(header, Header):
                 header = header[0]
             wavelength_score = abs(float(header.central_wavelength) - wavelength) / tolerance
-            ut_datetime_score = abs((header.ut_datetime - ut_datetime).seconds) / (365.0*24.0*60.0*60.0)
+            ut_datetime_score = abs((header.ut_datetime - ut_datetime).seconds) / (30.0*24.0*60.0*60.0)
             return wavelength_score + ut_datetime_score
 
         retval = [r for r in results]
