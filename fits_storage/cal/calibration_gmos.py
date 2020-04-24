@@ -457,6 +457,9 @@ class CalibrationGMOS(Calibration):
             if dv in self.descriptors['disperser']:
                 n = float(dv)
         dispersion = 0.03/n
+        # Replace with this if we start storing dispersion in the gmos table and map
+        # it in above in the list of `instrDescriptors` to copy.
+        # dispersion = float(self.descriptors['dispersion'])
 
         # per conversation with Chris Simpson
         tolerance = 200 * dispersion
