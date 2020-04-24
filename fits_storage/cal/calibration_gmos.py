@@ -477,6 +477,7 @@ class CalibrationGMOS(Calibration):
                 .standard(processed)
                 .add_filters(*filters) 
                 .match_descriptors(Header.instrument,
+                                   Gmos.disperser,
                                    Gmos.detector_x_bin,
                                    Gmos.detector_y_bin,
                                    Gmos.filter_name) 
