@@ -299,3 +299,6 @@ else:
     blocked_urls = []
 
 validation_def_path = lookup_config('VALIDATION_DEF_PATH', '/opt/FitsStorage/docs/dataDefinition')
+
+orcid_client_id = "APP-DBYNSNN5SCGF2G75"
+orcid_client_secret = "66f21bdb-90f6-4219-bd81-f6b6af3bf34a"

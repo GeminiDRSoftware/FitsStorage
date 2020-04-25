@@ -22,6 +22,7 @@ class User(Base):
     __tablename__ = 'archiveuser'
 
     id = Column(Integer, primary_key=True)
+    account_type = Column(Text)
     username = Column(Text, nullable=False, index=True)
     fullname = Column(Text)
     password = Column(Text)
@@ -37,6 +38,7 @@ class User(Base):
     password_changed = Column(DateTime)
 
     def __init__(self, username):
+        self.account_type = None
         self.username = username
         self.password = None
         self.gemini_staff = False

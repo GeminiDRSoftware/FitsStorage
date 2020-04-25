@@ -1,6 +1,10 @@
 """
 This module handles the web 'user' functions - creating user accounts, login / logout, password reset etc
 """
+import urllib
+
+import requests
+from urllib.parse import urlencode
 
 from sqlalchemy import desc
 from sqlalchemy.sql import functions
@@ -10,7 +14,7 @@ from ..orm.user import User
 
 from ..utils.web import get_context, Return
 
-from ..fits_storage_config import fits_servername, smtp_server, use_as_archive
+from ..fits_storage_config import fits_servername, smtp_server, use_as_archive, orcid_client_id, orcid_client_secret
 
 from . import templating
 
@@ -594,7 +598,8 @@ def login(things):
             reason_bad = "Username / password not valid"
         else:
             # Find the user and check if the password is valid
-            user = ctx.session.query(User).filter(User.username == username).one()
+            user = ctx.session.query(User).filter(User.username == username) \
+                .filter(User.account_type == None).one()
             if user.validate_password(password):
                 # Sucessfull login
                 cookie = user.log_in()
@@ -827,3 +832,63 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, misc_upload=F
             return fn(*args, **kw)
         return wrapper
     return decorator
+
+
+@templating.templated("user/orcid.html")
+def orcid(code):
+    """
+    Generates and handles ORCID backed accounts
+    """
+
+    redirect_url = 'http://localhost:8090/orcid'
+
+    ctx = get_context()
+    if ctx.user:
+        # Alert user they are already logged in.  Logout to setup an ORCID based account
+        pass
+
+    if code:
+        # Need to POST the token to ORCID to get the credentials
+        data = {
+            "client_id": orcid_client_id,
+            "client_secret": orcid_client_secret,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": redirect_url
+        }
+        orcid_token_url = 'https://sandbox.orcid.org/oauth/token'
+        r = requests.post(orcid_token_url, data=data)
+        if r.status_code == 200:
+            response_data = r.json()
+            orcid_id = response_data["orcid"]
+            print("Got ORCID ID: %s" % orcid_id)
+            # create a session for this orcid id
+            user = ctx.session.query(User).filter(User.username == orcid_id) \
+                .filter(User.account_type == 'orcid').one_or_none()
+            if user is None:
+                # make a new user record with our ORCID data?  or is this an error
+                user = User(orcid_id)
+                user.account_type='orcid'
+                user.fullname = response_data['name']
+                user.email = 'zoidberg04021970@mailinator.com'
+                session = ctx.session
+                session.add(user)
+                session.commit()
+
+            cookie = user.log_in()
+            exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=31536000)
+            ctx.cookies.set('gemini_archive_session', cookie, expires=exp, path="/")
+            ctx.resp.redirect_to('http://localhost:8090/searchform')
+    else:
+        # Send them to ORCID, which will callback here with their token
+        redirect_url = 'http://localhost:8090/orcid'
+        orcid_url = 'https://sandbox.orcid.org/oauth/authorize?client_id=%s&' \
+                    'response_type=code&scope=/authenticate&redirect_uri=%s' \
+                    % (orcid_client_id, urllib.parse.quote(redirect_url))
+
+        ctx.resp.redirect_to(orcid_url)
+
+    template_args = dict(
+        )
+
+    return template_args
