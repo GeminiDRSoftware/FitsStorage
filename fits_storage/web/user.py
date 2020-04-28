@@ -435,7 +435,7 @@ def request_password_reset():
             # They gave us a valid username
             username = thing
             request_valid = True
-        if orcid_inuse(thing):
+        elif orcid_inuse(thing):
             orcid = thing
             request_valid = True
         elif email_inuse(thing):
