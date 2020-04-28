@@ -47,7 +47,7 @@ def my_programs(things):
             reason_bad = request_user_program(user, program_id, program_key)
         prog_list = get_program_list(user)
 
-    if username == '' and not user.orcid_id:
+    if username == '' and not orcid:
         return dict(logged_in = False)
 
     someid = username
