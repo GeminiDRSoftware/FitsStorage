@@ -1,6 +1,10 @@
 """
 This module handles the web 'user' functions - creating user accounts, login / logout, password reset etc
 """
+import urllib
+
+import requests
+from urllib.parse import urlencode
 
 from sqlalchemy import desc
 from sqlalchemy.sql import functions
@@ -10,7 +14,8 @@ from ..orm.user import User
 
 from ..utils.web import get_context, Return
 
-from ..fits_storage_config import fits_servername, smtp_server, use_as_archive
+from ..fits_storage_config import fits_servername, smtp_server, use_as_archive, orcid_client_id, orcid_client_secret, \
+    orcid_server, orcid_enabled
 
 from . import templating
 
@@ -384,6 +389,9 @@ def change_password(things):
         if user is None:
             valid_request = False
             reason_bad = 'You are not currently logged in'
+        elif not user.username:
+            valid_request = False
+            reason_bad = 'This account has no password based login'
         elif user.validate_password(oldpassword) is False:
             valid_request = False
             reason_bad = 'Current password not correct'
@@ -414,6 +422,7 @@ def request_password_reset():
     request_valid = None
 
     username = None
+    orcid = None
     email = None
 
     # Parse the form data here
@@ -425,6 +434,9 @@ def request_password_reset():
         if username_inuse(thing):
             # They gave us a valid username
             username = thing
+            request_valid = True
+        if orcid_inuse(thing):
+            orcid = thing
             request_valid = True
         elif email_inuse(thing):
             # They gave us a valid email address
@@ -442,6 +454,8 @@ def request_password_reset():
         query = ctx.session.query(User)
         if username:
             query = query.filter(User.username == username)
+        elif orcid:
+            query = query.filter(User.orcid_id == orcid)
         elif email:
             query = query.filter(User.email == email)
         else:
@@ -594,7 +608,8 @@ def login(things):
             reason_bad = "Username / password not valid"
         else:
             # Find the user and check if the password is valid
-            user = ctx.session.query(User).filter(User.username == username).one()
+            user = ctx.session.query(User).filter(User.username == username) \
+                .filter(User.account_type == None).one()
             if user.validate_password(password):
                 # Sucessfull login
                 cookie = user.log_in()
@@ -653,12 +668,13 @@ def whoami(things):
     """
     # Find out who we are if logged in
 
-    template_args = {}
+    template_args = {'orcid_enabled': orcid_enabled}
 
     user = get_context().user
 
     try:
-        template_args['username'] = user.username
+        template_args['username'] = user.username if user.username else ""
+        template_args['orcid'] = user.orcid_id if user.orcid_id else ""
         template_args['fullname'] = user.fullname
         template_args['is_superuser'] = user.superuser
     except AttributeError:
@@ -710,6 +726,7 @@ def email_inuse(email):
             return False
     return True
 
+
 def username_inuse(username):
     """
     Check the database to see if a username is already in use. Returns True if it is, False otherwise
@@ -717,6 +734,16 @@ def username_inuse(username):
 
     num = get_context().session.query(User).filter(User.username == username).count()
     return num != 0
+
+
+def orcid_inuse(orcid):
+    """
+    Check the database to see if a username is already in use. Returns True if it is, False otherwise
+    """
+
+    num = get_context().session.query(User).filter(User.orcid_id == orcid).count()
+    return num != 0
+
 
 digits_cre = re.compile(r'\d')
 lower_cre = re.compile('[a-z]')
@@ -827,3 +854,83 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, misc_upload=F
             return fn(*args, **kw)
         return wrapper
     return decorator
+
+
+@templating.templated("user/orcid.html")
+def orcid(code):
+    """
+    Generates and handles ORCID backed accounts
+
+    ``code``
+      This is the ORCID supplied authentication code.  We can use this to request
+      the users identity from the ORCID service.  On the first pass to this
+      endpoint, there is no code and we redirect the user to the ORCID login page.
+    """
+
+    if not orcid_enabled:
+        return dict(
+            notification_message="",
+            reason_bad="ORCID not enabled on this system"
+        )
+
+    notification_message = ""
+    reason_bad = ""
+
+    if use_as_archive:
+        redirect_url = 'https://%s/orcid' % fits_servername
+    else:
+        redirect_url = 'http://%s/orcid' % fits_servername
+
+    ctx = get_context()
+
+    if code:
+        # Need to POST the token to ORCID to get the credentials
+        data = {
+            "client_id": orcid_client_id,
+            "client_secret": orcid_client_secret,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": redirect_url
+        }
+        orcid_token_url = 'https://%s/oauth/token' % orcid_server
+        r = requests.post(orcid_token_url, data=data)
+        if r.status_code == 200:
+            response_data = r.json()
+            orcid_id = response_data["orcid"]
+            # create a session for this orcid id
+            user = ctx.session.query(User).filter(User.orcid_id == orcid_id).one_or_none()
+            if user is None:
+                # Authorized as ORCID user and we haven't seen this ORCID before
+                if ctx.user:
+                    # Add ORCID to existing user
+                    ctx.user.orcid_id = orcid_id
+                    ctx.session.save(ctx.user)
+                else:
+                    # make a new user record with our ORCID data
+                    user = User('')
+                    user.orcid_id = orcid_id
+                    user.fullname = response_data['name']
+                    session = ctx.session
+                    session.add(user)
+                    session.commit()
+
+            cookie = user.log_in()
+            exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=31536000)
+            ctx.cookies.set('gemini_archive_session', cookie, expires=exp, path="/")
+            ctx.resp.redirect_to('/searchform') # 'http://localhost:8090/searchform')
+        else:
+            reason_bad = "Error communicating with ORCID service"
+    else:
+        # Send them to ORCID, which will callback here with their token
+        orcid_url = 'https://%s/oauth/authorize?client_id=%s&' \
+                    'response_type=code&scope=/authenticate&redirect_uri=%s' \
+                    % (orcid_server, orcid_client_id, urllib.parse.quote(redirect_url))
+
+        ctx.resp.redirect_to(orcid_url)
+
+    template_args = dict(
+        notification_message=notification_message,
+        reason_bad=reason_bad
+    )
+
+    return template_args

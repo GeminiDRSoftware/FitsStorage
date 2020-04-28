@@ -31,7 +31,7 @@ from fits_storage.web.fileserver import fileserver, download, download_post
 from fits_storage.web.qastuff import qareport, qametrics, qaforgui
 from fits_storage.web.statistics import content, stats
 from fits_storage.web.user import request_account, password_reset, request_password_reset, login, logout, whoami, \
-    change_password, change_email, admin_change_email
+    change_password, change_email, admin_change_email, orcid
 from fits_storage.web.user import staff_access, user_list
 from fits_storage.web.userprogram import my_programs
 from fits_storage.web.searchform import searchform, nameresolver
@@ -344,6 +344,9 @@ url_map = Map([
          collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
     Rule('/associated_cals/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'associated_cals'),
          collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+
+    # ORCID login handling/account setup
+    Rule('/orcid', orcid, collect_qs_args=dict(code='code'), defaults=dict(code=None)),
 
     Rule('/rawfiles/<filename>', rawfiles),                      # This is the fits file server
 

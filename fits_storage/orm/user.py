@@ -1,4 +1,4 @@
-from sqlalchemy import Column
+from sqlalchemy import Column, String
 from sqlalchemy import Integer, Text, Boolean, DateTime
 
 from . import Base
@@ -22,6 +22,7 @@ class User(Base):
     __tablename__ = 'archiveuser'
 
     id = Column(Integer, primary_key=True)
+    orcid_id = Column(String(20), index=True)
     username = Column(Text, nullable=False, index=True)
     fullname = Column(Text)
     password = Column(Text)
@@ -37,6 +38,7 @@ class User(Base):
     password_changed = Column(DateTime)
 
     def __init__(self, username):
+        self.account_type = None
         self.username = username
         self.password = None
         self.gemini_staff = False
