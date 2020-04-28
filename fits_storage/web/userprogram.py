@@ -37,10 +37,12 @@ def my_programs(things):
     username = ''
     prog_list = []
     reason_bad = ''
+    orcid = ''
 
     user = ctx.user
     if user:
         username = user.username
+        orcid = user.orcid_id
         if program_id or program_key:
             reason_bad = request_user_program(user, program_id, program_key)
         prog_list = get_program_list(user)
@@ -50,7 +52,7 @@ def my_programs(things):
 
     someid = username
     if not someid:
-        someid = user.orcid_id
+        someid = orcid
     template_args = dict(
         # Build the thing_string to link back to the searchform
         logged_in    = True,
