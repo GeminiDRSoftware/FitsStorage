@@ -30,7 +30,8 @@ _host_based_configs = {
         'FITS_SYSTEM_STATUS': 'production',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/mkofits-lv3",
-        'FITS_SERVERNAME': 'mkofits-lv3.hi.gemini.edu'
+        'FITS_SERVERNAME': 'mkofits-lv3.hi.gemini.edu',
+        'ORCID_ENABLED': 'False'
     },
     "cpofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
@@ -41,7 +42,8 @@ _host_based_configs = {
         'FITS_SYSTEM_STATUS': 'production',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/cpofits-lv3",
-        'FITS_SERVERNAME': 'cpofits-lv3.cl.gemini.edu'
+        'FITS_SERVERNAME': 'cpofits-lv3.cl.gemini.edu',
+        'ORCID_ENABLED': 'False'
     },
     "hbffits-lv1": {
         'USE_AS_ARCHIVE': 'False',
@@ -79,7 +81,8 @@ _host_based_configs = {
         'EXPORT_DESTINATIONS': '',
         'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files',
         'FITS_DB_BACKUP_DIR': "/backup",
-        'FITS_SERVERNAME': 'archive.gemini.edu'
+        'FITS_SERVERNAME': 'archive.gemini.edu',
+        'ORCID_ENABLED': 'False'
     },
     "arcdev": {
         'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
