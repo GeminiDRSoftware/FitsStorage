@@ -19,7 +19,8 @@ _host_based_configs = {
         'FITS_SYSTEM_STATUS': 'development',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv4",
-        'FITS_SERVERNAME': 'hbffits-lv4.hi.gemini.edu'
+        'FITS_SERVERNAME': 'hbffits-lv4.hi.gemini.edu',
+        'ORCID_REDIRECT_URL': 'http://hbffits-lv4.hi.gemini.edu/orcid'
     },
     "mkofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
@@ -31,7 +32,7 @@ _host_based_configs = {
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/mkofits-lv3",
         'FITS_SERVERNAME': 'mkofits-lv3.hi.gemini.edu',
-        'ORCID_ENABLED': 'False'
+        'ORCID_ENABLED': 'False',
     },
     "cpofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
@@ -91,7 +92,8 @@ _host_based_configs = {
         'FITS_SYSTEM_STATUS': 'development',
         'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files',
         'FITS_DB_BACKUP_DIR': "/backup",
-        'FITS_SERVERNAME': 'arcdev.gemini.edu'
+        'FITS_SERVERNAME': 'arcdev.gemini.edu',
+        'ORCID_REDIRECT_URL': 'http://arcdev.gemini.edu/orcid'
     }
 }
 
@@ -307,3 +309,4 @@ orcid_client_id = lookup_config('ORCID_CLIENT_ID', "APP-DBYNSNN5SCGF2G75")
 orcid_client_secret = lookup_config('ORCID_CLIENT_SECRET', "66f21bdb-90f6-4219-bd81-f6b6af3bf34a")
 orcid_server = lookup_config('ORCID_SERVER', 'sandbox.orcid.org')
 orcid_enabled = lookup_config_bool('ORCID_ENABLED', True)
+orcid_redirect_url = lookup_config('ORCID_REDIRECT_URL', 'http://%s/orcid' % fits_servername)
