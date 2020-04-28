@@ -608,8 +608,7 @@ def login(things):
             reason_bad = "Username / password not valid"
         else:
             # Find the user and check if the password is valid
-            user = ctx.session.query(User).filter(User.username == username) \
-                .filter(User.account_type == None).one()
+            user = ctx.session.query(User).filter(User.username == username).one()
             if user.validate_password(password):
                 # Sucessfull login
                 cookie = user.log_in()
