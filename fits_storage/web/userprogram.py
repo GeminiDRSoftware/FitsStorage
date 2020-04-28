@@ -45,13 +45,16 @@ def my_programs(things):
             reason_bad = request_user_program(user, program_id, program_key)
         prog_list = get_program_list(user)
 
-    if username == '':
+    if username == '' and not user.orcid_id:
         return dict(logged_in = False)
 
+    someid = username
+    if not someid:
+        someid = user.orcid_id
     template_args = dict(
         # Build the thing_string to link back to the searchform
         logged_in    = True,
-        username     = username,
+        username     = someid,
         progs        = prog_list,
         thing_string = '/'.join(things),
         reason_bad   = reason_bad

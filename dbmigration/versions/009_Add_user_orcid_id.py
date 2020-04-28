@@ -1,16 +1,21 @@
 from sqlalchemy import *
 from migrate import *
 
+
 def upgrade(migrate_engine):
     meta = MetaData(bind = migrate_engine)
     user = Table('archiveuser', meta, autoload=True)
 
-    account_type    = Column('account_type', Text)
+    orcid_id = Column('orcid_id', String(20))
 
-    account_type.create(user)
+    orcid_id.create(user)
+
+    i = Index('idx_archiveuser_orcid_id', orcid_id)
+    i.create(migrate_engine)
+
 
 def downgrade(migrate_engine):
     meta = MetaData(bind = migrate_engine)
     user = Table('archiveuser', meta, autoload=True)
 
-    user.c.account_type.drop()
+    user.c.orcid_id.drop()

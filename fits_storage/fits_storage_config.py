@@ -300,5 +300,7 @@ else:
 
 validation_def_path = lookup_config('VALIDATION_DEF_PATH', '/opt/FitsStorage/docs/dataDefinition')
 
-orcid_client_id = "APP-DBYNSNN5SCGF2G75"
-orcid_client_secret = "66f21bdb-90f6-4219-bd81-f6b6af3bf34a"
+orcid_client_id = lookup_config('ORCID_CLIENT_ID', "APP-DBYNSNN5SCGF2G75")
+orcid_client_secret = lookup_config('ORCID_CLIENT_SECRET', "66f21bdb-90f6-4219-bd81-f6b6af3bf34a")
+orcid_server = lookup_config('ORCID_SERVER', 'sandbox.orcid.org')
+orcid_enabled = lookup_config_bool('ORCID_ENABLED', True)

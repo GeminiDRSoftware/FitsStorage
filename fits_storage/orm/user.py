@@ -1,4 +1,4 @@
-from sqlalchemy import Column
+from sqlalchemy import Column, String
 from sqlalchemy import Integer, Text, Boolean, DateTime
 
 from . import Base
@@ -22,7 +22,7 @@ class User(Base):
     __tablename__ = 'archiveuser'
 
     id = Column(Integer, primary_key=True)
-    account_type = Column(Text)
+    orcid_id = Column(String(20), index=True)
     username = Column(Text, nullable=False, index=True)
     fullname = Column(Text)
     password = Column(Text)

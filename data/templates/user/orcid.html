@@ -1,10 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>ORCID TEST PAGE</title>
-</head>
-<body>
-I'm a little tea pot.
-</body>
-</html>
+{% extends "layout.html" %}
+{% block extra_header %}
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
+{% block title %}Gemini Archive ORCID log in{% endblock %}
+
+{% block body %}
+ <H1>Gemini Observatory Archive ORCID Login</H1>
+ {% if valid_request %}
+   <P>Welcome, you are sucessfully logged in to the Gemini Archive.</P>
+   {% if thing_string %}
+     <p><a href="/searchform/{{ thing_string }}">Click here to go back to your search form</a></p>
+     <p><a href="/searchform">Click here to go to an empty search form</a></p>
+   {% else %}
+     <p><a href="/searchform">Click here to go to the search form</a></p>
+   {% endif %}
+   <p>In order to access proprietary data, your programs need to be registered with your archive account.</p>
+   <p><a href="/my_programs">Click here to register programs</a></p>
+ {% else %}
+   {% if reason_bad %}
+     <P>Log-in did not suceed: {{ reason_bad }}. Please try again.</P>
+   {% endif %}
+ {% endif %}{# valid request #}
+{% endblock %}
