@@ -15,7 +15,7 @@ from ..orm.user import User
 from ..utils.web import get_context, Return
 
 from ..fits_storage_config import fits_servername, smtp_server, use_as_archive, orcid_client_id, orcid_client_secret, \
-    orcid_server, orcid_enabled
+    orcid_server, orcid_enabled, orcid_redirect_url
 
 from . import templating
 
@@ -875,10 +875,7 @@ def orcid(code):
     notification_message = ""
     reason_bad = ""
 
-    if use_as_archive:
-        redirect_url = 'https://%s/orcid' % fits_servername
-    else:
-        redirect_url = 'http://%s/orcid' % fits_servername
+    redirect_url = orcid_redirect_url
 
     ctx = get_context()
 
