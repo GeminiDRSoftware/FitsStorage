@@ -20,7 +20,7 @@ _host_based_configs = {
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv4",
         'FITS_SERVERNAME': 'hbffits-lv4.hi.gemini.edu',
-        'ORCID_REDIRECT_URL': 'http://hbffits-lv4.hi.gemini.edu/orcid'
+        'ORCID_REDIRECT_URL': 'http://hbffits-lv4/orcid'
     },
     "mkofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
