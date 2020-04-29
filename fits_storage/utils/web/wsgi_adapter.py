@@ -12,6 +12,7 @@ from datetime import datetime
 import json
 import tarfile
 import sys
+import os
 
 class SetEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -19,14 +20,27 @@ class SetEncoder(json.JSONEncoder):
           return list(obj)
        return json.JSONEncoder.default(self, obj)
 
+
 # Boilerplate object. Maybe later we'll add something else to it?
-def Uploadedfile(object):
+class UploadedFile(object):
     def __init__(self, name):
         self.name = name
 
+    def rename_to(self, path):
+        pass
+
+
 class ItemizedFieldStorage(FieldStorage):
-    def __init__(self, fp, environ):
-        FieldStorage.__init__(self, fp, environ=environ)
+    # def __init__(self, fp, environ):
+    def __init__(self, fp=None, headers=None, outerboundary=b'',
+                 environ=os.environ, keep_blank_values=0, strict_parsing=0,
+                 limit=None, encoding='utf-8', errors='replace',
+                 max_num_fields=None):
+
+        FieldStorage.__init__(self, fp, headers=headers, outerboundary=outerboundary,
+                              environ=environ, keep_blank_values=keep_blank_values,
+                              strict_parsing=strict_parsing, limit=limit, encoding=encoding,
+                              errors=errors, max_num_fields=max_num_fields)
         if self.filename is None:
             self.uploaded_file = None
         else:

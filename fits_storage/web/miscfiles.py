@@ -21,6 +21,8 @@ import os
 import stat
 from datetime import datetime, timedelta
 
+import multipart
+
 from cgi import parse_header
 
 SEARCH_LIMIT = 500
@@ -30,6 +32,11 @@ def miscfiles(handle = None):
     try:
 #        if len(things) == 1 and things[0] == 'validate_add':
 #            return validate()
+
+        ctx = get_context()
+        env = ctx.env
+        # if handle is None and 'upload' in formdata:
+        #     return save_file_fixed(get_context()._env)
 
         formdata = get_context().get_form_data(large_file=True)
         if handle is None:
@@ -68,10 +75,10 @@ def search_miscfiles(formdata):
 
     message = []
 
-    name = formdata.get('name', '').strip()
+    name = formdata['name'].value.strip() if 'name' in formdata else ''
     # Make sure there are no '&' in the keywords
-    keyw = ' '.join(formdata.get('keyw', '').split('&')).strip()
-    prog = formdata.get('prog', '').strip()
+    keyw = ' '.join(formdata['keyw'].value.split('&')).strip() if 'keyw' in formdata else ''
+    prog = formdata['prog'].value.strip() if 'prog' in formdata else ''
 
     if name:
         query = query.filter(File.name.like('%' + name + '%'))
@@ -127,7 +134,8 @@ def validate():
 @needs_login(superuser=True)
 @templating.templated("miscfiles/miscfiles.html")
 def save_file(formdata):
-    fileitem = formdata.uploaded_file
+    # fileitem = formdata.uploaded_file
+    fileitem = formdata['uploadFile'].uploaded_file
     localfilename = normalize_diskname(fileitem.name)
     fullpath = os.path.join(upload_staging_path, localfilename)
     jsonpath = fullpath + '.json'
@@ -160,14 +168,23 @@ def save_file(formdata):
                         **current_data)
 
     try:
-        formdata.uploaded_file.rename_to(fullpath)
+        with open(fullpath, 'wb') as staging_file:
+            read_file = formdata['uploadFile'].file
+            read_file.seek(0)
+            dat = read_file.read(4096)
+            while dat:
+                staging_file.write(dat)
+                dat = read_file.read(4096)
+            staging_file.flush()
+            staging_file.close()
+        # formdata['uploadFile'].uploaded_file.rename_to(fullpath)
         os.chmod(fullpath, stat.S_IRUSR|stat.S_IRGRP|stat.S_IROTH)
         with open(jsonpath, 'w') as meta:
             json.dump({'filename': fileitem.name,
                        'is_misc':  'True',
                        'release':  release_date.strftime('%Y-%m-%d'),
-                       'description': formdata.get('uploadDesc', None),
-                       'program': formdata.get('uploadProg', None)},
+                       'description': formdata['uploadDesc'].value,
+                       'program': formdata['uploadProg'].value},
                      meta)
         proxy = ApiProxy(api_backend_location)
         result = proxy.ingest_upload(filename=localfilename)
@@ -206,7 +223,7 @@ def detail_miscfile(handle, formdata = {}):
             )
 
         if 'save' in formdata:
-            relase = formdata.getvalue('release', '').strip()
+            release = formdata.getvalue('release', '').strip()
             if release == 'default':
                 release_date = datetime.now() + timedelta(days=540) # Now + 18 pseudo-months
             elif release == 'now':
