@@ -2,7 +2,7 @@ import astropy.io.fits as pf
 from bz2 import BZ2File
 import os
 from argparse import ArgumentParser
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 
 def open_image(path):
@@ -49,17 +49,19 @@ def fix_zorro_or_alopeke(fits, instr):
         if isinstance(val, str):
             pheader['CRVAL2'] = float(val)
             retval = True
-    if 'RELEASE' not in pheader:
-        if 'OBSTIME' in pheader and pheader['OBSTIME'] is not None:
-            try:
-                obstime = pheader['OBSTIME']
-                dt = datetime.utcfromtimestamp(int(obstime))
-                if 'CAL' not in pheader['OBSID']:
-                    pheader['RELEASE'] = (dt + timedelta(days=365)).strftime('%Y-%m-%d')
-                else:
-                    pheader['RELEASE'] = dt.strftime('%Y-%m-%d')
-            except Exception as e:
-                print("Unable to determine release date, continuing")
+    # per Andrew S, we always update the RELEASE keyword, it was not reliably being set
+    if 'OBSTIME' in pheader and pheader['OBSTIME'] is not None:
+        try:
+            obstime = pheader['OBSTIME']
+            dt = datetime.utcfromtimestamp(int(obstime))
+            if 'CAL' in pheader['OBSID']:
+                pheader['RELEASE'] = dt.strftime('%Y-%m-%d')
+            elif '-FT-' in pheader['OBSID']:
+                pheader['RELEASE'] = (dt + timedelta(days=183)).strftime('%Y-%m-%d')
+            else:
+                pheader['RELEASE'] = (dt + timedelta(days=365)).strftime('%Y-%m-%d')
+        except Exception as e:
+            print("Unable to determine release date, continuing")
     return retval
 
 
@@ -69,6 +71,33 @@ def fix_zorro(fits):
 
 def fix_alopeke(fits):
     return fix_zorro_or_alopeke(fits, 'Alopeke')
+
+
+def fix_igrins(fits):
+    pheader = fits[0].header
+    if 'INSTRUME' not in pheader:
+        return False
+    inst = pheader['INSTRUME']
+    if inst.strip() != 'IGRINS':
+        return False
+    retval = False
+    progid = None
+    if 'GEMPRGID' in pheader:
+        progid = pheader['GEMPRGID']
+    elif 'GEMPRID' in pheader:
+        progid = pheader['GEMPRID']
+        pheader['GEMPRGID'] = pheader['GEMPRID']
+    if progid is not None:
+        if 'OBSID' not in pheader or pheader['OBSID'] == progid:
+            pheader['OBSID'] = "%s-0" % progid
+            retval = True
+        elif 'OBSID' in pheader and isinstance(pheader['OBSID'], int):
+            obsid = pheader['OBSID']
+            pheader['OBSID'] = "%s-%s" % (progid, obsid)
+        if 'DATALAB' not in pheader:
+            pheader['DATALAB'] = "%s-0" % pheader['OBSID']
+            retval = True
+    return retval
 
 
 def fix_and_copy(src_dir, dest_dir, fn):
@@ -85,6 +114,8 @@ def fix_and_copy(src_dir, dest_dir, fn):
             fits[0].header['HISTORY'] = 'Corrected metadata: Zorro fixes'
         if fix_alopeke(fits):
             fits[0].header['HISTORY'] = 'Corrected metadata: Alopeke fixes'
+        if fix_igrins(fits):
+            fits[0].header['HISTORY'] = 'Corrected metadata: IGRINS fixes'
         fits.writeto(output_file(df), output_verify='silentfix+exception')
     except (IOError, ValueError) as e:
         print('{0} >> {1}'.format(fn, e))
