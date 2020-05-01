@@ -154,6 +154,10 @@ def ingest_upload(filename, fileuploadlog_id=None, processed_cal=False):
             try:
                 dst = os.path.join(storage_root, dst)
                 logger.debug("Moving %s to %s" % (src, dst))
+                if is_miscfile(src):
+                    srcmeta = miscfile_meta_path(src)
+                    dstmeta = miscfile_meta_path(dst)
+                    shutil.copy(srcmeta, dstmeta)
                 # We can't use os.rename as that keeps the old permissions and ownership, which we specifically want to avoid
                 # Instead, we copy the file and the remove it
                 shutil.copy(src, dst)
