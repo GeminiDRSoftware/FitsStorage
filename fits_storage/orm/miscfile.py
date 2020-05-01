@@ -45,8 +45,7 @@ def is_miscfile(path):
 
 def decode_description(meta):
     try:
-        # urlsafe_b64decode doesn't seem to like unicode strings; force it to str
-        return decode_string(str(meta['description']))
+        return decode_string(meta['description'])
     except (KeyError, AttributeError):
         # If there's no description member, or it is None, pass
         pass

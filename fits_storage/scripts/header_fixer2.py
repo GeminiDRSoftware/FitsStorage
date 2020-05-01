@@ -50,10 +50,10 @@ def fix_zorro_or_alopeke(fits, instr):
             pheader['CRVAL2'] = float(val)
             retval = True
     # per Andrew S, we always update the RELEASE keyword, it was not reliably being set
-    if 'OBSTIME' in pheader and pheader['OBSTIME'] is not None:
+    if 'DATE-OBS' in pheader and pheader['DATE-OBS'] is not None:
         try:
-            obstime = pheader['OBSTIME']
-            dt = datetime.utcfromtimestamp(int(obstime))
+            dateobs = pheader['DATE-OBS']
+            dt = datetime.strptime(dateobs, '%Y-%m-%d')
             if 'CAL' in pheader['OBSID']:
                 pheader['RELEASE'] = dt.strftime('%Y-%m-%d')
             elif '-FT-' in pheader['OBSID']:
