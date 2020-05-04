@@ -8,7 +8,7 @@ generating previews, and for feeding datafiles upstream from the individual site
 
 These links are if you just want to quickly deploy to a target environment
 
-[Build and deploy master](http://ooberdorf:11a3f74b7cffa0dd06ceeca74e9773a904@hbffits-lv3.hi.gemini.edu:8080/job/fitsstorage/buildWithParameters?token=qpZIKjlU3xSlM9JA3wwFjv8CJsu5lhYM&cause=Manually%20triggered%20from%20url)
+[Build and deploy master](http://ooberdorf:11a3f74b7cffa0dd06ceeca74e9773a904@hbffits-lv3.hi.gemini.edu:8080/job/fitsstorage/buildWithParameters?token=qpZIKjlU3xSlM9JA3wwFjv8CJsu5lhYM&deploy_target=qap&cause=Manually%20triggered%20from%20url)
 
 ## Getting Started
 
