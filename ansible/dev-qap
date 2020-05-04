@@ -1,2 +1,5 @@
+[archive:vars]
+ansible_become_pass='{{ sudo_pass }}'
+
 [archive]
 hbfqapdev-lv1
