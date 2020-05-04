@@ -4,6 +4,12 @@ FITSStorage is used as a web application and set of background jobs both for the
 for the internal web portals for Gemini North and Gemini South.  It includes the code for ingesting new datafiles,
 generating previews, and for feeding datafiles upstream from the individual sites to the main archive website.
 
+## Quick Deploys
+
+These links are if you just want to quickly deploy to a target environment
+
+[Build and deploy master]: http://ooberdorf:11a3f74b7cffa0dd06ceeca74e9773a904@hbffits-lv3.hi.gemini.edu:8080/job/fitsstorage/buildWithParameters?token=qpZIKjlU3xSlM9JA3wwFjv8CJsu5lhYM&cause=Manually%20triggered%20from%20url
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
