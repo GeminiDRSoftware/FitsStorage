@@ -8,8 +8,8 @@ generating previews, and for feeding datafiles upstream from the individual site
 
 These links are if you just want to quickly deploy to a target environment
 
-[Build and deploy Dev](http://ooberdorf:11a3f74b7cffa0dd06ceeca74e9773a904@hbffits-lv3.hi.gemini.edu:8080/job/fitsstorage/buildWithParameters?token=qpZIKjlU3xSlM9JA3wwFjv8CJsu5lhYM&deploy_target=dev&cause=Manually%20triggered%20from%20url)
-[Build and deploy QAP](http://ooberdorf:11a3f74b7cffa0dd06ceeca74e9773a904@hbffits-lv3.hi.gemini.edu:8080/job/fitsstorage/buildWithParameters?token=qpZIKjlU3xSlM9JA3wwFjv8CJsu5lhYM&deploy_target=qap&cause=Manually%20triggered%20from%20url)
+ * [Build and deploy Dev](http://ooberdorf:11a3f74b7cffa0dd06ceeca74e9773a904@hbffits-lv3.hi.gemini.edu:8080/job/fitsstorage/buildWithParameters?token=qpZIKjlU3xSlM9JA3wwFjv8CJsu5lhYM&deploy_target=dev&cause=Manually%20triggered%20from%20url)
+ * [Build and deploy QAP](http://ooberdorf:11a3f74b7cffa0dd06ceeca74e9773a904@hbffits-lv3.hi.gemini.edu:8080/job/fitsstorage/buildWithParameters?token=qpZIKjlU3xSlM9JA3wwFjv8CJsu5lhYM&deploy_target=dev-qap&cause=Manually%20triggered%20from%20url)
 
 ## Getting Started
 
@@ -54,8 +54,8 @@ There are multiple ways to deploy and run the FitsStorage website.  I am refacto
 clarity by breaking out each option into a dedicated document.  While I am working on that, I will leave the
 information below as it is still useful.
 
-[OSX Dev](docs/OSX.md)
-[Docker Dev](docs/DockerDev.md)
+ * [OSX Dev](docs/OSX.md)
+ * [Docker Dev](docs/DockerDev.md)
 
 ### Prerequisites
 
