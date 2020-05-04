@@ -108,9 +108,10 @@ pipeline {
 //         }
         stage('Deploy To Dev') {
             steps {
-                echo "Deploying to Dev Host"
+                def deploy_target = System.getProperty('deploy_target')
+                echo "Deploying to ${deploy_target} Host"
                 ansiblePlaybook(
-                    inventory: 'ansible/dev',
+                    inventory: 'ansible/${deploy_target}',
                     playbook: 'ansible/playbooks/archive_install.yml',
                     disableHostKeyChecking: true,
                     credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7',
