@@ -108,7 +108,6 @@ pipeline {
 //         }
         stage('Deploy To Dev') {
             steps {
-                def deploy_target = System.getProperty('deploy_target')
                 echo "Deploying to ${deploy_target} Host"
                 ansiblePlaybook(
                     inventory: 'ansible/${deploy_target}',
