@@ -28,7 +28,9 @@ def get_programs(xdoc):
             pass
 
 class NoInfoError(Exception):
-    pass
+    def __init__(self, message=""):
+        super().__init__(self)
+        self.message = message
 
 class Program(object):
     def __init__(self, program_node):
@@ -46,11 +48,15 @@ class Program(object):
         ("auth_1, auth_2, auth_3", "auth_1@goo.edu")
 
         """
+        # catch-all setting for eventual return, just in case it hits the edge case with no piEmail
+        # may refactor, but for now not keen to alter the functional logic that was here already
+        inames = ''
+        piEmail = ''
         investigatorNames = []
         investigator_sections = self.root.getElementsByTagName('investigators')
         if all(len(iname.childNodes) == 0 for iname in investigator_sections):
             gp = GeminiProgram(self.get_reference()) # reference is 'program id'
-            if not gp.is_env and not gp.is_sv:
+            if not gp.is_eng and not gp.is_sv and not gp.is_cal:
                 raise NoInfoError("There are no investigators listed for {}".format(self.get_reference()))
             else:
                 # eng and sv programs can have no investigators, setting defaults for returns
