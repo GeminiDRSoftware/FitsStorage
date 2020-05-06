@@ -128,7 +128,9 @@ class Request(adapter.Request):
 
     @property
     def raw_data(self):
-        return self.input.read()
+        l = int(self._env['CONTENT_LENGTH']) if self._env['CONTENT_LENGTH'] else 0
+        return self.input.read(l) if l > 0 else ''
+        # return self.input.read()
 
     def get_header_value(self, header_name):
         return self._env[header_name]
