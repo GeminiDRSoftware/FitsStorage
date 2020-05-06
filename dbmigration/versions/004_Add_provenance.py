@@ -12,3 +12,9 @@ def downgrade(migrate_engine):
     provenance.drop()
     provenance_history = Table('provenance_history', meta, autoload=True)
     provenance_history.drop()
+
+
+# putting this here since most new migrations begin as a copy/paste
+# DON'T FORGET TO UPDATE ANSIBLE archive_install.yml TO SET VERISON=x ON FRESH DB INSTALL
+# i.e.:
+#              query: update migrate_version set version=10

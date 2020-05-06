@@ -23,3 +23,9 @@ def downgrade(migrate_engine):
     userprogram.c.observation_id.drop()
     userprogram.c.path.drop()
     userprogram.c.filename.drop()
+
+
+# putting this here since most new migrations begin as a copy/paste
+# DON'T FORGET TO UPDATE ANSIBLE archive_install.yml TO SET VERISON=x ON FRESH DB INSTALL
+# i.e.:
+#              query: update migrate_version set version=10
