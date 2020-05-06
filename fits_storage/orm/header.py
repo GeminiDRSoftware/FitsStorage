@@ -12,7 +12,7 @@ import types
 from . import Base
 from .diskfile import DiskFile
 
-from ..gemini_metadata_utils import GeminiProgram
+from ..gemini_metadata_utils import GeminiProgram, procsci_codes, gemini_procsci
 
 from ..gemini_metadata_utils import ratodeg
 from ..gemini_metadata_utils import dectodeg
@@ -46,6 +46,7 @@ from ..gemini_metadata_utils import obs_types, obs_classes, reduction_states
 gemini_readmode_settings = [i.replace(' ', '_') for i in gemini_readmode_settings]
 
 # Enumerated Column types
+PROCSCI_ENUM = Enum(*procsci_codes, name='procsci')
 OBSTYPE_ENUM = Enum(*obs_types, name='obstype')
 OBSCLASS_ENUM = Enum(*obs_classes, name='obsclass')
 REDUCTION_STATE_ENUM = Enum(*reduction_states, name='reduction_state')
@@ -82,7 +83,7 @@ class Header(Base):
     engineering = Column(Boolean, index=True)
     science_verification = Column(Boolean, index=True)
     calibration_program = Column(Boolean, index=True)
-    procsci = Column(String(4))
+    procsci = Column(PROCSCI_ENUM)
     observation_id = Column(Text, index=True)
     data_label = Column(Text, index=True)
     telescope = Column(TELESCOPE_ENUM, index=True)
@@ -189,7 +190,7 @@ class Header(Base):
             self.science_verification = False
 
         try:
-            self.procsci = ad.phu.get('PROCSCI')
+            self.procsci = gemini_procsci(ad.phu.get('PROCSCI'))
         except AttributeError as psciae:
             self.procsci = None
 
