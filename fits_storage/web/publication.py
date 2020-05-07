@@ -22,7 +22,7 @@ def publication_ads(bibcode=None):
 
     if bibcode is not None and bibcode.startswith('bibcode='):
         bibcode = bibcode[8:]
-    query = session.query(Publication) # .filter(Publication.bibcode == bibcode)
+    query = session.query(Publication).filter(Publication.bibcode == bibcode)
     publication = query.first()
     if publication is None:
         resp.content_type = "text/plain"
