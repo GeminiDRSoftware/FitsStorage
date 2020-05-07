@@ -37,22 +37,24 @@ while start <= end:
             .filter(Header.id < stop) \
             .filter(FullTextHeader.diskfile_id == Header.diskfile_id) \
             .filter(Header.instrument.like('GMOS%')) \
-            .filter(Header.detector_readmode_setting == 'Classic') \
-            .filter(FullTextHeader.fulltext.like("%'NODANDSHUFFLE'%")).all()
+            .filter(Header.detector_readmode_setting == 'BORKED').all()
 
         logger.info("Starting checking...")
 
         count = 0
         for hdr, fth in query:
             if "'NODANDSHUFFLE'" in fth.fulltext:  # always true, we could do something clever to validate it's the tags
-                if options.dryrun:
-                    logger.info("Would update header: %s" % hdr.id)
-                else:
-                    hdr.detector_readmode_setting = 'NodAndShuffle'
-                    count = count + 1
-                    if (count % 1000) == 0:
-                        session.commit()
-                        count = 0
+                readmode = 'NodAndShuffle'
+            else:
+                readmode = 'Classic'
+            if options.dryrun:
+                logger.info("Would update header: %s to mode %s" % (hdr.id, readmode))
+            else:
+                hdr.detector_readmode_setting = readmode
+                count = count + 1
+                if (count % 1000) == 0:
+                    session.commit()
+                    count = 0
         if count > 0:
             session.commit()
     start = start + options.step
