@@ -21,8 +21,6 @@ import os
 import stat
 from datetime import datetime, timedelta
 
-import multipart
-
 from cgi import parse_header
 
 SEARCH_LIMIT = 500
