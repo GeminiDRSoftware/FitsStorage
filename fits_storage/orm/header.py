@@ -387,7 +387,7 @@ class Header(Base):
 
         if 'GMOS' in ad.tags:
             self.detector_readmode_setting = "NodAndShuffle" \
-                if ({'GMOS', 'NODANDSHUFFLE'}).issubset(ad.tags) else "Classic"
+                if 'NODANDSHUFFLE' in ad.tags else "Classic"
         else:
             self.detector_readmode_setting = str(ad.read_mode()).replace(' ', '_')
 
