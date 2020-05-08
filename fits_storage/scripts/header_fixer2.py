@@ -109,7 +109,10 @@ def fix_and_copy(src_dir, dest_dir, fn):
 
     df = os.path.join(dest_dir, fn)
     try:
-        fits = pf.open(open_image(tmppath), do_not_scale_image_data=True)
+        if tmppath:
+            fits = pf.open(open_image(tmppath), do_not_scale_image_data=True)
+        else:
+            fits = pf.open(open_image(path), do_not_scale_image_data=True)
         if fix_zorro(fits):
             fits[0].header['HISTORY'] = 'Corrected metadata: Zorro fixes'
         if fix_alopeke(fits):
