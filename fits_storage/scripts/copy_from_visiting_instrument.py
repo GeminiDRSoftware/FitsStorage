@@ -161,6 +161,25 @@ class Zorro(AlopekeZorroABC):
         self._filename_re = re.compile(r'S20200316Z\d{4}[br].fits.bz2')
 
 
+class IGRINS(VisitingInstrumentABC):
+    def __init__(self, base_path="/Users/ooberdorf/Downloads/IGRINS/"):
+        super().__init__(base_path, True)
+
+    def prep(self):
+        if not os.path.exists(os.path.join(storage_root, 'igrins')):
+            os.mkdir(os.path.join(storage_root, 'igrins'))
+
+    def get_files(self):
+        for f in os.listdir(self.base_path):
+            yield os.path.join(self.base_path, f)
+
+    def get_destination(self, filename):
+        return os.path.join('igrins', '20180527', filename)
+
+    def get_dest_path(self, filename):
+        return os.path.join('igrins', '20180527')
+
+
 if __name__ == "__main__":
     # Option Parsing
     from optparse import OptionParser
@@ -174,6 +193,7 @@ if __name__ == "__main__":
     parser.add_option("--zorro", action="store_true", dest="zorro", default=False, help="Copy Zorro data")
     parser.add_option("--zorro-old", action="store_true", dest="zorroold", default=False,
                       help="Copy Old Zorro data (from /sci/dataflow/zorro-old)")
+    parser.add_option("--igrins", action="store_true", dest="igrins", default=False, help="Copy IGRINS data")
 
     (options, args) = parser.parse_args()
 
@@ -198,6 +218,8 @@ if __name__ == "__main__":
         ingesters.append(Zorro())
     if options.zorroold:
         ingesters.append(Zorro("/sci/dataflow/zorro-old"))
+    if options.igrins:
+        ingesters.append(IGRINS())
     if ingesters:
         for ingester in ingesters:
             # Get initial Alopeke directory listing

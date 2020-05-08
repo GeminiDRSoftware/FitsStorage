@@ -394,7 +394,8 @@ class Header(Base):
             self.detector_welldepth_setting = welldepthstr
 
         if 'GMOS' in ad.tags:
-            self.detector_readmode_setting = "NodAndShuffle" if ad.tags.intersection({'GMOS', 'NODANDSHUFFLE'}) else "Classic"
+            self.detector_readmode_setting = "NodAndShuffle" \
+                if 'NODANDSHUFFLE' in ad.tags else "Classic"
         else:
             self.detector_readmode_setting = str(ad.read_mode()).replace(' ', '_')
 
