@@ -164,6 +164,7 @@ class Zorro(AlopekeZorroABC):
 class IGRINS(VisitingInstrumentABC):
     def __init__(self, base_path="/Users/ooberdorf/Downloads/IGRINS/"):
         super().__init__(base_path, True)
+        self._date_re = re.compile(r'[A-Z]{4}_(\d{8})_\d{4}.*\.fits')
 
     def prep(self):
         if not os.path.exists(os.path.join(storage_root, 'igrins')):
@@ -171,13 +172,17 @@ class IGRINS(VisitingInstrumentABC):
 
     def get_files(self):
         for f in os.listdir(self.base_path):
-            yield os.path.join(self.base_path, f)
+            yield f
 
     def get_destination(self, filename):
-        return os.path.join('igrins', '20180527', filename)
+        result = self._date_re.match(os.path.basename(filename))
+        ymd = result.group(1)
+        return os.path.join('igrins', ymd, filename)
 
     def get_dest_path(self, filename):
-        return os.path.join('igrins', '20180527')
+        result = self._date_re.match(os.path.basename(filename))
+        ymd = result.group(1)
+        return os.path.join('igrins', ymd)
 
 
 if __name__ == "__main__":
