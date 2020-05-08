@@ -162,7 +162,7 @@ class Zorro(AlopekeZorroABC):
 
 
 class IGRINS(VisitingInstrumentABC):
-    def __init__(self, base_path="/Users/ooberdorf/Downloads/IGRINS/"):
+    def __init__(self, base_path="/sci/dataflow/igrins/igrins-rawfiles/"):
         super().__init__(base_path, True)
         self._date_re = re.compile(r'[A-Z]{4}_(\d{8})_\d{4}.*\.fits')
 
@@ -172,7 +172,8 @@ class IGRINS(VisitingInstrumentABC):
 
     def get_files(self):
         for f in os.listdir(self.base_path):
-            yield f
+            if self._date_re.match(f):
+                yield f
 
     def get_destination(self, filename):
         result = self._date_re.match(os.path.basename(filename))
@@ -183,7 +184,6 @@ class IGRINS(VisitingInstrumentABC):
         result = self._date_re.match(os.path.basename(filename))
         ymd = result.group(1)
         return os.path.join('igrins', ymd)
-
 
 if __name__ == "__main__":
     # Option Parsing
