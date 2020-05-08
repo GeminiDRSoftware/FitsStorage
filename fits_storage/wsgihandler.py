@@ -13,6 +13,7 @@ from fits_storage.utils.web import RequestRedirect, ClientError
 from fits_storage.utils.web.routing import Map, Rule, BaseConverter
 
 from fits_storage.fits_storage_config import blocked_urls, use_as_archive
+from fits_storage.web.publication import publication_ads, list_publications
 from fits_storage.web.summary import summary
 from fits_storage.web.file_list import xmlfilelist, jsonfilelist, jsonsummary, jsonqastate
 from fits_storage.web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead
@@ -241,6 +242,9 @@ url_map = Map([
     Rule('/ingest_programs', ingest_programs, methods=['POST']),    # JSON RPC dispatcher
     Rule('/ingest_publications', ingest_publications,
         methods=['POST']),                                          # JSON RPC dispatcher
+    Rule('/publication/ads/<bibcode>', publication_ads),  # Publication ADS Info
+    Rule('/list_publications', list_publications),  # Publication Bibcode/Link List
+
     Rule('/curation', curation_report),                             # curation_report handler
     Rule('/staff_access', staff_access),                            # staff_access
     Rule('/admin_change_email', admin_change_email),                # admin page for changing a user's email
