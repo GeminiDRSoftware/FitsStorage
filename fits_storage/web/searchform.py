@@ -221,6 +221,9 @@ def updateform(selection):
         elif key == 'pre_image':
             if value:
                 dct['preimage'] = 'preimage'
+        elif key == 'gpi_astrometric_standard':
+            if value:
+                dct['gpi_astrometric_standard'] = 'gpi_astrometric_standard'
         else:
             # The rest needs no special processing. This does all the generic
             # pulldown menus and text fields,
@@ -681,6 +684,8 @@ dropdown_options = {
          ("FPM_J", "J"),
          ("FPM_H", "H"),
          ("FPM_K1", "K1")],
+    "gpi_astrometric_standard_options":
+        [("gpi_astrometric_standard", "Astrometric Std"), ],
     "gmos_disp_options":
         [("B600", "B600"),
          ("R400", "R400"),

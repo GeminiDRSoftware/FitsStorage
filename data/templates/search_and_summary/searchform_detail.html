@@ -659,6 +659,14 @@
     <span class="help">(help)
         <span class="helpright">Select a GPI Apodizer</span>
     </span><br>
+    <label>Astrometric Std:</label><select id="gpi_astrometric_standard" class="ddw inst_clearable"
+                                                name="gpi_astrometric_standard">
+        <option value="">Any</option>
+{{ generate_option_list(gpi_astrometric_standard_options, updated.gpi_astrometric_standard, 'GPI' in updated.inst ) }}
+    </select>
+    <span class="help">(help)
+        <span class="helpright">Search GPI Astrometric Standards</span>
+    </span><br>
     </div>
 
 

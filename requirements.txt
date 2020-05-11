@@ -19,3 +19,4 @@ Pillow==6.2.1
 mod_wsgi==4.6.5
 Cython==0.29.15
 jplephem==2.14
+mysql-connector

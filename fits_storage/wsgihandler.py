@@ -13,6 +13,7 @@ from fits_storage.utils.web import RequestRedirect, ClientError
 from fits_storage.utils.web.routing import Map, Rule, BaseConverter
 
 from fits_storage.fits_storage_config import blocked_urls, use_as_archive
+from fits_storage.web.publication import publication_ads, list_publications
 from fits_storage.web.summary import summary
 from fits_storage.web.file_list import xmlfilelist, jsonfilelist, jsonsummary, jsonqastate
 from fits_storage.web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead
