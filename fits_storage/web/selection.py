@@ -24,6 +24,7 @@ from ..gemini_metadata_utils import gemini_date, gemini_daterange, get_time_peri
 from ..gemini_metadata_utils import gemini_time_period_from_range
 from ..gemini_metadata_utils import gemini_gain_settings, gemini_readspeed_settings
 from ..gemini_metadata_utils import gemini_welldepth_settings, gemini_readmode_settings
+from ..orm.gpi import Gpi
 
 from ..orm.header import Header
 from ..orm.diskfile import DiskFile
@@ -129,6 +130,7 @@ getselection_booleans = {
     'photstandard': ('photstandard', True),
     'mdgood': ('mdready', True),
     'mdbad': ('mdready', False),
+    'gpi_astrometric_standard': ('gpi_astrometric_standard', True),
 
      # this is basically a dummy value for the search form defaults
     'includeengineering': ('engineering', 'Include'),
@@ -265,7 +267,8 @@ sayselection_defs = {
     'camera': 'Camera',
     'exposure_time': 'Exposure Time',
     'coadds': 'Coadds',
-    'mdready': 'MetaData OK'
+    'mdready': 'MetaData OK',
+    'gpi_astrometric_standard': 'GPI Astrometric Standard',
     }
 
 def sayselection(selection):
@@ -714,6 +717,10 @@ def queryselection(query, selection):
     if 'ephemeris_target' in selection:
         query = query.join(TargetPresence, TargetPresence.diskfile_id == DiskFile.id)
         query = query.filter(TargetPresence.target_name == selection['ephemeris_target'])
+
+    if 'gpi_astrometric_standard' in selection:
+        query = query.join(Gpi, Gpi.header_id == Header.id)
+        query = query.filter(Gpi.astrometric_standard == selection['gpi_astrometric_standard'])
 
     return query
 
