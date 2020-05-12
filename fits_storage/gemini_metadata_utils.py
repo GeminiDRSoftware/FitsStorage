@@ -893,7 +893,10 @@ def get_date_offset():
     #print datetime.timedelta(seconds=zone)
     #print ONEDAY_OFFSET
 
-    return datetime.timedelta(hours=16) + datetime.timedelta(seconds=zone) - ONEDAY_OFFSET
+    retval = datetime.timedelta(hours=16) + datetime.timedelta(seconds=zone)
+    if zone >= 8 * 3600:
+        retval = retval - ONEDAY_OFFSET
+    return retval
 
 def get_time_period(start, end=None, as_date=False):
     startdt = gemini_date(start, offset=get_date_offset(), as_datetime=True)
