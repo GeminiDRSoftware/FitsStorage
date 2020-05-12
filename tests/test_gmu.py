@@ -179,7 +179,7 @@ def patch_datetime_now(monkeypatch):
     monkeypatch.setattr(datetime, 'datetime', mydatetime)
 
 
-def test_chile_today_tommorow_yesterday(patch_datetime_now):
+def test_today_tommorow_yesterday(patch_datetime_now):
     print("timezone: %s" % time.timezone)
     print("altzone: %s" % time.altzone)
     os.environ['TZ'] = 'America/Santiago'
@@ -199,7 +199,6 @@ def test_chile_today_tommorow_yesterday(patch_datetime_now):
     assert enddt.hour == 19
     assert enddt.minute == 0
     assert enddt.second == 0
-    # startdt, enddt = gmu.get_time_period('tomorrow')
     startdt, enddt = gmu.get_time_period('yesterday')
     assert startdt.year == 2020
     assert startdt.month == 5
