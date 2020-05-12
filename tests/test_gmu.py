@@ -1,7 +1,11 @@
+import os
+import time
+
 import pytest
 import itertools
 import fits_storage.gemini_metadata_utils as gmu
-from datetime import datetime, timedelta
+import datetime
+# from datetime import datetime, timedelta
 from dateutil import parser as dateparser
 parsedate = dateparser.parse
 
@@ -87,8 +91,8 @@ daterange_as_datetime_pairs = (
 
 good_dates = ('20050101', '20080228', '20120229', '20390101')
 bad_dates = ('00000000', '20110229', '12345678', '10000101', '29000101', 'blah', '')
-now = datetime.utcnow()
-a_day_ago = now - timedelta(days = 1)
+now = datetime.datetime.utcnow()
+a_day_ago = now - datetime.timedelta(days = 1)
 more_good_dates = (
     ('today'  ,   '{0:%Y%m%d}'.format(now)),
     ('tonight',   '{0:%Y%m%d}'.format(now)),
@@ -157,3 +161,71 @@ def test_gemini_daterange(input, expected):
 @pytest.mark.parametrize("input,expected", daterange_as_datetime_pairs)
 def test_gemini_daterange_as_datetime(input, expected):
     assert gmu.gemini_daterange(input, as_datetime=True) == expected
+
+
+FAKE_TIME = datetime.datetime(2020, 5, 11, 14, 30, 55)
+
+@pytest.fixture
+def patch_datetime_now(monkeypatch):
+    class mydatetime:
+        @classmethod
+        def utcnow(cls):
+            return FAKE_TIME
+
+        @classmethod
+        def now(cls):
+            return FAKE_TIME
+
+    monkeypatch.setattr(datetime, 'datetime', mydatetime)
+
+
+def test_today_tommorow_yesterday(patch_datetime_now):
+    print("timezone: %s" % time.timezone)
+    print("altzone: %s" % time.altzone)
+    os.environ['TZ'] = 'America/Santiago'
+    time.tzset()
+    print("timezone: %s" % time.timezone)
+    print("altzone: %s" % time.altzone)
+    startdt, enddt = gmu.get_time_period('today')
+    assert startdt.year == 2020
+    assert startdt.month == 5
+    assert startdt.day == 11
+    assert startdt.hour == 19
+    assert startdt.minute == 0
+    assert startdt.second == 0
+    assert enddt.year == 2020
+    assert enddt.month == 5
+    assert enddt.day == 12
+    assert enddt.hour == 19
+    assert enddt.minute == 0
+    assert enddt.second == 0
+    startdt, enddt = gmu.get_time_period('yesterday')
+    assert startdt.year == 2020
+    assert startdt.month == 5
+    assert startdt.day == 10
+    assert startdt.hour == 19
+    assert startdt.minute == 0
+    assert startdt.second == 0
+    assert enddt.year == 2020
+    assert enddt.month == 5
+    assert enddt.day == 11
+    assert enddt.hour == 19
+    assert enddt.minute == 0
+    assert enddt.second == 0
+    pass
+    os.environ['TZ'] = 'US/Hawaii'
+    time.tzset()
+    startdt, enddt = gmu.get_time_period('today')
+    assert startdt.year == 2020
+    assert startdt.month == 5
+    assert startdt.day == 11
+    assert startdt.hour == 2
+    assert startdt.minute == 0
+    assert startdt.second == 0
+    assert enddt.year == 2020
+    assert enddt.month == 5
+    assert enddt.day == 12
+    assert enddt.hour == 2
+    assert enddt.minute == 0
+    assert enddt.second == 0
+    pass
