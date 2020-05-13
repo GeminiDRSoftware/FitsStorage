@@ -1,0 +1,18 @@
+[Unit]
+Description=Fits Copy From Visiting Instrument CPO
+After=syslog.target network.target postgresql.service
+
+[Service]
+Environment=PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
+User=fitsdata
+Group=geminidata
+ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/copy_from_visiting_instrument.py --debug --demon --zorro
+Restart=always
+# This will force the system to wait 10 seconds before respawning
+RestartSec=10
+# Make sure that we're using the right umask for the files that are copied
+# to storage_root. Otherwise, SOS have no write access to them.
+UMask=0002
+
+[Install]
+WantedBy=runlevel5.target

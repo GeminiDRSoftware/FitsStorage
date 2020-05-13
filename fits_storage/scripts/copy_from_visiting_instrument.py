@@ -207,7 +207,9 @@ if __name__ == "__main__":
     if using_s3:
         logger.info("This should not be used with S3 storage. Exiting")
         sys.exit(1)
-
+    if options.demon and options.force:
+        logger.info("Force not not available when running as daemon")
+        sys.exit(2)
 
     logger.info("Doing Initial visiting instrument directory scan...")
 
@@ -221,36 +223,41 @@ if __name__ == "__main__":
     if options.igrins:
         ingesters.append(IGRINS())
     if ingesters:
-        for ingester in ingesters:
-            # Get initial Alopeke directory listing
-            dir_list = set(ingester.get_files())
-            logger.info("... found %d files", len(dir_list))
-            known_list = set()
+        known_list = set()
 
-            with session_scope() as session:
-                logger.debug("Instantiating IngestQueueUtil object")
-                iq = IngestQueueUtil(session, logger)
+        with session_scope() as session:
+            done = False
+            while not done:
+                for ingester in ingesters:
+                    # Get initial Alopeke directory listing
+                    dir_list = set(ingester.get_files())
+                    logger.info("... found %d files", len(dir_list))
 
-                # logger.info("Starting looping...")
-                # while True:
+                    logger.debug("Instantiating IngestQueueUtil object")
+                    iq = IngestQueueUtil(session, logger)
 
-                todo_list = dir_list - known_list
-                logger.info("%d new files to check", len(todo_list))
-                for filename in todo_list:
-                    if 'tmp' in filename:
-                        logger.info("Ignoring tmp file: %s", filename)
-                        continue
-                    fullname = filename
-                    filename = os.path.split(filename)[1]
-                    if check_present(session, filename):
-                        logger.debug("%s is already present in database", filename)
-                        known_list.add(filename)
-                    else:
-                        if ingester.copy_over(session, iq, logger, fullname, options.dryrun, options.force):
+                    # logger.info("Starting looping...")
+                    # while True:
+
+                    todo_list = dir_list - known_list
+                    logger.info("%d new files to check", len(todo_list))
+                    for filename in todo_list:
+                        if 'tmp' in filename:
+                            logger.info("Ignoring tmp file: %s", filename)
+                            continue
+                        fullname = filename
+                        filename = os.path.split(filename)[1]
+                        if check_present(session, filename):
+                            logger.debug("%s is already present in database", filename)
                             known_list.add(filename)
-                # logger.debug("Pass complete, sleeping")
-                # time.sleep(5)
-                # logger.debug("Re-scanning")
-                # dir_list = set(ingester.get_files())
+                        else:
+                            if ingester.copy_over(session, iq, logger, fullname, options.dryrun, options.force):
+                                known_list.add(filename)
+                if options.demon:
+                    logger.debug("Pass complete, sleeping")
+                    time.sleep(5)
+                else:
+                    done = True
+                    logger.debug("Exiting")
     else:
         logger.info("No ingesters specified, nothing to copy")
