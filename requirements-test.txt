@@ -16,3 +16,4 @@ monkeypatch
 pytest==5.2.2
 pylint==2.4.3
 coverage==4.5.4
+pytz

@@ -241,14 +241,29 @@ def gemini_date(string, as_datetime=False, offset=ZERO_OFFSET):
 
     """
     dt_to_text = lambda x: x.date().strftime('%Y%m%d')
+    dt_to_text_full = lambda x: x.strftime('%Y-%m-%dT%H:%M:%s')
 
     if string in {'today', 'tonight'}:
         #string = get_fake_ut()
-        string = dt_to_text(datetime.datetime.utcnow())
+        dt = datetime.datetime.now()
+        if dt.hour < 14:
+            dt = dt - datetime.timedelta(days=1)
+        # string = dt_to_text(datetime.datetime.utcnow())
+        dt = dt.replace(hour=14, minute=0, second=0, microsecond=0).astimezone(datetime.timezone.utc)
+        if DATE_LIMIT_LOW <= dt.replace(tzinfo=None) < DATE_LIMIT_HIGH:
+            return dt_to_text(dt) if not as_datetime else dt
     elif string in {'yesterday', 'lastnight'}:
         #past = dateutil.parser.parse(get_fake_ut()) -  ONEDAY_OFFSET
         #string = dt_to_text(past)
-        string = dt_to_text(datetime.datetime.utcnow() - ONEDAY_OFFSET)
+        # string = dt_to_text(datetime.datetime.utcnow() - ONEDAY_OFFSET)
+        dt = datetime.datetime.now()
+        if dt.hour < 14:
+            dt = dt - datetime.timedelta(days=2)
+        else:
+            dt = dt - datetime.timedelta(days=1)
+        dt = dt.replace(hour=14, minute=0, second=0, microsecond=0).astimezone(datetime.timezone.utc)
+        if DATE_LIMIT_LOW <= dt.replace(tzinfo=None) < DATE_LIMIT_HIGH:
+            return dt_to_text(dt) if not as_datetime else dt
 
     if len(string) == 8 and string.isdigit():
         try:
