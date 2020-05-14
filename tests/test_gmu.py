@@ -1,11 +1,13 @@
 import os
+
+import pytz
 import time
 
 import pytest
 import itertools
+
 import fits_storage.gemini_metadata_utils as gmu
 import datetime
-# from datetime import datetime, timedelta
 from dateutil import parser as dateparser
 parsedate = dateparser.parse
 
@@ -16,9 +18,11 @@ gemini_telescope_pairs = (
     ('foobar', None)
     )
 
+
 @pytest.mark.parametrize("input,expected", gemini_telescope_pairs)
 def test_gemini_telescope(input, expected):
     assert gmu.gemini_telescope(input) == expected
+
 
 gemini_instrument_pairs = (
     ('nIRi',            'NIRI'),
@@ -48,6 +52,7 @@ gemini_instrument_pairs = (
     ('blah',            (dict(other=True), 'blah')),
     )
 
+
 @pytest.mark.parametrize("input,expected", gemini_instrument_pairs)
 def test_gemini_instrument(input, expected):
     if isinstance(expected, tuple):
@@ -56,6 +61,7 @@ def test_gemini_instrument(input, expected):
     else:
         assert gmu.gemini_instrument(input) == expected
 
+
 def generate_same_pairs_plus_garbage(data, garbage, bad_value = None):
     for k in data:
         yield (k, k)
@@ -63,15 +69,20 @@ def generate_same_pairs_plus_garbage(data, garbage, bad_value = None):
     for k in garbage:
         yield (k, bad_value)
 
+
 gemini_observation_type_bad  = ('dark', 'blah')
 gemini_observation_class_bad = ('DAYCAL', 'blah')
 gemini_reduction_state_bad   = ('raw', 'blah')
 gemini_cal_type_bad          = ('DARK', 'blah')
 gemini_gmos_grating_bad      = ('mirror', 'blah')
+
+
 def good_binning():
     for a, b in itertools.product("124", "124"):
         yield a + 'x' + b
-gemini_binning_bad           = ('1x6', '1x', 'blah')
+
+
+gemini_binning_bad = ('1x6', '1x', 'blah')
 good_dateranges = (
     '20050101-20061231',
     '20080228-20120229',
@@ -91,22 +102,16 @@ daterange_as_datetime_pairs = (
 
 good_dates = ('20050101', '20080228', '20120229', '20390101')
 bad_dates = ('00000000', '20110229', '12345678', '10000101', '29000101', 'blah', '')
-now = datetime.datetime.utcnow()
-a_day_ago = now - datetime.timedelta(days = 1)
-more_good_dates = (
-    ('today'  ,   '{0:%Y%m%d}'.format(now)),
-    ('tonight',   '{0:%Y%m%d}'.format(now)),
-    ('yesterday', '{0:%Y%m%d}'.format(a_day_ago)),
-    ('lastnight', '{0:%Y%m%d}'.format(a_day_ago)),
-    )
+
 
 def date_as_datetime_pairs():
     for d in good_dates:
         yield (d, parsedate(d))
     for d in bad_dates:
         yield (d, None)
-    for f, d in more_good_dates:
-        yield (f, parsedate(d))
+    # for f, d in more_good_dates:
+    #     yield (f, parsedate(d))
+
 
 @pytest.mark.parametrize("input,expected",
         generate_same_pairs_plus_garbage(gmu.obs_types,
@@ -114,11 +119,13 @@ def date_as_datetime_pairs():
 def test_gemini_observation_type(input, expected):
     assert gmu.gemini_observation_type(input) == expected
 
+
 @pytest.mark.parametrize("input,expected",
         generate_same_pairs_plus_garbage(gmu.obs_classes,
                                          gemini_observation_class_bad))
 def test_gemini_observation_class(input, expected):
     assert gmu.gemini_observation_class(input) == expected
+
 
 @pytest.mark.parametrize("input,expected",
         generate_same_pairs_plus_garbage(gmu.reduction_states,
@@ -126,11 +133,13 @@ def test_gemini_observation_class(input, expected):
 def test_gemini_reduction_state(input, expected):
     assert gmu.gemini_reduction_state(input) == expected
 
+
 @pytest.mark.parametrize("input,expected",
         generate_same_pairs_plus_garbage(gmu.cal_types,
                                          gemini_cal_type_bad))
 def test_gemini_caltype(input, expected):
     assert gmu.gemini_caltype(input) == expected
+
 
 @pytest.mark.parametrize("input,expected",
         generate_same_pairs_plus_garbage(gmu.gmos_gratings,
@@ -138,39 +147,51 @@ def test_gemini_caltype(input, expected):
 def test_gmos_gratingname(input, expected):
     assert gmu.gmos_gratingname(input) == expected
 
+
 @pytest.mark.parametrize("input,expected",
         generate_same_pairs_plus_garbage(good_binning(), gemini_binning_bad, ''))
 def test_gemini_binning(input, expected):
     assert gmu.gemini_binning(input) == expected
 
+
 @pytest.mark.parametrize("input,expected",
-        itertools.chain(generate_same_pairs_plus_garbage(good_dates, bad_dates, ''),
-                        more_good_dates))
+        generate_same_pairs_plus_garbage(good_dates, bad_dates, ''))
 def test_gemini_date(input, expected):
     assert gmu.gemini_date(input) == expected
+
 
 @pytest.mark.parametrize("input,expected", date_as_datetime_pairs())
 def test_gemini_date_as_datetime(input, expected):
     assert gmu.gemini_date(input, as_datetime=True) == expected
+
 
 @pytest.mark.parametrize("input,expected",
         generate_same_pairs_plus_garbage(good_dateranges, bad_dateranges, ''))
 def test_gemini_daterange(input, expected):
     assert gmu.gemini_daterange(input) == expected
 
+
 @pytest.mark.parametrize("input,expected", daterange_as_datetime_pairs)
 def test_gemini_daterange_as_datetime(input, expected):
     assert gmu.gemini_daterange(input, as_datetime=True) == expected
 
 
+# These are for the below test with updated today/etc parsing for Chile and Hawaii
+CHILE_TZ = pytz.timezone('America/Santiago')  # timezone('America/Santiago')
+HAWAII_TZ = pytz.timezone('US/Hawaii')
 FAKE_TIME = datetime.datetime(2020, 5, 11, 14, 30, 55)
+CHILE_NOON = CHILE_TZ.localize(datetime.datetime(2020, 5, 11, 12, 00, 00))
+CHILE_AFTERNOON = CHILE_TZ.localize(datetime.datetime(2020, 5, 11, 16, 00, 00))
+CHILE_EVENING = CHILE_TZ.localize(datetime.datetime(2020, 5, 11, 21, 00, 00))
+HAWAII_NOON = HAWAII_TZ.localize(datetime.datetime(2020, 5, 11, 12, 00, 00))
+HAWAII_AFTERNOON = HAWAII_TZ.localize(datetime.datetime(2020, 5, 11, 16, 00, 00))
 
 @pytest.fixture
 def patch_datetime_now(monkeypatch):
     class mydatetime:
         @classmethod
         def utcnow(cls):
-            return FAKE_TIME
+            return FAKE_TIME.astimezone(tz=datetime.timezone.utc).replace(tzinfo=None)
 
         @classmethod
         def now(cls):
@@ -180,52 +201,118 @@ def patch_datetime_now(monkeypatch):
 
 
 def test_today_tommorow_yesterday(patch_datetime_now):
-    print("timezone: %s" % time.timezone)
-    print("altzone: %s" % time.altzone)
     os.environ['TZ'] = 'America/Santiago'
     time.tzset()
-    print("timezone: %s" % time.timezone)
-    print("altzone: %s" % time.altzone)
+
+    global FAKE_TIME
+    FAKE_TIME = CHILE_NOON
+    # Today, noon Chile (so 'yesterday' 2pm Chile through 2pm today)
     startdt, enddt = gmu.get_time_period('today')
-    assert startdt.year == 2020
-    assert startdt.month == 5
-    assert startdt.day == 11
-    assert startdt.hour == 19
-    assert startdt.minute == 0
-    assert startdt.second == 0
-    assert enddt.year == 2020
-    assert enddt.month == 5
-    assert enddt.day == 12
-    assert enddt.hour == 19
-    assert enddt.minute == 0
-    assert enddt.second == 0
-    startdt, enddt = gmu.get_time_period('yesterday')
+    # convert back to local time from utc
+    startdt = startdt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
+    enddt = enddt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
     assert startdt.year == 2020
     assert startdt.month == 5
     assert startdt.day == 10
-    assert startdt.hour == 19
+    assert startdt.hour == 14
     assert startdt.minute == 0
     assert startdt.second == 0
     assert enddt.year == 2020
     assert enddt.month == 5
     assert enddt.day == 11
-    assert enddt.hour == 19
+    assert enddt.hour == 14
     assert enddt.minute == 0
     assert enddt.second == 0
-    pass
-    os.environ['TZ'] = 'US/Hawaii'
-    time.tzset()
+
+    # Yesterday, noon Chile (so 'day before yesterday' 2pm Chile through 2pm yesterday)
+    FAKE_TIME = CHILE_NOON
+    startdt, enddt = gmu.get_time_period('yesterday')
+    startdt = startdt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
+    enddt = enddt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
+    assert startdt.year == 2020
+    assert startdt.month == 5
+    assert startdt.day == 9
+    assert startdt.hour == 14
+    assert startdt.minute == 0
+    assert startdt.second == 0
+    assert enddt.year == 2020
+    assert enddt.month == 5
+    assert enddt.day == 10
+    assert enddt.hour == 14
+    assert enddt.minute == 0
+    assert enddt.second == 0
+
+    # Today, afternoon Chile (so uses today into tonight)
+    FAKE_TIME = CHILE_AFTERNOON
     startdt, enddt = gmu.get_time_period('today')
+    # convert back to local time from utc
+    startdt = startdt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
+    enddt = enddt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
     assert startdt.year == 2020
     assert startdt.month == 5
     assert startdt.day == 11
-    assert startdt.hour == 2
+    assert startdt.hour == 14
     assert startdt.minute == 0
     assert startdt.second == 0
     assert enddt.year == 2020
     assert enddt.month == 5
     assert enddt.day == 12
-    assert enddt.hour == 2
+    assert enddt.hour == 14
     assert enddt.minute == 0
     assert enddt.second == 0
-    pass
+
+    # Today, evening Chile (so UTC rolled)
+    FAKE_TIME = CHILE_EVENING
+    startdt, enddt = gmu.get_time_period('today')
+    # convert back to local time from utc
+    startdt = startdt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
+    enddt = enddt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
+    assert startdt.year == 2020
+    assert startdt.month == 5
+    assert startdt.day == 11
+    assert startdt.hour == 14
+    assert startdt.minute == 0
+    assert startdt.second == 0
+    assert enddt.year == 2020
+    assert enddt.month == 5
+    assert enddt.day == 12
+    assert enddt.hour == 14
+    assert enddt.minute == 0
+    assert enddt.second == 0
+
+    os.environ['TZ'] = 'US/Hawaii'
+    time.tzset()
+    FAKE_TIME = HAWAII_NOON
+    startdt, enddt = gmu.get_time_period('today')
+    startdt = startdt.replace(tzinfo=pytz.utc).astimezone(tz=HAWAII_TZ)
+    enddt = enddt.replace(tzinfo=pytz.utc).astimezone(tz=HAWAII_TZ)
+    assert startdt.year == 2020
+    assert startdt.month == 5
+    assert startdt.day == 10
+    assert startdt.hour == 14
+    assert startdt.minute == 0
+    assert startdt.second == 0
+    assert enddt.year == 2020
+    assert enddt.month == 5
+    assert enddt.day == 11
+    assert enddt.hour == 14
+    assert enddt.minute == 0
+    assert enddt.second == 0
+
+    FAKE_TIME = HAWAII_AFTERNOON
+    startdt, enddt = gmu.get_time_period('today')
+    startdt = startdt.replace(tzinfo=pytz.utc).astimezone(tz=HAWAII_TZ)
+    enddt = enddt.replace(tzinfo=pytz.utc).astimezone(tz=HAWAII_TZ)
+    assert startdt.year == 2020
+    assert startdt.month == 5
+    assert startdt.day == 11
+    assert startdt.hour == 14
+    assert startdt.minute == 0
+    assert startdt.second == 0
+    assert enddt.year == 2020
+    assert enddt.month == 5
+    assert enddt.day == 12
+    assert enddt.hour == 14
+    assert enddt.minute == 0
+    assert enddt.second == 0
+
