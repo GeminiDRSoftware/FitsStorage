@@ -184,6 +184,7 @@ CHILE_NOON = CHILE_TZ.localize(datetime.datetime(2020, 5, 11, 12, 00, 00))
 CHILE_AFTERNOON = CHILE_TZ.localize(datetime.datetime(2020, 5, 11, 16, 00, 00))
 CHILE_EVENING = CHILE_TZ.localize(datetime.datetime(2020, 5, 11, 21, 00, 00))
 HAWAII_NOON = HAWAII_TZ.localize(datetime.datetime(2020, 5, 11, 12, 00, 00))
+HAWAII_AFTERNOON = HAWAII_TZ.localize(datetime.datetime(2020, 5, 11, 16, 00, 00))
 
 @pytest.fixture
 def patch_datetime_now(monkeypatch):
@@ -200,12 +201,8 @@ def patch_datetime_now(monkeypatch):
 
 
 def test_today_tommorow_yesterday(patch_datetime_now):
-    print("timezone: %s" % time.timezone)
-    print("altzone: %s" % time.altzone)
     os.environ['TZ'] = 'America/Santiago'
     time.tzset()
-    print("timezone: %s" % time.timezone)
-    print("altzone: %s" % time.altzone)
 
     global FAKE_TIME
     FAKE_TIME = CHILE_NOON
@@ -298,6 +295,23 @@ def test_today_tommorow_yesterday(patch_datetime_now):
     assert enddt.year == 2020
     assert enddt.month == 5
     assert enddt.day == 11
+    assert enddt.hour == 14
+    assert enddt.minute == 0
+    assert enddt.second == 0
+
+    FAKE_TIME = HAWAII_AFTERNOON
+    startdt, enddt = gmu.get_time_period('today')
+    startdt = startdt.replace(tzinfo=pytz.utc).astimezone(tz=HAWAII_TZ)
+    enddt = enddt.replace(tzinfo=pytz.utc).astimezone(tz=HAWAII_TZ)
+    assert startdt.year == 2020
+    assert startdt.month == 5
+    assert startdt.day == 11
+    assert startdt.hour == 14
+    assert startdt.minute == 0
+    assert startdt.second == 0
+    assert enddt.year == 2020
+    assert enddt.month == 5
+    assert enddt.day == 12
     assert enddt.hour == 14
     assert enddt.minute == 0
     assert enddt.second == 0
