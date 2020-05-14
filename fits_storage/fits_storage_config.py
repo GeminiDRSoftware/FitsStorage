@@ -6,7 +6,7 @@ We put them in a separate file to ease install issues
 import os
 import socket
 import configparser
-
+import time
 
 """ Configuration defaults based on the hostname """
 _host_based_configs = {
@@ -44,7 +44,8 @@ _host_based_configs = {
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/cpofits-lv3",
         'FITS_SERVERNAME': 'cpofits-lv3.cl.gemini.edu',
-        'ORCID_ENABLED': 'False'
+        'ORCID_ENABLED': 'False',
+        'TZ': 'America/Santiago',
     },
     "hbffits-lv1": {
         'USE_AS_ARCHIVE': 'False',
@@ -83,7 +84,8 @@ _host_based_configs = {
         'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files',
         'FITS_DB_BACKUP_DIR': "/backup",
         'FITS_SERVERNAME': 'archive.gemini.edu',
-        'ORCID_ENABLED': 'False'
+        'ORCID_ENABLED': 'False',
+        'TZ': 'UTC',
     },
     "arcdev": {
         'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
@@ -93,7 +95,8 @@ _host_based_configs = {
         'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files',
         'FITS_DB_BACKUP_DIR': "/backup",
         'FITS_SERVERNAME': 'arcdev.gemini.edu',
-        'ORCID_REDIRECT_URL': 'http://arcdev.gemini.edu/orcid'
+        'ORCID_REDIRECT_URL': 'http://arcdev.gemini.edu/orcid',
+        'TZ': 'UTC',
     }
 }
 
@@ -310,3 +313,9 @@ orcid_client_secret = lookup_config('ORCID_CLIENT_SECRET', "66f21bdb-90f6-4219-b
 orcid_server = lookup_config('ORCID_SERVER', 'sandbox.orcid.org')
 orcid_enabled = lookup_config_bool('ORCID_ENABLED', True)
 orcid_redirect_url = lookup_config('ORCID_REDIRECT_URL', 'http://%s/orcid' % fits_servername)
+
+time_zone = lookup_config('TZ', 'US/Hawaii')
+
+# Init timezone
+os.environ['TZ'] = time_zone
+time.tzset()
