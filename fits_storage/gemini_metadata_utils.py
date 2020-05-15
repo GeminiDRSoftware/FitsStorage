@@ -246,18 +246,18 @@ def gemini_date(string, as_datetime=False, offset=ZERO_OFFSET):
         dt = datetime.datetime.now()
         if dt.hour < 14:
             dt = dt - datetime.timedelta(days=1)
-        dt = dt.replace(hour=14, minute=0, second=0, microsecond=0)
-        if DATE_LIMIT_LOW <= dt.replace(tzinfo=None) < DATE_LIMIT_HIGH:
-            return dt_to_text(dt) if not as_datetime else dt.replace(tzinfo=None)
+        dt = dt.replace(hour=14, minute=0, second=0, microsecond=0, tzinfo=None)
+        if DATE_LIMIT_LOW <= dt < DATE_LIMIT_HIGH:
+            return dt_to_text(dt) if not as_datetime else dt
     elif string in {'yesterday', 'lastnight'}:
         dt = datetime.datetime.now()
         if dt.hour < 14:
             dt = dt - datetime.timedelta(days=2)
         else:
             dt = dt - datetime.timedelta(days=1)
-        dt = dt.replace(hour=14, minute=0, second=0, microsecond=0)
-        if DATE_LIMIT_LOW <= dt.replace(tzinfo=None) < DATE_LIMIT_HIGH:
-            return dt_to_text(dt) if not as_datetime else dt.replace(tzinfo=None)
+        dt = dt.replace(hour=14, minute=0, second=0, microsecond=0, tzinfo=None)
+        if DATE_LIMIT_LOW <= dt < DATE_LIMIT_HIGH:
+            return dt_to_text(dt) if not as_datetime else dt
 
     if len(string) == 8 and string.isdigit():
         # What we want here is to bracket from 2pm yesterday through 2pm today.
@@ -271,6 +271,7 @@ def gemini_date(string, as_datetime=False, offset=ZERO_OFFSET):
         # offset (CL) = -10 + 4 = -6
         try:
             dt = dateutil.parser.parse(string) + offset
+            dt = dt.replace(tzinfo=None)
             if DATE_LIMIT_LOW <= dt < DATE_LIMIT_HIGH:
                 return dt_to_text(dt) if not as_datetime else dt
         except ValueError:
