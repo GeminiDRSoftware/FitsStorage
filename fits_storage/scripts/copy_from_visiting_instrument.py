@@ -24,8 +24,7 @@ def check_present(session, filename):
     # TODO this assumes path is a match, bad joojoo
     df = session.query(DiskFile).filter(DiskFile.filename==filename).filter(DiskFile.present==True).first()
     if df:
-        return False
-        # return True
+        return True
     return False
 
 
@@ -112,7 +111,7 @@ class VisitingInstrumentABC(ABC):
                     shutil.copyfile(src, dst)
                 logger.info("Adding %s to IngestQueue", filename)
                 
-                # iq.add_to_queue(dst_filename, dst_path, force=False, force_md5=False, after=None)
+                iq.add_to_queue(dst_filename, dst_path, force=False, force_md5=False, after=None)
         except:
             logger.error("Problem copying %s to %s", src, storage_root)
             logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
@@ -158,7 +157,7 @@ class Zorro(AlopekeZorroABC):
     def __init__(self, base_path="/net/cpostonfs-nv1/tier2/ins/sto/zorro/"):
         super().__init__('zorro', base_path, True)
         self._filename_re = re.compile(r'S\d{8}Z\d{4}[br].fits.bz2')
-        self._filename_re = re.compile(r'S20200316Z\d{4}[br].fits.bz2')
+        self._filename_re = re.compile(r'S202\d{5}Z\d{4}[br].fits.bz2')
 
 
 class IGRINS(VisitingInstrumentABC):
