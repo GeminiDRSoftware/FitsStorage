@@ -208,9 +208,6 @@ def test_today_tommorow_yesterday(patch_datetime_now):
     FAKE_TIME = CHILE_NOON
     # Today, noon Chile (so 'yesterday' 2pm Chile through 2pm today)
     startdt, enddt = gmu.get_time_period('today')
-    # convert back to local time from utc
-    startdt = startdt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
-    enddt = enddt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
     assert startdt.year == 2020
     assert startdt.month == 5
     assert startdt.day == 10
@@ -227,8 +224,6 @@ def test_today_tommorow_yesterday(patch_datetime_now):
     # Yesterday, noon Chile (so 'day before yesterday' 2pm Chile through 2pm yesterday)
     FAKE_TIME = CHILE_NOON
     startdt, enddt = gmu.get_time_period('yesterday')
-    startdt = startdt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
-    enddt = enddt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
     assert startdt.year == 2020
     assert startdt.month == 5
     assert startdt.day == 9
@@ -245,9 +240,6 @@ def test_today_tommorow_yesterday(patch_datetime_now):
     # Today, afternoon Chile (so uses today into tonight)
     FAKE_TIME = CHILE_AFTERNOON
     startdt, enddt = gmu.get_time_period('today')
-    # convert back to local time from utc
-    startdt = startdt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
-    enddt = enddt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
     assert startdt.year == 2020
     assert startdt.month == 5
     assert startdt.day == 11
@@ -264,9 +256,6 @@ def test_today_tommorow_yesterday(patch_datetime_now):
     # Today, evening Chile (so UTC rolled)
     FAKE_TIME = CHILE_EVENING
     startdt, enddt = gmu.get_time_period('today')
-    # convert back to local time from utc
-    startdt = startdt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
-    enddt = enddt.replace(tzinfo=pytz.utc).astimezone(tz=CHILE_TZ)
     assert startdt.year == 2020
     assert startdt.month == 5
     assert startdt.day == 11
@@ -284,8 +273,6 @@ def test_today_tommorow_yesterday(patch_datetime_now):
     time.tzset()
     FAKE_TIME = HAWAII_NOON
     startdt, enddt = gmu.get_time_period('today')
-    startdt = startdt.replace(tzinfo=pytz.utc).astimezone(tz=HAWAII_TZ)
-    enddt = enddt.replace(tzinfo=pytz.utc).astimezone(tz=HAWAII_TZ)
     assert startdt.year == 2020
     assert startdt.month == 5
     assert startdt.day == 10
@@ -301,8 +288,6 @@ def test_today_tommorow_yesterday(patch_datetime_now):
 
     FAKE_TIME = HAWAII_AFTERNOON
     startdt, enddt = gmu.get_time_period('today')
-    startdt = startdt.replace(tzinfo=pytz.utc).astimezone(tz=HAWAII_TZ)
-    enddt = enddt.replace(tzinfo=pytz.utc).astimezone(tz=HAWAII_TZ)
     assert startdt.year == 2020
     assert startdt.month == 5
     assert startdt.day == 11
@@ -316,3 +301,38 @@ def test_today_tommorow_yesterday(patch_datetime_now):
     assert enddt.minute == 0
     assert enddt.second == 0
 
+
+def test_date_string(patch_datetime_now):
+    os.environ['TZ'] = 'America/Santiago'
+    time.tzset()
+
+    startdt, enddt = gmu.get_time_period('20200511')
+    assert startdt.year == 2020
+    assert startdt.month == 5
+    assert startdt.day == 10
+    assert startdt.hour == 17
+    assert startdt.minute == 0
+    assert startdt.second == 0
+    assert enddt.year == 2020
+    assert enddt.month == 5
+    assert enddt.day == 11
+    assert enddt.hour == 17
+    assert enddt.minute == 0
+    assert enddt.second == 0
+
+    os.environ['TZ'] = 'US/Hawaii'
+    time.tzset()
+
+    startdt, enddt = gmu.get_time_period('20200511')
+    assert startdt.year == 2020
+    assert startdt.month == 5
+    assert startdt.day == 11
+    assert startdt.hour == 0
+    assert startdt.minute == 0
+    assert startdt.second == 0
+    assert enddt.year == 2020
+    assert enddt.month == 5
+    assert enddt.day == 12
+    assert enddt.hour == 0
+    assert enddt.minute == 0
+    assert enddt.second == 0

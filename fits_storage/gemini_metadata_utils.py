@@ -8,7 +8,6 @@ import time
 import datetime
 import dateutil.parser
 
-#from .fits_storage_config import use_as_archive
 from . import fits_storage_config
 
 # ------------------------------------------------------------------------------
@@ -241,31 +240,35 @@ def gemini_date(string, as_datetime=False, offset=ZERO_OFFSET):
 
     """
     dt_to_text = lambda x: x.date().strftime('%Y%m%d')
-    dt_to_text_full = lambda x: x.strftime('%Y-%m-%dT%H:%M:%s')
+    dt_to_text_full = lambda x: x.strftime('%Y-%m-%dT%H:%M:%S')
 
     if string in {'today', 'tonight'}:
-        #string = get_fake_ut()
         dt = datetime.datetime.now()
         if dt.hour < 14:
             dt = dt - datetime.timedelta(days=1)
-        # string = dt_to_text(datetime.datetime.utcnow())
-        dt = dt.replace(hour=14, minute=0, second=0, microsecond=0).astimezone(datetime.timezone.utc)
+        dt = dt.replace(hour=14, minute=0, second=0, microsecond=0)
         if DATE_LIMIT_LOW <= dt.replace(tzinfo=None) < DATE_LIMIT_HIGH:
             return dt_to_text(dt) if not as_datetime else dt.replace(tzinfo=None)
     elif string in {'yesterday', 'lastnight'}:
-        #past = dateutil.parser.parse(get_fake_ut()) -  ONEDAY_OFFSET
-        #string = dt_to_text(past)
-        # string = dt_to_text(datetime.datetime.utcnow() - ONEDAY_OFFSET)
         dt = datetime.datetime.now()
         if dt.hour < 14:
             dt = dt - datetime.timedelta(days=2)
         else:
             dt = dt - datetime.timedelta(days=1)
-        dt = dt.replace(hour=14, minute=0, second=0, microsecond=0).astimezone(datetime.timezone.utc)
+        dt = dt.replace(hour=14, minute=0, second=0, microsecond=0)
         if DATE_LIMIT_LOW <= dt.replace(tzinfo=None) < DATE_LIMIT_HIGH:
             return dt_to_text(dt) if not as_datetime else dt.replace(tzinfo=None)
 
     if len(string) == 8 and string.isdigit():
+        # What we want here is to bracket from 2pm yesterday through 2pm today.
+        # That is, 20200415 should convert to 2020-04-14 14:00 local time, but
+        # in UTC.  The offset we are passed is what we need to add, including
+        # the 2pm offset as well as the timezone adjustment to convert back to
+        # UTC.
+        # Example (HST): 2020-04-15 0:00 -10 hrs = 2020-04-14 2pm + 10 hrs = 2020-04-15 0:00
+        # Example (CL): 2020-04-15 0:00 -10 hrs = 2020-04-14 2pm + 4 hrs = 2020-04-14 18:00
+        # offset (HST) = -10 + 10 = 0
+        # offset (CL) = -10 + 4 = -6
         try:
             dt = dateutil.parser.parse(string) + offset
             if DATE_LIMIT_LOW <= dt < DATE_LIMIT_HIGH:
@@ -276,15 +279,21 @@ def gemini_date(string, as_datetime=False, offset=ZERO_OFFSET):
     if len(string) >= 14 and 'T' in string and '=' not in string:
         # Parse an ISO style datestring, so 2019-12-10T11:22:33.444444
         try:
-            dt = dateutil.parser.isoparse(string) + offset
+            # TODO this is dateutil bug #786, so for now we truncate to 6 digits
+            if '.' in string:
+                lastdot = string.rindex('.')
+                if len(string)-lastdot > 6:
+                    string = string[:lastdot-len(string)]
+            # TODO end of workaround
+            dt = dateutil.parser.isoparse("%sZ" % string) + offset
+            # strip back out time zone as the rest of the code does not support it
+            dt = dt.replace(tzinfo=None)
             if DATE_LIMIT_LOW <= dt < DATE_LIMIT_HIGH:
-                return dt_to_text(dt) if not as_datetime else dt
+                return dt_to_text_full(dt) if not as_datetime else dt
         except ValueError as ve:
             pass
 
     return '' if not as_datetime else None
-
-
 
 
 racre = re.compile(r'^([012]\d):([012345]\d):([012345]\d)(\.?\d*)$')
@@ -908,9 +917,10 @@ def get_date_offset():
     #print datetime.timedelta(seconds=zone)
     #print ONEDAY_OFFSET
 
-    retval = datetime.timedelta(hours=16) + datetime.timedelta(seconds=zone)
-    if zone >= 8 * 3600:
-        retval = retval - ONEDAY_OFFSET
+    # retval = datetime.timedelta(hours=16) + datetime.timedelta(seconds=zone)
+    retval = - datetime.timedelta(hours=10) + datetime.timedelta(seconds=zone)
+    # if zone >= 10 * 3600:
+    #     retval = retval - ONEDAY_OFFSET
     return retval
 
 def get_time_period(start, end=None, as_date=False):
