@@ -254,7 +254,7 @@ if __name__ == "__main__":
                                 known_list.add(filename)
                 if options.demon:
                     logger.debug("Pass complete, sleeping")
-                    time.sleep(5)
+                    time.sleep(300)
                 else:
                     done = True
                     logger.debug("Exiting")
