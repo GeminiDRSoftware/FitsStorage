@@ -69,7 +69,8 @@ _host_based_configs = {
     },
     "ooberdorf-ml1": {
         'EXPORT_DESTINATIONS': '',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok'
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'TZ': 'America/Santiago',
     },
     "some_actual_site_host": {
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
@@ -314,8 +315,8 @@ orcid_server = lookup_config('ORCID_SERVER', 'sandbox.orcid.org')
 orcid_enabled = lookup_config_bool('ORCID_ENABLED', True)
 orcid_redirect_url = lookup_config('ORCID_REDIRECT_URL', 'http://%s/orcid' % fits_servername)
 
-time_zone = lookup_config('TZ', 'US/Hawaii')
+# time_zone = lookup_config('TZ', 'US/Hawaii')
 
 # Init timezone
-os.environ['TZ'] = time_zone
-time.tzset()
+# os.environ['TZ'] = time_zone
+# time.tzset()
