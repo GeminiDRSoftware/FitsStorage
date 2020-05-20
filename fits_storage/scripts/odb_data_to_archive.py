@@ -31,7 +31,6 @@ __version__ = "0.1"
 # ------------------------------------------------------------------------------
 # fits URLs
 prodfitsurl = 'https://archive.gemini.edu/ingest_programs'
-prodfitsurl = 'http://127.0.0.1:8090/ingest_programs'
 # ------------------------------------------------------------------------------
 
 def update_program_dbtable(url, pinfo):
