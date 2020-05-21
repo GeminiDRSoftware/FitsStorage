@@ -580,6 +580,11 @@ def login(things):
     """
     ctx = get_context()
 
+    qs = ctx.env.qs
+    if qs and qs.startswith('redirect='):
+        redirect = qs[9:]
+    else:
+        redirect = None
     # Process the form data first if there is any
     formdata = ctx.get_form_data()
     request_attempted = False
@@ -597,6 +602,8 @@ def login(things):
             username = formdata['username'].value
         if 'password' in formdata:
             password = formdata['password'].value
+        if 'redirect' in formdata:
+            redirect = formdata['redirect'].value
 
         # Validate
         valid_request = False
@@ -620,13 +627,16 @@ def login(things):
         # Cookie expires in 1 year
         exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=31536000)
         ctx.cookies.set('gemini_archive_session', cookie, expires=exp, path="/")
+        if redirect:
+            ctx.resp.redirect_to(redirect)
 
     template_args = dict(
         # Rebuild the thing_string for the url
         thing_string      = '/'.join(things),
         valid_request     = valid_request,
         reason_bad        = reason_bad,
-        username          = username
+        username          = username,
+        redirect          = redirect,
         )
 
     return template_args
