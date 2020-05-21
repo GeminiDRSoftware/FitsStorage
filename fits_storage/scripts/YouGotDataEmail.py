@@ -28,6 +28,7 @@ setdemon(options.demon)
 # ISG have local smtp servers set up on the fits hosts (mkofits1 and cpofits1) that relay mail to the gemini smtp
 # servers without needing to authenticate. Otherwise, the gemini smtp will not relay to external addresses.
 
+warning_cre = re.compile(r'WARNING: I didn\'t recognize the following search terms')
 cre = re.compile(r'\.fits')
 
 logger.info("YouveGotDataEmail.py starting for date %s" % options.date)
@@ -74,7 +75,9 @@ with session_scope() as session:
             logger.debug("URL is: %s", url)
             html = str(urllib.request.urlopen(url).read(), 'utf-8')
 
-            if cre.search(html):
+            if warning_cre.search(html):
+                logger.warn("Invalid selection seen when querying archive: %s" % notif.selection)
+            elif cre.search(html):
                 if options.check:
                     subject = "Data set to CHECK for %s" % notif.selection
                 else:
