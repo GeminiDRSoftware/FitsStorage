@@ -1,5 +1,16 @@
-2020-1.1
-================
+2020-1.3
+========
+
+Updated Scripts
+---------------
+
+YouGotDataEmail.py
+^^^^^^^^^^^^^^^^^^
+
+- Log warning and don't send email for searches with unrecognized terms
+
+2020-1.2
+========
 
 Updated Scripts
 ---------------
@@ -8,6 +19,9 @@ odb_data_to_archive.py
 ^^^^^^^^^^^^^^^^^^^^^^
 
 - Runs programs in batches of 20
+
+2020-1.1
+========
 
 Updated Web Services
 --------------------
