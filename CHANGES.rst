@@ -17,6 +17,15 @@ fits_storage
 - Database backup location now calculated from hostname by default [#342]
 
 
+Web Services
+------------
+
+/login
+^^^^^^
+
+- Now accepts a redirect query argument to invoke an http redirect on successful login
+
+
 2020-1.1
 ========
 
