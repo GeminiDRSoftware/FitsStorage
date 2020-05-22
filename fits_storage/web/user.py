@@ -580,11 +580,14 @@ def login(things):
     """
     ctx = get_context()
 
-    qs = ctx.env.qs
-    if qs and qs.startswith('redirect='):
-        redirect = qs[9:]
-    else:
-        redirect = None
+    redirect = None
+    try:
+        qs = ctx.env.qs
+        if qs and qs.startswith('redirect='):
+            redirect = qs[9:]
+    except KeyError:
+        pass  # no query string, that's ok and redirect is set to None
+
     # Process the form data first if there is any
     formdata = ctx.get_form_data()
     request_attempted = False
