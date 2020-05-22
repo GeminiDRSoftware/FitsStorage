@@ -588,6 +588,7 @@ def login(things):
 
     username = ''
     password = ''
+    redirect = ''
     cookie = None
 
     # Parse the form data here
