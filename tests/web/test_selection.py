@@ -67,7 +67,7 @@ getselection_pairs = [
     (['GEMINI-SOUTH'], {'telescope': 'Gemini-South'}),
     (['19990101'], {'date': '19990101'}),
     (['20491231'], {'date': '20491231'}),
-    (['today'], {'date': gemini_date('today')}),
+    # (['today'], {'date': gemini_date('today')}),
     (['21000101'], {'notrecognised': '21000101'}),
     (['20140101-20150101'], {'daterange': '20140101-20150101'}),
     (['20140101-today'], {'daterange': '20140101-today'}),
