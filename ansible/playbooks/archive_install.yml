@@ -645,16 +645,34 @@
           owner: fitsdata
           group: fitsdata
           mode: u+rwx,g-rwx,o-rwx
-      # - name: Copy Crontab
-      #   copy:
-      #     src: ../../otherfiles/system_crontab
-      #     dest: /etc/cron.d/fitsstorage
-      #     owner: root
-      #     group: root
-      #     mode: 0644
-      #   notify: restart cron
-      #   when: "'arc' not in inventory_hostname"
-
+# Chile setup fitsdata user cron support for me
+#      - name: Copy Crontab
+#        copy:
+#          src: ../../otherfiles/system_crontab
+#          dest: /etc/cron.d/fitsstorage
+#          owner: root
+#          group: root
+#          mode: 0644
+#         notify: restart cron
+#         when: "'arc' not in inventory_hostname"
+      - name: Copy Crontab
+        copy:
+          src: ../../otherfiles/system_crontab
+          dest: /var/spool/cron/fitsdata
+          force: no
+          owner: fitsdata
+          group: fitsdata
+          mode: 0600
+        register: cron_installed
+        notify: restart cron
+        when: "'mkofits-lv3' in inventory_hostname or 'cpofits-lv3' in inventory_hostname"
+      - name: Update cron for cpo
+        lineinfile:
+          path: /etc/cron.d/fitsstorage
+          line: 50 7 * * * python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=auto
+          regex: "^50 7 * * * python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py"
+        notify: restart cron
+        when: cron_installed.changed and 'cpofits-mk3' in inventory_hostname
     handlers:
       - name: restart fits-api-backend
         service: name=fits-api-backend state=restarted
