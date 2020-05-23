@@ -25,12 +25,41 @@ Web Services
 
 - Now accepts a redirect query argument to invoke an http redirect on successful login
 
+2020-1.3
+========
+
+Updated Scripts
+---------------
+
+YouGotDataEmail.py
+^^^^^^^^^^^^^^^^^^
+
+- Log warning and don't send email for searches with unrecognized terms
+
+2020-1.2
+========
+
+Updated Scripts
+---------------
+
+odb_data_to_archive.py
+^^^^^^^^^^^^^^^^^^^^^^
+
+- Runs programs in batches of 20
 
 2020-1.1
 ========
 
+Updated Web Services
+--------------------
+
+/ingest_program
+^^^^^^^^^^^^^^^
+
+- Now takes optionally an array of program data for batch processing
+
 New Web Services
-----------------------
+----------------
 
 /publication/ads/<bibcode>
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

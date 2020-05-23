@@ -283,40 +283,42 @@ def ingest_programs():
     resp.content_type = 'application/json'
     fields = ['reference', 'title', 'contactScientistEmail', 'abstrakt', 'piEmail', 'coIEmails', 'observations', 'investigatorNames']
     try:
-        program = ctx.json
+        programs = ctx.json
+        if not isinstance(programs, list):
+            programs = [programs, ]
     except ValueError:
         resp.append_json(error_response('Invalid information sent to the server'))
         return
 
     session = ctx.session
 
-    prog_obj = session.query(Program).filter(Program.program_id == program['reference']).first()
-    if prog_obj is None:
-        prog_obj = Program(program['reference'])
-        session.add(prog_obj)
+    for program in programs:
+        prog_obj = session.query(Program).filter(Program.program_id == program['reference']).first()
+        if prog_obj is None:
+            prog_obj = Program(program['reference'])
+            session.add(prog_obj)
 
-    pairs = (('title', 'title'),
-             ('abstrakt', 'abstract'),
-             ('piEmail', 'piemail'),
-             ('coIEmails', 'coiemail'),
-             ('investigatorNames', 'pi_coi_names'))
+        pairs = (('title', 'title'),
+                 ('abstrakt', 'abstract'),
+                 ('piEmail', 'piemail'),
+                 ('coIEmails', 'coiemail'),
+                 ('investigatorNames', 'pi_coi_names'))
 
-    for remote, local in pairs:
-        try:
-            setattr(prog_obj, local, program[remote])
-        except KeyError:
-            # Just ignore any non-existing associationsfield
-            pass
+        for remote, local in pairs:
+            try:
+                setattr(prog_obj, local, program[remote])
+            except KeyError:
+                # Just ignore any non-existing associationsfield
+                pass
 
-    for obs in program['observations']:
-        lcomms = session.query(ObslogComment).filter(ObslogComment.data_label == obs['label']).first()
-        if lcomms is None:
-            lcomms = ObslogComment(program['reference'], obs['label'], obs['comment'])
-            session.add(lcomms)
-        else:
-            lcomms.program_id = program['reference']
-            lcomms.comment = obs['comment']
-
+        for obs in program['observations']:
+            lcomms = session.query(ObslogComment).filter(ObslogComment.data_label == obs['label']).first()
+            if lcomms is None:
+                lcomms = ObslogComment(program['reference'], obs['label'], obs['comment'])
+                session.add(lcomms)
+            else:
+                lcomms.program_id = program['reference']
+                lcomms.comment = obs['comment']
 
     session.commit()
 

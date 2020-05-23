@@ -23,6 +23,9 @@ from optparse import OptionParser
 
 import requests
 
+import json
+
+
 __version__ = "0.1"
 
 # ------------------------------------------------------------------------------
@@ -31,8 +34,15 @@ prodfitsurl = 'https://archive.gemini.edu/ingest_programs'
 # ------------------------------------------------------------------------------
 
 def update_program_dbtable(url, pinfo):
+    payload = list()
     for prog in pinfo:
-        req = requests.post(url, json=prog, cookies={'gemini_api_authorization': fsc.magic_api_cookie})
+        payload.append(prog)
+        if len(payload) >= 20:
+            req = requests.post(url, data=json.dumps(payload), cookies={'gemini_api_authorization': fsc.magic_api_cookie})
+            req.raise_for_status()
+            payload = list()
+    if payload:
+        req = requests.post(url, data=json.dumps(payload), cookies={'gemini_api_authorization': fsc.magic_api_cookie})
         req.raise_for_status()
 
 # ------------------------------------------------------------------------------

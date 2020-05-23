@@ -507,6 +507,16 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-copy_from_dhs.service
           dest: /etc/systemd/system/fits-copy_from_dhs.service
+      - name: Install Copy From Visiting Instrument MKO Service
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-copy_from_visiting_instruments_mko.service
+          dest: /etc/systemd/system/fits-copy_from_visiting_instruments_mko.service
+        when: "'mkofits-lv3' in inventory_hostname"
+      - name: Install Copy From Visiting Instrument CPO Service
+        copy:
+          src: ../../otherfiles/etc_systemd_system_fits-copy_from_visiting_instruments_cpo.service
+          dest: /etc/systemd/system/fits-copy_from_visiting_instruments_cpo.service
+        when: "'cpofits-lv3' in inventory_hostname"
       - name: Install fitsstorage config
         copy:
           src: ../../otherfiles/fitsstorage.conf
@@ -594,6 +604,12 @@
         service: name=fits-api-backend state=started enabled=yes
       - name: Register DHS service
         service: name=fits-copy_from_dhs state=started enabled=yes
+      - name: Register Visiting Instrument CPO service
+        service: name=fits-copy_from_visiting_instruments_cpo.service state=started enabled=yes
+        when: "'cpofits-lv3' in inventory_hostname"
+      - name: Register Visiting Instrument MKO service
+        service: name=fits-copy_from_visiting_instruments_mko.service state=started enabled=yes
+        when: "'mkofits-lv3' in inventory_hostname"
       - name: Register postfix service
         service: name=postfix state=started enabled=yes
         when: "'mkofits-lv3' in inventory_hostname or 'cpofits-lv3' in inventory_hostname or 'arc' in inventory_hostname"
