@@ -1,3 +1,15 @@
+2020-1.4
+========
+
+Updated Infrastructure
+----------------------
+
+playbook.yml
+^^^^^^^^^^^^
+
+Added user-space crontab install for fitsdata on ops, if absent.  Also added logic to  update CPO crontab to run with
+region specific flag
+
 2020-1.3
 ========
 
