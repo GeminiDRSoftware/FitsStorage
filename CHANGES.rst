@@ -1,3 +1,13 @@
+2020-1.5
+
+Updated Scripts
+---------------
+
+fixHead.py
+^^^^^^^^^^
+
+- Queries server for list of known files on that date and discards any number range entries that are absent in the filenames
+
 2020-1.4
 ========
 
