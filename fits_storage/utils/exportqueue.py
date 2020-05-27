@@ -168,7 +168,7 @@ class ExportQueueUtil(object):
             request.add_header('Content-Length', '%d' % len(postdata))
             request.add_header('Content-Type', 'application/octet-stream')
             request.add_header('Cookie', 'gemini_fits_upload_auth=%s' % export_upload_auth_cookie)
-            u = urllib.request.urlopen(request, timeout=120)
+            u = urllib.request.urlopen(request, timeout=600)
             response = u.read()
             u.close()
             http_status = u.getcode()

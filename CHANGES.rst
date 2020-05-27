@@ -1,4 +1,13 @@
+Updated Scripts
+---------------
+
+exportqueue.py
+^^^^^^^^^^^^^^
+
+- During export, increased timeout of file post to 10 minutes as Zorro files take time to upload
+
 2020-1.5
+========
 
 Updated Scripts
 ---------------
