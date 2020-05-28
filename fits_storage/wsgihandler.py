@@ -21,7 +21,7 @@ from fits_storage.web.xml_tape import xmltape
 from fits_storage.web.progsobserved import progsobserved
 from fits_storage.web.gmoscal import gmoscal_html, gmoscal_json
 from fits_storage.web.notification import notification, import_odb_notifications
-from fits_storage.web.calmgr import calmgr
+from fits_storage.web.calmgr import calmgr, xmlcalmgr, jsoncalmgr
 from fits_storage.web.calibrations import calibrations
 from fits_storage.web.rawfiles import rawfiles
 from fits_storage.web.upload_file import upload_file
@@ -310,7 +310,9 @@ url_map = Map([
     Rule('/jsonsummary/<selection:selection>', jsonsummary,
          collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
     Rule('/jsonqastate/<selection:selection>', jsonqastate),
-    Rule('/calmgr/<selection:selection>', calmgr),                  # The calmgr handler
+    Rule('/calmgr/<selection:selection>', xmlcalmgr),               # The calmgr handler, returning xml (legacy url)
+    Rule('/xmlcalmgr/<selection:selection>', xmlcalmgr),            # The calmgr handler, returning xml
+    Rule('/jsoncalmgr/<selection:selection>', jsoncalmgr),          # The calmgr handler, returning json
     Rule('/gmoscal/<selection:selection>', gmoscal_html),           # The GMOS twilight flat and bias report
     Rule('/programsobserved/<selection:selection>',                 # This is the projects observed feature
          progsobserved),
