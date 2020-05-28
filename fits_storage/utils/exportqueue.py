@@ -59,6 +59,16 @@ class ExportQueueUtil(object):
         it returns None.
         """
         self.l.info("Adding file %s to %s to exportqueue", filename, destination)
+
+        query = self.s.query(ExportQueue)\
+                    .filter(ExportQueue.filename == filename)\
+                    .filter(ExportQueue.path == path)\
+                    .filter(ExportQueue.destination == destination)
+        check_export = query.one_or_none()
+        if check_export is not None:
+            self.l.info("Already have entry to export file %s to %s, ignoring", filename, destination)
+            return check_export
+
         eq = ExportQueue(filename, path, destination)
         self.l.debug("Instantiated ExportQueue object")
         self.s.add(eq)
@@ -66,6 +76,7 @@ class ExportQueueUtil(object):
         try:
             self.s.commit()
         except IntegrityError:
+            # table is not sufficiently constrained
             self.l.debug("File %s seems to be in the queue", eq.filename)
             self.s.rollback()
         else:
