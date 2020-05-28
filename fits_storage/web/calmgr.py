@@ -213,7 +213,16 @@ def generate_get_calmgr(selection, caltype):
     # commit the usagelog notes
     session.commit()
 
+
+def jsoncalmgr(selection):
+    get_context().resp.send_json(calmgr(selection), indent=4)
+
+
 @templating.templated("calmgr.xml", content_type='text/xml')
+def xmlcalmgr(selection):
+    return calmgr(selection)
+
+
 def calmgr(selection):
     """
     This is the calibration manager. It implements a machine readable calibration association server

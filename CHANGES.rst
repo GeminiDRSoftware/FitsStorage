@@ -15,7 +15,7 @@ fits_storage
 ^^^^^^^^^^^^
 
 - Database backup location now calculated from hostname by default [#342]
-
+- jsoncalmgr and xmlcalmgr endpoints to get a json or xml variant of the data, with calmgr returning xml for back compatibility
 
 Web Services
 ------------

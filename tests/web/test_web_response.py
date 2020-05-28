@@ -99,6 +99,8 @@ no_auth_no_data = (
     ('jsonsummary/20130101', GET, OK),
     ('jsonqastate/20130101', GET, OK),
     ('calmgr/N20130101S0001.fits', GET, OK),
+    ('xmlcalmgr/N20130101S0001.fits', GET, OK),
+    ('jsoncalmgr/N20130101S0001.fits', GET, OK),
     ('gmoscal/20130101', GET, OK),
     ('programsobserved/20130101', GET, OK),
     ('obslogs/20130101', GET, OK),
