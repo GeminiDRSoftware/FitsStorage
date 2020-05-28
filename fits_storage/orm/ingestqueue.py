@@ -18,6 +18,7 @@ class IngestQueue(Base):
     __tablename__ = 'ingestqueue'
     __table_args__ = (
         UniqueConstraint('filename', 'inprogress', 'failed'),
+        UniqueConstraint('filename', 'path'),
     )
 
     id = Column(Integer, primary_key=True)
