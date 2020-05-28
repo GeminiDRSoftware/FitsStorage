@@ -1,6 +1,7 @@
 """
 This module contains the calmgr html generator function.
 """
+import json
 
 from fits_storage.utils.api import WSGIError, BAD_REQUEST
 
@@ -215,7 +216,14 @@ def generate_get_calmgr(selection, caltype):
 
 
 def jsoncalmgr(selection):
-    get_context().resp.send_json(calmgr(selection), indent=4)
+    first = True
+    dat = calmgr(selection)
+    get_context().resp.append('[\n')
+    for i in dat['generator']:
+        if not first:
+            get_context().resp.append(',\n')
+        get_context().resp.append(json.dumps(i, indent=4))
+    get_context().resp.append(']\n')
 
 
 @templating.templated("calmgr.xml", content_type='text/xml')
