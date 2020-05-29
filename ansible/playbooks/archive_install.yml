@@ -597,6 +597,7 @@
         when: "'arc' in inventory_hostname"
       - name: Register Export Queue
         service: name=fits-service_export_queue1 state=started enabled=yes
+        when: "'cpofits-lv3' in inventory_hostname or 'mkofits-lv3' in inventory_hostname"
       - name: Register CalCache service 1
         service: name=fits-service_calcache_queue1 state=started enabled=yes
         when: "'arc' in inventory_hostname"
