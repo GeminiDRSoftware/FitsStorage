@@ -39,9 +39,12 @@ RUN pip3 install psycopg2-binary && \
     pip3 install pandas && \
     pip3 install astropy && \
     pip3 install future && \
+    pip3 install psutil && \
     pip3 install boto3 && \
     pip3 install pytest && \
-    pip3 install coverage
+    pip3 install coverage && \
+    pip3 install mysql-connector && \
+    pip3 install simplejson
 
 # Needed for imexam, which is needed for DRAGONS
 RUN pip3 install photutils
