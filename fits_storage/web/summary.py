@@ -2,6 +2,7 @@
 This module contains the main web summary code.
 """
 import datetime
+import json
 
 from ..utils.web import get_context
 from ..fits_storage_config import fits_system_status, fits_open_result_limit, fits_closed_result_limit
@@ -72,6 +73,13 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
     session = ctx.session
     sumlinks = ALL_LINKS if links else NO_LINKS
 
+    files_list = None
+    if ctx.env.method == 'POST':
+        # extract list of files from request
+        raw_data = get_context().req.raw_data
+        data = raw_data.decode('utf-8')
+        selection.update(json.loads(data))
+
     # If this is a diskfiles summary, select even ones that are not canonical
     if sumtype != 'diskfiles':
         # Usually, we want to only select headers with diskfiles that are canonical
@@ -110,6 +118,7 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
     if sumtype == 'associated_cals':
         querylog.add_note("Associated Cals")
         headers = associate_cals(session, (x[0] for x in headers), full_query=True)
+
         querylog.cals_completed = datetime.datetime.utcnow()
         querylog.numcalresults = len(headers)
 

@@ -80,27 +80,58 @@ function recodeUrl() {
     return recomp;
 }
 
-function CalsTab() {
-    if ($("#caltab").html() == 'Load Associated Calibrations') {
-        /* First time - initiate loading the associated cals */
-        var allow = $("#allow_cals").val() == "yes";
+function CalsTab(selected) {
+    if (selected == false) {
+        if ($("#caltab").html() == 'Load Associated Calibrations'
+            || $("#caltab").html().startsWith('Selected')) {
+            /* First time - initiate loading the associated cals */
+            var allow = $("#allow_cals").val() == "yes";
 
-        var urlstring = recodeUrl(); // $("#things").val();
-        var calurl = '/associated_cals/body_only' + urlstring;
-        if (allow) {
-            $("#loading_cals").show();
-            $('#calibration_results').load(calurl, function(){
-                $("#loading_cals").hide();
-                // we 'unmarkAll' on the associated cals once they are loaded
-                // because that's when the UI elements are present and we can
-                // attach listeners to them (unmarkAll does this work on the
-                // first call)
-                unmarkAll('associated_cals');
-            });
-        } else {
-            $("#not_loading_cals").show();
+            var urlstring = recodeUrl(); // $("#things").val();
+            var calurl = '/associated_cals/body_only' + urlstring;
+            if (allow) {
+                $("#loading_cals").show();
+                $('#calibration_results').load(calurl, function(){
+                    $("#loading_cals").hide();
+                    // we 'unmarkAll' on the associated cals once they are loaded
+                    // because that's when the UI elements are present and we can
+                    // attach listeners to them (unmarkAll does this work on the
+                    // first call)
+                    unmarkAll('associated_cals');
+                });
+            } else {
+                $("#not_loading_cals").show();
+            }
+            $("#caltab").html('View Calibrations');
         }
-        $("#caltab").html('View Calibrations');
+    } else {
+        // get the list of filenames
+        selection = [];
+        $('.mark_customsearch:checkbox:checked').each(function() {
+            selection.push(this.value);
+        })
+
+        if (selection.length == 0) {
+            alert("Please select one or more files first.");
+            return;
+        } else {
+            var urlstring = recodeUrl();
+            var calurl = '/associated_cals/body_only'; // + urlstring;
+            var allow = $("#allow_cals").val() == "yes";
+            if (allow) {
+                $("#loading_cals").show();
+                $.post(calurl, data=JSON.stringify({'filelist': selection}), success=function(data){
+                    $("#loading_cals").hide();
+                    // we 'unmarkAll' on the associated cals once they are loaded
+                    // because that's when the UI elements are present and we can
+                    // attach listeners to them (unmarkAll does this work on the
+                    // first call)
+                    unmarkAll('associated_cals');
+                    $('#calibration_results').html(data);
+                    $("#caltab").html('Selected Calibrations');
+                });
+            }
+        }
     }
     setCurrentTab('caltab');
 }
@@ -301,7 +332,7 @@ $(document).ready(function() {
         nameresolver();
     });
     $('#caltab').click(function() {
-        CalsTab();
+        CalsTab(false);
     });
     $('#obslogstab').click(function() {
         ObslogsTab();
