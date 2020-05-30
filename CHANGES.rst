@@ -7,6 +7,7 @@ User-Facing Changes
 
 - Search by GPI Astrometric Standard [#253]
 - Fixed time ranges to operate from 2pm-2pm local time in Chile/Hawaii [#288]
+- Ability to search for calibrations associated with selected files [#356]
 
 Service fixes and enhancements
 ------------------------------
@@ -16,6 +17,7 @@ fits_storage
 
 - Database backup location now calculated from hostname by default [#342]
 - jsoncalmgr and xmlcalmgr endpoints to get a json or xml variant of the data, with calmgr returning xml for back compatibility
+- summary service accepts POST method calls where the body is a json dictionary merged over the URL selections
 
 Web Services
 ------------
