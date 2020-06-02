@@ -20,7 +20,8 @@ _host_based_configs = {
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv4",
         'FITS_SERVERNAME': 'hbffits-lv4.hi.gemini.edu',
-        'ORCID_REDIRECT_URL': 'http://hbffits-lv4/orcid'
+        'ORCID_REDIRECT_URL': 'http://hbffits-lv4/orcid',
+        'PROCESSED_CALS_PATH': 'reduced_cals_dev'
     },
     "mkofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
@@ -33,6 +34,7 @@ _host_based_configs = {
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/mkofits-lv3",
         'FITS_SERVERNAME': 'mkofits-lv3.hi.gemini.edu',
         'ORCID_ENABLED': 'False',
+        'PROCESSED_CALS_PATH': 'reduced_cals'
     },
     "cpofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
@@ -46,6 +48,7 @@ _host_based_configs = {
         'FITS_SERVERNAME': 'cpofits-lv3.cl.gemini.edu',
         'ORCID_ENABLED': 'False',
         'TZ': 'America/Santiago',
+        'PROCESSED_CALS_PATH': 'reduced_cals'
     },
     "hbffits-lv1": {
         'USE_AS_ARCHIVE': 'False',
@@ -55,7 +58,8 @@ _host_based_configs = {
         'FITS_SERVERTITLE': 'TEST On-site FitsServer (CentOS 7)',
         'FITS_SYSTEM_STATUS': 'development',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv1"
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv1",
+        'PROCESSED_CALS_PATH': 'reduced_cals_dev'
     },
     "hbfqapdev-lv1": {
         'USE_AS_ARCHIVE': 'False',
@@ -65,17 +69,20 @@ _host_based_configs = {
         'FITS_SERVERTITLE': 'TEST QAP FitsServer (CentOS 7)',
         'FITS_SYSTEM_STATUS': 'development',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbfqapdev-lv1"
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbfqapdev-lv1",
+        'PROCESSED_CALS_PATH': 'reduced_cals_dev'
     },
     "ooberdorf-ml1": {
         'EXPORT_DESTINATIONS': '',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'TZ': 'America/Santiago',
+        'PROCESSED_CALS_PATH': 'reduced_cals_dev'
     },
     "some_actual_site_host": {
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
         'PUBDB_REMOTE': 'https://archive.gemini.edu/ingest_publications',
-        'BLOCKED_URLS': ''
+        'BLOCKED_URLS': '',
+        'PROCESSED_CALS_PATH': 'reduced_cals_dev'
     },
     "archive": {
         'FITS_SERVERTITLE': 'Gemini Observatory Archive',
@@ -87,6 +94,7 @@ _host_based_configs = {
         'FITS_SERVERNAME': 'archive.gemini.edu',
         'ORCID_ENABLED': 'False',
         'TZ': 'UTC',
+        'PROCESSED_CALS_PATH': 'reduced_cals'
     },
     "arcdev": {
         'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
@@ -98,6 +106,7 @@ _host_based_configs = {
         'FITS_SERVERNAME': 'arcdev.gemini.edu',
         'ORCID_REDIRECT_URL': 'http://arcdev.gemini.edu/orcid',
         'TZ': 'UTC',
+        'PROCESSED_CALS_PATH': 'reduced_cals_dev'
     }
 }
 
@@ -228,7 +237,8 @@ else:
 export_bzip = True
 
 # This is the subdirectory in dataroot where processed_cals live
-processed_cals_path = "reduced_cals"
+# Ops hosts override this to reduced_cals
+processed_cals_path = lookup_config('PROCESSED_CALS_PATH', "reduced_cals_dev")
 
 # This is the subdirectory in dataroot where preview files live
 #using_previews = False
