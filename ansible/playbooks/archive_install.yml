@@ -608,6 +608,10 @@
         service: name=fits-api-backend state=started enabled=yes
       - name: Register DHS service
         service: name=fits-copy_from_dhs state=started enabled=yes
+        when: "'cpofits-lv3' in inventory_hostname or 'mkofits-lv3' in inventory_hostname"
+      - name: Un-Register DHS service
+        service: name=fits-copy_from_dhs state=stopped enabled=no
+        when: "'cpofits-lv3' not in inventory_hostname and 'mkofits-lv3' not in inventory_hostname"
       - name: Register Visiting Instrument CPO service
         service: name=fits-copy_from_visiting_instruments_cpo.service state=started enabled=yes
         when: "'cpofits-lv3' in inventory_hostname"
