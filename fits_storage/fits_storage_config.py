@@ -50,6 +50,17 @@ _host_based_configs = {
         'TZ': 'America/Santiago',
         'PROCESSED_CALS_PATH': 'reduced_cals'
     },
+    "cpofits-lv2": {
+        'USE_AS_ARCHIVE': 'False',
+        'EXPORT_DESTINATIONS': '',
+        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
+        'BLOCKED_URLS': '',
+        'FITS_SERVERTITLE': 'TEST On-site FitsServer (CentOS 8)',
+        'FITS_SYSTEM_STATUS': 'development',
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/cpofits-lv2",
+        'PROCESSED_CALS_PATH': 'reduced_cals_dev'
+    },
     "hbffits-lv1": {
         'USE_AS_ARCHIVE': 'False',
         'EXPORT_DESTINATIONS': '',
