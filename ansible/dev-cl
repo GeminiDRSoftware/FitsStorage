@@ -1,0 +1,5 @@
+#[archive:vars]
+#ansible_become_pass='{{ sudo_pass }}'
+
+[archive]
+cpofits-lv2.cl.gemini.edu

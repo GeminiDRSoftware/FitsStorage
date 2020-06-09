@@ -5,7 +5,7 @@
       - name: Fail on non-release deploys to archive
         fail:
           msg: Attempt to deploy master to an ops host
-        when: "'archive' in inventory_hostname or 'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+        when: "'archive' in inventory_hostname or 'mko' in inventory_hostname or 'cpofits-lv3' in inventory_hostname"
       - name: Check for dataflow folder
         stat:
           path: /sci/dataflow
@@ -19,11 +19,11 @@
         stat:
           path: /sci/dhs
         register: dhs_folder
-        when: "'mko' in inventory_hostname or 'cpo' in inventory_hostname"
+        when: "'mko' in inventory_hostname or 'cpofits-lv3' in inventory_hostname"
       - name: Fail if DHS folder missing
         fail:
           msg: "DHS folder not found"
-        when: "not dhs_folder and ('mko' in inventory_hostname or 'cpo' in inventory_hostname)"
+        when: "not dhs_folder and ('mko' in inventory_hostname or 'cpofits-lv3' in inventory_hostname)"
 # removing per Jose Varas, ITS should setup necessary packages/repos for us
 #      - name: install EPEL
 #        yum:
