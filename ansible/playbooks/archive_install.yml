@@ -189,13 +189,14 @@
           state: directory
           mode: '{{ item.mode }}'
           owner: '{{ item.owner }}'
+          group: '{{ item.group }}'
         with_items:
           - { path: /data/logs, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o-w" }
-          - { path: /data/backups, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
-          - { path: /data/upload_staging, owner: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
-          - { path: /data/z_staging, owner: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
-          - { path: /data/s3_staging, owner: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
-          - { path: /data/gemini_data, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
+          - { path: /data/backups, owner: fitsdata, group: fitsdata, mode: "u+rwx,g-w,o-w" }
+          - { path: /data/upload_staging, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
+          - { path: /data/z_staging, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
+          - { path: /data/s3_staging, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
+          - { path: /data/gemini_data, owner: fitsdata, group: fitsdata, mode: "u+rwx,g-w,o-w" }
       # - name: Ensure previews folder exists
       #   file:
       #     path: /sci/dataflow/previews
@@ -756,6 +757,7 @@
       - name: restart preview1
         service: name=fits-service_preview_queue1 state=restarted
         listen: "restart services"
+        when: "'arc' in inventory_hostname"
       - name: restart preview2
         service: name=fits-service_preview_queue2 state=restarted
         listen: "restart services"
