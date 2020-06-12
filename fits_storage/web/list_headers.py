@@ -74,7 +74,9 @@ def list_headers(selection, orderby, full_query=False, add_previews=False, sessi
 
     # Default sorting by ascending date if closed query, desc date if open query
     if is_openquery:
-        order_criteria.append(nullslast(desc(Header.ut_datetime)))
+        # This makes the query extremely slow on ops
+        # order_criteria.append(nullslast(desc(Header.ut_datetime)))
+        order_criteria.append(desc(Header.ut_datetime))
     else:
         order_criteria.append(asc(Header.ut_datetime))
 
