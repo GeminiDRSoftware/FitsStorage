@@ -6,6 +6,7 @@ Updated Web Services
 ^^^^^^^^
 
 - Now sorts null ut datetimes to the end of the results, so most recent properly displays
+- Removed engineering results by default
 
 Updated Scripts
 ---------------
@@ -14,6 +15,11 @@ exportqueue.py
 ^^^^^^^^^^^^^^
 
 - During export, increased timeout of file post to 10 minutes as Zorro files take time to upload
+
+copy_from_visiting_instrument.py
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Added compression option which, if set to false, does not re-encrypt data after fixing the headers
 
 2020-1.5
 ========
