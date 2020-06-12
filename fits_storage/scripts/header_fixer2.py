@@ -100,7 +100,7 @@ def fix_igrins(fits):
     return retval
 
 
-def fix_and_copy(src_dir, dest_dir, fn, compress=False):
+def fix_and_copy(src_dir, dest_dir, fn, compress=True):
     path = os.path.join(src_dir, fn)
     tmppath = None
     if fn.endswith('.bz2'):
