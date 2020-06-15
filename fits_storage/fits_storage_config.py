@@ -208,6 +208,7 @@ defer_seconds = 4
 # Target free space and number of files on storage_root for delete script
 target_gb_free = 250
 target_max_files = 8000000
+delete_min_days_age = 365
 
 # This is the path in the storage root where processed calibrations
 # uploaded through the http server get stored.
