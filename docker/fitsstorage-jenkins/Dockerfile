@@ -5,10 +5,11 @@ LABEL maintainer="ooberdorf@gemini.edu"
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
 # INSTALL HTTPD AND POSTGRESQL
+# this is causing issues, taking out for now
+#                   epel-release \
 RUN yum -y install openssl \
                    postgresql \
                    postgresql-devel \
-                   epel-release \
                    gcc \
                    gcc-c++ \
                    gcc-gfortran \
