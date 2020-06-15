@@ -2,7 +2,8 @@ FROM centos:centos8
 LABEL maintainer="ooberdorf@gemini.edu"
 
 # ENABLE EPEL
-RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+# this is causing issues, taking out for now - see also epel-release for the yum install below
+#RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
 # INSTALL HTTPD AND POSTGRESQL
 # this is causing issues, taking out for now
