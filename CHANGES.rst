@@ -1,4 +1,3 @@
-
 2020-2 (unreleased)
 ===================
 
@@ -27,6 +26,12 @@ Web Services
 
 - Now accepts a redirect query argument to invoke an http redirect on successful login
 
+/summary
+^^^^^^^^
+
+- Now sorts null ut datetimes to the end of the results, so most recent properly displays
+- Removed engineering results by default
+
 Updated Scripts
 ---------------
 
@@ -35,6 +40,39 @@ delete_files.py
 
 - Configurable minimum age for files to delete, will skip any files with a filename pattern implying it's too new
 - Error messages also added to a dedicated error email, which is sent only if errors were seen
+
+2020-1.5
+========
+
+Updated Scripts
+---------------
+
+exportqueue.py
+^^^^^^^^^^^^^^
+
+- During export, increased timeout of file post to 10 minutes as Zorro files take time to upload
+
+copy_from_visiting_instrument.py
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Added compression option which, if set to false, does not re-encrypt data after fixing the headers
+
+fixHead.py
+^^^^^^^^^^
+
+- Queries server for list of known files on that date and discards any number range entries that are absent in the filenames
+
+2020-1.4
+========
+
+Updated Infrastructure
+----------------------
+
+playbook.yml
+^^^^^^^^^^^^
+
+Added user-space crontab install for fitsdata on ops, if absent.  Also added logic to  update CPO crontab to run with
+region specific flag
 
 2020-1.3
 ========

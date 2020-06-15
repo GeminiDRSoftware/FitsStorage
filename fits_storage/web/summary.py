@@ -34,7 +34,10 @@ def summary(sumtype, selection, orderby, links=True, body_only=False):
     This function just wraps that in the relevant html
     tags to make it a page in it's own right.
     """
-
+    if 'engineering' not in selection:
+        selection['engineering'] = False
+    if 'site_monitoring' not in selection:
+        selection['site_monitoring'] = False
     if body_only:
         return embeddable_summary(sumtype, selection, orderby, links)
     else:

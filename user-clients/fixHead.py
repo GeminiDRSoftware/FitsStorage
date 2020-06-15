@@ -139,19 +139,21 @@ def get_file_list_by_obsid(server, args):
     """
     return tuple(info['name'] for info in server.summary('obsid='+args.obsid))
 
-def get_file_list_by_date_and_number(args):
+def get_file_list_by_date_and_number(server, args):
     """
     Returns a tuple with a list of files generated based on the provided numbers,
     date, and prefix.
     """
     pref = args.prefix or DEFAULTPREF
-    return tuple('{}{}S{:04d}.fits'.format(pref, args.date, n) for n in args.filenums)
+    filelist = server.summary(args.date)
+    filelist = [entry['name'] for entry in filelist]
+    return tuple(f for f in ['{}{}S{:04d}.fits'.format(pref, args.date, n) for n in args.filenums] if f in filelist)
 
 def get_file_list(server, args):
     if args.obsid:
         return get_file_list_by_obsid(server, args)
     else:
-        return get_file_list_by_date_and_number(args)
+        return get_file_list_by_date_and_number(server, args)
 
 doc_simplified ="""
 Usage examples for SOS purposes:

@@ -100,7 +100,7 @@ def fix_igrins(fits):
     return retval
 
 
-def fix_and_copy(src_dir, dest_dir, fn):
+def fix_and_copy(src_dir, dest_dir, fn, compress=True):
     path = os.path.join(src_dir, fn)
     tmppath = None
     if fn.endswith('.bz2'):
@@ -108,6 +108,9 @@ def fix_and_copy(src_dir, dest_dir, fn):
         os.system('bzcat %s > %s' % (path, tmppath))
 
     df = os.path.join(dest_dir, fn)
+    if df.endswith('.bz2') and not compress:
+        df = df[:-4]
+
     try:
         if tmppath:
             fits = pf.open(open_image(tmppath), do_not_scale_image_data=True)
@@ -135,15 +138,17 @@ if __name__ == "__main__":
                         help="Source directory")
     parser.add_argument("--dest", action="store", type=str, dest="dest_dir",
                         help="Destination directory")
+    parser.add_argument("--compress", action="store_true", default=False, dest="compress",
+                        help="Compress output file as .bz2")
     parser.add_argument('path', nargs='+', help='Path of a file or a folder of files.')
-
     options = parser.parse_args()
     src_dir = options.src_dir
     dest_dir = options.dest_dir
+    compress = options.compress
 
     if src_dir == dest_dir:
         print('destination cannot be the same as the source')
     files = options.path
 
     for fn in files:
-        fix_and_copy(src_dir, dest_dir, fn)
+        fix_and_copy(src_dir, dest_dir, fn, compress=compress)

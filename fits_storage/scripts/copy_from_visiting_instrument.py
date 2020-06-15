@@ -21,8 +21,15 @@ def check_present(session, filename):
     """
     Check if the given filename is present in the database.
     """
-    # TODO this assumes path is a match, bad joojoo
+    otherfilename = filename
+    if otherfilename.endswith('.bz2'):
+        otherfilename = otherfilename[:-4]
+    else:
+        otherfilename = "%.bz2" % otherfilename
     df = session.query(DiskFile).filter(DiskFile.filename==filename).filter(DiskFile.present==True).first()
+    if df:
+        return True
+    df = session.query(DiskFile).filter(DiskFile.filename==otherfilename).filter(DiskFile.present==True).first()
     if df:
         return True
     return False
@@ -35,9 +42,10 @@ class VisitingInstrumentABC(ABC):
     This provides the common framework/structure and the
     implementations handle the peculiarities of each.
     """
-    def __init__(self, base_path, apply_fixes):
+    def __init__(self, base_path, apply_fixes, storage_root=storage_root):
         self.base_path = base_path
         self.apply_fixes = apply_fixes
+        self.storage_root = storage_root
     
     def check_filename(self, filename):
         return filename not in ['.bplusvtoc_internal', '.vtoc_internal']
@@ -64,16 +72,26 @@ class VisitingInstrumentABC(ABC):
     def get_destination(self, filename):
         raise NotImplementedError("subclasses must implement get_dest_path()")
 
+    def target_found(self, dst):
+        if os.access(dst, os.F_OK | os.R_OK):
+            return True
+        if dst.endswith('.bz2'):
+            if os.access(dst[:-4], os.F_OK | os.R_OK):
+                return True
+        else:
+            if os.access('%s.bz2' % dst, os.F_OK | os.R_OK):
+                return True
+
     def copy_over(self, session, iq, logger, filename, dryrun, force):
         src = os.path.join(self.base_path, filename)
         dst_filename = self.get_dest_filename(src)
         logger.debug("Calcuating dst_path from src=%s" % src)
         dst_path = self.get_dest_path(filename)
-        logger.debug("Creating dst from %s %s %s" % (storage_root, dst_path, dst_filename))
-        dst = os.path.join(storage_root, dst_path, dst_filename)
-        dest = os.path.join(storage_root, self.get_destination(filename))
+        logger.debug("Creating dst from %s %s %s" % (self.storage_root, dst_path, dst_filename))
+        dst = os.path.join(self.storage_root, dst_path, dst_filename)
+        dest = os.path.join(self.storage_root, self.get_destination(filename))
         # If the Destination file already exists, skip it
-        if not force and os.access(dst, os.F_OK | os.R_OK):
+        if not force and self.target_found(dst):
             logger.info("%s already exists on storage_root - skipping", filename)
             return True
         # If the source path is a directory, skip is
@@ -98,22 +116,22 @@ class VisitingInstrumentABC(ABC):
             if dryrun:
                 logger.info("Dryrun - not actually copying %s", filename)
             else:
-                logger.info("Copying %s to %s", filename, storage_root)
+                logger.info("Copying %s to %s", filename, self.storage_root)
                 # We can't use shutil.copy, because it preserves mode of the
                 # source file, making the umask totally useless. Under the hood,
                 # copy is just a shutil.copyfile + shutil.copymode. We'll
                 # use copyfile instead.
-                if not os.path.exists(os.path.join(storage_root, dst_path)):
-                    os.mkdir(os.path.join(storage_root, dst_path))
+                if not os.path.exists(os.path.join(self.storage_root, dst_path)):
+                    os.mkdir(os.path.join(self.storage_root, dst_path))
                 if self.apply_fixes:
-                    fix_and_copy(os.path.dirname(src), os.path.join(storage_root, dst_path), dst_filename)
+                    fix_and_copy(os.path.dirname(src), os.path.join(self.storage_root, dst_path), dst_filename)
                 else:
                     shutil.copyfile(src, dst)
                 logger.info("Adding %s to IngestQueue", filename)
                 
                 iq.add_to_queue(dst_filename, dst_path, force=False, force_md5=False, after=None)
         except:
-            logger.error("Problem copying %s to %s", src, storage_root)
+            logger.error("Problem copying %s to %s", src, self.storage_root)
             logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
                                                     traceback.format_tb(sys.exc_info()[2]))
             return False
@@ -122,13 +140,13 @@ class VisitingInstrumentABC(ABC):
 
 
 class AlopekeZorroABC(VisitingInstrumentABC):
-    def __init__(self, instr, path, apply_fixes):
-        super().__init__(path, apply_fixes)
+    def __init__(self, instr, path, apply_fixes, storage_root=storage_root):
+        super().__init__(path, apply_fixes, storage_root=storage_root)
         self._instrument = instr
 
     def prep(self):
-        if not os.path.exists(os.path.join(storage_root, self._instrument)):
-            os.mkdir(os.path.join(storage_root, self._instrument))
+        if not os.path.exists(os.path.join(self.storage_root, self._instrument)):
+            os.mkdir(os.path.join(self.storage_root, self._instrument))
 
     def get_files(self):
         for f in os.listdir(self.base_path):
@@ -150,7 +168,7 @@ class Alopeke(AlopekeZorroABC):
     def __init__(self):
         super().__init__('alopeke', "/net/mkovisdata/home/alopeke/", True)
         self._filename_re = re.compile(r'N\d{8}A\d{4}[br].fits.bz2')
-        self._filename_re = re.compile(r'N20200218A\d{4}[br].fits.bz2')
+        self._filename_re = re.compile(r'N202006\d{2}A\d{4}[br].fits.bz2')
 
 
 class Zorro(AlopekeZorroABC):
@@ -161,13 +179,13 @@ class Zorro(AlopekeZorroABC):
 
 
 class IGRINS(VisitingInstrumentABC):
-    def __init__(self, base_path="/sci/dataflow/igrins/igrins-rawfiles/"):
-        super().__init__(base_path, True)
+    def __init__(self, base_path="/sci/dataflow/igrins/igrins-rawfiles/", storage_root=storage_root):
+        super().__init__(base_path, True, storage_root=storage_root)
         self._date_re = re.compile(r'[A-Z]{4}_(\d{8})_\d{4}.*\.fits')
 
     def prep(self):
-        if not os.path.exists(os.path.join(storage_root, 'igrins')):
-            os.mkdir(os.path.join(storage_root, 'igrins'))
+        if not os.path.exists(os.path.join(self.storage_root, 'igrins')):
+            os.mkdir(os.path.join(self.storage_root, 'igrins'))
 
     def get_files(self):
         for f in os.listdir(self.base_path):
