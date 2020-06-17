@@ -82,11 +82,14 @@ class DiskFile(Base):
                 self.uncompressed_cache_file = os.path.join(z_staging_area, nonzfilename)
                 if os.path.exists(self.uncompressed_cache_file):
                     os.unlink(self.uncompressed_cache_file)
-                in_file = bz2.BZ2File(self.fullpath(), mode='rb')
-                out_file = open(self.uncompressed_cache_file, 'wb')
-                out_file.write(in_file.read())
-                in_file.close()
-                out_file.close()
+
+                os.system('bzcat %s > %s' % (self.fullpath(), self.uncompressed_cache_file))
+                # TODO remove these lines once we are comfortable with the above
+                # in_file = bz2.BZ2File(self.fullpath(), mode='rb')
+                # out_file = open(self.uncompressed_cache_file, 'wb')
+                # out_file.write(in_file.read())
+                # in_file.close()
+                # out_file.close()
             except:
                 # Failed to create the unzipped cache file
                 self.uncompressed_cache_file = None
