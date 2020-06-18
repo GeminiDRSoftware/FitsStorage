@@ -1,4 +1,4 @@
-FROM centos:centos8
+FROM centos:centos8.1.1911
 LABEL maintainer="ooberdorf@gemini.edu"
 
 # ENABLE EPEL
