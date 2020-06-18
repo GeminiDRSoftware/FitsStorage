@@ -13,7 +13,7 @@ from optparse import OptionParser
 from fits_storage.fits_storage_config import using_s3
 from fits_storage.utils.hashes import md5sum
 from os.path import basename
-from glob import glob
+from glob import iglob
 
 parser = OptionParser()
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
@@ -41,32 +41,35 @@ if using_s3:
 # Get a database session
 with session_scope() as session:
     if path:
-        filenames = glob("%s/%s/%s*.fits*" % (snapshotdir, path, filepre))
+        filenames = iglob("%s/%s/%s*.fits*" % (snapshotdir, path, filepre))
     else:
-        filenames = glob("%s/%s*.fits*" % (snapshotdir, filepre))
+        filenames = iglob("%s/%s*.fits*" % (snapshotdir, filepre))
     for filename in filenames:
+        basefilename = basename(filename)
         # Get a list of all diskfile_ids marked as present
         query = session.query(DiskFile) \
             .filter(DiskFile.path == path).filter(DiskFile.canonical == True). \
-            filter(DiskFile.filename == filename).order_by(desc(DiskFile.lastmod))
+            filter(DiskFile.filename == basefilename).order_by(desc(DiskFile.lastmod))
 
         record = query.one_or_none()
 
         if record is not None:
             if record.exists():
                 # nothing to do, file is already on disk
-                logger.info("File already exists on dataflow, no need to restore")
+                logger.info("File %s already exists on dataflow, no need to restore", filename)
             else:
                 md5s = md5sum(filename)
                 if md5s != record.file_md5:
-                    logger.info("File has mismatched md5, unable to restore in place")
+                    logger.info("File %s has mismatched md5, unable to restore in place", filename)
+                    print("File %s has mismatched md5, unable to restore in place", filename)
                 else:
                     # ok, we want to restore it, make a fresh check that there are no other 'present' records
                     query = session.query(DiskFile) \
-                        .filter(DiskFile.present == True).filter(DiskFile.filename == filename)
+                        .filter(DiskFile.present == True).filter(DiskFile.filename == basefilename)
                     present_check = query.one_or_none()
                     if present_check:
                         logger.info("Found a 'present' record in the database, unable to restore in place")
+                        print("Found a 'present' record in the database, unable to restore in place")
                     else:
                         if path:
                             dest = '/sci/dataflow/%s/%s' % (path, basename(filename))
@@ -74,8 +77,14 @@ with session_scope() as session:
                             dest = '/sci/dataflow/%s' % basename(filename)
                         if options.debug:
                             logger.info("Would copy from %s to %s and flag as present" % (filename, dest))
+                            print("Would copy from %s to %s and flag as present" % (filename, dest))
                         else:
+                            logger.info("Restoring %s to %s and flagging as present" % (filename, dest))
+                            print("Restoring %s to %s and flagging as present" % (filename, dest))
                             shutil.copy(filename, dest)
                             record.present = True
+        else:
+            logger.warn("No canonical diskfile found for %s" % filename)
+            print("No canonical diskfile found for %s" % filename)
 
 logger.info("*** restore_from_snapshot.py exiting normally at %s" % datetime.datetime.now())
