@@ -4,6 +4,10 @@ LABEL maintainer="ooberdorf@gemini.edu"
 # ENABLE EPEL
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
+# see: https://stackoverflow.com/questions/59993633/yum-dnf-error-failed-to-download-metadata-for-repo
+# Do on build
+RUN dnf clean all && rm -r /var/cache/dnf  && dnf upgrade -y && dnf update -y
+
 # INSTALL HTTPD AND POSTGRESQL
 RUN yum -y install openssl \
                    postgresql \
