@@ -1,6 +1,9 @@
 FROM centos:centos8.1.1911
 LABEL maintainer="ooberdorf@gemini.edu"
 
+# see: https://forums.centos.org/viewtopic.php?f=54&t=74286
+update-crypto-policies --set DEFAULT
+
 # ENABLE EPEL
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
