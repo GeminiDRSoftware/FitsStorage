@@ -26,10 +26,10 @@ def check_present(session, filename):
         otherfilename = otherfilename[:-4]
     else:
         otherfilename = "%.bz2" % otherfilename
-    df = session.query(DiskFile).filter(DiskFile.filename==filename).filter(DiskFile.present==True).first()
+    df = session.query(DiskFile).filter(DiskFile.filename==filename).filter(DiskFile.canonical==True).first()
     if df:
         return True
-    df = session.query(DiskFile).filter(DiskFile.filename==otherfilename).filter(DiskFile.present==True).first()
+    df = session.query(DiskFile).filter(DiskFile.filename==otherfilename).filter(DiskFile.canonical==True).first()
     if df:
         return True
     return False
@@ -264,7 +264,7 @@ if __name__ == "__main__":
                             continue
                         fullname = filename
                         filename = os.path.split(filename)[1]
-                        if check_present(session, filename):
+                        if check_present(session, filename) and not options.force:
                             logger.debug("%s is already present in database", filename)
                             known_list.add(filename)
                         else:
