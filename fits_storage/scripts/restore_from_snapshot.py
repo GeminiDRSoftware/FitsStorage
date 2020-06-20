@@ -45,6 +45,7 @@ if using_s3:
 
 # Get a database session
 with session_scope() as session:
+    count = 0
     iq = IngestQueueUtil(session, logger)
 
     if path:
@@ -91,6 +92,9 @@ with session_scope() as session:
                             print("Restoring %s to %s and flagging as present" % (filename, dest))
                             shutil.copy(filename, dest)
                             record.present = True
+                            if count >= 1000:
+                                session.commit()
+                                count = 0
         else:
             if path:
                 dest = '/sci/dataflow/%s/%s' % (path, basename(filename))
@@ -100,5 +104,7 @@ with session_scope() as session:
             print("No canonical diskfile found for %s" % filename)
             shutil.copy(filename, dest)
             iq.add_to_queue(basefilename, path, force=False, force_md5=False, after=None)
+    if count > 0:
+        session.commit()
 
 logger.info("*** restore_from_snapshot.py exiting normally at %s" % datetime.datetime.now())
