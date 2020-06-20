@@ -35,6 +35,7 @@ filepre = options.filepre
 
 # Annouce startup
 logger.info("*********    restore_from_snapshot.py - starting up at %s" % datetime.datetime.now())
+print("*********    restore_from_snapshot.py - starting up at %s" % datetime.datetime.now())
 
 if using_s3:
     logger.warning("Not compatible with S3, exiting")
@@ -61,6 +62,7 @@ with session_scope() as session:
             if record.exists():
                 # nothing to do, file is already on disk
                 logger.info("File %s already exists on dataflow, no need to restore", filename)
+                print("File %s already exists on dataflow, no need to restore", filename)
             else:
                 md5s = md5sum(filename)
                 if md5s != record.file_md5:
