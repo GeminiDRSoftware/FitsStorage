@@ -15,6 +15,8 @@ from fits_storage.utils.hashes import md5sum
 from os.path import basename
 from glob import iglob
 
+from fits_storage.utils.ingestqueue import IngestQueueUtil
+
 parser = OptionParser()
 parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
 parser.add_option("--snapshotdir", action="store", type="string", dest="snapshotdir", help="Location of snapshot folder (NOT including path)")
@@ -40,6 +42,8 @@ if using_s3:
 
 # Get a database session
 with session_scope() as session:
+    iq = IngestQueueUtil(session, logger)
+
     if path:
         filenames = iglob("%s/%s/%s*.fits*" % (snapshotdir, path, filepre))
     else:
@@ -86,5 +90,7 @@ with session_scope() as session:
         else:
             logger.warn("No canonical diskfile found for %s" % filename)
             print("No canonical diskfile found for %s" % filename)
+            shutil.copy(filename, dest)
+            iq.add_to_queue(basefilename, path, force=False, force_md5=False, after=None)
 
 logger.info("*** restore_from_snapshot.py exiting normally at %s" % datetime.datetime.now())
