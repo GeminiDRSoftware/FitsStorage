@@ -2,7 +2,7 @@ FROM gemini/epelhack:jenkins
 LABEL maintainer="ooberdorf@gemini.edu"
 
 # ENABLE EPEL
-RUN yun -y install yum-utils
+RUN yum -y install yum-utils
 COPY spacewalk-epel-20200619.repo /etc/yum.repo.d/spacewalk-epel-20200619.repo
 RUN yum config-manager spacewalk-epel-20200619
 # RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
