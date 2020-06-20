@@ -1,0 +1,5 @@
+[spacewalk-epel-20200619]
+name=Spacewalk EPEL Repo for Gemini
+baseurl=http://linuxmirror/yum/epel/8/x86_64/
+enabled=1
+gpgcheck=0

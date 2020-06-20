@@ -2,7 +2,9 @@ FROM gemini/epelhack:jenkins
 LABEL maintainer="ooberdorf@gemini.edu"
 
 # ENABLE EPEL
-RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+COPY spacewalk-epel-20200619.repo /etc/yum.repo.d/spacewalk-epel-20200619.repo
+RUN yum-config-manager spacewalk-epel-20200619
+# RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
 # see: https://stackoverflow.com/questions/59993633/yum-dnf-error-failed-to-download-metadata-for-repo
 # Do on build
