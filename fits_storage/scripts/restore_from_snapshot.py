@@ -31,6 +31,8 @@ setdebug(options.debug)
 
 snapshotdir = options.snapshotdir
 path = options.path
+if path is None:
+    path = ""
 filepre = options.filepre
 
 # Annouce startup
