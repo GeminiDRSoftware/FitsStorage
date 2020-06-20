@@ -55,9 +55,14 @@ with session_scope() as session:
     for filename in filenames:
         basefilename = basename(filename)
         # Get a list of all diskfile_ids marked as present
-        query = session.query(DiskFile) \
-            .filter(DiskFile.path == path).filter(DiskFile.canonical == True). \
-            filter(DiskFile.filename == basefilename).order_by(desc(DiskFile.lastmod))
+        if path != '':
+            query = session.query(DiskFile) \
+                .filter(DiskFile.path == path).filter(DiskFile.canonical == True). \
+                filter(DiskFile.filename == basefilename).order_by(desc(DiskFile.lastmod))
+        else:
+            query = session.query(DiskFile) \
+                .filter(DiskFile.canonical == True). \
+                filter(DiskFile.filename == basefilename).order_by(desc(DiskFile.lastmod))
 
         record = query.one_or_none()
 
