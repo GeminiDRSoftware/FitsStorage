@@ -3,8 +3,9 @@ LABEL maintainer="ooberdorf@gemini.edu"
 
 # ENABLE EPEL
 RUN yum -y install yum-utils
-COPY spacewalk-epel-20200619.repo /etc/yum.repo.d/spacewalk-epel-20200619.repo
-RUN yum-config-manager spacewalk-epel-20200619
+# COPY spacewalk-epel-20200619.repo /etc/yum.repo.d/spacewalk-epel-20200619.repo
+COPY spacewalk-epel-20200619.repo /tmp/spacewalk-epel-20200619.repo
+RUN yum-config-manager --add-repo /tmp/spacewalk-epel-20200619.repo
 # RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
 # see: https://stackoverflow.com/questions/59993633/yum-dnf-error-failed-to-download-metadata-for-repo
