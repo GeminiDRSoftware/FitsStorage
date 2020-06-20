@@ -90,6 +90,10 @@ with session_scope() as session:
                             shutil.copy(filename, dest)
                             record.present = True
         else:
+            if path:
+                dest = '/sci/dataflow/%s/%s' % (path, basename(filename))
+            else:
+                dest = '/sci/dataflow/%s' % basename(filename)
             logger.warn("No canonical diskfile found for %s" % filename)
             print("No canonical diskfile found for %s" % filename)
             shutil.copy(filename, dest)
