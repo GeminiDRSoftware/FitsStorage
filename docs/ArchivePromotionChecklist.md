@@ -51,17 +51,17 @@ ps -Aef | grep fits
 /usr/bin/pg_dump --data-only --format=p -t archiveuser -t archiveuser_id_seq -t userprogram -t userprogram_id_seq -t glacier -t glacier_id_seq  -t downloadlog -t downloadlog_id_seq -t filedownloadlog -t filedownloadlog_id_seq -t fileuploadlog -t fileuploadlog_id_seq -t qareport -t qareport_id_seq -t qametriciq -t qametriciq_id_seq -t qametriczp -t qametriczp_id_seq -t qametricsb -t qametricsb_id_seq -t qametricpe -t qametricpe_id_seq -t usagelog -t usagelog_id_seq fitsdata | gzip -7 > metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz
 ```
 
-or use format=c for compatible editions of postgres
+or use `format=c` for compatible editions of postgres
 
 ## SCP To ArcDev Host
 
-Get the IP address for the arcdev host at AWS:
+Get the IP address for the `arcdev` host at AWS:
 
 ```
 ifconfig
 ```
 
-Then login to archive and scp the backup over to arcdev by IP:
+Then login to `archive` and `scp` the backup over to `arcdev` by IP:
 
 ```
 scp metricsandlogs-arc-YYYYMMDD.pg_dump_p.gz username@arcdev-ip-address:

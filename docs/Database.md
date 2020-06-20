@@ -118,3 +118,10 @@ Then we can restore much like above with:
 ```
 zcat fitsdata.usersandlogs.DATE.pg_dump_p.gz | /usr/bin/psql -d fitsdata -f -
 ```
+
+# Upgrading Archive Database
+
+We also have documentation for upgrading the archive database
+
+* [Upgrade Database](ArchiveDatabaseUpgradeNotes.md)
+* [Backup and Restore](DatabaseBackupAndRestore.md)

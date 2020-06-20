@@ -183,6 +183,36 @@ Installing to servers is done using Ansible.  The ansible plays and inventories 
 
 * [Ansible](docs/Ansible.md)
 
+## Database Notes
+
+Database notes are captured here:
+
+* [Database Notes](docs/Database.md)
+
+## AWS
+
+Documents related to our AWS setup
+
+* [Setup](docs/AWSSetup.md)
+* [Emergency Procedures](docs/AWSEmergencyProcedures.md)
+* [Spot Instance Notes](docs/AWSSpotInstanceNotes.md)
+* [Promotion Checklist](docs/ArchivePromotionChecklist.md)
+* [Database Upgrade Notes](docs/ArchiveDatabaseUpgradeNotes.md)
+
+## Email Server
+
+We use a fairly simple email server relay configuration on `postfix`.  More 
+information is documented here:
+
+* [Email Relay Setup](docs/GeminiMailSetup.md)
+
+## Let's Encrypt SSL Setup
+
+We use Let's Encrypt as our SSL certificate provider.  Their tools renew the cert every
+90 days.
+
+* [SSL Install](docs/ssl_install.md)
+
 ## Built With
 
 * [DRAGONS](https://github.com/GeminiDRSoftware/DRAGONS) - The utilities for working with Gemini FITS files.
