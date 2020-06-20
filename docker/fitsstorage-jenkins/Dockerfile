@@ -8,6 +8,9 @@ COPY spacewalk-epel-20200619.repo /tmp/spacewalk-epel-20200619.repo
 RUN yum-config-manager --add-repo /tmp/spacewalk-epel-20200619.repo
 # RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
+# IT Workaround - we can't resolve this host within Gemini network
+RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts
+
 # see: https://stackoverflow.com/questions/59993633/yum-dnf-error-failed-to-download-metadata-for-repo
 # Do on build
 RUN dnf clean all
