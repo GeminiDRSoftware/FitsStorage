@@ -28,7 +28,6 @@ parser.add_option("--filename-pre", action="store", type="string", dest="filepre
 setdebug(options.debug)
 
 
-snapshotdir = options.snapshotdir
 path = options.path
 if path is None:
     path = ""
@@ -69,13 +68,13 @@ with session_scope() as session:
                 .filter(DiskFile.canonical == True). \
                 filter(DiskFile.filename == basefilename).order_by(desc(DiskFile.lastmod))
 
-        record = query.one_or_none()
+        record = query.first()
 
         if record is not None:
             # This file has been ingested, next see if it is in the export queue
             query = session.query(ExportQueue) \
                 .filter(ExportQueue.filename == basefilename)
-            export_record = query.one_or_none()
+            export_record = query.first()
             if export_record is None or export_record.failed:
                 # we have to see if this is on Archive
                 if r is None:
