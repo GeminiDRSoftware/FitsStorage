@@ -33,6 +33,10 @@ path = options.path
 if path is None:
     path = ""
 filepre = options.filepre
+if not filepre:
+    print("--filename-pre is required, we use it to scan the archive contents efficiently")
+if len(filepre) < 6:
+    print("Minimum 6 character filename-pre length")
 
 # Annouce startup
 logger.info("*********    verify_exported.py - starting up at %s" % datetime.datetime.now())
@@ -50,6 +54,9 @@ with session_scope() as session:
         filenames = iglob("%s/%s/%s*.fits*" % (storage_root, path, filepre))
     else:
         filenames = iglob("%s/%s*.fits*" % (storage_root, filepre))
+
+    r = None # for later, we query archive
+
     for filename in filenames:
         basefilename = basename(filename)
         # Get a list of all diskfile_ids marked as present
@@ -71,17 +78,18 @@ with session_scope() as session:
             export_record = query.one_or_none()
             if export_record is None or export_record.failed:
                 # we have to see if this is on Archive
-                r = requests.get("https://archive.gemini.edu/jsonfilelist/filepre=%s" % basefilename)
-                if r.status_code != 200:
-                    logger.error("Unable to check on archive for file %s" % basefilename)
-                else:
-                    if basefilename not in r.body:
-                        # Not found on archive, question now is, did it fail to export or we never tried?
-                        if export_record is not None:
-                            logger.error("File %s not found on archive and had error in export queue" % basefilename)
-                            print("File %s not found on archive and had error in export queue" % basefilename)
-                        else:
-                            logger.error("File %s not found on archive and not found in export queue" % basefilename)
-                            print("File %s not found on archive and not found in export queue" % basefilename)
+                if r is None:
+                    r = requests.get("https://archive.gemini.edu/jsonfilelist/filepre=%s" % filepre)
+                    if r.status_code != 200:
+                        logger.error("Unable to check on archive for file %s" % basefilename)
+                        exit(1)
+                if basefilename not in r.text:
+                    # Not found on archive, question now is, did it fail to export or we never tried?
+                    if export_record is not None:
+                        logger.error("File %s not found on archive and had error in export queue" % basefilename)
+                        print("File %s not found on archive and had error in export queue" % basefilename)
+                    else:
+                        logger.error("File %s not found on archive and not found in export queue" % basefilename)
+                        print("File %s not found on archive and not found in export queue" % basefilename)
 
 logger.info("*** verify_exported.py exiting normally at %s" % datetime.datetime.now())
