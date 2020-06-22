@@ -54,7 +54,7 @@ with session_scope() as session:
     else:
         filenames = iglob("%s/%s*.fits*" % (storage_root, filepre))
 
-    r = None # for later, we query archive
+    filechecks = dict()
 
     for filename in filenames:
         basefilename = basename(filename)
@@ -77,11 +77,17 @@ with session_scope() as session:
             export_record = query.first()
             if export_record is None or export_record.failed:
                 # we have to see if this is on Archive
-                if r is None:
+                key = filepre
+                if len(key) < 9:
+                    key = basefilename[0:10]
+                if key not in filechecks:
                     r = requests.get("https://archive.gemini.edu/jsonfilelist/filepre=%s" % filepre)
                     if r.status_code != 200:
                         logger.error("Unable to check on archive for file %s" % basefilename)
                         exit(1)
+                    filechecks[key] = r
+                else:
+                    r = filechecks[key]
                 if basefilename not in r.text:
                     # Not found on archive, question now is, did it fail to export or we never tried?
                     if export_record is not None:
