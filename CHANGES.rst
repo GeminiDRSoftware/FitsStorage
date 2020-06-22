@@ -32,6 +32,11 @@ fixHead.py
 
 - Queries server for list of known files on that date and discards any number range entries that are absent in the filenames
 
+verify_exported.py
+^^^^^^^^^^^^^^^^^^
+
+- Queries regex list of files and checks if they are present on the archive.  That is, we aren't missing any exports
+
 2020-1.4
 ========
 
