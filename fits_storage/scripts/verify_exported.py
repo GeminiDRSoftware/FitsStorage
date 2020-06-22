@@ -1,5 +1,4 @@
 import requests
-import shutil
 
 from fits_storage.orm import session_scope
 from fits_storage.orm.exportqueue import ExportQueue
@@ -16,8 +15,6 @@ from fits_storage.fits_storage_config import using_s3, storage_root
 from fits_storage.utils.hashes import md5sum
 from os.path import basename
 from glob import iglob
-
-from fits_storage.utils.ingestqueue import IngestQueueUtil
 
 
 parser = OptionParser()
@@ -48,7 +45,6 @@ if using_s3:
 # Get a database session
 with session_scope() as session:
     count = 0
-    iq = IngestQueueUtil(session, logger)
 
     if path:
         filenames = iglob("%s/%s/%s*.fits*" % (storage_root, path, filepre))
@@ -82,8 +78,10 @@ with session_scope() as session:
                     if basefilename not in r.body:
                         # Not found on archive, question now is, did it fail to export or we never tried?
                         if export_record is not None:
-                            logger.error("File %s not found on archive and had error in export queue")
+                            logger.error("File %s not found on archive and had error in export queue" % basefilename)
+                            print("File %s not found on archive and had error in export queue" % basefilename)
                         else:
-                            logger.error("File %s not found on archive and not found in export queue")
+                            logger.error("File %s not found on archive and not found in export queue" % basefilename)
+                            print("File %s not found on archive and not found in export queue" % basefilename)
 
 logger.info("*** verify_exported.py exiting normally at %s" % datetime.datetime.now())
