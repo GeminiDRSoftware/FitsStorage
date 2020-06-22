@@ -141,12 +141,12 @@
       - name: install python packages
         command: bash -c "python -m pip install psycopg2-binary==2.8.4"
         when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
-      - name: Set PYTHONPATH for fitsdata user for convenience
-        lineinfile:
-          path: /home/fitsdata/.cshrc
-          line: setenv PYTHONPATH /opt/DRAGONS:/opt/FitsStorage
-          regex: PYTHONPATH
-          create: yes
+#      - name: Set PYTHONPATH for fitsdata user for convenience
+#        lineinfile:
+#          path: /home/fitsdata/.cshrc
+#          line: setenv PYTHONPATH /opt/DRAGONS:/opt/FitsStorage
+#          regex: PYTHONPATH
+#          create: yes
       - name: Create folders for FitsStorage to work with files
         file:
           path: '{{ item.path }}'
