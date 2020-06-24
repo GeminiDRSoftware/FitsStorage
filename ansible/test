@@ -1,6 +1,3 @@
-[defaults]
-remote_tmp = /tmp/ansible-$USER
-
 [archive]
 hbffitstest-lv1.hi.gemini.edu
 
