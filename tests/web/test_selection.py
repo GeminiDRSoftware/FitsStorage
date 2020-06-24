@@ -121,7 +121,7 @@ getselection_pairs = [
     (['science'], {'observation_class': 'science'}),
     (['dark'], {'caltype': 'dark'}),
     (['specphot'], {'caltype': 'specphot'}),
-    (['PROCESSED_FLAT'], {'reduction': 'PROCESSED_FLAT'}),
+#    (['PROCESSED_FLAT'], {'reduction': 'PROCESSED_FLAT'}),
     (['R600'], {'disperser': 'R600'}),
     (['disperser=R600'], {'disperser': 'R600'}),
     (['camera=foobar'], {'camera': 'foobar'}),

@@ -1,23 +1,23 @@
-FROM gemini/epelhack:jenkins
+FROM centos:centos8.1.1911
+# FROM gemini/epelhack:jenkins
 LABEL maintainer="ooberdorf@gemini.edu"
 
 # ENABLE EPEL
-RUN yum -y install yum-utils
-# COPY spacewalk-epel-20200619.repo /etc/yum.repo.d/spacewalk-epel-20200619.repo
-COPY spacewalk-epel-20200619.repo /tmp/spacewalk-epel-20200619.repo
-RUN yum-config-manager --add-repo /tmp/spacewalk-epel-20200619.repo
-# RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+###RUN yum -y install yum-utils
+###COPY spacewalk-epel-20200619.repo /tmp/spacewalk-epel-20200619.repo
+###RUN yum-config-manager --add-repo /tmp/spacewalk-epel-20200619.repo
+RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
 # IT Workaround - we can't resolve this host within Gemini network
-RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts
-RUN cat /etc/hosts
+### RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts
+### RUN cat /etc/hosts
 
 # see: https://stackoverflow.com/questions/59993633/yum-dnf-error-failed-to-download-metadata-for-repo
 # Do on build
-RUN dnf clean all
-RUN rm -r /var/cache/dnf
-RUN dnf upgrade -y
-RUN dnf update -y
+### RUN dnf clean all
+### RUN rm -r /var/cache/dnf
+### RUN dnf upgrade -y
+### RUN dnf update -y
 
 # INSTALL HTTPD AND POSTGRESQL
 RUN yum -y install openssl \

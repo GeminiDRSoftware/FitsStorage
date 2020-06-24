@@ -53,7 +53,7 @@ pipeline {
         stage('Building Docker Containers') {
             steps {
                 script {
-                    def epelhackimage = docker.build("gemini/epelhack:jenkins", " -f docker/epelhack-jenkins/Dockerfile .")
+                    //def epelhackimage = docker.build("gemini/epelhack:jenkins", " -f docker/epelhack-jenkins/Dockerfile .")
                     def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f docker/fitsstorage-jenkins/Dockerfile .")
                     def archiveimage = docker.build("gemini/archive:jenkins", " -f docker/archive-jenkins/Dockerfile .")
                     sh '''
