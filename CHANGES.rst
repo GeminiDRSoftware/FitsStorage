@@ -40,6 +40,12 @@ delete_files.py
 
 - Configurable minimum age for files to delete, will skip any files with a filename pattern implying it's too new
 - Error messages also added to a dedicated error email, which is sent only if errors were seen
+- Checks export queue and skips files that are awaiting export
+
+copy_from_visiting_instrument.py
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- IGRINS checks for and adds RELEASE keyword if missing (and DATE-OBS exists)
 
 2020-1.5
 ========
