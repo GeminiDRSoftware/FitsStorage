@@ -6,25 +6,42 @@ generating previews, and for feeding datafiles upstream from the individual site
 
 ## Quick Deploys
 
-These links are if you just want to quickly deploy to a target environment
+These links are if you just want to quickly deploy to a target environment.  They take you to the Jenkins build page
+shown below.
 
  * [Build and deploy Dev](http://ooberdorf:11a3f74b7cffa0dd06ceeca74e9773a904@hbffits-lv3.hi.gemini.edu:8080/job/fitsstorage/parambuild?token=qpZIKjlU3xSlM9JA3wwFjv8CJsu5lhYM&deploy_target=dev&cause=Manually%20triggered%20from%20url)
  * [Build and deploy QAP](http://ooberdorf:11a3f74b7cffa0dd06ceeca74e9773a904@hbffits-lv3.hi.gemini.edu:8080/job/fitsstorage/parambuild?token=qpZIKjlU3xSlM9JA3wwFjv8CJsu5lhYM&deploy_target=dev-qap&cause=Manually%20triggered%20from%20url)
 
+![Jenkins Build with Parameters](docs/images/JenkinsBuildWithParameters.png)
+
+From there, you hit the *Build* button and Jenkins will:
+
+ 1. Check out the latest codebase for `FitsStorage` on the master branch.
+ 2. Create docker image definitions for a `FitsStorage` web application and an environment for running tests
+ 3. Spin up docker containers for the database, web application, and testing server
+ 4. Run `pytest` against the running docker cluster
+ 5. Tear down the test environment
+ 6. If the tests pass, deploy to your chosen target server
+
+If anything goes wrong, you can click through the Jenkins webpage for the failing step and look at the console
+output.  The deploy step is using the same Ansible configuration as described below.  Since all of this is a 
+one button deploy, and you don't have to check out the code, I call this the 'Quick Deploy'.  However, it is also
+the preferred method for deploys to the dev environments.
+
 ## Development
 
-For developing the FITSStorage code, see the notes on development here:
+For developing the FITSStorage code, see the notes on development setup here:
 
  * [Development Notes](docs/Development.md)
  
-### Installing
+## Installing
 
 The install is managed by running an Ansible play.  This play is wrapped in a convenient shell script called
 `archive_install_internal.sh` in the `ansible` folder.  There is also an `archive_install_aws.sh` for installs to
   the AWS host (be careful!).  The play relies on you having a proper secrets setup to handle ssh
 logins to the remote host.  You also need to have sudo permission to root on the target host.
 
-To install, simply:
+To install, from the root of a FitsStorage checkout, simply:
 
 ```
 cd ansible
@@ -66,8 +83,8 @@ as well, you can add the `--runslow` argument.
 Note that the tests will decide what webserver and database to connect to based on some environment variables.
 
 ```shell 
-ENV PYTEST_SERVER archive
-ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata
+export PYTEST_SERVER=localhost:8080
+export FITS_DB_SERVER=localhost
 ```
 
 ## Configuration
