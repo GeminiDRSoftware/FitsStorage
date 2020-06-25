@@ -11,119 +11,19 @@ These links are if you just want to quickly deploy to a target environment
  * [Build and deploy Dev](http://ooberdorf:11a3f74b7cffa0dd06ceeca74e9773a904@hbffits-lv3.hi.gemini.edu:8080/job/fitsstorage/parambuild?token=qpZIKjlU3xSlM9JA3wwFjv8CJsu5lhYM&deploy_target=dev&cause=Manually%20triggered%20from%20url)
  * [Build and deploy QAP](http://ooberdorf:11a3f74b7cffa0dd06ceeca74e9773a904@hbffits-lv3.hi.gemini.edu:8080/job/fitsstorage/parambuild?token=qpZIKjlU3xSlM9JA3wwFjv8CJsu5lhYM&deploy_target=dev-qap&cause=Manually%20triggered%20from%20url)
 
-## Getting Started
+## Development
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+For developing the FITSStorage code, see the notes on development here:
 
-### Ultra-Quick-Start
-
-To get things up and running as fast as possible, I recommend the "lite" Docker Compose recipe.  To do this, there
-are just a few steps.  I'll assume you installed docker and you have a fresh chekout of this repo.
-
-1. Build the images
-
-    ```
-    <cd to top-level of FitsStorage codebase>
-    bash ./docker/scripts/buildfitsstorageutils.sh
-    bash ./docker/scripts/buildarchive.sh
-    ```
-
-2. Make a dataflow directory
-
-    ```
-    mkdir ~/dataflow/
-    cp <somefiles> ~/dataflow/
-    ```
-
-3. Run the mini cluster
-
-    ```
-    docker-compose -f docker-compose-lite.yml up
-    ```
-
-4. Shut down
-
-    ```
-    <Ctrl-C in the terminal>
-    docker-compose -f docker-compose-lite.yml down
-    ```
-
-### Dev Options
-
-There are multiple ways to deploy and run the FitsStorage website.  I am refactoring these instructions for
-clarity by breaking out each option into a dedicated document.  While I am working on that, I will leave the
-information below as it is still useful.
-
- * [OSX Dev](docs/OSX.md)
- * [Docker Dev](docs/DockerDev.md)
-
-### Prerequisites
-
-These instructions cover setting the project up to run for development on OSX.
-
-You will need a copy of python3.  Anaconda is an easy way to get setup on OSX.  You will also need a PostgreSQL 
-database.  For OSX, I like Postgres.App as it runs like a normal desktop application and doesn't clutter your 
-system with new services.
-
- * https://anaconda.com/
- * https://postgresapp.com/
-
-You can also install postres within a docker container or as a service.
-
-I like to create a custom Anaconda environment to install python packages into.  This keeps my work in FitsStorage
-independent of any other projects that I have going on.
-
-```
-conda create -n myenv python=3.6
-conda activate myenv
-```
-
-There is a `requirements.txt` and a `requirements-test.txt` file that list the python requirements to run and test,
-respectively, the project.  I generally just install all of these with pip3:
-
-```
-pip3 install requirements.txt
-pip3 install requirements-test.txt
-```
-
-The project also uses the DRAGONS package developed by SUSD for Gemini.  I prefer to link in this dependency from a
-full checkout of their codebase.
-
-```
-cd ~
-git clone https://github.com/GeminiDRSoftware/DRAGONS.git
-cd DRAGONS
-pip3 install -e .
-```
-
-### Environment
-
-Various features in the website can be configured via environment variables.  This allows you to, for instance,
-change where FITS files are found on your Mac when running in PyCharm vs where it lives on the deployed CentOS servers.
-Here are the environment variables you will likely want to set, tune according to your setup.
-
-```shell 
-export FITS_LOG_DIR=/Users/ooberdorf/logs/
-export STORAGE_ROOT=/Users/ooberdorf/data/
-export FITSVERIFY_BIN=/Users/ooberdorf/fitsverify/fitsverify
-export VALIDATION_DEF_PATH=/Users/ooberdorf/dev-oly-tests-centos8/docs/dataDefinition/
-export TEST_IMAGE_PATH=/Users/ooberdorf/data/
-export TEST_IMAGE_CACHE=/Users/ooberdorf/tmp/cache/
-export FITS_AUX_DATADIR=/Users/ooberdorf/dev-oly-tests-centos8/data/
-export PYTHONPATH=~/DRAGONS:~/FitsStorage
-```
-
-If these environment variables are not found, the code falls back to defaults that are appropriate for the deployed
-operational server.
-
+ * [Development Notes](docs/Development.md)
+ 
 ### Installing
 
 The install is managed by running an Ansible play.  This play is wrapped in a convenient shell script called
-`archive_install_internal.sh` in the `ansible` folder.  The play relies on you having a proper secrets setup to handle ssh
-logins to the remote host.
+`archive_install_internal.sh` in the `ansible` folder.  There is also an `archive_install_aws.sh` for installs to
+  the AWS host (be careful!).  The play relies on you having a proper secrets setup to handle ssh
+logins to the remote host.  You also need to have sudo permission to root on the target host.
 
-
-Now that this is done, assuming you have sudo permission to root on the target host, you can run the ansible play.
 To install, simply:
 
 ```
@@ -134,6 +34,17 @@ bash ./archive_install_internal.sh -i dev
 Once the install finishes, you should be able to browse the deployed site at (modify as appropriate):
 
 https://hbffits-lv4.hi.gemini.edu/searchform/
+
+| *Filename*        | *Host*             | *Notes* |
+|-------------------|--------------------|-------|
+| dev               | hbffits-lv4        | This is the primary development host.  Normally, deploys are automatic from Jenkins. |
+| dev-cl            | cpofits-lv2        | A development host available in Chile.  Mainly for testing skycam data. |
+| dev-qap           | something          | A development host for integrating with DRAGONS/QAP |
+| dev-aws           | N/A                | Currently not provisioned.  For deploying to an AWS dev host near public release |
+| cpo               | cpofits-lv3        | The Chile operational FITSStorage host |
+| mko               | mkofits-lv3        | The Hawaii operational FITSStorage host |
+| aws *CAUTION*     | archive.gemini.edu | The public GOA host |
+
 
 ### Crontab
 

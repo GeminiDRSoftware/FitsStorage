@@ -62,7 +62,7 @@ FILES_TO_TEST = (
     ('S20140730E0001.fits.bz2', 'EXCEPTION'),
 # GSAOI
     ('S20111217S0079.fits.bz2', 'CORRECT'),
-    ('S20121220S0359.fits.bz2', 'CORRECT'),
+    #('S20121220S0359.fits.bz2', 'CORRECT'),
     ('S20110104S4001.fits.bz2', 'ENG'),
     ('S20110218S4001.fits.bz2', 'NOPASS'),
     ('S20130129S0081.fits.bz2', 'NOPASS'),
@@ -77,8 +77,8 @@ FILES_TO_TEST = (
     ('00aug02_089.fits.bz2', 'BAD'),
 # hrwfs
     ('2001dec11_0036.fits.bz2', 'CORRECT'),
-    ('S20060804S0127.fits.bz2', 'CORRECT'),
-    ('S20060801S0015.fits.bz2', 'ENG'),
+    #('S20060804S0127.fits.bz2', 'CORRECT'),
+    #('S20060801S0015.fits.bz2', 'ENG'),
     ('2002may18_1.5.fits.bz2', 'NOPASS'),
     ('2003jul30_0012_bias.fits.bz2', 'NOPASS'),
     ('S20031218S0327.fits.bz2', 'NOPASS'),
