@@ -1,14 +1,10 @@
 import os
-
 import re
-
-from fits_storage.fits_verify import fitsverify
-import pytest
 
 from fits_storage.scripts.copy_from_visiting_instrument import AlopekeZorroABC
 
 
-class TestAlopekeZorro(AlopekeZorroABC):
+class MockAlopekeZorro(AlopekeZorroABC):
     def __init__(self):
         super().__init__('alopeke', "/tmp/taztest/from", True, storage_root="/tmp/taztest/to")
         self._filename_re = re.compile(r'N\d{8}A\d{4}[br].fits.bz2')
@@ -24,7 +20,7 @@ def test_target_found():
     if os.access("/tmp/taztest/to/foo.fits.bz2", os.F_OK):
         os.unlink("/tmp/taztest/to/foo.fits.bz2")
 
-    taz = TestAlopekeZorro()
+    taz = MockAlopekeZorro()
 
     # file does not exist
     assert(not taz.target_found("/tmp/taztest/to/foo.fits"))
