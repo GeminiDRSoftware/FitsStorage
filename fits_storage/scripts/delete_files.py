@@ -10,6 +10,7 @@ import re
 
 from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
+from fits_storage.orm.exportqueue import ExportQueue
 from fits_storage.orm.file import File
 from fits_storage.fits_storage_config import storage_root, target_max_files, target_gb_free, delete_min_days_age,\
     smtp_server
@@ -82,6 +83,11 @@ def check_old_enough_to_delete(fname):
             if filedt > _max_datetime:
                 return False
     return True
+
+
+def check_not_on_export_queue(session, fname):
+    query = session.query(ExportQueue).filter(ExportQueue.filename == fname)
+    return query.first() is None
 
 
 if __name__ == "__main__":
@@ -224,8 +230,11 @@ if __name__ == "__main__":
                     break
                 if options.maxgb:
                     if sumgb>options.maxgb:
-                        add_to_msg(logger.info, "Allready deleted %.2f GB - stopping now" % sumgb)
+                        add_to_msg(logger.info, "Already deleted %.2f GB - stopping now" % sumgb)
                         break
+                if not check_not_on_export_queue(session, dbfilename):
+                    add_to_msg(logger.info, "File is in export queue, skipping: %s" % dbfilename)
+                    break
                 if options.auto:
                     if (numtodelete > 0) and (sumfiles >= numtodelete):
                         add_to_msg(
