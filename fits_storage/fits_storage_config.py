@@ -79,7 +79,8 @@ _host_based_configs = {
         'EXPORT_DESTINATIONS': '',
         'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files',
         'FITS_DB_BACKUP_DIR': "/backup",
-        'FITS_SERVERNAME': 'archive.gemini.edu'
+        'FITS_SERVERNAME': 'archive.gemini.edu',
+        'USING_PREVIEWS': 'True'
     },
     "arcdev": {
         'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
@@ -88,7 +89,8 @@ _host_based_configs = {
         'FITS_SYSTEM_STATUS': 'development',
         'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files',
         'FITS_DB_BACKUP_DIR': "/backup",
-        'FITS_SERVERNAME': 'arcdev.gemini.edu'
+        'FITS_SERVERNAME': 'arcdev.gemini.edu',
+        'USING_PREVIEWS': 'True'
     }
 }
 
@@ -209,7 +211,7 @@ processed_cals_path = "reduced_cals"
 
 # This is the subdirectory in dataroot where preview files live
 #using_previews = False
-using_previews = True
+using_previews = lookup_config_bool('USING_PREVIEWS', False)
 preview_path = "previews"
 
 # The DAS calibration reduction path is used to find the last processing
