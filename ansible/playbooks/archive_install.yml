@@ -177,12 +177,12 @@
       - name: install imexam and specutils for DRAGONS (Centos 7)
         command: bash -c "python3 -m pip install imexam specutils"
         when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
-      - name: Set PYTHONPATH for fitsdata user for convenience
-        lineinfile:
-          path: /home/fitsdata/.cshrc
-          line: setenv PYTHONPATH /opt/DRAGONS:/opt/FitsStorage
-          regex: PYTHONPATH
-          create: yes
+#      - name: Set PYTHONPATH for fitsdata user for convenience
+#        lineinfile:
+#          path: /home/fitsdata/.cshrc
+#          line: setenv PYTHONPATH /opt/DRAGONS:/opt/FitsStorage
+#          regex: PYTHONPATH
+#          create: yes
       - name: Create folders for FitsStorage to work with files
         file:
           path: '{{ item.path }}'
@@ -191,12 +191,12 @@
           owner: '{{ item.owner }}'
           group: '{{ item.group }}'
         with_items:
-          - { path: /data/logs, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o-w" }
-          - { path: /data/backups, owner: fitsdata, group: fitsdata, mode: "u+rwx,g-w,o-w" }
-          - { path: /data/upload_staging, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
-          - { path: /data/z_staging, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
-          - { path: /data/s3_staging, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
-          - { path: /data/gemini_data, owner: fitsdata, group: fitsdata, mode: "u+rwx,g-w,o-w" }
+          - { path: /data/logs, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
+          - { path: /data/backups, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
+          - { path: /data/upload_staging, owner: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
+          - { path: /data/z_staging, owner: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
+          - { path: /data/s3_staging, owner: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
+          - { path: /data/gemini_data, owner: fitsdata, mode: "u+rwx,g-w,o-w" }
       # - name: Ensure previews folder exists
       #   file:
       #     path: /sci/dataflow/previews
@@ -715,14 +715,16 @@
         service: name=fits-httpd enabled=yes
       - name: Start API service on boot
         service: name=fits-api-backend enabled=yes
-      - name: Copy diskspace script
-        copy:
-          src: ../../otherfiles/diskspace.py
-          dest: /home/fitsdata/diskspace.py
-          owner: fitsdata
-          group: fitsdata
-          mode: u+rwx,g-rwx,o-rwx
+# TODO diskspace script references mko folder, causing mount from Chile - fix thena dd this back in
+#      - name: Copy diskspace script
+#        copy:
+#          src: ../../otherfiles/diskspace.py
+#          dest: /home/fitsdata/diskspace.py
+#          owner: fitsdata
+#          group: fitsdata
+#          mode: u+rwx,g-rwx,o-rwx
 # removing for now, we had to revert to user cron
+# Chile setup fitsdata user cron support for me
 #      - name: Copy Crontab
 #        copy:
 #          src: ../../otherfiles/system_crontab

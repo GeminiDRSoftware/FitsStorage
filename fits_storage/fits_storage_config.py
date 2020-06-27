@@ -66,7 +66,7 @@ _host_based_configs = {
         'EXPORT_DESTINATIONS': '',
         'PUBDB_REMOTE': 'https://localhost/ingest_publications',
         'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'TEST On-site FitsServer (CentOS 7)',
+        'FITS_SERVERTITLE': 'Dev On-site FitsServer (CentOS 7)',
         'FITS_SYSTEM_STATUS': 'development',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv1",
@@ -82,6 +82,16 @@ _host_based_configs = {
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbfqapdev-lv1",
         'PROCESSED_CALS_PATH': 'reduced_cals_dev'
+    },
+    "hbffitstest-lv1": {
+        'USE_AS_ARCHIVE': 'False',
+        'EXPORT_DESTINATIONS': '',
+        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
+        'BLOCKED_URLS': '',
+        'FITS_SERVERTITLE': 'TEST On-site FitsServer (CentOS 7)',
+        'FITS_SYSTEM_STATUS': 'development',
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffitstest-lv1"
     },
     "ooberdorf-ml1": {
         'EXPORT_DESTINATIONS': '',
@@ -105,7 +115,8 @@ _host_based_configs = {
         'FITS_SERVERNAME': 'archive.gemini.edu',
         'ORCID_ENABLED': 'False',
         'TZ': 'UTC',
-        'PROCESSED_CALS_PATH': 'reduced_cals'
+        'PROCESSED_CALS_PATH': 'reduced_cals',
+        'USING_PREVIEWS': 'True'
     },
     "arcdev": {
         'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
@@ -117,7 +128,8 @@ _host_based_configs = {
         'FITS_SERVERNAME': 'arcdev.gemini.edu',
         'ORCID_REDIRECT_URL': 'http://arcdev.gemini.edu/orcid',
         'TZ': 'UTC',
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev'
+        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
+        'USING_PREVIEWS': 'True'
     }
 }
 
@@ -254,7 +266,7 @@ processed_cals_path = lookup_config('PROCESSED_CALS_PATH', "reduced_cals_dev")
 
 # This is the subdirectory in dataroot where preview files live
 #using_previews = False
-using_previews = True
+using_previews = lookup_config_bool('USING_PREVIEWS', False)
 preview_path = "previews"
 
 # The DAS calibration reduction path is used to find the last processing
