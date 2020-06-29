@@ -49,6 +49,11 @@ def fix_zorro_or_alopeke(fits, instr):
         if isinstance(val, str):
             pheader['CRVAL2'] = float(val)
             retval = True
+    if 'EXPTIME' in pheader:
+        val = pheader['EXPTIME']
+        if isinstance(val, str):
+            pheader['EXPTIME'] = float(val)
+            retval = True
     # per Andrew S, we always update the RELEASE keyword, it was not reliably being set
     if 'DATE-OBS' in pheader and pheader['DATE-OBS'] is not None:
         try:
