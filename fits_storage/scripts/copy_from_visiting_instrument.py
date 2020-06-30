@@ -170,11 +170,10 @@ class AlopekeZorroABC(VisitingInstrumentABC):
 
 class Alopeke(AlopekeZorroABC):
     def __init__(self):
-        # super().__init__('alopeke', "/net/mkovisdata/home/alopeke/", True)
-        super().__init__('alopeke', "/Users/ooberdorf/alopeke_old/", True)
-        self._filename_re = re.compile(r'N\d{8}A\d{4}[br].fits.bz2')
+        super().__init__('alopeke', "/net/mkovisdata/home/alopeke/", True)
         self._filename_res = [re.compile(r'N202006\d{2}A\d{4}[br].fits.bz2'),
                               re.compile(r'[rb]_\d\d.\d\d.\d\d_\d{1,4}.fits.bz2')]
+        self._filename_res = [re.compile(r'N202006\d{2}A\d{4}[br].fits.bz2'), ]
 
 
 class Zorro(AlopekeZorroABC):
