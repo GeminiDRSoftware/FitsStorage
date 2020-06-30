@@ -153,7 +153,11 @@ class AlopekeZorroABC(VisitingInstrumentABC):
             fullpath = os.path.join(self.base_path, f)
             if os.path.isdir(fullpath) and re.search(r'^\d{8}$', f):
                 for datafile in os.listdir(fullpath):
-                    if self._filename_re.search(datafile):
+                    matched = False
+                    for rex in self._filename_res:
+                        if rex.search(datafile):
+                            matched = True
+                    if matched:
                         yield os.path.join(f, datafile)
 
     def get_destination(self, filename):
@@ -166,16 +170,18 @@ class AlopekeZorroABC(VisitingInstrumentABC):
 
 class Alopeke(AlopekeZorroABC):
     def __init__(self):
-        super().__init__('alopeke', "/net/mkovisdata/home/alopeke/", True)
+        # super().__init__('alopeke', "/net/mkovisdata/home/alopeke/", True)
+        super().__init__('alopeke', "/Users/ooberdorf/alopeke_old/", True)
         self._filename_re = re.compile(r'N\d{8}A\d{4}[br].fits.bz2')
-        self._filename_re = re.compile(r'N202006\d{2}A\d{4}[br].fits.bz2')
+        self._filename_res = [re.compile(r'N202006\d{2}A\d{4}[br].fits.bz2'),
+                              re.compile(r'[rb]_\d\d.\d\d.\d\d_\d{1,4}.fits.bz2')]
 
 
 class Zorro(AlopekeZorroABC):
     def __init__(self, base_path="/net/cpostonfs-nv1/tier2/ins/sto/zorro/"):
         super().__init__('zorro', base_path, True)
         self._filename_re = re.compile(r'S\d{8}Z\d{4}[br].fits.bz2')
-        self._filename_re = re.compile(r'S202\d{5}Z\d{4}[br].fits.bz2')
+        self._filename_res = [re.compile(r'S202\d{5}Z\d{4}[br].fits.bz2'), ]
 
 
 class IGRINS(VisitingInstrumentABC):
