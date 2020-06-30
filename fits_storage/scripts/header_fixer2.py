@@ -19,14 +19,12 @@ def output_file(path):
     return open(path, 'wb')
 
 
-def fix_zorro_or_alopeke(fits, instr):
+def fix_zorro_or_alopeke(fits, instr, telescope):
+    retval = False
     pheader = fits[0].header
     if 'INSTRUME' not in pheader:
-        return False
-    inst = pheader['INSTRUME']
-    if inst.strip() != instr:
-        return False
-    retval = False
+        pheader['INSTRUME'] = instr.upper()
+        retval = True
     if 'Object' in pheader and 'OBJECT' not in pheader:
         pheader['OBJECT'] = pheader['Object']
         del pheader['Object']
@@ -49,6 +47,17 @@ def fix_zorro_or_alopeke(fits, instr):
         if isinstance(val, str):
             pheader['CRVAL2'] = float(val)
             retval = True
+    if 'EXPTIME' in pheader:
+        val = pheader['EXPTIME']
+        if isinstance(val, str):
+            pheader['EXPTIME'] = float(val)
+            retval = True
+    if 'OBSTYPE' not in pheader:
+        pheader['OBSTYPE'] = 'OBJECT'
+        retval = True
+    if 'TELESCOP' not in pheader:
+        pheader['TELESCOP'] = telescope
+        retval = True
     # per Andrew S, we always update the RELEASE keyword, it was not reliably being set
     if 'DATE-OBS' in pheader and pheader['DATE-OBS'] is not None:
         try:
@@ -66,11 +75,11 @@ def fix_zorro_or_alopeke(fits, instr):
 
 
 def fix_zorro(fits):
-    return fix_zorro_or_alopeke(fits, 'Zorro')
+    return fix_zorro_or_alopeke(fits, 'Zorro', 'Gemini-South')
 
 
 def fix_alopeke(fits):
-    return fix_zorro_or_alopeke(fits, 'Alopeke')
+    return fix_zorro_or_alopeke(fits, 'Alopeke', 'Gemini-North')
 
 
 def fix_igrins(fits):
@@ -124,10 +133,12 @@ def fix_and_copy(src_dir, dest_dir, fn, compress=True):
             fits = pf.open(open_image(tmppath), do_not_scale_image_data=True)
         else:
             fits = pf.open(open_image(path), do_not_scale_image_data=True)
-        if fix_zorro(fits):
-            fits[0].header['HISTORY'] = 'Corrected metadata: Zorro fixes'
-        if fix_alopeke(fits):
-            fits[0].header['HISTORY'] = 'Corrected metadata: Alopeke fixes'
+        if 'zorro' in dest_dir.lower():
+            if fix_zorro(fits):
+                fits[0].header['HISTORY'] = 'Corrected metadata: Zorro fixes'
+        if 'alopeke' in dest_dir.lower():
+            if fix_alopeke(fits):
+                fits[0].header['HISTORY'] = 'Corrected metadata: Alopeke fixes'
         if fix_igrins(fits):
             fits[0].header['HISTORY'] = 'Corrected metadata: IGRINS fixes'
         fits.writeto(output_file(df), output_verify='silentfix+exception')
