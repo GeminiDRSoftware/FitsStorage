@@ -47,6 +47,11 @@ copy_from_visiting_instrument.py
 
 - IGRINS checks for and adds RELEASE keyword if missing (and DATE-OBS exists)
 
+service_ingest_queue.py
+^^^^^^^^^^^^^^^^^^^^^^^
+
+- via ingestqueue.py, now when it has an error parsing the headers, it will still try to clean up the cache file so z_staging doesn't fill up
+
 2020-1.5
 ========
 

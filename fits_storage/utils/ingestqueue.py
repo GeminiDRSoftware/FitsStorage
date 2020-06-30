@@ -219,117 +219,120 @@ class IngestQueueUtil(object):
 
         # Instantiating the DiskFile object with a bzip2 filename will trigger creation of the unzipped cache file too.
         diskfile = DiskFile(fileobj, filename, path)
-        self.s.add(diskfile)
-        self.s.commit()
-        if diskfile.uncompressed_cache_file:
-            self.l.debug("diskfile uncompressed cache file = %s, access=%s", diskfile.uncompressed_cache_file,
-                            os.access(diskfile.uncompressed_cache_file, os.F_OK))
-
-
-        if is_miscfile(filename):
-            meta = miscfile_meta(filename)
-            misc = MiscFile()
-            misc.diskfile_id = diskfile.id
-            misc.release = dateutil.parser.parse(meta['release'])
-            misc.description = meta['description']
-            misc.program_id  = meta['program']
-
-            self.s.add(misc)
+        try:
+            self.s.add(diskfile)
             self.s.commit()
-        elif 'obslog' in filename:
-            obslog = Obslog(diskfile)
-            self.s.add(obslog)
-            self.s.commit()
-        else:
-            # Proceed with normal fits file ingestion
-
-            # Instantiate an astrodata object here and pass it in to the things that need it
-            # These are expensive to instantiate each time
             if diskfile.uncompressed_cache_file:
-                fullpath_for_ad = diskfile.uncompressed_cache_file
+                self.l.debug("diskfile uncompressed cache file = %s, access=%s", diskfile.uncompressed_cache_file,
+                                os.access(diskfile.uncompressed_cache_file, os.F_OK))
+
+
+            if is_miscfile(filename):
+                meta = miscfile_meta(filename)
+                misc = MiscFile()
+                misc.diskfile_id = diskfile.id
+                misc.release = dateutil.parser.parse(meta['release'])
+                misc.description = meta['description']
+                misc.program_id  = meta['program']
+
+                self.s.add(misc)
+                self.s.commit()
+            elif 'obslog' in filename:
+                obslog = Obslog(diskfile)
+                self.s.add(obslog)
+                self.s.commit()
             else:
-                fullpath_for_ad = diskfile.fullpath()
+                # Proceed with normal fits file ingestion
 
-            self.l.debug("Instantiating AstroData object on %s", fullpath_for_ad)
-            try:
-                diskfile.ad_object = astrodata.open(fullpath_for_ad)
-            except:
-                self.l.error("Failed to open astrodata object on file: %s. Giving up", fullpath_for_ad)
+                # Instantiate an astrodata object here and pass it in to the things that need it
+                # These are expensive to instantiate each time
+                if diskfile.uncompressed_cache_file:
+                    fullpath_for_ad = diskfile.uncompressed_cache_file
+                else:
+                    fullpath_for_ad = diskfile.fullpath()
 
-                self.delete_file(diskfile, fullpath)
+                self.l.debug("Instantiating AstroData object on %s", fullpath_for_ad)
+                try:
+                    diskfile.ad_object = astrodata.open(fullpath_for_ad)
+                except:
+                    self.l.error("Failed to open astrodata object on file: %s. Giving up", fullpath_for_ad)
 
-                return
+                    self.delete_file(diskfile, fullpath)
 
-            # This will use the DiskFile unzipped cache file if it exists
-            self.l.debug("Adding new DiskFileReport entry")
-            dfreport = DiskFileReport(diskfile, self.skip_fv, self.skip_md)
-            self.s.add(dfreport)
-            self.s.commit()
+                    return
 
-            self.l.debug("Adding new Header entry")
-            # This will use the diskfile ad_object if it exists, else
-            # it will use the DiskFile unzipped cache file if it exists
-            header = Header(diskfile)
-            self.s.add(header)
-
-            ingest_provenance(diskfile)
-
-            inst = header.instrument
-            self.s.commit()
-            try:
-                fps = header.footprints(diskfile.ad_object)
-                for i in list(fps.keys()):
-                    if fps[i] is not None:
-                        foot = Footprint(header)
-                        foot.populate(i)
-                        self.s.add(foot)
-                        self.s.commit()
-                        add_footprint(self.s, foot.id, fps[i])
-            except Exception as e:
-                # self.l.error("Footprint Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
-                pass
-
-            if not using_sqlite:
-                if header.spectroscopy == False:
-                    self.l.debug("Imaging - populating PhotStandardObs")
-                    do_std_obs(self.s, header.id)
-
-            # This will use the DiskFile unzipped cache file if it exists
-            self.l.debug("Adding FullTextHeader entry")
-            ftheader = FullTextHeader(diskfile)
-            self.s.add(ftheader)
-            self.s.commit()
-            # Add the instrument specific tables
-            # These will use the DiskFile unzipped cache file if it exists
-            try:
-                name, instClass = instrument_table[inst]
-                self.l.debug("Adding new {} entry".format(name))
-                entry = instClass(header, diskfile.ad_object)
-                self.s.add(entry)
-                self.s.commit()
-            except KeyError:
-                # Unknown instrument. Maybe we should put a message?
-                pass
-
-            # Do the preview here.
-            try:
-                if using_previews:
-                    self.preview.process(diskfile, make=self.make_previews)
-            except:
-                # For debug
-                string = traceback.format_tb(sys.exc_info()[2])
-                string = "".join(string)
-                self.l.error("Error making preview for %s", diskfile.filename)
-                self.l.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
-
-            # If we are in archive mode and the metadata is OK, add to calcachequeue here
-            if use_as_archive and diskfile.mdready:
-                self.l.info("Adding header id %d to calcachequeue", header.id)
-                cq = CalCacheQueue(header.id, sortkey=header.ut_datetime)
-                self.s.add(cq)
+                # This will use the DiskFile unzipped cache file if it exists
+                self.l.debug("Adding new DiskFileReport entry")
+                dfreport = DiskFileReport(diskfile, self.skip_fv, self.skip_md)
+                self.s.add(dfreport)
                 self.s.commit()
 
-        self.delete_file(diskfile, fullpath)
+                self.l.debug("Adding new Header entry")
+                # This will use the diskfile ad_object if it exists, else
+                # it will use the DiskFile unzipped cache file if it exists
+                header = Header(diskfile)
+                self.s.add(header)
+
+                ingest_provenance(diskfile)
+
+                inst = header.instrument
+                self.s.commit()
+                try:
+                    fps = header.footprints(diskfile.ad_object)
+                    for i in list(fps.keys()):
+                        if fps[i] is not None:
+                            foot = Footprint(header)
+                            foot.populate(i)
+                            self.s.add(foot)
+                            self.s.commit()
+                            add_footprint(self.s, foot.id, fps[i])
+                except Exception as e:
+                    # self.l.error("Footprint Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
+                    pass
+
+                if not using_sqlite:
+                    if header.spectroscopy == False:
+                        self.l.debug("Imaging - populating PhotStandardObs")
+                        do_std_obs(self.s, header.id)
+
+                # This will use the DiskFile unzipped cache file if it exists
+                self.l.debug("Adding FullTextHeader entry")
+                ftheader = FullTextHeader(diskfile)
+                self.s.add(ftheader)
+                self.s.commit()
+                # Add the instrument specific tables
+                # These will use the DiskFile unzipped cache file if it exists
+                try:
+                    name, instClass = instrument_table[inst]
+                    self.l.debug("Adding new {} entry".format(name))
+                    entry = instClass(header, diskfile.ad_object)
+                    self.s.add(entry)
+                    self.s.commit()
+                except KeyError:
+                    # Unknown instrument. Maybe we should put a message?
+                    pass
+
+                # Do the preview here.
+                try:
+                    if using_previews:
+                        self.preview.process(diskfile, make=self.make_previews)
+                except:
+                    # For debug
+                    string = traceback.format_tb(sys.exc_info()[2])
+                    string = "".join(string)
+                    self.l.error("Error making preview for %s", diskfile.filename)
+                    self.l.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
+
+                # If we are in archive mode and the metadata is OK, add to calcachequeue here
+                if use_as_archive and diskfile.mdready:
+                    self.l.info("Adding header id %d to calcachequeue", header.id)
+                    cq = CalCacheQueue(header.id, sortkey=header.ut_datetime)
+                    self.s.add(cq)
+                    self.s.commit()
+
+        finally:
+            # really really try to clean up the cache file if we have one
+            self.delete_file(diskfile, fullpath)
 
         self.s.commit()
 
