@@ -1,17 +1,20 @@
 from FitsStorageXmlClientUtils import get_file_list
 
-# Data selection. For example:
-selection = "today/GMOS/Imaging/OBJECT"
 
-files = get_file_list(selection)
+if __name__ == "__main__":
 
-# files is now a list, where each element in the list is a dictionary 
-# representing a fits file, and having 'filename', 'size', 'md5', 'lastmod' keys.
-# Here's some examples of how you access that information
+  # Data selection. For example:
+  selection = "today/GMOS/Imaging/OBJECT"
 
-numfiles = len(files)
-print("Got %d files" % numfiles)
+  files = get_file_list(selection)
 
-for file in files:
-  print("Filename: %s   size: %d" % (file['filename'], file['size']))
+  # files is now a list, where each element in the list is a dictionary
+  # representing a fits file, and having 'filename', 'size', 'md5', 'lastmod' keys.
+  # Here's some examples of how you access that information
+
+  numfiles = len(files)
+  print("Got %d files" % numfiles)
+
+  for file in files:
+    print("Filename: %s   size: %d" % (file['filename'], file['size']))
 

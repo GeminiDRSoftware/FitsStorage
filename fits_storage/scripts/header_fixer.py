@@ -145,71 +145,74 @@ def output_file(path):
 
     return open(path, 'w')
 
-# Main program
-conv_func  = (str.upper if args['-i'] else lambda x: x)
-try:
-    if args['-k']:
-        matches = tuple(Match(*vals) for vals in reader(open(args['-k'])))
-    else:
-        matches = (Match(args['<keyword>'], args['<old-value>'], args['<new-value>']),)
-except IOError as e:
-    print(e)
-    sys.exit(1)
-source_dir = args['-s']
-validate   = not args['-n']
-pathfn     = ((lambda x: x) if args['-S'] else functools.partial(os.path.join, source_dir))
-bzipoutput = args['-j']
-justrw     = args['just-rewrite']
-fixrele    = args['fix-release']
 
-try:
-    filelist = (args['<filename>'] or (x.strip() for x in open(args['-f'])))
-except IOError as e:
-    print(e)
-    sys.exit(1)
+if __name__ == "__main__":
 
-dd = args['-d']
-if dd is not None:
-    dest_dir = dd
-else:
-    dest_dir = mkdtemp()
-    print('The new files will be written into: {0}'.format(dest_dir))
-
-if validate:
-    validator = Tester()
-
-for fn, path in ((normalized_fn(x), pathfn(x)) for x in filelist):
-    df = os.path.join(dest_dir, fn)
+    # Main program
+    conv_func  = (str.upper if args['-i'] else lambda x: x)
     try:
-        fits = pf.open(open_image(path), do_not_scale_image_data = True)
-        if fixrele:
-            if not fix_release(fits):
-                continue
-            fits[0].header['HISTORY'] = 'Corrected metadata: RELEASE (proper)'
-        elif not justrw:
-            fits.verify('exception')
-            change_sets = [x for x in [(h.header, change_set(h.header)) for h in fits] if x[1]]
-            if not change_sets:
-                print("Skipping {0}".format(fn))
-                continue
-            for header, cset in change_sets:
-                changes = []
-                for kw, nv in cset:
-                    header[kw] = nv
-                    changes.append(kw)
-                if changes:
-                    header['HISTORY'] = 'Corrected metadata: {0}'.format(', '.join(changes))
+        if args['-k']:
+            matches = tuple(Match(*vals) for vals in reader(open(args['-k'])))
         else:
-            fits.verify('silentfix+ignore')
-            fits[0].header['HISTORY'] = 'Corrected metadata: automated fixes from PyFITS'
+            matches = (Match(args['<keyword>'], args['<old-value>'], args['<new-value>']),)
+    except IOError as e:
+        print(e)
+        sys.exit(1)
+    source_dir = args['-s']
+    validate   = not args['-n']
+    pathfn     = ((lambda x: x) if args['-S'] else functools.partial(os.path.join, source_dir))
+    bzipoutput = args['-j']
+    justrw     = args['just-rewrite']
+    fixrele    = args['fix-release']
+
+    try:
+        filelist = (args['<filename>'] or (x.strip() for x in open(args['-f'])))
+    except IOError as e:
+        print(e)
+        sys.exit(1)
+
+    dd = args['-d']
+    if dd is not None:
+        dest_dir = dd
+    else:
+        dest_dir = mkdtemp()
+        print('The new files will be written into: {0}'.format(dest_dir))
+
+    if validate:
+        validator = Tester()
+
+    for fn, path in ((normalized_fn(x), pathfn(x)) for x in filelist):
+        df = os.path.join(dest_dir, fn)
         try:
-            if validate and not validator.valid(fits):
-                print("The resulting {0} is not valid".format(fn))
-                continue
-        except (EngineeringImage, BadData, NotGeminiData):
-            pass
-        fits.writeto(output_file(df), output_verify='silentfix+exception')
-    except (IOError, VerifyError, ValueError, NoDateError) as e:
-        print('{0} >> {1}'.format(fn, e))
-        if os.path.exists(df):
-            os.unlink(df)
+            fits = pf.open(open_image(path), do_not_scale_image_data = True)
+            if fixrele:
+                if not fix_release(fits):
+                    continue
+                fits[0].header['HISTORY'] = 'Corrected metadata: RELEASE (proper)'
+            elif not justrw:
+                fits.verify('exception')
+                change_sets = [x for x in [(h.header, change_set(h.header)) for h in fits] if x[1]]
+                if not change_sets:
+                    print("Skipping {0}".format(fn))
+                    continue
+                for header, cset in change_sets:
+                    changes = []
+                    for kw, nv in cset:
+                        header[kw] = nv
+                        changes.append(kw)
+                    if changes:
+                        header['HISTORY'] = 'Corrected metadata: {0}'.format(', '.join(changes))
+            else:
+                fits.verify('silentfix+ignore')
+                fits[0].header['HISTORY'] = 'Corrected metadata: automated fixes from PyFITS'
+            try:
+                if validate and not validator.valid(fits):
+                    print("The resulting {0} is not valid".format(fn))
+                    continue
+            except (EngineeringImage, BadData, NotGeminiData):
+                pass
+            fits.writeto(output_file(df), output_verify='silentfix+exception')
+        except (IOError, VerifyError, ValueError, NoDateError) as e:
+            print('{0} >> {1}'.format(fn, e))
+            if os.path.exists(df):
+                os.unlink(df)

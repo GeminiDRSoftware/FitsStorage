@@ -6,58 +6,60 @@ from fits_storage.logger import logger, setdebug, setdemon
 from datetime import datetime, timedelta
 import sys
 
-# Option Parsing
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option("--file-re", action="store", type="string", dest="file_pre", help="filename prefix to select files to queue by")
-parser.add_option("--lastdays", action="store", type="int", dest="lastdays", help="queue observations with ut_datetime in last n days")
-parser.add_option("--all", action="store_true", dest="all", help="queue all observations in database. Use with Caution")
-parser.add_option("--mdbad", action="store_true", dest="mdbad", help="add files even if they fail metadata validation")
-parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
-parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
+if __name__ == "__main__":
 
-options, args = parser.parse_args()
+    # Option Parsing
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("--file-re", action="store", type="string", dest="file_pre", help="filename prefix to select files to queue by")
+    parser.add_option("--lastdays", action="store", type="int", dest="lastdays", help="queue observations with ut_datetime in last n days")
+    parser.add_option("--all", action="store_true", dest="all", help="queue all observations in database. Use with Caution")
+    parser.add_option("--mdbad", action="store_true", dest="mdbad", help="add files even if they fail metadata validation")
+    parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
+    parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
-# Logging level to debug? Include stdio log?
-setdebug(options.debug)
-setdemon(options.demon)
+    options, args = parser.parse_args()
 
-# Annouce startup
-logger.info("*********    add_to_calcache_queue.py - starting up at %s" % datetime.now())
+    # Logging level to debug? Include stdio log?
+    setdebug(options.debug)
+    setdemon(options.demon)
 
-if not (options.file_pre or options.lastdays or options.all):
-    logger.error("You must give either a file_pre or lastdays, or use the all flag")
-    sys.exit(1)
+    # Annouce startup
+    logger.info("*********    add_to_calcache_queue.py - starting up at %s" % datetime.now())
 
-with session_scope() as session:
-    # Get a list of header IDs to queue. NB files don't have to be present, but we do want the canonical one
-    # We use the header.ut_datetime as the sortkey for the queue
-    query = (
-        session.query(Header.id, Header.ut_datetime).select_from(Header, DiskFile)
-            .filter(DiskFile.id == Header.diskfile_id)
-            .filter(DiskFile.canonical == True)
-        )
-    if not options.mdbad:
-        query = query.filter(DiskFile.mdready == True)
+    if not (options.file_pre or options.lastdays or options.all):
+        logger.error("You must give either a file_pre or lastdays, or use the all flag")
+        sys.exit(1)
 
-    if options.file_pre:
-        query = query.filter(DiskFile.filename.like(options.file_pre+'%'))
+    with session_scope() as session:
+        # Get a list of header IDs to queue. NB files don't have to be present, but we do want the canonical one
+        # We use the header.ut_datetime as the sortkey for the queue
+        query = (
+            session.query(Header.id, Header.ut_datetime).select_from(Header, DiskFile)
+                .filter(DiskFile.id == Header.diskfile_id)
+                .filter(DiskFile.canonical == True)
+            )
+        if not options.mdbad:
+            query = query.filter(DiskFile.mdready == True)
 
-    if options.lastdays:
-        then = datetime.utcnow() - timedelta(days=options.lastdays)
-        query = query.filter(Header.ut_datetime > then)
+        if options.file_pre:
+            query = query.filter(DiskFile.filename.like(options.file_pre+'%'))
 
-    hids = query.all()
+        if options.lastdays:
+            then = datetime.utcnow() - timedelta(days=options.lastdays)
+            query = query.filter(Header.ut_datetime > then)
 
-    logger.info("Got %d header items to queue" % len(hids))
+        hids = query.all()
 
-    for num, (hid, ut_datetime) in enumerate(hids):
-        logger.debug("Adding CalCacheQueue with obs_hid %s", hid)
-        cq = CalCacheQueue(hid, sortkey=ut_datetime)
-        session.add(cq)
-        if num % 1000 == 0:
-            logger.info("Committing batch %d", num)
-            session.commit()
+        logger.info("Got %d header items to queue" % len(hids))
 
-logger.info("*** add_to_calcache_queue.py exiting normally at %s" % datetime.now())
+        for num, (hid, ut_datetime) in enumerate(hids):
+            logger.debug("Adding CalCacheQueue with obs_hid %s", hid)
+            cq = CalCacheQueue(hid, sortkey=ut_datetime)
+            session.add(cq)
+            if num % 1000 == 0:
+                logger.info("Committing batch %d", num)
+                session.commit()
+
+    logger.info("*** add_to_calcache_queue.py exiting normally at %s" % datetime.now())
 

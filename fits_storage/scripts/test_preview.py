@@ -8,50 +8,53 @@ from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.null_logger import EmptyLogger
 from fits_storage.orm import sessionfactory
 
-# Option Parsing
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option("--file", action="store", type="string", dest="file",
-                  help="file to preview")
 
-parser.add_option("--debug", action="store_true", dest="debug",
-                  help="Increase log level to debug")
+if __name__ == "__main__":
 
-parser.add_option("--demon", action="store_true", dest="demon",
-                  help="Run as a background demon, do not generate stdout")
+    # Option Parsing
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("--file", action="store", type="string", dest="file",
+                      help="file to preview")
 
-(options, args) = parser.parse_args()
+    parser.add_option("--debug", action="store_true", dest="debug",
+                      help="Increase log level to debug")
 
-# Logging level to debug? Include stdio log?
-setdebug(options.debug)
-setdemon(options.demon)
+    parser.add_option("--demon", action="store_true", dest="demon",
+                      help="Run as a background demon, do not generate stdout")
 
-filename = options.file
+    (options, args) = parser.parse_args()
 
-if not filename:
-    print("Must supply and input filename")
-    sys.exit(1)
+    # Logging level to debug? Include stdio log?
+    setdebug(options.debug)
+    setdemon(options.demon)
 
-ad = astrodata.open(filename)
-if not ad:
-    print("AstroData open failed")
-    sys.exit(2)
+    filename = options.file
 
-jpgfile = filename.replace('.fits', '.jpg')
-fp = open(jpgfile, 'wb')
+    if not filename:
+        print("Must supply and input filename")
+        sys.exit(1)
 
-print("input file: %s" % filename)
-print("output file: %s" % jpgfile)
+    ad = astrodata.open(filename)
+    if not ad:
+        print("AstroData open failed")
+        sys.exit(2)
 
-print("Rendering Preview...")
+    jpgfile = filename.replace('.fits', '.jpg')
+    fp = open(jpgfile, 'wb')
 
-with sessionfactory() as session:
-    logger = EmptyLogger()
-    pqu = PreviewQueueUtil(session, logger)
-    pqu.render_preview(ad, fp)
+    print("input file: %s" % filename)
+    print("output file: %s" % jpgfile)
 
-print("Done")
+    print("Rendering Preview...")
 
-fp.close()
-ad.close()
+    with sessionfactory() as session:
+        logger = EmptyLogger()
+        pqu = PreviewQueueUtil(session, logger)
+        pqu.render_preview(ad, fp)
+
+    print("Done")
+
+    fp.close()
+    ad.close()
 
