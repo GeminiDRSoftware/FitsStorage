@@ -6,45 +6,47 @@ from fits_storage.logger import logger, setdebug, setdemon
 import datetime
 import sys
 
-# Option Parsing
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option("--file-pre", action="store", type="string", dest="file_pre", help="filename iprefix to select files to queue by")
-parser.add_option("--instrument", action="store", type="string", dest="instrument", help="add files from this instrument only")
-parser.add_option("--all", action="store_true", dest="all", help="queue all observations in database. Use with Caution")
-parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
-parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
+if __name__ == "__main__":
 
-options, args = parser.parse_args()
+    # Option Parsing
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("--file-pre", action="store", type="string", dest="file_pre", help="filename iprefix to select files to queue by")
+    parser.add_option("--instrument", action="store", type="string", dest="instrument", help="add files from this instrument only")
+    parser.add_option("--all", action="store_true", dest="all", help="queue all observations in database. Use with Caution")
+    parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
+    parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
-# Logging level to debug? Include stdio log?
-setdebug(options.debug)
-setdemon(options.demon)
+    options, args = parser.parse_args()
 
-# Annouce startup
-logger.info("*********    add_to_target_queue.py - starting up at %s" % datetime.datetime.now())
+    # Logging level to debug? Include stdio log?
+    setdebug(options.debug)
+    setdemon(options.demon)
 
-if not (options.file_pre or options.all):
-    logger.error("You must give either a file_pre, or use the all flag")
-    sys.exit(1)
+    # Annouce startup
+    logger.info("*********    add_to_target_queue.py - starting up at %s" % datetime.datetime.now())
 
-with session_scope() as session:
-    # Get a list of diskfile IDs to queue.
-    query = session.query(DiskFile)
+    if not (options.file_pre or options.all):
+        logger.error("You must give either a file_pre, or use the all flag")
+        sys.exit(1)
 
-    if options.instrument:
-        query = query.select_from(DiskFile, Header).filter(Header.diskfile_id == DiskFile.id)
-        query = query.filter(Header.instrument == options.instrument)
+    with session_scope() as session:
+        # Get a list of diskfile IDs to queue.
+        query = session.query(DiskFile)
 
-    query = query.filter(DiskFile.canonical == True)
+        if options.instrument:
+            query = query.select_from(DiskFile, Header).filter(Header.diskfile_id == DiskFile.id)
+            query = query.filter(Header.instrument == options.instrument)
 
-    if options.file_pre:
-        query = query.filter(DiskFile.filename.like(options.file_pre+'%'))
+        query = query.filter(DiskFile.canonical == True)
 
-    dfs = query.all()
+        if options.file_pre:
+            query = query.filter(DiskFile.filename.like(options.file_pre+'%'))
 
-    logger.info("Got %d diskfileitems to queue" % len(dfs))
+        dfs = query.all()
 
-    TargetQueueUtil(session, logger).process(dfs)
+        logger.info("Got %d diskfileitems to queue" % len(dfs))
 
-logger.info("*** add_to_target_queue.py exiting normally at %s" % datetime.datetime.now())
+        TargetQueueUtil(session, logger).process(dfs)
+
+    logger.info("*** add_to_target_queue.py exiting normally at %s" % datetime.datetime.now())

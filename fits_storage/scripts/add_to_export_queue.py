@@ -10,60 +10,62 @@ import re
 import datetime
 import time
 
-# Option Parsing
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option("--selection", action="store", type="string", dest="selection", help="file selection to use")
-parser.add_option("--destination", action="store", type="string", dest="destination", help="server name to export to")
-parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
-parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
+if __name__ == "__main__":
 
-options, args = parser.parse_args()
+    # Option Parsing
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("--selection", action="store", type="string", dest="selection", help="file selection to use")
+    parser.add_option("--destination", action="store", type="string", dest="destination", help="server name to export to")
+    parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
+    parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
-# Logging level to debug? Include stdio log?
-setdebug(options.debug)
-setdemon(options.demon)
+    options, args = parser.parse_args()
 
-# Annouce startup
-logger.info("*********    add_to_export_queue.py - starting up at %s" % datetime.datetime.now())
+    # Logging level to debug? Include stdio log?
+    setdebug(options.debug)
+    setdemon(options.demon)
 
-if not options.selection:
-    logger.error("You must specify a file selection")
-    sys.exit(1)
+    # Annouce startup
+    logger.info("*********    add_to_export_queue.py - starting up at %s" % datetime.datetime.now())
 
-if not options.destination:
-    logger.error("You must specify a destination")
-    sys.exit(1)
-else:
-    destination = options.destination
+    if not options.selection:
+        logger.error("You must specify a file selection")
+        sys.exit(1)
 
-selection = options.selection + '/present'
+    if not options.destination:
+        logger.error("You must specify a destination")
+        sys.exit(1)
+    else:
+        destination = options.destination
 
-orderby = []
-things = selection.split('/')
-selection = getselection(things)
-logger.info("Selection: %s" % selection)
-logger.info("Selection is open: %s" % openquery(selection))
+    selection = options.selection + '/present'
 
-with session_scope() as session:
-    logger.info("Getting header object list")
-    headers = list_headers(session, selection, orderby)
+    orderby = []
+    things = selection.split('/')
+    selection = getselection(things)
+    logger.info("Selection: %s" % selection)
+    logger.info("Selection is open: %s" % openquery(selection))
 
-    # For some reason, looping through the header list directly for the add
-    # is really slow if the list is big.
-    logger.info("Building filename and path lists")
-    filenames = []
-    paths = []
-    for header in headers:
-        filenames.append(header.diskfile.filename)
-        paths.append(header.diskfile.path)
+    with session_scope() as session:
+        logger.info("Getting header object list")
+        headers = list_headers(session, selection, orderby)
 
-    headers = None
+        # For some reason, looping through the header list directly for the add
+        # is really slow if the list is big.
+        logger.info("Building filename and path lists")
+        filenames = []
+        paths = []
+        for header in headers:
+            filenames.append(header.diskfile.filename)
+            paths.append(header.diskfile.path)
 
-    export_queue = ExportQueueUtil(session, logger)
-    n = len(filenames)
-    for i, (filename, path) in enumerate(zip(filenames, paths), 1):
-        logger.info("Queueing for Export: (%d/%d): %s" % (i, n, filename))
-        export_queue.add_to_queue(filename, path, destination)
+        headers = None
 
-logger.info("*** add_to_exportqueue.py exiting normally at %s" % datetime.datetime.now())
+        export_queue = ExportQueueUtil(session, logger)
+        n = len(filenames)
+        for i, (filename, path) in enumerate(zip(filenames, paths), 1):
+            logger.info("Queueing for Export: (%d/%d): %s" % (i, n, filename))
+            export_queue.add_to_queue(filename, path, destination)
+
+    logger.info("*** add_to_exportqueue.py exiting normally at %s" % datetime.datetime.now())

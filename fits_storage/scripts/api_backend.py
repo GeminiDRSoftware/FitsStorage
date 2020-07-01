@@ -31,17 +31,6 @@ from fits_storage.utils.api import METHOD_NOT_ALLOWED, NOT_FOUND
 from fits_storage.logger import logger, setdebug, setdemon
 import logging
 import argparse
-parser = argparse.ArgumentParser("Backend server for the Apache frontend. Performs operations as a separate user")
-parser.add_argument("--debug", action="store_true", dest="debug", help="Increase log level to debug")
-parser.add_argument("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
-options = parser.parse_args()
-
-# NOTE: Maybe we want this to be a startup option
-setdebug(options.debug)
-setdemon(options.demon)
-
-# Annouce startup
-logger.info("*********  api_backend.py - starting up at %s" % datetime.datetime.now())
 
 from fits_storage.fits_storage_config import api_backend_location
 from fits_storage.orm import session_scope
@@ -230,6 +219,20 @@ class LoggerWSGIRequestHandler(wsgiref.simple_server.WSGIRequestHandler):
 # Provide a basic WSGI server, in case we're testing or don't need any fancy
 # container...
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser("Backend server for the Apache frontend. Performs operations as a separate user")
+    parser.add_argument("--debug", action="store_true", dest="debug", help="Increase log level to debug")
+    parser.add_argument("--demon", action="store_true", dest="demon",
+                        help="Run as a background demon, do not generate stdout")
+    options = parser.parse_args()
+
+    # NOTE: Maybe we want this to be a startup option
+    setdebug(options.debug)
+    setdemon(options.demon)
+
+    # Annouce startup
+    logger.info("*********  api_backend.py - starting up at %s" % datetime.datetime.now())
+
     try:
         server, port = api_backend_location.split(':')
     except ValueError:

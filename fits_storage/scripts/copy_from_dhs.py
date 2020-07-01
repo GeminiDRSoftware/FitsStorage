@@ -62,53 +62,54 @@ def copy_over(session, iq, logger, filename, dryrun):
     return True
 
 
-# Option Parsing
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option("--dryrun", action="store_true", dest="dryrun", default=False, help="Don't actually do anything")
-parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
-parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run in background mode")
+if __name__ == "__main__":
 
-(options, args) = parser.parse_args()
+    # Option Parsing
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("--dryrun", action="store_true", dest="dryrun", default=False, help="Don't actually do anything")
+    parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
+    parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run in background mode")
 
-# Logging level to debug?
-setdebug(options.debug)
-setdemon(options.demon)
+    (options, args) = parser.parse_args()
 
-# Annouce startup
-logger.info("*********  copy_from_dhs.py - starting up at %s" % datetime.datetime.now())
+    # Logging level to debug?
+    setdebug(options.debug)
+    setdemon(options.demon)
 
-if using_s3:
-    logger.info("This should not be used with S3 storage. Exiting")
-    sys.exit(1)
+    # Annouce startup
+    logger.info("*********  copy_from_dhs.py - starting up at %s" % datetime.datetime.now())
 
+    if using_s3:
+        logger.info("This should not be used with S3 storage. Exiting")
+        sys.exit(1)
 
-logger.info("Doing Initial DHS directory scan...")
-# Get initial DHS directory listing
-dhs_list = set(os.listdir(dhs_perm))
-logger.info("... found %d files", len(dhs_list))
-known_list = set()
+    logger.info("Doing Initial DHS directory scan...")
+    # Get initial DHS directory listing
+    dhs_list = set(os.listdir(dhs_perm))
+    logger.info("... found %d files", len(dhs_list))
+    known_list = set()
 
-with session_scope() as session:
-     logger.debug("Instantiating IngestQueueUtil object")
-     iq = IngestQueueUtil(session, logger)
-     logger.info("Starting looping...")
-     while True:
-         todo_list = dhs_list - known_list
-         logger.info("%d new files to check", len(todo_list))
-         for filename in todo_list:
-             if 'tmp' in filename:
-                 logger.info("Ignoring tmp file: %s", filename)
-                 continue
-             filename = os.path.split(filename)[1]
-             if check_present(session, filename):
-                 logger.debug("%s is already present in database", filename)
-                 known_list.add(filename)
-             else:
-                 if copy_over(session, iq, logger, filename, options.dryrun):
+    with session_scope() as session:
+         logger.debug("Instantiating IngestQueueUtil object")
+         iq = IngestQueueUtil(session, logger)
+         logger.info("Starting looping...")
+         while True:
+             todo_list = dhs_list - known_list
+             logger.info("%d new files to check", len(todo_list))
+             for filename in todo_list:
+                 if 'tmp' in filename:
+                     logger.info("Ignoring tmp file: %s", filename)
+                     continue
+                 filename = os.path.split(filename)[1]
+                 if check_present(session, filename):
+                     logger.debug("%s is already present in database", filename)
                      known_list.add(filename)
-         logger.debug("Pass complete, sleeping")
-         time.sleep(5)
-         logger.debug("Re-scanning")
-         dhs_list = set(os.listdir(dhs_perm))
+                 else:
+                     if copy_over(session, iq, logger, filename, options.dryrun):
+                         known_list.add(filename)
+             logger.debug("Pass complete, sleeping")
+             time.sleep(5)
+             logger.debug("Re-scanning")
+             dhs_list = set(os.listdir(dhs_perm))
 

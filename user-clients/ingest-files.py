@@ -59,28 +59,31 @@ def post_query(url, query_data):
 
 #########################################################################################################################################
 
-# Option Parsing
-from argparse import ArgumentParser
-parser = ArgumentParser(description="Ask the Archive to ingest files")
-parser.add_argument("--path", action="store", dest="path", help="Use given path relative to storage root")
-parser.add_argument("--force", action="store_true", dest="force", help="Force re-ingestion of these files unconditionally")
-parser.add_argument("--force_md5", action="store_true", dest="force_md5", help="Force checking of file change by md5 not just lastmod date")
-parser.add_argument("filepref", metavar='prefix', help="Prefix for the files that need to be added")
 
-options = parser.parse_args()
+if __name__ == "__main__":
 
-query = dict(
-    filepre   = options.filepref,
-    path      = options.path or '',
-    force     = options.force,
-    force_md5 = options.force_md5
-)
+    # Option Parsing
+    from argparse import ArgumentParser
+    parser = ArgumentParser(description="Ask the Archive to ingest files")
+    parser.add_argument("--path", action="store", dest="path", help="Use given path relative to storage root")
+    parser.add_argument("--force", action="store_true", dest="force", help="Force re-ingestion of these files unconditionally")
+    parser.add_argument("--force_md5", action="store_true", dest="force_md5", help="Force checking of file change by md5 not just lastmod date")
+    parser.add_argument("filepref", metavar='prefix', help="Prefix for the files that need to be added")
 
-url = "http://{server}/ingest_files".format(server = SERVER)
-ret = post_query(url, query)
-if ret:
-    if 'error' in ret:
-        logger.error(ret['error'])
-    else:
-        for filename in ret['added']:
-            print(("Added {}".format(filename)))
+    options = parser.parse_args()
+
+    query = dict(
+        filepre   = options.filepref,
+        path      = options.path or '',
+        force     = options.force,
+        force_md5 = options.force_md5
+    )
+
+    url = "http://{server}/ingest_files".format(server = SERVER)
+    ret = post_query(url, query)
+    if ret:
+        if 'error' in ret:
+            logger.error(ret['error'])
+        else:
+            for filename in ret['added']:
+                print(("Added {}".format(filename)))
