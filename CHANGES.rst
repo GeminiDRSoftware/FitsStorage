@@ -37,6 +37,11 @@ verify_exported.py
 
 - Queries regex list of files and checks if they are present on the archive.  That is, we aren't missing any exports
 
+copy_from_visiting_instrument.py
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Modified IGRINS handling to match folder structure Hwi is using for the staging area I copy from
+
 2020-1.4
 ========
 

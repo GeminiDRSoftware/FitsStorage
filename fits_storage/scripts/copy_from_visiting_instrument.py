@@ -185,8 +185,9 @@ class Zorro(AlopekeZorroABC):
 
 
 class IGRINS(VisitingInstrumentABC):
-    def __init__(self, base_path="/Users/ooberdorf/Downloads/IGRINS/", storage_root=storage_root):
+    def __init__(self, base_path="/net/cpostonfs-nv1/tier2/ins/sto/igrins/DATA", storage_root=storage_root):
         super().__init__(base_path, True, storage_root=storage_root)
+        self.filename_re = re.compile(r'^SDCS_(\d{8})_\d{4}.fits')
 
     def prep(self):
         if not os.path.exists(os.path.join(self.storage_root, 'igrins')):
@@ -194,13 +195,24 @@ class IGRINS(VisitingInstrumentABC):
 
     def get_files(self):
         for f in os.listdir(self.base_path):
-            yield os.path.join(self.base_path, f)
+            fullpath = os.path.join(self.base_path, f)
+            if os.path.isdir(fullpath) and re.search(r'^\d{4}\w$', f):
+                for datedir in os.listdir(fullpath):
+                    fulldatepath = os.path.join(fullpath, datedir)
+                    if os.path.isdir(fulldatepath) and re.search(r'^\d{8}$', datedir):
+                        for datafile in os.listdir(fulldatepath):
+                            if self.filename_re.search(datafile):
+                                yield os.path.join(fulldatepath, datafile)
 
     def get_destination(self, filename):
-        return os.path.join('igrins', '20180527', filename)
+        m = self.filename_re.match(filename)
+        datefolder = m.groups()[0]
+        return os.path.join('igrins', datefolder, filename)
 
     def get_dest_path(self, filename):
-        return os.path.join('igrins', '20180527')
+        m = self.filename_re.match(filename)
+        datefolder = m.groups()[0]
+        return os.path.join('igrins', datefolder)
 
 
 if __name__ == "__main__":
