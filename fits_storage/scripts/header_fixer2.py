@@ -106,6 +106,15 @@ def fix_igrins(fits):
         if 'DATALAB' not in pheader:
             pheader['DATALAB'] = "%s-0" % pheader['OBSID']
             retval = True
+    # fix RELEASE header if missing, we base this on DATE-OBS + 1 year
+    if 'RELEASE' not in pheader and 'DATE-OBS' in pheader and pheader['DATE-OBS'] is not None:
+        try:
+            dateobs = pheader['DATE-OBS']
+            dt = datetime.strptime(dateobs, '%Y-%m-%d')
+            pheader['RELEASE'] = (dt + timedelta(days=365)).strftime('%Y-%m-%d')
+            retval = True
+        except Exception as e:
+            print("Unable to determine release date, continuing")
     return retval
 
 

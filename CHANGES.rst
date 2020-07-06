@@ -21,6 +21,22 @@ copy_from_visiting_instrument.py
 
 - Added compression option which, if set to false, does not re-encrypt data after fixing the headers
 
+2020-1.6
+========
+
+Updated Scripts
+---------------
+
+header_fixer2.py
+^^^^^^^^^^^^^^^^
+
+- IGRINS utility call adds RELEASE based on obs date, if the RELEASE date is missing
+
+copy_from_visiting_instrument.py
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Modified IGRINS handling to match folder structure Hwi is using for the staging area I copy from
+
 2020-1.5
 ========
 
@@ -36,11 +52,6 @@ verify_exported.py
 ^^^^^^^^^^^^^^^^^^
 
 - Queries regex list of files and checks if they are present on the archive.  That is, we aren't missing any exports
-
-copy_from_visiting_instrument.py
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-- Modified IGRINS handling to match folder structure Hwi is using for the staging area I copy from
 
 2020-1.4
 ========
