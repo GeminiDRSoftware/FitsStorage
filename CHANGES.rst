@@ -1,3 +1,4 @@
+
 2020-2 (unreleased)
 ===================
 
@@ -35,6 +36,11 @@ Web Services
 Updated Scripts
 ---------------
 
+various
+^^^^^^^
+
+- Check for `__name__` == `__main__` to avoid side effects during sphinx documentation [#369]
+
 delete_files.py
 ^^^^^^^^^^^^^^^
 
@@ -46,11 +52,30 @@ copy_from_visiting_instrument.py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - IGRINS checks for and adds RELEASE keyword if missing (and DATE-OBS exists)
+- Allow for multiple filename regexes for 'Alopeke and Zorro
+- Add Telescope/Instrument keyword if missing (it is absent in <= 2018 'Alopeke data)
+- Fixing exposure time in `Alopeke and Zorro files if it is a string, should be numeric
 
 service_ingest_queue.py
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 - via ingestqueue.py, now when it has an error parsing the headers, it will still try to clean up the cache file so z_staging doesn't fill up
+- If we have an error during ingest, be sure to cleanup the `z_staging` cache file if it exists, then continue to raise the error
+
+fits_storage_config.py
+^^^^^^^^^^^^^^^^^^^^^^
+
+- made preview queue setting per-host configurable to avoid accidentally turning them on for hosts that do not require them
+
+verify_exported.py
+^^^^^^^^^^^^^^^^^^
+
+- helper script to check files were exported to the archive
+
+verify_in_diskfiles.py
+^^^^^^^^^^^^^^^^^^^^^^
+
+- helper script for checking files on disk exist in the `diskfiles` table.
 
 2020-1.5
 ========

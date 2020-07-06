@@ -10,7 +10,10 @@ Welcome to FitsStorage's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   changelog.rst
 
+.. automodule:: fits_storage
+   :members:
 
 Indices and tables
 ==================
@@ -18,3 +21,4 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+

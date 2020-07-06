@@ -462,13 +462,6 @@ def handler(environ, start_response):
 application = ArchiveContextMiddleware(handler)
 
 
-if os.getenv("FITSSTORAGE_PTVSD", None) is not None:
-    import ptvsd
-
-    ptvsd.enable_attach(address=('0.0.0.0', 3000))
-    #ptvsd.wait_for_attach()
-
-
 # Provide a basic WSGI server, in case we're testing or don't need any fancy
 # container...
 if __name__ == '__main__':
