@@ -187,7 +187,7 @@ class Zorro(AlopekeZorroABC):
 class IGRINS(VisitingInstrumentABC):
     def __init__(self, base_path="/net/cpostonfs-nv1/tier2/ins/sto/igrins/DATA", storage_root=storage_root):
         super().__init__(base_path, True, storage_root=storage_root)
-        self.filename_re = re.compile(r'^SDCS_(\d{8})_\d{4}.fits')
+        self.filename_re = re.compile(r'^SDC\w_(\d{8})_\d{4}.fits')
 
     def prep(self):
         if not os.path.exists(os.path.join(self.storage_root, 'igrins')):
