@@ -25,7 +25,7 @@ def check_present(session, filename):
     if otherfilename.endswith('.bz2'):
         otherfilename = otherfilename[:-4]
     else:
-        otherfilename = "%.bz2" % otherfilename
+        otherfilename = "%s.bz2" % otherfilename
     df = session.query(DiskFile).filter(DiskFile.filename==filename).filter(DiskFile.canonical==True).first()
     if df:
         return True
