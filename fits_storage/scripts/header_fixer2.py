@@ -110,9 +110,13 @@ def fix_igrins(fits):
     if 'RELEASE' not in pheader and 'DATE-OBS' in pheader and pheader['DATE-OBS'] is not None:
         try:
             dateobs = pheader['DATE-OBS']
-            dt = datetime.strptime(dateobs, '%Y-%m-%d')
-            pheader['RELEASE'] = (dt + timedelta(days=365)).strftime('%Y-%m-%d')
-            retval = True
+            if len(dateobs) >= 10:
+                dateobs = dateobs[0:10]
+                dt = datetime.strptime(dateobs, '%Y-%m-%d')
+                pheader['RELEASE'] = (dt + timedelta(days=365)).strftime('%Y-%m-%d')
+                retval = True
+            else:
+                print("RELEASE not set and DATE-OBS in unrecognized format")
         except Exception as e:
             print("Unable to determine release date, continuing")
     return retval

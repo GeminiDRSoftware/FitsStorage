@@ -205,12 +205,13 @@ class IGRINS(VisitingInstrumentABC):
                                 yield os.path.join(fulldatepath, datafile)
 
     def get_destination(self, filename):
-        m = self.filename_re.match(filename)
+        basefilename = os.path.basename(filename)
+        m = self.filename_re.match(basefilename)
         datefolder = m.groups()[0]
-        return os.path.join('igrins', datefolder, filename)
+        return os.path.join('igrins', datefolder, basefilename)
 
     def get_dest_path(self, filename):
-        m = self.filename_re.match(filename)
+        m = self.filename_re.match(os.path.basefilename(filename))
         datefolder = m.groups()[0]
         return os.path.join('igrins', datefolder)
 
