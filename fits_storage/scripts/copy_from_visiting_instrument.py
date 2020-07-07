@@ -211,7 +211,7 @@ class IGRINS(VisitingInstrumentABC):
         return os.path.join('igrins', datefolder, basefilename)
 
     def get_dest_path(self, filename):
-        m = self.filename_re.match(os.path.basefilename(filename))
+        m = self.filename_re.match(os.path.basename(filename))
         datefolder = m.groups()[0]
         return os.path.join('igrins', datefolder)
 
