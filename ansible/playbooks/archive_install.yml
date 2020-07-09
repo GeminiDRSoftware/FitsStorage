@@ -140,7 +140,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: master
+          version: refac/368_sphinx
           dest: /opt/FitsStorage
           accept_hostkey: yes
         when: "'arc' not in inventory_hostname"
@@ -180,7 +180,7 @@
       - name: Build Sphinx documentation (hbffits-lv4 only)
         command: make html
         args:
-          chdir: sphinx
+          chdir: /opt/FitsStorage/sphinx
         when: "'hbffits-lv4' in inventory_hostname"
       - name: Create folders for FitsStorage to work with files
         file:
