@@ -77,6 +77,14 @@ verify_in_diskfiles.py
 
 - helper script for checking files on disk exist in the `diskfiles` table.
 
+Other
+-----
+
+ansible
+^^^^^^^
+
+- Building HTML docs on `hbffits-lv4` host and exposing via apache [#368]
+
 2020-1.5
 ========
 

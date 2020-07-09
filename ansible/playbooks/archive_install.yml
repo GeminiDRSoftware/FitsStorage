@@ -177,12 +177,11 @@
       - name: install imexam and specutils for DRAGONS (Centos 7)
         command: bash -c "python3 -m pip install imexam specutils"
         when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
-#      - name: Set PYTHONPATH for fitsdata user for convenience
-#        lineinfile:
-#          path: /home/fitsdata/.cshrc
-#          line: setenv PYTHONPATH /opt/DRAGONS:/opt/FitsStorage
-#          regex: PYTHONPATH
-#          create: yes
+      - name: Build Sphinx documentation (hbffits-lv4 only)
+        command: make html
+        args:
+          chdir: sphinx
+        when: 'hbffits-lv4' in inventory_histname
       - name: Create folders for FitsStorage to work with files
         file:
           path: '{{ item.path }}'
@@ -197,15 +196,6 @@
           - { path: /data/z_staging, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
           - { path: /data/s3_staging, owner: fitsdata, group: fitsdata, mode: "u+rwx,g+rwx,o+rwx" }
           - { path: /data/gemini_data, owner: fitsdata, group: fitsdata, mode: "u+rwx,g-w,o-w" }
-      # - name: Ensure previews folder exists
-      #   file:
-      #     path: /sci/dataflow/previews
-      #     state: directory
-      #     mode: u+rwx,g+rwx,o+rwx
-      #     owner: fitsdata
-      #     group: fitsdata
-      #   become: true
-      #   when: "'arc' not in inventory_hostname"
       - name: Checkout DRAGONS into /opt
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
@@ -752,7 +742,7 @@
 #          line: 50 7 * * * python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py --demon --odb=gnodb --semester=auto
 #          regex: "^50 7 * * * python3 /opt/FitsStorage/fits_storage/scripts/get_notifications_from_odb.py"
 #        notify: restart cron
-#        when: cron_installed.changed and 'cpofits-mk3' in inventory_hostname
+#        when: cron_installed.changed and 'cpofits-lv3' in inventory_hostname
     handlers:
       - name: restart fits-api-backend
         service: name=fits-api-backend state=restarted
