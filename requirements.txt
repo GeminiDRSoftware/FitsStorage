@@ -23,4 +23,3 @@ mysql-connector
 simplejson
 
 sphinx
-sphinx_rtd_theme
