@@ -19,37 +19,11 @@ from fits_storage.logger import logger, setdebug, setdemon
 
 # Option Parsing
 from optparse import OptionParser
-parser = OptionParser()
-parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape1", help="The Fits Storage Tape server to use to check the files are on tape")
-parser.add_option("--path", action="store", type="string", dest="path", default="", help="Path within the storage root")
-parser.add_option("--file-pre", action="store", type="string", dest="filepre", help="File prefix to operate on, eg N20090130, N200812 etc")
-parser.add_option("--maxnum", type="int", action="store", dest="maxnum", help="Delete at most X files.")
-parser.add_option("--maxgb", type="float", action="store", dest="maxgb", help="Delete at most X GB of files")
-parser.add_option("--auto", action="store_true", dest="auto", help="Delete old files to get to pre-defined free space")
-parser.add_option("--oldbyfilename", action="store_true", dest="oldbyfilename", help="Sort by filename to determine oldest files")
-parser.add_option("--oldbylastmod", action="store_true", dest="oldbylastmod", help="Sort by lastmod to determine oldest files")
-parser.add_option("--numbystat", action="store_true", dest="numbystat", default=False, help="Use statvfs rather than database to determine number of files on the disk")
-parser.add_option("--yesimsure", action="store_true", dest="yesimsure", help="Needed when file count is large")
-parser.add_option("--notpresent", action="store_true", dest="notpresent", help="Include files that are marked as not present")
-parser.add_option("--mintapes", action="store", type="int", dest="mintapes", default=2, help="Minimum number of tapes file must be on to be eligable for deletion")
-parser.add_option("--skip-md5", action="store_true", dest="skipmd5", help="Do not bother to verify the md5 of the file on disk")
-parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
-parser.add_option("--emailto", action="store", type="string", dest="emailto", help="Email address to send message to")
-parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
-parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
-
-(options, args) = parser.parse_args()
-
-# Logging level to debug? Include stdio log?
-setdebug(options.debug)
-setdemon(options.demon)
 
 
 msglines = []
 errmsglines = None
 
-# Annouce startup
-logger.info("*********    delete_files.py - starting up at %s" % datetime.datetime.now())
 
 def add_to_msg(log, msg):
     log(msg)
@@ -91,6 +65,47 @@ def check_not_on_export_queue(session, fname):
 
 
 if __name__ == "__main__":
+
+    # Annouce startup
+    logger.info("*********    delete_files.py - starting up at %s" % datetime.datetime.now())
+
+    parser = OptionParser()
+    parser.add_option("--tapeserver", action="store", type="string", dest="tapeserver", default="hbffitstape1",
+                      help="The Fits Storage Tape server to use to check the files are on tape")
+    parser.add_option("--path", action="store", type="string", dest="path", default="",
+                      help="Path within the storage root")
+    parser.add_option("--file-pre", action="store", type="string", dest="filepre",
+                      help="File prefix to operate on, eg N20090130, N200812 etc")
+    parser.add_option("--maxnum", type="int", action="store", dest="maxnum", help="Delete at most X files.")
+    parser.add_option("--maxgb", type="float", action="store", dest="maxgb", help="Delete at most X GB of files")
+    parser.add_option("--auto", action="store_true", dest="auto",
+                      help="Delete old files to get to pre-defined free space")
+    parser.add_option("--oldbyfilename", action="store_true", dest="oldbyfilename",
+                      help="Sort by filename to determine oldest files")
+    parser.add_option("--oldbylastmod", action="store_true", dest="oldbylastmod",
+                      help="Sort by lastmod to determine oldest files")
+    parser.add_option("--numbystat", action="store_true", dest="numbystat", default=False,
+                      help="Use statvfs rather than database to determine number of files on the disk")
+    parser.add_option("--yesimsure", action="store_true", dest="yesimsure", help="Needed when file count is large")
+    parser.add_option("--notpresent", action="store_true", dest="notpresent",
+                      help="Include files that are marked as not present")
+    parser.add_option("--mintapes", action="store", type="int", dest="mintapes", default=2,
+                      help="Minimum number of tapes file must be on to be eligable for deletion")
+    parser.add_option("--skip-md5", action="store_true", dest="skipmd5",
+                      help="Do not bother to verify the md5 of the file on disk")
+    parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
+    parser.add_option("--emailto", action="store", type="string", dest="emailto",
+                      help="Email address to send message to")
+    parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
+    parser.add_option("--demon", action="store_true", dest="demon",
+                      help="Run as a background demon, do not generate stdout")
+
+    (options, args) = parser.parse_args()
+
+    # Logging level to debug? Include stdio log?
+    setdebug(options.debug)
+    setdemon(options.demon)
+
     with session_scope() as session:
         query = session.query(DiskFile).select_from(join(File, DiskFile)).filter(DiskFile.canonical==True)
 

@@ -1,29 +1,32 @@
 import urllib.request, urllib.parse, urllib.error
 import json
 
-# Construct the URL. We'll use the jsonsummary service
-url = "https://archive.gemini.edu/jsonsummary/"
 
-# List the OBJECT files taken with GMOS-N on 2010-12-31
-url += "canonical/OBJECT/GMOS-N/20101231"
+if __name__ == "__main__":
 
-# Open the URL and fetch the JSON document text into a string
-u = urllib.request.urlopen(url)
-jsondoc = u.read()
-u.close()
+    # Construct the URL. We'll use the jsonsummary service
+    url = "https://archive.gemini.edu/jsonsummary/"
 
-# Decode the JSON
-files = json.loads(jsondoc)
+    # List the OBJECT files taken with GMOS-N on 2010-12-31
+    url += "canonical/OBJECT/GMOS-N/20101231"
 
-# This is a list of dictionaries each containing info about a file
-total_data_size = 0
-print("%20s %22s %10s %8s %s" % ("Filename", "Data Label", "ObsClass", 
-                                 "QA state", "Object Name"))
+    # Open the URL and fetch the JSON document text into a string
+    u = urllib.request.urlopen(url)
+    jsondoc = u.read()
+    u.close()
 
-for f in files:
-    total_data_size += f['data_size']
-    print("%20s %22s %10s %8s %s" % (f['name'], f['data_label'], 
-                                     f['observation_class'], f['qa_state'], 
-                                     f['object']))
+    # Decode the JSON
+    files = json.loads(jsondoc)
 
-print("Total data size: %d" % total_data_size)
+    # This is a list of dictionaries each containing info about a file
+    total_data_size = 0
+    print("%20s %22s %10s %8s %s" % ("Filename", "Data Label", "ObsClass",
+                                     "QA state", "Object Name"))
+
+    for f in files:
+        total_data_size += f['data_size']
+        print("%20s %22s %10s %8s %s" % (f['name'], f['data_label'],
+                                         f['observation_class'], f['qa_state'],
+                                         f['object']))
+
+    print("Total data size: %d" % total_data_size)
