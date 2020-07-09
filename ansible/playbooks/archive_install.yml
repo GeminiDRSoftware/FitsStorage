@@ -181,7 +181,7 @@
         command: make html
         args:
           chdir: sphinx
-        when: 'hbffits-lv4' in inventory_histname
+        when: "'hbffits-lv4' in inventory_histname"
       - name: Create folders for FitsStorage to work with files
         file:
           path: '{{ item.path }}'
