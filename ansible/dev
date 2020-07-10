@@ -1,5 +1,7 @@
 [archive:vars]
-ansible_become_pass='{{ sudo_pass }}'
+#ansible_become_pass='{{ sudo_pass }}'
+build_sphinx=True
+sphinx_opts='-Q'
 
 [archive]
 hbffits-lv4.hi.gemini.edu

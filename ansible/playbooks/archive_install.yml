@@ -5,21 +5,21 @@
       - name: Fail on non-release deploys to archive
         fail:
           msg: Attempt to deploy master to an ops host
-        when: "'archive' in inventory_hostname or 'mko' in inventory_hostname or 'cpofits-lv3' in inventory_hostname"
+        when: is_archive or ( is_onsite and is_ops )
       - name: Check for dataflow folder
         stat:
           path: /sci/dataflow
         register: dataflow_folder
-        when: "'arc' not in inventory_hostname"
+        when: not is_s3
       - name: Fail if dataflow folder missing
         fail:
           msg: "Dataflow folder not found"
-        when: "not dataflow_folder and 'arc' not in inventory_hostname"
+        when: not dataflow_folder and not is_s3
       - name: Check for DHS folder
         stat:
           path: /sci/dhs
         register: dhs_folder
-        when: "'mko' in inventory_hostname or 'cpofits-lv3' in inventory_hostname"
+        when: is_onsite and is_ops
       - name: Fail if DHS folder missing
         fail:
           msg: "DHS folder not found"
@@ -87,7 +87,7 @@
         yum:
           name:
             - postfix
-        when: "'mkofits-lv3' in inventory_hostname or 'cpofits-lv3' in inventory_hostname"
+        when: enable_postfix
         notify: restart postfix
       - name: configure postfix inet protocols
         lineinfile:
@@ -95,7 +95,7 @@
           line: inet_protocols = ipv4
           regex: inet_protocols
           create: yes
-        when: "'mkofits-lv3' in inventory_hostname or 'cpofits-lv3' in inventory_hostname"
+        when: enable_postfix
         notify: restart postfix
       - name: configure postfix relay in Hawaii
         lineinfile:
@@ -103,7 +103,7 @@
           line: relayhost = [smtp.hi.gemini.edu]:25
           regex: relayhost
           create: yes
-        when: "'mkofits-lv3' in inventory_hostname"
+        when: enable_postfix and is_hawaii
         notify: restart postfix
       - name: configure postfix relay in Chile
         lineinfile:
@@ -111,19 +111,19 @@
           line: relayhost = [smtp.cl.gemini.edu]:25
           regex: relayhost
           create: yes
-        when: "'cpofits-lv3' in inventory_hostname"
+        when: enable_postfix and is_chile
         notify: restart postfix
       - name: configure postfix in AWS
         copy:
           src: ../../otherfiles/postfix_main.cf
           dest: /etc/postfix/main.cf
-        when: "'arc' in inventory_hostname"
+        when: enable_postfix and is_aws
         notify: restart postfix
       - name: configure postfix transports in AWS
         copy:
           src: ../../otherfiles/postfix_transport
           dest: /etc/postfix/transport
-        when: "'arc' in inventory_hostname"
+        when: enable_postfix and is_aws
         register: updated_postfix_transport
       - name: Create postfix transport.db
         become: true
@@ -169,17 +169,17 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: master
+          version: refac/370_remove_playbook_hostnames
           dest: /opt/FitsStorage
           accept_hostkey: yes
-        when: "'arc' not in inventory_hostname"
+        when: not is_aws
         notify: restart services
       - name: Rsync FitsStorage into /opt (AWS)
         become: false
         local_action: 
           module: shell
-          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../.. fitsdata@arcdev.gemini.edu:/opt/FitsStorage/
-        when: "'arc' in inventory_hostname"
+          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../.. fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/FitsStorage/
+        when: is_aws
         notify: restart services
       - name: install python packages
         command: bash -c "cd /opt/FitsStorage && python3 -m pip install -r requirements.txt"
@@ -258,8 +258,8 @@
           chdir: /opt/FitsStorage/sphinx
         environment:
           - PYTHONPATH: "/opt/FitsStorage:/opt/DRAGONS"
-          - SPHINXOPTS: "-Q"
-        when: "'hbffits-lv4' in inventory_hostname"
+          - SPHINXOPTS: "{{ sphinx_opts }}"
+        when: build_sphinx
       - name: Setup PostgreSQL data directory
         file:
           path: /data/pgsql_data
@@ -409,40 +409,40 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue.service
           dest: /etc/systemd/system/fits-service_ingest_queue3.service
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Setup ingest 3
         lineinfile:
           path: /etc/systemd/system/fits-service_ingest_queue3.service
           line: Description=Fits Service Ingest Queue 3
           regex: Description=
           create: no
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Setup ingest 3 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_ingest_queue3.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq3
           regex: ExecStart=
           create: no
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Install ingest queue 4
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue.service
           dest: /etc/systemd/system/fits-service_ingest_queue4.service
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Setup ingest 4
         lineinfile:
           path: /etc/systemd/system/fits-service_ingest_queue4.service
           line: Description=Fits Service Ingest Queue 4
           regex: Description=
           create: no
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Setup ingest 4 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_ingest_queue4.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq4
           regex: ExecStart=
           create: no
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Install preview queue 1
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
@@ -463,64 +463,64 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
           dest: /etc/systemd/system/fits-service_preview_queue2.service
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Setup preview 2
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue2.service
           line: Description=Fits Service Preview Queue 2
           regex: Description=
           create: no
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Setup preview 2 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue2.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq2
           regex: ExecStart=
           create: no
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Install preview queue 3
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
           dest: /etc/systemd/system/fits-service_preview_queue3.service
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Setup preview 3
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue3.service
           line: Description=Fits Service Preview Queue 3
           regex: Description=
           create: no
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Setup preview 3 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue3.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq3
           regex: ExecStart=
           create: no
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Install preview queue 4
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
           dest: /etc/systemd/system/fits-service_preview_queue4.service
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Setup preview 4
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue4.service
           line: Description=Fits Service Preview Queue 4
           regex: Description=
           create: no
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Setup preview 4 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue4.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq4
           regex: ExecStart=
           create: no
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Install calcache queue 1
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_calcache_queue.service
           dest: /etc/systemd/system/fits-service_calcache_queue1.service
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Install export queue
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_export_queue1.service
@@ -537,18 +537,18 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-copy_from_visiting_instruments_mko.service
           dest: /etc/systemd/system/fits-copy_from_visiting_instruments_mko.service
-        when: "'mkofits-lv3' in inventory_hostname"
+        when: is_ops and is_hawaii
       - name: Install Copy From Visiting Instrument CPO Service
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-copy_from_visiting_instruments_cpo.service
           dest: /etc/systemd/system/fits-copy_from_visiting_instruments_cpo.service
-        when: "'cpofits-lv3' in inventory_hostname"
+        when: is_ops and is_chile
       - name: Install fitsstorage config
         copy:
           src: ../../otherfiles/fitsstorage.conf
           dest: /etc/fitsstorage.conf
         register: fitsstorageconf
-        when: "'arc' in inventory_hostname"
+        when: is_archive
         notify: restart services
       - name: Use as archive
         lineinfile:
@@ -605,48 +605,48 @@
         service: name=fits-service_ingest_queue2 state=started enabled=yes
       - name: Register Ingest service 3
         service: name=fits-service_ingest_queue3 state=started enabled=yes
-        when: "'arcdisabled' in inventory_hostname"
+        when: enable_all_ingest
       - name: Register Ingest service 4
         service: name=fits-service_ingest_queue4 state=started enabled=yes
-        when: "'arcdisabled' in inventory_hostname"
+        when: enable_all_ingest
       - name: Register Preview service 1
         service: name=fits-service_preview_queue1 state=started enabled=yes
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Register Preview service 2
         service: name=fits-service_preview_queue2 state=started enabled=yes
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Register Preview service 3
         service: name=fits-service_preview_queue3 state=started enabled=yes
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Register Preview service 4
         service: name=fits-service_preview_queue4 state=started enabled=yes
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Register Export Queue
         service: name=fits-service_export_queue1 state=started enabled=yes
-        when: "'cpofits-lv3' in inventory_hostname or 'mkofits-lv3' in inventory_hostname"
+        when: enable_export
       - name: Register Export Queue (hbf)
         service: name=fits-service_export_queue1 state=stopped enabled=no
-        when: "'hbf' in inventory_hostname"
+        when: not enable_export
       - name: Register CalCache service 1
         service: name=fits-service_calcache_queue1 state=started enabled=yes
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: Register API service
         service: name=fits-api-backend state=started enabled=yes
       - name: Register DHS service
         service: name=fits-copy_from_dhs state=started enabled=yes
-        when: "'cpofits-lv3' in inventory_hostname or 'mkofits-lv3' in inventory_hostname"
+        when: is_ops and is_onsite
       - name: Un-Register DHS service
         service: name=fits-copy_from_dhs state=stopped enabled=no
-        when: "'cpofits-lv3' not in inventory_hostname and 'mkofits-lv3' not in inventory_hostname"
+        when: not is_ops or not is_onsite
       - name: Register Visiting Instrument CPO service
         service: name=fits-copy_from_visiting_instruments_cpo.service state=started enabled=yes
-        when: "'cpofits-lv3' in inventory_hostname"
+        when: is_ops and is_chile
       - name: Register Visiting Instrument MKO service
         service: name=fits-copy_from_visiting_instruments_mko.service state=started enabled=yes
-        when: "'mkofits-lv3' in inventory_hostname"
+        when: is_ops and is_hawaii
       - name: Register postfix service
         service: name=postfix state=started enabled=yes
-        when: "'mkofits-lv3' in inventory_hostname or 'cpofits-lv3' in inventory_hostname or 'arc' in inventory_hostname"
+        when: enable_postfix
       - name: install webserver packages
         yum:
           name: 
@@ -692,19 +692,13 @@
           src: ../../otherfiles/httpd-patched-centos8.conf
           dest: /opt/modwsgi-default/httpd.conf
         notify: restart services
-        when: "'arc' not in inventory_hostname"
-      - name: (ARCDEV) Copy Mod-WSGI HTTPD config
-        copy:
-          src: ../../otherfiles/arcdev-httpd.conf
-          dest: /opt/modwsgi-default/httpd.conf
-        notify: restart services
-        when: "'arcdev' in inventory_hostname"
-      - name: (ARCHIVE) Copy Mod-WSGI HTTPD config
+        when: not is_archive
+      - name: (ARCHIVE/ARCDEV) Copy Mod-WSGI HTTPD config
         copy:
           src: ../../otherfiles/archive-httpd.conf
           dest: /opt/modwsgi-default/httpd.conf
         notify: restart services
-        when: "'archive' in inventory_hostname"
+        when: {{ is_archive }}
       - name: Set WSGI entry point
         lineinfile:
           path: /opt/modwsgi-default/handler.wsgi
@@ -723,7 +717,7 @@
           name: 
             - certbot python3-certbit-apache mod_ssl
           state: latest
-        when: "'arc' in inventory_hostname"
+        when: is_archive
       - name: (ARCDEV) Setup Let's Encrypt
         command: certbot certonly --webroot -w /opt/modwsgi-default/htdocs/ -d arcdev.gemini.edu
         args:
@@ -794,27 +788,27 @@
       - name: restart ingest3
         service: name=fits-service_ingest_queue3 state=restarted
         listen: "restart services"
-        when: "'arcdisabled' in inventory_hostname"
+        when: enable_all_ingest
       - name: restart ingest4
         service: name=fits-service_ingest_queue4 state=restarted
         listen: "restart services"
-        when: "'arcdisabled' in inventory_hostname"
+        when: enable_all_ingest
       - name: restart preview1
         service: name=fits-service_preview_queue1 state=restarted
         listen: "restart services"
-        when: "'arc' in inventory_hostname"
+        when: enable_preview
       - name: restart preview2
         service: name=fits-service_preview_queue2 state=restarted
         listen: "restart services"
-        when: "'arc' in inventory_hostname"
+        when: enable_preview
       - name: restart preview3
         service: name=fits-service_preview_queue3 state=restarted
         listen: "restart services"
-        when: "'arc' in inventory_hostname"
+        when: enable_preview and enable_all_preview
       - name: restart preview4
         service: name=fits-service_preview_queue4 state=restarted
         listen: "restart services"
-        when: "'arc' in inventory_hostname"
+        when: enable_preview and enable_all_preview
       - name: restart cron
         service: name=crond state=restarted
       - name: restart postfix
