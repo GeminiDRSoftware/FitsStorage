@@ -249,15 +249,16 @@
         args:
           chdir: /opt/fitsverify/
         when: copiedfitsverify.changed and ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+# unset SPHINXOPTS if you want to see all the warnings from sphinx
       - name: Build Sphinx documentation (hbffits-lv4 only)
         become: true
         become_user: fitsdata
-        command: "make html >& /dev/null"
+        command: "make html"
         args:
           chdir: /opt/FitsStorage/sphinx
         environment:
           - PYTHONPATH: "/opt/FitsStorage:/opt/DRAGONS"
-        ignore_errors: yes
+          - SPHINXOPTS: "-Q"
         when: "'hbffits-lv4' in inventory_hostname"
       - name: Setup PostgreSQL data directory
         file:
