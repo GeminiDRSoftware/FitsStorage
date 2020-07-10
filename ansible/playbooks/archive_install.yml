@@ -171,7 +171,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: refac/370_remove_playbook_hostnames
+          version: master
           dest: /opt/FitsStorage
           accept_hostkey: yes
         when: not is_aws
