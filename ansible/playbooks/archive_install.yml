@@ -698,7 +698,7 @@
           src: ../../otherfiles/archive-httpd.conf
           dest: /opt/modwsgi-default/httpd.conf
         notify: restart services
-        when: {{ is_archive }}
+        when: is_archive
       - name: Set WSGI entry point
         lineinfile:
           path: /opt/modwsgi-default/handler.wsgi
