@@ -15,6 +15,3 @@ is_s3=false
 
 [archive]
 cpofits-lv3.cl.gemini.edu
-
-#[control]
-#localhost ansible_connection=local

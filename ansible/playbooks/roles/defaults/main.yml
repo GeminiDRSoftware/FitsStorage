@@ -1,0 +1,14 @@
+enable_all_ingest: false
+enable_all_preview: false
+enable_export: false
+enable_postfix: false
+enable_preview: false
+is_archive: false
+is_aws: false
+is_chile: false
+is_hawaii: false
+is_onsite: true
+is_ops: false
+is_s3: false
+build_sphinx: false
+sphinx_opts: '-Q'

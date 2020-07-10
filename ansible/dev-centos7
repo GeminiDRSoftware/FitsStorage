@@ -15,6 +15,3 @@ is_s3=false
 
 [archive]
 hbffits-lv1.hi.gemini.edu
-
-#[control]
-#localhost ansible_connection=local

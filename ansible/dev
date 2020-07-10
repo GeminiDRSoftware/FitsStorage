@@ -1,10 +1,19 @@
 [archive:vars]
 #ansible_become_pass='{{ sudo_pass }}'
-build_sphinx=True
+build_sphinx=true
 sphinx_opts='-Q'
+enable_all_ingest=false
+enable_all_preview=false
+enable_export=false
+enable_postfix=false
+enable_preview=false
+is_archive=false
+is_aws=false
+is_chile=false
+is_hawaii=true
+is_onsite=true
+is_ops=false
+is_s3=false
 
 [archive]
 hbffits-lv4.hi.gemini.edu
-
-#[control]
-#localhost ansible_connection=local
