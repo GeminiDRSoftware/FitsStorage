@@ -260,6 +260,8 @@ class IntegerConverter(BaseConverter):
 #:       'string':  UnicodeConverter,
 #:       'int':     IntegerConverter
 #:   }
+#:
+
 DEFAULT_CONVERTERS = {
     'default': UnicodeConverter,
     'string':  UnicodeConverter,

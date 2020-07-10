@@ -230,7 +230,7 @@ def calmgr(selection):
     This is the calibration manager. It implements a machine readable calibration association server
     type is the summary type required
     selection is an array of items to select on, simply passed through to the webhdrsummary function
-        - in this case, this will usually be a datalabel or filename
+    - in this case, this will usually be a datalabel or filename
 
     if this code is called via an HTTP POST request rather than a GET, it expects to
     receive a string representation of a python dictionary containing descriptor values

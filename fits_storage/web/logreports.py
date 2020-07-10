@@ -263,13 +263,15 @@ usagestats_header = """
 def usagestats():
     """
     Usage statistics:
-    Site hits
-    Searches
-    Downloads:
-      Proprietry data
-      Public data logged in
-      Public data not logged in
-    Ingests
+    * Site hits
+    * Searches
+    * Downloads
+
+      * Proprietry data
+      * Public data logged in
+      * Public data not logged in
+
+    * Ingests
 
     Generate counts per year, per week and per day
     """

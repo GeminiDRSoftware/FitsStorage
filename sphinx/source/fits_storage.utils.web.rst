@@ -12,14 +12,6 @@ fits\_storage.utils.web.adapter module
    :undoc-members:
    :show-inheritance:
 
-fits\_storage.utils.web.mod\_python\_adapter module
----------------------------------------------------
-
-.. automodule:: fits_storage.utils.web.mod_python_adapter
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 fits\_storage.utils.web.routing module
 --------------------------------------
 
