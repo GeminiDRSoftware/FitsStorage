@@ -4,6 +4,7 @@ This module generates the Observing Statistics - ie "Open Shutter" Statistic rep
 
 from .summary import list_headers
 from ..gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
+from ..orm.fulltextheader import FullTextHeader
 
 from ..utils.web import get_context, with_content_type
 
@@ -82,9 +83,9 @@ def observing_statistics(selection):
             elif c.find("conddict") > 0:
                 resp.append(l[c][i] + ', ' for i in range(7))
 
-                # It's a single value
-                else:
-                    resp.append(l[c] + ', ')
+            # It's a single value
+            else:
+                resp.append(l[c] + ', ')
             resp.append('\n')
 
 def calculate_observing_statistics(ctx, selection, debug=False):
@@ -266,8 +267,8 @@ def calculate_observing_statistics(ctx, selection, debug=False):
         resp.append("# T_all = %.1f = %.2f\n" % (t_all, t_all/3600.0))
         resp.append_iterable("# T_all_%s = %.1f = %.2f\n" % (t, t_all_inst[t], t_all_inst[t]/3600.0)
                              for t in t_all_inst)
-        resp.append_iterable("# T_all_cond_%d = %.1f = %.2f\n" % (i, t_all_cond[i], t_all_cond[i]/3600.0)
-                             for t in t_tall_cond)
+        resp.append_iterable("# T_all_cond_%d = %.1f = %.2f\n" % (t, t_all_cond[t], t_all_cond[t]/3600.0)
+                             for t in t_all_cond)
 
     if debug:
         resp.append("# Nightlog Query: Date: %s - Telescope: %s" % (nightlog_date, nightlog_telescope))
@@ -428,9 +429,9 @@ def nightlog_numbers(utdate, telescope):
     result = []
     try:
         result = client.service.OpGetList(querystr, 0, 2)
-    except WebFault, e:
+    except WebFault as e:
         error_message = "WebFault: " + str(e.fault)
-    except Exception, e:
+    except Exception as e:
         error_message = "Exception: " + str(e)
 
     if len(result) > 1:

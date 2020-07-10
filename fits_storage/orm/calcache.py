@@ -14,7 +14,8 @@ class CalCache(Base):
     to do all the calibration association in real time in the archive context,
     so we implement this cache table. We refresh recent observations in the cache
     periodically via cron.
-     The obs_hid is the header_id of the thing (observation) to be calibrated
+
+    The obs_hid is the header_id of the thing (observation) to be calibrated
     the cal_hid is the header_id of the calibration that applies the rank is the
     rank of the calibration - ie 0 is the best one (generally closest in time),
     1 is next best, etc caltype is the calibration type.

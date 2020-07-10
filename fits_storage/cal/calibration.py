@@ -185,9 +185,8 @@ class CalQuery(object):
         """
         A convenience for filters that are added conditionally. To be used like
         in this example from GMOS:
-        ::
-            if_(self.descriptors['nodandshuffle'], 'match_descriptors',
-                Gmos.nod_count, Gmos.nod_pixels)
+
+            >> if_(self.descriptors['nodandshuffle'], 'match_descriptors', Gmos.nod_count, Gmos.nod_pixels)
 
         This method exists only so that we can construct a whole query just by chaining.
 
@@ -263,8 +262,7 @@ class CalQuery(object):
 
         # Returns up to 5 objects, sorting by the default order criteria, and then
         # "Header.program_id == BLAH"   (matching first)
-        >> query_object.all(limit=5, extra_order_terms=[desc(Header.program_id=='BLAH')],
-                            default_order=DEFAULT_ORDER_BY_FIRST)
+        >> query_object.all(limit=5, extra_order_terms=[desc(Header.program_id=='BLAH')], default_order=DEFAULT_ORDER_BY_FIRST)
 
         """
         order = () if extra_order_terms is None else tuple(extra_order_terms)
@@ -371,13 +369,13 @@ class CalQuery(object):
 
     def raw_or_processed(self, name, processed):
         """
-        Filter. If `processed` is ``True``, it is a shorthand for 
+        Filter: If processed is ``True``, it is a shorthand for
 
-          reduction('PROCESSED_' + name)
+        ``reduction("PROCESSED_" + name)``
 
-        If not `processed`, then it is equivalent to 
+        If not processed, then it is equivalent to
 
-        raw().observation_type(name)
+        ``raw().observation_type(name)``
 
         """
         if processed:

@@ -222,7 +222,7 @@ def gemini_date(string, as_datetime=False, offset=ZERO_OFFSET):
     string: <str>
         A string moniker indicating a day to convert to a gemini_date.
         One of 'today', tomorrow', 'yesterday', 'lastnight' OR an actual 
-    'yyyymmdd' string.
+        'yyyymmdd' string.
 
     as_datetime: <bool>
         return is a datetime object.
@@ -990,7 +990,7 @@ def previous_semester(semester):
 
 def site_monitor(string):
     """
-    Parameters:
+    Parameters
     ----------
     string: <str>
         The name of the instrument that is a sky monitor. Currently, this

@@ -12,8 +12,6 @@ Welcome to FitsStorage's documentation!
 
    changelog.rst
 
-.. automodule:: fits_storage
-   :members:
 
 Indices and tables
 ==================

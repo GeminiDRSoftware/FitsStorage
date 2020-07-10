@@ -21,4 +21,6 @@ Cython==0.29.15
 jplephem==2.14
 mysql-connector
 simplejson
+suds-jurko
+ephem
 sphinx

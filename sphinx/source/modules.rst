@@ -1,3 +1,5 @@
+:orphan:
+
 fits_storage
 ============
 

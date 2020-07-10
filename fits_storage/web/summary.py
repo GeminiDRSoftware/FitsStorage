@@ -62,10 +62,8 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
     """
     This is the main summary generator.
     sumtype is the summary type required
-    selection is an array of items to select on, simply passed
-        through to the webhdrsummary function
-    orderby specifies how to order the output table, simply
-        passed through to the webhdrsummary function
+    selection is an array of items to select on, simply passed through to the webhdrsummary function
+    orderby specifies how to order the output table, simply passed through to the webhdrsummary function
 
     This function outputs header and footer for the html page,
     and calls the webhdrsummary function to actually generate
