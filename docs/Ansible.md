@@ -4,6 +4,34 @@ The install is managed by running an Ansible play.  This play is wrapped in conv
 `archive_install_internal.sh` and `archive_install_aws.sh` in the `ansible` folder.  The play relies on you 
 having a proper secrets setup to handle ssh logins to the remote host.
 
+### Vars
+
+We use various ansible vars to control how the host will be setup.  These variables
+determine if a host will run `postfix` and if the `preview` and/or `export` services 
+will be enabled.  They indicate if a host is running in Chile or Hawaii or on AWS 
+and more.  The default variables can all be found in `ansible/playbooks/roles/archive/defaults/main.yml`.
+Each inventory overrides only the variables that it needs.  Note that if you redefine
+a boolean variable in a .ini format file *you must use capitalized False and True*.
+
+Here is a list of the current variables that we use:
+
+```
+enable_all_ingest: false
+enable_all_preview: false
+enable_export: false
+enable_postfix: false
+enable_preview: false
+is_archive: false
+is_aws: false
+is_chile: false
+is_hawaii: false
+is_onsite: true
+is_ops: false
+is_s3: false
+build_sphinx: false
+sphinx_opts: '-Q'
+```
+
 ### AWS Vars
 
 For the AWS deploys, we need to configure the server to access the Amazon S3 service.  This is sensitive,

@@ -1,5 +1,10 @@
+[archive:vars]
+#ansible_become_pass='{{ sudo_pass }}'
+enable_export=True
+enable_postfix=True
+is_chile=True
+is_onsite=True
+is_ops=True
+
 [archive]
 cpofits-lv3.cl.gemini.edu
-
-#[control]
-#localhost ansible_connection=local

@@ -1,5 +1,7 @@
+[archive:vars]
+#ansible_become_pass='{{ sudo_pass }}'
+is_hawaii=True
+is_onsite=True
+
 [archive]
 hbffitstest-lv1.hi.gemini.edu
-
-#[control]
-#localhost ansible_connection=local

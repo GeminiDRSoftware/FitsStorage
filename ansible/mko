@@ -1,5 +1,10 @@
+[archive:vars]
+#ansible_become_pass='{{ sudo_pass }}'
+enable_export=True
+enable_postfix=True
+is_hawaii=True
+is_onsite=True
+is_ops=True
+
 [archive]
 mkofits-lv3.hi.gemini.edu
-
-#[control]
-#localhost ansible_connection=local
