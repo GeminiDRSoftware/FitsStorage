@@ -449,18 +449,21 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
           dest: /etc/systemd/system/fits-service_preview_queue1.service
+        when: is_archive
       - name: Setup preview 1
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue1.service
           line: Description=Fits Service Preview Queue 1
           regex: Description=
           create: no
+        when: is_archive
       - name: Setup preview 1 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue1.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq1
           regex: ExecStart=
           create: no
+        when: is_archive
       - name: Install preview queue 2
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
