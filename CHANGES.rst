@@ -84,6 +84,7 @@ ansible
 ^^^^^^^
 
 - Building HTML docs on `hbffits-lv4` host and exposing via apache [#368]
+- Added boolean variables in inventory to to turn on/off features in ansible deploys, instead of hardcoded hostname logic
 
 2020-1.5
 ========
