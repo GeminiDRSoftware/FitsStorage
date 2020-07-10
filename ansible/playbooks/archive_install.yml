@@ -1,5 +1,7 @@
 ---
-  - hosts: all
+  - hosts: archive
+    roles:
+      - archive
     become: true
     tasks:
       - name: Fail on non-release deploys to archive
@@ -81,7 +83,7 @@
             - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/fontawesome-fonts-web-4.7.0-4.el8.noarch.rpm
             - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-whoosh-2.7.4-9.el8.noarch.rpm
           state: present
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+        when: build_sphinx
 # tweak this to deploy when we are about to go live
       - name: install postfix
         yum:

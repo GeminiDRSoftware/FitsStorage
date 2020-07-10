@@ -1,17 +1,7 @@
 [archive:vars]
 #ansible_become_pass='{{ sudo_pass }}'
-enable_all_ingest=false
-enable_all_preview=false
-enable_export=false
-enable_postfix=false
-enable_preview=false
-is_archive=false
-is_aws=false
-is_chile=true
-is_hawaii=false
-is_onsite=true
-is_ops=false
-is_s3=false
+is_chile=True
+is_onsite=True
 
 [archive]
 cpofits-lv2.cl.gemini.edu
