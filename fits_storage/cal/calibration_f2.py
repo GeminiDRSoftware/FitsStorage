@@ -2,10 +2,10 @@
 This module holds the CalibrationF2 class
 """
 
-from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.f2 import F2
 from .calibration import Calibration, not_processed
+
 
 class CalibrationF2(Calibration):
     """
@@ -22,6 +22,14 @@ class CalibrationF2(Calibration):
         )
 
     def set_applicable(self):
+        """
+        Get the list of applicable calibration types, such as "flat", "processed_dark", etc.
+
+        Returns
+        -------
+
+        list of str
+        """
         # Return a list of the calibrations applicable to this dataset
         self.applicable = []
 
@@ -60,9 +68,14 @@ class CalibrationF2(Calibration):
             self.applicable.append('flat')
             self.applicable.append('processed_flat')
 
-
-    # TODO: Check with Paul if the semantics are right
     def dark(self, processed=False, howmany=None):
+        """
+        Get a query for darks appropriate for F2.
+
+        Returns
+        -------
+        :class:`sqlalchemy.orm.query.Query` matching the `exposure_time` and F2 `read_mode` within 90 days
+        """
         if howmany is None:
             howmany = 1 if processed else 10
 
@@ -80,9 +93,32 @@ class CalibrationF2(Calibration):
 
     @staticmethod
     def common_descriptors():
+        """
+        Get the main descriptors for the F2 instrument
+
+        Returns
+        -------
+        list of :class:`sqlalchemy.schema.Column`
+        """
         return (F2.disperser, F2.lyot_stop, F2.filter_name, F2.focal_plane_mask)
 
     def flat(self, processed=False, howmany=None):
+        """
+        Get matching flats for an F2 observation.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Query for processed flats, or not
+
+        howmany : int, defaults to `None`
+            How many results to return, or all if `None`
+
+        Returns
+        -------
+        :class:`sqlalchemy.orm.query.Query` for flats matching the F2 read_mode and the :meth:`fits_storage.cal.calibration_f2.CalibrationF2.common_descriptors` within 90 days.  Also within 0.001 wavelength for spectroscopy
+        """
         if howmany is None:
             howmany = 1 if processed else 10
 
@@ -99,6 +135,22 @@ class CalibrationF2(Calibration):
             )
 
     def arc(self, processed=False, howmany=None):
+        """
+        Get matching arcs for an F2 observation.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Query for processed flats, or not
+
+        howmany : int, defaults to `None`
+            How many results to return, or all if `None`
+
+        Returns
+        -------
+        :class:`sqlalchemy.orm.query.Query` for arcs matching the F2 :meth:`fits_storage.cal.calibration_f2.CalibrationF2.common_descriptors` within 0.001 wavelength and 90 days
+        """
         # Default number to associate is 1
         howmany = howmany if howmany else 1
 
@@ -115,6 +167,22 @@ class CalibrationF2(Calibration):
 
     @not_processed
     def photometric_standard(self, processed=False, howmany=None):
+        """
+        Get matching photometric standards for an F2 observation.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Query for processed standards, or not
+
+        howmany : int, defaults to `None`
+            How many results to return, or all if `None`
+
+        Returns
+        -------
+        :class:`sqlalchemy.orm.query.Query` for photometric standards that are `OBJECT` s and `partnerCal`, matching the F2 `filter_name` and `lyot_stop`and within a day
+        """
         # Default number to associate
         howmany = howmany if howmany else 10
 
@@ -131,6 +199,22 @@ class CalibrationF2(Calibration):
 
     @not_processed
     def telluric_standard(self, processed=False, howmany=None):
+        """
+        Get matching telluric standards for an F2 observation.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Query for telluric standards, or not
+
+        howmany : int, defaults to `None`
+            How many results to return, or all if `None`
+
+        Returns
+        -------
+        :class:`sqlalchemy.orm.query.Query` for telluric standards that are `OBJECT` s and `partnerCal`, matching the F2 :meth:`fits_storage.cal.calibration_f2.CalibrationF2.common_descriptors` within 0.001 `central_wavelength` and within a day
+        """
         # Default number to associate
         howmany = howmany if howmany else 10
 
