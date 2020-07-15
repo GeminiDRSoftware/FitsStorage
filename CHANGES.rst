@@ -8,6 +8,7 @@ User-Facing Changes
 - Search by GPI Astrometric Standard [#253]
 - Fixed time ranges to operate from 2pm-2pm local time in Chile/Hawaii [#288]
 - Ability to search for calibrations associated with selected files [#356]
+- Support for slitresponse calibration data
 
 Service fixes and enhancements
 ------------------------------
