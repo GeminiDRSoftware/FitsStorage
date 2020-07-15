@@ -5,7 +5,7 @@ from migrate import *
 def upgrade(migrate_engine):
     with migrate_engine.connect() as connection:
         # Adding the normal slitresponse caltype as well
-        
+
         # connection.execute("ALTER TYPE obstype ADD VALUE 'STANDARD'")
         # connection.commit()
 
