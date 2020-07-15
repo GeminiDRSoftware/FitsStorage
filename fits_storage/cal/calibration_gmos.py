@@ -105,6 +105,8 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('processed_arc')
                 self.applicable.append('flat')
                 self.applicable.append('processed_flat')
+                self.applicable.append('slitresponse')
+                self.applicable.append('processed_slitresponse')
 
                 if self.descriptors['observation_class'] not in ['partnerCal', 'progCal']:
                     self.applicable.append('spectwilight')
@@ -128,6 +130,7 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('processed_fringe')
                 if self.descriptors['central_wavelength'] is not None:
                     self.applicable.append('processed_standard')
+                    self.applicable.append('processed_slitresponse')
                 # If it's all that and obsclass science, then it needs a photstd
                 # need to take care that phot_stds don't require phot_stds for recursion
                 if self.descriptors['observation_class'] == 'science':
@@ -648,3 +651,70 @@ class CalibrationGMOS(Calibration):
                              Header.instrument.startswith('GMOS'))
                 .all(howmany)
             )
+
+    def slitresponse(self, processed=False, howmany=None):
+        """
+        Method to find the best slit response for the target dataset.
+        """
+        # Default number to associate
+        howmany = howmany if howmany else 1
+
+        filters = []
+
+        # Find the dispersion, assume worst case if we can't match it
+        n = 1200.0
+        disperser_values = ['1200', '600', '831', '400', '150']
+        for dv in disperser_values:
+            if dv in self.descriptors['disperser']:
+                n = float(dv)
+        dispersion = 0.03/n
+        # Replace with this if we start storing dispersion in the gmos table and map
+        # it in above in the list of `instrDescriptors` to copy.
+        # dispersion = float(self.descriptors['dispersion'])
+
+        # per conversation with Chris Simpson
+        tolerance = 200 * dispersion
+
+        central_wavelength = float(self.descriptors['central_wavelength'])
+        lower_bound = central_wavelength - tolerance
+        upper_bound = central_wavelength + tolerance
+
+        filters.append(Header.central_wavelength.between(lower_bound, upper_bound))
+
+        # we get 1000 rows here to have a limit of some sort, but in practice
+        # we get all the cals, then sort them below, then limit it per the request
+        results = (
+            self.get_query()
+                .slitresponse(processed)
+                .add_filters(*filters)
+                .match_descriptors(Header.instrument,
+                                   Gmos.disperser,
+                                   Gmos.detector_x_bin,
+                                   Gmos.detector_y_bin,
+                                   Gmos.filter_name)
+                # Absolute time separation must be within 1 year
+                .max_interval(days=183)
+                .all(1000))
+
+        ut_datetime = self.descriptors['ut_datetime']
+        wavelength = float(self.descriptors['central_wavelength'])
+
+        # we score it based on the wavelength deviation expressed as a fraction of the wavelength itself,
+        # plus the difference in date as a fraction of the allowed 365 day interval.  This is a placeholder
+        # and we can do something else, add some weighting, add a squaring of the deviation, or other terms
+        def score(header):
+            if not isinstance(header, Header):
+                header = header[0]
+            wavelength_score = abs(float(header.central_wavelength) - wavelength) / tolerance
+            ut_datetime_score = abs((header.ut_datetime - ut_datetime).seconds) / (30.0*24.0*60.0*60.0)
+            return wavelength_score + ut_datetime_score
+
+        retval = [r for r in results]
+
+        # do the actual sort and return our requested max results
+        retval.sort(key=score)
+        if len(retval) > howmany:
+            return retval[0:howmany]
+        else:
+            return retval
+

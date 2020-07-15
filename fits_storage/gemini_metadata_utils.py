@@ -533,7 +533,8 @@ def gemini_procsci(string):
     """
     return string if string in procsci_codes else None
 
-obs_types = ('DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI', 'CAL', 'FRINGE', 'MASK', 'STANDARD')
+obs_types = ('DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI', 'CAL', 'FRINGE', 'MASK', 'STANDARD',
+             'SLITRESPONSE')
 def gemini_observation_type(string):
     """
     A utility function for matching Gemini ObsTypes.
@@ -582,7 +583,8 @@ def gemini_observation_class(string):
 
 reduction_states = ('RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS',
                     'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK',
-                    'PROCESSED_TELLURIC', 'PROCESSED_SCIENCE', 'PROCESSED_STANDARD')
+                    'PROCESSED_TELLURIC', 'PROCESSED_SCIENCE', 'PROCESSED_STANDARD',
+                    'PROCESSED_SLITRESPONSE')
 def gemini_reduction_state(string):
     """
     A utility function matching Gemini reduction states.
@@ -609,7 +611,7 @@ cal_types = (
     'ronchi_mask', 'spectwilight', 'lampoff_flat', 'qh_flat', 'specphot', 
     'photometric_standard', 'telluric_standard', 'domeflat', 'lampoff_domeflat',
     'mask', 'polarization_standard', 'astrometric_standard', 'polarization_flat',
-    'processed_standard'
+    'processed_standard', 'processed_slitresponse',
     )
 def gemini_caltype(string):
     """

@@ -65,6 +65,7 @@ REDUCTION_STATUS = {
     'ARC': 'PROCESSED_ARC',
     'SCIENCE': 'PROCESSED_SCIENCE',
     'STANDARD': 'PROCESSED_STANDARD',
+    'SLITRESPONSE': 'PROCESSED_SLITRESPONSE',
 }
 
 # ------------------------------------------------------------------------------
