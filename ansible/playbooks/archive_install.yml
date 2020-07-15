@@ -171,7 +171,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: master
+          version: refac/slit_response_function
           dest: /opt/FitsStorage
           accept_hostkey: yes
         when: not is_aws
@@ -226,7 +226,7 @@
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
-          version: master
+          version: refac/slit_response_function
         register: dragonscheckout
       - name: Cythonize DRAGONS
         command: /usr/local/bin/cythonize -3 -i cyclip.pyx
