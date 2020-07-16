@@ -154,7 +154,7 @@ class CalibrationGMOS(Calibration):
         dataset.
 
         This will match on arcs for the same instrument, disperser and filter_name
-        with the same x and y binning and a wavelength within 0.001nm tolerance taken
+        with the same x and y binning and a wavelength within 0.001 microns tolerance taken
         within a year of the observation.
 
         This method will also match on `focal_plane_mask`.  If the `focal_plane_mask` is
@@ -401,7 +401,7 @@ class CalibrationGMOS(Calibration):
         Method to find the best spectroscopy flats for the target dataset
 
         This will match on spectroscopy flats for the provided `flat_descr` elements
-        and `filt` filters with a `central_wavelength` tolerance of 0.001nm
+        and `filt` filters with a `central_wavelength` tolerance of 0.001 microns
         within 180 days of the observation.  It will also do some fuzzy matching
         on the elevation.
 
@@ -665,7 +665,7 @@ class CalibrationGMOS(Calibration):
 
         This will match on 'Twilight' spectroscopy for the same instrument, filter,
         focal plane mask, disperser, and amp read area with the same
-        x and y binning and a central wavelength within 0.02nm within 1 year.
+        x and y binning and a central wavelength within 0.02 microns within 1 year.
 
         Parameters
         ----------
@@ -790,7 +790,7 @@ class CalibrationGMOS(Calibration):
         """
         Method to find the best photometric standard observation
 
-        This will match on partner cal files with a 'CAL' program id and matcjing filter name
+        This will match on partner cal files with a 'CAL' program id and matching filter name
         taken within a day.
 
         Parameters
