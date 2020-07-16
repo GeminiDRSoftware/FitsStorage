@@ -173,7 +173,7 @@ class CalibrationGMOS(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.Header` records that match the criteria
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default 1 arc
         howmany = howmany if howmany else 1
@@ -236,7 +236,7 @@ class CalibrationGMOS(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.Header` records that match the criteria
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
 
         if howmany is None:
@@ -303,7 +303,7 @@ class CalibrationGMOS(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.Header` records that match the criteria
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
 
         if howmany is None:
@@ -377,7 +377,7 @@ class CalibrationGMOS(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.Header` records that match the criteria
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         if howmany is None:
             howmany = 1 if processed else 20
@@ -419,7 +419,7 @@ class CalibrationGMOS(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.Header` records that match the criteria
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         if howmany is None:
             howmany = 1 if processed else 2
@@ -500,7 +500,7 @@ class CalibrationGMOS(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.Header` records that match the criteria
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         filters = []
 
@@ -590,7 +590,7 @@ class CalibrationGMOS(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.Header` records that match the criteria
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 1
@@ -677,7 +677,7 @@ class CalibrationGMOS(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.Header` records that match the criteria
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 2
@@ -735,7 +735,7 @@ class CalibrationGMOS(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.Header` records that match the criteria
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 4
@@ -803,7 +803,7 @@ class CalibrationGMOS(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.Header` records that match the criteria
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 4
@@ -838,7 +838,7 @@ class CalibrationGMOS(Calibration):
 
         Returns
         -------
-            list of :class:`fits_storage.orm.Header` records that match the criteria
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 1
