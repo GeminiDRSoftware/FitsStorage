@@ -10,6 +10,7 @@ from .calibration import Calibration, not_processed
 
 from sqlalchemy import or_
 
+
 class CalibrationNIRI(Calibration):
     """
     This class implements a calibration manager for NIRI.
@@ -68,6 +69,25 @@ class CalibrationNIRI(Calibration):
                 self.applicable.append('processed_flat')
 
     def dark(self, processed=False, howmany=None):
+        """
+        Method to find the darks
+
+        This will find NIRI darks with a matching read mode, well depth setting, and coadds.
+        It also matches on the data_section and exposure time (within 0.01s for float fuzzyness)
+        and within 180 days.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw darks.
+        howmany : int, default 1 if processed, else 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         if howmany is None:
             howmany = 1 if processed else 10
 
@@ -87,6 +107,27 @@ class CalibrationNIRI(Calibration):
             )
 
     def flat(self, processed=False, howmany=None):
+        """
+        Method to find the flats
+
+        This will find NIRI flats with a matching well depth setting, filter name, camera,
+        focal plane mask, and disperser.
+        It also matches on the data_section looks for gcal_lamp of IRhigh, IRlow or QM.
+        If this is spectroscopy, it matches on a central wavelength within 0.0001 microns.
+        It only matches within 180 days.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw flats.
+        howmany : int, default 1 if processed, else 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         if howmany is None:
             howmany = 1 if processed else 10
 
@@ -110,6 +151,27 @@ class CalibrationNIRI(Calibration):
             )
 
     def arc(self, processed=False, howmany=None):
+        """
+         Method to find the arcs
+
+         This will find NIRI arcs with a matching filter name, camera,
+         focal plane mask, and disperser.
+         It also matches on the data_section and,
+         if this is spectroscopy, it matches on a central wavelength within 0.0001 microns.
+         It only matches within 180 days.
+
+         Parameters
+         ----------
+
+         processed : bool
+             Indicate if we want to retrieve processed or raw arcs.
+         howmany : int, default 1
+             How many matches to return
+
+         Returns
+         -------
+             list of :class:`fits_storage.orm.header.Header` records that match the criteria
+         """
         # Default number to associate
         howmany = howmany if howmany else 1
 
@@ -129,6 +191,26 @@ class CalibrationNIRI(Calibration):
 
     @not_processed
     def lampoff_flat(self, processed=False, howmany=None):
+        """
+         Method to find the lamp off flats
+
+         This will find NIRI lamp off flats with a matching well depth setting,
+         filter name, camera, and disperser.
+         It also matches on the data_section and a gcal_lamp of "Off"
+         It only matches within 1 hour.
+
+         Parameters
+         ----------
+
+         processed : bool
+             Indicate if we want to retrieve processed or raw lamp off flats.
+         howmany : int, default 10
+             How many matches to return
+
+         Returns
+         -------
+             list of :class:`fits_storage.orm.header.Header` records that match the criteria
+         """
         # Default number to associate
         howmany = howmany if howmany else 10
 
@@ -148,6 +230,27 @@ class CalibrationNIRI(Calibration):
 
     @not_processed
     def photometric_standard(self, processed=False, howmany=None):
+        """
+         Method to find the photometric standards
+
+         This will find NIRI photometric standards with a matching
+         filter name and camera.  It also expects the match to be
+         an OBJECT, not spectroscopy, and have phot_standard set to
+         True.
+         It only matches within 1 day.
+
+         Parameters
+         ----------
+
+         processed : bool
+             Indicate if we want to retrieve processed or raw photometric standards.
+         howmany : int, default 10
+             How many matches to return
+
+         Returns
+         -------
+             list of :class:`fits_storage.orm.header.Header` records that match the criteria
+         """
         # Default number to associate
         howmany = howmany if howmany else 10
 
@@ -166,6 +269,26 @@ class CalibrationNIRI(Calibration):
 
     @not_processed
     def telluric_standard(self, processed=False, howmany=None):
+        """
+         Method to find the telluric standards
+
+         This will find NIRI telluric standards with a matching
+         filter name, camera, focal plane mask, and disperser.  It also expects the match to be
+         an OBJECT and partnerCal.  The central wavelength needs to match within 0.001 microns.
+         It only matches within 1 day.
+
+         Parameters
+         ----------
+
+         processed : bool
+             Indicate if we want to retrieve processed or raw telluric standards.
+         howmany : int, default 10
+             How many matches to return
+
+         Returns
+         -------
+             list of :class:`fits_storage.orm.header.Header` records that match the criteria
+         """
         # Default number to associate
         howmany = howmany if howmany else 10
 

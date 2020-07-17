@@ -138,6 +138,24 @@ class CalibrationGHOST(Calibration):
         """
         This method identifies the best GHOST ARC to use for the target
         dataset.
+
+        This will find GHOST arcs with matching wavelength within 0.001 microns, disperser, and filter name.
+        If "want_before_arc" is set and true, it limits to 1 result and only matches observations prior to the
+        ut_datetime.  If it is set and false, it limits to 1 result after the ut_datetime.  Otherwise, it keeps
+        the `howmany` as specified with a default of 2 and has no restriction on ut_datetime.
+        It matches within 1 year.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw arcs
+        howmany : int, default 2 if `want_before_arc` is not set, or 1 if it is
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         ab = self.descriptors.get('want_before_arc', None)
         # Default 2 arcs, hopefully one before and one after
@@ -187,6 +205,20 @@ class CalibrationGHOST(Calibration):
     def dark(self, processed=False, howmany=None):
         """
         Method to find best GHOST Dark frame for the target dataset.
+
+        This will find GHOST darks with matching read speed setting, gain setting, and within 50 seconds
+        exposure time.  It will also matching amp read area.  It matches within 1 year.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw darks
+        howmany : int, default 1 if processed, else 15
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         if howmany is None:
             howmany = 1 if processed else 15
@@ -220,6 +252,22 @@ class CalibrationGHOST(Calibration):
     def bias(self, processed=False, howmany=None):
         """
         Method to find the best bias frames for the target dataset
+
+        This will find GHOST biases with matching read speed setting, gain setting, amp read area, and x and y binning.
+        If it's 'prepared' data, it will match overscan trimmed and overscan subtracted.
+
+        It matches within 90 days
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw biases
+        howmany : int, default 1 if processed, else 50
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         if howmany is None:
             howmany = 1 if processed else 50
@@ -265,6 +313,36 @@ class CalibrationGHOST(Calibration):
             )
 
     def imaging_flat(self, processed, howmany, flat_descr, filt, sf=False):
+        """
+        Method to find the best imaging flats for the target dataset
+
+        This will find imaging flats that are either obervation type of 'FLAT' or
+        are both dayCal and 'Twilight'.  This also adds a large set of flat filters
+        in flat_descr from the higher level flat query.
+
+        This will find GHOST imaging flats with matching read speed setting, gain setting, filter name,
+        res mode, focal plane mask, and disperser.
+
+        It matches within 180 days
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw imaging flats
+        howmany : int, default 1 if processed, else 20
+            How many do we want results
+        flat_descr: list
+            set of filter parameters from the higher level function calling into this helper method
+        filt: list
+            Additional filter terms to apply from the higher level method
+        sf: bool
+            True for slit flats, else False
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         if howmany is None:
             howmany = 1 if processed else 20
 
@@ -287,6 +365,32 @@ class CalibrationGHOST(Calibration):
             )
 
     def spectroscopy_flat(self, processed, howmany, flat_descr, filt):
+        """
+        Method to find the best imaging flats for the target dataset
+
+        This will find spectroscopy flats with a central wavelength within 0.001 microns, a matching elevation, and
+        matching cass rotator pa (for elevation under 85).  The specific tolerances for elevation
+        depend on factors such as the type of focal plane mask.  The search also adds a large set of flat filters
+        in flat_descr and filt from the higher level flat query.
+
+        It matches within 180 days
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw imaging flats
+        howmany : int, default 1 if processed, else 2
+            How many do we want results
+        flat_descr: list
+            set of filter parameters from the higher level function calling into this helper method
+        filt: list
+            Additional filter terms to apply from the higher level method
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         if howmany is None:
             howmany = 1 if processed else 2
 
@@ -347,8 +451,26 @@ class CalibrationGHOST(Calibration):
     def flat(self, processed=False, howmany=None):
         """
         Method to find the best GHOST FLAT fields for the target dataset
-        """
 
+        This will find GHOST flats with matching read speed setting, gain setting, filter name,
+        res mode, focal plane mask, and disperser.  It will search for matching spectroscopy setting
+        and matching amp read area.  Then additional filtering is done based on logic either for
+        imaging flats or spectroscopy flats, as per :meth:`spectroscopy_flat` and :meth:`imaging_flat`.
+
+        It matches within 180 days
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw imaging flats
+        howmany : int
+            How many do we want
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         filters = []
 
         # Common descriptors for both types of flat
@@ -382,6 +504,29 @@ class CalibrationGHOST(Calibration):
     def processed_slitflat(self, howmany=None):
         """
         Method to find the best GHOST SLITFLAT for the target dataset
+
+        If the type is 'SLITV', this method falls back to the regular :meth:`flat` logic.
+
+        This will find GHOST imaging flats with matching read speed setting, gain setting, filter name,
+        res mode, and disperser.  It filters further on the logic in :meth:`imaging_flat`.
+
+        It matches within 180 days
+
+        Parameters
+        ----------
+
+        howmany : int, default 1
+            How many do we want results
+        flat_descr: list
+            set of filter parameters from the higher level function calling into this helper method
+        filt: list
+            Additional filter terms to apply from the higher level method
+        sf: bool
+            True for slit flats, else False
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         if 'SLITV' in self.types:
             return self.flat(True, howmany)
@@ -404,6 +549,23 @@ class CalibrationGHOST(Calibration):
                                  sf=True)
 
     def processed_slit(self, howmany=None):
+        """
+        Method to find the best processed GHOST SLIT for the target dataset
+
+        This will find GHOST processed slits with a 'Sony-ICX674' detector.  It matches the observation
+        type, res mode, and within 30 seconds.  For 'ARC' observation type it matches
+        'PROCESSED_ARC' data, otherwise it matches 'PREPARED' data.
+
+        Parameters
+        ----------
+
+        howmany : int
+            How many do we want results
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         descripts = (
             Header.instrument,
             Header.observation_type,
@@ -432,8 +594,20 @@ class CalibrationGHOST(Calibration):
 
     def processed_fringe(self, howmany=None):
         """
-        Method to find the best processed_fringe frame for the target dataset.
-        Note that the concept of a raw fringe frame is meaningless.
+        Method to find the best GHOST processed fringe for the target dataset
+
+        This will find GHOST processed fringes matching the amp read area, filter name, and x and y binning.
+        It matches within 1 year.
+
+        Parameters
+        ----------
+
+        howmany : int, default 1
+            How many do we want results
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 1
@@ -468,6 +642,22 @@ class CalibrationGHOST(Calibration):
         """
         Method to find the best spectwilight - ie spectroscopy twilight
         ie MOS / IFU / LS twilight
+
+        This will find GHOST spec twilights matching the amp read area, filter name, disperser,
+        filter plane mask, and x and y binning.  It matches central wavelength within 0.02 microns.
+        It matches within 1 year.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw spec twilights
+        howmany : int, default 2
+            How many do we want results
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 2
@@ -508,6 +698,25 @@ class CalibrationGHOST(Calibration):
     def specphot(self, processed=False, howmany=None):
         """
         Method to find the best specphot observation
+
+        This will find GHOST spec photometry matching the amp read area, filter name, and disperser.
+        The data must be partnerCal or progCal and not be Twilight.  If the focal plane mask is measured
+        in arcsec, it will match the central wavelength to within 0.1 microns, else it matches within 0.05
+        microns.
+
+        It matches within 1 year.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw spec photometry
+        howmany : int, default 2
+            How many do we want results
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 4
@@ -555,6 +764,21 @@ class CalibrationGHOST(Calibration):
     def photometric_standard(self, processed=False, howmany=None):
         """
         Method to find the best phot_std observation
+
+        This will find GHOST photometric standards matching the filter name.  It must be a partnerCal with
+        a CAL program id.  This matches within 1 day.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw photometric standards
+        howmany : int, default 4
+            How many do we want results
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 4
@@ -576,6 +800,20 @@ class CalibrationGHOST(Calibration):
     def mask(self, processed=False, howmany=None):
         """
         Method to find the MASK (MDF) file
+
+        This will find GHOST masks matching the focal plane mask.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw masks
+        howmany : int, default 1
+            How many do we want results
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 1

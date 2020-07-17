@@ -37,8 +37,25 @@ class CalibrationMICHELLE(Calibration):
                 self.descriptors['observation_class'] == 'science'):
             self.applicable.append('flat')
 
-
     def dark(self, processed=False, howmany=None):
+        """
+        Find the optimal Michelle Dark for this target frame
+
+        This will find Michelle darks with a matching read mode, exposure time, and coadds
+        within 1 day.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw darks.
+        howmany : int, default 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         # Default number to associate
         howmany = howmany if howmany else 10
 
@@ -54,6 +71,24 @@ class CalibrationMICHELLE(Calibration):
             )
 
     def flat(self, processed=False, howmany=None):
+        """
+        Find the optimal Michelle Flat for this target frame
+
+        This will find Michelle flats with a matching read mode, filter name, disperser, and focal plane mask.
+        It also matches the central wavelength within 0.001 microns.  Flats must be taken within 1 day.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw flats.
+        howmany : int, default 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         # Default number to associate
         howmany = howmany if howmany else 10
 
