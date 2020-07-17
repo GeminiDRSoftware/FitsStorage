@@ -50,6 +50,24 @@ class CalibrationNIFS(Calibration):
         return (Header.central_wavelength, Nifs.disperser, Nifs.focal_plane_mask, Nifs.filter_name)
 
     def dark(self, processed=False, howmany=None):
+        """
+        Find the optimal NIFS Dark for this target frame
+
+        This will find NIFS darks with a matching exposure time, read mode, coadds,
+        and disperser taken within 90 days.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw darks.
+        howmany : int, default 1 if processed, else 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         if howmany is None:
             howmany = 1 if processed else 10
 
@@ -66,6 +84,24 @@ class CalibrationNIFS(Calibration):
             )
 
     def flat(self, processed=False, howmany=None):
+        """
+        Find the optimal NIFS Flat for this target frame
+
+        This will find NIFS flats with a gcal_lamp of 'IRhigh' or 'QH' with a matching focal plane mask, filter name,
+        central wavelength, and disperser taken within 10 days.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw flats.
+        howmany : int, default 1 if processed, else 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         if howmany is None:
             howmany = 1 if processed else 10
 
@@ -82,6 +118,24 @@ class CalibrationNIFS(Calibration):
             )
 
     def lampoff_flat(self, howmany=None):
+        """
+        Find the optimal NIFS Lamp-off Flat for this target frame
+
+        This will find NIFS lamp-off flats with a gcal_lamp of 'Off' with a matching focal plane mask, filter name,
+        central wavelength, and disperser taken within 1 hour.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw lamp-off flats.
+        howmany : int, default 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         # Default number of processed flats to associate
         howmany = howmany if howmany else 10
 
@@ -98,6 +152,24 @@ class CalibrationNIFS(Calibration):
             )
 
     def arc(self, howmany=None):
+        """
+        Find the optimal NIFS Arc for this target frame
+
+        This will find NIFS arcs with a matching focal plane mask, filter name,
+        central wavelength, and disperser taken within 1 year.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw arcs.
+        howmany : int, default 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         # Always associate 1 arc by default
         howmany = howmany if howmany else 1
 
@@ -111,6 +183,24 @@ class CalibrationNIFS(Calibration):
             )
 
     def ronchi_mask(self, processed=False, howmany=None):
+        """
+        Find the optimal NIFS Ronchi Mask for this target frame
+
+        This will find NIFS ronchi masks by searching on observation_type of 'RONCHI' with a matching
+        central wavelength, and disperser.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw ronchi masks.
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         # Always associate 1 ronchi by default
         howmany = howmany if howmany else 1
 
@@ -124,6 +214,24 @@ class CalibrationNIFS(Calibration):
             )
 
     def telluric_standard(self, processed=False, howmany=None):
+        """
+        Find the optimal NIFS Telluric Standards for this target frame
+
+        This will find NIFS telluric standards by searching parnterCal data on focal plane mask, filter name,
+        central wavelength, and disperser taken within 1 day.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw telluric standards.
+        howmany : int, default 1 if processed, else 12
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         if howmany is None:
             howmany = 1 if processed else 12
 

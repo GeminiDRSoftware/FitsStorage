@@ -86,6 +86,21 @@ class CalibrationGNIRS(Calibration):
     def dark(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS Dark for this target frame
+
+        This will find GNIRS darks with a matching read mode, well depth setting, exposure time, and coadds
+        within 180 days.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw darks.
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number of processed darks to associate
         if howmany is None:
@@ -105,6 +120,23 @@ class CalibrationGNIRS(Calibration):
             )
 
     def get_gnirs_flat_query(self, processed):
+        """
+        Utility method for getting a query for GNIRS flats
+
+        This will find GNIRS flats with a matching disperser, focal plane mask, camera, filter name,
+        and well depth setting.  It also matches the central wavelength within 0.001 microns.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw darks.
+
+        Returns
+        -------
+        :class:`fits_storage.cal.calibration.CalQuery` setup for flats as described that can be
+            further refined
+        """
         return (
             self.get_query()
             .flat(processed=processed)
@@ -122,7 +154,24 @@ class CalibrationGNIRS(Calibration):
 
     def flat(self, processed=False, howmany=None):
         """
-        Find the optimal GNIRS IR flat field for this target frame
+        Utility method for getting a query for GNIRS flats
+
+        This will find GNIRS flats with a matching disperser, focal plane mask, camera, filter name,
+        and well depth setting.  It also matches the central wavelength within 0.001 microns.
+
+        Finally, it matches gcal_lamp of IRhigh and within 90 days.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw flats.
+        howmany : int, default 1 if processed else 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # GNIRS mostly uses GCAL flats with the IRhigh lamp.
         # Sometimes, eg thermal wavelengths, it just uses GCAL with the lamp off (shutter closed),
@@ -152,6 +201,21 @@ class CalibrationGNIRS(Calibration):
     def arc(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS ARC for this target frame
+
+        This will find GNIRS arc with a matching central wavelength, disperser, focal plane mask, camera,
+        and filter name.  It matches within a year.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw arcs.
+        howmany : int, default 1 if processed else 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Always default to 1 arc
         howmany = howmany if howmany else 1
@@ -172,7 +236,22 @@ class CalibrationGNIRS(Calibration):
 
     def pinhole_mask(self, processed=False, howmany=None):
         """
-        Find the optimal GNIRS pinhole_mask for this target frame
+        Find the optimal GNIRS Pinhole Mask for this target frame
+
+        This will find GNIRS pinhole mask with a matching central wavelength, disperser, and camera.
+        It matches within a year.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw pinhole mask.
+        howmany : int, default 1 if processed else 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         if howmany is None:
             howmany = 1 if processed else 5
@@ -193,6 +272,22 @@ class CalibrationGNIRS(Calibration):
     def lampoff_flat(self, processed=False, howmany=None):
         """
         Find the optimal lamp-off flats to go with the lamp-on flat
+
+        This will find GNIRS lamp off flats with a matching disperser, focal plane mask, camera, filter name,
+        and well depth setting.  It also matches the central wavelength within 0.001 microns.  Finally, it
+        matches against gcal_lamp of 'Off'.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw lamp-off flats
+        howmany : int, default 1 if processed else 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number of raw lampoff flats
         howmany = howmany if howmany else 10
@@ -208,6 +303,22 @@ class CalibrationGNIRS(Calibration):
     def qh_flat(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS QH flat field for this target frame
+
+        This will find GNIRS flats with a gcal_lamp of 'QH'.  It looks for a matching disperser, focal plane mask,
+        camera, filter name, and well depth setting.  It also matches the central wavelength within 0.001 microns.
+        It matches within 90 days.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw QH flats
+        howmany : int, default 1 if processed else 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # GNIRS mostly uses GCAL flats with the IRhigh lamp.
         # Sometimes, eg thermal wavelengths, it just uses GCAL with the lamp off (shutter closed),
@@ -233,6 +344,22 @@ class CalibrationGNIRS(Calibration):
     def telluric_standard(self, processed=False, howmany=None):
         """
         Find the optimal GNIRS telluric observations for this target frame
+
+        This will find GNIRS telluric standards with matching wavelength, disperser, focal plane mask,
+        camera, and filter name.  It looks only for a qa_state of 'Pass' or 'Undefined'.  It matches
+        within 1 day.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw telluric standards
+        howmany : int, default 1 if processed else 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         if howmany is None:
             howmany = 1 if processed else 8

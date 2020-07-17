@@ -540,6 +540,19 @@ class CalibrationGMOS(Calibration):
         """
         Method to find the best processed_fringe frame for the target dataset.
         Note that the concept of a raw fringe frame is meaningless.
+
+        This will match on amp read area, filter name, and x and y binning.  It matches
+        within 1 year.
+
+        Parameters
+        ----------
+
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 1

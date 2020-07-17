@@ -53,6 +53,20 @@ class CalibrationGPI(Calibration):
     def dark(self, processed=False, howmany=None):
         """
         Find the optimal GPI DARK for this target frame
+
+        This will match on darks with an exposure time within 10 seconds and taken within 1 year.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw darks.
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         #  default to 1 dark for now
         howmany = howmany if howmany else 1
@@ -70,6 +84,20 @@ class CalibrationGPI(Calibration):
     def arc(self, processed=False, howmany=None):
         """
         Find the optimal GPI ARC for this target frame
+
+        This will match on disperser and filter name, taken within 1 year.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw arcs.
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Always default to 1 arc
         howmany = howmany if howmany else 1
@@ -86,6 +114,21 @@ class CalibrationGPI(Calibration):
     def telluric_standard(self, processed=False, howmany=None):
         """
         Find the optimal GPI telluric standard for this target frame
+
+        This will match on disperser and filter name, taken within 1 year.  For processed, it matches against
+        calibration programs only.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw telluric standards.
+        howmany : int, default 1 if processed, else 8
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         if howmany is None:
             howmany = 1 if processed else 8
@@ -106,12 +149,29 @@ class CalibrationGPI(Calibration):
     def polarization_standard(self, processed=False, howmany=None):
         """
         Find the optimal GPI polarization standard for this target frame
+
+        It matches on non-spectroscopy science with a calibration program and where the GPI wollaston is set.
+        For processed data, it matches a reduction state of 'PROCESSED_POLSTANDARD' instead.  Then, in either case,
+        it matches data on disperser and filter name taken within 1 year.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw polarization standards.
+        howmany : int, default 1 if processed, else 8
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         if howmany is None:
             howmany = 1 if processed else 8
 
         # NOTE: polarization standards are only found in GPI. We won't bother moving this to CalQuery - yet
         if processed:
+            # TODO I can't find this method?!
             query = self.get_query().PROCESSED_POLSTANDARD()
         else:
             query = (self.get_query().raw().science().spectroscopy(False)
@@ -127,6 +187,22 @@ class CalibrationGPI(Calibration):
     def astrometric_standard(self, processed=False, howmany=None):
         """
         Find the optimal GPI astrometric standard field for this target frame
+
+        This will match any data with the GPI astrometric standard flag set.  For processed
+        data, it instead looks for the reduction state of 'PROCESSED_ASTROMETRIC'.  Then,
+        in either case, it looks for data taken within 1 year.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw astrometric standards.
+        howmany : int, default 1 if processed, else 8
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         if howmany is None:
             howmany = 1 if processed else 8
@@ -134,6 +210,7 @@ class CalibrationGPI(Calibration):
         # NOTE: astrometric standards are only found in GPI. We won't bother moving this to CalQuery - yet
 
         if processed:
+            # TODO where does this live?
             query = self.get_query().PROCESSED_ASTROMETRIC()
         else:
             query = (self.get_query().raw().OBJECT()
@@ -149,6 +226,22 @@ class CalibrationGPI(Calibration):
     def polarization_flat(self, processed=False, howmany=None):
         """
         Find the optimal GPI polarization flat for this target frame
+
+        This will match partnerCal datawith the GPI wollaston flag set.  For
+        processed data, it looks for a reduction state of 'PROCESSED_POLFLAT' instead.
+        Then, in either case, it matches on disperser and filter name  and taken within 1 year.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw polarization flats.
+        howmany : int, default 1 if processed, else 8
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         if howmany is None:
             howmany = 1 if processed else 8
@@ -158,6 +251,7 @@ class CalibrationGPI(Calibration):
         query = self.session.query(Header).select_from(join(join(Gpi, Header), DiskFile))
 
         if processed:
+            # TODO where does this live? document behavior above..
             query = self.get_query().PROCESSED_POLFLAT()
         else:
             query = (self.get_query().flat().partnerCal()

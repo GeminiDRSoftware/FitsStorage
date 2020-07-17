@@ -170,6 +170,9 @@ class CalibrationF2(Calibration):
         """
         Get matching photometric standards for an F2 observation.
 
+        This matches photometric standards that are `OBJECT` s and `partnerCal`, matching the F2 `filter_name` and
+        `lyot_stop`and within a day
+
         Parameters
         ----------
 
@@ -181,7 +184,7 @@ class CalibrationF2(Calibration):
 
         Returns
         -------
-        :class:`sqlalchemy.orm.query.Query` for photometric standards that are `OBJECT` s and `partnerCal`, matching the F2 `filter_name` and `lyot_stop`and within a day
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 10
@@ -202,18 +205,21 @@ class CalibrationF2(Calibration):
         """
         Get matching telluric standards for an F2 observation.
 
+        This searches for telluric standards that are `OBJECT` s and `partnerCal`, matching the
+        F2 :meth:`fits_storage.cal.calibration_f2.CalibrationF2.common_descriptors` within 0.001
+        `central_wavelength` and within a day
+
         Parameters
         ----------
 
         processed : bool
             Query for telluric standards, or not
-
-        howmany : int, defaults to `None`
-            How many results to return, or all if `None`
+        howmany : int, defaults to 10
+            How many results to return, or 10 if `None`
 
         Returns
         -------
-        :class:`sqlalchemy.orm.query.Query` for telluric standards that are `OBJECT` s and `partnerCal`, matching the F2 :meth:`fits_storage.cal.calibration_f2.CalibrationF2.common_descriptors` within 0.001 `central_wavelength` and within a day
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 10
