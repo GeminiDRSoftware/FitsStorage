@@ -5,7 +5,7 @@ from sqlalchemy.orm import relation, relationship
 
 from . import Base
 
-# ------------------------------------------------------------------------------
+
 class Tape(Base):
     """
     This is the ORM object for the Tape table.
@@ -29,10 +29,19 @@ class Tape(Base):
     tapewrites = relationship('TapeWrite')
 
     def __init__(self, label):
+        """
+        Create a :class:`~Tape` record with the given label
+
+        Parameters
+        ----------
+        label : str
+            Text label for the tape, to find the physical tape in future
+        """
         self.label = label
         self.active = True
         self.full = False
         self.set = 0
+
 
 class TapeWrite(Base):
     """
@@ -77,6 +86,7 @@ class TapeFile(Base):
     data_size = Column(Integer)
     data_md5 = Column(Text)
     lastmod = Column(DateTime(timezone=True), index=True)
+
 
 class TapeRead(Base):
     """

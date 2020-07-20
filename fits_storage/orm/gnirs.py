@@ -13,7 +13,7 @@ READ_MODE_ENUM = Enum(*READ_MODES, name='gnirs_read_mode')
 WELL_DEPTH_SETTINGS = ['Shallow', 'Deep', 'Invalid']
 WELL_DEPTH_SETTING_ENUM = Enum(*WELL_DEPTH_SETTINGS, name='gnirs_well_depth_setting')
 
-# ------------------------------------------------------------------------------
+
 class Gnirs(Base):
     """
     This is the ORM object for the GNIRS details.
@@ -32,12 +32,30 @@ class Gnirs(Base):
     focal_plane_mask = Column(Text)
 
     def __init__(self, header, ad):
+        """
+        Create a GNIRS record for the given header and astrodata
+
+        Parameters
+        ----------
+        header : :class:`~header.Header`
+            Header corresponding to this record
+        ad : :class:`astrodata.AstroData`
+            AstroData object to read GNIRS information from
+        """
         self.header = header
 
         # Populate from an astrodata object
         self.populate(ad)
 
     def populate(self, ad):
+        """
+        Populate this GNIRS record from the given astrodata
+
+        Parameters
+        ----------
+        ad : :class:`astrodata.AstroData`
+            AstroData object to populate from
+        """
         try:
             self.disperser = ad.disperser()
         except AttributeError as ae:

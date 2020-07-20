@@ -29,6 +29,18 @@ class ExportQueue(Base):
     error_name = 'EXPORT'
 
     def __init__(self, filename, path, destination):
+        """
+        Create an :class:`~ExportQueue` record
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file to export
+        path : str
+            Path of the file within the `storage_root`
+        destination : str
+            URL of the server to export to
+        """
         self.filename = filename
         self.path = path
         self.destination = destination
@@ -44,6 +56,10 @@ class ExportQueue(Base):
         entries where one of them is being processed (it's ok if there's a failed 
         one...)
 
+        Parameters
+        ----------
+        session : :class:`sqlalchemy.orm.session.Session`
+            SQL Alchemy session to query against
         """
         # The query that we're performing here is equivalent to
         #
@@ -71,13 +87,21 @@ class ExportQueue(Base):
                 .order_by(desc(ExportQueue.filename))
         )
 
-    @staticmethod
-    def rebuild(session, element):
-        session.query(ExportQueue)\
-            .filter(ExportQueue.inprogress == False)\
-            .filter(ExportQueue.filename == element.filename)\
-            .delete()
+# TODO seems to be out of use, removing for now
+#     @staticmethod
+#     def rebuild(session, element):
+#         session.query(ExportQueue)\
+#             .filter(ExportQueue.inprogress == False)\
+#             .filter(ExportQueue.filename == element.filename)\
+#             .delete()
 
     def __repr__(self):
+        """
+        Make a string representation of the queue item.
+
+        Returns
+        -------
+        str : String representation of this record
+        """
         return "<ExportQueue('%s', '%s')>" % (self.id, self.filename)
 

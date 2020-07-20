@@ -21,6 +21,14 @@ class Notification(Base):
     internal = Column(Boolean)
 
     def __init__(self, label):
+        """
+        Create a motification with the given label
+
+        Parameters
+        ----------
+        label : str
+            Label to use for :class:`~Notification`
+        """
         self.label = label
 
 

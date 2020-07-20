@@ -16,6 +16,7 @@ _rule_re = re.compile(r'''
    >
 ''', re.VERBOSE)
 
+
 def parse_rule(rule):
     """
     Parse a rule and return it as a generator. Each iteration yields tuples
@@ -48,12 +49,14 @@ def parse_rule(rule):
             raise ValueError('malformed url rule: {!r}'.format(rule))
         yield None, None, remaining
 
+
 def parse_converter_args(arguments):
     a = arguments.strip()
     if not a:
         return (), {}
 
     return tuple(x.strip() for x in a.split(',')), {}
+
 
 class Rule(object):
     """
@@ -213,6 +216,7 @@ class Rule(object):
 
             return result
 
+
 class BaseConverter(object):
     """
     Basic, minimal data converter. It captures a string of character
@@ -235,8 +239,10 @@ class BaseConverter(object):
         """
         return value
 
+
 class UnicodeConverter(BaseConverter):
     pass
+
 
 class IntegerConverter(BaseConverter):
     """
@@ -262,11 +268,13 @@ class IntegerConverter(BaseConverter):
 #:   }
 #:
 
+
 DEFAULT_CONVERTERS = {
     'default': UnicodeConverter,
     'string':  UnicodeConverter,
     'int':     IntegerConverter
 }
+
 
 class Map(object):
     """

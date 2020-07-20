@@ -16,6 +16,7 @@ GAIN_SETTING_ENUM = Enum(*GAIN_SETTINGS, name='ghost_gain_setting')
 RESOLUTIONS = ['std', 'high']
 RESOLUTION_ENUM = Enum(*RESOLUTIONS, name='ghost_resolution')
 
+
 class Ghost(Base):
     """
     This is the ORM object for the GHOST details.
@@ -40,12 +41,30 @@ class Ghost(Base):
     overscan_trimmed = Column(Boolean, index=True)
 
     def __init__(self, header, ad):
+        """
+        Create a Ghost instrument record
+
+        Parameters
+        ----------
+        header : :class:`~header.Header`
+            Corresponding header for the observation
+        ad : :class:`astrodata.AstroData`
+            Astrodata object to load Ghost information from
+        """
         self.header = header
 
         # Populate from the astrodata object
         self.populate(ad)
 
     def populate(self, ad):
+        """
+        Populate the Ghost information from the given :class:`astrodata.AstroData`
+
+        Parameters
+        ----------
+        ad : :class:`astrodata.Astrodata`
+            Astrodata object to read Ghost information from
+        """
         self.disperser = ad.disperser()
         self.filter_name = ad.filter_name()
         try:

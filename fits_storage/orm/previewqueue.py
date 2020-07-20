@@ -5,7 +5,7 @@ from sqlalchemy import desc
 from . import Base
 from ..utils.queue import sortkey_for_filename
 
-# ------------------------------------------------------------------------------
+
 class PreviewQueue(Base):
     """
     This is the ORM object for the previewqueue table. 

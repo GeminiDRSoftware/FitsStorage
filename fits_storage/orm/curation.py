@@ -11,10 +11,20 @@ from sqlalchemy.orm import aliased
 
 diskfile_alias = aliased(DiskFile)
 
-def duplicate_canonicals(session):
-    """Find canonical DiskFiles with duplicate file_ids.
 
-       Returns a query object"""
+def duplicate_canonicals(session):
+    """
+    Find canonical DiskFiles with duplicate file_ids.
+
+    Parameters
+    ----------
+    session: :class:`sqlalchemy.orm.session.Session`
+        SQL Alchemy session to query for duplicates
+
+    Returns
+    -------
+    :class:`sqlalchemy.orm.query.Query` query for finding the duplicates
+    """
     # Make an alias of DiskFile
     # Self join DiskFile with its alias and compare their file_ids
     return (
@@ -30,10 +40,18 @@ def duplicate_canonicals(session):
 
 
 def duplicate_present(session):
-    """Find present DiskFiles with duplicate file_ids.
+    """
+    Find present DiskFiles with duplicate file_ids.
 
-       Returns a query object"""
+    Parameters
+    ----------
+    session: :class:`sqlalchemy.orm.session.Session`
+        SQL Alchemy session to query for duplicates
 
+    Returns
+    -------
+    :class:`sqlalchemy.orm.query.Query` query for finding the duplicates
+    """
     return (
         session.query(distinct(DiskFile.id), File)
             .join(File)
@@ -44,11 +62,20 @@ def duplicate_present(session):
             .order_by(DiskFile.id)
         )
 
+
 def present_not_canonical(session):
-    """Find present DiskFiles that are not canonical.
+    """
+    Find present DiskFiles that are not canonical.
 
-       Returns a query object"""
+    Parameters
+    ----------
+    session: :class:`sqlalchemy.orm.session.Session`
+        SQL Alchemy session to query for present non-canonical files
 
+    Returns
+    -------
+    :class:`sqlalchemy.orm.query.Query` query for finding the problematic diskfiles
+    """
     return (
         session.query(distinct(DiskFile.id), File)
             .join(File)

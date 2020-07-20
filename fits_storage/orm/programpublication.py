@@ -32,6 +32,18 @@ class ProgramPublication(Base):
             )
 
     def __init__(self, program, publication):
+        """
+        Create a new link between a program and a publication.
+
+        These records help us track which programs are associated with a publication.
+
+        Parameters
+        ----------
+        program : :class:`~program.Program`
+            Program to link to a publication
+        publication : :class:`~publication.Publication`
+            Publication to add a linked program to
+        """
         self.prog_id = program.id
         self.program_text_id = program.program_id
         self.pub_id = publication.id

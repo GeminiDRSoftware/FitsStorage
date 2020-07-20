@@ -44,18 +44,29 @@ class FileUploadLog(Base):
     def __init__(self, usagelog):
         """
         Create an initial FileDownloadLog instance from a UsageLog instance
+
+        Parameters
+        ----------
+        usagelog : :class:`~usagelog.Usagelog`
+            Corresponding usagelog entry
         """
         self.usagelog_id = usagelog.id
 
     def add_note(self, note):
         """
         Add a note to this log entry.
+
+        Parameters
+        ----------
+        note : str
+            Note to add to the notes on this record
         """
 
         if self.notes is None:
             self.notes = note
         else:
             self.notes += "\n" + note
+
 
 class FileUploadWrapper(object):
     def __init__(self, fileuploadlog = None):

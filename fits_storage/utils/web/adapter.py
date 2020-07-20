@@ -7,6 +7,7 @@ from threading import local
 import abc
 import json
 
+
 class ReturnMetaClass(type):
     __return_codes = {
         'HTTP_OK': 200,
@@ -30,6 +31,7 @@ class ReturnMetaClass(type):
         except KeyError:
             raise AttributeError("No return code {}".format(key))
 
+
 class Return(object, metaclass=ReturnMetaClass):
     """
     This is a specialized class with constant members giving names to
@@ -49,6 +51,7 @@ class Return(object, metaclass=ReturnMetaClass):
       * ``Return.HTTP_BAD_REQUEST``
       * ``Return.HTTP_INTERNAL_SERVER_ERROR``
     """
+
 
 class ClientError(Exception):
     """
@@ -72,6 +75,7 @@ class ClientError(Exception):
         self.args     = [message]
         self.annotate = annotate
 
+
 class RequestRedirect(Exception):
     """
     Raising this exception will stop the processing (eg. generation of
@@ -85,6 +89,7 @@ class RequestRedirect(Exception):
     """
     pass
 
+
 def context_wrapped(fn):
     @wraps(fn)
     def wrapper(*args, **kw):
@@ -94,6 +99,7 @@ def context_wrapped(fn):
         finally:
             invalidate_context()
     return wrapper
+
 
 def with_content_type(content_type):
     def content_decorator(fn):
@@ -105,9 +111,11 @@ def with_content_type(content_type):
         return fn_wrapper
     return content_decorator
 
+
 # The context storage is a threading local-variable container. Eache
 # thread will see a different value
 __ContextStorage__ = local()
+
 
 def get_context(initialize = False):
     """
@@ -129,8 +137,10 @@ def get_context(initialize = False):
 
     return ctx
 
+
 def invalidate_context():
     __ContextStorage__.ctx = None
+
 
 class Context(object):
     """
@@ -186,6 +196,7 @@ class Context(object):
         except KeyError:
             return False
 
+
 class Cookies(object):
     """
     Dictionary-like object that handles querying and setting cookies. It is syntactic
@@ -231,6 +242,7 @@ class Cookies(object):
         Refer to :py:class:`Cookie.Morsel` for a list of allowed attributes.
         """
         self._resp.set_cookie(key, value, **kw)
+
 
 class Request(object, metaclass=abc.ABCMeta):
     """
@@ -355,8 +367,10 @@ class Request(object, metaclass=abc.ABCMeta):
         the first argument is the message to be printed.
         """
 
+
 class Response(object):
     __metadata__ = abc.ABCMeta
+
     def __init__(self, session):
         self._s = session
         self.status = Return.HTTP_OK

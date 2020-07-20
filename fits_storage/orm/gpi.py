@@ -25,12 +25,30 @@ class Gpi(Base):
     prism = Column(Boolean, index=True)
 
     def __init__(self, header, ad):
+        """
+        Record for GPI information
+
+        Parameters
+        ----------
+        header : :class:`~header.Header`
+            Corresponding header rcord for the GPI data
+        ad : :class:`astrodata.AstroData`
+            AstroData object to read GPI information from
+        """
         self.header = header
 
         # Populate from an astrodata object
         self.populate(ad)
 
     def populate(self, ad):
+        """
+        Populate this GPI record from the given astrodata object
+
+        Parameters
+        ----------
+        ad : :class:`astrodata.AstroData`
+            AstroData object to populate GPI data from
+        """
         self.filter_name = ad.filter_name()
         self.disperser = ad.disperser()
         self.focal_plane_mask = ad.focal_plane_mask()

@@ -24,12 +24,31 @@ class Nifs(Base):
     focal_plane_mask = Column(Text)
 
     def __init__(self, header, ad):
+        """
+        Create a record for NIFS data linked to the given header and sourced
+        from an :class:`astrodata.AstroData` object
+
+        Parameters
+        ----------
+        header : :class:`~header.Header`
+            Header record linked to this one
+        ad : :class:`astrodata.AstroData`
+            AstroData object to read NIFS data from
+        """
         self.header = header
 
         # Populate from an astrodata object
         self.populate(ad)
 
     def populate(self, ad):
+        """
+        Populate the NIFS record data from an :class:`astrodata.AstroData` object
+
+        Parameters
+        ----------
+        ad : :class:`astrodata.AstroData`
+            AstroData object to read NIFS data from
+        """
         self.disperser = ad.disperser()
         self.filter_name = ad.filter_name()
 

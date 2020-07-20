@@ -22,16 +22,56 @@ class FileClash(Exception):
 
 MISCFILE_PREFIX = 'miscfile_'
 
+
 def normalize_diskname(filename):
+    """
+    Prepar a filename for use as a `miscfile`.  This is done by adding
+    a prefix of `miscfile_` to the filename, if it not already there
+
+    Parameters
+    ----------
+    filename : str
+        String filename to normalize
+
+    Returns
+    -------
+    str : Name of the file with an ensured `miscfile_` prefix
+    """
     if not filename.startswith(MISCFILE_PREFIX):
         return MISCFILE_PREFIX + filename
 
     return filename
 
+
 def miscfile_meta_path(path):
+    """
+    Derive the path to the JSON file with metadata for the `miscfile`
+
+    Parameters
+    ----------
+    path : str
+        Path to derive metadata filename from
+
+    Returns
+    -------
+    str : path to JSON metadata file
+    """
     return path + '.json'
 
+
 def is_miscfile(path):
+    """
+    Check if the given path is a `miscfile`
+
+    Parameters
+    ----------
+    path : str
+        Path to the file to check
+
+    Returns
+    -------
+    bool : True if file is a `miscfile`
+    """
     if os.path.exists(miscfile_meta_path(path)):
         return True
     elif using_s3:
@@ -43,14 +83,42 @@ def is_miscfile(path):
 
     return False
 
+
 def decode_description(meta):
+    """
+    Read the description from the passed metadata
+
+    Parameters
+    ----------
+    meta : dict
+        Metadata dictionary to read description from
+
+    Returns
+    -------
+        str : Description decoded from `meta` dictionary
+    """
     try:
         return decode_string(meta['description'])
     except (KeyError, AttributeError):
         # If there's no description member, or it is None, pass
         pass
 
+
 def miscfile_meta(path, urlencode=False):
+    """
+    Read `miscfile` metadata for the given path
+
+    Parameters
+    ----------
+    path : str
+        Path to miscfile to extract metadata for (note: NOT the path to the JSON)
+    urlencode : bool
+        If True, we do urlencoding on the description
+
+    Returns
+    -------
+    dict : Metadata dictionary
+    """
     try:
         meta = json.load(io.open(miscfile_meta_path(path), encoding='utf-8'))
         if urlencode:
@@ -63,6 +131,7 @@ def miscfile_meta(path, urlencode=False):
             raise
 
     return meta
+
 
 class MiscFile(Base):
     """

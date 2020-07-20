@@ -18,9 +18,25 @@ class Footprint(Base):
     # An area column of type polygon gets added using raw sql in CreateTables.py
 
     def __init__(self, header):
+        """
+        Create a :class:`~Footprint`
+
+        Parameters
+        ----------
+        header : :class:`~header.Header`
+            Corresponding header record for this footprint
+        """
         self.header_id = header.id
 
     def populate(self, extension):
+        """
+        Populate the footprint from the given extension
+
+        Parameters
+        ----------
+        extension : str
+            Textual representation of the footprint
+        """
         self.extension = extension
 
 

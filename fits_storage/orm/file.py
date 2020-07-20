@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 
 from . import Base
 
-# ------------------------------------------------------------------------------
+
 class File(Base):
     """
     This is the ORM class for the file table. This is highest level most abstract
@@ -22,15 +22,39 @@ class File(Base):
     diskfiles = relationship('DiskFile', lazy='dynamic')
 
     def __init__(self, filename):
+        """
+        Create a :class:`~File` record from the filename
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file for the record
+        """
         self.name = File.trim_name(filename)
 
     def __repr__(self):
+        """
+        Get a string representation of the :class:`~File` object
+
+        Returns
+        -------
+        str : string representation of the :class:`~File`
+        """
         return "<File('%s', '%s')>" % (self.id, self.name)
 
     @staticmethod
     def trim_name(filename):
         """
         Trim any trailing .bz2 off the filename
+
+        Parameters
+        ----------
+        filename : str
+            Filename to trim
+
+        Returns
+        -------
+            str : filename, with a trailing `.bz2` removed, if present
         """
 
         if filename.endswith(".bz2"):

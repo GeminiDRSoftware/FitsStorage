@@ -10,7 +10,7 @@ from sqlalchemy import desc, func
 from . import Base
 from ..utils.queue import sortkey_for_filename
 
-# ------------------------------------------------------------------------------
+
 class IngestQueue(Base):
     """
     This is the ORM object for the IngestQueue table
@@ -35,6 +35,16 @@ class IngestQueue(Base):
     error_name = 'INGEST'
 
     def __init__(self, filename, path):
+        """
+        Create an :class:`~IngestQueue` instance with the given filename and path
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file to ingest
+        path : str
+            Path of the file within the `storage_root`
+        """
         self.filename = filename
         self.path = path
         self.added = datetime.datetime.now()
@@ -55,6 +65,10 @@ class IngestQueue(Base):
         entries where one of them is being processed (it's ok if there's a failed 
         one...)
 
+        Parameters
+        ----------
+        session : :class:`sqlalchemy.orm.session.Session`
+            SQL Alchemy session to query in
         """
         # The query that we're performing here is equivalent to
         #
@@ -82,13 +96,20 @@ class IngestQueue(Base):
                 .order_by(desc(IngestQueue.sortkey))
         )
 
-    @staticmethod
-    def rebuild(session, element):
-        session.query(IngestQueue)\
-            .filter(IngestQueue.inprogress == False)\
-            .filter(IngestQueue.filename == element.filename)\
-            .delete()
+    # TODO this seems to be something we can get rid of
+    # @staticmethod
+    # def rebuild(session, element):
+    #     session.query(IngestQueue)\
+    #         .filter(IngestQueue.inprogress == False)\
+    #         .filter(IngestQueue.filename == element.filename)\
+    #         .delete()
 
     def __repr__(self):
-        return "<IngestQueue('{}', '{}')>".format((self.id, self.filename))
+        """
+        Build a string representation of this :class:`~IngestQueue` record
 
+        Returns
+        -------
+            str : String representation of the :class:`~IngestQueue` record
+        """
+        return "<IngestQueue('{}', '{}')>".format((self.id, self.filename))

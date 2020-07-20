@@ -54,6 +54,11 @@ def create_tables(session):
     """
     Creates the database tables and grants the apache user
     SELECT on the appropriate ones
+
+    Parameters
+    ----------
+    session : sqlalchemy.orm.session.Session
+        The SQL Alchemy session to create the tables in
     """
     # Create the tables
     File.metadata.create_all(bind=pg_db)
@@ -123,17 +128,24 @@ def create_tables(session):
         pg_db.execute("GRANT DELETE ON notification, ingestqueue TO fitsdata;COMMIT;")
 
     # Make a dummy publication
-    pub = Publication(
-        bibcode='1993ApJ...415...50C',
-        author='Cavaliere, A.; Colafrancesco, S.; Menci, N.',
-        journal='Astrophysical Journal, Part 1, vol.415, no. 1, p. 50-57.',
-        year='1993',
-        title='Distant clusters of galaxies detected by X-rays'
-    )
-    session.add(pub)
+    # pub = Publication(
+    #     bibcode='1993ApJ...415...50C',
+    #     author='Cavaliere, A.; Colafrancesco, S.; Menci, N.',
+    #     journal='Astrophysical Journal, Part 1, vol.415, no. 1, p. 50-57.',
+    #     year='1993',
+    #     title='Distant clusters of galaxies detected by X-rays'
+    # )
+    # session.add(pub)
+
 
 def drop_tables(session):
     """
     Drops all the database tables. Very unsubtle. Use with caution
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.session.Session`
+        The current SQL Alchemy session (future proofing, for now it all routes through `pg_db`)
     """
+    # TODO is this even used anywhere?  I think we should kill it here and in the create_tables script
     File.metadata.drop_all(bind=pg_db)

@@ -4,8 +4,11 @@ from sqlalchemy.orm import relation
 
 from . import Base
 
-# ------------------------------------------------------------------------------
+
 class Glacier(Base):
+    """
+    Record to track files that we've moved to Glacier
+    """
     __tablename__ = 'glacier'
     id = Column(Integer, primary_key=True)
     filename = Column(Text, nullable=False, index=True)

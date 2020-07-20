@@ -15,7 +15,7 @@ DISPERSERS = ['Block', 'H-50/50_G5701', 'H-CH4-Dichroic_G5704',
 
 DISPERSER_ENUM = Enum(*DISPERSERS, name='nici_disperser')
 
-# ------------------------------------------------------------------------------
+
 class Nici(Base):
     """
     This is the ORM object for the NICI details
@@ -30,12 +30,31 @@ class Nici(Base):
     disperser = Column(DISPERSER_ENUM, index=True)
 
     def __init__(self, header, ad):
+        """
+        Create a record for NICI data linked to the given header and sourced
+        from an :class:`astrodata.AstroData` object
+
+        Parameters
+        ----------
+        header : :class:`~header.Header`
+            Header record linked to this one
+        ad : :class:`astrodata.AstroData`
+            AstroData object to read NICI data from
+        """
         self.header = header
 
         # Populate from an astrodata object
         self.populate(ad)
 
     def populate(self, ad):
+        """
+        Populate the NICI record data from an :class:`astrodata.AstroData` object
+
+        Parameters
+        ----------
+        ad : :class:`astrodata.AstroData`
+            AstroData object to read NICI data from
+        """
         try:
             self.filter_name = ad.filter_name()
         except (AttributeError, ValueError):
