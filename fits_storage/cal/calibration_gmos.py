@@ -92,6 +92,12 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('arc')
                 self.applicable.append('processed_arc')
 
+            # TODO what should match these?
+            if self.descriptors['spectroscopy']:
+                self.applicable.append('slitresponse')
+                self.applicable.append('processed_slitresponse')
+            # end TODO
+
             # If it (is spectroscopy) and
             # (is an OBJECT) and
             # (is not a Twilight) and
