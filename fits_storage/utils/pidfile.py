@@ -10,6 +10,7 @@ class PidFileError(Exception):
 #       by separate processes. Not a problem (in principle), but maybe we should fix
 #       that
 
+
 class PidFile(object):
     def __init__(self, logger, name, dummy=False):
         try:

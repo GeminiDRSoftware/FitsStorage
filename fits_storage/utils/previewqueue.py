@@ -39,7 +39,7 @@ from gempy.library.spectral import Spek1D
 
 from .. import logger
 
-# ------------------------------------------------------------------------------
+
 def norm(data, percentile=0.3):
     """
     Normalize the data onto 0:1 using percentiles
@@ -53,17 +53,45 @@ def norm(data, percentile=0.3):
     data /= (phigh - plow)
     return data
 
+
 class PreviewQueueUtil(object):
+    """
+    Helper utility for working with the :class:`~PreviewQueue`
+    """
     def __init__(self, session, logger):
+        """
+        Create utility for working with the preview queue
+
+        Parameters
+        ----------
+        session : :class:`sqlalchemy.orm.session.Session`
+            SQL Alchemy session to work with
+        logger : :class:`~Logger`
+            Logger for log messages
+        """
         self.s = session
         self.l = logger
         if using_s3:
             self.s3 = get_helper(logger_ = logger)
 
     def length(self):
+        """
+        Get the length of the queue
+
+        Returns
+        -------
+        int : length of queue
+        """
         return queue.queue_length(PreviewQueue, self.s)
 
     def pop(self):
+        """
+        Get the next item off the list
+
+        Returns
+        -------
+        :class:`~PreviewQueue` : next record off the preview queue
+        """
         return queue.pop_queue(PreviewQueue, self.s, self.l)
 
     def set_error(self, trans, exc_type, exc_value, tb):
@@ -75,6 +103,17 @@ class PreviewQueueUtil(object):
         queue.delete_with_id(PreviewQueue, trans.id, self.s)
 
     def process(self, diskfiles, make=False):
+        """
+        Add the set of diskfiles to the preview queue, or create the previews
+        immediately.
+
+        Parameters
+        ----------
+        diskfiles : iterable of :class:`~DiskFile`
+            List of DiskFiles to generate previews for
+        make : bool
+            True if we should make the preview immediately, False to add to the queue
+        """
         try:
             iter(diskfiles)
         except TypeError:
@@ -127,6 +166,10 @@ class PreviewQueueUtil(object):
         have that so it will then either open the file or fetch it from S3 as 
         appropriate etc.
 
+        Parameters
+        ----------
+        diskfile : :class:`~DiskFile`
+            DiskFile record to make preview for
         """
         # Setup the preview file
         preview_filename = diskfile.filename + "_preview.jpg"
@@ -228,7 +271,6 @@ class PreviewQueueUtil(object):
                 if our_dfcc:
                     os.unlink(ad_fullpath)
 
-
     def render_spectra_preview(self, ad, outfile, idx):
         """
         Pass in an astrodata object and a file-like outfile. This function will
@@ -286,7 +328,6 @@ class PreviewQueueUtil(object):
         fig.savefig(outfile, format='jpg')
 
         plt.close()
-
 
     def render_preview(self, ad, outfile):
         """

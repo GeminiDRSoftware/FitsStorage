@@ -19,14 +19,41 @@ from ..cal import get_cal_object
 from ..cal.associate_calibrations import associate_cals
 
 class CalCacheQueueUtil(object):
+    """
+    Helper class for working with the queue for creating CalCache records.
+    """
     def __init__(self, session, logger):
+        """
+        Create a :class:`~CalCacheQueueUtil`
+
+        Parameters
+        ----------
+        session : :class:`sqlalchemy.orm.session.Session
+            SQL Alchemy session to work in
+        logger : :class:`logger.Logger`
+            Logger for logging messages
+        """
         self.s = session
         self.l = logger
 
     def length(self):
+        """
+        Get the current length of the queue
+
+        Returns
+        -------
+        int : length of the queue, including in progress and failed entries
+        """
         return queue.queue_length(CalCacheQueue, self.s)
 
     def pop(self, fast_rebuild=False):
+        """
+        Take the last entry off the queue
+
+        Returns
+        -------
+        :class:`~orm.calcachequeue.CalCacheQueue` : next item on the queue
+        """
         return queue.pop_queue(CalCacheQueue, self.s, self.l, fast_rebuild)
 
     def set_error(self, trans, exc_type, exc_value, tb):
@@ -37,10 +64,18 @@ class CalCacheQueueUtil(object):
         "Deletes a transient object"
         queue.delete_with_id(CalCacheQueue, trans.id, self.s)
 
+
 def cache_associations(session, obs_hid):
     """
     Do the calibration association and insert the associations into the calcache table.
     Remove any old associations that this replaces
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.session.Session
+        SQL Alchemy session to work in
+    obs_hid : int
+        ID of Header to perform Calibration associations on and save in cache
     """
 
     # Get the Header object

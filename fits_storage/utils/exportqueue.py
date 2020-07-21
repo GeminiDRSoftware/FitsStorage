@@ -28,15 +28,43 @@ from .. import apache_return_codes as apache
 if using_s3:
     from .aws_s3 import get_helper
 
+
 class ExportQueueUtil(object):
+    """
+    Utility for working with the :class:`~orm.exportqueue.ExportQueue`
+    """
     def __init__(self, session, logger):
+        """
+        Create an :class:`~ExportQueueUtil` utility
+
+        Parameters
+        ----------
+        session : :class:`sqlalchemy.orm.session.Session`
+            SQL Alchemy session to use
+        logger : :class:`logger.Logger`
+            Logger to use
+        """
         self.s = session
         self.l = logger
 
     def length(self):
+        """
+        Get the length of the export queue
+
+        Returns
+        -------
+        int : length of queue
+        """
         return queue.queue_length(ExportQueue, self.s)
 
     def pop(self):
+        """
+        Get the next record off the queue
+
+        Returns
+        -------
+        :class:`~ExportQueue` : next export queue item
+        """
         return queue.pop_queue(ExportQueue, self.s, self.l, fast_rebuild=False)
 
     def set_error(self, trans, exc_type, exc_value, tb):
@@ -88,7 +116,18 @@ class ExportQueueUtil(object):
         """
         Exports a file to a downstream server.
 
-        Returns True if sucessfull, False otherwise
+        Parameters
+        ----------
+        filename : str
+            Name of the file to export
+        path : str
+            Path in `dataflow` of the file
+        destination : str
+            URL of the service to export to
+
+        Returns
+        -------
+        bool : True if sucessfull, False otherwise
         """
         self.l.debug("export_file %s to %s", filename, destination)
 
@@ -238,6 +277,7 @@ class ExportQueueUtil(object):
             self.l.debug("There are no failed ExportQueue items to retry")
 
         self.s.commit()
+
 
 def get_destination_data_md5(filename, logger, destination):
     """
