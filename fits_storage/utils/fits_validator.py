@@ -231,7 +231,13 @@ class Pattern(object):
         self.cpat = re.compile(pattern)
 
     def __contains__(self, x):
-        return self.cpat.match(x) is not None
+        if x is None:
+            return False
+        if not isinstance(x, str) and not isinstance(x, bytes):
+            check_x = "%s" % x
+        else:
+            check_x = x
+        return self.cpat.match(check_x) is not None
 
     def __repr__(self):
         return '<pattern({0!r})>'.format(self.cpat.pattern)

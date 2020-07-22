@@ -21,6 +21,17 @@ copy_from_visiting_instrument.py
 
 - Added compression option which, if set to false, does not re-encrypt data after fixing the headers
 
+2020-1.7
+========
+
+Updated Scripts
+---------------
+
+fits_validator.py
+^^^^^^^^^^^^^^^^^
+
+- For regex checks, convert non-str values into strings before testing - and automatically fail on None
+
 2020-1.6
 ========
 
