@@ -115,7 +115,19 @@ def queue_length(queue_class, session):
                     .filter(queue_class.inprogress == False)\
                     .count()
 
+
 def format_tb(tb):
+    """
+    Format a traceback as a human readable (ish) string
+
+    Parameters
+    ----------
+    tb : exception traceback
+
+    Returns
+    -------
+    str : text encoded dump of the stack trace
+    """
     ret = []
     while tb is not None:
         f = tb.tb_frame
@@ -131,7 +143,29 @@ def format_tb(tb):
 
     return ret
 
+
 def add_error(queue_class, obj, exc_type, exc_value, tb, session):
+    """
+    Add an error to the database.
+
+    This helper adds an error in handling a queue item to the database for future
+    triage.
+
+    Parameters
+    ----------
+    queue_class : class of type :class:`~Queue`
+        The Queue class to be logged
+    obj : :class:`~Queue`
+        The instance from the queue that failed
+    exc_type : Any
+        The type of the exception
+    exc_value : Any
+        The exception information
+    tb : Any
+        The traceback
+    session : :class:`sqlalchemy.orm.session.Session`
+        SQL Alchemy session to save the queue error to
+    """
     session.rollback()
     queue = queue_class.error_name
 
@@ -171,7 +205,20 @@ def add_error(queue_class, obj, exc_type, exc_value, tb, session):
 #     dbob.error = '\n'.join(text)
 #     session.commit()
 
+
 def delete_with_id(queue_class, oid, session):
+    """
+    Delete the queue entry by id
+
+    Parameters
+    ----------
+    queue_class : class of type :class:`~Queue`
+        The queue type to remove the record from
+    oid : int
+        The ID of the entry to remove
+    session : :class:`sqlalchemy.orm.session.Session`
+        SQL Alchemy session to delete the record from
+    """
     dbob = session.query(queue_class).get(oid)
     session.delete(dbob)
     session.commit()

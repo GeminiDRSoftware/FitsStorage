@@ -22,6 +22,7 @@ queues = (
     ('Calibration Cache', 'cq', CalCacheQueue, CalCacheQueueUtil),
     )
 
+
 def stats(session):
     for qname, linkname, qtype, qutil in queues:
         length = qutil(session, None).length()
@@ -35,6 +36,7 @@ def stats(session):
                'type': qtype,
                'size': length,
                'errors': errors}
+
 
 stat_query = {
     # Type: (select_from, join, columns, sorting)
@@ -53,6 +55,7 @@ stat_query = {
     }
 
 StatResult = namedtuple('StatResult', 'oid filename error added')
+
 
 def get_error_result(session, obj=None, oid=None):
     if obj is None:
