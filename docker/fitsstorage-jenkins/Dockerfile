@@ -3,13 +3,10 @@ FROM centos:centos8.1.1911
 LABEL maintainer="ooberdorf@gemini.edu"
 
 # ENABLE EPEL
-###RUN yum -y install yum-utils
-###COPY spacewalk-epel-20200619.repo /tmp/spacewalk-epel-20200619.repo
-###RUN yum-config-manager --add-repo /tmp/spacewalk-epel-20200619.repo
-# Trying this hack
-#   https://www.edureka.co/community/72932/error-failed-to-download-metadata-for-repo-epel-modular
-RUN rm -r /var/cache/dnf
-RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+RUN yum -y install yum-utils
+COPY spacewalk-epel-20200619.repo /tmp/spacewalk-epel-20200619.repo
+RUN yum-config-manager --add-repo /tmp/spacewalk-epel-20200619.repo
+#RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
 # IT Workaround - we can't resolve this host within Gemini network
 ### RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts
