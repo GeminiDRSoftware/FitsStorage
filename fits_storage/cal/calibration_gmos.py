@@ -162,6 +162,27 @@ class CalibrationGMOS(Calibration):
         This method identifies the best GMOS ARC to use for the target
         dataset.
 
+        This will match on arcs for the same instrument, disperser and filter_name
+        with the same x and y binning and a wavelength within 0.001 microns tolerance taken
+        within a year of the observation.
+
+        This method will also match on `focal_plane_mask`.  If the `focal_plane_mask` is
+        5.0arcsec, this is a special case and will will simply match on any value
+        ending in "arcsec".
+
+        Finally, we look for a match on `amp_read_area`.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw arcs
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default 1 arc
         howmany = howmany if howmany else 1
@@ -207,7 +228,26 @@ class CalibrationGMOS(Calibration):
     def dark(self, processed=False, howmany=None):
         """
         Method to find best GMOS Dark frame for the target dataset.
+
+        This will match on darks for the same instrument, read speed, gain, and nod/shuffle
+        with the same x and y binning and an exposure time within 50s tolerance taken
+        within a year of the observation.
+
+        Finally, we look for a match on `amp_read_area`.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw darks
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
+
         if howmany is None:
             howmany = 1 if processed else 15
 
@@ -252,7 +292,29 @@ class CalibrationGMOS(Calibration):
     def bias(self, processed=False, howmany=None):
         """
         Method to find the best bias frames for the target dataset
+
+        This will match on biases for the same instrument, read speed, and gain
+        with the same x and y binning and
+        within a 90 days of the observation.
+
+        For `prepared` data, we also look for a match on `overscan_trimmed` and
+        `overscan_subtracted`.
+
+        Finally, we look for a match on `amp_read_area`.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw biases
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
+
         if howmany is None:
             howmany = 1 if processed else 50
 
@@ -302,6 +364,30 @@ class CalibrationGMOS(Calibration):
             )
 
     def imaging_flat(self, processed, howmany, flat_descr, filt):
+        """
+        Method to find the best imaging flats for the target dataset
+
+        For unprocessed imaging flats, we look for a target type of `Twilight`.
+
+        This will match on imaging flats for the provided `flat_descr` elements
+        within 180 days of the observation.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw flats
+        howmany : int, default 1
+            How many matches to return
+        flat_descr : list of descriptors
+            The list of descriptors to match against
+        filt : list of filters
+            Additional list of filters to apply to the query
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         if howmany is None:
             howmany = 1 if processed else 20
 
@@ -320,6 +406,30 @@ class CalibrationGMOS(Calibration):
             )
 
     def spectroscopy_flat(self, processed, howmany, flat_descr, filt):
+        """
+        Method to find the best spectroscopy flats for the target dataset
+
+        This will match on spectroscopy flats for the provided `flat_descr` elements
+        and `filt` filters with a `central_wavelength` tolerance of 0.001 microns
+        within 180 days of the observation.  It will also do some fuzzy matching
+        on the elevation.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw flats
+        howmany : int, default 1
+            How many matches to return
+        flat_descr : list of descriptors
+            The list of descriptors to match against
+        filt : list of filters
+            Additional list of filters to apply to the query
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         if howmany is None:
             howmany = 1 if processed else 2
 
@@ -381,8 +491,26 @@ class CalibrationGMOS(Calibration):
     def flat(self, processed=False, howmany=None):
         """
         Method to find the best GMOS FLAT fields for the target dataset
-        """
 
+        This will match on flats for the same instrument, read speed, filter,
+        focal plane mask, disperser, amp read area, and gain with the same
+        x and y binning.
+
+        It will then do the matching using either :meth:`spectroscopy_flat` or
+        :meth:`imaging_flat` as appropriate.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw flats
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         filters = []
 
         # Common descriptors for both types of flat
@@ -421,6 +549,19 @@ class CalibrationGMOS(Calibration):
         """
         Method to find the best processed_fringe frame for the target dataset.
         Note that the concept of a raw fringe frame is meaningless.
+
+        This will match on amp read area, filter name, and x and y binning.  It matches
+        within 1 year.
+
+        Parameters
+        ----------
+
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 1
@@ -453,6 +594,25 @@ class CalibrationGMOS(Calibration):
     def standard(self, processed=False, howmany=None):
         """
         Method to find the best standard frame for the target dataset.
+
+        This will match on flats for the same instrument, read speed, filter,
+        focal plane mask, disperser, amp read area, and gain with the same
+        x and y binning.
+
+        It will then do the matching using either :meth:`spectroscopy_flat` or
+        :meth:`imaging_flat` as appropriate.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw standards
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 1
@@ -524,6 +684,22 @@ class CalibrationGMOS(Calibration):
         """
         Method to find the best spectwilight - ie spectroscopy twilight
         ie MOS / IFU / LS twilight
+
+        This will match on 'Twilight' spectroscopy for the same instrument, filter,
+        focal plane mask, disperser, and amp read area with the same
+        x and y binning and a central wavelength within 0.02 microns within 1 year.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw spectwilights.  Currently processed are not supported.
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 2
@@ -566,6 +742,22 @@ class CalibrationGMOS(Calibration):
     def specphot(self, processed=False, howmany=None):
         """
         Method to find the best specphot observation
+
+        This will match on non-'Twilight' partner cal or program cal for the same instrument, filter,
+        disperser, focal plane mask, and amp read area with  a central wavelength within 0.05
+        (or 0.1 for MOS) microns within 1 year.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw specphots.
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 4
@@ -618,7 +810,22 @@ class CalibrationGMOS(Calibration):
     @not_spectroscopy
     def photometric_standard(self, processed=False, howmany=None):
         """
-        Method to find the best phot_std observation
+        Method to find the best photometric standard observation
+
+        This will match on partner cal files with a 'CAL' program id and matching filter name
+        taken within a day.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw photometric standards.
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 4
@@ -639,7 +846,21 @@ class CalibrationGMOS(Calibration):
     @not_processed
     def mask(self, processed=False, howmany=None):
         """
-        Method to find the MASK (MDF) file
+        Method to find the best mask
+
+        This will match on GMOS 'MASK' observation type data with a matching focal plane mask.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw masks.
+        howmany : int, default 1
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 1

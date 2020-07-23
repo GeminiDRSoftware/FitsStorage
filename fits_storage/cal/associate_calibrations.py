@@ -19,11 +19,36 @@ mapping = {
     'processed_slitresponse': ('slitresponse', { 'processed': True })
     }
 
+
 def associate_cals(session, headers, caltype="all", recurse_level=0, full_query=False):
     """
     This function takes a list of headers from a search result and
     generates a list of the associated calibration headers
     We return a priority ordered (best first) list
+
+    Parameters
+    ----------
+
+    session : :class:`sqlalchemy.orm.session.Session`
+        The open session to use for querying data
+
+
+    header : list of :class:`fits_storage.orm.header.Header`
+        A list of headers to get the appropriate calibration objects for
+
+    caltype : str, defaults to "all"
+        Type of calibration to lookup, or "all" for all types
+
+    recurse_level : int, defaults to 0
+        The current depth of the query, should initally be passed in as 0 (defeault).
+
+    full_query : bool, defaults to False
+        If True, query pulls in DiskFile and File records as well
+
+    Returns
+    -------
+
+    list of :class:`fits_storage.orm.header.Header` calibration records or, if `full_query`, list of tuples of :class:`fits_storage.orm.header.Header`, :class:`fits_storage.orm.diskfile.DiskFile`, :class:`fits_storage.orm.file.File`
     """
 
     calheaders = []
@@ -67,18 +92,40 @@ def associate_cals(session, headers, caltype="all", recurse_level=0, full_query=
     # All done, return the shortlist
     return shortlist
 
+
 def associate_cals_from_cache(session, headers, caltype="all", recurse_level=0, full_query=False):
     """
-    This function takes a list of headers from a search result and
-    generates a list of the associated calibration headers
+    This function takes a list of :class:`fits_storage.orm.header.Header`s from a search result and
+    generates a list of the associated calibration :class:`fits_storage.orm.header.Header`s
     We return a priority ordered (best first) list
 
     This is the same interface as associate_cals above, but this version
-    queries the CalCache table rather than actually doing the association
+    queries the :class:`fits_storage.orm.calcache.CalCache` table rather than actually doing the association.
+
+    Parameters
+    ----------
+
+    session : :class:`sqlalchemy.orm.session.Session`
+        The open session to use for querying data
+
+    headers : list of :class:`fits_storage.orm.header.Header`
+        A list of headers to get the appropriate calibration objects for
+
+    caltype : str, defaults to "all"
+        Type of calibration to lookup, or "all" for all types
+
+    recurse_level : int, defaults to 0
+        The current depth of the query, should initally be passed in as 0 (defeault).
+
+    full_query : bool, defaults to False
+        If True, query pulls in DiskFile and File records as well
+
+    Returns
+    -------
+
+    list of :class:`fits_storage.orm.header.Header` calibration records or, if `full_query`, list of tuples of :class:`fits_storage.orm.header.Header`, :class:`fits_storage.orm.diskfile.DiskFile`, :class:`fits_storage.orm.file.File`
+
     """
-
-    calheaders = []
-
     # We can do this a bit more efficiently than the non-cache version, as we can do one
     # big 'distinct' query rather than de-duplicating after the fact.
 

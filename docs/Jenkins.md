@@ -61,3 +61,22 @@ First, install python3 as described in the pytest section.  Then:
 ```
 pip3 install ansible
 ```
+
+## FitsStorage Deploys
+
+I have the Jenkins server setup to do deploys of the FitsServer to `dev` and `qap-dev`.
+These builds involve creating a set of docker images to replicate the service spinning 
+up the containers, creating the database and running a set of unit and integration tests
+against it.  Only if everything passes does Jenkins then use ansible to deploy the latest
+checkin onto the target host.
+
+### Jenkins Docker Disk Space
+
+Docker has a nasty habit of eating up disk space until you run out.  If you see errors in
+the build about a `devicemapper` folder being full, do this on the server as root.
+
+```
+sudo service docker stop
+sudo rm -rf /var/lib/docker/image/devicemapper /var/lib/docker/devicemapper
+sudo service docker start
+```

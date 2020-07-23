@@ -138,3 +138,45 @@ your test data in at the beginning.
 ```
 bash ./docker/scripts/cleanup.sh
 ```
+
+## EPEL Notes
+
+I've run into serious issues with the Red Hat/Fedora EPEL repository of late.
+IT's not clear to what extent this is Fedora's fault or CentOS or IT Ops.
+The workaround is to add an alternate repo during the docker image creation
+and to add a host entry to the hosts file for the fedora mirror.  This host
+entry is added inside the `Dockerfile` Jenkins is using to build the image.
+It has to be done on the same line as the command that needs the host.  
+Docker treats the hosts file magically and will immediately restore it
+after each command, if it changed.
+
+That is, if you try to do this:
+
+```
+RUN echo 1.2.3.4 foo >> /etc/hosts
+RUN wget http://foo/
+```
+
+Then by the time it runs the wget, the hosts file no longer has the entry
+for `foo`.  You must instead do this:
+
+```
+RUN echo 1.2.3.4 foo >> /etc/hosts && wget http://foo/
+```
+
+In our case, here are the commands in `fitsstorage-jenkins/Dockerfile` 
+we needed for the workaround EPEL repo:
+
+```
+# ENABLE EPEL
+RUN yum -y install yum-utils
+COPY spacewalk-epel-20200619.repo /tmp/spacewalk-epel-20200619.repo
+RUN yum-config-manager --add-repo /tmp/spacewalk-epel-20200619.repo
+```
+
+Then, further down, here is the hostname hack we had to add to install
+`python3-pip`
+
+```
+RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts && yum -y --nogpgcheck install python3-pip
+```

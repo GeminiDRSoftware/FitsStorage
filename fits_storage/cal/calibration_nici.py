@@ -34,8 +34,24 @@ class CalibrationNICI(Calibration):
                 self.descriptors['gcal_lamp'] != 'Off'):
             self.applicable.append('lampoff_flat')
 
-
     def dark(self, processed=False, howmany=None):
+        """
+        Find the optimal NICI Dark for this target frame
+
+        This will find NICI darks with an exposure tie within 0.01 seconds taken within 1 day.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw darks.
+        howmany : int, default 1 of processed, else 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         if howmany is None:
             howmany = 1 if processed else 10
 
@@ -51,6 +67,24 @@ class CalibrationNICI(Calibration):
             )
 
     def flat(self, processed=False, howmany=None):
+        """
+        Find the optimal NICI Flat for this target frame
+
+        This will find NICI flats with a gcal_lamp of 'IRhigh' and a matching filter name, focal plane mask,
+        and disperser taken within 1 day.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw flats.
+        howmany : int, default 1 if processed, else 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         if howmany is None:
             howmany = 1 if processed else 10
 
@@ -69,6 +103,24 @@ class CalibrationNICI(Calibration):
 
     @not_processed
     def lampoff_flat(self, processed=False, howmany=None):
+        """
+        Find the optimal NICI Lamp-off Flat for this target frame
+
+        This will find NICI lamp-off flats with a gcal_lamp of 'Off' and a matching filter name, focal plane mask,
+        and disperser taken within 1 hour.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw flats.
+        howmany : int, default 10
+            How many matches to return
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
+        """
         # Default number to associate
         howmany = howmany if howmany else 10
 

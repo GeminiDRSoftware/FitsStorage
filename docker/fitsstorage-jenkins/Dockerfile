@@ -3,14 +3,14 @@ FROM centos:centos8.1.1911
 LABEL maintainer="ooberdorf@gemini.edu"
 
 # ENABLE EPEL
-###RUN yum -y install yum-utils
-###COPY spacewalk-epel-20200619.repo /tmp/spacewalk-epel-20200619.repo
-###RUN yum-config-manager --add-repo /tmp/spacewalk-epel-20200619.repo
-RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+RUN yum -y install yum-utils
+COPY spacewalk-epel-20200619.repo /tmp/spacewalk-epel-20200619.repo
+RUN yum-config-manager --add-repo /tmp/spacewalk-epel-20200619.repo
+#RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
 # IT Workaround - we can't resolve this host within Gemini network
-### RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts
-### RUN cat /etc/hosts
+#RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts
+RUN cat /etc/hosts
 
 # see: https://stackoverflow.com/questions/59993633/yum-dnf-error-failed-to-download-metadata-for-repo
 # Do on build
@@ -34,7 +34,10 @@ RUN yum -y install openssl \
                    redhat-rpm-config \
                    python3-devel
 
-RUN yum -y --nogpgcheck install python3-pip
+##RUN yum -y --nogpgcheck install python3-pip
+# WOW, Docker sucks.  You can't modify the hosts file except like this, just in time to run a command.  Because magical.  Or, magically bad.
+# IT Workaround - we can't resolve this host within Gemini network
+RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts && yum -y --nogpgcheck install python3-pip
 
 # Fix Centos 8 broken Locale
 RUN yum -y --nogpgcheck install glibc-langpack-en glibc-common
