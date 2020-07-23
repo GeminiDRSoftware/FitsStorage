@@ -2,6 +2,9 @@ FROM centos:centos8
 LABEL maintainer="ooberdorf@gemini.edu"
 
 # ENABLE EPEL
+# Trying this hack
+#   https://www.edureka.co/community/72932/error-failed-to-download-metadata-for-repo-epel-modular
+RUN rm -r /var/cache/dnf
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
 # INSTALL HTTPD AND POSTGRESQL
