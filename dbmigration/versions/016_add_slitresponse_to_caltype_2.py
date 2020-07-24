@@ -4,7 +4,7 @@ from migrate import *
 
 def upgrade(migrate_engine):
     with migrate_engine.connect() as connection:
-        # Adding the normal slitresponse caltype as well
+        # Adding the normal slitillum caltype as well
 
         # connection.execute("ALTER TYPE obstype ADD VALUE 'STANDARD'")
         # connection.commit()
@@ -14,7 +14,7 @@ def upgrade(migrate_engine):
         # So, we do this
         # see: https://stackoverflow.com/questions/1771543/adding-a-new-value-to-an-existing-enum-type/41696273#41696273
         connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
-                           "SELECT 'caltype'::regtype::oid, 'slitresponse', "
+                           "SELECT 'caltype'::regtype::oid, 'slitillum', "
                            " MAX(enumsortorder) + 1 FROM pg_enum "
                            "WHERE enumtypid = 'caltype'::regtype")
 

@@ -12,7 +12,7 @@ def upgrade(migrate_engine):
         # So, we do this
         # see: https://stackoverflow.com/questions/1771543/adding-a-new-value-to-an-existing-enum-type/41696273#41696273
         connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
-                           "SELECT 'reduction_state'::regtype::oid, 'PROCESSED_SLITRESPONSE', "
+                           "SELECT 'reduction_state'::regtype::oid, 'PROCESSED_SLITILLUM', "
                            " MAX(enumsortorder) + 1 FROM pg_enum "
                            "WHERE enumtypid = 'reduction_state'::regtype")
 
