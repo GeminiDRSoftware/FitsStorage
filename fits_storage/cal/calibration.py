@@ -483,6 +483,13 @@ class CalQuery(object):
                 ret = getattr(self, key)()
             return ret
 
+    def slitillum(self, processed=False):
+        """
+        Filter: shorthand for ``raw_or_processed('SLITILLUM', processed)``
+        """
+        return self.raw_or_processed('SLITILLUM', processed)
+
+
 class Calibration(object):
     """
     This class provides a basic Calibration Manager
@@ -656,3 +663,6 @@ class Calibration(object):
         # Not defined for this instrument
         return []
 
+    def slitillum(self, processed=False, howmany=None):
+        # Not defined for this instrument
+        return []

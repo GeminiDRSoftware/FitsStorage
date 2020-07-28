@@ -171,7 +171,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: master
+          version: refac/slit_response_function
           dest: /opt/FitsStorage
           accept_hostkey: yes
         when: not is_aws
@@ -226,7 +226,7 @@
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
-          version: master
+          version: refac/slit_response_function
         register: dragonscheckout
       - name: Cythonize DRAGONS
         command: /usr/local/bin/cythonize -3 -i cyclip.pyx
@@ -343,10 +343,10 @@
         become: yes
         become_user: postgres
         when: fitsdata_db_created.changed
-      - name: If we have a fresh DB, set version to 12 since we are already up to date with the migrations
+      - name: If we have a fresh DB, set version to 16 since we are already up to date with the migrations
         postgresql_query:
           db: fitsdata
-          query: update migrate_version set version=12
+          query: update migrate_version set version=16
         become: yes
         become_user: postgres
         when: fitsdata_db_created.changed

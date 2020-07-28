@@ -84,9 +84,9 @@ if __name__ == "__main__":
                     else:
                         # Don't query queue length in fast_rebuild mode
                         if options.fast_rebuild:
-                            logger.info("Processing obs_hid %d", ccq.obs_hid)
+                            logger.info("Processing obs_hid %d" % ccq.obs_hid)
                         else:
-                            logger.info("Processing obs_hid %d, (%d in queue)", ccq.obs_hid, ccq_util.length())
+                            logger.info("Processing obs_hid %d, (%d in queue)" % (ccq.obs_hid, ccq_util.length()))
 
                         try:
                             # Do the associations and put them in the CalCache table
@@ -94,14 +94,14 @@ if __name__ == "__main__":
 
                         except:
                             logger.info("Problem Associating Calibrations for Cache - Rolling back")
-                            logger.error("Exception processing obs_hid %d: %s : %s... %s", ccq.obs_hid, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2]))
+                            logger.error("Exception processing obs_hid %d: %s : %s... %s" % (ccq.obs_hid, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2])))
                             # We leave inprogress as True here, because if we set it back to False, we get immediate retry and rapid failures
                             # iq.inprogress=False
 
                             # Recover the session to a working state and log the error to the database
                             ccq_util.set_error(ccq, *sys.exc_info())
                             raise
-                        logger.debug("Deleteing calcachequeue id %d", ccq.id)
+                        logger.debug("Deleteing calcachequeue id %d" % ccq.id)
                         # ccq is a transient ORM object, find it in the db
                         ccq_util.delete(ccq)
 
@@ -112,7 +112,7 @@ if __name__ == "__main__":
                     string = traceback.format_tb(sys.exc_info()[2])
                     string = "".join(string)
                     session.rollback()
-                    logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
+                    logger.error("Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
                     # Press on with the next file, don't raise the esception further. Unless if debugging uncomment next line
                     # raise
     except PidFileError as e:
