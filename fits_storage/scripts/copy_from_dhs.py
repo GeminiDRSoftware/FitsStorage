@@ -48,8 +48,10 @@ def validate(fullpath):
             _seen_validation_failures[fullpath] = num_failures+1
 
         num_failures = _seen_validation_failures[fullpath]
+
+        logger.warn(reason)
+
         if num_failures == max_dhs_validation_failures:
-            logger.warn(reason)
 
             if smtp_server:
                 # First time it fails, send an email error message
