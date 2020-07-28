@@ -32,12 +32,11 @@ def _determine_timestamp_from_filename(filename):
     ]:
         m = regex.search(filename)
         if m:
-            year = int(m.group(0))
-            month = int(m.group(1))
-            day = int(m.group(2))
+            year = int(m.group(1))
+            month = int(m.group(2))
+            day = int(m.group(3))
             dt = datetime.datetime(year=year, month=month, day=day)
-            if dt.before(datetime.now()):
-                return dt
+            return dt
     # Unrecognized filename format, upstream will have to do something appropriate
     return None
 
