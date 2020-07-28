@@ -21,6 +21,18 @@ copy_from_visiting_instrument.py
 
 - Added compression option which, if set to false, does not re-encrypt data after fixing the headers
 
+2020-1.8
+========
+
+Updated Scripts
+---------------
+
+copy_from_dhs.py
+^^^^^^^^^^^^^^^^
+
+- Performs basic validation before doing the copy
+- On 4th failure to validate, emails fitsdata@gemini.edu to alert on the failing file
+
 2020-1.7
 ========
 

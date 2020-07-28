@@ -154,6 +154,8 @@ storage_root = lookup_config('STORAGE_ROOT', '/sci/dataflow')
 #storage_root = '/data/archive_soak'
 #storage_root = '/data/skycam'
 dhs_perm = '/sci/dhs'
+min_dhs_age_seconds = 5
+max_dhs_validation_failures = 4
 
 if(using_s3):
     storage_root = s3_staging_area

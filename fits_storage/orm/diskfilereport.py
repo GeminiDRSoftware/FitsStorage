@@ -102,8 +102,12 @@ class DiskFileReport(Base):
             filename = diskfile.fullpath()
 
         if filename:
-            result = evaluate(diskfile.ad_object)
-            diskfile.mdready = result.passes
-            self.mdstatus = result.code
-            if result.message is not None:
-                self.mdreport = result.message
+            try:
+                result = evaluate(diskfile.ad_object)
+                diskfile.mdready = result.passes
+                self.mdstatus = result.code
+                if result.message is not None:
+                    self.mdreport = result.message
+            except:
+                # don't want to fail the ingest over a metadata report
+                pass
