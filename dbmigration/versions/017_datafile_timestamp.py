@@ -14,10 +14,17 @@ def upgrade(migrate_engine):
     i.create(migrate_engine)
 
     with migrate_engine.connect() as connection:
-        connection.execute("update diskfile set datafile_timestamp=to_date(substring(filename from 2 for 8), 'YYYYMMDD') where filename like 'N20[0-9][0-9][0-1][0-9][0-3][0-9]%'")
-        connection.execute("update diskfile set datafile_timestamp=to_date(substring(filename from 5 for 8), 'YYYYMMDD') where filename like 'img_20[0-9][0-9][0-1][0-9][0-3][0-9]%'")
-        connection.execute("update diskfile set datafile_timestamp=to_date(substring(filename from 6 for 8), 'YYYYMMDD') where filename like '[A-Z][A-Z][A-Z][A-Z]_20[0-9][0-9][0-1][0-9][0-3][0-9]%'")
+        for year in range(2020, 2000, -1):
+            for month in range(12,1,-1):
+                datestr = "%4d%2d" % (year, month)
+                    connection.execute("update diskfile set datafile_timestamp=to_date(substring(filename from 2 for 8), 'YYYYMMDD') where filename like 'N{datestr}[0-3][0-9]%'".format(datestr=datestr))
+                    connection.commit()
+                    connection.execute("update diskfile set datafile_timestamp=to_date(substring(filename from 5 for 8), 'YYYYMMDD') where filename like 'img_{datestr}[0-3][0-9]%'".format(datestr=datestr))
+                    connection.commit()
+                    connection.execute("update diskfile set datafile_timestamp=to_date(substring(filename from 6 for 8), 'YYYYMMDD') where filename like '[A-Z][A-Z][A-Z][A-Z]_{datestr}[0-3][0-9]%'".format(datestr=datestr))
+                    connection.commit()
         connection.execute("update diskfile set datafile_timestamp=lastmod where datafile_timestamp is NULL")
+        connection.commit()
 
 
 def downgrade(migrate_engine):
