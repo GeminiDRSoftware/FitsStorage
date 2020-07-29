@@ -8,10 +8,10 @@ def upgrade(migrate_engine):
 
     datafile_timestamp = Column('datafile_timestamp', DateTime(timezone=True))
 
-    #datafile_timestamp.create(diskfile)
+    datafile_timestamp.create(diskfile)
 
-    #i = Index('idx_diskfile_datafile_timestamp', datafile_timestamp)
-    #i.create(migrate_engine)
+    i = Index('idx_diskfile_datafile_timestamp', datafile_timestamp)
+    i.create(migrate_engine)
 
     with migrate_engine.connect() as connection:
         for year in range(2020, 2000, -1):
