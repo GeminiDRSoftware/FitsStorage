@@ -2,7 +2,7 @@ PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
 MAILTO=fitsadmin@gemini.edu
 #
 # Add to ingest queue
-#*/4  * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=today --demon
+*/4  * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=today --demon
 */30 * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=fourday --demon
 50 * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=twentyday --demon
 2 * * * * python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --path=masks --demon
