@@ -238,11 +238,13 @@ class Header(Base):
 
         # Data Types
         self.observation_type = gemini_observation_type(ad.observation_type())
-    
+
         if 'PINHOLE' in ad.tags:
             self.observation_type = 'PINHOLE'
         if 'RONCHI' in ad.tags:
             self.observation_type = 'RONCHI'
+        if 'SLITILLUM' in ad.tags and 'UNPREPARED' in ad.tags:
+            self.observation_type = 'SLITILLUM'
         self.observation_class = gemini_observation_class(ad.observation_class())
         self.object = ad.object()
 

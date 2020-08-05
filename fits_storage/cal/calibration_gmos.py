@@ -92,6 +92,10 @@ class CalibrationGMOS(Calibration):
                 self.applicable.append('arc')
                 self.applicable.append('processed_arc')
 
+            if self.descriptors['spectroscopy'] is True:
+                self.applicable.append('processed_slitillum')
+                self.applicable.append('slitillum')
+
             # If it (is spectroscopy) and
             # (is an OBJECT) and
             # (is not a Twilight) and
@@ -112,7 +116,6 @@ class CalibrationGMOS(Calibration):
 
                     if self.descriptors['central_wavelength'] is not None:
                         self.applicable.append('processed_standard')
-                        self.applicable.append('processed_slitillum')
 
             # If it (is imaging) and (is Imaging focal plane mask) and
             # (is an OBJECT) and (is not a Twilight) and is not acq or acqcal
