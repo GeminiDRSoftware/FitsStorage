@@ -62,7 +62,7 @@ class AlopekeZorroProblemChecker(ProblemChecker, ABC):
                 year = int(m.group(1))
                 month = int(m.group(2))
                 day = int(m.group(3))
-                if (datetime.datetime() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
+                if (datetime.now() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
                     for f in os.listdir(os.path.join(self._staging_dir, dirname)):
                         if self._filename_re.match(f):
                             query = session.query(DiskFile) \
@@ -126,7 +126,7 @@ class IGRINSProblemChecker(ProblemChecker, ABC):
                         year = int(m.group(1))
                         month = int(m.group(2))
                         day = int(m.group(3))
-                        if (datetime.datetime() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
+                        if (datetime.now() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
                             for f in os.listdir(os.path.join(self._staging_dir, f, dirname)):
                                 if self._filename_re.match(f):
                                     query = session.query(DiskFile) \
@@ -167,7 +167,7 @@ class DHSProblemChecker(ProblemChecker):
                 year = int(m.group(1))
                 month = int(m.group(2))
                 day = int(m.group(3))
-                if (datetime.datetime() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
+                if (datetime.now() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
                     query = session.query(DiskFile) \
                         .filter(DiskFile.canonical == True). \
                         filter(DiskFile.filename == f)
