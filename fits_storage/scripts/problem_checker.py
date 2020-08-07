@@ -62,7 +62,7 @@ class AlopekeZorroProblemChecker(ProblemChecker, ABC):
                 year = int(m.group(1))
                 month = int(m.group(2))
                 day = int(m.group(3))
-                if (datetime.now() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
+                if (datetime.datetime.now() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
                     for f in os.listdir(os.path.join(self._staging_dir, dirname)):
                         if self._filename_re.match(f):
                             query = session.query(DiskFile) \
@@ -70,15 +70,14 @@ class AlopekeZorroProblemChecker(ProblemChecker, ABC):
                                 filter(DiskFile.filename == f)
 
                             record = query.first()
-
                             if record is None:
-                                yield {'filename': f, 'problem': 'No canonical DiskFile found'}
+                                yield "filename: %s, problem: No canonical DiskFile found" % f
                             else:
                                 query = session.query(Header) \
                                     .filter(Header.diskfile_id == record.id)
                                 record = query.first()
                                 if record is None:
-                                    yield {'filename': f, 'problem': 'Missing Header (but Diskfile exists)'}
+                                    yield "filename': %s, problem: Missing Header (but Diskfile exists)" % f
 
 
 class AlopekeProblemChecker(AlopekeZorroProblemChecker):
@@ -126,7 +125,7 @@ class IGRINSProblemChecker(ProblemChecker, ABC):
                         year = int(m.group(1))
                         month = int(m.group(2))
                         day = int(m.group(3))
-                        if (datetime.now() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
+                        if (datetime.datetime.now() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
                             for f in os.listdir(os.path.join(self._staging_dir, f, dirname)):
                                 if self._filename_re.match(f):
                                     query = session.query(DiskFile) \
@@ -134,15 +133,14 @@ class IGRINSProblemChecker(ProblemChecker, ABC):
                                         filter(DiskFile.filename == f)
 
                                     record = query.first()
-
                                     if record is None:
-                                        yield {'filename': f, 'problem': 'No canonical DiskFile found'}
+                                        yield "filename: %s, problem: No canonical DiskFile found" % f
                                     else:
                                         query = session.query(Header) \
                                             .filter(Header.diskfile_id == record.id)
                                         record = query.first()
                                         if record is None:
-                                            yield {'filename': f, 'problem': 'Missing Header (but Diskfile exists)'}
+                                            yield "filename': %s, problem: Missing Header (but Diskfile exists)" % f
 
 
 class DHSProblemChecker(ProblemChecker):
@@ -167,7 +165,7 @@ class DHSProblemChecker(ProblemChecker):
                 year = int(m.group(1))
                 month = int(m.group(2))
                 day = int(m.group(3))
-                if (datetime.now() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
+                if (datetime.datetime.now() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
                     query = session.query(DiskFile) \
                         .filter(DiskFile.canonical == True). \
                         filter(DiskFile.filename == f)
@@ -175,13 +173,13 @@ class DHSProblemChecker(ProblemChecker):
                     record = query.first()
 
                     if record is None:
-                        yield {'filename': f, 'problem': 'No canonical DiskFile found'}
+                        yield "filename: %s, problem: No canonical DiskFile found" % f
                     else:
                         query = session.query(Header) \
                             .filter(Header.diskfile_id == record.id)
                         record = query.first()
                         if record is None:
-                            yield {'filename': f, 'problem': 'Missing Header (but Diskfile exists)'}
+                            yield "filename': %s, problem: Missing Header (but Diskfile exists)" % f
 
 
 if __name__ == "__main__":
