@@ -58,10 +58,10 @@ class AlopekeZorroProblemChecker(ProblemChecker, ABC):
         for f in os.listdir(self._staging_dir):
             m = self._dir_re.match(f)
             if m:
-                dirname = m.groups[0]
-                year = int(m.groups[1])
-                month = int(m.groups[2])
-                day = int(m.groups[3])
+                dirname = m.groups(0)
+                year = int(m.groups(1))
+                month = int(m.groups(2))
+                day = int(m.groups(3))
                 if (datetime.datetime() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
                     for f in os.listdir(os.path.join(self._staging_dir, dirname)):
                         if self._filename_re.match(f):
@@ -122,10 +122,10 @@ class IGRINSProblemChecker(ProblemChecker, ABC):
                 for datefolder in os.listdir(os.path.join(self._staging_dir, f)):
                     m = self._dir_re.match(datefolder)
                     if m:
-                        dirname = m.groups[0]
-                        year = int(m.groups[1])
-                        month = int(m.groups[2])
-                        day = int(m.groups[3])
+                        dirname = m.groups(0)
+                        year = int(m.groups(1))
+                        month = int(m.groups(2))
+                        day = int(m.groups(3))
                         if (datetime.datetime() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
                             for f in os.listdir(os.path.join(self._staging_dir, f, dirname)):
                                 if self._filename_re.match(f):
@@ -164,9 +164,9 @@ class DHSProblemChecker(ProblemChecker):
         for f in os.listdir(self._staging_dir):
             m = self._file_re.match(f)
             if m:
-                year = int(m.groups[1])
-                month = int(m.groups[2])
-                day = int(m.groups[3])
+                year = int(m.groups(1))
+                month = int(m.groups(2))
+                day = int(m.groups(3))
                 if (datetime.datetime() - datetime.datetime(year, month, day)) < datetime.timedelta(days=4):
                     query = session.query(DiskFile) \
                         .filter(DiskFile.canonical == True). \
