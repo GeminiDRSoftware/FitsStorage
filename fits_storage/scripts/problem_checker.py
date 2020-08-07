@@ -70,14 +70,17 @@ class AlopekeZorroProblemChecker(ProblemChecker, ABC):
                                 filter(DiskFile.filename == f)
 
                             record = query.first()
+
                             if record is None:
-                                yield "filename: %s, problem: No canonical DiskFile found" % f
+                                yield "checker: %s, filename: %s, problem: No canonical DiskFile found" % (
+                                self.name(), f)
                             else:
                                 query = session.query(Header) \
                                     .filter(Header.diskfile_id == record.id)
                                 record = query.first()
                                 if record is None:
-                                    yield "filename': %s, problem: Missing Header (but Diskfile exists)" % f
+                                    yield "checker: %s, filename': %s, problem: Missing Header (but Diskfile exists)" % (
+                                    self.name(), f)
 
 
 class AlopekeProblemChecker(AlopekeZorroProblemChecker):
@@ -133,14 +136,17 @@ class IGRINSProblemChecker(ProblemChecker, ABC):
                                         filter(DiskFile.filename == f)
 
                                     record = query.first()
+
                                     if record is None:
-                                        yield "filename: %s, problem: No canonical DiskFile found" % f
+                                        yield "checker: %s, filename: %s, problem: No canonical DiskFile found" % (
+                                        self.name(), f)
                                     else:
                                         query = session.query(Header) \
                                             .filter(Header.diskfile_id == record.id)
                                         record = query.first()
                                         if record is None:
-                                            yield "filename': %s, problem: Missing Header (but Diskfile exists)" % f
+                                            yield "checker: %s, filename': %s, problem: Missing Header (but Diskfile exists)" % (
+                                            self.name(), f)
 
 
 class DHSProblemChecker(ProblemChecker):
@@ -173,13 +179,13 @@ class DHSProblemChecker(ProblemChecker):
                     record = query.first()
 
                     if record is None:
-                        yield "filename: %s, problem: No canonical DiskFile found" % f
+                        yield "checker: %s, filename: %s, problem: No canonical DiskFile found" % (self.name(), f)
                     else:
                         query = session.query(Header) \
                             .filter(Header.diskfile_id == record.id)
                         record = query.first()
                         if record is None:
-                            yield "filename': %s, problem: Missing Header (but Diskfile exists)" % f
+                            yield "checker: %s, filename': %s, problem: Missing Header (but Diskfile exists)" % (self.name(), f)
 
 
 if __name__ == "__main__":
@@ -197,8 +203,6 @@ if __name__ == "__main__":
     print("Starting problem_checker.py")
 
     problems = list()
-
-    problems.extend(["just testing, remove this line if it works"])
 
     with session_scope() as session:
         for problem_checker in problem_checkers:
