@@ -383,6 +383,24 @@ class CalQuery(object):
         else:
             return self.raw().observation_type(name)
 
+    def raw_or_processed_by_types(self, name, processed):
+        """
+        Filter: If processed is ``True``, it is a shorthand for
+
+        ``reduction("PROCESSED_" + name)``
+
+        If not processed, then we look at the types (from AstroData tags).
+        Not all calibrations are noted in the OBSTYPE header and this is
+        an alternate way to distinguish them.
+
+        ``raw().filter(Header.types.like('%{0}%'.format(name)))``
+
+        """
+        if processed:
+            return self.reduction('PROCESSED_' + name)
+        else:
+            return self.raw().filter(Header.types.like('%''{0}''%'.format(name)))
+
     def bias(self, processed=False):
         """
         Filter: shorthand for ``raw_or_processed('BIAS', processed)``
@@ -487,7 +505,7 @@ class CalQuery(object):
         """
         Filter: shorthand for ``raw_or_processed('SLITILLUM', processed)``
         """
-        return self.raw_or_processed('SLITILLUM', processed)
+        return self.raw_or_processed_by_types('SLITILLUM', processed)
 
 
 class Calibration(object):
