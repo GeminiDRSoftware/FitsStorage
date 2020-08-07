@@ -33,6 +33,11 @@ copy_from_dhs.py
 - Performs basic validation before doing the copy
 - On 4th failure to validate, emails fitsdata@gemini.edu to alert on the failing file
 
+problem_checker.py
+^^^^^^^^^^^^^^^^^^
+
+- New script to look for problems with recent data that hasn't ingested correctly
+
 2020-1.7
 ========
 
