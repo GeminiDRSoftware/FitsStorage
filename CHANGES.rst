@@ -57,6 +57,7 @@ copy_from_visiting_instrument.py
 - Allow for multiple filename regexes for 'Alopeke and Zorro
 - Add Telescope/Instrument keyword if missing (it is absent in <= 2018 'Alopeke data)
 - Fixing exposure time in 'Alopeke and Zorro files if it is a string, should be numeric
+- Send error email (if recipient specified) when there is an error copying over/header fixing a file [#378]
 
 service_ingest_queue.py
 ^^^^^^^^^^^^^^^^^^^^^^^
