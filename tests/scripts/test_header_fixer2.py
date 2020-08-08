@@ -1,4 +1,9 @@
-from fits_storage.scripts.header_fixer2 import fix_igrins
+import os
+import tempfile
+from os.path import basename, dirname
+
+import fits_storage
+from fits_storage.scripts.header_fixer2 import fix_igrins, fix_and_copy
 
 
 class MockPHU(object):
@@ -73,3 +78,25 @@ def test_dont_fix_exiting_release():
     fits = mock_fits({"INSTRUME": "IGRINS", "GEMPRGID": "prog", "DATE-OBS": "2018-01-01"})
     assert(fix_igrins(fits))
     assert (fits[0].header['RELEASE'] == "2019-01-01")
+
+
+def test_email_on_error(monkeypatch):
+    global saw_error_email
+    saw_error_email = False
+
+    def mocksendmail(subject, mailfrom, mailto, messages):
+        global saw_error_email
+        saw_error_email = True
+
+    monkeypatch.setattr('fits_storage.scripts.header_fixer2.sendmail', mocksendmail)
+    with tempfile.NamedTemporaryFile() as fp:
+        fp.write(b'Hello world!')
+        fp.close()
+        fullname = fp.name
+        filename = basename(fullname)
+        src = dirname(fullname)
+        dst = tempfile.mkdtemp(suffix="_FitsStorage_test_header_fixer2")
+        fix_and_copy(src, dst, filename, compress=True,
+                     mailfrom="fitsdata@gemini.edu", mailto="ooberdorf@gemini.edu")
+        os.rmdir(dst)
+        assert saw_error_email
