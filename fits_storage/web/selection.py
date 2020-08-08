@@ -689,7 +689,17 @@ def queryselection(query, selection):
 
         if valid and not ((0.2 < lower < 30) and (0.2 < upper < 30)):
             selection['warning'] = 'Invalid Central wavelength value. Value should be in microns, >0.2 and <30.0'
-            valid = False
+            if lower > upper:
+                lower, upper = upper, lower
+            if lower < 0.2:
+                lower = 0.2
+            if upper > 30:
+                upper = 30
+            if lower > 30 or upper < 0.2:
+                # only reject the terms outright if they are completely out of range
+                selection['warning'] = 'Invalid Central wavelength value. Value should be in microns, >0.2 and <30.0' \
+                                       ' - Ignoring terms'
+                valid = False
 
         if valid and (lower > upper):
             lower, upper = upper, lower
