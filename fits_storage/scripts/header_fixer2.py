@@ -4,6 +4,8 @@ import os
 from argparse import ArgumentParser
 from datetime import datetime, timedelta, date
 
+from fits_storage.scripts.emailutils import sendmail
+
 
 def open_image(path):
     if path.endswith('.bz2'):
@@ -117,7 +119,7 @@ def fix_igrins(fits):
     return retval
 
 
-def fix_and_copy(src_dir, dest_dir, fn, compress=True):
+def fix_and_copy(src_dir, dest_dir, fn, compress=True, mailfrom=None, mailto=None):
     path = os.path.join(src_dir, fn)
     tmppath = None
     if fn.endswith('.bz2'):
@@ -143,6 +145,12 @@ def fix_and_copy(src_dir, dest_dir, fn, compress=True):
             fits[0].header['HISTORY'] = 'Corrected metadata: IGRINS fixes'
         fits.writeto(output_file(df), output_verify='silentfix+exception')
     except (IOError, ValueError) as e:
+        if mailfrom and mailto:
+            message = ["ERROR - Unable to fix visiting instrument data",
+                       "file: %s" % fn,
+                       "(from %s to %s)" % (src_dir, dest_dir)]
+            sendmail("ERROR - Unable to import visiting instrument file %s" % fn,
+                     mailfrom, mailto, message)
         print('{0} >> {1}'.format(fn, e))
         if os.path.exists(df):
             os.unlink(df)

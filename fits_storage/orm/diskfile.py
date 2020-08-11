@@ -5,6 +5,7 @@ from sqlalchemy.orm import relation
 import os
 import datetime
 import bz2
+import re
 
 from fits_storage.orm.provenance import Provenance, ProvenanceHistory
 from ..utils.hashes import md5sum, md5sum_size_bz2
@@ -14,6 +15,30 @@ from .file import File
 from .preview import Preview
 
 from ..fits_storage_config import storage_root, z_staging_area
+
+
+_standard_filename_timestamp_re = re.compile(r'[NS](\d{4})(\d{2})(\d{2})[A-Z].*')
+_igrins_filename_timestamp_re = re.compile(r'[A-Z]{4}_(\d{4})(\d{2})(\d{2})_.*')
+_skycam_filename_timestamp_re = re.compile(r'img_(\d{4})(\d{2})(\d{2})_\d{2}h\d{2}m\d{2}s.fits')
+_fallback_filename_timestamp_re = re.compile(r'.*(20\d{2})([0-1]\d)([0-3]\d).*')
+
+
+def _determine_timestamp_from_filename(filename):
+    for regex in [
+        _standard_filename_timestamp_re,
+        _igrins_filename_timestamp_re,
+        _skycam_filename_timestamp_re,
+        _fallback_filename_timestamp_re
+    ]:
+        m = regex.search(filename)
+        if m:
+            year = int(m.group(1))
+            month = int(m.group(2))
+            day = int(m.group(3))
+            dt = datetime.datetime(year=year, month=month, day=day)
+            return dt
+    # Unrecognized filename format, upstream will have to do something appropriate
+    return None
 
 
 class DiskFile(Base):
@@ -50,6 +75,8 @@ class DiskFile(Base):
     fvwarnings = Column(Integer)
     fverrors = Column(Integer)
     mdready = Column(Boolean)
+
+    datafile_timestamp = Column(DateTime(timezone=True), index=True)
 
     provenance = relation(Provenance, backref='diskfile', order_by=Provenance.timestamp)
     provenance_history = relation(ProvenanceHistory, backref='diskfile', order_by=ProvenanceHistory.timestamp_start)
@@ -90,6 +117,13 @@ class DiskFile(Base):
         self.file_size = self.get_file_size()
         self.file_md5 = self.get_file_md5()
         self.lastmod = self.get_lastmod()
+
+        ts = _determine_timestamp_from_filename(given_filename)
+        if ts is not None:
+            self.datafile_timestamp = ts
+        else:
+            self.datafile_timestamp = self.lastmod
+
         if compressed == True or given_filename.endswith(".bz2"):
             self.compressed = True
             # Create the uncompressed cache filename and unzip to it

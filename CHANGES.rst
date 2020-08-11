@@ -8,6 +8,7 @@ User-Facing Changes
 - Search by GPI Astrometric Standard [#253]
 - Fixed time ranges to operate from 2pm-2pm local time in Chile/Hawaii [#288]
 - Ability to search for calibrations associated with selected files [#356]
+- Support for slitillum calibration data
 
 Service fixes and enhancements
 ------------------------------
@@ -47,6 +48,7 @@ delete_files.py
 - Configurable minimum age for files to delete, will skip any files with a filename pattern implying it's too new
 - Error messages also added to a dedicated error email, which is sent only if errors were seen
 - Checks export queue and skips files that are awaiting export
+- Option to delete over a specific age, using new column in `DiskFile` populated on ingest by interpreting the filename [#376]
 
 copy_from_visiting_instrument.py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -55,6 +57,7 @@ copy_from_visiting_instrument.py
 - Allow for multiple filename regexes for 'Alopeke and Zorro
 - Add Telescope/Instrument keyword if missing (it is absent in <= 2018 'Alopeke data)
 - Fixing exposure time in 'Alopeke and Zorro files if it is a string, should be numeric
+- Send error email (if recipient specified) when there is an error copying over/header fixing a file [#378]
 
 service_ingest_queue.py
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -86,6 +89,11 @@ ansible
 - Building HTML docs on `hbffits-lv4` host and exposing via apache [#368]
 - Added boolean variables in inventory to to turn on/off features in ansible deploys, instead of hardcoded hostname logic [#370]
 - Created defaults file for archive host variables so we only need to define overrides in the inventories [#370]
+
+calibration
+^^^^^^^^^^^
+
+- Normalized calibration matching for GMOS arcs to use amp read area even for processed arcs [#380]
 
 2020-1.5
 ========

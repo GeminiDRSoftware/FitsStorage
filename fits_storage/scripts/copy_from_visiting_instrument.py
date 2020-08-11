@@ -124,7 +124,8 @@ class VisitingInstrumentABC(ABC):
                 if not os.path.exists(os.path.join(self.storage_root, dst_path)):
                     os.mkdir(os.path.join(self.storage_root, dst_path))
                 if self.apply_fixes:
-                    fix_and_copy(os.path.dirname(src), os.path.join(self.storage_root, dst_path), dst_filename)
+                    fix_and_copy(os.path.dirname(src), os.path.join(self.storage_root, dst_path), dst_filename,
+                                 True, _mailfrom, _mailto)
                 else:
                     shutil.copyfile(src, dst)
                 logger.info("Adding %s to IngestQueue", filename)
@@ -208,6 +209,10 @@ class IGRINS(VisitingInstrumentABC):
         return os.path.join('igrins', ymd)
 
 
+_mailfrom = "fitsdata@gemini.edu"
+_mailto = None
+
+
 if __name__ == "__main__":
     # Option Parsing
     from optparse import OptionParser
@@ -222,12 +227,16 @@ if __name__ == "__main__":
     parser.add_option("--zorro-old", action="store_true", dest="zorroold", default=False,
                       help="Copy Old Zorro data (from /sci/dataflow/zorro-old)")
     parser.add_option("--igrins", action="store_true", dest="igrins", default=False, help="Copy IGRINS data")
+    parser.add_option("--emailto", action="store", dest="emailto", default=None, help="Where to send error emails")
 
     (options, args) = parser.parse_args()
 
     # Logging level to debug?
     setdebug(options.debug)
     setdemon(options.demon)
+
+    if options.emailto:
+        _mailto = options.emailto
 
     # Annouce startup
     logger.info("*********  copy_from_visiting_instrument.py - starting up at %s" % datetime.datetime.now())

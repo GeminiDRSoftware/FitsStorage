@@ -65,6 +65,7 @@ REDUCTION_STATUS = {
     'ARC': 'PROCESSED_ARC',
     'SCIENCE': 'PROCESSED_SCIENCE',
     'STANDARD': 'PROCESSED_STANDARD',
+    'SLITILLUM': 'PROCESSED_SLITILLUM',
 }
 
 # ------------------------------------------------------------------------------
@@ -244,7 +245,7 @@ class Header(Base):
 
         # Data Types
         self.observation_type = gemini_observation_type(ad.observation_type())
-    
+
         if 'PINHOLE' in ad.tags:
             self.observation_type = 'PINHOLE'
         if 'RONCHI' in ad.tags:

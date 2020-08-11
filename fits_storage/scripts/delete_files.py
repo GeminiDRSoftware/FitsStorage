@@ -80,10 +80,14 @@ if __name__ == "__main__":
     parser.add_option("--maxgb", type="float", action="store", dest="maxgb", help="Delete at most X GB of files")
     parser.add_option("--auto", action="store_true", dest="auto",
                       help="Delete old files to get to pre-defined free space")
+    parser.add_option("--olderthan", type="int", action="store", dest="olderthan",
+                      help="Delete files listed in database as older than this number of days")
     parser.add_option("--oldbyfilename", action="store_true", dest="oldbyfilename",
                       help="Sort by filename to determine oldest files")
     parser.add_option("--oldbylastmod", action="store_true", dest="oldbylastmod",
                       help="Sort by lastmod to determine oldest files")
+    parser.add_option("--oldbytimestamp", action="store_true", dest="oldtimestamp",
+                      help="Sort by the datafile_timestamp column to determine oldest files")
     parser.add_option("--numbystat", action="store_true", dest="numbystat", default=False,
                       help="Use statvfs rather than database to determine number of files on the disk")
     parser.add_option("--yesimsure", action="store_true", dest="yesimsure", help="Needed when file count is large")
@@ -140,14 +144,20 @@ if __name__ == "__main__":
         if not options.notpresent:
             query = query.filter(DiskFile.present == True)
 
+        if options.olderthan and options.olderthan > 0:
+            dt = datetime.now()
+            dt = dt - datetime.timedelta(days=options.olderthan)
+            query = query.filter(DiskFile.datafile_timestamp < dt)
+
         if options.oldbylastmod:
             query = query.order_by(desc(DiskFile.lastmod))
+        elif options.oldbytimestamp:
+            query = query.order_by(DiskFile.datafile_timestamp)
         else:
             query = query.order_by(File.name)
 
         if options.maxnum:
             query = query.limit(options.maxnum)
-
         cnt = query.count()
 
         if cnt == 0:
