@@ -4,7 +4,7 @@ import os
 from argparse import ArgumentParser
 from datetime import datetime, timedelta, date
 
-from fits_storage.scripts.email import sendmail
+from fits_storage.scripts.emailutils import sendmail
 
 
 def open_image(path):
