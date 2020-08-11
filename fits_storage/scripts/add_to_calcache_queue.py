@@ -35,7 +35,7 @@ if __name__ == "__main__":
         # Get a list of header IDs to queue. NB files don't have to be present, but we do want the canonical one
         # We use the header.ut_datetime as the sortkey for the queue
         query = (
-            session.query(Header.id, Header.ut_datetime).select_from(Header, DiskFile)
+            session.query(Header.id, Header.ut_datetime, DiskFile.filename).select_from(Header, DiskFile)
                 .filter(DiskFile.id == Header.diskfile_id)
                 .filter(DiskFile.canonical == True)
             )
@@ -53,9 +53,9 @@ if __name__ == "__main__":
 
         logger.info("Got %d header items to queue" % len(hids))
 
-        for num, (hid, ut_datetime) in enumerate(hids):
+        for num, (hid, ut_datetime, filename) in enumerate(hids):
             logger.debug("Adding CalCacheQueue with obs_hid %s", hid)
-            cq = CalCacheQueue(hid, sortkey=ut_datetime)
+            cq = CalCacheQueue(hid, filename, sortkey=ut_datetime)
             session.add(cq)
             if num % 1000 == 0:
                 logger.info("Committing batch %d", num)
