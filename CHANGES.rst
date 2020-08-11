@@ -95,6 +95,11 @@ calibration
 
 - Normalized calibration matching for GMOS arcs to use amp read area even for processed arcs [#380]
 
+calcachequeue
+^^^^^^^^^^^^^
+
+- Added filename to object to use for logging errors in the queue_error table (as is done for other queues)
+
 2020-1.5
 ========
 

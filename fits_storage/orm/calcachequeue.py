@@ -9,6 +9,7 @@ from sqlalchemy import desc
 
 from . import Base
 
+
 # ------------------------------------------------------------------------------
 class CalCacheQueue(Base):
     """
@@ -22,6 +23,7 @@ class CalCacheQueue(Base):
     failed = Column(Boolean)
     ut_datetime = Column(DateTime)
     sortkey = Column(DateTime(timezone=False), index=True)
+    filename = Column(Text)
 
     error_name = 'CALCACHE'
 
@@ -38,9 +40,10 @@ class CalCacheQueue(Base):
                 .filter(CalCacheQueue.obs_hid == element.obs_hid)\
                 .delete()
 
-    def __init__(self, obs_hid, sortkey=None):
+    def __init__(self, obs_hid, filename, sortkey=None):
         self.obs_hid = obs_hid
         self.inprogress = False
         self.sortkey = sortkey
         self.ut_datetime = datetime.datetime.utcnow()
         self.failed = False
+        self.filename = filename
