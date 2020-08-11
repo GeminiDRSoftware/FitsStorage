@@ -90,6 +90,11 @@ ansible
 - Added boolean variables in inventory to to turn on/off features in ansible deploys, instead of hardcoded hostname logic [#370]
 - Created defaults file for archive host variables so we only need to define overrides in the inventories [#370]
 
+calibration
+^^^^^^^^^^^
+
+- Normalized calibration matching for GMOS arcs to use amp read area even for processed arcs [#380]
+
 2020-1.5
 ========
 
