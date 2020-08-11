@@ -10,6 +10,13 @@ from fits_storage.fits_storage_config import storage_root, using_s3
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 
+"""
+Script to add files in the FITS Server to the queue for export to an Archive server.
+
+This script will add files in the system to the queue for exporting to an Archive
+server.  The export service will then post these files to the Archive server for
+ingest there.
+"""
 if __name__ == "__main__":
     if using_s3:
         from fits_storage.utils.aws_s3 import get_helper

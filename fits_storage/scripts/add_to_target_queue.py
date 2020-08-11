@@ -6,6 +6,11 @@ from fits_storage.logger import logger, setdebug, setdemon
 import datetime
 import sys
 
+"""
+Script to add files in the FITS Server to the queue for finding moving targets.
+
+This script will add files in the system to the queue for checking for known targets.
+"""
 if __name__ == "__main__":
 
     # Option Parsing

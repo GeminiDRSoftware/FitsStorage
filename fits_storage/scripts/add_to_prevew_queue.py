@@ -6,6 +6,14 @@ from fits_storage.logger import logger, setdebug, setdemon
 import datetime
 import sys
 
+
+"""
+Script to add files to the preview queue in the Archive Server
+
+This script will add files in the system to the queue for preview generation.
+The preview service will then use the files to create preview images which 
+will be available in the web interface.
+"""
 if __name__ == "__main__":
 
     # Option Parsing

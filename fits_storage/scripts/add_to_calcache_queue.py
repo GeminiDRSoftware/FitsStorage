@@ -6,6 +6,14 @@ from fits_storage.logger import logger, setdebug, setdemon
 from datetime import datetime, timedelta
 import sys
 
+
+"""
+Script to add files to ingest into the FITS Server
+
+This script will add files in the system to the queue for ingest.
+The ingest service will then examine the files and create 
+`fits_storage.orm.DiskFile` and `fits_storage.orm.Header` records.
+"""
 if __name__ == "__main__":
 
     # Option Parsing

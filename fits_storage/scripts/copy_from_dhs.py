@@ -10,12 +10,63 @@ from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 from fits_storage.fits_storage_config import using_s3, storage_root, dhs_perm
 
+
+"""
+Script to copy files from the DHS staging area into Dataflow.
+"""
+
+
 # Utility functions
 def check_present(session, filename):
+    """
+    Check if the file is present as a `fits_storage.orm.DiskFile`
+
+    This function checks in the given session if the filename exists
+    in the `fits_storage.orm.DiskFile` table with the `present`
+    flag set to True.
+
+
+    Parameters
+    ----------
+
+    session : `sqlalchemy.orm.session.Session`
+        SQLAlchemy session to check against
+    filename : str
+        Name of the file to look for
+
+    Returns
+    -------
+        True if a record exists in `fits_storage.orm.DiskFile` for this filename with `present` set to True
+    """
     df = session.query(DiskFile).filter(DiskFile.filename==filename).filter(DiskFile.present==True).first()
     return True if df else False
 
+
 def copy_over(session, iq, logger, filename, dryrun):
+    """
+    Copy the given file over from DHS and add it to the ingest queue.
+
+    This method copies the given file over from the DHS staging area
+    into Dataflow and adds it to the ingest queue.
+
+    Parameters
+    ----------
+
+    session : `sqlalchemy.orm.session.Session`
+        SQLAlchemy session (unused)
+    iq : `fits_storage.orm.ingestqueue.IngestQueue`
+        Ingest queue to add file to after copying to dataflow
+    logger : `logging.logger`
+        Logger for log messages
+    filename : str
+        Name of file to copy
+    dryrun : bool
+        If True, don't actually copy or add to ingest queue, just check
+
+    Returns
+    -------
+        True if the file was copied or intentionally ignored (directory, known bad, etc.), False if it was not
+    """
     src = os.path.join(dhs_perm, filename)
     dest = os.path.join(storage_root, filename)
     # If the Destination file already exists, skip it
