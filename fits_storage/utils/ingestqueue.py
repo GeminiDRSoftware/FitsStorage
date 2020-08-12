@@ -326,7 +326,7 @@ class IngestQueueUtil(object):
                 # If we are in archive mode and the metadata is OK, add to calcachequeue here
                 if use_as_archive and diskfile.mdready:
                     self.l.info("Adding header id %d to calcachequeue", header.id)
-                    cq = CalCacheQueue(header.id, sortkey=header.ut_datetime)
+                    cq = CalCacheQueue(header.id, diskfile.filename, sortkey=header.ut_datetime)
                     self.s.add(cq)
                     self.s.commit()
 
