@@ -1,3 +1,5 @@
+import signal
+
 import sys
 import os
 import traceback
@@ -437,6 +439,33 @@ if __name__ == "__main__":
     # Annouce startup
     logger.info("*********  copy_from_visiting_instrument.py - starting up at %s" % datetime.datetime.now())
 
+    # Need to set up the global loop variable before we define the signal handlers
+    # This is the loop forever variable later, allowing us to stop cleanly via kill
+    global loop
+    loop = True
+
+    # Define signal handlers. This allows us to bail out neatly if we get a signal
+    def handler(signum, frame):
+        logger.error("Received signal: %d. Crashing out. ", signum)
+        raise KeyboardInterrupt('Signal', signum)
+
+    def nicehandler(signum, frame):
+        logger.error("Received signal: %d. Attempting to stop nicely ", signum)
+        global loop
+        loop = False
+
+    # Set handlers for the signals we want to handle
+    # Cannot trap SIGKILL or SIGSTOP, all others are fair game
+    signal.signal(signal.SIGHUP, nicehandler)
+    signal.signal(signal.SIGINT, nicehandler)
+    signal.signal(signal.SIGQUIT, nicehandler)
+    signal.signal(signal.SIGILL, handler)
+    signal.signal(signal.SIGABRT, handler)
+    signal.signal(signal.SIGFPE, handler)
+    signal.signal(signal.SIGSEGV, handler)
+    signal.signal(signal.SIGPIPE, handler)
+    signal.signal(signal.SIGTERM, nicehandler)
+
     if using_s3:
         logger.info("This should not be used with S3 storage. Exiting")
         sys.exit(1)
@@ -486,7 +515,7 @@ if __name__ == "__main__":
                         else:
                             if ingester.copy_over(session, iq, logger, fullname, options.dryrun, options.force):
                                 known_list.add(filename)
-                if options.demon:
+                if options.demon and loop:
                     logger.debug("Pass complete, sleeping")
                     time.sleep(300)
                 else:
