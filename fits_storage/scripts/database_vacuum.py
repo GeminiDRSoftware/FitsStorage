@@ -7,6 +7,9 @@ from fits_storage.logger import logger, setdebug, setdemon
 from optparse import OptionParser
 
 
+"""
+Script to vacuum the Postgres database.
+"""
 if __name__ == "__main__":
 
     parser = OptionParser()

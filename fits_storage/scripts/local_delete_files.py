@@ -6,7 +6,32 @@ import hashlib
 import sys
 
 
+"""
+Local file cleanup.
+
+This is used to do a smart cleanup of the DHS folder with some checks that the file is ingested and is on tape.
+"""
+
+
 def getXmlData(element, tag):
+    """
+    Utility to get the data out of a given element/tag.
+
+    This just allows for a much more readable way of looking at the XML data.
+    This is used to handle the XML-based webservice to check the tape status
+    for the file.
+
+    Parameters
+    ----------
+    element : `xml.dom.minidom.Node`
+        Element to get data from a child tag
+    tag : str
+        Name of tag to get data from, using the first instance if there are multiple of this tag in the element
+
+    Returns
+    -------
+    str : contents of the tag's data
+    """
     return element.getElementsByTagName(tag)[0].childNodes[0].data
 
 

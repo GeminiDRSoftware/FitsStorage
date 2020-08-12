@@ -6,6 +6,10 @@ from fits_storage.fits_storage_config import fits_aux_datadir
 import datetime
 
 
+"""
+Read in the list of standards from `standards.txt` and add them to the database.
+"""
+
 if __name__ == "__main__":
 
     # Option Parsing

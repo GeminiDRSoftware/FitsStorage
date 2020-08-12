@@ -11,7 +11,12 @@ if using_s3:
     from fits_storage.utils.aws_s3 import get_helper
     s3 = get_helper()
 
+"""
+Helper script to ensure we have `~Preview` records for any `_preview.jpg` files.
 
+The script will validate that we have a corresponding `~DiskFile` for the `~Preview`,
+create the `~Preview` and then link them.
+"""
 if __name__ == "__main__":
 
     # Option Parsing

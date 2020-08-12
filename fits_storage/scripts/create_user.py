@@ -8,6 +8,9 @@ from fits_storage.orm.createtables import create_tables, drop_tables
 
 from datetime import datetime
 
+"""
+Helper script for creating a user for the FITS Server or Archive
+"""
 
 if __name__ == "__main__":
 

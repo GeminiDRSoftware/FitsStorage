@@ -6,6 +6,10 @@ from fits_storage.orm import session_scope
 from fits_storage.orm.createtables import create_tables, drop_tables
 
 
+"""
+Helper script for generating the initial database.
+"""
+
 if __name__ == "__main__":
 
     # ------------------------------------------------------------------------------
