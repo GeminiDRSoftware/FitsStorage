@@ -6,6 +6,7 @@ import gemini_instruments
 
 from . import Base
 
+
 class FullTextHeader(Base):
     """
     This is the ORM object for the Full Text of the header.
@@ -19,6 +20,14 @@ class FullTextHeader(Base):
     fulltext = Column(Text)
 
     def __init__(self, diskfile):
+        """
+        Create a :class:`~FullTextHeader` record for the given file
+
+        Parameters
+        ----------
+        diskfile : :class:`~diskfile.DiskFile`
+            File on disk to read header from
+        """
         self.diskfile_id = diskfile.id
         self.populate(diskfile)
 
@@ -26,6 +35,10 @@ class FullTextHeader(Base):
         """
         Populate the FullTextHeader data items.
 
+        Parameters
+        ----------
+        diskfile : :class:`~diskfile.DiskFile`
+            Read the header out of this diskfile to populate the record
         """
         # A fulltextheader object is unusual; directly pass the constructor
         # a diskfile object which may have an ad_object in it.

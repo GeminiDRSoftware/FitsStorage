@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-This script pulls 
+This script pulls publication data from Xiaoyu's MySQL database and adds it into the archive.
 """
 
 from contextlib import closing
@@ -19,7 +19,14 @@ def process_publication(row):
     Takes a database row representing a publication and normalizes/removes
     certain values, preparing them for ingestion by the web site.
 
-    Returns a dictionary
+    Parameters
+    ----------
+    row : row from MySQL query
+        Row of data from MySQL with information for a bibcode
+
+    Returns
+    -------
+    dict : dictionary equivalent of the row, with empty values removed and `program_id` split into array in `programs`
     """
     copy = dict(row)
     print(("Processing {0}".format(copy.get('bibcode'))))

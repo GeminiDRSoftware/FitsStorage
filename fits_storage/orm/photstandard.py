@@ -5,6 +5,7 @@ from sqlalchemy.orm import relation
 from . import Base
 from .footprint import Footprint
 
+
 class PhotStandard(Base):
     """
     This is the ORM class for the table holding the standard star list for the
@@ -30,6 +31,7 @@ class PhotStandard(Base):
     k_mag = Column(Numeric(precision=6, scale=4))
     lprime_mag = Column(Numeric(precision=6, scale=4))
     m_mag = Column(Numeric(precision=6, scale=4))
+
 
 class PhotStandardObs(Base):
     """

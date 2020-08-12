@@ -148,11 +148,18 @@ class Header(Base):
         return "<Header('%s', '%s')>" % (self.id, self.diskfile_id)
 
     UT_DATETIME_SECS_EPOCH = datetime.datetime(2000, 1, 1, 0, 0, 0)
+
     def populate_fits(self, diskfile, log=None):
         """
         Populates header table values from the FITS headers of the file.
         Uses the AstroData object to access the file.
 
+        Parameters
+        ----------
+        diskfile : :class:`~diskfile.DiskFile`
+            DiskFile record to read to populate :class:`~Header` record
+        log : :class:`logging.Logger`
+            Logger to log messages to
         """
         # The header object is unusual in that we directly pass the constructor
         # a diskfile object which may have an ad_object in it.
@@ -504,8 +511,18 @@ class Header(Base):
 
         return
 
-
     def footprints(self, ad):
+        """
+        Set footprints based on information in an :class:`astrodata.AstroData` instance.
+
+        This method extracts the WCS from the AstroData instance and uses that to build
+        footprint information.
+
+        Parameters
+        ----------
+        ad : :class:`astrodata.AstroData`
+            AstroData object to read footprints from
+        """
         retary = {}
         # Horrible hack - GNIRS etc has the WCS for the extension in the PHU!
         if ad.tags.intersection({'GNIRS', 'MICHELLE', 'NIFS'}):

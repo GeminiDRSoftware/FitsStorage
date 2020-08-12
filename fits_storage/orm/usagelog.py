@@ -34,6 +34,10 @@ class UsageLog(Base):
         Create an initial UsageLog instance from the information in the context.
         Populates initial fields but does not add the instance to the session.
 
+        Parameters
+        ----------
+        ctx : :class:`~Context`
+            The context for this web session
         """
         self.utdatetime = datetime.datetime.utcnow()
 
@@ -53,6 +57,10 @@ class UsageLog(Base):
 
         Call this right at the end, after the request is basically finished.
 
+        Parameters
+        ----------
+        ctx : :class:`~Context`
+            The context for this web session
         """
         self.bytes = ctx.resp.bytes_sent
         self.status = ctx.resp.status
@@ -60,6 +68,11 @@ class UsageLog(Base):
     def add_note(self, note):
         """
         Add a note to this log entry.
+
+        Parameters
+        ----------
+        note : str
+            The note to add
         """
 
         if self.notes is None:
@@ -72,6 +85,9 @@ class UsageLog(Base):
         """
         Returns a string with the http status and a human readable translation.
 
+        Returns
+        -------
+        str : String help text corresponding to the status
         """
         html = str(self.status)
         if self.status == 200:

@@ -3,7 +3,7 @@ from sqlalchemy import Integer, Text
 
 from . import Base
 
-# ------------------------------------------------------------------------------
+
 class Preview(Base):
     """
     This is the ORM object for the preview table. Use this to find preview (jpeg)
@@ -18,5 +18,15 @@ class Preview(Base):
     filename = Column(Text)
 
     def __init__(self, diskfile, preview_filename):
+        """
+        Create a :class:`~Preview` record for the given :class:`~DiskFile` and associated preview filename
+
+        Parameters
+        ----------
+        diskfile : :class:`~DiskFile`
+            DiskFile record to store preview for
+        preview_filename : str
+            Filename of the preview file
+        """
         self.diskfile_id = diskfile.id
         self.filename = preview_filename

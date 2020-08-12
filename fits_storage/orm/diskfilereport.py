@@ -13,7 +13,7 @@ evaluate = AstroDataEvaluator()
 
 STATUS_ENUM = Enum(*STATUSES, name='mdstatus')
 
-# ------------------------------------------------------------------------------
+
 class DiskFileReport(Base):
     """
     This is the ORM object for DiskFileReport.
@@ -34,6 +34,19 @@ class DiskFileReport(Base):
     mdstatus = Column(STATUS_ENUM, index=True)
 
     def __init__(self, diskfile, skip_fv, skip_md):
+        """
+        Create a :class:`~DiskFileReport` for the given :class:`~DiskFile`
+        by running the FITS and metadata checks.
+
+        Parameters
+        ----------
+        diskfile : :class:`~DiskFile`
+            Run the reports on this :class:`~DiskFile`
+        skip_fv : bool
+            If `True`, skip the FITS verication report
+        skip_md : bool
+            If `True`, skip the Metadata verification report
+        """
         self.diskfile_id = diskfile.id
         if skip_fv:
             diskfile.fverrors = 0
@@ -53,6 +66,10 @@ class DiskFileReport(Base):
 
         - Populates the fvreport in self
 
+        Parameters
+        ----------
+        diskfile : :class:`~DiskFile`
+            Run FITS verify report on this :class:`~DiskFile`
         """
         filename = None
         if diskfile.compressed:
@@ -88,6 +105,10 @@ class DiskFileReport(Base):
         - Populates the mdreport text in self
         - Populates the mdstatus enum in self
 
+        Prameters
+        ---------
+        diskfile : :class:`~DiskFile`
+            Run the Metadata report on this :class:`~DiskFile`
         """
         filename = None
         if diskfile.compressed:

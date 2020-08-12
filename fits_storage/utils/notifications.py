@@ -8,7 +8,22 @@ from . import programs
 
 from ..gemini_metadata_utils import GeminiProgram
 
+
 def ingest_odb_xml(session, xml):
+    """
+    Read ODB XML and update notification settings in the Fits Server
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.session.Session`
+        SQL Alchemy session to operate in
+    xml : str
+        XML data from ODB
+
+    Returns
+    -------
+    array of str : List of text messages describing the changes that were applied
+    """
     report = []
     nprogs = 0
     dom = parseString(xml)

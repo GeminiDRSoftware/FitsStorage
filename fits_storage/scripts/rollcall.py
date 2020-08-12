@@ -14,6 +14,15 @@ if using_s3:
     from fits_storage.utils.aws_s3 import get_helper
 
 
+"""
+Utility for validating `~DiskFile`s as being present.
+
+This script checks a set of files to check if they are present and marks 
+them not present if they are not available.  This can be useful in bootstrapping
+a system where you mark all canonical `~DiskFile`s present and run this to
+clear out the ones that are no longer on disk.
+"""
+
 if __name__ == "__main__":
 
     parser = OptionParser()

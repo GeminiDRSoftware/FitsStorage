@@ -396,6 +396,9 @@ class IngestQueueUtil(object):
 
         self.l.debug("ingest_file %s", filename)
 
+        if path is None:
+            path = ""
+
         # First, sanity check if the file actually exists
         if using_s3:
             fullpath = os.path.join(storage_root, filename)
@@ -445,13 +448,38 @@ class IngestQueueUtil(object):
                                 diskfile.uncompressed_cache_file)
 
     def length(self):
+        """
+        Get the length of the ingest queue
+
+        Returns
+        -------
+        int : length of the queue
+        """
         return queue.queue_length(IngestQueue, self.s)
 
     def pop(self, fast_rebuild=False):
+        """
+        Get the next item off the :class:'~IngestQueue`
+
+        Returns
+        -------
+        :class:`~IngestQueue` : queue item
+        """
         return queue.pop_queue(IngestQueue, self.s, self.l, fast_rebuild)
 
     def maybe_defer(self, iq):
-        """Check if the file was very recently modified or is locked, defer ingestion if it was"""
+        """
+        Check if the file was very recently modified or is locked, defer ingestion if it was.
+
+        Parameters
+        ----------
+        iq : :class:`~IngestQueue`
+            Queue item to check for deferral
+
+        Returns
+        -------
+        bool : True if item was deferred
+        """
         after = None
 
         fullpath = os.path.join(storage_root, iq.path, iq.filename)

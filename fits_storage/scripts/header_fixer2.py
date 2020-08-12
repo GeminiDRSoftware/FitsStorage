@@ -7,7 +7,36 @@ from datetime import datetime, timedelta, date
 from fits_storage.scripts.emailutils import sendmail
 
 
+"""
+Utilities for cleaning up headers from unreliable sources.
+
+The visiting instruments have had trouble with providing us
+our requested header keywords.  As much as we'd prefer that
+they create datafiles to the spec, we don't want to hold up
+support for their data over it.  So, these utilities look
+for known issues in the files and correct for them.
+
+Eventually, the hope is these methods would see perfect
+datafiles and not have to make any changes.
+"""
+
+
 def open_image(path):
+    """
+    Open the given datafile.
+
+    This opens the provided datafile.  If it is a `.bz2` file,
+    it will wrap it appropriately.
+
+    Parameters
+    ----------
+    path : str
+        Path to file
+
+    Returns
+    -------
+    file-like object
+    """
     if path.endswith('.bz2'):
         return BZ2File(path)
 
@@ -15,6 +44,13 @@ def open_image(path):
 
 
 def output_file(path):
+    """
+    Create writeable file handle for given path.
+
+    This creates a file-like object for writing out to.  If
+    we are writing a `.bz2` file, it encapsulates the compression
+    for us.
+    """
     if path.endswith('.bz2'):
         return BZ2File(path, 'wb')
 
@@ -22,6 +58,22 @@ def output_file(path):
 
 
 def fix_zorro_or_alopeke(fits, instr, telescope):
+    """
+    Method to clean up FITS files from Zorro or Alopeke.
+
+    Parameters
+    ----------
+    fits : `~Astrodata`
+        File to read data from
+    instr : str
+        Which instrument, `zorro` or `alopeke`
+    telescope : str
+        Which telescope
+
+    Returns
+    -------
+    True if we needed to make any fixes, False if the file is fine as it is
+    """
     retval = False
     pheader = fits[0].header
     if 'INSTRUME' not in pheader:
@@ -77,14 +129,56 @@ def fix_zorro_or_alopeke(fits, instr, telescope):
 
 
 def fix_zorro(fits):
+    """
+    Fix Zorro datafile.
+
+    This just wraps the call to `fix_zorro_or_alopeke` with the
+    appropriate instrument and telescope.
+
+    Parameters
+    ----------
+    fits : astrodata
+        Astrodata object with Zorro data to check
+
+    Returns
+    -------
+    True if we had to modify the file, False if it was fine
+    """
     return fix_zorro_or_alopeke(fits, 'Zorro', 'Gemini-South')
 
 
 def fix_alopeke(fits):
+    """
+    Fix Alopeke datafile.
+
+    This just wraps the call to `fix_zorro_or_alopeke` with the
+    appropriate instrument and telescope.
+
+    Parameters
+    ----------
+    fits : astrodata
+        Astrodata object with Alopeke data to check
+
+    Returns
+    -------
+    True if we had to modify the file, False if it was fine
+    """
     return fix_zorro_or_alopeke(fits, 'Alopeke', 'Gemini-North')
 
 
 def fix_igrins(fits):
+    """
+    Fix IGRINS datafile.
+
+    Parameters
+    ----------
+    fits : astrodata
+        Astrodata object with IGRINS data to check
+
+    Returns
+    -------
+    True if we had to modify the file, False if it was fine
+    """
     pheader = fits[0].header
     if 'INSTRUME' not in pheader:
         return False
@@ -120,6 +214,25 @@ def fix_igrins(fits):
 
 
 def fix_and_copy(src_dir, dest_dir, fn, compress=True, mailfrom=None, mailto=None):
+    """
+    Fix and copy the given file from the visiting instrument staging folder to
+    the appropriate dataflow location.
+
+    Parameters
+    ----------
+    src_dir : str
+        Location of file in the visitor instrument staging area
+    dest_dir : str
+        Location in dataflow to put the file with any required fixes
+    fn : str
+        Name of the file
+    compress : bool
+        If True, we should compress the file on dataflow
+    mailfrom : str
+        If set, use this as the FROM address for any alert emails
+    mailto : str
+        If set, send any alert emails to this address
+    """
     path = os.path.join(src_dir, fn)
     tmppath = None
     if fn.endswith('.bz2'):

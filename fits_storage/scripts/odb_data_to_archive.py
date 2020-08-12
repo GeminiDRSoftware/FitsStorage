@@ -52,8 +52,16 @@ ODB_URLS = {'gemini-north' : 'gnodb.hi.gemini.edu:8442',
             'gemini-south' : 'gsodb.cl.gemini.edu:8442'
            }
 # ------------------------------------------------------------------------------
+
+
 def netloc():
-    """ Site selection, North or South """
+    """
+    Site selection, North or South.
+
+    Returns
+    -------
+    str : hostname and port to query for the ODB webservice
+    """
     def get_site():
         local_site = "Unknown location."
         timezone = time.timezone / 3600
@@ -75,8 +83,19 @@ odb_path   = 'odbbrowser/observations'
 odb_query  = 'programSemester='
 odbq_parts = [odb_scheme, odb_netloc, odb_path, odb_query, None]
 
+
 def do_semester(semester):
-    #qrl = urlunsplit(odbq_parts).format(semester)
+    """
+    Retrieve all ODB program data for a given semester and update database
+
+    This queries the ODB webservice for programs for the given semester.
+    Then it updates the database accordingly.
+
+    Parameters
+    ----------
+    semester : str
+        Semester to query, such as 2020A
+    """
     qrl = "%s://%s/%s/%s%s" % (odb_scheme, odb_netloc, odb_path, odb_query, semester)
     logger.info("Requesting ODB program metadata for semester %s", semester)
     logger.info("ODB URL %s", qrl)
@@ -86,8 +105,19 @@ def do_semester(semester):
     pdata = programs.build_odbdata(programs.get_programs(xdoc))
     update_program_dbtable(prodfitsurl, pdata)
     logger.info("Semester %s appears to have completed sucessfully", semester)
-    
+
+
 def auto_semesters():
+    """
+    Calculate the current and previous semester and return.
+
+    Determines the current and previous semester to assist
+    in automatically running current information.
+
+    Returns
+    -------
+    array of str : Returns current and previous semesters
+    """
     # Return a list giving the current and previous semester
     today = datetime.datetime.now().date()
     this = gemini_semester(today)

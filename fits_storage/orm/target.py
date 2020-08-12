@@ -29,6 +29,16 @@ class Target(Base):
     ephemeris_name = Column(String(32), unique=True, index=True)
 
     def __init__(self, name, ephem_name):
+        """
+        Create a :class:`~Target` record from the given inputs
+
+        Parameters
+        ----------
+        name : str
+            Human-readable name of the target
+        ephem_name : str
+            ID of the target in the JPL ephemeris
+        """
         self.name = name
         self.ephemeris_name = ephem_name
 
@@ -98,6 +108,14 @@ class TargetQueue(Base):
     error_name = 'TARGET'
 
     def __init__(self, diskfile):
+        """
+        Create a :class:`~TargetQueue` record from the given :class:`~DiskFile`
+
+        Parameters
+        ----------
+        diskfile : :class:`~DiskFile`
+            File on disk to find target matches for based on the footprint
+        """
         self.diskfile_id = diskfile.id
         self.added = datetime.datetime.now()
         self.inprogress = False
@@ -116,6 +134,15 @@ class TargetQueue(Base):
         in progress, and that have no duplicates, meaning that there are not two
         entries where one of them is being processed (it's ok if there's a failed 
         one...)
+
+        Parameters
+        ----------
+        session : :class:`~sqlalchemy.orm.session.Session`
+            Session to query against
+
+        Returns
+        -------
+        :class:`~sqlalchemy.orm.query.Query` : query object for retrieving records
 
         """
         # The query that we're performing here is equivalent to
@@ -145,18 +172,36 @@ class TargetQueue(Base):
                 .order_by(desc(TargetQueue.sortkey))
         )
 
-    @staticmethod
-    def rebuild(session, element):
-        session.query(TargetQueue)\
-            .filter(TargetQueue.inprogress == False)\
-            .filter(TargetQueue.header_id == element.header_id)\
-            .delete()
+# TODO I believe this is no longer in use, removing - delete it if it ends up not needed
+    # @staticmethod
+    # def rebuild(session, element):
+    #     session.query(TargetQueue)\
+    #         .filter(TargetQueue.inprogress == False)\
+    #         .filter(TargetQueue.header_id == element.header_id)\
+    #         .delete()
 
     def __repr__(self):
+        """
+        Build a string representation of this queue record
+
+        Returns
+        -------
+        str : String representation of the queue entry
+        """
         return "<TargetQueue('{}', '{}')>".format((self.id, self.diskfile_id))
 
 
 def init_target_tables(session, pg_db):
+    """
+    Initialize the target tables and build the readable name - JPL id mapping
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.session.Session`
+        SQL Alchemy session
+    pg_db : :class:`sqlalchemy.engine.interfaces.Connectable`
+        Database connection information
+    """
     Target.metadata.create_all(bind=pg_db)
     TargetPresence.metadata.create_all(bind=pg_db)
     TargetsChecked.metadata.create_all(bind=pg_db)

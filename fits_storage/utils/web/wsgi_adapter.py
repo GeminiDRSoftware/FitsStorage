@@ -14,7 +14,20 @@ import tarfile
 import sys
 import os
 
+
 class SetEncoder(json.JSONEncoder):
+    """
+    Custom JSON encoder that undertands sets.
+
+    For some crazy reason, the default JSON encoder can't handle sets.
+    We have these sometimes and want to be able to handle them.
+
+    Parameters
+    ----------
+    obj : Any
+        Thing to encode into JSON
+
+    """
     def default(self, obj):
        if isinstance(obj, set):
           return list(obj)

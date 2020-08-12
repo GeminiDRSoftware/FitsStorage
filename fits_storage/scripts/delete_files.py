@@ -26,11 +26,33 @@ errmsglines = None
 
 
 def add_to_msg(log, msg):
+    """
+    Log the given message and add it to the array of messages to email.
+
+    Parameters
+    ----------
+
+    log : `logging.logger.Logger`
+        log to write message to
+    msg : str
+        Message to log and to save for emailing
+    """
     log(msg)
     msglines.append(msg)
 
 
 def add_to_errmsg(log, msg):
+    """
+    Log the given message and add it to the array of messages to an error email.
+
+    Parameters
+    ----------
+
+    log : `logging.logger.Logger`
+        log to write message to
+    msg : str
+        Message to log and to save for emailing with any other errors
+    """
     global errmsglines
     # pass log=None if we logged it via add_to_msg
     if log is not None:
@@ -45,6 +67,23 @@ _filename_datetime_regex = re.compile(r'[NS](\d{8})')
 
 
 def check_old_enough_to_delete(fname):
+    """
+    Utility method to see if the given file is old enough to be safely deleted.
+
+    This helps avoid deleting recent data just because we are low in space on
+    dataflow.  I had a bad interaction with the filesystem snapshots and a large
+    free space quota that led to very recent files being cleared out.  This is
+    an attempt to mitigate that.
+
+    File ages are inferred by matching a regex to extract the encoded date from
+    the filename.  We are not using FITS header keywords or file timestamps.
+
+    Parameters
+    ----------
+
+    fname : str
+        Filename to check the age of
+    """
     if delete_min_days_age:
         global _max_datetime
         if _max_datetime is None:
@@ -60,6 +99,23 @@ def check_old_enough_to_delete(fname):
 
 
 def check_not_on_export_queue(session, fname):
+    """
+    Double check the file is not on the export queue.
+
+    We want to avoid deleting files that are pending export.
+
+    Parameters
+    ----------
+
+    session : `sqlalchemy.orm.session.Session`
+        session to query
+    fname : str
+        Filename to check for
+
+    Returns
+    -------
+    bool : True if not on export queue
+    """
     query = session.query(ExportQueue).filter(ExportQueue.filename == fname)
     return query.first() is None
 

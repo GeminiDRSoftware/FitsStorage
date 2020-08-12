@@ -15,6 +15,12 @@ if using_s3:
     from fits_storage.utils.aws_s3 import get_helper
 
 
+"""
+Ingest an uploaded file.
+
+This can be used on the Archive to ingest a file that has been uploaded.
+"""
+
 if __name__ == "__main__":
 
     # Option Parsing

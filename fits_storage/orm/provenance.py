@@ -26,6 +26,20 @@ class Provenance(Base):
     diskfile_id = Column(Integer, ForeignKey('diskfile.id'))
 
     def __init__(self, timestamp, filename, md5, primitive):
+        """
+        Create provenance record with the given information
+
+        Parameters
+        ----------
+        timestamp : datetime
+            Time of the provenance occuring
+        filename : str
+            Name of the file involved
+        md5 : str
+            MD5 Checksum of the input file
+        primitive : str
+            Name of the DRAGONS primitive that was performed
+        """
         self.timestamp = timestamp
         self.filename = filename
         self.md5 = md5
@@ -46,6 +60,23 @@ class ProvenanceHistory(Base):
     diskfile_id = Column(Integer, ForeignKey('diskfile.id'))
 
     def __init__(self, timestamp_start, timestamp_end, primitive, args):
+        """
+        Create a provenahce history record.
+
+        These are more fine grained than the provenance in that it captures
+        the arguments and the start and stop times
+
+        Parameters
+        ----------
+        timestamp_start : DateTime
+            time the operation began
+        timestamp_end : DateTime
+            time the operation completed
+        primitive : str
+            Name of the DRAGONS primitive performed
+        args : str
+            string-encoded arguments that were passed to the primitive
+        """
         self.timestamp_start = timestamp_start
         self.timestamp_end = timestamp_end
         self.primitive = primitive
@@ -54,10 +85,19 @@ class ProvenanceHistory(Base):
 
 def ingest_provenance(diskfile):
     """
-    ingest the provenance data from the diskfile into the database.
+    Ingest the provenance data from the diskfile into the database.
 
-    :param diskfile: diskfile to read provenance data out of
-    :return: none
+    This helper method reads the FITS file to extract the :class:`~provenance.Provenance`
+    and :class:`~provenance.ProvenanceHistory` data from it and ingest it into the database.
+
+    Parameters
+    ----------
+    diskfile : :class:`~diskfile.Diskfile`
+        diskfile to read provenance data out of
+
+    Returns
+    -------
+    None
     """
     ad = diskfile.ad_object
     if hasattr(ad, 'PROVENANCE'):

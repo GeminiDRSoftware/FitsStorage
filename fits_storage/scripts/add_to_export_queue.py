@@ -1,15 +1,19 @@
 from fits_storage.orm import session_scope
-from fits_storage.fits_storage_config import storage_root
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.exportqueue import ExportQueueUtil
 from fits_storage.web.list_headers import list_headers
 from fits_storage.web.selection import getselection, openquery
-import os
 import sys
-import re
 import datetime
-import time
 
+
+"""
+Script to add files in the FITS Server to the queue for export to an Archive server.
+
+This script will add files in the system to the queue for exporting to an Archive
+server.  The export service will then post these files to the Archive server for
+ingest there.
+"""
 if __name__ == "__main__":
 
     # Option Parsing

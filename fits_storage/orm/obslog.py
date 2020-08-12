@@ -34,7 +34,8 @@ MONMAP = {'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
 }
 OBSLOG_CRE = re.compile(r'^(20\d\d\d\d\d\d)_(.*)_obslog.txt')
 OBSLOG_RE2 = re.compile(r'(^\d\d\d\d)([a-zA-Z][a-zA-Z][a-zA-Z])(\d\d)_obslog.txt')
-# ------------------------------------------------------------------------------ 
+
+
 class Obslog(Base):
     """
     This is the ORM class for the obslog table
@@ -48,6 +49,14 @@ class Obslog(Base):
     date = Column(Date, index=True)
 
     def __init__(self, diskfile):
+        """
+        Create an :class:`~Obslog` record based on the provided :class:`~DiskFile`
+
+        Parameters
+        ----------
+        diskfile : :class:`~DiskFile`
+            DiskFile to build record from
+        """
         self.diskfile_id = diskfile.id
         filename = diskfile.filename
         if filename:
@@ -63,6 +72,13 @@ class Obslog(Base):
                     self.program_id = None
 
     def __repr__(self):
+        """
+        Get a string representation of this Obslog
+
+        Returns
+        -------
+        str : String representation of the :class:`~Obslog`
+        """
         report = "<Obslog('{}', '{}', '{}')>"
         return report.format(self.id, self.program_id, self.date)
 

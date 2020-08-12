@@ -9,7 +9,11 @@ from fits_storage.fits_storage_config import storage_root
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 
+"""
+Local disk add to ingest queue utility.
 
+This is deprecated? see `~add_to_ingest_queue`
+"""
 if __name__ == "__main__":
     # Option Parsing
     from optparse import OptionParser

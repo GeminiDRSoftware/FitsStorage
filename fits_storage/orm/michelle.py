@@ -27,7 +27,7 @@ FOCAL_PLANE_MASKS = ['4_pixels', 'unknown', '8_pixels', 'No Value', '1_pixel',
 
 FOCAL_PLANE_MAKE_ENUM = Enum(*FOCAL_PLANE_MASKS, name='michelle_focal_plane_mask')
 
-# ------------------------------------------------------------------------------
+
 class Michelle(Base):
     """
     This is the ORM object for the MICHELLE details.
@@ -44,12 +44,32 @@ class Michelle(Base):
     focal_plane_mask = Column(FOCAL_PLANE_MAKE_ENUM, index=True)
 
     def __init__(self, header, ad):
+        """
+        Create a record for Michelle data linked to the given header and sourced
+        from an :class:`astrodata.AstroData` object
+
+        Parameters
+        ----------
+        header : :class:`~header.Header`
+            Header record linked to this one
+        ad : :class:`astrodata.AstroData`
+            AstroData object to read Michelle data from
+        """
         self.header = header
 
         # Populate from an astrodata object
         self.populate(ad)
 
     def populate(self, ad):
+        """
+        Populate the Michelle record data from an :class:`astrodata.AstroData` object
+
+        Parameters
+        ----------
+        ad : :class:`astrodata.AstroData`
+            AstroData object to read Michelle data from
+        """
+
         disperser = ad.disperser()
         if disperser in DISPERSERS:
             self.disperser = disperser

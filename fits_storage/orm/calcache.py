@@ -30,6 +30,26 @@ class CalCache(Base):
     caltype = Column(CALTYPE_ENUM, index=True)
     
     def __init__(self, obs_hid, cal_hid, caltype, rank):
+        """
+        Create a calcache record linking data to a relevant calibration file.
+
+        A calcache record allows us to quickly lookup matching calibrations without
+        having to redo the very expensive types of queries that normally requires.
+        In essense, we do the query up front and save the results in a pure
+        data-to-calibration lookup table for the calibration type.
+
+        Parameters
+        ----------
+
+        obs_hid : int
+            ID of the :class:`~header.Header` record for the data being linked
+        cal_hid : int
+            ID of the :class:`~header.Header` record for the calibration
+        caltype : `CALTYPE_ENUM`
+            type of calibration being linked
+        rank : int
+            rank of this calibrtion (relative to other options, lower is better)
+        """
         self.obs_hid = obs_hid
         self.cal_hid = cal_hid
         self.caltype = caltype

@@ -8,6 +8,12 @@ from fits_storage.logger import logger, setdemon, setdebug
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 
 
+"""
+Ingest Queue job that works off of inotify.
+
+Deprecated - we are not currently using this (but perhaps we should dust it off?
+"""
+
 if __name__ == "__main__":
 
     # Option Parsing

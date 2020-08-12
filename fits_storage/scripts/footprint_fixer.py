@@ -26,6 +26,10 @@ except:
     pass
 
 
+# This is deprecated, was to fix a one off problem migrating to python3.
+# Keeping for now for reference
+
+
 def save_missing_footprints(filename, fromdate, todate):
     f = open(filename, "w")
     with session_scope() as session:

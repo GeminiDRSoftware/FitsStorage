@@ -11,7 +11,7 @@ from base64 import b32encode, standard_b64encode
 # Note, password hashing follows the scheme at
 # https://crackstation.net/hashing-security.htm
 
-# ------------------------------------------------------------------------------
+
 class User(Base):
     """
     This is the ORM class for the user table.
@@ -38,6 +38,14 @@ class User(Base):
     password_changed = Column(DateTime)
 
     def __init__(self, username):
+        """
+        Create a User record with the given username
+
+        Parameters
+        ----------
+        username : str
+            Username for the account
+        """
         self.account_type = None
         self.username = username
         self.password = None
@@ -58,6 +66,10 @@ class User(Base):
         This function also expires any existing reset_token and session cookie
         Calling code needs to call a session.commit() after calling this.
 
+        Parameters
+        ----------
+        password : str
+            New value for the password (unhashed)
         """
         self.change_password(password)
         self._clear_reset_token()
@@ -69,6 +81,10 @@ class User(Base):
         password with the salt, updates the ORM with the new hash and the new salt.
         Calling code needs to call a session.commit() after calling this.
 
+        Parameters
+        ----------
+        password : str
+            Password (unhashed) to be salted, hashed and saved to the database
         """
         hashobj = sha256()
         salt = standard_b64encode(urandom(256))
@@ -115,6 +131,9 @@ class User(Base):
         Don't forget to commit the session after calling this.
         Returns the token for convenience.
 
+        Returns
+        -------
+        str : token to pass back in for a password reset
         """
         self.reset_token = b32encode(urandom(32)).decode('utf-8')
         self.reset_token_expires = datetime.utcnow() + timedelta(minutes=15)
@@ -126,7 +145,11 @@ class User(Base):
         If the token is valid, return True after nulling the token in the db.
         Returns False if the token is not valid or has expired
         Don't forget to commit the session after calling this so that a
-        sucessfull validation will null the token making it one-time-use
+        successful validation will null the token making it one-time-use
+
+        Returns
+        -------
+        bool : True if candidate successfully passed in a matching reset token
         """
         try:
             if (candidate is not None) and (datetime.utcnow() < self.reset_token_expires) and (candidate == self.reset_token):
@@ -151,6 +174,9 @@ class User(Base):
         Returns the session cookie.
         Don't forget to commit the session afterwards.
 
+        Returns
+        -------
+        str : generated cookie value
         """
         # Void any outstanding password reset tokens
         self._clear_reset_token()
@@ -173,16 +199,44 @@ class User(Base):
 
     @property
     def reset_requested(self):
+        """
+        Check if reset has been requested
+
+        Returns
+        -------
+        bool : True if a reset token is set
+        """
         return self.reset_token is not None
 
     @property
     def reset_active(self):
+        """
+        Check if a reset is active
+
+        Returns
+        -------
+        bool : True if a reset has been requested and the token has not expired
+        """
         return self.reset_requested and (self.reset_token_expires > datetime.utcnow())
 
     @property
     def has_password(self):
+        """
+        Check if a password is set
+
+        Returns
+        -------
+        bool : True if a password has been set
+        """
         return self.password is not None
 
     @property
     def is_staffer(self):
+        """
+        Check if the user is a staff member
+
+        Returns
+        -------
+        bool : True if the Gemini staff flag is set
+        """
         return self.gemini_staff

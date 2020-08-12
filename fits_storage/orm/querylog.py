@@ -5,7 +5,7 @@ from sqlalchemy.orm import relation
 from . import Base
 from .usagelog import UsageLog
 
-# ------------------------------------------------------------------------------
+
 class QueryLog(Base):
     """
     This is the ORM class for the query log table
@@ -32,13 +32,22 @@ class QueryLog(Base):
         """
         Create an initial QueryLog instance from a UsageLog instance.
 
+        Parameters
+        ----------
+        usagelog : :class:`~usagelog.UsageLog`
+            Related usagelog
         """
         self.usagelog_id = usagelog.id
 
     def add_note(self, note):
         """
-        Add a note to this log entry.
+        Add a note to this log entry.  If we already have notes
+        this one is added after a newline to keep things tidy.
 
+        Parameters
+        ----------
+        note : str
+            Note to add to this log entry
         """
 
         if self.notes is None:

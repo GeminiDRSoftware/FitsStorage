@@ -9,10 +9,25 @@ import json
 
 # ------------------------------------------------------------------------------
 def float_or_None(val):
+    """
+    Data cleanup utility - converts the given str value to a float or returns None
+    for invalid values.  Wraps the kinds of conversion errors we would see from
+    bad data.
+
+    Parameters
+    ----------
+    val : str
+        unreliable string-encoded float value to convert
+
+    Returns
+    -------
+    float : float value of string if it can convert, None if it is not a valid float.
+    """
     try:
         return float(val)
     except (TypeError, ValueError):
         return None
+
 
 class MetricDictMixin(object):
     def __getitem__(self, key):
@@ -55,6 +70,23 @@ class QAreport(Base, MetricDictMixin):
 
     @staticmethod
     def from_dict(qa_dict, host, time):
+        """
+        Convert a dictionary of appropriate values into a proper
+        :class:`~qastuff.QAreport` object.
+
+        Parameters
+        ----------
+        qa_dict : dict
+            Dictionary of values for a QA Report
+        host : str
+            Host submitting the QA report
+        time : datetime
+            Time of the QA report
+
+        Returns
+        -------
+        :class:`~qastuff.QAreport` : report object
+        """
         qa = QAreport()
         qa.hostname = qa_dict['hostname']
         qa.userid = qa_dict['userid']
@@ -80,7 +112,7 @@ class QAreport(Base, MetricDictMixin):
 
         return qa
 
-# ------------------------------------------------------------------------------
+
 class QAmetricIQ(Base, MetricDictMixin):
     """
     This is the ORM class for a QA IQ metric measurement
@@ -124,6 +156,21 @@ class QAmetricIQ(Base, MetricDictMixin):
 
     @staticmethod
     def from_metrics(report, metrics):
+        """
+        Convert a dictionary of IQ metrics into a first-class :class:`~qastuff.QAmetricIQ` object.
+
+        Parameters
+        ----------
+        report : :class:`~qastuff.QAreport`
+            report object to associate with
+        metrics : dict
+            Dictionary of values for the IQ
+
+        Returns
+        -------
+        :class:`~qastuff.QAmetricIQ`
+            IQ information
+        """
         iq = QAmetricIQ(report)
         iq.filename = metrics['filename']
         iq.datalabel = metrics['datalabel']
@@ -151,9 +198,28 @@ class QAmetricIQ(Base, MetricDictMixin):
         return iq
 
     def to_json(self):
+        """
+        Return a JSON encoded version of IQ report information.
+
+        Returns
+        -------
+        str : JSON encoded data
+        """
         return json.dumps(dict(self))
 
     def to_evaluated_dict(self, airmass=None):
+        """
+        Return a dictionary of cleaned and interpreted data.
+
+        Parameters
+        ----------
+        airmass : float
+            Air mass
+
+        Returns
+        -------
+        dict : Dictionary of IQ information with further calculations for AO seeing and/or Zenith as appropriate
+        """
         iq = {
             'band': self.percentile_band,
             'delivered': float_or_None(self.fwhm),
@@ -182,7 +248,7 @@ class QAmetricIQ(Base, MetricDictMixin):
 
         return iq
 
-# ------------------------------------------------------------------------------
+
 class QAmetricZP(Base, MetricDictMixin):
     """
     This is the ORM class for a QA ZP metric measurement
@@ -210,10 +276,33 @@ class QAmetricZP(Base, MetricDictMixin):
     )
 
     def __init__(self, qareport):
+        """
+        Create a ZP report associated with the given QA report
+
+        Parameters
+        ----------
+        qareport : :class:`~qastuff.QAreport`
+            QA report to associate this ZP report with
+        """
         self.qareport_id = qareport.id
 
     @staticmethod
     def from_metrics(report, metrics):
+        """
+        Create a ZP report from the given dictionary of values and associated
+        with the given :class:`~qastuff.QAreport`
+
+        Parameters
+        ----------
+        report : :class:`~qastuff.QAreport`
+            report to associate this ZP information to
+        metrics : dict
+            ZP information provided in dictionary form
+
+        Returns
+        -------
+        :class:`~qastuff.QAmetricZP` : ZP information
+        """
         zp = QAmetricZP(report)
         zp.filename = metrics['filename']
         zp.datalabel = metrics['datalabel']
@@ -232,9 +321,30 @@ class QAmetricZP(Base, MetricDictMixin):
         return zp
 
     def to_json(self):
+        """
+        Express the information in this ZP report as a JSON encoded string
+
+        Returns
+        -------
+        str : JSON encoded ZP report
+        """
         return json.dumps(dict(self))
 
+
 def evaluate_cc_from_metrics(metrics):
+    """
+    Evaluate the CC from the given metrics and return a dictionary
+    with the results.
+
+    Parameters
+    ----------
+    metrics : list
+        List of ZP report information to consolidate
+
+    Returns
+    -------
+    dict : Dictionary of CC summary information
+    """
     # Now go through those and merge them into the form required
     # This is a bit tediouos, given that we may have a result that is split by amp,
     # or we may have one from a mosaiced full frame image.
@@ -267,7 +377,7 @@ def evaluate_cc_from_metrics(metrics):
 
     return cc
 
-# ------------------------------------------------------------------------------
+
 class QAmetricSB(Base, MetricDictMixin):
     """
     This is the ORM class for a QA SB metric measurement
@@ -295,10 +405,32 @@ class QAmetricSB(Base, MetricDictMixin):
         )
 
     def __init__(self, qareport):
+        """
+        Create an SB metrics report linked to the given QA report
+
+        Parameters
+        ----------
+        qareport : :class:`~qastuff.QAreport`
+            report to connect to
+        """
         self.qareport_id = qareport.id
 
     @staticmethod
     def from_metrics(report, metrics):
+        """
+        Build a SB metrics report for the given QA report using the supplied dictionary of values
+
+        Parameters
+        ----------
+        report : :class:`~qastuff.QAreport`
+            QA report to build SB metrics for
+        metrics : dict
+            Dictionary of values to use for metrics
+
+        Returns
+        -------
+        :class:`~qastuff.QAmetricsSB` : SB metrics
+        """
         sb = QAmetricSB(report)
         sb.filename = metrics['filename']
         sb.datalabel = metrics['datalabel']
@@ -323,9 +455,29 @@ class QAmetricSB(Base, MetricDictMixin):
         return sb
 
     def to_json(self):
+        """
+        Generate a JSON encoded version of this data.
+
+        Returns
+        -------
+        str : JSON encoded representation of this SB metrics report
+        """
         return json.dumps(dict(self))
 
+
 def evaluate_bg_from_metrics(metrics):
+    """
+    Merge the SB metrics into a single background report
+
+    Parameters
+    ----------
+    metrics : list
+        List of :class:~`qastuff.QAmetricSB` data
+
+    Returns
+    -------
+    dict : Consolidated background information
+    """
     # Now go through those and merge them into the form required
     # This is a bit tediouos, given that we may have a result that is split by amp,
     # or we may have one from a mosaiced full frame image.
@@ -359,7 +511,7 @@ def evaluate_bg_from_metrics(metrics):
 
     return bg
 
-# ------------------------------------------------------------------------------
+
 class QAmetricPE(Base, MetricDictMixin):
     """
     This is the ORM class for a QA PE (Astrometric Pointing Error) metric measurement
@@ -387,10 +539,32 @@ class QAmetricPE(Base, MetricDictMixin):
         )
 
     def __init__(self, qareport):
+        """
+        Create a pointing error report associated with the given QA report
+
+        Parameters
+        ----------
+        qareport : :class:`~qastuff.QAreport`
+            QA report to link to
+        """
         self.qareport_id = qareport.id
 
     @staticmethod
     def from_metrics(report, metrics):
+        """
+        Build a pointing error report for the given QA report from a dictionary of metrics
+
+        Parameters
+        ----------
+        report : :class:`~qastuff.QAreprt`
+            QA report to link to
+        metrics : dict
+            Dictionary of values for the pointing error information
+
+        Returns
+        -------
+        :class:`~qastuff.QAmetricsPE` pointing error metrics data
+        """
         pe = QAmetricPE(report)
         pe.filename = metrics['filename']
         pe.datalabel = metrics['datalabel']
@@ -406,4 +580,11 @@ class QAmetricPE(Base, MetricDictMixin):
         return pe
 
     def to_json(self):
+        """
+        Create a JSON representation of this pointing error report
+
+        Returns
+        -------
+        str : JSON encoded set of metrics
+        """
         return json.dumps(dict(self))

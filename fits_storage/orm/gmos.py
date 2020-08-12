@@ -14,7 +14,7 @@ READ_SPEED_SETTING_ENUM = Enum(*READ_SPEED_SETTINGS, name='gmos_read_speed_setti
 GAIN_SETTINGS = ['low', 'high']
 GAIN_SETTING_ENUM = Enum(*GAIN_SETTINGS, name='gmos_gain_setting')
 
-# ------------------------------------------------------------------------------
+
 class Gmos(Base):
     """
     This is the ORM object for the GMOS details.
@@ -43,12 +43,30 @@ class Gmos(Base):
     grating_order = Column(Integer)
 
     def __init__(self, header, ad):
+        """
+        Create a GMOS record for the given header and data
+
+        Parameters
+        ----------
+        header : :class:`~header.Header`
+            Corresponding header record
+        ad : :class:`astrodata.AstroData`
+            AstroData object to read GMOS information from
+        """
         self.header = header
 
         # Populate from the astrodata object
         self.populate(ad)
 
     def populate(self, ad):
+        """
+        Populate GMOS record from AstroData instance
+
+        Parameters
+        ----------
+        ad : :class:`astrodata.AstroData`
+            AstroData record to read GMOS information from
+        """
         self.disperser = ad.disperser()
         self.filter_name = ad.filter_name()
         try:

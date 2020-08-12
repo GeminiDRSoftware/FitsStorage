@@ -35,7 +35,6 @@ DATA_SECTIONS = ['Section(x1=0, x2=1024, y1=0, y2=1024)',
 DATA_SECTION_ENUM = Enum(*DATA_SECTIONS, name='niri_data_section')
 
 
-# ------------------------------------------------------------------------------
 class Niri(Base):
     """
     This is the ORM object for the NIRI details.
@@ -55,13 +54,31 @@ class Niri(Base):
     focal_plane_mask = Column(Text)
 
     def __init__(self, header, ad):
+        """
+        Create a record for NIRI data linked to the given header and sourced
+        from an :class:`astrodata.AstroData` object
+
+        Parameters
+        ----------
+        header : :class:`~header.Header`
+            Header record linked to this one
+        ad : :class:`astrodata.AstroData`
+            AstroData object to read NIRI data from
+        """
         self.header = header
 
         # Populate from an astrodata object
         self.populate(ad)
 
     def populate(self, ad):
+        """
+        Populate the NIRI record data from an :class:`astrodata.AstroData` object
 
+        Parameters
+        ----------
+        ad : :class:`astrodata.AstroData`
+            AstroData object to read NIRI data from
+        """
         disperser = ad.disperser()
         if disperser in DISPERSERS:
             self.disperser = disperser

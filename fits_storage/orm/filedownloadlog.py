@@ -8,7 +8,7 @@ from . import Base
 from .usagelog import UsageLog
 from .diskfile import DiskFile
 
-# ------------------------------------------------------------------------------
+
 class FileDownloadLog(Base):
     """
     This is the ORM class for the filedownload log table
@@ -37,7 +37,12 @@ class FileDownloadLog(Base):
 
     def __init__(self, usagelog):
         """
-        Create an initial FileDownloadLog instance from a UsageLog instance
+        Create an initial FileDownloadLog instance from a UsageLog instance.
+
+        Parameters
+        ----------
+        usagelog : :class:`~usagelog.Usagelog`
+            The corresponding :class:`~usagelog.Usagelog` record
         """
         self.usagelog_id = usagelog.id
         self.ut_datetime = datetime.datetime.utcnow()
@@ -45,6 +50,11 @@ class FileDownloadLog(Base):
     def add_note(self, note):
         """
         Add a note to this log entry.
+
+        Parameters
+        ----------
+        note : str
+            Notes to add to this record
         """
 
         if self.notes is None:

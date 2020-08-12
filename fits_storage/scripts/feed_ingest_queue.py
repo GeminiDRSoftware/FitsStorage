@@ -12,6 +12,9 @@ import time
 ONEDAY = datetime.timedelta(days=1)
 
 
+# I think this is deprecated
+
+
 def filebase(site, date):
     """
     Given a site ('N' or 'S') and date object,

@@ -19,6 +19,18 @@ class ObslogComment(Base):
     comment = Column(Text)
 
     def __init__(self, program_id, data_label, comment):
+        """
+        Create an :class:`~ObslogComment` record for the given program id, data label and comment text
+
+        Parameters
+        ----------
+        program_id : str
+            Program ID for the Obslog comment
+        data_label : str
+            Datalabel for the Obslog comment
+        comment : str
+            Comment to save
+        """
         self.program_id = program_id
         self.data_label = data_label
         self.comment = comment

@@ -12,7 +12,8 @@ if __name__ == "__main__":
 
     parser = OptionParser()
     parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
-    parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
+    parser.add_option("--demon", action="store_true", dest="demon",
+                      help="Run as a background demon, do not generate stdout")
 
     (options, args) = parser.parse_args()
 

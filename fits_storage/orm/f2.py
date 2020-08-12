@@ -24,12 +24,30 @@ class F2(Base):
     focal_plane_mask = Column(Text)
 
     def __init__(self, header, ad):
+        """
+        Create an F2 record with the given :class:`~header.Header` and data from :class:`astrodata.Astrodata`
+
+        Parameters
+        ----------
+        header : :class:`~header.Header`
+            Header record corresponding to this F2 instrument data record
+        ad : :class:`astrodata.Astrodata`
+            Astrodata object to parse for additional F2 data
+        """
         self.header = header
 
         # Populate from an astrodata object
         self.populate(ad)
 
     def populate(self, ad):
+        """
+        Populate the F2 information from the given :class:`~astrodata.Astrodata` object
+
+        Parameters
+        ----------
+        ad : :class:`astrodata.Astrodata`
+            Astrodata object to read F2 information from
+        """
         self.disperser = ad.disperser()
         self.filter_name = ad.filter_name()
         self.lyot_stop = ad.lyot_stop()

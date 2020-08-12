@@ -33,5 +33,13 @@ class Program(Base):
     publications = association_proxy('program_publications', 'publication')
 
     def __init__(self, program_id):
+        """
+        Create a new program with the given program id
+
+        Parameters
+        ----------
+        program_id : str
+            Program ID
+        """
         self.program_id = program_id
 

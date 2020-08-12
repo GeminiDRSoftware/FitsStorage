@@ -94,6 +94,20 @@ class DiskFile(Base):
     ad_object = None
 
     def __init__(self, given_file, given_filename, path, compressed=None):
+        """
+        Create a :class:`~Diskfile` record.
+
+        Parameters
+        ----------
+        given_file : :class:`~File`
+            A :class:`~File` record to associate with
+        given_filename : str
+            The name of the file
+        path : str
+            The path of the file within the `storage_root`
+        compressed : bool
+            True if the file is compressed.  It's also considered compressed if the filename ends in .bz2
+        """
         self.file_id = given_file.id
         self.filename = given_filename
         self.path = path
@@ -142,20 +156,54 @@ class DiskFile(Base):
             self.data_size = self.file_size
 
     def fullpath(self):
+        """
+        Get the full path to the file, including the `storage_root`, `path`, and `filename`
+
+        Returns
+        -------
+            str : full path to file
+        """
         return os.path.join(storage_root, self.path, self.filename)
 
     def get_file_size(self):
+        """
+        Get the size of the file
+
+        Returns
+        -------
+            int : size of file in bytes
+        """
         return os.path.getsize(self.fullpath())
 
     def exists(self):
+        """
+        Check if the file exists
+
+        Returns
+        -------
+            bool : True if the file exits, is a file, and is readable, else False
+        """
         exists = os.access(self.fullpath(), os.F_OK | os.R_OK)
         isfile = os.path.isfile(self.fullpath())
         return exists and isfile
 
     def get_file_md5(self):
+        """
+        Get the MD5 checksum of the file
+
+        Returns
+        -------
+            str : md5 of the file as a string
+        """
         return md5sum(self.fullpath())
 
     def get_data_md5(self):
+        """
+        Get the MD5 checksum of the uncompressed file.
+
+        Returns:
+            str : md5 of the uncompressed file (this may be the same if it is not compressed)
+        """
         if self.compressed == False:
             return self.file_md5
         else:
@@ -166,6 +214,13 @@ class DiskFile(Base):
                 return u_md5
 
     def get_data_size(self):
+        """
+        Get the size of the uncompressed file
+
+        Returns
+        -------
+            int : The size of the file when uncompressed.
+        """
         if self.compressed == False:
             return self.file_size()
         else:
@@ -176,7 +231,21 @@ class DiskFile(Base):
                 return u_size
 
     def get_lastmod(self):
+        """
+        Get the time the file was last modified
+
+        Returns
+        -------
+            datetime : This checks on the filesystemf or the last modification date on the file
+        """
         return datetime.datetime.fromtimestamp(os.path.getmtime(self.fullpath()))
 
     def __repr__(self):
+        """
+        Get a string representation of this object
+
+        Returns
+        -------
+            A human radable representation of this :class:`~Diskfile`
+        """
         return "<DiskFile('%s', '%s', '%s', '%s')>" % (self.id, self.file_id, self.filename, self.path)

@@ -9,7 +9,7 @@ from io import StringIO
 
 from . import Base
 
-# ------------------------------------------------------------------------------
+
 class Publication(Base):
     """
     This is the ORM class for storing publication details fetched from the
@@ -38,6 +38,22 @@ class Publication(Base):
     programs = association_proxy('publication_programs', 'program')
 
     def __init__(self, bibcode, author='', title='', year='', journal=''):
+        """
+        Create a publication record from the given inputs
+
+        Parameters
+        ----------
+        bibcode : str
+            Bibliography code for the publication
+        author : str
+            Author of the article
+        title : str
+            Title of the article
+        year : int
+            Year of publication
+        journal : str
+            Name of the journal article was published in
+        """
         self.bibcode = bibcode
         self.author = author
         self.title = title

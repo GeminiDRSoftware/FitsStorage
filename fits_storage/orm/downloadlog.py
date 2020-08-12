@@ -5,7 +5,7 @@ from sqlalchemy.orm import relation
 from . import Base
 from .usagelog import UsageLog
 
-# ------------------------------------------------------------------------------
+
 class DownloadLog(Base):
     """
     This is the ORM class for the download log table.
@@ -33,6 +33,9 @@ class DownloadLog(Base):
         """
         Create an initial QueryLog instance from a UsageLog instance.
 
+        Parameters
+        ----------
+        useagelog : :class:`~usagelog.UsageLog`
         """
         self.usagelog_id = usagelog.id
 
@@ -40,6 +43,10 @@ class DownloadLog(Base):
         """
         Add a note to this log entry.
 
+        Parameters
+        ----------
+        note : str
+            Notes to append on the download log entry
         """
 
         if self.notes is None:

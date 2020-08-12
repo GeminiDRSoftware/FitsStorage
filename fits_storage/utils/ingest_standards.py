@@ -20,6 +20,7 @@ mag_pairs = (
     (15, 'm_mag')
 )
 
+
 def ingest_standards(session, filename):
     """
     Load the standards text file into the Standards table

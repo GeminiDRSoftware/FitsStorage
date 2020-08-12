@@ -3,12 +3,12 @@ from sqlalchemy import Integer, Text
 
 from . import Base
 
-# ------------------------------------------------------------------------------
+
 class UserProgram(Base):
     """
     This is the ORM class for the userprogram table. This provides the association
-    for which users are associated with which programs, and should have access to
-    proprietary data from them.
+    for which users are associated with which programs, observations, or files and
+    should have access to proprietary data from them.
 
     This is a N:M mapping.
 
@@ -22,6 +22,23 @@ class UserProgram(Base):
     filename = Column(Text, nullable=True, index=True)
 
     def __init__(self, user_id, program_id=None, observation_id=None, filename=None, path=None):
+        """
+        Create a UserProgram record linking a user and program, observation, or file together.
+        These linked records encompass what proprietary data the user has access to.
+
+        Parameters
+        ----------
+        user_id : str
+            ID of the linked user
+        program_id : str
+            Program ID of the permitted program
+        observation_id : str
+            Observation ID of the permitted observation
+        filename : str
+            Filename of the file
+        path : str
+            Path of the file (works in conjunction with `filename`)
+        """
         count = 0
         if program_id:
             count = count+1
