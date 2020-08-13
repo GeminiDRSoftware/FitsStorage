@@ -41,7 +41,8 @@ args_for_cals = {
     'processed_arc':  ('arc', {'processed': True}),
     'processed_bias': ('bias', {'processed': True}),
     'processed_dark': ('dark', {'processed': True}),
-    'processed_flat': ('flat', {'processed': True})
+    'processed_flat': ('flat', {'processed': True}),
+    'processed_standard': ('standard', {'processed': True}),
     }
 
 def cals_info(cal_obj, caltype, qtype='UNKNOWN', log=no_func, add_note=no_func, http=True, hostname=None, storage_root=''):
