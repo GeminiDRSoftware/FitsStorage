@@ -3,7 +3,7 @@ This is the calcachequeue ORM class
 
 """
 import datetime
-from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Column, ForeignKey, Text
 from sqlalchemy import Integer, Boolean, DateTime
 from sqlalchemy import desc
 
