@@ -14,6 +14,27 @@ from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.fits_storage_config import fits_servername, use_as_archive, smtp_server
 
 
+def get_and_fix_emails(emails):
+    retval = list()
+    if not emails:
+        return retval
+    emails = emails.split(',')
+    for email in emails:
+        if ' ' in email:
+            check_is_multiple_emails = email.strip().split(' ')
+            if False not in ['@' in e for e in check_is_multiple_emails]:
+                for e in check_is_multiple_emails:
+                    if e.strip() != "":
+                        retval.append(e.strip())
+            else:
+                if email.strip() != "":
+                    retval.append(email.strip())
+        else:
+            if email.strip() != "":
+                retval.append(email.strip())
+    return retval
+
+
 if __name__ == "__main__":
 
     parser = OptionParser()
@@ -112,10 +133,10 @@ if __name__ == "__main__":
                     msg.attach(part1)
                     msg.attach(part2)
 
-                    fulllist = msg['To'].split(',')
+                    fulllist = get_and_fix_emails(msg['To'])
                     if msg['Cc']:
                         # Don't make this an .append, it needs to be a +=
-                        fulllist += msg['Cc'].split(',')
+                        fulllist += get_and_fix_emails(msg['Cc'])
 
                     # For now, Bcc fitsadmin on all the emails to see that it's working...
                     fulllist.append('fitsadmin@gemini.edu')
