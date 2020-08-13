@@ -265,7 +265,6 @@ class IngestQueueUtil(object):
                 self.l.debug("Adding new DiskFileReport entry")
                 dfreport = DiskFileReport(diskfile, self.skip_fv, self.skip_md)
                 self.s.add(dfreport)
-                self.s.commit()
 
                 self.l.debug("Adding new Header entry")
                 # This will use the diskfile ad_object if it exists, else
