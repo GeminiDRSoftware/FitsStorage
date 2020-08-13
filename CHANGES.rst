@@ -80,6 +80,11 @@ verify_in_diskfiles.py
 
 - helper script for checking files on disk exist in the `diskfiles` table.
 
+YouveGotDataEmail.py
+^^^^^^^^^^^^^^^^^^^^
+
+- fuzzy handling for email lists, space and comma delimited both work if all terms have @ [#383]
+
 Other
 -----
 
