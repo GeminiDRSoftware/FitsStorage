@@ -193,10 +193,22 @@ class CalibrationGMOS(Calibration):
         # the index. Otherwise, the science frame could have a subset of the amps
         # thus we must do the substring match
 
-        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
-            filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
-        elif self.descriptors['amp_read_area'] is not None:
-                filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
+        # IF looking for processed thing
+        #     Full frame is always ok
+        #     Central Spectrum can match Central Spectrum as well
+        #     Custom detector_roi_
+        if processed:
+            if self.descriptors['detector_roi_setting'] == 'Full Frame':
+                filters.append(Header.detector_roi_setting == 'Full Frame')
+            elif self.descriptors['detector_roi_setting'] == 'Central Spectrum':
+                filters.append(Header.detector_roi_setting.in_(['Full Frame', 'Central Spectrum']))
+            else:
+                filters.append(Header.detector_roi_setting == 'Full Frame')
+        else:
+            if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+                filters.append(Gmos.amp_read_area == self.descriptors['amp_read_area'])
+            elif self.descriptors['amp_read_area'] is not None:
+                    filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         return (
             self.get_query()
