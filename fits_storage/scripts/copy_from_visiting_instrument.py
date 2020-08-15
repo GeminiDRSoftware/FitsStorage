@@ -408,7 +408,7 @@ class IGRINS(VisitingInstrumentABC):
         -------
             str : path within dataflow, something like `igrins/20200102`
         """
-        result = self._date_re.match(os.path.basename(filename))
+        result = self.filename_re.match(os.path.basename(filename))
         ymd = result.group(1)
         return os.path.join('igrins', ymd)
 

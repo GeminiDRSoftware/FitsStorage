@@ -76,11 +76,6 @@ def test_get_files():
     assert(lst[0] == '/tmp/test/cfvii/igrins/2020A/20200101/SDCS_20200101_0001.fits')
 
 
-def test_get_destination():
-    igrins = igrins_init()
-    assert(igrins.get_destination('SDCS_20200101_0001.fits') == 'igrins/20200101/SDCS_20200101_0001.fits')
-
-
 def test_get_dest_path():
     igrins = igrins_init()
     assert(igrins.get_dest_path('SDCS_20200101_0001.fits') == 'igrins/20200101')
