@@ -921,11 +921,9 @@ def get_date_offset():
     #print datetime.timedelta(seconds=zone)
     #print ONEDAY_OFFSET
 
-    # retval = datetime.timedelta(hours=16) + datetime.timedelta(seconds=zone)
-    retval = - datetime.timedelta(hours=10) + datetime.timedelta(seconds=zone)
-    # if zone >= 10 * 3600:
-    #     retval = retval - ONEDAY_OFFSET
-    return retval
+    #return datetime.timedelta(hours=16) + datetime.timedelta(seconds=zone) - ONEDAY_OFFSET
+    # I think this interacted with the Chile today changes to cause the missing starts in Hawaii for summary
+    return datetime.timedelta(hours=14) + datetime.timedelta(seconds=zone) - ONEDAY_OFFSET
 
 def get_time_period(start, end=None, as_date=False):
     startdt = gemini_date(start, offset=get_date_offset(), as_datetime=True)

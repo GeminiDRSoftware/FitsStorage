@@ -105,6 +105,50 @@ calcachequeue
 
 - Added filename to object to use for logging errors in the queue_error table (as is done for other queues)
 
+2020-1.8
+========
+
+Updated Scripts
+---------------
+
+copy_from_dhs.py
+^^^^^^^^^^^^^^^^
+
+- Performs basic validation before doing the copy
+- On 4th failure to validate, emails fitsdata@gemini.edu to alert on the failing file
+
+problem_checker.py
+^^^^^^^^^^^^^^^^^^
+
+- New script to look for problems with recent data that hasn't ingested correctly
+
+2020-1.7
+========
+
+Updated Scripts
+---------------
+
+fits_validator.py
+^^^^^^^^^^^^^^^^^
+
+- For regex checks, convert non-str values into strings before testing - and automatically fail on None
+
+2020-1.6
+========
+
+Updated Scripts
+---------------
+
+header_fixer2.py
+^^^^^^^^^^^^^^^^
+
+- IGRINS utility call adds RELEASE based on obs date, if the RELEASE date is missing
+
+copy_from_visiting_instrument.py
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Modified IGRINS handling to match folder structure Hwi is using for the staging area I copy from
+
 2020-1.5
 ========
 

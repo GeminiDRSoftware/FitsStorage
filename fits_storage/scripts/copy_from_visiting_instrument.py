@@ -48,7 +48,7 @@ def check_present(session, filename):
     if otherfilename.endswith('.bz2'):
         otherfilename = otherfilename[:-4]
     else:
-        otherfilename = "%.bz2" % otherfilename
+        otherfilename = "%s.bz2" % otherfilename
     df = session.query(DiskFile).filter(DiskFile.filename==filename).filter(DiskFile.canonical==True).first()
     if df:
         return True
@@ -368,12 +368,12 @@ class IGRINS(VisitingInstrumentABC):
     """
     IGRINS implementation for copying visiting instrument data.
     """
-    def __init__(self, base_path="/sci/dataflow/igrins/igrins-rawfiles/", storage_root=storage_root):
+    def __init__(self, base_path="/net/cpostonfs-nv1/tier2/ins/sto/igrins/DATA", storage_root=storage_root):
         """
         Create IGRINS visiting instrument data copier
         """
         super().__init__(base_path, True, storage_root=storage_root)
-        self._date_re = re.compile(r'[A-Z]{4}_(\d{8})_\d{4}.*\.fits')
+        self.filename_re = re.compile(r'^SDC\w_(\d{8})_\d{4}.fits')
 
     def prep(self):
         """
@@ -391,8 +391,14 @@ class IGRINS(VisitingInstrumentABC):
         list of str : list of files in the top level to be copied
         """
         for f in os.listdir(self.base_path):
-            if self._date_re.match(f):
-                yield f
+            fullpath = os.path.join(self.base_path, f)
+            if os.path.isdir(fullpath) and re.search(r'^\d{4}\w$', f):
+                for datedir in os.listdir(fullpath):
+                    fulldatepath = os.path.join(fullpath, datedir)
+                    if os.path.isdir(fulldatepath) and re.search(r'^\d{8}$', datedir):
+                        for datafile in os.listdir(fulldatepath):
+                            if self.filename_re.search(datafile):
+                                yield os.path.join(fulldatepath, datafile)
 
     def get_dest_path(self, filename):
         """
