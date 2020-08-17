@@ -21,6 +21,22 @@ copy_from_visiting_instrument.py
 
 - Added compression option which, if set to false, does not re-encrypt data after fixing the headers
 
+2020-1.9
+
+Updated Scripts
+---------------
+
+copy_from_visiting_instrument.py
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- If OBSCLASS not set for 'Alopeke or Zorro, set to science
+
+copy_from_dhs.py
+^^^^^^^^^^^^^^^^
+
+- Increase min age to 15s due to ongoing dhs issues
+
+
 2020-1.8
 ========
 
