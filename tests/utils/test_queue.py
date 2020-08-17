@@ -1,4 +1,6 @@
 import pytest
+
+from fits_storage.orm.queue_error import QueueError
 from fits_storage.utils.ingestqueue import IngestQueue, IngestQueueUtil
 from fits_storage.utils.previewqueue import PreviewQueue, PreviewQueueUtil
 import logging
@@ -13,7 +15,7 @@ import os
 #     'N20011022S130.fits.bz2',
 #     'N20011022S140.fits.bz2'
 #     )
-from fits_storage.utils.queue import sortkey_for_filename, pop_queue, queue_length
+from fits_storage.utils.queue import sortkey_for_filename, pop_queue, queue_length, delete_with_id, add_error
 
 FILES_TO_INGEST = (
     'N20191008S0458.fits',
@@ -87,6 +89,25 @@ class TestQueue:
         session.query(IngestQueue).filter(IngestQueue.filename == "filename2").delete()
         session.query(IngestQueue).filter(IngestQueue.filename == "filename3").delete()
 
+    def test_delete_with_id(self, session):
+        iqentry = IngestQueue("filename", "path")
+        session.add(iqentry)
+        session.commit()
+        delete_with_id(IngestQueue, iqentry.id, session)
+        iqcheck = session.query(IngestQueue).get(iqentry.id)
+        assert(iqcheck is None)
+
+    def test_add_error(self, session):
+        iqentry = IngestQueue("failme", "path")
+        session.add(iqentry)
+        session.commit()
+        add_error(IngestQueue, iqentry, ValueError, None, None, session)
+        assert(iqentry.inprogress is False)
+        assert(iqentry.failed is True)
+        errcheck = session.query(QueueError).filter(QueueError.filename == "failme").first()
+        assert(errcheck is not None)
+        session.query(QueueError).filter(QueueError.filename == "failme").delete()
+        session.query(IngestQueue).filter(IngestQueue.filename == "failme").delete()
 
 @pytest.mark.usefixtures("rollback")
 @pytest.mark.slow
