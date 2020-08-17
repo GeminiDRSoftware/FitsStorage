@@ -13,6 +13,8 @@ import os
 #     'N20011022S130.fits.bz2',
 #     'N20011022S140.fits.bz2'
 #     )
+from fits_storage.utils.queue import sortkey_for_filename, pop_queue, queue_length
+
 FILES_TO_INGEST = (
     'N20191008S0458.fits',
     'N20191009S0025.fits',
@@ -50,6 +52,41 @@ def add_to_iq(request, session, ingest_util, testfile_path):
 
     session.execute(delete(IngestQueue))
     session.commit()
+
+
+@pytest.mark.usefixtures("rollback")
+class TestQueue:
+    def test_sortkey_for_filename(self):
+        assert sortkey_for_filename('asdf20200101E123b') == 'z20200101E123'
+        assert sortkey_for_filename('asdf20200101S123b') == 'z20200101S123'
+        assert sortkey_for_filename('unrecognizedfilename') == 'aunrecognizedfilename'
+
+    def test_popqueue(self, session):
+        # Read from empty queue
+        queue_item = pop_queue(IngestQueue, session, dummy_logger)
+        assert(queue_item is None)
+
+        # Create IngestQueue item and read
+        iqentry = IngestQueue("filename", "path")
+        session.add(iqentry)
+        assert(iqentry.inprogress is False)
+        queue_item = pop_queue(IngestQueue, session, dummy_logger)
+        assert(isinstance(queue_item, IngestQueue))
+        # should have been set to in progress
+        assert(queue_item.inprogress is True)
+        session.query(IngestQueue).filter(IngestQueue.id == iqentry.id).delete()
+
+    def test_queue_length(self, session):
+        # Create IngestQueue item and read
+        assert(queue_length(IngestQueue, session) == 0)
+        session.add(IngestQueue("filename", "path"))
+        session.add(IngestQueue("filename2", "path"))
+        session.add(IngestQueue("filename3", "path"))
+        assert(queue_length(IngestQueue, session) == 3)
+        session.query(IngestQueue).filter(IngestQueue.filename == "filename").delete()
+        session.query(IngestQueue).filter(IngestQueue.filename == "filename2").delete()
+        session.query(IngestQueue).filter(IngestQueue.filename == "filename3").delete()
+
 
 @pytest.mark.usefixtures("rollback")
 @pytest.mark.slow
