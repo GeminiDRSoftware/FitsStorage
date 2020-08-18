@@ -104,7 +104,7 @@ if using_s3:
 
 @json_api_call(logger)
 def ingest_upload(filename, fileuploadlog_id=None, processed_cal=False):
-    logger.info("ingest_upload: filename: %s, fileuploadlog_id: %d, processed_cal: %s", filename, fileuploadlog_id, processed_cal)
+    logger.info("ingest_upload: filename: %s, fileuploadlog_id: %s, processed_cal: %s", filename, fileuploadlog_id, processed_cal)
     path = processed_cals_path if processed_cal else ''
     fileuploadlog = FileUploadWrapper()
 
