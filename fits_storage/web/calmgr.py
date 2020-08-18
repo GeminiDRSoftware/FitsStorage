@@ -58,22 +58,19 @@ def cals_info(cal_obj, caltype, qtype='UNKNOWN', log=no_func, add_note=no_func, 
     for ct in caltypes:
         # Call the appropriate method depending what calibration type we want
         try:
-            if ct in cal_obj.applicable:
-                # if ct is one of the recognized cal_types, we'll invoke
-                # the method in cal_obj with the same name as ct. If there's
-                # no such name, like in the case of various processed_XXX, which
-                # are obtained invoking other method with some arguments, then
-                # we can introduce a mappint in args_for_cals
-                method, args = args_for_cals.get(ct, (ct, {}))
-                try:
-                    cals = getattr(cal_obj, method)(**args)
-                except (InternalError, DataError):
-                    get_context().session.rollback()
-                    add_note("Rolling back errored transaction in cal query")
-                    get_context().session.commit()
-                    raise
-            else:
-                cals = []
+            # if ct is one of the recognized cal_types, we'll invoke
+            # the method in cal_obj with the same name as ct. If there's
+            # no such name, like in the case of various processed_XXX, which
+            # are obtained invoking other method with some arguments, then
+            # we can introduce a mappint in args_for_cals
+            method, args = args_for_cals.get(ct, (ct, {}))
+            try:
+                cals = getattr(cal_obj, method)(**args)
+            except (InternalError, DataError):
+                get_context().session.rollback()
+                add_note("Rolling back errored transaction in cal query")
+                get_context().session.commit()
+                raise
 
             cal_res = []
             for cal in cals:
