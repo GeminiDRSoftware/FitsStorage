@@ -1,4 +1,6 @@
 import pytest
+
+from fits_storage.orm.queue_error import QueueError
 from fits_storage.utils.ingestqueue import IngestQueue, IngestQueueUtil
 from fits_storage.utils.previewqueue import PreviewQueue, PreviewQueueUtil
 import logging
@@ -13,6 +15,8 @@ import os
 #     'N20011022S130.fits.bz2',
 #     'N20011022S140.fits.bz2'
 #     )
+from fits_storage.utils.queue import sortkey_for_filename, pop_queue, queue_length, delete_with_id, add_error
+
 FILES_TO_INGEST = (
     'N20191008S0458.fits',
     'N20191009S0025.fits',
@@ -50,6 +54,60 @@ def add_to_iq(request, session, ingest_util, testfile_path):
 
     session.execute(delete(IngestQueue))
     session.commit()
+
+
+@pytest.mark.usefixtures("rollback")
+class TestQueue:
+    def test_sortkey_for_filename(self):
+        assert sortkey_for_filename('asdf20200101E123b') == 'z20200101E123'
+        assert sortkey_for_filename('asdf20200101S123b') == 'z20200101S123'
+        assert sortkey_for_filename('unrecognizedfilename') == 'aunrecognizedfilename'
+
+    def test_popqueue(self, session):
+        # Read from empty queue
+        queue_item = pop_queue(IngestQueue, session, dummy_logger)
+        assert(queue_item is None)
+
+        # Create IngestQueue item and read
+        iqentry = IngestQueue("filename", "path")
+        session.add(iqentry)
+        assert(iqentry.inprogress is False)
+        queue_item = pop_queue(IngestQueue, session, dummy_logger)
+        assert(isinstance(queue_item, IngestQueue))
+        # should have been set to in progress
+        assert(queue_item.inprogress is True)
+        session.query(IngestQueue).filter(IngestQueue.id == iqentry.id).delete()
+
+    def test_queue_length(self, session):
+        # Create IngestQueue item and read
+        assert(queue_length(IngestQueue, session) == 0)
+        session.add(IngestQueue("filename", "path"))
+        session.add(IngestQueue("filename2", "path"))
+        session.add(IngestQueue("filename3", "path"))
+        assert(queue_length(IngestQueue, session) == 3)
+        session.query(IngestQueue).filter(IngestQueue.filename == "filename").delete()
+        session.query(IngestQueue).filter(IngestQueue.filename == "filename2").delete()
+        session.query(IngestQueue).filter(IngestQueue.filename == "filename3").delete()
+
+    def test_delete_with_id(self, session):
+        iqentry = IngestQueue("filename", "path")
+        session.add(iqentry)
+        session.commit()
+        delete_with_id(IngestQueue, iqentry.id, session)
+        iqcheck = session.query(IngestQueue).get(iqentry.id)
+        assert(iqcheck is None)
+
+    def test_add_error(self, session):
+        iqentry = IngestQueue("failme", "path")
+        session.add(iqentry)
+        session.commit()
+        add_error(IngestQueue, iqentry, ValueError, None, None, session)
+        assert(iqentry.inprogress is False)
+        assert(iqentry.failed is True)
+        errcheck = session.query(QueueError).filter(QueueError.filename == "failme").first()
+        assert(errcheck is not None)
+        session.query(QueueError).filter(QueueError.filename == "failme").delete()
+        session.query(IngestQueue).filter(IngestQueue.filename == "failme").delete()
 
 @pytest.mark.usefixtures("rollback")
 @pytest.mark.slow

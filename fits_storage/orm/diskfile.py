@@ -14,7 +14,8 @@ from . import Base
 from .file import File
 from .preview import Preview
 
-from ..fits_storage_config import storage_root, z_staging_area
+#from ..fits_storage_config import storage_root, z_staging_area
+from .. import fits_storage_config as fsc
 
 
 _standard_filename_timestamp_re = re.compile(r'[NS](\d{4})(\d{2})(\d{2})[A-Z].*')
@@ -132,7 +133,7 @@ class DiskFile(Base):
                     nonzfilename = given_filename[:-4]
                 else:
                     nonzfilename = given_filename + "_bz2unzipped"
-                self.uncompressed_cache_file = os.path.join(z_staging_area, nonzfilename)
+                self.uncompressed_cache_file = os.path.join(fsc.z_staging_area, nonzfilename)
                 if os.path.exists(self.uncompressed_cache_file):
                     os.unlink(self.uncompressed_cache_file)
 
@@ -163,7 +164,7 @@ class DiskFile(Base):
         -------
             str : full path to file
         """
-        return os.path.join(storage_root, self.path, self.filename)
+        return os.path.join(fsc.storage_root, self.path, self.filename)
 
     def get_file_size(self):
         """

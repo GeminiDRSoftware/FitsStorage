@@ -7,12 +7,6 @@ from subprocess import call
 from bz2 import BZ2File
 import sys
 
-from fits_storage.orm.createtables import create_tables
-from fits_storage.orm.downloadlog import DownloadLog
-from fits_storage.orm.querylog import QueryLog
-from fits_storage.orm.usagelog import UsageLog
-from fits_storage.orm.user import User
-from fits_storage.orm.userprogram import UserProgram
 
 now = dt.datetime.now()
 
@@ -42,9 +36,19 @@ fsc.pytest_database_server = os.getenv("FITS_DB_SERVER", '')
 TEST_IMAGE_PATH=os.getenv('TEST_IMAGE_PATH', '/mnt/hahalua')
 TEST_IMAGE_CACHE=os.getenv('TEST_IMAGE_CACHE', os.path.expanduser('~/tmp/cache'))
 
+
+# ORM imports must occur AFTER we have patched the db config settings
 import sqlalchemy
 from fits_storage import orm
 from fits_storage.orm import createtables
+from sqlalchemy.orm import sessionmaker
+
+from fits_storage.orm.createtables import create_tables
+from fits_storage.orm.downloadlog import DownloadLog
+from fits_storage.orm.querylog import QueryLog
+from fits_storage.orm.usagelog import UsageLog
+from fits_storage.orm.user import User
+from fits_storage.orm.userprogram import UserProgram
 
 
 class DatabaseCreation(object):
@@ -69,6 +73,7 @@ class DatabaseCreation(object):
             self.conn = conn
         else:
             conn = self.conn
+
         s = orm.sessionfactory()
 
         return conn, s

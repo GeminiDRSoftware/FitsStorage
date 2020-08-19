@@ -61,7 +61,7 @@ def norm(data, percentile=0.3):
 
 def get_location(diskfile):
     # TODO n/s locations?
-    loc = EarthLocation.of_site('greenwich')
+    return EarthLocation.of_site('greenwich')
 
 
 def get_time(session, header):
