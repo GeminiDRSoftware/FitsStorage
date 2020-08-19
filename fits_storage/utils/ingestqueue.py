@@ -18,10 +18,11 @@ import traceback
 from fits_storage.orm.provenance import ingest_provenance
 from ..orm.geometryhacks import add_footprint, do_std_obs
 
-from ..fits_storage_config import storage_root, using_sqlite, using_s3, using_previews, defer_seconds, use_as_archive
+#from ..fits_storage_config import storage_root, using_sqlite, using_s3, using_previews, defer_seconds, use_as_archive
+from .. import fits_storage_config as fsc
 from . import queue
 
-if using_previews:
+if fsc.using_previews:
     from .previewqueue import PreviewQueueUtil
 
 from ..orm.file import File
@@ -47,7 +48,7 @@ from ..orm.miscfile import is_miscfile, miscfile_meta, MiscFile
 import astrodata
 import gemini_instruments
 
-if using_s3:
+if fsc.using_s3:
     from .aws_s3 import get_helper
 
 class IngestError(Exception):
@@ -82,9 +83,9 @@ class IngestQueueUtil(object):
         self.skip_md = skip_md
         self.skip_fv = skip_fv
         self.make_previews = make_previews
-        if using_previews:
+        if fsc.using_previews:
             self.preview = PreviewQueueUtil(self.s, self.l)
-        if using_s3:
+        if fsc.using_s3:
             self.s3 = get_helper()
 
     def add_to_queue(self, filename, path, force_md5=False, force=False, after=None):
@@ -148,7 +149,7 @@ class IngestQueueUtil(object):
                     return True
 
             # Has the file changed since we last ingested it?
-            if using_s3:
+            if fsc.using_s3:
                 # Lastmod on s3 is always the upload time, no way to set it manually
                 result = need_to_add_diskfile_p(self.s3.get_md5(diskfile.filename), "S3 etag md5", "S3 etag md5 or force flag")
             else:
@@ -211,7 +212,7 @@ class IngestQueueUtil(object):
 
     def add_diskfile_entry(self, fileobj, filename, path, fullpath):
         self.l.debug("Adding new DiskFile entry")
-        if using_s3:
+        if fsc.using_s3:
             # At this point, we fetch a local copy of the file to the staging area
             if not self.s3.fetch_to_staging(filename):
                 # Failed to fetch the file from S3. Can't do this
@@ -289,7 +290,7 @@ class IngestQueueUtil(object):
                     # self.l.error("Footprint Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
                     pass
 
-                if not using_sqlite:
+                if not fsc.using_sqlite:
                     if header.spectroscopy == False:
                         self.l.debug("Imaging - populating PhotStandardObs")
                         do_std_obs(self.s, header.id)
@@ -313,7 +314,7 @@ class IngestQueueUtil(object):
 
                 # Do the preview here.
                 try:
-                    if using_previews:
+                    if fsc.using_previews:
                         self.preview.process(diskfile, make=self.make_previews)
                 except:
                     # For debug
@@ -323,11 +324,18 @@ class IngestQueueUtil(object):
                     self.l.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
 
                 # If we are in archive mode and the metadata is OK, add to calcachequeue here
-                if use_as_archive and diskfile.mdready:
+                if fsc.use_as_archive and diskfile.mdready:
                     self.l.info("Adding header id %d to calcachequeue", header.id)
                     cq = CalCacheQueue(header.id, diskfile.filename, sortkey=header.ut_datetime)
                     self.s.add(cq)
                     self.s.commit()
+
+        except:
+            # For debug
+            string = traceback.format_tb(sys.exc_info()[2])
+            string = "".join(string)
+            self.l.error("Error making diskfile entry for %s", diskfile.filename)
+            self.l.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
 
         finally:
             # really really try to clean up the cache file if we have one
@@ -399,14 +407,14 @@ class IngestQueueUtil(object):
             path = ""
 
         # First, sanity check if the file actually exists
-        if using_s3:
-            fullpath = os.path.join(storage_root, filename)
+        if fsc.using_s3:
+            fullpath = os.path.join(fsc.storage_root, filename)
             if not self.s3.exists_key(filename):
                 self.l.error("cannot access %s in S3 bucket", filename)
                 self.check_present(filename)
                 return
         else:
-            fullpath = os.path.join(storage_root, path, filename)
+            fullpath = os.path.join(fsc.storage_root, path, filename)
             exists = os.access(fullpath, os.F_OK | os.R_OK) and os.path.isfile(fullpath)
             if not exists:
                 self.l.error("cannot access %s", fullpath)
@@ -433,7 +441,7 @@ class IngestQueueUtil(object):
         return False
 
     def delete_file(self, diskfile, fullpath):
-        if using_s3:
+        if fsc.using_s3:
             self.l.debug("deleting %s from s3_staging_area", os.path.basename(fullpath))
             os.unlink(fullpath)
 
@@ -481,12 +489,12 @@ class IngestQueueUtil(object):
         """
         after = None
 
-        fullpath = os.path.join(storage_root, iq.path, iq.filename)
-        if defer_seconds > 0:
+        fullpath = os.path.join(fsc.storage_root, iq.path, iq.filename)
+        if fsc.defer_seconds > 0:
             lastmod = datetime.datetime.fromtimestamp(os.path.getmtime(fullpath))
             now = datetime.datetime.now()
             age = now - lastmod
-            defer = datetime.timedelta(seconds=defer_seconds)
+            defer = datetime.timedelta(seconds=fsc.defer_seconds)
             if age < defer:
                 self.l.info("Deferring ingestion of recently modified file %s", iq.filename)
                 # Defer ingestion of this file for defer_secs

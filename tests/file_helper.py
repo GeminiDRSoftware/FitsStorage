@@ -22,6 +22,9 @@ def ensure_file(filename, path=None):
     if path is None:
         path = fits_storage_config.storage_root
 
+    if os.path.isfile(os.path.join(path, filename)):
+        return
+
     getfile = filename
     if getfile.endswith(".bz2"):
         getfile = getfile[:-4]
