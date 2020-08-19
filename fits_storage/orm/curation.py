@@ -36,7 +36,6 @@ def duplicate_canonicals(session):
                 .filter(diskfile_alias.canonical == True)
                 .order_by(DiskFile.id)
         )
-    return diskfiles
 
 
 def duplicate_present(session):

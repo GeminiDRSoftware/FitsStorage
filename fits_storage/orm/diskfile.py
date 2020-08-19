@@ -205,7 +205,7 @@ class DiskFile(Base):
         Returns:
             str : md5 of the uncompressed file (this may be the same if it is not compressed)
         """
-        if self.compressed == False:
+        if self.compressed is False:
             return self.file_md5
         else:
             if self.uncompressed_cache_file:
@@ -222,8 +222,8 @@ class DiskFile(Base):
         -------
             int : The size of the file when uncompressed.
         """
-        if self.compressed == False:
-            return self.file_size()
+        if self.compressed is False:
+            return self.get_file_size()
         else:
             if self.uncompressed_cache_file:
                 return os.path.getsize(self.uncompressed_cache_file)
