@@ -17,29 +17,26 @@ def _mock_sendmail(fromaddr, toaddr, message):
     pass
 
 
-def _init_f2(session):
+def _init_gsaoi(session):
     session.rollback()
 
 
-# TODO convert tests into fixtures or do some matching-logic specific mocking and test negatives as well
-
-
 @pytest.mark.usefixtures("rollback")
-def test_dark(session):
-    _init_f2(session)
+def test_domeflat(session):
+    _init_gsaoi(session)
     save_storage_root = fits_storage_config.storage_root
     try:
-        raw_dark_file = 'S20181231S0247.fits'
-        data_file = 'S20181224S0078.fits'
+        test_domeflat_file = 'S20181016S0090.fits'
+        data_file = 'S20181018S0151.fits'
 
         fits_storage_config.storage_root = '/tmp'
 
-        ensure_file(raw_dark_file, '/tmp')
+        ensure_file(test_domeflat_file, '/tmp')
         ensure_file(data_file, '/tmp')
 
         iq = IngestQueueUtil(session, EmptyLogger())
 
-        iq.ingest_file(raw_dark_file, "", False, True)
+        iq.ingest_file(test_domeflat_file, "", False, True)
         iq.ingest_file(data_file, "", False, True)
 
         df = session.query(DiskFile).filter(DiskFile.filename == data_file)\
@@ -47,7 +44,7 @@ def test_dark(session):
         header = session.query(Header).filter(Header.diskfile_id == df.id).one()
         cache_associations(session, header.id)
 
-        df = session.query(DiskFile).filter(DiskFile.filename == raw_dark_file)\
+        df = session.query(DiskFile).filter(DiskFile.filename == test_domeflat_file)\
             .filter(DiskFile.canonical == True).one()
         cal_header = session.query(Header).filter(Header.diskfile_id == df.id).one()
 
@@ -59,21 +56,21 @@ def test_dark(session):
 
 
 @pytest.mark.usefixtures("rollback")
-def test_flat(session):
-    _init_f2(session)
+def test_lampoff_domeflat(session):
+    _init_gsaoi(session)
     save_storage_root = fits_storage_config.storage_root
     try:
-        raw_flat_file = 'S20181231S0120.fits'
-        data_file = 'S20181219S0333.fits'
+        test_lampoff_domeflat_file = 'S20181016S0144.fits'
+        data_file = 'S20181018S0151.fits'
 
         fits_storage_config.storage_root = '/tmp'
 
-        ensure_file(raw_flat_file, '/tmp')
+        ensure_file(test_lampoff_domeflat_file, '/tmp')
         ensure_file(data_file, '/tmp')
 
         iq = IngestQueueUtil(session, EmptyLogger())
 
-        iq.ingest_file(raw_flat_file, "", False, True)
+        iq.ingest_file(test_lampoff_domeflat_file, "", False, True)
         iq.ingest_file(data_file, "", False, True)
 
         df = session.query(DiskFile).filter(DiskFile.filename == data_file)\
@@ -81,7 +78,7 @@ def test_flat(session):
         header = session.query(Header).filter(Header.diskfile_id == df.id).one()
         cache_associations(session, header.id)
 
-        df = session.query(DiskFile).filter(DiskFile.filename == raw_flat_file)\
+        df = session.query(DiskFile).filter(DiskFile.filename == test_lampoff_domeflat_file)\
             .filter(DiskFile.canonical == True).one()
         cal_header = session.query(Header).filter(Header.diskfile_id == df.id).one()
 
@@ -93,21 +90,21 @@ def test_flat(session):
 
 
 @pytest.mark.usefixtures("rollback")
-def test_arc(session):
-    _init_f2(session)
+def test_photometric_standard(session):
+    _init_gsaoi(session)
     save_storage_root = fits_storage_config.storage_root
     try:
-        raw_arc_file = 'S20181231S0100.fits'
-        data_file = 'S20181231S0093.fits'
+        test_lampoff_domeflat_file = 'S20181018S0115.fits'
+        data_file = 'S20181016S0163.fits'
 
         fits_storage_config.storage_root = '/tmp'
 
-        ensure_file(raw_arc_file, '/tmp')
+        ensure_file(test_lampoff_domeflat_file, '/tmp')
         ensure_file(data_file, '/tmp')
 
         iq = IngestQueueUtil(session, EmptyLogger())
 
-        iq.ingest_file(raw_arc_file, "", False, True)
+        iq.ingest_file(test_lampoff_domeflat_file, "", False, True)
         iq.ingest_file(data_file, "", False, True)
 
         df = session.query(DiskFile).filter(DiskFile.filename == data_file)\
@@ -115,7 +112,7 @@ def test_arc(session):
         header = session.query(Header).filter(Header.diskfile_id == df.id).one()
         cache_associations(session, header.id)
 
-        df = session.query(DiskFile).filter(DiskFile.filename == raw_arc_file)\
+        df = session.query(DiskFile).filter(DiskFile.filename == test_lampoff_domeflat_file)\
             .filter(DiskFile.canonical == True).one()
         cal_header = session.query(Header).filter(Header.diskfile_id == df.id).one()
 
@@ -124,4 +121,3 @@ def test_arc(session):
         assert(cc is not None)
     finally:
         fits_storage_config.storage_root = save_storage_root
-
