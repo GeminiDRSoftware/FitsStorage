@@ -1,6 +1,9 @@
 from datetime import datetime
 
-from fits_storage.orm.diskfile import _determine_timestamp_from_filename
+from fits_storage.orm.diskfile import _determine_timestamp_from_filename, DiskFile
+from fits_storage.orm.file import File
+from tests.file_helper import ensure_file
+import fits_storage.fits_storage_config as fsc
 
 
 def test_standard_filename():
@@ -28,3 +31,42 @@ def test_bizzare_filename():
 def test_bad_filename():
     dt = _determine_timestamp_from_filename('asdf-271.fits')
     assert(dt is None)
+
+
+def test_diskfile():
+    save_storage_root = fsc.storage_root
+    try:
+        fsc.storage_root = '/tmp'
+        testfile = 'S20181231S0120.fits'
+        ensure_file(testfile, "/tmp")
+        f = File(testfile)
+        df = DiskFile(f, testfile, "")
+        assert(df.filename == testfile)
+        assert(df.path == "")
+        assert(df.present is True)
+        assert(df.canonical is True)
+        assert(df.entrytime is not None)
+        assert(df.get_file_size() == 16801920)
+        assert(df.get_file_md5() == '1402251d036b931fbfbf0bb2db0d2c38')
+        assert(df.file_size == 16801920)
+        assert(df.file_md5 == '1402251d036b931fbfbf0bb2db0d2c38')
+        assert(df.get_data_size() == 16801920)
+        assert(df.get_data_md5() == '1402251d036b931fbfbf0bb2db0d2c38')
+        assert(df.data_size == 16801920)
+        assert(df.data_md5 == '1402251d036b931fbfbf0bb2db0d2c38')
+        assert(df.compressed is False)
+    finally:
+        fsc.storage_root = save_storage_root
+
+
+def test_diskfile_fullpath():
+    save_storage_root = fsc.storage_root
+    try:
+        fsc.storage_root = '/tmp'
+        testfile = 'S20181231S0120.fits'
+        ensure_file(testfile, "/tmp")
+        f = File(testfile)
+        df = DiskFile(f, testfile, "")
+        assert(df.fullpath() == '/tmp/%s' % testfile)
+    finally:
+        fsc.storage_root = save_storage_root
