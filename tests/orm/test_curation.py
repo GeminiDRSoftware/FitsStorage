@@ -4,36 +4,53 @@ from fits_storage.orm.curation import duplicate_present, present_not_canonical, 
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.file import File
 import sqlalchemy.orm.exc as orm_exc
+import fits_storage.fits_storage_config as fsc
+from tests.file_helper import ensure_file
 
 
 @pytest.mark.usefixtures("rollback")
-def test_duplicate_canonicals(session):
+def test_duplicate_canonicals(monkeypatch, session):
+    monkeypatch.setattr(fsc, "storage_root", "/tmp")
+
+    data_file = 'S20130124S0036.fits'
+
     try:
-        f = session.query(File).filter(File.name == 'filename').one()
+        f = session.query(File).filter(File.name == data_file).one()
     except orm_exc.NoResultFound:
-        f = File("filename")
+        f = File(data_file)
         session.add(f)
-    df1 = DiskFile(f, "filename", "")
-    df2 = DiskFile(f, "filename", "")
+    for df in session.query(DiskFile).filter(DiskFile.filename == data_file).all():
+        session.delete(df)
+
+    ensure_file(data_file, '/tmp')
+
+    df1 = DiskFile(f, data_file, "")
+    df2 = DiskFile(f, data_file, "")
     session.add(df1)
     session.add(df2)
     diskfiles = duplicate_canonicals(session)
     assert(diskfiles is not None)
     unpacked = list(diskfiles)
     assert(len(unpacked) == 2)
-    assert(unpacked[0].filename == "filename")
-    assert(unpacked[1].filename == "filename")
+    assert(unpacked[0].filename == data_file)
+    assert(unpacked[1].filename == data_file)
 
 
 @pytest.mark.usefixtures("rollback")
-def test_duplicate_present(session):
+def test_duplicate_present(monkeypatch, session):
+    monkeypatch.setattr(fsc, "storage_root", "/tmp")
+
+    data_file = 'S20130124S0036.fits'
+
     try:
-        f = session.query(File).filter(File.name == 'filename').one()
+        f = session.query(File).filter(File.name == data_file).one()
     except orm_exc.NoResultFound:
-        f = File("filename")
+        f = File(data_file)
         session.add(f)
-    df1 = DiskFile(f, "filename", "")
-    df2 = DiskFile(f, "filename", "")
+    for df in session.query(DiskFile).filter(DiskFile.filename == data_file).all():
+        session.delete(df)
+    df1 = DiskFile(f, data_file, "")
+    df2 = DiskFile(f, data_file, "")
     df1.present = True
     df2.present = True
     session.add(df1)
@@ -42,20 +59,23 @@ def test_duplicate_present(session):
     assert(diskfiles is not None)
     unpacked = list(diskfiles)
     assert(len(unpacked) == 2)
-    assert(unpacked[0].filename == "filename")
-    assert(unpacked[1].filename == "filename")
+    assert(unpacked[0].filename == data_file)
+    assert(unpacked[1].filename == data_file)
 
 
 @pytest.mark.usefixtures("rollback")
-def test_present_not_canonical(session):
+def test_present_not_canonical(monkeypatch, session):
+    monkeypatch.setattr(fsc, "storage_root", "/tmp")
+
+    data_file = 'S20130124S0036.fits'
     try:
-        f = session.query(File).filter(File.name == 'filename').one()
+        f = session.query(File).filter(File.name == data_file).one()
     except orm_exc.NoResultFound:
-        f = File("filename")
+        f = File(data_file)
         session.add(f)
-    for df in session.query(DiskFile).filter(DiskFile.filename=="filename").all():
+    for df in session.query(DiskFile).filter(DiskFile.filename == data_file).all():
         session.delete(df)
-    df = DiskFile(f, "filename", "")
+    df = DiskFile(f, data_file, "")
     df.present = True
     df.canonical = False
     session.add(df)
@@ -63,4 +83,4 @@ def test_present_not_canonical(session):
     assert(diskfiles is not None)
     unpacked = list(diskfiles)
     assert(len(unpacked) == 1)
-    assert(unpacked[0].filename == "filename")
+    assert(unpacked[0].filename == data_file)
