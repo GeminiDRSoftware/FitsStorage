@@ -3,12 +3,16 @@ import pytest
 from fits_storage.orm.curation import duplicate_present, present_not_canonical, duplicate_canonicals
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.file import File
+import sqlalchemy.orm.exc as orm_exc
 
 
 @pytest.mark.usefixtures("rollback")
 def test_duplicate_canonicals(session):
-    f = File("filename")
-    session.add(f)
+    try:
+        f = session.query(File).filter(File.filename == 'filename').one()
+    except orm_exc.NoResultFound:
+        f = File("filename")
+        session.add(f)
     df1 = DiskFile(f, "filename", "")
     df2 = DiskFile(f, "filename", "")
     session.add(df1)
@@ -23,8 +27,11 @@ def test_duplicate_canonicals(session):
 
 @pytest.mark.usefixtures("rollback")
 def test_duplicate_present(session):
-    f = File("filename")
-    session.add(f)
+    try:
+        f = session.query(File).filter(File.filename == 'filename').one()
+    except orm_exc.NoResultFound:
+        f = File("filename")
+        session.add(f)
     df1 = DiskFile(f, "filename", "")
     df2 = DiskFile(f, "filename", "")
     df1.present = True
@@ -41,8 +48,13 @@ def test_duplicate_present(session):
 
 @pytest.mark.usefixtures("rollback")
 def test_present_not_canonical(session):
-    f = File("filename")
-    session.add(f)
+    try:
+        f = session.query(File).filter(File.filename == 'filename').one()
+    except orm_exc.NoResultFound:
+        f = File("filename")
+        session.add(f)
+    for df in session.query(DiskFile).filter(DiskFile.filename=="filename").all():
+        session.delete(df)
     df = DiskFile(f, "filename", "")
     df.present = True
     df.canonical = False
