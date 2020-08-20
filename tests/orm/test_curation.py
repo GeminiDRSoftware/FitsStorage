@@ -6,6 +6,7 @@ from fits_storage.orm.diskfilereport import DiskFileReport
 from fits_storage.orm.file import File
 import sqlalchemy.orm.exc as orm_exc
 import fits_storage.fits_storage_config as fsc
+from fits_storage.orm.footprint import Footprint
 from fits_storage.orm.fulltextheader import FullTextHeader
 from fits_storage.orm.header import Header
 from tests.file_helper import ensure_file
@@ -23,6 +24,8 @@ def test_duplicate_canonicals(monkeypatch, session):
         f = File(data_file)
         session.add(f)
     for df in session.query(DiskFile).filter(DiskFile.filename == data_file).all():
+        session.query(Footprint).join(Header, Footprint.header_id == Header.id) \
+            .filter(Header.diskfile_id == df.id).delete()
         session.query(Header).filter(Header.diskfile_id == df.id).delete()
         session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == df.id).delete()
         session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == df.id).delete()
@@ -54,6 +57,8 @@ def test_duplicate_present(monkeypatch, session):
         f = File(data_file)
         session.add(f)
     for df in session.query(DiskFile).filter(DiskFile.filename == data_file).all():
+        session.query(Footprint).join(Header, Footprint.header_id == Header.id) \
+            .filter(Header.diskfile_id == df.id).delete()
         session.query(Header).filter(Header.diskfile_id == df.id).delete()
         session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == df.id).delete()
         session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == df.id).delete()
@@ -83,6 +88,8 @@ def test_present_not_canonical(monkeypatch, session):
         f = File(data_file)
         session.add(f)
     for df in session.query(DiskFile).filter(DiskFile.filename == data_file).all():
+        session.query(Footprint).join(Header, Footprint.header_id == Header.id) \
+            .filter(Header.diskfile_id == df.id).delete()
         session.query(Header).filter(Header.diskfile_id == df.id).delete()
         session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == df.id).delete()
         session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == df.id).delete()
