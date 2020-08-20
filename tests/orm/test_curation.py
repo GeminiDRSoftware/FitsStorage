@@ -9,7 +9,7 @@ import sqlalchemy.orm.exc as orm_exc
 @pytest.mark.usefixtures("rollback")
 def test_duplicate_canonicals(session):
     try:
-        f = session.query(File).filter(File.filename == 'filename').one()
+        f = session.query(File).filter(File.name == 'filename').one()
     except orm_exc.NoResultFound:
         f = File("filename")
         session.add(f)
@@ -28,7 +28,7 @@ def test_duplicate_canonicals(session):
 @pytest.mark.usefixtures("rollback")
 def test_duplicate_present(session):
     try:
-        f = session.query(File).filter(File.filename == 'filename').one()
+        f = session.query(File).filter(File.name == 'filename').one()
     except orm_exc.NoResultFound:
         f = File("filename")
         session.add(f)
@@ -49,7 +49,7 @@ def test_duplicate_present(session):
 @pytest.mark.usefixtures("rollback")
 def test_present_not_canonical(session):
     try:
-        f = session.query(File).filter(File.filename == 'filename').one()
+        f = session.query(File).filter(File.name == 'filename').one()
     except orm_exc.NoResultFound:
         f = File("filename")
         session.add(f)
