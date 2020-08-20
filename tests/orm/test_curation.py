@@ -6,6 +6,7 @@ from fits_storage.orm.diskfilereport import DiskFileReport
 from fits_storage.orm.file import File
 import sqlalchemy.orm.exc as orm_exc
 import fits_storage.fits_storage_config as fsc
+from fits_storage.orm.fulltextheader import FullTextHeader
 from tests.file_helper import ensure_file
 
 
@@ -23,6 +24,8 @@ def test_duplicate_canonicals(monkeypatch, session):
     for df in session.query(DiskFile).filter(DiskFile.filename == data_file).all():
         for dfr in session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == df.id):
             session.delete(dfr)
+        for fth in session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == df.id):
+            session.delete(fth)
         session.delete(df)
 
     ensure_file(data_file, '/tmp')
@@ -53,6 +56,8 @@ def test_duplicate_present(monkeypatch, session):
     for df in session.query(DiskFile).filter(DiskFile.filename == data_file).all():
         for dfr in session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == df.id):
             session.delete(dfr)
+        for fth in session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == df.id):
+            session.delete(fth)
         session.delete(df)
     df1 = DiskFile(f, data_file, "")
     df2 = DiskFile(f, data_file, "")
@@ -81,6 +86,8 @@ def test_present_not_canonical(monkeypatch, session):
     for df in session.query(DiskFile).filter(DiskFile.filename == data_file).all():
         for dfr in session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == df.id):
             session.delete(dfr)
+        for fth in session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == df.id):
+            session.delete(fth)
         session.delete(df)
     df = DiskFile(f, data_file, "")
     df.present = True
