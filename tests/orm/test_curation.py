@@ -1,5 +1,6 @@
 import pytest
 
+from fits_storage.orm.calcache import CalCache
 from fits_storage.orm.curation import duplicate_present, present_not_canonical, duplicate_canonicals
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.diskfilereport import DiskFileReport
@@ -39,9 +40,12 @@ def _delete_diskfiles(session, filename):
         _delete_via_header(session, df, Michelle)
         _delete_via_header(session, df, Nifs)
         _delete_via_header(session, df, Niri)
-        for fp in session.query(Footprint).join(Header, Footprint.header_id == Header.id) \
+        for cc in session.query(CalCache).join(Header, CalCache.obs_hid == Header.id) \
                 .filter(Header.diskfile_id == df.id):
-            session.delete(fp)
+            session.delete(cc)
+        for cc in session.query(CalCache).join(Header, CalCache.cal_hid == Header.id) \
+                .filter(Header.diskfile_id == df.id):
+            session.delete(cc)
         session.query(Header).filter(Header.diskfile_id == df.id).delete()
         session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == df.id).delete()
         session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == df.id).delete()
