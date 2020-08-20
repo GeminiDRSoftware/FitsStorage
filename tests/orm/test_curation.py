@@ -3,17 +3,42 @@ import pytest
 from fits_storage.orm.curation import duplicate_present, present_not_canonical, duplicate_canonicals
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.diskfilereport import DiskFileReport
+from fits_storage.orm.f2 import F2
 from fits_storage.orm.file import File
 import sqlalchemy.orm.exc as orm_exc
 import fits_storage.fits_storage_config as fsc
 from fits_storage.orm.footprint import Footprint
 from fits_storage.orm.fulltextheader import FullTextHeader
+from fits_storage.orm.gmos import Gmos
+from fits_storage.orm.gnirs import Gnirs
+from fits_storage.orm.gpi import Gpi
+from fits_storage.orm.gsaoi import Gsaoi
 from fits_storage.orm.header import Header
+from fits_storage.orm.michelle import Michelle
+from fits_storage.orm.nici import Nici
+from fits_storage.orm.nifs import Nifs
+from fits_storage.orm.niri import Niri
 from tests.file_helper import ensure_file
+
+
+def _delete_via_header(session, df, clazz):
+    for fp in session.query(clazz).join(Header, clazz.header_id == Header.id) \
+            .filter(Header.diskfile_id == df.id):
+        session.delete(fp)
 
 
 def _delete_diskfiles(session, filename):
     for df in session.query(DiskFile).filter(DiskFile.filename == filename).all():
+        _delete_via_header(session, df, Footprint)
+        _delete_via_header(session, df, Nici)
+        _delete_via_header(session, df, F2)
+        _delete_via_header(session, df, Gmos)
+        _delete_via_header(session, df, Gnirs)
+        _delete_via_header(session, df, Gpi)
+        _delete_via_header(session, df, Gsaoi)
+        _delete_via_header(session, df, Michelle)
+        _delete_via_header(session, df, Nifs)
+        _delete_via_header(session, df, Niri)
         for fp in session.query(Footprint).join(Header, Footprint.header_id == Header.id) \
                 .filter(Header.diskfile_id == df.id):
             session.delete(fp)
