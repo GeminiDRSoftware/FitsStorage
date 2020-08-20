@@ -102,8 +102,8 @@ def test_duplicate_present(monkeypatch, session):
     assert(diskfiles is not None)
     unpacked = list(diskfiles)
     assert(len(unpacked) == 2)
-    assert(unpacked[0].filename == data_file)
-    assert(unpacked[1].filename == data_file)
+    assert(unpacked[0][1].name == data_file)
+    assert(unpacked[1][1].name == data_file)
 
 
 @pytest.mark.usefixtures("rollback")
