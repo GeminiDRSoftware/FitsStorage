@@ -12,6 +12,17 @@ from fits_storage.orm.header import Header
 from tests.file_helper import ensure_file
 
 
+def _delete_diskfiles(session, filename):
+    for df in session.query(DiskFile).filter(DiskFile.filename == filename).all():
+        for fp in session.query(Footprint).join(Header, Footprint.header_id == Header.id) \
+                .filter(Header.diskfile_id == df.id):
+            session.delete(fp)
+        session.query(Header).filter(Header.diskfile_id == df.id).delete()
+        session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == df.id).delete()
+        session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == df.id).delete()
+        session.delete(df)
+
+
 @pytest.mark.usefixtures("rollback")
 def test_duplicate_canonicals(monkeypatch, session):
     monkeypatch.setattr(fsc, "storage_root", "/tmp")
@@ -23,13 +34,7 @@ def test_duplicate_canonicals(monkeypatch, session):
     except orm_exc.NoResultFound:
         f = File(data_file)
         session.add(f)
-    for df in session.query(DiskFile).filter(DiskFile.filename == data_file).all():
-        session.query(Footprint).join(Header, Footprint.header_id == Header.id) \
-            .filter(Header.diskfile_id == df.id).delete()
-        session.query(Header).filter(Header.diskfile_id == df.id).delete()
-        session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == df.id).delete()
-        session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == df.id).delete()
-        session.delete(df)
+    _delete_diskfiles(session, data_file)
 
     ensure_file(data_file, '/tmp')
 
@@ -56,13 +61,8 @@ def test_duplicate_present(monkeypatch, session):
     except orm_exc.NoResultFound:
         f = File(data_file)
         session.add(f)
-    for df in session.query(DiskFile).filter(DiskFile.filename == data_file).all():
-        session.query(Footprint).join(Header, Footprint.header_id == Header.id) \
-            .filter(Header.diskfile_id == df.id).delete()
-        session.query(Header).filter(Header.diskfile_id == df.id).delete()
-        session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == df.id).delete()
-        session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == df.id).delete()
-        session.delete(df)
+    _delete_diskfiles(session, data_file)
+
     df1 = DiskFile(f, data_file, "")
     df2 = DiskFile(f, data_file, "")
     df1.present = True
@@ -87,13 +87,8 @@ def test_present_not_canonical(monkeypatch, session):
     except orm_exc.NoResultFound:
         f = File(data_file)
         session.add(f)
-    for df in session.query(DiskFile).filter(DiskFile.filename == data_file).all():
-        session.query(Footprint).join(Header, Footprint.header_id == Header.id) \
-            .filter(Header.diskfile_id == df.id).delete()
-        session.query(Header).filter(Header.diskfile_id == df.id).delete()
-        session.query(DiskFileReport).filter(DiskFileReport.diskfile_id == df.id).delete()
-        session.query(FullTextHeader).filter(FullTextHeader.diskfile_id == df.id).delete()
-        session.delete(df)
+    _delete_diskfiles(session, data_file)
+
     df = DiskFile(f, data_file, "")
     df.present = True
     df.canonical = False
