@@ -75,8 +75,8 @@ def test_duplicate_canonicals(monkeypatch, session):
     assert(diskfiles is not None)
     unpacked = list(diskfiles)
     assert(len(unpacked) == 2)
-    assert(unpacked[0].filename == data_file)
-    assert(unpacked[1].filename == data_file)
+    assert(unpacked[0][1].name == data_file)
+    assert(unpacked[1][1].name == data_file)
 
 
 @pytest.mark.usefixtures("rollback")
@@ -126,4 +126,4 @@ def test_present_not_canonical(monkeypatch, session):
     assert(diskfiles is not None)
     unpacked = list(diskfiles)
     assert(len(unpacked) == 1)
-    assert(unpacked[0].filename == data_file)
+    assert(unpacked[0][1].name == data_file)
