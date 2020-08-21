@@ -34,3 +34,6 @@ def test_ingest_odb_xml(session):
     assert(n.piemail == 'pi@pi.pi')
     assert(n.ngoemail == 'ngo@ngo.ngo')
     assert(n.csemail == 'contact@contact.contact')
+
+    # cleanup
+    session.query(Notification).filter(Notification.selection == 'GN-ENG20000101/science').delete()
