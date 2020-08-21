@@ -35,5 +35,32 @@ def test_ingest_odb_xml(session):
     assert(n.ngoemail == 'ngo@ngo.ngo')
     assert(n.csemail == 'contact@contact.contact')
 
+    xmlstr = """
+    <program>
+        <reference>GN-ENG20000101</reference>
+        <investigators>
+            <investigator pi='true'>
+                <name>Foo</name>
+                <email>pi2@pi.pi</email>
+            </investigator>
+            <investigator pi='false'>
+                <name>Bar</name>
+                <email>coi2@coi.coi</email>
+            </investigator>
+        </investigators>
+        <ngoEmail>ngo2@ngo.ngo</ngoEmail>
+        <contactScientistEmail>contact2@contact.contact</contactScientistEmail>
+        <notifyPi>Yes</notifyPi>
+    </program>
+    """
+
+    ingest_odb_xml(session, xmlstr)
+
+    n = session.query(Notification).filter(Notification.selection == 'GN-ENG20000101/science').one()
+
+    assert(n.piemail == 'pi2@pi.pi')
+    assert(n.ngoemail == 'ngo2@ngo.ngo')
+    assert(n.csemail == 'contact2@contact.contact')
+
     # cleanup
     session.query(Notification).filter(Notification.selection == 'GN-ENG20000101/science').delete()
