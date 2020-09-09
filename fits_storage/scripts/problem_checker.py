@@ -219,6 +219,6 @@ if __name__ == "__main__":
             message = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (
                 mailfrom, ", ".join(mailto), "ERRORS - %s" % subject, '\n'.join(problems))
 
-        server = smtplib.SMTP(smtp_server)
-        server.sendmail(mailfrom, mailto, message)
-        server.quit()
+            server = smtplib.SMTP(smtp_server)
+            server.sendmail(mailfrom, mailto, message)
+            server.quit()
