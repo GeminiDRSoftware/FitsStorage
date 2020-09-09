@@ -21,7 +21,20 @@ copy_from_visiting_instrument.py
 
 - Added compression option which, if set to false, does not re-encrypt data after fixing the headers
 
+2020-1.10
+=========
+
+Updated Web Services
+--------------------
+
+/gmoscaltwilightdetails
+^^^^^^^^^^^^^^^^^^^^^^^
+
+- New web report for SOS staff to give details on twilights through previously processed filter/bin combination
+
+
 2020-1.9
+========
 
 Updated Scripts
 ---------------

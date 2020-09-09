@@ -65,7 +65,8 @@ _host_based_configs = {
     },
     "ooberdorf-ml1": {
         'EXPORT_DESTINATIONS': '',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok'
+        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'DAS_CALPROC_PATH': '/Users/ooberdorf/das_calproc',
     },
     "some_actual_site_host": {
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
