@@ -109,6 +109,9 @@ def fix_zorro_or_alopeke(fits, instr, telescope):
     if 'OBSTYPE' not in pheader:
         pheader['OBSTYPE'] = 'OBJECT'
         retval = True
+    if 'OBSCLASS' not in pheader:
+        pheader['OBSCLASS'] = 'science'
+        retval = True
     if 'TELESCOP' not in pheader:
         pheader['TELESCOP'] = telescope
         retval = True

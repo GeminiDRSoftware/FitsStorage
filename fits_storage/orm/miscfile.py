@@ -5,7 +5,8 @@ from sqlalchemy.orm import relation
 from . import Base, NoResultFound
 from .diskfile import DiskFile
 
-from ..fits_storage_config import using_s3
+from ..fits_storage_config import using_s3, upload_staging_path
+
 if using_s3:
     from ..utils.aws_s3 import get_helper, ClientError
     s3 = get_helper()
@@ -56,7 +57,7 @@ def miscfile_meta_path(path):
     -------
     str : path to JSON metadata file
     """
-    return path + '.json'
+    return os.path.join(upload_staging_path, path + '.json')
 
 
 def is_miscfile(path):
@@ -122,7 +123,8 @@ def miscfile_meta(path, urlencode=False):
     try:
         meta = json.load(io.open(miscfile_meta_path(path), encoding='utf-8'))
         if urlencode:
-            meta['description'] = encode_string(meta['description'].encode('utf-8'))
+            meta['description'] = encode_string(meta['description'].encode('utf-8')) \
+                .decode(encoding='utf-8', errors='ignore')
     except IOError:
         if using_s3:
             meta = s3.get_key(path).metadata

@@ -227,13 +227,20 @@ class IngestQueueUtil(object):
                 self.l.debug("diskfile uncompressed cache file = %s, access=%s", diskfile.uncompressed_cache_file,
                                 os.access(diskfile.uncompressed_cache_file, os.F_OK))
 
-
             if is_miscfile(filename):
                 meta = miscfile_meta(filename)
                 misc = MiscFile()
                 misc.diskfile_id = diskfile.id
                 misc.release = dateutil.parser.parse(meta['release'])
-                misc.description = meta['description']
+                #misc.description = meta['description']
+                dsc = meta['description']
+                if isinstance(dsc, str):
+                    if dsc.startswith('\\x'):
+                        dsc = bytes.fromhex(dsc[2:].replace('\\x', '')).decode('utf-8')
+                else:
+                    dsc_bytes = dsc
+                    dsc = dsc_bytes.decode('utf-8', errors='ignore')
+                misc.description = dsc
                 misc.program_id  = meta['program']
 
                 self.s.add(misc)

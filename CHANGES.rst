@@ -105,6 +105,35 @@ calcachequeue
 
 - Added filename to object to use for logging errors in the queue_error table (as is done for other queues)
 
+2020-1.10
+=========
+
+Updated Web Services
+--------------------
+
+/gmoscaltwilightdetails
+^^^^^^^^^^^^^^^^^^^^^^^
+
+- New web report for SOS staff to give details on twilights through previously processed filter/bin combination
+
+
+2020-1.9
+========
+
+Updated Scripts
+---------------
+
+copy_from_visiting_instrument.py
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- If OBSCLASS not set for 'Alopeke or Zorro, set to science
+
+copy_from_dhs.py
+^^^^^^^^^^^^^^^^
+
+- Increase min age to 15s due to ongoing dhs issues
+
+
 2020-1.8
 ========
 

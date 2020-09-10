@@ -96,8 +96,8 @@ _host_based_configs = {
     "ooberdorf-ml1": {
         'EXPORT_DESTINATIONS': '',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'TZ': 'America/Santiago',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev'
+        'DAS_CALPROC_PATH': '/Users/ooberdorf/das_calproc',
     },
     "some_actual_site_host": {
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
@@ -207,7 +207,7 @@ storage_root = lookup_config('STORAGE_ROOT', '/sci/dataflow')
 #storage_root = '/data/archive_soak'
 #storage_root = '/data/skycam'
 dhs_perm = '/sci/dhs'
-min_dhs_age_seconds = 5
+min_dhs_age_seconds = 15
 max_dhs_validation_failures = 4
 
 if(using_s3):
