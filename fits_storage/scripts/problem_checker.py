@@ -200,8 +200,6 @@ if __name__ == "__main__":
         DHSProblemChecker(),
     ]
 
-    print("Starting problem_checker.py")
-
     problems = list()
 
     with session_scope() as session:
