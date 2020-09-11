@@ -62,7 +62,11 @@ RUN pip3 install psycopg2-binary && \
     pip3 install pytest && \
     pip3 install coverage && \
     pip3 install mysql-connector && \
-    pip3 install simplejson
+    pip3 install simplejson && \
+    pip3 install suds-jurko && \
+    pip3 install ephem && \
+    pip3 install sphinx && \
+    pip3 install requests-toolbelt
 
 # Needed for imexam, which is needed for DRAGONS
 RUN pip3 install photutils
