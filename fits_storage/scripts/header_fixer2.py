@@ -187,4 +187,4 @@ if __name__ == "__main__":
 
     for fn in files:
         if file_prefix is None or file_prefix=='' or fn.startswith(file_prefix):
-            fix_and_copy(src_dir, dest_dir, fn, compress=compress, file_prefix=file_prefix)
+            fix_and_copy(src_dir, dest_dir, fn, compress=compress)
