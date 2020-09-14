@@ -21,6 +21,18 @@ copy_from_visiting_instrument.py
 
 - Added compression option which, if set to false, does not re-encrypt data after fixing the headers
 
+
+2020-1.11
+
+Updated Scripts
+---------------
+
+header_fixer2.py
+^^^^^^^^^^^^^^^^
+
+- Added a fix for CTYPE2 if it is incorrectly set to RA--TAN to fix it to RA---TAN for 'Alopeke and Zorro
+
+
 2020-1.10
 =========
 
