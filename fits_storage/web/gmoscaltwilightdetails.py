@@ -51,11 +51,20 @@ def gmoscaltwilightdetails():
     fromdt = datetime.datetime.now() - timedelta(days=180)
     rs = session.execute("""
         with last_processed as (
-        select max(ph.ut_datetime) as dt, ph.filter_name as filter, ph.detector_binning as binning from header ph 
-        where ph.instrument in ('GMOS-N', 'GMOS-S') and ph.ut_datetime > :dt and ph.types like '%PREPARED%' 
-        and ph.observation_class='dayCal' and ph.object='Twilight' and ph.detector_roi_setting='Full Frame' 
-        and ph.mode='imaging'
-        group by ph.filter_name, ph.detector_binning
+            select max(ph.ut_datetime) as dt, 
+                   ph.filter_name as filter, 
+                   ph.detector_binning as binning 
+            from header ph, diskfile df
+            where ph.instrument in ('GMOS-N', 'GMOS-S') 
+                and ph.ut_datetime > :dt 
+                and ph.types like '%PREPARED%' 
+                and ph.observation_class='dayCal' 
+                and ph.object='Twilight' 
+                and ph.detector_roi_setting='Full Frame' 
+                and ph.mode='imaging'
+                and ph.diskfile_id=df.id
+                and df.filename like '%_flat.fits'
+            group by ph.filter_name, ph.detector_binning
         )
         select count(1) as num, h.observation_class, h.filter_name, h.detector_binning, last_processed.dt 
         from header h 
