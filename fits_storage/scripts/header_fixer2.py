@@ -37,6 +37,11 @@ def fix_zorro_or_alopeke(fits, instr, telescope):
         if 'DATALAB' not in pheader:
             pheader['DATALAB'] = "%s-0" % pheader['OBSID']
             retval = True
+    if 'CTYPE2' in pheader:
+        val = pheader['CTYPE2']
+        if val == 'RA--TAN':
+            pheader['CTYPE2'] = 'RA---TAN'
+            retval = True
     if 'CRVAL1' in pheader:
         val = pheader['CRVAL1']
         if isinstance(val, str):
@@ -167,15 +172,19 @@ if __name__ == "__main__":
                         help="Destination directory")
     parser.add_argument("--compress", action="store_true", default=False, dest="compress",
                         help="Compress output file as .bz2")
+    parser.add_argument("--file-re", action="store", type=str, dest="file_prefix",
+                        help="Prefix of filename to match on")
     parser.add_argument('path', nargs='+', help='Path of a file or a folder of files.')
     options = parser.parse_args()
     src_dir = options.src_dir
     dest_dir = options.dest_dir
     compress = options.compress
+    file_prefix = options.file_prefix
 
     if src_dir == dest_dir:
         print('destination cannot be the same as the source')
     files = options.path
 
     for fn in files:
-        fix_and_copy(src_dir, dest_dir, fn, compress=compress)
+        if file_prefix is None or file_prefix=='' or fn.startswith(file_prefix):
+            fix_and_copy(src_dir, dest_dir, fn, compress=compress, file_prefix=file_prefix)
