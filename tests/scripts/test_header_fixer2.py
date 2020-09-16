@@ -1,9 +1,8 @@
 import os
 import tempfile
 from os.path import basename, dirname
-
 import fits_storage
-from fits_storage.scripts.header_fixer2 import fix_igrins, fix_and_copy
+from fits_storage.scripts.header_fixer2 import fix_igrins, fix_and_copy, fix_zorro_or_alopeke
 
 
 class MockPHU(object):
@@ -100,3 +99,22 @@ def test_email_on_error(monkeypatch):
                      mailfrom="fitsdata@gemini.edu", mailto="ooberdorf@gemini.edu")
         os.rmdir(dst)
         assert saw_error_email
+
+
+class MockAstroData(object):
+    def __init__(self):
+        self.header = dict()
+
+
+def _build_test_ad():
+    ret = list()
+    ret.append(MockAstroData())
+    return ret
+
+
+def test_alopeke_zorro_ra_cleaner():
+    ad = _build_test_ad()
+    ad[0].header['CTYPE2'] = 'RA--TAN'
+    ret = fix_zorro_or_alopeke(ad, 'Alopeke', 'Gemini-North')
+    assert(ad[0].header['CTYPE2'] == 'RA---TAN')
+    assert ret

@@ -1,12 +1,12 @@
 #! /usr/bin/env python
 
 """
-FITS Header Fixing Tool v0.7
+FITS Header Fixing Tool v0.8
 
 Usage:
 
- fixHead [-hlNSy] [--ext=EXT] [<date>] <filenums> KEYW:VAL [KEYW:VAL ...]
- fixHead [-hly]   [--ext=EXT] obsid <observation-id> KEYW:VAL [KEYW:VAL ...]
+ fixHead.py [-hlNSy] [--ext=EXT] [<date>] <filenums> KEYW:VAL [KEYW:VAL ...]
+ fixHead.py [-hly]   [--ext=EXT] obsid <observation-id> KEYW:VAL [KEYW:VAL ...]
 
 Arguments:
 
@@ -45,10 +45,10 @@ Optional Arguments:
 
 Usage examples:
 
- fixHead 20160116 15,20,25 RAWIQ:70 qa:usable
- fixHead 20160115 10-20,31,35-40 RAWIQ:any RAWWV:80 RAWCC:50
- fixHead 20160115 10-20,31,35-40 cond:iqany,wv80,cc50
- fixHead 1-200 SSA:"John Smith"
+ fixHead.py 20160116 15,20,25 RAWIQ:70 qa:usable
+ fixHead.py 20160115 10-20,31,35-40 RAWIQ:any RAWWV:80 RAWCC:50
+ fixHead.py 20160115 10-20,31,35-40 cond:iqany,wv80,cc50
+ fixHead.py 1-200 SSA:"John Smith"
 """
 
 
@@ -82,7 +82,10 @@ Usage examples:
 #                           version to 0.5
 #    2017-01-11, rcardene  : Fixed a bug with date acquisition. Released as 0.6
 #    2017-04-06, rcardene  : Re-fixed the bug with date acquisition. Released as 0.7
-#    2020-03-09, ooberdorf : Fixed request to ask for a streamed response and updated for python2 compatibility
+#    2020-03-09, ooberdorf : Fixed request to ask for a streamed response and updated for python2 compatibility. Released as 0.8
+#    2020-05-26, ooberdorf : Fixed request file list names
+#    2020-09-14, bcooper   : Fixed issue with multiple 'cond' inputs not updating files
+#
 
 from __future__ import print_function
 
@@ -158,12 +161,12 @@ def get_file_list(server, args):
 doc_simplified ="""
 Usage examples for SOS purposes:
 
- {GREEN}fixHead 20160116 15,20,25 RAWIQ:70 qa:usable{RESET}
- {GREEN}fixHead 20160115 10-20,31,35-40 RAWIQ:any RAWWV:80 RAWCC:50{RESET}
+ {GREEN}fixHead.py 20160116 15,20,25 RAWIQ:70 qa:usable{RESET}
+ {GREEN}fixHead.py 20160115 10-20,31,35-40 RAWIQ:any RAWWV:80 RAWCC:50{RESET}
 
 That last one can also be written:
 
- {GREEN}fixHead 20160115 10-20,31,35-40 cond:iqany,wv80,cc50{RESET}
+ {GREEN}fixHead.py 20160115 10-20,31,35-40 cond:iqany,wv80,cc50{RESET}
 
 Specials:
 
@@ -177,9 +180,9 @@ Specials:
 
 You can skip the date (the current one will be used):
 
- {GREEN}fixHead 1-200 SSA:"John Smith"{RESET}
+ {GREEN}fixHead.py 1-200 SSA:"John Smith"{RESET}
 
-Type "fixHead -h" for a more thorough help message.
+Type "fixHead.py -h" for a more thorough help message.
 """
 
 def colorize(text):
@@ -309,7 +312,7 @@ def parse_args(raw_args):
             if _ != ':' or not value:
                 usage()
             args.pairs.append((kw, value))
-
+                
     except (SetLimitError, IndexError, ValueError):
         usage()
 
@@ -358,7 +361,11 @@ def map_actions(pairs):
         if keyword == 'qa':
             actions['qa_state'] = validate_keyword(value, valid_sets['qa'], 'qa', trans=str.lower)
         elif keyword == 'cond':
-            actions['raw_site'] = value
+            if value.find(',') == -1: 
+                actions['raw_site'] = value
+            else:   
+                actions['raw_site'] = value.split(',')
+          
         elif keyword == 'release':
             actions['release'] = value
         else:
