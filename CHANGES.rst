@@ -32,6 +32,23 @@ header_fixer2.py
 
 - Added a fix for CTYPE2 if it is incorrectly set to RA--TAN to fix it to RA---TAN for 'Alopeke and Zorro
 
+User Scripts
+------------
+
+fixHead.py
+^^^^^^^^^^
+
+- allow for multiple conditions passed using , to separate (added by @bcooper)
+
+Updated Web Services
+--------------------
+
+/gmoscaltwilightdetails
+^^^^^^^^^^^^^^^^^^^^^^^
+
+- Added extra filtering to find last _flat.fits file when finding date within 6 months
+- Added query for all within pat 6 months when no relevant _flat.fits was found (for the common filter/bin types)
+
 
 2020-1.10
 =========
