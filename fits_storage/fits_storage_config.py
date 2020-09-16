@@ -21,6 +21,7 @@ _host_based_configs = {
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv4",
         'FITS_SERVERNAME': 'hbffits-lv4.hi.gemini.edu',
         'ORCID_REDIRECT_URL': 'http://hbffits-lv4/orcid',
+        'ORCID_ENABLED': 'False',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev'
     },
     "mkofits-lv3": {
@@ -81,7 +82,8 @@ _host_based_configs = {
         'FITS_SYSTEM_STATUS': 'development',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbfqapdev-lv1",
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev'
+        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
+        'ORCID_ENABLED': 'False',
     },
     "hbffitstest-lv1": {
         'USE_AS_ARCHIVE': 'False',
@@ -91,7 +93,8 @@ _host_based_configs = {
         'FITS_SERVERTITLE': 'TEST On-site FitsServer (CentOS 7)',
         'FITS_SYSTEM_STATUS': 'development',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffitstest-lv1"
+        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffitstest-lv1",
+        'ORCID_ENABLED': 'False',
     },
     "ooberdorf-ml1": {
         'EXPORT_DESTINATIONS': '',
@@ -129,7 +132,8 @@ _host_based_configs = {
         'ORCID_REDIRECT_URL': 'http://arcdev.gemini.edu/orcid',
         'TZ': 'UTC',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev',
-        'USING_PREVIEWS': 'True'
+        'USING_PREVIEWS': 'True',
+        'ORCID_ENABLED': 'False',
     }
 }
 
