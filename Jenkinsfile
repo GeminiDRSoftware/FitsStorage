@@ -107,17 +107,17 @@ pipeline {
 //             }
 //
 //         }
-        stage('Deploy To Dev') {
+        stage('Deploy To Host') {
             steps {
-                echo "(Disabled - using dev4 for DB testing) Deploying to ${deploy_target} Host"
-//                ansiblePlaybook(
-//                    inventory: 'ansible/${deploy_target}',
-//                    playbook: 'ansible/playbooks/archive_install.yml',
-//                    disableHostKeyChecking: true,
-//                    credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7',
-//                    vaultCredentialsId: 'vault_pass',
-//                    extras: " --extra-vars '@/var/lib/jenkins/secret.yml'"
-//                )
+                echo "Deploying to ${deploy_target} Host"
+                ansiblePlaybook(
+                    inventory: 'ansible/${deploy_target}',
+                    playbook: 'ansible/playbooks/archive_install.yml',
+                    disableHostKeyChecking: true,
+                    credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7',
+                    vaultCredentialsId: 'vault_pass',
+                    extras: " --extra-vars '@/var/lib/jenkins/secret.yml'"
+                )
             }
         }
     }
