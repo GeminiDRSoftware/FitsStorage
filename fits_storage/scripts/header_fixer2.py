@@ -91,10 +91,10 @@ def fix_zorro_or_alopeke(fits, instr, telescope):
         if 'DATALAB' not in pheader:
             pheader['DATALAB'] = "%s-0" % pheader['OBSID']
             retval = True
-    if 'CTYPE2' in pheader:
-        val = pheader['CTYPE2']
+    if 'CTYPE1' in pheader:
+        val = pheader['CTYPE1']
         if val == 'RA--TAN':
-            pheader['CTYPE2'] = 'RA---TAN'
+            pheader['CTYPE1'] = 'RA---TAN'
             retval = True
     if 'CRVAL1' in pheader:
         val = pheader['CRVAL1']
