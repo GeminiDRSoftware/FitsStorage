@@ -10,6 +10,7 @@ from sqlalchemy import and_, between, cast, desc, extract, func, join
 from sqlalchemy import Date, Interval, String
 from sqlalchemy.orm import aliased
 
+from ..fits_storage_config import logreports_use_materialized_view
 from ..orm import pg_db
 from ..orm import Base
 from ..orm.usagelog import UsageLog
@@ -380,15 +381,20 @@ def build_query(session, period, since=None):
        provide this data quickly.  If that fails, the call falls back to the older brute
        force query (which is slow).
        """
-    try:
-        partial = False
-        for result in build_query_materialized_view(session, period, since):
+    if logreports_use_materialized_view:
+        try:
+            partial = False
+            for result in build_query_materialized_view(session, period, since):
+                yield result
+                partial = True
+        except Exception as e:
+            if not partial:
+                # try the brute force approach
+                for result in build_query_brute_force(session, period, since):
+                    yield result
+    else:
+        for result in build_query_brute_force(session, period, since):
             yield result
-            partial = True
-    except Exception as e:
-        if not partial:
-            # try the brute force approach
-            build_query_brute_force(session, period, since)
 
 
 def build_query_materialized_view(session, period, since=None):
