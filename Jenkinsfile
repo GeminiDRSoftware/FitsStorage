@@ -129,9 +129,9 @@ pipeline {
             )
           sh '''
              if [ -f dragons-repo.txt ]; then rm -rf `cat dragons-repo.txt`; fi
-             docker rmi gemini/fitsarchiveutils:jenkins || true
-             docker rmi gemini/archive:jenkins || true
-             docker network rm fitsstorage-jenkins || true
+             docker rmi gemini/fitsarchiveutils:release-jenkins || true
+             docker rmi gemini/archive:release-jenkins || true
+             docker network rm fitsstorage-release-jenkins || true
           '''
         }
         success {
