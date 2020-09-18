@@ -22,7 +22,8 @@ _host_based_configs = {
         'FITS_SERVERNAME': 'hbffits-lv4.hi.gemini.edu',
         'ORCID_REDIRECT_URL': 'http://hbffits-lv4/orcid',
         'ORCID_ENABLED': 'False',
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev'
+        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
+        'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
     },
     "mkofits-lv3": {
         'USE_AS_ARCHIVE': 'False',
@@ -119,7 +120,8 @@ _host_based_configs = {
         'ORCID_ENABLED': 'False',
         'TZ': 'UTC',
         'PROCESSED_CALS_PATH': 'reduced_cals',
-        'USING_PREVIEWS': 'True'
+        'USING_PREVIEWS': 'True',
+        'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
     },
     "arcdev": {
         'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
@@ -134,6 +136,7 @@ _host_based_configs = {
         'PROCESSED_CALS_PATH': 'reduced_cals_dev',
         'USING_PREVIEWS': 'True',
         'ORCID_ENABLED': 'False',
+        'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
     }
 }
 
@@ -348,6 +351,8 @@ else:
     blocked_urls = []
 
 validation_def_path = lookup_config('VALIDATION_DEF_PATH', '/opt/FitsStorage/docs/dataDefinition')
+
+logreports_use_materialized_view = lookup_config_bool('LOGREPORTS_USE_MATERIALIZED_VIEW', 'True')
 
 orcid_client_id = lookup_config('ORCID_CLIENT_ID', "APP-DBYNSNN5SCGF2G75")
 orcid_client_secret = lookup_config('ORCID_CLIENT_SECRET', "66f21bdb-90f6-4219-bd81-f6b6af3bf34a")
