@@ -1,4 +1,4 @@
-FROM gemini/fitsarchiveutils:jenkins
+FROM gemini/fitsarchiveutils:release-jenkins
 LABEL maintainer="ooberdorf@gemini.edu"
 
 # INSTALL HTTPD AND POSTGRESQL
