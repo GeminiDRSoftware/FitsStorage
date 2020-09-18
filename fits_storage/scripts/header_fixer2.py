@@ -96,6 +96,11 @@ def fix_zorro_or_alopeke(fits, instr, telescope):
         if val == 'RA--TAN':
             pheader['CTYPE1'] = 'RA---TAN'
             retval = True
+    if 'CTYPE2' in pheader:
+        val = pheader['CTYPE2']
+        if val == 'RA--TAN':
+            pheader['CTYPE2'] = 'RA---TAN'
+            retval = True
     if 'CRVAL1' in pheader:
         val = pheader['CRVAL1']
         if isinstance(val, str):
