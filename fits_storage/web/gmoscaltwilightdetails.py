@@ -119,9 +119,11 @@ def gmoscaltwilightdetails():
             '2x2',
             '4x4'
         ]:
-            if "%s-%s" % (filter_name, detector_binning) not in counts.keys():
+            key = "%s-%s" % (filter_name, detector_binning)
+            if key not in counts.keys():
+                counts[key] = {"science": 0, "twilights": 0, "filter": filter_name, "bin": detector_binning, "dt": fromdt}
                 rs = session.execute("""
-                    select count(1) as num, h.observation_class, h.filter_name, h.detector_binning, last_processed.dt 
+                    select count(1) as num, h.observation_class, h.filter_name, h.detector_binning, :dt 
                     from header h 
                     where h.ut_datetime>=:dt and h.instrument in ('GMOS-N', 'GMOS-S') 
                     and h.filter_name=:filter_name
@@ -135,9 +137,6 @@ def gmoscaltwilightdetails():
                     clazz = row["observation_class"]
                     filter = row["filter_name"]
                     bin = row["detector_binning"]
-                    key = "%s-%s" % (filter, bin)
-                    if key not in counts:
-                        counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": bin, "dt": fromdt}
                     dat = counts[key]
                     if clazz == "science":
                         dat["science"] = num
