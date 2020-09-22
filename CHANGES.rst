@@ -132,6 +132,7 @@ Updated Web Services
 
 - Added extra filtering to find last _flat.fits file when finding date within 6 months
 - Added query for all within pat 6 months when no relevant _flat.fits was found (for the common filter/bin types)
+- Fix to query to only count headers with a canonical diskfile entry
 
 
 2020-1.10
