@@ -141,28 +141,29 @@ def gmoscaltwilightdetails():
             '4x4'
         ]:
             key = "%s-%s" % (filter_name, detector_binning)
-            rs = session.execute("""
-                select count(1) as num, h.observation_class, :dt 
-                from header h, diskfile df
-                where df.canonical and h.diskfile_id=df.id 
-                and h.ut_datetime>=:dt and h.instrument in ('GMOS-N', 'GMOS-S') 
-                and h.filter_name=:filter_name
-                and h.detector_binning=:detector_binning
-                and h.observation_class in ('science', 'dayCal')
-                and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
-                group by h.observation_class, h.filter_name, h.detector_binning
-            """, {"dt": fromdt, "filter_name": filter_name, "detector_binning": detector_binning})
-            for row in rs:
-                if key not in counts.keys():
-                    counts[key] = {"science": 0, "twilights": 0, "filter": filter_name, "bin": detector_binning,
-                                   "dt": fromdt.strftime('%Y-%m-%d')}
-                num = row["num"]
-                clazz = row["observation_class"]
-                dat = counts[key]
-                if clazz == "science":
-                    dat["science"] = num
-                else:
-                    dat["twilights"] = num
+            if key not in counts.keys():
+                rs = session.execute("""
+                    select count(1) as num, h.observation_class, :dt 
+                    from header h, diskfile df
+                    where df.canonical and h.diskfile_id=df.id 
+                    and h.ut_datetime>=:dt and h.instrument in ('GMOS-N', 'GMOS-S') 
+                    and h.filter_name=:filter_name
+                    and h.detector_binning=:detector_binning
+                    and h.observation_class in ('science', 'dayCal')
+                    and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
+                    group by h.observation_class, h.filter_name, h.detector_binning
+                """, {"dt": fromdt, "filter_name": filter_name, "detector_binning": detector_binning})
+                for row in rs:
+                    if key not in counts.keys():
+                        counts[key] = {"science": 0, "twilights": 0, "filter": filter_name, "bin": detector_binning,
+                                       "dt": fromdt.strftime('%Y-%m-%d')}
+                    num = row["num"]
+                    clazz = row["observation_class"]
+                    dat = counts[key]
+                    if clazz == "science":
+                        dat["science"] = num
+                    else:
+                        dat["twilights"] = num
 
     result.update(dict(
         counts=sorted(list(counts.values()), key=lambda x: "%s-%s" % (x["filter"], x["bin"])),
