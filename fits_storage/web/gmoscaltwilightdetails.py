@@ -31,12 +31,32 @@ import dateutil.parser
 import json
 from collections import defaultdict, namedtuple
 
+
+_cached_twilight_results = None
+_cached_twilgiht_date = None
+
+
 @templating.templated("gmoscaltwilightdetails.html")
 def gmoscaltwilightdetails():
     """
     This generates a GMOS imaging twilight flat, bias and nod and shuffle darks report.
     If no date or daterange is given, tries to find last processing date
     """
+
+    # -- check our cached results
+    # if we ever come up with a single query for the below, may consider materialized view (also after we upgrade
+    # all servers to CentOS 8)
+    global _cached_twilight_date
+    global _cached_twilight_results
+
+    fromdt = datetime.date.today() - timedelta(days=180)
+
+    if _cached_twilight_results is not None and _cached_twilgiht_date is not None and _cached_twilgiht_date == fromdt:
+        return _cached_twilight_results
+
+    _cached_twilight_date = fromdt
+    _cached_twilight_results = None
+    # -- end cache check
 
     result = dict(
         is_development = fits_system_status == 'development',
@@ -48,7 +68,6 @@ def gmoscaltwilightdetails():
 
     session = get_context().session
 
-    fromdt = datetime.datetime.now() - timedelta(days=180)
     rs = session.execute("""
         with last_processed as (
             select max(ph.ut_datetime) as dt, 
@@ -121,30 +140,33 @@ def gmoscaltwilightdetails():
             '4x4'
         ]:
             key = "%s-%s" % (filter_name, detector_binning)
-            if key not in counts.keys():
-                counts[key] = {"science": 0, "twilights": 0, "filter": filter_name, "bin": detector_binning, "dt": fromdt}
-                rs = session.execute("""
-                    select count(1) as num, h.observation_class, :dt 
-                    from header h, diskfile df
-                    where df.canonical and h.diskfile_id=df.id 
-                    and h.ut_datetime>=:dt and h.instrument in ('GMOS-N', 'GMOS-S') 
-                    and h.filter_name=:filter_name
-                    and h.detector_binning=:detector_binning
-                    and h.observation_class in ('science', 'dayCal')
-                    and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
-                    group by h.observation_class, h.filter_name, h.detector_binning
-                """, {"dt": fromdt, "filter_name": filter_name, "detector_binning": detector_binning})
-                for row in rs:
-                    num = row["num"]
-                    clazz = row["observation_class"]
-                    dat = counts[key]
-                    if clazz == "science":
-                        dat["science"] = num
-                    else:
-                        dat["twilights"] = num
+            rs = session.execute("""
+                select count(1) as num, h.observation_class, :dt 
+                from header h, diskfile df
+                where df.canonical and h.diskfile_id=df.id 
+                and h.ut_datetime>=:dt and h.instrument in ('GMOS-N', 'GMOS-S') 
+                and h.filter_name=:filter_name
+                and h.detector_binning=:detector_binning
+                and h.observation_class in ('science', 'dayCal')
+                and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
+                group by h.observation_class, h.filter_name, h.detector_binning
+            """, {"dt": fromdt, "filter_name": filter_name, "detector_binning": detector_binning})
+            for row in rs:
+                if key not in counts.keys():
+                    counts[key] = {"science": 0, "twilights": 0, "filter": filter_name, "bin": detector_binning,
+                                   "dt": fromdt.strftime('%Y-%m-%d')}
+                num = row["num"]
+                clazz = row["observation_class"]
+                dat = counts[key]
+                if clazz == "science":
+                    dat["science"] = num
+                else:
+                    dat["twilights"] = num
 
     result.update(dict(
         counts=sorted(list(counts.values()), key=lambda x: "%s-%s" % (x["filter"], x["bin"])),
         ))
+
+    _cached_twilight_results = result
 
     return result
