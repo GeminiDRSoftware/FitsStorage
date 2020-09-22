@@ -2,7 +2,7 @@
 
 """
 Ricardo brought to my attention that the WCS headers for Zorro/Alopeke were broken.
-CTYPE1 was set to RA--TAN instead of RA---TAN.  Rather than reingest everything
+CTYPEx was set to RA--TAN instead of RA---TAN.  Rather than reingest everything
 after patching headers, it seemed better to write this script to:
 
 a) query Zorro/Alopeke files for a given date/range
@@ -90,25 +90,33 @@ def get_file(s3, filename):
 def patch_file(localname):
     fits = pf.open(open_image(localname), do_not_scale_image_data=True)
     pheader = fits[0].header
+    fixed = False
     if 'CTYPE1' in pheader:
         val = pheader['CTYPE1']
         print("CTYPE1 = %s" % val)
         if val == 'RA--TAN':
             pheader['CTYPE1'] = 'RA---TAN'
-            bzoutfile = os.path.join("/tmp/repairout", os.path.basename(localname))
-            outfile = bzoutfile[:-4]
-            print("outfile is %s" % outfile)
-            #fits.writeto(output_file(bzoutfile), output_verify='silentfix+exception')
-            fits.writeto(output_file(outfile), output_verify='silentfix+exception')
-            os.system('bzip2 -c %s > %s' % (outfile, bzoutfile))
+            fixed = True
+    if 'CTYPE2' in pheader:
+        val = pheader['CTYPE2']
+        print("CTYPE2 = %s" % val)
+        if val == 'RA--TAN':
+            pheader['CTYPE2'] = 'RA---TAN'
+            fixed = True
+    if fixed:
+        bzoutfile = os.path.join("/tmp/repairout", os.path.basename(localname))
+        outfile = bzoutfile[:-4]
+        print("outfile is %s" % outfile)
+        #fits.writeto(output_file(bzoutfile), output_verify='silentfix+exception')
+        fits.writeto(output_file(outfile), output_verify='silentfix+exception')
+        os.system('bzip2 -c %s > %s' % (outfile, bzoutfile))
             
-            return (outfile, bzoutfile)
+        return (outfile, bzoutfile)
     return (None, None)
 
 
 def put_file(s3, localname, filename):
-    print("would store S3 filename: %s" % filename)
-    exit(1)
+    print("storing S3 filename: %s" % filename)
     s3.upload_file(filename, localname)
 
 
@@ -145,10 +153,9 @@ if __name__ == "__main__":
                 localname = get_file(s3, filename)
                 print("Stored file in %s" % localname)
                 outfile, bzoutfile = patch_file(localname)
-                print("%s (%s)\n%s (%s)\n"% (outfile, md5sum(outfile), bzoutfile, md5sum(bzoutfile)))
                 if outfile is not None:
+                    print("%s (%s)\n%s (%s)\n"% (outfile, md5sum(outfile), bzoutfile, md5sum(bzoutfile)))
                     put_file(s3, bzoutfile, filename)
-                    exit(1)
                     df.file_md5 = md5sum(bzoutfile)
                     df.file_size = os.path.getsize(bzoutfile)
                     df.data_md5 = md5sum(outfile)
@@ -159,5 +166,8 @@ if __name__ == "__main__":
                 else:
                     print("Unable to repair %s" % filename)
                 os.unlink(localname)
+                if localname.endswith('.bz2'):
+                    os.unlink(localname[:-4])
         finally:
             session.commit()
+

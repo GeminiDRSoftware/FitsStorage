@@ -46,6 +46,10 @@ class CalibrationNIRI(Calibration):
         if (self.descriptors['observation_type'] == 'OBJECT' and
                 self.descriptors['spectroscopy'] == False):
             self.applicable.append('processed_flat')
+            if self.descriptors['observation_class'] == 'partnerCal':
+                if self.descriptors['filter_name'] not in ['Lprime_G0207', 'Mprime_G0208', 'Bra_G0238', 'Bracont_G0237',
+                                                           'hydrocarb_G0231']:
+                    self.applicable.append('flat')
             if self.descriptors['observation_class'] == 'science':
                 self.applicable.append('dark')
                 # No flats for L', M' Br(alpha) or Br(alpha) continuum, hydrocarbon as per AS 20130514, confirmed 20160516
