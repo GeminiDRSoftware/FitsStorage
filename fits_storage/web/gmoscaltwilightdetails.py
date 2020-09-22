@@ -33,7 +33,7 @@ from collections import defaultdict, namedtuple
 
 
 _cached_twilight_results = None
-_cached_twilgiht_date = None
+_cached_twilight_date = None
 
 
 @templating.templated("gmoscaltwilightdetails.html")
