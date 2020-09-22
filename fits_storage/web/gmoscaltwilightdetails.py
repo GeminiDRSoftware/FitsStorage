@@ -67,11 +67,12 @@ def gmoscaltwilightdetails():
             group by ph.filter_name, ph.detector_binning
         )
         select count(1) as num, h.observation_class, h.filter_name, h.detector_binning, last_processed.dt 
-        from header h 
+        from header h
         join last_processed on h.ut_datetime>=last_processed.dt and h.instrument in ('GMOS-N', 'GMOS-S') 
         and h.filter_name=last_processed.filter
         and h.detector_binning=last_processed.binning
-        where h.observation_class in ('science', 'dayCal')
+        join diskfile df on h.diskfile_id=df.id
+        where df.canonical and h.observation_class in ('science', 'dayCal')
         and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
         group by h.observation_class, h.filter_name, h.detector_binning, last_processed.dt
     """, {"dt": fromdt})
@@ -124,8 +125,9 @@ def gmoscaltwilightdetails():
                 counts[key] = {"science": 0, "twilights": 0, "filter": filter_name, "bin": detector_binning, "dt": fromdt}
                 rs = session.execute("""
                     select count(1) as num, h.observation_class, :dt 
-                    from header h 
-                    where h.ut_datetime>=:dt and h.instrument in ('GMOS-N', 'GMOS-S') 
+                    from header h, diskfile df
+                    where df.canonical and h.diskfile_id=df.id 
+                    and h.ut_datetime>=:dt and h.instrument in ('GMOS-N', 'GMOS-S') 
                     and h.filter_name=:filter_name
                     and h.detector_binning=:detector_binning
                     and h.observation_class in ('science', 'dayCal')
