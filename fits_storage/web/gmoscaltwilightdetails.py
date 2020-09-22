@@ -83,6 +83,7 @@ def gmoscaltwilightdetails():
                 and ph.mode='imaging'
                 and ph.diskfile_id=df.id
                 and df.filename like '%_flat.fits'
+                and df.canonical
             group by ph.filter_name, ph.detector_binning
         )
         select count(1) as num, h.observation_class, h.filter_name, h.detector_binning, last_processed.dt 
@@ -105,7 +106,7 @@ def gmoscaltwilightdetails():
         dt = row["dt"]
         key = "%s-%s" % (filter, bin)
         if key not in counts:
-            counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": bin, "dt": dt}
+            counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": bin, "dt": dt.strftime('%Y-%m-%d')}
         dat = counts[key]
         if clazz == "science":
             dat["science"] = num
