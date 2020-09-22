@@ -51,7 +51,7 @@ def gmoscaltwilightdetails():
 
     fromdt = datetime.date.today() - timedelta(days=180)
 
-    if _cached_twilight_results is not None and _cached_twilgiht_date is not None and _cached_twilgiht_date == fromdt:
+    if _cached_twilight_results is not None and _cached_twilight_date is not None and _cached_twilight_date == fromdt:
         return _cached_twilight_results
 
     _cached_twilight_date = fromdt
