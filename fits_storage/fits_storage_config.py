@@ -78,7 +78,7 @@ _host_based_configs = {
         'USE_AS_ARCHIVE': 'True',
         'FITS_SYSTEM_STATUS': 'production',
         'EXPORT_DESTINATIONS': '',
-        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files',
+        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files',
         'FITS_DB_BACKUP_DIR': "/backup",
         'FITS_SERVERNAME': 'archive.gemini.edu',
         'USING_PREVIEWS': 'True'
@@ -88,7 +88,7 @@ _host_based_configs = {
         'USE_AS_ARCHIVE': 'True',
         'EXPORT_DESTINATIONS': '',
         'FITS_SYSTEM_STATUS': 'development',
-        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files',
+        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files',
         'FITS_DB_BACKUP_DIR': "/backup",
         'FITS_SERVERNAME': 'arcdev.gemini.edu',
         'USING_PREVIEWS': 'True'
