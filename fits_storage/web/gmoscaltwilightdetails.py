@@ -33,7 +33,7 @@ from collections import defaultdict, namedtuple
 
 
 _cached_twilight_results = None
-_cached_twilgiht_date = None
+_cached_twilight_date = None
 
 
 @templating.templated("gmoscaltwilightdetails.html")
@@ -51,7 +51,7 @@ def gmoscaltwilightdetails():
 
     fromdt = datetime.date.today() - timedelta(days=180)
 
-    if _cached_twilight_results is not None and _cached_twilgiht_date is not None and _cached_twilgiht_date == fromdt:
+    if _cached_twilight_results is not None and _cached_twilight_date is not None and _cached_twilight_date == fromdt:
         return _cached_twilight_results
 
     _cached_twilight_date = fromdt
@@ -83,6 +83,7 @@ def gmoscaltwilightdetails():
                 and ph.mode='imaging'
                 and ph.diskfile_id=df.id
                 and df.filename like '%_flat.fits'
+                and df.canonical
             group by ph.filter_name, ph.detector_binning
         )
         select count(1) as num, h.observation_class, h.filter_name, h.detector_binning, last_processed.dt 
@@ -105,7 +106,7 @@ def gmoscaltwilightdetails():
         dt = row["dt"]
         key = "%s-%s" % (filter, bin)
         if key not in counts:
-            counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": bin, "dt": dt}
+            counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": bin, "dt": dt.strftime('%Y-%m-%d')}
         dat = counts[key]
         if clazz == "science":
             dat["science"] = num
@@ -140,28 +141,29 @@ def gmoscaltwilightdetails():
             '4x4'
         ]:
             key = "%s-%s" % (filter_name, detector_binning)
-            rs = session.execute("""
-                select count(1) as num, h.observation_class, :dt 
-                from header h, diskfile df
-                where df.canonical and h.diskfile_id=df.id 
-                and h.ut_datetime>=:dt and h.instrument in ('GMOS-N', 'GMOS-S') 
-                and h.filter_name=:filter_name
-                and h.detector_binning=:detector_binning
-                and h.observation_class in ('science', 'dayCal')
-                and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
-                group by h.observation_class, h.filter_name, h.detector_binning
-            """, {"dt": fromdt, "filter_name": filter_name, "detector_binning": detector_binning})
-            for row in rs:
-                if key not in counts.keys():
-                    counts[key] = {"science": 0, "twilights": 0, "filter": filter_name, "bin": detector_binning,
-                                   "dt": fromdt.strftime('%Y-%m-%d')}
-                num = row["num"]
-                clazz = row["observation_class"]
-                dat = counts[key]
-                if clazz == "science":
-                    dat["science"] = num
-                else:
-                    dat["twilights"] = num
+            if key not in counts.keys():
+                rs = session.execute("""
+                    select count(1) as num, h.observation_class, :dt 
+                    from header h, diskfile df
+                    where df.canonical and h.diskfile_id=df.id 
+                    and h.ut_datetime>=:dt and h.instrument in ('GMOS-N', 'GMOS-S') 
+                    and h.filter_name=:filter_name
+                    and h.detector_binning=:detector_binning
+                    and h.observation_class in ('science', 'dayCal')
+                    and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
+                    group by h.observation_class, h.filter_name, h.detector_binning
+                """, {"dt": fromdt, "filter_name": filter_name, "detector_binning": detector_binning})
+                for row in rs:
+                    if key not in counts.keys():
+                        counts[key] = {"science": 0, "twilights": 0, "filter": filter_name, "bin": detector_binning,
+                                       "dt": fromdt.strftime('%Y-%m-%d')}
+                    num = row["num"]
+                    clazz = row["observation_class"]
+                    dat = counts[key]
+                    if clazz == "science":
+                        dat["science"] = num
+                    else:
+                        dat["twilights"] = num
 
     result.update(dict(
         counts=sorted(list(counts.values()), key=lambda x: "%s-%s" % (x["filter"], x["bin"])),
