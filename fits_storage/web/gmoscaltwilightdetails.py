@@ -88,7 +88,8 @@ def gmoscaltwilightdetails():
         )
         select count(1) as num, h.observation_class, h.filter_name, h.detector_binning, last_processed.dt 
         from header h
-        join last_processed on h.ut_datetime>=last_processed.dt and h.instrument in ('GMOS-N', 'GMOS-S') 
+        join last_processed on h.ut_datetime>=(date(last_processed.dt) + INTERVAL '1 day') 
+        and h.instrument in ('GMOS-N', 'GMOS-S') 
         and h.filter_name=last_processed.filter
         and h.detector_binning=last_processed.binning
         join diskfile df on h.diskfile_id=df.id
