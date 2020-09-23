@@ -17,7 +17,7 @@
   <tr class='alternating'>
     <td>{{ row["science"] }}</td><td>{{ row["twilights"] }}</td><td>{{ row["filter"] }}</td><td>{{ row["bin"] }}</td><td>{{ row["dt"] }}</td>
       {% if row["filename"] %}
-      <td><a href="https://archive.gemini.edu/preview/{{ row['filename']}}">[P] {{ row["filename"] }}</a></td>
+      <td><a href="https://archive.gemini.edu/preview/{{ row['filename']}}">[P]</a> {{ row["filename"] }}</td>
       {% else %}
       <td>(None)</td>
       {% endif %}

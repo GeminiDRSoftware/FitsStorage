@@ -121,11 +121,11 @@ def gmoscaltwilightdetails():
                     and df.filename like '%_flat.fits'
                     and h.filter_name=:filter_name
                     and h.detector_binning=:detector_binning
-            """, {"dt": fromdt, "filter_name": filter, "detector_binning": bin})
-            filename_row = filename_rs.fetch_one()
+            """, {"dt": dt, "filter_name": filter, "detector_binning": bin})
+            filename_row = filename_rs.fetchone()
             if filename_row is not None:
                 filename = filename_row["filename"]
-                if filename_rs.fetch_one() is not None:
+                if filename_rs.fetchone() is not None:
                     # too many results
                     filename = ""
             else:
