@@ -12,10 +12,15 @@
 {% else %}
 <h2>Twilights from Date</h2>
 <table border='0'>
-  <tr class='tr_head'><th>Number of Science Frames</th><th>Number of Twilight Frames</th><th>Filter</th><th>Binning</th><th>From Date</th></tr>
+  <tr class='tr_head'><th>Number of Science Frames</th><th>Number of Twilight Frames</th><th>Filter</th><th>Binning</th><th>From Date</th><th>Filename</th></tr>
  {%- for row in counts %}
   <tr class='alternating'>
     <td>{{ row["science"] }}</td><td>{{ row["twilights"] }}</td><td>{{ row["filter"] }}</td><td>{{ row["bin"] }}</td><td>{{ row["dt"] }}</td>
+      {% if row["filename"] %}
+      <td><a href="https://archive.gemini.edu/preview/{{ row['filename']}}">[P]</a> {{ row["filename"] }}</td>
+      {% else %}
+      <td>(None)</td>
+      {% endif %}
   </tr>
  {%- endfor %}
 </table>
