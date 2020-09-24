@@ -88,7 +88,8 @@ def gmoscaltwilightdetails():
         )
         select count(1) as num, h.observation_class, h.filter_name, h.detector_binning, last_processed.dt 
         from header h
-        join last_processed on h.ut_datetime>=last_processed.dt and h.instrument in ('GMOS-N', 'GMOS-S') 
+        join last_processed on h.ut_datetime>=(date(last_processed.dt) + INTERVAL '1 day') 
+        and h.instrument in ('GMOS-N', 'GMOS-S') 
         and h.filter_name=last_processed.filter
         and h.detector_binning=last_processed.binning
         join diskfile df on h.diskfile_id=df.id
@@ -104,9 +105,36 @@ def gmoscaltwilightdetails():
         filter = row["filter_name"]
         bin = row["detector_binning"]
         dt = row["dt"]
+        if dt != fromdt:
+            # fetch the filename
+            filename_rs = session.execute("""
+                select df.filename
+                from header h, diskfile df
+                where df.canonical and h.diskfile_id=df.id
+                    and h.instrument in ('GMOS-N', 'GMOS-S')
+                    and h.ut_datetime = :dt
+                    and h.types like '%PREPARED%'
+                    and h.observation_class='dayCal'
+                    and h.object = 'Twilight'
+                    and h.detector_roi_setting='Full Frame'
+                    and h.mode='imaging'
+                    and df.filename like '%_flat.fits'
+                    and h.filter_name=:filter_name
+                    and h.detector_binning=:detector_binning
+            """, {"dt": dt, "filter_name": filter, "detector_binning": bin})
+            filename_row = filename_rs.fetchone()
+            if filename_row is not None:
+                filename = filename_row["filename"]
+                if filename_rs.fetchone() is not None:
+                    # too many results
+                    filename = ""
+            else:
+                filename = ""
+
         key = "%s-%s" % (filter, bin)
         if key not in counts:
-            counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": bin, "dt": dt.strftime('%Y-%m-%d')}
+            counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": bin, "dt": dt.strftime('%Y-%m-%d'),
+                           "filename": filename}
         dat = counts[key]
         if clazz == "science":
             dat["science"] = num
@@ -156,7 +184,7 @@ def gmoscaltwilightdetails():
                 for row in rs:
                     if key not in counts.keys():
                         counts[key] = {"science": 0, "twilights": 0, "filter": filter_name, "bin": detector_binning,
-                                       "dt": fromdt.strftime('%Y-%m-%d')}
+                                       "dt": fromdt.strftime('%Y-%m-%d'), "filename": ""}
                     num = row["num"]
                     clazz = row["observation_class"]
                     dat = counts[key]
