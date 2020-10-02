@@ -32,6 +32,8 @@ import json
 from collections import defaultdict, namedtuple
 
 
+# Set this True to enable cache.  Adam Smith says we want the results to be live after all
+_cache_results = False
 _cached_twilight_results = None
 _cached_twilight_date = None
 
@@ -92,6 +94,7 @@ def gmoscaltwilightdetails():
         and h.instrument in ('GMOS-N', 'GMOS-S') 
         and h.filter_name=last_processed.filter
         and h.detector_binning=last_processed.binning
+        and (h.qa_state='Pass' or (h.qa_state='Undefined' and h.observation_class='science'))
         join diskfile df on h.diskfile_id=df.id
         where df.canonical and h.observation_class in ('science', 'dayCal')
         and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
@@ -178,6 +181,7 @@ def gmoscaltwilightdetails():
                     and h.filter_name=:filter_name
                     and h.detector_binning=:detector_binning
                     and h.observation_class in ('science', 'dayCal')
+                    and (h.qa_state='Pass' or (h.qa_state='Undefined' and h.observation_class='science'))
                     and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
                     group by h.observation_class, h.filter_name, h.detector_binning
                 """, {"dt": fromdt, "filter_name": filter_name, "detector_binning": detector_binning})
@@ -197,6 +201,7 @@ def gmoscaltwilightdetails():
         counts=sorted(list(counts.values()), key=lambda x: "%s-%s" % (x["filter"], x["bin"])),
         ))
 
-    _cached_twilight_results = result
+    if _cache_results:
+        _cached_twilight_results = result
 
     return result
