@@ -363,7 +363,6 @@ fixtures = (
 @pytest.mark.usefixtures("min_rollback")
 @pytest.mark.parametrize("route,expected", FixtureIter(fixtures))
 def test_wsgi(min_session, route, expected):
-    _init_test_user(min_session)
     # ctx = get_context()
     if route is None:
         assert expected.status == 404
