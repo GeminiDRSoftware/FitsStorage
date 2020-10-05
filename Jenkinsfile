@@ -54,17 +54,17 @@ pipeline {
             steps {
                 script {
                     //def epelhackimage = docker.build("gemini/epelhack:jenkins", " -f docker/epelhack-jenkins/Dockerfile .")
-                    def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins_2020-2", " -f docker/fitsstorage-jenkins/Dockerfile .")
-                    def archiveimage = docker.build("gemini/archive:jenkins_2020-2", " -f docker/archive-jenkins/Dockerfile .")
+                    def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f docker/fitsstorage-jenkins/Dockerfile .")
+                    def archiveimage = docker.build("gemini/archive:jenkins", " -f docker/archive-jenkins/Dockerfile .")
                     sh '''
-                    docker network create fitsstorage-jenkins_2020-2 || true
-                    docker container rm fitsdata-jenkins_2020-2 || true
-                    docker container rm archive-jenkins_2020-2 || true
+                    docker network create fitsstorage-jenkins || true
+                    docker container rm fitsdata-jenkins || true
+                    docker container rm archive-jenkins || true
                     '''
-                    def postgres = docker.image('postgres:12').withRun(" --network fitsstorage-jenkins_2020-2 --name fitsdata-jenkins_2020-2 -e POSTGRES_USER=fitsdata -e POSTGRES_PASSWORD=fitsdata -e POSTGRES_DB=fitsdata") { c ->
-                        def archive = docker.image("gemini/archive:jenkins_2020-2").withRun(" --network fitsstorage-jenkins_2020-2 --name archive-jenkins_2020-2 -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins_2020-2\" -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e BLOCKED_URLS=\"\" -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") { a->
+                    def postgres = docker.image('postgres:12').withRun(" --network fitsstorage-jenkins --name fitsdata-jenkins -e POSTGRES_USER=fitsdata -e POSTGRES_PASSWORD=fitsdata -e POSTGRES_DB=fitsdata") { c ->
+                        def archive = docker.image("gemini/archive:jenkins").withRun(" --network fitsstorage-jenkins --name archive-jenkins -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e BLOCKED_URLS=\"\" -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") { a->
                             try {
-                                docker.image('gemini/fitsarchiveutils:jenkins_2020-2').inside(" -v /data/pytest_tmp:/tmp  --network fitsstorage-jenkins_2020-2 -e STORAGE_ROOT=/tmp/jenkins_pytest/dataflow -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins_2020-2\" -e PYTEST_SERVER=http://archive-jenkins_2020-2 -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e BLOCKED_URLS=\"\" -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") {
+                                docker.image('gemini/fitsarchiveutils:jenkins').inside(" -v /data/pytest_tmp:/tmp  --network fitsstorage-jenkins -e STORAGE_ROOT=/tmp/jenkins_pytest/dataflow -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e PYTEST_SERVER=http://archive-jenkins -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e BLOCKED_URLS=\"\" -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS") {
                                     sh 'python3 fits_storage/scripts/create_tables.py'
                                     echo "Running tests against docker containers"
                                     sh  '''
@@ -129,9 +129,9 @@ pipeline {
             )
           sh '''
              if [ -f dragons-repo.txt ]; then rm -rf `cat dragons-repo.txt`; fi
-             docker rmi gemini/fitsarchiveutils:jenkins_2020-2 || true
-             docker rmi gemini/archive:jenkins_2020-2 || true
-             docker network rm fitsstorage-jenkins_2020-2 || true
+             docker rmi gemini/fitsarchiveutils:jenkins || true
+             docker rmi gemini/archive:jenkins || true
+             docker network rm fitsstorage-jenkins || true
           '''
         }
         success {
