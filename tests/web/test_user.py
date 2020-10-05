@@ -28,6 +28,7 @@ def _init_test_user(session):
         user.email = 'ooberdorf@gemini.edu'
         user.change_password('p4$$Word4pytest')
         session.add(user)
+        session.flush()
 
 
 def _init_admin_user(session):
@@ -41,6 +42,7 @@ def _init_admin_user(session):
         user.email = 'noreply@gemini.edu'
         user.superuser = True
         session.add(user)
+        session.flush()
 
 
 @pytest.mark.usefixtures("rollback")
