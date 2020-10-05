@@ -36,6 +36,9 @@ class MockResponse(object):
     def set_content_type(self, content_type):
         self.content_type = content_type
 
+    def append_json(self, json):
+        self.stuff = "%s\n%s" % (self.stuff, json)
+
 
 class MockEnv(object):
     def __init__(self, method='GET'):
@@ -64,4 +67,7 @@ class MockContext(object):
 
     def get_form_data(self):
         return dict()
+
+    def json(self):
+        return '{}'
 
