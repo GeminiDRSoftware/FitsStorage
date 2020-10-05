@@ -20,6 +20,7 @@ class UserProgram(Base):
     program_id = Column(Text, nullable=True, index=True)
     observation_id = Column(Text, nullable=True, index=True)
     filename = Column(Text, nullable=True, index=True)
+    path = Column(Text, nullable=True, index=True)
 
     def __init__(self, user_id, program_id=None, observation_id=None, filename=None, path=None):
         """

@@ -49,7 +49,10 @@ class MockEnv(object):
 
 class MockUser(object):
     def __init__(self):
-        self.gemini_staff=True
+        self.id = 1
+        self.gemini_staff = True
+        self.username = 'mockuser'
+        self.orcid_id = None
 
 
 class MockContext(object):
