@@ -45,4 +45,4 @@ def test_list_publications(session, monkeypatch):
 
     list_publications()
     assert(mock_context.resp.status == 200)
-    assert(mock_context.resp.stuff == '\nbibcode   https://archive.gemini.edu/searchform/bibcode=bibcode\n')
+    assert(mock_context.resp.stuff == '\nbibcode   https://archive.gemini.edu/searchform/publication=bibcode\n')
