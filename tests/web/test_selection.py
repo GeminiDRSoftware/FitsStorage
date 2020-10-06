@@ -182,7 +182,12 @@ getselection_pairs = [
     (['Crpa=kjkj'], {'notrecognised': 'Crpa=kjkj'}),
     (['cenwlen=blahblah'], {'cenwlen': 'blahblah'}),
     (['exposure_time=blahblah'], {'exposure_time': 'blahblah'}),
-    ]
+    (['high'], {'gain': 'high'}),
+    (['cols=program_id'], {'cols': 'program_id'}),
+    (['sq'], {'procsci': 'sq'}),
+    (['preimage'], {'pre_image': True}),
+    (["zardoz"], {'notrecognised': 'zardoz'}),
+]
 
 
 @pytest.mark.parametrize("input,expected", getselection_pairs)
@@ -204,6 +209,7 @@ sayselection_pairs = [
      ". WARNING: I didn't understand these (case-sensitive) words: Foobar"),
     ({'program_id': 'GN-CAL20150623', 'notrecognised': 'Foobar'},
      "; Program ID: GN-CAL20150623. WARNING: I didn't understand these (case-sensitive) words: Foobar"),
+    ({'site_monitoring': True}, {' Is Site Monitoring Data'}),
     ]
 
 
