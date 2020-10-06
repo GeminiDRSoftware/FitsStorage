@@ -204,7 +204,8 @@ def detail_miscfile(handle, formdata = {}):
     ctx = get_context()
 
     try:
-        query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile, MiscFile.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id)
+        query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile, MiscFile.diskfile_id == DiskFile.id)\
+            .join(File, DiskFile.file_id == File.id)
         try:
             meta, df, fobj = query.filter(MiscFile.id == int(handle)).one()
         except ValueError:
@@ -236,7 +237,7 @@ def detail_miscfile(handle, formdata = {}):
             meta.release = release_date
             meta.program_id = formdata.getvalue('prog', '')
             meta.description = formdata.getvalue('desc', '')
-            session.flush()
+            ctx.session.flush()
             ret['message'] = "Successfully updated"
 
         return ret
