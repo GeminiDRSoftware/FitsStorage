@@ -6,19 +6,13 @@ import fits_storage
 from fits_storage.orm.program import Program
 from fits_storage.orm.programpublication import ProgramPublication
 from fits_storage.orm.publication import Publication
-from fits_storage.orm.queue_error import QueueError
-from fits_storage.orm.tapestuff import Tape, TapeFile, TapeWrite, TapeRead
 from fits_storage.web.api import lookup_diskfile
 from fits_storage.web.program import program_info
-from fits_storage.web.publication import publication_ads
-from fits_storage.web.queuestatus import queuestatus_summary, queuestatus_tb, queuestatus_update
-from fits_storage.web.tapestuff import fileontape, tapewrite, tapefile, taperead
 from tests.web_helper import MockContext
-from sqlalchemy import join, desc, func
 
 
 @pytest.mark.usefixtures("rollback")
-def test_programIinfo(session, monkeypatch):
+def test_program_info(session, monkeypatch):
     mock_context = MockContext(session, method='GET')
 
     def _mock_get_context(initialize=True):
