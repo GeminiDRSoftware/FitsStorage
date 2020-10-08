@@ -19,6 +19,7 @@ class MockResponse(object):
         self.content_type = 'text/plain'
         self.stuff = ''
         self.error = None
+        self.status = 200
 
     def append_iterable(self, iter):
         for i in iter:
@@ -45,6 +46,7 @@ class MockEnv(object):
         self.method = method
         self.remote_ip = '127.0.0.1'
         self.unparsed_uri = '/foo'
+        self.uri = '/foo'
 
 
 class MockUser(object):
@@ -59,7 +61,7 @@ class MockContext(object):
     """
     Mock Web Context for unit tests.
     """
-    def __init__(self, session, method='GET'):
+    def __init__(self, session, *, method='GET', form_data=dict(), is_staffer=False):
         self.session = session
         self.env = MockEnv(method=method)
         self.resp = MockResponse()
@@ -67,9 +69,11 @@ class MockContext(object):
         self.user = MockUser()
         self.req = {'User-Agent': 'Flagon 1.0'}
         self.got_magic = False
+        self.is_staffer = is_staffer
+        self.form_data = form_data
 
-    def get_form_data(self):
-        return dict()
+    def get_form_data(self, *args, **kwargs):
+        return self.form_data
 
     def json(self):
         return '{}'
