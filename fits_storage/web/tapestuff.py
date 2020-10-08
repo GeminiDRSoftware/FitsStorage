@@ -154,7 +154,6 @@ def taperead():
     """
     This is the taperead list function
     """
-
     query = get_context().session.query(TapeRead).order_by(TapeRead.id)
 
-    return dict(tapefiles = query)
+    return dict(tapereads = query)

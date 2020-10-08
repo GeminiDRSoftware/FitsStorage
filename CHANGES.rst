@@ -34,6 +34,16 @@ Web Services
 - Now sorts null ut datetimes to the end of the results, so most recent properly displays
 - Removed engineering results by default
 
+/tapestuff
+^^^^^^^^^^
+
+- Fixed bug in taperead listing, was always blank
+
+/miscfiles
+^^^^^^^^^^
+
+- Fixed bug in session/context handling in miscfiles details
+
 Updated Scripts
 ---------------
 
