@@ -61,7 +61,7 @@ class MockContext(object):
     """
     Mock Web Context for unit tests.
     """
-    def __init__(self, session, *, method='GET', form_data=dict(), is_staffer=False):
+    def __init__(self, session, *, method='GET', form_data=dict(), raw_data=None, is_staffer=False):
         self.session = session
         self.env = MockEnv(method=method)
         self.resp = MockResponse()
@@ -71,6 +71,7 @@ class MockContext(object):
         self.got_magic = False
         self.is_staffer = is_staffer
         self.form_data = form_data
+        self.raw_data = raw_data
 
     def get_form_data(self, *args, **kwargs):
         return self.form_data

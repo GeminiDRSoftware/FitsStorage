@@ -43,6 +43,7 @@ Web Services
 ^^^^^^^^^^
 
 - Fixed bug in session/context handling in miscfiles details
+- Fixed validation to check both release and program independently (was passing if release passed)
 
 Updated Scripts
 ---------------

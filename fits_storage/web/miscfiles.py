@@ -117,10 +117,10 @@ def validate():
                 dateutil.parser.parse(input_data['release'])
             except ValueError:
                 response['result'] = False
-        elif 'program' in input_data:
+        if 'program' in input_data and response['result']:
             prog = GeminiProgram(input_data['program'])
             response['result'] = prog.valid
-        else:
+        if 'release' not in input_data and 'program' not in input_data:
             raise ValueError
     except ValueError:
         ctx.resp.status = Return.HTTP_BAD_REQUEST
