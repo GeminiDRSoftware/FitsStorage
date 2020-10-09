@@ -105,6 +105,7 @@ def test_miscfiles_search_detail(session, monkeypatch):
     Field = collections.namedtuple('Field', 'name value')
     form_data = ItemizedFieldStorage()
     form_data.list = [
+        Field(name='name', value='foo.fits'),
         Field(name='prog', value='program'),
         Field(name='search', value=True)
     ]
@@ -286,6 +287,28 @@ def test_miscfiles_handle_save(session, monkeypatch):
     m = session.query(MiscFile).filter(MiscFile.id == m.id).first()
     assert(m.program_id == 'newprog')
     assert(m.description == 'newdesc')
+
+    mock_context.resp.status = 200
+    form_data.list = [
+        Field(name='save', value=True),
+        Field(name='prog', value='newprog'),
+        Field(name='desc', value='newdesc'),
+        Field(name='release', value='now'),
+    ]
+    detail_miscfile(handle=m.id, formdata=form_data)
+    assert(mock_context.resp.status == 200)
+    assert('Successfully updated' in mock_context.resp.stuff)
+
+    mock_context.resp.status = 200
+    form_data.list = [
+        Field(name='save', value=True),
+        Field(name='prog', value='newprog'),
+        Field(name='desc', value='newdesc'),
+        Field(name='arbRelease', value='2020-08-02'),
+    ]
+    detail_miscfile(handle=m.id, formdata=form_data)
+    assert(mock_context.resp.status == 200)
+    assert('Successfully updated' in mock_context.resp.stuff)
 
     session.rollback()
 
