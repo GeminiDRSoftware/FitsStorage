@@ -46,6 +46,14 @@ def make_test_file(session):
     return f, df, h, m
 
 
+def cleanup_test_file(session, f, df, h, m):
+    session.delete(m)
+    session.delete(h)
+    session.delete(df)
+    session.delete(f)
+    session.flush()
+
+
 @pytest.mark.usefixtures("rollback")
 def test_xmlfilelist(session, monkeypatch):
     setup_mock_file_stuff(monkeypatch)
@@ -108,6 +116,8 @@ def test_diskfile_dicts(session, monkeypatch):
     assert(retval['mdready'] is None)
     assert(retval['size'] == 0)
 
+    cleanup_test_file(session, f, df, h, m)
+
     session.rollback()
 
 
@@ -143,6 +153,8 @@ def test_jsonfilelist(session, monkeypatch):
     assert(js['mdready'] is None)
     assert(js['size'] == 0)
     assert(js['md5'] == '')
+
+    cleanup_test_file(session, f, df, h, m)
 
     session.rollback()
 
@@ -181,6 +193,8 @@ def test_jsonsummary(session, monkeypatch):
     assert(js['size'] == 0)
     assert(js['md5'] == '')
 
+    cleanup_test_file(session, f, df, h, m)
+
     session.rollback()
 
 
@@ -211,5 +225,7 @@ def test_jsonqastate(session, monkeypatch):
     assert(js['filename'] == 'foo.fits')
     assert(js['data_md5'] == '')
     assert(js['qa_state'] is None)
+
+    cleanup_test_file(session, f, df, h, m)
 
     session.rollback()
