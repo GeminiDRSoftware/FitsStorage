@@ -19,26 +19,26 @@ from tests.web_helper import MockContext
 
 
 def make_test_file(session):
-    f = session.query(File).filter(File.name == 'foo.fits').one_or_none()
+    f = session.query(File).filter(File.name == 'tflfoo.fits').one_or_none()
     if f is None:
-        f = File('foo.fits')
+        f = File('tflfoo.fits')
         session.add(f)
         session.flush()
-    df = session.query(DiskFile).filter(DiskFile.filename == 'foo.fits').one_or_none()
+    df = session.query(DiskFile).filter(DiskFile.filename == 'tflfoo.fits').one_or_none()
     if df is None:
-        df = DiskFile(f, 'foo.fits', '')
+        df = DiskFile(f, 'tflfoo.fits', '')
         session.add(df)
         session.flush()
     h = session.query(Header).filter(Header.diskfile_id == df.id).one_or_none()
     if h is None:
         h = Header(df, None)
         h.ut_datetime = datetime(2020, 5, 1)
-        h.program_id = 'program'
+        h.program_id = 'tflprogram'
         session.add(h)
         session.flush()
     m = MiscFile()
     m.diskfile_id = df.id
-    m.program_id = 'program'
+    m.program_id = 'tflprogram'
     m.release = datetime.now() - timedelta(days=366)
     session.add(m)
     session.flush()
@@ -71,7 +71,7 @@ def test_xmlfilelist(session, monkeypatch):
     xmlfilelist({})
 
     assert(mock_context.resp.status == 200)
-    assert('<filename>foo.fits</filename>' in mock_context.resp.stuff)
+    assert('<filename>tflfoo.fits</filename>' in mock_context.resp.stuff)
 
     session.rollback()
 
@@ -87,8 +87,8 @@ def test_diskfile_dicts(session, monkeypatch):
 
     assert(len(retval) == 1)
     retval = retval[0]
-    assert(retval['name'] == 'foo.fits')
-    assert(retval['filename'] == 'foo.fits')
+    assert(retval['name'] == 'tflfoo.fits')
+    assert(retval['filename'] == 'tflfoo.fits')
     assert(retval['path'] == '')
     assert(retval['compressed'] is False)
     assert(retval['file_size'] == 0)
@@ -104,8 +104,8 @@ def test_diskfile_dicts(session, monkeypatch):
     assert(len(retval) == 1)
     retval, hdr = retval[0]
     assert(hdr.id == h.id)
-    assert(retval['name'] == 'foo.fits')
-    assert(retval['filename'] == 'foo.fits')
+    assert(retval['name'] == 'tflfoo.fits')
+    assert(retval['filename'] == 'tflfoo.fits')
     assert(retval['path'] == '')
     assert(retval['compressed'] is False)
     assert(retval['file_size'] == 0)
@@ -143,8 +143,8 @@ def test_jsonfilelist(session, monkeypatch):
     assert(len(mock_context.resp.json_list) == 1)
 
     js = mock_context.resp.json_list[0]
-    assert(js['name'] == 'foo.fits')
-    assert(js['filename'] == 'foo.fits')
+    assert(js['name'] == 'tflfoo.fits')
+    assert(js['filename'] == 'tflfoo.fits')
     assert(js['path'] == '')
     assert(js['compressed'] is False)
     assert(js['file_size'] == 0)
@@ -182,8 +182,8 @@ def test_jsonsummary(session, monkeypatch):
 
     js = mock_context.resp.json_list[0]
 
-    assert(js['name'] == 'foo.fits')
-    assert(js['filename'] == 'foo.fits')
+    assert(js['name'] == 'tflfoo.fits')
+    assert(js['filename'] == 'tflfoo.fits')
     assert(js['path'] == '')
     assert(js['compressed'] is False)
     assert(js['file_size'] == 0)
@@ -222,7 +222,7 @@ def test_jsonqastate(session, monkeypatch):
     js = mock_context.resp.json_list[0]
 
     assert(js['data_label'] is None)
-    assert(js['filename'] == 'foo.fits')
+    assert(js['filename'] == 'tflfoo.fits')
     assert(js['data_md5'] == '')
     assert(js['qa_state'] is None)
 
