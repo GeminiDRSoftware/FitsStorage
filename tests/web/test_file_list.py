@@ -19,17 +19,23 @@ from tests.web_helper import MockContext
 
 
 def make_test_file(session):
-    f = File('foo.fits')
-    session.add(f)
-    session.flush()
-    df = DiskFile(f, 'foo.fits', '')
-    session.add(df)
-    session.flush()
-    h = Header(df, None)
-    h.ut_datetime = datetime(2020, 5, 1)
-    h.program_id = 'program'
-    session.add(h)
-    session.flush()
+    f = session.query(File).filter(File.name == 'foo.fits').one_or_none()
+    if f is None:
+        f = File('foo.fits')
+        session.add(f)
+        session.flush()
+    df = session.query(DiskFile).filter(DiskFile.filename == 'foo.fits').one_or_none()
+    if df is None:
+        df = DiskFile(f, 'foo.fits', '')
+        session.add(df)
+        session.flush()
+    h = session.query(Header).filter(Header.diskfile_id == df.id).one_or_none()
+    if h is None:
+        h = Header(df, None)
+        h.ut_datetime = datetime(2020, 5, 1)
+        h.program_id = 'program'
+        session.add(h)
+        session.flush()
     m = MiscFile()
     m.diskfile_id = df.id
     m.program_id = 'program'
