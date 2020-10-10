@@ -20,6 +20,8 @@ class MockResponse(object):
         self.stuff = ''
         self.error = None
         self.status = 200
+        self.json_list = None
+        self.json_indent = None
 
     def append_iterable(self, iter):
         for i in iter:
@@ -39,6 +41,10 @@ class MockResponse(object):
 
     def append_json(self, json):
         self.stuff = "%s\n%s" % (self.stuff, json)
+
+    def send_json(self, thelist, indent=4):
+        self.json_list = thelist
+        self.json_indent = indent
 
 
 class MockEnv(object):
