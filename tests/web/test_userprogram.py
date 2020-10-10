@@ -3,13 +3,12 @@ import urllib
 import pytest
 
 import fits_storage
-from fits_storage.orm.queue_error import QueueError
 from fits_storage.orm.user import User
 from fits_storage.orm.userprogram import UserProgram
 from fits_storage.web.api import lookup_diskfile
 from fits_storage.web.userprogram import my_programs, get_permissions_list, get_program_list, get_file_list, \
     request_user_program, get_obsid_list, validate_program_key
-from tests.web_helper import MockContext, MockUser
+from tests.web_helper import MockContext
 
 
 @pytest.mark.usefixtures("rollback")

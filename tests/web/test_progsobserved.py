@@ -7,10 +7,8 @@ from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.file import File
 from fits_storage.orm.header import Header
 from fits_storage.orm.program import Program
-from fits_storage.orm.publication import Publication
 from fits_storage.web.api import lookup_diskfile
 from fits_storage.web.progsobserved import progsobserved, sitemap
-from fits_storage.web.publication import publication_ads, list_publications
 from tests.web_helper import MockContext
 
 

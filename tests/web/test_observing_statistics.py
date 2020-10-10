@@ -2,11 +2,7 @@
 import pytest
 
 import fits_storage
-from fits_storage.orm.diskfile import DiskFile
-from fits_storage.orm.file import File
-from fits_storage.orm.header import Header
 from fits_storage.web.list_headers import list_headers
-from fits_storage.web.notification import notification
 from fits_storage.web.observing_statistics import observing_statistics
 from tests.orm_helper import MockHeader
 from tests.web_helper import MockContext

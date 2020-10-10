@@ -1,16 +1,10 @@
-from datetime import datetime
-
 import pytest
 
 import fits_storage
-from fits_storage.orm.queue_error import QueueError
 from fits_storage.orm.tapestuff import Tape, TapeFile, TapeWrite, TapeRead
 from fits_storage.web.api import lookup_diskfile
-from fits_storage.web.publication import publication_ads
-from fits_storage.web.queuestatus import queuestatus_summary, queuestatus_tb, queuestatus_update
 from fits_storage.web.tapestuff import fileontape, tapewrite, tapefile, taperead
 from tests.web_helper import MockContext
-from sqlalchemy import join, desc, func
 
 
 @pytest.mark.usefixtures("rollback")
