@@ -1,7 +1,3 @@
-import os
-
-import collections
-from cgi import FieldStorage
 
 from datetime import datetime, timedelta
 
@@ -68,7 +64,7 @@ def test_xmlfilelist(session, monkeypatch):
 
     f, df, h, m = make_test_file(session)
 
-    xmlfilelist({})
+    xmlfilelist({'filename': 'tflfoo.fits'})
 
     assert(mock_context.resp.status == 200)
     assert('<filename>tflfoo.fits</filename>' in mock_context.resp.stuff)
@@ -135,7 +131,7 @@ def test_jsonfilelist(session, monkeypatch):
 
     f, df, h, m = make_test_file(session)
 
-    jsonfilelist({})
+    jsonfilelist({'filename': 'tflfoo.fits'})
 
     assert(mock_context.resp.status == 200)
     assert(mock_context.resp.json_list is not None)
@@ -174,7 +170,7 @@ def test_jsonsummary(session, monkeypatch):
 
     f, df, h, m = make_test_file(session)
 
-    jsonsummary({})
+    jsonsummary({'filename': 'tflfoo.fits'})
 
     assert(mock_context.resp.status == 200)
 
@@ -213,7 +209,7 @@ def test_jsonqastate(session, monkeypatch):
 
     f, df, h, m = make_test_file(session)
 
-    jsonqastate({})
+    jsonqastate({'filename': 'tflfoo.fits'})
 
     assert(mock_context.resp.status == 200)
 
