@@ -12,15 +12,8 @@ from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.file import File
 from fits_storage.orm.header import Header
 from fits_storage.orm.miscfile import MiscFile
-from fits_storage.orm.program import Program
-from fits_storage.orm.publication import Publication
-from fits_storage.utils.web import Return
-from fits_storage.utils.web.wsgi_adapter import ItemizedFieldStorage
 from fits_storage.web.api import lookup_diskfile
 from fits_storage.web.file_list import xmlfilelist, diskfile_dicts, jsonfilelist, jsonsummary, jsonqastate
-from fits_storage.web.miscfiles import miscfiles, detail_miscfile, string_to_date, validate
-from fits_storage.web.progsobserved import progsobserved, sitemap
-from fits_storage.web.publication import publication_ads, list_publications
 from tests.file_helper import setup_mock_file_stuff
 from tests.web_helper import MockContext
 

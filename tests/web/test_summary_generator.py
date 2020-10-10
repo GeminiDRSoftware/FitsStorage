@@ -207,3 +207,4 @@ def test_summary_generator(session, monkeypatch):
 
     assert(wb is None)  # could track down something that will set this
 
+    session.rollback()
