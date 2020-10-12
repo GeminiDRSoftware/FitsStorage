@@ -47,6 +47,19 @@ class MockResponse(object):
         self.json_indent = indent
 
 
+class MockRequest(object):
+    def __init__(self, *, form_data=None):
+        self.form_data = form_data
+
+    def get_form_data(self):
+        return self.form_data
+
+    def __getattr__(self, item):
+        if item == 'User-Agent':
+            return 'Flagon 1.0'
+        return super().__getattr__(item)
+
+
 class MockEnv(object):
     def __init__(self, method='GET'):
         self.method = method
@@ -73,7 +86,8 @@ class MockContext(object):
         self.resp = MockResponse()
         self.usagelog = MockUsageLog()
         self.user = MockUser()
-        self.req = {'User-Agent': 'Flagon 1.0'}
+        # self.req = {'User-Agent': 'Flagon 1.0'}
+        self.req = MockRequest(form_data=form_data)
         self.got_magic = False
         self.is_staffer = is_staffer
         self.form_data = form_data
@@ -84,4 +98,3 @@ class MockContext(object):
 
     def json(self):
         return '{}'
-
