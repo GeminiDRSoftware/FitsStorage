@@ -5,7 +5,7 @@ from fits_storage.gemini_metadata_utils import gemini_date, ONEDAY_OFFSET
 from fits_storage import fits_storage_config
 
 from collections import OrderedDict
-from sqlalchemy import Column, Integer, or_, and_
+from sqlalchemy import Column, Integer, or_, and_, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.query import Query
 from sqlalchemy.sql.elements import AsBoolean, BooleanClauseList
@@ -187,6 +187,7 @@ getselection_pairs = [
     (['sq'], {'procsci': 'sq'}),
     (['preimage'], {'pre_image': True}),
     (["zardoz"], {'notrecognised': 'zardoz'}),
+    (["zardoz", "plan9fromouterspace"], {'notrecognised': 'zardoz plan9fromouterspace'}),
 ]
 
 
@@ -251,6 +252,11 @@ queryselection_pair_source = (
     # The following are a bit special and the query conditions will be constructed in the query generator
     ('date', None),
     ('daterange', None),
+    (('lastmoddaterange', '20200101 20200202'),
+     and_(DiskFile.lastmod >= datetime(2020, 1, 1), DiskFile.lastmod < datetime(2020, 2, 3))),
+    (('object', 'OBJECT'), and_(Header.object.ilike('OBJECT'),
+                                or_(Header.proprietary_coordinates == False,
+                                    Header.release <= func.now()))),
     )
 
 def generate_queryselection_pairs():
@@ -283,7 +289,6 @@ def generate_queryselection_pairs():
         yield {fieldname: value}, str(compiled_statement(q.statement))
 
 @pytest.mark.parametrize("input,expected", generate_queryselection_pairs())
-@pytest.mark.slow
 def test_queryselection(query, input, expected):
     q = queryselection(query, input)
     print (q)
