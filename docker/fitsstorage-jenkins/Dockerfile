@@ -55,6 +55,7 @@ RUN pip3 install psycopg2-binary && \
     pip3 install matplotlib && \
     pip3 install scipy && \
     pip3 install pandas && \
+    pip3 install cython && \
     pip3 install astropy && \
     pip3 install future && \
     pip3 install psutil && \
@@ -111,7 +112,7 @@ WORKDIR /opt/FitsStorage
 COPY fitsverify /opt/fitsverify
 
 # CYTHON STEP FOR DRAGONS
-RUN pip3 install cython
+#RUN pip3 install cython # installed earlier
 RUN cd /opt/DRAGONS/gempy/library/ && cythonize -i cyclip.pyx
 
 # Calibs code
