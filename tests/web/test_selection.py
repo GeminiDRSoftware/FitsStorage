@@ -261,7 +261,8 @@ queryselection_pair_source = (
     (('exposure_time', '10000'), and_(Header.exposure_time >= 9999.5, Header.exposure_time <= 10000.5)),
     (('dec', '50.0'), and_(and_(Header.dec >= 49.95, Header.dec < 50.05),
                            or_(Header.proprietary_coordinates == False,
-                               Header.release <= func.now())))
+                               Header.release <= func.now()))),
+    (('cenwlen', '0.7-0.8'), and_(Header.central_wavelength > 0.7, Header.central_wavelength < 0.8)),
     )
 
 def generate_queryselection_pairs():
