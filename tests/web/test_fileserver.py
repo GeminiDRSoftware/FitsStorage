@@ -192,6 +192,6 @@ def test_download(session, monkeypatch):
     download({'dt': '20200101'}, False)
 
     assert(mock_context.resp.status == 200)
-    
+
     session.rollback()
 
