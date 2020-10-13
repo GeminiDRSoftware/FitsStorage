@@ -1,3 +1,5 @@
+from fits_storage.utils.web import adapter
+
 
 class MockUsageLog(object):
     def __init__(self):
@@ -47,9 +49,11 @@ class MockResponse(object):
         self.json_indent = indent
 
 
-class MockRequest(object):
-    def __init__(self, *, form_data=None):
+class MockRequest(adapter.Request):
+    def __init__(self, session, *, form_data=None):
+        super().__init__(session)
         self.form_data = form_data
+        self.header = {'User-Agent': 'Flagon 1.0'}
 
     def get_form_data(self):
         return self.form_data
@@ -58,6 +62,24 @@ class MockRequest(object):
         if item == 'User-Agent':
             return 'Flagon 1.0'
         return super().__getattr__(item)
+
+    def env(self):
+        pass
+
+    def get_header_value(self, header_name):
+        pass
+
+    def input(self):
+        pass
+
+    def log(self):
+        pass
+
+    def raw_data(self):
+        pass
+
+    def contains_header(self, name):
+        return name in self.header.keys()
 
 
 class MockEnv(object):
@@ -87,7 +109,7 @@ class MockContext(object):
         self.usagelog = MockUsageLog()
         self.user = MockUser()
         # self.req = {'User-Agent': 'Flagon 1.0'}
-        self.req = MockRequest(form_data=form_data)
+        self.req = MockRequest(session, form_data=form_data)
         self.got_magic = False
         self.is_staffer = is_staffer
         self.form_data = form_data
