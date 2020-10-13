@@ -1,5 +1,5 @@
 import pytest
-from fits_storage.web.selection import getselection, sayselection, queryselection
+from fits_storage.web.selection import getselection, sayselection, queryselection, _parse_range
 from fits_storage.orm import compiled_statement
 from fits_storage.gemini_metadata_utils import gemini_date, ONEDAY_OFFSET
 from fits_storage import fits_storage_config
@@ -295,3 +295,18 @@ def test_queryselection(query, input, expected):
     q = queryselection(query, input)
     print (q)
     assert str(compiled_statement(queryselection(query, input).statement)) == expected
+
+
+def test_parse_range():
+    a, b = _parse_range('1.0-2.0')
+    assert(a == '1.0')
+    assert(b == '2.0')
+    a, b = _parse_range('-1.0--2.0')
+    assert(a == '-1.0')
+    assert(b == '-2.0')
+    a, b = _parse_range('-.--2.0')
+    assert(a is None)
+    assert(b is None)
+    a, b = _parse_range('thisisnotarange')
+    assert(a is None)
+    assert(b is None)
