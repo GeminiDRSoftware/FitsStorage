@@ -257,6 +257,8 @@ queryselection_pair_source = (
     (('object', 'OBJECT'), and_(Header.object.ilike('OBJECT'),
                                 or_(Header.proprietary_coordinates == False,
                                     Header.release <= func.now()))),
+    (('exposure_time', '0-10000'), and_(Header.exposure_time >= 0.0, Header.exposure_time <= 10000.0)),
+    (('exposure_time', '10000'), and_(Header.exposure_time >= 9999.5, Header.exposure_time <= 10000.5)),
     )
 
 def generate_queryselection_pairs():
