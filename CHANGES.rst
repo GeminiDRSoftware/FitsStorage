@@ -9,6 +9,7 @@ User-Facing Changes
 - Fixed time ranges to operate from 2pm-2pm local time in Chile/Hawaii [#288]
 - Ability to search for calibrations associated with selected files [#356]
 - Support for slitillum calibration data
+- Load Cals for Marked disabled if there are no checkboxes to mark [#386]
 
 Service fixes and enhancements
 ------------------------------

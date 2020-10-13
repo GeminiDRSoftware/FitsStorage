@@ -63,4 +63,6 @@ Click Here to open in a new tab</a></p><br>
 - this is always available at <a href="{{ down_all_link }}">this link</a>
 </FORM>
 {% endif %}
+{% if clickable == True and data_rows.downloadable == True %}
 <INPUT id='load_cals_for_marked' type='button' value='Load Cals for Marked' onclick='CalsTab(true)'>
+{% endif %}
