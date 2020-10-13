@@ -1,3 +1,4 @@
+import sqlalchemy
 from datetime import datetime
 
 import collections
@@ -10,9 +11,10 @@ from fits_storage.orm.file import File
 from fits_storage.orm.header import Header
 from fits_storage.orm.miscfile import MiscFile
 from fits_storage.orm.obslog import Obslog
+from fits_storage.orm.usagelog import UsageLog
 from fits_storage.web import fileserver
 from fits_storage.web.fileserver import generate_filename, make_tarinfo, download_post, is_regular_file, is_obslog, \
-    is_misc
+    is_misc, download
 from tests.file_helper import setup_mock_file_stuff
 from tests.web_helper import MockContext
 
@@ -144,5 +146,52 @@ def test_is_miscfile(session, monkeypatch):
     assert (mf2 == mf)
     assert (content_type == 'application/octect-stream')
 
+    session.rollback()
+
+
+@pytest.mark.usefixtures("rollback")
+def test_download(session, monkeypatch):
+    monkeypatch.setattr(sqlalchemy.orm.session.Session, 'commit', sqlalchemy.orm.session.Session.flush)
+
+    Field = collections.namedtuple('Field', 'name value')
+    # mock_context = MockContext(session, method='GET', form_data={'files': [Field(name='file', value='filea.fits'),
+    #                                                                        Field(name='file', value='fileb.fits')]})
+    mock_context = MockContext(session, method='GET', usagelog=None)
+    usagelog=UsageLog(mock_context)
+    session.add(usagelog)
+    session.flush()
+    mock_context.usagelog=usagelog
+
+    def _mock_get_context(initialize=True):
+        return mock_context
+
+    monkeypatch.setattr(fits_storage.web.fileserver, "get_context", _mock_get_context)
+    monkeypatch.setattr(fits_storage.web.list_headers, "get_context", _mock_get_context)
+    monkeypatch.setattr(fits_storage.utils.web.adapter, "get_context", _mock_get_context)
+
+    setup_mock_file_stuff(monkeypatch)
+
+    f = File('foo.fits')
+    session.add(f)
+    session.flush()
+    df = DiskFile(f, 'foo.fits', '')
+    df.canonical = True
+    df.present = True
+    session.add(df)
+    session.flush()
+    mf = MiscFile()
+    mf.diskfile_id = df.id
+    mf.release = datetime.now()
+    session.add(mf)
+    session.flush()
+    h = Header(df)
+    h.ut_datetime = datetime(2020, 1, 1, 12)
+    session.add(h)
+    session.flush()
+
+    download({'dt': '20200101'}, False)
+
+    assert(mock_context.resp.status == 200)
+    
     session.rollback()
 

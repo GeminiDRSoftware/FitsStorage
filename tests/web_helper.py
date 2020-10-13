@@ -1,6 +1,24 @@
 from fits_storage.utils.web import adapter
 
 
+class MockTarfile(object):
+    def __init__(self, tarfilename, mode):
+        self.tarfilename = tarfilename
+        self.mode = mode
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, typ, value, tb):
+        pass
+
+    def add(self, fullpath, filename):
+        pass
+
+    def addfile(self, tarinfo, bytes):
+        pass
+
+
 class MockUsageLog(object):
     def __init__(self):
         self.notes = list()
@@ -47,6 +65,9 @@ class MockResponse(object):
     def send_json(self, thelist, indent=4):
         self.json_list = thelist
         self.json_indent = indent
+
+    def tarfile(self, tarfilename, mode):
+        return MockTarfile(tarfilename, mode)
 
 
 class MockRequest(adapter.Request):
@@ -102,11 +123,12 @@ class MockContext(object):
     """
     Mock Web Context for unit tests.
     """
-    def __init__(self, session, *, method='GET', form_data=dict(), raw_data=None, is_staffer=False):
+    def __init__(self, session, *, method='GET', form_data=dict(), raw_data=None, is_staffer=False,
+                 usagelog=MockUsageLog()):
         self.session = session
         self.env = MockEnv(method=method)
         self.resp = MockResponse()
-        self.usagelog = MockUsageLog()
+        self.usagelog = usagelog
         self.user = MockUser()
         # self.req = {'User-Agent': 'Flagon 1.0'}
         self.req = MockRequest(session, form_data=form_data)
