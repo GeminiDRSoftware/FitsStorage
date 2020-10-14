@@ -361,7 +361,7 @@ fixtures = (
 )
 
 # we're failing the build :(
-fixtures = ()
+# fixtures = ()
 
 @pytest.mark.usefixtures("min_rollback")
 @pytest.mark.parametrize("route,expected", FixtureIter(fixtures))
