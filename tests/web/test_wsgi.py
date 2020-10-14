@@ -215,14 +215,14 @@ ArchiveContextMiddleware(tm)(f.get_env(), start_response)
 
 fixtures = (
     # test /user_list, first with anonymous user, then with logged-in user
-    Fixture('/user_list', cases="You don't appear to be logged in as a Gemini Staff user"),
-    Fixture('/user_list', cookies=cookies['user1'],
-            cases=("<td>user1<td>User 1<td>unknown1@gemini.edu",
-                   "<td>user2<td>User 2<td>unknown2@gemini.edu")),
+#    Fixture('/user_list', cases="You don't appear to be logged in as a Gemini Staff user"),
+#    Fixture('/user_list', cookies=cookies['user1'],
+#            cases=("<td>user1<td>User 1<td>unknown1@gemini.edu",
+#                   "<td>user2<td>User 2<td>unknown2@gemini.edu")),
     # test /usagereport, first with anonymous user, then with logged-in user
-    Fixture('/usagereport', data={'start': '2016-02-10', 'end': '2016-02-12'},
-            exception = (ClientError, "You need to be logged in to access this resource")),
-    Fixture('/usagereport', data={'start': '2016-02-10', 'end': '2016-02-12'}, cookies=cookies['user1']), #,
+#    Fixture('/usagereport', data={'start': '2016-02-10', 'end': '2016-02-12'},
+#            exception = (ClientError, "You need to be logged in to access this resource")),
+#    Fixture('/usagereport', data={'start': '2016-02-10', 'end': '2016-02-12'}, cookies=cookies['user1']), #,
     #O TODO fix and add back in somehow
             # cases=('<td><a target="_blank" href="/usagedetails/134843">134843</a>',
             #        '<td><a target="_blank" href="/usagedetails/134840">134840</a>',
@@ -243,37 +243,37 @@ fixtures = (
     #                '<li>S20150917S0011.fits: 2015-09-16 09:46:06.687962-10:00')),
 
     # Test /qareport, first using GET, then POST
-    Fixture('/qareport', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
-    Fixture('/qareport', json=True, data=[]),
+#    Fixture('/qareport', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
+#    Fixture('/qareport', json=True, data=[]),
     # Test /usagestats, both with anonymous and registered user
-    Fixture('/usagestats',
-            exception = (ClientError, "You need to be logged in to access this resource")),
-    Fixture('/usagestats', cookies=cookies['user2'],
-            cases='<h1>Usage Statistics'),
+#    Fixture('/usagestats',
+#            exception = (ClientError, "You need to be logged in to access this resource")),
+#    Fixture('/usagestats', cookies=cookies['user2'],
+#            cases='<h1>Usage Statistics'),
     # Test /taperead
-    Fixture('/xmltape', cases='<?xml version="1.0"?>\n<on_tape>\n\n</on_tape>'),
+#    Fixture('/xmltape', cases='<?xml version="1.0"?>\n<on_tape>\n\n</on_tape>'),
     # Test /taperead
-    Fixture('/taperead', cases='<h1>FITS Storage taperead information'),
+#    Fixture('/taperead', cases='<h1>FITS Storage taperead information'),
     # Test /notification without and with authentication
-    Fixture('/notification', exception=(ClientError, 'You need to be logged in to access this resource')),
-    Fixture('/notification', cookies=cookies['user2'],
-            cases='<title>FITS Storage new data email notification list'),
+#    Fixture('/notification', exception=(ClientError, 'You need to be logged in to access this resource')),
+#    Fixture('/notification', cookies=cookies['user2'],
+#            cases='<title>FITS Storage new data email notification list'),
     # Test /import_odb_notifications
-    Fixture('/import_odb_notifications', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
-    Fixture('/import_odb_notifications', post=True, cookies=cookies['fits'],
-            exception=(ClientError, '<!-- The content sent is not valid XML -->')),
+#    Fixture('/import_odb_notifications', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
+#    Fixture('/import_odb_notifications', post=True, cookies=cookies['fits'],
+#            exception=(ClientError, '<!-- The content sent is not valid XML -->')),
     # Test /logout
-    Fixture('/logout', cases='You are sucessfully logged out of the Gemini Archive.'),
-    Fixture('/logout', cookies=cookies['user2'],
-            cases='You are sucessfully logged out of the Gemini Archive.'),
+#    Fixture('/logout', cases='You are sucessfully logged out of the Gemini Archive.'),
+#    Fixture('/logout', cookies=cookies['user2'],
+#            cases='You are sucessfully logged out of the Gemini Archive.'),
     # Test /curation
-    Fixture('/curation',
-            cases=('<h2>Duplicate Canonical DiskFiles:',
-                   'None found.')),
+#    Fixture('/curation',
+#            cases=('<h2>Duplicate Canonical DiskFiles:',
+#                   'None found.')),
     # Test /nameresolver
-    Fixture('/nameresolver', retcode=404),
-    Fixture('/nameresolver/simbad/m31',
-            cases=('"success": ',)),  # cut it back because strasburg can be down or timeout
+#    Fixture('/nameresolver', retcode=404),
+#    Fixture('/nameresolver/simbad/m31',
+#            cases=('"success": ',)),  # cut it back because strasburg can be down or timeout
     # Test /fileontape
     Fixture('/fileontape', retcode=404),
     Fixture('/fileontape/foobar', cases='<?xml version="1.0" ?>\n<file_list>\n</file_list>'),
