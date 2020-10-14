@@ -42,6 +42,7 @@ class MockResponse(object):
         self.status = 200
         self.json_list = None
         self.json_indent = None
+        self.sent_file = None
 
     def append_iterable(self, iter):
         for i in iter:
@@ -71,6 +72,9 @@ class MockResponse(object):
 
     def respond(self, fn):
         self.stuff = 'respond called'
+
+    def sendfile(self, fullpath):
+        self.sent_file = fullpath
 
 
 class MockRequest(adapter.Request):
