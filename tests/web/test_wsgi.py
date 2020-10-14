@@ -369,6 +369,7 @@ fixtures = (
 @pytest.mark.parametrize("route,expected", FixtureIter(fixtures))
 def test_wsgi(min_session, route, expected):
     try:
+        print("route: %s  expected: %s" % (route, expected))
         # ctx = get_context()
         if route is None:
             assert expected.status == 404
@@ -402,6 +403,3 @@ def test_wsgi(min_session, route, expected):
                                 print("Not found, str_resp is:\n")
                                 print(str_resp)
                             raise
-    except:
-        print("route: %s  expected: %s" % (route, expected))
-        raise
