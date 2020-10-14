@@ -402,4 +402,3 @@ def test_wsgi(min_session, route, expected):
                             if DEBUGGING:
                                 print("Not found, str_resp is:\n")
                                 print(str_resp)
-                            raise
