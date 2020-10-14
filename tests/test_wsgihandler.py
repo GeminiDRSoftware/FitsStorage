@@ -6,6 +6,7 @@ from fits_storage.wsgihandler import handler
 from tests.web_helper import MockContext
 
 
+@pytest.mark.slow
 @pytest.mark.usefixtures("rollback")
 def test_handler(session, monkeypatch):
     mock_context = MockContext(session, method='GET')
