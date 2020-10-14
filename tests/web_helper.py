@@ -69,6 +69,9 @@ class MockResponse(object):
     def tarfile(self, tarfilename, mode):
         return MockTarfile(tarfilename, mode)
 
+    def respond(self, fn):
+        self.stuff = 'respond called'
+
 
 class MockRequest(adapter.Request):
     def __init__(self, session, *, form_data=None):
