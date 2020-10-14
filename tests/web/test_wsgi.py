@@ -243,7 +243,7 @@ fixtures = (
     #                '<li>S20150917S0011.fits: 2015-09-16 09:46:06.687962-10:00')),
 
     # Test /qareport, first using GET, then POST
-    Fixture('/qareport', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
+#     Fixture('/qareport', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
 #    Fixture('/qareport', json=True, data=[]),
     # Test /usagestats, both with anonymous and registered user
     Fixture('/usagestats',
