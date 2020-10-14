@@ -262,7 +262,7 @@ fixtures = (
 
 #--
     # Test /import_odb_notifications
-    Fixture('/import_odb_notifications', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
+#    Fixture('/import_odb_notifications', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
     Fixture('/import_odb_notifications', post=True, cookies=cookies['fits'],
             exception=(ClientError, '<!-- The content sent is not valid XML -->')),
     # Test /logout
