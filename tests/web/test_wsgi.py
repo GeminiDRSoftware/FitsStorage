@@ -368,36 +368,40 @@ fixtures = (
 @pytest.mark.usefixtures("min_rollback")
 @pytest.mark.parametrize("route,expected", FixtureIter(fixtures))
 def test_wsgi(min_session, route, expected):
-    # ctx = get_context()
-    if route is None:
-        assert expected.status == 404
-    elif isinstance(route[0], int):
-        assert expected.status == route[0]
-    else:
-        env = expected.get_env()
-        if expected.exc:
-            excep, message = expected.exc
-            with pytest.raises(excep) as excinfo:
-                run_web_test(route, env)
-            assert message in str(excinfo.value)
+    try:
+        # ctx = get_context()
+        if route is None:
+            assert expected.status == 404
+        elif isinstance(route[0], int):
+            assert expected.status == route[0]
         else:
-            tm = run_web_test(route, env)
+            env = expected.get_env()
+            if expected.exc:
+                excep, message = expected.exc
+                with pytest.raises(excep) as excinfo:
+                    run_web_test(route, env)
+                assert message in str(excinfo.value)
+            else:
+                tm = run_web_test(route, env)
 
-            assert expected.status == tm.resp.status
-            if expected.cases:
-                str_resp = ''
-                for el in tm.resp:
-                    if isinstance(el, str):
-                        str_resp = "%s%s" % (str_resp, el)
-                    else:
-                        str_resp = "%s%s" % (str_resp, el.decode('utf-8'))
-                # r = b''.join(tm.resp)
-                # r = r.decode('utf-8')
-                for f in expected.cases:
-                    try:
-                       assert f in str_resp
-                    except AssertionError:
-                        if DEBUGGING:
-                            print("Not found, str_resp is:\n")
-                            print(str_resp)
-                        raise
+                assert expected.status == tm.resp.status
+                if expected.cases:
+                    str_resp = ''
+                    for el in tm.resp:
+                        if isinstance(el, str):
+                            str_resp = "%s%s" % (str_resp, el)
+                        else:
+                            str_resp = "%s%s" % (str_resp, el.decode('utf-8'))
+                    # r = b''.join(tm.resp)
+                    # r = r.decode('utf-8')
+                    for f in expected.cases:
+                        try:
+                           assert f in str_resp
+                        except AssertionError:
+                            if DEBUGGING:
+                                print("Not found, str_resp is:\n")
+                                print(str_resp)
+                            raise
+    except:
+        print("route: %s  expected: %s" % (route, expected))
+        raise
