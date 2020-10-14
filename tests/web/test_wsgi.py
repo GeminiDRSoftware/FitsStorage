@@ -244,7 +244,7 @@ fixtures = (
 
     # Test /qareport, first using GET, then POST
     Fixture('/qareport', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
-    Fixture('/qareport', json=True, data=[]),
+#    Fixture('/qareport', json=True, data=[]),
     # Test /usagestats, both with anonymous and registered user
     Fixture('/usagestats',
             exception = (ClientError, "You need to be logged in to access this resource")),
