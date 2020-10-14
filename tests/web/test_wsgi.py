@@ -242,22 +242,23 @@ fixtures = (
     #                '<li>Total present size: 7358825260 bytes (6.85 GB)',
     #                '<li>S20150917S0011.fits: 2015-09-16 09:46:06.687962-10:00')),
 
+#--
     # Test /qareport, first using GET, then POST
-    Fixture('/qareport', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
-    Fixture('/qareport', json=True, data=[]),
+#    Fixture('/qareport', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
+#    Fixture('/qareport', json=True, data=[]),
     # Test /usagestats, both with anonymous and registered user
-    Fixture('/usagestats',
-            exception = (ClientError, "You need to be logged in to access this resource")),
-    Fixture('/usagestats', cookies=cookies['user2'],
-            cases='<h1>Usage Statistics'),
+#    Fixture('/usagestats',
+#            exception = (ClientError, "You need to be logged in to access this resource")),
+#    Fixture('/usagestats', cookies=cookies['user2'],
+#            cases='<h1>Usage Statistics'),
     # Test /taperead
-    Fixture('/xmltape', cases='<?xml version="1.0"?>\n<on_tape>\n\n</on_tape>'),
+#    Fixture('/xmltape', cases='<?xml version="1.0"?>\n<on_tape>\n\n</on_tape>'),
     # Test /taperead
-    Fixture('/taperead', cases='<h1>FITS Storage taperead information'),
+#    Fixture('/taperead', cases='<h1>FITS Storage taperead information'),
     # Test /notification without and with authentication
-    Fixture('/notification', exception=(ClientError, 'You need to be logged in to access this resource')),
-    Fixture('/notification', cookies=cookies['user2'],
-            cases='<title>FITS Storage new data email notification list'),
+#    Fixture('/notification', exception=(ClientError, 'You need to be logged in to access this resource')),
+#    Fixture('/notification', cookies=cookies['user2'],
+#            cases='<title>FITS Storage new data email notification list'),
     # Test /import_odb_notifications
     Fixture('/import_odb_notifications', retcode=Return.HTTP_METHOD_NOT_ALLOWED),
     Fixture('/import_odb_notifications', post=True, cookies=cookies['fits'],
