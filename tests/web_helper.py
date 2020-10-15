@@ -61,7 +61,7 @@ class MockResponse(object):
     def set_content_type(self, content_type):
         self.content_type = content_type
 
-    def append_json(self, json):
+    def append_json(self, json, indent=4):
         self.stuff = "%s\n%s" % (self.stuff, json)
 
     def send_json(self, thelist, indent=4):
@@ -115,6 +115,7 @@ class MockEnv(object):
     def __init__(self, method='GET'):
         self.method = method
         self.remote_ip = '127.0.0.1'
+        self.remote_host = 'localhost'
         self.unparsed_uri = '/foo'
         self.uri = '/foo'
 
