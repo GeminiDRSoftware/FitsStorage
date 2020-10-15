@@ -30,6 +30,7 @@ def test_observing_statistics(session, monkeypatch):
     h = Header(df)
     h.ut_datetime = datetime.now()
     h.data_label = 'datalabel'
+    h.instrument = 'ALOPEKE'
     session.add(h)
     session.flush()
     fth = FullTextHeader(df)
@@ -75,5 +76,9 @@ def test_observing_statistics(session, monkeypatch):
     mock_context.resp.stuff = ''
     observing_statistics({'telescope': 'Gemini-North',
                           'daterange': '%s-%s' % (fromdt.strftime('%Y%m%d'), todt.strftime('%Y%m%d'))})
+    assert(mock_context.resp.status == 200)
+    assert('UTdate' in mock_context.resp.stuff)
+    mock_context.resp.stuff = ''
+    observing_statistics({'telescope': 'Gemini-North'})
     assert(mock_context.resp.status == 200)
     assert('UTdate' in mock_context.resp.stuff)
