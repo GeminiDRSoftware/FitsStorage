@@ -45,6 +45,7 @@ args_for_cals = {
     'processed_standard': ('standard', {'processed': True}),
     }
 
+
 def cals_info(cal_obj, caltype, qtype='UNKNOWN', log=no_func, add_note=no_func, http=True, hostname=None, storage_root=''):
     resp = []
 
