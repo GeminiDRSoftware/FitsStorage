@@ -22,6 +22,7 @@ class MockTarfile(object):
 class MockUsageLog(object):
     def __init__(self):
         self.notes = list()
+        self.this = None
 
     def add_note(self, note):
         self.notes.append(note)
