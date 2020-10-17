@@ -131,7 +131,12 @@ def generate_post_calmgr(selection, caltype):
     usagelog = ctx.usagelog
     usagelog.add_note("CalMGR request desc_str: %s" % desc_str)
     usagelog.add_note("CalMGR request type_str: %s" % type_str)
-    descriptors = eval(desc_str)
+    try:
+        desc_str = re.sub(r'\'dispersion_axis\': <map object at 0x.+>', '\'dispersion_axis\': None', desc_str)
+        descriptors = eval(desc_str)
+    except SyntaxError as sxe:
+        raise SkipTemplateError(message="Invalid descriptors field in request: {}".format(desc_str),
+                                content_type='text/plain', status = Return.HTTP_BAD_REQUEST)
     types = eval(type_str)
     usagelog.add_note("CalMGR request CalType: %s" % caltype)
     usagelog.add_note("CalMGR request Descriptor Dictionary: %s" % descriptors)
