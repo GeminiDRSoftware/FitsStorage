@@ -4,6 +4,8 @@ import os
 from argparse import ArgumentParser
 from datetime import datetime, timedelta, date
 
+from fits_storage.fits_storage_config import z_staging_area
+
 
 def open_image(path):
     if path.endswith('.bz2'):
@@ -139,11 +141,11 @@ def fix_and_copy(src_dir, dest_dir, fn, compress=True):
     path = os.path.join(src_dir, fn)
     tmppath = None
     if fn.endswith('.bz2'):
-        tmppath = os.path.join('/tmp/', fn[:-4])
-        os.system('bzcat %s > %s' % (path, tmppath))
+        tmppath = os.path.join(z_staging_area, fn[:-4])
+        os.system('bzcat -s %s > %s' % (path, tmppath))
 
     df = os.path.join(dest_dir, fn)
-    if df.endswith('.bz2') and not compress:
+    if df.endswith('.bz2'): # and not compress:  # let's do it anyway and compress after
         df = df[:-4]
 
     try:
@@ -160,10 +162,16 @@ def fix_and_copy(src_dir, dest_dir, fn, compress=True):
         if fix_igrins(fits):
             fits[0].header['HISTORY'] = 'Corrected metadata: IGRINS fixes'
         fits.writeto(output_file(df), output_verify='silentfix+exception')
+        if compress:
+            # compress the file, then cleanup the .fits
+            os.system('cat %s | bzip2 -sc > %s' % (df, '%s.bz2' % df))
+            os.unlink(df)
     except (IOError, ValueError) as e:
         print('{0} >> {1}'.format(fn, e))
         if os.path.exists(df):
             os.unlink(df)
+        if os.path.exists('%s.bz2' % df):
+            os.unlink('%s.bz2' % df)
     finally:
         if tmppath is not None:
             os.unlink(tmppath)
