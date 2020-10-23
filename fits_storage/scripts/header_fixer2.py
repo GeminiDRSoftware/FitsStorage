@@ -150,9 +150,9 @@ def fix_and_copy(src_dir, dest_dir, fn, compress=True):
 
     try:
         if tmppath:
-            fits = pf.open(open_image(tmppath), do_not_scale_image_data=True)
+            fits = pf.open(open_image(tmppath), do_not_scale_image_data=True, memmap=False)
         else:
-            fits = pf.open(open_image(path), do_not_scale_image_data=True)
+            fits = pf.open(open_image(path), do_not_scale_image_data=True, memmap=False)
         if 'zorro' in dest_dir.lower():
             if fix_zorro(fits):
                 fits[0].header['HISTORY'] = 'Corrected metadata: Zorro fixes'
