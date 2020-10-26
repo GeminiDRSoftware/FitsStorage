@@ -1,10 +1,14 @@
+import smtplib
+
 import astropy.io.fits as pf
 from bz2 import BZ2File
 import os
 from argparse import ArgumentParser
 from datetime import datetime, timedelta, date
 
-from fits_storage.fits_storage_config import z_staging_area
+from fits_storage.fits_storage_config import z_staging_area, smtp_server
+
+_missing_end_files = list()
 
 
 def open_image(path):
@@ -19,6 +23,38 @@ def output_file(path):
         return BZ2File(path, 'wb')
 
     return open(path, 'wb')
+
+
+def check_end(filename):
+    if not filename.endswith('.fits'):
+        # we don't need to validate, not a FITS file
+        return True
+
+    f = open(filename, 'r')
+
+    endcheck = ''
+
+    idx = 0
+
+    try:
+        while 1:
+            try:
+                char = f.read(1)
+                if not char:
+                    return False
+                endcheck = endcheck + char
+                if endcheck == 'END':
+                    print("Found at byte: %s" % idx)
+                    return True
+                else:
+                    if endcheck != 'EN' and endcheck != 'E':
+                        endcheck = ''
+                idx = idx + 1
+            except UnicodeDecodeError:
+                print("Entered data block without seeing END")
+                return False
+    finally:
+        f.close()
 
 
 def fix_zorro_or_alopeke(fits, instr, telescope):
@@ -138,11 +174,36 @@ def fix_igrins(fits):
 
 
 def fix_and_copy(src_dir, dest_dir, fn, compress=True):
+    if fn in _missing_end_files:
+        # fail fast, it had no END keyword
+        return False
+
     path = os.path.join(src_dir, fn)
     tmppath = None
     if fn.endswith('.bz2'):
         tmppath = os.path.join(z_staging_area, fn[:-4])
         os.system('bzcat -s %s > %s' % (path, tmppath))
+
+    if not check_end(tmppath):
+        _missing_end_files.append(fn)
+        if smtp_server:
+            # First time it fails, send an email error message
+            # we don't want to continually spam it and we will be retrying...
+            subject = "ERROR - header_fixer2 saw no END keyword for file %s, will ignore" % fn
+
+            mailfrom = 'fitsdata@gemini.edu'
+            mailto = ['fitsdata@gemini.edu']
+
+            message = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (
+                mailfrom, ", ".join(mailto), subject, "Ignoring bad FITS file.  The system will not try to copy "
+                                                      "this file again until the copy from visiting instrument "
+                                                      "service is restarted." % fn)
+
+            server = smtplib.SMTP(smtp_server)
+            server.sendmail(mailfrom, mailto, message)
+            server.quit()
+        os.unlink(tmppath)
+        return False
 
     df = os.path.join(dest_dir, fn)
     if df.endswith('.bz2'): # and not compress:  # let's do it anyway and compress after
@@ -154,6 +215,8 @@ def fix_and_copy(src_dir, dest_dir, fn, compress=True):
             fits = pf.open(tmppath, do_not_scale_image_data=True, mode='readonly', memmap=True)
         else:
             # fits = pf.open(open_image(path), do_not_scale_image_data=True)
+            import astrodata
+            adtest = astrodata.open(path)
             fits = pf.open(path, do_not_scale_image_data=True, mode='readonly', memmap=True)
         if 'zorro' in dest_dir.lower():
             if fix_zorro(fits):
@@ -168,6 +231,7 @@ def fix_and_copy(src_dir, dest_dir, fn, compress=True):
             # compress the file, then cleanup the .fits
             os.system('cat %s | bzip2 -sc > %s' % (df, '%s.bz2' % df))
             os.unlink(df)
+        return True
     except (IOError, ValueError) as e:
         print('{0} >> {1}'.format(fn, e))
         if os.path.exists(df):

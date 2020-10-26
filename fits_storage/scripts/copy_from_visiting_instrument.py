@@ -124,12 +124,14 @@ class VisitingInstrumentABC(ABC):
                 if not os.path.exists(os.path.join(self.storage_root, dst_path)):
                     os.mkdir(os.path.join(self.storage_root, dst_path))
                 if self.apply_fixes:
-                    fix_and_copy(os.path.dirname(src), os.path.join(self.storage_root, dst_path), dst_filename)
+                    success = fix_and_copy(os.path.dirname(src), os.path.join(self.storage_root, dst_path),
+                                           dst_filename)
                 else:
                     shutil.copyfile(src, dst)
-                logger.info("Adding %s to IngestQueue", filename)
-                
-                iq.add_to_queue(dst_filename, dst_path, force=False, force_md5=False, after=None)
+                    success = True
+                if success:
+                    logger.info("Adding %s to IngestQueue", filename)
+                    iq.add_to_queue(dst_filename, dst_path, force=False, force_md5=False, after=None)
         except:
             logger.error("Problem copying %s to %s", src, self.storage_root)
             logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
