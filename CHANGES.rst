@@ -1,3 +1,14 @@
+2020-3 (unreleased)
+===================
+
+Updated Scripts
+---------------
+
+add_to_preview_queue.py
+^^^^^^^^^^^^^^^^^^^^^^^
+
+- Added a new `force` option to recreate previews even if they already exist [#387]
+
 
 2020-2 (unreleased)
 ===================

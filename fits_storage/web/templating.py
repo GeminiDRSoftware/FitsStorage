@@ -172,6 +172,7 @@ def templated(template_name, content_type="text/html", with_generator=False, def
                 if at_end_hook:
                     at_end_hook()
             except SkipTemplateError as e:
+                status = e.status
                 kw = {'message': e.message}
                 if e.content_type:
                     kw['content_type'] = e.content_type

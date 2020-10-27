@@ -30,6 +30,9 @@ from tests.file_helper import ensure_file
 #]
 
 # Monkeypatch routing.Map to override the need for a context
+from tests.web.test_user import _init_test_user
+
+
 class MapTester(routing.Map):
     def match(self, path_info, method=None):
         found = False

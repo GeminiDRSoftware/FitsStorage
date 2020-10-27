@@ -1,6 +1,7 @@
 # Provides functionality to get reports on publications by their bibcode
 
 from . import templating
+from .templating import SkipTemplateError
 
 from ..fits_storage_config import fits_system_status
 
@@ -17,23 +18,28 @@ def publication_ads(bibcode=None):
 
     if bibcode is None:
         # OK, they must have fed us garbage
+        resp.status = Return.HTTP_NOT_FOUND
         resp.content_type = "text/plain"
         resp.client_error(Return.HTTP_NOT_FOUND, "Need to provide a bibcode")
+        raise SkipTemplateError(Return.HTTP_NOT_FOUND)
 
     if bibcode is not None and bibcode.startswith('bibcode='):
         bibcode = bibcode[8:]
     query = session.query(Publication).filter(Publication.bibcode == bibcode)
     publication = query.first()
     if publication is None:
+        resp.status = Return.HTTP_NOT_FOUND
         resp.content_type = "text/plain"
         resp.client_error(Return.HTTP_NOT_FOUND, "No rows found")
-    return dict(
-        bibcode = publication.bibcode,
-        author = publication.author,
-        journal = publication.journal,
-        year = publication.year,
-        title = publication.title
-    )
+        raise SkipTemplateError(Return.HTTP_NOT_FOUND)
+    else:
+        return dict(
+            bibcode = publication.bibcode,
+            author = publication.author,
+            journal = publication.journal,
+            year = publication.year,
+            title = publication.title
+        )
 
 
 @templating.templated("list_publications.txt", content_type='text/plain')
