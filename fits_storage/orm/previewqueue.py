@@ -18,15 +18,17 @@ class PreviewQueue(Base):
     diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, unique=True, index=True)
     inprogress = Column(Boolean, index=True)
     failed = Column(Boolean)
+    force = Column(Boolean)
     sortkey = Column(Text, index=True)
 
     error_name = 'PREVIEW'
 
-    def __init__(self, diskfile):
+    def __init__(self, diskfile, force=False):
         self.diskfile_id = diskfile.id
         self.sortkey = sortkey_for_filename(diskfile.filename)
         self.inprogress = False
         self.failed = False
+        self.force = force
 
     @staticmethod
     def find_not_in_progress(session):
