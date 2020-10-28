@@ -171,7 +171,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: 2020-2
+          version: master
           dest: /opt/FitsStorage
           accept_hostkey: yes
         when: not is_aws
