@@ -106,6 +106,15 @@ exist on the FITS Server and was later cleared out for space.  The file should b
 available on the Archive website still.  The FITS Server only shows search results 
 for files it still has available in `/sci/dataflow`.
 
+If the file is in the database, but does not appear in search results, try searching
+with the *Engineering data* advanced option turned on.  It also may be worth checking
+that a header row was properly created.  These are unlikely issues, but you can 
+check for them while you are in the database.
+
+``` 
+select h.id, df.filename from Header h, Diskfile df where df.filename='<filename>' and df.canonical and h.diskfile_id=df.id
+```
+
 Once you've verified the file does not exist on the target system's database, you 
 can move on to diagnosing the cause.
 
