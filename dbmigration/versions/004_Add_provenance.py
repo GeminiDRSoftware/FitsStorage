@@ -1,5 +1,6 @@
 from sqlalchemy import *
 from migrate import *
+from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.provenance import Provenance, ProvenanceHistory
 
 def upgrade(migrate_engine):
