@@ -326,14 +326,14 @@
         become: yes
         become_user: fitsdata
         when: fitsdata_db_created.changed
-      - name: Create Materialized Views
-        postgresql_query:
-          db: fitsdata
-          login_user: fitsdata
-          path_to_script: /opt/FitsStorage/sql/views.sql
-        become: yes
-        become_user: fitsdata
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+#      - name: Create Materialized Views
+#        postgresql_query:
+#          db: fitsdata
+#          login_user: fitsdata
+#          path_to_script: /opt/FitsStorage/sql/views.sql
+#        become: yes
+#        become_user: fitsdata
+#        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
       - name: Setup Migrations
         command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
         become: yes
