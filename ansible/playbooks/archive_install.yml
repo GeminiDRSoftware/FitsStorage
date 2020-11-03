@@ -4,10 +4,6 @@
       - archive
     become: true
     tasks:
-      - name: Fail on non-release deploys to archive
-        fail:
-          msg: Attempt to deploy 2020-2 RC to an ops host
-        when: is_archive or ( is_onsite and is_ops )
       - name: Check for dataflow folder
         stat:
           path: /sci/dataflow
