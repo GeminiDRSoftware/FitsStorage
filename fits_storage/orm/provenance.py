@@ -3,6 +3,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, String
+from .diskfile import DiskFile
 
 from . import Base
 
