@@ -117,10 +117,10 @@ def validate():
                 dateutil.parser.parse(input_data['release'])
             except ValueError:
                 response['result'] = False
-        elif 'program' in input_data:
+        if 'program' in input_data and response['result']:
             prog = GeminiProgram(input_data['program'])
             response['result'] = prog.valid
-        else:
+        if 'release' not in input_data and 'program' not in input_data:
             raise ValueError
     except ValueError:
         ctx.resp.status = Return.HTTP_BAD_REQUEST
@@ -204,7 +204,8 @@ def detail_miscfile(handle, formdata = {}):
     ctx = get_context()
 
     try:
-        query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile, MiscFile.diskfile_id == DiskFile.id).join(File, DiskFile.file_id == File.id)
+        query = ctx.session.query(MiscFile, DiskFile, File).join(DiskFile, MiscFile.diskfile_id == DiskFile.id)\
+            .join(File, DiskFile.file_id == File.id)
         try:
             meta, df, fobj = query.filter(MiscFile.id == int(handle)).one()
         except ValueError:
@@ -236,7 +237,7 @@ def detail_miscfile(handle, formdata = {}):
             meta.release = release_date
             meta.program_id = formdata.getvalue('prog', '')
             meta.description = formdata.getvalue('desc', '')
-            session.flush()
+            ctx.session.flush()
             ret['message'] = "Successfully updated"
 
         return ret

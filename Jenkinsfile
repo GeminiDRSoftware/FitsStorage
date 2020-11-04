@@ -71,7 +71,7 @@ pipeline {
                                         mkdir -p /tmp/archive_test_images
                                         mkdir -p /tmp/cached_archive_test_images
                                         coverage run --omit "/usr/lib/*,/usr/local/*,/opt/DRAGONS/*,tests/*" -m pytest tests
-                                        coverage report -m --fail-under=58
+                                        coverage report -m --fail-under=66
                                         '''
                                 }
                             } catch (exc) {
@@ -110,14 +110,14 @@ pipeline {
         stage('Deploy To Host') {
             steps {
                 echo "Deploying to ${deploy_target} Host"
-//                ansiblePlaybook(
-//                    inventory: 'ansible/${deploy_target}',
-//                    playbook: 'ansible/playbooks/archive_install.yml',
-//                    disableHostKeyChecking: true,
-//                    credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7',
-//                    vaultCredentialsId: 'vault_pass',
-//                    extras: " --extra-vars '@/var/lib/jenkins/secret.yml'"
-//                )
+                ansiblePlaybook(
+                    inventory: 'ansible/${deploy_target}',
+                    playbook: 'ansible/playbooks/archive_install.yml',
+                    disableHostKeyChecking: true,
+                    credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7',
+                    vaultCredentialsId: 'vault_pass',
+                    extras: " --extra-vars '@/var/lib/jenkins/secret.yml'"
+                )
             }
         }
     }

@@ -83,7 +83,7 @@ def get_permissions_list(user):
                 prog_list.append(result.program_id)
             if result.observation_id:
                 obsid_list.append(result.observation_id)
-            if result.file:
+            if result.filename:
                 file_list.append((result.path if result.path else "", result.filename))
 
     return prog_list, obsid_list, file_list

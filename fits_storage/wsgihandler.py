@@ -457,7 +457,8 @@ def handler(environ, start_response):
                 log = session.query(annotationClass).filter(annotationClass.usagelog_id == ctx.usagelog.id).one()
             except NoResultFound:
                 log = annotationClass(ctx.usagelog)
-            log.add_note(e.message)
+            if hasattr(e, 'message'):
+                log.add_note(e.message)
             session.add(log)
         return ctx.resp.respond(unicode_to_string)
 

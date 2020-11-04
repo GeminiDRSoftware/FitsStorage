@@ -43,6 +43,7 @@ def qareport():
     qareport_ingest(thelist, submit_host=ctx.env.remote_host,
                     submit_time=datetime.datetime.now())
 
+
 def qareport_ingest(thelist, submit_host=None, submit_time=datetime.datetime.now()):
     """
     This function takes a list of qareport dictionaries and inserts into the 

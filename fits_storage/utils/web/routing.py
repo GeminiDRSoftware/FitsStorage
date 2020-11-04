@@ -385,4 +385,4 @@ class Map(object):
         # If we get here and found is True, then it means that there's a route, but the
         # method we used was not allowed
         if found:
-            ctx.resp.client_error(Return.HTTP_METHOD_NOT_ALLOWED)
+            ctx.resp.client_error(Return.HTTP_METHOD_NOT_ALLOWED, 'method not allowed: %s, %s' % (path_info, method))

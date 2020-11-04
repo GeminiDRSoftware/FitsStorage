@@ -20,6 +20,7 @@ User-Facing Changes
 - Fixed time ranges to operate from 2pm-2pm local time in Chile/Hawaii [#288]
 - Ability to search for calibrations associated with selected files [#356]
 - Support for slitillum calibration data
+- Load Cals for Marked disabled if there are no checkboxes to mark [#386]
 
 Service fixes and enhancements
 ------------------------------
@@ -44,6 +45,17 @@ Web Services
 
 - Now sorts null ut datetimes to the end of the results, so most recent properly displays
 - Removed engineering results by default
+
+/tapestuff
+^^^^^^^^^^
+
+- Fixed bug in taperead listing, was always blank
+
+/miscfiles
+^^^^^^^^^^
+
+- Fixed bug in session/context handling in miscfiles details
+- Fixed validation to check both release and program independently (was passing if release passed)
 
 Updated Scripts
 ---------------
