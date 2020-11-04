@@ -49,6 +49,7 @@ def check_present(session, filename):
 
 
 _seen_validation_failures = dict()
+_pending_email = None
 
 
 def validate(fullpath):
@@ -78,21 +79,10 @@ def validate(fullpath):
         logger.warn(reason)
 
         if num_failures == max_dhs_validation_failures:
-
-            if smtp_server:
-                # First time it fails, send an email error message
-                # we don't want to continually spam it and we will be retrying...
-                subject = "ERROR - %s validation failed" % fullpath
-
-                mailfrom = 'fitsdata@gemini.edu'
-                mailto = ['fitsdata@gemini.edu']
-
-                message = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (
-                mailfrom, ", ".join(mailto), subject, reason)
-
-                server = smtplib.SMTP(smtp_server)
-                server.sendmail(mailfrom, mailto, message)
-                server.quit()
+            global _pending_email
+            if _pending_email is None:
+                _pending_email = ''
+            _pending_email = '{}{}: {}\n'.format(_pending_email, fullpath, reason)
 
         return False
     return True
@@ -217,6 +207,21 @@ if __name__ == "__main__":
                  else:
                      if copy_over(session, iq, logger, filename, options.dryrun):
                          known_list.add(filename)
+             if _pending_email and smtp_server:
+                 subject = "ERROR - copy_from_dhs validation failures"
+
+                 mailfrom = 'fitsdata@gemini.edu'
+                 mailto = ['fitsdata@gemini.edu']
+
+                 message = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (
+                     mailfrom, ", ".join(mailto), subject, _pending_email)
+
+                 server = smtplib.SMTP(smtp_server)
+                 server.sendmail(mailfrom, mailto, message)
+                 server.quit()
+
+                 _pending_email = None
+
              logger.debug("Pass complete, sleeping")
              time.sleep(5)
              logger.debug("Re-scanning")

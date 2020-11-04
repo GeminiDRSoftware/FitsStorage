@@ -9,9 +9,26 @@ add_to_preview_queue.py
 
 - Added a new `force` option to recreate previews even if they already exist [#387]
 
+copy_from_dhs.py
+^^^^^^^^^^^^^^^^
 
-2020-2 (unreleased)
-===================
+- Batching email for validation errors to not spam when first starting up [#391]
+
+
+2020-2.1
+========
+
+Web Services
+------------
+
+/login
+^^^^^^
+
+- Now accepts a redirect query argument to invoke an http redirect on successful login
+
+
+2020-2.0
+========
 
 User-Facing Changes
 ----------------------
