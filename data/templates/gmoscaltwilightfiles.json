@@ -3,7 +3,7 @@
 {% else %}
 [
  {%- for filename in file_list %}
-    "{{ row['filename'] }}",
+    "{{ filename }}",
  {%- endfor %}
 ]
 {% endif %}{# using_sqlite #}
