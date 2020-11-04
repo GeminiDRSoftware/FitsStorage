@@ -1,0 +1,9 @@
+{% if using_sqlite %}
+        ERROR: Not a Postgres system, unsupported method
+{% else %}
+[
+ {%- for filename in file_list %}
+    "{{ row['filename'] }}",
+ {%- endfor %}
+]
+{% endif %}{# using_sqlite #}
