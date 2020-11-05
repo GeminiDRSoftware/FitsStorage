@@ -108,6 +108,9 @@ pipeline {
 //
 //         }
         stage('Deploy To Host') {
+            when {
+                expression { deploy_target != 'none' }
+            }
             steps {
                 echo "Deploying to ${deploy_target} Host"
                 ansiblePlaybook(
