@@ -1,4 +1,16 @@
 
+2020-2.2
+
+Other
+-----
+
+archive_install.yml
+^^^^^^^^^^^^^^^^^^^
+
+- Apply database migrations as user fitsdata to ensure proper table/sequence ownership
+- Set migration version to 18 for new databases (step 19 has been eliminated)
+
+
 2020-2.1
 ========
 
