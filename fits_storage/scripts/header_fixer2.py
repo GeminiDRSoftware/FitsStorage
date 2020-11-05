@@ -299,7 +299,7 @@ def fix_and_copy(src_dir, dest_dir, fn, compress=True, mailfrom=None, mailto=Non
         tmppath = os.path.join(z_staging_area, fn[:-4])
         os.system('bzcat -s %s > %s' % (path, tmppath))
 
-    if not check_end(tmppath):
+    if tmppath and not check_end(tmppath):
         _missing_end_files.append(fn)
         if smtp_server:
             # First time it fails, send an email error message

@@ -71,7 +71,7 @@ pipeline {
                                         mkdir -p /tmp/archive_test_images
                                         mkdir -p /tmp/cached_archive_test_images
                                         coverage run --omit "/usr/lib/*,/usr/local/*,/opt/DRAGONS/*,tests/*" -m pytest tests
-                                        coverage report -m --fail-under=58
+                                        coverage report -m --fail-under=66
                                         '''
                                 }
                             } catch (exc) {
@@ -108,8 +108,11 @@ pipeline {
 //
 //         }
         stage('Deploy To Host') {
+            when {
+                expression { deploy_target != 'none' }
+            }
             steps {
-                echo "Deploying to ${deploy_target} Host"
+//                echo "Deploying to ${deploy_target} Host"
 //                ansiblePlaybook(
 //                    inventory: 'ansible/${deploy_target}',
 //                    playbook: 'ansible/playbooks/archive_install.yml',

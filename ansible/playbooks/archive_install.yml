@@ -4,10 +4,6 @@
       - archive
     become: true
     tasks:
-      - name: Fail on non-release deploys to archive
-        fail:
-          msg: Attempt to deploy 2020-2 RC to an ops host
-        when: is_archive or ( is_onsite and is_ops )
       - name: Check for dataflow folder
         stat:
           path: /sci/dataflow
@@ -330,18 +326,18 @@
         become: yes
         become_user: fitsdata
         when: fitsdata_db_created.changed
-      - name: Create Materialized Views
-        postgresql_query:
-          db: fitsdata
-          login_user: fitsdata
-          path_to_script: /opt/FitsStorage/sql/views.sql
-        become: yes
-        become_user: fitsdata
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+#      - name: Create Materialized Views
+#        postgresql_query:
+#          db: fitsdata
+#          login_user: fitsdata
+#          path_to_script: /opt/FitsStorage/sql/views.sql
+#        become: yes
+#        become_user: fitsdata
+#        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
       - name: Setup Migrations
         command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
         become: yes
-        become_user: postgres
+        become_user: fitsdata
         when: fitsdata_db_created.changed
       - name: If we have a fresh DB, set version to 19 since we are already up to date with the migrations
         postgresql_query:
@@ -353,7 +349,7 @@
       - name: Apply Migrations (Idempotent, always apply)
         command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py upgrade postgresql:///fitsdata dbmigration"
         become: yes
-        become_user: postgres
+        become_user: fitsdata
         when: apply_migrations
       - name: Ensure we have apache user with access to database
         postgresql_user: db=fitsdata

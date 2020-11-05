@@ -9,9 +9,39 @@ add_to_preview_queue.py
 
 - Added a new `force` option to recreate previews even if they already exist [#387]
 
+copy_from_dhs.py
+^^^^^^^^^^^^^^^^
 
-2020-2 (unreleased)
-===================
+- Batching email for validation errors to not spam when first starting up [#391]
+
+
+2020-2.2
+========
+
+Other
+-----
+
+archive_install.yml
+^^^^^^^^^^^^^^^^^^^
+
+- Apply database migrations as user fitsdata to ensure proper table/sequence ownership
+- Set migration version to 18 for new databases (step 19 has been eliminated)
+
+
+2020-2.1
+========
+
+Updated Scripts
+---------------
+
+database_backup.py
+^^^^^^^^^^^^^^^^^^
+
+- Allow existing folder for database backup location [#395]
+
+
+2020-2.0
+========
 
 User-Facing Changes
 ----------------------
@@ -20,6 +50,7 @@ User-Facing Changes
 - Fixed time ranges to operate from 2pm-2pm local time in Chile/Hawaii [#288]
 - Ability to search for calibrations associated with selected files [#356]
 - Support for slitillum calibration data
+- Load Cals for Marked disabled if there are no checkboxes to mark [#386]
 
 Service fixes and enhancements
 ------------------------------
@@ -44,6 +75,22 @@ Web Services
 
 - Now sorts null ut datetimes to the end of the results, so most recent properly displays
 - Removed engineering results by default
+
+/tapestuff
+^^^^^^^^^^
+
+- Fixed bug in taperead listing, was always blank
+
+/miscfiles
+^^^^^^^^^^
+
+- Fixed bug in session/context handling in miscfiles details
+- Fixed validation to check both release and program independently (was passing if release passed)
+
+/gmoscaltwilgihtfiles
+^^^^^^^^^^^^^^^^^^^^^
+
+- New webservice endpoint to get json list of cal filenames associated with `gmoscaltwilightdetails` counts [#392]
 
 Updated Scripts
 ---------------

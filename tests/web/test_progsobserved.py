@@ -7,10 +7,8 @@ from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.file import File
 from fits_storage.orm.header import Header
 from fits_storage.orm.program import Program
-from fits_storage.orm.publication import Publication
 from fits_storage.web.api import lookup_diskfile
-from fits_storage.web.progsobserved import progsobserved
-from fits_storage.web.publication import publication_ads, list_publications
+from fits_storage.web.progsobserved import progsobserved, sitemap
 from tests.web_helper import MockContext
 
 
@@ -62,3 +60,42 @@ def test_progsobserved(session, monkeypatch):
     assert(mock_context.resp.status == 200)  # bibcode is invalid
     # assert('<p>program </p>' in mock_context.resp.stuff)
     assert('<li><a href="/summary/program/20200101-20201230">program</a></li>' in mock_context.resp.stuff)
+
+    session.rollback()
+
+
+@pytest.mark.usefixtures("rollback")
+def test_sitemap(session, monkeypatch):
+    mock_context = MockContext(session, method='GET')
+
+    def _mock_get_context(initialize=True):
+        return mock_context
+    monkeypatch.setattr(fits_storage.web.progsobserved, "get_context", _mock_get_context)
+    monkeypatch.setattr(fits_storage.web.templating, "get_context", _mock_get_context)
+    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
+    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
+    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
+    monkeypatch.setattr(fits_storage.orm.header.Header, 'populate_fits', mock_populate_fits)
+
+    f = File('foo.fits')
+    session.add(f)
+    session.flush()
+    df = DiskFile(f, 'foo.fits', '')
+    session.add(df)
+    session.flush()
+    h = Header(df, None)
+    h.ut_datetime = datetime(2020, 5, 1)
+    h.program_id = 'program'
+    session.add(h)
+    session.flush()
+    p = Program('program')
+    session.add(p)
+    session.flush()
+
+    sitemap(mock_context.req)
+
+    assert(mock_context.resp.status == 200)  # bibcode is invalid
+    # assert('<p>program </p>' in mock_context.resp.stuff)
+    assert('<lastmod>2015-09-01</lastmod>' in mock_context.resp.stuff)
+
+    session.rollback()

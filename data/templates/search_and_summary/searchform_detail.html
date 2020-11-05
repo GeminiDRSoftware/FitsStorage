@@ -66,6 +66,15 @@
     <span class="helpright">You can select raw data, reduced data, or processed calibrations. We only guarantee the presence of RAW data, reduced data and processed calibrations are mostly on a best efforts basis.</span></span>
     <br>
 
+    <label>Science Quality:</label>
+    <select class="ddw" name="science_quality">
+        <option value="">Any</option>
+{{ generate_option_list(science_quality_options, updated.procsci) }}
+    </select>
+    <span class="help">(help)
+        <span class="helpleft">Select science quality of files: Any, Science Quality, or Quick Look.</span>
+    </span><br>
+
     <label class="wide" id="advanced_header">Advanced Options &#9662;</label>
     <span class="help">(click to show / hide)
     <span class="helpright">Click where it says "Advanced Options" to show or hide the advanced options.</span></span>
@@ -178,15 +187,6 @@
     </select>
     <span class="help">(help)
         <span class="helpleft">Select data did or did not use Adaptive Optics, or that used specifically LGS or NGS AO.</span>
-    </span><br>
-
-    <label>Science Quality:</label>
-    <select class="ddw" name="science_quality">
-        <option value="">Any</option>
-{{ generate_option_list(science_quality_options, updated.procsci) }}
-    </select>
-    <span class="help">(help)
-        <span class="helpleft">Select science quality of files: Any, Science Quality, or Quick Look.</span>
     </span><br>
 
     <div id="Spec" style="display:none">

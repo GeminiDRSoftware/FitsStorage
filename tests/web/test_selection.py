@@ -1,11 +1,11 @@
 import pytest
-from fits_storage.web.selection import getselection, sayselection, queryselection
+from fits_storage.web.selection import getselection, sayselection, queryselection, _parse_range
 from fits_storage.orm import compiled_statement
 from fits_storage.gemini_metadata_utils import gemini_date, ONEDAY_OFFSET
 from fits_storage import fits_storage_config
 
 from collections import OrderedDict
-from sqlalchemy import Column, Integer, or_, and_
+from sqlalchemy import Column, Integer, or_, and_, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.query import Query
 from sqlalchemy.sql.elements import AsBoolean, BooleanClauseList
@@ -182,7 +182,13 @@ getselection_pairs = [
     (['Crpa=kjkj'], {'notrecognised': 'Crpa=kjkj'}),
     (['cenwlen=blahblah'], {'cenwlen': 'blahblah'}),
     (['exposure_time=blahblah'], {'exposure_time': 'blahblah'}),
-    ]
+    (['high'], {'gain': 'high'}),
+    (['cols=program_id'], {'cols': 'program_id'}),
+    (['sq'], {'procsci': 'sq'}),
+    (['preimage'], {'pre_image': True}),
+    (["zardoz"], {'notrecognised': 'zardoz'}),
+    (["zardoz", "plan9fromouterspace"], {'notrecognised': 'zardoz plan9fromouterspace'}),
+]
 
 
 @pytest.mark.parametrize("input,expected", getselection_pairs)
@@ -204,6 +210,7 @@ sayselection_pairs = [
      ". WARNING: I didn't understand these (case-sensitive) words: Foobar"),
     ({'program_id': 'GN-CAL20150623', 'notrecognised': 'Foobar'},
      "; Program ID: GN-CAL20150623. WARNING: I didn't understand these (case-sensitive) words: Foobar"),
+    ({'site_monitoring': True}, {' Is Site Monitoring Data'}),
     ]
 
 
@@ -245,6 +252,18 @@ queryselection_pair_source = (
     # The following are a bit special and the query conditions will be constructed in the query generator
     ('date', None),
     ('daterange', None),
+    (('lastmoddaterange', '20200101 20200202'),
+     and_(DiskFile.lastmod >= datetime(2020, 1, 1), DiskFile.lastmod < datetime(2020, 2, 3))),
+    (('object', 'OBJECT'), and_(Header.object.ilike('OBJECT'),
+                                or_(Header.proprietary_coordinates == False,
+                                    Header.release <= func.now()))),
+    (('exposure_time', '0-10000'), and_(Header.exposure_time >= 0.0, Header.exposure_time <= 10000.0)),
+    (('exposure_time', '10000'), and_(Header.exposure_time >= 9999.5, Header.exposure_time <= 10000.5)),
+    (('dec', '50.0'), and_(and_(Header.dec >= 49.95, Header.dec < 50.05),
+                           or_(Header.proprietary_coordinates == False,
+                               Header.release <= func.now()))),
+    (('cenwlen', '0.7-0.8'), and_(Header.central_wavelength > 0.7, Header.central_wavelength < 0.8)),
+    (('disperser', '10lXD'), Header.disperser),
     )
 
 def generate_queryselection_pairs():
@@ -277,8 +296,22 @@ def generate_queryselection_pairs():
         yield {fieldname: value}, str(compiled_statement(q.statement))
 
 @pytest.mark.parametrize("input,expected", generate_queryselection_pairs())
-@pytest.mark.slow
 def test_queryselection(query, input, expected):
     q = queryselection(query, input)
     print (q)
     assert str(compiled_statement(queryselection(query, input).statement)) == expected
+
+
+def test_parse_range():
+    a, b = _parse_range('1.0-2.0')
+    assert(a == '1.0')
+    assert(b == '2.0')
+    a, b = _parse_range('-1.0--2.0')
+    assert(a == '-1.0')
+    assert(b == '-2.0')
+    a, b = _parse_range('-.--2.0')
+    assert(a is None)
+    assert(b is None)
+    a, b = _parse_range('thisisnotarange')
+    assert(a is None)
+    assert(b is None)

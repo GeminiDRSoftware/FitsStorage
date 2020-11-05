@@ -2,7 +2,9 @@
 
 
 import os
+from datetime import datetime
 
+import fits_storage
 from fits_storage import fits_storage_config
 
 
@@ -36,3 +38,32 @@ def ensure_file(filename, path=None):
             bz2.BZ2File(diskfile, 'w').write(r.content)
         else:
             open(diskfile, 'wb').write(r.content)
+
+
+def mock_get_file_size(path):
+    return 0
+
+
+def mock_get_file_md5(path):
+    return ''
+
+
+def mock_get_lastmod(path):
+    return datetime.now()
+
+
+def mock_populate_fits(hdr, df, log):
+    pass
+
+
+def mock_populate(ftxthdr, df):
+    pass
+
+
+def setup_mock_file_stuff(monkeypatch):
+    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
+    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
+    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
+    monkeypatch.setattr(fits_storage.orm.header.Header, 'populate_fits', mock_populate_fits)
+    monkeypatch.setattr(fits_storage.orm.fulltextheader.FullTextHeader, 'populate', mock_populate)
+

@@ -21,6 +21,7 @@ if using_s3:
 
 from ..utils.userprogram import icanhave
 
+
 def num_previews(filenamegiven):
     """
     This is the preview server, it sends you the preview jpg for the requested file.

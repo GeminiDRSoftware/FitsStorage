@@ -13,7 +13,7 @@ from fits_storage.utils.web import RequestRedirect, ClientError
 from fits_storage.utils.web.routing import Map, Rule, BaseConverter
 
 from fits_storage.fits_storage_config import blocked_urls, use_as_archive
-from fits_storage.web.gmoscaltwilightdetails import gmoscaltwilightdetails
+from fits_storage.web.gmoscaltwilightdetails import gmoscaltwilightdetails, gmoscaltwilightfiles
 from fits_storage.web.publication import publication_ads, list_publications
 from fits_storage.web.summary import summary
 from fits_storage.web.file_list import xmlfilelist, jsonfilelist, jsonsummary, jsonqastate
@@ -316,6 +316,7 @@ url_map = Map([
     Rule('/jsoncalmgr/<selection:selection>', jsoncalmgr),          # The calmgr handler, returning json
     Rule('/gmoscal/<selection:selection>', gmoscal_html),           # The GMOS twilight flat and bias report
     Rule('/gmoscaltwilightdetails', gmoscaltwilightdetails),        # The GMOS twilight flat and bias report
+    Rule('/gmoscaltwilightfiles', gmoscaltwilightfiles),            # The GMOS twilight flat list of files
     Rule('/programsobserved/<selection:selection>',                 # This is the projects observed feature
          progsobserved),
 
@@ -457,7 +458,8 @@ def handler(environ, start_response):
                 log = session.query(annotationClass).filter(annotationClass.usagelog_id == ctx.usagelog.id).one()
             except NoResultFound:
                 log = annotationClass(ctx.usagelog)
-            log.add_note(e.message)
+            if hasattr(e, 'message'):
+                log.add_note(e.message)
             session.add(log)
         return ctx.resp.respond(unicode_to_string)
 
