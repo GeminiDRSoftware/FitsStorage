@@ -43,7 +43,7 @@ if __name__ == "__main__":
         else:
             command = ["/usr/bin/pg_dump", "--format=c", "--file=%s/%s" % (fits_db_backup_dir, filename), fits_dbname]
 
-        os.makedirs(fits_db_backup_dir)
+        os.makedirs(fits_db_backup_dir, exist_ok=True)
 
         logger.info("Executing pg_dump")
         sp = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

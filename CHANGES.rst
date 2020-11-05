@@ -15,16 +15,29 @@ copy_from_dhs.py
 - Batching email for validation errors to not spam when first starting up [#391]
 
 
+2020-2.2
+========
+
+Other
+-----
+
+archive_install.yml
+^^^^^^^^^^^^^^^^^^^
+
+- Apply database migrations as user fitsdata to ensure proper table/sequence ownership
+- Set migration version to 18 for new databases (step 19 has been eliminated)
+
+
 2020-2.1
 ========
 
-Web Services
-------------
+Updated Scripts
+---------------
 
-/login
-^^^^^^
+database_backup.py
+^^^^^^^^^^^^^^^^^^
 
-- Now accepts a redirect query argument to invoke an http redirect on successful login
+- Allow existing folder for database backup location [#395]
 
 
 2020-2.0
@@ -73,6 +86,11 @@ Web Services
 
 - Fixed bug in session/context handling in miscfiles details
 - Fixed validation to check both release and program independently (was passing if release passed)
+
+/gmoscaltwilgihtfiles
+^^^^^^^^^^^^^^^^^^^^^
+
+- New webservice endpoint to get json list of cal filenames associated with `gmoscaltwilightdetails` counts [#392]
 
 Updated Scripts
 ---------------

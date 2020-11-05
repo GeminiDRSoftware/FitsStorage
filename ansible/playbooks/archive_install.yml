@@ -337,19 +337,19 @@
       - name: Setup Migrations
         command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
         become: yes
-        become_user: postgres
+        become_user: fitsdata
         when: fitsdata_db_created.changed
-      - name: If we have a fresh DB, set version to 19 since we are already up to date with the migrations
+      - name: If we have a fresh DB, set version to 18 since we are already up to date with the migrations
         postgresql_query:
           db: fitsdata
-          query: update migrate_version set version=19
+          query: update migrate_version set version=18
         become: yes
         become_user: postgres
         when: fitsdata_db_created.changed
       - name: Apply Migrations (Idempotent, always apply)
         command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py upgrade postgresql:///fitsdata dbmigration"
         become: yes
-        become_user: postgres
+        become_user: fitsdata
         when: apply_migrations
       - name: Ensure we have apache user with access to database
         postgresql_user: db=fitsdata
