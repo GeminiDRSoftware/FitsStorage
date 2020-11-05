@@ -1,5 +1,17 @@
 
-2020-2 (unreleased)
+2020-2.1
+========
+
+Updated Scripts
+---------------
+
+database_backup.py
+^^^^^^^^^^^^^^^^^^
+
+- Allow existing folder for database backup location [#395]
+
+
+2020-2.0
 ===================
 
 User-Facing Changes
