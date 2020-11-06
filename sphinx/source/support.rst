@@ -21,21 +21,22 @@ Is The Webserver Running?
 
 To check if the webserver is running, I use `ps`
 
-```
-[ooberdorf@hbffits-lv4 ~]$ ps -Aef | grep http
-ooberdo+  3257  3225  0 13:36 pts/0    00:00:00 grep --color=auto http
-root     16441     1  0 Oct26 ?        00:00:06 httpd (mod_wsgi-express) -f /opt/modwsgi-default/httpd.conf -DMOD_WSGI_ACCESS_LOG -DMOD_WSGI_WITH_PYTHON_PATH -DMOD_WSGI_MPM_ENABLE_EVENT_MODULE -DMOD_WSGI_MPM_EXISTS_EVENT_MODULE -DMOD_WSGI_MPM_EXISTS_WORKER_MODULE -DMOD_WSGI_MPM_EXISTS_PREFORK_MODULE -k start
-apache   16442 16441  0 Oct26 ?        00:00:16 (wsgi:localhost:80:0)    -f /opt/modwsgi-default/httpd.conf -DMOD_WSGI_ACCESS_LOG -DMOD_WSGI_WITH_PYTHON_PATH -DMOD_WSGI_MPM_ENABLE_EVENT_MODULE -DMOD_WSGI_MPM_EXISTS_EVENT_MODULE -DMOD_WSGI_MPM_EXISTS_WORKER_MODULE -DMOD_WSGI_MPM_EXISTS_PREFORK_MODULE -k start
-apache   16443 16441  0 Oct26 ?        00:00:00 httpd (mod_wsgi-express) -f /opt/modwsgi-default/httpd.conf -DMOD_WSGI_ACCESS_LOG -DMOD_WSGI_WITH_PYTHON_PATH -DMOD_WSGI_MPM_ENABLE_EVENT_MODULE -DMOD_WSGI_MPM_EXISTS_EVENT_MODULE -DMOD_WSGI_MPM_EXISTS_WORKER_MODULE -DMOD_WSGI_MPM_EXISTS_PREFORK_MODULE -k start
-```
+.. code:: bash
+
+   [ooberdorf@hbffits-lv4 ~]$ ps -Aef | grep http
+   ooberdo+  3257  3225  0 13:36 pts/0    00:00:00 grep --color=auto http
+   root     16441     1  0 Oct26 ?        00:00:06 httpd (mod_wsgi-express) -f /opt/modwsgi-default/httpd.conf -DMOD_WSGI_ACCESS_LOG -DMOD_WSGI_WITH_PYTHON_PATH -DMOD_WSGI_MPM_ENABLE_EVENT_MODULE -DMOD_WSGI_MPM_EXISTS_EVENT_MODULE -DMOD_WSGI_MPM_EXISTS_WORKER_MODULE -DMOD_WSGI_MPM_EXISTS_PREFORK_MODULE -k start
+   apache   16442 16441  0 Oct26 ?        00:00:16 (wsgi:localhost:80:0)    -f /opt/modwsgi-default/httpd.conf -DMOD_WSGI_ACCESS_LOG -DMOD_WSGI_WITH_PYTHON_PATH -DMOD_WSGI_MPM_ENABLE_EVENT_MODULE -DMOD_WSGI_MPM_EXISTS_EVENT_MODULE -DMOD_WSGI_MPM_EXISTS_WORKER_MODULE -DMOD_WSGI_MPM_EXISTS_PREFORK_MODULE -k start
+   apache   16443 16441  0 Oct26 ?        00:00:00 httpd (mod_wsgi-express) -f /opt/modwsgi-default/httpd.conf -DMOD_WSGI_ACCESS_LOG -DMOD_WSGI_WITH_PYTHON_PATH -DMOD_WSGI_MPM_ENABLE_EVENT_MODULE -DMOD_WSGI_MPM_EXISTS_EVENT_MODULE -DMOD_WSGI_MPM_EXISTS_WORKER_MODULE -DMOD_WSGI_MPM_EXISTS_PREFORK_MODULE -k start
 
 If you don't see httpd worker processes like this, you can (re)start the server.
 Even if the server is running, you might try doing a restart anyway in case HTTPD
 ran out of workers.
 
-```
-sudo systemctl restart fits-httpd
-```
+.. code:: bash
+
+   sudo systemctl restart fits-httpd
+
 
 Check the API Server
 """"""""""""""""""""
@@ -47,17 +48,17 @@ issues instead of the HTTPD Server.
 
 Triage is similar.  Look for `api_backend.py`:
 
-```
-[ooberdorf@hbffits-lv4 modwsgi-default]$ ps -Aef | grep api
-ooberdo+  3327  3225  0 13:48 pts/0    00:00:00 grep --color=auto api
-fitsdata 16281     1  0 Oct26 ?        00:00:31 /usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/api_backend.py --demon
-```
+.. code:: bash
+
+   [ooberdorf@hbffits-lv4 modwsgi-default]$ ps -Aef | grep api
+   ooberdo+  3327  3225  0 13:48 pts/0    00:00:00 grep --color=auto api
+   fitsdata 16281     1  0 Oct26 ?        00:00:31 /usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/api_backend.py --demon
 
 Restart is similar:
 
-```
-sudo systemctl restart fits-api-backend.service
-```
+.. code:: bash
+
+   sudo systemctl restart fits-api-backend.service
 
 Check the Logs
 """"""""""""""
@@ -68,20 +69,20 @@ for any major issues.  There may be some benign astropy messages which you can i
 I also look at access_log.  Here I can see if requests are making it to the HTTPD server.
 This has never been an issue, but it is worth checking.
 
-```
-cd /opt/modwsgi-default
-tail -100 error_log
-tail -100 access_log
-```
+.. code:: bash
+
+   cd /opt/modwsgi-default
+   tail -100 error_log
+   tail -100 access_log
 
 Check disk space
 """"""""""""""""
 
 If one of the server disks fills up, this can cause issues.  You can check with a simple `df`.
 
-```
-df -h
-```
+.. code:: bash
+
+   df -h
 
 I am most interested in `/`, `/data/`, and `/sci/dataflow/`.  `/` could indicate problems in `/tmp`.
 `/data` is used for things like staging decompressed FITS files and database backups.
@@ -99,15 +100,15 @@ I've had many instances where the user was just doing a search they thought shou
 return the file and did not.  You can try a quick look at their web query if you have
 it, or the most foolproof method is to just look in the database:
 
-```
-select * from Diskfile where filename='<filename>';
-```
+.. code:: sql
+
+   select * from Diskfile where filename='<filename>';
 
 If there is a record, see if there's a `canonical` record.
 
-```
+.. code:: sql
+
 select * from Diskfile where filename='<filename>' and canonical;
-```
 
 If there is a `canonical` record, is it marked as `present`?  If not, the file did
 exist on the FITS Server and was later cleared out for space.  The file should be
@@ -119,9 +120,9 @@ with the *Engineering data* advanced option turned on.  It also may be worth che
 that a header row was properly created.  These are unlikely issues, but you can
 check for them while you are in the database.
 
-```
-select h.id, df.filename from Header h, Diskfile df where df.filename='<filename>' and df.canonical and h.diskfile_id=df.id
-```
+.. code:: sql
+
+   select h.id, df.filename from Header h, Diskfile df where df.filename='<filename>' and df.canonical and h.diskfile_id=df.id
 
 Once you've verified the file does not exist on the target system's database, you
 can move on to diagnosing the cause.
@@ -139,11 +140,11 @@ onto dataflow and that naturally means it won't show up in the webserver search 
 If you are familiar with the layout, you can do something a bit more targeted, but otherwise
 this is a good brute force check (note: find takes a long time!):
 
-```
-ls /sci/dataflow/<filename>
-# if not found...
-find /sci/dataflow -name <filename>
-```
+.. code:: bash
+
+   ls /sci/dataflow/<filename>
+   # if not found...
+   find /sci/dataflow -name <filename>
 
 If the file did not show up, the next step depends on where the file comes from.  This can
 be a normal file we get from the DHS folder.  It can be a visiting instrument like \'Alopeke
@@ -163,20 +164,20 @@ DHS (Regular) Data
 
 The first thing I check is if the DHS copy job is running
 
-```
-[ooberdorf@mkofits-lv3 ~]$ ps -Aef | grep dhs
-ooberdo+  4909  4629  0 15:30 pts/3    00:00:00 grep --color=auto dhs
-fitsdata 27509     1 11 Aug18 ?        8-04:42:14 /usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/copy_from_dhs.py --debug --demon
-```
+.. code:: bash
+
+   [ooberdorf@mkofits-lv3 ~]$ ps -Aef | grep dhs
+   ooberdo+  4909  4629  0 15:30 pts/3    00:00:00 grep --color=auto dhs
+   fitsdata 27509     1 11 Aug18 ?        8-04:42:14 /usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/copy_from_dhs.py --debug --demon
 
 If it is, check if the file looks ok.  The DHS job will check for a valid file before
 copying it into dataflow.  Opening the file with astrodata or looking for the `TELESCOP`
 keyword are typical easy checks.  You can also take a look in the DHS copy job logs:
 
-```
-cd /data/logs
-less copy_from_dhs.py.log.1
-```
+.. code:: bash
+
+   cd /data/logs
+   less copy_from_dhs.py.log.1
 
 If a DHS file was copied to dataflow but it is older than 20 days, it also won't be
 picked up by the cronjob that adds these to the ingest queue.  This is rare, and the file
@@ -192,10 +193,10 @@ file is recompressed and placed in dataflow.  This is another case where I would
 copy of the data and check if the file opens in astrodata and looks valid.  Otherwise, I
 first look for the copy job and there is also a log.
 
-```
-cd /data/logs
-tail copy_from_visiting_instrument.py.log.1
-```
+.. code:: bash
+
+   cd /data/logs
+   tail copy_from_visiting_instrument.py.log.1
 
 SkyCam
 """"""
@@ -210,18 +211,18 @@ Regardless of what type of file, once it is placed in dataflow, it will be added
 the ingest queue and entered into the database by the ingest job.  We can check if
 that is running.
 
-```
-[ooberdorf@mkofits-lv3 logs]$ ps -Aef | grep ingest
-ooberdo+  5088  4629  0 15:38 pts/3    00:00:00 grep --color=auto ingest
-fitsdata 12288     1  6 Jul22 ?        6-11:24:55 /usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq1
-fitsdata 12299     1  6 Jul22 ?        6-10:20:04 /usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq2
-```
+.. code:: bash
+
+   [ooberdorf@mkofits-lv3 logs]$ ps -Aef | grep ingest
+   ooberdo+  5088  4629  0 15:38 pts/3    00:00:00 grep --color=auto ingest
+   fitsdata 12288     1  6 Jul22 ?        6-11:24:55 /usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq1
+   fitsdata 12299     1  6 Jul22 ?        6-10:20:04 /usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq2
 
 We can check for issues in the database:
 
-```
-select * from ingestqueue where filename='<filename>';
-```
+.. code:: sql
+
+   select * from ingestqueue where filename='<filename>';
 
 If failed is True, you can try setting it to False.  If in_progress is set to True, you
 can try setting it to False (I prefer stopping the ingest services, setting in_progress
@@ -235,26 +236,26 @@ entries in that case (generally the stuck one).
 
 You can look at the `queue_error` table to see what the error message was.
 
-```
-select * from queue_error where filename='<filename>' and queue='INGEST' order by added desc;
-```
+.. code:: sql
+
+   select * from queue_error where filename='<filename>' and queue='INGEST' order by added desc;
 
 Finally, if you want to add a file to the ingest queue to force the service to try
 and ingest it again, you can do:
 
-```
-sudo -u fitsdata env PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=N20200804S0091.fits --force
-```
+.. code:: bash
+
+   sudo -u fitsdata env PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --file-re=N20200804S0091.fits --force
 
 If the file is in a subdirectory, such as \`Alopeke data, I add the path argument and I
 prefer to add a logsuffix so errors go a seperate log.  Add `--force` if you want the
 file to ingest even if it appears unchanged (for instance, to pick up code changes that
 were made for parsing the header).
 
-```
-sudo -u fitsdata env PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --logsuffix=alopeke --path=alopeke/20201023 --file-re=N20201023A0021
-sudo -u fitsdata env PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --logsuffix=graces --path=graces --file-re=N20200926G005
-```
+.. code:: bash
+
+   sudo -u fitsdata env PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --logsuffix=alopeke --path=alopeke/20201023 --file-re=N20201023A0021
+   sudo -u fitsdata env PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --logsuffix=graces --path=graces --file-re=N20200926G005
 
 Archive Ingest
 ^^^^^^^^^^^^^^
@@ -271,25 +272,25 @@ If a file is on the FITS Server, check if the export service is running on that 
 This is the job that continuously pushes newly ingested data to the Archive.  There is
 normally just one running.
 
-```
-[ooberdorf@mkofits-lv3 ~]$ ps -Aef | grep export
-ooberdo+  2191  2163  0 13:52 pts/0    00:00:00 grep --color=auto export
-fitsdata 31051     1  1 Jun16 ?        2-13:53:27 /usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_export_queue.py --demon --lockfile --name=seq1
-```
+.. code:: bash
+
+   [ooberdorf@mkofits-lv3 ~]$ ps -Aef | grep export
+   ooberdo+  2191  2163  0 13:52 pts/0    00:00:00 grep --color=auto export
+   fitsdata 31051     1  1 Jun16 ?        2-13:53:27 /usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_export_queue.py --demon --lockfile --name=seq1
 
 If the export service is not running, you can (re)start it.
 
-```
-sudo systemctl restart fits-service_export_queue1
-```
+.. code:: bash
+
+   sudo systemctl restart fits-service_export_queue1
 
 You can check the logs for the export queue for issues.
 
-```
-cd /data/logs
-grep <filename> service_export_queue.py-seq?.log*
-tail -20 service_export_queue.py-seq1.log
-```
+.. code:: bash
+
+   cd /data/logs
+   grep <filename> service_export_queue.py-seq?.log*
+   tail -20 service_export_queue.py-seq1.log
 
 If you do find errors in the log, this may need followup on the Archive server.
 For instance, if it seems like the webservice calls to the Archive to submit
@@ -298,20 +299,21 @@ triage steps:
 
 You can also log into the Postgres Database as `fitsdata` and check the `exportqueue`.
 
-```
-sudo -u fitsdata psql fitsdata
-```
-```
-select * from exportqueue where filename='<filename>' order by added desc;
-```
+.. code:: bash
+
+   sudo -u fitsdata psql fitsdata
+
+.. code:: sql
+
+   select * from exportqueue where filename='<filename>' order by added desc;
 
 Normally, the file will not be in the `exportqueue`.  If it is, it's possible the
 export job simply hasn't reached that file yet.  See if the `failed` column is set.
 If so, the queue failed to send the file and won't try again until you clear it.
 
-```
-update exportqueue set failed=False where filename='<filename>';
-```
+.. code:: sql
+
+   update exportqueue set failed=False where filename='<filename>';
 
 Another very unlikely possibility is the file marked as `in_progress` but the
 `exportqueue` job died or was restarted.  The safest way to do this is to
@@ -319,18 +321,21 @@ shut down the export job(s), then update the flag, then start the jobs.
 This avoids the possibility that the file was legitimately in progress
 and having it two export queues fight over it.
 
-```
-sudo service stop fits-service_export_queue1
-# and any other instances
-```
+.. code:: bash
+
+   sudo service stop fits-service_export_queue1
+   # and any other instances
+
 in Postgres:
-```
-update exportqueue set in_progress=False where filename='<filename>';
-```
-```
-sudo service start fits-service_export_queue1
-# and any other instances
-```
+
+.. code:: sql
+
+   update exportqueue set in_progress=False where filename='<filename>';
+
+.. code:: bash
+
+   sudo service start fits-service_export_queue1
+   # and any other instances
 
 It is possible, and again rare, for the `failed` or `in_progress`
 state to allow a second entry in the queue for a file.  In that case,
@@ -339,9 +344,10 @@ would collide with the clean one.  It's safe to delete one of the
 entries in that case (generally the stuck one).
 
 If the file fails again, you can look at the `queue_error` table.
-```
-select * from queue_error where queue='EXPORT' and filename='<filename>' order by date desc limit 5;
-```
+
+.. code:: sql
+
+   select * from queue_error where queue='EXPORT' and filename='<filename>' order by date desc limit 5;
 
 If it looks like the problem is on the Archive, this will depend on what
 the problem looks like.  If the export webservice requests are unable to
