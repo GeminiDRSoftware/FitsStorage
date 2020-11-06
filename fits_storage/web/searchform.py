@@ -734,7 +734,11 @@ dropdown_options = {
          ("PROCESSED_BIAS", "Processed Biases Only"),
          ("PROCESSED_FLAT", "Processed Flats Only"),
          ("PROCESSED_FRINGE", "Processed Fringe Frames Only"),
-         ("PROCESSED_ARC", "Processed Arcs Only")],
+         ("PROCESSED_ARC", "Processed Arcs Only"),
+         ("PROCESSED_DARK", "Processed Darks Only"),
+         ("PROCESSED_STANDARD", "Processed Standards Only"),
+         ("PROCESSED_SLITILLUM", "Processed Slit Illuminations Only"),
+         ],
     "qa_options":
         [("NotFail", "Not Fail"),
          ("AnyQA", "Any"),
