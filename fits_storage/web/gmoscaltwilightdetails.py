@@ -264,7 +264,7 @@ def gmoscaltwilightfiles():
         bin = row["detector_binning"]
         dt = row["dt"]
 
-        key = "%s-%s" % (filter, bin)
+        key = "%s_%s" % (filter, bin)
         if key not in counts:
             counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": bin, "dt": dt.strftime('%Y-%m-%d'),}
         dat = counts[key]
@@ -273,7 +273,7 @@ def gmoscaltwilightfiles():
         else:
             dat["twilights"] = num
 
-    filenames = list()
+    filenames = dict()
     for filter_name in [
         'DS920',
         'g',
@@ -301,7 +301,7 @@ def gmoscaltwilightfiles():
             '2x2',
             '4x4'
         ]:
-            key = "%s-%s" % (filter_name, detector_binning)
+            key = "%s_%s" % (filter_name, detector_binning)
             if key not in counts.keys():
                 dt = fromdt
             else:
@@ -317,11 +317,14 @@ def gmoscaltwilightfiles():
                 and h.qa_state='Pass'
                 and (h.object='Twilight' and h.detector_roi_setting='Full Frame')
             """, {"dt": dt, "filter_name": filter_name, "detector_binning": detector_binning})
+            filenames_list = list()
             for row in rs:
-                filenames.append(row["filename"])
+                filenames_list.append(row["filename"])
+            if filenames_list:
+                filenames[key] = filenames_list
 
     result.update(dict(
-        file_list=filenames,
+        file_list=json.dumps(filenames),
         ))
 
     return result
