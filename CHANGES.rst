@@ -1,5 +1,18 @@
 
+2020-2.3
+========
+
+Web Services
+------------
+
+/gmoscaltwilgihtfiles
+^^^^^^^^^^^^^^^^^^^^^
+
+- Updated filelisting api endpoint to return a json dictionary per SOS team [#397]
+
+
 2020-2.2
+========
 
 Other
 -----
