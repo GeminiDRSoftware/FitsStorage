@@ -355,3 +355,65 @@ POST to the archive at all, this is the same process as figuring out why
 a server is unresponsive from above.  If files are posting to the Archive,
 but still not showing up in the web interface there, then we need to look
 at the services on `archive.gemini.edu`.
+
+
+Emails
+------
+
+User Notifications
+^^^^^^^^^^^^^^^^^^
+
+We regularly send emails to the users when their program data is available.
+The list of users and their programs is stored on the FITS Store servers
+in Hawaii in Chile.  The scripts that check daily for emails to send runs
+in each of these locations for programs that are local there.  However,
+the datafiles are checked for on the Archive server.
+
+You can check that the email job is enabled by looking at the crontab.
+It is currently in the cron for the fitsdata user, but if that looks empty
+it may have been moved to a root crontab or similar.
+
+Here are the jobs in Hawaii's crontab
+
+.. code::
+
+   0 8 * * *  python3 /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon
+   0 8 * * *  python3 /opt/FitsStorage/fits_storage/scripts/YouGotDataEmail.py --demon --check
+
+The script will read the rows in the `notification` table.  The selection field is
+the query that will be run against the Archive website looking for matches.  The
+email notifications will go to all three emails listed in that row.
+
+Notice also the `--check` job.  This job is different but uses mostly the same
+logic as the user notifications.  This job, with the `--check`, looks for files with
+a CHECK QA state on the local FITS Store.  It does not email all the users, only the
+`csemail` indicated in the `notification` table.
+
+If a user isn't receiving an email they expected, and the cron job looks ok, I
+first check what notifications exist for the program.
+
+.. code:: sql
+
+   select * from notification where selection like '%<program_id>%'
+
+If you do see a row, check the emails.  Pay particular attention if any of the
+emails fields has multiple emails or odd formatting.  This may not have been
+parsed as intended by the script.  As these are sourced from ODB, it is better
+to make the script smarter than to try and fix the field in the database.  It
+will simply get reset again from the ODB on the next load.  You can also check
+the Archive to see what the `selection` column returns:
+
+.. code::
+
+   https://archive.gemini.edu/searchform/GN-2019A-FT-211/science
+
+Also consider the notification script runs with a date.  By default, it uses `today` but
+you can also pass a `YYYYMMDD` encoded date if you are checking a previous day's results.
+
+.. code::
+
+   https://archive.gemini.edu/searchform/GN-2019A-FT-211/science/today
+
+If all of that looks ok, the next things to check are the logs in `/data/logs/YouGotDataEmail.py.log`
+and work with ITOps to check the email server configuration.
+
