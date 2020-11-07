@@ -108,7 +108,7 @@ If there is a record, see if there's a `canonical` record.
 
 .. code:: sql
 
-select * from Diskfile where filename='<filename>' and canonical;
+   select * from Diskfile where filename='<filename>' and canonical;
 
 If there is a `canonical` record, is it marked as `present`?  If not, the file did
 exist on the FITS Server and was later cleared out for space.  The file should be
@@ -355,4 +355,3 @@ POST to the archive at all, this is the same process as figuring out why
 a server is unresponsive from above.  If files are posting to the Archive,
 but still not showing up in the web interface there, then we need to look
 at the services on `archive.gemini.edu`.
-
