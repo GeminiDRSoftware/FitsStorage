@@ -39,36 +39,3 @@ RequestAccountPage
   [Documentation]  Load Request Account Page
   Open Browser  ${URL}/request_account/  ${BROWSER}
   Page Should Contain  New Account Request
-
-SearchPICoIName
-  [Documentation]  Search PI/CoI Name
-  Open Browser  ${URL}/searchform  ${BROWSER}
-  Page Should Contain  PI/CoI Name
-  input text  name=PIname  Hirst
-  input text  name=date  20130711
-  click button  name=Search
-  Page Should Contain  N20130711S0203.fits
-
-LoadObsLogs
-  [Documentation]  Load Associated Observation Logs
-  Open Browser  ${URL}/searchform  ${BROWSER}
-  Page Should Contain  PI/CoI Name
-  input text  name=PIname  Hirst
-  input text  name=date  20130711
-  click button  name=Search
-  Page Should Contain  N20130711S0203.fits
-  Click Link  id=obslogstab
-  Sleep  1s  Waiting for tab to load
-  Page Should Contain  20130711_GN-2013B-Q-60_obslog.txt
-
-ViewCalibrations
-  [Documentation]  View Calibrations
-  Open Browser  ${URL}/searchform  ${BROWSER}
-  Page Should Contain  PI/CoI Name
-  input text  name=PIname  Hirst
-  input text  name=date  20130711
-  click button  name=Search
-  Page Should Contain  N20130711S0203.fits
-  Click Link  id=caltab
-  Sleep  30s  Waiting for tab to load
-  Page Should Contain  GN-CAL20130710-22-033
