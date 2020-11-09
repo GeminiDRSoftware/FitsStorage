@@ -731,6 +731,7 @@ dropdown_options = {
     "reduction_options":
         [("RAW", "Raw Only"),
          ("PREPARED", "Reduced (not Cals)"),
+         ("PROCESSED_SCIENCE", "Processed Science Only"),
          ("PROCESSED_BIAS", "Processed Biases Only"),
          ("PROCESSED_FLAT", "Processed Flats Only"),
          ("PROCESSED_FRINGE", "Processed Fringe Frames Only"),
@@ -738,7 +739,6 @@ dropdown_options = {
          ("PROCESSED_DARK", "Processed Darks Only"),
          ("PROCESSED_STANDARD", "Processed Standards Only"),
          ("PROCESSED_SLITILLUM", "Processed Slit Illuminations Only"),
-         ("PROCESSED_SCIENCE", "Processed Science Only"),
          ],
     "qa_options":
         [("NotFail", "Not Fail"),
