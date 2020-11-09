@@ -12,6 +12,7 @@ Welcome to FitsStorage's documentation!
 
    changelog.rst
 
+   support.rst
 
 Indices and tables
 ==================
