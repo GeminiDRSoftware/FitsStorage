@@ -3,9 +3,9 @@ conditions:
 
 keywords:
   - CTYPE1:
-    - char:   [ LINEAR, PIXEL, RA---TAN, AZ---TAN ]
+    - char:   [ LINEAR, PIXEL, RA---TAN, AZ---TAN, WAVE ]
   - CTYPE2:
-    - char:   [ LINEAR, PIXEL, DEC--TAN, EL---TAN ]
+    - char:   [ LINEAR, PIXEL, DEC--TAN, EL---TAN, RA---TAN ]
   - CRPIX1,CRPIX2:
     - float
   - CRVAL1,CRVAL2:

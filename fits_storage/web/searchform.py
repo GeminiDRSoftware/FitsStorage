@@ -738,6 +738,7 @@ dropdown_options = {
          ("PROCESSED_DARK", "Processed Darks Only"),
          ("PROCESSED_STANDARD", "Processed Standards Only"),
          ("PROCESSED_SLITILLUM", "Processed Slit Illuminations Only"),
+         ("PROCESSED_SCIENCE", "Processed Science Only"),
          ],
     "qa_options":
         [("NotFail", "Not Fail"),
