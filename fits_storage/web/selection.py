@@ -177,6 +177,9 @@ def getselection(things):
                 selection[getselection_key_value[key]] = value
             elif sep == '=' and key == 'cols':
                 selection['cols'] = value
+            elif sep == '=' and key == 'reduction':
+                # special case for multiple reductions, would not have matched automatically
+                selection['reduction'] = value
             elif thing in getselection_booleans:
                 kw, val = getselection_booleans[thing]
                 selection[kw] = val
@@ -333,7 +336,7 @@ queryselection_filters = (
     ('data_label',     Header.data_label),
     ('observation_type',     Header.observation_type),
     ('observation_class',     Header.observation_class),
-    ('reduction',     Header.reduction),
+    # ('reduction',     Header.reduction),
     ('telescope',     Header.telescope),
     ('filename',      File.name),
     ('binning',       Header.detector_binning),
@@ -474,7 +477,11 @@ def queryselection(query, selection):
             query = query.filter(Header.qa_state == 'Undefined')
         else:
             query = query.filter(Header.qa_state == selection['qa_state'])
-
+    if 'reduction' in selection:
+        if ',' in selection['reduction']:
+            query = query.filter(Header.reduction.in_([rdct for rdct in selection['reduction'].split(',')]))
+        else:
+            query = query.filter(Header.reduction == selection['reduction'])
     if 'ao' in selection:
         isAO = (selection['ao'] == 'AO')
         query = query.filter(Header.adaptive_optics == isAO)
@@ -870,6 +877,11 @@ def selection_to_URL(selection, with_columns=False):
                 urlstring += '/central256'
             else:
                 urlstring += '/%s' % selection[key]
+        elif key == 'reduction_state':
+            if isinstance(selection[key], list):
+                urlstring += '/reduction=%s' % (','.join(selection[key]),)
+            else:
+                urlstring += '/reduction=%s' % selection[key]
         elif key == 'focal_plane_mask':
             # if selection[key] == gmos_focal_plane_mask(selection[key]):
             #     urlstring += '/' + str(selection[key])

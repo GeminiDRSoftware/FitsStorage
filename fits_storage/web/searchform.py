@@ -318,6 +318,11 @@ def updateselection(formdata, selection):
             selection['cols'] = formdata_to_compressed(value)
         elif key == 'object':
             selection['object'] = value
+        elif key == 'reduction':
+            if ',' in value:
+                selection['reduction'] = value.split(',')
+            else:
+                selection['reduction'] = value
         else:
             # This covers the generic case where the formdata key is also
             # the selection key, and the form value is the selection value
@@ -730,11 +735,16 @@ dropdown_options = {
          ("HK", "HK")],
     "reduction_options":
         [("RAW", "Raw Only"),
-         ("PREPARED", "Reduced (not Cals)"),
+         ("PREPARED,PROCESSED_SCIENCE", "Reduced (not Cals)"),
          ("PROCESSED_BIAS", "Processed Biases Only"),
          ("PROCESSED_FLAT", "Processed Flats Only"),
          ("PROCESSED_FRINGE", "Processed Fringe Frames Only"),
-         ("PROCESSED_ARC", "Processed Arcs Only")],
+         ("PROCESSED_ARC", "Processed Arcs Only"),
+         ("PROCESSED_DARK", "Processed Darks Only"),
+         ("PROCESSED_STANDARD", "Processed Standards Only"),
+         ("PROCESSED_SLITILLUM", "Processed Slit Illuminations Only"),
+         ("PROCESSED_SCIENCE", "Processed Science Only"),
+         ],
     "qa_options":
         [("NotFail", "Not Fail"),
          ("AnyQA", "Any"),
