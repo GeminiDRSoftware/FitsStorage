@@ -11,8 +11,8 @@ Welcome to FitsStorage's documentation!
    :caption: Contents:
 
    changelog.rst
-
    support.rst
+   visiting_instruments.rst
 
 Indices and tables
 ==================
