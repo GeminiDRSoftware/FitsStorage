@@ -339,10 +339,10 @@
         become: yes
         become_user: postgres
         when: fitsdata_db_created.changed
-      - name: If we have a fresh DB, set version to 18 since we are already up to date with the migrations
+      - name: If we have a fresh DB, set version to 20 since we are already up to date with the migrations
         postgresql_query:
           db: fitsdata
-          query: update migrate_version set version=18
+          query: update migrate_version set version=20
         become: yes
         become_user: postgres
         when: fitsdata_db_created.changed
