@@ -493,7 +493,7 @@ class Header(Base):
                 # Supposedly a processed file, but not any that we know of!
                 # Mark it as prepared, just in case
                 # TODO: Maybe we want to signal an error here?
-                self.reduction = 'PREPARED'
+                self.reduction = 'PROCESSED_UNKNOWN'
         elif 'PREPARED' in tags:
             self.reduction = 'PREPARED'
         else:
