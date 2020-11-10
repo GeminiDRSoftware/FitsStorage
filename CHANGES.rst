@@ -1,4 +1,16 @@
 
+2020-2.4
+========
+
+Web Services
+------------
+
+/gmoscalfiles
+^^^^^^^^^^^^^
+
+- Made combined bias+twilights variant per SOS request [#398]
+
+
 2020-2.3
 ========
 
