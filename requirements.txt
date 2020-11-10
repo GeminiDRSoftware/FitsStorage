@@ -22,7 +22,7 @@ mysql-connector
 simplejson
 suds-jurko
 ephem
-sphinx
+sphinx==2.2.1
 m2r
 requests-toolbelt
 # last since it fails on non-Apache systems

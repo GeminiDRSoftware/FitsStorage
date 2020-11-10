@@ -1,19 +1,19 @@
-# How to Add an new element to the Fitsstore web interface.
+## How to Add an new element to the Fitsstore web interface.
 
 Our example will be the real world addition of the All-Sky Camera to the database and web interface.
 
 If this is a new data type for Astrodata, you will need to add an astrodata adclass for that data type.
 In our example, these data are for instrument, “ALLSKYCAMERA”.
 
-# Update for Database
+## Update for Database
 
 Update AstroData to accommodate the new data type in the database.
 How to write your adclass is beyond the scope of this document. Consult the AstroData manual on
 how to do this.
 
-# Fitsstore updates
+## Fitsstore updates
 
-## `fits_storage/orm/header.py`
+### `fits_storage/orm/header.py`
 
 In `orm/header.py`, add the new column (field) name to the header table.
 These are set as class attributes on the `header.Header` class.
@@ -58,7 +58,7 @@ Add some conditions to header.populate_fits() if needed.
         		    return False
 ```
 
-## `fits_storage/web/searchform.py`
+### `fits_storage/web/searchform.py`
 
 In `web/searchform.searchform()` add the new field to the formdata conditional tuple:
 
@@ -143,7 +143,7 @@ dropdown_options = {
          ("SmInclude", "Find Only")],
 ```
 
-## `fits_storage/web/selection.py`
+### `fits_storage/web/selection.py`
 
 Add values and defaults to the appropriate “getselection” type. For site monitoring, this is a boolean.
 
@@ -223,7 +223,7 @@ def selection_to_URL(selection, with_columns=False):
 	return ulrstring
 ```
 
-## `FitsStorage/data/templates/search_and_summary/searchform_detail.html`
+### `FitsStorage/data/templates/search_and_summary/searchform_detail.html`
 
 In this file, `searchform_detail.html`, a template for the searchform is laid out. Add new elements to this template.
 For site_monitoring, this is added @L110 of the template:

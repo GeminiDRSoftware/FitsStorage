@@ -12,9 +12,11 @@ Welcome to FitsStorage's documentation!
 
    changelog.rst
    support.rst
+   setup.rst
    manual/database.rst
    visiting_instruments.rst
-   .. mdinclude:: ../docs/GeminiMailSetup.md
+   gemini_mail_setup.rst
+   development.rst
 
 Indices and tables
 ==================
