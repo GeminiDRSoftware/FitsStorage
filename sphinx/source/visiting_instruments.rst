@@ -29,7 +29,7 @@ typical flow is:
 ----------------
 
 Header Repair
-=============
+"""""""""""""
 
 These two instruments are mostly the same.  'Alopeke operates in Hawaii and Zorro is in Chile.  Some of the problems
 we see in the original headers are:
@@ -42,7 +42,7 @@ we see in the original headers are:
  * missing `OBSTYPE`, `OBSCLASS`, `TELESCOP`, `INSTRUME`, `DATE-OBS`, and/or `RELEASE`
 
 Staging Area
-============
+""""""""""""
 
 'Alopeke data lives in `/net/mkovisdata/home/alopeke/`.  Zorro data lives in Chile on
 `/net/cpostonfs-nv1/tier2/ins/sto/zorro/`
@@ -52,7 +52,7 @@ IGRINS
 ------
 
 Header Repair
-=============
+"""""""""""""
 
 IGRINS has a different set of header issues that we fix.  These have been as follows
 
@@ -61,6 +61,6 @@ IGRINS has a different set of header issues that we fix.  These have been as fol
  * missing `DATE-OBS` and/or `RELEASE`
 
 Staging Area
-============
+""""""""""""
 
 IGRINS data lives in `/net/cpostonfs-nv1/tier2/ins/sto/igrins/DATA`
