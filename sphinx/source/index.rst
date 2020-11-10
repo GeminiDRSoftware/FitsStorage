@@ -14,6 +14,7 @@ Welcome to FitsStorage's documentation!
    support.rst
    manual/database.rst
    visiting_instruments.rst
+   .. mdinclude:: ../docs/GeminiMailSetup.md
 
 Indices and tables
 ==================
@@ -21,4 +22,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

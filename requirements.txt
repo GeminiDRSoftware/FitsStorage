@@ -23,6 +23,7 @@ simplejson
 suds-jurko
 ephem
 sphinx
+m2r
 requests-toolbelt
 # last since it fails on non-Apache systems
 mod_wsgi
