@@ -251,7 +251,7 @@
       - name: Build Sphinx documentation (hbffits-lv4 only)
         become: true
         become_user: fitsdata
-        command: "make html"
+        command: "env PATH=/usr/local/bin:$PATH make clean html"
         args:
           chdir: /opt/FitsStorage/sphinx
         environment:
