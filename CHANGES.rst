@@ -2,6 +2,15 @@
 2020-2.4
 ========
 
+Uesr-Facing Changes
+-------------------
+
+/lsummary
+^^^^^^^^^
+
+- Added long form summary back into web service (not sure when it was removed) [#399]
+
+
 Web Services
 ------------
 

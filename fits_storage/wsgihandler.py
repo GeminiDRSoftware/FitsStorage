@@ -348,6 +348,8 @@ url_map = Map([
          collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
     Rule('/ssummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'ssummary'),
          collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/lsummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'lsummary'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
     Rule('/searchresults/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'searchresults'),
          collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
     Rule('/associated_cals/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'associated_cals'),
