@@ -10,6 +10,10 @@ Uesr-Facing Changes
 
 - Added long form summary back into web service (not sure when it was removed) [#399]
 
+/searchform
+^^^^^^^^^^^
+
+- Added extra reduction state options in search form for slitillum, standard, etc. [#396]
 
 Web Services
 ------------
