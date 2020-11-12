@@ -18,10 +18,10 @@ Uesr-Facing Changes
 Web Services
 ------------
 
-/gmoscalfiles
+/gmoscalbiasfiles
 ^^^^^^^^^^^^^
 
-- Made combined bias+twilights variant per SOS request [#398]
+- Made bias file list per SOS request [#398]
 
 
 2020-2.3
