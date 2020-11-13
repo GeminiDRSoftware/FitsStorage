@@ -10,14 +10,18 @@ Uesr-Facing Changes
 
 - Added long form summary back into web service (not sure when it was removed) [#399]
 
+/searchform
+^^^^^^^^^^^
+
+- Added extra reduction state options in search form for slitillum, standard, etc. [#396]
 
 Web Services
 ------------
 
-/gmoscalfiles
+/gmoscalbiasfiles
 ^^^^^^^^^^^^^
 
-- Made combined bias+twilights variant per SOS request [#398]
+- Made bias file list per SOS request [#398]
 
 
 2020-2.3
