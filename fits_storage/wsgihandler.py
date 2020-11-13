@@ -318,7 +318,7 @@ url_map = Map([
     Rule('/gmoscal/<selection:selection>', gmoscal_html),           # The GMOS twilight flat and bias report
     Rule('/gmoscaltwilightdetails', gmoscaltwilightdetails),        # The GMOS twilight flat and bias report
     Rule('/gmoscaltwilightfiles', gmoscaltwilightfiles),            # The GMOS twilight flat list of files
-    Rule('/gmoscalfiles/<selection:selection>', gmoscalbiasfiles),  # The GMOS bias list of files
+    Rule('/gmoscalbiasfiles/<selection:selection>', gmoscalbiasfiles),  # The GMOS bias list of files
     Rule('/programsobserved/<selection:selection>',                 # This is the projects observed feature
          progsobserved),
 

@@ -90,7 +90,8 @@ def gmoscalbiasfiles(selection):
 
     # Fudge and add the selection criteria
     # Keep the same selection from the flats above, but drop the spectroscopy specifier and add some others
-    selection.pop('spectroscopy')
+    if 'spectroscopy' in selection.keys():
+        selection.pop('spectroscopy')
     selection['observation_type'] = 'BIAS'
     selection['inst'] = 'GMOS'
     selection['qa_state'] = 'NotFail'
