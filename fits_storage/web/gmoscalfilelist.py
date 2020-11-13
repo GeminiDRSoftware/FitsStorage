@@ -104,6 +104,7 @@ def gmoscalbiasfiles(selection):
     bias = {}
     seendates = set()
     for utdate, binning, roi, filename in query:
+        utdate = utdate.strftime('%Y-%m-%d')
         if utdate not in list(bias.keys()):
             bias[utdate] = {}
         if binning not in list(bias[utdate].keys()):
