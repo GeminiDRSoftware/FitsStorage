@@ -15,6 +15,53 @@ copy_from_dhs.py
 - Batching email for validation errors to not spam when first starting up [#391]
 
 
+2020-2.5
+
+User-Facing Changes
+
+/searchform
+^^^^^^^^^^^
+
+- Added B480 grating to GMOS searches
+
+
+2020-2.4
+========
+
+Uesr-Facing Changes
+-------------------
+
+/lsummary
+^^^^^^^^^
+
+- Added long form summary back into web service (not sure when it was removed) [#399]
+
+/searchform
+^^^^^^^^^^^
+
+- Added extra reduction state options in search form for slitillum, standard, etc. [#396]
+
+Web Services
+------------
+
+/gmoscalbiasfiles
+^^^^^^^^^^^^^
+
+- Made bias file list per SOS request [#398]
+
+
+2020-2.3
+========
+
+Web Services
+------------
+
+/gmoscaltwilgihtfiles
+^^^^^^^^^^^^^^^^^^^^^
+
+- Updated filelisting api endpoint to return a json dictionary per SOS team [#397]
+
+
 2020-2.2
 ========
 

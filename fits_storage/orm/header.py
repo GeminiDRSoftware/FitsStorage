@@ -481,7 +481,9 @@ class Header(Base):
         # both PREPARED and PROCESSED_FLAT in it's types.
         # Here, ensure "highest" value wins.
         tags = ad.tags
-        if 'PROCESSED' in tags:
+        if 'PROCESSED_SCIENCE' in tags:
+            self.reduction = 'PROCESSED_SCIENCE'
+        elif 'PROCESSED' in tags:
             # Use the image type tag (BIAS, FLAT, ...) to obtain the
             # appropriate reduction status from the lookup table
             kind = list(tags.intersection(list(REDUCTION_STATUS.keys())))
@@ -491,7 +493,7 @@ class Header(Base):
                 # Supposedly a processed file, but not any that we know of!
                 # Mark it as prepared, just in case
                 # TODO: Maybe we want to signal an error here?
-                self.reduction = 'PREPARED'
+                self.reduction = 'PROCESSED_UNKNOWN'
         elif 'PREPARED' in tags:
             self.reduction = 'PREPARED'
         else:

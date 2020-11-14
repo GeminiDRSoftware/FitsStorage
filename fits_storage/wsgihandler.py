@@ -13,6 +13,7 @@ from fits_storage.utils.web import RequestRedirect, ClientError
 from fits_storage.utils.web.routing import Map, Rule, BaseConverter
 
 from fits_storage.fits_storage_config import blocked_urls, use_as_archive
+from fits_storage.web.gmoscalfilelist import gmoscalbiasfiles
 from fits_storage.web.gmoscaltwilightdetails import gmoscaltwilightdetails, gmoscaltwilightfiles
 from fits_storage.web.publication import publication_ads, list_publications
 from fits_storage.web.summary import summary
@@ -317,6 +318,7 @@ url_map = Map([
     Rule('/gmoscal/<selection:selection>', gmoscal_html),           # The GMOS twilight flat and bias report
     Rule('/gmoscaltwilightdetails', gmoscaltwilightdetails),        # The GMOS twilight flat and bias report
     Rule('/gmoscaltwilightfiles', gmoscaltwilightfiles),            # The GMOS twilight flat list of files
+    Rule('/gmoscalbiasfiles/<selection:selection>', gmoscalbiasfiles),  # The GMOS bias list of files
     Rule('/programsobserved/<selection:selection>',                 # This is the projects observed feature
          progsobserved),
 
@@ -345,6 +347,8 @@ url_map = Map([
     Rule('/diskfiles/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'diskfiles'),
          collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
     Rule('/ssummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'ssummary'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/lsummary/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'lsummary'),
          collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
     Rule('/searchresults/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'searchresults'),
          collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),

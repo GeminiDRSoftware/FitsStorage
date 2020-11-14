@@ -687,7 +687,8 @@ dropdown_options = {
     "gpi_astrometric_standard_options":
         [("gpi_astrometric_standard", "Astrometric Std"), ],
     "gmos_disp_options":
-        [("B600", "B600"),
+        [("B480", "B480"),
+         ("B600", "B600"),
          ("R400", "R400"),
          ("R831", "R831"),
          ("B1200", "B1200"),
@@ -731,10 +732,15 @@ dropdown_options = {
     "reduction_options":
         [("RAW", "Raw Only"),
          ("PREPARED", "Reduced (not Cals)"),
+         ("PROCESSED_SCIENCE", "Processed Science Only"),
          ("PROCESSED_BIAS", "Processed Biases Only"),
          ("PROCESSED_FLAT", "Processed Flats Only"),
          ("PROCESSED_FRINGE", "Processed Fringe Frames Only"),
-         ("PROCESSED_ARC", "Processed Arcs Only")],
+         ("PROCESSED_ARC", "Processed Arcs Only"),
+         ("PROCESSED_DARK", "Processed Darks Only"),
+         ("PROCESSED_STANDARD", "Processed Standards Only"),
+         ("PROCESSED_SLITILLUM", "Processed Slit Illuminations Only"),
+         ],
     "qa_options":
         [("NotFail", "Not Fail"),
          ("AnyQA", "Any"),

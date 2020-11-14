@@ -243,21 +243,12 @@ def gemini_date(string, as_datetime=False, offset=ZERO_OFFSET):
     dt_to_text_full = lambda x: x.strftime('%Y-%m-%dT%H:%M:%S')
 
     if string in {'today', 'tonight'}:
-        dt = datetime.datetime.now()
-        if dt.hour < 14:
-            dt = dt - datetime.timedelta(days=1)
-        dt = dt.replace(hour=14, minute=0, second=0, microsecond=0, tzinfo=None)
-        if DATE_LIMIT_LOW <= dt < DATE_LIMIT_HIGH:
-            return dt_to_text(dt) if not as_datetime else dt
+        string = get_fake_ut()
+        # string = dt_to_text(datetime.datetime.utcnow())
     elif string in {'yesterday', 'lastnight'}:
-        dt = datetime.datetime.now()
-        if dt.hour < 14:
-            dt = dt - datetime.timedelta(days=2)
-        else:
-            dt = dt - datetime.timedelta(days=1)
-        dt = dt.replace(hour=14, minute=0, second=0, microsecond=0, tzinfo=None)
-        if DATE_LIMIT_LOW <= dt < DATE_LIMIT_HIGH:
-            return dt_to_text(dt) if not as_datetime else dt
+        past = dateutil.parser.parse(get_fake_ut()) -  ONEDAY_OFFSET
+        string = dt_to_text(past)
+        # string = dt_to_text(datetime.datetime.utcnow() - ONEDAY_OFFSET)
 
     if len(string) == 8 and string.isdigit():
         # What we want here is to bracket from 2pm yesterday through 2pm today.
@@ -584,7 +575,7 @@ def gemini_observation_class(string):
 reduction_states = ('RAW', 'PREPARED', 'PROCESSED_FLAT', 'PROCESSED_BIAS',
                     'PROCESSED_FRINGE', 'PROCESSED_ARC', 'PROCESSED_DARK',
                     'PROCESSED_TELLURIC', 'PROCESSED_SCIENCE', 'PROCESSED_STANDARD',
-                    'PROCESSED_SLITILLUM')
+                    'PROCESSED_SLITILLUM', 'PROCESSED_UNKNOWN')
 def gemini_reduction_state(string):
     """
     A utility function matching Gemini reduction states.
@@ -637,7 +628,7 @@ def gemini_caltype(string):
     """
     return string if string in cal_types else None
 
-gmos_gratings = ('MIRROR', 'B600', 'R600', 'R400', 'R831', 'R150', 'B1200')
+gmos_gratings = ('MIRROR', 'B480', 'B600', 'R600', 'R400', 'R831', 'R150', 'B1200')
 def gmos_gratingname(string):
     """
     A utility function matching a GMOS Grating name. This could be expanded to
