@@ -1,4 +1,14 @@
 
+2020-2.5
+
+User-Facing Changes
+
+/searchform
+^^^^^^^^^^^
+
+- Added B480 grating to GMOS searches
+
+
 2020-2.4
 ========
 
