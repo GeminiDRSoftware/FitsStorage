@@ -628,7 +628,7 @@ def gemini_caltype(string):
     """
     return string if string in cal_types else None
 
-gmos_gratings = ('MIRROR', 'B600', 'R600', 'R400', 'R831', 'R150', 'B1200')
+gmos_gratings = ('MIRROR', 'B480', 'B600', 'R600', 'R400', 'R831', 'R150', 'B1200')
 def gmos_gratingname(string):
     """
     A utility function matching a GMOS Grating name. This could be expanded to

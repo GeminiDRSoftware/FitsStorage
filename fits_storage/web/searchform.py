@@ -687,7 +687,8 @@ dropdown_options = {
     "gpi_astrometric_standard_options":
         [("gpi_astrometric_standard", "Astrometric Std"), ],
     "gmos_disp_options":
-        [("B600", "B600"),
+        [("B480", "B480"),
+         ("B600", "B600"),
          ("R400", "R400"),
          ("R831", "R831"),
          ("B1200", "B1200"),
