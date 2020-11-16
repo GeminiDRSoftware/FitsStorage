@@ -294,7 +294,7 @@ def gmoscaltwilightfiles():
         num = row["num"]
         clazz = row["observation_class"]
         filter = row["filter"]
-        bin = row["detector"]
+        bin = row["binning"]
         dt = row["dt"]
 
         key = "%s_%s" % (filter, bin)
