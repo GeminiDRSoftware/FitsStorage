@@ -129,7 +129,7 @@ def gmoscaltwilightdetails():
         and h.observation_class in ('science', 'dayCal')
         left outer join diskfile df on h.diskfile_id=df.id
         and df.canonical
-        group by h.observation_class, h.filter_name, h.detector_binning, last_processed.dt
+        group by h.observation_class, last_processed.filter, last_processed.binning, last_processed.dt
     """, {"dt": fromdt})
 
     counts = dict()
@@ -286,7 +286,7 @@ def gmoscaltwilightfiles():
         and h.observation_class in ('science', 'dayCal')
         left outer join diskfile df on h.diskfile_id=df.id
         and df.canonical
-        group by h.observation_class, h.filter_name, h.detector_binning, last_processed.dt
+        group by h.observation_class, last_processed.filter, last_processed.binning, last_processed.dt
     """, {"dt": fromdt})
 
     counts = dict()
