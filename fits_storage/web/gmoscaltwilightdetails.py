@@ -136,8 +136,8 @@ def gmoscaltwilightdetails():
     for row in rs:
         num = row["num"]
         clazz = row["observation_class"]
-        filter = row["filter_name"]
-        bin = row["detector_binning"]
+        filter = row["filter"]
+        bin = row["binning"]
         dt = row["dt"]
         if dt != fromdt:
             # fetch the filename
@@ -293,8 +293,8 @@ def gmoscaltwilightfiles():
     for row in rs:
         num = row["num"]
         clazz = row["observation_class"]
-        filter = row["filter_name"]
-        bin = row["detector_binning"]
+        filter = row["filter"]
+        bin = row["detector"]
         dt = row["dt"]
 
         key = "%s_%s" % (filter, bin)
