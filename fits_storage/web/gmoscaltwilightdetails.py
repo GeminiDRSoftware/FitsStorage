@@ -118,7 +118,7 @@ def gmoscaltwilightdetails():
                 and df.canonical
             group by ph.filter_name, ph.detector_binning
         )
-        select count(1) as num, h.observation_class, h.filter_name, h.detector_binning, last_processed.dt 
+        select count(1) as num, h.observation_class, last_processed.filter, last_processed.binning, last_processed.dt 
         from last_processed 
         left outer join header h on h.ut_datetime>=(date(last_processed.dt) + INTERVAL '1 day') 
         and h.instrument in ('GMOS-N', 'GMOS-S') 
@@ -275,7 +275,7 @@ def gmoscaltwilightfiles():
                 and df.canonical
             group by ph.filter_name, ph.detector_binning
         )
-        select count(1) as num, h.observation_class, h.filter_name, h.detector_binning, last_processed.dt 
+        select count(1) as num, h.observation_class, last_processed.filter, last_processed.binning, last_processed.dt 
         from last_processed 
         left outer join header h on h.ut_datetime>=(date(last_processed.dt) + INTERVAL '1 day') 
         and h.instrument in ('GMOS-N', 'GMOS-S') 
