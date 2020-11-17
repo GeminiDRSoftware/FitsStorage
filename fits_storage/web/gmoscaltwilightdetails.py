@@ -194,6 +194,10 @@ def gmoscaltwilightdetails():
             and h.observation_class in ('science', 'dayCal')
             and h.diskfile_id=df.id
             and df.canonical
+            and h.observation_type='OBJECT'
+            and h.spectroscopy=False
+            and h.engineering=False
+            and h.science_verification=False
             group by h.observation_class
             """, {"dt": dt, "filter": filter, "binning": binning})
         for row2 in rs2:
