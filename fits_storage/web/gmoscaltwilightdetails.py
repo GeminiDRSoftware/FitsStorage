@@ -185,7 +185,7 @@ def gmoscaltwilightdetails():
 
         rs2 = session.execute("""
             select count(1) as num, h.observation_class
-            header h, diskfile df where h.ut_datetime>=(date(:dt) + INTERVAL '1 day') 
+            from header h, diskfile df where h.ut_datetime>=(date(:dt) + INTERVAL '1 day') 
             and h.instrument in ('GMOS-N', 'GMOS-S') 
             and h.filter_name=:filter
             and h.detector_binning=:binning
