@@ -188,8 +188,8 @@ def gmoscaltwilightdetails():
             from last_processed 
             join header h on h.ut_datetime>=(date(:dt) + INTERVAL '1 day') 
             and h.instrument in ('GMOS-N', 'GMOS-S') 
-            and h.filter_name=last_processed.filter
-            and h.detector_binning=last_processed.binning
+            and h.filter_name=:filter
+            and h.detector_binning=:binning
             and (h.qa_state='Pass' or (h.qa_state='Undefined' and h.observation_class='science'))
             and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
             and h.observation_class in ('science', 'dayCal')
