@@ -185,15 +185,14 @@ def gmoscaltwilightdetails():
 
         rs2 = session.execute("""
             select count(1) as num, h.observation_class
-            from last_processed 
-            join header h on h.ut_datetime>=(date(:dt) + INTERVAL '1 day') 
+            header h, diskfile df where h.ut_datetime>=(date(:dt) + INTERVAL '1 day') 
             and h.instrument in ('GMOS-N', 'GMOS-S') 
             and h.filter_name=:filter
             and h.detector_binning=:binning
             and (h.qa_state='Pass' or (h.qa_state='Undefined' and h.observation_class='science'))
             and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
             and h.observation_class in ('science', 'dayCal')
-            join diskfile df on h.diskfile_id=df.id
+            and h.diskfile_id=df.id
             and df.canonical
             group by h.observation_class
             """, {"dt": dt, "filter": filter, "binning": binning})
