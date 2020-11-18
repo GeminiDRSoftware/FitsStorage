@@ -287,7 +287,7 @@ def gmoscaltwilightfiles():
         filter = row["filter"]
         binning = row["binning"]
 
-        key = "%s-%s" % (filter, binning)
+        key = "%s_%s" % (filter, binning)
         counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": binning,
                        "dt": dt.strftime('%Y-%m-%d'),
                        "filename": "none"}
