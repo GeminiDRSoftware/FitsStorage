@@ -371,7 +371,7 @@ def gmoscaltwilightfiles():
                 from header h, diskfile df
                 where df.canonical and h.diskfile_id=df.id 
                 and df.filename not like '%_flat.fits'
-                and h.ut_datetime>=:dt and h.instrument in ('GMOS-N', 'GMOS-S') 
+                and h.ut_datetime>=(date(:dt) + INTERVAL '1 day') and h.instrument in ('GMOS-N', 'GMOS-S') 
                 and h.filter_name=:filter_name
                 and h.detector_binning=:detector_binning
                 and h.observation_class = 'dayCal'
