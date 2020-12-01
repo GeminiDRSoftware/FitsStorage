@@ -1,5 +1,14 @@
+2020-2.6
+========
+
+/gmoscalbiasfiles
+^^^^^^^^^^^^^
+
+- Made bias file list bugfixes [#398]
+
 
 2020-2.5
+========
 
 User-Facing Changes
 
