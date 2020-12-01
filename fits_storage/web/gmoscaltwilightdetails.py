@@ -70,39 +70,8 @@ def gmoscaltwilightdetails():
 
     session = get_context().session
 
-    # rs = session.execute("""
-    #     with last_processed as (
-    #         select max(ph.ut_datetime) as dt,
-    #                ph.filter_name as filter,
-    #                ph.detector_binning as binning
-    #         from header ph, diskfile df
-    #         where ph.instrument in ('GMOS-N', 'GMOS-S')
-    #             and ph.ut_datetime > :dt
-    #             and ph.types like '%PREPARED%'
-    #             and ph.observation_class='dayCal'
-    #             and ph.object='Twilight'
-    #             and ph.detector_roi_setting='Full Frame'
-    #             and ph.mode='imaging'
-    #             and ph.diskfile_id=df.id
-    #             and df.filename like '%_flat.fits'
-    #             and df.canonical
-    #         group by ph.filter_name, ph.detector_binning
-    #     )
-    #     select count(1) as num, h.observation_class, h.filter_name, h.detector_binning, last_processed.dt
-    #     from header h
-    #     join last_processed on h.ut_datetime>=(date(last_processed.dt) + INTERVAL '1 day')
-    #     and h.instrument in ('GMOS-N', 'GMOS-S')
-    #     and h.filter_name=last_processed.filter
-    #     and h.detector_binning=last_processed.binning
-    #     and (h.qa_state='Pass' or (h.qa_state='Undefined' and h.observation_class='science'))
-    #     join diskfile df on h.diskfile_id=df.id
-    #     where df.canonical and h.observation_class in ('science', 'dayCal')
-    #     and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
-    #     group by h.observation_class, h.filter_name, h.detector_binning, last_processed.dt
-    # """, {"dt": fromdt})
     rs = session.execute("""
-        with last_processed as (
-            select max(ph.ut_datetime) as dt, 
+        select max(ph.ut_datetime) as dt, 
                    ph.filter_name as filter, 
                    ph.detector_binning as binning 
             from header ph, diskfile df
@@ -117,28 +86,19 @@ def gmoscaltwilightdetails():
                 and df.filename like '%_flat.fits'
                 and df.canonical
             group by ph.filter_name, ph.detector_binning
-        )
-        select count(1) as num, h.observation_class, last_processed.filter, last_processed.binning, last_processed.dt 
-        from last_processed 
-        left outer join header h on h.ut_datetime>=(date(last_processed.dt) + INTERVAL '1 day') 
-        and h.instrument in ('GMOS-N', 'GMOS-S') 
-        and h.filter_name=last_processed.filter
-        and h.detector_binning=last_processed.binning
-        and (h.qa_state='Pass' or (h.qa_state='Undefined' and h.observation_class='science'))
-        and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
-        and h.observation_class in ('science', 'dayCal')
-        left outer join diskfile df on h.diskfile_id=df.id
-        and df.canonical
-        group by h.observation_class, last_processed.filter, last_processed.binning, last_processed.dt
     """, {"dt": fromdt})
 
     counts = dict()
     for row in rs:
-        num = row["num"]
-        clazz = row["observation_class"]
-        filter = row["filter"]
-        bin = row["binning"]
         dt = row["dt"]
+        filter = row["filter"]
+        binning = row["binning"]
+
+        key = "%s-%s" % (filter, binning)
+        counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": binning,
+                       "dt": dt.strftime('%Y-%m-%d'),
+                       "filename": "none"}
+
         if dt != fromdt:
             # fetch the filename
             filename_rs = session.execute("""
@@ -155,25 +115,39 @@ def gmoscaltwilightdetails():
                     and df.filename like '%_flat.fits'
                     and h.filter_name=:filter_name
                     and h.detector_binning=:detector_binning
-            """, {"dt": dt, "filter_name": filter, "detector_binning": bin})
+            """, {"dt": dt, "filter_name": filter, "detector_binning": binning})
             filename_row = filename_rs.fetchone()
             if filename_row is not None:
-                filename = filename_row["filename"]
-                if filename_rs.fetchone() is not None:
-                    # too many results
-                    filename = ""
-            else:
-                filename = ""
+                counts[key]["filename"] = filename_row["filename"]
 
-        key = "%s-%s" % (filter, bin)
-        if key not in counts:
-            counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": bin, "dt": dt.strftime('%Y-%m-%d'),
-                           "filename": filename}
-        dat = counts[key]
-        if clazz == "science":
-            dat["science"] = num
-        elif clazz == 'dayCal':
-            dat["twilights"] = num
+        rs2 = session.execute("""
+            select count(1) as num, h.observation_class
+            from header h, diskfile df where h.ut_datetime>=(date(:dt) + INTERVAL '1 day') 
+            and h.instrument in ('GMOS-N', 'GMOS-S') 
+            and h.filter_name=:filter
+            and h.detector_binning=:binning
+            and (h.qa_state='Pass' or (h.qa_state='Undefined' and h.observation_class='science'))
+            and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
+            and h.observation_class in ('science', 'dayCal')
+            and h.diskfile_id=df.id
+            and df.canonical
+            and h.observation_type='OBJECT'
+            and h.spectroscopy=False
+            and h.engineering=False
+            and h.science_verification=False
+            group by h.observation_class
+            """, {"dt": dt, "filter": filter, "binning": binning})
+        for row2 in rs2:
+            num = row2["num"]
+            clazz = row2["observation_class"]
+            # filter = row["filter"]
+            # bin = row["binning"]
+            # dt = row["dt"]
+            dat = counts[key]
+            if clazz == "science":
+                dat["science"] = num
+            elif clazz == 'dayCal':
+                dat["twilights"] = num
 
     for filter_name in [
         'DS920',
@@ -257,9 +231,40 @@ def gmoscaltwilightfiles():
     session = get_context().session
 
     # TODO this was done quick based on the stats page.  I should refactor this on master
+    # rs = session.execute("""
+    #     with last_processed as (
+    #         select max(ph.ut_datetime) as dt,
+    #                ph.filter_name as filter,
+    #                ph.detector_binning as binning
+    #         from header ph, diskfile df
+    #         where ph.instrument in ('GMOS-N', 'GMOS-S')
+    #             and ph.ut_datetime > :dt
+    #             and ph.types like '%PREPARED%'
+    #             and ph.observation_class='dayCal'
+    #             and ph.object='Twilight'
+    #             and ph.detector_roi_setting='Full Frame'
+    #             and ph.mode='imaging'
+    #             and ph.diskfile_id=df.id
+    #             and df.filename like '%_flat.fits'
+    #             and df.canonical
+    #         group by ph.filter_name, ph.detector_binning
+    #     )
+    #     select count(1) as num, h.observation_class, last_processed.filter, last_processed.binning, last_processed.dt
+    #     from last_processed
+    #     left outer join header h on h.ut_datetime>=(date(last_processed.dt) + INTERVAL '1 day')
+    #     and h.instrument in ('GMOS-N', 'GMOS-S')
+    #     and h.filter_name=last_processed.filter
+    #     and h.detector_binning=last_processed.binning
+    #     and (h.qa_state='Pass' or (h.qa_state='Undefined' and h.observation_class='science'))
+    #     and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
+    #     and h.observation_class in ('science', 'dayCal')
+    #     left outer join diskfile df on h.diskfile_id=df.id
+    #     and df.canonical
+    #     group by h.observation_class, last_processed.filter, last_processed.binning, last_processed.dt
+    # """, {"dt": fromdt})
+
     rs = session.execute("""
-        with last_processed as (
-            select max(ph.ut_datetime) as dt, 
+        select max(ph.ut_datetime) as dt, 
                    ph.filter_name as filter, 
                    ph.detector_binning as binning 
             from header ph, diskfile df
@@ -274,37 +279,59 @@ def gmoscaltwilightfiles():
                 and df.filename like '%_flat.fits'
                 and df.canonical
             group by ph.filter_name, ph.detector_binning
-        )
-        select count(1) as num, h.observation_class, last_processed.filter, last_processed.binning, last_processed.dt 
-        from last_processed 
-        left outer join header h on h.ut_datetime>=(date(last_processed.dt) + INTERVAL '1 day') 
-        and h.instrument in ('GMOS-N', 'GMOS-S') 
-        and h.filter_name=last_processed.filter
-        and h.detector_binning=last_processed.binning
-        and (h.qa_state='Pass' or (h.qa_state='Undefined' and h.observation_class='science'))
-        and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
-        and h.observation_class in ('science', 'dayCal')
-        left outer join diskfile df on h.diskfile_id=df.id
-        and df.canonical
-        group by h.observation_class, last_processed.filter, last_processed.binning, last_processed.dt
     """, {"dt": fromdt})
 
     counts = dict()
     for row in rs:
-        num = row["num"]
-        clazz = row["observation_class"]
-        filter = row["filter"]
-        bin = row["binning"]
         dt = row["dt"]
+        filter = row["filter"]
+        binning = row["binning"]
 
-        key = "%s_%s" % (filter, bin)
-        if key not in counts:
-            counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": bin, "dt": dt.strftime('%Y-%m-%d'),}
-        dat = counts[key]
-        if clazz == "science":
-            dat["science"] = num
-        else:
-            dat["twilights"] = num
+        key = "%s_%s" % (filter, binning)
+        counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": binning,
+                       "dt": dt.strftime('%Y-%m-%d'),
+                       "filename": "none"}
+
+        # num = row["num"]
+        # clazz = row["observation_class"]
+
+        # key = "%s_%s" % (filter, bin)
+        # if key not in counts:
+        #     counts[key] = {"science": 0, "twilights": 0, "filter": filter, "bin": bin, "dt": dt.strftime('%Y-%m-%d'),}
+        # dat = counts[key]
+        # if clazz == "science":
+        #     dat["science"] = num
+        # else:
+        #     dat["twilights"] = num
+        #
+        # rs2 = session.execute("""
+        #     select count(1) as num, h.observation_class
+        #     from header h, diskfile df where h.ut_datetime>=(date(:dt) + INTERVAL '1 day')
+        #     and h.instrument in ('GMOS-N', 'GMOS-S')
+        #     and h.filter_name=:filter
+        #     and h.detector_binning=:binning
+        #     and (h.qa_state='Pass' or (h.qa_state='Undefined' and h.observation_class='science'))
+        #     and (h.observation_class='science' or (h.object='Twilight' and h.detector_roi_setting='Full Frame'))
+        #     and h.observation_class in ('science', 'dayCal')
+        #     and h.diskfile_id=df.id
+        #     and df.canonical
+        #     and h.observation_type='OBJECT'
+        #     and h.spectroscopy=False
+        #     and h.engineering=False
+        #     and h.science_verification=False
+        #     group by h.observation_class
+        #     """, {"dt": dt, "filter": filter, "binning": binning})
+        # for row2 in rs2:
+        #     num = row2["num"]
+        #     clazz = row2["observation_class"]
+        #     # filter = row["filter"]
+        #     # bin = row["binning"]
+        #     # dt = row["dt"]
+        #     dat = counts[key]
+        #     if clazz == "science":
+        #         dat["science"] = num
+        #     elif clazz == 'dayCal':
+        #         dat["twilights"] = num
 
     filenames = dict()
     for filter_name in [
@@ -344,7 +371,7 @@ def gmoscaltwilightfiles():
                 from header h, diskfile df
                 where df.canonical and h.diskfile_id=df.id 
                 and df.filename not like '%_flat.fits'
-                and h.ut_datetime>=:dt and h.instrument in ('GMOS-N', 'GMOS-S') 
+                and h.ut_datetime>=(date(:dt) + INTERVAL '1 day') and h.instrument in ('GMOS-N', 'GMOS-S') 
                 and h.filter_name=:filter_name
                 and h.detector_binning=:detector_binning
                 and h.observation_class = 'dayCal'
