@@ -23,6 +23,7 @@ _host_based_configs = {
         'ORCID_REDIRECT_URL': 'http://hbffits-lv4/orcid',
         'ORCID_ENABLED': 'False',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev',
+        'DEFAULT_UPLOAD_PATH': 'upload_dev',
         'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
     },
     "mkofits-lv3": {
@@ -61,7 +62,8 @@ _host_based_configs = {
         'FITS_SYSTEM_STATUS': 'development',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/cpofits-lv2",
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev'
+        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
+        'DEFAULT_UPLOAD_PATH': 'upload_dev',
     },
     "hbffits-lv1": {
         'USE_AS_ARCHIVE': 'False',
@@ -72,6 +74,7 @@ _host_based_configs = {
         'FITS_SYSTEM_STATUS': 'development',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv1",
+        'DEFAULT_UPLOAD_PATH': 'upload_dev',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev'
     },
     "hbfqapdev-lv1": {
@@ -83,6 +86,7 @@ _host_based_configs = {
         'FITS_SYSTEM_STATUS': 'development',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbfqapdev-lv1",
+        'DEFAULT_UPLOAD_PATH': 'upload_dev',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev',
         'ORCID_ENABLED': 'False',
     },
@@ -96,10 +100,13 @@ _host_based_configs = {
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffitstest-lv1",
         'ORCID_ENABLED': 'False',
+        'DEFAULT_UPLOAD_PATH': 'upload_dev',
+        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
     },
     "ooberdorf-ml1": {
         'EXPORT_DESTINATIONS': '',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
+        'DEFAULT_UPLOAD_PATH': 'upload_dev',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev',
         'DAS_CALPROC_PATH': '/Users/ooberdorf/das_calproc',
     },
@@ -107,6 +114,7 @@ _host_based_configs = {
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
         'PUBDB_REMOTE': 'https://archive.gemini.edu/ingest_publications',
         'BLOCKED_URLS': '',
+        'DEFAULT_UPLOAD_PATH': 'upload_dev',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev'
     },
     "archive": {
@@ -133,6 +141,7 @@ _host_based_configs = {
         'FITS_SERVERNAME': 'arcdev.gemini.edu',
         'ORCID_REDIRECT_URL': 'http://arcdev.gemini.edu/orcid',
         'TZ': 'UTC',
+        'DEFAULT_UPLOAD_PATH': 'upload_dev',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev',
         'USING_PREVIEWS': 'True',
         'ORCID_ENABLED': 'False',
@@ -272,6 +281,7 @@ export_bzip = True
 # This is the subdirectory in dataroot where processed_cals live
 # Ops hosts override this to reduced_cals
 processed_cals_path = lookup_config('PROCESSED_CALS_PATH', "reduced_cals_dev")
+default_upload_path = lookup_config('DEFAULT_UPLOAD_PATH', '')
 
 # This is the subdirectory in dataroot where preview files live
 #using_previews = False
