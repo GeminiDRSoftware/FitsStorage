@@ -86,7 +86,8 @@ def set_image_metadata(path, changes, reject_new=False):
 from fits_storage.orm.fileuploadlog import FileUploadLog, FileUploadWrapper
 from fits_storage.orm.miscfile import is_miscfile, miscfile_meta, miscfile_meta_path
 from fits_storage.utils.ingestqueue import IngestQueueUtil
-from fits_storage.fits_storage_config import storage_root, upload_staging_path, processed_cals_path, using_s3
+from fits_storage.fits_storage_config import storage_root, upload_staging_path, processed_cals_path, \
+    default_upload_path, using_s3
 import shutil
 if using_s3:
     from fits_storage.utils.aws_s3 import get_helper
@@ -94,7 +95,7 @@ if using_s3:
 @json_api_call(logger)
 def ingest_upload(filename, fileuploadlog_id=None, processed_cal=False):
     logger.info("ingest_upload: filename: %s, fileuploadlog_id: %s, processed_cal: %s", filename, fileuploadlog_id, processed_cal)
-    path = processed_cals_path if processed_cal else ''
+    path = processed_cals_path if processed_cal else default_upload_path
     fileuploadlog = FileUploadWrapper()
 
     with session_scope() as session:
