@@ -1,3 +1,11 @@
+2020-2.7
+========
+
+/calibrations
+^^^^^^^^^^^^^
+
+- Added workaround for SOS missing cals webpage in calibration_gmos to not apply darks if year is 2020+ (i.e. not Ham)
+
 2020-2.6
 ========
 
