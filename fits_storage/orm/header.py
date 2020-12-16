@@ -198,10 +198,15 @@ class Header(Base):
             self.science_verification = False
 
         try:
-            self.procsci = gemini_procsci(ad.phu.get('PROCSCI'))
-        except AttributeError as psciae:
+            self.procsci = gemini_procsci(ad.phu.get('PROCMODE'))
+        except AttributeError as pmodeae:
             self.procsci = None
-
+        if self.procsci is None:
+            # check if PROCSCI is ql or sq for legacy file support
+            try:
+                self.procsci = gemini_procsci(ad.phu.get('PROCSCI'))
+            except AttributeError as psciae:
+                self.procsci = None
         try:
             self.observation_id = ad.observation_id()
         except (TypeError, AttributeError, KeyError, ValueError, IndexError) as oidae:
@@ -213,7 +218,7 @@ class Header(Base):
         try:
             self.data_label = ad.data_label()
             if self.data_label is not None:
-            # Ensure upper case
+                # Ensure upper case
                 self.data_label = self.data_label.upper()
         except (TypeError, AttributeError, KeyError, ValueError, IndexError) as dlae:
             if log:
