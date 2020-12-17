@@ -1,10 +1,18 @@
-2020-2.8
+2020-2.9
 ========
 
 local_cals
 ^^^^^^^^^^
 
 - Updating version number for the calibrations standalone library to 1.0.0
+
+2020-2.8
+========
+
+local_cals
+^^^^^^^^^^
+
+- introduced dependency on fits_storage, had to patch to 2020-2.9
 
 2020-2.7
 ========
