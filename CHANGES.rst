@@ -14,8 +14,25 @@ copy_from_dhs.py
 
 - Batching email for validation errors to not spam when first starting up [#391]
 
+2020-2.7
+========
+
+/calibrations
+^^^^^^^^^^^^^
+
+- Added workaround for SOS missing cals webpage in calibration_gmos to not apply darks if year is 2020+ (i.e. not Ham)
+
+2020-2.6
+========
+
+/gmoscalbiasfiles
+^^^^^^^^^^^^^
+
+- Made bias file list bugfixes [#398]
+
 
 2020-2.5
+========
 
 User-Facing Changes
 

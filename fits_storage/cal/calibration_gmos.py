@@ -138,9 +138,16 @@ class CalibrationGMOS(Calibration):
             # If it (is nod and shuffle) and (is an OBJECT), then it needs a dark
             if ((self.descriptors['nodandshuffle'] == True) and
                 (self.descriptors['observation_type'] == 'OBJECT')):
-
-                self.applicable.append('dark')
-                self.applicable.append('processed_dark')
+                # Hack - for now, using a datetime filter.  For recent data we don't need darks
+                # replace this with a check against the Gmos.detector once we track it
+                ut_datetime = None
+                if 'ut_datetime' in self.descriptors.keys():
+                    ut_datetime = self.descriptors['ut_datetime']
+                    if not hasattr(ut_datetime, 'year'):
+                        ut_datetime = None
+                if ut_datetime is None or ut_datetime.year < 2020:
+                    self.applicable.append('dark')
+                    self.applicable.append('processed_dark')
 
             # If it is MOS then it needs a MASK
             if 'MOS' in self.types:
