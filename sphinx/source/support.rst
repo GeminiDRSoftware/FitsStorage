@@ -365,7 +365,7 @@ User Notifications
 
 We regularly send emails to the users when their program data is available.
 The list of users and their programs is stored on the FITS Store servers
-in Hawaii in Chile.  The scripts that check daily for emails to send runs
+in Hawaii and in Chile.  The scripts that check daily for emails to send runs
 in each of these locations for programs that are local there.  However,
 the datafiles are checked for on the Archive server.
 
