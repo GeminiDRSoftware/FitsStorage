@@ -14,6 +14,11 @@ copy_from_dhs.py
 
 - Batching email for validation errors to not spam when first starting up [#391]
 
+service_target_queue.py
+^^^^^^^^^^^^^^^^^^^^^^^
+
+- Properly detect location of Gemini North and South for target calculation, skip GPI [GL#5]
+
 2020-2.9
 ========
 
