@@ -61,7 +61,13 @@ def norm(data, percentile=0.3):
 
 def get_location(diskfile):
     # TODO n/s locations?
-    return EarthLocation.of_site('greenwich')
+    if diskfile.filename is None:
+        return None
+    if diskfile.filename.startswith('N'):
+        return EarthLocation.of_site('gemn')
+    if diskfile.filename.startswith('S'):
+        return EarthLocation.of_site('gems')
+    return None
 
 
 def get_time(session, header):
@@ -148,13 +154,15 @@ class TargetQueueUtil(object):
                 return
 
             # Add entries to target table
+            # only for recognized filenames and not for GPI, since it has bad footprints
             loc = get_location(diskfile)
-            t = get_time(self.s, header)
-            if t is not None:
-                with solar_system_ephemeris.set('de432s'):
-                    for target in self.targets:
-                        coords = get_body(target.ephemeris_name, t, loc)
-                        # TODO how to check overlap?
-                        if check_contained(self.s, coords, header.id):
-                            self.s.add(TargetPresence(diskfile.id, target.name))
+            if loc is not None and header.instrument != 'GPI':
+                t = get_time(self.s, header)
+                if t is not None:
+                    with solar_system_ephemeris.set('de432s'):
+                        for target in self.targets:
+                            coords = get_body(target.ephemeris_name, t, loc)
+                            # TODO how to check overlap?
+                            if check_contained(self.s, coords, header.id):
+                                self.s.add(TargetPresence(diskfile.id, target.name))
         self.s.add(TargetsChecked(diskfile.id, now))
