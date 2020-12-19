@@ -109,9 +109,7 @@ pipeline {
 //         }
         stage('Deploy To Host') {
             when {
-                expression {
-                    return (${deploy_target} != 'none')
-                }
+                expression { ${deploy_target} != 'none' }
             }
             steps {
                 echo "Deploying to ${deploy_target} Host"
