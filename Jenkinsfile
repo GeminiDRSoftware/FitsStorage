@@ -109,7 +109,7 @@ pipeline {
 //         }
         stage('Deploy To Host') {
             when {
-                expresion {
+                expression {
                     return (${deploy_target} != 'none')
                 }
             }
