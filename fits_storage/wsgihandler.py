@@ -15,6 +15,7 @@ from fits_storage.utils.web.routing import Map, Rule, BaseConverter
 from fits_storage.fits_storage_config import blocked_urls, use_as_archive
 from fits_storage.web.gmoscalfilelist import gmoscalbiasfiles
 from fits_storage.web.gmoscaltwilightdetails import gmoscaltwilightdetails, gmoscaltwilightfiles
+from fits_storage.web.programs import programs
 from fits_storage.web.publication import publication_ads, list_publications
 from fits_storage.web.summary import summary
 from fits_storage.web.file_list import xmlfilelist, jsonfilelist, jsonsummary, jsonqastate
@@ -325,6 +326,7 @@ url_map = Map([
     # Group of URIs dealing with program/publication
     Rule('/programinfo/<program_id>', program_info),                # Displays data from a program
     Rule('/logcomments/<selection(SEL):selection>', log_comments),
+    Rule('/programs/<selection:selection>', programs),
     # Obslogs get their own summary-like handler
     # Both actions use the same function, with 'sumtype' specifiying which
     # one of them, but aside from that, it's just a regular (req, selections)
