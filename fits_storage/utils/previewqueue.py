@@ -40,7 +40,7 @@ from gempy.library.spectral import Spek1D
 from .. import logger
 
 
-def norm(data, percentile=0.3):
+def norm(data, percentile=0.03):
     """
     Normalize the data onto 0:1 using percentiles
     """
@@ -425,6 +425,7 @@ class PreviewQueueUtil(object):
                         gain = 1.0
                     self.l.debug(fmt3.format(s_xmin, s_xmax, s_ymin, s_ymax,
                                             d_xmin, d_xmax, d_ymin, d_ymax))
+                    full = full.astype(dtype=numpy.float64)  # needs to not be uint16 before bias/gain adjust (per ext)
                     full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
 
             full = norm(full)
@@ -572,4 +573,4 @@ class PreviewQueueUtil(object):
 
 if __name__ == "__main__":
     pqu = PreviewQueueUtil(None, logger.logger)
-    pqu.render_preview(astrodata.open("/Users/ooberdorf/dataflow/N20200103S0103_linearized.fits"), "/Users/ooberdorf/test.jpg")
+    pqu.render_preview(astrodata.open("/Users/ooberdorf/Downloads/N20200730S0218.fits"), "/Users/ooberdorf/test.jpg")
