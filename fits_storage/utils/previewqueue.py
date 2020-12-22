@@ -40,7 +40,7 @@ from gempy.library.spectral import Spek1D
 from .. import logger
 
 
-def norm(data, percentile=0.03):
+def norm(data, percentile=0.3):
     """
     Normalize the data onto 0:1 using percentiles
     """
