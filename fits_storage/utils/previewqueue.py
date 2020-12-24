@@ -50,10 +50,10 @@ def norm(data, percentile=0.3, edge_trim_percent=None):
         plow = numpy.percentile(data, lower)
         phigh = numpy.percentile(data, upper)
     else:
-        xmin = int(data.shape[0] * 0.1)
-        xmax = int(data.shape[0] * 0.9)
-        ymin = int(data.shape[1] * 0.1)
-        ymax = int(data.shape[1] * 0.9)
+        xmin = int(data.shape[0] * edge_trim_percent)
+        xmax = int(data.shape[0] * (1.0 - edge_trim_percent))
+        ymin = int(data.shape[1] * edge_trim_percent)
+        ymax = int(data.shape[1] * (1.0 - edge_trim_percent))
         plow = numpy.percentile(data[xmin:xmax, ymin:ymax], lower)
         phigh = numpy.percentile(data[xmin:xmax, ymin:ymax], upper)
     data = numpy.clip(data, plow, phigh)
@@ -388,6 +388,7 @@ class PreviewQueueUtil(object):
             gap = 40 # approx chip gap in pixels
             shape = (ymax-ymin, (xmax-xmin)+2*gap)
             full = numpy.zeros(shape, ad[0].data.dtype)
+            # full = numpy.zeros(shape, numpy.float64)
             full = full.astype(dtype=numpy.float64)  # needs to not be uint16 before bias/gain adjust (per ext)
 
             # Loop through ads, pasting them in. Do gmos bias and gain hack
