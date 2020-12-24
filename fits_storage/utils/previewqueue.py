@@ -40,22 +40,14 @@ from gempy.library.spectral import Spek1D
 from .. import logger
 
 
-def norm(data, percentile=0.3, edge_trim_percent=None):
+def norm(data, percentile=0.3):
     """
     Normalize the data onto 0:1 using percentiles
     """
     lower = percentile
     upper = 100.0 - percentile
-    if edge_trim_percent is None:
-        plow = numpy.percentile(data, lower)
-        phigh = numpy.percentile(data, upper)
-    else:
-        xmin = int(data.shape[0] * edge_trim_percent)
-        xmax = int(data.shape[0] * (1.0 - edge_trim_percent))
-        ymin = int(data.shape[1] * edge_trim_percent)
-        ymax = int(data.shape[1] * (1.0 - edge_trim_percent))
-        plow = numpy.percentile(data[xmin:xmax, ymin:ymax], lower)
-        phigh = numpy.percentile(data[xmin:xmax, ymin:ymax], upper)
+    plow = numpy.percentile(data, lower)
+    phigh = numpy.percentile(data, upper)
     data = numpy.clip(data, plow, phigh)
     data -= plow
     data /= (phigh - plow)
@@ -387,9 +379,8 @@ class PreviewQueueUtil(object):
             # Make empty array for full image
             gap = 40 # approx chip gap in pixels
             shape = (ymax-ymin, (xmax-xmin)+2*gap)
-            full = numpy.zeros(shape, ad[0].data.dtype)
-            # full = numpy.zeros(shape, numpy.float64)
-            full = full.astype(dtype=numpy.float64)  # needs to not be uint16 before bias/gain adjust (per ext)
+            # full = numpy.zeros(shape, ad[0].data.dtype)
+            full = numpy.zeros(shape, numpy.float64)  # needs to not be uint16 before bias/gain adjust (per ext)
 
             # Loop through ads, pasting them in. Do gmos bias and gain hack
             if len(ad[0].data.shape) == 1:
@@ -437,8 +428,7 @@ class PreviewQueueUtil(object):
                     self.l.debug(fmt3.format(s_xmin, s_xmax, s_ymin, s_ymax,
                                             d_xmin, d_xmax, d_ymin, d_ymax))
                     full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
-
-                full = norm(full, edge_trim_percent=0.1)
+                full = norm(full, percentile=5)
 
         elif str(ad.instrument()) == 'GSAOI':
             gap = 125
