@@ -275,10 +275,11 @@ class CalQuery(object):
             targ_ut_dt_secs = int((self.descr['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
             def_order = func.abs(Header.ut_datetime_secs - targ_ut_dt_secs)
             present_order = desc(DiskFile.present)
+            procmode_order = desc(Header.procmode)
             if default_order == DEFAULT_ORDER_BY_LAST:
-                order = order + (present_order, def_order,)
+                order = order + (procmode_order, present_order, def_order,)
             else:
-                order = (present_order, def_order,) + order
+                order = (procmode_order, present_order, def_order,) + order
 
         if order:
             self.query = self.query.order_by(*order)
