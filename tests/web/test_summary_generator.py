@@ -124,7 +124,7 @@ def test_summary_generator(session, monkeypatch):
     tr = sg.table_row(h, df, f, comment=None)
 
     fn = sg.filename(h, df, f)
-    assert(sg.procsci(h) is None)
+    assert(sg.procmode(h) is None)
 
     dlabel = sg.datalabel(h, comment=None)
 
@@ -144,7 +144,7 @@ def test_summary_generator(session, monkeypatch):
     assert(tr is not None)
     assert(tr.can_download is False)
     assert(tr.has_provenance is False)
-    assert(tr.procsci is None)
+    assert(tr.procmode is None)
     assert(tr.uri is None)
 
     assert(fn is not None)

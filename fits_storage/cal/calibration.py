@@ -101,9 +101,10 @@ class CalQuery(object):
     associated with a Header.
 
     """
-    def __init__(self, session, instrClass, descriptors, full_query=False):
+    def __init__(self, session, instrClass, descriptors, procmode=None, full_query=False):
         # Keep a copy of the instrument descriptors and start the query with some
         # common filters
+        self.procmode = procmode
         self.descr = descriptors
         if full_query:
             query = (session.query(Header, DiskFile, File)
@@ -113,6 +114,8 @@ class CalQuery(object):
         else:
             query = (session.query(Header)
                             .select_from(join(join(instrClass, Header), DiskFile)))
+        if procmode is not None:
+            query = query.filter(Header.procmode == procmode)
         self.query = (query.filter(DiskFile.canonical == True) # Search canonical entries
                            .filter(Header.qa_state != 'Fail')  # Knock out FAILs
 			   .filter(Header.engineering == False)) # No engineering data

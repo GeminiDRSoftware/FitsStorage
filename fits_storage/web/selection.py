@@ -195,7 +195,7 @@ def getselection(things):
                 # Make LGS / NGS selection imply AO selection
                 selection['ao'] = 'AO'
             elif thing in {'sq', 'ql'}:
-                selection['procsci'] = thing
+                selection['procmode'] = thing
             elif thing.lower() in getselection_detector_roi:
                 selection['detector_roi'] = getselection_detector_roi[thing.lower()]
             elif thing.lower() == 'preimage':
@@ -236,7 +236,7 @@ sayselection_defs = {
     'observation_type':'ObsType',
     'observation_class': 'ObsClass',
     'filename': 'Filename',
-    'procsci': 'Sci',
+    'procmode': 'Quality',
     'object': 'Object Name',
     'engineering': 'Engineering Data',
     'science_verification': 'Science Verification Data',
@@ -350,7 +350,7 @@ queryselection_filters = (
     ('pre_image',     Header.pre_image),
     ('raw_cc',        Header.raw_cc),
     ('raw_iq',        Header.raw_iq),
-    ('procsci',       Header.procsci)
+    ('procmode',       Header.procmode)
     )
 
 def queryselection(query, selection):

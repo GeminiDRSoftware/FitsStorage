@@ -60,10 +60,10 @@ def selection_to_column_names(selection):
     return tuple(search_col_mapping[x][0] for x in cols)
 
 sum_type_defs = {
-    'summary' : ['filename', 'procsci', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
+    'summary' : ['filename', 'procmode', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
                     'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'qa_state',
                     'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
-    'lsummary' : ['filename', 'procsci', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
+    'lsummary' : ['filename', 'procmode', 'data_label', 'ut_datetime', 'instrument', 'observation_class', 'observation_type',
                     'object', 'waveband', 'exposure_time', 'airmass', 'local_time', 'filter_name', 'focal_plane_mask',
                     'detector_roi', 'detector_binning', 'detector_gain_setting', 'detector_readmode_setting', 'qa_state',
                     'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
@@ -71,10 +71,10 @@ sum_type_defs = {
                     'object', 'waveband', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
     'diskfiles' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'present', 'entrytime', 'lastmod',
                     'file_size', 'file_md5', 'compressed', 'data_size', 'data_md5'],
-    'searchresults' : ['download', 'filename', 'procsci', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
+    'searchresults' : ['download', 'filename', 'procmode', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
                     'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state'],
-    'customsearch'  : ['download', 'filename', 'procsci', 'data_label', 'ut_datetime', 'instrument'],
-    'associated_cals': ['download', 'filename', 'procsci', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
+    'customsearch'  : ['download', 'filename', 'procmode', 'data_label', 'ut_datetime', 'instrument'],
+    'associated_cals': ['download', 'filename', 'procmode', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
                     'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state']
     }
 
@@ -188,9 +188,9 @@ class SummaryGenerator(object):
             'download':    ColDef(heading      = 'Download',
                                   sortarrows   = False,
                                   summary_func = 'download'),
-            'procsci':     ColDef(heading      = 'Sci',
+            'procmode':     ColDef(heading      = 'Qual',
                                   sortarrows   = False,
-                                  summary_func = 'procsci'),
+                                  summary_func = 'procmode'),
             'filename':    ColDef(heading      = 'Filename',
                                   summary_func = 'filename'),
             'data_label':  ColDef(heading      = 'Data Label',
@@ -318,7 +318,7 @@ class SummaryGenerator(object):
         row = Row()
 
         row.uri = self.uri
-        row.procsci = header.procsci
+        row.procmode = header.procmode
         if diskfile.provenance:
             row.has_provenance = True
         else:
@@ -397,9 +397,9 @@ class SummaryGenerator(object):
         else:
             return dict(prop_message=file.name, release=header.release)
 
-    def procsci(self, header, **kw):
+    def procmode(self, header, **kw):
         """
-        Get the science intent of the file (science quality, quick look...)
+        Get the quality of the file (science quality, quick look...)
 
         :param header:
         :param diskfile:
@@ -407,7 +407,7 @@ class SummaryGenerator(object):
         :param kw:
         :return:
         """
-        return header.procsci
+        return header.procmode
 
     def datalabel(self, header, comment, **kw):
         """

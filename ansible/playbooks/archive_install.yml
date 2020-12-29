@@ -167,7 +167,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: 2020-2
+          version: feature/2020-2-procmode_support
           dest: /opt/FitsStorage
           accept_hostkey: yes
         when: not is_aws
@@ -339,10 +339,10 @@
         become: yes
         become_user: postgres
         when: fitsdata_db_created.changed
-      - name: If we have a fresh DB, set version to 20 since we are already up to date with the migrations
+      - name: If we have a fresh DB, set version to 21 since we are already up to date with the migrations
         postgresql_query:
           db: fitsdata
-          query: update migrate_version set version=20
+          query: update migrate_version set version=21
         become: yes
         become_user: postgres
         when: fitsdata_db_created.changed

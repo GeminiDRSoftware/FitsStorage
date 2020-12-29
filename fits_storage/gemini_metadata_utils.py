@@ -503,26 +503,27 @@ def gemini_daterange(string, as_datetime=False, offset=ZERO_OFFSET):
 
     return '' if not as_datetime else None
 
-procsci_codes = ('sq', 'ql', 'qa')
-def gemini_procsci(string):
-    """
-    A utility function for matching Gemini Processed Science Code.
 
-    If the string argument matches a gemini Processed Science Code then we return the
+procmode_codes = ('sq', 'ql', 'qa')
+def gemini_procmode(string):
+    """
+    A utility function for matching Gemini Processed Mode.
+
+    If the string argument matches a gemini Processed Mode Code then we return the
     code else return None
 
     Parameters
     ----------
     string : <str>
-        Name of a processed science code.
+        Name of a processed mode code.
 
     Return
     ------
     string : <str> or <NoneType>
-        The name of the processed science code or None.
+        The name of the processed mode code or None.
 
     """
-    return string if string in procsci_codes else None
+    return string if string in procmode_codes else None
 
 obs_types = ('DARK', 'ARC', 'FLAT', 'BIAS', 'OBJECT', 'PINHOLE', 'RONCHI', 'CAL', 'FRINGE', 'MASK', 'STANDARD',
              'SLITILLUM')
