@@ -525,7 +525,7 @@ class Calibration(object):
     instrClass = None
     instrDescriptors = ()
 
-    def __init__(self, session, header, descriptors, types, full_query=False):
+    def __init__(self, session, header, descriptors, types, procmode=None, full_query=False):
         """
         Initialize a calibration manager for a given header object (ie data file)
         Need to pass in an sqlalchemy session that should already be open, this
@@ -537,6 +537,7 @@ class Calibration(object):
         self.descriptors = descriptors
         self.types = types
         self.from_descriptors = False
+        self.procmode = procmode
         self.full_query = full_query
 
         # Populate the descriptors dictionary for header
@@ -584,7 +585,7 @@ class Calibration(object):
         instrument class, descriptors and the setting for full/not-full query.
 
         """
-        return CalQuery(self.session, self.instrClass, self.descriptors, full_query=self.full_query)
+        return CalQuery(self.session, self.instrClass, self.descriptors, procmode=self.procmode, full_query=self.full_query)
 
     def set_applicable(self):
         """
