@@ -101,9 +101,10 @@ class CalQuery(object):
     associated with a Header.
 
     """
-    def __init__(self, session, instrClass, descriptors, full_query=False):
+    def __init__(self, session, instrClass, descriptors, procmode=None, full_query=False):
         # Keep a copy of the instrument descriptors and start the query with some
         # common filters
+        self.procmode = procmode
         self.descr = descriptors
         if full_query:
             query = (session.query(Header, DiskFile, File)
@@ -113,6 +114,11 @@ class CalQuery(object):
         else:
             query = (session.query(Header)
                             .select_from(join(join(instrClass, Header), DiskFile)))
+        if procmode == 'sq':
+            query = query.filter(Header.procmode == procmode)
+        elif procmode == 'ql':
+            query = query.filter(Header.procmode.in_('ql', 'sq'))
+
         self.query = (query.filter(DiskFile.canonical == True) # Search canonical entries
                            .filter(Header.qa_state != 'Fail')  # Knock out FAILs
 			   .filter(Header.engineering == False)) # No engineering data
@@ -272,10 +278,11 @@ class CalQuery(object):
             targ_ut_dt_secs = int((self.descr['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
             def_order = func.abs(Header.ut_datetime_secs - targ_ut_dt_secs)
             present_order = desc(DiskFile.present)
+            procmode_order = desc(Header.procmode)
             if default_order == DEFAULT_ORDER_BY_LAST:
-                order = order + (present_order, def_order,)
+                order = order + (procmode_order, present_order, def_order,)
             else:
-                order = (present_order, def_order,) + order
+                order = (procmode_order, present_order, def_order,) + order
 
         if order:
             self.query = self.query.order_by(*order)
@@ -522,7 +529,7 @@ class Calibration(object):
     instrClass = None
     instrDescriptors = ()
 
-    def __init__(self, session, header, descriptors, types, full_query=False):
+    def __init__(self, session, header, descriptors, types, procmode=None, full_query=False):
         """
         Initialize a calibration manager for a given header object (ie data file)
         Need to pass in an sqlalchemy session that should already be open, this
@@ -534,6 +541,7 @@ class Calibration(object):
         self.descriptors = descriptors
         self.types = types
         self.from_descriptors = False
+        self.procmode = procmode
         self.full_query = full_query
 
         # Populate the descriptors dictionary for header
@@ -581,7 +589,7 @@ class Calibration(object):
         instrument class, descriptors and the setting for full/not-full query.
 
         """
-        return CalQuery(self.session, self.instrClass, self.descriptors, full_query=self.full_query)
+        return CalQuery(self.session, self.instrClass, self.descriptors, procmode=self.procmode, full_query=self.full_query)
 
     def set_applicable(self):
         """
