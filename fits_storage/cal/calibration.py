@@ -13,7 +13,7 @@ from sqlalchemy.orm import join
 from datetime import timedelta
 
 from .. import gemini_metadata_utils as gmu
-from fits_storage.utils.render_query import render_query
+# from fits_storage.utils.render_query import render_query
 
 DEFAULT_ORDER_BY_FIRST = 0
 DEFAULT_ORDER_BY_LAST  = 1
@@ -287,8 +287,8 @@ class CalQuery(object):
         if order:
             self.query = self.query.order_by(*order)
 
-        if os.getenv("CAL_QUERY_DEBUG", False):
-            print("Query: %s" % render_query(self.query))
+        # if os.getenv("CAL_QUERY_DEBUG", False):
+        #     print("Query: %s" % render_query(self.query))
 
         return self.query.limit(limit).all()
 
