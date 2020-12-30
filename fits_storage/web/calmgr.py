@@ -46,7 +46,7 @@ args_for_cals = {
     }
 
 
-def cals_info(cal_obj, caltype, qtype='UNKNOWN', log=no_func, add_note=no_func, http=True, hostname=None, storage_root=''):
+def cals_info(cal_obj, caltype, procmode=None, qtype='UNKNOWN', log=no_func, add_note=no_func, http=True, hostname=None, storage_root=''):
     resp = []
 
     # Figure out which caltype(s) we want
@@ -116,7 +116,7 @@ def cals_info(cal_obj, caltype, qtype='UNKNOWN', log=no_func, add_note=no_func, 
                 cals  = None
                 )
 
-def generate_post_calmgr(selection, caltype):
+def generate_post_calmgr(selection, caltype, procmode=None):
     # OK, get the details from the POST data
     ctx = get_context()
     clientdata = ctx.raw_data
@@ -155,7 +155,7 @@ def generate_post_calmgr(selection, caltype):
 
     # Get a cal object for this target data
     try:
-        c = get_cal_object(ctx.session, None, header=None, descriptors=descriptors, types=types)
+        c = get_cal_object(ctx.session, None, header=None, procmode=procmode, descriptors=descriptors, types=types)
     except KeyError as ke:
         raise SkipTemplateError(message="Missing field in request: {}".format(ke), content_type='text/plain', status = Return.HTTP_BAD_REQUEST)
 
@@ -163,17 +163,18 @@ def generate_post_calmgr(selection, caltype):
         label    = descriptors['data_label'],
         filename = None,
         md5      = None,
-        cal_info = cals_info(c, caltype, qtype='POST',
-                                      log=ctx.log,
-                                      add_note=usagelog.add_note,
-                                      hostname=fits_servername,
-                                      storage_root=storage_root)
+        cal_info = cals_info(c, caltype,
+                             qtype='POST',
+                             log=ctx.log,
+                             add_note=usagelog.add_note,
+                             hostname=fits_servername,
+                             storage_root=storage_root)
         )
 
     # Commit the changes to the usagelog
     ctx.session.commit()
 
-def generate_get_calmgr(selection, caltype):
+def generate_get_calmgr(selection, caltype, procmode=None):
     # OK, we got called via a GET - find the science datasets in the database
     # The Basic Query
 
@@ -203,13 +204,14 @@ def generate_get_calmgr(selection, caltype):
         # Loop through targets frames we found
         for header in headers:
             # Get a cal object for this target data
-            c = get_cal_object(ctx.session, None, header=header)
+            c = get_cal_object(ctx.session, None, header=header, procmode=procmode)
 
             yield dict(
                 label    = header.data_label,
                 filename = header.diskfile.file.name,
                 md5      = header.diskfile.data_md5,
-                cal_info = cals_info(c, caltype, qtype='GET',
+                cal_info = cals_info(c, caltype,
+                                     qtype='GET',
                                      log=ctx.log,
                                      add_note=usagelog.add_note,
                                      hostname=ctx.env.server_hostname),
@@ -261,7 +263,7 @@ def calmgr(selection):
 
     # Was the request for only one type of calibration?
     caltype = selection.get('caltype', '')
-
+    procmode = selection.get('procmode', None)
 
     # An empty cal type is acceptable for GET - means to list all the calibrations available
     if not caltype and method == 'POST':
@@ -275,5 +277,5 @@ def calmgr(selection):
         req_method   = method,
         now          = datetime.datetime.now(),
         utcnow       = datetime.datetime.utcnow(),
-        generator    = gen(selection, caltype),
+        generator    = gen(selection, caltype, procmode),
         )

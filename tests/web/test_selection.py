@@ -184,7 +184,7 @@ getselection_pairs = [
     (['exposure_time=blahblah'], {'exposure_time': 'blahblah'}),
     (['high'], {'gain': 'high'}),
     (['cols=program_id'], {'cols': 'program_id'}),
-    (['sq'], {'procsci': 'sq'}),
+    (['sq'], {'procmode': 'sq'}),
     (['preimage'], {'pre_image': True}),
     (["zardoz"], {'notrecognised': 'zardoz'}),
     (["zardoz", "plan9fromouterspace"], {'notrecognised': 'zardoz plan9fromouterspace'}),

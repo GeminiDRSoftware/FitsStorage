@@ -195,7 +195,7 @@ def updateform(selection):
             # The Adaptive Optics ends up in various selection keys...
             dct['ao'] = value
         elif value in {'sq', 'ql'}:
-            dct['procsci'] = value
+            dct['procmode'] = value
         elif key == 'gain':
             # GMOSes are the only thing with a gain field currently
             dct['gmos_gain'] = value

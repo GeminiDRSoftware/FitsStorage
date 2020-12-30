@@ -12,7 +12,7 @@ import types
 from . import Base
 from .diskfile import DiskFile
 
-from ..gemini_metadata_utils import GeminiProgram, procsci_codes, gemini_procsci
+from ..gemini_metadata_utils import GeminiProgram, procmode_codes, gemini_procmode
 
 from ..gemini_metadata_utils import ratodeg
 from ..gemini_metadata_utils import dectodeg
@@ -46,7 +46,7 @@ from ..gemini_metadata_utils import obs_types, obs_classes, reduction_states
 gemini_readmode_settings = [i.replace(' ', '_') for i in gemini_readmode_settings]
 
 # Enumerated Column types
-PROCSCI_ENUM = Enum(*procsci_codes, name='procsci')
+PROCMODE_ENUM = Enum(*procmode_codes, name='procmode')
 OBSTYPE_ENUM = Enum(*obs_types, name='obstype')
 OBSCLASS_ENUM = Enum(*obs_classes, name='obsclass')
 REDUCTION_STATE_ENUM = Enum(*reduction_states, name='reduction_state')
@@ -84,7 +84,7 @@ class Header(Base):
     engineering = Column(Boolean, index=True)
     science_verification = Column(Boolean, index=True)
     calibration_program = Column(Boolean, index=True)
-    procsci = Column(PROCSCI_ENUM)
+    procmode = Column(PROCMODE_ENUM)
     observation_id = Column(Text, index=True)
     data_label = Column(Text, index=True)
     telescope = Column(TELESCOPE_ENUM, index=True)
@@ -198,10 +198,15 @@ class Header(Base):
             self.science_verification = False
 
         try:
-            self.procsci = gemini_procsci(ad.phu.get('PROCSCI'))
-        except AttributeError as psciae:
-            self.procsci = None
-
+            self.procmode = gemini_procmode(ad.phu.get('PROCMODE'))
+        except AttributeError as pmodeae:
+            self.procmode = None
+        if self.procmode is None:
+            # check if PROCSCI is ql or sq for legacy file support
+            try:
+                self.procmode = gemini_procmode(ad.phu.get('PROCSCI'))
+            except AttributeError as psciae:
+                self.procmode = None
         try:
             self.observation_id = ad.observation_id()
         except (TypeError, AttributeError, KeyError, ValueError, IndexError) as oidae:
@@ -213,7 +218,7 @@ class Header(Base):
         try:
             self.data_label = ad.data_label()
             if self.data_label is not None:
-            # Ensure upper case
+                # Ensure upper case
                 self.data_label = self.data_label.upper()
         except (TypeError, AttributeError, KeyError, ValueError, IndexError) as dlae:
             if log:
