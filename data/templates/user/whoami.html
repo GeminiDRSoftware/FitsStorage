@@ -25,6 +25,9 @@
       <li class="whoami"><i>Admin:</i></li>
       <li class="whoami"><a href="/admin_change_email/">Change User's Email</a></li>
       <li class="whoami"><a href="/staff_access/">Edit Staff Access</a></li>
+  {% elif user_admin %}
+      <li class="whoami"><i>User Admin:</i></li>
+      <li class="whoami"><a href="/admin_change_email/">Change User's Email</a></li>
   {% endif %}
   </ul>
 {% else %}

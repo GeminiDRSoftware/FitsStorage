@@ -30,6 +30,7 @@ class User(Base):
     email = Column(Text)
     gemini_staff = Column(Boolean)
     misc_upload = Column(Boolean)
+    user_admin = Column(Boolean)
     superuser = Column(Boolean)
     reset_token = Column(Text)
     reset_token_expires = Column(DateTime)
@@ -51,6 +52,7 @@ class User(Base):
         self.password = None
         self.gemini_staff = False
         self.misc_upload = False
+        self.user_admin = False
         self.superuser = False
         self.reset_token = None
         self.cookie = None

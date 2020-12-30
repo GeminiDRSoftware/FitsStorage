@@ -44,13 +44,15 @@
             <div class="col-12">
                 <table class="table table-striped table-hover" id="usertable">
                  <thead>
-                     <tr><th>Username</th><th>Full Name</th><th>Email</th><th>Staff Access</th><th>Superuser</th><tr>
+                 <tr><th>Username</th><th>Full Name</th><th>Email</th><th>Staff Access</th><th>Superuser</th>
+                     <th>User Admin</th><tr>
                  </thead>
                  <tbody>
                    {% for user in user_list %}
                      <tr onclick="$('#username').val('{{ user.username }}');">
                          <td>{{ user.username }}</td><td>{{ user.fullname }}</td><td>{{ user.email }}
-                         <td>{{ user.gemini_staff }}</td><td>{{ user.superuser }}</td></tr>
+                         <td>{{ user.gemini_staff }}</td><td>{{ user.superuser }}</td>
+                         <td>{{ user.user_admin }}</td></tr>
                    {% endfor %}
                  </tbody>
                 </table>
