@@ -108,8 +108,11 @@ pipeline {
 //
 //         }
         stage('Deploy To Host') {
+            when {
+                expression { params.deploy_target != 'none' }
+            }
             steps {
-//                echo "Deploying to ${deploy_target} Host"
+                echo "Deploying to ${deploy_target} Host"
 //                ansiblePlaybook(
 //                    inventory: 'ansible/${deploy_target}',
 //                    playbook: 'ansible/playbooks/archive_install.yml',
