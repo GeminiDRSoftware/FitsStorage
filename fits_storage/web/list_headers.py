@@ -7,13 +7,14 @@ from ..orm.file import File
 from ..orm.diskfile import DiskFile
 from ..orm.preview import Preview
 from ..orm.header import Header
+from ..orm.program import Program
 from ..orm.provenance import Provenance
 from ..orm.obslog import Obslog
 from ..orm.obslog_comment import ObslogComment
 from ..fits_storage_config import fits_open_result_limit, fits_closed_result_limit, use_as_archive
 from .selection import queryselection, openquery
 from ..gemini_metadata_utils import gemini_date, gemini_time_period_from_range
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, func
 import dateutil.parser
 
 from ..utils.web import get_context
@@ -145,3 +146,35 @@ def list_obslogs(selection, orderby):
     return query.all()
 
 
+def list_programs(selection):
+    """
+    This function searches the database for a list of program table
+    entries that satisfy the selection criteria
+
+    selection is a dictionary containing fields to select on
+
+    The only fields used in the selection are programid,
+
+    Returns a list of Program objects
+    """
+
+    # The basic query
+    query = get_context().session.query(Program)
+
+    # Can't use queryselection as that assumes header objects
+    # Build the query here manually
+
+    if 'program_id' in selection:
+        query = query.filter(Program.program_id==selection['program_id'])
+
+    if 'PIname' in selection:
+        query = query.filter(
+            func.to_tsvector(Program.pi_coi_names).match(' & '.join(selection['PIname'].split()))
+        )
+
+    if 'ProgramText' in selection:
+        query = query.filter(
+            func.to_tsvector(Program.title).match(' & '.join(selection['ProgramText'].split()))
+        )
+
+    return query.all()

@@ -32,6 +32,48 @@ service_target_queue.py
 
 - Properly detect location of Gemini North and South for target calculation, skip GPI [GL#5]
 
+2020-2.11
+=========
+
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- Altered science quality column to `Qual`
+
+
+Web Services
+------------
+
+/calmgr
+^^^^^^^
+
+- Now accepts a `sq` or `ql` term and infers a smart `procmode` query filter against it
+
+
+Other
+-----
+
+header.py
+^^^^^^^^^
+
+- `procsci` column renamed to `procmode`
+- `procmode` driven off of `PROCMODE` header keyword or, if not found, `PROCSCI` for legacy support
+
+
+2020-2.10
+=========
+
+Updated Scripts
+---------------
+
+previewqueue
+^^^^^^^^^^^^
+
+- Fixed bias/gain adjust for GMOS in preview generation to not clip pixels to black [#gl7]
+
 2020-2.9
 ========
 
@@ -79,7 +121,7 @@ User-Facing Changes
 2020-2.4
 ========
 
-Uesr-Facing Changes
+User-Facing Changes
 -------------------
 
 /lsummary

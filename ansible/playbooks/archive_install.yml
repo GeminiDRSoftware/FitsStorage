@@ -337,7 +337,7 @@
       - name: Setup Migrations
         command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
         become: yes
-        become_user: fitsdata
+        become_user: postgres
         when: fitsdata_db_created.changed
       - name: If we have a fresh DB, set version to 22 since we are already up to date with the migrations
         postgresql_query:

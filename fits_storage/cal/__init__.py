@@ -65,6 +65,9 @@ def get_cal_object(session, filename, header=None, procmode=None, descriptors=No
     full_query :boolean, defaults to `False`
         If `True`, query will pull in the `DiskFile` and `File` records as well as the `Header`
 
+    procmode : str, defaults to None
+        Either 'sq', 'ql', or None to indicate the proc mode.  'ql' will also accept 'sq' calibrations as matches
+
     Returns
     -------
     :class:`fits_storage.cal.calibration.Calibration`

@@ -24,7 +24,7 @@ Base = declarative_base()
 
 # Create a database engine connection to the postgres database
 # and an sqlalchemy session to go with it
-pg_db = create_engine(fits_database, echo = True)
+pg_db = create_engine(fits_database, echo = False)
 sessionfactory = sessionmaker(pg_db)
 
 @contextmanager

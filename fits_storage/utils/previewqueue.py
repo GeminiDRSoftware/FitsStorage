@@ -389,12 +389,14 @@ class PreviewQueueUtil(object):
             # Make empty array for full image
             gap = 40 # approx chip gap in pixels
             shape = (ymax-ymin, (xmax-xmin)+2*gap)
-            full = numpy.zeros(shape, ad[0].data.dtype)
+            # full = numpy.zeros(shape, ad[0].data.dtype)
+            full = numpy.zeros(shape, numpy.float64)  # needs to not be uint16 before bias/gain adjust (per ext)
 
             # Loop through ads, pasting them in. Do gmos bias and gain hack
             if len(ad[0].data.shape) == 1:
                 # spectra
                 full = ad[0].data
+                full = norm(full)
             else:
                 for add in ad:
                     s_xmin, s_xmax, s_ymin, s_ymax = add.data_section()
@@ -436,8 +438,7 @@ class PreviewQueueUtil(object):
                     self.l.debug(fmt3.format(s_xmin, s_xmax, s_ymin, s_ymax,
                                             d_xmin, d_xmax, d_ymin, d_ymax))
                     full[d_ymin:d_ymax, d_xmin:d_xmax] = (add.data[s_ymin:s_ymax, s_xmin:s_xmax] - bias) * gain
-
-            full = norm(full)
+                full = norm(full, percentile=5)
 
         elif str(ad.instrument()) == 'GSAOI':
             gap = 125
@@ -582,4 +583,8 @@ class PreviewQueueUtil(object):
 
 if __name__ == "__main__":
     pqu = PreviewQueueUtil(None, logger.logger)
-    pqu.render_preview(astrodata.open("/Users/ooberdorf/dataflow/N20200103S0103_linearized.fits"), "/Users/ooberdorf/test.jpg")
+    # Example of one that had the black blotch
+    # pqu.render_preview(astrodata.open("/Users/ooberdorf/Downloads/N20200730S0218.fits"), "/Users/ooberdorf/test.jpg")
+    # Example of one that worked with the old way and failed after the fix
+    pqu.render_preview(astrodata.open("/Users/ooberdorf/Downloads/N20201208S0446.fits"), "/Users/ooberdorf/test.jpg")
+
