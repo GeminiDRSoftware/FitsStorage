@@ -1,6 +1,14 @@
 2020-3 (unreleased)
 ===================
 
+Updated Web Services
+--------------------
+
+admin_change_email.py
+^^^^^^^^^^^^^^^^^^^^^
+
+- This also serves as a user list and I added a user_admin role to grant access without superuser [GL#2]
+
 Updated Scripts
 ---------------
 
