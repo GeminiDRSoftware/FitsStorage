@@ -417,3 +417,20 @@ you can also pass a `YYYYMMDD` encoded date if you are checking a previous day's
 If all of that looks ok, the next things to check are the logs in `/data/logs/YouGotDataEmail.py.log`
 and work with ITOps to check the email server configuration.
 
+OT
+--
+
+OT Shows Observations "Not in Public Archive"
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+First, I check if the data are showing up in `archive.gemini.edu` search results.  If not, I
+will also search with Engineering data turned on.  It's possible something is causing the archive
+to not recognize the data.
+
+Usually, I find the data is actually showing fine on the website.  In that case, check the SSL
+certificate on archive.  You can see this by clicking on the 'lock' icon in Chrome just left of
+the URL.  Then click on "Certificate".  Then click the "Details" drop down.  Scroll down and
+find the "Timestamp" near the bottom.  If this lines up with when the OT stopped seeing the
+data, then the OT probably needs a certificate update.  Their host doesn't work well with
+Let's Encrypt certificates for some reason and when the certificate automatically updates
+every ~3 months it can break this connection.
