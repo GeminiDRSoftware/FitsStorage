@@ -22,6 +22,11 @@ copy_from_dhs.py
 
 - Batching email for validation errors to not spam when first starting up [#391]
 
+problem_checker.py
+^^^^^^^^^^^^^^^^^^
+
+- Added check for filesize difference over 10% between DHS and Dataflow [GL#8]
+
 service_target_queue.py
 ^^^^^^^^^^^^^^^^^^^^^^^
 
