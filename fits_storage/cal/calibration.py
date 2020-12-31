@@ -116,8 +116,8 @@ class CalQuery(object):
                             .select_from(join(join(instrClass, Header), DiskFile)))
         if procmode == 'sq':
             query = query.filter(Header.procmode == procmode)
-        elif procmode == 'ql':
-            query = query.filter(Header.procmode.in_(['ql', 'sq']))
+        # elif procmode == 'ql':
+        #     query = query.filter(Header.procmode.in_(['ql', 'sq']))
 
         self.query = (query.filter(DiskFile.canonical == True) # Search canonical entries
                            .filter(Header.qa_state != 'Fail')  # Knock out FAILs
