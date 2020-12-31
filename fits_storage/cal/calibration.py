@@ -8,7 +8,7 @@ from ..orm.file     import File
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, case
 from sqlalchemy.orm import join
 from datetime import timedelta
 
@@ -271,6 +271,13 @@ class CalQuery(object):
         >> query_object.all(limit=5, extra_order_terms=[desc(Header.program_id=='BLAH')], default_order=DEFAULT_ORDER_BY_FIRST)
 
         """
+        # Enforcing deterministic sort of procmode by a case query, postgresql was exhibiting reverse alpha sort
+        # on natural order and that surprised me
+        enums = Header.procmode.type.enums
+        whens = {pm: str(pm) if pm else 'AAA' for pm in
+                 enums}
+        sort_logic = case(value=Header.procmode, whens=whens, else_='AAA').label("procmode_sortkey")
+
         order = () if extra_order_terms is None else tuple(extra_order_terms)
 
         if default_order is not DEFAULT_ORDER_BY_NONE:
@@ -278,7 +285,7 @@ class CalQuery(object):
             targ_ut_dt_secs = int((self.descr['ut_datetime'] - Header.UT_DATETIME_SECS_EPOCH).total_seconds())
             def_order = func.abs(Header.ut_datetime_secs - targ_ut_dt_secs)
             present_order = desc(DiskFile.present)
-            procmode_order = Header.procmode
+            procmode_order = desc(sort_logic)  # Header.procmode
             if default_order == DEFAULT_ORDER_BY_LAST:
                 order = order + (present_order, def_order, procmode_order)
             else:
