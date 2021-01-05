@@ -68,6 +68,32 @@ REDUCTION_STATUS = {
     'SLITILLUM': 'PROCESSED_SLITILLUM',
 }
 
+
+def _get_wcs(ad):
+    ctype1 = ad.phu.get('CTYPE1')
+    ctype2 = ad.phu.get('CTYPE2')
+    crval1 = ad.phu.get('CRVAL1')
+    crval2 = ad.phu.get('CRVAL2')
+    return ctype1, ctype2, crval1, crval2
+
+
+def find_wcs_ra(ad):
+    ctype1, ctype2, crval1, crval2 = _get_wcs(ad)
+    if ctype1 == 'RA---TAN' or ctype1 == 'RA--TAN':  # Zorro sometimes is broken with RA--TAN
+        return crval1
+    if ctype2 == 'RA---TAN' or ctype2 == 'RA--TAN':  # Zorro sometimes is broken with RA--TAN
+        return crval2
+    return None
+
+
+def find_wcs_dec(ad):
+    ctype1, ctype2, crval1, crval2 = _get_wcs(ad)
+    if ctype1 == 'DEC--TAN':
+        return crval1
+    if ctype2 == 'DEC--TAN':
+        return crval2
+    return None
+
 # ------------------------------------------------------------------------------
 class Header(Base):
     """
@@ -272,6 +298,19 @@ class Header(Base):
                 if log:
                     log.warn("Unable to read DEC from datafile: %s" % ie)
                 self.dec = None
+            if self.ra is None or self.dec is None:
+                try:
+                    # TODO this is basically to deal with missing RA/DEC for Zorro/Alopeke.
+                    # It should perhaps be moved to a custom Astrodata class though I'd
+                    # prefer that be something we register from here than pollute DRAGONS
+                    # with.
+                    wcsra = find_wcs_ra(ad)
+                    wcsdec = find_wcs_dec(ad)
+                    self.ra = wcsra
+                    self.dec = wcsdec
+                except Exception as wcse:
+                    if log:
+                        log.warn("WCS RA/DEC fallback failed")
             if type(self.ra) is str:
                 self.ra = ratodeg(self.ra)
             if type(self.dec) is str:
