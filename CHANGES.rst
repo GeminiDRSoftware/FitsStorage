@@ -1,4 +1,4 @@
-2020-2.11
+2020-2.10
 =========
 
 User-Facing Changes
@@ -8,6 +8,11 @@ User-Facing Changes
 ^^^^^^^^^^^
 
 - Altered science quality column to `Qual`
+
+/summary
+^^^^^^^^
+
+- Removed defaulting logic for engineering, SOSes reported it was a change of behavior
 
 
 Web Services
@@ -28,9 +33,6 @@ header.py
 - `procsci` column renamed to `procmode`
 - `procmode` driven off of `PROCMODE` header keyword or, if not found, `PROCSCI` for legacy support
 
-
-2020-2.10
-=========
 
 Updated Scripts
 ---------------
