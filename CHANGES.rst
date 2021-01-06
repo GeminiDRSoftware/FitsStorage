@@ -1,4 +1,4 @@
-2020-2.11
+2020-2.10
 =========
 
 User-Facing Changes
@@ -8,6 +8,11 @@ User-Facing Changes
 ^^^^^^^^^^^
 
 - Altered science quality column to `Qual`
+
+/summary
+^^^^^^^^
+
+- Removed defaulting logic for engineering, SOSes reported it was a change of behavior
 
 
 Web Services
@@ -38,9 +43,6 @@ alopeke_zorro_wcs_workaround.py
 
 - New cleanup script to quick-fix RA/DEC values where missing for existing Alopeke and Zorro records (for archive after deploying the header.py fix above) [#gl10]
 
-
-2020-2.10
-=========
 
 Updated Scripts
 ---------------
