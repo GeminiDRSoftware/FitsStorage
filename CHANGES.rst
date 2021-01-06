@@ -27,6 +27,16 @@ header.py
 
 - `procsci` column renamed to `procmode`
 - `procmode` driven off of `PROCMODE` header keyword or, if not found, `PROCSCI` for legacy support
+- `AstroDataAlopekeZorro` added to clean up WCS issues and fallback to something that works during Header record creation [#gl10]
+
+
+Updated Scripts
+---------------
+
+alopeke_zorro_wcs_workaround.py
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- New cleanup script to quick-fix RA/DEC values where missing for existing Alopeke and Zorro records (for archive after deploying the header.py fix above) [#gl10]
 
 
 2020-2.10
