@@ -58,7 +58,7 @@ _host_based_configs = {
         'EXPORT_DESTINATIONS': '',
         'PUBDB_REMOTE': 'https://localhost/ingest_publications',
         'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'TEST On-site FitsServer (CentOS 8)',
+        'FITS_SERVERTITLE': 'TEST On-site FitsServer (Chile)',
         'FITS_SYSTEM_STATUS': 'development',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/cpofits-lv2",
