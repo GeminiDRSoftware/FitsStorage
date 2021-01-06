@@ -9,6 +9,7 @@ import dateutil.parser
 import datetime
 import types
 
+from gemini_instruments.gemini import AstroDataGemini
 from . import Base
 from .diskfile import DiskFile
 
@@ -67,6 +68,48 @@ REDUCTION_STATUS = {
     'STANDARD': 'PROCESSED_STANDARD',
     'SLITILLUM': 'PROCESSED_SLITILLUM',
 }
+
+
+# TODO move this into a special area and perhaps add other FitsStorage specific astrodata definitions
+class AstroDataAlopekeZorro(AstroDataGemini):
+    @staticmethod
+    def _matches_data(source):
+        return source[0].header.get('INSTRUME', '').upper() == 'ZORRO' \
+            or source[0].header.get('INSTRUME', '').upper() == 'ALOPEKE'
+        return False
+
+    def _get_wcs(self):
+        ctype1 = self.phu.get('CTYPE1')
+        ctype2 = self.phu.get('CTYPE2')
+        crval1 = self.phu.get('CRVAL1')
+        crval2 = self.phu.get('CRVAL2')
+        return ctype1, ctype2, crval1, crval2
+
+    def ra(self):
+        try:
+            return super().ra()
+        except:
+            ctype1, ctype2, crval1, crval2 = self._get_wcs()
+            if ctype1 == 'RA---TAN' or ctype1 == 'RA--TAN':  # Zorro sometimes is broken with RA--TAN
+                return crval1
+            if ctype2 == 'RA---TAN' or ctype2 == 'RA--TAN':  # Zorro sometimes is broken with RA--TAN
+                return crval2
+        return None
+
+    def dec(self):
+        try:
+            return super().dec()
+        except:
+            ctype1, ctype2, crval1, crval2 = self._get_wcs()
+            if ctype1 == 'DEC--TAN':
+                return crval1
+            if ctype2 == 'DEC--TAN':
+                return crval2
+        return None
+
+
+astrodata.factory.addClass(AstroDataAlopekeZorro)
+
 
 # ------------------------------------------------------------------------------
 class Header(Base):
