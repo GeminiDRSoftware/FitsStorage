@@ -89,6 +89,7 @@ local_cals
 ========
 
 User-Facing Changes
+-------------------
 
 /searchform
 ^^^^^^^^^^^
