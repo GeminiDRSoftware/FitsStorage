@@ -45,9 +45,24 @@ def parse_value(line):
 
 
 if __name__ == "__main__":
-    instrument = "ZORRO"  # "ALOPEKE"
-    from_dt = datetime(2010,1,1)
-    to_dt = datetime(2021,12,30)
+
+    # Option Parsing
+    from argparse import ArgumentParser
+    # ------------------------------------------------------------------------------
+    parser = ArgumentParser()
+    parser.add_argument("--instrument", action="store", dest="instrument", default = "ZORRO",
+                        help="Instrument to cleanup ra/dec for (ZORRO or ALOPEKE)")
+    parser.add_argument("--fromdt", action="store", dest="fromdt", default = "20100101",
+                        help="Start date for cleanup, YYYYMMDD")
+    parser.add_argument("--todt", action="store", dest="todt", default = "20211231",
+                        help="End date for cleanup, YYYYMMDD")
+    options = parser.parse_args()
+
+    instrument = options.instrument
+    from_dt = datetime.strptime(options.fromdt, '%Y%m%d')
+    to_dt = datetime.strptime(options.todt, '%Y%m%d')
+
+    print("Running on instrument %s from %s to %s" % (instrument, from_dt, to_dt))
 
     if instrument.upper() not in ('ALOPEKE', 'ZORRO'):
         print("Specify instrument (alopeke or zorro)")
@@ -57,7 +72,7 @@ if __name__ == "__main__":
     print("Running date range of: %s to %s" % (from_dt, to_dt))
 
     with session_scope() as session:
-        for hdr, fht, df in session.query(Header, FullTextHeader, DiskFile).filter(Header.instrument == instrument) \
+        for hdr, fht, df in session.query(Header, FullTextHeader, DiskFile).filter(Header.instrument == instrument.upper()) \
                 .filter(Header.ut_datetime.between(from_dt, to_dt)) \
                 .filter(or_(Header.ra == None, Header.dec == None)) \
                 .filter(FullTextHeader.diskfile_id ==DiskFile.id) \
