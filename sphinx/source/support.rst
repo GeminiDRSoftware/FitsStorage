@@ -417,6 +417,24 @@ you can also pass a `YYYYMMDD` encoded date if you are checking a previous day's
 If all of that looks ok, the next things to check are the logs in `/data/logs/YouGotDataEmail.py.log`
 and work with ITOps to check the email server configuration.
 
+One thing that has happened is the job hanging on sending an email.  When this happens, which is
+rare, remaining notifications won't get sent out for that day.  The way to see this in the log
+is if you don't see a message like this at the end of that date int he log.
+
+.. code::
+
+   YouveGotDataEmail.py exiting normally
+
+Here is an example where that happened.  As you can see, on January 3rd, 2021 the script
+logged that it was sending an email and no further logging happened before January 4th.
+
+.. code::
+
+   2021-01-03 08:07:35,512 20393:YouGotDataEmail:109 INFO: New Data for GN-2020B-Q-320/science
+   2021-01-03 08:07:35,561 20393:YouGotDataEmail:145 INFO: Sending Email- To: fernandoc2.campos@gmail.com; CC: aardila@lna.br, jscharwaechter@gemini.edu; Subject: New Data for GN-2020B-Q-320/science
+   2021-01-04 08:00:02,961 26799:YouGotDataEmail:58 INFO: YouveGotDataEmail.py starting for date today
+
+
 OT
 --
 
