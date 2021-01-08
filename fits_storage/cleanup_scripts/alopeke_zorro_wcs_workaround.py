@@ -26,6 +26,27 @@ from fits_storage.orm.header import Header
 
 
 def parse_value(line):
+    """
+    Parse the value from a line of header text.
+
+    This will look at one line from the stored header dump in the
+    database.  It trims the 'key=' part, if found.  It also pulls
+    the value out of a wrapping pair of ' marks, if found.  Then
+    it strips leading and trailing whitespace.  It does not
+    automatically recognize and convert numeric types, so the
+    return type will always be a string.
+
+    Parameters
+    ----------
+
+    line : str
+        Line from header to parse value from
+
+    Returns
+    -------
+
+    str value
+    """
     val = line
     if val.index('=') >= 0:
         idx = val.index('=') + 1
@@ -45,7 +66,6 @@ def parse_value(line):
 
 
 if __name__ == "__main__":
-
     # Option Parsing
     from argparse import ArgumentParser
     # ------------------------------------------------------------------------------
@@ -67,9 +87,6 @@ if __name__ == "__main__":
     if instrument.upper() not in ('ALOPEKE', 'ZORRO'):
         print("Specify instrument (alopeke or zorro)")
         exit(1)
-
-    print("Running instrument of: %s" % instrument)
-    print("Running date range of: %s to %s" % (from_dt, to_dt))
 
     with session_scope() as session:
         for hdr, fht, df in session.query(Header, FullTextHeader, DiskFile).filter(Header.instrument == instrument.upper()) \
