@@ -1,3 +1,15 @@
+2020-2.11
+=========
+
+Other
+-----
+
+local_cals
+^^^^^^^^^^
+
+- Updating version number for the calibrations standalone library to 1.0.0
+
+
 2020-2.10
 =========
 
@@ -44,9 +56,6 @@ alopeke_zorro_wcs_workaround.py
 - New cleanup script to quick-fix RA/DEC values where missing for existing Alopeke and Zorro records (for archive after deploying the header.py fix above) [#gl10]
 
 
-Updated Scripts
----------------
-
 previewqueue
 ^^^^^^^^^^^^
 
@@ -55,13 +64,20 @@ previewqueue
 2020-2.9
 ========
 
+Other
+-----
+
 local_cals
 ^^^^^^^^^^
 
 - Updating version number for the calibrations standalone library to 1.0.0
 
+
 2020-2.8
 ========
+
+Other
+-----
 
 local_cals
 ^^^^^^^^^^
