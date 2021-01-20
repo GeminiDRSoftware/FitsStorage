@@ -17,6 +17,13 @@ Web Services
 
 - New endpoint for json encoded program information, for Andy Adamson
 
+Other
+-----
+
+ingestqueue.py
+^^^^^^^^^^^^^^
+
+- commit should have been flush, so all changes rollback on an error
 
 
 2020-2.11
