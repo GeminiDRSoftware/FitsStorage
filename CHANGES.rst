@@ -1,3 +1,24 @@
+2020-2.12
+=========
+
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- Cleanup comment text in log comment table link so it doesn't break html with chars like "
+
+Web Services
+------------
+
+/programinfojson
+^^^^^^^^^^^^^^^^
+
+- New endpoint for json encoded program information, for Andy Adamson
+
+
+
 2020-2.11
 =========
 
