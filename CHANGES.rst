@@ -25,6 +25,11 @@ ingestqueue.py
 
 - commit should have been flush, so all changes rollback on an error
 
+header.py
+^^^^^^^^^
+
+- converted Alopeke/Zorro custom AstroData overide into helper methods (for ra/dec)
+
 
 2020-2.11
 =========
