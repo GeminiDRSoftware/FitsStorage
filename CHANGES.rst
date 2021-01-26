@@ -8,6 +8,7 @@ User-Facing Changes
 ^^^^^^^^^^^
 
 - Cleanup comment text in log comment table link so it doesn't break html with chars like "
+- Added publication field for searching by bibliography code (back-end already has support)
 
 Web Services
 ------------
