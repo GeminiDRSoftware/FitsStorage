@@ -9,6 +9,11 @@ admin_change_email.py
 
 - This also serves as a user list and I added a user_admin role to grant access without superuser [GL#2]
 
+calmgr.py
+^^^^^^^^^
+
+- Now able to handle Section() objects passed from DRAGONS cal requests
+
 Updated Scripts
 ---------------
 
