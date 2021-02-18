@@ -5,6 +5,8 @@ The CalibrationGMOS class
 import datetime
 import math
 
+from .rules import IfInRule, MatchRule, IfNotNoneRule, CalContainsRule, IfProcessedRule, IfEqualsRule, AndRule, \
+    MaxIntervalRule, RawOrProcessedRule
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.gmos import Gmos
@@ -372,6 +374,37 @@ class CalibrationGMOS(Calibration):
                 .max_interval(days=90)
                 .all(howmany)
             )
+
+    def bias_new(self, howmany=1):
+        query = self.get_query()
+        for rule in self.bias_rules():
+            query = rule.updatequery(query, self, self.descriptors, 'BIAS')
+
+        return (query.all(howmany))
+
+    def bias_rules(self):
+        rules = list()
+        rules.append(RawOrProcessedRule('BIAS'))
+        rules.append(IfInRule('detector_roi_setting', ['Full Frame', 'Central Spectrum'],
+                              MatchRule('amp_read_area'),
+                              IfNotNoneRule('amp_read_area',
+                                            CalContainsRule('amp_read_area'))
+                              ))
+        rules.append(IfProcessedRule(
+            IfEqualsRule('prepared', True,
+                         AndRule(MatchRule('overscan_trimmed'),
+                                 MatchRule('overscan_subtracted')))
+        ))
+        rules.append(AndRule(
+            MatchRule('instrument'),
+            MatchRule('detector_x_bin'),
+            MatchRule('detector_y_bin'),
+            MatchRule('read_speed_setting'),
+            MatchRule('gain_setting')
+        ))
+        rules.append(MaxIntervalRule(90))
+        # TODO handle matches beyond howmany?
+        return rules
 
     def imaging_flat(self, processed, howmany, flat_descr, filt):
         """
@@ -938,6 +971,22 @@ class CalibrationGMOS(Calibration):
             return retval[0:howmany]
         else:
             return retval
+
+    def why_not_matching(self, calibration, method, processed):
+        if hasattr(self, method + '_rules'):
+            tpl = self.session.query(Header, Gmos, DiskFile) \
+                .filter(DiskFile.filename == calibration).filter(DiskFile.canonical == True).first()
+            if tpl is None:
+                return "Calibration not loadable into caldb"
+            (h, g, _) = tpl
+            rules = getattr(self, method + '_rules')
+            for rule in rules():
+                check = rule.check(self, self.descriptors, processed, h, g)
+                if check is not None:
+                    return check
+            return None  # looks like it should match...
+        else:
+            return "Match checking not implemented for %s for calibrations of type %s" % (self.__class__, method)
 
     def _get_fuzzy_wavelength(self):
         """
