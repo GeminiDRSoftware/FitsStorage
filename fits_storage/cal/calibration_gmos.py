@@ -2,11 +2,14 @@
 The CalibrationGMOS class
 
 """
+import os
+
 import datetime
 import math
+import yaml
 
 from .rules import IfInRule, MatchRule, IfNotNoneRule, CalContainsRule, IfProcessedRule, IfEqualsRule, AndRule, \
-    MaxIntervalRule, RawOrProcessedRule
+    MaxIntervalRule, RawOrProcessedRule, parse_yaml
 from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.gmos import Gmos
@@ -19,6 +22,7 @@ from .calibration import not_spectroscopy
 from sqlalchemy.orm import join
 
 from gempy.utils import logutils
+from .render_query import render_query as rq
 
 log = logutils.get_logger(__name__)
 
@@ -301,7 +305,7 @@ class CalibrationGMOS(Calibration):
                 .all(howmany)
             )
 
-    def bias(self, processed=False, howmany=None):
+    def bias(self, processed=False, howmany=None, render_query=False):
         """
         Method to find the best bias frames for the target dataset
 
@@ -361,19 +365,33 @@ class CalibrationGMOS(Calibration):
                 #filters.append(Gmos.overscan_subtracted == True)
                 pass
 
-        return (
-            self.get_query()
-                .bias(processed)
-                .add_filters(*filters)
+        query = self.get_query() \
+                .bias(processed) \
+                .add_filters(*filters) \
                 .match_descriptors(Header.instrument,
                                   Gmos.detector_x_bin,
                                   Gmos.detector_y_bin,
                                   Gmos.read_speed_setting,
-                                  Gmos.gain_setting)
-                # Absolute time separation must be within 3 months
+                                  Gmos.gain_setting) \
                 .max_interval(days=90)
-                .all(howmany)
-            )
+        if render_query:
+            rqr = rq(query.query)
+            return (query.all(howmany)), rqr
+        else:
+            return (query.all(howmany))
+        # return (
+        #     self.get_query()
+        #         .bias(processed)
+        #         .add_filters(*filters)
+        #         .match_descriptors(Header.instrument,
+        #                           Gmos.detector_x_bin,
+        #                           Gmos.detector_y_bin,
+        #                           Gmos.read_speed_setting,
+        #                           Gmos.gain_setting)
+        #         # Absolute time separation must be within 3 months
+        #         .max_interval(days=90)
+        #         .all(howmany)
+        #     )
 
     def bias_new(self, howmany=1):
         query = self.get_query()
@@ -382,29 +400,33 @@ class CalibrationGMOS(Calibration):
 
         return (query.all(howmany))
 
-    def bias_rules(self):
+    def bias_rules(self, processed):
         rules = list()
         rules.append(RawOrProcessedRule('BIAS'))
-        rules.append(IfInRule('detector_roi_setting', ['Full Frame', 'Central Spectrum'],
-                              MatchRule('amp_read_area'),
-                              IfNotNoneRule('amp_read_area',
-                                            CalContainsRule('amp_read_area'))
-                              ))
-        rules.append(IfProcessedRule(
-            IfEqualsRule('prepared', True,
-                         AndRule(MatchRule('overscan_trimmed'),
-                                 MatchRule('overscan_subtracted')))
-        ))
-        rules.append(AndRule(
+        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+            rules.append(MatchRule('amp_read_area',
+                                   prefix="If `detector_roi_setting` in 'Full Frame' or 'Central Spectrum'"))
+        else:
+            if self.descriptors['amp_read_area'] is not None:
+                rules.append(CalContainsRule('amp_read_area',
+                                             prefix="If `detector_roi_setting` not in "
+                                                    "'Full Frame' or 'Central Spectrum' "
+                                                    "and `amp_read_area` is not None"))
+        if processed and self.descriptors['prepared'] == True:
+            rules.append(AndRule(MatchRule('overscan_trimmed'),
+                                 MatchRule('overscan_subtracted'), prefix='For processed prepared data'))
+        rules.extend([
             MatchRule('instrument'),
             MatchRule('detector_x_bin'),
             MatchRule('detector_y_bin'),
             MatchRule('read_speed_setting'),
-            MatchRule('gain_setting')
-        ))
+            MatchRule('gain_setting')])
         rules.append(MaxIntervalRule(90))
         # TODO handle matches beyond howmany?
         return rules
+
+    def bias_rules_yaml(self):
+        return parse_yaml("/Users/ooberdorf/FitsStorage/fits_storage/cal/calibration_gmos.yml", 'bias')
 
     def imaging_flat(self, processed, howmany, flat_descr, filt):
         """
@@ -972,15 +994,18 @@ class CalibrationGMOS(Calibration):
         else:
             return retval
 
-    def why_not_matching(self, calibration, method, processed):
-        if hasattr(self, method + '_rules'):
+    def why_not_matching(self, calibration, method, processed, file_based=False):
+        sfx = '_rules'
+        if file_based:
+            sfx = '_rules_yaml'
+        if hasattr(self, method + sfx):
             tpl = self.session.query(Header, Gmos, DiskFile) \
                 .filter(DiskFile.filename == calibration).filter(DiskFile.canonical == True).first()
             if tpl is None:
                 return "Calibration not loadable into caldb"
             (h, g, _) = tpl
-            rules = getattr(self, method + '_rules')
-            for rule in rules():
+            rules = getattr(self, method + sfx)
+            for rule in rules(processed=processed):  # to pass processed or not depends on the ultimate implementation
                 check = rule.check(self, self.descriptors, processed, h, g)
                 if check is not None:
                     return check
