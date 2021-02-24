@@ -1,0 +1,34 @@
+
+bias:
+  howmany:
+      processed: 1
+      raw: 50
+  rules:
+    - raw_or_processed: 'BIAS'
+    - if_in:
+        descriptor: 'amp_read_area'
+        values: ['Full Frame', 'Central Spectrum']
+        in:
+          - match: 'amp_read_area'
+        not_in:
+          - if_not_none:
+              descriptor: 'amp_read_area'
+              not_none:
+                - cal_contains: 'amp_read_area'
+    - if_processed:
+        - if_equals:
+            descriptor: 'prepared'
+            value: True
+            equals:
+              - match: [
+                    'overscan_trimmed',
+                    'overscan_subtracted'
+                  ]
+    - match: [
+        'instrument',
+        'detector_x_bin',
+        'detector_y_bin',
+        'read_speed_setting',
+        'gain_setting'
+        ]
+    - max_interval: 90
