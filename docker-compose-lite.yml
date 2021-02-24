@@ -85,7 +85,7 @@ services:
       - EXPORT_DESTINATIONS=
     volumes:
       - "~/dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/add_to_ingest_queue.py
+    command: bash -c "sleep 20 && python3 fits_storage/scripts/add_to_ingest_queue.py"
 
   add-to-ingest-queue-cals:
     image: fitsstorageutils:latest
@@ -98,20 +98,7 @@ services:
       - EXPORT_DESTINATIONS=
     volumes:
       - "~/dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/add_to_ingest_queue.py --path=reduced_cals
-
-  add-to-ingest-queue-cals:
-    image: fitsstorageutils:latest
-    depends_on:
-      - postgres-init
-      - postgres-init-views
-      - postgres
-    environment:
-      - FITS_DB_SERVER=fitsdata:fitsdata@postgres
-      - EXPORT_DESTINATIONS=
-    volumes:
-      - "~/dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/add_to_ingest_queue.py --path=alopeke/20200218
+    command: bash -c "sleep 20 && python3 fits_storage/scripts/add_to_ingest_queue.py --path=reduced_cals"
 
   ingest-service:
     image: fitsstorageutils:latest
@@ -126,7 +113,7 @@ services:
       - EXPORT_DESTINATIONS=
     volumes:
       - "~/dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
+    command: bash -c "sleep 20 && python3 fits_storage/scripts/service_ingest_queue.py --make-previews"
 
   add-to-calcache-queue:
     image: fitsstorageutils:latest
@@ -151,4 +138,4 @@ services:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
     volumes:
       - "~/dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/service_calcache_queue.py
+    command: bash -c "sleep 20 && python3 fits_storage/scripts/service_calcache_queue.py"
