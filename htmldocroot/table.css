@@ -47,12 +47,12 @@ tr.sq-alternating:nth-child(even) {
 }
 
 tr.ql-alternating:nth-child(odd) {
-  background-color: #aaaaff;
+  background-color: #ccffcc;
   font-size: small
 }
 
 tr.ql-alternating:nth-child(even) {
-  background-color: #aaaacc;
+  background-color: #bbeebb;
   font-size: small
 }
 
