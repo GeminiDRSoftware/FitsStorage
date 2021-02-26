@@ -21,7 +21,7 @@ from pygments.lexers.sql import SqlLexer
 # 1. SQL query dump and prompt
 # 2. Rule python structure and interpretation
 # 3. File-based rule structure and interpretation
-debug_mode = 2
+debug_mode = 3
 
 
 def build_descripts(rq):
