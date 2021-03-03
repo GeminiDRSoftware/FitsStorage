@@ -1,3 +1,31 @@
+2020-2.13
+=========
+
+Web Services
+------------
+
+/calibrations
+^^^^^^^^^^^^^
+
+- Filtered out some arc and dark warnings for GMOS per SOS feedback
+
+Updated Scripts
+---------------
+
+delete_files.py
+^^^^^^^^^^^^^^^
+
+- Fixed column name error for unused, but available, order by date column
+
+Other
+-----
+
+fits_storage_config.py
+^^^^^^^^^^^^^^^^^^^^^^
+
+- Added new twilight/bias json web APIs for SOSes to blocklist for public archive
+
+
 2020-2.12
 =========
 
