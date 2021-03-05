@@ -1,3 +1,14 @@
+2020-2.14
+
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- updated color for quick look data rows in the grid
+
+
 2020-2.13
 =========
 
