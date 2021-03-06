@@ -14,6 +14,35 @@ calmgr.py
 
 - Now able to handle Section() objects passed from DRAGONS cal requests
 
+add_to_preview_queue.py
+^^^^^^^^^^^^^^^^^^^^^^^
+
+- Added a new `force` option to recreate previews even if they already exist [#387]
+
+copy_from_dhs.py
+^^^^^^^^^^^^^^^^
+
+- Batching email for validation errors to not spam when first starting up [#391]
+
+problem_checker.py
+^^^^^^^^^^^^^^^^^^
+
+- Added check for filesize difference over 10% between DHS and Dataflow [GL#8]
+
+service_target_queue.py
+^^^^^^^^^^^^^^^^^^^^^^^
+
+- Properly detect location of Gemini North and South for target calculation, skip GPI [GL#5]
+
+Other
+-----
+
+YouGotDataEmail.py
+^^^^^^^^^^^^^^^^^^
+
+- catch errors per notification and allow the rest to be tried, email full list of errors at end if any [GL#19]
+
+
 2020-2.14
 =========
 
@@ -40,7 +69,6 @@ Web Services
 Updated Scripts
 ---------------
 
-<<<<<<< HEAD
 delete_files.py
 ^^^^^^^^^^^^^^^
 
@@ -87,28 +115,6 @@ header.py
 ^^^^^^^^^
 
 - converted Alopeke/Zorro custom AstroData overide into helper methods (for ra/dec)
-
-=======
-add_to_preview_queue.py
-^^^^^^^^^^^^^^^^^^^^^^^
-
-- Added a new `force` option to recreate previews even if they already exist [#387]
-
-copy_from_dhs.py
-^^^^^^^^^^^^^^^^
-
-- Batching email for validation errors to not spam when first starting up [#391]
-
-problem_checker.py
-^^^^^^^^^^^^^^^^^^
-
-- Added check for filesize difference over 10% between DHS and Dataflow [GL#8]
-
-service_target_queue.py
-^^^^^^^^^^^^^^^^^^^^^^^
-
-- Properly detect location of Gemini North and South for target calculation, skip GPI [GL#5]
->>>>>>> master
 
 2020-2.11
 =========
