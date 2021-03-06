@@ -1,8 +1,8 @@
-# OSX Install Instructions
+## OSX Install Instructions
 
-## Requirements
+### Requirements
 
-### PostgreSQL
+#### PostgreSQL
 
 You will need a PostgreSQL server.  Personally, I prefer `Postgres.app`.  This way I can run it on demand and leave it 
 off if I am not doing development on the website.
@@ -22,7 +22,7 @@ ssh -L 5432:localhost:5432 fitsdata@hbffits-lv1.hi.gemini.edu
 I have configured the PostgreSQL server on that host to allow the `fitsdata` user to connect to it when you are
 sshed in like this.
 
-### fitsverify
+#### fitsverify
 
 The ingest process makes use of `fitsverify`.
 
@@ -45,7 +45,7 @@ To compile, you have to modify the command they suggest to leave off `-lnl` and 
 
 Note that it spits out some warnings, but it does build the binary.
 
-### Anaconda
+#### Anaconda
 
 I installed Anaconda3.  You probably already have this, but if not just go get it here:
 
@@ -55,7 +55,7 @@ I like to create a custom environment for running things.
 
 `conda env create <my_environment_name>`
 
-### Python Packages
+#### Python Packages
 
 Unfortunately, I don't yet have a fully working .yml spec for OSX.  The one that I do have for Jenkins causes
 some nasty infinite loop if you try and use it on OSX.  So, for now, I would pip install these packages, as
@@ -80,7 +80,7 @@ indicated in `.jenkins/conda_py3env_stable.yml`:
   - boto3
   - matplotlib
 
-### DRAGONS
+#### DRAGONS
 
 In addition to the FitsStorage codebase, you need to have a copy of DRAGONS.  You can check this out of git.
 You may want to clone via ssh instead, depending on your permissions.
@@ -94,16 +94,16 @@ or in your .bash_profile with
 
 `export PYTHONPATH=/where/you/put/DRAGONS`
 
-### Data
+#### Data
 
 You'll want to start out with some data.  I recommend just doing a search on archive.gemini.edu and grabbing
 some public data.  Put this in a folder somewhere for later use.
 
-### Logging Directory
+#### Logging Directory
 
 You need a folder for your logs.  Just create a folder wherever and remember it's location
 
-### Environment Variables
+#### Environment Variables
 
 In order to override various default locations that FitsStorage uses on the servers, I have made a set of
 environment variables.  You can set these variables to tell the FitsStorage scripts and website to go to
@@ -122,27 +122,23 @@ export TEST_IMAGE_PATH=/where/you/want/image/data
 export USE_AS_ARCHIVE=False  # (or True, False by default)
 ```
 
-### Initialize Database
+#### Initialize Database
 
 Before running anything, you'll want to setup your empty database with the schema.  To do this, you can
 run the create_tables.py script in the `FitsStorage` repo.
 
 `python fits_storage\scripts\create_tables.py`
 
-### Queue Data Ingest
+#### Queue Data Ingest
 
 Now that the tables are in place, you'll want to add all your data files to the queue to be ingested.
 Again, this is in the scripts directory.
 
 `python fits_storage\scripts\add_to_ingest_queue.py`
 
-### Run Ingest Service
+#### Run Ingest Service
 
 Normally, the ingest service runs continuously.  You could start it up in a separate terminal if you
 like, but it is also possible to run it like a one-off command using the `--empty` flag.
 
 `python fits_storage\scripts\service_ingest_queue.py --empty`
-
-
-
-

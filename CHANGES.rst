@@ -1,4 +1,21 @@
+2020-3 (unreleased)
+===================
+
+Updated Web Services
+--------------------
+
+admin_change_email.py
+^^^^^^^^^^^^^^^^^^^^^
+
+- This also serves as a user list and I added a user_admin role to grant access without superuser [GL#2]
+
+calmgr.py
+^^^^^^^^^
+
+- Now able to handle Section() objects passed from DRAGONS cal requests
+
 2020-2.14
+=========
 
 User-Facing Changes
 -------------------
@@ -23,6 +40,7 @@ Web Services
 Updated Scripts
 ---------------
 
+<<<<<<< HEAD
 delete_files.py
 ^^^^^^^^^^^^^^^
 
@@ -70,6 +88,27 @@ header.py
 
 - converted Alopeke/Zorro custom AstroData overide into helper methods (for ra/dec)
 
+=======
+add_to_preview_queue.py
+^^^^^^^^^^^^^^^^^^^^^^^
+
+- Added a new `force` option to recreate previews even if they already exist [#387]
+
+copy_from_dhs.py
+^^^^^^^^^^^^^^^^
+
+- Batching email for validation errors to not spam when first starting up [#391]
+
+problem_checker.py
+^^^^^^^^^^^^^^^^^^
+
+- Added check for filesize difference over 10% between DHS and Dataflow [GL#8]
+
+service_target_queue.py
+^^^^^^^^^^^^^^^^^^^^^^^
+
+- Properly detect location of Gemini North and South for target calculation, skip GPI [GL#5]
+>>>>>>> master
 
 2020-2.11
 =========
@@ -249,7 +288,7 @@ database_backup.py
 
 
 2020-2.0
-===================
+========
 
 User-Facing Changes
 ----------------------
@@ -371,6 +410,16 @@ calcachequeue
 
 - Added filename to object to use for logging errors in the queue_error table (as is done for other queues)
 
+
+2020-1.11
+
+Updated Scripts
+---------------
+
+header_fixer2.py
+^^^^^^^^^^^^^^^^
+
+- Detect when we have no END in the header and abort.  This prevents running out of memory on large corrupt Zorro files.
 
 2020-1.11
 

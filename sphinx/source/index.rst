@@ -11,7 +11,12 @@ Welcome to FitsStorage's documentation!
    :caption: Contents:
 
    changelog.rst
-
+   support.rst
+   setup.rst
+   manual/database.rst
+   visiting_instruments.rst
+   gemini_mail_setup.rst
+   development.rst
 
 Indices and tables
 ==================
@@ -19,4 +24,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

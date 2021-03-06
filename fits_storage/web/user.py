@@ -29,8 +29,8 @@ import functools
 
 import logging
 
-
 bad_password_msg = "Bad password - must be at least 14 characters long, and contain at least one lower case letter, upper case letter, decimal digit and non-alphanumeric character (e.g. !, #, %, * etc)"
+
 
 @templating.templated("user/request_account.html")
 def request_account(things):
@@ -86,20 +86,20 @@ def request_account(things):
             valid_request = True
 
     template_args = dict(
-        reason_bad        = reason_bad,
-        request_attempted = request_attempted,
+        reason_bad=reason_bad,
+        request_attempted=request_attempted,
         # Contruct the thing_string for the url to link back to their form
-        thing_string      = '/'.join(things),
-        valid_request     = valid_request,
+        thing_string='/'.join(things),
+        valid_request=valid_request,
         # User data
-        username          = username,
-        fullname          = fullname,
-        email             = email,
-        maybe_gemini      = email.endswith("@gemini.edu"),
+        username=username,
+        fullname=fullname,
+        email=email,
+        maybe_gemini=email.endswith("@gemini.edu"),
         # For debugging
-        debugging         = False,
-        formdata          = formdata
-        )
+        debugging=False,
+        formdata=formdata
+    )
 
     if valid_request:
         try:
@@ -114,6 +114,7 @@ def request_account(things):
             template_args['error'] = True
 
     return template_args
+
 
 def send_password_reset_email(userid):
     """
@@ -190,6 +191,7 @@ so please do that promptly.</p>
 
     return True
 
+
 @templating.templated("user/password_reset.html")
 def password_reset(userid, token):
     """
@@ -202,8 +204,8 @@ def password_reset(userid, token):
     session = ctx.session
 
     template_args = dict(
-        valid_request = False,
-        )
+        valid_request=False,
+    )
 
     try:
         userid = int(userid)
@@ -267,11 +269,12 @@ def password_reset(userid, token):
 
     # Send the new account form
     template_args.update(dict(
-        userid = userid,
-        token = token
-        ))
+        userid=userid,
+        token=token
+    ))
 
     return template_args
+
 
 @templating.templated("user/change_email.html")
 def change_email(things):
@@ -329,13 +332,14 @@ def change_email(things):
             successful = True
 
     template_args = dict(
-        successful    = successful,
-        reason_bad    = reason_bad,
+        successful=successful,
+        reason_bad=reason_bad,
         # Construct the things_string to link back to the current form
-        thing_string  = '/'.join(things)
-        )
+        thing_string='/'.join(things)
+    )
 
     return template_args
+
 
 @templating.templated("user/change_password.html")
 def change_password(things):
@@ -401,13 +405,14 @@ def change_password(things):
             successful = True
 
     template_args = dict(
-        successful    = successful,
-        reason_bad    = reason_bad,
+        successful=successful,
+        reason_bad=reason_bad,
         # Construct the things_string to link back to the current form
-        thing_string  = '/'.join(things)
-        )
+        thing_string='/'.join(things)
+    )
 
     return template_args
+
 
 @templating.templated("user/request_password_reset.html")
 def request_password_reset():
@@ -446,8 +451,8 @@ def request_password_reset():
             request_valid = False
 
     template_args = dict(
-        request_valid = request_valid
-        )
+        request_valid=request_valid
+    )
 
     if request_valid:
         # Try to process it
@@ -474,6 +479,7 @@ def request_password_reset():
 
     return template_args
 
+
 @templating.templated("user/staff_access.html")
 def staff_access():
     """
@@ -496,9 +502,9 @@ def staff_access():
 
     thisuser = ctx.user
     if thisuser is None or thisuser.superuser != True:
-        return dict(allowed = False)
+        return dict(allowed=False)
 
-    template_args = dict(allowed = True)
+    template_args = dict(allowed=True)
 
     # If we got an action, do it
     if username:
@@ -542,11 +548,12 @@ def admin_change_email():
         if 'email' in list(formdata.keys()):
             email = formdata['email'].value
 
+    # Permission requires either superuser or user_admin
     thisuser = ctx.user
-    if thisuser is None or thisuser.superuser != True:
-        return dict(allowed = False)
+    if thisuser is None or (thisuser.superuser is not True and thisuser.user_admin is not True):
+        return dict(allowed=False)
 
-    template_args = dict(allowed = True)
+    template_args = dict(allowed=True)
     template_args['user_list'] = ctx.session.query(User).order_by(User.gemini_staff, User.username)
     if email and email_inuse(email):
         template_args['email_in_use'] = True
@@ -571,6 +578,7 @@ def admin_change_email():
     ctx.session.commit()
 
     return template_args
+
 
 @templating.templated("user/login.html")
 def login(things):
@@ -636,14 +644,15 @@ def login(things):
 
     template_args = dict(
         # Rebuild the thing_string for the url
-        thing_string      = '/'.join(things),
-        valid_request     = valid_request,
-        reason_bad        = reason_bad,
-        username          = username,
-        redirect          = redirect,
-        )
+        thing_string='/'.join(things),
+        valid_request=valid_request,
+        reason_bad=reason_bad,
+        username=username,
+        redirect=redirect,
+    )
 
     return template_args
+
 
 @templating.templated("user/logout.html")
 def logout():
@@ -674,6 +683,7 @@ def logout():
 
     return {}
 
+
 @templating.templated("user/whoami.html")
 def whoami(things):
     """
@@ -690,6 +700,7 @@ def whoami(things):
         template_args['orcid'] = user.orcid_id if user.orcid_id else ""
         template_args['fullname'] = user.fullname
         template_args['is_superuser'] = user.superuser
+        template_args['user_admin'] = user.user_admin
     except AttributeError:
         # no user
         pass
@@ -699,6 +710,7 @@ def whoami(things):
     template_args['thing_string'] = '/'.join(things)
 
     return template_args
+
 
 @templating.templated("user/list.html")
 def user_list():
@@ -711,15 +723,16 @@ def user_list():
 
     thisuser = ctx.user
     if thisuser is None or thisuser.gemini_staff != True:
-        return dict(staffer = False)
+        return dict(staffer=False)
 
     users = (ctx.session.query(User)
-                .order_by(desc(User.superuser),
-                          desc(User.gemini_staff),
-                          User.username))
+             .order_by(desc(User.superuser),
+                       desc(User.gemini_staff),
+                       User.username))
 
-    return dict(staffer = True,
-                users   = users)
+    return dict(staffer=True,
+                users=users)
+
 
 def email_inuse(email):
     """
@@ -763,6 +776,8 @@ lower_cre = re.compile('[a-z]')
 upper_cre = re.compile('[A-Z]')
 nonalpha_cre = re.compile('[^a-zA-Z0-9]')
 password_criteria = (digits_cre, lower_cre, upper_cre, nonalpha_cre)
+
+
 def bad_password(candidate):
     """
     Checks candidate for compliance with password rules.
@@ -775,7 +790,9 @@ def bad_password(candidate):
 
     return True
 
-def needs_login(magic_cookies=(), only_magic=False, staffer=False, misc_upload=False, superuser=False, content_type='html', annotate=None, archive_only=False):
+
+def needs_login(magic_cookies=(), only_magic=False, staffer=False, misc_upload=False, superuser=False,
+                content_type='html', annotate=None, archive_only=False):
     """Decorator for functions that need a user to be logged in, or some sort of cookie
        to be set. The basic use is (notice the decorator parenthesis, they're important)::
 
@@ -814,6 +831,7 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, misc_upload=F
        ``archive_only=(False|True)``
          If ``True``, authentication is only required if this is an archive server
     """
+
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(*args, **kw):
@@ -844,7 +862,8 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, misc_upload=F
                 got_magic = True
             if not got_magic:
                 logging.debug("Handling auth")
-                raise_error = functools.partial(ctx.resp.client_error, code=Return.HTTP_FORBIDDEN, content_type=ctype, annotate=annotate)
+                raise_error = functools.partial(ctx.resp.client_error, code=Return.HTTP_FORBIDDEN, content_type=ctype,
+                                                annotate=annotate)
                 if only_magic:
                     logging.info("Could not find a proper magic cookie for a cookie-only service")
                     raise_error(message="Could not find a proper magic cookie for a cookie-only service")
@@ -865,7 +884,9 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, misc_upload=F
                                         "access this service")
             logging.debug("Past auth check, calling method")
             return fn(*args, **kw)
+
         return wrapper
+
     return decorator
 
 
@@ -927,7 +948,7 @@ def orcid(code):
             cookie = user.log_in()
             exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=31536000)
             ctx.cookies.set('gemini_archive_session', cookie, expires=exp, path="/")
-            ctx.resp.redirect_to('/searchform') # 'http://localhost:8090/searchform')
+            ctx.resp.redirect_to('/searchform')  # 'http://localhost:8090/searchform')
         else:
             reason_bad = "Error communicating with ORCID service"
     else:

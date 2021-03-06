@@ -1,0 +1,8 @@
+--outputdir fits.hi.report
+--variable URL:http://fits.hi.gemini.edu
+MissingCalibration.robot
+PagesAndTabs.robot
+QAForGUI.robot
+SearchInstrumentGNIRS.robot
+SearchInstrumentGRACES.robot
+SearchInstrumentNIRI_hi.robot

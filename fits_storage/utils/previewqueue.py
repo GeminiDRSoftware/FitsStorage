@@ -102,7 +102,7 @@ class PreviewQueueUtil(object):
         "Deletes a transient object"
         queue.delete_with_id(PreviewQueue, trans.id, self.s)
 
-    def process(self, diskfiles, make=False):
+    def process(self, diskfiles, make=False, force=False):
         """
         Add the set of diskfiles to the preview queue, or create the previews
         immediately.
@@ -113,6 +113,8 @@ class PreviewQueueUtil(object):
             List of DiskFiles to generate previews for
         make : bool
             True if we should make the preview immediately, False to add to the queue
+        force : bool
+            True if we want to create the preview even if we already have one
         """
         try:
             iter(diskfiles)
@@ -130,11 +132,11 @@ class PreviewQueueUtil(object):
                     message = "Making Preview for {}: {}".format(pq.id, df.filename)
                 else:
                     message = "Making Preview with diskfile_id {}".format(df.id)
-                if len(df.previews) > 0:
+                if len(df.previews) > 0 and not force and not pq.force:
                     self.l.info("Skipping preview for diskfile_id {} (would duplicate)".format(df.id))
                     continue
                 self.l.info(message)
-                if df.present == True:
+                if df.present:
                     self.make_preview(df)
                 else:
                     self.l.info("Skipping non-present diskfile_id {}".format(df.id))
@@ -145,10 +147,9 @@ class PreviewQueueUtil(object):
                     pq = df
                     df = self.s.query(DiskFile).get(pq.diskfile_id)
                 self.l.info("Adding PreviewQueue with diskfile_id {}".format(df.id))
-                pq = PreviewQueue(df)
+                pq = PreviewQueue(df, force=force)
                 self.s.add(pq)
             self.s.commit()
-
 
     def make_preview(self, diskfile):
         """
@@ -170,6 +171,8 @@ class PreviewQueueUtil(object):
         ----------
         diskfile : :class:`~DiskFile`
             DiskFile record to make preview for
+        force : bool
+            If True, force (re)creation of the preview even if we already have it
         """
         # Setup the preview file
         preview_filename = diskfile.filename + "_preview.jpg"
@@ -243,8 +246,11 @@ class PreviewQueueUtil(object):
                         os.unlink(prv_fullpath)
 
                     # Add to preview table
-                    preview = Preview(diskfile, filename)
-                    self.s.add(preview)
+                    p_check = self.s.query(Preview).filter(Preview.diskfile_id == diskfile.id,
+                                                           Preview.filename == filename).first()
+                    if p_check is None:
+                        preview = Preview(diskfile, filename)
+                        self.s.add(preview)
             else:
                 with open(preview_fullpath, 'wb') as fp:
                     try:
@@ -261,8 +267,12 @@ class PreviewQueueUtil(object):
                     os.unlink(preview_fullpath)
 
                 # Add to preview table
-                preview = Preview(diskfile, preview_filename)
-                self.s.add(preview)
+                # Add to preview table
+                p_check = self.s.query(Preview).filter(Preview.diskfile_id == diskfile.id,
+                                                       Preview.filename == preview_filename).first()
+                if p_check is None:
+                    preview = Preview(diskfile, preview_filename)
+                    self.s.add(preview)
         finally:
             # Do any cleanup from above
             if our_dfado:

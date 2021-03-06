@@ -1,6 +1,8 @@
 """
 This module contains the calmgr html generator function.
 """
+from collections import namedtuple
+
 import simplejson as json
 
 from fits_storage.utils.api import WSGIError, BAD_REQUEST
@@ -35,6 +37,9 @@ import traceback
 no_func = lambda x: None
 
 NonLinCoeffs = lambda *args, **kwargs : ""
+
+Section = namedtuple('Section', 'x1 x2 y1 y2')
+
 
 args_for_cals = {
     # cal_type      : (method_name, {arg_name: value, ...})

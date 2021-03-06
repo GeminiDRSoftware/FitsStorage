@@ -1,6 +1,6 @@
-# Jenkins Notes
+## Jenkins Notes
 
-## Installation
+### Installation
 
 Although I have a Jenkins docker definition, I have setup a dedicated server on
 the CentOS 7 host `hbffits-lv3.hi.gemini.edu`.  This may be temporary as a 
@@ -9,7 +9,7 @@ Bruno's DRAGONS Jenkins server (for instance).  Or we may go to Gitlab when
 that is ready.  For now, I want something I can make big changes on and setup
 docker/etc.
 
-## Instructions
+### Instructions
 
 Instructions for installing Jenkins on CentOS 7 came from:
 
@@ -17,15 +17,15 @@ Instructions for installing Jenkins on CentOS 7 came from:
 https://linuxize.com/post/how-to-install-jenkins-on-centos-7/
 ```
 
-### Additional Requirements
+#### Additional Requirements
 
-#### git
+##### git
 
 ```
 sudo yum install -y git
 ```
 
-#### docker
+##### docker
 
 Install Container-SELinux
 ```
@@ -48,21 +48,21 @@ sudo systemctl stop jenkins
 sudo systemctl start jenkins
 ```
 
-### pytest
+#### pytest
 
 Install python3
 ```
 sudo yum install python3
 ```
 
-### Ansible
+#### Ansible
 
 First, install python3 as described in the pytest section.  Then:
 ```
 pip3 install ansible
 ```
 
-## FitsStorage Deploys
+### FitsStorage Deploys
 
 I have the Jenkins server setup to do deploys of the FitsServer to `dev` and `qap-dev`.
 These builds involve creating a set of docker images to replicate the service spinning 
@@ -70,10 +70,12 @@ up the containers, creating the database and running a set of unit and integrati
 against it.  Only if everything passes does Jenkins then use ansible to deploy the latest
 checkin onto the target host.
 
-### Jenkins Docker Disk Space
+#### Jenkins Docker Disk Space
 
 Docker has a nasty habit of eating up disk space until you run out.  If you see errors in
-the build about a `devicemapper` folder being full, do this on the server as root.
+the build about a `devicemapper` folder being full, do this on the server as root.  *Note that
+although the path is `/var/lib/docker`, I have made that a symlink into the larger `/data/` 
+folder.  So it's the free space in `/data/` that matters here.
 
 ```
 sudo service docker stop

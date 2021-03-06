@@ -1,11 +1,11 @@
-# Docker Dev Setup
+## Docker Dev Setup
 
 FitsStorage can be run via Docker containers.  This has the advantage of being closer to
 what the system will be like in the deployed servers, with matching OS and layouts.  It
 also makes it very easy to clean up and start from a known state.  Finally, this leverages
 the same docker support we are using for doing CI/CD testing.
 
-## Getting Started
+### Getting Started
 
 To begin, you will want to install the latest Docker on your machine.  I am using a
 MacBook, so my instructions will be geared to OSX but Linux and Windows should also 
@@ -19,7 +19,7 @@ file downloads from your dev archive without pulling down all the datafiles.
 However, I would suggest getting your docker setup without it first and then come
 back to it when you are ready.
 
-## Folders
+### Folders
 
 The containers built by our full compose file depend on a few folders.  It is
 best if you create these folders now and toss some sample data into 
@@ -37,7 +37,7 @@ Copy your datafiles into `~/testdata/onsite-sci-dataflow`
 You do not need these folders if you opt for the "lite" compose file.  That one simply 
 requires a `~/dataflow/` folder with the data you want to use.
 
-## Compose
+### Compose
 
 There is now a very fast way to get a test cluster up complete with two webservers for
 'onsite' and 'archive' (public).  You can just use docker-compose.  There is a `docker-compose.yml`
@@ -57,13 +57,13 @@ You can build these two images by running `docker/scripts/buildfitsstorageutils.
 `docker/scripts/buildarchive.sh` respectively.  The images are also available in the container
 registry in gitlab at `https://gitlab.gemini.edu/DRSoftware/FitsStorage/container_registry`.
 
-## Scripts
+### Scripts
 
 All of the Docker support is saved in the `docker/` folder in the project.  This consists
 of a set of Dockerfiles to build various machine types and supporting scripts to
 simplify spinning them up.
 
-### Postgres
+#### Postgres
 
 We also have a container for running your own Postgres database.  This allows you to 
 operate against your system without impacting any of the shared environments.  This is
@@ -75,7 +75,7 @@ name and a login.
 ./docker/scripts/postgres.sh
 ```
 
-### Build Images
+#### Build Images
 
 The docker support for running a cluster depends on some custom images.  There
 are helper build scripts to easily create these with the proper parameters and
@@ -89,7 +89,7 @@ bash ./docker/scripts/buildfitsstorageutils.sh
 bash ./docker/scripts/buildarchive.sh
 ```
 
-### PostgreSQL Databases
+#### PostgreSQL Databases
 
 For the cluster, we setup two postgres databases.  One of these is used by our
 'onsite' website and the other is used by our 'public' archive website.  We use
@@ -104,7 +104,7 @@ All of this is wrapped up in a helper script, so you can simply do:
 bash ./docker/scripts/postgres.sh
 ```
 
-### Onsite Website
+#### Onsite Website
 
 We can setup a container to run as if it is the 'onsite' website.  This is the
 one hosted internally at Gemini North or South and is distinct from the public
@@ -114,7 +114,7 @@ facing 'Archive Website'.  To run this, you can use the helper script:
 bash ./docker/scripts/onsite.sh
 ```
 
-### Archive Website
+#### Archive Website
 
 Now that you have initialized the database, you can run the website in a
 container as well.  To do this, run:
@@ -128,7 +128,7 @@ This container will expose the website on port 8080 on your host machine.
 So, you can now browse to `http://localhost:8080/searchform` and see
 the website.  You won't have any data since you haven't ingested any yet.
 
-## Cleanup
+### Cleanup
 
 After you are up and running, you can clean everything up at any time
 by running the cleanup script.  This stops and removes all of the above
@@ -139,7 +139,7 @@ your test data in at the beginning.
 bash ./docker/scripts/cleanup.sh
 ```
 
-## EPEL Notes
+### EPEL Notes
 
 I've run into serious issues with the Red Hat/Fedora EPEL repository of late.
 IT's not clear to what extent this is Fedora's fault or CentOS or IT Ops.

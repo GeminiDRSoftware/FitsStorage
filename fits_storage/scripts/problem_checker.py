@@ -13,8 +13,9 @@ from optparse import OptionParser
 import re
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 
-from fits_storage.fits_storage_config import smtp_server, dhs_perm
+from fits_storage.fits_storage_config import smtp_server, dhs_perm, storage_root
 from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.orm.header import Header
@@ -186,6 +187,11 @@ class DHSProblemChecker(ProblemChecker):
                         record = query.first()
                         if record is None:
                             yield "checker: %s, filename': %s, problem: Missing Header (but Diskfile exists)" % (self.name(), f)
+                if os.path.exists(os.path.join(storage_root, f)):
+                    dhs_size = Path(os.path.join(dhs_perm, f)).stat().st_size
+                    dataflow_size = Path(os.path.join(storage_root, f)).stat().st_size
+                    if abs(dhs_size - dataflow_size) > 0.1 * dhs_size:
+                        yield "checker: %s, filename: %s, problem: DHS/Dataflow size differ by > 10%" % (self.name(), f)
 
 
 if __name__ == "__main__":
