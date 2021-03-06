@@ -46,7 +46,7 @@ from fits_storage.web.reporting import report
 from fits_storage.web.queuestatus import queuestatus_summary, queuestatus_tb, queuestatus_update
 from fits_storage.web.api import update_headers, ingest_files, ingest_programs, ingest_publications
 from fits_storage.web.publication import publication_ads, list_publications
-from fits_storage.web.program import program_info
+from fits_storage.web.program import program_info, program_info_json
 from fits_storage.web.logcomments import log_comments
 from fits_storage.web import miscfiles
 from fits_storage.web import templating
@@ -325,6 +325,7 @@ url_map = Map([
 
     # Group of URIs dealing with program/publication
     Rule('/programinfo/<program_id>', program_info),                # Displays data from a program
+    Rule('/programinfojson/<program_id>', program_info_json),                # Displays data from a program
     Rule('/logcomments/<selection(SEL):selection>', log_comments),
     Rule('/programs/<selection:selection>', programs),
     # Obslogs get their own summary-like handler

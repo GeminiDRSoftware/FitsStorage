@@ -71,8 +71,14 @@
         <option value="">Any</option>
 {{ generate_option_list(science_quality_options, updated.procmode) }}
     </select>
-    <span class="help">(help)
+    <span class="help">(Science Quality, Quick Look)
         <span class="helpleft">Select science quality of files: Any, Science Quality, or Quick Look.</span>
+    </span><br>
+
+    <label>Publication:</label>
+    <input id="publication" type="text" placeholder="(leave empty for Any)" name="publication" value="{{ updated.publication }}"/>
+    <span class="help">(bibliography code of related publication)
+        <span class="helpright">Search for data related to a publication by it's bibliography code.</span>
     </span><br>
 
     <label class="wide" id="advanced_header">Advanced Options &#9662;</label>

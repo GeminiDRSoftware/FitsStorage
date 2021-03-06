@@ -818,6 +818,8 @@ def selection_to_URL(selection, with_columns=False):
             # de-escape it for us and we'll be left with, for instance, /s that we can't differentiate
             # from those in the path.
             urlstring += '/object=%s' % urllib.parse.quote(selection[key])
+        elif key == 'publication':
+            urlstring += '/publication=%s' % urllib.parse.quote(selection[key])
         elif key == 'spectroscopy':
             if selection[key] is True:
                 urlstring += '/spectroscopy'

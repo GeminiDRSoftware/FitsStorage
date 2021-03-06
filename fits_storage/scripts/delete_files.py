@@ -142,7 +142,7 @@ if __name__ == "__main__":
                       help="Sort by filename to determine oldest files")
     parser.add_option("--oldbylastmod", action="store_true", dest="oldbylastmod",
                       help="Sort by lastmod to determine oldest files")
-    parser.add_option("--oldbytimestamp", action="store_true", dest="oldtimestamp",
+    parser.add_option("--oldbytimestamp", action="store_true", dest="oldbytimestamp",
                       help="Sort by the datafile_timestamp column to determine oldest files")
     parser.add_option("--numbystat", action="store_true", dest="numbystat", default=False,
                       help="Use statvfs rather than database to determine number of files on the disk")

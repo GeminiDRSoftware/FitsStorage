@@ -14,9 +14,81 @@ calmgr.py
 
 - Now able to handle Section() objects passed from DRAGONS cal requests
 
+2020-2.14
+=========
+
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- updated color for quick look data rows in the grid
+
+
+2020-2.13
+=========
+
+Web Services
+------------
+
+/calibrations
+^^^^^^^^^^^^^
+
+- Filtered out some arc and dark warnings for GMOS per SOS feedback
+
 Updated Scripts
 ---------------
 
+<<<<<<< HEAD
+delete_files.py
+^^^^^^^^^^^^^^^
+
+- Fixed column name error for unused, but available, order by date column
+
+Other
+-----
+
+fits_storage_config.py
+^^^^^^^^^^^^^^^^^^^^^^
+
+- Added new twilight/bias json web APIs for SOSes to blocklist for public archive
+
+
+2020-2.12
+=========
+
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- Cleanup comment text in log comment table link so it doesn't break html with chars like "
+- Added publication field for searching by bibliography code (back-end already has support)
+
+Web Services
+------------
+
+/programinfojson
+^^^^^^^^^^^^^^^^
+
+- New endpoint for json encoded program information, for Andy Adamson
+
+Other
+-----
+
+ingestqueue.py
+^^^^^^^^^^^^^^
+
+- commit should have been flush, so all changes rollback on an error
+
+header.py
+^^^^^^^^^
+
+- converted Alopeke/Zorro custom AstroData overide into helper methods (for ra/dec)
+
+=======
 add_to_preview_queue.py
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -36,8 +108,21 @@ service_target_queue.py
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 - Properly detect location of Gemini North and South for target calculation, skip GPI [GL#5]
+>>>>>>> master
 
 2020-2.11
+=========
+
+Other
+-----
+
+local_cals
+^^^^^^^^^^
+
+- Updating version number for the calibrations standalone library to 1.0.0
+
+
+2020-2.10
 =========
 
 User-Facing Changes
@@ -47,6 +132,11 @@ User-Facing Changes
 ^^^^^^^^^^^
 
 - Altered science quality column to `Qual`
+
+/summary
+^^^^^^^^
+
+- Removed defaulting logic for engineering, SOSes reported it was a change of behavior
 
 
 Web Services
@@ -66,13 +156,17 @@ header.py
 
 - `procsci` column renamed to `procmode`
 - `procmode` driven off of `PROCMODE` header keyword or, if not found, `PROCSCI` for legacy support
+- `AstroDataAlopekeZorro` added to clean up WCS issues and fallback to something that works during Header record creation [#gl10]
 
-
-2020-2.10
-=========
 
 Updated Scripts
 ---------------
+
+alopeke_zorro_wcs_workaround.py
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- New cleanup script to quick-fix RA/DEC values where missing for existing Alopeke and Zorro records (for archive after deploying the header.py fix above) [#gl10]
+
 
 previewqueue
 ^^^^^^^^^^^^
@@ -82,13 +176,20 @@ previewqueue
 2020-2.9
 ========
 
+Other
+-----
+
 local_cals
 ^^^^^^^^^^
 
 - Updating version number for the calibrations standalone library to 1.0.0
 
+
 2020-2.8
 ========
+
+Other
+-----
 
 local_cals
 ^^^^^^^^^^
@@ -116,6 +217,7 @@ local_cals
 ========
 
 User-Facing Changes
+-------------------
 
 /searchform
 ^^^^^^^^^^^

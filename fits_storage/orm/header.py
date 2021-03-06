@@ -9,6 +9,7 @@ import dateutil.parser
 import datetime
 import types
 
+from gemini_instruments.gemini import AstroDataGemini
 from . import Base
 from .diskfile import DiskFile
 
@@ -67,6 +68,62 @@ REDUCTION_STATUS = {
     'STANDARD': 'PROCESSED_STANDARD',
     'SLITILLUM': 'PROCESSED_SLITILLUM',
 }
+
+
+def _extract_zorro_wcs(ad):
+    ctype1 = ad.phu.get('CTYPE1')
+    ctype2 = ad.phu.get('CTYPE2')
+    crval1 = ad.phu.get('CRVAL1')
+    crval2 = ad.phu.get('CRVAL2')
+    return ctype1, ctype2, crval1, crval2
+
+
+def _ra_for_zorro(ad):
+    try:
+        return ad.ra()
+    except:
+        ctype1, ctype2, crval1, crval2 = _extract_zorro_wcs(ad)
+        if ctype1 == 'RA---TAN' or ctype1 == 'RA--TAN':  # Zorro sometimes is broken with RA--TAN
+            return crval1
+        if ctype2 == 'RA---TAN' or ctype2 == 'RA--TAN':  # Zorro sometimes is broken with RA--TAN
+            return crval2
+
+
+def _dec_for_zorro(ad):
+    try:
+        return ad.dec()
+    except:
+        ctype1, ctype2, crval1, crval2 = _extract_zorro_wcs(ad)
+        if ctype1 == 'DEC--TAN':
+            return crval1
+        if ctype2 == 'DEC--TAN':
+            return crval2
+    return None
+
+
+_wcs_fns = {"zorro": (_ra_for_zorro, _dec_for_zorro),
+            "alopeke": (_ra_for_zorro, _dec_for_zorro)}
+
+
+def _ra(ad):
+    try:
+        instr = ad.instrument().lower()
+        if instr in _wcs_fns:
+            return _wcs_fns[instr][0](ad)
+    except:
+        pass  # fallback to ra()
+    return ad.ra()
+
+
+def _dec(ad):
+    try:
+        instr = ad.instrument().lower()
+        if instr in _wcs_fns:
+            return _wcs_fns[instr][1](ad)
+    except:
+        pass  # fallback to dec()
+    return ad.dec()
+
 
 # ------------------------------------------------------------------------------
 class Header(Base):
@@ -261,13 +318,13 @@ class Header(Base):
         # RA and Dec are not valid for AZEL_TARGET frames
         if 'AZEL_TARGET' not in ad.tags:
             try:
-                self.ra = ad.ra()
+                self.ra = _ra(ad)
             except (TypeError, AttributeError, KeyError, ValueError, IndexError) as ie:
                 if log:
                     log.warn("Unable to read RA from datafile: %s" % ie)
                 self.ra = None
             try:
-                self.dec = ad.dec()
+                self.dec = _dec(ad)
             except (TypeError, AttributeError, KeyError, ValueError, IndexError) as ie:
                 if log:
                     log.warn("Unable to read DEC from datafile: %s" % ie)

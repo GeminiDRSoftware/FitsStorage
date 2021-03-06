@@ -85,10 +85,11 @@ services:
       - USE_AS_ARCHIVE=True
       - API_BACKEND_LOCATION=:8000
       - USE_ELK_LOGGING=True
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/testdata/archive-data-upload_staging:/data/upload_staging"
       - "~/testdata/archive-sci-dataflow:/sci/dataflow"
-    command:  python3 fits_storage/scripts/api_backend.py
+    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/api_backend.py"
 
   archive:
     image: fitsimage:latest
@@ -117,23 +118,25 @@ services:
       - USE_AS_ARCHIVE=True
       - API_BACKEND_LOCATION=api:8000
       - USE_ELK_LOGGING=True
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/testdata/archive-data-upload_staging:/data/upload_staging"
       - "~/testdata/archive-sci-dataflow:/sci/dataflow"
-    # command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
-    command: python3 fits_storage/scripts/service_ingest_queue.py
+    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/service_ingest_queue.py"
 
   onsite:
     image: fitsimage:latest
     depends_on:
       - postgres-init-onsite
       - postgres-onsite
+    # command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
       - USE_AS_ARCHIVE=False
       - EXPORT_DESTINATIONS=http://archive
       - USE_ELK_LOGGING=True
       - BLOCKED_URLS=
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
@@ -150,10 +153,11 @@ services:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
       - EXPORT_DESTINATIONS=http://archive
       - USE_ELK_LOGGING=True
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/add_to_ingest_queue.py
+    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/add_to_ingest_queue.py"
 
   onsite-ingest-service:
     image: fitsstorageutils:latest
@@ -165,11 +169,11 @@ services:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
       - EXPORT_DESTINATIONS=http://archive
       - USE_ELK_LOGGING=True
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
-    # command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
-    command: python3 fits_storage/scripts/service_ingest_queue.py 
+    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/service_ingest_queue.py"
 
   onsite-export-service:
     image: fitsstorageutils:latest
@@ -181,10 +185,11 @@ services:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres-onsite
       - EXPORT_DESTINATIONS=http://archive
       - USE_ELK_LOGGING=True
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/service_export_queue.py
+    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/service_export_queue.py"
 
 
   archive-calcache-service:
@@ -195,10 +200,11 @@ services:
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
       - USE_ELK_LOGGING=True
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/testdata/archive-data-upload_staging:/data/upload_staging"
       - "~/testdata/archive-sci-dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/service_calcache_queue.py
+    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/service_calcache_queue.py"
 
 
   archive-preview-service:
@@ -209,7 +215,8 @@ services:
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres-archive
       - USE_ELK_LOGGING=True
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/testdata/archive-data-upload_staging:/data/upload_staging"
       - "~/testdata/archive-sci-dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/service_preview_queue.py
+    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/service_preview_queue.py"
