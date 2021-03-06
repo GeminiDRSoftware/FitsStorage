@@ -24,7 +24,7 @@ services:
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
       - PGPASSWORD=fitsdata
-    command: psql -h postgres -U fitsdata fitsdata < ./sql/views.sql
+    command: bash -c "/wait-for-postgres.sh postgres psql -h postgres -U fitsdata fitsdata < ./sql/views.sql"
 
   postgres-init-user:
     image: fitsstorageutils:latest
@@ -33,7 +33,8 @@ services:
       - postgres-init
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
-    command: python3 ./fits_storage/scripts/create_user.py --username admin --password admin --email "noreply@gemini.edu" --superuser
+      - PGPASSWORD=fitsdata
+    command: bash -c "/wait-for-postgres.sh postgres python3 ./fits_storage/scripts/create_user.py --username admin --password admin --email "noreply@gemini.edu" --superuser"
   
   api:
     image: fitsimage:latest
@@ -46,10 +47,11 @@ services:
       - API_BACKEND_LOCATION=:8000
       - USE_ELK_LOGGING=True
       - BLOCKED_URLS=
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/upload_staging:/data/upload_staging"
       - "~/dataflow:/sci/dataflow"
-    command:  python3 fits_storage/scripts/api_backend.py
+    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/api_backend.py"
   
   fitsstore:
     image: fitsimage:latest
@@ -68,6 +70,7 @@ services:
       - UPLOAD_AUTH_COOKIE=qap_upload_processed_cal_ok
       - API_BACKEND_LOCATION=api:8000
       - CAL_QUERY_DEBUG=1
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/upload_staging:/data/upload_staging"
       - "~/dataflow:/sci/dataflow"
@@ -83,9 +86,10 @@ services:
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
       - EXPORT_DESTINATIONS=
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/add_to_ingest_queue.py
+    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/add_to_ingest_queue.py"
 
   add-to-ingest-queue-cals:
     image: fitsstorageutils:latest
@@ -96,9 +100,10 @@ services:
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
       - EXPORT_DESTINATIONS=
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/add_to_ingest_queue.py --path=reduced_cals
+    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/add_to_ingest_queue.py --path=reduced_cals"
 
   add-to-ingest-queue-cals:
     image: fitsstorageutils:latest
@@ -109,9 +114,10 @@ services:
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
       - EXPORT_DESTINATIONS=
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/add_to_ingest_queue.py --path=alopeke/20200218
+    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/add_to_ingest_queue.py --path=alopeke/20200218"
 
   ingest-service:
     image: fitsstorageutils:latest
@@ -124,9 +130,10 @@ services:
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
       - EXPORT_DESTINATIONS=
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/service_ingest_queue.py --make-previews
+    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/service_ingest_queue.py --make-previews"
 
   add-to-calcache-queue:
     image: fitsstorageutils:latest
@@ -137,9 +144,10 @@ services:
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
       - EXPORT_DESTINATIONS=
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/dataflow:/sci/dataflow"
-    command: bash -c "sleep 20 && python3 fits_storage/scripts/add_to_calcache_queue.py --all"
+    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/add_to_calcache_queue.py --all"
 
   calcache-service:
     image: fitsstorageutils:latest
@@ -149,6 +157,7 @@ services:
       - postgres
     environment:
       - FITS_DB_SERVER=fitsdata:fitsdata@postgres
+      - PGPASSWORD=fitsdata
     volumes:
       - "~/dataflow:/sci/dataflow"
-    command: python3 fits_storage/scripts/service_calcache_queue.py
+    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/service_calcache_queue.py"

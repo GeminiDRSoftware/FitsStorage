@@ -110,6 +110,8 @@ RUN cd /opt && git clone --branch release/3.0.x https://github.com/GeminiDRSoftw
 COPY . /opt/FitsStorage
 WORKDIR /opt/FitsStorage
 COPY fitsverify /opt/fitsverify
+COPY docker/wait-for-postgres.sh /
+RUN chmod a+x /wait-for-postgres.sh
 
 # CYTHON STEP FOR DRAGONS
 #RUN pip3 install cython # installed earlier
