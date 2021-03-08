@@ -1,4 +1,5 @@
 2020-2.14
+=========
 
 User-Facing Changes
 -------------------
@@ -7,6 +8,14 @@ User-Facing Changes
 ^^^^^^^^^^^
 
 - updated color for quick look data rows in the grid
+
+Other
+-----
+
+dbmigration
+^^^^^^^^^^^
+
+- removed initializing timestamps on older file database records since it takes too long during ansible deploy
 
 
 2020-2.13
