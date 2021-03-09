@@ -726,12 +726,12 @@
           creates: /etc/letsencrypt
         notify: restart fits-httpd
         when: "'arcdev' in inventory_hostname"
-      - name: (ARCHIVE) Setup Let's Encrypt
-        command: certbot certonly --webroot -w /opt/modwsgi-default/htdocs/ -d archive.gemini.edu
-        args:
-          creates: /etc/letsencrypt
-        notify: restart fits-httpd
-        when: "'archive' in inventory_hostname"
+#      - name: (ARCHIVE) Setup Let's Encrypt
+#        command: certbot certonly --webroot -w /opt/modwsgi-default/htdocs/ -d archive.gemini.edu
+#        args:
+#          creates: /etc/letsencrypt
+#        notify: restart fits-httpd
+#        when: "'archive' in inventory_hostname"
       - name: Start WSGI service on boot
         service: name=fits-httpd enabled=yes
       - name: Start API service on boot
