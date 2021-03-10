@@ -17,11 +17,56 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.history import InMemoryHistory
 from pygments.lexers.sql import SqlLexer
 
+from sqlalchemy.sql.elements import BooleanClauseList, BinaryExpression, True_
+from gemini_calmgr.orm.header import Header
+from gemini_calmgr.orm.diskfile import DiskFile
+from gemini_calmgr.orm.gmos import Gmos
 
 # 1. SQL query dump and prompt
 # 2. Rule python structure and interpretation
 # 3. File-based rule structure and interpretation
-debug_mode = 3
+# 4. SQLAlchemy Query Inspection
+debug_mode = 4
+
+
+def debug_boolean_clause_list(clause, cal_obj, header, diskfile, instr):
+    for clause in clause.clauses:
+        debug_dispatch(clause, cal_obj, header, diskfile, instr)
+
+
+def show_line(table_name, key, cal_value, value, expr):
+    if (not isinstance(cal_value, str) or len(cal_value) <= 28) \
+            and (not isinstance(value, str) or len(value) <= 28):
+        print("%9s | %18s | %30s | %30s | %s" % (table_name, key, cal_value, value, expr))
+    else:
+        print("%9s | %18s | cal: %58s | %s" % (table_name, key, cal_value, expr))
+        print("%9s | %18s | val: %58s | %s" % ('', '', value, ''))
+
+
+def debug_binary_expression(clause, cal_obj, header, diskfile, instr):
+    if hasattr(clause.left, 'table'):  # isinstance(clause.left, AnnotatedColumn):
+        table = clause.left.table
+        key = clause.left.key
+        val = clause.right.value if hasattr(clause.right, 'value') else ''
+        expr = "%s" % clause
+        if table.name == 'header':
+            show_line(table.name, key, getattr(header, key), val, expr)
+        if table.name == 'diskfile':
+            show_line(table.name, key, getattr(diskfile, key), val, expr)
+        if table.name == 'gmos':
+            show_line(table.name, key, getattr(instr, key), val, expr)
+
+
+def debug_dispatch(clause, cal_obj, header, diskfile, instr):
+    if isinstance(clause, BooleanClauseList):
+        debug_boolean_clause_list(clause, cal_obj, header, diskfile, instr)
+    elif isinstance(clause, BinaryExpression):
+        debug_binary_expression(clause, cal_obj, header, diskfile, instr)
+
+
+def debug_parser(query, cal_obj, header, diskfile, instr):
+    for clause in query.query.whereclause.clauses:
+        debug_dispatch(clause, cal_obj, header, diskfile, instr)
 
 
 def build_descripts(rq):
@@ -72,6 +117,9 @@ def why_not_matching(filename, cal_type, calibration):
         if debug_mode == 1:
             args["render_query"] = True
             cals, render_query_result = getattr(cal_obj, method)(**args)
+        elif debug_mode == 4:
+            args["return_query"] = True
+            cals, query_result = getattr(cal_obj, method)(**args)
         else:
             cals = getattr(cal_obj, method)(**args)
         for cal in cals:
@@ -79,7 +127,7 @@ def why_not_matching(filename, cal_type, calibration):
                 logging.info("Calibration matched")
                 exit(0)
 
-        if debug_mode != 1:
+        if debug_mode != 1 and debug_mode != 4:
             if method.startswith('processed_'):
                 processed = True
                 method = method[10:]
@@ -147,6 +195,16 @@ def why_not_matching(filename, cal_type, calibration):
                         print('\n\nResults\n-------\n')
                         for message in messages:
                             print(message)
+        elif debug_mode == 4:
+            header = mgr.session.query(Header).first()
+            diskfile = mgr.session.query(DiskFile).first()
+            instr = mgr.session.query(Gmos).first()
+            print('Relevant fields from calibration:\n')
+            print('Table     | Key                | Cal Value                      '
+                  '| Value                          | Expr')
+            print('----------+--------------------+--------------------------------'
+                  '+--------------------------------+-------------------')
+            debug_parser(query_result, cal_obj, header, diskfile, instr)
 
     if reasons:
         logging.info(reasons)

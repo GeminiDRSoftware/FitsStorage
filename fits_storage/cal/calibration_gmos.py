@@ -305,7 +305,7 @@ class CalibrationGMOS(Calibration):
                 .all(howmany)
             )
 
-    def bias(self, processed=False, howmany=None, render_query=False):
+    def bias(self, processed=False, howmany=None, render_query=False, return_query=False):
         """
         Method to find the best bias frames for the target dataset
 
@@ -377,6 +377,8 @@ class CalibrationGMOS(Calibration):
         if render_query:
             rqr = rq(query.query)
             return (query.all(howmany)), rqr
+        elif return_query:
+            return (query.all(howmany)), query
         else:
             return (query.all(howmany))
         # return (
