@@ -67,7 +67,8 @@ RUN pip3 install psycopg2-binary && \
     pip3 install suds-jurko && \
     pip3 install ephem && \
     pip3 install sphinx && \
-    pip3 install requests-toolbelt
+    pip3 install requests-toolbelt && \
+    pip3 install packaging
 
 # Needed for imexam, which is needed for DRAGONS
 RUN pip3 install photutils
