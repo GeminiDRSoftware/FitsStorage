@@ -47,7 +47,16 @@ def debug_binary_expression(clause, cal_obj, header, diskfile, instr):
     if hasattr(clause.left, 'table'):  # isinstance(clause.left, AnnotatedColumn):
         table = clause.left.table
         key = clause.left.key
-        val = clause.right.value if hasattr(clause.right, 'value') else ''
+        val = clause.right.value if hasattr(clause.right, 'value') else None
+        if val is None:
+            if hasattr(clause.right, 'clauses') and len(clause.right.clauses) > 0:
+                vals = []
+                for cl in clause.right.clauses:
+                    if hasattr(cl, 'value') and cl.value is not None:
+                        vals.append("%s" % cl.value)
+                val = ', '.join(vals)
+            else:
+                val = ''
         expr = "%s" % clause
         if table.name == 'header':
             show_line(table.name, key, getattr(header, key), val, expr)

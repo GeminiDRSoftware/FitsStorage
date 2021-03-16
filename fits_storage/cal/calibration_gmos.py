@@ -947,13 +947,13 @@ class CalibrationGMOS(Calibration):
             )
 
     @not_imaging
-    def slitillum(self, processed=False, howmany=None):
+    def slitillum(self, processed=False, howmany=None, render_query=False, return_query=False):
         """
         Method to find the best slit response for the target dataset.
         """
         # Default number to associate
         howmany = howmany if howmany else 1
-
+        print("in new slitillum")
         filters = []
 
         lower_bound, upper_bound, tolerance = self._get_fuzzy_wavelength()
@@ -961,18 +961,17 @@ class CalibrationGMOS(Calibration):
 
         # we get 1000 rows here to have a limit of some sort, but in practice
         # we get all the cals, then sort them below, then limit it per the request
-        results = (
-            self.get_query()
-                .slitillum(processed)
-                .add_filters(*filters)
+        query = self.get_query() \
+                .slitillum(processed) \
+                .add_filters(*filters) \
                 .match_descriptors(Header.instrument,
                                    Gmos.disperser,
                                    Gmos.detector_x_bin,
                                    Gmos.detector_y_bin,
-                                   Gmos.filter_name)
-                # Absolute time separation must be within 1 year
+                                   Gmos.filter_name) \
                 .max_interval(days=183)
-                .all(1000))
+        results = (
+            query.all(1000))
 
         ut_datetime = self.descriptors['ut_datetime']
         wavelength = float(self.descriptors['central_wavelength'])
@@ -992,9 +991,15 @@ class CalibrationGMOS(Calibration):
         # do the actual sort and return our requested max results
         retval.sort(key=score)
         if len(retval) > howmany:
-            return retval[0:howmany]
+            if return_query:
+                return retval[0:howmany], query
+            else:
+                return retval[0:howmany]
         else:
-            return retval
+            if return_query:
+                return retval, query
+            else:
+                return retval
 
     def why_not_matching(self, calibration, method, processed, file_based=False):
         sfx = '_rules'
