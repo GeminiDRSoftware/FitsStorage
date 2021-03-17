@@ -194,7 +194,7 @@ class PreviewQueueUtil(object):
                 if using_s3:
                     # Fetch from S3 to staging area
                     # TODO: We're not checking here if the file was actually retrieved...
-                    if len(diskfile.ad_object) > 1:
+                    if False:  # TODO fixme len(diskfile.ad_object) > 1:
                         munged_filename = "preview_%s_%d" % (diskfile.filename, idx)
                     else:
                         munged_filename = "preview_" + diskfile.filename
@@ -577,4 +577,3 @@ if __name__ == "__main__":
     # pqu.render_preview(astrodata.open("/Users/ooberdorf/Downloads/N20200730S0218.fits"), "/Users/ooberdorf/test.jpg")
     # Example of one that worked with the old way and failed after the fix
     pqu.render_preview(astrodata.open("/Users/ooberdorf/Downloads/N20201208S0446.fits"), "/Users/ooberdorf/test.jpg")
-

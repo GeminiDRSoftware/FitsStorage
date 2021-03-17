@@ -1,3 +1,22 @@
+2020-2.15
+
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- added f32 options to disperser search for NIRI
+
+Other
+-----
+
+previewqueue
+^^^^^^^^^^^^
+
+- Removed problem if statement for s3 preview generation
+
+
 2020-2.14
 =========
 
