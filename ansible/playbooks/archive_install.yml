@@ -222,7 +222,8 @@
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
-          version: release/3.0.x
+          version: 9c809b389336c96580a5d4bd31b288627b49b957
+          #version: release/3.0.x
         register: dragonscheckout
       - name: Cythonize DRAGONS
         command: /usr/local/bin/cythonize -3 -i cyclip.pyx
