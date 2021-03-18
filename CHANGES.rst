@@ -8,6 +8,13 @@ User-Facing Changes
 
 - added f32 options to disperser search for NIRI
 
+Web Services
+------------
+
+/programinfojson
+
+- fixed formatting bug that cuased duplicate "s
+
 Other
 -----
 
