@@ -45,7 +45,12 @@ def check_present(session, filename):
         True if a record exists in `fits_storage.orm.DiskFile` for this filename with `present` set to True
     """
     df = session.query(DiskFile).filter(DiskFile.filename==filename).filter(DiskFile.present == True).first()
-    return True if df else False
+    if not df:
+        return False
+    src = os.path.join(dhs_perm, filename)
+    if df.file_size < os.path.getsize(src):
+        return False
+    return True
 
 
 _seen_validation_failures = dict()
@@ -126,7 +131,7 @@ def copy_over(session, iq, logger, filename, dryrun):
     src = os.path.join(dhs_perm, filename)
     dest = os.path.join(storage_root, filename)
     # If the Destination file already exists, skip it
-    if os.access(dest, os.F_OK | os.R_OK):
+    if os.access(dest, os.F_OK | os.R_OK) and os.path.getsize(dest) >= os.path.getsize(src):
         logger.info("%s already exists on storage_root - skipping", filename)
         return True
     # If the source path is a directory, skip is
@@ -203,6 +208,7 @@ if __name__ == "__main__":
          logger.debug("Instantiating IngestQueueUtil object")
          iq = IngestQueueUtil(session, logger)
          logger.info("Starting looping...")
+         count = 0  # reset known_list after count of 1000
          while True:
              todo_list = dhs_list - known_list
              logger.info("%d new files to check", len(todo_list))
@@ -217,6 +223,10 @@ if __name__ == "__main__":
                  else:
                      if copy_over(session, iq, logger, filename, options.dryrun):
                          known_list.add(filename)
+             count = count+1
+             if count >= 1000:
+                 count = 0
+                 known_list.clear()
              logger.debug("Pass complete, sleeping")
              time.sleep(5)
              logger.debug("Re-scanning")

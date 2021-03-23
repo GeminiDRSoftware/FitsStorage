@@ -1,4 +1,18 @@
+2020-2.16
+=========
+
+Updated Scripts
+---------------
+
+copy_from_dhs
+^^^^^^^^^^^^^
+
+- If DHS file is larger than dataflow, copy it again
+- flush list of "known" files every 1000 iterations
+
+
 2020-2.15
+=========
 
 User-Facing Changes
 -------------------
