@@ -306,13 +306,19 @@ class Header(Base):
             self.local_time = None
 
         # Data Types
-        self.observation_type = gemini_observation_type(ad.observation_type())
+        try:
+            self.observation_type = gemini_observation_type(ad.observation_type())
+        except AttributeError:
+            self.observation_type = None
 
         if 'PINHOLE' in ad.tags:
             self.observation_type = 'PINHOLE'
         if 'RONCHI' in ad.tags:
             self.observation_type = 'RONCHI'
-        self.observation_class = gemini_observation_class(ad.observation_class())
+        try:
+            self.observation_class = gemini_observation_class(ad.observation_class())
+        except AttributeError:
+            self.observation_class = None
         self.object = ad.object()
 
         # RA and Dec are not valid for AZEL_TARGET frames
@@ -339,11 +345,17 @@ class Header(Base):
                 self.dec = None
 
         # These should be in the descriptor function really.
-        azimuth = ad.azimuth()
+        try:
+            azimuth = ad.azimuth()
+        except AttributeError:
+            azimuth = None
         if isinstance(azimuth, str):
             azimuth = dmstodeg(azimuth)
         self.azimuth = azimuth
-        elevation = ad.elevation()
+        try:
+            elevation = ad.elevation()
+        except AttributeError:
+            elevation = None
         if isinstance(elevation, str):
             elevation = dmstodeg(elevation)
         self.elevation = elevation
@@ -361,14 +373,38 @@ class Header(Base):
             if log:
                 log.warn("Unable to parse airmass: %s" % airmasserr)
             self.airmass = None
-        self.raw_iq = ad.raw_iq()
-        self.raw_cc = ad.raw_cc()
-        self.raw_wv = ad.raw_wv()
-        self.raw_bg = ad.raw_bg()
-        self.requested_iq = ad.requested_iq()
-        self.requested_cc = ad.requested_cc()
-        self.requested_wv = ad.requested_wv()
-        self.requested_bg = ad.requested_bg()
+        try:
+            self.raw_iq = ad.raw_iq()
+        except AttributeError:
+            self.raw_iq = None
+        try:
+            self.raw_cc = ad.raw_cc()
+        except AttributeError:
+            self.raw_cc = None
+        try:
+            self.raw_wv = ad.raw_wv()
+        except AttributeError:
+            self.raw_wv = None
+        try:
+            self.raw_bg = ad.raw_bg()
+        except AttributeError:
+            self.raw_bg = None
+        try:
+            self.requested_iq = ad.requested_iq()
+        except AttributeError:
+            self.requested_iq = None
+        try:
+            self.requested_cc = ad.requested_cc()
+        except AttributeError:
+            self.requested_cc = None
+        try:
+            self.requested_wv = ad.requested_wv()
+        except AttributeError:
+            self.requested_wv = None
+        try:
+            self.requested_bg = ad.requested_bg()
+        except AttributeError:
+            self.requested_bg = None
 
         # Knock illegal characters out of filter names. eg NICI %s.
         # Spaces to underscores.
@@ -382,7 +418,10 @@ class Header(Base):
         # NICI exposure times are a pain, because there's two of them...
         # Except they're always the same.
         if self.instrument != 'NICI':
-            exposure_time = ad.exposure_time()
+            try:
+                exposure_time = ad.exposure_time()
+            except AttributeError:
+                exposure_time = None
         else:
             # NICI exposure_time descriptor is broken
             et_b = ad.phu.get('ITIME_B')
@@ -410,7 +449,10 @@ class Header(Base):
         if disperser_string:
             self.disperser = disperser_string.replace('/', '_')
 
-        self.camera = ad.camera(pretty=True)
+        try:
+            self.camera = ad.camera(pretty=True)
+        except AttributeError:
+            self.camera = None
         if 'SPECT' in ad.tags and 'GPI' not in ad.tags:
             try:
                 self.central_wavelength = ad.central_wavelength(asMicrometers=True)
@@ -422,8 +464,14 @@ class Header(Base):
             if log:
                 log.warn("Unable to read disperser information from datafile due to error: %s" % ae)
             self.wavelength_band = None
-        self.focal_plane_mask = ad.focal_plane_mask(pretty=True)
-        self.pupil_mask = ad.pupil_mask(pretty=True)
+        try:
+            self.focal_plane_mask = ad.focal_plane_mask(pretty=True)
+        except AttributeError:
+            self.focal_plane_mask = None
+        try:
+            self.pupil_mask = ad.pupil_mask(pretty=True)
+        except AttributeError:
+            self.pupil_mask = None
         try:
             dvx = ad.detector_x_bin()
         except (TypeError, AttributeError, KeyError, IndexError) as dvxae:
@@ -459,7 +507,10 @@ class Header(Base):
                 log.warn("Unable to get read speed from datafile: %s " % ae)
             self.detector_readspeed_setting = None
 
-        welldepthstr = str(ad.well_depth_setting())
+        try:
+            welldepthstr = str(ad.well_depth_setting())
+        except AttributeError:
+            welldepthstr = None
         if welldepthstr in gemini_welldepth_settings:
             self.detector_welldepth_setting = welldepthstr
 
@@ -467,7 +518,10 @@ class Header(Base):
             self.detector_readmode_setting = "NodAndShuffle" \
                 if 'NODANDSHUFFLE' in ad.tags else "Classic"
         else:
-            self.detector_readmode_setting = str(ad.read_mode()).replace(' ', '_')
+            try:
+                self.detector_readmode_setting = str(ad.read_mode()).replace(' ', '_')
+            except AttributeError:
+                self.detector_readmode_setting = None
 
         try:
             self.detector_roi_setting = ad.detector_roi_setting()
@@ -476,7 +530,10 @@ class Header(Base):
                 log.warn("Unable to get ROI setting: %s" % te)
             self.detector_roi_setting = None
 
-        self.coadds = ad.coadds()
+        try:
+            self.coadds = ad.coadds()
+        except AttributeError:
+            self.coadds = None
 
         # Hack the AO header and LGS for now
         aofold = ad.phu.get('AOFOLD')
@@ -488,7 +545,10 @@ class Header(Base):
         lgsloop = ad.phu.get('LGSLOOP')
 
         self.laser_guide_star = (lgsloop == 'CLOSED') or (lgustage == 'IN')
-        self.wavefront_sensor = ad.wavefront_sensor()
+        try:
+            self.wavefront_sensor = ad.wavefront_sensor()
+        except AttributeError:
+            self.wavefront_sensor = None
 
         # And the Spectroscopy and mode items
         self.spectroscopy = False
@@ -511,11 +571,14 @@ class Header(Base):
         if self.observation_type == 'MASK':
             self.qa_state = 'Pass'
         else:
-            qa_state = ad.qa_state()
-            if qa_state in ['Fail', 'CHECK', 'Undefined', 'Usable', 'Pass']:
-                self.qa_state = qa_state
-            else:
-                # Default to Undefined. Avoid having NULL values
+            try:
+                qa_state = ad.qa_state()
+                if qa_state in ['Fail', 'CHECK', 'Undefined', 'Usable', 'Pass']:
+                    self.qa_state = qa_state
+                else:
+                    # Default to Undefined. Avoid having NULL values
+                    self.qa_state = 'Undefined'
+            except AttributeError:
                 self.qa_state = 'Undefined'
 
         # Set the release date
@@ -534,7 +597,10 @@ class Header(Base):
             self.proprietary_coordinates = True
 
         # Set the gcal_lamp state
-        gcal_lamp = ad.gcal_lamp() 
+        try:
+            gcal_lamp = ad.gcal_lamp()
+        except AttributeError:
+            gcal_lamp = None
         if gcal_lamp is not None:
             self.gcal_lamp = gcal_lamp
 

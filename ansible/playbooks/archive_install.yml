@@ -280,7 +280,7 @@
         command: systemctl daemon-reload
         when: postgresql_configured.changed or postgresql_service_installed.changed
       - name: Initialize PostgreSQL database
-        command: bash -c "/usr/bin/postgresql-setup --initdb"
+        command: bash -c "/usr/bin/postgresql-setup initdb"
         when: postgresql_configured.changed or postgresql_service_installed.changed
         become: true
         become_user: root
