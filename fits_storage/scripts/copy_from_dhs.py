@@ -8,6 +8,7 @@ import time
 import shutil
 
 import astrodata
+from fits_storage.fits_verify import fitsverify
 from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
@@ -54,6 +55,7 @@ def check_present(session, filename):
 
 
 _seen_validation_failures = dict()
+_fits_verify_failures = dict()
 
 
 def validate(fullpath):
@@ -71,6 +73,21 @@ def validate(fullpath):
                 reason = 'TELESCOP keyword missing in file %s' % fullpath
         except:
             reason = "Unable to open file in astrodata, returning as invalid: %s" % fullpath
+        if reason is None:
+            try:
+                isfits, warnings, errors, report = fitsverify(fullpath)
+                if not isfits or errors > 0:
+                    if fullpath not in _fits_verify_failures:
+                        _fits_verify_failures[fullpath] = 1
+                    else:
+                        num_verify_failures = _fits_verify_failures[fullpath]
+                        _fits_verify_failures[fullpath] = num_verify_failures + 1
+                    if _fits_verify_failures[fullpath] < 120:
+                        reason = 'File %s failed fitsverify check:\n%s' % (fullpath, report)
+                    else:
+                        logger.info("%s failed fitsverify 100 times, allowing it now", filename)
+            except:
+                logger.info("%s unable to run fitsverify, continuing" % filename)
     if reason is not None:
         if fullpath not in _seen_validation_failures:
             _seen_validation_failures[fullpath] = 1
