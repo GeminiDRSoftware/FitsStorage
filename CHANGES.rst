@@ -10,7 +10,7 @@ copy_from_dhs
 - If DHS file is larger than dataflow, copy it again
 - flush list of "known" files every 1000 iterations
 - perform a fitsverify check after the TELESCOP and astrodata checks
-
+- perform and cache an md5 checksum on DHS files to compare against for future checks against todays data
 
 2020-2.15
 =========

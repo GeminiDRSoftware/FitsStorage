@@ -9,9 +9,11 @@ import shutil
 
 import astrodata
 from fits_storage.fits_verify import fitsverify
+from fits_storage.gemini_metadata_utils import get_fake_ut, gemini_date
 from fits_storage.orm import session_scope
 from fits_storage.orm.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.utils.hashes import md5sum
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 from fits_storage.fits_storage_config import using_s3, storage_root, dhs_perm, min_dhs_age_seconds, smtp_server, \
                                              max_dhs_validation_failures
@@ -21,6 +23,86 @@ from fits_storage.fits_storage_config import using_s3, storage_root, dhs_perm, m
 """
 Script to copy files from the DHS staging area into Dataflow.
 """
+
+
+global _today_str
+global _yesterday_str
+
+_today_str = gemini_date('today')
+_yesterday_str = gemini_date('yesterday')
+
+
+class MD5Cache:
+    def __init__(self):
+        self._today_md5s = dict()
+        self._yesterday_md5s = dict()
+
+    def rotate(self):
+        """
+        Rotate today's list of MD5s into yesterday.
+
+        This moves the 'today' md5 dictionary to yesterday and
+        creates a fresh dictionary for today.
+        """
+        self._yesterday_md5s = self._today_md5s
+        self._today_md5s = dict()
+
+    def add_today(self, filename, md5):
+        self._today_md5s[filename] = md5
+
+    def add_yesterday(self, filename, md5):
+        self._yesterday_md5s[filename] = md5
+
+    def get_md5(self, filename):
+        retval = self._today_md5s.get(filename, None)
+        if retval is None:
+            return self._yesterday_md5s.get(filename, None)
+        return retval
+
+    def set_md5(self, filename, md5):
+        if _yesterday_str in filename:
+            self._yesterday_md5s[filename] = md5
+        else:
+            self._today_md5s[filename] = md5
+
+
+_md5_cache = MD5Cache()
+
+
+def check_md5_differs(filename, logger=None):
+    """
+    Check if the MD5 of the given source file is different from what we had before.
+
+    This is to detect changes in a file.  Because we cache the list of recognized
+    files and only clear it out every 1000 iterations, this too will only be called
+    every 1000 iterations.  Running md5s on an entire day expends about 12 seconds
+    of additional real time.
+
+    Parameters
+    ----------
+    filename : str
+        Name of the file to check
+
+    Returns
+    -------
+    str md5 checksum if we detect a difference, None if we do not
+    """
+    if _today_str in filename or _yesterday_str in filename:
+        src = os.path.join(dhs_perm, filename)
+        md5 = md5sum(src)
+        checkmd5 = _md5_cache.get_md5(filename)
+        if checkmd5 is None:
+            # If we do not have this file at all, we save the MD5 now.
+            _md5_cache.set_md5(filename, md5)
+            return None
+        elif md5 != checkmd5:
+            # Mismatch, we return our calculated md5 but we DO NOT
+            # save it in the cache.  We let the copy job save it
+            # only if it actually copies the file.
+            if logger:
+                logger.info('Saw MD5 mismatch for file, signaling for recopy: %s' % filename)
+            return md5
+    return None
 
 
 # Utility functions
@@ -50,6 +132,9 @@ def check_present(session, filename):
         return False
     src = os.path.join(dhs_perm, filename)
     if df.file_size < os.path.getsize(src):
+        return False
+    if check_md5_differs(filename):
+        # the file changed since we last looked, so we don't have *this* version
         return False
     return True
 
@@ -147,9 +232,17 @@ def copy_over(session, iq, logger, filename, dryrun):
     """
     src = os.path.join(dhs_perm, filename)
     dest = os.path.join(storage_root, filename)
+    md5 = check_md5_differs(filename, logger)
     # If the Destination file already exists, skip it
-    if os.access(dest, os.F_OK | os.R_OK) and os.path.getsize(dest) >= os.path.getsize(src):
+    if os.access(dest, os.F_OK | os.R_OK) and os.path.getsize(dest) >= os.path.getsize(src) \
+            and md5 is None:
+        # unfortunately, we have to recheck md5 here pending a more invasive refactor
+        # I'm hoping we can drop the md5 logic once DHS implements the .part
         logger.info("%s already exists on storage_root - skipping", filename)
+        # have to save md5 as a special case, to catch file changes on existing files after
+        # starting copy_from_dhs job
+        if _today_str in filename or _yesterday_str in filename:
+            _md5_cache.set_md5(filename, md5sum(os.path.join(src)))
         return True
     # If the source path is a directory, skip is
     if os.path.isdir(src):
@@ -185,6 +278,10 @@ def copy_over(session, iq, logger, filename, dryrun):
             shutil.copyfile(src, dst)
             logger.info("Adding %s to IngestQueue", filename)
             iq.add_to_queue(filename, '', force=False, force_md5=False, after=None)
+            if md5 is not None:
+                # NOW we save the md5 of the last version we actually copied
+                if _today_str in filename or _yesterday_str in filename:
+                    _md5_cache.set_md5(filename, md5)
     except:
         logger.error("Problem copying %s to %s", src, storage_root)
         logger.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1],
@@ -244,6 +341,11 @@ if __name__ == "__main__":
              if count >= 1000:
                  count = 0
                  known_list.clear()
+             if _today_str != get_fake_ut():
+                 # clear out the md5 cache for a new day
+                 _md5_cache.rotate()
+                 _today_str = get_fake_ut()
+                 _yesterday_str = gemini_date('yesterday')
              logger.debug("Pass complete, sleeping")
              time.sleep(5)
              logger.debug("Re-scanning")
