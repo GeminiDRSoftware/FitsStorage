@@ -340,7 +340,9 @@ if __name__ == "__main__":
              count = count+1
              if count >= 1000:
                  count = 0
-                 known_list.clear()
+                 for f in known_list:
+                     if _today_str in known_list or _yesterday_str in known_list:
+                         known_list.remove(f)
              if _today_str != get_fake_ut():
                  # clear out the md5 cache for a new day
                  _md5_cache.rotate()
