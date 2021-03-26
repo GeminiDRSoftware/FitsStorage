@@ -338,18 +338,20 @@ if __name__ == "__main__":
                      if copy_over(session, iq, logger, filename, options.dryrun):
                          known_list.add(filename)
              count = count+1
-             if count >= 1000:
+             if count >= 1:
                  count = 0
+                 remove_list = set()
                  for f in known_list:
-                     if _today_str in known_list or _yesterday_str in known_list:
-                         known_list.remove(f)
+                     if _today_str in f or _yesterday_str in f:
+                         remove_list.add(f)
+                 known_list = known_list - remove_list
              if _today_str != get_fake_ut():
                  # clear out the md5 cache for a new day
                  _md5_cache.rotate()
                  _today_str = get_fake_ut()
                  _yesterday_str = gemini_date('yesterday')
              logger.debug("Pass complete, sleeping")
-             time.sleep(5)
+             # time.sleep(5)
              logger.debug("Re-scanning")
              dhs_list = set(os.listdir(dhs_perm))
 
