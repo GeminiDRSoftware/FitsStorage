@@ -338,7 +338,7 @@ if __name__ == "__main__":
                      if copy_over(session, iq, logger, filename, options.dryrun):
                          known_list.add(filename)
              count = count+1
-             if count >= 1:
+             if count >= 1000:
                  count = 0
                  remove_list = set()
                  for f in known_list:
@@ -351,7 +351,7 @@ if __name__ == "__main__":
                  _today_str = get_fake_ut()
                  _yesterday_str = gemini_date('yesterday')
              logger.debug("Pass complete, sleeping")
-             # time.sleep(5)
+             time.sleep(5)
              logger.debug("Re-scanning")
              dhs_list = set(os.listdir(dhs_perm))
 
