@@ -1,3 +1,15 @@
+2020-2.17
+=========
+
+Other
+-----
+
+header.py
+^^^^^^^^^
+
+- Made header parsing more tolerant of bad FITS files so they ingest with missing fields
+
+
 2020-2.16
 =========
 
