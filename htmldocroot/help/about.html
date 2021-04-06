@@ -12,18 +12,21 @@ as a lower cost replacement for the Gemini Science Archive which was operated un
 
 <p>The software was developed in house based on the FitsStorage software which had been developed
 previously as an internal data management tool. It makes heavy use of the AstroData module from the
-Gemini Python software written by the Gemini Data Processing Software Group.</p>
+DRAGONS software written by the Gemini Science User Support Department.</p>
 
 <p>Paul Hirst is the project manager and primary developer and developed the original FitsStorage
-software. Ricardo Cardenes is a software developer on the project. University of Victoria students 
-Adam Paul and Petra Clementson worked on the project during their internships at Gemini.</p>
+software. Ricardo Cardenes was a software developer on the project. University of Victoria students
+Adam Paul and Petra Clementson worked on the project during their internships at Gemini.
+Maintenance and development are now handled by Oliver Oberdorf.</p>
 
 <h1>Current Status</h1>
 
 <p>This system is fully operational.</p>
 <p>Raw data is being automatically ingested in near-real-time from both telescopes.</p>
 <p> We are not aware of any major issues with the system, if you find a problem that is not
-listed below, please do report it. </p>
+    listed below, please do report it in the
+    <a href="https://www.gemini.edu/sciops/helpdesk/submit-general-helpdesk-request">Helpdesk</a>
+    under the topic "Gemini Observatory Archive".</p>
 
 <h1>Known issues</h1>
 <ul>
@@ -32,5 +35,37 @@ listed below, please do report it. </p>
 
 <h1>Version</h1>
 <p>2020-3</p>
+
+<h1>Change Log (User Facing)</h1>
+
+<ul>
+    <li><b>March 17, 2021 (v2020-2.15)</b><br/>
+      <ul>
+        <li>
+            <b>NIRI f32 Disperser Search</b> NIRI disperser search options now include f32 options
+        </li>
+      </ul>
+    </li>
+    <li><b>March 9, 2021 (v2020-2.14)</b><br/>
+      <ul>
+        <li>
+            <b>Publication Search</b> search for related data by bibliography code. This is available on the
+            main search page in the lower right area of the form.
+        </li>
+        <li>
+            <b>B480 Grating Search</b> new search option for GMOS grating
+        </li>
+        <li>
+            <b>GPI Astrometric Standards</b> search for GPI Astrometric Standards when GPI Instrument is selected
+        </li>
+        <li>
+            <b>Search for Calibrations On Selected Files</b> Ability to select specific files to search for related calibrations
+        </li>
+        <li>
+            <b>Fix for 'Alopeke and Zorro data RA/DEC search</b> Problems with 'Alopeke and Zorro coordinates in the archive were resolved and they should be searchable by coordinates now
+        </li>
+      </ul></li>
+</ul>
+
 </body>
 </html>

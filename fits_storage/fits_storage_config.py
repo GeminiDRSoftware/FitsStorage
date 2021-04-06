@@ -104,11 +104,13 @@ _host_based_configs = {
         'PROCESSED_CALS_PATH': 'reduced_cals_dev',
     },
     "ooberdorf-ml1": {
+        'DHS_PERM': '/Users/ooberdorf/dhs',
         'EXPORT_DESTINATIONS': '',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'DEFAULT_UPLOAD_PATH': 'upload_dev',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev',
         'DAS_CALPROC_PATH': '/Users/ooberdorf/das_calproc',
+        'STORAGE_ROOT': '/Users/ooberdorf/dataflow'
     },
     "some_actual_site_host": {
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
@@ -222,7 +224,7 @@ z_staging_area = lookup_config('Z_STAGING_AREA', '/data/z_staging')
 storage_root = lookup_config('STORAGE_ROOT', '/sci/dataflow')
 #storage_root = '/data/archive_soak'
 #storage_root = '/data/skycam'
-dhs_perm = '/sci/dhs'
+dhs_perm = lookup_config('DHS_PERM', '/sci/dhs')
 min_dhs_age_seconds = 15
 max_dhs_validation_failures = 4
 

@@ -707,7 +707,10 @@ dropdown_options = {
          ("Jgrism", "J-grism"),
          ("Kgrism", "K-grism"),
          ("Lgrism", "L-grism"),
-         ("Mgrism", "M-grism")],
+         ("Mgrism", "M-grism"),
+         ("Hgrismf32", "H-grismf32"),
+         ("Jgrismf32", "J-grismf32"),
+         ("Kgrismf32", "K-grismf32")],
     "nifs_disp_options":
         [("Z", "Z"),
          ("J", "J"),

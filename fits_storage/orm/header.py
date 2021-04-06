@@ -125,6 +125,16 @@ def _dec(ad):
     return ad.dec()
 
 
+def _try_or_none(fn, log, message):
+    try:
+        retval = fn()
+        return retval
+    except (TypeError, AttributeError, KeyError, ValueError, IndexError) as tonerr:
+        if log:
+            log.warning(message)
+        return None
+
+
 # ------------------------------------------------------------------------------
 class Header(Base):
     """
@@ -308,16 +318,21 @@ class Header(Base):
         # Data Types
         try:
             self.observation_type = gemini_observation_type(ad.observation_type())
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as oterr:
+            if log:
+                log.warning("Unable to deternime observation type in datafile: %s" % oterr)
             self.observation_type = None
 
         if 'PINHOLE' in ad.tags:
             self.observation_type = 'PINHOLE'
         if 'RONCHI' in ad.tags:
             self.observation_type = 'RONCHI'
+
         try:
             self.observation_class = gemini_observation_class(ad.observation_class())
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as ocerr:
+            if log:
+                log.warning("Unable to determine observation class in datafile: %s" % oterr)
             self.observation_class = None
         self.object = ad.object()
 
@@ -347,14 +362,18 @@ class Header(Base):
         # These should be in the descriptor function really.
         try:
             azimuth = ad.azimuth()
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as azerr:
+            if log:
+                log.warning("Unable to determine azimuth from datafile: %s" % azerr)
             azimuth = None
         if isinstance(azimuth, str):
             azimuth = dmstodeg(azimuth)
         self.azimuth = azimuth
         try:
             elevation = ad.elevation()
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as elerr:
+            if log:
+                log.warning("Unable to determine elevation from datafile: %s" % elerr)
             elevation = None
         if isinstance(elevation, str):
             elevation = dmstodeg(elevation)
@@ -373,37 +392,54 @@ class Header(Base):
             if log:
                 log.warn("Unable to parse airmass: %s" % airmasserr)
             self.airmass = None
+
         try:
             self.raw_iq = ad.raw_iq()
-        except AttributeError:
-            self.raw_iq = None
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as rawiqerr:
+            if log:
+                log.warning("Unable to parse raw_iq: %s" % rawiqerr)
+            self.raw_iq=None
         try:
             self.raw_cc = ad.raw_cc()
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as rawccerr:
+            if log:
+                log.warning("Unable to parse raw_cc: %s" % rawccerr)
             self.raw_cc = None
         try:
             self.raw_wv = ad.raw_wv()
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as rawwverr:
+            if log:
+                log.warning("Unable to parse raw_wv: %s" % rawwverr)
             self.raw_wv = None
         try:
             self.raw_bg = ad.raw_bg()
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as rawbgerr:
+            if log:
+                log.warning("Unable to parse raw_bg: %s" % rawbgerr)
             self.raw_bg = None
         try:
             self.requested_iq = ad.requested_iq()
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as reqiqerr:
+            if log:
+                log.warning("Unable to parse requested_iq: %s" % reqiqerr)
             self.requested_iq = None
         try:
             self.requested_cc = ad.requested_cc()
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as reqccerr:
+            if log:
+                log.warning("Unable to parse requested_cc: %s" % reqccerr)
             self.requested_cc = None
         try:
             self.requested_wv = ad.requested_wv()
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as reqwverr:
+            if log:
+                log.warning("Unable to parse requested_wv: %s" % reqwverr)
             self.requested_wv = None
         try:
             self.requested_bg = ad.requested_bg()
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as reqbgerr:
+            if log:
+                log.warning("Unable to parse requested_bg: %s" % reqbgerr)
             self.requested_bg = None
 
         # Knock illegal characters out of filter names. eg NICI %s.
@@ -417,25 +453,22 @@ class Header(Base):
 
         # NICI exposure times are a pain, because there's two of them...
         # Except they're always the same.
-        if self.instrument != 'NICI':
-            try:
-                exposure_time = ad.exposure_time()
-            except AttributeError:
-                exposure_time = None
-        else:
-            # NICI exposure_time descriptor is broken
-            et_b = ad.phu.get('ITIME_B')
-            et_r = ad.phu.get('ITIME_R')
-            exposure_time = et_b if et_b else et_r
-
-        # Protect the database from field overflow from junk.
-        # The datatype is precision=8, scale=4
         try:
+            if self.instrument != 'NICI':
+                exposure_time = ad.exposure_time()
+            else:
+                # NICI exposure_time descriptor is broken
+                et_b = ad.phu.get('ITIME_B')
+                et_r = ad.phu.get('ITIME_R')
+                exposure_time = et_b if et_b else et_r
+
+            # Protect the database from field overflow from junk.
+            # The datatype is precision=8, scale=4
             if exposure_time is not None and (exposure_time < 10000 and exposure_time >= 0):
                 self.exposure_time = exposure_time
-        except TypeError as et_type_err:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as et_type_err:
             if log:
-                log.warn("Type rror parsing exposure time, ignoring")
+                log.warning("Type error parsing exposure time, ignoring")
             
 
         # Need to remove invalid characters in disperser names, eg gnirs has
@@ -451,8 +484,11 @@ class Header(Base):
 
         try:
             self.camera = ad.camera(pretty=True)
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as camerr:
+            if log:
+                log.warning("Unable to parse camera: %s" % camerr)
             self.camera = None
+
         if 'SPECT' in ad.tags and 'GPI' not in ad.tags:
             try:
                 self.central_wavelength = ad.central_wavelength(asMicrometers=True)
@@ -464,14 +500,21 @@ class Header(Base):
             if log:
                 log.warn("Unable to read disperser information from datafile due to error: %s" % ae)
             self.wavelength_band = None
+
         try:
             self.focal_plane_mask = ad.focal_plane_mask(pretty=True)
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as  fpmerr:
+            if log:
+                log.warning("Unable to parse focal plane mask: %s" % fpmerr)
             self.focal_plane_mask = None
+
         try:
             self.pupil_mask = ad.pupil_mask(pretty=True)
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as pupmerr:
+            if log:
+                log.warning("Unable to parse pupil_mask: %s" % pupmerr)
             self.pupil_mask = None
+
         try:
             dvx = ad.detector_x_bin()
         except (TypeError, AttributeError, KeyError, IndexError) as dvxae:
@@ -509,7 +552,9 @@ class Header(Base):
 
         try:
             welldepthstr = str(ad.well_depth_setting())
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as wdptherr:
+            if log:
+                log.warning("Unable to parse well_depth_setting: %s" % wdptherr)
             welldepthstr = None
         if welldepthstr in gemini_welldepth_settings:
             self.detector_welldepth_setting = welldepthstr
@@ -520,7 +565,9 @@ class Header(Base):
         else:
             try:
                 self.detector_readmode_setting = str(ad.read_mode()).replace(' ', '_')
-            except AttributeError:
+            except (TypeError, AttributeError, KeyError, ValueError, IndexError) as rdmderr:
+                if log:
+                    log.warning("Unable to parse read_mode: %s" % rdmderr)
                 self.detector_readmode_setting = None
 
         try:
@@ -532,7 +579,9 @@ class Header(Base):
 
         try:
             self.coadds = ad.coadds()
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as coaddserr:
+            if log:
+                log.warning("Unable to parse coadds: %s" % coaddserr)
             self.coadds = None
 
         # Hack the AO header and LGS for now
@@ -545,9 +594,12 @@ class Header(Base):
         lgsloop = ad.phu.get('LGSLOOP')
 
         self.laser_guide_star = (lgsloop == 'CLOSED') or (lgustage == 'IN')
+
         try:
             self.wavefront_sensor = ad.wavefront_sensor()
-        except AttributeError:
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as wfsenserr:
+            if log:
+                log.warning("Unable to parse wavefront_seonsor: %s" % wfsenserr)
             self.wavefront_sensor = None
 
         # And the Spectroscopy and mode items
@@ -578,7 +630,9 @@ class Header(Base):
                 else:
                     # Default to Undefined. Avoid having NULL values
                     self.qa_state = 'Undefined'
-            except AttributeError:
+            except (TypeError, AttributeError, KeyError, ValueError, IndexError) as qasterr:
+                if log:
+                    log.warning("Unable to parse qa_state: %s" % qasterr)
                 self.qa_state = 'Undefined'
 
         # Set the release date
@@ -599,10 +653,12 @@ class Header(Base):
         # Set the gcal_lamp state
         try:
             gcal_lamp = ad.gcal_lamp()
-        except AttributeError:
-            gcal_lamp = None
-        if gcal_lamp is not None:
-            self.gcal_lamp = gcal_lamp
+            if gcal_lamp is not None:
+                self.gcal_lamp = gcal_lamp
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as gcallmperr:
+            if log:
+                log.warning("Unable to parse gcal_lamp: %s" % gcallmperr)
+            self.gcal_lamp = None
 
         # Set the reduction state
         # Note - these are in order - a processed_flat will have
