@@ -180,7 +180,7 @@ class TapeDrive(object):
         retval = None
         [returncode, stdoutstring, stderrstring] = self.mt('status', fail=fail)
         if returncode == 0:
-            retval = stdoutstring
+            retval = stdoutstring.decode('ascii')
 
         return retval
 
