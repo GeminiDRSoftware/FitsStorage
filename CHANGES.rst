@@ -34,13 +34,65 @@ service_target_queue.py
 
 - Properly detect location of Gemini North and South for target calculation, skip GPI [GL#5]
 
+
+2020-2.17
+=========
+
 Other
 -----
 
+header.py
+^^^^^^^^^
+
+- Made header parsing more tolerant of bad FITS files so they ingest with missing fields
+
+
+2020-2.16
+=========
+
+Updated Scripts
+---------------
+
+copy_from_dhs
+^^^^^^^^^^^^^
+
+- If DHS file is larger than dataflow, copy it again
+- flush list of "known" files every 1000 iterations
+- perform a fitsverify check after the TELESCOP and astrodata checks
+- perform and cache an md5 checksum on DHS files to compare against for future checks against todays data
+
+2020-2.15
+=========
+
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- added f32 options to disperser search for NIRI
+
+Web Services
+------------
+
+/programinfojson
+
+- fixed formatting bug that cuased duplicate "s
+
+Other
+-----
+
+<<<<<<< HEAD
 YouGotDataEmail.py
 ^^^^^^^^^^^^^^^^^^
 
 - catch errors per notification and allow the rest to be tried, email full list of errors at end if any [GL#19]
+=======
+previewqueue
+^^^^^^^^^^^^
+
+- Removed problem if statement for s3 preview generation
+>>>>>>> 2020-2
 
 
 2020-2.14
@@ -53,6 +105,14 @@ User-Facing Changes
 ^^^^^^^^^^^
 
 - updated color for quick look data rows in the grid
+
+Other
+-----
+
+dbmigration
+^^^^^^^^^^^
+
+- removed initializing timestamps on older file database records since it takes too long during ansible deploy
 
 
 2020-2.13
