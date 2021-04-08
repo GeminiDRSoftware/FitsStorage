@@ -315,6 +315,8 @@ email_errors_to = "ooberdorf@gemini.edu"
 fits_dbname = lookup_config('FITS_DB_NAME', 'fitsdata')
 fits_dbserver = lookup_config('FITS_DB_SERVER', '')
 fits_database = 'postgresql://%s/%s' % (fits_dbserver, fits_dbname)
+fits_database_pool_size = 30
+fits_database_max_overflow = 10
 #fits_database = 'sqlite:////home/fitsdata/sqlite-database'
 #To reference database on another machine: 
 #fits_database = 'postgresql://hbffitstape1/'+fits_dbname
