@@ -430,7 +430,7 @@ class CalibrationGMOS(Calibration):
     def bias_rules_yaml(self):
         return parse_yaml("/Users/ooberdorf/FitsStorage/fits_storage/cal/calibration_gmos.yml", 'bias')
 
-    def imaging_flat(self, processed, howmany, flat_descr, filt):
+    def imaging_flat(self, processed, howmany, flat_descr, filt, render_query=False, return_query=False):
         """
         Method to find the best imaging flats for the target dataset
 
@@ -464,15 +464,26 @@ class CalibrationGMOS(Calibration):
             # Imaging flats are twilight flats
             # Twilight flats are dayCal OBJECT frames with target Twilight
             query = self.get_query().raw().dayCal().OBJECT().object('Twilight')
-        return (
-            query.add_filters(*filt)
-                 .match_descriptors(*flat_descr)
-                 # Absolute time separation must be within 6 months
-                 .max_interval(days=180)
-                 .all(howmany)
-            )
 
-    def spectroscopy_flat(self, processed, howmany, flat_descr, filt):
+        query.add_filters(*filt) \
+            .match_descriptors(*flat_descr) \
+            .max_interval(days=180)
+        if render_query:
+            rqr = rq(query.query)
+            return (query.all(howmany)), rqr
+        elif return_query:
+            return (query.all(howmany)), query
+        else:
+            return (query.all(howmany))
+        # return (
+        #     query.add_filters(*filt)
+        #          .match_descriptors(*flat_descr)
+        #          # Absolute time separation must be within 6 months
+        #          .max_interval(days=180)
+        #          .all(howmany)
+        #     )
+
+    def spectroscopy_flat(self, processed, howmany, flat_descr, filt, render_query=False, return_query=False):
         """
         Method to find the best spectroscopy flats for the target dataset
 
@@ -534,28 +545,44 @@ class CalibrationGMOS(Calibration):
             if under_85:
                 crpa_thres = el_thres/math.cos(math.radians(self.descriptors['elevation']))
 
-        return (
-            self.get_query()
-                .flat(processed)
-                .add_filters(*filt)
-                .match_descriptors(*flat_descr)
-            # Central wavelength is in microns (by definition in the DB table).
-                .tolerance(central_wavelength=0.001)
-
-            # Spectroscopy flats also have to somewhat match telescope position
-            # for flexure, as follows this is from FitsStorage TRAC #43 discussion with
-            # KR 20130425.  See the comments above to explain the thresholds.
-            
-                .tolerance(condition = ifu, elevation=el_thres)
-                .tolerance(condition = mos_or_ls, elevation=el_thres)
-                .tolerance(condition = under_85, cass_rotator_pa=crpa_thres)
-
-            # Absolute time separation must be within 6 months
+        query = self.get_query() \
+                .flat(processed) \
+                .add_filters(*filt) \
+                .match_descriptors(*flat_descr) \
+                .tolerance(central_wavelength=0.001) \
+                .tolerance(condition = ifu, elevation=el_thres) \
+                .tolerance(condition = mos_or_ls, elevation=el_thres) \
+                .tolerance(condition = under_85, cass_rotator_pa=crpa_thres) \
                 .max_interval(days=180)
-                .all(howmany)
-            )
+        if render_query:
+            rqr = rq(query.query)
+            return (query.all(howmany)), rqr
+        elif return_query:
+            return (query.all(howmany)), query
+        else:
+            return (query.all(howmany))
+        # return (
+        #     self.get_query()
+        #         .flat(processed)
+        #         .add_filters(*filt)
+        #         .match_descriptors(*flat_descr)
+        #     # Central wavelength is in microns (by definition in the DB table).
+        #         .tolerance(central_wavelength=0.001)
+        #
+        #     # Spectroscopy flats also have to somewhat match telescope position
+        #     # for flexure, as follows this is from FitsStorage TRAC #43 discussion with
+        #     # KR 20130425.  See the comments above to explain the thresholds.
+        #
+        #         .tolerance(condition = ifu, elevation=el_thres)
+        #         .tolerance(condition = mos_or_ls, elevation=el_thres)
+        #         .tolerance(condition = under_85, cass_rotator_pa=crpa_thres)
+        #
+        #     # Absolute time separation must be within 6 months
+        #         .max_interval(days=180)
+        #         .all(howmany)
+        #     )
 
-    def flat(self, processed=False, howmany=None):
+    def flat(self, processed=False, howmany=None, render_query=False, return_query=False):
         """
         Method to find the best GMOS FLAT fields for the target dataset
 
@@ -608,9 +635,9 @@ class CalibrationGMOS(Calibration):
                 filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         if self.descriptors['spectroscopy']:
-            return self.spectroscopy_flat(processed, howmany, flat_descriptors, filters)
+            return self.spectroscopy_flat(processed, howmany, flat_descriptors, filters, render_query=render_query, return_query=return_query)
         else:
-            return self.imaging_flat(processed, howmany, flat_descriptors, filters)
+            return self.imaging_flat(processed, howmany, flat_descriptors, filters, render_query=render_query, return_query=return_query)
 
     def processed_fringe(self, howmany=None):
         """
