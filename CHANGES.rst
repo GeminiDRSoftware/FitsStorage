@@ -1,3 +1,17 @@
+2020-2.18
+=========
+
+
+Other
+-----
+
+ingest_standards.py
+^^^^^^^^^^^^^^^^^^^
+
+- Made idempotent for reruns to update existing records by name (or create new ones as needed)
+- update to related geometryhacks logic to properly parse coordinate values
+
+
 2020-2.17
 =========
 
@@ -8,7 +22,6 @@ header.py
 ^^^^^^^^^
 
 - Made header parsing more tolerant of bad FITS files so they ingest with missing fields
-
 
 2020-2.16
 =========
