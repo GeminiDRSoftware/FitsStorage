@@ -32,7 +32,10 @@ def ingest_standards(session, filename):
             fields = line.strip().split(',')
 
             # Create and populate a standard instance
-            std = PhotStandard()
+            std = session.query(PhotStandard).filter(PhotStandard.name == fields[0]).first()
+            if std is None:
+                std = PhotStandard()
+                session.add(std)
             try:
                 std.name = fields[0]
                 std.field = fields[1]
@@ -46,7 +49,7 @@ def ingest_standards(session, filename):
                 raise
 
             # Add to database session
-            session.add(std)
+            # session.add(std)
             session.commit()
 
             # Hack in the geometrical point column
