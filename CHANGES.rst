@@ -1,6 +1,14 @@
 2020-2.17
 =========
 
+Web Services
+------------
+
+/jsonsummary
+^^^^^^^^^^^^
+
+- added entrytimedaterange query for a range of entry times, plus sort, plus fixes to lastmoddaterange query for CADC
+
 Other
 -----
 
