@@ -1,6 +1,14 @@
 2020-2.18
 =========
 
+Calibrations
+------------
+
+calibration_niri.py
+^^^^^^^^^^^^^^^^^^^
+
+- Made data_section parser handle tuple () style inputs and output the legacy Section() format for NIRI
+
 
 Other
 -----
