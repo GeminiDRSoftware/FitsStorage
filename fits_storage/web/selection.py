@@ -91,7 +91,9 @@ getselection_key_value = {
     'entrytime': 'entrytime',
     'raw_cc': 'raw_cc',
     'raw_iq': 'raw_iq',
-    'ephemeris_target': 'ephemeris_target'
+    'ephemeris_target': 'ephemeris_target',
+    'lastmoddaterange': 'lastmoddaterange',
+    'entrytimedaterange': 'entrytimedaterange',
     }
 
 # Also, some entries set themselves as the value for a certain selection
@@ -417,6 +419,15 @@ def queryselection(query, selection):
             a, b = selection['lastmoddaterange'].split(' ')
             startfiledt, endfiledt = get_time_period(a, b, False)
             query = query.filter(DiskFile.lastmod >= startfiledt).filter(DiskFile.lastmod < endfiledt)
+        except Exception:
+            # parse error on datetime
+            pass
+
+    if 'entrytimedaterange' in selection:
+        try:
+            a, b = selection['entrytimedaterange'].split(' ')
+            startfiledt, endfiledt = get_time_period(a, b, False)
+            query = query.filter(DiskFile.entrytime >= startfiledt).filter(DiskFile.entrytime < endfiledt)
         except Exception:
             # parse error on datetime
             pass

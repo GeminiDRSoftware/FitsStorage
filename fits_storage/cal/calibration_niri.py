@@ -28,7 +28,7 @@ class CalibrationNIRI(Calibration):
         )
 
     def _parse_section(self, section):
-        if section is not None and section.startswith('['):
+        if section is not None and section[0] in '([':
             arr = section[1:-1].split(",")
             if len(arr) == 4:
                 x1 = arr[0].strip()

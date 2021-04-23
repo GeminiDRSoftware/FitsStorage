@@ -35,8 +35,38 @@ service_target_queue.py
 - Properly detect location of Gemini North and South for target calculation, skip GPI [GL#5]
 
 
+2020-2.18
+=========
+
+Calibrations
+------------
+
+calibration_niri.py
+^^^^^^^^^^^^^^^^^^^
+
+- Made data_section parser handle tuple () style inputs and output the legacy Section() format for NIRI
+
+
+Other
+-----
+
+ingest_standards.py
+^^^^^^^^^^^^^^^^^^^
+
+- Made idempotent for reruns to update existing records by name (or create new ones as needed)
+- update to related geometryhacks logic to properly parse coordinate values
+
+
 2020-2.17
 =========
+
+Web Services
+------------
+
+/jsonsummary
+^^^^^^^^^^^^
+
+- added entrytimedaterange query for a range of entry times, plus sort, plus fixes to lastmoddaterange query for CADC
 
 Other
 -----
@@ -45,7 +75,6 @@ header.py
 ^^^^^^^^^
 
 - Made header parsing more tolerant of bad FITS files so they ingest with missing fields
-
 
 2020-2.16
 =========

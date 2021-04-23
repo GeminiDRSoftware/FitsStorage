@@ -77,6 +77,7 @@ class ExportQueueUtil(object):
 
     def set_last_failed(self, trans):
         self.s.query(ExportQueue).get(trans.id).lastfailed = datetime.datetime.now()
+        self.s.query(ExportQueue).get(trans.id).failed = True
         self.s.commit()
 
     def add_to_queue(self, filename, path, destination):
