@@ -4,6 +4,7 @@ in the Fits Storage System.
 """
 import sqlalchemy
 
+from .miscfile_plus import MiscFileCollectionUsers, MiscFileCollection, MiscFileFolder, MiscFilePlus
 from ..fits_storage_config import using_apache, using_sqlite
 from . import pg_db
 from .file import File
@@ -108,6 +109,10 @@ def create_tables(session):
     Program.metadata.create_all(bind=pg_db)
     Publication.metadata.create_all(bind=pg_db)
     ProgramPublication.metadata.create_all(bind=pg_db)
+    MiscFileCollectionUsers.create(bind=pg_db)
+    MiscFileCollection.metadata.create_all(bind=pg_db)
+    MiscFileFolder.metadata.create_all(bind=pg_db)
+    MiscFilePlus.metadata.create_all(bind=pg_db)
 
     init_target_tables(session, pg_db)
 

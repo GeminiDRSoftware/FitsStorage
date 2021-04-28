@@ -48,7 +48,7 @@ from fits_storage.web.api import update_headers, ingest_files, ingest_programs, 
 from fits_storage.web.publication import publication_ads, list_publications
 from fits_storage.web.program import program_info, program_info_json
 from fits_storage.web.logcomments import log_comments
-from fits_storage.web import miscfiles
+from fits_storage.web import miscfiles, miscfilesplus
 from fits_storage.web import templating
 
 from fits_storage.orm import session_scope, NoResultFound
@@ -288,6 +288,19 @@ url_map = Map([
     Rule('/miscfiles/<int:handle>', miscfiles.miscfiles),           # Miscellanea (Opaque files)
     Rule('/miscfiles/validate_add', miscfiles.validate,             # Miscellanea (Opaque files)
          methods=['POST']),
+
+    # Rules for "Miscfiles Plus" interfaces
+    Rule('/miscfilesplus/', miscfilesplus.miscfilesplus),           # Enhanced Misc
+    Rule('/miscfilesplus/browse/<collection>/',
+         miscfilesplus.miscfilesplus),                              # MFP for Collection
+    Rule('/miscfilesplus/browse/<collection>/<seq_of:folders>/',
+         miscfilesplus.miscfilesplus),                              # MFP for Folder
+    Rule('/miscfilesplus/browse/<collection>/<seq_of:folders>/filename',
+         miscfilesplus.miscfilesplus),                              # MFP for File
+    Rule('/miscfilesplus/add_collection',
+         miscfilesplus.add_collection),                             # MFP action to add a collection
+    Rule('/miscfilesplus/add_folder', miscfilesplus.add_folder),    # MFP action to add a folder
+    Rule('/miscfilesplus/upload_file', miscfilesplus.upload_file),  # MFP action to add a collection
 
     Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
     Rule('/upload_file/<filename>', upload_file,                    # The generic upload_file server

@@ -1,0 +1,128 @@
+{% extends "bootstrap_layout.html" %}
+
+{% block bootstrap_extra_header %}
+<style>
+div.collapseButton {
+    padding: 8px;
+    text-align: center;
+}
+</style>
+{% endblock %}
+
+
+{% block title %}MiscFiles Plus{% endblock %}
+
+{% block bootstrap_body %}
+<div class="container-fluid">
+    <div class="row">
+        <main role="main" class="col-lg-12">
+            {% if collections %}
+            <div class="card">
+                <div class="card-header">Collections</div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped  table-sm">
+                            <tr><th>Name</th><th>Program ID</th><th>Description</th></tr>
+                        {% for collection in collections %}
+                            <tr><td><a href="browse/{{ collection.name }}/">{{ collection.name }}</a></td>
+                            <td>{{ collection.program_id }}</td>
+                            <td>{{ collection.description | truncate(1024) }}</td></tr>
+                        {% endfor %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% if can_add %}
+            <div class="collapseButton">
+                <button id="addCollectionCollapserButton" class="btn btn-primary" type="button" data-toggle="collapse"
+                        data-target="#collapseAddCollection" aria-expanded="false"
+                        aria-controls="collapseAddCollection">Add Collection</button>
+            </div>
+            <div class="collapse" id="collapseAddCollection">
+                <div class="card">
+                    <div class="card-header">New Collection</div>
+                    <div class="card-body">
+                    <form action="add_collection" method="post">
+                      <div class="form-group">
+                        <label for="colleciton_name">New Collection Name</label>
+                        <input type="text" class="form-control" id="colleciton_name" aria-describedby="collectionNameHelp"
+                               placeholder="Enter New Collection Name" name="collection_name"/>
+                        <small id="collectionNameHelp" class="form-text text-muted">Enter the name of a new collection to add.</small>
+                      </div>
+                      <div class="form-group">
+                        <label for="program_id">Program ID</label>
+                        <input type="text" class="form-control" id="program_id" aria-describedby="programIDHelp"
+                               placeholder="Enter Program (or blank)" name="program_id"/>
+                        <small id="programIDHelp" class="form-text text-muted">Enter the ID of the related program, or leave blank.</small>
+                      </div>
+                      <div class="form-group">
+                        <label for="description">Description</label>
+                        <input type="text" class="form-control" id="description" aria-describedby="descriptionHelp"
+                               placeholder="Enter Description" name="description"/>
+                        <small id="descriptionHelp" class="form-text text-muted">Enter a description of this collection.</small>
+                      </div>
+                      <button type="submit" class="btn btn-success">Submit</button>
+                    </form>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+            {% if collection %}
+            <h2>{{ collection.name }}</h2>
+            {% endif %}
+            {% if folder %}
+            <h3>{{ folder.path() }}</h3>
+            {% endif %}
+            <h2>Files</h2>
+            <div class="table-responsive">
+                <table class="table table-striped table-sm">
+                    <tr><th></th><th>Filename</th></tr>
+                {% if folders %}
+                    {% for folder in folders %}
+                    <tr><td>[Folder]</td><td><a href="{{ folder.name }}/">{{ folder.name }}</a></td></tr>
+                    {% endfor %}
+                {% endif %}
+                {% if files %}
+                    {% for file in files %}
+                    <tr><td>[File]</td><td><a href="{{ file.filename }}">{{ file.filename }}</a></td></tr>
+                    {% endfor %}
+                {% endif %}
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-header">File Upload</div>
+                <div class="card-body">
+                <form action="/miscfilesplus/add_folder" method="post">
+                  <div class="form-group">
+                    <label for="folder_name">New Folder Name</label>
+                    <input type="text" class="form-control" id="folder_name" aria-describedby="folderNameHelp"
+                           placeholder="Enter New Folder Name" name="folder_name"/>
+                    <small id="folderNameHelp" class="form-text text-muted">Enter the name of a new folder to add.</small>
+                  </div>
+                    <input type="hidden" name="collection_name" value="{{ collection.name }}"/>
+                    {% if folder %}
+                    <input type="hidden" name="path" value="{{ folder.path() }}"/>
+                    {% endif %}
+                  <button type="submit" class="btn btn-success">Create Folder</button>
+                </form>
+                <form action="/miscfilesplus/upload_file" method="post">
+                  <div class="form-group">
+                    <label for="upload_file">File to Upload</label>
+                    <input type="file" class="form-control" id="upload_file" aria-describedby="uploadFileHelp"
+                           placeholder="Enter New Folder Name" name="upload_file"/>
+                    <small id="uploadFileHelp" class="form-text text-muted">File to upload.</small>
+                  </div>
+                    <input type="hidden" name="collection_name" value="{{ collection.name }}"/>
+                    {% if folder %}
+                    <input type="hidden" name="path" value="{{ folder.path() }}"/>
+                    {% endif %}
+                  <button type="submit" class="btn btn-success">Upload File</button>
+                </form>
+                </div>
+            </div>
+        <div>
+    </div>
+</main>
+{% endblock %}
