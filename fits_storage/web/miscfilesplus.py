@@ -61,8 +61,9 @@ def miscfilesplus(collection=None, folders=None, file=None):
                     folder = session.query(MiscFileFolder) \
                         .filter(MiscFileFolder.collection_id == collection.id) \
                         .filter(MiscFileFolder.folder_id == folder_id) \
-                        .filter(MiscFileFolder.name == folder_name).one()
-                    folder_id = folder.id
+                        .filter(MiscFileFolder.name == folder_name).first()
+                    if folder:
+                        folder_id = folder.id
 
             # Now get all the contained subfolders and files in our folder
             folders = session.query(MiscFileFolder) \
