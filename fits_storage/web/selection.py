@@ -127,8 +127,8 @@ getselection_booleans = {
     'notengineering': ('engineering', False),
     'science_verification': ('science_verification', True),
     'notscience_verification': ('science_verification', False),
-    'calibrationprogram': ('calibrationprogram', True),
-    'notcalibrationprogram': ('calibrationprogram', False),
+    'calprog': ('calprog', True),
+    'notcalprog': ('calprog', False),
     'site_monitoring': ('site_monitoring', True),
     'not_site_monitoring': ('site_monitoring', False),
     'photstandard': ('photstandard', True),
@@ -245,7 +245,7 @@ sayselection_defs = {
     'object': 'Object Name',
     'engineering': 'Engineering Data',
     'science_verification': 'Science Verification Data',
-    'calibrationprogram': 'Calibration Program',
+    'calprog': 'Calibration Program',
     'disperser': 'Disperser',
     'focal_plane_mask': 'Focal Plane Mask',
     'pupil_mask': 'Pupil Mask',
@@ -331,33 +331,33 @@ import time
 from types import MethodType
 
 queryselection_filters = (
-    ('present',        DiskFile.present), # Do want to select Header object for which diskfile.present is true?
-    ('canonical',      DiskFile.canonical),
-    ('science_verification', Header.science_verification),
-    ('program_id',     Header.program_id),
-    ('observation_id', Header.observation_id),
-    ('data_label',     Header.data_label),
-    ('observation_type',     Header.observation_type),
+    ('present',               DiskFile.present), # Do want to select Header object for which diskfile.present is true?
+    ('canonical',             DiskFile.canonical),
+    ('science_verification',  Header.science_verification),
+    ('program_id',            Header.program_id),
+    ('observation_id',        Header.observation_id),
+    ('data_label',            Header.data_label),
+    ('observation_type',      Header.observation_type),
     ('observation_class',     Header.observation_class),
-    ('reduction',     Header.reduction),
-    ('telescope',     Header.telescope),
-    ('filename',      File.name),
-    ('binning',       Header.detector_binning),
-    ('gain',          Header.detector_gain_setting),
-    ('readspeed',     Header.detector_readspeed_setting),
-    ('welldepth',     Header.detector_welldepth_setting),
-    ('readmode',      Header.detector_readmode_setting),
-    ('filter',        Header.filter_name),
-    ('spectroscopy',  Header.spectroscopy),
-    ('mode',          Header.mode),
-    ('coadds',        Header.coadds),
-    ('mdready',       DiskFile.mdready),
-    ('site_monitoring', Header.site_monitoring),
-    ('calibrationprogram', Header.calibration_program),
-    ('pre_image',     Header.pre_image),
-    ('raw_cc',        Header.raw_cc),
-    ('raw_iq',        Header.raw_iq),
-    ('procmode',       Header.procmode)
+    ('reduction',             Header.reduction),
+    ('telescope',             Header.telescope),
+    ('filename',              File.name),
+    ('binning',               Header.detector_binning),
+    ('gain',                  Header.detector_gain_setting),
+    ('readspeed',             Header.detector_readspeed_setting),
+    ('welldepth',             Header.detector_welldepth_setting),
+    ('readmode',              Header.detector_readmode_setting),
+    ('filter',                Header.filter_name),
+    ('spectroscopy',          Header.spectroscopy),
+    ('mode',                  Header.mode),
+    ('coadds',                Header.coadds),
+    ('mdready',               DiskFile.mdready),
+    ('site_monitoring',       Header.site_monitoring),
+    ('calprog',               Header.calibration_program),
+    ('pre_image',             Header.pre_image),
+    ('raw_cc',                Header.raw_cc),
+    ('raw_iq',                Header.raw_iq),
+    ('procmode',              Header.procmode)
     )
 
 def queryselection(query, selection):
@@ -391,8 +391,8 @@ def queryselection(query, selection):
     if selection.get('engineering') in (True, False):
         query = query.filter(Header.engineering == selection['engineering'])
 
-    if selection.get('calibrationprogram') in (True, False):
-        query = query.filter(Header.calibration_program == selection['calibrationprogram'])
+    if selection.get('calprog') in (True, False):
+        query = query.filter(Header.calibration_program == selection['calprog'])
 
     if ('object' in selection) and (('ra' not in selection) and ('dec' not in selection)):
         # Handle the "wildcards" allowed on the object name
@@ -871,11 +871,11 @@ def selection_to_URL(selection, with_columns=False):
                 urlstring += '/notengineering'
             else:
                 urlstring += '/includeengineering'
-        elif key == 'calibrationprogram':
+        elif key == 'calprog':
             if selection[key] is True:
-                urlstring += '/calibrationprogram'
+                urlstring += '/calprog'
             elif selection[key] is False:
-                urlstring += '/notcalibrationprogram'
+                urlstring += '/notcalprog'
         elif key == 'science_verification':
             if selection[key] is True:
                 urlstring += '/science_verification'
