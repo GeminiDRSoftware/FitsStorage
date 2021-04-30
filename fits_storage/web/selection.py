@@ -127,6 +127,8 @@ getselection_booleans = {
     'notengineering': ('engineering', False),
     'science_verification': ('science_verification', True),
     'notscience_verification': ('science_verification', False),
+    'calibrationprogram': ('calibrationprogram', True),
+    'notcalibrationprogram': ('calibrationprogram', False),
     'site_monitoring': ('site_monitoring', True),
     'not_site_monitoring': ('site_monitoring', False),
     'photstandard': ('photstandard', True),
@@ -147,6 +149,7 @@ getselection_detector_roi = {
     'central256': 'Central256',
     'custom': 'Custm'
     }
+
 
 def getselection(things):
     """
@@ -242,6 +245,7 @@ sayselection_defs = {
     'object': 'Object Name',
     'engineering': 'Engineering Data',
     'science_verification': 'Science Verification Data',
+    'calibrationprogram': 'Calibration Program',
     'disperser': 'Disperser',
     'focal_plane_mask': 'Focal Plane Mask',
     'pupil_mask': 'Pupil Mask',
@@ -349,6 +353,7 @@ queryselection_filters = (
     ('coadds',        Header.coadds),
     ('mdready',       DiskFile.mdready),
     ('site_monitoring', Header.site_monitoring),
+    ('calibrationprogram', Header.calibration_program),
     ('pre_image',     Header.pre_image),
     ('raw_cc',        Header.raw_cc),
     ('raw_iq',        Header.raw_iq),
@@ -385,6 +390,9 @@ def queryselection(query, selection):
     # Ignore the "Include" dummy value
     if selection.get('engineering') in (True, False):
         query = query.filter(Header.engineering == selection['engineering'])
+
+    if selection.get('calibrationprogram') in (True, False):
+        query = query.filter(Header.calibration_program == selection['calibrationprogram'])
 
     if ('object' in selection) and (('ra' not in selection) and ('dec' not in selection)):
         # Handle the "wildcards" allowed on the object name
@@ -863,6 +871,11 @@ def selection_to_URL(selection, with_columns=False):
                 urlstring += '/notengineering'
             else:
                 urlstring += '/includeengineering'
+        elif key == 'calibrationprogram':
+            if selection[key] is True:
+                urlstring += '/calibrationprogram'
+            elif selection[key] is False:
+                urlstring += '/notcalibrationprogram'
         elif key == 'science_verification':
             if selection[key] is True:
                 urlstring += '/science_verification'
