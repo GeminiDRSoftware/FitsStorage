@@ -1,3 +1,8 @@
+from _bz2 import BZ2Compressor
+
+import boto3
+
+from .fileserver import BZ2OnTheFlyDecompressor
 from ..orm.miscfile import MiscFile, normalize_diskname
 from ..orm.diskfile import DiskFile
 from ..orm.file     import File
@@ -23,6 +28,9 @@ import stat
 from datetime import datetime, timedelta
 
 from cgi import parse_header
+
+from smart_open import open, s3
+
 
 SEARCH_LIMIT = 500
 
@@ -178,132 +186,211 @@ def add_folder():
                 pass
 
 
-def save_mfp_file(session, formdata):
-    # fileitem = formdata.uploaded_file
-    fileitem = formdata['uploadFile'].uploaded_file
-    localfilename = normalize_diskname(fileitem.name)
-    fullpath = os.path.join(upload_staging_path, localfilename)
-    jsonpath = fullpath + '.json'
+def save_mfp_file(collection, folder, formdata):
+    """
+    Save MiscFilesPlus file to S3
+
+    This makes use of smart_open to stream the data out instead of staging a file
+    like the existing code.  See: https://github.com/RaRe-Technologies/smart_open
+    """
+    filename = formdata['uploadFile'].filename
+    fp = formdata['uploadFile'].file
+    fullname = os.path.join(f"{collection.name}", folder.path(), filename)
     current_data = {}
 
-    def cleanup():
-        for fn in (fullpath, jsonpath):
-            if os.path.exists(fn):
-                try:
-                    os.unlink(fn)
-                except IOError:
-                    pass
-
-    for item in ('uploadProg', 'uploadDesc'):
-        try:
-            current_data[item] = formdata[item]
-        except KeyError:
-            pass
-
-    uploadRelease = formdata.getvalue('uploadRelease', '').strip()
-    if uploadRelease == 'default':
-        release_date = datetime.now() + timedelta(days=540) # Now + 18 pseudo-months
-    elif uploadRelease == 'now':
-        release_date = datetime.now()
-    else:
-        try:
-            release_date = string_to_date(formdata.getvalue('arbRelease', '').strip())
-        except (ValueError, KeyError):
-            return dict(can_add=True, errorMessage = "Wrong value for release date",
-                        **current_data)
-
     try:
-        with open(fullpath, 'wb') as staging_file:
-            read_file = formdata['uploadFile'].file
+        compressor = BZ2Compressor()
+        session = boto3.Session(
+            profile_name="localstack",
+            aws_access_key_id     = 'foo', # os.environ['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key = 'foo' #  os.environ['AWS_SECRET_ACCESS_KEY'],)
+        )
+        url = f's3://miscfilesplus/{fullname}'
+        with open(url, 'wb', transport_params={
+                'client': session.client('s3', verify=False, endpoint_url='https://localhost:4566/')}) as fout:
+            bytes_written = 0
+            read_file = fp
             read_file.seek(0)
             dat = read_file.read(4096)
             while dat:
-                staging_file.write(dat)
+                cdat = compressor.compress(dat)
+                bytes_written += fout.write(cdat)
                 dat = read_file.read(4096)
-            staging_file.flush()
-            staging_file.close()
+            cdat = compressor.flush()
+            if cdat:
+                fout.write(cdat)
+            fout.flush()
+            fout.close()
+
+        print(bytes_written)
+
         # formdata['uploadFile'].uploaded_file.rename_to(fullpath)
-        os.chmod(fullpath, stat.S_IRUSR|stat.S_IRGRP|stat.S_IROTH)
-        with open(jsonpath, 'w') as meta:
-            json.dump({'filename': fileitem.name,
-                       'is_misc':  'True',
+        release_date = datetime.utcnow()
+        jsonurl = f's3://miscfilesplus/{fullname}.mfp.json'
+        with open(jsonurl, 'w', transport_params={
+                'client': session.client('s3', verify=False, endpoint_url='https://localhost:4566/')}) as meta:
+            json.dump({'filename': filename,
+                       'is_mfp':  'True',
                        'release':  release_date.strftime('%Y-%m-%d'),
-                       'description': formdata['uploadDesc'].value,
-                       'program': formdata['uploadProg'].value},
-                     meta)
-        proxy = ApiProxy(api_backend_location)
-        result = proxy.ingest_upload(filename=localfilename)
-        return dict(can_add=True, actionMessage = "Ingested with result: " + str(result))
+                       'description': '',
+                       'program': collection.program_id},
+                      meta)
+        return dict(can_add=True, actionMessage = "Uploaded to S3")
     except IOError:
-        cleanup()
         # TODO: We should log the failure
-        return dict(can_add=True, errorMessage = "Error when trying to save the file",
-                    **current_data)
-    except ApiProxyError:
-        cleanup()
-        return dict(can_add=True, errorMessage = "Error when trying to queue the file for ingestion",
+        return dict(can_add=True, errorMessage = "Error when trying to store the file on S3",
                     **current_data)
 
     return dict(can_add=True)
 
 
 def upload_file():
-    try:
-        ctx = get_context()
+    ctx = get_context()
 
-        # if handle is None and 'upload' in formdata:
-        #     return save_file_fixed(get_context()._env)
-        session = ctx.session
+    session = ctx.session
 
-        formdata = get_context().get_form_data(large_file=True)
+    formdata = get_context().get_form_data(large_file=True)
 
-        collection_name = formdata['collection_name'].value
-        file_name = formdata['upload_file'].value
-        if 'path' in formdata:
-            path = formdata['path'].value
-        else:
-            path = None
-        folder = None
+    collection_name = formdata['collection_name'].value
+    file_name = formdata['uploadFile'].filename
+    if 'path' in formdata:
+        path = formdata['path'].value
+    else:
+        path = None
+    folder = None
 
-        if collection_name:
-            collection = session.query(MiscFileCollection) \
-                .filter(MiscFileCollection.name == collection_name).first()
-            if not collection:
-                ctx.resp.status = Return.HTTP_BAD_REQUEST
-                return
-            else:
-                # now find the parent folder
-                if path:
-                    for f in path.split('/'):
-                        folder = session.query(MiscFileFolder) \
-                            .filter(MiscFileFolder.folder == folder) \
-                            .filter(MiscFileFolder.name == f).first()
-                        if not folder:
-                            ctx.resp.status = Return.HTTP_BAD_REQUEST
-                            return
-
-                # logic to save to S3 goes in here
-                # save_mfp_file(session, formdata)
-
-                mfp = MiscFilePlus()
-                mfp.folder = folder
-                mfp.filename = file_name
-                mfp.collection = collection
-                mfp.program_id = collection.program_id
-                mfp.release = datetime.now()
-                mfp.description = ''
-                session.add(mfp)
-                session.commit()
-        else:
+    if collection_name:
+        collection = session.query(MiscFileCollection) \
+            .filter(MiscFileCollection.name == collection_name).first()
+        if not collection:
             ctx.resp.status = Return.HTTP_BAD_REQUEST
             return
+        else:
+            # now find the parent folder
+            if path:
+                for f in path.split('/'):
+                    folder = session.query(MiscFileFolder) \
+                        .filter(MiscFileFolder.folder == folder) \
+                        .filter(MiscFileFolder.name == f).first()
+                    if not folder:
+                        ctx.resp.status = Return.HTTP_BAD_REQUEST
+                        return
 
-        if path is None:
-            path = ''
-        ctx.resp.redirect_to(f"/miscfilesplus/{path}")
-    finally:
-        if formdata and formdata.uploaded_file is not None:
-            try:
-                os.unlink(formdata.uploaded_file.name)
-            except OSError:
-                pass
+            # logic to save to S3 goes in here
+            save_mfp_file(collection, folder, formdata)
+
+            mfp = MiscFilePlus()
+            mfp.folder = folder
+            mfp.filename = file_name
+            mfp.collection = collection
+            mfp.program_id = collection.program_id
+            mfp.release = datetime.now()
+            mfp.description = ''
+            session.add(mfp)
+            session.commit()
+    else:
+        ctx.resp.status = Return.HTTP_BAD_REQUEST
+        return
+
+    if path is None:
+        path = ''
+    ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection_name}/{path}/")
+
+
+def get_file(collection, folders, filename):
+    ctx = get_context()
+
+    session = ctx.session
+
+    collection = session.query(MiscFileCollection) \
+        .filter(MiscFileCollection.name == collection).first()
+    if not collection:
+        ctx.resp.status = Return.HTTP_NOT_FOUND
+        return
+    else:
+        # now find the parent folder
+        folder = None
+        for f in folders:
+            folder = session.query(MiscFileFolder) \
+                .filter(MiscFileFolder.folder == folder) \
+                .filter(MiscFileFolder.name == f).first()
+            if not folder:
+                ctx.resp.status = Return.HTTP_NOT_FOUND
+                return
+
+        file = session.query(MiscFilePlus) \
+                .filter(MiscFilePlus.folder == folder) \
+                .filter(MiscFilePlus.collection == collection) \
+                .filter(MiscFilePlus.filename == filename).first()
+        if file is None:
+            ctx.resp.status = Return.HTTP_NOT_FOUND
+            return
+
+        session = boto3.Session(
+            profile_name="localstack",
+            aws_access_key_id     = 'foo', # os.environ['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key = 'foo' #  os.environ['AWS_SECRET_ACCESS_KEY'],)
+        )
+        if folder:
+            path = '/'.join(folders)
+            url = f's3://miscfilesplus/{collection.name}/{path}/{filename}'
+        else:
+            url = f's3://miscfilesplus/{collection.name}/{filename}'
+        with open(url, 'rb', transport_params={
+                'client': session.client('s3', verify=False, endpoint_url='https://localhost:4566/')}) as fin:
+            # resp.content_length = diskfile.data_size
+            ctx.resp.sendfile_obj(BZ2OnTheFlyDecompressor(fin))
+
+
+def delete_file(collection, folders, filename):
+    ctx = get_context()
+
+    session = ctx.session
+
+    collection = session.query(MiscFileCollection) \
+        .filter(MiscFileCollection.name == collection).first()
+    if not collection:
+        ctx.resp.status = Return.HTTP_NOT_FOUND
+        return
+    else:
+        # now find the parent folder
+        folder = None
+        for f in folders:
+            folder = session.query(MiscFileFolder) \
+                .filter(MiscFileFolder.folder == folder) \
+                .filter(MiscFileFolder.name == f).first()
+            if not folder:
+                ctx.resp.status = Return.HTTP_NOT_FOUND
+                return
+
+        file = session.query(MiscFilePlus) \
+                .filter(MiscFilePlus.folder == folder) \
+                .filter(MiscFilePlus.collection == collection) \
+                .filter(MiscFilePlus.filename == filename).first()
+        if file is None:
+            ctx.resp.status = Return.HTTP_NOT_FOUND
+            return
+
+        session = boto3.Session(
+            profile_name="localstack",
+            aws_access_key_id     = 'foo', # os.environ['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key = 'foo' #  os.environ['AWS_SECRET_ACCESS_KEY'],)
+        )
+        if folder:
+            path = '/'.join(folders)
+            key = f'{collection.name}/{path}/{filename}'
+        else:
+            key = f'{collection.name}/{filename}'
+
+        s3 = boto3.client('s3', region_name='us-east-1',
+                     aws_access_key_id="foo", aws_secret_access_key="foo",
+                     verify=False, endpoint_url='http://localhost:4566')
+        s3.delete_object(Bucket='miscfilesplus', Key=key)
+
+        file.delete()
+        session.commit()
+
+        if folders:
+            ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection.name}/{folder.path()}/")
+        else:
+            ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection.name}/")

@@ -295,12 +295,13 @@ url_map = Map([
          miscfilesplus.miscfilesplus),                              # MFP for Collection
     Rule('/miscfilesplus/browse/<collection>/<seq_of:folders>/',
          miscfilesplus.miscfilesplus),                              # MFP for Folder
-    Rule('/miscfilesplus/browse/<collection>/<seq_of:folders>/filename',
-         miscfilesplus.miscfilesplus),                              # MFP for File
+    Rule('/miscfilesplus/download/<collection>/<seq_of:folders>/<filename>',
+         miscfilesplus.get_file),                                   # MFP for File
     Rule('/miscfilesplus/add_collection',
          miscfilesplus.add_collection),                             # MFP action to add a collection
     Rule('/miscfilesplus/add_folder', miscfilesplus.add_folder),    # MFP action to add a folder
-    Rule('/miscfilesplus/upload_file', miscfilesplus.upload_file),  # MFP action to add a collection
+    Rule('/miscfilesplus/upload_file', miscfilesplus.upload_file),  # MFP action to upload a file
+    Rule('/miscfilesplus/delete/<collection>/<seq_of:folders>/<filename>', miscfilesplus.delete_file),  # MFP action to delete a file
 
     Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
     Rule('/upload_file/<filename>', upload_file,                    # The generic upload_file server
