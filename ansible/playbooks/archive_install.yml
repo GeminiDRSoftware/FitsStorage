@@ -29,9 +29,9 @@
 #            - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 #          state: present
 #        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
-      - name: Fail while I iterate
-        fail:
-          msg: "Exiting early"
+#      - name: Fail while I iterate
+#        fail:
+#          msg: "Exiting early"
       - name: install packages
         yum:
           name: 
