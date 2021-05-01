@@ -11,142 +11,152 @@ import time
 """ Configuration defaults based on the hostname """
 _host_based_configs = {
     "hbffits-lv4": {
-        'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': '',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'TEST On-site FitsServer',
-        'FITS_SYSTEM_STATUS': 'development',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv4",
-        'FITS_SERVERNAME': 'hbffits-lv4.hi.gemini.edu',
-        'ORCID_REDIRECT_URL': 'http://hbffits-lv4/orcid',
-        'ORCID_ENABLED': 'False',
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
-        'DEFAULT_UPLOAD_PATH': 'upload_dev',
+        'USE_AS_ARCHIVE':                   'False',
+        'EXPORT_DESTINATIONS':              '',
+        'PUBDB_REMOTE':                     'https://localhost/ingest_publications',
+        'BLOCKED_URLS':                     '',
+        'FITS_SERVERTITLE':                 'TEST On-site FitsServer',
+        'FITS_SYSTEM_STATUS':               'development',
+        'UPLOAD_AUTH_COOKIE':               'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR':               "/sci/dataflow/FitsStorage_Backups/hbffits-lv4",
+        'FITS_SERVERNAME':                  'hbffits-lv4.hi.gemini.edu',
+        'ORCID_REDIRECT_URL':               'http://hbffits-lv4/orcid',
+        'ORCID_ENABLED':                    'False',
+        'PROCESSED_CALS_PATH':              'reduced_cals_dev',
+        'DEFAULT_UPLOAD_PATH':              'upload_dev',
         'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
     },
     "mkofits-lv3": {
-        'USE_AS_ARCHIVE': 'False',
+        'USE_AS_ARCHIVE':      'False',
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'MKO Fits Server',
-        'FITS_SYSTEM_STATUS': 'production',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/mkofits-lv3",
-        'FITS_SERVERNAME': 'mkofits-lv3.hi.gemini.edu',
-        'ORCID_ENABLED': 'False',
+        'PUBDB_REMOTE':        'https://localhost/ingest_publications',
+        'BLOCKED_URLS':        '',
+        'FITS_SERVERTITLE':    'MKO Fits Server',
+        'FITS_SYSTEM_STATUS':  'production',
+        'UPLOAD_AUTH_COOKIE':  'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR':  "/sci/dataflow/FitsStorage_Backups/mkofits-lv3",
+        'FITS_SERVERNAME':     'mkofits-lv3.hi.gemini.edu',
+        'ORCID_ENABLED':       'False',
         'PROCESSED_CALS_PATH': 'reduced_cals'
     },
     "cpofits-lv3": {
-        'USE_AS_ARCHIVE': 'False',
+        'USE_AS_ARCHIVE':      'False',
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'CPO Fits Server',
-        'FITS_SYSTEM_STATUS': 'production',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/cpofits-lv3",
-        'FITS_SERVERNAME': 'cpofits-lv3.cl.gemini.edu',
-        'ORCID_ENABLED': 'False',
-        'TZ': 'America/Santiago',
+        'PUBDB_REMOTE':        'https://localhost/ingest_publications',
+        'BLOCKED_URLS':        '',
+        'FITS_SERVERTITLE':    'CPO Fits Server',
+        'FITS_SYSTEM_STATUS':  'production',
+        'UPLOAD_AUTH_COOKIE':  'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR':  "/sci/dataflow/FitsStorage_Backups/cpofits-lv3",
+        'FITS_SERVERNAME':     'cpofits-lv3.cl.gemini.edu',
+        'ORCID_ENABLED':       'False',
+        'TZ':                  'America/Santiago',
         'PROCESSED_CALS_PATH': 'reduced_cals'
     },
     "cpofits-lv2": {
-        'USE_AS_ARCHIVE': 'False',
+        'USE_AS_ARCHIVE':      'False',
         'EXPORT_DESTINATIONS': '',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'TEST On-site FitsServer (Chile)',
-        'FITS_SYSTEM_STATUS': 'development',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/cpofits-lv2",
+        'PUBDB_REMOTE':        'https://localhost/ingest_publications',
+        'BLOCKED_URLS':        '',
+        'FITS_SERVERTITLE':    'TEST On-site FitsServer (Chile)',
+        'FITS_SYSTEM_STATUS':  'development',
+        'UPLOAD_AUTH_COOKIE':  'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR':  "/sci/dataflow/FitsStorage_Backups/cpofits-lv2",
         'PROCESSED_CALS_PATH': 'reduced_cals_dev',
         'DEFAULT_UPLOAD_PATH': 'upload_dev',
     },
     "hbffits-lv1": {
-        'USE_AS_ARCHIVE': 'False',
+        'USE_AS_ARCHIVE':      'False',
         'EXPORT_DESTINATIONS': '',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'Dev On-site FitsServer (CentOS 7)',
-        'FITS_SYSTEM_STATUS': 'development',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv1",
+        'PUBDB_REMOTE':        'https://localhost/ingest_publications',
+        'BLOCKED_URLS':        '',
+        'FITS_SERVERTITLE':    'Dev On-site FitsServer (CentOS 7)',
+        'FITS_SYSTEM_STATUS':  'development',
+        'UPLOAD_AUTH_COOKIE':  'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR':  "/sci/dataflow/FitsStorage_Backups/hbffits-lv1",
         'DEFAULT_UPLOAD_PATH': 'upload_dev',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev'
     },
     "hbfqapdev-lv1": {
-        'USE_AS_ARCHIVE': 'False',
+        'USE_AS_ARCHIVE':      'False',
         'EXPORT_DESTINATIONS': '',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'TEST QAP FitsServer (CentOS 7)',
-        'FITS_SYSTEM_STATUS': 'development',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbfqapdev-lv1",
+        'PUBDB_REMOTE':        'https://localhost/ingest_publications',
+        'BLOCKED_URLS':        '',
+        'FITS_SERVERTITLE':    'TEST QAP FitsServer (CentOS 7)',
+        'FITS_SYSTEM_STATUS':  'development',
+        'UPLOAD_AUTH_COOKIE':  'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR':  "/sci/dataflow/FitsStorage_Backups/hbfqapdev-lv1",
         'DEFAULT_UPLOAD_PATH': 'upload_dev',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev',
-        'ORCID_ENABLED': 'False',
+        'ORCID_ENABLED':       'False',
     },
     "hbffitstest-lv1": {
-        'USE_AS_ARCHIVE': 'False',
+        'USE_AS_ARCHIVE':      'False',
         'EXPORT_DESTINATIONS': '',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'TEST On-site FitsServer (CentOS 7)',
-        'FITS_SYSTEM_STATUS': 'development',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffitstest-lv1",
-        'ORCID_ENABLED': 'False',
+        'PUBDB_REMOTE':        'https://localhost/ingest_publications',
+        'BLOCKED_URLS':        '',
+        'FITS_SERVERTITLE':    'TEST On-site FitsServer (CentOS 7)',
+        'FITS_SYSTEM_STATUS':  'development',
+        'UPLOAD_AUTH_COOKIE':  'qap_upload_processed_cal_ok',
+        'FITS_DB_BACKUP_DIR':  "/sci/dataflow/FitsStorage_Backups/hbffitstest-lv1",
+        'ORCID_ENABLED':       'False',
         'DEFAULT_UPLOAD_PATH': 'upload_dev',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev',
     },
     "ooberdorf-ml1": {
-        'DHS_PERM': '/Users/ooberdorf/dhs',
-        'EXPORT_DESTINATIONS': '',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'DEFAULT_UPLOAD_PATH': 'upload_dev',
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
-        'DAS_CALPROC_PATH': '/Users/ooberdorf/das_calproc',
-        'STORAGE_ROOT': '/Users/ooberdorf/dataflow'
+        'DHS_PERM':                  '/Users/ooberdorf/dhs',
+        'EXPORT_DESTINATIONS':       '',
+        'UPLOAD_AUTH_COOKIE':        'qap_upload_processed_cal_ok',
+        'DEFAULT_UPLOAD_PATH':       'upload_dev',
+        'PROCESSED_CALS_PATH':       'reduced_cals_dev',
+        'DAS_CALPROC_PATH':          '/Users/ooberdorf/das_calproc',
+        'STORAGE_ROOT':              '/Users/ooberdorf/dataflow',
+        'MFP_AWS_REGION_NAME':       'us-east-1',  # most likely WRONG for prod, this is for localstack
+        'MFP_AWS_ACCESS_KEY_ID':     'foo',
+        'MFP_AWS_SECRET_ACCESS_KEY': 'foo',
+        'MFP_AWS_VERIFY':            'True',
+        'MFP_AWS_ENDPOINT_URL':      'http://localhost:4566',
+        'MFP_AWS_PROFILE_NAME':      'localstack'
     },
     "some_actual_site_host": {
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
-        'PUBDB_REMOTE': 'https://archive.gemini.edu/ingest_publications',
-        'BLOCKED_URLS': '',
+        'PUBDB_REMOTE':        'https://archive.gemini.edu/ingest_publications',
+        'BLOCKED_URLS':        '',
         'DEFAULT_UPLOAD_PATH': 'upload_dev',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev'
     },
     "archive": {
-        'FITS_SERVERTITLE': 'Gemini Observatory Archive',
-        'USE_AS_ARCHIVE': 'True',
-        'FITS_SYSTEM_STATUS': 'production',
-        'EXPORT_DESTINATIONS': '',
-        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files,gmoscaltwilightfiles,gmoscalbiasfiles',
-        'FITS_DB_BACKUP_DIR': "/backup",
-        'FITS_SERVERNAME': 'archive.gemini.edu',
-        'ORCID_ENABLED': 'False',
-        'TZ': 'UTC',
-        'PROCESSED_CALS_PATH': 'reduced_cals',
-        'USING_PREVIEWS': 'True',
+        'FITS_SERVERTITLE':                 'Gemini Observatory Archive',
+        'USE_AS_ARCHIVE':                   'True',
+        'FITS_SYSTEM_STATUS':               'production',
+        'EXPORT_DESTINATIONS':              '',
+        'BLOCKED_URLS':                     'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,'
+                                            'xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files,'
+                                            'gmoscaltwilightfiles,gmoscalbiasfiles',
+        'FITS_DB_BACKUP_DIR':               "/backup",
+        'FITS_SERVERNAME':                  'archive.gemini.edu',
+        'ORCID_ENABLED':                    'False',
+        'TZ':                               'UTC',
+        'PROCESSED_CALS_PATH':              'reduced_cals',
+        'USING_PREVIEWS':                   'True',
         'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
     },
     "arcdev": {
-        'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
-        'USE_AS_ARCHIVE': 'True',
-        'EXPORT_DESTINATIONS': '',
-        'FITS_SYSTEM_STATUS': 'development',
-        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files,gmoscaltwilightfiles,gmoscalbiasfiles',
-        'FITS_DB_BACKUP_DIR': "/backup",
-        'FITS_SERVERNAME': 'arcdev.gemini.edu',
-        'ORCID_REDIRECT_URL': 'http://arcdev.gemini.edu/orcid',
-        'TZ': 'UTC',
-        'DEFAULT_UPLOAD_PATH': 'upload_dev',
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
-        'USING_PREVIEWS': 'True',
-        'ORCID_ENABLED': 'False',
+        'FITS_SERVERTITLE':                 'TEST Archive (AWS) FitsServer (CentOS 7)',
+        'USE_AS_ARCHIVE':                   'True',
+        'EXPORT_DESTINATIONS':              '',
+        'FITS_SYSTEM_STATUS':               'development',
+        'BLOCKED_URLS':                     'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,'
+                                            'xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files,'
+                                            'gmoscaltwilightfiles,gmoscalbiasfiles',
+        'FITS_DB_BACKUP_DIR':               "/backup",
+        'FITS_SERVERNAME':                  'arcdev.gemini.edu',
+        'ORCID_REDIRECT_URL':               'http://arcdev.gemini.edu/orcid',
+        'TZ':                               'UTC',
+        'DEFAULT_UPLOAD_PATH':              'upload_dev',
+        'PROCESSED_CALS_PATH':              'reduced_cals_dev',
+        'USING_PREVIEWS':                   'True',
+        'ORCID_ENABLED':                    'False',
         'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
     }
 }
@@ -210,12 +220,12 @@ use_as_archive_str = lookup_config('USE_AS_ARCHIVE', 'False')
 use_as_archive = use_as_archive_str.lower() == 'true' or use_as_archive_str == '1'
 
 # AWS S3 info
-using_s3 = lookup_config_bool('USING_S3', False)
-s3_bucket_name = lookup_config('S3_BUCKET_NAME', '')
+using_s3              = lookup_config_bool('USING_S3', False)
+s3_bucket_name        = lookup_config('S3_BUCKET_NAME', '')
 s3_backup_bucket_name = lookup_config('S3_BACKUP_BUCKET_NAME', '')
-s3_staging_area = lookup_config('S3_STAGING_AREA', '')
-aws_access_key = lookup_config('AWS_ACCESS_KEY', '')
-aws_secret_key = lookup_config('AWS_SECRET_KEY', '')
+s3_staging_area       = lookup_config('S3_STAGING_AREA', '')
+aws_access_key        = lookup_config('AWS_ACCESS_KEY', '')
+aws_secret_key        = lookup_config('AWS_SECRET_KEY', '')
 
 # Staging area for uncompressed cache of compressed file being processed
 z_staging_area = lookup_config('Z_STAGING_AREA', '/data/z_staging')
@@ -236,10 +246,9 @@ if(using_s3):
 # Set to zero to disable
 defer_seconds = 4
 
-
 # Target free space and number of files on storage_root for delete script
-target_gb_free = 250
-target_max_files = 8000000
+target_gb_free      = 250
+target_max_files    = 8000000
 delete_min_days_age = 365
 
 # This is the path in the storage root where processed calibrations
@@ -298,24 +307,24 @@ das_calproc_path = lookup_config('DAS_CALPROC_PATH', '/sci/dasgmos')
 
 # Configure the site and other misc stuff here
 # Especially for archive systems, make the servername a fully qualified domain name.
-fits_servertitle = lookup_config('FITS_SERVERTITLE', "CPO Fits Server")
-fits_servername = lookup_config('FITS_SERVERNAME', socket.gethostname())  # "cpofits-lv2"
+fits_servertitle   = lookup_config('FITS_SERVERTITLE', "CPO Fits Server")
+fits_servername    = lookup_config('FITS_SERVERNAME', socket.gethostname())  # "cpofits-lv2"
 fits_system_status = lookup_config('FITS_SYSTEM_STATUS', "production")
 
 # Limit on number of results in open searches
-fits_open_result_limit = 500
+fits_open_result_limit   = 500
 fits_closed_result_limit = 10000
 
-smtp_server = "localhost"
-email_errors_to = "ooberdorf@gemini.edu"
+smtp_server     = "localhost"
+email_errors_to = "oliver.oberdorf@noirlab.edu"
 #email_errors_to = "phirst@gemini.edu"
 #email_errors_to = "kanderso@gemini.edu"
 
 # Configure the path the data postgres database here
-fits_dbname = lookup_config('FITS_DB_NAME', 'fitsdata')
-fits_dbserver = lookup_config('FITS_DB_SERVER', '')
-fits_database = 'postgresql://%s/%s' % (fits_dbserver, fits_dbname)
-fits_database_pool_size = 30
+fits_dbname                = lookup_config('FITS_DB_NAME', 'fitsdata')
+fits_dbserver              = lookup_config('FITS_DB_SERVER', '')
+fits_database              = 'postgresql://%s/%s' % (fits_dbserver, fits_dbname)
+fits_database_pool_size    = 30
 fits_database_max_overflow = 10
 #fits_database = 'sqlite:////home/fitsdata/sqlite-database'
 #To reference database on another machine: 
@@ -352,10 +361,10 @@ using_apache = True
 using_sqlite = False
 
 # Publication database connection info
-pubdb_host = 'hbfmysql1.hi.gemini.edu'
+pubdb_host     = 'hbfmysql1.hi.gemini.edu'
 pubdb_username = 'fitsdata'
-pubdb_dbname = 'apps-publications'
-pubdb_remote = lookup_config('PUBDB_REMOTE', 'https://localhost/ingest_publications')
+pubdb_dbname   = 'apps-publications'
+pubdb_remote   = lookup_config('PUBDB_REMOTE', 'https://localhost/ingest_publications')
 
 # By default, all URLs on the server are active. List in blocked_urls any that you want to disable
 blocked_urls_str = lookup_config('BLOCKED_URLS', 'debug,summary,diskfiles,ssummary,lsummary,standardobs,calibrations,xmlfilelist,fileontape,calmgr,upload_processed_cal,fitsverify,mdreport,fullheader,file,programsobserved,gmoscal,qareport,qametrics,qaforgui,stats,tape,tapewrite,tapefile,taperead,xmltape,notification,curation,observing_statistics,authentication')
@@ -368,11 +377,21 @@ validation_def_path = lookup_config('VALIDATION_DEF_PATH', '/opt/FitsStorage/doc
 
 logreports_use_materialized_view = lookup_config_bool('LOGREPORTS_USE_MATERIALIZED_VIEW', 'True')
 
-orcid_client_id = lookup_config('ORCID_CLIENT_ID', "APP-DBYNSNN5SCGF2G75")
+orcid_client_id     = lookup_config('ORCID_CLIENT_ID', "APP-DBYNSNN5SCGF2G75")
 orcid_client_secret = lookup_config('ORCID_CLIENT_SECRET', "66f21bdb-90f6-4219-bd81-f6b6af3bf34a")
-orcid_server = lookup_config('ORCID_SERVER', 'sandbox.orcid.org')
-orcid_enabled = lookup_config_bool('ORCID_ENABLED', True)
-orcid_redirect_url = lookup_config('ORCID_REDIRECT_URL', 'http://%s/orcid' % fits_servername)
+orcid_server        = lookup_config('ORCID_SERVER', 'sandbox.orcid.org')
+orcid_enabled       = lookup_config_bool('ORCID_ENABLED', True)
+orcid_redirect_url  = lookup_config('ORCID_REDIRECT_URL', 'http://%s/orcid' % fits_servername)
+
+#########################
+# MiscFilesPlus Settings
+mfp_aws_region_name       = lookup_config('MFP_AWS_REGION_NAME', 'us-west-2')
+mfp_aws_access_key_id     = lookup_config('MFP_AWS_ACCESS_KEY_ID', aws_access_key)
+mfp_aws_secret_access_key = lookup_config('MFP_AWS_SECRET_ACCESS_KEY', aws_secret_key)
+mfp_aws_verify            = lookup_config('MFP_AWS_VERIFY', True)
+mfp_aws_endpoint_url      = lookup_config('MFP_AWS_ENDPOINT_URL', None)
+mfp_aws_profile_name      = lookup_config('MFP_AWS_PROFILE_NAME', None)
+#########################
 
 # time_zone = lookup_config('TZ', 'US/Hawaii')
 

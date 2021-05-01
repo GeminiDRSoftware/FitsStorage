@@ -1,51 +1,64 @@
+import fits_storage.fits_storage_config as fsc
+
 from _bz2 import BZ2Compressor
 
 import boto3
 
 from .fileserver import BZ2OnTheFlyDecompressor
-from ..orm.miscfile import MiscFile, normalize_diskname
-from ..orm.diskfile import DiskFile
-from ..orm.file     import File
-from ..orm          import NoResultFound, MultipleResultsFound
-
 from . import templating
 
-from ..fits_storage_config import upload_staging_path, api_backend_location
-
-from ..gemini_metadata_utils import GeminiProgram
 from ..orm.miscfile_plus import MiscFileCollection, MiscFileFolder, MiscFilePlus
 
-from ..utils.api import ApiProxy, ApiProxyError
-from ..utils.userprogram import icanhave
 from ..utils.web import get_context, Return
 
-from .user import needs_login
-
-import dateutil
 import json
 import os
-import stat
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from cgi import parse_header
-
-from smart_open import open, s3
+from smart_open import open
 
 
 SEARCH_LIMIT = 500
 
 
+def _get_boto3_client_kwargs():
+    retval = {
+        'region_name': fsc.mfp_aws_region_name,
+        'aws_access_key_id': fsc.mfp_aws_access_key_id,
+        'aws_secret_access_key': fsc.mfp_aws_secret_access_key,
+        'verify': fsc.mfp_aws_verify,
+    }
+    if fsc.mfp_aws_endpoint_url:
+        retval['endpoint_url'] = fsc.mfp_aws_endpoint_url
+    return retval
+
+
+def _get_boto3_session_kwargs():
+    retval = {
+        'aws_access_key_id': fsc.mfp_aws_access_key_id,
+        'aws_secret_access_key': fsc.mfp_aws_secret_access_key
+    }
+    if fsc.mfp_aws_profile_name:
+        retval['profile_name'] = fsc.mfp_aws_profile_name
+    return retval
+
+
+def _get_session_client_kwargs():
+    retval = {}
+    if fsc.mfp_aws_verify:
+        retval['verify'] = True
+    elif fsc.mfp_aws_verify is False:
+        retval['verify'] = False
+    if fsc.mfp_aws_endpoint_url:
+        retval['endpoint_url'] = fsc.mfp_aws_endpoint_url
+    return retval
+
+
 @templating.templated("miscfilesplus/miscfilesplus.html")
-def miscfilesplus(collection=None, folders=None, file=None):
+def miscfilesplus(collection=None, folders=None):
     formdata = None
     try:
-#        if len(things) == 1 and things[0] == 'validate_add':
-#            return validate()
-
         ctx = get_context()
-        env = ctx.env
-
-        # formdata = ctx.get_form_data(large_file=True)
 
         session = ctx.session
         if collection is None:
@@ -95,8 +108,6 @@ def add_collection():
     try:
         ctx = get_context()
 
-        # if handle is None and 'upload' in formdata:
-        #     return save_file_fixed(get_context()._env)
         session = ctx.session
 
         formdata = get_context().get_form_data(large_file=True)
@@ -132,8 +143,6 @@ def add_folder():
     try:
         ctx = get_context()
 
-        # if handle is None and 'upload' in formdata:
-        #     return save_file_fixed(get_context()._env)
         session = ctx.session
 
         formdata = get_context().get_form_data(large_file=True)
@@ -201,13 +210,11 @@ def save_mfp_file(collection, folder, formdata):
     try:
         compressor = BZ2Compressor()
         session = boto3.Session(
-            profile_name="localstack",
-            aws_access_key_id     = 'foo', # os.environ['AWS_ACCESS_KEY_ID'],
-            aws_secret_access_key = 'foo' #  os.environ['AWS_SECRET_ACCESS_KEY'],)
+            **_get_boto3_session_kwargs()
         )
         url = f's3://miscfilesplus/{fullname}'
         with open(url, 'wb', transport_params={
-                'client': session.client('s3', verify=False, endpoint_url='https://localhost:4566/')}) as fout:
+                'client': session.client('s3', **_get_session_client_kwargs())}) as fout:
             bytes_written = 0
             read_file = fp
             read_file.seek(0)
@@ -224,11 +231,10 @@ def save_mfp_file(collection, folder, formdata):
 
         print(bytes_written)
 
-        # formdata['uploadFile'].uploaded_file.rename_to(fullpath)
         release_date = datetime.utcnow()
         jsonurl = f's3://miscfilesplus/{fullname}.mfp.json'
         with open(jsonurl, 'w', transport_params={
-                'client': session.client('s3', verify=False, endpoint_url='https://localhost:4566/')}) as meta:
+                'client': session.client('s3', **_get_session_client_kwargs())}) as meta:
             json.dump({'filename': filename,
                        'is_mfp':  'True',
                        'release':  release_date.strftime('%Y-%m-%d'),
@@ -240,8 +246,6 @@ def save_mfp_file(collection, folder, formdata):
         # TODO: We should log the failure
         return dict(can_add=True, errorMessage = "Error when trying to store the file on S3",
                     **current_data)
-
-    return dict(can_add=True)
 
 
 def upload_file():
@@ -327,9 +331,7 @@ def get_file(collection, folders, filename):
             return
 
         session = boto3.Session(
-            profile_name="localstack",
-            aws_access_key_id     = 'foo', # os.environ['AWS_ACCESS_KEY_ID'],
-            aws_secret_access_key = 'foo' #  os.environ['AWS_SECRET_ACCESS_KEY'],)
+            **_get_boto3_session_kwargs()
         )
         if folder:
             path = '/'.join(folders)
@@ -337,7 +339,7 @@ def get_file(collection, folders, filename):
         else:
             url = f's3://miscfilesplus/{collection.name}/{filename}'
         with open(url, 'rb', transport_params={
-                'client': session.client('s3', verify=False, endpoint_url='https://localhost:4566/')}) as fin:
+                'client': session.client('s3', **_get_session_client_kwargs())}) as fin:
             # resp.content_length = diskfile.data_size
             ctx.resp.sendfile_obj(BZ2OnTheFlyDecompressor(fin))
 
@@ -372,9 +374,7 @@ def delete_file(collection, folders, filename):
             return
 
         session = boto3.Session(
-            profile_name="localstack",
-            aws_access_key_id     = 'foo', # os.environ['AWS_ACCESS_KEY_ID'],
-            aws_secret_access_key = 'foo' #  os.environ['AWS_SECRET_ACCESS_KEY'],)
+            **_get_boto3_session_kwargs()
         )
         if folder:
             path = '/'.join(folders)
@@ -382,9 +382,7 @@ def delete_file(collection, folders, filename):
         else:
             key = f'{collection.name}/{filename}'
 
-        s3 = boto3.client('s3', region_name='us-east-1',
-                     aws_access_key_id="foo", aws_secret_access_key="foo",
-                     verify=False, endpoint_url='http://localhost:4566')
+        s3 = boto3.client('s3', **_get_boto3_client_kwargs())
         s3.delete_object(Bucket='miscfilesplus', Key=key)
 
         file.delete()
