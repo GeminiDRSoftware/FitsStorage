@@ -80,7 +80,11 @@ div.collapseButton {
                     <tr><th></th><th>Filename</th><th></th></tr>
                 {% if folders %}
                     {% for folder in folders %}
+                    {% if can_add %}
+                    <tr><td>[Folder]</td><td><a href="{{ folder.name }}/">{{ folder.name }}</a></td><td><a href="/miscfilesplus/delete/{{ collection.name }}/{{ folder.path() }}/">[ Delete ]</a></td></tr>
+                    {% else %}
                     <tr><td>[Folder]</td><td><a href="{{ folder.name }}/">{{ folder.name }}</a></td><td></td></tr>
+                    {% endif %}
                     {% endfor %}
                 {% endif %}
                 {% if files %}

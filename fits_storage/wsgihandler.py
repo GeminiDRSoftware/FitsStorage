@@ -2,13 +2,13 @@
 # When a request comes in, handler(req) gets called by the apache server
 
 import os
-import re
 import sys
+import mimetypes
 
-from fits_storage.gemini_metadata_utils import gemini_date
+from pprint import pformat
 
-from fits_storage.utils.web import get_context, Return, context_wrapped
-from fits_storage.utils.web import WSGIRequest, WSGIResponse, ArchiveContextMiddleware
+from fits_storage.utils.web import get_context, Return
+from fits_storage.utils.web import ArchiveContextMiddleware
 from fits_storage.utils.web import RequestRedirect, ClientError
 from fits_storage.utils.web.routing import Map, Rule, BaseConverter
 
@@ -16,7 +16,6 @@ from fits_storage.fits_storage_config import blocked_urls, use_as_archive
 from fits_storage.web.gmoscalfilelist import gmoscalbiasfiles
 from fits_storage.web.gmoscaltwilightdetails import gmoscaltwilightdetails, gmoscaltwilightfiles
 from fits_storage.web.programs import programs
-from fits_storage.web.publication import publication_ads, list_publications
 from fits_storage.web.summary import summary
 from fits_storage.web.file_list import xmlfilelist, jsonfilelist, jsonsummary, jsonqastate
 from fits_storage.web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead
@@ -49,14 +48,14 @@ from fits_storage.web.publication import publication_ads, list_publications
 from fits_storage.web.program import program_info, program_info_json
 from fits_storage.web.logcomments import log_comments
 from fits_storage.web import miscfiles, miscfilesplus
-from fits_storage.web import templating
 
-from fits_storage.orm import session_scope, NoResultFound
-from fits_storage.orm.usagelog import UsageLog
+from fits_storage.orm import NoResultFound
 
 from functools import partial
 
-####### CUSTOM CONVERTERS ##########
+# *****************
+# CUSTOM CONVERTERS
+
 
 class SelectionConverter(BaseConverter):
     """
@@ -77,7 +76,9 @@ class SelectionConverter(BaseConverter):
     is passed, then ``SEL`` **must** be included among the arguments. See the
     documentation for ``to_python`` method to learn about their uses.
     """
+
     regex = '.*'
+
     def __init__(self, *args):
         if args:
             if 'SEL' not in args:
@@ -161,6 +162,7 @@ class SelectionConverter(BaseConverter):
             return result[0]
         return tuple(result)
 
+
 class SequenceConverter(BaseConverter):
     """
     The regular expression for this converter is very simple: just take whatever
@@ -172,7 +174,9 @@ class SequenceConverter(BaseConverter):
     ``SequenceConverter`` accepts arguments. If there are any arguments, they are
     interpreted as a set of unique **allowed** values.
     """
+
     regex = '.*'
+
     def __init__(self, *args):
         self.allowed = set(args or ())
 
@@ -192,9 +196,14 @@ class SequenceConverter(BaseConverter):
 
         return things
 
-####### END CUSTOM CONVERTERS ##########
 
-####### HELPER FUNCTIONS #######
+# END CUSTOM CONVERTERS
+# *********************
+
+
+# ****************
+# HELPER FUNCTIONS
+
 
 debug_template = """
 Debug info
@@ -208,7 +217,6 @@ Environment:
 {env}
 """
 
-from pprint import pformat
 
 # Send debugging info to browser
 def debugmessage():
@@ -301,7 +309,10 @@ url_map = Map([
          miscfilesplus.add_collection),                             # MFP action to add a collection
     Rule('/miscfilesplus/add_folder', miscfilesplus.add_folder),    # MFP action to add a folder
     Rule('/miscfilesplus/upload_file', miscfilesplus.upload_file),  # MFP action to upload a file
-    Rule('/miscfilesplus/delete/<collection>/<seq_of:folders>/<filename>', miscfilesplus.delete_file),  # MFP action to delete a file
+    Rule('/miscfilesplus/delete/<collection>/<seq_of:folders>/',
+         miscfilesplus.delete_folder),                              # MFP action to delete a file
+    Rule('/miscfilesplus/delete/<collection>/<seq_of:folders>/<filename>',
+         miscfilesplus.delete_file),                                # MFP action to delete a file
 
     Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
     Rule('/upload_file/<filename>', upload_file,                    # The generic upload_file server
@@ -388,14 +399,17 @@ url_map = Map([
 for bu in blocked_urls:
     url_map.add_forbidden(bu)
 
+
 def get_route(routes):
     env = get_context().env
     return routes.match(env.uri, env.method)
+
 
 def default_route(environ, start_response):
     resp = get_context().resp
     resp.set_content_type('text/plain')
     resp.append("This is the default page!\nYou're probably looking for something else")
+
 
 def dispatch(endpoint, args):
     kw = {}
@@ -403,17 +417,16 @@ def dispatch(endpoint, args):
         kw.update(d)
     return endpoint(**kw)
 
+
 def unicode_to_string(uni):
     return uni.encode('utf-8') if isinstance(uni, str) else uni
+
 
 def core_handler(environ, start_response):
     ctx = get_context()
     req, resp = ctx.req, ctx.resp
     resp.set_header('Cache-Control', 'no-cache')
     resp.set_header('Expired', '-1')
-
-    #if req.env.server_hostname == 'archive':
-    #    new_uri = "https://archive.gemini.edu%s" % req.unparsed_uri
 
     route = get_route(url_map)
     if route is None:
@@ -422,7 +435,6 @@ def core_handler(environ, start_response):
         dispatch(*route)
         return resp.respond(unicode_to_string)
 
-import mimetypes
 
 class StaticServer(object):
     """
@@ -461,9 +473,11 @@ class StaticServer(object):
                 resp.client_error(Return.HTTP_FORBIDDEN)
         return self.app(environ, start_response)
 
+
 htmldocroot = os.path.join(os.path.dirname(__file__), '..', 'htmldocroot')
 htmldocroot = os.getenv('HTML_DOC_ROOT', htmldocroot)
 handle_with_static = StaticServer(core_handler, root=htmldocroot)
+
 
 def handler(environ, start_response):
     ctx = get_context()
@@ -483,6 +497,7 @@ def handler(environ, start_response):
                 log.add_note(e.message)
             session.add(log)
         return ctx.resp.respond(unicode_to_string)
+
 
 application = ArchiveContextMiddleware(handler)
 

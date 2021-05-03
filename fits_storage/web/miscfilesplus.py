@@ -185,8 +185,9 @@ def add_folder():
             return
 
         if path is None:
-            path = ''
-        ctx.resp.redirect_to(f"/miscfilesplus/{path}")
+            ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection_name}/")
+        else:
+            ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection_name}/{path}/")
     finally:
         if formdata and formdata.uploaded_file is not None:
             try:
@@ -342,6 +343,37 @@ def get_file(collection, folders, filename):
                 'client': session.client('s3', **_get_session_client_kwargs())}) as fin:
             # resp.content_length = diskfile.data_size
             ctx.resp.sendfile_obj(BZ2OnTheFlyDecompressor(fin))
+
+
+def delete_folder(collection, folders):
+    ctx = get_context()
+
+    session = ctx.session
+
+    collection = session.query(MiscFileCollection) \
+        .filter(MiscFileCollection.name == collection).first()
+    if not collection:
+        ctx.resp.status = Return.HTTP_NOT_FOUND
+        return
+    else:
+        # now find the parent folder
+        folder = None
+        for f in folders:
+            folder = session.query(MiscFileFolder) \
+                .filter(MiscFileFolder.folder == folder) \
+                .filter(MiscFileFolder.name == f).first()
+            if not folder:
+                ctx.resp.status = Return.HTTP_NOT_FOUND
+                return
+
+        parent = folder.folder
+        folder.delete()
+        session.commit()
+
+        if parent:
+            ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection.name}/{parent.path()}/")
+        else:
+            ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection.name}/")
 
 
 def delete_file(collection, folders, filename):
