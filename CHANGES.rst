@@ -38,6 +38,14 @@ service_target_queue.py
 2020-2.18
 =========
 
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- added calprog and notcalprog options to search explicitly for calibration programs or to exclude (URL only)
+
 Calibrations
 ------------
 
