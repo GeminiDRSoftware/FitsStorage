@@ -64,6 +64,11 @@ ingest_standards.py
 - Made idempotent for reruns to update existing records by name (or create new ones as needed)
 - update to related geometryhacks logic to properly parse coordinate values
 
+add_to_export_queue.py
+^^^^^^^^^^^^^^^^^^^^^^
+
+- Updated header query to use session as a keyword argument, was broken
+
 
 2020-2.17
 =========
