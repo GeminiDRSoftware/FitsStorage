@@ -8,7 +8,7 @@ from time import sleep
 
 import re
 
-date_re = re.compile(r'(\d{8}[SE]\d+)')
+date_re = re.compile(r'(\d{8}[A-Z]\d+)')
 
 def sortkey_for_filename(filename):
     """
