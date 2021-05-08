@@ -151,7 +151,7 @@ class ExportQueueUtil(object):
         our_md5 = diskfile.data_md5
 
         self.l.debug("Checking for remote file md5")
-        dest_md5 = get_destination_data_md5(filename, self.l, destination)
+        dest_md5 = get_destination_data_md5(filename_nobz2, self.l, destination)
 
         if dest_md5 == 'ERROR':
             return False
