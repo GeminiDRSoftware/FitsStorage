@@ -36,6 +36,7 @@ exportqueue.py
 ^^^^^^^^^^^^^^
 
 - Check file presence on archive with the non-bz2 filename, to avoid problems with A'lopeke and Zorro
+- Added destination to unique constraint so we can have multiple destinations
 
 queue.py
 ^^^^^^^^
