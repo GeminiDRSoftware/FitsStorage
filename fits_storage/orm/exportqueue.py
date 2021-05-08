@@ -13,7 +13,7 @@ class ExportQueue(Base):
     """
     __tablename__ = 'exportqueue'
     __table_args__ = (
-        UniqueConstraint('filename', 'inprogress', 'failed'),
+        UniqueConstraint('filename', 'inprogress', 'failed', 'destiation'),
         UniqueConstraint('filename', 'path', 'destination'),
     )
 
