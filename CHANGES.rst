@@ -69,6 +69,21 @@ add_to_export_queue.py
 
 - Updated header query to use session as a keyword argument, was broken
 
+exportqueue.py
+^^^^^^^^^^^^^^
+
+- Check file presence on archive with the non-bz2 filename, to avoid problems with A'lopeke and Zorro
+
+queue.py
+^^^^^^^^
+
+- Updated filename regex to support more visiting instruments
+
+list_headers.py
+^^^^^^^^^^^^^^^
+
+- Add a flag to allow an unlimited search for internal tools, also updated the add_to_export_queue.py and write_to_tape.py to use it
+
 
 2020-2.17
 =========
