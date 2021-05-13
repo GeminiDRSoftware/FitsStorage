@@ -110,7 +110,9 @@ _host_based_configs = {
         'DEFAULT_UPLOAD_PATH': 'upload_dev',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev',
         'DAS_CALPROC_PATH': '/Users/ooberdorf/das_calproc',
-        'STORAGE_ROOT': '/Users/ooberdorf/dataflow'
+        'STORAGE_ROOT': '/Users/ooberdorf/dataflow',
+        'FITS_LOG_DIR': '/Users/ooberdorf/fitslogs',
+        'FITS_AUX_DATADIR': '/Users/ooberdorf/FitsStorage/data'
     },
     "some_actual_site_host": {
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
