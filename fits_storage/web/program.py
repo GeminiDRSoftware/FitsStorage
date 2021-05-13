@@ -2,7 +2,7 @@
 This module deals with displaying information about programs.
 """
 
-from cgi import escape
+from html import escape
 from . import templating
 from .templating import SkipTemplateError
 from ..orm.program import Program
