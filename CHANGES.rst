@@ -8,6 +8,7 @@ User-Facing Changes
 ^^^^^^^^^^^
 
 - added calprog and notcalprog options to search explicitly for calibration programs or to exclude (URL only)
+- highlight color changes for sq and ql data
 
 Calibrations
 ------------

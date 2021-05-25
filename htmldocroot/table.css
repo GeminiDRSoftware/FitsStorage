@@ -37,22 +37,22 @@ tr.warn-alternating:nth-child(even) {
 }
 
 tr.sq-alternating:nth-child(odd) {
-  background-color: #aaffaa;
+  background-color: #a7ed9c;
   font-size: small
 }
 
 tr.sq-alternating:nth-child(even) {
-  background-color: #aaccaa;
+  background-color: #88e679;
   font-size: small
 }
 
 tr.ql-alternating:nth-child(odd) {
-  background-color: #ccffcc;
+  background-color: #f2d21c;
   font-size: small
 }
 
 tr.ql-alternating:nth-child(even) {
-  background-color: #bbeebb;
+  background-color: #e7c70d;
   font-size: small
 }
 
