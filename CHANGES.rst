@@ -21,6 +21,13 @@ calibration_niri.py
 Other
 -----
 
+diskfilereport.py
+^^^^^^^^^^^^^^^^^
+
+- Added definitions for GMOS WCS extension to validation
+- Added definition for PROVENANCE and PROVENANNCE_HISTORY to validation
+- Added AWAV option for CTYPE1 and '' option for CTYPE2
+
 ingest_standards.py
 ^^^^^^^^^^^^^^^^^^^
 
