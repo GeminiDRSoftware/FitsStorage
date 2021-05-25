@@ -1,0 +1,7 @@
+
+provenance:
+  keywords:
+    - EXTNAME:
+      - char: [ PROVENANCE, PROVENANCE_HISTORY ]
+    - XTENSION:
+      - char:   BINTABLE
