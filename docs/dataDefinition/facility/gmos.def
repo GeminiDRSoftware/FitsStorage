@@ -6,7 +6,7 @@ import: [ fac-pdu, ext, wcs, provenance ]
 
 validation(final):
   - primary-hdu:   gmos-pdu
-  - extension  : [ gmos-ext, gmos-gwcs, provenance.provenance, ext.bintable ]
+  - extension  : [ gmos-ext, gmos-gwcs, gmos-sci, gmos-var, gmos-dq, provenance.provenance, ext.bintable ]
 
 gmos-pdu:
   - merge: fac-pdu
@@ -57,3 +57,24 @@ gmos-gwcs:
       - char:   WCS
     - XTENSION:
       - char:   TABLE
+
+gmos-sci:
+  - keywords:
+      - EXTNAME:
+          - char: SCI
+      - XTENSION:
+          - char: IMAGE
+
+gmos-var:
+  - keywords:
+      - EXTNAME:
+          - char: VAR
+      - XTENSION:
+          - char: IMAGE
+
+gmos-dq:
+  - keywords:
+      - EXTNAME:
+          - char: DQ
+      - XTENSION:
+          - char: IMAGE
