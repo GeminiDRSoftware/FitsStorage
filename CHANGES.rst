@@ -57,6 +57,11 @@ list_headers.py
 
 - Add a flag to allow an unlimited search for internal tools, also updated the add_to_export_queue.py and write_to_tape.py to use it
 
+header.py
+^^^^^^^^^
+
+- Fix to pre_image header parsing for boolean values
+
 
 2020-2.17
 =========
