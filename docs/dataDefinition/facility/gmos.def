@@ -2,11 +2,11 @@ conditions:
   - matching(pdu):
     - INSTRUME: [ GMOS-N, GMOS-S ]
 
-import: [ fac-pdu, ext, wcs ]
+import: [ fac-pdu, ext, wcs, provenance ]
 
 validation(final):
   - primary-hdu:   gmos-pdu
-  - extension  : [ gmos-ext, ext.bintable ]
+  - extension  : [ gmos-ext, gmos-gwcs, gmos-sci, gmos-var, gmos-dq, provenance.provenance, ext.bintable ]
 
 gmos-pdu:
   - merge: fac-pdu
@@ -50,3 +50,31 @@ gmos-ext:
         - char:       not null
       - CCDSIZE,CCDSEC,DATASEC,DETSEC,BIASSEC:
         - pattern:    '\[\d+:\d+,\d+:\d+]'
+
+gmos-gwcs:
+  - keywords:
+    - EXTNAME:
+      - char:   WCS
+    - XTENSION:
+      - char:   TABLE
+
+gmos-sci:
+  - keywords:
+      - EXTNAME:
+          - char: SCI
+      - XTENSION:
+          - char: IMAGE
+
+gmos-var:
+  - keywords:
+      - EXTNAME:
+          - char: VAR
+      - XTENSION:
+          - char: IMAGE
+
+gmos-dq:
+  - keywords:
+      - EXTNAME:
+          - char: DQ
+      - XTENSION:
+          - char: IMAGE

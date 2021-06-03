@@ -45,6 +45,7 @@ User-Facing Changes
 ^^^^^^^^^^^
 
 - added calprog and notcalprog options to search explicitly for calibration programs or to exclude (URL only)
+- highlight color changes for sq and ql data
 
 Calibrations
 ------------
@@ -57,6 +58,14 @@ calibration_niri.py
 
 Other
 -----
+
+diskfilereport.py
+^^^^^^^^^^^^^^^^^
+
+- Added definitions for GMOS WCS extension to validation
+- Added definition for PROVENANCE and PROVENANNCE_HISTORY to validation
+- Added AWAV option for CTYPE1 and '' option for CTYPE2
+- Added support for var, dq, sci (1d) headers in gmos validation
 
 ingest_standards.py
 ^^^^^^^^^^^^^^^^^^^
@@ -84,6 +93,11 @@ list_headers.py
 ^^^^^^^^^^^^^^^
 
 - Add a flag to allow an unlimited search for internal tools, also updated the add_to_export_queue.py and write_to_tape.py to use it
+
+header.py
+^^^^^^^^^
+
+- Fix to pre_image header parsing for boolean values
 
 
 2020-2.17
