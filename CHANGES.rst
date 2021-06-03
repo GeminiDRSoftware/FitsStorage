@@ -38,6 +38,15 @@ service_target_queue.py
 2020-2.18
 =========
 
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- added calprog and notcalprog options to search explicitly for calibration programs or to exclude (URL only)
+- highlight color changes for sq and ql data
+
 Calibrations
 ------------
 
@@ -50,11 +59,45 @@ calibration_niri.py
 Other
 -----
 
+diskfilereport.py
+^^^^^^^^^^^^^^^^^
+
+- Added definitions for GMOS WCS extension to validation
+- Added definition for PROVENANCE and PROVENANNCE_HISTORY to validation
+- Added AWAV option for CTYPE1 and '' option for CTYPE2
+- Added support for var, dq, sci (1d) headers in gmos validation
+
 ingest_standards.py
 ^^^^^^^^^^^^^^^^^^^
 
 - Made idempotent for reruns to update existing records by name (or create new ones as needed)
 - update to related geometryhacks logic to properly parse coordinate values
+
+add_to_export_queue.py
+^^^^^^^^^^^^^^^^^^^^^^
+
+- Updated header query to use session as a keyword argument, was broken
+
+exportqueue.py
+^^^^^^^^^^^^^^
+
+- Check file presence on archive with the non-bz2 filename, to avoid problems with A'lopeke and Zorro
+- Added destination to unique constraint so we can have multiple destinations
+
+queue.py
+^^^^^^^^
+
+- Updated filename regex to support more visiting instruments
+
+list_headers.py
+^^^^^^^^^^^^^^^
+
+- Add a flag to allow an unlimited search for internal tools, also updated the add_to_export_queue.py and write_to_tape.py to use it
+
+header.py
+^^^^^^^^^
+
+- Fix to pre_image header parsing for boolean values
 
 
 2020-2.17

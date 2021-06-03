@@ -3,7 +3,7 @@ This module contains the web summary generator class.
 """
 
 from collections import OrderedDict, namedtuple
-from cgi import escape
+from html import escape
 
 from ..gemini_metadata_utils import GeminiDataLabel, degtora, degtodec
 

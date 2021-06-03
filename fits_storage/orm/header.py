@@ -685,7 +685,7 @@ class Header(Base):
 
         try:
             pre_image = ad.phu.get("PREIMAGE")
-            if pre_image is not None and (pre_image == "1" or pre_image == "T"):
+            if pre_image is not None and (pre_image == "1" or pre_image == "T" or pre_image == True):
                 self.pre_image = True
             else:
                 self.pre_image = False
