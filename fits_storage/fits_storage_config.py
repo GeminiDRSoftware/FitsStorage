@@ -113,7 +113,7 @@ _host_based_configs = {
         'STORAGE_ROOT':              '/Users/ooberdorf/dataflow',
         'FITS_LOG_DIR':              '/Users/ooberdorf/fitslogs',
         'FITS_AUX_DATADIR':          '/Users/ooberdorf/FitsStorage/data',
-        'VALIDATION_DEF_PATH':       '/Users/ooberdorf/FitsStorage/docs/dataDefinition'
+        'VALIDATION_DEF_PATH':       '/Users/ooberdorf/FitsStorage/docs/dataDefinition',
         'MFP_AWS_REGION_NAME':       'us-east-1',  # most likely WRONG for prod, this is for localstack
         'MFP_AWS_ACCESS_KEY_ID':     'foo',
         'MFP_AWS_SECRET_ACCESS_KEY': 'foo',
