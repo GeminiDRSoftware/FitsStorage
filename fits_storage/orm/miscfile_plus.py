@@ -179,3 +179,5 @@ class MiscFilePlus(Base):
     description   = Column(Text)
     program_id    = Column(Text, index=True)
     filename      = Column(Text, index=True)
+    size          = Column(Integer, index=True)
+    last_modified = Column(DateTime, index=True)

@@ -1,3 +1,7 @@
+from zipfile import ZipFile
+
+from botocore.exceptions import ClientError
+
 import fits_storage.fits_storage_config as fsc
 
 from _bz2 import BZ2Compressor
@@ -13,7 +17,7 @@ from ..utils.web import get_context, Return
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from smart_open import open
 
@@ -196,16 +200,17 @@ def add_folder():
                 pass
 
 
-def save_mfp_file(collection, folder, formdata):
+def _save_mfp_file(collection, folder, fp, filename):
     """
     Save MiscFilesPlus file to S3
 
     This makes use of smart_open to stream the data out instead of staging a file
     like the existing code.  See: https://github.com/RaRe-Technologies/smart_open
     """
-    filename = formdata['uploadFile'].filename
-    fp = formdata['uploadFile'].file
-    fullname = os.path.join(f"{collection.name}", folder.path(), filename)
+    if folder:
+        fullname = f"{collection.name}/{folder.path()}/{filename}"
+    else:
+        fullname = f"{collection.name}/{filename}"
     current_data = {}
 
     try:
@@ -213,6 +218,11 @@ def save_mfp_file(collection, folder, formdata):
         session = boto3.Session(
             **_get_boto3_session_kwargs()
         )
+        client = session.client('s3', **_get_session_client_kwargs())
+        try:
+            client.head_bucket(Bucket='miscfilesplus')
+        except ClientError:
+            client.create_bucket(Bucket='miscfilesplus')
         url = f's3://miscfilesplus/{fullname}'
         with open(url, 'wb', transport_params={
                 'client': session.client('s3', **_get_session_client_kwargs())}) as fout:
@@ -249,6 +259,28 @@ def save_mfp_file(collection, folder, formdata):
                     **current_data)
 
 
+def _upload_zip_file(session, fp, collection, folder, program_id, release_date, description):
+    with ZipFile(fp) as zf:
+        for zi in zf.infolist():
+            with zf.open(zi) as zdata:
+                _save_mfp_file(collection, folder, zdata, zi.filename)
+                mfp = MiscFilePlus()
+                mfp.folder = folder
+                mfp.filename = zi.filename
+                mfp.collection = collection
+                if program_id:
+                    mfp.program_id = program_id
+                else:
+                    mfp.program_id = collection.program_id
+                if release_date:
+                    mfp.release = release_date
+                else:
+                    mfp.release = datetime.now()
+                mfp.description = description
+                session.add(mfp)
+                session.commit()
+
+
 def upload_file():
     ctx = get_context()
 
@@ -257,11 +289,30 @@ def upload_file():
     formdata = get_context().get_form_data(large_file=True)
 
     collection_name = formdata['collection_name'].value
-    file_name = formdata['uploadFile'].filename
+    file_name = formdata['file'].filename
+    if not file_name:
+        ctx.resp.status = Return.HTTP_BAD_REQUEST
+        return
+    if file_name.endswith('.mfp.json'):
+        # reserved suffix
+        ctx.resp.status = Return.HTTP_BAD_REQUEST
+        return
     if 'path' in formdata:
         path = formdata['path'].value
     else:
         path = None
+    if 'file_program_id' in formdata:
+        program_id = formdata['file_program_id'].value
+    else:
+        program_id = None
+    if 'file_release_date' in formdata:
+        release_date = formdata['file_release_date'].value
+        try:
+            release_date = datetime.strptime(release_date, '%Y%m%d')
+        except:
+            release_date = None
+    else:
+        release_date = None
     folder = None
 
     if collection_name:
@@ -281,18 +332,29 @@ def upload_file():
                         ctx.resp.status = Return.HTTP_BAD_REQUEST
                         return
 
-            # logic to save to S3 goes in here
-            save_mfp_file(collection, folder, formdata)
+            if file_name.lower().endswith('zip'):
+                _upload_zip_file(session, formdata['file'].file, collection, folder, program_id,
+                                 release_date, '')  #formdata['description'].value)
+            else:
+                # logic to save to S3 goes in here
+                fp = formdata.fp
+                _save_mfp_file(collection, folder, fp, file_name)
 
-            mfp = MiscFilePlus()
-            mfp.folder = folder
-            mfp.filename = file_name
-            mfp.collection = collection
-            mfp.program_id = collection.program_id
-            mfp.release = datetime.now()
-            mfp.description = ''
-            session.add(mfp)
-            session.commit()
+                mfp = MiscFilePlus()
+                mfp.folder = folder
+                mfp.filename = file_name
+                mfp.collection = collection
+                if program_id:
+                    mfp.program_id = program_id
+                else:
+                    mfp.program_id = collection.program_id
+                if release_date:
+                    mfp.release = release_date
+                else:
+                    mfp.release = datetime.now()
+                mfp.description = ''
+                session.add(mfp)
+                session.commit()
     else:
         ctx.resp.status = Return.HTTP_BAD_REQUEST
         return
@@ -345,7 +407,17 @@ def get_file(collection, folders, filename):
             ctx.resp.sendfile_obj(BZ2OnTheFlyDecompressor(fin))
 
 
-def delete_folder(collection, folders):
+def _delete_folder_recursive(session, folder):
+    for child_file in session.query(MiscFilePlus) \
+            .filter(MiscFilePlus.folder == folder).all():
+        session.delete(child_file)
+    for child_folder in session.query(MiscFileFolder) \
+            .filter(MiscFileFolder.folder == folder).all():
+        _delete_folder_recursive(session, child_folder)
+    session.delete(folder)
+
+
+def delete_path(collection, path):
     ctx = get_context()
 
     session = ctx.session
@@ -358,7 +430,7 @@ def delete_folder(collection, folders):
     else:
         # now find the parent folder
         folder = None
-        for f in folders:
+        for f in path[:-1]:
             folder = session.query(MiscFileFolder) \
                 .filter(MiscFileFolder.folder == folder) \
                 .filter(MiscFileFolder.name == f).first()
@@ -366,61 +438,33 @@ def delete_folder(collection, folders):
                 ctx.resp.status = Return.HTTP_NOT_FOUND
                 return
 
-        parent = folder.folder
-        folder.delete()
-        session.commit()
+        name = path[-1]
+        parent = folder
+        checkfolder = session.query(MiscFileFolder) \
+            .filter(MiscFileFolder.folder == parent) \
+            .filter(MiscFileFolder.name == name).first()
+        if checkfolder:
+            _delete_folder_recursive(session, checkfolder)
+            session.commit()
+        else:
+            # should be a file, find it, remove it from S3 and delete the record
+            checkfile = session.query(MiscFilePlus) \
+                .filter(MiscFilePlus.folder == parent) \
+                .filter(MiscFilePlus.filename == name).first()
+            if checkfile:
+                path = '/'.join(path)
+                key = f'{collection.name}/{path}/{name}'
 
+                s3 = boto3.client('s3', **_get_boto3_client_kwargs())
+                s3.delete_object(Bucket='miscfilesplus', Key=key)
+                s3.delete_object(Bucket='miscfilesplus', Key=f"{key}.mfp.json")
+
+                session.delete(checkfile)
+                session.commit()
+            else:
+                ctx.resp.status = Return.HTTP_NOT_FOUND
+                return
         if parent:
             ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection.name}/{parent.path()}/")
-        else:
-            ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection.name}/")
-
-
-def delete_file(collection, folders, filename):
-    ctx = get_context()
-
-    session = ctx.session
-
-    collection = session.query(MiscFileCollection) \
-        .filter(MiscFileCollection.name == collection).first()
-    if not collection:
-        ctx.resp.status = Return.HTTP_NOT_FOUND
-        return
-    else:
-        # now find the parent folder
-        folder = None
-        for f in folders:
-            folder = session.query(MiscFileFolder) \
-                .filter(MiscFileFolder.folder == folder) \
-                .filter(MiscFileFolder.name == f).first()
-            if not folder:
-                ctx.resp.status = Return.HTTP_NOT_FOUND
-                return
-
-        file = session.query(MiscFilePlus) \
-                .filter(MiscFilePlus.folder == folder) \
-                .filter(MiscFilePlus.collection == collection) \
-                .filter(MiscFilePlus.filename == filename).first()
-        if file is None:
-            ctx.resp.status = Return.HTTP_NOT_FOUND
-            return
-
-        session = boto3.Session(
-            **_get_boto3_session_kwargs()
-        )
-        if folder:
-            path = '/'.join(folders)
-            key = f'{collection.name}/{path}/{filename}'
-        else:
-            key = f'{collection.name}/{filename}'
-
-        s3 = boto3.client('s3', **_get_boto3_client_kwargs())
-        s3.delete_object(Bucket='miscfilesplus', Key=key)
-
-        file.delete()
-        session.commit()
-
-        if folders:
-            ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection.name}/{folder.path()}/")
         else:
             ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection.name}/")
