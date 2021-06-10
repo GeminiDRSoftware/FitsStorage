@@ -302,8 +302,12 @@ def _upload_zip_file(ctx, session, fp, collection, folder, program_id, release_d
                     if release_date:
                         mfp.release = release_date
                     else:
-                        mfp.release = datetime.now()
+                        mfp.release = datetime.utcnow()
                     mfp.description = description
+                    if zi.date_time:
+                        mfp.last_modified = datetime(zi.date_time[0], zi.date_time[1], zi.date_time[2],
+                                                     zi.date_time[3], zi.date_time[4], zi.date_time[5])
+                    mfp.size = zi.file_size
                     session.add(mfp)
                     session.commit()
 

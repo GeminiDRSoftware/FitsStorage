@@ -115,9 +115,9 @@ div.collapseButton {
                     <tr><th>Filename</th><th>Size</th><th>Last Modified</th><th>Program ID</th><th>Release Date</th><th>Actions</th></tr>
                 {% if folders %}
                     {% for folder in folders %}
-                    <tr><td><span class="fa fa-folder-open">&nbsp;&nbsp;</span><a href="{{ folder.name }}/">{{ folder.name }}</a></td>
+                    <tr><td><span class="fa fa-folder-open">&nbsp;&nbsp;</span><a href="{{ folder.name }}/">{{ folder.name }}</a></td><td></td><td></td><td></td><td></td>
                     {% if can_add %}
-                    <td></td><td></td><td><a href="/miscfilesplus/delete/{{ collection.name }}/{{ folder.path() }}/">&nbsp;&nbsp;<span class="fa fa-trash"></span></a></td></tr>
+                    <td><a href="/miscfilesplus/delete/{{ collection.name }}/{{ folder.path() }}/">&nbsp;&nbsp;<span class="fa fa-trash"></span></a></td></tr>
                     {% else %}
                     </tr>
                     {% endif %}
@@ -130,7 +130,7 @@ div.collapseButton {
                     {% else %}
                     <tr><td><span class="fa fa-file">&nbsp;&nbsp;</span><a href="/miscfilesplus/download/{{ collection.name }}/{{ file.filename }}">{{ file.filename }}</a></td>
                     {% endif %}
-                    <td>{{ file.size }}</td><td>{{ file.last_modified }}</td><td>{{ file.program_id }}</td><td>{{ file.release_date }}</td>
+                    <td>{{ file.size }}</td><td>{{ file.last_modified }}</td><td>{{ file.program_id }}</td><td>{{ file.release.strftime('%Y-%m-%d') }}</td>
                     {% if can_add %}
                       {% if folder %}
                         <td><a href="/miscfilesplus/delete/{{ collection.name }}/{{ folder.path() }}/{{ file.filename }}">&nbsp;&nbsp;<span class="fa fa-trash"></span></a></td>
