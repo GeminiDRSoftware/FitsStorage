@@ -1,3 +1,4 @@
+import zipfile
 from zipfile import ZipFile
 
 from botocore.exceptions import ClientError
@@ -23,6 +24,54 @@ from smart_open import open
 
 
 SEARCH_LIMIT = 500
+
+
+class ArchiveWrapper:
+    def __init__(self):
+        pass
+
+
+class ArchiveInfoWrapper:
+    def __init__(self):
+        pass
+
+
+class ZipArchive(ArchiveWrapper):
+    def __init__(self, fp):
+        self.zipfile = ZipFile(fp)
+
+    def infolist(self):
+        for zi in self.zipfile.infolist():
+            yield ZipArchiveInfo(zi)
+
+    def open(self, zi):
+        return self.zipfile.open(zi.zipinfo)
+
+
+class ZipArchiveInfo(ArchiveInfoWrapper):
+    def __init__(self, zipinfo):
+        self.zipinfo = zipinfo
+
+    def is_dir(self):
+        return self.zipinfo.is_dir()
+
+    @property
+    def filename(self):
+        return self.zipinfo.filename
+
+    @property
+    def date_time(self):
+        return self.zipinfo.date_time
+
+    @property
+    def file_size(self):
+        return self.zipinfo.file_size
+
+
+def _get_archive_wrapper(filename, fp):
+    if filename.lower().endswith('.zip'):
+        return ZipArchive(fp)
+    return None
 
 
 def _get_boto3_client_kwargs():
@@ -259,57 +308,57 @@ def _add_folder(ctx, session, collection, folder, folder_name):
     return mff
 
 
-def _upload_zip_file(ctx, session, fp, collection, folder, program_id, release_date, description):
-    with ZipFile(fp) as zf:
-        for zi in zf.infolist():
-            # if we need to create a path below the current folder, check and do so here
-            # then track the final "zipfolder" as the location to put the new folder or file
-            # and use the final element in the path as the filename
-            if '/' in zi.filename:
-                zippath = zi.filename.rstrip('/').split('/')
-                zipfolder = folder
-                zipfilename = zippath[-1]
-                for zif in zippath[:-1]:
-                    zipf = session.query(MiscFileFolder).filter(MiscFileFolder.folder == zipfolder,
-                                                                MiscFileFolder.name == zif).first()
-                    if zipf is None:
-                        zipfolder = _add_folder(ctx, session, collection, zipfolder, zif)
-                    else:
-                        zipfolder = zipf
-
-            if zi.is_dir():
+def _upload_zip_file(ctx, session, filename, fp, collection, folder, program_id, release_date, description):
+    aw = _get_archive_wrapper(filename, fp)
+    for ai in aw.infolist():
+        # if we need to create a path below the current folder, check and do so here
+        # then track the final "zipfolder" as the location to put the new folder or file
+        # and use the final element in the path as the filename
+        if '/' in ai.filename:
+            zippath = ai.filename.rstrip('/').split('/')
+            zipfolder = folder
+            zipfilename = zippath[-1]
+            for zif in zippath[:-1]:
                 zipf = session.query(MiscFileFolder).filter(MiscFileFolder.folder == zipfolder,
-                                                            MiscFileFolder.name == zipfilename).first()
+                                                            MiscFileFolder.name == zif).first()
                 if zipf is None:
-                    zipf = session.query(MiscFilePlus).filter(MiscFilePlus.folder == zipfolder,
-                                                              MiscFilePlus.filename == zipfilename).first()
-                    if zipf is not None:
-                        # file already exists with that name
-                        ctx.resp.status = Return.HTTP_BAD_REQUEST
-                        return
-                    _add_folder(ctx, session, collection, zipfolder, zipfilename)
-            else:
-                with zf.open(zi) as zdata:
-                    _save_mfp_file(collection, zipfolder, zdata, zipfilename)
-                    mfp = MiscFilePlus()
-                    mfp.folder = zipfolder
-                    mfp.filename = zipfilename
-                    mfp.collection = collection
-                    if program_id:
-                        mfp.program_id = program_id
-                    else:
-                        mfp.program_id = collection.program_id
-                    if release_date:
-                        mfp.release = release_date
-                    else:
-                        mfp.release = datetime.utcnow()
-                    mfp.description = description
-                    if zi.date_time:
-                        mfp.last_modified = datetime(zi.date_time[0], zi.date_time[1], zi.date_time[2],
-                                                     zi.date_time[3], zi.date_time[4], zi.date_time[5])
-                    mfp.size = zi.file_size
-                    session.add(mfp)
-                    session.commit()
+                    zipfolder = _add_folder(ctx, session, collection, zipfolder, zif)
+                else:
+                    zipfolder = zipf
+
+        if ai.is_dir():
+            zipf = session.query(MiscFileFolder).filter(MiscFileFolder.folder == zipfolder,
+                                                        MiscFileFolder.name == zipfilename).first()
+            if zipf is None:
+                zipf = session.query(MiscFilePlus).filter(MiscFilePlus.folder == zipfolder,
+                                                          MiscFilePlus.filename == zipfilename).first()
+                if zipf is not None:
+                    # file already exists with that name
+                    ctx.resp.status = Return.HTTP_BAD_REQUEST
+                    return
+                _add_folder(ctx, session, collection, zipfolder, zipfilename)
+        else:
+            with aw.open(ai) as zdata:
+                _save_mfp_file(collection, zipfolder, zdata, zipfilename)
+                mfp = MiscFilePlus()
+                mfp.folder = zipfolder
+                mfp.filename = zipfilename
+                mfp.collection = collection
+                if program_id:
+                    mfp.program_id = program_id
+                else:
+                    mfp.program_id = collection.program_id
+                if release_date:
+                    mfp.release = release_date
+                else:
+                    mfp.release = datetime.utcnow()
+                mfp.description = description
+                if ai.date_time:
+                    mfp.last_modified = datetime(ai.date_time[0], ai.date_time[1], ai.date_time[2],
+                                                 ai.date_time[3], ai.date_time[4], ai.date_time[5])
+                mfp.size = ai.file_size
+                session.add(mfp)
+                session.commit()
 
 
 def upload_file():
@@ -363,8 +412,9 @@ def upload_file():
                         ctx.resp.status = Return.HTTP_BAD_REQUEST
                         return
 
-            if file_name.lower().endswith('zip'):
-                _upload_zip_file(ctx, session, formdata['file'].file, collection, folder, program_id,
+            if file_name.lower().endswith('zip') or file_name.lower().endswith('.tgz') \
+                    or file_name.lower().endswith('.tar.gz') or file_name.loewr().endswith('.tar'):
+                _upload_zip_file(ctx, session, file_name, formdata['file'].file, collection, folder, program_id,
                                  release_date, '')  #formdata['description'].value)
             else:
                 # logic to save to S3 goes in here
