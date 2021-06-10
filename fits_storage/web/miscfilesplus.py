@@ -144,60 +144,47 @@ def add_collection():
 
 
 def add_folder():
-    try:
-        ctx = get_context()
+    ctx = get_context()
 
-        session = ctx.session
+    session = ctx.session
 
-        formdata = get_context().get_form_data(large_file=True)
+    formdata = get_context().get_form_data(large_file=True)
 
-        collection_name = formdata['collection_name'].value
-        folder_name = formdata['folder_name'].value
-        if 'path' in formdata:
-            path = formdata['path'].value
-        else:
-            path = None
-        folder = None
+    collection_name = formdata['collection_name'].value
+    folder_name = formdata['folder_name'].value
+    if 'path' in formdata:
+        path = formdata['path'].value
+    else:
+        path = None
 
-        if collection_name:
-            collection = session.query(MiscFileCollection) \
-                .filter(MiscFileCollection.name == collection_name).first()
-            if not collection:
-                ctx.resp.status = Return.HTTP_BAD_REQUEST
-                return
-            else:
-                # now find the parent folder
-                if path:
-                    for f in path.split('/'):
-                        folder = session.query(MiscFileFolder) \
-                            .filter(MiscFileFolder.folder == folder) \
-                            .filter(MiscFileFolder.name == f).first()
-                        if not folder:
-                            ctx.resp.status = Return.HTTP_BAD_REQUEST
-                            return
-                mff = MiscFileFolder()
-                mff.name = folder_name
-                mff.collection = collection
-                mff.folder = folder
-                mff.program_id = collection.program_id
-                mff.description = ''
-                mff.release = datetime.now()
-                session.add(mff)
-                session.commit()
-        else:
+    folder = None
+
+    if collection_name:
+        collection = session.query(MiscFileCollection) \
+            .filter(MiscFileCollection.name == collection_name).first()
+        if not collection:
             ctx.resp.status = Return.HTTP_BAD_REQUEST
             return
-
-        if path is None:
-            ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection_name}/")
         else:
-            ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection_name}/{path}/")
-    finally:
-        if formdata and formdata.uploaded_file is not None:
-            try:
-                os.unlink(formdata.uploaded_file.name)
-            except OSError:
-                pass
+            # now find the parent folder
+            if path:
+                for f in path.split('/'):
+                    folder = session.query(MiscFileFolder) \
+                        .filter(MiscFileFolder.folder == folder) \
+                        .filter(MiscFileFolder.name == f).first()
+                    if not folder:
+                        ctx.resp.status = Return.HTTP_BAD_REQUEST
+                        return
+    else:
+        ctx.resp.status = Return.HTTP_BAD_REQUEST
+        return
+
+    _add_folder(ctx, session, collection, folder, folder_name)
+
+    if path is None:
+        ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection_name}/")
+    else:
+        ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection_name}/{path}/")
 
 
 def _save_mfp_file(collection, folder, fp, filename):
@@ -259,26 +246,66 @@ def _save_mfp_file(collection, folder, fp, filename):
                     **current_data)
 
 
-def _upload_zip_file(session, fp, collection, folder, program_id, release_date, description):
+def _add_folder(ctx, session, collection, folder, folder_name):
+    mff = MiscFileFolder()
+    mff.name = folder_name
+    mff.collection = collection
+    mff.folder = folder
+    mff.program_id = collection.program_id
+    mff.description = ''
+    mff.release = datetime.now()
+    session.add(mff)
+    session.commit()
+    return mff
+
+
+def _upload_zip_file(ctx, session, fp, collection, folder, program_id, release_date, description):
     with ZipFile(fp) as zf:
         for zi in zf.infolist():
-            with zf.open(zi) as zdata:
-                _save_mfp_file(collection, folder, zdata, zi.filename)
-                mfp = MiscFilePlus()
-                mfp.folder = folder
-                mfp.filename = zi.filename
-                mfp.collection = collection
-                if program_id:
-                    mfp.program_id = program_id
-                else:
-                    mfp.program_id = collection.program_id
-                if release_date:
-                    mfp.release = release_date
-                else:
-                    mfp.release = datetime.now()
-                mfp.description = description
-                session.add(mfp)
-                session.commit()
+            # if we need to create a path below the current folder, check and do so here
+            # then track the final "zipfolder" as the location to put the new folder or file
+            # and use the final element in the path as the filename
+            if '/' in zi.filename:
+                zippath = zi.filename.rstrip('/').split('/')
+                zipfolder = folder
+                zipfilename = zippath[-1]
+                for zif in zippath[:-1]:
+                    zipf = session.query(MiscFileFolder).filter(MiscFileFolder.folder == zipfolder,
+                                                                MiscFileFolder.name == zif).first()
+                    if zipf is None:
+                        zipfolder = _add_folder(ctx, session, collection, zipfolder, zif)
+                    else:
+                        zipfolder = zipf
+
+            if zi.is_dir():
+                zipf = session.query(MiscFileFolder).filter(MiscFileFolder.folder == zipfolder,
+                                                            MiscFileFolder.name == zipfilename).first()
+                if zipf is None:
+                    zipf = session.query(MiscFilePlus).filter(MiscFilePlus.folder == zipfolder,
+                                                              MiscFilePlus.filename == zipfilename).first()
+                    if zipf is not None:
+                        # file already exists with that name
+                        ctx.resp.status = Return.HTTP_BAD_REQUEST
+                        return
+                    _add_folder(ctx, session, collection, zipfolder, zipfilename)
+            else:
+                with zf.open(zi) as zdata:
+                    _save_mfp_file(collection, zipfolder, zdata, zipfilename)
+                    mfp = MiscFilePlus()
+                    mfp.folder = zipfolder
+                    mfp.filename = zipfilename
+                    mfp.collection = collection
+                    if program_id:
+                        mfp.program_id = program_id
+                    else:
+                        mfp.program_id = collection.program_id
+                    if release_date:
+                        mfp.release = release_date
+                    else:
+                        mfp.release = datetime.now()
+                    mfp.description = description
+                    session.add(mfp)
+                    session.commit()
 
 
 def upload_file():
@@ -333,7 +360,7 @@ def upload_file():
                         return
 
             if file_name.lower().endswith('zip'):
-                _upload_zip_file(session, formdata['file'].file, collection, folder, program_id,
+                _upload_zip_file(ctx, session, formdata['file'].file, collection, folder, program_id,
                                  release_date, '')  #formdata['description'].value)
             else:
                 # logic to save to S3 goes in here
