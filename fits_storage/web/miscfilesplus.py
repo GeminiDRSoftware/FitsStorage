@@ -1,4 +1,5 @@
 import zipfile
+from tarfile import TarFile
 from zipfile import ZipFile
 
 from botocore.exceptions import ClientError
@@ -38,39 +39,81 @@ class ArchiveInfoWrapper:
 
 class ZipArchive(ArchiveWrapper):
     def __init__(self, fp):
-        self.zipfile = ZipFile(fp)
+        self._zipfile = ZipFile(fp)
 
     def infolist(self):
-        for zi in self.zipfile.infolist():
+        for zi in self._zipfile.infolist():
             yield ZipArchiveInfo(zi)
 
     def open(self, zi):
-        return self.zipfile.open(zi.zipinfo)
+        return self._zipfile.open(zi.zipinfo)
 
 
 class ZipArchiveInfo(ArchiveInfoWrapper):
     def __init__(self, zipinfo):
-        self.zipinfo = zipinfo
+        self._zipinfo = zipinfo
 
     def is_dir(self):
-        return self.zipinfo.is_dir()
+        return self._zipinfo.is_dir()
+
+    @property
+    def zipinfo(self):
+        return self._zipinfo
 
     @property
     def filename(self):
-        return self.zipinfo.filename
+        return self._zipinfo.filename
 
     @property
     def date_time(self):
-        return self.zipinfo.date_time
+        return self._zipinfo.date_time
 
     @property
     def file_size(self):
-        return self.zipinfo.file_size
+        return self._zipinfo.file_size
+
+
+class TarArchive(ArchiveWrapper):
+    def __init__(self, fp):
+        self._tarfile = TarFile(fileobj=fp)
+
+    def infolist(self):
+        for ti in self._tarfile.getmembers():
+            yield TarArchiveInfo(ti)
+
+    def open(self, ti):
+        return self._tarfile.open(ti.tarinfo)
+
+
+class TarArchiveInfo(ArchiveInfoWrapper):
+    def __init__(self, tarinfo):
+        self._tarinfo = tarinfo
+
+    def is_dir(self):
+        return self._tarinfo.isdir()
+
+    @property
+    def tarinfo(self):
+        return self._tarinfo
+
+    @property
+    def filename(self):
+        return self._tarinfo.name
+
+    @property
+    def date_time(self):
+        return self._tarinfo.mtime
+
+    @property
+    def file_size(self):
+        return self._tarinfo.size
 
 
 def _get_archive_wrapper(filename, fp):
     if filename.lower().endswith('.zip'):
         return ZipArchive(fp)
+    elif filename.lower().endswith('.tar') or filename.lower().endswith('.tar.gz') or filename.lower.endswith('.tgz'):
+        return TarArchive(fp)
     return None
 
 
@@ -128,8 +171,8 @@ def miscfilesplus(collection=None, folders=None):
                 .filter(MiscFileCollection.name == collection).one()
 
             # Now iterate over the list of folders from the URL to reach the active folder
-            folder = None # to hold the active folder
-            folder_id = None # id as we walk the tree for the parent folder
+            folder = None  # to hold the active folder
+            folder_id = None  # id as we walk the tree for the parent folder
             if folders:
                 for folder_name in folders:
                     folder = session.query(MiscFileFolder) \
@@ -314,17 +357,16 @@ def _upload_zip_file(ctx, session, filename, fp, collection, folder, program_id,
         # if we need to create a path below the current folder, check and do so here
         # then track the final "zipfolder" as the location to put the new folder or file
         # and use the final element in the path as the filename
-        if '/' in ai.filename:
-            zippath = ai.filename.rstrip('/').split('/')
-            zipfolder = folder
-            zipfilename = zippath[-1]
-            for zif in zippath[:-1]:
-                zipf = session.query(MiscFileFolder).filter(MiscFileFolder.folder == zipfolder,
-                                                            MiscFileFolder.name == zif).first()
-                if zipf is None:
-                    zipfolder = _add_folder(ctx, session, collection, zipfolder, zif)
-                else:
-                    zipfolder = zipf
+        zipfolder = folder
+        zippath = ai.filename.rstrip('/').split('/')
+        zipfilename = zippath[-1]
+        for zif in zippath[:-1]:
+            zipf = session.query(MiscFileFolder).filter(MiscFileFolder.folder == zipfolder,
+                                                        MiscFileFolder.name == zif).first()
+            if zipf is None:
+                zipfolder = _add_folder(ctx, session, collection, zipfolder, zif)
+            else:
+                zipfolder = zipf
 
         if ai.is_dir():
             zipf = session.query(MiscFileFolder).filter(MiscFileFolder.folder == zipfolder,
@@ -413,7 +455,7 @@ def upload_file():
                         return
 
             if file_name.lower().endswith('zip') or file_name.lower().endswith('.tgz') \
-                    or file_name.lower().endswith('.tar.gz') or file_name.loewr().endswith('.tar'):
+                    or file_name.lower().endswith('.tar.gz') or file_name.lower().endswith('.tar'):
                 _upload_zip_file(ctx, session, file_name, formdata['file'].file, collection, folder, program_id,
                                  release_date, '')  #formdata['description'].value)
             else:
