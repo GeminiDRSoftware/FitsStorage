@@ -387,7 +387,8 @@ class Header(Base):
             self.cass_rotator_pa = None
 
         try:
-            self.airmass = ad.airmass()
+            airmass = ad.airmass()
+            self.airmass = float(airmass) if isinstance(airmass, str) else airmass
         except (TypeError, AttributeError, KeyError, ValueError, IndexError) as airmasserr:
             if log:
                 log.warn("Unable to parse airmass: %s" % airmasserr)
