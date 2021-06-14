@@ -61,6 +61,7 @@ header.py
 ^^^^^^^^^
 
 - Fix to pre_image header parsing for boolean values
+- Fix to airmass parsing for bad string values like 'Unknown'
 
 
 2020-2.17
