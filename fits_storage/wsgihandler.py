@@ -311,6 +311,8 @@ url_map = Map([
     Rule('/miscfilesplus/upload_file', miscfilesplus.upload_file),  # MFP action to upload a file
     Rule('/miscfilesplus/delete/<collection>/<seq_of:path>/',
          miscfilesplus.delete_path),                                # MFP action to delete a folder or file
+    Rule('/miscfilesplus/search/',
+         miscfilesplus.search),  # MFP action to search
 
     Rule('/standardobs/<int:header_id>', standardobs),              # This is the standard star in observation server
     Rule('/upload_file/<filename>', upload_file,                    # The generic upload_file server

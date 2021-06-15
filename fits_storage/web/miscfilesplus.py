@@ -3,6 +3,7 @@ from tarfile import TarFile
 from zipfile import ZipFile
 
 from botocore.exceptions import ClientError
+from sqlalchemy import or_
 
 import fits_storage.fits_storage_config as fsc
 
@@ -82,7 +83,7 @@ class TarArchive(ArchiveWrapper):
             yield TarArchiveInfo(ti)
 
     def open(self, ti):
-        return self._tarfile.open(ti.tarinfo)
+        return self._tarfile.extractfile(ti.tarinfo)
 
 
 class TarArchiveInfo(ArchiveInfoWrapper):
@@ -102,7 +103,8 @@ class TarArchiveInfo(ArchiveInfoWrapper):
 
     @property
     def date_time(self):
-        return self._tarinfo.mtime
+        dt = datetime.fromtimestamp(self._tarinfo.mtime)
+        return dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second
 
     @property
     def file_size(self):
@@ -198,6 +200,23 @@ def miscfilesplus(collection=None, folders=None):
                 os.unlink(formdata.uploaded_file.name)
             except OSError:
                 pass
+
+
+@templating.templated("miscfilesplus/search.html")
+def search():
+    ctx = get_context()
+    formdata = ctx.get_form_data()
+    search = '%' + formdata['search_field'].value + '%'
+    session = ctx.session
+    # No collection, we are just going to show the list of all available collections
+    collections = session.query(MiscFileCollection) \
+        .filter(MiscFileCollection.name.ilike(search)).order_by(MiscFileCollection.name).all()
+    folders = session.query(MiscFileFolder) \
+        .filter(MiscFileFolder.name.ilike(search)).all()
+    files = session.query(MiscFilePlus) \
+        .filter(or_(MiscFilePlus.filename.ilike(search), MiscFilePlus.program_id.ilike(search))).all()
+
+    return dict(collections=collections, folders=folders, files=files)  # get_context().is_staffer)
 
 
 def add_collection():

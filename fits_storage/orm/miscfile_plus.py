@@ -160,6 +160,14 @@ class MiscFileFolder(Base):
             f = f.folder
         return '/'.join(retval)
 
+    def linkpath(self):
+        def urlify(folder):
+            return f"<a href=\"/miscfilesplus/browse/{folder.collection.name}/{folder.path()}/\">{folder.name}</a>"
+        if self.folder:
+            return self.folder.linkpath() + "/" + urlify(self)
+        else:
+            return urlify(self)
+
 
 class MiscFilePlus(Base):
     """
