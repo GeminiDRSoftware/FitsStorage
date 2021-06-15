@@ -123,7 +123,7 @@ div.collapseButton {
                             <tr><th>Filename</th><th>Size</th><th>Last Modified</th><th>Program ID</th><th>Release Date</th><th>Actions</th></tr>
                         {% if folders %}
                             {% for folder in folders %}
-                            <tr><td><span class="fa fa-folder-open">&nbsp;&nbsp;</span><a href="{{ folder.name | urlencode }}/">{{ folder.name }}</a></td><td></td><td></td><td></td><td></td>
+                            <tr><td><span class="fa fa-folder-open">&nbsp;&nbsp;</span><a href="{{ folder.name | urlencode }}/">{{ folder.name }}</a></td><td></td><td></td><td>{{ folder.program_id }}</td><td></td>
                             {% if can_add %}
                             <td><a href="/miscfilesplus/delete/{{ collection.name }}/{{ folder.path() }}/">&nbsp;&nbsp;<span class="fa fa-trash"></span></a></td></tr>
                             {% else %}
@@ -178,6 +178,12 @@ div.collapseButton {
             <input type="text" class="form-control" placeholder="New Folder" aria-label="New Folder"
                  aria-describedby="button-newfolder" name="folder_name" id="folder_name">
             <input type="hidden" name="collection_name" value="{{ collection.name }}"/>
+            <label for="folder_program_id">Program ID</label>
+            <input type="text" class="form-control" name="folder_program_id"
+                   id="folder_program_id" placeholder="Program ID"/>
+            <label for="folder_description">Description</label>
+            <input type="textarea" class="form-control" name="folder_description"
+                   id="folder_description" placeholder="Description..."/>
             {% if folder %}
             <input type="hidden" name="path" value="{{ folder.path() }}"/>
             {% endif %}
@@ -217,6 +223,11 @@ div.collapseButton {
             <label for="file_release_date">Release Date</label>
             <input type="text" class="form-control" name="file_release_date"
                    id="file_release_date" placeholder="YYYYMMDD"/>
+        </div>
+        <div class="form-group">
+            <label for="file_release_date">Description</label>
+            <input type="textarea" class="form-control" name="file_description"
+                   id="file_description" placeholder="Description..."/>
         </div>
 <!--        <input type="hidden" name="filename" id="filename" value=""/>-->
         <input type="hidden" name="collection_name" value="{{ collection.name }}"/>

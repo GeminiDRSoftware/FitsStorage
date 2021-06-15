@@ -210,11 +210,14 @@ def search():
     session = ctx.session
     # No collection, we are just going to show the list of all available collections
     collections = session.query(MiscFileCollection) \
-        .filter(MiscFileCollection.name.ilike(search)).order_by(MiscFileCollection.name).all()
+        .filter(or_(MiscFileCollection.name.ilike(search), MiscFileCollection.program_id.ilike(search))) \
+        .order_by(MiscFileCollection.name).all()
     folders = session.query(MiscFileFolder) \
-        .filter(MiscFileFolder.name.ilike(search)).all()
+        .filter(or_(MiscFileFolder.name.ilike(search), MiscFileFolder.program_id.ilike(search),
+                    MiscFileFolder.description.ilike(search))).all()
     files = session.query(MiscFilePlus) \
-        .filter(or_(MiscFilePlus.filename.ilike(search), MiscFilePlus.program_id.ilike(search))).all()
+        .filter(or_(MiscFilePlus.filename.ilike(search), MiscFilePlus.program_id.ilike(search),
+                    MiscFilePlus.description.ilike(search))).all()
 
     return dict(collections=collections, folders=folders, files=files)  # get_context().is_staffer)
 
@@ -267,6 +270,14 @@ def add_folder():
         path = formdata['path'].value
     else:
         path = None
+    if 'folder_description' in formdata:
+        description = formdata['folder_description'].value
+    else:
+        description = None
+    if 'folder_program_id' in formdata:
+        program_id = formdata['folder_program_id'].value
+    else:
+        program_id = ''
 
     folder = None
 
@@ -290,7 +301,7 @@ def add_folder():
         ctx.resp.status = Return.HTTP_BAD_REQUEST
         return
 
-    _add_folder(ctx, session, collection, folder, folder_name)
+    _add_folder(ctx, session, collection, folder, folder_name, program_id, description)
 
     if path is None:
         ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection_name}/")
@@ -357,13 +368,13 @@ def _save_mfp_file(collection, folder, fp, filename):
                     **current_data)
 
 
-def _add_folder(ctx, session, collection, folder, folder_name):
+def _add_folder(ctx, session, collection, folder, folder_name, program_id, description):
     mff = MiscFileFolder()
     mff.name = folder_name
     mff.collection = collection
     mff.folder = folder
-    mff.program_id = collection.program_id
-    mff.description = ''
+    mff.program_id = program_id
+    mff.description = description
     mff.release = datetime.now()
     session.add(mff)
     session.commit()
@@ -383,7 +394,7 @@ def _upload_zip_file(ctx, session, filename, fp, collection, folder, program_id,
             zipf = session.query(MiscFileFolder).filter(MiscFileFolder.folder == zipfolder,
                                                         MiscFileFolder.name == zif).first()
             if zipf is None:
-                zipfolder = _add_folder(ctx, session, collection, zipfolder, zif)
+                zipfolder = _add_folder(ctx, session, collection, zipfolder, zif, program_id, description)
             else:
                 zipfolder = zipf
 
@@ -397,7 +408,7 @@ def _upload_zip_file(ctx, session, filename, fp, collection, folder, program_id,
                     # file already exists with that name
                     ctx.resp.status = Return.HTTP_BAD_REQUEST
                     return
-                _add_folder(ctx, session, collection, zipfolder, zipfilename)
+                _add_folder(ctx, session, collection, zipfolder, zipfilename, program_id, description)
         else:
             with aw.open(ai) as zdata:
                 _save_mfp_file(collection, zipfolder, zdata, zipfilename)
@@ -454,6 +465,10 @@ def upload_file():
             release_date = None
     else:
         release_date = None
+    if 'file_description' in formdata:
+        description = formdata['file_description'].value
+    else:
+        description = None
     folder = None
 
     if collection_name:
@@ -486,6 +501,7 @@ def upload_file():
                 mfp.folder = folder
                 mfp.filename = file_name
                 mfp.collection = collection
+                mfp.description = description
                 if program_id:
                     mfp.program_id = program_id
                 else:
