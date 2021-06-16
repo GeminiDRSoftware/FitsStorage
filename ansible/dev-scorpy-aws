@@ -1,0 +1,13 @@
+[archive]
+arcdev.gemini.edu
+
+[archive:vars]
+ansible_ssh_user=ooberdorf
+ansible_ssh_private_key_file=/Users/ooberdorf/.ssh/id_rsa
+is_archive=False
+is_aws=True
+is_s3=False
+ignore_dhs=True
+enable_ingest_services=False
+enable_export=False
+enable_certbot=True
