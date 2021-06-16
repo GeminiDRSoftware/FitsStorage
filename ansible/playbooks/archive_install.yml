@@ -6,7 +6,7 @@
     tasks:
       - name: Check for dataflow folder
         stat:
-          path: {{ dataflow_path }}
+          path: "{{ dataflow_path }}"
         register: dataflow_folder
         when: not is_s3 and not ignore_dataflow
       - name: Fail if dataflow folder missing
@@ -28,10 +28,15 @@
 #          name:
 #            - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 #          state: present
-#        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+#        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8' and install_epel
 #      - name: Fail while I iterate
 #        fail:
 #          msg: "Exiting early"
+      - name: Setup EPEL
+        yum:
+          name:
+            - epel-release
+        when: install_epel
       - name: install packages
         yum:
           name: 
