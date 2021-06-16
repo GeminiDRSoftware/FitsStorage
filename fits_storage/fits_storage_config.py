@@ -136,7 +136,7 @@ _host_based_configs = {
         'USING_PREVIEWS': 'True',
         'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
     },
-    "arcdev": {
+    "arcdev-disabled": {
         'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
         'USE_AS_ARCHIVE': 'True',
         'EXPORT_DESTINATIONS': '',
@@ -151,7 +151,21 @@ _host_based_configs = {
         'USING_PREVIEWS': 'True',
         'ORCID_ENABLED': 'False',
         'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
-    }
+    },
+    "arcdev": {
+        'FITS_SERVERTITLE': 'GOA Scorpy Test',
+        'USE_AS_ARCHIVE': 'False',
+        'FITS_SYSTEM_STATUS': 'development',
+        'EXPORT_DESTINATIONS': '',
+        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files,gmoscaltwilightfiles,gmoscalbiasfiles',
+        'FITS_DB_BACKUP_DIR': "/backup",
+        'FITS_SERVERNAME': 'scorpy.gemini.edu',
+        'ORCID_ENABLED': 'False',
+        'TZ': 'UTC',
+        'PROCESSED_CALS_PATH': 'reduced_cals',
+        'USING_PREVIEWS': 'False',
+        'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
+    },
 }
 
 
@@ -312,7 +326,6 @@ fits_closed_result_limit = 10000
 smtp_server = "localhost"
 email_errors_to = "ooberdorf@gemini.edu"
 #email_errors_to = "phirst@gemini.edu"
-#email_errors_to = "kanderso@gemini.edu"
 
 # Configure the path the data postgres database here
 fits_dbname = lookup_config('FITS_DB_NAME', 'fitsdata')
