@@ -12,7 +12,7 @@ from sqlalchemy.sql.sqltypes import String, Date, DateTime, NullType
 from datetime import datetime, date
 from contextlib import contextmanager
 
-from ..fits_storage_config import fits_database, fits_database_pool_size, fits_database_max_overflow
+from ..fits_storage_config import fits_database
 
 # This was to debug the number of open database sessions.
 #import logging
@@ -24,8 +24,13 @@ Base = declarative_base()
 
 # Create a database engine connection to the postgres database
 # and an sqlalchemy session to go with it
-pg_db = create_engine(fits_database, pool_size=fits_database_pool_size,
-                      max_overflow=fits_database_max_overflow, echo=False)
+if fits_database.startswith('sqlite'):
+    engine_args = {}
+else:
+    # pool args not valid for sqlite
+    from ..fits_storage_config import fits_database_pool_size, fits_database_max_overflow
+    engine_args = {'pool_size': fits_database_pool_size, 'max_overflow': fits_database_max_overflow}
+pg_db = create_engine(fits_database, **engine_args, echo=False)
 sessionfactory = sessionmaker(pg_db)
 
 @contextmanager
