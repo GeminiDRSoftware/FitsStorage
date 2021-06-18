@@ -14,9 +14,6 @@ calmgr.py
 
 - Now able to handle Section() objects passed from DRAGONS cal requests
 
-Updated Scripts
----------------
-
 add_to_preview_queue.py
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -37,7 +34,234 @@ service_target_queue.py
 
 - Properly detect location of Gemini North and South for target calculation, skip GPI [GL#5]
 
+
+2020-2.18
+=========
+
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- added calprog and notcalprog options to search explicitly for calibration programs or to exclude (URL only)
+- highlight color changes for sq and ql data
+
+Calibrations
+------------
+
+calibration_niri.py
+^^^^^^^^^^^^^^^^^^^
+
+- Made data_section parser handle tuple () style inputs and output the legacy Section() format for NIRI
+
+
+Other
+-----
+
+diskfilereport.py
+^^^^^^^^^^^^^^^^^
+
+- Added definitions for GMOS WCS extension to validation
+- Added definition for PROVENANCE and PROVENANNCE_HISTORY to validation
+- Added AWAV option for CTYPE1 and '' option for CTYPE2
+- Added support for var, dq, sci (1d) headers in gmos validation
+
+ingest_standards.py
+^^^^^^^^^^^^^^^^^^^
+
+- Made idempotent for reruns to update existing records by name (or create new ones as needed)
+- update to related geometryhacks logic to properly parse coordinate values
+
+add_to_export_queue.py
+^^^^^^^^^^^^^^^^^^^^^^
+
+- Updated header query to use session as a keyword argument, was broken
+
+exportqueue.py
+^^^^^^^^^^^^^^
+
+- Check file presence on archive with the non-bz2 filename, to avoid problems with A'lopeke and Zorro
+- Added destination to unique constraint so we can have multiple destinations
+
+queue.py
+^^^^^^^^
+
+- Updated filename regex to support more visiting instruments
+
+list_headers.py
+^^^^^^^^^^^^^^^
+
+- Add a flag to allow an unlimited search for internal tools, also updated the add_to_export_queue.py and write_to_tape.py to use it
+
+header.py
+^^^^^^^^^
+
+- Fix to pre_image header parsing for boolean values
+- Fix to airmass parsing for bad string values like 'Unknown'
+
+
+2020-2.17
+=========
+
+Web Services
+------------
+
+/jsonsummary
+^^^^^^^^^^^^
+
+- added entrytimedaterange query for a range of entry times, plus sort, plus fixes to lastmoddaterange query for CADC
+
+Other
+-----
+
+header.py
+^^^^^^^^^
+
+- Made header parsing more tolerant of bad FITS files so they ingest with missing fields
+
+2020-2.16
+=========
+
+Updated Scripts
+---------------
+
+copy_from_dhs
+^^^^^^^^^^^^^
+
+- If DHS file is larger than dataflow, copy it again
+- flush list of "known" files every 1000 iterations
+- perform a fitsverify check after the TELESCOP and astrodata checks
+- perform and cache an md5 checksum on DHS files to compare against for future checks against todays data
+
+2020-2.15
+=========
+
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- added f32 options to disperser search for NIRI
+
+Web Services
+------------
+
+/programinfojson
+
+- fixed formatting bug that cuased duplicate "s
+
+Other
+-----
+
+<<<<<<< HEAD
+YouGotDataEmail.py
+^^^^^^^^^^^^^^^^^^
+
+- catch errors per notification and allow the rest to be tried, email full list of errors at end if any [GL#19]
+=======
+previewqueue
+^^^^^^^^^^^^
+
+- Removed problem if statement for s3 preview generation
+>>>>>>> 2020-2
+
+
+2020-2.14
+=========
+
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- updated color for quick look data rows in the grid
+
+Other
+-----
+
+dbmigration
+^^^^^^^^^^^
+
+- removed initializing timestamps on older file database records since it takes too long during ansible deploy
+
+
+2020-2.13
+=========
+
+Web Services
+------------
+
+/calibrations
+^^^^^^^^^^^^^
+
+- Filtered out some arc and dark warnings for GMOS per SOS feedback
+
+Updated Scripts
+---------------
+
+delete_files.py
+^^^^^^^^^^^^^^^
+
+- Fixed column name error for unused, but available, order by date column
+
+Other
+-----
+
+fits_storage_config.py
+^^^^^^^^^^^^^^^^^^^^^^
+
+- Added new twilight/bias json web APIs for SOSes to blocklist for public archive
+
+
+2020-2.12
+=========
+
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- Cleanup comment text in log comment table link so it doesn't break html with chars like "
+- Added publication field for searching by bibliography code (back-end already has support)
+
+Web Services
+------------
+
+/programinfojson
+^^^^^^^^^^^^^^^^
+
+- New endpoint for json encoded program information, for Andy Adamson
+
+Other
+-----
+
+ingestqueue.py
+^^^^^^^^^^^^^^
+
+- commit should have been flush, so all changes rollback on an error
+
+header.py
+^^^^^^^^^
+
+- converted Alopeke/Zorro custom AstroData overide into helper methods (for ra/dec)
+
 2020-2.11
+=========
+
+Other
+-----
+
+local_cals
+^^^^^^^^^^
+
+- Updating version number for the calibrations standalone library to 1.0.0
+
+
+2020-2.10
 =========
 
 User-Facing Changes
@@ -47,6 +271,11 @@ User-Facing Changes
 ^^^^^^^^^^^
 
 - Altered science quality column to `Qual`
+
+/summary
+^^^^^^^^
+
+- Removed defaulting logic for engineering, SOSes reported it was a change of behavior
 
 
 Web Services
@@ -66,13 +295,17 @@ header.py
 
 - `procsci` column renamed to `procmode`
 - `procmode` driven off of `PROCMODE` header keyword or, if not found, `PROCSCI` for legacy support
+- `AstroDataAlopekeZorro` added to clean up WCS issues and fallback to something that works during Header record creation [#gl10]
 
-
-2020-2.10
-=========
 
 Updated Scripts
 ---------------
+
+alopeke_zorro_wcs_workaround.py
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- New cleanup script to quick-fix RA/DEC values where missing for existing Alopeke and Zorro records (for archive after deploying the header.py fix above) [#gl10]
+
 
 previewqueue
 ^^^^^^^^^^^^
@@ -82,13 +315,20 @@ previewqueue
 2020-2.9
 ========
 
+Other
+-----
+
 local_cals
 ^^^^^^^^^^
 
 - Updating version number for the calibrations standalone library to 1.0.0
 
+
 2020-2.8
 ========
+
+Other
+-----
 
 local_cals
 ^^^^^^^^^^
@@ -116,6 +356,7 @@ local_cals
 ========
 
 User-Facing Changes
+-------------------
 
 /searchform
 ^^^^^^^^^^^

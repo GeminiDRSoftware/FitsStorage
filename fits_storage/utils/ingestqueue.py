@@ -222,7 +222,7 @@ class IngestQueueUtil(object):
         diskfile = DiskFile(fileobj, filename, path)
         try:
             self.s.add(diskfile)
-            self.s.commit()
+            self.s.flush()
             if diskfile.uncompressed_cache_file:
                 self.l.debug("diskfile uncompressed cache file = %s, access=%s", diskfile.uncompressed_cache_file,
                                 os.access(diskfile.uncompressed_cache_file, os.F_OK))
@@ -244,11 +244,11 @@ class IngestQueueUtil(object):
                 misc.program_id  = meta['program']
 
                 self.s.add(misc)
-                self.s.commit()
+                self.s.flush()
             elif 'obslog' in filename:
                 obslog = Obslog(diskfile)
                 self.s.add(obslog)
-                self.s.commit()
+                self.s.flush()
             else:
                 # Proceed with normal fits file ingestion
 
@@ -283,7 +283,7 @@ class IngestQueueUtil(object):
                 ingest_provenance(diskfile)
 
                 inst = header.instrument
-                self.s.commit()
+                self.s.flush()
                 try:
                     fps = header.footprints(diskfile.ad_object)
                     for i in list(fps.keys()):
@@ -306,7 +306,7 @@ class IngestQueueUtil(object):
                 self.l.debug("Adding FullTextHeader entry")
                 ftheader = FullTextHeader(diskfile)
                 self.s.add(ftheader)
-                self.s.commit()
+                self.s.flush()
                 # Add the instrument specific tables
                 # These will use the DiskFile unzipped cache file if it exists
                 try:
@@ -314,7 +314,7 @@ class IngestQueueUtil(object):
                     self.l.debug("Adding new {} entry".format(name))
                     entry = instClass(header, diskfile.ad_object)
                     self.s.add(entry)
-                    self.s.commit()
+                    self.s.flush()
                 except KeyError:
                     # Unknown instrument. Maybe we should put a message?
                     pass
@@ -335,7 +335,7 @@ class IngestQueueUtil(object):
                     self.l.info("Adding header id %d to calcachequeue", header.id)
                     cq = CalCacheQueue(header.id, diskfile.filename, sortkey=header.ut_datetime)
                     self.s.add(cq)
-                    self.s.commit()
+                    self.s.flush()
 
         except:
             # For debug

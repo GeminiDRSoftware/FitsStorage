@@ -39,6 +39,7 @@ if __name__ == "__main__":
 
     parser = OptionParser()
     parser.add_option("--emailfrom", action="store", dest="fromaddr", default="fitsdata@gemini.edu", help="Email Address to send from")
+    parser.add_option("--emailto", action="store", dest="emailto", default="ooberdorf@gemini.edu", help="Email Address to send errors to")
     parser.add_option("--replyto", action="store", dest="replyto", default="fitsadmin@gemini.edu", help="Set a Reply-To email header")
     parser.add_option("--date", action="store", dest="date", default="today", help="Specify an alternate date to check for data from")
     parser.add_option("--check", action="store_true", dest="check", help="Send the You've got data to CHECK emails")
@@ -85,70 +86,99 @@ if __name__ == "__main__":
         url_base = "http://%s" % fits_servername
 
     # The project / email list. Get from the database
+    errors = list()
+    errors.append("dummy error: remove once I see this is working")
     with session_scope() as session:
         for notif in session.query(Notification):
-            if (notif.selection is None) or (notif.piemail is None):
-                logger.error("Critical fields are None in notification id: %s; label: %s", notif.id, notif.label)
-            else:
-                selection = notif.selection
-                if options.check:
-                    selection += '/CHECK'
-                url = "%s/summary/nolinks/%s/%s" % (url_base, options.date, selection)
-                searchform_url = "%s/searchform/%s/%s" % (url_base, options.date, notif.selection)
-
-                logger.debug("URL is: %s", url)
-                html = str(urllib.request.urlopen(url).read(), 'utf-8')
-
-                if warning_cre.search(html):
-                    logger.warn("Invalid selection seen when querying archive: %s" % notif.selection)
-                elif cre.search(html):
+            try:
+                if (notif.selection is None) or (notif.piemail is None):
+                    logger.error("Critical fields are None in notification id: %s; label: %s", notif.id, notif.label)
+                else:
+                    selection = notif.selection
                     if options.check:
-                        subject = "Data set to CHECK for %s" % notif.selection
-                    else:
-                        subject = "New Data for %s" % notif.selection
-                    logger.info(subject)
+                        selection += '/CHECK'
+                    url = "%s/summary/nolinks/%s/%s" % (url_base, options.date, selection)
+                    searchform_url = "%s/searchform/%s/%s" % (url_base, options.date, notif.selection)
 
-                    msg = MIMEMultipart()
+                    logger.debug("URL is: %s", url)
+                    html = str(urllib.request.urlopen(url).read(), 'utf-8')
 
-                    text = text_tmpl.format(sel=notif.selection, form_url=searchform_url)
+                    if warning_cre.search(html):
+                        logger.warn("Invalid selection seen when querying archive: %s" % notif.selection)
+                        errors.append("Invalid selection seen when querying archive: %s" % notif.selection)
+                    elif cre.search(html):
+                        if options.check:
+                            subject = "Data set to CHECK for %s" % notif.selection
+                        else:
+                            subject = "New Data for %s" % notif.selection
+                        logger.info(subject)
 
-                    part1 = MIMEText(text, 'plain')
-                    part2 = MIMEText(html, 'html')
+                        msg = MIMEMultipart()
 
-                    msg['Subject'] = subject
-                    msg['From'] = options.fromaddr
-                    if options.check:
-                         msg['To'] = notif.csemail
-                         msg['Cc'] = ''
-                    else:
-                        msg['To'] = notif.piemail
-                        if notif.ngoemail is not None and notif.csemail is not None:
-                            msg['Cc'] = ', '.join([notif.ngoemail, notif.csemail])
-                        elif notif.ngoemail is not None:
-                            msg['Cc'] = notif.ngoemail
-                        elif notif.csemail is not None:
-                            msg['Cc'] = notif.csemail
-                        msg['Reply-To'] = options.replyto
+                        text = text_tmpl.format(sel=notif.selection, form_url=searchform_url)
 
-                    msg.attach(part1)
-                    msg.attach(part2)
+                        part1 = MIMEText(text, 'plain')
+                        part2 = MIMEText(html, 'html')
 
-                    fulllist = get_and_fix_emails(msg['To'])
-                    if msg['Cc']:
-                        # Don't make this an .append, it needs to be a +=
-                        fulllist += get_and_fix_emails(msg['Cc'])
+                        msg['Subject'] = subject
+                        msg['From'] = options.fromaddr
+                        if options.check:
+                             msg['To'] = notif.csemail
+                             msg['Cc'] = ''
+                        else:
+                            msg['To'] = notif.piemail
+                            if notif.ngoemail is not None and notif.csemail is not None:
+                                msg['Cc'] = ', '.join([notif.ngoemail, notif.csemail])
+                            elif notif.ngoemail is not None:
+                                msg['Cc'] = notif.ngoemail
+                            elif notif.csemail is not None:
+                                msg['Cc'] = notif.csemail
+                            msg['Reply-To'] = options.replyto
 
-                    # For now, Bcc fitsadmin on all the emails to see that it's working...
-                    fulllist.append('fitsadmin@gemini.edu')
+                        msg.attach(part1)
+                        msg.attach(part2)
 
-                    try:
-                        logger.info("Sending Email- To: %s; CC: %s; Subject: %s", msg['To'], msg['Cc'], msg['Subject'])
-                        logger.debug("Full list: %s", fulllist)
-                        smtp = smtplib.SMTP(smtp_server)
-                        smtp.sendmail(options.fromaddr, fulllist, msg.as_string())
-                        retval = smtp.quit()
-                        logger.info("SMTP seems to have worked OK: %s", str(retval))
-                    except smtplib.SMTPRecipientsRefused:
-                        logger.error("Error sending mail message - Exception: %s: %s" % (sys.exc_info()[0], sys.exc_info()[1]))
+                        fulllist = get_and_fix_emails(msg['To'])
+                        if msg['Cc']:
+                            # Don't make this an .append, it needs to be a +=
+                            fulllist += get_and_fix_emails(msg['Cc'])
 
+                        # For now, Bcc fitsadmin on all the emails to see that it's working...
+                        fulllist.append('fitsadmin@gemini.edu')
+
+                        try:
+                            logger.info("Sending Email- To: %s; CC: %s; Subject: %s", msg['To'], msg['Cc'], msg['Subject'])
+                            logger.debug("Full list: %s", fulllist)
+                            smtp = smtplib.SMTP(smtp_server)
+                            smtp.sendmail(options.fromaddr, fulllist, msg.as_string())
+                            retval = smtp.quit()
+                            logger.info("SMTP seems to have worked OK: %s", str(retval))
+                        except smtplib.SMTPRecipientsRefused:
+                            errmsg = "Error sending mail message: %d %s Exception: %s: %s" % (notif.id,
+                                                                                              notif.selection,
+                                                                                              sys.exc_info()[0],
+                                                                                              sys.exc_info()[1])
+                            logger.error(errmsg)
+                            errors.append(errmsg)
+            except:
+                errmsg = "Error handling notification: %d %s Exception: %s: %s" % (notif.id,
+                                                                                   notif.selection,
+                                                                                   sys.exc_info()[0],
+                                                                                   sys.exc_info()[1])
+                logger.error(errmsg)
+                errors.append(errmsg)
+
+    if options.emailto:
+        subject = "YouGotDataEmail"
+        mailfrom = 'fitsdata@gemini.edu'
+        mailto = [options.emailto]
+
+        errmessage = None
+        if errors:
+            message = "From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s" % (
+                mailfrom, ", ".join(mailto), "ERRORS - %s" % subject, '\n'.join(errors))
+
+            server = smtplib.SMTP(smtp_server)
+            server.sendmail(mailfrom, mailto, message)
+            server.quit()
     logger.info("YouveGotDataEmail.py exiting normally")

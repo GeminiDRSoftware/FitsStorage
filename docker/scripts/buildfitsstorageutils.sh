@@ -7,7 +7,7 @@ BRANCH=`git rev-parse --abbrev-ref HEAD`
 echo Branch is $BRANCH
 if [[ "$BRANCH" == "2020-2" ]]
 then
-  LABEL="2020-1"
+  LABEL="2020-2"
 else
   LABEL="latest"
 fi

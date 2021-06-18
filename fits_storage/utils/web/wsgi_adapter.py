@@ -6,7 +6,8 @@ from ...web import templating
 from wsgiref.handlers import SimpleHandler
 from wsgiref.simple_server import WSGIRequestHandler
 from wsgiref import util as wutil
-from cgi import escape, FieldStorage
+from cgi import FieldStorage
+from html import escape
 import http.cookies
 from datetime import datetime
 import json

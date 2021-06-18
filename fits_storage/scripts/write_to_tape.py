@@ -97,7 +97,7 @@ if __name__ == "__main__":
     with session_scope() as session:
         logger.info("Getting header object list")
         orderby = []
-        headers = list_headers(selection, orderby, session=session)
+        headers = list_headers(selection, orderby, session=session, unlimit=True)
 
         # For some reason, looping through the header list directly for the add
         # is really slow if the list is big.
@@ -283,7 +283,7 @@ if __name__ == "__main__":
                 backup_files = list()
                 for df in diskfiles:
                     filename = df.filename
-                    logger.info("Adding %s to tar file on tape %s in drive %s" % (filename, tape.label, td.dev))
+                    logger.info("Queueing %s for tar file on tape %s in drive %s" % (filename, tape.label, td.dev))
                     try:
                     # the filename is a unicode string, and tarfile cannot handle this, convert to ascii
                         #filename = filename.encode('ascii')
@@ -321,6 +321,7 @@ if __name__ == "__main__":
                         # tarinfo.uname = statinfo.
                         # tarinfo.gname = tarinfo.gname
 
+                        logger.info("Adding %s to tar file on tape %s in drive %s" % (backup_file.bz2_filename, tape.label, td.dev))
                         tar.addfile(tarinfo, f)
                         f.close()
                         # Create the TapeFile entry and add to DB
@@ -335,7 +336,7 @@ if __name__ == "__main__":
                         tapefile.data_md5 = backup_file.disk_file.data_md5
                         session.add(tapefile)
                         session.commit()
-                        bytecount += int(df.file_size)
+                        bytecount += int(backup_file.disk_file.file_size)
                     except:
                         logger.error("Error adding file to tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
                         logger.info("Probably the tape filled up - Marking tape as full in the DB - label: %s" % tape.label)

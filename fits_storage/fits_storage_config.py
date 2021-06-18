@@ -58,7 +58,7 @@ _host_based_configs = {
         'EXPORT_DESTINATIONS': '',
         'PUBDB_REMOTE': 'https://localhost/ingest_publications',
         'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'TEST On-site FitsServer (CentOS 8)',
+        'FITS_SERVERTITLE': 'TEST On-site FitsServer (Chile)',
         'FITS_SYSTEM_STATUS': 'development',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/cpofits-lv2",
@@ -104,11 +104,16 @@ _host_based_configs = {
         'PROCESSED_CALS_PATH': 'reduced_cals_dev',
     },
     "ooberdorf-ml1": {
+        'DHS_PERM': '/Users/ooberdorf/dhs',
         'EXPORT_DESTINATIONS': '',
         'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
         'DEFAULT_UPLOAD_PATH': 'upload_dev',
         'PROCESSED_CALS_PATH': 'reduced_cals_dev',
         'DAS_CALPROC_PATH': '/Users/ooberdorf/das_calproc',
+        'STORAGE_ROOT': '/Users/ooberdorf/dataflow',
+        'FITS_LOG_DIR': '/Users/ooberdorf/fitslogs',
+        'FITS_AUX_DATADIR': '/Users/ooberdorf/FitsStorage/data',
+        'VALIDATION_DEF_PATH': '/Users/ooberdorf/FitsStorage/docs/dataDefinition'
     },
     "some_actual_site_host": {
         'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
@@ -122,7 +127,7 @@ _host_based_configs = {
         'USE_AS_ARCHIVE': 'True',
         'FITS_SYSTEM_STATUS': 'production',
         'EXPORT_DESTINATIONS': '',
-        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files',
+        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files,gmoscaltwilightfiles,gmoscalbiasfiles',
         'FITS_DB_BACKUP_DIR': "/backup",
         'FITS_SERVERNAME': 'archive.gemini.edu',
         'ORCID_ENABLED': 'False',
@@ -131,12 +136,12 @@ _host_based_configs = {
         'USING_PREVIEWS': 'True',
         'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
     },
-    "arcdev": {
+    "arcdev-disabled": {
         'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
         'USE_AS_ARCHIVE': 'True',
         'EXPORT_DESTINATIONS': '',
         'FITS_SYSTEM_STATUS': 'development',
-        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files',
+        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files,gmoscaltwilightfiles,gmoscalbiasfiles',
         'FITS_DB_BACKUP_DIR': "/backup",
         'FITS_SERVERNAME': 'arcdev.gemini.edu',
         'ORCID_REDIRECT_URL': 'http://arcdev.gemini.edu/orcid',
@@ -146,7 +151,21 @@ _host_based_configs = {
         'USING_PREVIEWS': 'True',
         'ORCID_ENABLED': 'False',
         'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
-    }
+    },
+    "arcdev": {
+        'FITS_SERVERTITLE': 'GOA Scorpy Test',
+        'USE_AS_ARCHIVE': 'False',
+        'FITS_SYSTEM_STATUS': 'development',
+        'EXPORT_DESTINATIONS': '',
+        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files,gmoscaltwilightfiles,gmoscalbiasfiles',
+        'FITS_DB_BACKUP_DIR': "/backup",
+        'FITS_SERVERNAME': 'scorpy.gemini.edu',
+        'ORCID_ENABLED': 'False',
+        'TZ': 'UTC',
+        'PROCESSED_CALS_PATH': 'reduced_cals',
+        'USING_PREVIEWS': 'False',
+        'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
+    },
 }
 
 
@@ -222,7 +241,7 @@ z_staging_area = lookup_config('Z_STAGING_AREA', '/data/z_staging')
 storage_root = lookup_config('STORAGE_ROOT', '/sci/dataflow')
 #storage_root = '/data/archive_soak'
 #storage_root = '/data/skycam'
-dhs_perm = '/sci/dhs'
+dhs_perm = lookup_config('DHS_PERM', '/sci/dhs')
 min_dhs_age_seconds = 15
 max_dhs_validation_failures = 4
 
@@ -307,12 +326,13 @@ fits_closed_result_limit = 10000
 smtp_server = "localhost"
 email_errors_to = "ooberdorf@gemini.edu"
 #email_errors_to = "phirst@gemini.edu"
-#email_errors_to = "kanderso@gemini.edu"
 
 # Configure the path the data postgres database here
 fits_dbname = lookup_config('FITS_DB_NAME', 'fitsdata')
 fits_dbserver = lookup_config('FITS_DB_SERVER', '')
 fits_database = 'postgresql://%s/%s' % (fits_dbserver, fits_dbname)
+fits_database_pool_size = 30
+fits_database_max_overflow = 10
 #fits_database = 'sqlite:////home/fitsdata/sqlite-database'
 #To reference database on another machine: 
 #fits_database = 'postgresql://hbffitstape1/'+fits_dbname

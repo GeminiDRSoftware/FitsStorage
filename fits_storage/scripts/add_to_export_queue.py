@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     with session_scope() as session:
         logger.info("Getting header object list")
-        headers = list_headers(session, selection, orderby)
+        headers = list_headers(selection, orderby, session=session, unlimit=True)
 
         # For some reason, looping through the header list directly for the add
         # is really slow if the list is big.

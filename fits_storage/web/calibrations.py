@@ -91,7 +91,8 @@ class WrapperObject(object):
         return self.header.data_label
 
     def arcs(self):
-        if 'arc' in self.c.applicable and (self._ctype == 'all' or self._ctype == 'arc'):
+        if (self.c.header.instrument not in ['GMOS-N', 'GMOS-S'] or self.c.header.observation_class != 'dayCal') \
+                and 'arc' in self.c.applicable and (self._ctype == 'all' or self._ctype == 'arc'):
             self._requires = True
             wrap = WrappedCals(applicable=True)
 
@@ -142,7 +143,13 @@ class WrapperObject(object):
         return wrap
 
     def darks(self):
-        if 'dark' in self.c.applicable and self._ctype in ('all', 'dark'):
+        skip = False
+        # per Jocelyn Ferrara and Adam Smith, GMOS images with MASK_NAME of focus_array_new can be skipped
+        if self.c.header.instrument in ['GMOS-N', 'GMOS-S'] \
+                and self.c.header.spectroscopy is False \
+                and self.c.descriptors.get('focal_plane_mask', '') == 'focus_array_new':
+            skip = True
+        if not skip and 'dark' in self.c.applicable and self._ctype in ('all', 'dark'):
             self._requires = True
             wrap = WrappedCals(applicable=True)
 

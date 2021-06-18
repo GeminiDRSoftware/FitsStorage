@@ -45,7 +45,8 @@ RUN pip3 install psycopg2-binary && \
     pip3 install psutil && \
     pip3 install boto3 && \
     pip3 install mysql-connector && \
-    pip3 install simplejson
+    pip3 install simplejson && \
+    pip3 install packaging
 
 # Needed for imexam, which is needed for DRAGONS
 RUN pip3 install photutils
@@ -102,6 +103,8 @@ RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRA
 COPY . /opt/FitsStorage
 WORKDIR /opt/FitsStorage
 COPY fitsverify /opt/fitsverify
+COPY docker/wait-for-postgres.sh /
+RUN chmod a+x /wait-for-postgres.sh
 
 # CYTHON STEP FOR DRAGONS
 RUN pip3 install cython

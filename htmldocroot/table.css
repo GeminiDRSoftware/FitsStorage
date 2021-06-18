@@ -37,22 +37,22 @@ tr.warn-alternating:nth-child(even) {
 }
 
 tr.sq-alternating:nth-child(odd) {
-  background-color: #aaffaa;
+  background-color: #a7ed9c;
   font-size: small
 }
 
 tr.sq-alternating:nth-child(even) {
-  background-color: #aaccaa;
+  background-color: #88e679;
   font-size: small
 }
 
 tr.ql-alternating:nth-child(odd) {
-  background-color: #aaaaff;
+  background-color: #f2d21c;
   font-size: small
 }
 
 tr.ql-alternating:nth-child(even) {
-  background-color: #aaaacc;
+  background-color: #e7c70d;
   font-size: small
 }
 
@@ -65,9 +65,9 @@ tr.warn-alternating:hover {
 }
 
 tr.sq-alternating:hover {
-  background-color: #88aa88;
+  background-color: #c5f3be;
 }
 
 tr.ql-alternating:hover {
-  background-color: #8888aa;
+  background-color: #f3d735;
 }

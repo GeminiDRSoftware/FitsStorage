@@ -91,7 +91,9 @@ getselection_key_value = {
     'entrytime': 'entrytime',
     'raw_cc': 'raw_cc',
     'raw_iq': 'raw_iq',
-    'ephemeris_target': 'ephemeris_target'
+    'ephemeris_target': 'ephemeris_target',
+    'lastmoddaterange': 'lastmoddaterange',
+    'entrytimedaterange': 'entrytimedaterange',
     }
 
 # Also, some entries set themselves as the value for a certain selection
@@ -125,6 +127,8 @@ getselection_booleans = {
     'notengineering': ('engineering', False),
     'science_verification': ('science_verification', True),
     'notscience_verification': ('science_verification', False),
+    'calprog': ('calprog', True),
+    'notcalprog': ('calprog', False),
     'site_monitoring': ('site_monitoring', True),
     'not_site_monitoring': ('site_monitoring', False),
     'photstandard': ('photstandard', True),
@@ -145,6 +149,7 @@ getselection_detector_roi = {
     'central256': 'Central256',
     'custom': 'Custm'
     }
+
 
 def getselection(things):
     """
@@ -240,6 +245,7 @@ sayselection_defs = {
     'object': 'Object Name',
     'engineering': 'Engineering Data',
     'science_verification': 'Science Verification Data',
+    'calprog': 'Calibration Program',
     'disperser': 'Disperser',
     'focal_plane_mask': 'Focal Plane Mask',
     'pupil_mask': 'Pupil Mask',
@@ -325,32 +331,33 @@ import time
 from types import MethodType
 
 queryselection_filters = (
-    ('present',        DiskFile.present), # Do want to select Header object for which diskfile.present is true?
-    ('canonical',      DiskFile.canonical),
-    ('science_verification', Header.science_verification),
-    ('program_id',     Header.program_id),
-    ('observation_id', Header.observation_id),
-    ('data_label',     Header.data_label),
-    ('observation_type',     Header.observation_type),
+    ('present',               DiskFile.present), # Do want to select Header object for which diskfile.present is true?
+    ('canonical',             DiskFile.canonical),
+    ('science_verification',  Header.science_verification),
+    ('program_id',            Header.program_id),
+    ('observation_id',        Header.observation_id),
+    ('data_label',            Header.data_label),
+    ('observation_type',      Header.observation_type),
     ('observation_class',     Header.observation_class),
-    ('reduction',     Header.reduction),
-    ('telescope',     Header.telescope),
-    ('filename',      File.name),
-    ('binning',       Header.detector_binning),
-    ('gain',          Header.detector_gain_setting),
-    ('readspeed',     Header.detector_readspeed_setting),
-    ('welldepth',     Header.detector_welldepth_setting),
-    ('readmode',      Header.detector_readmode_setting),
-    ('filter',        Header.filter_name),
-    ('spectroscopy',  Header.spectroscopy),
-    ('mode',          Header.mode),
-    ('coadds',        Header.coadds),
-    ('mdready',       DiskFile.mdready),
-    ('site_monitoring', Header.site_monitoring),
-    ('pre_image',     Header.pre_image),
-    ('raw_cc',        Header.raw_cc),
-    ('raw_iq',        Header.raw_iq),
-    ('procmode',       Header.procmode)
+    ('reduction',             Header.reduction),
+    ('telescope',             Header.telescope),
+    ('filename',              File.name),
+    ('binning',               Header.detector_binning),
+    ('gain',                  Header.detector_gain_setting),
+    ('readspeed',             Header.detector_readspeed_setting),
+    ('welldepth',             Header.detector_welldepth_setting),
+    ('readmode',              Header.detector_readmode_setting),
+    ('filter',                Header.filter_name),
+    ('spectroscopy',          Header.spectroscopy),
+    ('mode',                  Header.mode),
+    ('coadds',                Header.coadds),
+    ('mdready',               DiskFile.mdready),
+    ('site_monitoring',       Header.site_monitoring),
+    ('calprog',               Header.calibration_program),
+    ('pre_image',             Header.pre_image),
+    ('raw_cc',                Header.raw_cc),
+    ('raw_iq',                Header.raw_iq),
+    ('procmode',              Header.procmode)
     )
 
 def queryselection(query, selection):
@@ -383,6 +390,9 @@ def queryselection(query, selection):
     # Ignore the "Include" dummy value
     if selection.get('engineering') in (True, False):
         query = query.filter(Header.engineering == selection['engineering'])
+
+    if selection.get('calprog') in (True, False):
+        query = query.filter(Header.calibration_program == selection['calprog'])
 
     if ('object' in selection) and (('ra' not in selection) and ('dec' not in selection)):
         # Handle the "wildcards" allowed on the object name
@@ -417,6 +427,15 @@ def queryselection(query, selection):
             a, b = selection['lastmoddaterange'].split(' ')
             startfiledt, endfiledt = get_time_period(a, b, False)
             query = query.filter(DiskFile.lastmod >= startfiledt).filter(DiskFile.lastmod < endfiledt)
+        except Exception:
+            # parse error on datetime
+            pass
+
+    if 'entrytimedaterange' in selection:
+        try:
+            a, b = selection['entrytimedaterange'].split(' ')
+            startfiledt, endfiledt = get_time_period(a, b, False)
+            query = query.filter(DiskFile.entrytime >= startfiledt).filter(DiskFile.entrytime < endfiledt)
         except Exception:
             # parse error on datetime
             pass
@@ -818,6 +837,8 @@ def selection_to_URL(selection, with_columns=False):
             # de-escape it for us and we'll be left with, for instance, /s that we can't differentiate
             # from those in the path.
             urlstring += '/object=%s' % urllib.parse.quote(selection[key])
+        elif key == 'publication':
+            urlstring += '/publication=%s' % urllib.parse.quote(selection[key])
         elif key == 'spectroscopy':
             if selection[key] is True:
                 urlstring += '/spectroscopy'
@@ -850,6 +871,11 @@ def selection_to_URL(selection, with_columns=False):
                 urlstring += '/notengineering'
             else:
                 urlstring += '/includeengineering'
+        elif key == 'calprog':
+            if selection[key] is True:
+                urlstring += '/calprog'
+            elif selection[key] is False:
+                urlstring += '/notcalprog'
         elif key == 'science_verification':
             if selection[key] is True:
                 urlstring += '/science_verification'

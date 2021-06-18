@@ -42,9 +42,9 @@ def add_point(session, id, x, y):
     y : float
         Y coordinate
     """
-    ptext = "'({}, {})'".format((x, y))
-    session.execute("UPDATE photstandard set coords = {} WHERE id={}".format((ptext,
-                                                                              id)))
+    ptext = "'({}, {})'".format(x, y)
+    session.execute("UPDATE photstandard set coords = {} WHERE id={}".format(ptext,
+                                                                              id))
     session.commit()
 
 

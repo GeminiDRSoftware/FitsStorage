@@ -77,6 +77,7 @@ class ExportQueueUtil(object):
 
     def set_last_failed(self, trans):
         self.s.query(ExportQueue).get(trans.id).lastfailed = datetime.datetime.now()
+        self.s.query(ExportQueue).get(trans.id).failed = True
         self.s.commit()
 
     def add_to_queue(self, filename, path, destination):
@@ -150,7 +151,7 @@ class ExportQueueUtil(object):
         our_md5 = diskfile.data_md5
 
         self.l.debug("Checking for remote file md5")
-        dest_md5 = get_destination_data_md5(filename, self.l, destination)
+        dest_md5 = get_destination_data_md5(filename_nobz2, self.l, destination)
 
         if dest_md5 == 'ERROR':
             return False

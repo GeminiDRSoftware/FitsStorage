@@ -1,0 +1,15 @@
+{
+    "program_id": {{ program_id|tojson }},
+    "title": {{ title|tojson }},
+    "pi_name": {{ pi_name|tojson }},
+    "co_names": {{ co_names|tojson }},
+    "abstract": {{ abstract|tojson }},
+    "publications": [
+    {%- for pub in publications %}
+        {
+            "title": {{ pub.title|tojson }},
+            "bibcode": {{ pub.bibcode|tojson }}
+        },
+    {%- endfor %}
+    ]
+}

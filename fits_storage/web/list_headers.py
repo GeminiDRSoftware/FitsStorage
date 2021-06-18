@@ -19,7 +19,7 @@ import dateutil.parser
 
 from ..utils.web import get_context
 
-def list_headers(selection, orderby, full_query=False, add_previews=False, session=None):
+def list_headers(selection, orderby, full_query=False, add_previews=False, session=None, unlimit=False):
     """
     This function queries the database for a list of header table
     entries that satisfy the selection criteria.
@@ -64,6 +64,8 @@ def list_headers(selection, orderby, full_query=False, add_previews=False, sessi
 
             if value == 'filename':
                 order_criteria.append(sortingfunc(DiskFile.filename))
+            elif value == 'lastmod':
+                order_criteria.append(sortingfunc(DiskFile.lastmod))
             elif value == 'entrytime':
                 order_criteria.append(sortingfunc(DiskFile.entrytime))
             elif value in whichorderby:
@@ -85,10 +87,11 @@ def list_headers(selection, orderby, full_query=False, add_previews=False, sessi
     query = query.order_by(*order_criteria)
 
     # If this is an open query, we should limit the number of responses
-    if is_openquery:
-        query = query.limit(fits_open_result_limit)
-    else:
-        query = query.limit(fits_closed_result_limit)
+    if not unlimit:
+        if is_openquery:
+            query = query.limit(fits_open_result_limit)
+        else:
+            query = query.limit(fits_closed_result_limit)
 
     # Return the list of DiskFile objects
     return query.all()

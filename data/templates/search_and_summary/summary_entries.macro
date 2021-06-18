@@ -63,7 +63,7 @@
 {%- endif -%}
 {%- if col.comment -%}
 <span class="info">
-<a href="/logcomments/{{ col.dl.observation_id }}" target="_blank"><abbr title="{{ col.comment }}">[L]</abbr></a>
+<a href="/logcomments/{{ col.dl.observation_id }}" target="_blank"><abbr title="{{ col.comment|tojson }}">[L]</abbr></a>
 </span>
 {%- endif -%} </span>
   {%- if col.dl.extension -%}
