@@ -2,15 +2,9 @@
 The CalibrationGMOS class
 
 """
-import os
 
-import datetime
 import math
-import yaml
 
-from .rules import IfInRule, MatchRule, IfNotNoneRule, CalContainsRule, IfProcessedRule, IfEqualsRule, AndRule, \
-    MaxIntervalRule, RawOrProcessedRule, parse_yaml
-from ..orm.diskfile import DiskFile
 from ..orm.header import Header
 from ..orm.gmos import Gmos
 
@@ -19,10 +13,7 @@ from .calibration import not_imaging
 from .calibration import not_processed
 from .calibration import not_spectroscopy
 
-from sqlalchemy.orm import join
-
 from gempy.utils import logutils
-from .render_query import render_query as rq
 
 log = logutils.get_logger(__name__)
 
@@ -305,7 +296,7 @@ class CalibrationGMOS(Calibration):
                 .all(howmany)
             )
 
-    def bias(self, processed=False, howmany=None, render_query=False, return_query=False):
+    def bias(self, processed=False, howmany=None, return_query=False):
         """
         Method to find the best bias frames for the target dataset
 
@@ -325,6 +316,8 @@ class CalibrationGMOS(Calibration):
             Indicate if we want to retrieve processed or raw biases
         howmany : int, default 1
             How many matches to return
+        return_query : bool
+            return the SQLAlchemy query as a 2nd part of the return value
 
         Returns
         -------
@@ -374,10 +367,7 @@ class CalibrationGMOS(Calibration):
                                   Gmos.read_speed_setting,
                                   Gmos.gain_setting) \
                 .max_interval(days=90)
-        if render_query:
-            rqr = rq(query.query)
-            return (query.all(howmany)), rqr
-        elif return_query:
+        if return_query:
             return (query.all(howmany)), query
         else:
             return (query.all(howmany))
@@ -395,42 +385,42 @@ class CalibrationGMOS(Calibration):
         #         .all(howmany)
         #     )
 
-    def bias_new(self, howmany=1):
-        query = self.get_query()
-        for rule in self.bias_rules():
-            query = rule.updatequery(query, self, self.descriptors, 'BIAS')
+    # def bias_new(self, howmany=1):
+    #     query = self.get_query()
+    #     for rule in self.bias_rules():
+    #         query = rule.updatequery(query, self, self.descriptors, 'BIAS')
+    #
+    #     return (query.all(howmany))
+    #
+    # def bias_rules(self, processed):
+    #     rules = list()
+    #     rules.append(RawOrProcessedRule('BIAS'))
+    #     if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
+    #         rules.append(MatchRule('amp_read_area',
+    #                                prefix="If `detector_roi_setting` in 'Full Frame' or 'Central Spectrum'"))
+    #     else:
+    #         if self.descriptors['amp_read_area'] is not None:
+    #             rules.append(CalContainsRule('amp_read_area',
+    #                                          prefix="If `detector_roi_setting` not in "
+    #                                                 "'Full Frame' or 'Central Spectrum' "
+    #                                                 "and `amp_read_area` is not None"))
+    #     if processed and self.descriptors['prepared'] == True:
+    #         rules.append(AndRule(MatchRule('overscan_trimmed'),
+    #                              MatchRule('overscan_subtracted'), prefix='For processed prepared data'))
+    #     rules.extend([
+    #         MatchRule('instrument'),
+    #         MatchRule('detector_x_bin'),
+    #         MatchRule('detector_y_bin'),
+    #         MatchRule('read_speed_setting'),
+    #         MatchRule('gain_setting')])
+    #     rules.append(MaxIntervalRule(90))
+    #     # TODO handle matches beyond howmany?
+    #     return rules
+    #
+    # def bias_rules_yaml(self):
+    #     return parse_yaml("/Users/ooberdorf/FitsStorage/fits_storage/cal/calibration_gmos.yml", 'bias')
 
-        return (query.all(howmany))
-
-    def bias_rules(self, processed):
-        rules = list()
-        rules.append(RawOrProcessedRule('BIAS'))
-        if self.descriptors['detector_roi_setting'] in ['Full Frame', 'Central Spectrum']:
-            rules.append(MatchRule('amp_read_area',
-                                   prefix="If `detector_roi_setting` in 'Full Frame' or 'Central Spectrum'"))
-        else:
-            if self.descriptors['amp_read_area'] is not None:
-                rules.append(CalContainsRule('amp_read_area',
-                                             prefix="If `detector_roi_setting` not in "
-                                                    "'Full Frame' or 'Central Spectrum' "
-                                                    "and `amp_read_area` is not None"))
-        if processed and self.descriptors['prepared'] == True:
-            rules.append(AndRule(MatchRule('overscan_trimmed'),
-                                 MatchRule('overscan_subtracted'), prefix='For processed prepared data'))
-        rules.extend([
-            MatchRule('instrument'),
-            MatchRule('detector_x_bin'),
-            MatchRule('detector_y_bin'),
-            MatchRule('read_speed_setting'),
-            MatchRule('gain_setting')])
-        rules.append(MaxIntervalRule(90))
-        # TODO handle matches beyond howmany?
-        return rules
-
-    def bias_rules_yaml(self):
-        return parse_yaml("/Users/ooberdorf/FitsStorage/fits_storage/cal/calibration_gmos.yml", 'bias')
-
-    def imaging_flat(self, processed, howmany, flat_descr, filt, render_query=False, return_query=False):
+    def imaging_flat(self, processed, howmany, flat_descr, filt, return_query=False):
         """
         Method to find the best imaging flats for the target dataset
 
@@ -450,6 +440,8 @@ class CalibrationGMOS(Calibration):
             The list of descriptors to match against
         filt : list of filters
             Additional list of filters to apply to the query
+        render_query : bool
+            If True, retuns the SqlAlchemy query along with the regular return
 
         Returns
         -------
@@ -468,10 +460,7 @@ class CalibrationGMOS(Calibration):
         query.add_filters(*filt) \
             .match_descriptors(*flat_descr) \
             .max_interval(days=180)
-        if render_query:
-            rqr = rq(query.query)
-            return (query.all(howmany)), rqr
-        elif return_query:
+        if return_query:
             return (query.all(howmany)), query
         else:
             return (query.all(howmany))
@@ -483,7 +472,7 @@ class CalibrationGMOS(Calibration):
         #          .all(howmany)
         #     )
 
-    def spectroscopy_flat(self, processed, howmany, flat_descr, filt, render_query=False, return_query=False):
+    def spectroscopy_flat(self, processed, howmany, flat_descr, filt, return_query=False):
         """
         Method to find the best spectroscopy flats for the target dataset
 
@@ -503,6 +492,8 @@ class CalibrationGMOS(Calibration):
             The list of descriptors to match against
         filt : list of filters
             Additional list of filters to apply to the query
+        return_query : bool
+            Return the SqlAlchemy query along with the regular results
 
         Returns
         -------
@@ -554,10 +545,7 @@ class CalibrationGMOS(Calibration):
                 .tolerance(condition = mos_or_ls, elevation=el_thres) \
                 .tolerance(condition = under_85, cass_rotator_pa=crpa_thres) \
                 .max_interval(days=180)
-        if render_query:
-            rqr = rq(query.query)
-            return (query.all(howmany)), rqr
-        elif return_query:
+        if return_query:
             return (query.all(howmany)), query
         else:
             return (query.all(howmany))
@@ -582,7 +570,7 @@ class CalibrationGMOS(Calibration):
         #         .all(howmany)
         #     )
 
-    def flat(self, processed=False, howmany=None, render_query=False, return_query=False):
+    def flat(self, processed=False, howmany=None, return_query=False):
         """
         Method to find the best GMOS FLAT fields for the target dataset
 
@@ -600,6 +588,8 @@ class CalibrationGMOS(Calibration):
             Indicate if we want to retrieve processed or raw flats
         howmany : int, default 1
             How many matches to return
+        return_query : bool
+            If True, return the SqlAlchemy query along with the normal results
 
         Returns
         -------
@@ -635,9 +625,9 @@ class CalibrationGMOS(Calibration):
                 filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         if self.descriptors['spectroscopy']:
-            return self.spectroscopy_flat(processed, howmany, flat_descriptors, filters, render_query=render_query, return_query=return_query)
+            return self.spectroscopy_flat(processed, howmany, flat_descriptors, filters, return_query=return_query)
         else:
-            return self.imaging_flat(processed, howmany, flat_descriptors, filters, render_query=render_query, return_query=return_query)
+            return self.imaging_flat(processed, howmany, flat_descriptors, filters, return_query=return_query)
 
     def processed_fringe(self, howmany=None):
         """
@@ -974,9 +964,23 @@ class CalibrationGMOS(Calibration):
             )
 
     @not_imaging
-    def slitillum(self, processed=False, howmany=None, render_query=False, return_query=False):
+    def slitillum(self, processed=False, howmany=None, return_query=False):
         """
         Method to find the best slit response for the target dataset.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw masks.
+        howmany : int, default 1
+            How many matches to return
+        return_query : bool
+            If True, return the SqlAlchemy query along with the regular results
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 1
@@ -1027,25 +1031,6 @@ class CalibrationGMOS(Calibration):
                 return retval, query
             else:
                 return retval
-
-    def why_not_matching(self, calibration, method, processed, file_based=False):
-        sfx = '_rules'
-        if file_based:
-            sfx = '_rules_yaml'
-        if hasattr(self, method + sfx):
-            tpl = self.session.query(Header, Gmos, DiskFile) \
-                .filter(DiskFile.filename == calibration).filter(DiskFile.canonical == True).first()
-            if tpl is None:
-                return "Calibration not loadable into caldb"
-            (h, g, _) = tpl
-            rules = getattr(self, method + sfx)
-            for rule in rules(processed=processed):  # to pass processed or not depends on the ultimate implementation
-                check = rule.check(self, self.descriptors, processed, h, g)
-                if check is not None:
-                    return check
-            return None  # looks like it should match...
-        else:
-            return "Match checking not implemented for %s for calibrations of type %s" % (self.__class__, method)
 
     def _get_fuzzy_wavelength(self):
         """
