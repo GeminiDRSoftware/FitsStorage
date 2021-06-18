@@ -1,5 +1,5 @@
 [archive]
-arcdev.gemini.edu
+arcdev
 
 [archive:vars]
 ansible_ssh_user=ooberdorf
@@ -12,3 +12,4 @@ enable_ingest_services=False
 enable_export=False
 enable_certbot=True
 install_epel=True
+dataflow_path=/data/dataflow

@@ -165,6 +165,9 @@ _host_based_configs = {
         'PROCESSED_CALS_PATH': 'reduced_cals',
         'USING_PREVIEWS': 'False',
         'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
+        'EXPORT_UPLOAD_AUTH_COOKIE': 'scorpy_testing_4l@k]P__4013',
+        'STORAGE_ROOT': '/data/dataflow/',
+        'UPLOAD_AUTH_COOKIE': 'scorpy_testing_4l@k]P__4013',
     },
 }
 
@@ -266,10 +269,10 @@ upload_staging_path = lookup_config('UPLOAD_STAGING_PATH', '/data/upload_staging
 # This is the cookie value needed to allow uploading files.
 # Leave it empty to disable upload authentication
 # The cookie name is 'gemini_fits_upload_auth'
-upload_auth_cookie = lookup_config('UPLOAD_AUTH_COOKIE', None)
+upload_auth_cookie = lookup_config('UPLOAD_AUTH_COOKIE', 'f3c6986fddfe42a8ce117203924c6983')
 
 # This is the cookie supplied to servers we are exporting to.
-export_upload_auth_cookie = 'f3c6986fddfe42a8ce117203924c6983'
+export_upload_auth_cookie = lookup_config('EXPORT_UPLOAD_AUTH_COOKIE', 'f3c6986fddfe42a8ce117203924c6983')
 
 
 # This is the magic cookie value needed to allow downloading any files
