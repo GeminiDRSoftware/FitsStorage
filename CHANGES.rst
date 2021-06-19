@@ -1,3 +1,13 @@
+2020-2.19
+
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- added standard option to search for files with tags that include 'STANDARD'
+
 2020-2.18
 =========
 
