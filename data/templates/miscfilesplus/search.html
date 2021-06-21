@@ -1,15 +1,5 @@
 {% extends "miscfilesplus/miscfilesplus_layout.html" %}
 
-{% block bootstrap_extra_header %}
-<style>
-div.collapseButton {
-    padding: 8px;
-    text-align: center;
-}
-</style>
-{% endblock %}
-
-
 {% block title %}MiscFiles Plus Search{% endblock %}
 
 {% block navbar %}
@@ -69,10 +59,10 @@ div.collapseButton {
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-striped table-sm">
-                            <tr><th>Filename</th><th>Size</th><th>Last Modified</th><th>Program ID</th><th>Release Date</th><th>Actions</th></tr>
+                            <tr><th>Collection</th><th>Path</th><th>Filename</th><th>Size</th><th>Last Modified</th><th>Program ID</th><th>Release Date</th><th>Actions</th></tr>
                         {% if folders %}
                             {% for folder in folders %}
-                            <tr><td><span class="fa fa-folder-open">&nbsp;&nbsp;</span><a href="/miscfilesplus/browse/{{ folder.collection.name }}/{{ folder.path() }}/">{{ folder.name }}</a></td><td></td><td></td><td></td><td></td>
+                            <tr><td>{{ folder.collection.name }}</td><td>{{ folder.parentpath() }}</td><td><span class="fa fa-folder-open">&nbsp;&nbsp;</span><a href="/miscfilesplus/browse/{{ folder.collection.name }}/{{ folder.path() }}/">{{ folder.name }}</a></td><td></td><td></td><td></td><td></td>
                             {% if can_add %}
                             <td><a href="/miscfilesplus/delete/{{ folder.collection.name }}/{{ folder.path() }}/">&nbsp;&nbsp;<span class="fa fa-trash"></span></a></td></tr>
                             {% else %}
@@ -83,9 +73,9 @@ div.collapseButton {
                         {% if files %}
                             {% for file in files %}
                             {% if file.folder %}
-                            <tr><td><span class="fa fa-file">&nbsp;&nbsp;</span><a href="/miscfilesplus/download/{{ file.collection.name }}/{{ file.folder.path() }}/{{ file.filename | urlencode }}">{{ file.filename }}</a></td>
+                            <tr><td>{{ file.collection.name }}</td><td>{{ file.parentpath() }}</td><td><span class="fa fa-file">&nbsp;&nbsp;</span><a href="/miscfilesplus/download/{{ file.collection.name }}/{{ file.folder.path() }}/{{ file.filename | urlencode }}">{{ file.filename }}</a></td>
                             {% else %}
-                            <tr><td><span class="fa fa-file">&nbsp;&nbsp;</span><a href="/miscfilesplus/download/{{ file.collection.name }}/{{ file.filename | urlencode }}">{{ file.filename }}</a></td>
+                            <tr><td>{{ file.collection.name }}</td><td>{{ file.parentpath() }}</td><td><span class="fa fa-file">&nbsp;&nbsp;</span><a href="/miscfilesplus/download/{{ file.collection.name }}/{{ file.filename | urlencode }}">{{ file.filename }}</a></td>
                             {% endif %}
                             <td>{{ file.size }}</td><td>{{ file.last_modified }}</td><td>{{ file.program_id }}</td><td>{{ file.release.strftime('%Y-%m-%d') }}</td>
                             {% if can_add %}

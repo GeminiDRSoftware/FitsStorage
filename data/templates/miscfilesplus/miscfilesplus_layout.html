@@ -1,6 +1,20 @@
 {% extends "bootstrap_layout.html" %}
 
 {% block bootstrap_extra_header %}
+<!-- TODO refactor titlebar into an upstream template, see also below -->
+<script>
+    $(document).ready(function(){
+  /* load the username pulldown */
+  var whoami_url = "/whoami";
+  whoami_url += " #whoami"
+  $("#div_whoami").load(whoami_url,function(){
+  });
+});
+
+</script>
+<link rel="stylesheet" type="text/css" href="/static/whoami.css" />
+<link rel="stylesheet" type="text/css" href="/static/titlebar.css" />
+
 <style>
 div.collapseButton {
     padding: 8px;
@@ -13,6 +27,29 @@ div.collapseButton {
 {% block title %}MiscFiles Plus{% endblock %}
 
 {% block bootstrap_body %}
+<!-- TODO refactor titlebar into an upstream template -->
+<div class="titlebar">
+ <!-- Uncomment this to display an announcement line at the top of the searchform page
+ <div class="titlebar">
+  <center>
+  <font color="red">
+  {{ server_title }} will be down for maintainance Wednesday 10-Aug-2016 10:00-12:00 HST (20:00-22:00 UTC)
+  </font>
+  </center>
+ </div>
+ -->
+ <div class="titlebar_left">
+{{ server_title }}
+ </div>
+ <div class="titlebar_help" id="help_about">
+  <a href="/help/index.html" target="_blank">Help</a> -
+  <a href="/help/about.html" target="_blank">About</a> -
+  <a href="/miscfiles"><abbr title="Miscellaneous Files containing data that can't be searched via the regular archive interface">Misc Files</abbr></a>
+ </div>
+ <div class="titlebar_right" id="div_whoami">
+  Loading...
+ </div>
+</div>
 {% block navbar %}
 <nav class="navbar navbar-default navbar-light bg-light navbar-expand-lg">
             {% if collection %}

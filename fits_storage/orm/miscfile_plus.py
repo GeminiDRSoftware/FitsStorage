@@ -160,6 +160,12 @@ class MiscFileFolder(Base):
             f = f.folder
         return '/'.join(retval)
 
+    def parentpath(self):
+        if self.folder:
+            return self.folder.path()
+        else:
+            return ''
+
     def linkpath(self):
         def urlify(folder):
             return f"<a href=\"/miscfilesplus/browse/{folder.collection.name}/{folder.path()}/\">{folder.name}</a>"
@@ -189,3 +195,9 @@ class MiscFilePlus(Base):
     filename      = Column(Text, index=True)
     size          = Column(Integer, index=True)
     last_modified = Column(DateTime, index=True)
+
+    def parentpath(self):
+        if self.folder:
+            return self.folder.path()
+        else:
+            return ''
