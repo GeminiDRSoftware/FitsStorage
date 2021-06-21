@@ -154,7 +154,7 @@ class CalibrationGMOS(Calibration):
 # ------------------------------------------------------------------------------
 
     @not_imaging
-    def arc(self, processed=False, howmany=None):
+    def arc(self, processed=False, howmany=None, return_query=False):
         """
         This method identifies the best GMOS ARC to use for the target
         dataset.
@@ -214,21 +214,20 @@ class CalibrationGMOS(Calibration):
             elif self.descriptors['amp_read_area'] is not None:
                     filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        return (
-            self.get_query()
-                .arc(processed)
-                .add_filters(*filters)
+        query = self.get_query() \
+                .arc(processed) \
+                .add_filters(*filters) \
                 .match_descriptors(Header.instrument,
                                    Gmos.disperser,
                                    Gmos.filter_name,    # Must match filter (KR 20100423)
                                    Gmos.detector_x_bin, # Must match ccd binning
-                                   Gmos.detector_y_bin)
-                                   # Gmos.grating_order) # match on grating order
-                .tolerance(central_wavelength=0.001)
-                # Absolute time separation must be within 1 year
+                                   Gmos.detector_y_bin) \
+                .tolerance(central_wavelength=0.001) \
                 .max_interval(days=365)
-                .all(howmany)
-            )
+        if return_query:
+            return (query.all(howmany)), query
+        else:
+            return (query.all(howmany))
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 
