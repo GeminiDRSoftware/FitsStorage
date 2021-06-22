@@ -1,4 +1,5 @@
 2020-2.19
+=========
 
 User-Facing Changes
 -------------------
@@ -15,6 +16,12 @@ header.py
 ^^^^^^^^^
 
 - updated header parsing for large values of airmass to take sec(90-elevation), if available, as an estimate
+
+downloads
+^^^^^^^^^
+
+- fixed typo in "associated"
+
 
 2020-2.18
 =========
