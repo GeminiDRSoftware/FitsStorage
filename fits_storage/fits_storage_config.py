@@ -144,24 +144,39 @@ _host_based_configs = {
         'USING_PREVIEWS':                   'True',
         'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
     },
-    "arcdev": {
-        'FITS_SERVERTITLE':                 'TEST Archive (AWS) FitsServer (CentOS 7)',
-        'USE_AS_ARCHIVE':                   'True',
-        'EXPORT_DESTINATIONS':              '',
-        'FITS_SYSTEM_STATUS':               'development',
-        'BLOCKED_URLS':                     'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,'
-                                            'xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files,'
-                                            'gmoscaltwilightfiles,gmoscalbiasfiles',
-        'FITS_DB_BACKUP_DIR':               "/backup",
-        'FITS_SERVERNAME':                  'arcdev.gemini.edu',
-        'ORCID_REDIRECT_URL':               'http://arcdev.gemini.edu/orcid',
-        'TZ':                               'UTC',
-        'DEFAULT_UPLOAD_PATH':              'upload_dev',
-        'PROCESSED_CALS_PATH':              'reduced_cals_dev',
-        'USING_PREVIEWS':                   'True',
-        'ORCID_ENABLED':                    'False',
+    "arcdev-disabled": {
+        'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
+        'USE_AS_ARCHIVE': 'True',
+        'EXPORT_DESTINATIONS': '',
+        'FITS_SYSTEM_STATUS': 'development',
+        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files,gmoscaltwilightfiles,gmoscalbiasfiles',
+        'FITS_DB_BACKUP_DIR': "/backup",
+        'FITS_SERVERNAME': 'arcdev.gemini.edu',
+        'ORCID_REDIRECT_URL': 'http://arcdev.gemini.edu/orcid',
+        'TZ': 'UTC',
+        'DEFAULT_UPLOAD_PATH': 'upload_dev',
+        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
+        'USING_PREVIEWS': 'True',
+        'ORCID_ENABLED': 'False',
         'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
-    }
+    },
+    "arcdev": {
+        'FITS_SERVERTITLE': 'GOA Scorpy Test',
+        'USE_AS_ARCHIVE': 'False',
+        'FITS_SYSTEM_STATUS': 'development',
+        'EXPORT_DESTINATIONS': '',
+        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files,gmoscaltwilightfiles,gmoscalbiasfiles',
+        'FITS_DB_BACKUP_DIR': "/backup",
+        'FITS_SERVERNAME': 'scorpy.gemini.edu',
+        'ORCID_ENABLED': 'False',
+        'TZ': 'UTC',
+        'PROCESSED_CALS_PATH': 'reduced_cals',
+        'USING_PREVIEWS': 'False',
+        'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
+        'EXPORT_UPLOAD_AUTH_COOKIE': 'scorpy_testing_4l@k]P__4013',
+        'STORAGE_ROOT': '/data/dataflow/',
+        'UPLOAD_AUTH_COOKIE': 'scorpy_testing_4l@k]P__4013',
+    },
 }
 
 
@@ -261,10 +276,10 @@ upload_staging_path = lookup_config('UPLOAD_STAGING_PATH', '/data/upload_staging
 # This is the cookie value needed to allow uploading files.
 # Leave it empty to disable upload authentication
 # The cookie name is 'gemini_fits_upload_auth'
-upload_auth_cookie = lookup_config('UPLOAD_AUTH_COOKIE', None)
+upload_auth_cookie = lookup_config('UPLOAD_AUTH_COOKIE', 'f3c6986fddfe42a8ce117203924c6983')
 
 # This is the cookie supplied to servers we are exporting to.
-export_upload_auth_cookie = 'f3c6986fddfe42a8ce117203924c6983'
+export_upload_auth_cookie = lookup_config('EXPORT_UPLOAD_AUTH_COOKIE', 'f3c6986fddfe42a8ce117203924c6983')
 
 
 # This is the magic cookie value needed to allow downloading any files
@@ -321,7 +336,6 @@ fits_closed_result_limit = 10000
 smtp_server     = "localhost"
 email_errors_to = "oliver.oberdorf@noirlab.edu"
 #email_errors_to = "phirst@gemini.edu"
-#email_errors_to = "kanderso@gemini.edu"
 
 # Configure the path the data postgres database here
 fits_dbname                = lookup_config('FITS_DB_NAME', 'fitsdata')

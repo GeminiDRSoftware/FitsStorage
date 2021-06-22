@@ -74,7 +74,7 @@ You can verify file integrity by running 'md5sum -c md5sums.txt'.
 """
 
 readme_associated = """\
-Note that this download was from an assoicated calibrations page -
+Note that this download was from an associated calibrations page -
 it only contains the calibration files that are associated with the science query.
 
 """

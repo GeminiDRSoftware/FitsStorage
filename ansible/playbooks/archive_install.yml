@@ -4,9 +4,17 @@
       - archive
     become: true
     tasks:
+      - name: (Scorpio Test) Ensure dataflow exists
+        file:
+          path: "{{ dataflow_path }}"
+          state: directory
+          mode: 'u+rwx,g+rwx,o+rx'
+          owner: fitsdata
+          group: fitsdata
+        when: "'arcdev' in inventory_hostname"
       - name: Check for dataflow folder
         stat:
-          path: /sci/dataflow
+          path: "{{ dataflow_path }}"
         register: dataflow_folder
         when: not is_s3 and not ignore_dataflow
       - name: Fail if dataflow folder missing
@@ -28,16 +36,22 @@
 #          name:
 #            - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 #          state: present
-#        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+#        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8' and install_epel
 #      - name: Fail while I iterate
 #        fail:
 #          msg: "Exiting early"
+      - name: Setup EPEL
+        yum:
+          name:
+            - epel-release
+        when: install_epel
       - name: install packages
         yum:
           name: 
             - openssl
             - postgresql
             - postgresql-server
+            - postgresql-devel
             - epel-release
             - gcc
             - gcc-c++
@@ -48,6 +62,8 @@
             - python3-pip
             - httpd
             - httpd-devel
+            - redhat-rpm-config
+            - make
           state: latest
       - name: install Repos for Sphinx (dnf-plugins)
 #        # shell: "dnf config-manager --enable PowerTools AppStream BaseOS *epel"
@@ -182,16 +198,19 @@
           _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../.. fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/FitsStorage/
         when: is_aws
         notify: restart services
+      - name: install psycopg2 binary (so we don't have to compile it) (CentOS 7)
+        command: bash -c "python -m pip install psycopg2-binary==2.8.4"
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+      - name: install psycopg2 binary (so we don't have to compile it) (CentOS 8)
+        command: bash -c "pip3 install psycopg2-binary==2.9.1"
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
       - name: install python packages
-        command: bash -c "cd /opt/FitsStorage && python3 -m pip install -r requirements.txt"
+        command: bash -c "cd /opt/FitsStorage && pip3 install -r requirements.txt"
       - name: install pip for python2 if on CentOS 7
         yum:
           name: 
             - python-pip
           state: latest
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
-      - name: install python packages
-        command: bash -c "python -m pip install psycopg2-binary==2.8.4"
         when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
       - name: install imexam for DRAGONS (Centos 8)
         command: bash -c "python3 -m pip install imexam specutils"
@@ -280,6 +299,9 @@
           regex: Environment=PGDATA
           create: yes
         register: postgresql_configured
+      - name: Configure SELinux for PostgresSQL
+        command: chcon -R -t postgresql_db_t  /data/pgsql_data
+        when: postgresql_configured
       - name: Reload System Daemons
         command: systemctl daemon-reload
         when: postgresql_configured.changed or postgresql_service_installed.changed
@@ -404,48 +426,50 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue1.service
           dest: /etc/systemd/system/fits-service_ingest_queue1.service
+        when: enable_ingest_services
       - name: Install ingest queue 2
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue2.service
           dest: /etc/systemd/system/fits-service_ingest_queue2.service
+        when: enable_ingest_services
       - name: Install ingest queue 3
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue.service
           dest: /etc/systemd/system/fits-service_ingest_queue3.service
-        when: is_archive
+        when: is_archive and enable_ingest_services
       - name: Setup ingest 3
         lineinfile:
           path: /etc/systemd/system/fits-service_ingest_queue3.service
           line: Description=Fits Service Ingest Queue 3
           regex: Description=
           create: no
-        when: is_archive
+        when: is_archive and enable_ingest_services
       - name: Setup ingest 3 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_ingest_queue3.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq3
           regex: ExecStart=
           create: no
-        when: is_archive
+        when: is_archive and enable_ingest_services
       - name: Install ingest queue 4
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue.service
           dest: /etc/systemd/system/fits-service_ingest_queue4.service
-        when: is_archive
+        when: is_archive and enable_ingest_services
       - name: Setup ingest 4
         lineinfile:
           path: /etc/systemd/system/fits-service_ingest_queue4.service
           line: Description=Fits Service Ingest Queue 4
           regex: Description=
           create: no
-        when: is_archive
+        when: is_archive and enable_ingest_services
       - name: Setup ingest 4 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_ingest_queue4.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq4
           regex: ExecStart=
           create: no
-        when: is_archive
+        when: is_archive and enable_ingest_services
       - name: Install preview queue 1
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
@@ -607,26 +631,28 @@
         when: fitsstorageconf.changed
       - name: Register Ingest service 1
         service: name=fits-service_ingest_queue1 state=started enabled=yes
+        when: enable_ingest_services
       - name: Register Ingest service 2
         service: name=fits-service_ingest_queue2 state=started enabled=yes
+        when: enable_ingest_services
       - name: Register Ingest service 3
         service: name=fits-service_ingest_queue3 state=started enabled=yes
-        when: enable_all_ingest
+        when: enable_all_ingest and enable_ingest_services
       - name: Register Ingest service 4
         service: name=fits-service_ingest_queue4 state=started enabled=yes
-        when: enable_all_ingest
+        when: enable_all_ingest and enable_ingest_services
       - name: Register Preview service 1
         service: name=fits-service_preview_queue1 state=started enabled=yes
-        when: is_archive
+        when: enable_preview
       - name: Register Preview service 2
         service: name=fits-service_preview_queue2 state=started enabled=yes
-        when: is_archive
+        when: enable_preview
       - name: Register Preview service 3
         service: name=fits-service_preview_queue3 state=started enabled=yes
-        when: is_archive
+        when: enable_preview
       - name: Register Preview service 4
         service: name=fits-service_preview_queue4 state=started enabled=yes
-        when: is_archive
+        when: enable_preview
       - name: Register Export Queue
         service: name=fits-service_export_queue1 state=started enabled=yes
         when: enable_export
@@ -698,13 +724,19 @@
           src: ../../otherfiles/httpd-patched-centos8.conf
           dest: /opt/modwsgi-default/httpd.conf
         notify: restart services
-        when: not is_archive
+        when: not is_aws
       - name: (ARCHIVE/ARCDEV) Copy Mod-WSGI HTTPD config
         copy:
           src: ../../otherfiles/archive-httpd.conf
           dest: /opt/modwsgi-default/httpd.conf
         notify: restart services
-        when: is_archive
+        when: "'archive' in inventory_hostname"
+      - name: (ARCDEV) Copy Mod-WSGI Pre-SSL HTTPD config
+        copy:
+          src: ../../otherfiles/pressl-arcdev-httpd.conf
+          dest: /opt/modwsgi-default/httpd.conf
+        notify: restart services
+        when: "'arcdev' in inventory_hostname"
       - name: Set WSGI entry point
         lineinfile:
           path: /opt/modwsgi-default/handler.wsgi
@@ -721,14 +753,22 @@
       - name: Install CertBot and associated
         yum:
           name: 
-            - certbot python3-certbit-apache mod_ssl
+            - certbot 
+            - python3-certbot-apache
+            - mod_ssl
           state: latest
-        when: is_archive
+        when: enable_certbot
       - name: (ARCDEV) Setup Let's Encrypt
         command: certbot certonly --webroot -w /opt/modwsgi-default/htdocs/ -d arcdev.gemini.edu
         args:
           creates: /etc/letsencrypt
         notify: restart fits-httpd
+        when: "'arcdev' in inventory_hostname"
+      - name: (ARCDEV) Copy Mod-WSGI HTTPD config
+        copy:
+          src: ../../otherfiles/arcdev-httpd.conf
+          dest: /opt/modwsgi-default/httpd.conf
+        notify: restart services
         when: "'arcdev' in inventory_hostname"
 #      - name: (ARCHIVE) Setup Let's Encrypt
 #        command: certbot certonly --webroot -w /opt/modwsgi-default/htdocs/ -d archive.gemini.edu
@@ -788,9 +828,11 @@
       - name: restart ingest1
         service: name=fits-service_ingest_queue1 state=restarted
         listen: "restart services"
+        when: enable_ingest_services
       - name: restart ingest2
         service: name=fits-service_ingest_queue2 state=restarted
         listen: "restart services"
+        when: enable_ingest_services
       - name: restart ingest3
         service: name=fits-service_ingest_queue3 state=restarted
         listen: "restart services"

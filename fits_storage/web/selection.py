@@ -217,6 +217,8 @@ def getselection(things):
             elif thing in {'LS', 'MOS', 'IFS'}:
                 selection['mode'] = thing
                 selection['spectroscopy'] = True
+            elif thing.lower() == 'standard':
+                selection['standard'] = True
             else:
                 if 'notrecognised' in selection:
                     selection['notrecognised'] += " "+thing
@@ -750,6 +752,9 @@ def queryselection(query, selection):
     if 'gpi_astrometric_standard' in selection:
         query = query.join(Gpi, Gpi.header_id == Header.id)
         query = query.filter(Gpi.astrometric_standard == selection['gpi_astrometric_standard'])
+
+    if 'standard' in selection:
+        query = query.filter(Header.types.ilike('%''STANDARD''%'))
 
     return query
 

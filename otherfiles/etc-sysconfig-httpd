@@ -21,7 +21,7 @@
 #
 #HTTPD_LANG=C
 
-export PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
+PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
 
-export PYTHON_EGG_CACHE=/var/www/python-egg-cache
+PYTHON_EGG_CACHE=/var/www/python-egg-cache
 
