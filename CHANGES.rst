@@ -8,6 +8,14 @@ User-Facing Changes
 
 - added standard option to search for files with tags that include 'STANDARD'
 
+Other
+-----
+
+header.py
+^^^^^^^^^
+
+- updated header parsing for large values of airmass to take sec(90-elevation), if available, as an estimate
+
 2020-2.18
 =========
 

@@ -5,6 +5,8 @@ from sqlalchemy import Time, BigInteger, Enum
 
 from sqlalchemy.orm import relation
 
+import numpy as np
+
 import dateutil.parser
 import datetime
 import types
@@ -389,6 +391,25 @@ class Header(Base):
         try:
             airmass = ad.airmass()
             self.airmass = float(airmass) if isinstance(airmass, str) else airmass
+            if self.airmass > 10:
+                if self.elevation is not None:
+                    try:
+                        # use secant(90-elevation) for airmass, converting to radians for numpy
+                        cos_value = np.cos(np.radians(90-self.elevation))
+                        sec_value = np.arccos(cos_value)
+                        if log:
+                            log.warning('Bad airmass value, using sec(90-elevation) as an estimate')
+                        self.airmass = sec_value
+                    except Exception as secamex:
+                        if log:
+                            log.warning('estimate failed, using None for airmass')
+                        self.airmass = None
+                else:
+                    # invalid airmass, just store None
+                    # note also DB can't handle airmass >= 100 (10 cutoff above is per Paul Hirst
+                    if log:
+                        log.warning('Invalid airmass value and no elevation to estimate from, using None')
+                    self.airmass = None
         except (TypeError, AttributeError, KeyError, ValueError, IndexError) as airmasserr:
             if log:
                 log.warn("Unable to parse airmass: %s" % airmasserr)
