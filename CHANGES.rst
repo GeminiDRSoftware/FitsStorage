@@ -34,6 +34,24 @@ service_target_queue.py
 
 - Properly detect location of Gemini North and South for target calculation, skip GPI [GL#5]
 
+2020-2.19
+=========
+
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- added standard option to search for files with tags that include 'STANDARD'
+
+Other
+-----
+
+header.py
+^^^^^^^^^
+
+- updated header parsing for large values of airmass to take sec(90-elevation), if available, as an estimate
 
 2020-2.18
 =========
@@ -155,17 +173,15 @@ Web Services
 Other
 -----
 
-<<<<<<< HEAD
 YouGotDataEmail.py
 ^^^^^^^^^^^^^^^^^^
 
 - catch errors per notification and allow the rest to be tried, email full list of errors at end if any [GL#19]
-=======
+
 previewqueue
 ^^^^^^^^^^^^
 
 - Removed problem if statement for s3 preview generation
->>>>>>> 2020-2
 
 
 2020-2.14
