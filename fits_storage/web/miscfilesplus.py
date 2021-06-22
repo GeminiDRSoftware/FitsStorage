@@ -24,6 +24,9 @@ from datetime import datetime, timedelta
 
 from smart_open import open
 
+__all__ = ["upload_file", "miscfilesplus", "search", "add_collection",
+           "add_folder", "upload_file", "get_file", "download_zip", "delete_path"]
+
 
 SEARCH_LIMIT = 500
 
@@ -563,6 +566,96 @@ def get_file(collection, folders, filename):
                 'client': session.client('s3', **_get_session_client_kwargs())}) as fin:
             # resp.content_length = diskfile.data_size
             ctx.resp.sendfile_obj(BZ2OnTheFlyDecompressor(fin))
+
+
+from io import RawIOBase
+
+class UnseekableStream(RawIOBase):
+    """
+    Utility class for download_zip.
+
+    This allows us to stream a zip on the fly out through the
+    wsgi response.  It is therefore very memory efficient and
+    also avoids staging S3 files onto disk.
+    """
+    def __init__(self):
+        self._buffer = b''
+
+    def writable(self):
+        return True
+
+    def write(self, b):
+        if self.closed:
+            raise ValueError('Stream was closed!')
+        self._buffer += b
+        return len(b)
+
+    def get(self):
+        chunk = self._buffer
+        self._buffer = b''
+        return chunk
+
+
+def download_zip():
+    ctx = get_context()
+
+    session = ctx.session
+
+    formdata = get_context().get_form_data(large_file=True)
+
+    # Helper to make a list of file ids from the input form
+    # This handles empty inputs, single values and string conversions
+    # to always produce a list of integer values
+    def make_list(formdata, field):
+        if field not in formdata:
+            return []
+        data = formdata[field]
+        if isinstance(data, list):
+            retval = []
+            for f in data:
+                retval.append(int(f.value))
+            return retval
+        else:
+            return [int(data.value)]
+
+    files = make_list(formdata, 'files')
+
+    def iter_zip(session, stream):
+        # This serves as an iterator pulling chunks out of a streaming ZipFile
+        # as it builds, but also feeding the ZipFile chunks of data from the s3
+        # stored requested files as it goes.  The stream passed in is an
+        # UnseekableStream as defined above.  This keeps our data off disk and
+        # our memory footprint small.
+        with ZipFile(stream, mode='w') as zf:
+            for file in session.query(MiscFilePlus).filter(MiscFilePlus.id.in_(files)):
+                zi = zipfile.ZipInfo(filename=file.filename)
+                with zf.open(zi, mode='w') as dest:
+                    collection = file.collection
+                    folder = file.folder
+
+                    boto3_session = boto3.Session(
+                        **_get_boto3_session_kwargs()
+                    )
+                    if folder:
+                        path = folder.path()
+                        url = f's3://miscfilesplus/{collection.name}/{path}/{file.filename}'
+                    else:
+                        url = f's3://miscfilesplus/{collection.name}/{file.filename}'
+                    with open(url, 'rb', transport_params={
+                        'client': boto3_session.client('s3', **_get_session_client_kwargs())}) as fin:
+                        decomp = BZ2OnTheFlyDecompressor(fin)
+                        chunk = decomp.read(8192)
+                        while chunk:
+                            dest.write(chunk)
+                            chunk = decomp.read(8192)
+                            yield stream.get()
+        # done, get any last data
+        yield stream.get()
+
+    ustream = UnseekableStream()
+
+    ctx.resp.content_disposition = f'attachment; filename=gemini_files.zip'
+    ctx.resp.append_iterable(iter_zip(session, ustream))
 
 
 def _delete_folder_recursive(session, folder):

@@ -305,6 +305,8 @@ url_map = Map([
          miscfilesplus.miscfilesplus),                              # MFP for Folder
     Rule('/miscfilesplus/download/<collection>/<seq_of:folders>/<filename>',
          miscfilesplus.get_file),                                   # MFP for File
+    Rule('/miscfilesplus/downloadzip',
+         miscfilesplus.download_zip),                                   # MFP for File
     Rule('/miscfilesplus/add_collection',
          miscfilesplus.add_collection),                             # MFP action to add a collection
     Rule('/miscfilesplus/add_folder', miscfilesplus.add_folder),    # MFP action to add a folder
