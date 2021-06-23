@@ -185,7 +185,7 @@ div.collapseButton {
                             {% for folder in folders %}
                             <tr><td></td><td><span class="fa fa-folder-open">&nbsp;&nbsp;</span><a href="{{ folder.name | urlencode }}/">{{ folder.name }}</a></td><td></td><td></td><td>{{ folder.program_id }}</td><td></td>
                             {% if can_add %}
-                            <td><td></td><a href="/miscfilesplus/delete/{{ collection.name }}/{{ folder.path() }}/">&nbsp;&nbsp;<span class="fa fa-trash"></span></a></td></tr>
+                            <td><a href="/miscfilesplus/delete/{{ collection.name }}/{{ folder.path() }}/">&nbsp;&nbsp;<span class="fa fa-trash"></span></a></td></tr>
                             {% else %}
                             </tr>
                             {% endif %}
