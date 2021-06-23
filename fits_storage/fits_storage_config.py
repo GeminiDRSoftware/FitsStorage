@@ -6,170 +6,8 @@ We put them in a separate file to ease install issues
 import os
 import socket
 import configparser
-import time
 
 """ Configuration defaults based on the hostname """
-_host_based_configs = {
-    "hbffits-lv4": {
-        'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': '',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'TEST On-site FitsServer',
-        'FITS_SYSTEM_STATUS': 'development',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv4",
-        'FITS_SERVERNAME': 'hbffits-lv4.hi.gemini.edu',
-        'ORCID_REDIRECT_URL': 'http://hbffits-lv4/orcid',
-        'ORCID_ENABLED': 'False',
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
-        'DEFAULT_UPLOAD_PATH': 'upload_dev',
-        'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
-    },
-    "mkofits-lv3": {
-        'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'MKO Fits Server',
-        'FITS_SYSTEM_STATUS': 'production',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/mkofits-lv3",
-        'FITS_SERVERNAME': 'mkofits-lv3.hi.gemini.edu',
-        'ORCID_ENABLED': 'False',
-        'PROCESSED_CALS_PATH': 'reduced_cals'
-    },
-    "cpofits-lv3": {
-        'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'CPO Fits Server',
-        'FITS_SYSTEM_STATUS': 'production',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/cpofits-lv3",
-        'FITS_SERVERNAME': 'cpofits-lv3.cl.gemini.edu',
-        'ORCID_ENABLED': 'False',
-        'TZ': 'America/Santiago',
-        'PROCESSED_CALS_PATH': 'reduced_cals'
-    },
-    "cpofits-lv2": {
-        'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': '',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'TEST On-site FitsServer (Chile)',
-        'FITS_SYSTEM_STATUS': 'development',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/cpofits-lv2",
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
-        'DEFAULT_UPLOAD_PATH': 'upload_dev',
-    },
-    "hbffits-lv1": {
-        'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': '',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'Dev On-site FitsServer (CentOS 7)',
-        'FITS_SYSTEM_STATUS': 'development',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffits-lv1",
-        'DEFAULT_UPLOAD_PATH': 'upload_dev',
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev'
-    },
-    "hbfqapdev-lv1": {
-        'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': '',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'TEST QAP FitsServer (CentOS 7)',
-        'FITS_SYSTEM_STATUS': 'development',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbfqapdev-lv1",
-        'DEFAULT_UPLOAD_PATH': 'upload_dev',
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
-        'ORCID_ENABLED': 'False',
-    },
-    "hbffitstest-lv1": {
-        'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': '',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'TEST On-site FitsServer (CentOS 7)',
-        'FITS_SYSTEM_STATUS': 'development',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'FITS_DB_BACKUP_DIR': "/sci/dataflow/FitsStorage_Backups/hbffitstest-lv1",
-        'ORCID_ENABLED': 'False',
-        'DEFAULT_UPLOAD_PATH': 'upload_dev',
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
-    },
-    "ooberdorf-ml1": {
-        'DHS_PERM': '/Users/ooberdorf/dhs',
-        'EXPORT_DESTINATIONS': '',
-        'UPLOAD_AUTH_COOKIE': 'qap_upload_processed_cal_ok',
-        'DEFAULT_UPLOAD_PATH': 'upload_dev',
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
-        'DAS_CALPROC_PATH': '/Users/ooberdorf/das_calproc',
-        'STORAGE_ROOT': '/Users/ooberdorf/dataflow',
-        'FITS_LOG_DIR': '/Users/ooberdorf/fitslogs',
-        'FITS_AUX_DATADIR': '/Users/ooberdorf/FitsStorage/data',
-        'VALIDATION_DEF_PATH': '/Users/ooberdorf/FitsStorage/docs/dataDefinition'
-    },
-    "some_actual_site_host": {
-        'EXPORT_DESTINATIONS': 'https://archive.gemini.edu',
-        'PUBDB_REMOTE': 'https://archive.gemini.edu/ingest_publications',
-        'BLOCKED_URLS': '',
-        'DEFAULT_UPLOAD_PATH': 'upload_dev',
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev'
-    },
-    "archive": {
-        'FITS_SERVERTITLE': 'Gemini Observatory Archive',
-        'USE_AS_ARCHIVE': 'True',
-        'FITS_SYSTEM_STATUS': 'production',
-        'EXPORT_DESTINATIONS': '',
-        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files,gmoscaltwilightfiles,gmoscalbiasfiles',
-        'FITS_DB_BACKUP_DIR': "/backup",
-        'FITS_SERVERNAME': 'archive.gemini.edu',
-        'ORCID_ENABLED': 'False',
-        'TZ': 'UTC',
-        'PROCESSED_CALS_PATH': 'reduced_cals',
-        'USING_PREVIEWS': 'True',
-        'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
-    },
-    "arcdev-disabled": {
-        'FITS_SERVERTITLE': 'TEST Archive (AWS) FitsServer (CentOS 7)',
-        'USE_AS_ARCHIVE': 'True',
-        'EXPORT_DESTINATIONS': '',
-        'FITS_SYSTEM_STATUS': 'development',
-        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files,gmoscaltwilightfiles,gmoscalbiasfiles',
-        'FITS_DB_BACKUP_DIR': "/backup",
-        'FITS_SERVERNAME': 'arcdev.gemini.edu',
-        'ORCID_REDIRECT_URL': 'http://arcdev.gemini.edu/orcid',
-        'TZ': 'UTC',
-        'DEFAULT_UPLOAD_PATH': 'upload_dev',
-        'PROCESSED_CALS_PATH': 'reduced_cals_dev',
-        'USING_PREVIEWS': 'True',
-        'ORCID_ENABLED': 'False',
-        'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
-    },
-    "arcdev": {
-        'FITS_SERVERTITLE': 'GOA Scorpy Test',
-        'USE_AS_ARCHIVE': 'False',
-        'FITS_SYSTEM_STATUS': 'development',
-        'EXPORT_DESTINATIONS': '',
-        'BLOCKED_URLS': 'fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,gmoscaltwilightdetails,update_headers,ingest_files,gmoscaltwilightfiles,gmoscalbiasfiles',
-        'FITS_DB_BACKUP_DIR': "/backup",
-        'FITS_SERVERNAME': 'scorpy.gemini.edu',
-        'ORCID_ENABLED': 'False',
-        'TZ': 'UTC',
-        'PROCESSED_CALS_PATH': 'reduced_cals',
-        'USING_PREVIEWS': 'False',
-        'LOGREPORTS_USE_MATERIALIZED_VIEW': 'False',
-        'EXPORT_UPLOAD_AUTH_COOKIE': 'scorpy_testing_4l@k]P__4013',
-        'STORAGE_ROOT': '/data/dataflow/',
-        'UPLOAD_AUTH_COOKIE': 'scorpy_testing_4l@k]P__4013',
-    },
-}
 
 
 def get_hostname():
@@ -186,6 +24,9 @@ def get_fits_db_backup_dir():
     return "/sci/dataflow/FitsStorage_Backups/%s" % hostname
     
 
+_config = None
+
+
 def lookup_config(name, default_value):
     """ Lookup a config value with the given name and a default.
 
@@ -198,23 +39,32 @@ def lookup_config(name, default_value):
     # TODO singleton wrap this - cheap anyway and will just be used at startup
     # try to load /etc/fitsstorage.conf
     # but be resilient if it is not found
-    config = configparser.ConfigParser()
-    if os.path.exists('/etc/fitsstorage.conf'):
-        config.read('/etc/fitsstorage.conf')
+    global _config
+
+    if _config is None:
+        config_path = os.getenv('FITSSTORAGE_CONFIG_FILE', None)
+        if config_path is None:
+            hostname = socket.gethostname()
+            if hostname is not None and '.' in hostname:
+                hostname = hostname[:hostname.find('.')]
+            if hostname is not None:
+                if hostname.startswith('cpo') or hostname.startswith('mko') or hostname.startswith('hbf') or \
+                        hostname == 'arcdev' or hostname == 'archive':
+                    config_path = '/etc/fitsstorage.conf'
+                else:
+                    config_path = '~/fitsstorage.conf'
+
+        _config = configparser.ConfigParser()
+        if os.path.exists(config_path):
+            _config.read(config_path)
     env_value = os.getenv(name, None)
     if env_value is not None:
         # we found it via the environment, this takes precedence
         return env_value
-    if 'FitsStorage' in config:
-        if name.lower() in config['FitsStorage']:
-            return config['FitsStorage'][name.lower()]
-    hostname = socket.gethostname()
-    if hostname is not None and '.' in hostname:
-        hostname = hostname[:hostname.find('.')]
-    if hostname is not None:
-        if hostname in _host_based_configs:
-            if name in _host_based_configs[hostname]:
-                return _host_based_configs[hostname][name]
+    if 'FitsStorage' in _config:
+        if name.lower() in _config['FitsStorage']:
+            return _config['FitsStorage'][name.lower()]
+
     return default_value
 
 
@@ -226,8 +76,7 @@ def lookup_config_bool(name, default_value):
 
 
 # Is this an archive server
-use_as_archive_str = lookup_config('USE_AS_ARCHIVE', 'False')
-use_as_archive = use_as_archive_str.lower() == 'true' or use_as_archive_str == '1'
+use_as_archive = lookup_config_bool('USE_AS_ARCHIVE', False)
 
 # AWS S3 info
 using_s3 = lookup_config_bool('USING_S3', False)
@@ -242,8 +91,6 @@ z_staging_area = lookup_config('Z_STAGING_AREA', '/data/z_staging')
 
 # Configure the path to the storage root here 
 storage_root = lookup_config('STORAGE_ROOT', '/sci/dataflow')
-#storage_root = '/data/archive_soak'
-#storage_root = '/data/skycam'
 dhs_perm = lookup_config('DHS_PERM', '/sci/dhs')
 min_dhs_age_seconds = 15
 max_dhs_validation_failures = 4
@@ -306,14 +153,11 @@ processed_cals_path = lookup_config('PROCESSED_CALS_PATH', "reduced_cals_dev")
 default_upload_path = lookup_config('DEFAULT_UPLOAD_PATH', '')
 
 # This is the subdirectory in dataroot where preview files live
-#using_previews = False
 using_previews = lookup_config_bool('USING_PREVIEWS', False)
 preview_path = "previews"
 
 # The DAS calibration reduction path is used to find the last processing
 # date for the gmoscal page's autodetect daterange feature
-#das_calproc_path = '/net/endor/export/home/dataproc/data/gmos/'
-#das_calproc_path = '/net/josie/staging/dataproc/gmos'
 das_calproc_path = lookup_config('DAS_CALPROC_PATH', '/sci/dasgmos')
 
 # Configure the site and other misc stuff here
@@ -328,7 +172,6 @@ fits_closed_result_limit = 10000
 
 smtp_server = "localhost"
 email_errors_to = "ooberdorf@gemini.edu"
-#email_errors_to = "phirst@gemini.edu"
 
 # Configure the path the data postgres database here
 fits_dbname = lookup_config('FITS_DB_NAME', 'fitsdata')
@@ -336,9 +179,6 @@ fits_dbserver = lookup_config('FITS_DB_SERVER', '')
 fits_database = 'postgresql://%s/%s' % (fits_dbserver, fits_dbname)
 fits_database_pool_size = 30
 fits_database_max_overflow = 10
-#fits_database = 'sqlite:////home/fitsdata/sqlite-database'
-#To reference database on another machine: 
-#fits_database = 'postgresql://hbffitstape1/'+fits_dbname
 
 # Configure the auxillary data directory here
 fits_aux_datadir = lookup_config('FITS_AUX_DATADIR', "/opt/FitsStorage/data")
@@ -392,9 +232,3 @@ orcid_client_secret = lookup_config('ORCID_CLIENT_SECRET', "66f21bdb-90f6-4219-b
 orcid_server = lookup_config('ORCID_SERVER', 'sandbox.orcid.org')
 orcid_enabled = lookup_config_bool('ORCID_ENABLED', True)
 orcid_redirect_url = lookup_config('ORCID_REDIRECT_URL', 'http://%s/orcid' % fits_servername)
-
-# time_zone = lookup_config('TZ', 'US/Hawaii')
-
-# Init timezone
-# os.environ['TZ'] = time_zone
-# time.tzset()
