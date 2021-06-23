@@ -162,6 +162,9 @@ def miscfilesplus(collection=None, folders=None):
         ctx = get_context()
 
         session = ctx.session
+
+        formdata = ctx.get_form_data()
+
         if collection is None:
             # No collection, we are just going to show the list of all available collections
             collections = session.query(MiscFileCollection).order_by(MiscFileCollection.name).all()
@@ -190,19 +193,68 @@ def miscfilesplus(collection=None, folders=None):
             # Now get all the contained subfolders and files in our folder
             folders = session.query(MiscFileFolder) \
                 .filter(MiscFileFolder.collection == collection) \
-                .filter(MiscFileFolder.folder_id == folder_id).all()
+                .filter(MiscFileFolder.folder_id == folder_id).order_by(_folder_order_by(formdata)).all()
             files = session.query(MiscFilePlus) \
                 .filter(MiscFilePlus.collection == collection) \
-                .filter(MiscFilePlus.folder_id == folder_id).all()
+                .filter(MiscFilePlus.folder_id == folder_id).order_by(_file_order_by(formdata)).all()
 
+        url_subpath = ''
+        if collection:
+            url_subpath = collection.name
+            if folder:
+                url_subpath = f"{url_subpath}/{folder.path()}"
         return dict(collections=collections, collection=collection, folder=folder, folders=folders, files=files,
-                    can_add=True)  # get_context().is_staffer)
+                    url_subpath=url_subpath, can_add=True)  # get_context().is_staffer)
     finally:
         if formdata and formdata.uploaded_file is not None:
             try:
                 os.unlink(formdata.uploaded_file.name)
             except OSError:
                 pass
+
+
+def _folder_order_by(formdata):
+    if 'order_by' in formdata:
+        order_by = formdata['order_by'].value
+        if order_by == 'name':
+            return MiscFileFolder.name
+        elif order_by == '-name':
+            return MiscFileFolder.name.desc()
+        elif order_by == 'program_id':
+            return MiscFileFolder.program_id
+        elif order_by == '-program_id':
+            return MiscFileFolder.program_id.desc()
+        elif order_by == 'release_date':
+            return MiscFileFolder.release
+        elif order_by == '-release_date':
+            return MiscFileFolder.release.desc()
+    return MiscFileFolder.name
+
+
+def _file_order_by(formdata):
+    if 'order_by' in formdata:
+        order_by = formdata['order_by'].value
+        if order_by == 'name':
+            return MiscFilePlus.filename
+        elif order_by == '-name':
+            return MiscFilePlus.filename.desc()
+        elif order_by == 'size':
+            return MiscFilePlus.size
+        elif order_by == '-size':
+            return MiscFilePlus.size.desc()
+        elif order_by == 'program_id':
+            return MiscFilePlus.program_id
+        elif order_by == '-program_id':
+            return MiscFilePlus.program_id.desc()
+        elif order_by == 'last_modified':
+            return MiscFilePlus.last_modified
+        elif order_by == '-last_modified':
+            return MiscFilePlus.last_modified.desc()
+        elif order_by == 'release_date':
+            return MiscFilePlus.release
+        elif order_by == '-release_date':
+            return MiscFilePlus.release.desc()
+    return MiscFilePlus.filename
 
 
 @templating.templated("miscfilesplus/search.html")
@@ -215,14 +267,14 @@ def search():
     collections = session.query(MiscFileCollection) \
         .filter(or_(MiscFileCollection.name.ilike(search), MiscFileCollection.program_id.ilike(search))) \
         .order_by(MiscFileCollection.name).all()
-    folders = session.query(MiscFileFolder) \
+    folders= session.query(MiscFileFolder) \
         .filter(or_(MiscFileFolder.name.ilike(search), MiscFileFolder.program_id.ilike(search),
-                    MiscFileFolder.description.ilike(search))).all()
+                    MiscFileFolder.description.ilike(search))).order_by(_folder_order_by(formdata)).all()
     files = session.query(MiscFilePlus) \
         .filter(or_(MiscFilePlus.filename.ilike(search), MiscFilePlus.program_id.ilike(search),
-                    MiscFilePlus.description.ilike(search))).all()
+                    MiscFilePlus.description.ilike(search))).order_by(_file_order_by(formdata)).all()
 
-    return dict(collections=collections, folders=folders, files=files)  # get_context().is_staffer)
+    return dict(collections=collections, folders=folders, files=files, search_field=formdata['search_field'].value)  # get_context().is_staffer)
 
 
 def add_collection():

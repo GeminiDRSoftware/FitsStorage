@@ -12,7 +12,7 @@
             <form class="navbar-form navbar-left form-inline" action="/miscfilesplus/search" method="get"
                   enctype="multipart/form-data">
                 <input type="text" class="form-control" name="search_field"
-                    id="search_field" placeholder="Search..."/>
+                    id="search_field" placeholder="Search..." value="{{ search_field }}"/>
                 <button type="submit" class="btn btn-success form-control" id="search_button">Search</button>
             </form>
         </li>
@@ -60,7 +60,29 @@
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-striped table-sm">
-                            <tr><th></th><th>Collection</th><th>Path</th><th>Filename</th><th>Size</th><th>Last Modified</th><th>Program ID</th><th>Release Date</th><th>Actions</th></tr>
+                            <tr><th></th><th>Collection</th>
+                                <th>Path
+                                </th>
+                                <th>Filename
+                                <a href="/miscfilesplus/search?search_field={{ search_field }}&order_by=name"><span class="fa fa-arrow-up"></span></a>
+                                <a href="/miscfilesplus/search?search_field={{ search_field }}&order_by=-name"><span class="fa fa-arrow-down"></span></a></th>
+                                <th>Size
+                                <a href="/miscfilesplus/search?search_field={{ search_field }}&order_by=size"><span class="fa fa-arrow-up"></span></a>
+                                <a href="/miscfilesplus/search?search_field={{ search_field }}&order_by=-size"><span class="fa fa-arrow-down"></span></a></th>
+                                </th>
+                                <th>Last Modified
+                                <a href="/miscfilesplus/search?search_field={{ search_field }}&order_by=last_modified"><span class="fa fa-arrow-up"/></a>
+                                <a href="/miscfilesplus/search?search_field={{ search_field }}&order_by=-last_modified"><span class="fa fa-arrow-down"/></a></th>
+                                </th>
+                                <th>Program ID
+                                <a href="/miscfilesplus/search?search_field={{ search_field }}&order_by=program_id"><span class="fa fa-arrow-up"></span></a>
+                                <a href="/miscfilesplus/search?search_field={{ search_field }}&order_by=-program_id"><span class="fa fa-arrow-down"></span></a></th>
+                                </th>
+                                <th>Release Date
+                                <a href="/miscfilesplus/search?search_field={{ search_field }}&order_by=release_date"><span class="fa fa-arrow-up"></span></a>
+                                <a href="/miscfilesplus/search?search_field={{ search_field }}&order_by=-release_date"><span class="fa fa-arrow-down"></span></a></th>
+                                </th>
+                            <th>Action</th></tr>
                         {% if folders %}
                             {% for folder in folders %}
                             <tr><td></td><td>{{ folder.collection.name }}</td><td>{{ folder.parentpath() }}</td><td><span class="fa fa-folder-open">&nbsp;&nbsp;</span><a href="/miscfilesplus/browse/{{ folder.collection.name }}/{{ folder.path() }}/">{{ folder.name }}</a></td><td></td><td></td><td></td><td></td>

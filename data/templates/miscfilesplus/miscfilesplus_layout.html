@@ -14,6 +14,7 @@
 </script>
 <link rel="stylesheet" type="text/css" href="/static/whoami.css" />
 <link rel="stylesheet" type="text/css" href="/static/titlebar.css" />
+<link rel="stylesheet" type="text/css" href="/static/miscfilesplus.css" />
 
 <style>
 div.collapseButton {
@@ -55,11 +56,20 @@ div.collapseButton {
             {% if collection %}
             <ul class="nav navbar-nav">
                 <li class="nav-item">
-                    <span class="navbar-brand h1"><a class="nav-link" href="/miscfilesplus/browse/{{ collection.name }}/">{{ collection.name }}</a></span>
+                    <a class="nav-link" href="/miscfilesplus/"><span class="fa fa-arrow-circle-up fa-2x" tooltip="Top"/></a>
+                </li>
+                <li class="nav-item">
+                    <span class="navbar-brand h2">Collection: </span>
+                </li>
+                <li class="nav-item">
+                    <span id="collection_span" class="navbar-brand h2"><a href="/miscfilesplus/browse/{{ collection.name }}/">{{ collection.name }}</a></span>
                 </li>
                 {% if folder %}
                 <li class="nav-item">
-                    <span class="navbar-brand h2">{{ folder.linkpath() }}</span>
+                    <span  class="navbar-brand h2">Folder: </span>
+                </li>
+                <li class="nav-item">
+                    <span id="folder_span" class="navbar-brand h2">{{ folder.linkpath() }}</span>
                 </li>
                 {% endif %}
                 <li class="nav-item">
@@ -75,11 +85,6 @@ div.collapseButton {
                 {% if folder.folder %}
                 <li class="nav-item">
                     <a class="nav-link" href="/miscfilesplus/browse/{{ collection.name }}/{{ folder.folder.path() }}">Up</a>
-                </li>
-                {% endif %}
-                {% if folder %}
-                <li class="nav-item">
-                    <a class="nav-link" href="/miscfilesplus/">Top</a>
                 </li>
                 {% endif %}
                 <li class="nav-item">
@@ -158,7 +163,24 @@ div.collapseButton {
                     <div class="table-responsive">
                         <form action="/miscfilesplus/downloadzip" method="post" target="_blank">
                         <table class="table table-striped table-sm">
-                            <tr><th></th><th>Filename</th><th>Size</th><th>Last Modified</th><th>Program ID</th><th>Release Date</th><th>Actions</th></tr>
+                            <tr><th></th>
+                                <th>Filename
+                                    <a href="/miscfilesplus/browse/{{ url_subpath }}?order_by=name"><span class="fa fa-arrow-up"></span></a>
+                                    <a href="/miscfilesplus/browse/{{ url_subpath }}?order_by=-name"><span class="fa fa-arrow-down"></span></a></th>
+                                <th>Size
+                                    <a href="/miscfilesplus/browse/{{ url_subpath }}?order_by=size"><span class="fa fa-arrow-up"></span></a>
+                                    <a href="/miscfilesplus/browse/{{ url_subpath }}?order_by=-size"><span class="fa fa-arrow-down"></span></a></th>
+                                <th>Last Modified
+                                    <a href="/miscfilesplus/browse/{{ url_subpath }}?order_by=last_modified"><span class="fa fa-arrow-up"></span></a>
+                                    <a href="/miscfilesplus/browse/{{ url_subpath }}?order_by=-last_modified"><span class="fa fa-arrow-down"></span></a></th>
+                                <th>Program ID
+                                    <a href="/miscfilesplus/browse/{{ url_subpath }}?order_by=program_id"><span class="fa fa-arrow-up"></span></a>
+                                    <a href="/miscfilesplus/browse/{{ url_subpath }}?order_by=-program_id"><span class="fa fa-arrow-down"></span></a></th>
+                                <th>Release Date
+                                    <a href="/miscfilesplus/browse/{{ url_subpath }}?order_by=release_date"><span class="fa fa-arrow-up"></span></a>
+                                    <a href="/miscfilesplus/browse/{{ url_subpath }}?order_by=-release_date"><span class="fa fa-arrow-down"></span></a></th>
+                                <th>Actions</th>
+                            </tr>
                         {% if folders %}
                             {% for folder in folders %}
                             <tr><td></td><td><span class="fa fa-folder-open">&nbsp;&nbsp;</span><a href="{{ folder.name | urlencode }}/">{{ folder.name }}</a></td><td></td><td></td><td>{{ folder.program_id }}</td><td></td>
@@ -171,18 +193,10 @@ div.collapseButton {
                         {% endif %}
                         {% if files %}
                             {% for file in files %}
-                            {% if folder %}
-                            <tr><td><input type="checkbox" id="files" name="files" value="{{ file.id }}"></td><td><span class="fa fa-file">&nbsp;&nbsp;</span><a href="/miscfilesplus/download/{{ collection.name }}/{{ folder.path() }}/{{ file.filename | urlencode }}">{{ file.filename }}</a></td>
-                            {% else %}
-                            <tr><td><input type="checkbox" id="files" name="files" value="{{ file.id }}"></td><td><span class="fa fa-file">&nbsp;&nbsp;</span><a href="/miscfilesplus/download/{{ collection.name }}/{{ file.filename | urlencode }}">{{ file.filename }}</a></td>
-                            {% endif %}
+                            <tr><td><input type="checkbox" id="files" name="files" value="{{ file.id }}"></td><td><span class="fa fa-file">&nbsp;&nbsp;</span><a href="/miscfilesplus/download/{{ url_subpath }}/{{ file.filename | urlencode }}">{{ file.filename }}</a></td>
                             <td>{{ file.size }}</td><td>{{ file.last_modified }}</td><td>{{ file.program_id }}</td><td>{{ file.release.strftime('%Y-%m-%d') }}</td>
                             {% if can_add %}
-                              {% if folder %}
-                                <td><a href="/miscfilesplus/delete/{{ collection.name }}/{{ folder.path() }}/{{ file.filename | urlencode }}">&nbsp;&nbsp;<span class="fa fa-trash"></span></a></td>
-                              {% else %}
-                                <td><a href="/miscfilesplus/delete/{{ collection.name }}/{{ file.filename | urlencode }}">&nbsp;&nbsp;<span class="fa fa-trash"></span></a></td>
-                              {% endif %}
+                                <td><a href="/miscfilesplus/delete/{{ url_subpath }}/{{ file.filename | urlencode }}">&nbsp;&nbsp;<span class="fa fa-trash"></span></a></td>
                             {% else %}
                             <td></td>
                             {% endif %}
@@ -191,7 +205,7 @@ div.collapseButton {
                         {% endif %}
                         </table>
                         <div class="col-md-12 text-center">
-                        <button type="submit" class="btn btn-success form-control" id="download_button">Download Selected</button>
+                            <button style="margin-left: auto; margin-right: auto;" type="submit" class="btn btn-success" id="download_button">Download Selected</button>
                         </div>
                         </form>
                     </div>
