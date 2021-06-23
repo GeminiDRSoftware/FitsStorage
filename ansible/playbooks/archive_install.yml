@@ -575,60 +575,10 @@
         when: is_ops and is_chile
       - name: Install fitsstorage config
         copy:
-          src: ../../otherfiles/fitsstorage.conf
+          src: ../../../FitsStorageConfig/config/{{ inventory_hostname_short }}_fitsstorage.conf
           dest: /etc/fitsstorage.conf
         register: fitsstorageconf
-        when: is_archive
         notify: restart services
-      - name: Use as archive
-        lineinfile:
-          path: /etc/fitsstorage.conf
-          line: use_as_archive = {{ use_as_archive }}
-          regex: use_as_archive
-          create: yes
-        when: fitsstorageconf.changed
-      - name: Set using_s3
-        lineinfile:
-          path: /etc/fitsstorage.conf
-          line: using_s3 = {{ using_s3 }}
-          regex: using_s3
-          create: yes
-        when: fitsstorageconf.changed
-      - name: Set s3_bucket_name
-        lineinfile:
-          path: /etc/fitsstorage.conf
-          line: s3_bucket_name = {{ s3_bucket_name }}
-          regex: s3_bucket_name
-          create: yes
-        when: fitsstorageconf.changed
-      - name: Set s3_backup_bucket_name
-        lineinfile:
-          path: /etc/fitsstorage.conf
-          line: s3_backup_bucket_name = {{ s3_backup_bucket_name }}
-          regex: s3_backup_bucket_name
-          create: yes
-        when: fitsstorageconf.changed
-      - name: Set s3_staging_area
-        lineinfile:
-          path: /etc/fitsstorage.conf
-          line: s3_staging_area = {{ s3_staging_area }}
-          regex: s3_staging_area
-          create: yes
-        when: fitsstorageconf.changed
-      - name: Set aws_access_key
-        lineinfile:
-          path: /etc/fitsstorage.conf
-          line: aws_access_key = {{ aws_access_key }}
-          regex: aws_access_key
-          create: yes
-        when: fitsstorageconf.changed
-      - name: Set aws_secret_key
-        lineinfile:
-          path: /etc/fitsstorage.conf
-          line: aws_secret_key = {{ aws_secret_key }}
-          regex: aws_secret_key
-          create: yes
-        when: fitsstorageconf.changed
       - name: Register Ingest service 1
         service: name=fits-service_ingest_queue1 state=started enabled=yes
         when: enable_ingest_services
@@ -780,7 +730,7 @@
         service: name=fits-httpd enabled=yes
       - name: Start API service on boot
         service: name=fits-api-backend enabled=yes
-# TODO diskspace script references mko folder, causing mount from Chile - fix thena dd this back in
+# TODO diskspace script references mko folder, causing mount from Chile - fix then add this back in
 #      - name: Copy diskspace script
 #        copy:
 #          src: ../../otherfiles/diskspace.py
