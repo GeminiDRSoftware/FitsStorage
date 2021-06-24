@@ -4,7 +4,7 @@ This module contains the calibrations html generator function.
 import datetime
 from gemini_obs_db import sessionfactory
 from .selection import sayselection, queryselection, openquery
-from ..cal import get_cal_object
+from gemini_calmgr.cal import get_cal_object
 from ..fits_storage_config import fits_servername, fits_system_status, use_as_archive
 
 from gemini_obs_db.header import Header

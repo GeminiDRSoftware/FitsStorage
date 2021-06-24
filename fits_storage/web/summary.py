@@ -19,9 +19,9 @@ from urllib.parse import quote_plus
 # We assume that servers used as archive use a calibration association cache table
 from ..fits_storage_config import use_as_archive
 if use_as_archive:
-    from ..cal.associate_calibrations import associate_cals_from_cache as associate_cals
+    from gemini_calmgr.cal.associate_calibrations import associate_cals_from_cache as associate_cals
 else:
-    from ..cal.associate_calibrations import associate_cals
+    from gemini_calmgr.cal.associate_calibrations import associate_cals
 
 from .userprogram import get_program_list, get_obsid_list, get_file_list, get_permissions_list
 
