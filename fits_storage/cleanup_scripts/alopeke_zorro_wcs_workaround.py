@@ -18,7 +18,7 @@ from datetime import datetime
 
 from sqlalchemy import or_
 
-from fits_storage.gemini_metadata_utils import ratodeg, dectodeg
+from gemini_obs_db.utils.gemini_metadata_utils import ratodeg, dectodeg
 from fits_storage.orm import session_scope
 from gemini_obs_db.diskfile import DiskFile
 from fits_storage.orm.fulltextheader import FullTextHeader

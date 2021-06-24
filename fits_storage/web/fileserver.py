@@ -2,7 +2,7 @@ from ..orm import NoResultFound, MultipleResultsFound
 
 from ..fits_storage_config import using_s3, fits_open_result_limit, fits_closed_result_limit
 
-from ..gemini_metadata_utils import gemini_fitsfilename
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_fitsfilename
 from gemini_obs_db.file import File
 from gemini_obs_db.diskfile import DiskFile
 from gemini_obs_db.header import Header

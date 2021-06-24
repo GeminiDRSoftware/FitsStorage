@@ -12,7 +12,7 @@ from ..utils.web import get_context, Return
 
 from .selection import queryselection
 from ..fits_storage_config import using_sqlite, fits_system_status, das_calproc_path
-from ..gemini_metadata_utils import ONEDAY_OFFSET
+from gemini_obs_db.utils.gemini_metadata_utils import ONEDAY_OFFSET
 
 from . import templating
 

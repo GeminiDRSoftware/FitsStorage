@@ -13,17 +13,17 @@ from datetime import timedelta
 from sqlalchemy import or_, func
 from sqlalchemy.orm import join
 
-from ..gemini_metadata_utils import gemini_telescope, gemini_instrument
-from ..gemini_metadata_utils import gemini_observation_type, gemini_observation_class
-from ..gemini_metadata_utils import gemini_reduction_state
-from ..gemini_metadata_utils import gemini_caltype, gmos_gratingname
-from ..gemini_metadata_utils import gmos_focal_plane_mask, gemini_fitsfilename
-from ..gemini_metadata_utils import gemini_binning, GeminiDataLabel, GeminiObservation
-from ..gemini_metadata_utils import GeminiProgram, ratodeg, dectodeg, srtodeg
-from ..gemini_metadata_utils import gemini_date, gemini_daterange, get_time_period
-from ..gemini_metadata_utils import gemini_time_period_from_range
-from ..gemini_metadata_utils import gemini_gain_settings, gemini_readspeed_settings
-from ..gemini_metadata_utils import gemini_welldepth_settings, gemini_readmode_settings
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_telescope, gemini_instrument
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_observation_type, gemini_observation_class
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_reduction_state
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_caltype, gmos_gratingname
+from gemini_obs_db.utils.gemini_metadata_utils import gmos_focal_plane_mask, gemini_fitsfilename
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_binning, GeminiDataLabel, GeminiObservation
+from gemini_obs_db.utils.gemini_metadata_utils import GeminiProgram, ratodeg, dectodeg, srtodeg
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_date, gemini_daterange, get_time_period
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_time_period_from_range
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_gain_settings, gemini_readspeed_settings
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_welldepth_settings, gemini_readmode_settings
 from gemini_obs_db.gpi import Gpi
 
 from gemini_obs_db.header import Header

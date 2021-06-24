@@ -7,7 +7,7 @@ from . import templating
 
 from ..fits_storage_config import upload_staging_path, api_backend_location
 
-from ..gemini_metadata_utils import GeminiProgram
+from gemini_obs_db.utils.gemini_metadata_utils import GeminiProgram
 
 from ..utils.api import ApiProxy, ApiProxyError
 from ..utils.userprogram import icanhave

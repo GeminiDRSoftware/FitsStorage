@@ -13,7 +13,7 @@ from ..orm.obslog import Obslog
 from ..orm.obslog_comment import ObslogComment
 from ..fits_storage_config import fits_open_result_limit, fits_closed_result_limit, use_as_archive
 from .selection import queryselection, openquery
-from ..gemini_metadata_utils import gemini_date, gemini_time_period_from_range
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_date, gemini_time_period_from_range
 from sqlalchemy import asc, desc, func
 import dateutil.parser
 

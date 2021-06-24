@@ -25,7 +25,7 @@ from ..orm.user import User
 from ..utils.query_utils import to_int, null_to_zero
 from ..utils.web import get_context, Return
 
-from ..gemini_metadata_utils import ONEDAY_OFFSET
+from gemini_obs_db.utils.gemini_metadata_utils import ONEDAY_OFFSET
 
 from .user import needs_login
 from .selection import getselection, queryselection, sayselection

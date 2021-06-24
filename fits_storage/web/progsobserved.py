@@ -11,7 +11,7 @@ from . import templating
 from sqlalchemy import join, not_, func
 import datetime
 
-from ..gemini_metadata_utils import gemini_date
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_date
 
 from ..utils.web import get_context
 

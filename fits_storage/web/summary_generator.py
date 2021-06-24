@@ -5,7 +5,7 @@ This module contains the web summary generator class.
 from collections import OrderedDict, namedtuple
 from html import escape
 
-from ..gemini_metadata_utils import GeminiDataLabel, degtora, degtodec
+from gemini_obs_db.utils.gemini_metadata_utils import GeminiDataLabel, degtora, degtodec
 
 from ..utils.userprogram import canhave_header, canhave_coords
 

@@ -14,7 +14,7 @@ from xml.parsers.expat import ExpatError
 from . import templating
 
 from .calibrations import calibrations
-from ..gemini_metadata_utils import GeminiDataLabel, GeminiObservation
+from gemini_obs_db.utils.gemini_metadata_utils import GeminiDataLabel, GeminiObservation
 
 from .selection import getselection, selection_to_URL
 from .summary import summary_body

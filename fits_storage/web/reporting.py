@@ -2,7 +2,7 @@
 
 import re
 
-from ..gemini_metadata_utils import gemini_fitsfilename
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_fitsfilename
 
 from gemini_obs_db.file import File
 from gemini_obs_db.diskfile import DiskFile
