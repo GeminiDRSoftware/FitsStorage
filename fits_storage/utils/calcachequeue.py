@@ -15,8 +15,9 @@ from ..orm.calcachequeue import CalCacheQueue
 
 from . import queue
 
-from ..cal import get_cal_object
-from ..cal.associate_calibrations import associate_cals
+from gemini_calmgr.cal import get_cal_object
+from gemini_calmgr.cal.associate_calibrations import associate_cals
+
 
 class CalCacheQueueUtil(object):
     """
