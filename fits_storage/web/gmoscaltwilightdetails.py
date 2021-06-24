@@ -13,9 +13,9 @@ from ..utils.web import get_context, Return, with_content_type
 
 from .selection import sayselection, queryselection
 from .calibrations import interval_hours
-from ..cal import get_cal_object
+from gemini_calmgr.cal import get_cal_object
 from ..fits_storage_config import using_sqlite, fits_system_status, das_calproc_path
-from ..gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
 
 from . import templating
 
