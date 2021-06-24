@@ -174,13 +174,35 @@
           name: apache
           groups: fitsdata
           append: yes
-      - name: Ensure FitsStorage repo folder is available and permissioned
+      - name: Ensure FitsStorage/DB/GCM repo folders are available and permissioned
         file:
-          path: '/opt/FitsStorage'
+          path: '{{item}}'
           state: directory
           mode: 'u+rwx,g+rwx,o+rx'
           owner: fitsdata
           group: fitsdata
+        with_items:
+          - ["/opt/FitsStorageDB", "/opt/GeminiCalMgr", "/opt/FitsStorage"]
+      - name: Checkout FitsStorageDB into /opt
+        become: true
+        become_user: fitsdata
+        git:
+          repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git"
+          version: master
+          dest: /opt/FitsStorageDB
+          accept_hostkey: yes
+        when: not is_aws
+        register: checkedout_fitsstoragedb
+      - name: Checkout GeminiCalMgr into /opt
+        become: true
+        become_user: fitsdata
+        git:
+          repo: "git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git"
+          version: master
+          dest: /opt/GeminiCalMgr
+          accept_hostkey: yes
+        when: not is_aws
+        register: checkedout_geminicalmgr
       - name: Checkout FitsStorage into /opt
         become: true
         become_user: fitsdata
@@ -190,6 +212,33 @@
           dest: /opt/FitsStorage
           accept_hostkey: yes
         when: not is_aws
+        notify: restart services
+      - name: Rsync FitsStorageDB into /opt (AWS)
+        become: false
+        local_action:
+          module: shell
+          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../FitsStorageDB fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/FitsStorageDB/
+        when: is_aws
+        notify: restart services
+        register: checkedout_fitsstoragedb
+      - name: Rsync GeminiCalMgr into /opt (AWS)
+        become: false
+        local_action:
+          module: shell
+          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../GeminiCalMgr fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/GeminiCalMgr/
+        when: is_aws
+        register: checkedout_geminicalmgr
+      - name: Install FitsStorageDB
+        command: bash -c "python setup.py install"
+        args:
+          chdir: /opt/FitsStorageDB
+        when: checkedout_fitsstoragedb
+        notify: restart services
+      - name: Install GeminiCalMgr
+        command: bash -c "python setup.py install"
+        args:
+          chdir: /opt/GeminiCalMgr
+        when: checkedout_geminicalmgr
         notify: restart services
       - name: Rsync FitsStorage into /opt (AWS)
         become: false
