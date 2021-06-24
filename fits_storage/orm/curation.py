@@ -3,8 +3,8 @@ This module contains the functions for curation_report.py that compare items in
 the tables Header and DiskFile.
 
 """
-from .diskfile import DiskFile
-from .file     import File
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.file     import File
 
 from sqlalchemy import text, distinct
 from sqlalchemy.orm import aliased

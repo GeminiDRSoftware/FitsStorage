@@ -4,9 +4,9 @@ from sqlalchemy.orm import relation
 
 import datetime
 
-from . import Base
+from gemini_obs_db import Base
 from .usagelog import UsageLog
-from .diskfile import DiskFile
+from gemini_obs_db.diskfile import DiskFile
 
 
 class FileDownloadLog(Base):

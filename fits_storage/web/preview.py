@@ -2,10 +2,10 @@ from ..fits_storage_config import using_s3, storage_root, preview_path
 
 from ..gemini_metadata_utils import gemini_fitsfilename
 
-from ..orm.file import File
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
-from ..orm.preview import Preview
+from gemini_obs_db.file import File
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
+from gemini_obs_db.preview import Preview
 from ..orm.downloadlog import DownloadLog
 
 from ..utils.web import get_context, Return, with_content_type

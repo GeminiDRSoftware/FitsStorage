@@ -5,9 +5,9 @@ The CalibrationGMOS class
 import datetime
 import math
 
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
-from ..orm.gmos import Gmos
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
+from gemini_obs_db.gmos import Gmos
 
 from .calibration import Calibration
 from .calibration import not_imaging

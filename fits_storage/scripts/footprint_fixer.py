@@ -16,10 +16,10 @@ from fits_storage.logger import logger
 from fits_storage.orm import session_scope
 import sys
 
-from fits_storage.orm.diskfile import DiskFile
+from gemini_obs_db.diskfile import DiskFile
 from fits_storage.orm.footprint import Footprint
 from fits_storage.orm.geometryhacks import add_footprint
-from fits_storage.orm.header import Header
+from gemini_obs_db.header import Header
 try:
     from fits_storage.utils.aws_s3 import get_helper
 except:

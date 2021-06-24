@@ -9,8 +9,8 @@ from sqlalchemy.orm.exc import ObjectDeletedError
 from sqlalchemy.orm import make_transient
 import functools
 
-from ..orm.header import Header
-from ..orm.calcache import CalCache
+from gemini_obs_db.header import Header
+from gemini_obs_db.calcache import CalCache
 from ..orm.calcachequeue import CalCacheQueue
 
 from . import queue

@@ -1,7 +1,7 @@
 from . import adapter
 from .adapter import Return, RequestRedirect, ClientError
 from ...fits_storage_config import upload_staging_path
-from ...orm import sessionfactory
+from gemini_obs_db import sessionfactory
 from ...web import templating
 from wsgiref.handlers import SimpleHandler
 from wsgiref.simple_server import WSGIRequestHandler

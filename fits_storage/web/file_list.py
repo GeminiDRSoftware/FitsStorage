@@ -5,9 +5,9 @@ summaries.
 """
 import json
 
-from ..orm.header import Header
-from ..orm.diskfile import DiskFile
-from ..orm.file import File
+from gemini_obs_db.header import Header
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.file import File
 from .selection import queryselection, openquery
 from .summary import list_headers
 from .standards import get_standard_obs

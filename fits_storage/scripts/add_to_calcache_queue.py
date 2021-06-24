@@ -1,7 +1,7 @@
 from fits_storage.orm import session_scope
 from fits_storage.orm.calcachequeue import CalCacheQueue
-from fits_storage.orm.header import Header
-from fits_storage.orm.diskfile import DiskFile
+from gemini_obs_db.header import Header
+from gemini_obs_db.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
 from datetime import datetime, timedelta
 import sys

@@ -12,8 +12,8 @@ from ..gemini_metadata_utils import gemini_date, get_date_offset, gemini_dateran
 
 from ..orm.qastuff import QAreport, QAmetricSB, QAmetricIQ, QAmetricZP, QAmetricPE
 from ..orm.qastuff import evaluate_bg_from_metrics, evaluate_cc_from_metrics
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
 
 from ..utils.web import get_context, Return
 

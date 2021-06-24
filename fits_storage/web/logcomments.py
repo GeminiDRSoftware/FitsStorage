@@ -6,7 +6,7 @@ from . import templating
 from .summary import list_headers
 from .selection import queryselection
 
-from ..orm.header import Header
+from gemini_obs_db.header import Header
 from ..orm.obslog_comment import ObslogComment
 from ..utils.web import get_context
 

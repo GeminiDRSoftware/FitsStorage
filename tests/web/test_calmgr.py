@@ -5,9 +5,9 @@ import pytest
 import fits_storage
 from fits_storage.web import calmgr
 from fits_storage.cal import CalibrationGMOS
-from fits_storage.orm.diskfile import DiskFile
-from fits_storage.orm.file import File
-from fits_storage.orm.header import Header
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.file import File
+from gemini_obs_db.header import Header
 from fits_storage.utils.web import Return
 from fits_storage.web.calibrations import interval_hours, interval_string, calibrations
 from fits_storage.web.calmgr import calmgr, cals_info

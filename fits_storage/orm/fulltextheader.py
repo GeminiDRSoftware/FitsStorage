@@ -4,7 +4,7 @@ from sqlalchemy import Integer, Text
 import astrodata
 import gemini_instruments
 
-from . import Base
+from gemini_obs_db import Base
 
 
 class FullTextHeader(Base):

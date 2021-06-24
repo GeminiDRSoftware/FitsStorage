@@ -5,9 +5,9 @@ import pytest
 from fits_storage import fits_storage_config
 from fits_storage.fits_storage_config import preview_path, storage_root
 from fits_storage.orm import sessionfactory
-from fits_storage.orm.diskfile import DiskFile
-from fits_storage.orm.file import File
-from fits_storage.orm.preview import Preview
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.file import File
+from gemini_obs_db.preview import Preview
 from fits_storage.utils.previewqueue import PreviewQueueUtil
 from fits_storage.utils.null_logger import EmptyLogger
 from fits_storage.utils import queue

@@ -7,9 +7,9 @@ import simplejson as json
 
 from fits_storage.utils.api import WSGIError, BAD_REQUEST
 
-from ..orm.file import File
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
+from gemini_obs_db.file import File
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
 
 from .selection import queryselection, openquery
 

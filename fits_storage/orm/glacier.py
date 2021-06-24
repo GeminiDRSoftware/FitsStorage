@@ -2,7 +2,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean, DateTime
 from sqlalchemy.orm import relation
 
-from . import Base
+from gemini_obs_db import Base
 
 
 class Glacier(Base):

@@ -3,11 +3,11 @@ from datetime import datetime
 import pytest
 
 import fits_storage
-from fits_storage.orm.diskfile import DiskFile
+from gemini_obs_db.diskfile import DiskFile
 from fits_storage.orm.diskfilereport import DiskFileReport
-from fits_storage.orm.file import File
+from gemini_obs_db.file import File
 from fits_storage.orm.fulltextheader import FullTextHeader
-from fits_storage.orm.header import Header
+from gemini_obs_db.header import Header
 from fits_storage.orm.provenance import Provenance, ProvenanceHistory
 from fits_storage.web.reporting import report
 from tests.file_helper import setup_mock_file_stuff

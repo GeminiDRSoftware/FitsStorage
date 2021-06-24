@@ -7,7 +7,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 
 from io import StringIO
 
-from . import Base
+from gemini_obs_db import Base
 
 
 class Publication(Base):

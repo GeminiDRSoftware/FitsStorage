@@ -4,7 +4,7 @@ orm.curation.py
 """
 
 from fits_storage.orm import session_scope
-from fits_storage.orm.header import Header
+from gemini_obs_db.header import Header
 from fits_storage.orm.curation import duplicate_canonicals, duplicate_present, present_not_canonical
 from optparse import OptionParser
 

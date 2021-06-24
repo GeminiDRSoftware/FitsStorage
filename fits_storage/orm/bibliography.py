@@ -9,9 +9,9 @@ import bz2
 from fits_storage.orm.provenance import Provenance, ProvenanceHistory
 from ..utils.hashes import md5sum, md5sum_size_bz2
 
-from . import Base
-from .file import File
-from .preview import Preview
+from gemini_obs_db import Base
+from gemini_obs_db.file import File
+from gemini_obs_db.preview import Preview
 
 from ..fits_storage_config import storage_root, z_staging_area
 

@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 
-from fits_storage.orm.header import Header
+from gemini_obs_db.header import Header
 from fits_storage.utils.render_query import render_query
 
 

@@ -11,8 +11,8 @@ from ..orm.userprogram import UserProgram
 
 from ..web.userprogram import get_program_list, get_file_list, get_obsid_list
 
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
 from ..orm.obslog import Obslog
 from ..orm.miscfile import MiscFile
 

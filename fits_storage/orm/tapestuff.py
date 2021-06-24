@@ -3,7 +3,7 @@ from sqlalchemy import Integer, Text, DateTime, Boolean, BigInteger
 
 from sqlalchemy.orm import relation, relationship
 
-from . import Base
+from gemini_obs_db import Base
 
 
 class Tape(Base):

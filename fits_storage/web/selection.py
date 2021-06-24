@@ -24,11 +24,11 @@ from ..gemini_metadata_utils import gemini_date, gemini_daterange, get_time_peri
 from ..gemini_metadata_utils import gemini_time_period_from_range
 from ..gemini_metadata_utils import gemini_gain_settings, gemini_readspeed_settings
 from ..gemini_metadata_utils import gemini_welldepth_settings, gemini_readmode_settings
-from ..orm.gpi import Gpi
+from gemini_obs_db.gpi import Gpi
 
-from ..orm.header import Header
-from ..orm.diskfile import DiskFile
-from ..orm.file import File
+from gemini_obs_db.header import Header
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.file import File
 from ..orm.footprint import Footprint
 from ..orm.photstandard import PhotStandardObs
 from ..orm.program import Program

@@ -4,9 +4,9 @@ This module contains the gmoscal html generator function.
 import sqlalchemy
 from sqlalchemy.sql.expression import cast
 from sqlalchemy import join
-from ..orm.header import Header
-from ..orm.diskfile import DiskFile
-from ..orm.file import File
+from gemini_obs_db.header import Header
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.file import File
 
 from ..utils.web import get_context, Return
 

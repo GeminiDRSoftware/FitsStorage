@@ -3,7 +3,7 @@ from sqlalchemy import desc, func
 from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Boolean, Text, DateTime
 
-from . import Base
+from gemini_obs_db import Base
 
 # ------------------------------------------------------------------------------
 class ExportQueue(Base):

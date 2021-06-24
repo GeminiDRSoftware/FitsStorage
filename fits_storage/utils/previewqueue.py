@@ -14,8 +14,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from ..orm.diskfile import DiskFile
-from ..orm.preview import Preview
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.preview import Preview
 from ..orm.previewqueue import PreviewQueue
 
 from . import queue

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String
 from sqlalchemy import Integer, Text, Boolean, DateTime
 
-from . import Base
+from gemini_obs_db import Base
 
 from hashlib import sha256
 from os import urandom

@@ -14,8 +14,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from ..orm.header import Header
-from ..orm.diskfile import DiskFile
+from gemini_obs_db.header import Header
+from gemini_obs_db.diskfile import DiskFile
 from ..orm.target import Target, TargetsChecked, TargetPresence
 from ..orm.target import TargetQueue
 

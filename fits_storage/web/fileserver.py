@@ -3,9 +3,9 @@ from ..orm import NoResultFound, MultipleResultsFound
 from ..fits_storage_config import using_s3, fits_open_result_limit, fits_closed_result_limit
 
 from ..gemini_metadata_utils import gemini_fitsfilename
-from ..orm.file import File
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
+from gemini_obs_db.file import File
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
 from ..orm.obslog import Obslog
 from ..orm.downloadlog import DownloadLog
 from ..orm.filedownloadlog import FileDownloadLog

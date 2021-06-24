@@ -1,5 +1,5 @@
 import astrodata
-from fits_storage.orm.f2 import F2
+from gemini_obs_db.f2 import F2
 import fits_storage.fits_storage_config as fsc
 from tests.file_helper import ensure_file
 

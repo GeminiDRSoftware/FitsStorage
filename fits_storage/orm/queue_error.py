@@ -6,7 +6,7 @@ import datetime
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text, DateTime, Enum
 
-from . import Base
+from gemini_obs_db import Base
 
 CALCACHEQUEUE = 'CALCACHE'
 EXPORTQUEUE   = 'EXPORT'

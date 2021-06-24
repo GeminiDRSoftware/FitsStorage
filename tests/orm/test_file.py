@@ -1,4 +1,4 @@
-from fits_storage.orm.file import File
+from gemini_obs_db.file import File
 
 
 def test_file():

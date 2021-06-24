@@ -1,7 +1,7 @@
 """
 This module contains the tape related html generator functions. 
 """
-from ..orm import sessionfactory, NoResultFound, MultipleResultsFound
+from gemini_obs_db import sessionfactory, NoResultFound, MultipleResultsFound
 from ..orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 from . import templating
 

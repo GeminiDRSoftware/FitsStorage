@@ -1,9 +1,9 @@
 """
 This module holds the CalibrationGPI class
 """
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
-from ..orm.gpi import Gpi
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
+from gemini_obs_db.gpi import Gpi
 from .calibration import Calibration
 
 from sqlalchemy.orm import join

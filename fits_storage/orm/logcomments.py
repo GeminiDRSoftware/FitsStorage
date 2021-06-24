@@ -1,8 +1,8 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
-from .header import Header
+from gemini_obs_db.header import Header
 
-from . import Base
+from gemini_obs_db import Base
 
 
 class LogComments(Base):

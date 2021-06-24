@@ -10,7 +10,7 @@ import re
 from abc import ABC, abstractmethod
 
 from fits_storage.orm import session_scope
-from fits_storage.orm.diskfile import DiskFile
+from gemini_obs_db.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.scripts.header_fixer2 import fix_and_copy
 from fits_storage.utils.ingestqueue import IngestQueueUtil
