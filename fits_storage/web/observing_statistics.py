@@ -3,7 +3,7 @@ This module generates the Observing Statistics - ie "Open Shutter" Statistic rep
 """
 
 from .summary import list_headers
-from ..gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_time_period_from_range, ONEDAY_OFFSET
 from ..orm.fulltextheader import FullTextHeader
 
 from ..utils.web import get_context, with_content_type

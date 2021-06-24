@@ -8,7 +8,7 @@ import time
 import json
 import math
 import dateutil.parser
-from ..gemini_metadata_utils import gemini_date, get_date_offset, gemini_daterange
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_date, get_date_offset, gemini_daterange
 
 from ..orm.qastuff import QAreport, QAmetricSB, QAmetricIQ, QAmetricZP, QAmetricPE
 from ..orm.qastuff import evaluate_bg_from_metrics, evaluate_cc_from_metrics

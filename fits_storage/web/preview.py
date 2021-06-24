@@ -1,6 +1,6 @@
 from ..fits_storage_config import using_s3, storage_root, preview_path
 
-from ..gemini_metadata_utils import gemini_fitsfilename
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_fitsfilename
 
 from gemini_obs_db.file import File
 from gemini_obs_db.diskfile import DiskFile

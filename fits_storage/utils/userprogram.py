@@ -6,7 +6,7 @@ import datetime
 
 from sqlalchemy import func
 
-from ..gemini_metadata_utils import ONEDAY_OFFSET
+from gemini_obs_db.utils.gemini_metadata_utils import ONEDAY_OFFSET
 from ..orm.userprogram import UserProgram
 
 from ..web.userprogram import get_program_list, get_file_list, get_obsid_list

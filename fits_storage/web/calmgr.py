@@ -15,9 +15,9 @@ from .selection import queryselection, openquery
 
 from ..utils.web import get_context, Return
 
-from ..cal import get_cal_object
+from gemini_calmgr.cal import get_cal_object
 from ..fits_storage_config import storage_root, fits_servername
-from ..gemini_metadata_utils import cal_types
+from gemini_obs_db.utils.gemini_metadata_utils import cal_types
 
 from . import templating
 from .templating import SkipTemplateError
