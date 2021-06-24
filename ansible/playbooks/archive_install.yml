@@ -40,11 +40,11 @@
 #      - name: Fail while I iterate
 #        fail:
 #          msg: "Exiting early"
-      - name: Setup EPEL
-        yum:
-          name:
-            - epel-release
-        when: install_epel
+#      - name: Setup EPEL
+#        yum:
+#          name:
+#            - epel-release
+#        when: install_epel
       - name: install packages
         yum:
           name: 
@@ -86,9 +86,9 @@
       - name: install Sphinx (have to pull direct from the mirror)
         yum:
           name:
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-sphinx-1.7.6-1.el8.noarch.rpm
+            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-sphinx-1.7.6-2.el8.noarch.rpm
             - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-sphinx-theme-alabaster-0.7.9-7.el8.noarch.rpm
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python-sphinx-locale-1.7.6-1.el8.noarch.rpm
+            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python-sphinx-locale-1.7.6-2.el8.noarch.rpm
             - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-mock-2.0.0-11.el8.noarch.rpm
             - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-packaging-16.8-9.el8.noarch.rpm
             - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-imagesize-1.0.0-2.el8.noarch.rpm
@@ -208,7 +208,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: master
+          version: refac/15_refactor_prep_for_splitting_cal_manager_logic
           dest: /opt/FitsStorage
           accept_hostkey: yes
         when: not is_aws
@@ -229,13 +229,15 @@
         when: is_aws
         register: checkedout_geminicalmgr
       - name: Install FitsStorageDB
-        command: bash -c "python setup.py install"
+        become: true
+        command: bash -c "python3 setup.py install"
         args:
           chdir: /opt/FitsStorageDB
         when: checkedout_fitsstoragedb
         notify: restart services
       - name: Install GeminiCalMgr
-        command: bash -c "python setup.py install"
+        become: true
+        command: bash -c "python3 setup.py install"
         args:
           chdir: /opt/GeminiCalMgr
         when: checkedout_geminicalmgr
@@ -348,9 +350,10 @@
           regex: Environment=PGDATA
           create: yes
         register: postgresql_configured
-      - name: Configure SELinux for PostgresSQL
-        command: chcon -R -t postgresql_db_t  /data/pgsql_data
-        when: postgresql_configured
+# onsite doesn't seem to like this, needed it for arcdev - TODO conditional?
+#      - name: Configure SELinux for PostgresSQL
+#        command: chcon -R -t postgresql_db_t  /data/pgsql_data
+#        when: postgresql_configured
       - name: Reload System Daemons
         command: systemctl daemon-reload
         when: postgresql_configured.changed or postgresql_service_installed.changed
@@ -624,7 +627,7 @@
         when: is_ops and is_chile
       - name: Install fitsstorage config
         copy:
-          src: ../../../FitsStorageConfig/config/{{ inventory_hostname_short }}_fitsstorage.conf
+          src: ../../../FitsStorageConfig/configs/{{ inventory_hostname_short }}_fitsstorage.conf
           dest: /etc/fitsstorage.conf
         register: fitsstorageconf
         notify: restart services

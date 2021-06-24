@@ -16,4 +16,5 @@ apply_migrations: true
 ignore_dataflow: false
 dataflow_path: /sci/dataflow
 install_ingest_services: true
+enable_ingest_services: false
 enable_certbot: false

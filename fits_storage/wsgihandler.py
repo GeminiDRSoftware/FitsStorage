@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from fits_storage.gemini_metadata_utils import gemini_date
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_date
 
 from fits_storage.utils.web import get_context, Return, context_wrapped
 from fits_storage.utils.web import WSGIRequest, WSGIResponse, ArchiveContextMiddleware
