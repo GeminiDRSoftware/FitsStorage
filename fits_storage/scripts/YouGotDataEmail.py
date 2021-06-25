@@ -7,7 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from optparse import OptionParser
 
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 from fits_storage.orm.notification import Notification
 from fits_storage.logger import logger, setdebug, setdemon
 
