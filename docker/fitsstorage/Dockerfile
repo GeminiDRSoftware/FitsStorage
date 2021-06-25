@@ -52,20 +52,6 @@ RUN pip3 install psycopg2-binary && \
 RUN pip3 install photutils
 
 RUN yum -y install make
-# RUN cd /opt && git clone https://github.com/ericmandel/xpa.git
-# RUN cd /opt/xpa && ./configure && make && make install
-# RUN yum -y install tcl-8.5.13-4.el7.x86_64
-# RUN yum -y install http://download-ib01.fedoraproject.org/pub/epel/7/x86_64/Packages/x/xpa-libs-2.1.18-1.el7.1.x86_64.rpm
-# RUN yum -y install http://download-ib01.fedoraproject.org/pub/epel/7/x86_64/Packages/x/xpa-2.1.18-1.el7.1.x86_64.rpm
-# RUN yum -y install http://download-ib01.fedoraproject.org/pub/epel/7/x86_64/Packages/x/xpa-devel-2.1.18-1.el7.1.x86_64.rpm
-
-# Need the latest imexam for DRAGONS    
-
-# RUN cd /opt && git clone --recursive https://github.com/spacetelescope/imexam.git
-# RUN cd /opt/imexam && git submodule update --init -- cextern/xpa
-# RUN cd /opt/imexam/cextern/xpa && ./configure && make && make install
-# RUN cd /opt/imexam && ls -l cextern/xpa/conf.h
-# RUN cd /opt/imexam && python3 setup.py install
 
 # RUN pip3 install git+https://github.com/spacetelescope/imexam.git
 RUN pip3 install imexam
@@ -100,18 +86,26 @@ ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
 RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
 #RUN cd /opt && git clone --branch refac/populate_provenance_data https://github.com/GeminiDRSoftware/DRAGONS.git
 #RUN cd /opt && git clone --branch refac/imexam_workaround https://github.com/olyoberdorf/DRAGONS.git
-COPY . /opt/FitsStorage
+
+# TODO This will require some sort of ssh key setup, maybe not worth it
+#RUN cd /opt && git clone --branch master git@gitlab.gemini.edu:DRSoftware/FitsStorageConfig.git
+#RUN cd /opt && git clone --branch master git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git
+#RUN cd /opt && git clone --branch master git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git
+
+COPY FitsStorageDB /opt/FitsStorageDB
+COPY GeminiCalMgr /opt/GeminiCalMgr
+
+RUN cd /opt/FitsStorageDB && python3 setup.py install
+RUN cd /opt/GeminiCalMgr && python3 setup.py install
+COPY FitsStorage /opt/FitsStorage
 WORKDIR /opt/FitsStorage
-COPY fitsverify /opt/fitsverify
-COPY docker/wait-for-postgres.sh /
+COPY FitsStorage/fitsverify /opt/fitsverify
+COPY FitsStorage/docker/wait-for-postgres.sh /
 RUN chmod a+x /wait-for-postgres.sh
 
 # CYTHON STEP FOR DRAGONS
 RUN pip3 install cython
 RUN cd /opt/DRAGONS/gempy/library/ && cythonize -i cyclip.pyx
-
-# Calibs code
-RUN cd /opt/FitsStorage/local_calibs && python3 setup.py install
 
 ENV PYTEST_SERVER archive
 ENV FITS_DB_SERVER fitsdata:fitsdata@postgres-fitsdata

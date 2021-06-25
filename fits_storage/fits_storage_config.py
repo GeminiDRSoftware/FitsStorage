@@ -193,7 +193,7 @@ fits_db_backup_dir = lookup_config('FITS_DB_BACKUP_DIR', get_fits_db_backup_dir(
 fits_lockfile_dir = lookup_config('FITS_LOCKFILE_DIR', "/data/logs")
 
 # Configure the log directory here
-fits_log_dir = lookup_config('FITS_LOG_DIR',"/data/logs/")
+fits_log_dir = lookup_config('FITS_LOG_DIR', "/data/logs/")
 
 # Indicate if we are running in a docker context (to alter logging behavior)
 is_docker_str = lookup_config('IS_DOCKER', "False")

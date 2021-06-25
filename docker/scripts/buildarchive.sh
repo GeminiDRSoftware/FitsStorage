@@ -1,7 +1,7 @@
 #!/bin/bash
 BASEDIR=$(dirname "$0")
 UPLOAD=$1
-pushd "$BASEDIR/../.."
+pushd "$BASEDIR/../../.."
 
 BRANCH=`git rev-parse --abbrev-ref HEAD`
 echo Branch is $BRANCH
@@ -12,7 +12,7 @@ else
   LABEL="latest"
 fi
 
-docker image build -t fitsimage:$LABEL -f docker/archive//Dockerfile .
+docker image build -t fitsimage:$LABEL -f FitsStorage/docker/archive//Dockerfile .
 
 if [[ $UPLOAD == "-u" ]]
 then
