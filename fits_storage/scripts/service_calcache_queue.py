@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 from fits_storage.orm.calcachequeue import CalCacheQueue
 from fits_storage.utils.calcachequeue import CalCacheQueueUtil, cache_associations
 from fits_storage.fits_storage_config import fits_lockfile_dir

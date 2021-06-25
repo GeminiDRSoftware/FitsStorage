@@ -8,7 +8,7 @@ import smtplib
 from sqlalchemy import join, desc
 import re
 
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 from gemini_obs_db.diskfile import DiskFile
 from fits_storage.orm.exportqueue import ExportQueue
 from gemini_obs_db.file import File

@@ -9,7 +9,7 @@ import shutil
 import re
 from abc import ABC, abstractmethod
 
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 from gemini_obs_db.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.scripts.header_fixer2 import fix_and_copy

@@ -5,12 +5,12 @@ import tarfile
 from sqlalchemy import join
 from sqlalchemy.orm.exc import NoResultFound
 
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile
 
 from fits_storage import fits_storage_config
 from fits_storage.utils.tape import TapeDrive, get_tape_drive
-from fits_storage.utils.hashes import md5sum_size_fp
+from gemini_obs_db.utils.hashes import md5sum_size_fp
 
 
 if __name__ == "__main__":

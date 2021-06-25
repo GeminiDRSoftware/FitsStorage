@@ -6,7 +6,7 @@ from optparse import OptionParser
 from datetime import datetime
 from dateutil.parser import parse as parsedate
 
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 from fits_storage.logger import logger, setdebug, setdemon
 
 from fits_storage.utils.notifications import ingest_odb_xml

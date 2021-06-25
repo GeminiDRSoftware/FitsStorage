@@ -1,4 +1,4 @@
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 from fits_storage.fits_storage_config import storage_root, using_s3, fits_lockfile_dir
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.ingestqueue import IngestQueueUtil

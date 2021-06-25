@@ -9,11 +9,11 @@ import shutil
 
 import astrodata
 from fits_storage.fits_verify import fitsverify
-from fits_storage.gemini_metadata_utils import get_fake_ut, gemini_date
-from fits_storage.orm import session_scope
+from gemini_obs_db.utils.gemini_metadata_utils import get_fake_ut, gemini_date
+from gemini_obs_db import session_scope
 from gemini_obs_db.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.utils.hashes import md5sum
+from gemini_obs_db.utils.hashes import md5sum
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 from fits_storage.fits_storage_config import using_s3, storage_root, dhs_perm, min_dhs_age_seconds, smtp_server, \
                                              max_dhs_validation_failures

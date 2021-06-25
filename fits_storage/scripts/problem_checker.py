@@ -16,9 +16,9 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 from fits_storage.fits_storage_config import smtp_server, dhs_perm, storage_root
-from fits_storage.orm import session_scope
-from fits_storage.orm.diskfile import DiskFile
-from fits_storage.orm.header import Header
+from gemini_obs_db import session_scope
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
 
 _alopeke_staging = "/net/mkovisdata/home/alopeke"
 _zorro_staging = "/net/cpostonfs-nv1/tier2/ins/sto/zorro"

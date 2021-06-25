@@ -6,7 +6,7 @@ import gemini_instruments
 from fits_storage.utils.previewqueue import PreviewQueueUtil
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.null_logger import EmptyLogger
-from fits_storage.orm import sessionfactory
+from gemini_obs_db import sessionfactory
 
 
 if __name__ == "__main__":

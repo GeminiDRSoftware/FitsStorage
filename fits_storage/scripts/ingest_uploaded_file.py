@@ -4,7 +4,7 @@ import traceback
 import datetime
 import shutil
 
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 from fits_storage.orm.fileuploadlog import FileUploadLog, FileUploadWrapper
 
 from fits_storage.fits_storage_config import storage_root, upload_staging_path, processed_cals_path, using_s3

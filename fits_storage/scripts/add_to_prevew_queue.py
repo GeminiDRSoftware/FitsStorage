@@ -1,4 +1,4 @@
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 from gemini_obs_db.diskfile import DiskFile
 from gemini_obs_db.header import Header
 from fits_storage.utils.previewqueue import PreviewQueueUtil

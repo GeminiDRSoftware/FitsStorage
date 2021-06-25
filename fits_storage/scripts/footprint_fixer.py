@@ -13,7 +13,7 @@ import astrodata
 from fits_storage import fits_storage_config
 from fits_storage.fits_storage_config import s3_staging_area, using_s3, z_staging_area
 from fits_storage.logger import logger
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 import sys
 
 from gemini_obs_db.diskfile import DiskFile

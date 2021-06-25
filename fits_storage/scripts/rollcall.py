@@ -1,6 +1,6 @@
-from fits_storage.orm import session_scope
-from fits_storage.orm.file import File
-from fits_storage.orm.diskfile import DiskFile
+from gemini_obs_db import session_scope
+from gemini_obs_db.file import File
+from gemini_obs_db.diskfile import DiskFile
 
 from fits_storage.logger import logger, setdebug, setdemon
 

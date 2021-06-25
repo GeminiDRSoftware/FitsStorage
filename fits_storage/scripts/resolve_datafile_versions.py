@@ -27,8 +27,6 @@ import sys
 import bz2
 import itertools
 
-import orm
-
 from operator import attrgetter, itemgetter
 # from optparse import OptionParser
 from docopt import docopt

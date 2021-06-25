@@ -1,8 +1,8 @@
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 from fits_storage.fits_storage_config import storage_root, using_s3
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.orm.preview import Preview
-from fits_storage.orm.diskfile import DiskFile
+from gemini_obs_db.preview import Preview
+from gemini_obs_db.diskfile import DiskFile
 import os
 import re
 import datetime

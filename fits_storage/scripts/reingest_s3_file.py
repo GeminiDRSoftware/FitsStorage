@@ -11,11 +11,11 @@ from datetime import datetime, timedelta
 import astropy.io.fits as pf
 from bz2 import BZ2File
 
-from fits_storage.orm import session_scope
-from fits_storage.orm.diskfile import DiskFile
-from fits_storage.orm.header import Header
+from gemini_obs_db import session_scope
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
 # from fits_storage.scripts.header_fixer2 import open_image
-from fits_storage.utils.hashes import md5sum
+from gemini_obs_db.utils.hashes import md5sum
 
 
 # from header_fixer2, use import after 2020-2 (not on archive, so copy paste)
