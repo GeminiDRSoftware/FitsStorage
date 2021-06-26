@@ -1,7 +1,7 @@
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text, Boolean
 
-from . import Base
+from gemini_obs_db import Base
 
 # ------------------------------------------------------------------------------
 class Notification(Base):

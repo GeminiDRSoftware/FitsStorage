@@ -33,7 +33,7 @@ import logging
 import argparse
 
 from fits_storage.fits_storage_config import api_backend_location
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 
 def get_route(environ, routes):
     req_meth  = environ['REQUEST_METHOD']

@@ -3,7 +3,7 @@ from migrate import *
 
 
 # Need for migration logic, since it's removed from codebase
-from fits_storage.orm.header import PROCMODE_ENUM
+from gemini_obs_db.header import PROCMODE_ENUM
 
 procsci_codes = ('sq', 'ql', 'qa')
 PROCSCI_ENUM = Enum(*procsci_codes, name='procsci')

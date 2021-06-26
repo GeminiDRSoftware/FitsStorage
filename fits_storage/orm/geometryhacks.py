@@ -5,7 +5,7 @@ sysyem using postGIS to do the co-ordinate transforms properly in the future.
 
 """
 
-from .header import Header
+from gemini_obs_db.header import Header
 
 def add_footprint(session, id, fp):
     """

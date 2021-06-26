@@ -7,7 +7,7 @@ import time
 import traceback
 import urllib.request, urllib.error, urllib.parse
 import ssl
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 from fits_storage.orm.exportqueue import ExportQueue
 from fits_storage.utils.exportqueue import ExportQueueUtil
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix

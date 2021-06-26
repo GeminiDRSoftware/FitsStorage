@@ -1,7 +1,7 @@
 """
 This module contains the curation_report html generator function.
 """
-from ..orm.header import Header
+from gemini_obs_db.header import Header
 from ..orm.curation import duplicate_canonicals, duplicate_present, present_not_canonical
 
 from ..utils.web import get_context

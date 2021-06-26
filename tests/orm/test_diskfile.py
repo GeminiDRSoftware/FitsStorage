@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from fits_storage.orm.diskfile import _determine_timestamp_from_filename, DiskFile
-from fits_storage.orm.file import File
+from gemini_obs_db.diskfile import _determine_timestamp_from_filename, DiskFile
+from gemini_obs_db.file import File
 from tests.file_helper import ensure_file
 import fits_storage.fits_storage_config as fsc
 

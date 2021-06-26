@@ -4,13 +4,13 @@
 try:
     from .fits_validator import *
     from .fits_validator import coerceValue, log
-    from ..gemini_metadata_utils import gemini_instrument
-    from ..gemini_metadata_utils import GeminiProgram, GeminiObservation, GeminiDataLabel
+    from gemini_obs_db.utils.gemini_metadata_utils import gemini_instrument
+    from gemini_obs_db.utils.gemini_metadata_utils import GeminiProgram, GeminiObservation, GeminiDataLabel
 except ValueError:
     from fits_storage.utils.fits_validator import *
     from fits_storage.utils.fits_validator import coerceValue, log
-    from fits_storage.gemini_metadata_utils import gemini_instrument
-    from fits_storage.gemini_metadata_utils import GeminiProgram, GeminiObservation, GeminiDataLabel
+    from gemini_obs_db.utils.gemini_metadata_utils import gemini_instrument
+    from gemini_obs_db.utils.gemini_metadata_utils import GeminiProgram, GeminiObservation, GeminiDataLabel
 
 import astrodata
 import gemini_instruments

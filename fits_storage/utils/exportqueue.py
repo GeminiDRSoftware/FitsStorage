@@ -19,8 +19,8 @@ from sqlalchemy.exc import IntegrityError
 from ..fits_storage_config import storage_root, using_s3, export_bzip, export_upload_auth_cookie
 from . import queue
 
-from ..orm.file import File
-from ..orm.diskfile import DiskFile
+from gemini_obs_db.file import File
+from gemini_obs_db.diskfile import DiskFile
 from ..orm.exportqueue import ExportQueue
 
 from .. import apache_return_codes as apache

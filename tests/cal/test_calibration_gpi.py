@@ -2,9 +2,9 @@
 import pytest
 
 from fits_storage.cal import get_cal_object
-from fits_storage.orm.calcache import CalCache
-from fits_storage.orm.diskfile import DiskFile
-from fits_storage.orm.header import Header
+from gemini_obs_db.calcache import CalCache
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
 from fits_storage.utils.calcachequeue import CalCacheQueueUtil, cache_associations
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 from fits_storage.utils.null_logger import EmptyLogger

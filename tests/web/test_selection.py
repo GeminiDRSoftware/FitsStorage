@@ -1,7 +1,7 @@
 import pytest
 from fits_storage.web.selection import getselection, sayselection, queryselection, _parse_range
 from fits_storage.orm import compiled_statement
-from fits_storage.gemini_metadata_utils import gemini_date, ONEDAY_OFFSET
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_date, ONEDAY_OFFSET
 from fits_storage import fits_storage_config
 
 from collections import OrderedDict

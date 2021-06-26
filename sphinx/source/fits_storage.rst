@@ -46,10 +46,10 @@ fits\_storage.fits\_verify module
    :undoc-members:
    :show-inheritance:
 
-fits\_storage.gemini\_metadata\_utils module
+gemini\_obs\_db.utils.gemini\_metadata\_utils module
 --------------------------------------------
 
-.. automodule:: fits_storage.gemini_metadata_utils
+.. automodule:: gemini_obs_db.utils.gemini_metadata_utils
    :members:
    :undoc-members:
    :show-inheritance:

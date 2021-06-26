@@ -8,9 +8,9 @@ from sqlalchemy.sql import column
 from sqlalchemy.orm import aliased
 
 from ..fits_storage_config import fits_system_status
-from ..orm.file import File
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
+from gemini_obs_db.file import File
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
 from ..orm.ingestqueue import IngestQueue
 
 from ..utils.query_utils import to_int, null_to_zero

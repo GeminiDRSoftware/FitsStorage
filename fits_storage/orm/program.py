@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
-from . import Base
+from gemini_obs_db import Base
 
 # ------------------------------------------------------------------------------
 class Program(Base):

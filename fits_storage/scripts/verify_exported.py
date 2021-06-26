@@ -1,9 +1,9 @@
 import requests
 
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 from fits_storage.orm.exportqueue import ExportQueue
-from fits_storage.orm.file import File
-from fits_storage.orm.diskfile import DiskFile
+from gemini_obs_db.file import File
+from gemini_obs_db.diskfile import DiskFile
 
 from fits_storage.logger import logger, setdebug
 
@@ -12,7 +12,7 @@ import datetime
 from optparse import OptionParser
 
 from fits_storage.fits_storage_config import using_s3, storage_root
-from fits_storage.utils.hashes import md5sum
+from gemini_obs_db.utils.hashes import md5sum
 from os.path import basename
 from glob import iglob
 

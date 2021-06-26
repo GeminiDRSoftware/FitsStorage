@@ -3,9 +3,9 @@ This module holds the CalibrationGSAOI class
 """
 import datetime
 
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
-from ..orm.gsaoi import Gsaoi
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
+from gemini_obs_db.gsaoi import Gsaoi
 from .calibration import Calibration, not_processed
 
 class CalibrationGSAOI(Calibration):

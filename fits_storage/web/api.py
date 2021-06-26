@@ -10,9 +10,9 @@ from time import sleep
 from astropy.io import fits as pf
 
 from ..orm import NoResultFound
-from ..orm.file import File
-from ..orm.header import Header
-from ..orm.diskfile import DiskFile
+from gemini_obs_db.file import File
+from gemini_obs_db.header import Header
+from gemini_obs_db.diskfile import DiskFile
 from ..orm.program import Program
 from ..orm.programpublication import ProgramPublication
 from ..orm.publication import Publication

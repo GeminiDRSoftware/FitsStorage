@@ -1,4 +1,4 @@
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 
 from fits_storage.logger import logger, setdebug
 
@@ -7,7 +7,7 @@ import datetime
 from optparse import OptionParser
 
 from fits_storage.orm.fulltextheader import FullTextHeader
-from fits_storage.orm.header import Header
+from gemini_obs_db.header import Header
 
 
 if __name__ == "__main__":

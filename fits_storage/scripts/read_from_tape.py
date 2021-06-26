@@ -8,7 +8,7 @@ import tarfile
 import urllib.request, urllib.parse, urllib.error
 from xml.dom.minidom import parseString
 
-from fits_storage.orm import sessionfactory
+from gemini_obs_db import sessionfactory
 #from fits_storage.fits_storage_config import *
 from fits_storage import fits_storage_config
 from fits_storage.logger import logger, setdebug, setdemon

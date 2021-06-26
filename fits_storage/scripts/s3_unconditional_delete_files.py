@@ -3,9 +3,9 @@ import sys
 
 from sqlalchemy import join, desc
 
-from fits_storage.orm import session_scope
-from fits_storage.orm.diskfile import DiskFile
-from fits_storage.orm.file import File
+from gemini_obs_db import session_scope
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.file import File
 from fits_storage.fits_storage_config import using_s3
 from fits_storage.utils.aws_s3 import get_helper
 from fits_storage.logger import logger, setdebug, setdemon

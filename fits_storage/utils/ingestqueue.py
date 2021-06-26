@@ -15,7 +15,7 @@ import dateutil.parser
 import sys
 import traceback
 
-from fits_storage.orm.provenance import ingest_provenance
+from gemini_obs_db.provenance import ingest_provenance
 from ..orm.geometryhacks import add_footprint, do_std_obs
 
 #from ..fits_storage_config import storage_root, using_sqlite, using_s3, using_previews, defer_seconds, use_as_archive
@@ -25,21 +25,21 @@ from . import queue
 if fsc.using_previews:
     from .previewqueue import PreviewQueueUtil
 
-from ..orm.file import File
-from ..orm.diskfile import DiskFile
+from gemini_obs_db.file import File
+from gemini_obs_db.diskfile import DiskFile
 from ..orm.diskfilereport import DiskFileReport
 from ..orm.fulltextheader import FullTextHeader
-from ..orm.header import Header
+from gemini_obs_db.header import Header
 from ..orm.footprint import Footprint
-from ..orm.gmos import Gmos
-from ..orm.gnirs import Gnirs
-from ..orm.niri import Niri
-from ..orm.nifs import Nifs
-from ..orm.michelle import Michelle
-from ..orm.f2 import F2
-from ..orm.gsaoi import Gsaoi
-from ..orm.nici import Nici
-from ..orm.gpi import Gpi
+from gemini_obs_db.gmos import Gmos
+from gemini_obs_db.gnirs import Gnirs
+from gemini_obs_db.niri import Niri
+from gemini_obs_db.nifs import Nifs
+from gemini_obs_db.michelle import Michelle
+from gemini_obs_db.f2 import F2
+from gemini_obs_db.gsaoi import Gsaoi
+from gemini_obs_db.nici import Nici
+from gemini_obs_db.gpi import Gpi
 from ..orm.ingestqueue import IngestQueue
 from ..orm.obslog import Obslog
 from ..orm.calcachequeue import CalCacheQueue

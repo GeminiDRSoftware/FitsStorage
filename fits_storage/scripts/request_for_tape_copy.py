@@ -1,7 +1,7 @@
 import datetime
 from sqlalchemy import desc
 
-from fits_storage.orm import sessionfactory
+from gemini_obs_db import sessionfactory
 from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 from fits_storage.logger import logger, setdebug, setdemon
 

@@ -5,15 +5,15 @@ import datetime
 import traceback
 from sqlalchemy import join, or_, desc
 
-from fits_storage.orm import session_scope
-from fits_storage.orm.diskfile import DiskFile
-from fits_storage.orm.header import Header
-from fits_storage.orm.gmos import Gmos
-from fits_storage.orm.niri import Niri
-from fits_storage.orm.gnirs import Gnirs
-from fits_storage.orm.nifs import Nifs
-from fits_storage.orm.michelle import Michelle
-from fits_storage.orm.f2 import F2
+from gemini_obs_db import session_scope
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
+from gemini_obs_db.gmos import Gmos
+from gemini_obs_db.niri import Niri
+from gemini_obs_db.gnirs import Gnirs
+from gemini_obs_db.nifs import Nifs
+from gemini_obs_db.michelle import Michelle
+from gemini_obs_db.f2 import F2
 from fits_storage.logger import logger, setdebug, setdemon
 from optparse import OptionParser
 

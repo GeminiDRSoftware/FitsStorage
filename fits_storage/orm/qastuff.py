@@ -3,7 +3,7 @@ from sqlalchemy import Integer, Text, DateTime, Numeric, Boolean
 from sqlalchemy.orm import relationship
 import math
 
-from . import Base
+from gemini_obs_db import Base
 
 import json
 

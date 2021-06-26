@@ -1,6 +1,6 @@
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.aws_s3 import get_helper
-from fits_storage.utils.hashes import md5sum
+from gemini_obs_db.utils.hashes import md5sum
 
 import os
 from multiprocessing import Pool

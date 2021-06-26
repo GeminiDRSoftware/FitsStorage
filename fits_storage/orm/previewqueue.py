@@ -2,7 +2,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean
 from sqlalchemy import desc
 
-from . import Base
+from gemini_obs_db import Base
 from ..utils.queue import sortkey_for_filename
 
 

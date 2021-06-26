@@ -3,9 +3,9 @@ This module holds the CalibrationNIRI class
 """
 import datetime
 
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
-from ..orm.niri import Niri
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
+from gemini_obs_db.niri import Niri
 from .calibration import Calibration, not_processed
 
 from sqlalchemy import or_

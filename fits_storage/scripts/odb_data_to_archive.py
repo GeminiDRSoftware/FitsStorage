@@ -17,7 +17,7 @@ from xml.dom.minidom import parseString
 from fits_storage.utils import programs
 from fits_storage import fits_storage_config as fsc
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
-from fits_storage.gemini_metadata_utils import gemini_semester, previous_semester
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_semester, previous_semester
 
 from optparse import OptionParser
 

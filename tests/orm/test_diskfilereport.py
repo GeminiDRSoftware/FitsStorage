@@ -1,8 +1,8 @@
 import astrodata
 import fits_storage.fits_storage_config as fsc
-from fits_storage.orm.diskfile import DiskFile
+from gemini_obs_db.diskfile import DiskFile
 from fits_storage.orm.diskfilereport import DiskFileReport
-from fits_storage.orm.file import File
+from gemini_obs_db.file import File
 from tests.file_helper import ensure_file
 
 

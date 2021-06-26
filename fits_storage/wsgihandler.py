@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from fits_storage.gemini_metadata_utils import gemini_date
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_date
 
 from fits_storage.utils.web import get_context, Return, context_wrapped
 from fits_storage.utils.web import WSGIRequest, WSGIResponse, ArchiveContextMiddleware
@@ -51,7 +51,7 @@ from fits_storage.web.logcomments import log_comments
 from fits_storage.web import miscfiles
 from fits_storage.web import templating
 
-from fits_storage.orm import session_scope, NoResultFound
+from gemini_obs_db import session_scope, NoResultFound
 from fits_storage.orm.usagelog import UsageLog
 
 from functools import partial

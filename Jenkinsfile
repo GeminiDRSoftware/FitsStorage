@@ -54,8 +54,8 @@ pipeline {
             steps {
                 script {
                     //def epelhackimage = docker.build("gemini/epelhack:jenkins", " -f docker/epelhack-jenkins/Dockerfile .")
-                    def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f docker/fitsstorage-jenkins/Dockerfile .")
-                    def archiveimage = docker.build("gemini/archive:jenkins", " -f docker/archive-jenkins/Dockerfile .")
+                    def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f FitsStorage/docker/fitsstorage-jenkins/Dockerfile .")
+                    def archiveimage = docker.build("gemini/archive:jenkins", " -f FitsStorage/docker/archive-jenkins/Dockerfile .")
                     sh '''
                     docker network create fitsstorage-jenkins || true
                     docker container rm fitsdata-jenkins || true

@@ -1,4 +1,4 @@
-from fits_storage.orm import session_scope
+from gemini_obs_db import session_scope
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.exportqueue import ExportQueueUtil
 from fits_storage.web.list_headers import list_headers

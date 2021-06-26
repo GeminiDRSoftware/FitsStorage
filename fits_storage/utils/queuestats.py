@@ -3,8 +3,8 @@ from ..orm.calcachequeue import CalCacheQueue
 from ..orm.previewqueue import PreviewQueue
 from ..orm.exportqueue import ExportQueue
 from ..orm.queue_error import QueueError
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
 
 from .ingestqueue import IngestQueueUtil
 from .calcachequeue import CalCacheQueueUtil

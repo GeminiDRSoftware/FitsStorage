@@ -2,10 +2,10 @@ from ..orm import NoResultFound, MultipleResultsFound
 
 from ..fits_storage_config import using_s3, fits_open_result_limit, fits_closed_result_limit
 
-from ..gemini_metadata_utils import gemini_fitsfilename
-from ..orm.file import File
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_fitsfilename
+from gemini_obs_db.file import File
+from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.header import Header
 from ..orm.obslog import Obslog
 from ..orm.downloadlog import DownloadLog
 from ..orm.filedownloadlog import FileDownloadLog
@@ -26,9 +26,9 @@ import os
 # We assume that servers used as archive use a calibraiton association cache table
 from ..fits_storage_config import use_as_archive
 if use_as_archive:
-    from ..cal.associate_calibrations import associate_cals_from_cache as associate_cals
+    from gemini_calmgr.cal.associate_calibrations import associate_cals_from_cache as associate_cals
 else:
-    from ..cal.associate_calibrations import associate_cals
+    from gemini_calmgr.cal.associate_calibrations import associate_cals
 
 if using_s3:
     from ..utils.aws_s3 import get_helper

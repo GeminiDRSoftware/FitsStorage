@@ -4,7 +4,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, BigInteger
 from sqlalchemy.orm import relation
 
-from . import Base
+from gemini_obs_db import Base
 from .user import User
 
 # ------------------------------------------------------------------------------
