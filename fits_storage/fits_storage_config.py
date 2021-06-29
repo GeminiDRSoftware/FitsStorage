@@ -7,8 +7,6 @@ import os
 import socket
 import configparser
 
-""" Configuration defaults based on the hostname """
-
 
 def get_hostname():
     hostname = socket.gethostname()
@@ -79,12 +77,12 @@ def lookup_config_bool(name, default_value):
 use_as_archive = lookup_config_bool('USE_AS_ARCHIVE', False)
 
 # AWS S3 info
-using_s3 = lookup_config_bool('USING_S3', False)
-s3_bucket_name = lookup_config('S3_BUCKET_NAME', '')
+using_s3              = lookup_config_bool('USING_S3', False)
+s3_bucket_name        = lookup_config('S3_BUCKET_NAME', '')
 s3_backup_bucket_name = lookup_config('S3_BACKUP_BUCKET_NAME', '')
-s3_staging_area = lookup_config('S3_STAGING_AREA', '')
-aws_access_key = lookup_config('AWS_ACCESS_KEY', '')
-aws_secret_key = lookup_config('AWS_SECRET_KEY', '')
+s3_staging_area       = lookup_config('S3_STAGING_AREA', '')
+aws_access_key        = lookup_config('AWS_ACCESS_KEY', '')
+aws_secret_key        = lookup_config('AWS_SECRET_KEY', '')
 
 # Staging area for uncompressed cache of compressed file being processed
 z_staging_area = lookup_config('Z_STAGING_AREA', '/data/z_staging')
@@ -103,10 +101,9 @@ if(using_s3):
 # Set to zero to disable
 defer_seconds = 4
 
-
 # Target free space and number of files on storage_root for delete script
-target_gb_free = 250
-target_max_files = 8000000
+target_gb_free      = 250
+target_max_files    = 8000000
 delete_min_days_age = 365
 
 # This is the path in the storage root where processed calibrations
@@ -162,22 +159,22 @@ das_calproc_path = lookup_config('DAS_CALPROC_PATH', '/sci/dasgmos')
 
 # Configure the site and other misc stuff here
 # Especially for archive systems, make the servername a fully qualified domain name.
-fits_servertitle = lookup_config('FITS_SERVERTITLE', "CPO Fits Server")
-fits_servername = lookup_config('FITS_SERVERNAME', socket.gethostname())  # "cpofits-lv2"
+fits_servertitle   = lookup_config('FITS_SERVERTITLE', "CPO Fits Server")
+fits_servername    = lookup_config('FITS_SERVERNAME', socket.gethostname())  # "cpofits-lv2"
 fits_system_status = lookup_config('FITS_SYSTEM_STATUS', "production")
 
 # Limit on number of results in open searches
-fits_open_result_limit = 500
+fits_open_result_limit   = 500
 fits_closed_result_limit = 10000
 
-smtp_server = "localhost"
-email_errors_to = "ooberdorf@gemini.edu"
+smtp_server     = "localhost"
+email_errors_to = "oliver.oberdorf@noirlab.edu"
 
 # Configure the path the data postgres database here
-fits_dbname = lookup_config('FITS_DB_NAME', 'fitsdata')
-fits_dbserver = lookup_config('FITS_DB_SERVER', '')
-fits_database = 'postgresql://%s/%s' % (fits_dbserver, fits_dbname)
-fits_database_pool_size = 30
+fits_dbname                = lookup_config('FITS_DB_NAME', 'fitsdata')
+fits_dbserver              = lookup_config('FITS_DB_SERVER', '')
+fits_database              = 'postgresql://%s/%s' % (fits_dbserver, fits_dbname)
+fits_database_pool_size    = 30
 fits_database_max_overflow = 10
 
 # Configure the auxillary data directory here
@@ -211,10 +208,10 @@ using_apache = True
 using_sqlite = False
 
 # Publication database connection info
-pubdb_host = 'hbfmysql1.hi.gemini.edu'
+pubdb_host     = 'hbfmysql1.hi.gemini.edu'
 pubdb_username = 'fitsdata'
-pubdb_dbname = 'apps-publications'
-pubdb_remote = lookup_config('PUBDB_REMOTE', 'https://localhost/ingest_publications')
+pubdb_dbname   = 'apps-publications'
+pubdb_remote   = lookup_config('PUBDB_REMOTE', 'https://localhost/ingest_publications')
 
 # By default, all URLs on the server are active. List in blocked_urls any that you want to disable
 blocked_urls_str = lookup_config('BLOCKED_URLS', 'debug,summary,diskfiles,ssummary,lsummary,standardobs,calibrations,xmlfilelist,fileontape,calmgr,upload_processed_cal,fitsverify,mdreport,fullheader,file,programsobserved,gmoscal,qareport,qametrics,qaforgui,stats,tape,tapewrite,tapefile,taperead,xmltape,notification,curation,observing_statistics,authentication')
@@ -227,8 +224,18 @@ validation_def_path = lookup_config('VALIDATION_DEF_PATH', '/opt/FitsStorage/doc
 
 logreports_use_materialized_view = lookup_config_bool('LOGREPORTS_USE_MATERIALIZED_VIEW', 'True')
 
-orcid_client_id = lookup_config('ORCID_CLIENT_ID', "APP-DBYNSNN5SCGF2G75")
+orcid_client_id     = lookup_config('ORCID_CLIENT_ID', "APP-DBYNSNN5SCGF2G75")
 orcid_client_secret = lookup_config('ORCID_CLIENT_SECRET', "66f21bdb-90f6-4219-bd81-f6b6af3bf34a")
-orcid_server = lookup_config('ORCID_SERVER', 'sandbox.orcid.org')
-orcid_enabled = lookup_config_bool('ORCID_ENABLED', True)
-orcid_redirect_url = lookup_config('ORCID_REDIRECT_URL', 'http://%s/orcid' % fits_servername)
+orcid_server        = lookup_config('ORCID_SERVER', 'sandbox.orcid.org')
+orcid_enabled       = lookup_config_bool('ORCID_ENABLED', True)
+orcid_redirect_url  = lookup_config('ORCID_REDIRECT_URL', 'http://%s/orcid' % fits_servername)
+
+#########################
+# MiscFilesPlus Settings
+mfp_aws_region_name       = lookup_config('MFP_AWS_REGION_NAME', 'us-west-2')
+mfp_aws_access_key_id     = lookup_config('MFP_AWS_ACCESS_KEY_ID', aws_access_key)
+mfp_aws_secret_access_key = lookup_config('MFP_AWS_SECRET_ACCESS_KEY', aws_secret_key)
+mfp_aws_verify            = lookup_config('MFP_AWS_VERIFY', True)
+mfp_aws_endpoint_url      = lookup_config('MFP_AWS_ENDPOINT_URL', None)
+mfp_aws_profile_name      = lookup_config('MFP_AWS_PROFILE_NAME', None)
+#########################
