@@ -161,7 +161,7 @@ div.collapseButton {
                 <div class="card-header">Files</div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <form action="/miscfilesplus/downloadzip" method="post" target="_blank">
+                        <form action="/miscfilesplus/bulkaction" method="post">
                         <table class="table table-striped table-sm">
                             <tr><th></th>
                                 <th>Filename
@@ -205,7 +205,12 @@ div.collapseButton {
                         {% endif %}
                         </table>
                         <div class="col-md-12 text-center">
-                            <button style="margin-left: auto; margin-right: auto;" type="submit" class="btn btn-success" id="download_button">Download Selected</button>
+                            <button type="submit" class="btn btn-success" id="download_button" name="bulk_action"
+                                    value="download_selected">Download Selected</button>
+                            {% if can_add %}
+                            <button type="submit" class="btn btn-warning" id="bulk_delete_button" name="bulk_action"
+                                    value="delete_selected">Delete Selected</button>
+                            {% endif %}
                         </div>
                         </form>
                     </div>
@@ -221,7 +226,7 @@ div.collapseButton {
 <!-- Create Folder Modal -->
 <div class="modal fade" id="createFolder" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog">
-    <form class="navbar-form navbar-left form-inline" action="/miscfilesplus/add_folder" method="post">
+    <form action="/miscfilesplus/add_folder" method="post">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="exampleModalLabel">Create Folder</h5>
@@ -230,20 +235,25 @@ div.collapseButton {
         </button>
       </div>
       <div class="modal-body">
-        <div class="input-group mb-3">
-            <input type="text" class="form-control" placeholder="New Folder" aria-label="New Folder"
-                 aria-describedby="button-newfolder" name="folder_name" id="folder_name">
+            <div class="form-group">
+                <label for="folder_name">Folder Name</label>
+                <input type="text" class="form-control" placeholder="New Folder" aria-label="New Folder"
+                     aria-describedby="button-newfolder" name="folder_name" id="folder_name">
+            </div>
             <input type="hidden" name="collection_name" value="{{ collection.name }}"/>
-            <label for="folder_program_id">Program ID</label>
-            <input type="text" class="form-control" name="folder_program_id"
-                   id="folder_program_id" placeholder="Program ID"/>
-            <label for="folder_description">Description</label>
-            <input type="textarea" class="form-control" name="folder_description"
-                   id="folder_description" placeholder="Description..."/>
+            <div class="form-group">
+                <label for="folder_program_id">Program ID</label>
+                <input type="text" class="form-control" name="folder_program_id"
+                       id="folder_program_id" placeholder="Program ID"/>
+            </div>
+            <div class="form-group">
+                <label for="folder_description">Description</label>
+                <input type="textarea" class="form-control" name="folder_description"
+                       id="folder_description" placeholder="Description..."/>
+            </div>
             {% if folder %}
             <input type="hidden" name="path" value="{{ folder.path() }}"/>
             {% endif %}
-        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -257,7 +267,7 @@ div.collapseButton {
 <!-- Upload File Dialog -->
 <div class="modal fade" id="uploadFileModal" tabindex="-1" aria-labelledby="uploadFileModalLabel" aria-hidden="true">
   <div class="modal-dialog">
-    <form class="navbar-form navbar-left form-inline" action="/miscfilesplus/upload_file" method="post"
+    <form action="/miscfilesplus/upload_file" method="post"
           enctype="multipart/form-data">
     <div class="modal-content">
       <div class="modal-header">
@@ -267,10 +277,11 @@ div.collapseButton {
         </button>
       </div>
       <div class="modal-body">
-        <label id="fileUploadLabel" class="btn btn-default form-control" for="uploadFile">
-            Browse
-        </label>
-        <input type="file" class="form-control" name="file" id="uploadFile">
+          <div class="form-group">
+            <label for="uploadFile">
+            Choose File</label>
+            <input type="file" class="form-control-file" name="uploadFile" id="uploadFile">
+          </div>
         <div class="form-group">
             <label for="file_program_id">Program ID</label>
             <input type="text" class="form-control" name="file_program_id" id="file_program_id" />
@@ -281,9 +292,9 @@ div.collapseButton {
                    id="file_release_date" placeholder="YYYYMMDD"/>
         </div>
         <div class="form-group">
-            <label for="file_release_date">Description</label>
-            <input type="textarea" class="form-control" name="file_description"
-                   id="file_description" placeholder="Description..."/>
+            <label for="file_description">Description</label>
+            <textarea class="form-control" name="file_description"
+                      id="file_description" rows="5" placeholder="Description..."></textarea>
         </div>
 <!--        <input type="hidden" name="filename" id="filename" value=""/>-->
         <input type="hidden" name="collection_name" value="{{ collection.name }}"/>
@@ -293,39 +304,13 @@ div.collapseButton {
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="submit" class="btn btn-success form-control" id="uploadFileButton"
-                disabled=true>Upload File</button>
+        <button type="submit" class="btn btn-success form-control" id="uploadFileButton">Upload File</button>
       </div>
     </div>
     </form>
   </div>
 </div>
 
-<script>
-$(document).on('change', ':file', function() {
-  var input = $(this);
-  var numFiles = input.get(0).files ? input.get(0).files.length : 1;
-  var label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
-  input.trigger('fileselect', [numFiles, label]);
-});
 
-$(document).ready(function() {
-  $(':file').on('fileselect', function(event, numFiles, label) {
-    if (numFiles == 1) {
-        $('#uploadFileButton')[0].innerText = 'Upload ' + label;
-        $('#uploadFileButton')[0].disabled = false;
-    } else if (numFiles > 1) {
-        console.log('multifile not supported yet');
-        $('#uploadFileButton')[0].innerText = 'Upload File';
-        $('#uploadFileButton')[0].disabled = true;
-    } else {
-        $('#uploadFileButton')[0].innerText = 'Upload File';
-        $('#uploadFileButton')[0].disabled = true;
-    }
-    console.log(numFiles);
-    console.log(label);
-  });
-});
-</script>
 {% endblock %}
 {% endblock %}
