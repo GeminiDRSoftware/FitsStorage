@@ -249,6 +249,19 @@
           _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../.. fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/FitsStorage/
         when: is_aws
         notify: restart services
+      - name: Setup AWS config folder for localstack
+        file:
+          path: /usr/share/httpd/.aws
+          state: directory
+          mode: u+rwx,g+rwx,o+rwx
+          owner: apache
+          group: apache
+        become: true
+      - name: Setup aws config file for localstack
+        copy:
+          src: ../../otherfiles/dot_aws_config_for_miscfilesplus_localstack
+          dest: ~apache/.aws/config
+          owner: apache
       - name: install psycopg2 binary (so we don't have to compile it) (CentOS 7)
         command: bash -c "python -m pip install psycopg2-binary==2.8.4"
         when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
