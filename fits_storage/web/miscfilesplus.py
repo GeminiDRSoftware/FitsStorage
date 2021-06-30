@@ -399,7 +399,7 @@ def _save_mfp_file(collection, folder, fp, filename):
                 'client': session.client('s3', **_get_session_client_kwargs())}) as fout:
             logger.error('handling writes')
             read_file = fp
-            read_file.seek(0)
+            # read_file.seek(0)
             dat = read_file.read(4096)
             while dat:
                 cdat = compressor.compress(dat)
