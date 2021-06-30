@@ -204,7 +204,7 @@ def miscfilesplus(collection=None, folders=None):
             if folder:
                 url_subpath = f"{url_subpath}/{folder.path()}"
         return dict(collections=collections, collection=collection, folder=folder, folders=folders, files=files,
-                    url_subpath=url_subpath, can_add=True)  # get_context().is_staffer)
+                    url_subpath=url_subpath, can_add=get_context().is_staffer)
     finally:
         if formdata and formdata.uploaded_file is not None:
             try:
@@ -341,6 +341,9 @@ def add_folder():
             .filter(MiscFileCollection.name == collection_name).first()
         if not collection:
             ctx.resp.status = Return.HTTP_BAD_REQUEST
+            return
+        if ctx.req.user.is_admin is False and ctx.req.user not in collection.users:
+            ctx.resp.status = Return.FORBIDDEN
             return
         else:
             # now find the parent folder
@@ -530,6 +533,9 @@ def upload_file():
         if not collection:
             ctx.resp.status = Return.HTTP_BAD_REQUEST
             return
+        elif ctx.req.user.is_admin is False and ctx.req.user in collection.users:
+            ctx.resp.status = Return.HTTP_FORBIDDEN
+            return
         else:
             # now find the parent folder
             if path:
@@ -605,6 +611,9 @@ def get_file(collection, folders=None, filename=None):
         if file is None:
             ctx.resp.status = Return.HTTP_NOT_FOUND
             return
+        if not file.check_download_permission():
+            ctx.resp.status = Return.HTTP_FORBIDDEN
+            return
 
         session = boto3.Session(
             **_get_boto3_session_kwargs()
@@ -621,6 +630,7 @@ def get_file(collection, folders=None, filename=None):
 
 
 from io import RawIOBase
+
 
 class UnseekableStream(RawIOBase):
     """
@@ -686,27 +696,28 @@ def download_zip(ctx, formdata):
         # our memory footprint small.
         with ZipFile(stream, mode='w') as zf:
             for file in session.query(MiscFilePlus).filter(MiscFilePlus.id.in_(files)):
-                zi = zipfile.ZipInfo(filename=file.filename)
-                with zf.open(zi, mode='w') as dest:
-                    collection = file.collection
-                    folder = file.folder
+                if file.check_download_permission():
+                    zi = zipfile.ZipInfo(filename=file.filename)
+                    with zf.open(zi, mode='w') as dest:
+                        collection = file.collection
+                        folder = file.folder
 
-                    boto3_session = boto3.Session(
-                        **_get_boto3_session_kwargs()
-                    )
-                    if folder:
-                        path = folder.path()
-                        url = f's3://miscfilesplus/{collection.name}/{path}/{file.filename}'
-                    else:
-                        url = f's3://miscfilesplus/{collection.name}/{file.filename}'
-                    with open(url, 'rb', transport_params={
-                        'client': boto3_session.client('s3', **_get_session_client_kwargs())}) as fin:
-                        decomp = BZ2OnTheFlyDecompressor(fin)
-                        chunk = decomp.read(8192)
-                        while chunk:
-                            dest.write(chunk)
+                        boto3_session = boto3.Session(
+                            **_get_boto3_session_kwargs()
+                        )
+                        if folder:
+                            path = folder.path()
+                            url = f's3://miscfilesplus/{collection.name}/{path}/{file.filename}'
+                        else:
+                            url = f's3://miscfilesplus/{collection.name}/{file.filename}'
+                        with open(url, 'rb', transport_params={
+                            'client': boto3_session.client('s3', **_get_session_client_kwargs())}) as fin:
+                            decomp = BZ2OnTheFlyDecompressor(fin)
                             chunk = decomp.read(8192)
-                            yield stream.get()
+                            while chunk:
+                                dest.write(chunk)
+                                chunk = decomp.read(8192)
+                                yield stream.get()
         # done, get any last data
         yield stream.get()
 
@@ -738,17 +749,18 @@ def delete_selected(ctx, formdata):
     files = make_list(formdata, 'files')
 
     for file in session.query(MiscFilePlus).filter(MiscFilePlus.id.in_(files)):
-        if file.folder:
-            key = f'{file.collection.name}/{file.folder.path}/{file.filename}'
-        else:
-            key = f'{file.collection.name}/{file.folder.ßpath}/{file.filename}'
+        if file.check_download_permission():
+            if file.folder:
+                key = f'{file.collection.name}/{file.folder.path}/{file.filename}'
+            else:
+                key = f'{file.collection.name}/{file.folder.ßpath}/{file.filename}'
 
-        s3 = boto3.client('s3', **_get_boto3_client_kwargs())
-        s3.delete_object(Bucket='miscfilesplus', Key=key)
-        s3.delete_object(Bucket='miscfilesplus', Key=f"{key}.mfp.json")
+            s3 = boto3.client('s3', **_get_boto3_client_kwargs())
+            s3.delete_object(Bucket='miscfilesplus', Key=key)
+            s3.delete_object(Bucket='miscfilesplus', Key=f"{key}.mfp.json")
 
-        session.delete(file)
-        session.commit()
+            session.delete(file)
+            session.commit()
 
 
 def _delete_folder_recursive(session, folder):
@@ -770,6 +782,9 @@ def delete_path(collection, path):
         .filter(MiscFileCollection.name == collection).first()
     if not collection:
         ctx.resp.status = Return.HTTP_NOT_FOUND
+        return
+    elif ctx.req.is_admin is False and ctx.req.user not in collection.users:
+        ctx.resp.status = Return.HTTP_FORBIDDEN
         return
     else:
         # now find the parent folder

@@ -193,9 +193,19 @@ div.collapseButton {
                         {% endif %}
                         {% if files %}
                             {% for file in files %}
-                            <tr><td><input type="checkbox" id="files" name="files" value="{{ file.id }}"></td><td><span class="fa fa-file">&nbsp;&nbsp;</span><a href="/miscfilesplus/download/{{ url_subpath }}/{{ file.filename | urlencode }}">{{ file.filename }}</a></td>
+                            <tr><td>
+                                {% if file.check_download_permission() %}
+                                <input type="checkbox" id="files" name="files" value="{{ file.id }}">
+                                {% endif %}
+                            </td><td><span class="fa fa-file">&nbsp;&nbsp;</span>
+                                {% if file.check_download_permission() %}
+                                <a href="/miscfilesplus/download/{{ url_subpath }}/{{ file.filename | urlencode }}">{{ file.filename }}</a>
+                                {% else %}
+                                {{ file.filename | urlencode }}
+                                {% endif %}
+                            </td>
                             <td>{{ file.size }}</td><td>{{ file.last_modified }}</td><td>{{ file.program_id }}</td><td>{{ file.release.strftime('%Y-%m-%d') }}</td>
-                            {% if can_add %}
+                            {% if file.check_download_permission() %}
                                 <td><a href="/miscfilesplus/delete/{{ url_subpath }}/{{ file.filename | urlencode }}">&nbsp;&nbsp;<span class="fa fa-trash"></span></a></td>
                             {% else %}
                             <td></td>

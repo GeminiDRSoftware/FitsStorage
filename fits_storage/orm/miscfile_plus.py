@@ -1,3 +1,5 @@
+import datetime
+
 from sqlalchemy import Column, ForeignKey, Table
 from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy.orm import relation, relationship
@@ -6,6 +8,7 @@ from gemini_obs_db import Base, NoResultFound
 from gemini_obs_db.diskfile import DiskFile
 
 from ..fits_storage_config import using_s3, upload_staging_path
+from ..utils.web import get_context
 
 if using_s3:
     from ..utils.aws_s3 import get_helper, ClientError
@@ -201,3 +204,12 @@ class MiscFilePlus(Base):
             return self.folder.path()
         else:
             return ''
+
+    def check_download_permission(self):
+        if get_context().is_staffer:
+            return True
+        if get_context().req.user in self.collection.users:
+            return True
+        if self.release <= datetime.utcnow():
+            return True
+        return False
