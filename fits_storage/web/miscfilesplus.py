@@ -24,6 +24,8 @@ from datetime import datetime, timedelta
 
 from smart_open import open
 
+from fits_storage.logger import logger
+
 __all__ = ["upload_file", "miscfilesplus", "search", "add_collection",
            "add_folder", "upload_file", "get_file", "download_zip", "delete_path"]
 
@@ -371,12 +373,14 @@ def _save_mfp_file(collection, folder, fp, filename):
     This makes use of smart_open to stream the data out instead of staging a file
     like the existing code.  See: https://github.com/RaRe-Technologies/smart_open
     """
+    logger.error('in _save_mfp_file')
     if folder:
         fullname = f"{collection.name}/{folder.path()}/{filename}"
     else:
         fullname = f"{collection.name}/{filename}"
     current_data = {}
 
+    logger.error(f'ready to save fullname is {fullname}')
     try:
         compressor = BZ2Compressor()
         session = boto3.Session(
@@ -386,23 +390,29 @@ def _save_mfp_file(collection, folder, fp, filename):
         try:
             client.head_bucket(Bucket='miscfilesplus')
         except ClientError:
+            logger.error('had to create bucket')
             client.create_bucket(Bucket='miscfilesplus')
         url = f's3://miscfilesplus/{fullname}'
+        logger.error(f's3url is {url}')
         bytes_written = 0
         with open(url, 'wb', transport_params={
                 'client': session.client('s3', **_get_session_client_kwargs())}) as fout:
+            logger.error('handling writes')
             read_file = fp
             read_file.seek(0)
             dat = read_file.read(4096)
             while dat:
                 cdat = compressor.compress(dat)
                 bytes_written += fout.write(cdat)
+                logger.error(f'bytes written: {bytes_written}')
                 dat = read_file.read(4096)
             cdat = compressor.flush()
             if cdat:
                 bytes_written += fout.write(cdat)
+            logger.error('flushing and closing')
             fout.flush()
             fout.close()
+            logger.error('doneflush/close')
 
         release_date = datetime.utcnow()
         jsonurl = f's3://miscfilesplus/{fullname}.mfp.json'
@@ -434,8 +444,11 @@ def _add_folder(ctx, session, collection, folder, folder_name, program_id, descr
 
 
 def _upload_zip_file(ctx, session, filename, fp, collection, folder, program_id, release_date, description):
+    logger.error('in _upload_zip_file')
     aw = _get_archive_wrapper(filename, fp)
+    logger.error('get archive wrapper')
     for ai in aw.infolist():
+        logger.error(f'handling archive info {ai.filename}')
         # if we need to create a path below the current folder, check and do so here
         # then track the final "zipfolder" as the location to put the new folder or file
         # and use the final element in the path as the filename
@@ -462,8 +475,11 @@ def _upload_zip_file(ctx, session, filename, fp, collection, folder, program_id,
                     return
                 _add_folder(ctx, session, collection, zipfolder, zipfilename, program_id, description)
         else:
+            logger.error('handling file')
             with aw.open(ai) as zdata:
+                logger.error('opened as zdata, saving mfp')
                 _save_mfp_file(collection, zipfolder, zdata, zipfilename)
+                logger.error('done saving mfp')
                 mfp = MiscFilePlus()
                 mfp.folder = zipfolder
                 mfp.filename = zipfilename
