@@ -342,7 +342,7 @@ def add_folder():
         if not collection:
             ctx.resp.status = Return.HTTP_BAD_REQUEST
             return
-        if ctx.req.user.is_admin is False and ctx.req.user not in collection.users:
+        if ctx.req.user.superuser is False and ctx.req.user not in collection.users:
             ctx.resp.status = Return.FORBIDDEN
             return
         else:
@@ -533,7 +533,7 @@ def upload_file():
         if not collection:
             ctx.resp.status = Return.HTTP_BAD_REQUEST
             return
-        elif ctx.req.user.is_admin is False and ctx.req.user in collection.users:
+        elif ctx.req.user.superuser is False and ctx.req.user in collection.users:
             ctx.resp.status = Return.HTTP_FORBIDDEN
             return
         else:
@@ -763,13 +763,33 @@ def delete_selected(ctx, formdata):
             session.commit()
 
 
-def _delete_folder_recursive(session, folder):
+def _delete_file(session, file, path):
+    path = '/'.join(path)
+    key = f'{file.collection.name}/{path}'
+
+    s3 = boto3.client('s3', **_get_boto3_client_kwargs())
+    s3.delete_object(Bucket='miscfilesplus', Key=key)
+    s3.delete_object(Bucket='miscfilesplus', Key=f"{key}.mfp.json")
+
+    session.delete(file)
+
+
+def _delete_folder_recursive(session, folder, path=None):
+    if path is None:
+        path = []
     for child_file in session.query(MiscFilePlus) \
             .filter(MiscFilePlus.folder == folder).all():
-        session.delete(child_file)
+        delpath = []
+        delpath.extend(path)
+        delpath.append(child_file.filename)
+        _delete_file(session, child_file, delpath)
     for child_folder in session.query(MiscFileFolder) \
             .filter(MiscFileFolder.folder == folder).all():
-        _delete_folder_recursive(session, child_folder)
+        delpath = []
+        delpath.extend(path)
+        delpath.append(child_folder.name)
+        _delete_folder_recursive(session, child_folder, delpath)
+        # _delete_folder_recursive(session, child_folder)
     session.delete(folder)
 
 
@@ -783,7 +803,7 @@ def delete_path(collection, path):
     if not collection:
         ctx.resp.status = Return.HTTP_NOT_FOUND
         return
-    elif ctx.req.is_admin is False and ctx.req.user not in collection.users:
+    elif ctx.req.user.superuser is False and ctx.req.user not in collection.users:
         ctx.resp.status = Return.HTTP_FORBIDDEN
         return
     else:
@@ -803,7 +823,7 @@ def delete_path(collection, path):
             .filter(MiscFileFolder.folder == parent) \
             .filter(MiscFileFolder.name == name).first()
         if checkfolder:
-            _delete_folder_recursive(session, checkfolder)
+            _delete_folder_recursive(session, checkfolder, path)
             session.commit()
         else:
             # should be a file, find it, remove it from S3 and delete the record
@@ -811,14 +831,7 @@ def delete_path(collection, path):
                 .filter(MiscFilePlus.folder == parent) \
                 .filter(MiscFilePlus.filename == name).first()
             if checkfile:
-                path = '/'.join(path)
-                key = f'{collection.name}/{path}/{name}'
-
-                s3 = boto3.client('s3', **_get_boto3_client_kwargs())
-                s3.delete_object(Bucket='miscfilesplus', Key=key)
-                s3.delete_object(Bucket='miscfilesplus', Key=f"{key}.mfp.json")
-
-                session.delete(checkfile)
+                _delete_file(session, checkfile, path)
                 session.commit()
             else:
                 ctx.resp.status = Return.HTTP_NOT_FOUND
