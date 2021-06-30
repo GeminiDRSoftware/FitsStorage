@@ -425,8 +425,10 @@ def _save_mfp_file(collection, folder, fp, filename):
                        'program': collection.program_id},
                       meta)
         return bytes_written
-    except IOError:
+    except IOError as ex:
         # TODO: We should log the failure
+        logger.error('failed!')
+        logger.error(f'{ex}')
         return -1
 
 
