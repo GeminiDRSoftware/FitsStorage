@@ -709,7 +709,7 @@
           path: /opt/modwsgi-default
           state: directory
       - name: setup mod-wsgi
-        command: /usr/local/bin/mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  /opt/FitsStorage/fits_storage/wsgihandler.py
+        command: /usr/local/bin/mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  --proxy-mount-point /rest http://127.0.0.1:8090/rest /opt/FitsStorage/fits_storage/wsgihandler.py
         args:
           creates: /opt/modwsgi-default/default.wsgi
         register: mod_wsgi_setup
