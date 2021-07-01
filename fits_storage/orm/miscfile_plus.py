@@ -210,6 +210,6 @@ class MiscFilePlus(Base):
             return True
         if get_context().req.user in self.collection.users:
             return True
-        if self.release <= datetime.utcnow():
+        if self.release <= datetime.datetime.utcnow():
             return True
         return False
