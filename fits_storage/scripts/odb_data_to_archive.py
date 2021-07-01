@@ -30,7 +30,7 @@ __version__ = "0.1"
 
 # ------------------------------------------------------------------------------
 # fits URLs
-prodfitsurl = 'https://archive.gemini.edu/ingest_programs'
+prodfitsurl = fsc.ingest_programs_url
 # ------------------------------------------------------------------------------
 
 def update_program_dbtable(url, pinfo):
@@ -128,6 +128,9 @@ def auto_semesters():
 # ------------------------------------------------------------------------------
 
 if __name__ == '__main__':
+    if prodfitsurl is None:
+        logger.error('No URL configured for updating programs, aborting.')
+        sys.exit(1)
     parser = OptionParser()
     parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
     parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")

@@ -48,6 +48,16 @@ User-Facing Changes
 Other
 -----
 
+fits_storage.orm
+^^^^^^^^^^^^^^^^
+
+- refactored all shared objects out into FitsStorageDB project as part of the calibration refactor
+
+local_calibs
+^^^^^^^^^^^^
+
+- refactored all calibration code out into GeminiCalMgr to be a proper dependency of DRAGONS and share code
+
 header.py
 ^^^^^^^^^
 

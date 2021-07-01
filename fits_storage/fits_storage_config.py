@@ -239,3 +239,5 @@ mfp_aws_verify            = lookup_config('MFP_AWS_VERIFY', True)
 mfp_aws_endpoint_url      = lookup_config('MFP_AWS_ENDPOINT_URL', None)
 mfp_aws_profile_name      = lookup_config('MFP_AWS_PROFILE_NAME', None)
 #########################
+
+ingest_programs_url = lookup_config('INGEST_PROGRAMS_URL', None)
