@@ -13,12 +13,20 @@
 <input type="hidden" id="allow_cals" value="yes">
 {% endif %}
 {% if clickable %}
+<div id="reduction_legend">
+   <div>
+   <b>Reduction:</b>
+   <div id="reduction_legend_ql">Quick-Look</div>
+   <div id="reduction_legend_sq">Auto Unverified</div>
+   </div>
+</div>
 <P>Key: [P] to preview an image of the data in your browser. [D] to download that
    one file. [A] to see program Abstract and PI / Co-I details. [L] to see observing Log entries.
    Use the check boxes to select a subset of the results to download, or if available
    a download all link is at <a href="#tableend"> the end of the table</a>. Click the filename
    to see the full header in a new tab. Click anything else to add that to your search criteria.
-   You can also <a href="{{ json_res_link}}" download target="_blank">save these results as JSON</a>.</p>
+   You can also <a href="{{ json_res_link}}" download target="_blank">save these results as JSON</a>.
+</p>
 <FORM action='/download' method='POST'>
 {%- endif %}
 {% if insert_prev %}
