@@ -342,6 +342,36 @@
         args:
           chdir: /opt/FitsStorage/sphinx
         environment:
+          - PYTHONPATH: "/opt/GeminiCalMgr:/opt/FitsStorageDB:/opt/FitsStorage:/opt/DRAGONS"
+          - SPHINXOPTS: "{{ sphinx_opts }}"
+        when: build_sphinx
+      - name: Build FitsStorageDB Sphinx documentation (hbffits-lv4 only)
+        become: true
+        become_user: fitsdata
+        command: "env PATH=/usr/local/bin:$PATH make clean html"
+        args:
+          chdir: /opt/FitsStorageDB/sphinx
+        environment:
+          - PYTHONPATH: "/opt/GeminiCalMgr:/opt/FitsStorageDB:/opt/FitsStorage:/opt/DRAGONS"
+          - SPHINXOPTS: "{{ sphinx_opts }}"
+        when: build_sphinx
+      - name: Build GeminiCalMgr Sphinx documentation (hbffits-lv4 only)
+        become: true
+        become_user: fitsdata
+        command: "env PATH=/usr/local/bin:$PATH make clean html"
+        args:
+          chdir: /opt/GeminiCalMgr/sphinx
+        environment:
+          - PYTHONPATH: "/opt/GeminiCalMgr:/opt/FitsStorageDB:/opt/FitsStorage:/opt/DRAGONS"
+          - SPHINXOPTS: "{{ sphinx_opts }}"
+        when: build_sphinx
+      - name: Build Sphinx documentation (hbffits-lv4 only)
+        become: true
+        become_user: fitsdata
+        command: "env PATH=/usr/local/bin:$PATH make clean html"
+        args:
+          chdir: /opt/FitsStorage/sphinx
+        environment:
           - PYTHONPATH: "/opt/FitsStorage:/opt/DRAGONS"
           - SPHINXOPTS: "{{ sphinx_opts }}"
         when: build_sphinx
