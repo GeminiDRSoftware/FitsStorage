@@ -7,7 +7,6 @@ import requests
 from urllib.parse import urlencode
 
 from sqlalchemy import desc
-from sqlalchemy.sql import functions
 
 from ..orm import NoResultFound
 from ..orm.user import User
@@ -21,7 +20,6 @@ from . import templating
 
 import re
 import datetime
-import time
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText

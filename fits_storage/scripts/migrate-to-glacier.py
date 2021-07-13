@@ -3,8 +3,8 @@ from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.fits_storage_config import using_s3, s3_backup_bucket_name
 from fits_storage.utils.pidfile import PidFile, PidFileError
 
-from gemini_obs_db import session_scope
-from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.db import session_scope
+from gemini_obs_db.orm.diskfile import DiskFile
 from fits_storage.orm.glacier import Glacier
 from sqlalchemy import and_, or_, func, cast, between
 from sqlalchemy import Interval

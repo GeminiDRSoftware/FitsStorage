@@ -1,7 +1,7 @@
 #! /usr/bin/env python
-from gemini_obs_db import session_scope
+from gemini_obs_db.db import session_scope
 from fits_storage.orm.previewqueue import PreviewQueue
-from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.orm.diskfile import DiskFile
 
 from fits_storage.fits_storage_config import fits_lockfile_dir
 from fits_storage.utils.previewqueue import PreviewQueueUtil

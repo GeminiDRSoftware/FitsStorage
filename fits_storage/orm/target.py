@@ -11,8 +11,9 @@ from sqlalchemy import desc, func
 
 from sqlalchemy.orm import relation, relationship
 
-from gemini_obs_db.diskfile import DiskFile
-from gemini_obs_db import Base, pg_db, session_scope
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.db import Base
+from gemini_obs_db.db import pg_db, session_scope
 from ..utils.queue import sortkey_for_filename
 
 

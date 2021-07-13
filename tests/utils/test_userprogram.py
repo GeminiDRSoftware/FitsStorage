@@ -2,9 +2,9 @@ import pytest
 import sqlalchemy.orm.exc as orm_exc
 from datetime import datetime, timedelta
 
-from gemini_obs_db.diskfile import DiskFile
-from gemini_obs_db.file import File
-from gemini_obs_db.header import Header
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.file import File
+from gemini_obs_db.orm.header import Header
 from fits_storage.orm.miscfile import MiscFile
 from fits_storage.orm.obslog import Obslog
 from fits_storage.orm.user import User

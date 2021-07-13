@@ -1,7 +1,7 @@
 """
 This module contains the tape related html generator functions. 
 """
-from gemini_obs_db import sessionfactory, NoResultFound, MultipleResultsFound
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from ..orm.tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 from . import templating
 
@@ -10,6 +10,7 @@ from ..utils.web import get_context
 from sqlalchemy import join, desc, func
 
 import datetime
+
 
 @templating.templated("tapestuff/fileontape.xml", content_type='text/xml', with_generator=True)
 def fileontape(filename):
@@ -28,6 +29,7 @@ def fileontape(filename):
     return dict(
         filelist = query
         )
+
 
 @templating.templated("tapestuff/tape.html", with_generator=True)
 def tape(search = None):
@@ -105,6 +107,7 @@ def tape(search = None):
         generator = generator(),
         )
 
+
 @templating.templated("tapestuff/tapewrite.html", with_generator=True)
 def tapewrite(label = None):
     """
@@ -134,6 +137,7 @@ def tapewrite(label = None):
 
     return dict(tws = query)
 
+
 @templating.templated("tapestuff/tapefile.html", with_generator=True)
 def tapefile(tapewrite_id):
     """
@@ -148,6 +152,7 @@ def tapefile(tapewrite_id):
     query = get_context().session.query(TapeFile).filter(TapeFile.tapewrite_id == tapewrite_id).order_by(TapeFile.id)
 
     return dict(tapefiles = query)
+
 
 @templating.templated("tapestuff/taperead.html", with_generator=True)
 def taperead():

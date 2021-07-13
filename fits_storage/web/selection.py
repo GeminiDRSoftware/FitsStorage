@@ -6,12 +6,8 @@ Functions in this module are only used within FitsStorageWebSummary.
 import re
 import math
 import urllib.request, urllib.parse, urllib.error
-import datetime
-import dateutil.parser
-from datetime import timedelta
 
 from sqlalchemy import or_, func
-from sqlalchemy.orm import join
 
 from gemini_obs_db.utils.gemini_metadata_utils import gemini_telescope, gemini_instrument
 from gemini_obs_db.utils.gemini_metadata_utils import gemini_observation_type, gemini_observation_class
@@ -24,16 +20,15 @@ from gemini_obs_db.utils.gemini_metadata_utils import gemini_date, gemini_datera
 from gemini_obs_db.utils.gemini_metadata_utils import gemini_time_period_from_range
 from gemini_obs_db.utils.gemini_metadata_utils import gemini_gain_settings, gemini_readspeed_settings
 from gemini_obs_db.utils.gemini_metadata_utils import gemini_welldepth_settings, gemini_readmode_settings
-from gemini_obs_db.gpi import Gpi
+from gemini_obs_db.orm.gpi import Gpi
 
-from gemini_obs_db.header import Header
-from gemini_obs_db.diskfile import DiskFile
-from gemini_obs_db.file import File
+from gemini_obs_db.orm.header import Header
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.file import File
 from ..orm.footprint import Footprint
 from ..orm.photstandard import PhotStandardObs
 from ..orm.program import Program
 from ..orm.programpublication import ProgramPublication
-from ..orm.publication import Publication
 
 # A number of the choices in the getselection inner loop are just simple checks
 # that can be represented by a data structure. It's better to keep it like that
@@ -329,7 +324,6 @@ def sayselection(selection):
     return ret
 
 # import time module to get local timezone
-import time
 from types import MethodType
 
 queryselection_filters = (

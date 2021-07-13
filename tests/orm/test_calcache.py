@@ -1,4 +1,4 @@
-from gemini_obs_db.calcache import CalCache
+from gemini_obs_db.orm.calcache import CalCache
 
 
 def test_calcache():

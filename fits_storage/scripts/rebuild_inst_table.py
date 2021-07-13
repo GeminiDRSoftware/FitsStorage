@@ -5,13 +5,13 @@ import datetime
 import traceback
 from sqlalchemy import join, or_, desc
 
-from gemini_obs_db import session_scope
-from gemini_obs_db.diskfile import DiskFile
-from gemini_obs_db.header import Header
-from gemini_obs_db.gmos import Gmos
+from gemini_obs_db.db import session_scope
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.header import Header
+from gemini_obs_db.orm.gmos import Gmos
 from gemini_obs_db.niri import Niri
-from gemini_obs_db.gnirs import Gnirs
-from gemini_obs_db.nifs import Nifs
+from gemini_obs_db.orm.gnirs import Gnirs
+from gemini_obs_db.orm.nifs import Nifs
 from gemini_obs_db.michelle import Michelle
 from gemini_obs_db.f2 import F2
 from fits_storage.logger import logger, setdebug, setdemon

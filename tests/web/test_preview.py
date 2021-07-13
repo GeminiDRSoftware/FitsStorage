@@ -3,12 +3,12 @@ from datetime import datetime
 import pytest
 
 import fits_storage
-from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.orm.diskfile import DiskFile
 from fits_storage.orm.diskfilereport import DiskFileReport
-from gemini_obs_db.file import File
+from gemini_obs_db.orm.file import File
 from fits_storage.orm.fulltextheader import FullTextHeader
-from gemini_obs_db.header import Header
-from gemini_obs_db.preview import Preview
+from gemini_obs_db.orm.header import Header
+from gemini_obs_db.orm.preview import Preview
 from fits_storage.orm.provenance import Provenance, ProvenanceHistory
 from fits_storage.orm.usagelog import UsageLog
 from fits_storage.web.preview import num_previews, preview, sendpreview

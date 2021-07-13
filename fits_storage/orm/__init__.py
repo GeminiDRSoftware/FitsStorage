@@ -45,24 +45,24 @@ from ..fits_storage_config import fits_database, fits_database_pool_size, fits_d
 #     finally:
 #         session.close()
 #
-# class StringLiteral(String):
+# class _StringLiteral(String):
 #     def literal_processor(self, dialect):
-#         super_processor = super(StringLiteral, self).literal_processor(dialect)
+#         super_processor = super(_StringLiteral, self).literal_processor(dialect)
 #         def process(value):
 #             if isinstance(value, (date, datetime)) or value is None:
 #                 return str(value)
 #             return super_processor(value)
 #         return process
 #
-# class LiteralDialect(postgresql.dialect):
+# class _LiteralDialect(postgresql.dialect):
 #     colspecs = {
-#         Date: StringLiteral,
-#         DateTime: StringLiteral,
-#         NullType: StringLiteral
+#         Date: _StringLiteral,
+#         DateTime: _StringLiteral,
+#         NullType: _StringLiteral
 #     }
 #
 # def compiled_statement(stmt):
 #     """Returns a compiled query using the PostgreSQL dialect. Useful for
 #        example to print the real query, when debugging"""
-#     return stmt.compile(dialect = LiteralDialect(), compile_kwargs={'literal_binds': True})
+#     return stmt.compile(dialect = _LiteralDialect(), compile_kwargs={'literal_binds': True})
 #

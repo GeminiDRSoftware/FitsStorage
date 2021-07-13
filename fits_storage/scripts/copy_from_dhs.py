@@ -10,8 +10,8 @@ import shutil
 import astrodata
 from fits_storage.fits_verify import fitsverify
 from gemini_obs_db.utils.gemini_metadata_utils import get_fake_ut, gemini_date
-from gemini_obs_db import session_scope
-from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.db import session_scope
+from gemini_obs_db.orm.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
 from gemini_obs_db.utils.hashes import md5sum
 from fits_storage.utils.ingestqueue import IngestQueueUtil

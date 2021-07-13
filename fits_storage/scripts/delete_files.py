@@ -1,17 +1,18 @@
 
 import sys
 import datetime
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.error
 from xml.dom.minidom import parseString
 import os
 import smtplib
 from sqlalchemy import join, desc
 import re
 
-from gemini_obs_db import session_scope
-from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.db import session_scope
+from gemini_obs_db.orm.diskfile import DiskFile
 from fits_storage.orm.exportqueue import ExportQueue
-from gemini_obs_db.file import File
+from gemini_obs_db.orm.file import File
 from fits_storage.fits_storage_config import storage_root, target_max_files, target_gb_free, delete_min_days_age,\
     smtp_server
 from fits_storage.logger import logger, setdebug, setdemon

@@ -13,13 +13,13 @@ import astrodata
 from fits_storage import fits_storage_config
 from fits_storage.fits_storage_config import s3_staging_area, using_s3, z_staging_area
 from fits_storage.logger import logger
-from gemini_obs_db import session_scope
+from gemini_obs_db.db import session_scope
 import sys
 
-from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.orm.diskfile import DiskFile
 from fits_storage.orm.footprint import Footprint
 from fits_storage.orm.geometryhacks import add_footprint
-from gemini_obs_db.header import Header
+from gemini_obs_db.orm.header import Header
 try:
     from fits_storage.utils.aws_s3 import get_helper
 except:

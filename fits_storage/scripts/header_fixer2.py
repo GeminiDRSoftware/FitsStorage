@@ -4,7 +4,7 @@ import astropy.io.fits as pf
 from bz2 import BZ2File
 import os
 from argparse import ArgumentParser
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 
 from fits_storage.scripts.emailutils import sendmail
 

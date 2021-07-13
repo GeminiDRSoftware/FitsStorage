@@ -5,7 +5,7 @@ import os
 
 from ..fits_verify import fitsverify
 
-from gemini_obs_db import Base
+from gemini_obs_db.db import Base
 
 from ..utils.gemini_fits_validator import AstroDataEvaluator, STATUSES
 

@@ -9,9 +9,9 @@ import gemini_instruments
 from gemini_calmgr.cal import get_cal_object
 
 from sqlalchemy.sql.elements import BooleanClauseList, BinaryExpression
-from gemini_obs_db.header import Header
-from gemini_obs_db.diskfile import DiskFile
-from gemini_obs_db.gmos import Gmos
+from gemini_obs_db.orm.header import Header
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.gmos import Gmos
 
 
 def debug_boolean_clause_list(clause, cal_obj, header, diskfile, instr):

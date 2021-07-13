@@ -1,11 +1,8 @@
-from gemini_obs_db import session_scope
-from gemini_obs_db.file import File
-from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.db import session_scope
 from fits_storage.orm.diskfilereport import DiskFileReport
 
-from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.logger import logger, setdebug
 
-from sqlalchemy import join
 import datetime
 from optparse import OptionParser
 

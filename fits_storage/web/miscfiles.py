@@ -1,6 +1,6 @@
 from ..orm.miscfile import MiscFile, normalize_diskname
-from gemini_obs_db.diskfile import DiskFile
-from gemini_obs_db.file     import File
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.file import File
 from ..orm          import NoResultFound, MultipleResultsFound
 
 from . import templating
@@ -20,8 +20,6 @@ import json
 import os
 import stat
 from datetime import datetime, timedelta
-
-from cgi import parse_header
 
 SEARCH_LIMIT = 500
 

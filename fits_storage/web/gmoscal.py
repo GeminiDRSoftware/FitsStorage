@@ -4,12 +4,12 @@ This module contains the gmoscal html generator function.
 import sqlalchemy
 from sqlalchemy.sql.expression import cast
 from sqlalchemy import func, join, desc
-from gemini_obs_db.gmos import Gmos
-from gemini_obs_db.header import Header
-from gemini_obs_db.diskfile import DiskFile
-from gemini_obs_db.file import File
+from gemini_obs_db.orm.gmos import Gmos
+from gemini_obs_db.orm.header import Header
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.file import File
 
-from ..utils.web import get_context, Return, with_content_type
+from ..utils.web import get_context, Return
 
 from .selection import sayselection, queryselection
 from .calibrations import interval_hours
@@ -22,13 +22,9 @@ from . import templating
 from math import fabs
 
 import os
-import copy
 import datetime
 from datetime import timedelta
 import time
-import re
-import dateutil.parser
-import json
 from collections import defaultdict, namedtuple
 
 @templating.templated("gmoscal.html")

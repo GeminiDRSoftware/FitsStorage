@@ -1,5 +1,4 @@
 import urllib.request, urllib.parse, urllib.error
-import datetime
 
 
 if __name__ == "__main__":

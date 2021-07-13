@@ -6,12 +6,13 @@ from optparse import OptionParser
 from datetime import datetime
 from dateutil.parser import parse as parsedate
 
-from gemini_obs_db import session_scope
+from gemini_obs_db.db import session_scope
 from fits_storage.logger import logger, setdebug, setdemon
 
 from fits_storage.utils.notifications import ingest_odb_xml
 from fits_storage.fits_storage_config import magic_download_cookie
 from fits_storage.apache_return_codes import HTTP_OK
+
 
 def download_and_ingest(url):
     logger.info("Fetching XML from ODB server: %s", url)

@@ -10,7 +10,7 @@ from jinja2 import Environment, FileSystemLoader
 from ..fits_storage_config import template_root
 from ..utils.web import get_context, Return
 
-# ------------------------------------------------------------------------------
+
 def datetime_filter(value, format=None, chopped=False):
     if format=='full':
         fmt = "%Y-%m-%d %H:%M:%S.%f"
@@ -23,6 +23,7 @@ def datetime_filter(value, format=None, chopped=False):
 
     return res if not chopped else res[:21]
 
+
 def seconds_since_filter(value, since, formatted=True):
     if not (value and since):
         return '' if formatted else None
@@ -33,22 +34,26 @@ def seconds_since_filter(value, since, formatted=True):
         return '{:.2f}'.format(ret)
     return ret
 
+
 def bytes_per_second(value, time, divider=1000000.0):
     try:
         return '{:.2f}'.format((value / time) / divider)
     except (ZeroDivisionError, TypeError):
         return ''
 
+
 def bytes_to_GB(value, GiB=False):
     if value is None:
         return 0
     return int(value) / (1.0E9 if not GiB else 1073741824.0)
+
 
 def format_float(value, decimals=2):
     try:
         return '{:.{pre}f}'.format(value, pre=decimals)
     except ValueError:
         return ''
+
 
 def group_digits(value, decimals=0):
     try:
@@ -59,9 +64,11 @@ def group_digits(value, decimals=0):
     except ValueError:
         return ''
 
+
 KB = 1024.0
 MB = 1024 * KB
 GB = 1024 * MB
+
 
 def abbreviate_size(value):
     if value >= GB:
@@ -70,6 +77,7 @@ def abbreviate_size(value):
         return '{:.2f} MB'.format(value / MB)
     else:
         return '{:.2f} KB'.format(value / KB)
+
 
 class DateTimeObject(object):
     def __init__(self, when):
@@ -82,6 +90,7 @@ class DateTimeObject(object):
             return str(datetime.now().date())
         else:
             return 'UNKNOWN DATE'
+
 
 global_members = {
     'NOW': DateTimeObject('NOW'),
@@ -102,6 +111,7 @@ included_extensions = [
     'jinja2.ext.with_'
 ]
 
+
 def get_env():
     """Create a Jinja environment that includes our customizations"""
     jinja_env = Environment(loader=FileSystemLoader(template_root),
@@ -117,6 +127,7 @@ def get_env():
 
     return jinja_env
 
+
 class SkipTemplateError(Exception):
     """Exception to be raised when we need to skip the rendering of a template.
 
@@ -126,11 +137,14 @@ class SkipTemplateError(Exception):
         self.content_type = content_type
         self.message = message
 
+
 class TemplateAccessError(Exception):
     pass
 
+
 class InterruptedError(Exception):
     pass
+
 
 # This is a decorator for functions that use templates. Simplifies some use cases,
 # making it easy to return from the function at any point without having to care

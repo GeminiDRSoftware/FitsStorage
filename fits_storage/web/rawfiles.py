@@ -1,22 +1,15 @@
 """
 This module contains the calibrations html generator function.
 """
-import datetime
-from gemini_obs_db import sessionfactory
-from .selection import sayselection, queryselection, openquery
-from gemini_calmgr.cal import get_cal_object
-from ..fits_storage_config import fits_servername, fits_system_status, use_as_archive
 
-from gemini_obs_db.header import Header
-from gemini_obs_db.diskfile import DiskFile
-from gemini_obs_db.file import File
-from gemini_obs_db.provenance import Provenance
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.provenance import Provenance
 
 from ..utils.web import get_context
 
 from . import templating
 
-from sqlalchemy import join, desc, or_
+from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 
 

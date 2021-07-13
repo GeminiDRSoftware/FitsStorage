@@ -5,7 +5,6 @@ import os
 import sys
 import mimetypes
 
-from gemini_obs_db.utils.gemini_metadata_utils import gemini_date
 from pprint import pformat
 
 from fits_storage.utils.web import get_context, Return
@@ -24,7 +23,7 @@ from fits_storage.web.xml_tape import xmltape
 from fits_storage.web.progsobserved import progsobserved
 from fits_storage.web.gmoscal import gmoscal_html, gmoscal_json
 from fits_storage.web.notification import notification, import_odb_notifications
-from fits_storage.web.calmgr import calmgr, xmlcalmgr, jsoncalmgr
+from fits_storage.web.calmgr import xmlcalmgr, jsoncalmgr
 from fits_storage.web.calibrations import calibrations
 from fits_storage.web.rawfiles import rawfiles
 from fits_storage.web.upload_file import upload_file
@@ -50,8 +49,6 @@ from fits_storage.web.program import program_info, program_info_json
 from fits_storage.web.logcomments import log_comments
 from fits_storage.web import miscfiles, miscfilesplus
 
-from gemini_obs_db import session_scope, NoResultFound
-from fits_storage.orm.usagelog import UsageLog
 from fits_storage.orm import NoResultFound
 
 from functools import partial

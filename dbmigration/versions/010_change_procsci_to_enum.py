@@ -1,7 +1,7 @@
 from sqlalchemy import *
 from migrate import *
 
-from gemini_obs_db.header import PROCSCI_ENUM
+from gemini_obs_db.orm.header import PROCSCI_ENUM
 
 
 def upgrade(migrate_engine):

@@ -7,7 +7,7 @@ import sys
 import time
 import traceback
 
-from gemini_obs_db import session_scope
+from gemini_obs_db.db import session_scope
 from fits_storage.orm.ingestqueue import IngestQueue
 
 from fits_storage.fits_storage_config import using_s3

@@ -1,4 +1,4 @@
-from gemini_obs_db.file import File
+from gemini_obs_db.orm.file import File
 
 
 def test_file():

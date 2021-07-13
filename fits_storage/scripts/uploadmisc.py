@@ -1,7 +1,6 @@
 import os
 from optparse import OptionParser
 
-import sys
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 

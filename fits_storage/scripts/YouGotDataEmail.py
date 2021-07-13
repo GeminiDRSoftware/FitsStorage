@@ -1,4 +1,5 @@
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.parse
 import sys
 import re
 import smtplib
@@ -7,11 +8,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from optparse import OptionParser
 
-from gemini_obs_db import session_scope
+from gemini_obs_db.db import session_scope
 from fits_storage.orm.notification import Notification
 from fits_storage.logger import logger, setdebug, setdemon
 
-from fits_storage.fits_storage_config import fits_servername, use_as_archive, smtp_server
+from fits_storage.fits_storage_config import fits_servername, smtp_server
 
 
 def get_and_fix_emails(emails):

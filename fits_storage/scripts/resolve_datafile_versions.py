@@ -33,6 +33,7 @@ from docopt import docopt
 
 from astropy.io import fits as pf
 
+import gemini_obs_db.db
 from fits_storage.orm.resolve_versions import Version
 from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile
 
@@ -192,7 +193,7 @@ if __name__ == "__main__":
     logger.info("*********    resolve_datafile_versions.py - starting up at %s" % datetime.datetime.now())
 
     # Get a session
-    with orm.session_scope() as session:
+    with gemini_obs_db.db.session_scope() as session:
         if arguments['scan']:
             idemp = not arguments['--noidemp']
             for srcdir in arguments['<directory>']:

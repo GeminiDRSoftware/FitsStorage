@@ -4,10 +4,10 @@ import re
 
 from gemini_obs_db.utils.gemini_metadata_utils import gemini_fitsfilename
 
-from gemini_obs_db.file import File
-from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.orm.file import File
+from gemini_obs_db.orm.diskfile import DiskFile
 from ..orm.diskfilereport import DiskFileReport
-from gemini_obs_db.header import Header
+from gemini_obs_db.orm.header import Header
 from ..orm.fulltextheader import FullTextHeader
 
 from ..utils.userprogram import canhave_coords

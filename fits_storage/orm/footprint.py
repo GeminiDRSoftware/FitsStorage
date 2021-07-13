@@ -1,7 +1,7 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 
-from gemini_obs_db import Base
+from gemini_obs_db.db import Base
 
 class Footprint(Base):
     """

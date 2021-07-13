@@ -1,23 +1,23 @@
 import pytest
 
-from gemini_obs_db.calcache import CalCache
+from gemini_obs_db.orm.calcache import CalCache
 from fits_storage.orm.curation import duplicate_present, present_not_canonical, duplicate_canonicals
-from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.orm.diskfile import DiskFile
 from fits_storage.orm.diskfilereport import DiskFileReport
 from gemini_obs_db.f2 import F2
-from gemini_obs_db.file import File
+from gemini_obs_db.orm.file import File
 import sqlalchemy.orm.exc as orm_exc
 import fits_storage.fits_storage_config as fsc
 from fits_storage.orm.footprint import Footprint
 from fits_storage.orm.fulltextheader import FullTextHeader
-from gemini_obs_db.gmos import Gmos
-from gemini_obs_db.gnirs import Gnirs
-from gemini_obs_db.gpi import Gpi
+from gemini_obs_db.orm.gmos import Gmos
+from gemini_obs_db.orm.gnirs import Gnirs
+from gemini_obs_db.orm.gpi import Gpi
 from gemini_obs_db.gsaoi import Gsaoi
-from gemini_obs_db.header import Header
+from gemini_obs_db.orm.header import Header
 from gemini_obs_db.michelle import Michelle
 from gemini_obs_db.nici import Nici
-from gemini_obs_db.nifs import Nifs
+from gemini_obs_db.orm.nifs import Nifs
 from gemini_obs_db.niri import Niri
 from tests.file_helper import ensure_file
 

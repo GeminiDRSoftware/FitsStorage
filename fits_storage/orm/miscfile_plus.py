@@ -4,8 +4,8 @@ from sqlalchemy import Column, ForeignKey, Table
 from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy.orm import relation, relationship
 
-from gemini_obs_db import Base, NoResultFound
-from gemini_obs_db.diskfile import DiskFile
+from gemini_obs_db.db import Base, NoResultFound
+from gemini_obs_db.orm.diskfile import DiskFile
 
 from ..fits_storage_config import using_s3, upload_staging_path
 from ..utils.web import get_context

@@ -7,7 +7,7 @@ from sqlalchemy import Column, ForeignKey, Text
 from sqlalchemy import Integer, Boolean, DateTime
 from sqlalchemy import desc
 
-from gemini_obs_db import Base
+from gemini_obs_db.db import Base
 
 
 class CalCacheQueue(Base):

@@ -3,9 +3,9 @@ from ..orm import NoResultFound, MultipleResultsFound
 from ..fits_storage_config import using_s3, fits_open_result_limit, fits_closed_result_limit
 
 from gemini_obs_db.utils.gemini_metadata_utils import gemini_fitsfilename
-from gemini_obs_db.file import File
-from gemini_obs_db.diskfile import DiskFile
-from gemini_obs_db.header import Header
+from gemini_obs_db.orm.file import File
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.header import Header
 from ..orm.obslog import Obslog
 from ..orm.downloadlog import DownloadLog
 from ..orm.filedownloadlog import FileDownloadLog
@@ -13,13 +13,13 @@ from ..orm.miscfile import MiscFile
 
 from ..utils.web import get_context, Return, with_content_type
 
-from .selection import getselection, openquery, selection_to_URL
+from .selection import openquery, selection_to_URL
 from .summary import list_headers
 
 import time
 import datetime
 import bz2
-from io import StringIO, BytesIO
+from io import BytesIO
 import tarfile
 import os
 
