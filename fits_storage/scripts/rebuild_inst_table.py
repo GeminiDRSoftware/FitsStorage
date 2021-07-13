@@ -9,11 +9,11 @@ from gemini_obs_db.db import session_scope
 from gemini_obs_db.orm.diskfile import DiskFile
 from gemini_obs_db.orm.header import Header
 from gemini_obs_db.orm.gmos import Gmos
-from gemini_obs_db.niri import Niri
+from gemini_obs_db.orm.niri import Niri
 from gemini_obs_db.orm.gnirs import Gnirs
 from gemini_obs_db.orm.nifs import Nifs
-from gemini_obs_db.michelle import Michelle
-from gemini_obs_db.f2 import F2
+from gemini_obs_db.orm.michelle import Michelle
+from gemini_obs_db.orm.f2 import F2
 from fits_storage.logger import logger, setdebug, setdemon
 from optparse import OptionParser
 

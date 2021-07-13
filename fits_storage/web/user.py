@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 
 from sqlalchemy import desc
 
-from ..orm import NoResultFound
+from sqlalchemy.exc import NoResultFound
 from ..orm.user import User
 
 from ..utils.web import get_context, Return

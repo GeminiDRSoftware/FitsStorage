@@ -2,7 +2,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime
 from sqlalchemy.orm import relation
 
-from gemini_obs_db.db import Base, NoResultFound
+from gemini_obs_db.db import Base
 from gemini_obs_db.orm.diskfile import DiskFile
 
 from ..fits_storage_config import using_s3, upload_staging_path
@@ -144,7 +144,7 @@ class MiscFile(Base):
     __tablename__ = 'miscfile'
 
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer,ForeignKey('diskfile.id'), nullable=False, index=True)
+    diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False, index=True)
     diskfile    = relation(DiskFile, order_by=id)
     release     = Column(DateTime, nullable=False)
     description = Column(Text)

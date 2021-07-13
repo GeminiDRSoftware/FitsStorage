@@ -43,7 +43,7 @@ class Obslog(Base):
     __tablename__ = 'obslog'
 
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer,ForeignKey('diskfile.id'), nullable=False, index=True)
+    diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False, index=True)
     diskfile = relation(DiskFile, order_by=id)
     program_id = Column(Text, index=True)
     date = Column(Date, index=True)

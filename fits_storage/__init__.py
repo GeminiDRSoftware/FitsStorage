@@ -2,8 +2,7 @@ __version__ = '1.0.0.dev'
 
 
 from fits_storage import fits_storage_config
-from gemini_obs_db.db import db_config
-
+from gemini_obs_db import db_config
 
 # Setup the Gemini Observation DB to use our PostgreSQL database settings
 db_config.using_apache = True

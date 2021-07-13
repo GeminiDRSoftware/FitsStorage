@@ -1,7 +1,7 @@
 from ..orm.miscfile import MiscFile, normalize_diskname
 from gemini_obs_db.orm.diskfile import DiskFile
 from gemini_obs_db.orm.file import File
-from ..orm          import NoResultFound, MultipleResultsFound
+from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
 from . import templating
 
