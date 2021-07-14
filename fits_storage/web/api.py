@@ -7,7 +7,7 @@ from glob import iglob
 #import pyfits as pf
 from astropy.io import fits as pf
 
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound
 from gemini_obs_db.orm.header import Header
 from gemini_obs_db.orm.diskfile import DiskFile
 from ..orm.program import Program

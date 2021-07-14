@@ -3,7 +3,7 @@ This module contains the obslogs web summary code.
 """
 import datetime
 
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound
 from ..orm.obslog import Obslog
 from ..fits_storage_config import fits_open_result_limit, fits_closed_result_limit
 from .list_headers import list_obslogs, list_headers

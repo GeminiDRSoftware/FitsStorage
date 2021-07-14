@@ -1,4 +1,5 @@
-from sqlalchemy.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.exc import MultipleResultsFound
+from sqlalchemy.orm.exc import NoResultFound
 
 from ..fits_storage_config import using_s3, fits_open_result_limit, fits_closed_result_limit
 

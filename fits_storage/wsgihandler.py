@@ -49,7 +49,7 @@ from fits_storage.web.program import program_info, program_info_json
 from fits_storage.web.logcomments import log_comments
 from fits_storage.web import miscfiles, miscfilesplus
 
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound
 
 from functools import partial
 
