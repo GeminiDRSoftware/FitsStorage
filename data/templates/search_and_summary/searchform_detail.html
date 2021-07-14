@@ -66,15 +66,6 @@
     <span class="helpright">You can select raw data, reduced data, or processed calibrations. We only guarantee the presence of RAW data, reduced data and processed calibrations are mostly on a best efforts basis.</span></span>
     <br>
 
-    <label>Reduction:</label>
-    <select class="ddw" name="science_quality">
-        <option value="">Any</option>
-{{ generate_option_list(science_quality_options, updated.procmode) }}
-    </select>
-    <span class="help">(Science Quality, Quick Look)
-        <span class="helpleft">Select reduction of files: Any, Science Quality, or Quick Look.</span>
-    </span><br>
-
     <label>Publication:</label>
     <input id="publication" type="text" placeholder="(leave empty for Any)" name="publication" value="{{ updated.publication }}"/>
     <span class="help">(bibliography code of related publication)
@@ -114,7 +105,17 @@
         <span class="help">(help)
             <span class="helpright">Define the quality of results you wish to access - choose Any for all results, including Fail.</span>
         </span>
-        <br> 
+        <br>
+
+        Reduced data:
+        <select class="ddw" name="science_quality">
+            <option value="">Any</option>
+    {{ generate_option_list(science_quality_options, updated.procmode) }}
+        </select>
+        <span class="help">(Reduction status of reduced data results)
+            <span class="helpright">Reduced data in the archive can have different levels of processing. Select here the processing status for any reduced data files in your results.</span>
+        </span><br>
+
         Filename Prefix:
         <input id="filepre" type="text" placeholder="(leave empty for Any)" name="filepre" value="{{ updated.filepre }}" />
 <span class="help">(help)
