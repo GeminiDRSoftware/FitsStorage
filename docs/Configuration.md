@@ -1,7 +1,7 @@
 ## Configuration
 
 Configuration of the FITS Storage server is evolving and is currently a multi-tiered approach.
-The configuration is driven by the `fits_storage/fits_storage_config.py` file.  Most of the
+The configuration is driven by the `fits_storage/fits_storage_config.py` file.  Many of the
 settings in this file are hardcoded and will be the same in any deployment.  For some, the
 configuration relies on a method called `lookup_config`.  With that method, the configuration
 uses the multi-tier approach.
@@ -17,8 +17,8 @@ the Docker images to tweak the container settings.
 
 Next, it looks for a file named `/etc/fiststorage.conf`.  This will look for a section called
 `[FitsStorge]` and read settings from there.  This file is built by ansible in the deploy and is 
-basically used so we can put the s3 related access keys outside of the source tree.  This file
-looks something like:
+basically used so we can put the s3 related access keys abd other secrets outside of the source
+tree.  This file looks something like:
 
 ```
 [FitsStorage]

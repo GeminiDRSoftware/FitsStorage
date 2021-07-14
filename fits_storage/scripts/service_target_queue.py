@@ -80,7 +80,7 @@ if __name__ == "__main__":
                             logger.info("--empty flag set, exiting")
                             break
                         else:
-                            logger.info("...Waiting")
+                            logger.debug("...Waiting")
                         time.sleep(5)
                     else:
 

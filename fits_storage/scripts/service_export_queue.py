@@ -103,7 +103,7 @@ if __name__ == "__main__":
                             logger.info("Nothing on queue and --empty flag set, exiting")
                             break
                         else:
-                            logger.info("Nothing on Queue... Waiting")
+                            logger.debug("Nothing on Queue... Waiting")
                         time.sleep(2)
 
                         # Mark any old failures for retry

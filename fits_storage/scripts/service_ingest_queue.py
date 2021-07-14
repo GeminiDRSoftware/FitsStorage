@@ -126,7 +126,7 @@ if __name__ == "__main__":
                             logger.info("Nothing on queue and --empty flag set, exiting")
                             break
                         else:
-                            logger.info("Nothing on queue... Waiting")
+                            logger.debug("Nothing on queue... Waiting")
                         time.sleep(2)
                     else:
                         # Don't query queue length in fast_rebuild mode
