@@ -3,11 +3,11 @@ future
 requests
 scipy
 sphinx_rtd_theme
-SQLAlchemy==1.4.20
+SQLAlchemy==1.3.24
 sqlalchemy-migrate
 psycopg2-binary
 PyYAML
-jinja2
+Jinja2==3.0.1
 pyfits
 dateutils
 python-dateutil

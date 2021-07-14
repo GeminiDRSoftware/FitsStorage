@@ -4,6 +4,8 @@ This is the searchform module.
 """
 import os
 import json
+from collections import defaultdict
+
 import urllib.request, urllib.parse, urllib.error
 import urllib
 import contextlib
@@ -111,13 +113,17 @@ def searchform(things, orderby):
             things.append(selection[thing])
     title_suffix = ' '.join(things)
 
+    updated_input = updateform(selection)
+    updated = defaultdict(lambda: '')
+    for k, v in updated_input.items():
+        updated[k] = v
     template_args = dict(
         server_title = fits_servertitle,
         title_suffix = title_suffix,
         archive_style = use_as_archive,
         thing_string = thing_string,
         args_string  = args_string,
-        updated      = updateform(selection),
+        updated      = updated,  # updateform(selection),
         debugging    = False, # Enable this to show some debugging data
         selection    = selection,
         col_sel      = column_selection,
