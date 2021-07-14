@@ -3,7 +3,7 @@ future
 requests
 scipy
 sphinx_rtd_theme
-SQLAlchemy
+SQLAlchemy==1.4.20
 sqlalchemy-migrate
 psycopg2-binary
 PyYAML
