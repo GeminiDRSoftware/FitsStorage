@@ -1,6 +1,7 @@
 """
 This module handles the web 'user' functions - creating user accounts, login / logout, password reset etc
 """
+import json
 import urllib
 
 import requests
@@ -847,7 +848,23 @@ def needs_login(magic_cookies=(), only_magic=False, staffer=False, misc_upload=F
             elif not disabled_cookies:
                 for cookie, content in magic_cookies:
                     try:
-                        if content is not None and ctx.cookies[cookie] == content:
+                        # Helper function will return True if the cookie matches the value
+                        # or, if the value is a json list, we can match any value (makes value migration easier)
+                        def cookie_match(ck, check):
+                            if ck == check:
+                                return True
+                            try:
+                                checks = json.loads(check)
+                                if checks is not None and isinstance(checks, list):
+                                    for chk in checks:
+                                        if ck == chk:
+                                            return True
+                            except:
+                                # ok, was not a json list
+                                pass
+                            return False
+
+                        if content is not None and cookie_match(ctx.cookies[cookie], content):  # ctx.cookies[cookie] == content:
                             logging.debug("Saw magic cookie")
                             got_magic = True
                             break
