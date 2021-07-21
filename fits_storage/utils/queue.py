@@ -77,7 +77,7 @@ def pop_queue(queue_class, session, logger, fast_rebuild=False):
                 qelement = queue_class.find_not_in_progress(session).with_for_update(of=queue_class, nowait=True).first()
                 try:
                     # OK, we got a viable item, set it to inprogress and return it.
-                    logger.debug("Popped id %d from %s", qelement.id, tname)
+                    logger.debug(f"Popped id {qelement.id} from {tname}")
                     # Set this entry to in progres and flush to the DB.
                     qelement.inprogress = True
                     session.flush()
@@ -176,7 +176,7 @@ def add_error(queue_class, obj, exc_type, exc_value, tb, session):
         text.extend(format_tb(tb))
     text.extend([x.rstrip() for x in  traceback.format_exception_only(exc_type, exc_value)])
 
-    error = QueueError(obj.filename, obj.path, queue, '\n'.join(text))
+    error = QueueError(obj.filename, getattr(obj, 'path', ''), queue, '\n'.join(text))
     session.add(error)
     session.flush()
 

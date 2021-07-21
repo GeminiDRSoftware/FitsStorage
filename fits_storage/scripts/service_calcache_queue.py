@@ -91,7 +91,6 @@ if __name__ == "__main__":
                         try:
                             # Do the associations and put them in the CalCache table
                             cache_associations(session, ccq.obs_hid)
-
                         except:
                             logger.info("Problem Associating Calibrations for Cache - Rolling back")
                             logger.error("Exception processing obs_hid %d: %s : %s... %s" % (ccq.obs_hid, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2])))
