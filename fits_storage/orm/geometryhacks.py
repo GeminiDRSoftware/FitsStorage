@@ -4,6 +4,8 @@ for simple geometry types in sqlalchemy. This could be replaced with a more accu
 sysyem using postGIS to do the co-ordinate transforms properly in the future.
 
 """
+import sys
+import traceback
 
 from gemini_obs_db.orm.header import Header
 
@@ -60,11 +62,15 @@ def do_std_obs(session, header_id):
     header_id : int
         ID of corresponding header for the footprint
     """
-    sql = "insert into photstandardobs (select nextval('photstandardobs_id_seq') as id, photstandard.id AS photstandard_id, footprint.id AS footprint_id from photstandard, footprint where photstandard.coords @ footprint.area and footprint.header_id=%d)" % header_id
-    result = session.execute(sql)
-    session.commit()
-
-    if result.rowcount:
-        header = session.query(Header).get(header_id)
-        header.phot_standard = True
+    try:
+        sql = "insert into photstandardobs (select nextval('photstandardobs_id_seq') as id, photstandard.id AS photstandard_id, footprint.id AS footprint_id from photstandard, footprint where photstandard.coords @ footprint.area and footprint.header_id=%d)" % header_id
+        result = session.execute(sql)
         session.commit()
+
+        if result.rowcount:
+            header = session.query(Header).get(header_id)
+            header.phot_standard = True
+            session.commit()
+    except Exception:
+        traceback.print_exc(file=sys.stdout)
+        session.rollback()

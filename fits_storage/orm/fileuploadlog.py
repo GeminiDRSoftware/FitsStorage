@@ -17,7 +17,7 @@ class FileUploadLog(Base):
     __tablename__ = 'fileuploadlog'
 
     id = Column(Integer, primary_key=True)
-    usagelog_id = Column(Integer,ForeignKey('usagelog.id'), nullable=False, index=True)
+    usagelog_id = Column(Integer, ForeignKey(UsageLog.id), nullable=False, index=True)
     usagelog = relation(UsageLog, order_by=id)
 
     ut_transfer_start = Column(DateTime(timezone=False), index=True)

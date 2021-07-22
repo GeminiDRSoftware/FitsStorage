@@ -42,8 +42,8 @@ class PhotStandardObs(Base):
     __tablename__ = "photstandardobs"
 
     id = Column(Integer, primary_key=True)
-    photstandard_id = Column(Integer, ForeignKey('photstandard.id'), nullable=False, index=True)
-    footprint_id = Column(Integer, ForeignKey('footprint.id'), nullable=False, index=True)
+    photstandard_id = Column(Integer, ForeignKey(PhotStandard.id), nullable=False, index=True)
+    footprint_id = Column(Integer, ForeignKey(Footprint.id), nullable=False, index=True)
     photstandard = relation(PhotStandard, order_by=id)
     footprint = relation(Footprint, order_by=id)
 

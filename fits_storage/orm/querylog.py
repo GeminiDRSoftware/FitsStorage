@@ -13,7 +13,7 @@ class QueryLog(Base):
     __tablename__ = 'querylog'
 
     id = Column(Integer, primary_key=True)
-    usagelog_id = Column(Integer,ForeignKey('usagelog.id'),nullable=False,index=True)
+    usagelog_id = Column(Integer, ForeignKey(UsageLog.id), nullable=False, index=True)
     usagelog = relation(UsageLog, order_by=id)
 
     summarytype = Column(Text, index=True)

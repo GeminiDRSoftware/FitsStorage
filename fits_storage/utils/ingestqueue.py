@@ -340,7 +340,7 @@ class IngestQueueUtil(object):
             string = "".join(string)
             self.l.error("Error making diskfile entry for %s", diskfile.filename)
             self.l.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
-
+            raise
         finally:
             # really really try to clean up the cache file if we have one
             self.delete_file(diskfile, fullpath)

@@ -16,7 +16,7 @@ class UsageLog(Base):
 
     id = Column(Integer, primary_key=True)
     utdatetime = Column(DateTime(timezone=False), index=True)
-    user_id = Column(Integer, ForeignKey('archiveuser.id'), nullable=True, index=True)
+    user_id = Column(Integer, ForeignKey(User.id), nullable=True, index=True)
     ip_address = Column(Text, index=True)
     user_agent = Column(Text)
     referer = Column(Text)

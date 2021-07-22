@@ -3,6 +3,7 @@ from sqlalchemy import Integer, Text, Enum
 
 import os
 
+from gemini_obs_db.orm.diskfile import DiskFile
 from ..fits_verify import fitsverify
 
 from gemini_obs_db.db import Base
@@ -28,7 +29,7 @@ class DiskFileReport(Base):
     __tablename__ = 'diskfilereport'
 
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
+    diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False, index=True)
     fvreport = Column(Text)
     mdreport = Column(Text)
     mdstatus = Column(STATUS_ENUM, index=True)

@@ -2,6 +2,8 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 
 from gemini_obs_db.db import Base
+from gemini_obs_db.orm.header import Header
+
 
 class Footprint(Base):
     """
@@ -13,7 +15,7 @@ class Footprint(Base):
     __tablename__ = 'footprint'
 
     id = Column(Integer, primary_key=True)
-    header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+    header_id = Column(Integer, ForeignKey(Header.id), nullable=False, index=True)
     extension = Column(Text)
     # An area column of type polygon gets added using raw sql in CreateTables.py
 

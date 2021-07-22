@@ -14,7 +14,7 @@ class LogComments(Base):
     __tablename__ = 'logcomments'
 
     id = Column(Integer, primary_key=True)
-    header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+    header_id = Column(Integer, ForeignKey(Header.id), nullable=False, index=True)
     comment = Text()
 
     def __init__(self, header, comment=None):
