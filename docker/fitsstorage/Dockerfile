@@ -81,7 +81,7 @@ RUN mkdir -p /data/logs && \
     chmod oug+rw /data/logs
 
 # COPY STUFFS
-ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
+ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/FitsStorageDB
 #RUN cd /opt && git clone --branch vrefac/processed_standard https://github.com/GeminiDRSoftware/DRAGONS.git
 RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
 #RUN cd /opt && git clone --branch refac/populate_provenance_data https://github.com/GeminiDRSoftware/DRAGONS.git
