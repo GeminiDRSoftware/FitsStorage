@@ -151,12 +151,6 @@ def validate(fullpath):
     else:
         try:
             ad = astrodata.open(fullpath)
-            if 'TELESCOP' in ad.phu:
-                telescop = ad.phu['TELESCOP']
-                if telescop == 0:
-                    reason = 'Bad value %s for TELESCOP in file %s' % (telescop, fullpath)
-            else:
-                reason = 'TELESCOP keyword missing in file %s' % fullpath
         except:
             reason = "Unable to open file in astrodata, returning as invalid: %s" % fullpath
         if reason is None:

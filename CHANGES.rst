@@ -1,4 +1,4 @@
-2020-3 (unreleased)
+2021-1 (unreleased)
 ===================
 
 Updated Web Services
@@ -23,6 +23,7 @@ copy_from_dhs.py
 ^^^^^^^^^^^^^^^^
 
 - Batching email for validation errors to not spam when first starting up [#391]
+- No longer ignoring DHS files without a TELESCOP field in the header, these are legal
 
 problem_checker.py
 ^^^^^^^^^^^^^^^^^^
