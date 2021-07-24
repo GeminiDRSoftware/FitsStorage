@@ -7,7 +7,7 @@ import sys
 import time
 import traceback
 
-from fits_storage.orm import session_scope
+from gemini_obs_db.db import session_scope
 from fits_storage.orm.ingestqueue import IngestQueue
 
 from fits_storage.fits_storage_config import using_s3
@@ -126,7 +126,7 @@ if __name__ == "__main__":
                             logger.info("Nothing on queue and --empty flag set, exiting")
                             break
                         else:
-                            logger.info("Nothing on queue... Waiting")
+                            logger.debug("Nothing on queue... Waiting")
                         time.sleep(2)
                     else:
                         # Don't query queue length in fast_rebuild mode

@@ -4,9 +4,17 @@
       - archive
     become: true
     tasks:
+      - name: (Scorpio Test) Ensure dataflow exists
+        file:
+          path: "{{ dataflow_path }}"
+          state: directory
+          mode: 'u+rwx,g+rwx,o+rx'
+          owner: fitsdata
+          group: fitsdata
+        when: "'arcdev' in inventory_hostname"
       - name: Check for dataflow folder
         stat:
-          path: {{ dataflow_path }}
+          path: "{{ dataflow_path }}"
         register: dataflow_folder
         when: not is_s3 and not ignore_dataflow
       - name: Fail if dataflow folder missing
@@ -28,16 +36,22 @@
 #          name:
 #            - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 #          state: present
-#        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+#        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8' and install_epel
 #      - name: Fail while I iterate
 #        fail:
 #          msg: "Exiting early"
+#      - name: Setup EPEL
+#        yum:
+#          name:
+#            - epel-release
+#        when: install_epel
       - name: install packages
         yum:
           name: 
             - openssl
             - postgresql
             - postgresql-server
+            - postgresql-devel
             - epel-release
             - gcc
             - gcc-c++
@@ -48,6 +62,8 @@
             - python3-pip
             - httpd
             - httpd-devel
+            - redhat-rpm-config
+            - make
           state: latest
       - name: install Repos for Sphinx (dnf-plugins)
 #        # shell: "dnf config-manager --enable PowerTools AppStream BaseOS *epel"
@@ -70,9 +86,9 @@
       - name: install Sphinx (have to pull direct from the mirror)
         yum:
           name:
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-sphinx-1.7.6-1.el8.noarch.rpm
+            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-sphinx-1.7.6-2.el8.noarch.rpm
             - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-sphinx-theme-alabaster-0.7.9-7.el8.noarch.rpm
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python-sphinx-locale-1.7.6-1.el8.noarch.rpm
+            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python-sphinx-locale-1.7.6-2.el8.noarch.rpm
             - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-mock-2.0.0-11.el8.noarch.rpm
             - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-packaging-16.8-9.el8.noarch.rpm
             - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-imagesize-1.0.0-2.el8.noarch.rpm
@@ -158,13 +174,35 @@
           name: apache
           groups: fitsdata
           append: yes
-      - name: Ensure FitsStorage repo folder is available and permissioned
+      - name: Ensure FitsStorage/DB/GCM repo folders are available and permissioned
         file:
-          path: '/opt/FitsStorage'
+          path: '{{item}}'
           state: directory
           mode: 'u+rwx,g+rwx,o+rx'
           owner: fitsdata
           group: fitsdata
+        with_items:
+          - ["/opt/FitsStorageDB", "/opt/GeminiCalMgr", "/opt/FitsStorage"]
+      - name: Checkout FitsStorageDB into /opt
+        become: true
+        become_user: fitsdata
+        git:
+          repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git"
+          version: master
+          dest: /opt/FitsStorageDB
+          accept_hostkey: yes
+        when: not is_aws
+        register: checkedout_fitsstoragedb
+      - name: Checkout GeminiCalMgr into /opt
+        become: true
+        become_user: fitsdata
+        git:
+          repo: "git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git"
+          version: master
+          dest: /opt/GeminiCalMgr
+          accept_hostkey: yes
+        when: not is_aws
+        register: checkedout_geminicalmgr
       - name: Checkout FitsStorage into /opt
         become: true
         become_user: fitsdata
@@ -175,6 +213,35 @@
           accept_hostkey: yes
         when: not is_aws
         notify: restart services
+      - name: Rsync FitsStorageDB into /opt (AWS)
+        become: false
+        local_action:
+          module: shell
+          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../FitsStorageDB fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/FitsStorageDB/
+        when: is_aws
+        notify: restart services
+        register: checkedout_fitsstoragedb
+      - name: Rsync GeminiCalMgr into /opt (AWS)
+        become: false
+        local_action:
+          module: shell
+          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../GeminiCalMgr fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/GeminiCalMgr/
+        when: is_aws
+        register: checkedout_geminicalmgr
+      - name: Install FitsStorageDB
+        become: true
+        command: bash -c "python3 setup.py install"
+        args:
+          chdir: /opt/FitsStorageDB
+        when: checkedout_fitsstoragedb
+        notify: restart services
+      - name: Install GeminiCalMgr
+        become: true
+        command: bash -c "python3 setup.py install"
+        args:
+          chdir: /opt/GeminiCalMgr
+        when: checkedout_geminicalmgr
+        notify: restart services
       - name: Rsync FitsStorage into /opt (AWS)
         become: false
         local_action: 
@@ -182,16 +249,32 @@
           _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../.. fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/FitsStorage/
         when: is_aws
         notify: restart services
+      - name: Setup AWS config folder for localstack
+        file:
+          path: /usr/share/httpd/.aws
+          state: directory
+          mode: u+rwx,g+rwx,o+rwx
+          owner: apache
+          group: apache
+        become: true
+      - name: Setup aws config file for localstack
+        copy:
+          src: ../../otherfiles/dot_aws_config_for_miscfilesplus_localstack
+          dest: ~apache/.aws/config
+          owner: apache
+      - name: install psycopg2 binary (so we don't have to compile it) (CentOS 7)
+        command: bash -c "python -m pip install psycopg2-binary==2.8.4"
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+      - name: install psycopg2 binary (so we don't have to compile it) (CentOS 8)
+        command: bash -c "pip3 install psycopg2-binary==2.9.1"
+        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
       - name: install python packages
-        command: bash -c "cd /opt/FitsStorage && python3 -m pip install -r requirements.txt"
+        command: bash -c "cd /opt/FitsStorage && pip3 install -r requirements.txt --upgrade"
       - name: install pip for python2 if on CentOS 7
         yum:
           name: 
             - python-pip
           state: latest
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
-      - name: install python packages
-        command: bash -c "python -m pip install psycopg2-binary==2.8.4"
         when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
       - name: install imexam for DRAGONS (Centos 8)
         command: bash -c "python3 -m pip install imexam specutils"
@@ -259,6 +342,36 @@
         args:
           chdir: /opt/FitsStorage/sphinx
         environment:
+          - PYTHONPATH: "/opt/GeminiCalMgr:/opt/FitsStorageDB:/opt/FitsStorage:/opt/DRAGONS"
+          - SPHINXOPTS: "{{ sphinx_opts }}"
+        when: build_sphinx
+      - name: Build FitsStorageDB Sphinx documentation (hbffits-lv4 only)
+        become: true
+        become_user: fitsdata
+        command: "env PATH=/usr/local/bin:$PATH make clean html"
+        args:
+          chdir: /opt/FitsStorageDB/sphinx
+        environment:
+          - PYTHONPATH: "/opt/GeminiCalMgr:/opt/FitsStorageDB:/opt/FitsStorage:/opt/DRAGONS"
+          - SPHINXOPTS: "{{ sphinx_opts }}"
+        when: build_sphinx
+      - name: Build GeminiCalMgr Sphinx documentation (hbffits-lv4 only)
+        become: true
+        become_user: fitsdata
+        command: "env PATH=/usr/local/bin:$PATH make clean html"
+        args:
+          chdir: /opt/GeminiCalMgr/sphinx
+        environment:
+          - PYTHONPATH: "/opt/GeminiCalMgr:/opt/FitsStorageDB:/opt/FitsStorage:/opt/DRAGONS"
+          - SPHINXOPTS: "{{ sphinx_opts }}"
+        when: build_sphinx
+      - name: Build Sphinx documentation (hbffits-lv4 only)
+        become: true
+        become_user: fitsdata
+        command: "env PATH=/usr/local/bin:$PATH make clean html"
+        args:
+          chdir: /opt/FitsStorage/sphinx
+        environment:
           - PYTHONPATH: "/opt/FitsStorage:/opt/DRAGONS"
           - SPHINXOPTS: "{{ sphinx_opts }}"
         when: build_sphinx
@@ -280,6 +393,10 @@
           regex: Environment=PGDATA
           create: yes
         register: postgresql_configured
+# onsite doesn't seem to like this, needed it for arcdev - TODO conditional?
+#      - name: Configure SELinux for PostgresSQL
+#        command: chcon -R -t postgresql_db_t  /data/pgsql_data
+#        when: postgresql_configured
       - name: Reload System Daemons
         command: systemctl daemon-reload
         when: postgresql_configured.changed or postgresql_service_installed.changed
@@ -553,84 +670,34 @@
         when: is_ops and is_chile
       - name: Install fitsstorage config
         copy:
-          src: ../../otherfiles/fitsstorage.conf
+          src: ../../../FitsStorageConfig/configs/{{ inventory_hostname_short }}_fitsstorage.conf
           dest: /etc/fitsstorage.conf
         register: fitsstorageconf
-        when: is_archive
         notify: restart services
-      - name: Use as archive
-        lineinfile:
-          path: /etc/fitsstorage.conf
-          line: use_as_archive = {{ use_as_archive }}
-          regex: use_as_archive
-          create: yes
-        when: fitsstorageconf.changed
-      - name: Set using_s3
-        lineinfile:
-          path: /etc/fitsstorage.conf
-          line: using_s3 = {{ using_s3 }}
-          regex: using_s3
-          create: yes
-        when: fitsstorageconf.changed
-      - name: Set s3_bucket_name
-        lineinfile:
-          path: /etc/fitsstorage.conf
-          line: s3_bucket_name = {{ s3_bucket_name }}
-          regex: s3_bucket_name
-          create: yes
-        when: fitsstorageconf.changed
-      - name: Set s3_backup_bucket_name
-        lineinfile:
-          path: /etc/fitsstorage.conf
-          line: s3_backup_bucket_name = {{ s3_backup_bucket_name }}
-          regex: s3_backup_bucket_name
-          create: yes
-        when: fitsstorageconf.changed
-      - name: Set s3_staging_area
-        lineinfile:
-          path: /etc/fitsstorage.conf
-          line: s3_staging_area = {{ s3_staging_area }}
-          regex: s3_staging_area
-          create: yes
-        when: fitsstorageconf.changed
-      - name: Set aws_access_key
-        lineinfile:
-          path: /etc/fitsstorage.conf
-          line: aws_access_key = {{ aws_access_key }}
-          regex: aws_access_key
-          create: yes
-        when: fitsstorageconf.changed
-      - name: Set aws_secret_key
-        lineinfile:
-          path: /etc/fitsstorage.conf
-          line: aws_secret_key = {{ aws_secret_key }}
-          regex: aws_secret_key
-          create: yes
-        when: fitsstorageconf.changed
       - name: Register Ingest service 1
         service: name=fits-service_ingest_queue1 state=started enabled=yes
-        when: install_ingest_services
+        when: enable_ingest_services
       - name: Register Ingest service 2
         service: name=fits-service_ingest_queue2 state=started enabled=yes
-        when: install_ingest_services
+        when: enable_ingest_services
       - name: Register Ingest service 3
         service: name=fits-service_ingest_queue3 state=started enabled=yes
-        when: enable_all_ingest and install_ingest_services
+        when: enable_all_ingest and enable_ingest_services
       - name: Register Ingest service 4
         service: name=fits-service_ingest_queue4 state=started enabled=yes
-        when: enable_all_ingest and install_ingest_services
+        when: enable_all_ingest and enable_ingest_services
       - name: Register Preview service 1
         service: name=fits-service_preview_queue1 state=started enabled=yes
-        when: is_archive
+        when: enable_preview
       - name: Register Preview service 2
         service: name=fits-service_preview_queue2 state=started enabled=yes
-        when: is_archive
+        when: enable_preview
       - name: Register Preview service 3
         service: name=fits-service_preview_queue3 state=started enabled=yes
-        when: is_archive
+        when: enable_preview
       - name: Register Preview service 4
         service: name=fits-service_preview_queue4 state=started enabled=yes
-        when: is_archive
+        when: enable_preview
       - name: Register Export Queue
         service: name=fits-service_export_queue1 state=started enabled=yes
         when: enable_export
@@ -672,7 +739,7 @@
           path: /opt/modwsgi-default
           state: directory
       - name: setup mod-wsgi
-        command: /usr/local/bin/mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  /opt/FitsStorage/fits_storage/wsgihandler.py
+        command: /usr/local/bin/mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  --proxy-mount-point /rest http://127.0.0.1:8090/rest /opt/FitsStorage/fits_storage/wsgihandler.py
         args:
           creates: /opt/modwsgi-default/default.wsgi
         register: mod_wsgi_setup
@@ -702,13 +769,19 @@
           src: ../../otherfiles/httpd-patched-centos8.conf
           dest: /opt/modwsgi-default/httpd.conf
         notify: restart services
-        when: not is_archive
+        when: not is_aws
       - name: (ARCHIVE/ARCDEV) Copy Mod-WSGI HTTPD config
         copy:
           src: ../../otherfiles/archive-httpd.conf
           dest: /opt/modwsgi-default/httpd.conf
         notify: restart services
-        when: is_archive
+        when: "'archive' in inventory_hostname"
+      - name: (ARCDEV) Copy Mod-WSGI Pre-SSL HTTPD config
+        copy:
+          src: ../../otherfiles/pressl-arcdev-httpd.conf
+          dest: /opt/modwsgi-default/httpd.conf
+        notify: restart services
+        when: "'arcdev' in inventory_hostname"
       - name: Set WSGI entry point
         lineinfile:
           path: /opt/modwsgi-default/handler.wsgi
@@ -725,7 +798,9 @@
       - name: Install CertBot and associated
         yum:
           name: 
-            - certbot python3-certbit-apache mod_ssl
+            - certbot 
+            - python3-certbot-apache
+            - mod_ssl
           state: latest
         when: enable_certbot
       - name: (ARCDEV) Setup Let's Encrypt
@@ -733,6 +808,12 @@
         args:
           creates: /etc/letsencrypt
         notify: restart fits-httpd
+        when: "'arcdev' in inventory_hostname"
+      - name: (ARCDEV) Copy Mod-WSGI HTTPD config
+        copy:
+          src: ../../otherfiles/arcdev-httpd.conf
+          dest: /opt/modwsgi-default/httpd.conf
+        notify: restart services
         when: "'arcdev' in inventory_hostname"
 #      - name: (ARCHIVE) Setup Let's Encrypt
 #        command: certbot certonly --webroot -w /opt/modwsgi-default/htdocs/ -d archive.gemini.edu
@@ -744,7 +825,7 @@
         service: name=fits-httpd enabled=yes
       - name: Start API service on boot
         service: name=fits-api-backend enabled=yes
-# TODO diskspace script references mko folder, causing mount from Chile - fix thena dd this back in
+# TODO diskspace script references mko folder, causing mount from Chile - fix then add this back in
 #      - name: Copy diskspace script
 #        copy:
 #          src: ../../otherfiles/diskspace.py
@@ -792,9 +873,11 @@
       - name: restart ingest1
         service: name=fits-service_ingest_queue1 state=restarted
         listen: "restart services"
+        when: enable_ingest_services
       - name: restart ingest2
         service: name=fits-service_ingest_queue2 state=restarted
         listen: "restart services"
+        when: enable_ingest_services
       - name: restart ingest3
         service: name=fits-service_ingest_queue3 state=restarted
         listen: "restart services"

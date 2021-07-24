@@ -1,28 +1,24 @@
 import os
 import fcntl
-import json
 
 from time import strptime
 from glob import iglob
-from time import sleep
 
 #import pyfits as pf
 from astropy.io import fits as pf
 
-from ..orm import NoResultFound
-from ..orm.file import File
-from ..orm.header import Header
-from ..orm.diskfile import DiskFile
+from sqlalchemy.orm.exc import NoResultFound
+from gemini_obs_db.orm.header import Header
+from gemini_obs_db.orm.diskfile import DiskFile
 from ..orm.program import Program
 from ..orm.programpublication import ProgramPublication
 from ..orm.publication import Publication
 from ..orm.obslog_comment import ObslogComment
 
-from ..utils.fitseditor import compare_cards, modify_multiple_cards
 from ..utils.ingestqueue import IngestQueueUtil, IngestError
 from ..utils.api import ApiProxy, ApiProxyError, NewCardsIncluded
 from ..utils.null_logger import EmptyLogger
-from ..utils.web import get_context, Return
+from ..utils.web import get_context
 
 from .user import needs_login
 
@@ -30,8 +26,6 @@ from ..fits_storage_config import storage_root
 from ..fits_storage_config import magic_api_cookie, api_backend_location
 
 from sqlalchemy import desc
-
-from contextlib import contextmanager
 
 
 class RequestError(Exception):

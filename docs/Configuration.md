@@ -1,7 +1,7 @@
 ## Configuration
 
 Configuration of the FITS Storage server is evolving and is currently a multi-tiered approach.
-The configuration is driven by the `fits_storage/fits_storage_config.py` file.  Most of the
+The configuration is driven by the `fits_storage/fits_storage_config.py` file.  Many of the
 settings in this file are hardcoded and will be the same in any deployment.  For some, the
 configuration relies on a method called `lookup_config`.  With that method, the configuration
 uses the multi-tier approach.
@@ -17,8 +17,8 @@ the Docker images to tweak the container settings.
 
 Next, it looks for a file named `/etc/fiststorage.conf`.  This will look for a section called
 `[FitsStorge]` and read settings from there.  This file is built by ansible in the deploy and is 
-basically used so we can put the s3 related access keys outside of the source tree.  This file
-looks something like:
+basically used so we can put the s3 related access keys abd other secrets outside of the source
+tree.  This file looks something like:
 
 ```
 [FitsStorage]
@@ -30,25 +30,11 @@ aws_access_key = the access key
 aws_secret_key = the secret key
 ```
 
-### Host-specific Settings
+You can override the file it uses by setting the environment variable `FITSSTORAGE_CONFIG_FILE` to
+the path to this config file.
 
-If neither of those has the setting we are looking for, it will fall back to a dictionary
-of host-specific values defined at the top of the file.  This allows us to do things like
-change the displayed title for a specific host.  These settings at the top of the file 
-look something like:
-
-```
-_host_based_configs = {
-    "hbffits-lv4": {
-        'USE_AS_ARCHIVE': 'False',
-        'EXPORT_DESTINATIONS': '',
-        'PUBDB_REMOTE': 'https://localhost/ingest_publications',
-        'BLOCKED_URLS': '',
-        'FITS_SERVERTITLE': 'TEST On-site FitsServer',
-        'FITS_SYSTEM_STATUS': 'development'
-    },
-    ...
-```
+Files for various Gemini hosts are stored separately in the `FitsStorageConfig` project on the
+Gemini gitlab.
 
 ### Defaults
 

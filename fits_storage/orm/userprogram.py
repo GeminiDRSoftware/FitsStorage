@@ -1,7 +1,8 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
 
-from . import Base
+from fits_storage.orm.user import User
+from gemini_obs_db.db import Base
 
 
 class UserProgram(Base):
@@ -16,7 +17,7 @@ class UserProgram(Base):
     __tablename__ = 'userprogram'
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('archiveuser.id'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey(User.id), nullable=False, index=True)
     program_id = Column(Text, nullable=True, index=True)
     observation_id = Column(Text, nullable=True, index=True)
     filename = Column(Text, nullable=True, index=True)

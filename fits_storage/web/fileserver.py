@@ -1,11 +1,11 @@
-from ..orm import NoResultFound, MultipleResultsFound
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from ..fits_storage_config import using_s3, fits_open_result_limit, fits_closed_result_limit
 
-from ..gemini_metadata_utils import gemini_fitsfilename
-from ..orm.file import File
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_fitsfilename
+from gemini_obs_db.orm.file import File
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.header import Header
 from ..orm.obslog import Obslog
 from ..orm.downloadlog import DownloadLog
 from ..orm.filedownloadlog import FileDownloadLog
@@ -13,22 +13,22 @@ from ..orm.miscfile import MiscFile
 
 from ..utils.web import get_context, Return, with_content_type
 
-from .selection import getselection, openquery, selection_to_URL
+from .selection import openquery, selection_to_URL
 from .summary import list_headers
 
 import time
 import datetime
 import bz2
-from io import StringIO, BytesIO
+from io import BytesIO
 import tarfile
 import os
 
 # We assume that servers used as archive use a calibraiton association cache table
 from ..fits_storage_config import use_as_archive
 if use_as_archive:
-    from ..cal.associate_calibrations import associate_cals_from_cache as associate_cals
+    from gemini_calmgr.cal.associate_calibrations import associate_cals_from_cache as associate_cals
 else:
-    from ..cal.associate_calibrations import associate_cals
+    from gemini_calmgr.cal.associate_calibrations import associate_cals
 
 if using_s3:
     from ..utils.aws_s3 import get_helper
@@ -74,7 +74,7 @@ You can verify file integrity by running 'md5sum -c md5sums.txt'.
 """
 
 readme_associated = """\
-Note that this download was from an assoicated calibrations page -
+Note that this download was from an associated calibrations page -
 it only contains the calibration files that are associated with the science query.
 
 """

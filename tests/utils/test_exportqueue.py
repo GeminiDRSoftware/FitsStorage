@@ -9,20 +9,15 @@ import urllib
 
 from datetime import datetime, timedelta
 
-import pytest
-
 import fits_storage
-from fits_storage import fits_storage_config
 from fits_storage.orm import sessionfactory
-from fits_storage.orm.diskfile import DiskFile
+from gemini_obs_db.orm.diskfile import DiskFile
 from fits_storage.orm.exportqueue import ExportQueue
-from fits_storage.orm.file import File
+from gemini_obs_db.orm.file import File
 from fits_storage.utils.exportqueue import ExportQueueUtil, get_destination_data_md5
-from fits_storage.utils.previewqueue import PreviewQueueUtil
 from fits_storage.utils.null_logger import EmptyLogger
 from fits_storage.utils import queue
 
-from tests.file_helper import ensure_file
 from tests.log_helper import DummyLogger
 
 

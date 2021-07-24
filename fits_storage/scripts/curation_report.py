@@ -3,8 +3,7 @@ This module retrieves and prints out the desired values from the list created in
 orm.curation.py
 """
 
-from fits_storage.orm import session_scope
-from fits_storage.orm.header import Header
+from gemini_obs_db.db import session_scope
 from fits_storage.orm.curation import duplicate_canonicals, duplicate_present, present_not_canonical
 from optparse import OptionParser
 

@@ -66,15 +66,6 @@
     <span class="helpright">You can select raw data, reduced data, or processed calibrations. We only guarantee the presence of RAW data, reduced data and processed calibrations are mostly on a best efforts basis.</span></span>
     <br>
 
-    <label>Science Quality:</label>
-    <select class="ddw" name="science_quality">
-        <option value="">Any</option>
-{{ generate_option_list(science_quality_options, updated.procmode) }}
-    </select>
-    <span class="help">(Science Quality, Quick Look)
-        <span class="helpleft">Select science quality of files: Any, Science Quality, or Quick Look.</span>
-    </span><br>
-
     <label>Publication:</label>
     <input id="publication" type="text" placeholder="(leave empty for Any)" name="publication" value="{{ updated.publication }}"/>
     <span class="help">(bibliography code of related publication)
@@ -114,7 +105,17 @@
         <span class="help">(help)
             <span class="helpright">Define the quality of results you wish to access - choose Any for all results, including Fail.</span>
         </span>
-        <br> 
+        <br>
+
+        Reduced data:
+        <select class="ddw" name="science_quality">
+            <option value="">Any</option>
+    {{ generate_option_list(science_quality_options, updated.procmode) }}
+        </select>
+        <span class="help">(Reduction status of reduced data results)
+            <span class="helpright">Reduced data in the archive can have different levels of processing. Select here the processing status for any reduced data files in your results.</span>
+        </span><br>
+
         Filename Prefix:
         <input id="filepre" type="text" placeholder="(leave empty for Any)" name="filepre" value="{{ updated.filepre }}" />
 <span class="help">(help)
@@ -206,24 +207,30 @@
 {%- if col_sel is defined %}
 <div class="next" id="column_selection" style="display:none">
 <table class="fullwidth">
-  <tr><td>{{ column_sel('ObsClass', 'col_cls', std=True) }}
-      <td>{{ column_sel('ObsType', 'col_typ', std=True) }}
-      <td>{{ column_sel('Object Name', 'col_obj', std=True) }}
-      <td>{{ column_sel('WaveBand', 'col_wvb', std=True) }}
-      <td>{{ column_sel('Filter', 'col_flt') }}
-      <td>{{ column_sel('FP Mask', 'col_fpm') }}
-  <tr><td>{{ column_sel('Disperser', 'col_dis') }}
-      <td>{{ column_sel('Binning', 'col_bin') }}
-      <td>{{ column_sel('ExpTime', 'col_exp', std=True) }}
-      <td>{{ column_sel('Airmass', 'col_air') }}
-      <td>{{ column_sel('RA', 'col_ra') }}
-      <td>{{ column_sel('Dec', 'col_dec') }}
-  <tr><td>{{ column_sel('Wavelength', 'col_cwl') }}
-      <td>{{ column_sel('QA State', 'col_qas', std=True) }}
-      <td>{{ column_sel('Raw IQ', 'col_riq') }}
-      <td>{{ column_sel('Raw CC', 'col_rcc') }}
-      <td>{{ column_sel('Raw WV', 'col_rwv') }}
-      <td>{{ column_sel('Raw BG', 'col_rbg') }}
+    <tr>
+        <td>{{ column_sel('ObsClass', 'col_cls', std=True) }}</td>
+        <td>{{ column_sel('ObsType', 'col_typ', std=True) }}</td>
+        <td>{{ column_sel('Object Name', 'col_obj', std=True) }}</td>
+        <td>{{ column_sel('WaveBand', 'col_wvb', std=True) }}</td>
+        <td>{{ column_sel('Filter', 'col_flt') }}</td>
+    </tr><tr>
+        <td>{{ column_sel('FP Mask', 'col_fpm') }}</td>
+        <td>{{ column_sel('Disperser', 'col_dis') }}</td>
+        <td>{{ column_sel('Binning', 'col_bin') }}</td>
+        <td>{{ column_sel('ExpTime', 'col_exp', std=True) }}</td>
+        <td>{{ column_sel('Airmass', 'col_air') }}</td>
+    </tr><tr>
+        <td>{{ column_sel('RA', 'col_ra') }}</td>
+        <td>{{ column_sel('Dec', 'col_dec') }}</td>
+        <td>{{ column_sel('Wavelength', 'col_cwl') }}</td>
+        <td>{{ column_sel('Reduction', 'col_procmode') }}</td>
+        <td>{{ column_sel('QA State', 'col_qas', std=True) }}</td>
+    </tr><tr>
+        <td>{{ column_sel('Raw IQ', 'col_riq') }}</td>
+        <td>{{ column_sel('Raw CC', 'col_rcc') }}</td>
+        <td>{{ column_sel('Raw WV', 'col_rwv') }}</td>
+        <td>{{ column_sel('Raw BG', 'col_rbg') }}</td>
+    </tr>
 </table>
 </div>
 {%- endif %}

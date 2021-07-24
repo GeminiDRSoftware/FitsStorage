@@ -2,25 +2,25 @@
 This module provides various utility function used to manage the export queue
 """
 import os
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.error
+import urllib.parse
 import json
 import datetime
 import hashlib
 import bz2
-import functools
 import http.client
 import ssl
 
-from sqlalchemy import desc, join
+from sqlalchemy import join
 from sqlalchemy.orm import make_transient
-from sqlalchemy.orm.exc import ObjectDeletedError
 from sqlalchemy.exc import IntegrityError
 
 from ..fits_storage_config import storage_root, using_s3, export_bzip, export_upload_auth_cookie
 from . import queue
 
-from ..orm.file import File
-from ..orm.diskfile import DiskFile
+from gemini_obs_db.orm.file import File
+from gemini_obs_db.orm.diskfile import DiskFile
 from ..orm.exportqueue import ExportQueue
 
 from .. import apache_return_codes as apache
@@ -68,14 +68,26 @@ class ExportQueueUtil(object):
         return queue.pop_queue(ExportQueue, self.s, self.l, fast_rebuild=False)
 
     def set_error(self, trans, exc_type, exc_value, tb):
-        "Sets an error message to a transient object"
+        """
+        Sets an error message to a transient object
+        """
         queue.add_error(ExportQueue, trans, exc_type, exc_value, tb, self.s)
 
     def delete(self, trans):
-        "Deletes a transient object"
+        """
+        Deletes a transient object
+        """
         queue.delete_with_id(ExportQueue, trans.id, self.s)
 
     def set_last_failed(self, trans):
+        """
+        Set export to failed and update last failed timestamp.
+
+        Parameters
+        ----------
+        trans : :class:`~fits_storage.orm.exportqueue.ExportQueue`
+            queue item to set failed timestamp and flag on
+        """
         self.s.query(ExportQueue).get(trans.id).lastfailed = datetime.datetime.now()
         self.s.query(ExportQueue).get(trans.id).failed = True
         self.s.commit()
@@ -86,6 +98,20 @@ class ExportQueueUtil(object):
 
         Upon success, returns a transient object representing the queue entry. Otherwise,
         it returns None.
+
+        Parameters
+        ----------
+        filename : str
+            Name of file to add to queue
+        path : str
+            Path of file within the storage root
+        destination : str
+            URL of destination service to export to
+
+        Returns
+        -------
+        :class:`~fits_storage.orm.ExportQueue`
+            queue item if successful
         """
         self.l.info("Adding file %s to %s to exportqueue", filename, destination)
 

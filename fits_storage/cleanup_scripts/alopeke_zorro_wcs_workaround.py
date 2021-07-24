@@ -18,11 +18,11 @@ from datetime import datetime
 
 from sqlalchemy import or_
 
-from fits_storage.gemini_metadata_utils import ratodeg, dectodeg
+from gemini_obs_db.utils.gemini_metadata_utils import ratodeg, dectodeg
 from fits_storage.orm import session_scope
-from fits_storage.orm.diskfile import DiskFile
+from gemini_obs_db.orm.diskfile import DiskFile
 from fits_storage.orm.fulltextheader import FullTextHeader
-from fits_storage.orm.header import Header
+from gemini_obs_db.orm.header import Header
 
 
 def parse_value(line):

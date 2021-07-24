@@ -7,17 +7,17 @@ import simplejson as json
 
 from fits_storage.utils.api import WSGIError, BAD_REQUEST
 
-from ..orm.file import File
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
+from gemini_obs_db.orm.file import File
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.header import Header
 
 from .selection import queryselection, openquery
 
 from ..utils.web import get_context, Return
 
-from ..cal import get_cal_object
+from gemini_calmgr.cal import get_cal_object
 from ..fits_storage_config import storage_root, fits_servername
-from ..gemini_metadata_utils import cal_types
+from gemini_obs_db.utils.gemini_metadata_utils import cal_types
 
 from . import templating
 from .templating import SkipTemplateError

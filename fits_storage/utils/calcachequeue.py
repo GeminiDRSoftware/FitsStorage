@@ -1,34 +1,34 @@
-"""
-This module provides various utility functions to
-manage and service the calcache queue
-"""
-import os
-import datetime
-from sqlalchemy import desc
-from sqlalchemy.orm.exc import ObjectDeletedError
-from sqlalchemy.orm import make_transient
-import functools
+# This module provides various utility functions to
+# manage and service the calcache queue
 
-from ..orm.header import Header
-from ..orm.calcache import CalCache
+from gemini_obs_db.orm.header import Header
+from gemini_obs_db.orm.calcache import CalCache
 from ..orm.calcachequeue import CalCacheQueue
 
 from . import queue
 
-from ..cal import get_cal_object
-from ..cal.associate_calibrations import associate_cals
+from gemini_calmgr.cal import get_cal_object
+from gemini_calmgr.cal.associate_calibrations import associate_cals
+
 
 class CalCacheQueueUtil(object):
     """
     Helper class for working with the queue for creating CalCache records.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session
+        SQL Alchemy session to work in
+    logger : :class:`logger.Logger`
+        Logger for logging messages
     """
     def __init__(self, session, logger):
         """
-        Create a :class:`~CalCacheQueueUtil`
+        Create a :class:`CalCacheQueueUtil`
 
         Parameters
         ----------
-        session : :class:`sqlalchemy.orm.session.Session
+        session : :class:`~sqlalchemy.orm.Session
             SQL Alchemy session to work in
         logger : :class:`logger.Logger`
             Logger for logging messages
@@ -57,11 +57,15 @@ class CalCacheQueueUtil(object):
         return queue.pop_queue(CalCacheQueue, self.s, self.l, fast_rebuild)
 
     def set_error(self, trans, exc_type, exc_value, tb):
-        "Sets an error message to a transient object"
+        """
+        Sets an error message to a transient object
+        """
         queue.add_error(CalCacheQueue, trans, exc_type, exc_value, tb, self.s)
 
     def delete(self, trans):
-        "Deletes a transient object"
+        """
+        Deletes a transient object
+        """
         queue.delete_with_id(CalCacheQueue, trans.id, self.s)
 
 

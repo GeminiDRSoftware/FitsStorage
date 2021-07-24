@@ -2,7 +2,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, DateTime, Boolean
 from sqlalchemy.orm import relation
 
-from . import Base
+from gemini_obs_db.db import Base
 from .usagelog import UsageLog
 
 
@@ -14,7 +14,7 @@ class DownloadLog(Base):
     __tablename__ = 'downloadlog'
 
     id = Column(Integer, primary_key=True)
-    usagelog_id = Column(Integer, ForeignKey('usagelog.id'), nullable=False,
+    usagelog_id = Column(Integer, ForeignKey(UsageLog.id), nullable=False,
                          index=True)
     usagelog = relation(UsageLog, order_by=id)
 

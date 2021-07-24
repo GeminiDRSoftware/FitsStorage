@@ -11,21 +11,21 @@ from sqlalchemy import Date, Interval, String
 from sqlalchemy.orm import aliased
 
 from ..fits_storage_config import logreports_use_materialized_view
-from ..orm import pg_db
-from ..orm import Base
+from gemini_obs_db.db import pg_db
+from gemini_obs_db.db import Base
 from ..orm.usagelog import UsageLog
 from ..orm.querylog import QueryLog
 from ..orm.downloadlog import DownloadLog
 from ..orm.filedownloadlog import FileDownloadLog
 from ..orm.fileuploadlog import FileUploadLog
-from ..orm.diskfile import DiskFile
-from ..orm.header import Header
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.header import Header
 from ..orm.user import User
 
 from ..utils.query_utils import to_int, null_to_zero
 from ..utils.web import get_context, Return
 
-from ..gemini_metadata_utils import ONEDAY_OFFSET
+from gemini_obs_db.utils.gemini_metadata_utils import ONEDAY_OFFSET
 
 from .user import needs_login
 from .selection import getselection, queryselection, sayselection

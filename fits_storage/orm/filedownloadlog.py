@@ -4,9 +4,9 @@ from sqlalchemy.orm import relation
 
 import datetime
 
-from . import Base
+from gemini_obs_db.db import Base
 from .usagelog import UsageLog
-from .diskfile import DiskFile
+from gemini_obs_db.orm.diskfile import DiskFile
 
 
 class FileDownloadLog(Base):
@@ -16,7 +16,7 @@ class FileDownloadLog(Base):
     __tablename__ = 'filedownloadlog'
 
     id = Column(Integer, primary_key=True)
-    usagelog_id = Column(Integer,ForeignKey('usagelog.id'), nullable=False, index=True)
+    usagelog_id = Column(Integer,ForeignKey(UsageLog.id), nullable=False, index=True)
     usagelog = relation(UsageLog, order_by=id)
 
     # Don't reference the diskfile_id here - we want to be able to preserve

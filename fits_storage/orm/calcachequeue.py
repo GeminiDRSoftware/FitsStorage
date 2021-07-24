@@ -7,7 +7,8 @@ from sqlalchemy import Column, ForeignKey, Text
 from sqlalchemy import Integer, Boolean, DateTime
 from sqlalchemy import desc
 
-from . import Base
+from gemini_obs_db.db import Base
+from gemini_obs_db.orm.header import Header
 
 
 class CalCacheQueue(Base):
@@ -20,7 +21,7 @@ class CalCacheQueue(Base):
     __tablename__ = 'calcachequeue'
 
     id = Column(Integer, primary_key=True)
-    obs_hid = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+    obs_hid = Column(Integer, ForeignKey(Header.id), nullable=False, index=True)
     inprogress = Column(Boolean, index=True)
     failed = Column(Boolean)
     ut_datetime = Column(DateTime)
@@ -34,7 +35,7 @@ class CalCacheQueue(Base):
         """
         Find :class:`~CalCacheQueue` record that are not currently in progress.
 
-        This queries for any records that are not in progress, ordering them by the
+        This queries for any records that are not in progress or failed, ordering them by the
         sortkey.
 
         Returns
@@ -44,6 +45,7 @@ class CalCacheQueue(Base):
         """
         return session.query(CalCacheQueue)\
                     .filter(CalCacheQueue.inprogress == False)\
+                    .filter(CalCacheQueue.failed == False)\
                     .order_by(desc(CalCacheQueue.sortkey))
 
     # TODO remove tjhis

@@ -7,6 +7,7 @@ from . import templating
 
 from ..utils.web.adapter import get_context
 
+
 # We use these wrappers in order to trigger separate query for the
 # internal objects. This is done only to conserve memory, because
 # SQLAlchemy tends to hog a lot of it and we may end up being killed.
@@ -19,6 +20,7 @@ class QueryWrapper(object):
     def __iter__(self):
         for obj in self.q:
             yield self.W(obj)
+
 
 class TapeWrapper(object):
     def __init__(self, obj):
@@ -35,6 +37,7 @@ class TapeWrapper(object):
                     .order_by(TapeWrite.id))
         return QueryWrapper(q, TapeWriterWrapper)
 
+
 class TapeWriterWrapper(object):
     def __init__(self, obj):
         self.o = obj
@@ -45,6 +48,7 @@ class TapeWriterWrapper(object):
     @property
     def tapefiles(self):
         return get_context().session.query(TapeFile).filter(TapeFile.tapewrite_id == self.o.id)
+
 
 @templating.templated("tape.xml", content_type='text/xml', with_generator=True)
 def xmltape():

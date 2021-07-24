@@ -2,12 +2,12 @@
 
 import re
 
-from ..gemini_metadata_utils import gemini_fitsfilename
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_fitsfilename
 
-from ..orm.file import File
-from ..orm.diskfile import DiskFile
+from gemini_obs_db.orm.file import File
+from gemini_obs_db.orm.diskfile import DiskFile
 from ..orm.diskfilereport import DiskFileReport
-from ..orm.header import Header
+from gemini_obs_db.orm.header import Header
 from ..orm.fulltextheader import FullTextHeader
 
 from ..utils.userprogram import canhave_coords

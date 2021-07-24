@@ -1,8 +1,8 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text
-from .header import Header
+from gemini_obs_db.orm.header import Header
 
-from . import Base
+from gemini_obs_db.db import Base
 
 
 class LogComments(Base):
@@ -14,7 +14,7 @@ class LogComments(Base):
     __tablename__ = 'logcomments'
 
     id = Column(Integer, primary_key=True)
-    header_id = Column(Integer, ForeignKey('header.id'), nullable=False, index=True)
+    header_id = Column(Integer, ForeignKey(Header.id), nullable=False, index=True)
     comment = Text()
 
     def __init__(self, header, comment=None):

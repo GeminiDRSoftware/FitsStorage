@@ -1,19 +1,13 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import BigInteger, Integer, Text, Boolean, DateTime, String
+from sqlalchemy import Integer, Text, Boolean, DateTime, String
 from sqlalchemy.orm import relationship
 
-import os
 import datetime
 import bz2
 
-from fits_storage.orm.provenance import Provenance, ProvenanceHistory
 from ..utils.hashes import md5sum, md5sum_size_bz2
 
-from . import Base
-from .file import File
-from .preview import Preview
-
-from ..fits_storage_config import storage_root, z_staging_area
+from gemini_obs_db.db import Base
 
 from io import StringIO
 

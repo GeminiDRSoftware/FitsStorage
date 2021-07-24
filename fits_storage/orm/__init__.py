@@ -14,41 +14,6 @@ from contextlib import contextmanager
 
 from ..fits_storage_config import fits_database
 
-# This was to debug the number of open database sessions.
-#import logging
-#logging.basicConfig(filename='/data/autoingest/debug.log', level=logging.DEBUG)
-#logging.getLogger('sqlalchemy.pool').setLevel(logging.INFO)
-
-
-Base = declarative_base()
-
-# Create a database engine connection to the postgres database
-# and an sqlalchemy session to go with it
-if fits_database.startswith('sqlite'):
-    engine_args = {}
-else:
-    # pool args not valid for sqlite
-    from ..fits_storage_config import fits_database_pool_size, fits_database_max_overflow
-    engine_args = {'pool_size': fits_database_pool_size, 'max_overflow': fits_database_max_overflow}
-pg_db = create_engine(fits_database, **engine_args, echo=False)
-sessionfactory = sessionmaker(pg_db)
-
-@contextmanager
-def session_scope(no_rollback=False):
-    "Provide a transactional scope around a series of operations"
-
-    session = sessionfactory()
-    try:
-        yield session
-        session.commit()
-    except:
-        if not no_rollback:
-            session.rollback()
-        else:
-            session.commit()
-        raise
-    finally:
-        session.close()
 
 class StringLiteral(String):
     def literal_processor(self, dialect):
@@ -59,6 +24,7 @@ class StringLiteral(String):
             return super_processor(value)
         return process
 
+
 class LiteralDialect(postgresql.dialect):
     colspecs = {
         Date: StringLiteral,
@@ -66,8 +32,8 @@ class LiteralDialect(postgresql.dialect):
         NullType: StringLiteral
     }
 
+
 def compiled_statement(stmt):
     """Returns a compiled query using the PostgreSQL dialect. Useful for
        example to print the real query, when debugging"""
     return stmt.compile(dialect = LiteralDialect(), compile_kwargs={'literal_binds': True})
-

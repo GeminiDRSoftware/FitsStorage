@@ -7,7 +7,7 @@ import time
 import traceback
 import urllib.request, urllib.error, urllib.parse
 import ssl
-from fits_storage.orm import session_scope
+from gemini_obs_db.db import session_scope
 from fits_storage.orm.exportqueue import ExportQueue
 from fits_storage.utils.exportqueue import ExportQueueUtil
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
@@ -103,7 +103,7 @@ if __name__ == "__main__":
                             logger.info("Nothing on queue and --empty flag set, exiting")
                             break
                         else:
-                            logger.info("Nothing on Queue... Waiting")
+                            logger.debug("Nothing on Queue... Waiting")
                         time.sleep(2)
 
                         # Mark any old failures for retry

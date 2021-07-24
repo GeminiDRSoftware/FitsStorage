@@ -11,8 +11,9 @@ from sqlalchemy import desc, func
 
 from sqlalchemy.orm import relation, relationship
 
-from fits_storage.orm.diskfile import DiskFile
-from . import Base, pg_db, session_scope
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.db import Base
+from gemini_obs_db.db import pg_db, session_scope
 from ..utils.queue import sortkey_for_filename
 
 
@@ -56,12 +57,12 @@ class TargetPresence(Base):
 
     id = Column(Integer, primary_key=True)
 
-    diskfile = relation(DiskFile)
+    # diskfile = relation(DiskFile)
     target = relation(Target)
 
     target_name = Column(String(32), ForeignKey('target.name'), nullable=False, index=True)
-    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
-
+    diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False, index=True)
+    diskfile = relationship(DiskFile)
 
 class TargetsChecked(Base):
     """
@@ -80,7 +81,7 @@ class TargetsChecked(Base):
 
     diskfile = relation(DiskFile)
 
-    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, unique=True, index=True)
+    diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False, unique=True, index=True)
     date_checked = Column(DateTime, index=True)
 
 
@@ -97,7 +98,7 @@ class TargetQueue(Base):
 
     diskfile = relation(DiskFile)
 
-    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, index=True)
+    diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False, index=True)
     inprogress = Column(Boolean, index=True)
     failed = Column(Boolean)
     added = Column(DateTime)

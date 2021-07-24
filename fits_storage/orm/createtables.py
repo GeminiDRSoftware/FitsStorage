@@ -4,23 +4,24 @@ in the Fits Storage System.
 """
 import sqlalchemy
 
+from .miscfile_plus import MiscFileCollectionUsers, MiscFileCollection, MiscFileFolder, MiscFilePlus
 from ..fits_storage_config import using_apache, using_sqlite
-from . import pg_db
-from .file import File
-from .diskfile import DiskFile
+from gemini_obs_db.db import pg_db
+from gemini_obs_db.orm.file import File
+from gemini_obs_db.orm.diskfile import DiskFile
 from .diskfilereport import DiskFileReport
 from .fulltextheader import FullTextHeader
-from .header import Header
+from gemini_obs_db.orm.header import Header
 from .footprint import Footprint
-from .gmos import Gmos
-from .niri import Niri
-from .gnirs import Gnirs
-from .nifs import Nifs
-from .f2 import F2
-from .gpi import Gpi
-from .gsaoi import Gsaoi
-from .nici import Nici
-from .michelle import Michelle
+from gemini_obs_db.orm.gmos import Gmos
+from gemini_obs_db.orm.niri import Niri
+from gemini_obs_db.orm.gnirs import Gnirs
+from gemini_obs_db.orm.nifs import Nifs
+from gemini_obs_db.orm.f2 import F2
+from gemini_obs_db.orm.gpi import Gpi
+from gemini_obs_db.orm.gsaoi import Gsaoi
+from gemini_obs_db.orm.nici import Nici
+from gemini_obs_db.orm.michelle import Michelle
 from .ingestqueue import IngestQueue
 from .tapestuff import Tape, TapeWrite, TapeFile, TapeRead
 from .notification import Notification
@@ -35,9 +36,9 @@ from .querylog import QueryLog
 from .downloadlog import DownloadLog
 from .filedownloadlog import FileDownloadLog
 from .fileuploadlog import FileUploadLog
-from .calcache import CalCache
+from gemini_obs_db.orm.calcache import CalCache
 from .calcachequeue import CalCacheQueue
-from .preview import Preview
+from gemini_obs_db.orm.preview import Preview
 from .previewqueue import PreviewQueue
 from .obslog import Obslog
 from .miscfile import MiscFile
@@ -108,6 +109,10 @@ def create_tables(session):
     Program.metadata.create_all(bind=pg_db)
     Publication.metadata.create_all(bind=pg_db)
     ProgramPublication.metadata.create_all(bind=pg_db)
+    MiscFileCollectionUsers.create(bind=pg_db)
+    MiscFileCollection.metadata.create_all(bind=pg_db)
+    MiscFileFolder.metadata.create_all(bind=pg_db)
+    MiscFilePlus.metadata.create_all(bind=pg_db)
 
     init_target_tables(session, pg_db)
 

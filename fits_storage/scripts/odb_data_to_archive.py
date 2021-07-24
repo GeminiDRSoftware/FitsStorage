@@ -17,7 +17,7 @@ from xml.dom.minidom import parseString
 from fits_storage.utils import programs
 from fits_storage import fits_storage_config as fsc
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
-from fits_storage.gemini_metadata_utils import gemini_semester, previous_semester
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_semester, previous_semester
 
 from optparse import OptionParser
 
@@ -30,7 +30,7 @@ __version__ = "0.1"
 
 # ------------------------------------------------------------------------------
 # fits URLs
-prodfitsurl = 'https://archive.gemini.edu/ingest_programs'
+prodfitsurl = fsc.ingest_programs_url
 # ------------------------------------------------------------------------------
 
 def update_program_dbtable(url, pinfo):
@@ -128,6 +128,9 @@ def auto_semesters():
 # ------------------------------------------------------------------------------
 
 if __name__ == '__main__':
+    if prodfitsurl is None:
+        logger.error('No URL configured for updating programs, aborting.')
+        sys.exit(1)
     parser = OptionParser()
     parser.add_option("--debug", action="store_true", dest="debug", default=False, help="Increase log level to debug")
     parser.add_option("--demon", action="store_true", dest="demon", default=False, help="Run as a background demon, do not generate stdout")

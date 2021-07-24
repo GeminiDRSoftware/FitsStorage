@@ -4,18 +4,16 @@ manage and service the ingestqueue
 """
 import os
 import datetime
-from sqlalchemy import desc
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import ObjectDeletedError, NoResultFound
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import make_transient
 from time import sleep
-import functools
 import fcntl
 import dateutil.parser
 import sys
 import traceback
 
-from fits_storage.orm.provenance import ingest_provenance
+from gemini_obs_db.orm.provenance import ingest_provenance
 from ..orm.geometryhacks import add_footprint, do_std_obs
 
 #from ..fits_storage_config import storage_root, using_sqlite, using_s3, using_previews, defer_seconds, use_as_archive
@@ -25,28 +23,27 @@ from . import queue
 if fsc.using_previews:
     from .previewqueue import PreviewQueueUtil
 
-from ..orm.file import File
-from ..orm.diskfile import DiskFile
+from gemini_obs_db.orm.file import File
+from gemini_obs_db.orm.diskfile import DiskFile
 from ..orm.diskfilereport import DiskFileReport
 from ..orm.fulltextheader import FullTextHeader
-from ..orm.header import Header
+from gemini_obs_db.orm.header import Header
 from ..orm.footprint import Footprint
-from ..orm.gmos import Gmos
-from ..orm.gnirs import Gnirs
-from ..orm.niri import Niri
-from ..orm.nifs import Nifs
-from ..orm.michelle import Michelle
-from ..orm.f2 import F2
-from ..orm.gsaoi import Gsaoi
-from ..orm.nici import Nici
-from ..orm.gpi import Gpi
+from gemini_obs_db.orm.gmos import Gmos
+from gemini_obs_db.orm.gnirs import Gnirs
+from gemini_obs_db.orm.niri import Niri
+from gemini_obs_db.orm.nifs import Nifs
+from gemini_obs_db.orm.michelle import Michelle
+from gemini_obs_db.orm.f2 import F2
+from gemini_obs_db.orm.gsaoi import Gsaoi
+from gemini_obs_db.orm.nici import Nici
+from gemini_obs_db.orm.gpi import Gpi
 from ..orm.ingestqueue import IngestQueue
 from ..orm.obslog import Obslog
 from ..orm.calcachequeue import CalCacheQueue
 from ..orm.miscfile import is_miscfile, miscfile_meta, MiscFile
 
 import astrodata
-import gemini_instruments
 
 if fsc.using_s3:
     from .aws_s3 import get_helper
@@ -343,7 +340,7 @@ class IngestQueueUtil(object):
             string = "".join(string)
             self.l.error("Error making diskfile entry for %s", diskfile.filename)
             self.l.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
-
+            raise
         finally:
             # really really try to clean up the cache file if we have one
             self.delete_file(diskfile, fullpath)

@@ -1,5 +1,5 @@
 from functools import wraps
-from ...orm import NoResultFound, MultipleResultsFound
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from ...orm.user import User
 from ...fits_storage_config import magic_download_cookie
 from _thread import get_ident

@@ -108,10 +108,16 @@ RUN mkdir -p /usr/share/httpd/.specutils && \
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
 RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
-COPY . /opt/FitsStorage
+
+COPY FitsStorageDB /opt/FitsStorageDB
+COPY GeminiCalMgr /opt/GeminiCalMgr
+RUN cd /opt/FitsStorageDB && python3 setup.py install
+RUN cd /opt/GeminiCalMgr && python3 setup.py install
+
+COPY FitsStorage /opt/FitsStorage
 WORKDIR /opt/FitsStorage
-COPY fitsverify /opt/fitsverify
-COPY docker/wait-for-postgres.sh /
+COPY FitsStorage/fitsverify /opt/fitsverify
+COPY FitsStorage/docker/wait-for-postgres.sh /
 RUN chmod a+x /wait-for-postgres.sh
 
 # CYTHON STEP FOR DRAGONS

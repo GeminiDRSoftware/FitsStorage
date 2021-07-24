@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-from fits_storage.orm import session_scope
+from gemini_obs_db.db import session_scope
 from fits_storage.orm.calcachequeue import CalCacheQueue
 from fits_storage.utils.calcachequeue import CalCacheQueueUtil, cache_associations
 from fits_storage.fits_storage_config import fits_lockfile_dir
@@ -79,7 +79,7 @@ if __name__ == "__main__":
                             logger.info("--empty flag set, exiting")
                             break
                         else:
-                            logger.info("...Waiting")
+                            logger.debug("...Waiting")
                         time.sleep(10)
                     else:
                         # Don't query queue length in fast_rebuild mode
@@ -91,7 +91,6 @@ if __name__ == "__main__":
                         try:
                             # Do the associations and put them in the CalCache table
                             cache_associations(session, ccq.obs_hid)
-
                         except:
                             logger.info("Problem Associating Calibrations for Cache - Rolling back")
                             logger.error("Exception processing obs_hid %d: %s : %s... %s" % (ccq.obs_hid, sys.exc_info()[0], sys.exc_info()[1], traceback.format_tb(sys.exc_info()[2])))

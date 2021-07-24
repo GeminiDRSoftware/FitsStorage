@@ -6,7 +6,7 @@ from xml.dom.minidom import parseString
 from ..orm.notification import Notification
 from . import programs
 
-from ..gemini_metadata_utils import GeminiProgram
+from gemini_obs_db.utils.gemini_metadata_utils import GeminiProgram
 
 
 def ingest_odb_xml(session, xml):

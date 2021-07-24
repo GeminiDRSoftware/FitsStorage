@@ -6,7 +6,6 @@ from fits_storage.fits_storage_config import aws_access_key, aws_secret_key
 import boto.glacier
 
 from fits_storage.logger import logger, setdebug, setdemon
-#from fits_storage.orm import sessionfactory
 
 
 if __name__ == "__main__":

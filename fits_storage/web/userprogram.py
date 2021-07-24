@@ -9,7 +9,10 @@ from ..utils.web import get_context
 
 from . import templating
 
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
+
 
 @templating.templated("user_programs.html")
 def my_programs(things):

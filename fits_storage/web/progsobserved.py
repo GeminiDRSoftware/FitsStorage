@@ -3,15 +3,15 @@ This is the Fits Storage Web Summary module. It provides the functions
 which query the database and generate html for the web header
 summaries.
 """
-from ..orm.header import Header
-from ..orm.diskfile import DiskFile
-from ..orm.file import File
+from gemini_obs_db.orm.header import Header
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.file import File
 from .selection import sayselection, queryselection
 from . import templating
 from sqlalchemy import join, not_, func
 import datetime
 
-from ..gemini_metadata_utils import gemini_date
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_date
 
 from ..utils.web import get_context
 

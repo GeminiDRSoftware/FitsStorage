@@ -1,23 +1,18 @@
 import sys
 import os
 import datetime
-import time
-import subprocess
 import tarfile
-import urllib.request, urllib.parse, urllib.error
-import traceback
 from bz2 import BZ2File
 from tempfile import mkstemp
 
 from sqlalchemy import join
 
 from fits_storage.fits_storage_config import storage_root
-from fits_storage.orm import session_scope
+from gemini_obs_db.db import session_scope
 from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile
 from fits_storage.fits_storage_config import fits_tape_scratchdir
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.utils.hashes import md5sum
-from fits_storage.utils.tape import TapeDrive, get_tape_drive
+from fits_storage.utils.tape import get_tape_drive
 from fits_storage.web.list_headers import list_headers
 from fits_storage.web.selection import getselection, openquery
 

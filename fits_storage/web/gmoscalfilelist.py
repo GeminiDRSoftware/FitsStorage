@@ -4,15 +4,15 @@ This module contains the gmoscal html generator function.
 import sqlalchemy
 from sqlalchemy.sql.expression import cast
 from sqlalchemy import join
-from ..orm.header import Header
-from ..orm.diskfile import DiskFile
-from ..orm.file import File
+from gemini_obs_db.orm.header import Header
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.file import File
 
 from ..utils.web import get_context, Return
 
 from .selection import queryselection
 from ..fits_storage_config import using_sqlite, fits_system_status, das_calproc_path
-from ..gemini_metadata_utils import ONEDAY_OFFSET
+from gemini_obs_db.utils.gemini_metadata_utils import ONEDAY_OFFSET
 
 from . import templating
 

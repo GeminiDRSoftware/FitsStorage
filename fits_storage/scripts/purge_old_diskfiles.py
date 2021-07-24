@@ -1,12 +1,12 @@
 import sys
 import datetime
 
-from fits_storage.orm import session_scope
-from fits_storage.orm.file import File
-from fits_storage.orm.diskfile import DiskFile
-from fits_storage.orm.header import Header
-from fits_storage.orm.gmos import Gmos
-from fits_storage.orm.niri import Niri
+from gemini_obs_db.db import session_scope
+from gemini_obs_db.orm.file import File
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.header import Header
+from gemini_obs_db.orm.gmos import Gmos
+from gemini_obs_db.orm.niri import Niri
 
 #from fits_storage_config import *
 from fits_storage.logger import logger, setdebug, setdemon

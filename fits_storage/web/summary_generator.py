@@ -5,7 +5,7 @@ This module contains the web summary generator class.
 from collections import OrderedDict, namedtuple
 from html import escape
 
-from ..gemini_metadata_utils import GeminiDataLabel, degtora, degtodec
+from gemini_obs_db.utils.gemini_metadata_utils import GeminiDataLabel, degtora, degtodec
 
 from ..utils.userprogram import canhave_header, canhave_coords
 
@@ -32,6 +32,7 @@ search_col_mapping = {
     'col_dis': ('disperser', 'D'),
     'col_ra' : ('ra', 'r'),
     'col_dec': ('dec', 'd'),
+    'col_procmode': ('procmode', 'p'),
     'col_qas': ('qa_state', 'Q'),
     'col_riq': ('raw_iq', 'i'),
     'col_rcc': ('raw_cc', 'c'),
@@ -71,10 +72,10 @@ sum_type_defs = {
                     'object', 'waveband', 'qa_state', 'raw_iq', 'raw_cc', 'raw_wv', 'raw_bg'],
     'diskfiles' : ['filename', 'data_label', 'ut_datetime', 'instrument', 'present', 'entrytime', 'lastmod',
                     'file_size', 'file_md5', 'compressed', 'data_size', 'data_md5'],
-    'searchresults' : ['download', 'filename', 'procmode', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
+    'searchresults' : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
                     'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state'],
-    'customsearch'  : ['download', 'filename', 'procmode', 'data_label', 'ut_datetime', 'instrument'],
-    'associated_cals': ['download', 'filename', 'procmode', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
+    'customsearch'  : ['download', 'filename', 'data_label', 'ut_datetime', 'instrument'],
+    'associated_cals': ['download', 'filename', 'data_label', 'ut_datetime', 'instrument', 'observation_class',
                     'observation_type', 'object', 'waveband', 'exposure_time', 'qa_state']
     }
 
@@ -188,7 +189,8 @@ class SummaryGenerator(object):
             'download':    ColDef(heading      = 'Download',
                                   sortarrows   = False,
                                   summary_func = 'download'),
-            'procmode':     ColDef(heading      = 'Qual',
+            'procmode':    ColDef(heading      = 'Reduction',
+                                  longheading  = 'Reduction Quality',
                                   sortarrows   = False,
                                   summary_func = 'procmode'),
             'filename':    ColDef(heading      = 'Filename',

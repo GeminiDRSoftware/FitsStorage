@@ -1,17 +1,9 @@
-import datetime
-
 import pytest
 
 import fits_storage
 from fits_storage.web import calmgr
-from fits_storage.cal import CalibrationGMOS
-from fits_storage.orm.diskfile import DiskFile
-from fits_storage.orm.file import File
-from fits_storage.orm.header import Header
 from fits_storage.utils.web import Return
-from fits_storage.web.calibrations import interval_hours, interval_string, calibrations
-from fits_storage.web.calmgr import calmgr, cals_info
-from tests.file_helper import setup_mock_file_stuff
+from fits_storage.web.calmgr import calmgr
 from tests.web_helper import MockContext
 
 

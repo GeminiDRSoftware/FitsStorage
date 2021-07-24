@@ -103,7 +103,7 @@ some public data.  Put this in a folder somewhere for later use.
 
 You need a folder for your logs.  Just create a folder wherever and remember it's location
 
-#### Environment Variables
+#### Configuration
 
 In order to override various default locations that FitsStorage uses on the servers, I have made a set of
 environment variables.  You can set these variables to tell the FitsStorage scripts and website to go to
@@ -121,6 +121,10 @@ export TEST_IMAGE_CACHE=/where/you/want/cache
 export TEST_IMAGE_PATH=/where/you/want/image/data
 export USE_AS_ARCHIVE=False  # (or True, False by default)
 ```
+
+You can also use a `.conf` file to configure the FitsStore.  You need to set the environment variable
+`FITSSTORAGE_CONFIG_FILE` to point to it's location.  This file is described in more detail in 
+[Config.md](docs/Config.md).
 
 #### Initialize Database
 

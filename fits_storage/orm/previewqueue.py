@@ -2,7 +2,8 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, Text, Boolean
 from sqlalchemy import desc
 
-from . import Base
+from gemini_obs_db.db import Base
+from gemini_obs_db.orm.diskfile import DiskFile
 from ..utils.queue import sortkey_for_filename
 
 
@@ -15,7 +16,7 @@ class PreviewQueue(Base):
     __tablename__ = 'previewqueue'
 
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer, ForeignKey('diskfile.id'), nullable=False, unique=True, index=True)
+    diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False, unique=True, index=True)
     inprogress = Column(Boolean, index=True)
     failed = Column(Boolean)
     force = Column(Boolean)

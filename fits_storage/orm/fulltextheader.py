@@ -4,7 +4,8 @@ from sqlalchemy import Integer, Text
 import astrodata
 import gemini_instruments
 
-from . import Base
+from gemini_obs_db.db import Base
+from gemini_obs_db.orm.diskfile import DiskFile
 
 
 class FullTextHeader(Base):
@@ -16,7 +17,7 @@ class FullTextHeader(Base):
     __tablename__ = 'fulltextheader'
 
     id = Column(Integer, primary_key=True)
-    diskfile_id = Column(Integer,ForeignKey('diskfile.id'), nullable=False, index=True)
+    diskfile_id = Column(Integer, ForeignKey(DiskFile.id), nullable=False, index=True)
     fulltext = Column(Text)
 
     def __init__(self, diskfile):

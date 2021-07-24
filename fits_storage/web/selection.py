@@ -6,34 +6,29 @@ Functions in this module are only used within FitsStorageWebSummary.
 import re
 import math
 import urllib.request, urllib.parse, urllib.error
-import datetime
-import dateutil.parser
-from datetime import timedelta
 
 from sqlalchemy import or_, func
-from sqlalchemy.orm import join
 
-from ..gemini_metadata_utils import gemini_telescope, gemini_instrument
-from ..gemini_metadata_utils import gemini_observation_type, gemini_observation_class
-from ..gemini_metadata_utils import gemini_reduction_state
-from ..gemini_metadata_utils import gemini_caltype, gmos_gratingname
-from ..gemini_metadata_utils import gmos_focal_plane_mask, gemini_fitsfilename
-from ..gemini_metadata_utils import gemini_binning, GeminiDataLabel, GeminiObservation
-from ..gemini_metadata_utils import GeminiProgram, ratodeg, dectodeg, srtodeg
-from ..gemini_metadata_utils import gemini_date, gemini_daterange, get_time_period
-from ..gemini_metadata_utils import gemini_time_period_from_range
-from ..gemini_metadata_utils import gemini_gain_settings, gemini_readspeed_settings
-from ..gemini_metadata_utils import gemini_welldepth_settings, gemini_readmode_settings
-from ..orm.gpi import Gpi
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_telescope, gemini_instrument
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_observation_type, gemini_observation_class
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_reduction_state
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_caltype, gmos_gratingname
+from gemini_obs_db.utils.gemini_metadata_utils import gmos_focal_plane_mask, gemini_fitsfilename
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_binning, GeminiDataLabel, GeminiObservation
+from gemini_obs_db.utils.gemini_metadata_utils import GeminiProgram, ratodeg, dectodeg, srtodeg
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_date, gemini_daterange, get_time_period
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_time_period_from_range
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_gain_settings, gemini_readspeed_settings
+from gemini_obs_db.utils.gemini_metadata_utils import gemini_welldepth_settings, gemini_readmode_settings
+from gemini_obs_db.orm.gpi import Gpi
 
-from ..orm.header import Header
-from ..orm.diskfile import DiskFile
-from ..orm.file import File
+from gemini_obs_db.orm.header import Header
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.file import File
 from ..orm.footprint import Footprint
 from ..orm.photstandard import PhotStandardObs
 from ..orm.program import Program
 from ..orm.programpublication import ProgramPublication
-from ..orm.publication import Publication
 
 # A number of the choices in the getselection inner loop are just simple checks
 # that can be represented by a data structure. It's better to keep it like that
@@ -217,6 +212,8 @@ def getselection(things):
             elif thing in {'LS', 'MOS', 'IFS'}:
                 selection['mode'] = thing
                 selection['spectroscopy'] = True
+            elif thing.lower() == 'standard':
+                selection['standard'] = True
             else:
                 if 'notrecognised' in selection:
                     selection['notrecognised'] += " "+thing
@@ -327,7 +324,6 @@ def sayselection(selection):
     return ret
 
 # import time module to get local timezone
-import time
 from types import MethodType
 
 queryselection_filters = (
@@ -750,6 +746,9 @@ def queryselection(query, selection):
     if 'gpi_astrometric_standard' in selection:
         query = query.join(Gpi, Gpi.header_id == Header.id)
         query = query.filter(Gpi.astrometric_standard == selection['gpi_astrometric_standard'])
+
+    if 'standard' in selection:
+        query = query.filter(Header.types.ilike('%''STANDARD''%'))
 
     return query
 

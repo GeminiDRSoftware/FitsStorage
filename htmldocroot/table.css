@@ -2,6 +2,26 @@ body {
   font-family: "Arial", "sans-serif";
 }
 
+div#reduction_legend {
+    float: right;
+    margin-left: 4px;
+    border: solid black 1px;
+}
+
+div#reduction_legend div {
+    margin: 4px;
+}
+
+#reduction_legend_ql {
+    background-color:  #f2d21c;
+    font-size: small;
+}
+
+#reduction_legend_sq {
+    background-color: #a7ed9c;
+    font-size: small;
+}
+
 .nowrap {
   white-space: nowrap;
 }
