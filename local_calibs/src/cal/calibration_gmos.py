@@ -2,7 +2,7 @@
 The CalibrationGMOS class
 
 """
-import datetime
+
 import math
 
 from gemini_obs_db.diskfile import DiskFile
@@ -13,8 +13,6 @@ from .calibration import Calibration
 from .calibration import not_imaging
 from .calibration import not_processed
 from .calibration import not_spectroscopy
-
-from sqlalchemy.orm import join
 
 from gempy.utils import logutils
 
@@ -157,7 +155,7 @@ class CalibrationGMOS(Calibration):
 # ------------------------------------------------------------------------------
 
     @not_imaging
-    def arc(self, processed=False, howmany=None):
+    def arc(self, processed=False, howmany=None, return_query=False):
         """
         This method identifies the best GMOS ARC to use for the target
         dataset.
@@ -217,21 +215,20 @@ class CalibrationGMOS(Calibration):
             elif self.descriptors['amp_read_area'] is not None:
                     filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
-        return (
-            self.get_query()
-                .arc(processed)
-                .add_filters(*filters)
+        query = self.get_query() \
+                .arc(processed) \
+                .add_filters(*filters) \
                 .match_descriptors(Header.instrument,
                                    Gmos.disperser,
                                    Gmos.filter_name,    # Must match filter (KR 20100423)
                                    Gmos.detector_x_bin, # Must match ccd binning
-                                   Gmos.detector_y_bin)
-                                   # Gmos.grating_order) # match on grating order
-                .tolerance(central_wavelength=0.001)
-                # Absolute time separation must be within 1 year
+                                   Gmos.detector_y_bin) \
+                .tolerance(central_wavelength=0.001) \
                 .max_interval(days=365)
-                .all(howmany)
-            )
+        if return_query:
+            return (query.all(howmany)), query
+        else:
+            return (query.all(howmany))
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 
@@ -299,7 +296,7 @@ class CalibrationGMOS(Calibration):
                 .all(howmany)
             )
 
-    def bias(self, processed=False, howmany=None):
+    def bias(self, processed=False, howmany=None, return_query=False):
         """
         Method to find the best bias frames for the target dataset
 
@@ -319,6 +316,8 @@ class CalibrationGMOS(Calibration):
             Indicate if we want to retrieve processed or raw biases
         howmany : int, default 1
             How many matches to return
+        return_query : bool
+            return the SQLAlchemy query as a 2nd part of the return value
 
         Returns
         -------
@@ -359,21 +358,21 @@ class CalibrationGMOS(Calibration):
                 #filters.append(Gmos.overscan_subtracted == True)
                 pass
 
-        return (
-            self.get_query()
-                .bias(processed)
-                .add_filters(*filters)
+        query = self.get_query() \
+                .bias(processed) \
+                .add_filters(*filters) \
                 .match_descriptors(Header.instrument,
                                   Gmos.detector_x_bin,
                                   Gmos.detector_y_bin,
                                   Gmos.read_speed_setting,
-                                  Gmos.gain_setting)
-                # Absolute time separation must be within 3 months
+                                  Gmos.gain_setting) \
                 .max_interval(days=90)
-                .all(howmany)
-            )
+        if return_query:
+            return (query.all(howmany)), query
+        else:
+            return query.all(howmany)
 
-    def imaging_flat(self, processed, howmany, flat_descr, filt):
+    def imaging_flat(self, processed, howmany, flat_descr, filt, return_query=False):
         """
         Method to find the best imaging flats for the target dataset
 
@@ -393,6 +392,8 @@ class CalibrationGMOS(Calibration):
             The list of descriptors to match against
         filt : list of filters
             Additional list of filters to apply to the query
+        render_query : bool
+            If True, retuns the SqlAlchemy query along with the regular return
 
         Returns
         -------
@@ -407,15 +408,16 @@ class CalibrationGMOS(Calibration):
             # Imaging flats are twilight flats
             # Twilight flats are dayCal OBJECT frames with target Twilight
             query = self.get_query().raw().dayCal().OBJECT().object('Twilight')
-        return (
-            query.add_filters(*filt)
-                 .match_descriptors(*flat_descr)
-                 # Absolute time separation must be within 6 months
-                 .max_interval(days=180)
-                 .all(howmany)
-            )
 
-    def spectroscopy_flat(self, processed, howmany, flat_descr, filt):
+        query.add_filters(*filt) \
+            .match_descriptors(*flat_descr) \
+            .max_interval(days=180)
+        if return_query:
+            return (query.all(howmany)), query
+        else:
+            return query.all(howmany)
+
+    def spectroscopy_flat(self, processed, howmany, flat_descr, filt, return_query=False):
         """
         Method to find the best spectroscopy flats for the target dataset
 
@@ -435,6 +437,8 @@ class CalibrationGMOS(Calibration):
             The list of descriptors to match against
         filt : list of filters
             Additional list of filters to apply to the query
+        return_query : bool
+            Return the SqlAlchemy query along with the regular results
 
         Returns
         -------
@@ -477,28 +481,21 @@ class CalibrationGMOS(Calibration):
             if under_85:
                 crpa_thres = el_thres/math.cos(math.radians(self.descriptors['elevation']))
 
-        return (
-            self.get_query()
-                .flat(processed)
-                .add_filters(*filt)
-                .match_descriptors(*flat_descr)
-            # Central wavelength is in microns (by definition in the DB table).
-                .tolerance(central_wavelength=0.001)
-
-            # Spectroscopy flats also have to somewhat match telescope position
-            # for flexure, as follows this is from FitsStorage TRAC #43 discussion with
-            # KR 20130425.  See the comments above to explain the thresholds.
-            
-                .tolerance(condition = ifu, elevation=el_thres)
-                .tolerance(condition = mos_or_ls, elevation=el_thres)
-                .tolerance(condition = under_85, cass_rotator_pa=crpa_thres)
-
-            # Absolute time separation must be within 6 months
+        query = self.get_query() \
+                .flat(processed) \
+                .add_filters(*filt) \
+                .match_descriptors(*flat_descr) \
+                .tolerance(central_wavelength=0.001) \
+                .tolerance(condition = ifu, elevation=el_thres) \
+                .tolerance(condition = mos_or_ls, elevation=el_thres) \
+                .tolerance(condition = under_85, cass_rotator_pa=crpa_thres) \
                 .max_interval(days=180)
-                .all(howmany)
-            )
+        if return_query:
+            return (query.all(howmany)), query
+        else:
+            return query.all(howmany)
 
-    def flat(self, processed=False, howmany=None):
+    def flat(self, processed=False, howmany=None, return_query=False):
         """
         Method to find the best GMOS FLAT fields for the target dataset
 
@@ -516,6 +513,8 @@ class CalibrationGMOS(Calibration):
             Indicate if we want to retrieve processed or raw flats
         howmany : int, default 1
             How many matches to return
+        return_query : bool
+            If True, return the SqlAlchemy query along with the normal results
 
         Returns
         -------
@@ -551,9 +550,9 @@ class CalibrationGMOS(Calibration):
                 filters.append(Gmos.amp_read_area.contains(self.descriptors['amp_read_area']))
 
         if self.descriptors['spectroscopy']:
-            return self.spectroscopy_flat(processed, howmany, flat_descriptors, filters)
+            return self.spectroscopy_flat(processed, howmany, flat_descriptors, filters, return_query=return_query)
         else:
-            return self.imaging_flat(processed, howmany, flat_descriptors, filters)
+            return self.imaging_flat(processed, howmany, flat_descriptors, filters, return_query=return_query)
 
     def processed_fringe(self, howmany=None):
         """
@@ -685,7 +684,6 @@ class CalibrationGMOS(Calibration):
             return retval[0:howmany]
         else:
             return retval
-
 
     # We don't handle processed ones (yet)
     @not_processed
@@ -890,13 +888,27 @@ class CalibrationGMOS(Calibration):
             )
 
     @not_imaging
-    def slitillum(self, processed=False, howmany=None):
+    def slitillum(self, processed=False, howmany=None, return_query=False):
         """
         Method to find the best slit response for the target dataset.
+
+        Parameters
+        ----------
+
+        processed : bool
+            Indicate if we want to retrieve processed or raw masks.
+        howmany : int, default 1
+            How many matches to return
+        return_query : bool
+            If True, return the SqlAlchemy query along with the regular results
+
+        Returns
+        -------
+            list of :class:`fits_storage.orm.header.Header` records that match the criteria
         """
         # Default number to associate
         howmany = howmany if howmany else 1
-
+        print("in new slitillum")
         filters = []
 
         lower_bound, upper_bound, tolerance = self._get_fuzzy_wavelength()
@@ -904,18 +916,17 @@ class CalibrationGMOS(Calibration):
 
         # we get 1000 rows here to have a limit of some sort, but in practice
         # we get all the cals, then sort them below, then limit it per the request
-        results = (
-            self.get_query()
-                .slitillum(processed)
-                .add_filters(*filters)
+        query = self.get_query() \
+                .slitillum(processed) \
+                .add_filters(*filters) \
                 .match_descriptors(Header.instrument,
                                    Gmos.disperser,
                                    Gmos.detector_x_bin,
                                    Gmos.detector_y_bin,
-                                   Gmos.filter_name)
-                # Absolute time separation must be within 1 year
+                                   Gmos.filter_name) \
                 .max_interval(days=183)
-                .all(1000))
+        results = (
+            query.all(1000))
 
         ut_datetime = self.descriptors['ut_datetime']
         wavelength = float(self.descriptors['central_wavelength'])
@@ -935,9 +946,15 @@ class CalibrationGMOS(Calibration):
         # do the actual sort and return our requested max results
         retval.sort(key=score)
         if len(retval) > howmany:
-            return retval[0:howmany]
+            if return_query:
+                return retval[0:howmany], query
+            else:
+                return retval[0:howmany]
         else:
-            return retval
+            if return_query:
+                return retval, query
+            else:
+                return retval
 
     def _get_fuzzy_wavelength(self):
         """
