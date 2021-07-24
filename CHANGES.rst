@@ -35,6 +35,28 @@ service_target_queue.py
 
 - Properly detect location of Gemini North and South for target calculation, skip GPI [GL#5]
 
+Scripts
+-------
+
+add_to_calcache_queue.py
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Changed option to ignore_mdbad and accepting bad metadata inputs by default
+
+Other
+-----
+
+local_calibs
+^^^^^^^^^^^^
+
+- Major refactor to separate out calibration logic into GeminiCalMgr project
+
+fits_storage.orm
+^^^^^^^^^^^^^^^^
+
+- Major refactor to separate out database logic into FitsStorageDB project
+
+
 2020-2.19
 =========
 

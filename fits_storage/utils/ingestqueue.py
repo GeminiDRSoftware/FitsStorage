@@ -327,8 +327,8 @@ class IngestQueueUtil(object):
                     self.l.error("Error making preview for %s", diskfile.filename)
                     self.l.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
 
-                # If we are in archive mode and the metadata is OK, add to calcachequeue here
-                if fsc.use_as_archive and diskfile.mdready:
+                # If we are in archive mode, add to calcachequeue here
+                if fsc.use_as_archive:
                     self.l.info("Adding header id %d to calcachequeue", header.id)
                     cq = CalCacheQueue(header.id, diskfile.filename, sortkey=header.ut_datetime)
                     self.s.add(cq)

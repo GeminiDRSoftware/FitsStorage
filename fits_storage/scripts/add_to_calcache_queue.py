@@ -22,7 +22,7 @@ if __name__ == "__main__":
     parser.add_option("--file-re", action="store", type="string", dest="file_pre", help="filename prefix to select files to queue by")
     parser.add_option("--lastdays", action="store", type="int", dest="lastdays", help="queue observations with ut_datetime in last n days")
     parser.add_option("--all", action="store_true", dest="all", help="queue all observations in database. Use with Caution")
-    parser.add_option("--mdbad", action="store_true", dest="mdbad", help="add files even if they fail metadata validation")
+    parser.add_option("--ignore_mdbad", action="store_true", dest="ignore_mdbad", help="don't add files if they fail metadata validation")
     parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
     parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
@@ -47,7 +47,7 @@ if __name__ == "__main__":
                 .filter(DiskFile.id == Header.diskfile_id)
                 .filter(DiskFile.canonical == True)
             )
-        if not options.mdbad:
+        if not options.ignore_mdbad:
             query = query.filter(DiskFile.mdready == True)
 
         if options.file_pre:
