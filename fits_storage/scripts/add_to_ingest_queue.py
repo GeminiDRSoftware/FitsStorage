@@ -5,10 +5,12 @@ import re
 import datetime
 import time
 
-from gemini_obs_db.db import session_scope
 from fits_storage.fits_storage_config import storage_root, using_s3
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.utils.ingestqueue import IngestQueueUtil
+
+from gemini_obs_db.db import session_scope
+
 
 """
 Script to add files in the FITS Server to the queue for export to an Archive server.

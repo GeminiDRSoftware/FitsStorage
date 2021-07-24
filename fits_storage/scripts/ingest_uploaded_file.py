@@ -4,12 +4,14 @@ import traceback
 import datetime
 import shutil
 
-from gemini_obs_db.db import session_scope
 from fits_storage.orm.fileuploadlog import FileUploadLog, FileUploadWrapper
 
 from fits_storage.fits_storage_config import storage_root, upload_staging_path, processed_cals_path, using_s3
 from fits_storage.logger import logger, setdemon, setdebug
 from fits_storage.utils.ingestqueue import IngestQueueUtil
+
+from gemini_obs_db.db import session_scope
+
 
 if using_s3:
     from fits_storage.utils.aws_s3 import get_helper

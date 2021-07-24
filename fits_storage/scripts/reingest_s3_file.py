@@ -11,6 +11,9 @@ from datetime import datetime, timedelta
 import astropy.io.fits as pf
 from bz2 import BZ2File
 
+# TODO perhaps we need a better way to override the gemini_obs_db config for FitsStorage than an import
+import fits_storage
+
 from gemini_obs_db.db import session_scope
 from gemini_obs_db.orm.diskfile import DiskFile
 from gemini_obs_db.orm.header import Header

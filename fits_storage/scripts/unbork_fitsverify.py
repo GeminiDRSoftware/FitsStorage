@@ -1,7 +1,7 @@
-from gemini_obs_db.db import session_scope
 from fits_storage.orm.diskfilereport import DiskFileReport
-
 from fits_storage.logger import logger, setdebug
+
+from gemini_obs_db.db import session_scope
 
 import datetime
 from optparse import OptionParser

@@ -14,6 +14,7 @@ from fits_storage import orm
 from fits_storage.orm.resolve_versions import Version
 from sqlalchemy import distinct
 
+
 def compare_headers(*headers):
     differences = []
 

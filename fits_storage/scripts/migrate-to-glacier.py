@@ -1,24 +1,25 @@
 #! /usr/bin/env python
-from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
-from fits_storage.fits_storage_config import using_s3, s3_backup_bucket_name
-from fits_storage.utils.pidfile import PidFile, PidFileError
-
-from gemini_obs_db.db import session_scope
-from gemini_obs_db.orm.diskfile import DiskFile
-from fits_storage.orm.glacier import Glacier
-from sqlalchemy import and_, or_, func, cast, between
-from sqlalchemy import Interval
-from sqlalchemy.exc import OperationalError
-
-from fits_storage.utils.aws_s3 import get_helper
 
 import sys
 import os
 import datetime
 import time
 import traceback
-
 import argparse
+
+from sqlalchemy import and_, or_, func, cast, between
+from sqlalchemy import Interval
+from sqlalchemy.exc import OperationalError
+
+from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
+from fits_storage.fits_storage_config import using_s3, s3_backup_bucket_name
+from fits_storage.utils.pidfile import PidFile, PidFileError
+from fits_storage.orm.glacier import Glacier
+from fits_storage.utils.aws_s3 import get_helper
+
+from gemini_obs_db.db import session_scope
+from gemini_obs_db.orm.diskfile import DiskFile
+
 
 # This is the amount of rows to be retrieved at the same time from the database
 # Controls the resorces taken in the local side. Too small number will result in

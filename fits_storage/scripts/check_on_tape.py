@@ -3,10 +3,10 @@ import datetime
 import urllib.request, urllib.error
 from xml.dom.minidom import parseString
 from sqlalchemy import join
+from fits_storage.logger import logger, setdebug, setdemon
 from gemini_obs_db.db import session_scope
 from gemini_obs_db.orm.file import File
 from gemini_obs_db.orm.diskfile import DiskFile
-from fits_storage.logger import logger, setdebug, setdemon
 
 
 if __name__ == "__main__":

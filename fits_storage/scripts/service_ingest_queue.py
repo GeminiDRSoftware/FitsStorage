@@ -7,23 +7,22 @@ import sys
 import time
 import traceback
 
-from gemini_obs_db.db import session_scope
-from fits_storage.orm.ingestqueue import IngestQueue
+from sqlalchemy.exc import OperationalError
 
+from argparse import ArgumentParser
+
+from fits_storage.orm.ingestqueue import IngestQueue
 from fits_storage.fits_storage_config import using_s3
 from fits_storage.fits_storage_config import storage_root
 from fits_storage.fits_storage_config import fits_lockfile_dir
 from fits_storage.fits_storage_config import export_destinations
-
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
-
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 from fits_storage.utils.exportqueue import ExportQueueUtil
 from fits_storage.utils.pidfile import PidFile, PidFileError
 
-from sqlalchemy.exc import OperationalError
+from gemini_obs_db.db import session_scope
 
-from argparse import ArgumentParser
 
 
 if __name__ == "__main__":

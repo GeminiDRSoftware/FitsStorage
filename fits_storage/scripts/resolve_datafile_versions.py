@@ -26,6 +26,7 @@ import os
 import sys
 import bz2
 import itertools
+import datetime
 
 from operator import attrgetter, itemgetter
 # from optparse import OptionParser
@@ -33,14 +34,15 @@ from docopt import docopt
 
 from astropy.io import fits as pf
 
-import gemini_obs_db.db
 from fits_storage.orm.resolve_versions import Version
 from fits_storage.orm.tapestuff import Tape, TapeWrite, TapeFile
 
 from fits_storage.utils import resolve_scoring
 
 from fits_storage.logger import logger, setdebug, setdemon
-import datetime
+
+import gemini_obs_db.db
+
 
 # parser = OptionParser()
 # parser.add_option("--dryrun",   action="store_true", dest="dryrun", default=False, help="Don't actually do anything, just say what would be done")

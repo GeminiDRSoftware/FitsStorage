@@ -1,21 +1,19 @@
 import shutil
-
-from gemini_obs_db.db import session_scope
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.diskfile import DiskFile
-
-from fits_storage.logger import logger, setdebug
-
-from sqlalchemy import join, desc
+from os.path import basename
+from glob import iglob
 import datetime
 from optparse import OptionParser
 
-from fits_storage.fits_storage_config import using_s3
-from gemini_obs_db.utils.hashes import md5sum
-from os.path import basename
-from glob import iglob
+from sqlalchemy import join, desc
 
+from fits_storage.logger import logger, setdebug
+from fits_storage.fits_storage_config import using_s3
 from fits_storage.utils.ingestqueue import IngestQueueUtil
+
+from gemini_obs_db.utils.hashes import md5sum
+from gemini_obs_db.db import session_scope
+from gemini_obs_db.orm.file import File
+from gemini_obs_db.orm.diskfile import DiskFile
 
 
 if __name__ == "__main__":

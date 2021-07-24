@@ -1,18 +1,18 @@
 import requests
 
-from gemini_obs_db.db import session_scope
-from fits_storage.orm.exportqueue import ExportQueue
-from gemini_obs_db.orm.diskfile import DiskFile
-
-from fits_storage.logger import logger, setdebug
-
 from sqlalchemy import desc
 import datetime
 from optparse import OptionParser
 
-from fits_storage.fits_storage_config import using_s3, storage_root
 from os.path import basename
 from glob import iglob
+
+from fits_storage.logger import logger, setdebug
+from fits_storage.orm.exportqueue import ExportQueue
+from fits_storage.fits_storage_config import using_s3, storage_root
+
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.db import session_scope
 
 
 if __name__ == "__main__":

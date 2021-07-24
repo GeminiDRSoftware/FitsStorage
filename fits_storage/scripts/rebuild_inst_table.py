@@ -4,6 +4,9 @@ import signal
 import datetime
 import traceback
 from sqlalchemy import join, or_, desc
+from optparse import OptionParser
+
+from fits_storage.logger import logger, setdebug, setdemon
 
 from gemini_obs_db.db import session_scope
 from gemini_obs_db.orm.diskfile import DiskFile
@@ -14,8 +17,7 @@ from gemini_obs_db.orm.gnirs import Gnirs
 from gemini_obs_db.orm.nifs import Nifs
 from gemini_obs_db.orm.michelle import Michelle
 from gemini_obs_db.orm.f2 import F2
-from fits_storage.logger import logger, setdebug, setdemon
-from optparse import OptionParser
+
 
 # Define signal handler. This allows us to bail out neatly if we get a signal
 def handler(signum, frame):

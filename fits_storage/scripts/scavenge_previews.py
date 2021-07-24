@@ -1,15 +1,18 @@
-from gemini_obs_db.db import session_scope
-from fits_storage.fits_storage_config import storage_root, using_s3
-from fits_storage.logger import logger, setdebug, setdemon
-from gemini_obs_db.orm.preview import Preview
-from gemini_obs_db.orm.diskfile import DiskFile
 import os
 import re
 import datetime
 import time
+
+from fits_storage.fits_storage_config import storage_root, using_s3
+from fits_storage.logger import logger, setdebug, setdemon
 if using_s3:
     from fits_storage.utils.aws_s3 import get_helper
     s3 = get_helper()
+
+from gemini_obs_db.db import session_scope
+from gemini_obs_db.orm.preview import Preview
+from gemini_obs_db.orm.diskfile import DiskFile
+
 
 """
 Helper script to ensure we have `~Preview` records for any `_preview.jpg` files.

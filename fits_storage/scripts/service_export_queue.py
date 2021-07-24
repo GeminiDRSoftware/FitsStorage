@@ -7,16 +7,18 @@ import time
 import traceback
 import urllib.request, urllib.error, urllib.parse
 import ssl
-from gemini_obs_db.db import session_scope
+
+from sqlalchemy.exc import OperationalError, IntegrityError
+from optparse import OptionParser
+
 from fits_storage.orm.exportqueue import ExportQueue
 from fits_storage.utils.exportqueue import ExportQueueUtil
 from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
 from fits_storage.fits_storage_config import fits_lockfile_dir
 from fits_storage.utils.pidfile import PidFile, PidFileError
-from sqlalchemy.exc import OperationalError, IntegrityError
 
+from gemini_obs_db.db import session_scope
 
-from optparse import OptionParser
 
 
 if __name__ == "__main__":

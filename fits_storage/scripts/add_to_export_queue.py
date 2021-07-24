@@ -1,8 +1,8 @@
-from gemini_obs_db.db import session_scope
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.exportqueue import ExportQueueUtil
 from fits_storage.web.list_headers import list_headers
 from fits_storage.web.selection import getselection, openquery
+from gemini_obs_db.db import session_scope
 import sys
 import datetime
 

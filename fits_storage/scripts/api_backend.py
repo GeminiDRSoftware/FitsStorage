@@ -16,24 +16,22 @@
 #   Generic stuff, mainly to control the routing and error responses
 #
 import datetime
-import json
 import os
 import traceback
 import sys
 
 import wsgiref.simple_server
-from wsgiref.validate import validator
-from wsgiref.util import request_uri, application_uri, shift_path_info
 
 from fits_storage.utils.api import json_api_call, WSGIError, NewCardsIncluded
 from fits_storage.utils.api import METHOD_NOT_ALLOWED, NOT_FOUND
-
 from fits_storage.logger import logger, setdebug, setdemon
+from fits_storage.fits_storage_config import api_backend_location
+
+from gemini_obs_db.db import session_scope
+
 import logging
 import argparse
 
-from fits_storage.fits_storage_config import api_backend_location
-from gemini_obs_db.db import session_scope
 
 
 def get_route(environ, routes):

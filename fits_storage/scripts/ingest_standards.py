@@ -1,9 +1,11 @@
 import os
-from gemini_obs_db.db import session_scope
+import datetime
+
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.utils.ingest_standards import ingest_standards
 from fits_storage.fits_storage_config import fits_aux_datadir
-import datetime
+
+from gemini_obs_db.db import session_scope
 
 
 """

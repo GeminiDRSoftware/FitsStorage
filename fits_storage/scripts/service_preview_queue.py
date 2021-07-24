@@ -1,12 +1,4 @@
 #! /usr/bin/env python
-from gemini_obs_db.db import session_scope
-from fits_storage.orm.previewqueue import PreviewQueue
-from gemini_obs_db.orm.diskfile import DiskFile
-
-from fits_storage.fits_storage_config import fits_lockfile_dir
-from fits_storage.utils.previewqueue import PreviewQueueUtil
-from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
-from fits_storage.utils.pidfile import PidFile, PidFileError
 import signal
 import sys
 import os
@@ -14,6 +6,16 @@ import datetime
 import time
 import traceback
 from sqlalchemy.exc import OperationalError
+
+from fits_storage.orm.previewqueue import PreviewQueue
+from fits_storage.fits_storage_config import fits_lockfile_dir
+from fits_storage.utils.previewqueue import PreviewQueueUtil
+from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
+from fits_storage.utils.pidfile import PidFile, PidFileError
+
+from gemini_obs_db.db import session_scope
+from gemini_obs_db.orm.diskfile import DiskFile
+
 
 
 from optparse import OptionParser

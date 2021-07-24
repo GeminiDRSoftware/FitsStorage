@@ -1,12 +1,4 @@
 #! /usr/bin/env python
-from gemini_obs_db.db import session_scope
-from fits_storage.orm.target import TargetQueue, TargetsChecked
-from gemini_obs_db.orm.diskfile import DiskFile
-
-from fits_storage.fits_storage_config import fits_lockfile_dir
-from fits_storage.utils.targetqueue import TargetQueueUtil
-from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
-from fits_storage.utils.pidfile import PidFile, PidFileError
 import signal
 import sys
 import os
@@ -14,9 +6,18 @@ import datetime
 import time
 import traceback
 from sqlalchemy.exc import OperationalError
-
-
 from optparse import OptionParser
+
+from fits_storage.orm.target import TargetQueue, TargetsChecked
+from fits_storage.fits_storage_config import fits_lockfile_dir
+from fits_storage.utils.targetqueue import TargetQueueUtil
+from fits_storage.logger import logger, setdebug, setdemon, setlogfilesuffix
+from fits_storage.utils.pidfile import PidFile, PidFileError
+
+from gemini_obs_db.db import session_scope
+from gemini_obs_db.orm.diskfile import DiskFile
+
+
 
 
 if __name__ == "__main__":

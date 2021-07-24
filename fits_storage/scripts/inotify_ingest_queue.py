@@ -2,10 +2,11 @@ import pyinotify
 import re
 import datetime
 
-from gemini_obs_db.db import session_scope
 from fits_storage.fits_storage_config import storage_root
 from fits_storage.logger import logger, setdemon, setdebug
 from fits_storage.utils.ingestqueue import IngestQueueUtil
+
+from gemini_obs_db.db import session_scope
 
 
 """

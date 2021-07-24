@@ -2,8 +2,9 @@
 
 from argparse import ArgumentParser
 
-from gemini_obs_db.db import session_scope
 from fits_storage.orm.user import User
+
+from gemini_obs_db.db import session_scope
 
 from datetime import datetime
 

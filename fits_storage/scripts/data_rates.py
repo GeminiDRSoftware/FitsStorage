@@ -2,10 +2,11 @@ import datetime
 from optparse import OptionParser
 from sqlalchemy import func, join
 
+from fits_storage.logger import logger, setdebug, setdemon
+
 from gemini_obs_db.db import session_scope
 from gemini_obs_db.orm.header import Header
 from gemini_obs_db.orm.diskfile import DiskFile
-from fits_storage.logger import logger, setdebug, setdemon
 
 
 if __name__ == "__main__":

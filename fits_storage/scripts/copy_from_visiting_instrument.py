@@ -9,13 +9,15 @@ import shutil
 import re
 from abc import ABC, abstractmethod
 
-from gemini_obs_db.db import session_scope
-from gemini_obs_db.orm.diskfile import DiskFile
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.scripts.header_fixer2 import fix_and_copy
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 
 from fits_storage.fits_storage_config import using_s3, storage_root
+
+from gemini_obs_db.db import session_scope
+from gemini_obs_db.orm.diskfile import DiskFile
+
 
 """
 Script to copy files from the various Visting Instrument staging areas into Dataflow.

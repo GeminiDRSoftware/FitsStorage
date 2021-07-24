@@ -1,8 +1,8 @@
+from fits_storage.utils.targetqueue import TargetQueueUtil
+from fits_storage.logger import logger, setdebug, setdemon
 from gemini_obs_db.db import session_scope
 from gemini_obs_db.orm.diskfile import DiskFile
 from gemini_obs_db.orm.header import Header
-from fits_storage.utils.targetqueue import TargetQueueUtil
-from fits_storage.logger import logger, setdebug, setdemon
 import datetime
 import sys
 

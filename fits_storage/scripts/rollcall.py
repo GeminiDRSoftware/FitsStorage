@@ -1,17 +1,15 @@
-from gemini_obs_db.db import session_scope
-from gemini_obs_db.orm.file import File
-from gemini_obs_db.orm.diskfile import DiskFile
-
-from fits_storage.logger import logger, setdebug, setdemon
-
 from sqlalchemy import join
 import datetime
 from optparse import OptionParser
 
+from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.fits_storage_config import using_s3
-
 if using_s3:
     from fits_storage.utils.aws_s3 import get_helper
+
+from gemini_obs_db.db import session_scope
+from gemini_obs_db.orm.file import File
+from gemini_obs_db.orm.diskfile import DiskFile
 
 
 """

@@ -1,11 +1,10 @@
-from gemini_obs_db.db import session_scope
-
-from fits_storage.logger import logger, setdebug
-
 import datetime
 from optparse import OptionParser
 
 from fits_storage.orm.miscfile import MiscFile
+from fits_storage.logger import logger, setdebug
+
+from gemini_obs_db.db import session_scope
 
 
 if __name__ == "__main__":
