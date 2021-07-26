@@ -8,6 +8,12 @@ import socket
 import configparser
 
 
+# These two are only used if we are using a Postgres database
+# However, we define them anyway so they are available for import
+postgres_database_pool_size = 30
+postgres_database_max_overflow = 10
+
+
 def get_hostname():
     hostname = socket.gethostname()
     if hostname is not None and '.' in hostname:
