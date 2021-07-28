@@ -14,6 +14,14 @@ calmgr.py
 
 - Now able to handle Section() objects passed from DRAGONS cal requests
 
+Scripts
+-------
+
+local_delete_files.py
+^^^^^^^^^^^^^^^^^^^^^
+
+- fix for detecting files on tape that are `.bz2`
+
 add_to_preview_queue.py
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -34,9 +42,6 @@ service_target_queue.py
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 - Properly detect location of Gemini North and South for target calculation, skip GPI [GL#5]
-
-Scripts
--------
 
 add_to_calcache_queue.py
 ^^^^^^^^^^^^^^^^^^^^^^^^

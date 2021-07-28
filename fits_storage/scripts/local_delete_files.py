@@ -106,7 +106,7 @@ if __name__ == "__main__":
               filename = filename[:-4]
           if thefile.endswith(".bz2"):
               thefile = thefile[:-4]
-          if (filename == thefile) and ((md5 == filemd5) or options.nomd5) and (tapeid not in tapeids):
+          if ((filename == thefile) or (filename == f"{thefile}.bz2")) and ((md5 == filemd5) or options.nomd5) and (tapeid not in tapeids):
             #print "Found it on tape id %d" % tapeid
             tapeids.append(tapeid)
 
