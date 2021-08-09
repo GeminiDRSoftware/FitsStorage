@@ -61,6 +61,21 @@ fits_storage.orm
 
 - Major refactor to separate out database logic into FitsStorageDB project
 
+archive-httpd.conf
+^^^^^^^^^^^^^^^^^^
+
+- Updated log rotation to cap count and base on filesize
+
+arcdev-httpd.conf
+^^^^^^^^^^^^^^^^^
+
+- Updated log rotation to cap count and base on filesize
+
+httpd-patched-centos8.conf
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Updated log rotation to cap count and base on filesize
+
 
 2020-2.19
 =========
