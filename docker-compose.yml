@@ -89,7 +89,7 @@ services:
     volumes:
       - "~/testdata/archive-data-upload_staging:/data/upload_staging"
       - "~/testdata/archive-sci-dataflow:/sci/dataflow"
-    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/api_backend.py"
+    command: bash -c "/wait-for-postgres.sh postgres-archive python3 fits_storage/scripts/api_backend.py"
 
   archive:
     image: fitsimage:latest
@@ -122,7 +122,7 @@ services:
     volumes:
       - "~/testdata/archive-data-upload_staging:/data/upload_staging"
       - "~/testdata/archive-sci-dataflow:/sci/dataflow"
-    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/service_ingest_queue.py"
+    command: bash -c "/wait-for-postgres.sh postgres-archive python3 fits_storage/scripts/service_ingest_queue.py"
 
   onsite:
     image: fitsimage:latest
@@ -157,7 +157,7 @@ services:
     volumes:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
-    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/add_to_ingest_queue.py"
+    command: bash -c "/wait-for-postgres.sh postgres-onsite python3 fits_storage/scripts/add_to_ingest_queue.py"
 
   onsite-ingest-service:
     image: fitsstorageutils:latest
@@ -173,7 +173,7 @@ services:
     volumes:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
-    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/service_ingest_queue.py"
+    command: bash -c "/wait-for-postgres.sh postgres-onsite python3 fits_storage/scripts/service_ingest_queue.py"
 
   onsite-export-service:
     image: fitsstorageutils:latest
@@ -189,7 +189,7 @@ services:
     volumes:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"
-    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/service_export_queue.py"
+    command: bash -c "/wait-for-postgres.sh postgres-onsite python3 fits_storage/scripts/service_export_queue.py"
 
 
   archive-calcache-service:
@@ -204,7 +204,7 @@ services:
     volumes:
       - "~/testdata/archive-data-upload_staging:/data/upload_staging"
       - "~/testdata/archive-sci-dataflow:/sci/dataflow"
-    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/service_calcache_queue.py"
+    command: bash -c "/wait-for-postgres.sh postgres-archive python3 fits_storage/scripts/service_calcache_queue.py"
 
 
   archive-preview-service:
@@ -219,4 +219,4 @@ services:
     volumes:
       - "~/testdata/archive-data-upload_staging:/data/upload_staging"
       - "~/testdata/archive-sci-dataflow:/sci/dataflow"
-    command: bash -c "/wait-for-postgres.sh postgres python3 fits_storage/scripts/service_preview_queue.py"
+    command: bash -c "/wait-for-postgres.sh postgres-archive python3 fits_storage/scripts/service_preview_queue.py"
