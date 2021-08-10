@@ -2,26 +2,26 @@ version: "3"
 
 services:
 
-  elk:
-    image: sebp/elk
-    environment:
-      - MAX_MAP_COUNT=262144
-    ports:
-      - "5601:5601"
-      - "9200:9200"
-      - "5044:5044"
-  
-  filebeat:
-    image: docker.elastic.co/beats/filebeat:7.5.1
-    user: root
-    privileged: true
-    volumes:
-      - "./filebeat.docker.yml:/usr/share/filebeat/filebeat.yml:ro"
-      - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-    command: filebeat -e -strict.perms=false
-    environment:
-      - output.elasticsearch.hosts=["elk:9200"]
+#  elk:
+#    image: sebp/elk
+#    environment:
+#      - MAX_MAP_COUNT=262144
+#    ports:
+#      - "5601:5601"
+#      - "9200:9200"
+#      - "5044:5044"
+#
+#  filebeat:
+#    image: docker.elastic.co/beats/filebeat:7.5.1
+#    user: root
+#    privileged: true
+#    volumes:
+#      - "./filebeat.docker.yml:/usr/share/filebeat/filebeat.yml:ro"
+#      - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
+#      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+#    command: filebeat -e -strict.perms=false
+#    environment:
+#      - output.elasticsearch.hosts=["elk:9200"]
 
   # elk-init:
   #   image: centos:centos8

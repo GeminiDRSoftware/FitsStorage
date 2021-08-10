@@ -8,6 +8,9 @@ echo Branch is $BRANCH
 if [[ "$BRANCH" == "2020-2" ]]
 then
   LABEL="2020-2"
+elif [[ "$BRANCH" == "2021-1" ]]
+then
+  LABEL="2021-1"
 else
   LABEL="latest"
 fi

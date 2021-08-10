@@ -109,7 +109,7 @@ def create_tables(session):
     Program.metadata.create_all(bind=pg_db)
     Publication.metadata.create_all(bind=pg_db)
     ProgramPublication.metadata.create_all(bind=pg_db)
-    MiscFileCollectionUsers.create(bind=pg_db)
+    # MiscFileCollectionUsers.create(bind=pg_db)
     MiscFileCollection.metadata.create_all(bind=pg_db)
     MiscFileFolder.metadata.create_all(bind=pg_db)
     MiscFilePlus.metadata.create_all(bind=pg_db)
