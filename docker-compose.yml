@@ -86,6 +86,8 @@ services:
       - API_BACKEND_LOCATION=:8000
       - USE_ELK_LOGGING=True
       - PGPASSWORD=fitsdata
+      - EXPORT_UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+      - UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
     volumes:
       - "~/testdata/archive-data-upload_staging:/data/upload_staging"
       - "~/testdata/archive-sci-dataflow:/sci/dataflow"
@@ -102,6 +104,8 @@ services:
       - API_BACKEND_LOCATION=api:8000
       - USE_ELK_LOGGING=True
       - BLOCKED_URLS=fileontape,qareport,qametrics,qaforgui,tape,tapewrite,tapefile,taperead,xmltape,gmoscal,update_headers,ingest_files
+      - EXPORT_UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+      - UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
     volumes:
       - "~/testdata/archive-data-upload_staging:/data/upload_staging"
       - "~/testdata/archive-sci-dataflow:/sci/dataflow"
@@ -186,6 +190,8 @@ services:
       - EXPORT_DESTINATIONS=http://archive
       - USE_ELK_LOGGING=True
       - PGPASSWORD=fitsdata
+      - EXPORT_UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+      - UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
     volumes:
       - "~/testdata/onsite-data-upload_staging:/data/upload_staging"
       - "~/testdata/onsite-sci-dataflow:/sci/dataflow"

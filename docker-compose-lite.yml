@@ -48,6 +48,8 @@ services:
       - USE_ELK_LOGGING=True
       - BLOCKED_URLS=
       - PGPASSWORD=fitsdata
+      - EXPORT_UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+      - UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
     volumes:
       - "~/upload_staging:/data/upload_staging"
       - "~/dataflow:/sci/dataflow"
@@ -71,6 +73,8 @@ services:
       - API_BACKEND_LOCATION=api:8000
       - CAL_QUERY_DEBUG=1
       - PGPASSWORD=fitsdata
+      - EXPORT_UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
+      - UPLOAD_AUTH_COOKIE=f3c6986fddfe42a8ce117203924c6983
     volumes:
       - "~/upload_staging:/data/upload_staging"
       - "~/dataflow:/sci/dataflow"

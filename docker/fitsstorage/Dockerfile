@@ -20,7 +20,8 @@ RUN yum -y install openssl \
                    libjpeg-devel \
                    python3-pillow \
                    redhat-rpm-config \
-                   python3-devel
+                   python3-devel \
+                   bzip2
 
 RUN yum -y --nogpgcheck install python3-pip
 
@@ -46,7 +47,8 @@ RUN pip3 install psycopg2-binary && \
     pip3 install boto3 && \
     pip3 install mysql-connector && \
     pip3 install simplejson && \
-    pip3 install packaging
+    pip3 install packaging && \
+    pip3 install smart-open
 
 # Needed for imexam, which is needed for DRAGONS
 RUN pip3 install photutils
@@ -99,7 +101,14 @@ RUN cd /opt/FitsStorageDB && python3 setup.py install
 RUN cd /opt/GeminiCalMgr && python3 setup.py install
 COPY FitsStorage /opt/FitsStorage
 WORKDIR /opt/FitsStorage
+
+RUN yum -y install libnsl
+RUN ln -s /usr/lib64/libnsl.so.2 /usr/lib64/libnsl.so
 COPY FitsStorage/fitsverify /opt/fitsverify
+RUN cd /opt/fitsverify && gcc -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c \
+    fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -L/usr/lib64 -lcfitsio -lm -lnsl \
+    -I /usr/include/cfitsio -L/usr/lib64/
+
 COPY FitsStorage/docker/wait-for-postgres.sh /
 RUN chmod a+x /wait-for-postgres.sh
 
