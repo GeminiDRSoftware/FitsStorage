@@ -16,7 +16,7 @@ class ProgramPublication(Base):
     __tablename__ = 'programpublication'
 
     id = Column(Integer, primary_key=True)
-    prog_id = Column(Integer, nullable = False, index = True)
+    prog_id = Column(Integer, nullable = True, index = True)
     pub_id = Column(Integer, nullable = False, index = True)
     program_text_id = Column(Text, nullable=False, index=True)
     bibcode = Column(String(20), nullable=False, index=True)
@@ -31,7 +31,7 @@ class ProgramPublication(Base):
             UniqueConstraint('prog_id', 'pub_id', name='programpublication_unique'),
             )
 
-    def __init__(self, program, publication):
+    def __init__(self, program, publication, program_text_id=None):
         """
         Create a new link between a program and a publication.
 
@@ -43,8 +43,14 @@ class ProgramPublication(Base):
             Program to link to a publication
         publication : :class:`~publication.Publication`
             Publication to add a linked program to
+        program_text_id : str
+            Optional program ID (the text id)
         """
-        self.prog_id = program.id
-        self.program_text_id = program.program_id
+        if program is None:
+            self.prog_id = None
+            self.program_text_id = program_text_id
+        else:
+            self.prog_id = program.id
+            self.program_text_id = program.program_id
         self.pub_id = publication.id
         self.bibcode = publication.bibcode

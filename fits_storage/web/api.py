@@ -31,10 +31,12 @@ from sqlalchemy import desc
 class RequestError(Exception):
     pass
 
+
 class ItemError(Exception):
     def __init__(self, message, label=None):
         super(ItemError, self).__init__(message)
         self.label = label
+
 
 class DummyLogger(object):
     def __getattr__(self, attr):
@@ -43,11 +45,13 @@ class DummyLogger(object):
     def __call__(self, *args, **kw):
         return
 
+
 def locked_file(path):
     fd = open(fullpath, "r+")
     fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     yield fd
     fd.close()
+
 
 def get_json_data():
     try:
@@ -58,6 +62,7 @@ def get_json_data():
         raise RequestError("This looks like a malformed request. Invalid JSON")
     except TypeError:
         raise RequestError("This looks like a malformed request. Didn't get a string in data's content")
+
 
 def lookup_diskfile(session, query):
     try:
@@ -78,12 +83,14 @@ def lookup_diskfile(session, query):
 
     return label, df
 
+
 def error_response(message, id=None):
     response = {'result': False, 'error': message}
     if id is not None:
         response['id'] = id
 
     return response
+
 
 qa_keywords = ('RAWGEMQA', 'RAWPIREQ')
 qa_state_pairs = {
@@ -118,8 +125,10 @@ rs_state_pairs = {
     'wvany':   (None, None, None, 'Any'),
 }
 
+
 def valid_pair(pair):
     return pair[1] is not None
+
 
 class PairMapper(object):
     def __init__(self, keywords, pairs):
@@ -132,13 +141,16 @@ class PairMapper(object):
         except KeyError:
             raise ValueError(value)
 
+
 def map_release(value):
     # This will raise ValueError in vase of an illegal date
     strptime(value, "%Y-%m-%d")
     return [('RELEASE', value)]
 
+
 def map_generic(value):
     return [tuple(value)]
+
 
 change_actions = {
     'qa_state': PairMapper(qa_keywords, qa_state_pairs),
@@ -146,6 +158,7 @@ change_actions = {
     'release':  map_release,
     'generic':  map_generic,
 }
+
 
 def map_changes(changes):
     change_pairs = []
@@ -164,6 +177,7 @@ def map_changes(changes):
             raise ItemError("Illegal value '{}' for action '{}'".format(value, key))
 
     return dict(change_pairs)
+
 
 def process_update(session, proxy, query, iq):
     reingest = False
@@ -196,12 +210,14 @@ def process_update(session, proxy, query, iq):
         if reingest:
            iq.add_to_queue(filename, os.path.dirname(path))
 
+
 def process_all_updates(data):
     session = get_context().session
     proxy = ApiProxy(api_backend_location)
     iq = IngestQueueUtil(session, DummyLogger())
     for query in data:
         yield process_update(session, proxy, query, iq)
+
 
 @needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], only_magic=True, content_type='json')
 def update_headers():
@@ -232,6 +248,7 @@ def update_headers():
         resp.append_json(error_response("Malformed request. It lacks the '{}' argument".format(e.args[0])))
     except TypeError:
         resp.append_json(error_response("This looks like a malformed request. Expected a dictionary or a list of queries. Instead I got {}".format(type(data))))
+
 
 def ingest_files():
     ctx = get_context()
@@ -268,6 +285,7 @@ def ingest_files():
         resp.append_json(error_response('Could not find any file with prefix: {}*'.format(file_pre)))
     else:
         resp.append_json(dict(result=True, added=sorted(added)))
+
 
 # TODO: "Only_magic" is a temporary thing. Check if it can stay
 @needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], only_magic=True, content_type='json')
@@ -318,6 +336,7 @@ def ingest_programs():
 
     resp.append_json(dict(result=True))
 
+
 def process_publication(pub_data):
     bibcode = pub_data['bibcode']
 
@@ -359,12 +378,16 @@ def process_publication(pub_data):
                       .filter(Program.program_id == progid)\
                       .first()
         if prog is None:
-            continue
-        prog_pub = ProgramPublication(program = prog,
-                                      publication = pub)
+            prog_pub = ProgramPublication(program=None,
+                                          publication=pub,
+                                          program_text_id=progid)
+        else:
+            prog_pub = ProgramPublication(program=prog,
+                                          publication=pub)
         session.add(prog_pub)
 
     session.commit()
+
 
 @needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], only_magic=True, content_type='json')
 def ingest_publications():
