@@ -28,8 +28,11 @@ pipeline {
 
             steps{
                 echo 'STARTED'
-                checkout scm
-
+//                 checkout scm
+                dir('FitsStorageDB') {
+                    git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git',
+                    credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
+                }
                 // Rest is for doing on-host testing.  We don't have docker, so reverting to that for now...
 //                 sh 'mkdir -p ${TEST_IMAGE_PATH}'
 //                 sh 'mkdir -p ${TEST_IMAGE_CACHE}'

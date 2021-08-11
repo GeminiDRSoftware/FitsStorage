@@ -10,7 +10,7 @@ RUN yum-config-manager --add-repo /tmp/spacewalk-epel-20200619.repo
 
 # IT Workaround - we can't resolve this host within Gemini network
 #RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts
-RUN cat /etc/hosts
+#RUN cat /etc/hosts
 
 # see: https://stackoverflow.com/questions/59993633/yum-dnf-error-failed-to-download-metadata-for-repo
 # Do on build
@@ -32,7 +32,8 @@ RUN yum -y install openssl \
                    libjpeg-devel \
                    python3-pillow \
                    redhat-rpm-config \
-                   python3-devel
+                   python3-devel \
+                   bzip2
 
 ##RUN yum -y --nogpgcheck install python3-pip
 # WOW, Docker sucks.  You can't modify the hosts file except like this, just in time to run a command.  Because magical.  Or, magically bad.
@@ -68,7 +69,8 @@ RUN pip3 install psycopg2-binary && \
     pip3 install ephem && \
     pip3 install sphinx && \
     pip3 install requests-toolbelt && \
-    pip3 install packaging
+    pip3 install packaging && \
+    pip3 install smart-open
 
 # Needed for imexam, which is needed for DRAGONS
 RUN pip3 install photutils
@@ -106,7 +108,7 @@ RUN mkdir -p /usr/share/httpd/.specutils && \
     chmod oug+rwx /usr/share/httpd/.specutils
 
 # COPY STUFFS
-ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS
+ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/FitsStorageDB
 RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
 
 COPY FitsStorageDB /opt/FitsStorageDB
@@ -116,7 +118,15 @@ RUN cd /opt/GeminiCalMgr && python3 setup.py install
 
 COPY FitsStorage /opt/FitsStorage
 WORKDIR /opt/FitsStorage
+
+RUN yum -y install libnsl
+RUN ln -s /usr/lib64/libnsl.so.2 /usr/lib64/libnsl.so
 COPY FitsStorage/fitsverify /opt/fitsverify
+RUN cd /opt/fitsverify && gcc -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c \
+    fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -L/usr/lib64 -lcfitsio -lm -lnsl \
+    -I /usr/include/cfitsio -L/usr/lib64/
+
+# COPY FitsStorage/fitsverify /opt/fitsverify
 COPY FitsStorage/docker/wait-for-postgres.sh /
 RUN chmod a+x /wait-for-postgres.sh
 
