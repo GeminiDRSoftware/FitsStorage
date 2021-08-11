@@ -8,7 +8,7 @@ from bz2 import BZ2File
 import sys
 
 from gemini_obs_db.db import sessionfactory
-
+from fits_storage.orm import createtables
 
 now = dt.datetime.now()
 
@@ -117,7 +117,7 @@ def session(request):
     'Creates a fresh database, with empty tables'
     dbname = fsc.fits_dbname
     conn, s = dbcreation.create_db(dbname)
-    orm.createtables.create_tables(s)
+    createtables.create_tables(s)
 
     yield s
 
