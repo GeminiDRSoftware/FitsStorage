@@ -27,6 +27,9 @@ def ensure_file(filename, path=None):
     if os.path.isfile(os.path.join(path, filename)):
         return
 
+    # Make sure the folder exists.  On Jenkins, it can be transient
+    os.makedirs(path, exist_ok=True)
+
     getfile = filename
     if getfile.endswith(".bz2"):
         getfile = getfile[:-4]
