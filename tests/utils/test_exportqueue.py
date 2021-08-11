@@ -10,6 +10,7 @@ import urllib
 from datetime import datetime, timedelta
 
 import fits_storage
+import gemini_obs_db
 from gemini_obs_db.db import sessionfactory
 from gemini_obs_db.orm.diskfile import DiskFile
 from fits_storage.orm.exportqueue import ExportQueue
@@ -154,9 +155,9 @@ def test_export_queue_util_export_file(monkeypatch):
     def mock_get_lastmod(df):
         return datetime.now()
 
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
     # turn off bzip
     monkeypatch.setattr(fits_storage.utils.exportqueue, 'export_bzip', False)
 

@@ -62,11 +62,11 @@ def test_diskfile():
 def test_diskfile_fullpath():
     save_storage_root = fsc.storage_root
     try:
-        fsc.storage_root = '/tmp'
+        fsc.storage_root = '/tmp/jenkins_pytest/dataflow'
         testfile = 'S20181231S0120.fits'
-        ensure_file(testfile, "/tmp")
+        ensure_file(testfile, "/tmp/jenkins_pytest/dataflow")
         f = File(testfile)
         df = DiskFile(f, testfile, "")
-        assert(df.fullpath() == '/tmp/%s' % testfile)
+        assert(df.fullpath() == '/tmp/jenkins_pytest/dataflow/%s' % testfile)
     finally:
         fsc.storage_root = save_storage_root
