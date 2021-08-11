@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 
 import fits_storage
+import gemini_obs_db
 from fits_storage import fits_storage_config
 from gemini_obs_db import db_config
 
@@ -69,9 +70,9 @@ def mock_populate(ftxthdr, df):
 
 
 def setup_mock_file_stuff(monkeypatch):
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
-    monkeypatch.setattr(fits_storage.orm.header.Header, 'populate_fits', mock_populate_fits)
-    monkeypatch.setattr(fits_storage.orm.fulltextheader.FullTextHeader, 'populate', mock_populate)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
+    monkeypatch.setattr(gemini_obs_db.orm.header.Header, 'populate_fits', mock_populate_fits)
+    monkeypatch.setattr(gemini_obs_db.orm.fulltextheader.FullTextHeader, 'populate', mock_populate)
 
