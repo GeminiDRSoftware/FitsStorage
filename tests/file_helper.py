@@ -21,6 +21,9 @@ def ensure_file(filename, path=None):
     import requests
     import bz2
 
+    # Thinking of dropping the arg, fsc storage root is already set properly
+    path = None
+
     if path is None:
         path = fits_storage_config.storage_root
 
