@@ -29,7 +29,7 @@ pipeline {
             steps{
                 echo 'STARTED'
 
-//                 checkout scm
+                checkout scm
 
                 echo 'Checking Out FitsStorage'
                 dir('FitsStorage') {
