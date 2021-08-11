@@ -7,6 +7,8 @@ from subprocess import call
 from bz2 import BZ2File
 import sys
 
+from gemini_obs_db.db import sessionfactory
+
 
 now = dt.datetime.now()
 
@@ -74,7 +76,7 @@ class DatabaseCreation(object):
         else:
             conn = self.conn
 
-        s = orm.sessionfactory()
+        s = sessionfactory()
 
         return conn, s
 
