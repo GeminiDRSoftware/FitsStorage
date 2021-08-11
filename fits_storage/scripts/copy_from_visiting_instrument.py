@@ -209,7 +209,7 @@ class VisitingInstrumentABC(ABC):
         dryrun : bool
             If True, don't do any actual changes, just check what would be done
         force : bool
-            If True, copy and ingest file, even if it already has a `fits_storage.orm.diskfile.DiskFile` record
+            If True, copy and ingest file, even if it already has a :class:`~gemini_obs_db.orm.diskfile.DiskFile` record
 
         Returns
         -------

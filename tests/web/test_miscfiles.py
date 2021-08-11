@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import pytest
 
 import fits_storage
+import gemini_obs_db
 from gemini_obs_db.orm.diskfile import DiskFile
 from gemini_obs_db.orm.file import File
 from gemini_obs_db.orm.header import Header
@@ -70,10 +71,10 @@ def test_miscfiles_search(session, monkeypatch):
         return mock_context
     monkeypatch.setattr(fits_storage.web.miscfiles, "get_context", _mock_get_context)
     monkeypatch.setattr(fits_storage.web.templating, "get_context", _mock_get_context)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
-    monkeypatch.setattr(fits_storage.orm.header.Header, 'populate_fits', mock_populate_fits)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
+    monkeypatch.setattr(gemini_obs_db.orm.header.Header, 'populate_fits', mock_populate_fits)
 
     f = File('foo.fits')
     session.add(f)
@@ -116,10 +117,10 @@ def test_miscfiles_search_detail(session, monkeypatch):
         return mock_context
     monkeypatch.setattr(fits_storage.web.miscfiles, "get_context", _mock_get_context)
     monkeypatch.setattr(fits_storage.web.templating, "get_context", _mock_get_context)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
-    monkeypatch.setattr(fits_storage.orm.header.Header, 'populate_fits', mock_populate_fits)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
+    monkeypatch.setattr(gemini_obs_db.orm.header.Header, 'populate_fits', mock_populate_fits)
 
     f = File('foo.fits')
     session.add(f)
@@ -178,10 +179,10 @@ def test_miscfiles_upload(session, monkeypatch):
     monkeypatch.setattr(fits_storage.web.miscfiles, "get_context", _mock_get_context)
     monkeypatch.setattr(fits_storage.web.templating, "get_context", _mock_get_context)
     monkeypatch.setattr(fits_storage.web.miscfiles, "save_file", _mock_save_file)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
-    monkeypatch.setattr(fits_storage.orm.header.Header, 'populate_fits', mock_populate_fits)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
+    monkeypatch.setattr(gemini_obs_db.orm.header.Header, 'populate_fits', mock_populate_fits)
     monkeypatch.setattr(os, 'unlink', _mock_unlink)
 
     miscfiles()
@@ -208,10 +209,10 @@ def test_miscfiles_handle(session, monkeypatch):
         return mock_context
     monkeypatch.setattr(fits_storage.web.miscfiles, "get_context", _mock_get_context)
     monkeypatch.setattr(fits_storage.web.templating, "get_context", _mock_get_context)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
-    monkeypatch.setattr(fits_storage.orm.header.Header, 'populate_fits', mock_populate_fits)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
+    monkeypatch.setattr(gemini_obs_db.orm.header.Header, 'populate_fits', mock_populate_fits)
 
     f = File('foo.fits')
     session.add(f)
@@ -248,10 +249,10 @@ def test_miscfiles_handle_save(session, monkeypatch):
         return mock_context
     monkeypatch.setattr(fits_storage.web.miscfiles, "get_context", _mock_get_context)
     monkeypatch.setattr(fits_storage.web.templating, "get_context", _mock_get_context)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
-    monkeypatch.setattr(fits_storage.orm.header.Header, 'populate_fits', mock_populate_fits)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
+    monkeypatch.setattr(gemini_obs_db.orm.header.Header, 'populate_fits', mock_populate_fits)
 
     f = File('foo.fits')
     session.add(f)
@@ -328,10 +329,10 @@ def test_validate(session, monkeypatch):
         return mock_context
     monkeypatch.setattr(fits_storage.web.miscfiles, "get_context", _mock_get_context)
     monkeypatch.setattr(fits_storage.web.templating, "get_context", _mock_get_context)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
-    monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
-    monkeypatch.setattr(fits_storage.orm.header.Header, 'populate_fits', mock_populate_fits)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_size', mock_get_file_size)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_file_md5', mock_get_file_md5)
+    monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, 'get_lastmod', mock_get_lastmod)
+    monkeypatch.setattr(gemini_obs_db.orm.header.Header, 'populate_fits', mock_populate_fits)
 
     validate()
     assert(mock_context.resp.status == Return.HTTP_BAD_REQUEST)

@@ -3,6 +3,7 @@ import datetime
 import pytest
 
 import fits_storage
+import gemini_obs_db
 from gemini_obs_db.orm.diskfile import DiskFile
 from gemini_obs_db.orm.file import File
 from fits_storage.orm.obslog import Obslog
@@ -62,9 +63,9 @@ def test_generate_obslogs(session, monkeypatch):
         monkeypatch.setattr(fits_storage.web.obslogs, "get_context", _mock_get_context)
         monkeypatch.setattr(fits_storage.web.obslogs, "icanhave", _mock_icanhave)
         monkeypatch.setattr(fits_storage.web.userprogram, "get_context", _mock_get_context)
-        monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, "get_file_size", _mock_diskfile_get_file_size)
-        monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, "get_file_md5", _mock_diskfile_get_file_md5)
-        monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, "get_lastmod", _mock_diskfile_get_lastmod)
+        monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, "get_file_size", _mock_diskfile_get_file_size)
+        monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, "get_file_md5", _mock_diskfile_get_file_md5)
+        monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, "get_lastmod", _mock_diskfile_get_lastmod)
 
         f = File('somefile.fits')
         session.add(f)
@@ -115,9 +116,9 @@ def test_obslogs(session, monkeypatch):
         monkeypatch.setattr(fits_storage.web.userprogram, "get_context", _mock_get_context)
         monkeypatch.setattr(fits_storage.web.templating, "get_context", _mock_get_context)
         monkeypatch.setattr(fits_storage.web.list_headers, "get_context", _mock_get_context)
-        monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, "get_file_size", _mock_diskfile_get_file_size)
-        monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, "get_file_md5", _mock_diskfile_get_file_md5)
-        monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, "get_lastmod", _mock_diskfile_get_lastmod)
+        monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, "get_file_size", _mock_diskfile_get_file_size)
+        monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, "get_file_md5", _mock_diskfile_get_file_md5)
+        monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, "get_lastmod", _mock_diskfile_get_lastmod)
 
         f = File('somefile.fits')
         session.add(f)
@@ -166,9 +167,9 @@ def test_associate_obslogs(session, monkeypatch):
         monkeypatch.setattr(fits_storage.web.userprogram, "get_context", _mock_get_context)
         monkeypatch.setattr(fits_storage.web.templating, "get_context", _mock_get_context)
         monkeypatch.setattr(fits_storage.web.list_headers, "get_context", _mock_get_context)
-        monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, "get_file_size", _mock_diskfile_get_file_size)
-        monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, "get_file_md5", _mock_diskfile_get_file_md5)
-        monkeypatch.setattr(fits_storage.orm.diskfile.DiskFile, "get_lastmod", _mock_diskfile_get_lastmod)
+        monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, "get_file_size", _mock_diskfile_get_file_size)
+        monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, "get_file_md5", _mock_diskfile_get_file_md5)
+        monkeypatch.setattr(gemini_obs_db.orm.diskfile.DiskFile, "get_lastmod", _mock_diskfile_get_lastmod)
 
         f = File('somefile.fits')
         session.add(f)
