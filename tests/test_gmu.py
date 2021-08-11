@@ -6,7 +6,7 @@ import time
 import pytest
 import itertools
 
-import fits_storage.gemini_metadata_utils as gmu
+import gemini_obs_db.utils.gemini_metadata_utils as gmu
 import datetime
 from dateutil import parser as dateparser
 parsedate = dateparser.parse

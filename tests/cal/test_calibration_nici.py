@@ -1,7 +1,7 @@
 
 import pytest
 
-from fits_storage.cal import get_cal_object
+from gemini_calmgr.cal import get_cal_object
 from gemini_obs_db.orm.calcache import CalCache
 from gemini_obs_db.orm.diskfile import DiskFile
 from gemini_obs_db.orm.header import Header

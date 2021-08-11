@@ -1,6 +1,6 @@
 import pytest
 
-from fits_storage.cal.associate_calibrations import associate_cals, associate_cals_from_cache
+from gemini_calmgr.cal.associate_calibrations import associate_cals, associate_cals_from_cache
 
 
 @pytest.mark.usefixtures("rollback")
