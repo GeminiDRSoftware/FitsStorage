@@ -9,7 +9,7 @@ from gemini_obs_db.orm.file import File
 from fits_storage.orm.fulltextheader import FullTextHeader
 from gemini_obs_db.orm.header import Header
 from gemini_obs_db.orm.preview import Preview
-from fits_storage.orm.provenance import Provenance, ProvenanceHistory
+from gemini_obs_db.orm.provenance import Provenance, ProvenanceHistory
 from fits_storage.orm.usagelog import UsageLog
 from fits_storage.web.preview import num_previews, preview, sendpreview
 from fits_storage.web.reporting import report

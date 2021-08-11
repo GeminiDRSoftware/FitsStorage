@@ -1,6 +1,6 @@
 import astrodata
-from fits_storage.orm.diskfile import DiskFile
-from fits_storage.orm.file import File
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.file import File
 from fits_storage.orm.fulltextheader import FullTextHeader
 import fits_storage.fits_storage_config as fsc
 from tests.file_helper import ensure_file

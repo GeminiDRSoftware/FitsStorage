@@ -10,7 +10,7 @@ import urllib
 from datetime import datetime, timedelta
 
 import fits_storage
-from fits_storage.orm import sessionfactory
+from gemini_obs_db.db import sessionfactory
 from gemini_obs_db.orm.diskfile import DiskFile
 from fits_storage.orm.exportqueue import ExportQueue
 from gemini_obs_db.orm.file import File

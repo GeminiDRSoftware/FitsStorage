@@ -11,7 +11,7 @@ from gemini_obs_db.orm.file import File
 from gemini_obs_db.orm.header import Header
 from fits_storage.orm.miscfile import MiscFile
 from fits_storage.orm.obslog import Obslog
-from fits_storage.orm.provenance import Provenance
+from gemini_obs_db.orm.provenance import Provenance
 from fits_storage.orm.usagelog import UsageLog
 from fits_storage.web import fileserver
 from fits_storage.web.fileserver import generate_filename, make_tarinfo, download_post, is_regular_file, is_obslog, \

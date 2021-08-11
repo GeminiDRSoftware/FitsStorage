@@ -9,7 +9,7 @@ import os
 from copy import deepcopy
 
 from fits_storage import fits_storage_config
-from fits_storage.orm import sessionfactory
+from gemini_obs_db.db import sessionfactory
 from fits_storage.utils.ingestqueue import IngestQueueUtil
 from fits_storage.utils.null_logger import EmptyLogger
 from fits_storage.utils.web import get_context, Return, ClientError, RequestRedirect

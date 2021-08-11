@@ -8,7 +8,7 @@ from fits_storage.orm.diskfilereport import DiskFileReport
 from gemini_obs_db.orm.file import File
 from fits_storage.orm.fulltextheader import FullTextHeader
 from gemini_obs_db.orm.header import Header
-from fits_storage.orm.provenance import Provenance, ProvenanceHistory
+from gemini_obs_db.orm.provenance import Provenance, ProvenanceHistory
 from fits_storage.web.reporting import report
 from tests.file_helper import setup_mock_file_stuff
 from tests.web_helper import MockContext, MockUsageLog

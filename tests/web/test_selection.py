@@ -222,10 +222,10 @@ def test_sayselection(input, expected):
     else:
         assert sayselection(input) == expected
 
-from fits_storage.orm.diskfile import DiskFile
-from fits_storage.orm.file import File
+from gemini_obs_db.orm.diskfile import DiskFile
+from gemini_obs_db.orm.file import File
 from fits_storage.orm.footprint import Footprint
-from fits_storage.orm.header import Header
+from gemini_obs_db.orm.header import Header
 from fits_storage.orm.photstandard import PhotStandardObs
 
 queryselection_pair_source = (

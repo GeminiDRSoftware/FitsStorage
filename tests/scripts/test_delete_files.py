@@ -20,7 +20,7 @@ from fits_storage.scripts.delete_files import check_old_enough_to_delete, check_
     add_to_errmsg
 from fits_storage.scripts import delete_files
 
-from fits_storage.orm import session_scope
+from gemini_obs_db.db import session_scope
 
 
 def test_add_to_msg():
