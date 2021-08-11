@@ -122,5 +122,6 @@ def perform_test(url, method=GET, *args, **kw):
 
 @pytest.mark.parametrize("input,method,expected", no_auth_no_data)
 def test_simple_get_query(input, method, expected):
-    url = '/'.join([SERVER,input])
+    url = '/'.join([SERVER, input])
+    print(f"Checking url {url}")
     assert perform_test(url, method=method) == expected

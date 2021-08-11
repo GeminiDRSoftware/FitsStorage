@@ -95,7 +95,7 @@ pipeline {
                                     sh  '''
                                         mkdir -p /tmp/archive_test_images
                                         mkdir -p /tmp/cached_archive_test_images
-                                        coverage run --omit "/usr/lib/*,/usr/local/*,/opt/DRAGONS/*,tests/*" -m pytest tests
+                                        env PYTEST_SERVER=http://archive-jenkins coverage run --omit "/usr/lib/*,/usr/local/*,/opt/DRAGONS/*,tests/*" -m pytest tests
                                         coverage report -m --fail-under=66
                                         '''
                                 }
