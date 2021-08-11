@@ -6,7 +6,7 @@ from datetime import datetime
 
 import fits_storage
 from fits_storage import fits_storage_config
-
+from gemini_obs_db import db_config
 
 for path in (fits_storage_config.storage_root,
              os.path.join(fits_storage_config.storage_root,
@@ -25,6 +25,8 @@ def ensure_file(filename, path=None):
     path = None
 
     if path is None:
+        db_config.storage_root = '/tmp/jenkins_pytest/dataflow'
+        fits_storage_config.storage_root = '/tmp/jenkins_pytest/dataflow'
         path = fits_storage_config.storage_root
 
     if os.path.isfile(os.path.join(path, filename)):
