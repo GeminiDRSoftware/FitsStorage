@@ -58,7 +58,7 @@ class DatabaseCreation(object):
     def create_db(self, dbname):
         if self.conn is None:
             if _create_test_db:
-                eng = sqlalchemy.create_engine('postgres://%s/postgres' % fsc.pytest_database_server)
+                eng = sqlalchemy.create_engine('postgresql://%s/postgres' % fsc.pytest_database_server)
                 conn = eng.connect()
                 conn.execute('COMMIT') # Make sure we're not inside a transaction
                                        # as CREATE DATABASE can't run inside one
@@ -66,7 +66,7 @@ class DatabaseCreation(object):
 
                 # Trying to fix test_wsgi.py
                 conn.close()
-            eng = sqlalchemy.create_engine('postgres://%s/%s' % (fsc.pytest_database_server, dbname))
+            eng = sqlalchemy.create_engine('postgresql://%s/%s' % (fsc.pytest_database_server, dbname))
             conn = eng.connect()
             # end of my hackery
 
@@ -98,7 +98,7 @@ class DatabaseCreation(object):
 
             orm.pg_db.dispose()
 
-            eng = sqlalchemy.create_engine('postgres://%s/postgres' % fsc.pytest_database_server)
+            eng = sqlalchemy.create_engine('postgresql://%s/postgres' % fsc.pytest_database_server)
             conn = eng.connect()
             conn.execute('COMMIT') # Make sure we're not inside a transaction
                                    # as CREATE DATABASE can't run inside one
