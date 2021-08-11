@@ -120,8 +120,8 @@ def create_tables(session):
     # Ignore any errors, commonly from column already exists...
     if not using_sqlite:
         try:
-            pg_db.execute("ALTER TABLE footprint ADD COLUMN area polygon;")
-            pg_db.execute("ALTER TABLE photstandard ADD COLUMN coords point;")
+            pg_db.execute("ALTER TABLE footprint ADD COLUMN IF NOT EXISTS area polygon;")
+            pg_db.execute("ALTER TABLE photstandard ADD COLUMN IF NOT EXISTS coords point;")
         except sqlalchemy.exc.ProgrammingError:
             pass
 
