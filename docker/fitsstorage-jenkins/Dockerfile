@@ -116,18 +116,18 @@ COPY GeminiCalMgr /opt/GeminiCalMgr
 RUN cd /opt/FitsStorageDB && python3 setup.py install
 RUN cd /opt/GeminiCalMgr && python3 setup.py install
 
-COPY . /opt/FitsStorage
+COPY FitsStorage /opt/FitsStorage
 WORKDIR /opt/FitsStorage
 
 RUN yum -y install libnsl
 RUN ln -s /usr/lib64/libnsl.so.2 /usr/lib64/libnsl.so
-COPY fitsverify /opt/fitsverify
+COPY FitsStorage/fitsverify /opt/fitsverify
 RUN cd /opt/fitsverify && gcc -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c \
     fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -L/usr/lib64 -lcfitsio -lm -lnsl \
     -I /usr/include/cfitsio -L/usr/lib64/
 
 # COPY FitsStorage/fitsverify /opt/fitsverify
-COPY docker/wait-for-postgres.sh /
+COPY FitsStorage/docker/wait-for-postgres.sh /
 RUN chmod a+x /wait-for-postgres.sh
 
 # CYTHON STEP FOR DRAGONS
