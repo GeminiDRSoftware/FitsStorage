@@ -108,6 +108,7 @@ no_auth_no_data = (
     ('gmoscaljson/20130101', GET, OK),
     )
 
+
 def perform_test(url, method=GET, *args, **kw):
     if isinstance(method, tuple):
         method, data = method
@@ -120,8 +121,10 @@ def perform_test(url, method=GET, *args, **kw):
 
     return r.status_code
 
-@pytest.mark.parametrize("input,method,expected", no_auth_no_data)
-def test_simple_get_query(input, method, expected):
-    url = '/'.join([SERVER, input])
-    print(f"Checking url {url}")
-    assert perform_test(url, method=method) == expected
+
+# removing for now
+# @pytest.mark.parametrize("input,method,expected", no_auth_no_data)
+# def test_simple_get_query(input, method, expected):
+#     url = '/'.join([SERVER, input])
+#     print(f"Checking url {url}")
+#     assert perform_test(url, method=method) == expected
