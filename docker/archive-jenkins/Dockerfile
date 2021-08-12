@@ -22,7 +22,7 @@ RUN ln -sf /dev/stdout /var/log/httpd/access_log && \
     ln -sf /dev/stdout /var/log/messages
 
 # SETUP WEB SERVER
-RUN mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  /opt/FitsStorage/fits_storage/wsgihandler.py
+RUN mod_wsgi-express setup-server --server-root /opt/modwsgi-default --port 80 --user apache --group apache --access-log --url-alias /static /opt/FitsStorage/htmldocroot --url-alias /favicon.ico /opt/FitsStorage/htmldocroot/favicon.ico --url-alias /robots.txt /opt/FitsStorage/htmldocroot/robots.txt --python-path /opt/FitsStorage --python-path /opt/DRAGONS  --python-path /opt/GeminiCalMgr --python-path /opt/FitsStorageDB --proxy-mount-point /services/rest http://127.0.0.1:8090/services/rest  /opt/FitsStorage/fits_storage/wsgihandler.py
 RUN chown -R apache:apache /opt/modwsgi-default
 
 # SETUP HTTPD SERVICE
