@@ -70,8 +70,8 @@ def report(thing):
         elif this == 'fullheader':
             # Need to find the header associated with this diskfile
             query = (session.query(Header, FullTextHeader)
-                        .filter(FullTextHeader.diskfile_id == diskfile.id)
-                        .filter(Header.diskfile_id == diskfile.id))
+                     .filter(FullTextHeader.diskfile_id == diskfile.id)
+                     .filter(Header.diskfile_id == FullTextHeader.diskfile_id))  # explicit join to keep SQLA happy
             header, ftheader = query.one()
             if canhave_coords(session, ctx.user, header):
                 resp.append(ftheader.fulltext)
