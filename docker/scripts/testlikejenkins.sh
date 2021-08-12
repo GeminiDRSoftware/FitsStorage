@@ -1,9 +1,8 @@
 #!/bin/bash
 
 # Build fresh images
-docker image build -t gemini/epelhack:jenkins -f docker/epelhack-jenkins/Dockerfile .
-docker image build -t gemini/fitsarchiveutils:jenkins -f docker/fitsstorage-jenkins/Dockerfile .
-docker image build -t gemini/archive:jenkins -f docker/archive-jenkins/Dockerfile .
+docker image build -t gemini/fitsarchiveutils:jenkins -f FitsStorage/docker/fitsstorage-jenkins/Dockerfile .
+docker image build -t gemini/archive:jenkins -f FitsStorage/docker/archive-jenkins/Dockerfile .
 
 # Cleanup any residuals
 docker network create fitsstorage-jenkins || true
