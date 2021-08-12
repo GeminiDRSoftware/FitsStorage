@@ -101,6 +101,7 @@ pipeline {
                                 }
                             } catch (exc) {
                                 sh "docker logs ${a.id}"
+                                sh "docker logs archive-jenkins"
                                 throw exc
                             }
                         }
