@@ -116,6 +116,9 @@ COPY GeminiCalMgr /opt/GeminiCalMgr
 RUN cd /opt/FitsStorageDB && python3 setup.py install
 RUN cd /opt/GeminiCalMgr && python3 setup.py install
 
+# Install the configuration file for the Jenkins FitsStore containers
+COPY FitsStorageConfig/configs/jenkins_fitsstorage.conf /etc/fitsstorage.conf
+
 COPY FitsStorage /opt/FitsStorage
 WORKDIR /opt/FitsStorage
 

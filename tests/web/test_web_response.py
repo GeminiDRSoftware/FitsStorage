@@ -122,9 +122,8 @@ def perform_test(url, method=GET, *args, **kw):
     return r.status_code
 
 
-# removing for now
-# @pytest.mark.parametrize("input,method,expected", no_auth_no_data)
-# def test_simple_get_query(input, method, expected):
-#     url = '/'.join([SERVER, input])
-#     print(f"Checking url {url}")
-#     assert perform_test(url, method=method) == expected
+@pytest.mark.parametrize("input,method,expected", no_auth_no_data)
+def test_simple_get_query(input, method, expected):
+    url = '/'.join([SERVER, input])
+    print(f"Checking url {url}")
+    assert perform_test(url, method=method) == expected
