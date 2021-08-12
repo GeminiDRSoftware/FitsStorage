@@ -325,7 +325,19 @@ def fileserver(filenamegiven):
     downloadlog.query_started = datetime.datetime.utcnow()
 
     try:
-        file = session.query(File).filter(File.name == filename).one()
+        try:
+            file = session.query(File).filter(File.name == filename).one()
+        except NoResultFound:
+            file = None
+        if file is None:
+            if not filename.endswith('.bz2'):
+                needs_bzip2 = True
+                filename = f"{filename}.bz2"
+            else:
+                needs_bunzip2 = True
+                filename = filename[:-4]
+            file = session.query(File).filter(File.name == filename).one()
+
         # OK, we should have the file record now.
         # Next, find the canonical diskfile for it
         diskfile = (
@@ -339,7 +351,6 @@ def fileserver(filenamegiven):
         downloadlog.add_note("Not found in File table")
         ctx.resp.status = Return.HTTP_NOT_FOUND
         return
-
 
     item = None
     # And now find the header record...
@@ -363,7 +374,7 @@ def fileserver(filenamegiven):
         if icanhave(ctx, item):
             # Send them the data
             downloadlog.sending_files = True
-            sendonefile(item.diskfile, content_type=content_type)
+            sendonefile(item.diskfile, content_type=content_type, filenamegiven=filenamegiven)
             downloadlog.download_completed = datetime.datetime.utcnow()
         else:
             # Refuse to send data
@@ -371,6 +382,7 @@ def fileserver(filenamegiven):
             ctx.resp.client_error(Return.HTTP_FORBIDDEN, "Not enough privileges to download this content")
 
 CHUNKSIZE = 8192*64
+
 
 class BZ2OnTheFlyDecompressor(object):
     def __init__(self, buff):
@@ -399,15 +411,52 @@ class BZ2OnTheFlyDecompressor(object):
 
         return ret
 
+
+class BZ2OnTheFlyCompressor(object):
+    def __init__(self, buff):
+        self.buff = buff
+        self.comp = bz2.BZ2Compressor()
+        self.unused_bytes = b''
+        self.done = False
+
+    def _buffer(self, limit):
+        while not self.done and len(self.unused_bytes) < limit:
+            chunk = self.buff.read(CHUNKSIZE)
+            if not chunk:
+                comp = self.comp.flush()
+                if comp:
+                    self.unused_bytes += comp
+                self.done = True
+            else:
+                comp = self.comp.compress(chunk)
+                if comp:
+                    self.unused_bytes += comp
+
+    def read(self, k):
+        if len(self.unused_bytes) < k:
+            self._buffer(k)
+
+        if not self.unused_bytes:
+            return None
+
+        ret = self.unused_bytes[:k]
+        self.unused_bytes = self.unused_bytes[k:]
+
+        return ret
+
+
 unexpected_not_found_template = """
 The file '{fname}' could not be found in the system.</p>
 This was unexpected. Please, inform the administrators.
 """
 
-def sendonefile(diskfile, content_type=None):
+
+def sendonefile(diskfile, content_type=None, filenamegiven=None):
     """
     Send the (one) fits file referred to by the diskfile object to the client.
-    This always sends unzipped data.
+    This sends data as compressed or uncompressed depending on the givebn filename
+    extension (.bz2 for compressed).  If no given filename is passed, the filename
+    is taken from the diskfile entry.
     """
 
     ctx = get_context()
@@ -417,27 +466,45 @@ def sendonefile(diskfile, content_type=None):
     if content_type is not None:
         resp.content_type = content_type
 
-    if content_type == 'application/fits':
-        resp.set_header('Content-Disposition', 'attachment; filename="%s"' % str(diskfile.file.name))
-
-
     fname = diskfile.filename
+    if filenamegiven is None:
+        filenamegiven = fname
+
+    if content_type == 'application/fits':
+        resp.set_header('Content-Disposition', 'attachment; filename="%s"' % filenamegiven)
+
     if using_s3:
         # S3 file server
-        resp.content_length = diskfile.data_size
+        # resp.content_length = diskfile.data_size
         with s3.fetch_temporary(fname) as buffer:
             if diskfile.compressed:
-                resp.sendfile_obj(BZ2OnTheFlyDecompressor(buffer))
+                if filenamegiven.lower().endswith('.bz2'):
+                    resp.content_length = diskfile.file_size
+                    resp.sendfile_obj(buffer)
+                else:
+                    resp.content_length = diskfile.data_size
+                    resp.sendfile_obj(BZ2OnTheFlyDecompressor(buffer))
             else:
-                resp.sendfile_obj(buffer)
+                if filenamegiven.lower().endswith('.bz2'):
+                    resp.sendfile_obj(BZ2OnTheFlyCompressor(buffer))
+                else:
+                    resp.content_length = diskfile.file_size
+                    resp.sendfile_obj(buffer)
     else:
         # Serve from regular file
         try:
             if diskfile.compressed == True:
-                # Unzip it on the fly
-                resp.content_length = diskfile.data_size
-                resp.sendfile_obj(BZ2OnTheFlyDecompressor(open(diskfile.fullpath(), 'rb')))
+                if filenamegiven.lower().endswith('.bz2'):
+                    resp.content_length = diskfile.file_size
+                    resp.sendfile(diskfile.fullpath())
+                else:
+                    # Unzip it on the fly
+                    resp.content_length = diskfile.data_size
+                    resp.sendfile_obj(BZ2OnTheFlyDecompressor(open(diskfile.fullpath(), 'rb')))
             else:
-                resp.sendfile(diskfile.fullpath())
+                if filenamegiven.lower().endswith('.bz2'):
+                    resp.sendfile_obj(BZ2OnTheFlyCompressor(open(diskfile.fullpath(), 'rb')))
+                else:
+                    resp.sendfile(diskfile.fullpath())
         except IOError:
-            ctx.resp.client_error(Return.HTTP_NOT_FOUND, unexpected_not_found_template.format(fname = fname))
+            ctx.resp.client_error(Return.HTTP_NOT_FOUND, unexpected_not_found_template.format(fname=filenamegiven))

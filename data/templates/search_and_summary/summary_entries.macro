@@ -103,7 +103,11 @@
 <div class='center'>
 {%- if col.prev %}<span class="preview"><a href="/preview/{{ col.name }}">[P]</a> </span>{% endif -%}
 {%- if has_provenance %}<a href="/rawfiles/{{ col.name }}" target="_blank">[R]</a>{% endif -%}
+{%- if col.name.endswith('.fits') %}
+<a href="/file/{{ col.name }}.bz2">[D]</a>
+{%- else -%}
 <a href="/file/{{ col.name }}">[D]</a>
+{%- endif -%}
 {%- if col.down_sel %} <input type='checkbox' class='mark mark_{{ sumtype }}' name='files' value='{{ col.name }}'>{% endif -%}
 </div>
 {%- endmacro -%}
