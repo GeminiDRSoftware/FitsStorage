@@ -14,6 +14,8 @@
 pipeline {
     agent any
 
+    options { skipDefaultCheckout() }
+
     environment {
         PATH = "$JENKINS_HOME/anaconda3-dev-oly/bin:$PATH"
         CONDA_ENV_FILE = ".jenkins/conda_py3env_stable.yml"
@@ -29,7 +31,7 @@ pipeline {
             steps{
                 echo 'STARTED'
 
-                checkout scm
+//                 checkout scm
 
                 echo 'Checking Out FitsStorage'
                 dir('FitsStorage') {
