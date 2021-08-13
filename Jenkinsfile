@@ -54,23 +54,6 @@ pipeline {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git',
                     credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
                 }
-
-                // Rest is for doing on-host testing.  We don't have docker, so reverting to that for now...
-//                 sh 'mkdir -p ${TEST_IMAGE_PATH}'
-//                 sh 'mkdir -p ${TEST_IMAGE_CACHE}'
-//                 sh 'rm -rf ./plots; mkdir -p ./plots'
-//
-//                 sh 'rm -rf ./reports; mkdir -p ./reports'
-//                 sh '.jenkins/scripts/download_and_install_packages.sh'
-//                 sh '.jenkins/scripts/download_and_install_anaconda.sh'
-//                 sh '.jenkins/scripts/create_conda_environment.sh'
-//                 sh '''. activate ${CONDA_ENV_NAME}
-//                       '''
-//                 sh 'conda list -n ${CONDA_ENV_NAME}'
-//                 sh '''
-//                     echo /tmp/DRAGONS-$$ > dragons-repo.txt
-//                     git clone https://github.com/GeminiDRSoftware/DRAGONS.git `cat dragons-repo.txt`
-//                 '''
             }
 
         }
@@ -78,7 +61,6 @@ pipeline {
         stage('Building Docker Containers') {
             steps {
                 script {
-                    //def epelhackimage = docker.build("gemini/epelhack:jenkins", " -f docker/epelhack-jenkins/Dockerfile .")
                     def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f FitsStorage/docker/fitsstorage-jenkins/Dockerfile .")
                     def archiveimage = docker.build("gemini/archive:jenkins", " -f FitsStorage/docker/archive-jenkins/Dockerfile .")
                     sh '''
@@ -109,30 +91,6 @@ pipeline {
                 }
             }
         }
-
-//         stage('Unit tests') {
-//
-//             steps {
-//                 echo "Activating Conda environment"
-//                 sh '''. activate ${CONDA_ENV_NAME}
-//                       '''
-//                 echo "ensure cleaning __pycache__"
-//                 sh  'find . | grep -E "(__pycache__|\\.pyc|\\.pyo$)" | xargs rm -rfv'
-//
-//                 echo "Running tests"
-//                 sh  '''
-//                     export CREATE_TEST_DB=False
-//                     . activate ${CONDA_ENV_NAME}
-//                     export PYTHONPATH=`cat dragons-repo.txt`
-//                     echo running python `which python`
-//                     echo running pytest `which pytest`
-//                     echo running coverage `which coverage`
-//                     export VALIDATION_DEF_PATH=./docs/dataDefinition/
-//                     #coverage run -m pytest --junit-xml ./reports/unittests_results.xml tests
-//                     '''
-//             }
-//
-//         }
         stage('Deploy To Host') {
             when {
                 expression { deploy_target != 'none' }

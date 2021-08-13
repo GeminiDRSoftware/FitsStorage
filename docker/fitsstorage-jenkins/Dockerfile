@@ -1,27 +1,7 @@
 FROM centos:centos8.1.1911
-# FROM gemini/epelhack:jenkins
-LABEL maintainer="ooberdorf@gemini.edu"
+LABEL maintainer="oliver.oberdorf@noirlab.edu"
 
 # ENABLE EPEL
-#RUN yum -y install yum-utils
-#COPY spacewalk-epel-20200619.repo /tmp/spacewalk-epel-20200619.repo
-#RUN yum-config-manager --add-repo /tmp/spacewalk-epel-20200619.repo
-#RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-
-# IT Workaround - we can't resolve this host within Gemini network
-#RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts
-#RUN cat /etc/hosts
-
-# see: https://stackoverflow.com/questions/59993633/yum-dnf-error-failed-to-download-metadata-for-repo
-# Do on build
-### RUN dnf clean all
-### RUN rm -r /var/cache/dnf
-### RUN dnf upgrade -y
-### RUN dnf update -y
-
-# ENABLE EPEL
-# Trying this hack
-#   https://www.edureka.co/community/72932/error-failed-to-download-metadata-for-repo-epel-modular
 RUN rm -r /var/cache/dnf
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
@@ -41,17 +21,14 @@ RUN yum -y install openssl \
                    python3-devel \
                    bzip2
 
-##RUN yum -y --nogpgcheck install python3-pip
 # WOW, Docker sucks.  You can't modify the hosts file except like this, just in time to run a command.  Because magical.  Or, magically bad.
 # IT Workaround - we can't resolve this host within Gemini network
 RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts && yum -y --nogpgcheck install python3-pip
 
 # Fix Centos 8 broken Locale
 RUN yum -y --nogpgcheck install glibc-langpack-en glibc-common
-#RUN localedef --no-archive -i en_US -f UTF-8 en_US.UTF-8
 
 # SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
-#RUN pip3 install --upgrade pip
 RUN pip3 install psycopg2-binary && \
     pip3 install sqlalchemy && \
     pip3 install pyyaml && \
@@ -140,7 +117,6 @@ COPY FitsStorage/docker/wait-for-postgres.sh /
 RUN chmod a+x /wait-for-postgres.sh
 
 # CYTHON STEP FOR DRAGONS
-#RUN pip3 install cython # installed earlier
 RUN cd /opt/DRAGONS/gempy/library/ && cythonize -i cyclip.pyx
 
 # Calibs code

@@ -1,5 +1,5 @@
 FROM gemini/fitsarchiveutils:jenkins
-LABEL maintainer="ooberdorf@gemini.edu"
+LABEL maintainer="oliver.oberdorf@noirlab.edu"
 
 # INSTALL HTTPD AND POSTGRESQL
 RUN yum -y --nogpgcheck install httpd \
@@ -37,4 +37,3 @@ EXPOSE 80
 EXPOSE 443
 
 ENTRYPOINT ["/opt/modwsgi-default/apachectl", "-D", "FOREGROUND"]
-#ENTRYPOINT ["bash"]

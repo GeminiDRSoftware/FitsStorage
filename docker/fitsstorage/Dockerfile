@@ -1,9 +1,7 @@
 FROM centos:centos8
-LABEL maintainer="ooberdorf@gemini.edu"
+LABEL maintainer="oliver.oberdorf@noirlab.edu"
 
 # ENABLE EPEL
-# Trying this hack
-#   https://www.edureka.co/community/72932/error-failed-to-download-metadata-for-repo-epel-modular
 RUN rm -r /var/cache/dnf
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
@@ -27,10 +25,8 @@ RUN yum -y --nogpgcheck install python3-pip
 
 # Fix Centos 8 broken Locale
 RUN yum -y --nogpgcheck install glibc-langpack-en glibc-common
-#RUN localedef --no-archive -i en_US -f UTF-8 en_US.UTF-8
 
 # SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
-#RUN pip3 install --upgrade pip
 RUN pip3 install psycopg2-binary && \
     pip3 install sqlalchemy && \
     pip3 install pyyaml && \
@@ -84,10 +80,7 @@ RUN mkdir -p /data/logs && \
 
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/FitsStorageDB
-#RUN cd /opt && git clone --branch vrefac/processed_standard https://github.com/GeminiDRSoftware/DRAGONS.git
 RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
-#RUN cd /opt && git clone --branch refac/populate_provenance_data https://github.com/GeminiDRSoftware/DRAGONS.git
-#RUN cd /opt && git clone --branch refac/imexam_workaround https://github.com/olyoberdorf/DRAGONS.git
 
 # TODO This will require some sort of ssh key setup, maybe not worth it
 #RUN cd /opt && git clone --branch master git@gitlab.gemini.edu:DRSoftware/FitsStorageConfig.git
