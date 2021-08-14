@@ -61,7 +61,7 @@ class WrapperObject(object):
         self.cals['arcs'] = self.arcs()
         self.cals['darks'] = self.darks()
         self.cals['biases'] = self.common('bias', self.c.bias)
-        self.cals['flats'] = self.common('flat', self.c.flat)
+        self.cals['flats'] = self.flats()
         self.cals['pinhole_masks'] = self.common('pinhole_mask', self.c.pinhole_mask)
         self.cals['ronchi_masks'] = self.common('ronchi_mask', self.c.ronchi_mask)
         if self._warning:
@@ -140,6 +140,12 @@ class WrapperObject(object):
             wrap = WrappedCals(applicable=False)
 
         return wrap
+
+    def flats(self):
+        if self.c.header.instrument.starts_with('GMOS') and self.c.header.grating == 'MIRROR':
+            return WrappedCals(applicable=False)
+        else:
+            return self.common('flat', self.c.flat)
 
     def darks(self):
         skip = False
