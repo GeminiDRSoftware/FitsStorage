@@ -36,7 +36,7 @@ pipeline {
                 echo 'Checking Out FitsStorage'
                 dir('FitsStorage') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorage.git',
-                    branch: 'release/2021-2',
+                    branch: '2021-2',
                     credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
                 }
 
