@@ -40,7 +40,7 @@ requires a `~/dataflow/` folder with the data you want to use.
 ### Compose
 
 There is now a very fast way to get a test cluster up complete with two webservers for
-'onsite' and 'archive' (public).  You can just use docker-compose.  There is a `docker-compose.yml`
+'onsite' and 'archive' (public).  You can just use `docker-compose`.  There is a `docker-compose.yml`
 file in the top directory of the tree.  Just change to the top folder of your checkout and
 run `docker-compose up`.  Instructions for running containers manually are listed below in case
 you don't want to use docker-compose.
@@ -53,9 +53,10 @@ to `http://localhost/searchform` to see the normal search form and search for yo
 You do not need the folders listed above for this simplified compose configuration.
 
 The docker compose does depend on the two docker images `fitsstorageutils:latest` and `fitsimage:latest`.
-You can build these two images by running `docker/scripts/buildfitsstorageutils.sh` and
-`docker/scripts/buildarchive.sh` respectively.  The images are also available in the container
+You can build these two images by running `FitsStorage/docker/scripts/buildfitsstorageutils.sh` and
+`FitsStorage/docker/scripts/buildarchive.sh` respectively.  The images are also available in the container
 registry in gitlab at `https://gitlab.gemini.edu/DRSoftware/FitsStorage/container_registry`.
+The scripts assume that `FitsStorageDB` and `GeminiCalMgr` are checked out alongside `FitsStorage`.
 
 ### Scripts
 
@@ -79,14 +80,15 @@ name and a login.
 
 The docker support for running a cluster depends on some custom images.  There
 are helper build scripts to easily create these with the proper parameters and
-names.
+names.  These scripts assume `FitsStorageDB` and `GeminiCalMgr` are checked
+out alongside `FitsStorage`.
 
 If you are on the master branch and want to update the `:latest` images in the
 gitlab repo, add a `-u` to these scripts when you run them.
 
 ```
-bash ./docker/scripts/buildfitsstorageutils.sh
-bash ./docker/scripts/buildarchive.sh
+bash ./FitsStorage/docker/scripts/buildfitsstorageutils.sh
+bash ./FitsStorage/docker/scripts/buildarchive.sh
 ```
 
 #### PostgreSQL Databases
@@ -111,7 +113,7 @@ one hosted internally at Gemini North or South and is distinct from the public
 facing 'Archive Website'.  To run this, you can use the helper script:
 
 ```
-bash ./docker/scripts/onsite.sh
+bash ./FitsStorage/docker/scripts/onsite.sh
 ```
 
 #### Archive Website
@@ -120,8 +122,8 @@ Now that you have initialized the database, you can run the website in a
 container as well.  To do this, run:
 
 ```
-bash ./docker/scripts/api.sh
-bash ./docker/scripts/archive.sh
+bash ./FitsStorage/docker/scripts/api.sh
+bash ./FitsStorage/docker/scripts/archive.sh
 ```
 
 This container will expose the website on port 8080 on your host machine.
@@ -136,47 +138,16 @@ containers and it clears out your data folders, save for the one you put
 your test data in at the beginning.
 
 ```
-bash ./docker/scripts/cleanup.sh
+bash ./FitsStorage/docker/scripts/cleanup.sh
 ```
 
 ### EPEL Notes
 
-I've run into serious issues with the Red Hat/Fedora EPEL repository of late.
-IT's not clear to what extent this is Fedora's fault or CentOS or IT Ops.
-The workaround is to add an alternate repo during the docker image creation
-and to add a host entry to the hosts file for the fedora mirror.  This host
-entry is added inside the `Dockerfile` Jenkins is using to build the image.
-It has to be done on the same line as the command that needs the host.  
-Docker treats the hosts file magically and will immediately restore it
-after each command, if it changed.
-
-That is, if you try to do this:
-
-```
-RUN echo 1.2.3.4 foo >> /etc/hosts
-RUN wget http://foo/
-```
-
-Then by the time it runs the wget, the hosts file no longer has the entry
-for `foo`.  You must instead do this:
-
-```
-RUN echo 1.2.3.4 foo >> /etc/hosts && wget http://foo/
-```
-
-In our case, here are the commands in `fitsstorage-jenkins/Dockerfile` 
+Here are the commands in `fitsstorage-jenkins/Dockerfile` 
 we needed for the workaround EPEL repo:
 
 ```
 # ENABLE EPEL
-RUN yum -y install yum-utils
-COPY spacewalk-epel-20200619.repo /tmp/spacewalk-epel-20200619.repo
-RUN yum-config-manager --add-repo /tmp/spacewalk-epel-20200619.repo
-```
-
-Then, further down, here is the hostname hack we had to add to install
-`python3-pip`
-
-```
-RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts && yum -y --nogpgcheck install python3-pip
+RUN rm -r /var/cache/dnf
+RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 ```
