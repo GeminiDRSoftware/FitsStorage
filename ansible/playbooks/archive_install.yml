@@ -188,7 +188,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git"
-          version: master
+          version: v1.0.0
           dest: /opt/FitsStorageDB
           accept_hostkey: yes
         when: not is_aws
@@ -198,7 +198,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git"
-          version: master
+          version: v1.1.0
           dest: /opt/GeminiCalMgr
           accept_hostkey: yes
         when: not is_aws
@@ -208,7 +208,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: master
+          version: release/2021-2
           dest: /opt/FitsStorage
           accept_hostkey: yes
         when: not is_aws
@@ -308,7 +308,7 @@
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
-          version: master
+          version: 201e1d04018af9769707aaf9d9260aea052e6345
           #version: release/3.0.x
         register: dragonscheckout
       - name: Cythonize DRAGONS
