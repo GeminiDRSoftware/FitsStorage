@@ -43,21 +43,21 @@ pipeline {
                 echo 'Checking Out FitsStorageConfig'
                 dir('FitsStorageConfig') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorageConfig.git',
-                    branch: 'release/2021-2',
+                    branch: '2021-2',
                     credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
                 }
 
                 echo 'Checking Out FitsStorageDB'
                 dir('FitsStorageDB') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git',
-                    branch: 'v1.0.0',
+                    branch: 'release/1.0.x',
                     credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
                 }
 
                 echo 'Checking Out GeminiCalMgr'
                 dir('GeminiCalMgr') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git',
-                    branch: 'v1.1.0',
+                    branch: 'release/1.1.x',
                     credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
                 }
             }
