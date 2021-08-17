@@ -78,7 +78,7 @@ pipeline {
                         def archive = docker.image("gemini/archive:jenkins").withRun(" --network fitsstorage-jenkins --name archive-jenkins -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e CREATE_TEST_DB=False -e BLOCKED_URLS=\"\" -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/FitsStorageDB:/opt/GeminiCalMgr") { a->
                             try {
                                 docker.image('gemini/fitsarchiveutils:jenkins').inside(" -v /data/pytest_tmp:/tmp  --network fitsstorage-jenkins -e STORAGE_ROOT=/tmp/jenkins_pytest/dataflow -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e PYTEST_SERVER=http://archive-jenkins -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e BLOCKED_URLS=\"\" -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/FitsStorageDB:/opt/GeminiCalMgr") {
-                                    sh 'python3 fits_storage/scripts/create_tables.py'
+                                    sh 'python3 /opt/FitsStorage/fits_storage/scripts/create_tables.py'
                                     echo "Running tests against docker containers"
                                     sh  '''
                                         mkdir -p /tmp/archive_test_images

@@ -443,7 +443,7 @@
       - name: Enable PostgreSQL on startup
         service: name=postgresql enabled=yes
       - name: Create tables in DB
-        command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 ./fits_storage/scripts/create_tables.py"
+        command: bash -c "cd /opt/FitsStorage && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage:/opt/GeminiCalMgr:/opt/FitsStorageDB python3 ./fits_storage/scripts/create_tables.py"
         become: yes
         become_user: fitsdata
         when: fitsdata_db_created.changed
