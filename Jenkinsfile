@@ -81,12 +81,10 @@ pipeline {
                                     sh 'python3 /opt/FitsStorage/fits_storage/scripts/create_tables.py'
                                     echo "Running tests against docker containers"
                                     sh  '''
-                                        cd /opt/FitsStorage
                                         mkdir -p /tmp/archive_test_images
                                         mkdir -p /tmp/cached_archive_test_images
-                                        echo checking pwd
-                                        pwd
                                         env PYTEST_SERVER=http://archive-jenkins coverage run --omit "/usr/lib/*,/usr/local/*,/opt/DRAGONS/*,/opt/FitsStorage/tests/*" -m pytest /opt/FitsStorage/tests
+                                        coverage report -m --fail-under=63
                                         '''
                                 }
                             } catch (exc) {
