@@ -108,9 +108,10 @@ WORKDIR /opt/FitsStorage
 RUN yum -y install libnsl
 RUN ln -s /usr/lib64/libnsl.so.2 /usr/lib64/libnsl.so
 COPY FitsStorage/fitsverify /opt/fitsverify
-RUN cd /opt/fitsverify && gcc -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c \
-    fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -L/usr/lib64 -lcfitsio -lm -lnsl \
-    -I /usr/include/cfitsio -L/usr/lib64/
+# Is this causing our problems with Jenkins?
+#RUN cd /opt/fitsverify && gcc -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c \
+#    fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -L/usr/lib64 -lcfitsio -lm -lnsl \
+#    -I /usr/include/cfitsio -L/usr/lib64/
 
 # Setup a Config
 COPY FitsStorageConfig/configs/jenkins_fitsstorage.conf /etc/fitsstorage.conf
