@@ -7,6 +7,9 @@ from subprocess import call
 from bz2 import BZ2File
 import sys
 
+# import fits_storage to drive reconfiguration of the sqlalchemy connection based on postgresql
+import fits_storage
+
 from gemini_obs_db.db import sessionfactory
 from fits_storage.orm import createtables
 
