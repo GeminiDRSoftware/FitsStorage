@@ -87,7 +87,6 @@ pipeline {
                                         echo checking pwd
                                         pwd
                                         env PYTEST_SERVER=http://archive-jenkins coverage run --omit "/usr/lib/*,/usr/local/*,/opt/DRAGONS/*,/opt/FitsStorage/tests/*" -m pytest /opt/FitsStorage/tests
-                                        coverage report -m --fail-under=63
                                         '''
                                 }
                             } catch (exc) {
