@@ -84,7 +84,7 @@ pipeline {
                                         cd /opt/FitsStorage
                                         mkdir -p /tmp/archive_test_images
                                         mkdir -p /tmp/cached_archive_test_images
-                                        env PYTEST_SERVER=http://archive-jenkins coverage run --omit "/usr/lib/*,/usr/local/*,/opt/DRAGONS/*,tests/*" -m pytest tests
+                                        env PYTEST_SERVER=http://archive-jenkins coverage run --omit "/usr/lib/*,/usr/local/*,/opt/DRAGONS/*,/opt/FitsStorage/tests/*" -m pytest /opt/FitsStorage/tests
                                         coverage report -m --fail-under=63
                                         '''
                                 }
