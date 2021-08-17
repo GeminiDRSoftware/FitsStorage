@@ -112,6 +112,9 @@ RUN cd /opt/fitsverify && gcc -o fitsverify ftverify.c fvrf_data.c fvrf_file.c f
     fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -L/usr/lib64 -lcfitsio -lm -lnsl \
     -I /usr/include/cfitsio -L/usr/lib64/
 
+# Setup a Config
+COPY FitsStorageConfig/configs/jenkins_fitsstorage.conf /etc/fitsstorage.conf
+
 # COPY FitsStorage/fitsverify /opt/fitsverify
 COPY FitsStorage/docker/wait-for-postgres.sh /
 RUN chmod a+x /wait-for-postgres.sh
