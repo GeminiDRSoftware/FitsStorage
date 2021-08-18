@@ -148,8 +148,10 @@
         command: cd /etc/postfix && postmap transport
         when: updated_postfix_transport.changed
         notify: restart postfix
+#      - name: target pip version due to bug
+#        command: python3 -m pip install --upgrade "pip<10.0"
       - name: target pip version due to bug
-        command: python3 -m pip install --upgrade "pip<10.0"
+        command: python3 -m pip install --upgrade
       - name: Ensure group "fitsdata" exists
         group:
           name: fitsdata
