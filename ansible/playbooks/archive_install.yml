@@ -270,8 +270,10 @@
       - name: install psycopg2 binary (so we don't have to compile it) (CentOS 8)
         command: bash -c "pip3 install psycopg2-binary==2.9.1"
         when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+      - name: install python packages for DB
+        command: bash -c "cd /opt/FitsStorageDB && python3 -m pip install -r requirements.txt --upgrade"
       - name: install python packages
-        command: bash -c "cd /opt/FitsStorage && pip3 install -r requirements.txt --upgrade"
+        command: bash -c "cd /opt/FitsStorage && python3 -m pip install -r requirements.txt --upgrade"
       - name: install pip for python2 if on CentOS 7
         yum:
           name: 
