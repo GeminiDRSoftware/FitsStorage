@@ -23,7 +23,7 @@ mysql-connector==2.2.9
 simplejson==3.17.3
 suds-jurko==0.6
 ephem==4.0.0.2
-sphinx==4.1.2
+sphinx==2.2.1
 m2r==0.2.1
 requests-toolbelt==0.9.1
 smart_open==5.1.0
