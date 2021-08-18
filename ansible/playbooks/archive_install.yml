@@ -151,7 +151,7 @@
 #      - name: target pip version due to bug
 #        command: python3 -m pip install --upgrade "pip<10.0"
       - name: target pip version due to bug
-        command: python3 -m pip install --upgrade
+        command: pip install --upgrade pip
       - name: Ensure group "fitsdata" exists
         group:
           name: fitsdata
