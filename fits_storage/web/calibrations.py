@@ -142,7 +142,7 @@ class WrapperObject(object):
         return wrap
 
     def flats(self):
-        if self.c.header.instrument.starts_with('GMOS') and self.c.header.grating == 'MIRROR':
+        if self.c.header.instrument.startswith('GMOS') and "'IMAGE'" in self.c.header.types:
             return WrappedCals(applicable=False)
         else:
             return self.common('flat', self.c.flat)
