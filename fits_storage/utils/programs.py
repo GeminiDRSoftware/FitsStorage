@@ -166,6 +166,9 @@ class Program(object):
     def get_contact(self):
         return extract_element_by_tag_name(self.root, 'contactScientistEmail')
 
+    def get_too(self):
+        return extract_element_by_tag_name(self.root, 'tooStatus')
+
     def get_abstract(self):
         return extract_element_by_tag_name(self.root, 'abstrakt', default_val="No abstract")
 
@@ -196,6 +199,7 @@ def build_odbdata(programs):
             odb_data['reference'] = program.get_reference()
             odb_data['title'] = program.get_title()
             odb_data['contactScientistEmail'] = program.get_contact()
+            odb_data['too'] = program.get_too()
             odb_data['abstrakt'] = program.get_abstract()
             odb_data['investigatorNames'], odb_data['piEmail'] = program.get_investigators()
             odb_data['observations'] = program.get_obslog_comms()

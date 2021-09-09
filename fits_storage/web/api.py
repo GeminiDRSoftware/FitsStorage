@@ -293,7 +293,8 @@ def ingest_programs():
     ctx = get_context()
     resp = ctx.resp
     resp.content_type = 'application/json'
-    fields = ['reference', 'title', 'contactScientistEmail', 'abstrakt', 'piEmail', 'coIEmails', 'observations', 'investigatorNames']
+    fields = ['reference', 'title', 'contactScientistEmail', 'abstrakt', 'piEmail', 'coIEmails', 'observations',
+              'investigatorNames', 'too']
     try:
         programs = ctx.json
         if not isinstance(programs, list):
@@ -322,6 +323,10 @@ def ingest_programs():
             except KeyError:
                 # Just ignore any non-existing associationsfield
                 pass
+        if 'too' in program and program['too'].lower() in ('standard', 'rapid'):
+            prog_obj.too = True
+        else:
+            prog_obj.too = False
 
         for obs in program['observations']:
             lcomms = session.query(ObslogComment).filter(ObslogComment.data_label == obs['label']).first()
