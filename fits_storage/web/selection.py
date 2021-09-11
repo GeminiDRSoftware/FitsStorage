@@ -185,11 +185,18 @@ def getselection(things):
             elif GeminiProgram(thing).valid:
                 selection['program_id'] = GeminiProgram(thing).program_id
             elif key == 'progid':
-                selection['program_id'] = value
+                if value is not None and isinstance(value, str):
+                    value = value.strip()
+                if GeminiDataLabel(value).valid:
+                    selection['data_label'] = value
+                elif GeminiObservation(value).valid:
+                    selection['observation_id'] = value
+                else:
+                    selection['program_id'] = value
             elif GeminiObservation(thing).observation_id or key == 'obsid':
-                selection['observation_id'] = value
+                selection['observation_id'] = value.strip()
             elif GeminiDataLabel(thing).datalabel or key == 'datalabel':
-                selection['data_label'] = value
+                selection['data_label'] = value.strip()
             elif thing in {'LGS', 'NGS'}:
                 selection['lgs'] = thing
                 # Make LGS / NGS selection imply AO selection
