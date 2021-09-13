@@ -261,6 +261,7 @@ url_map = Map([
     Rule('/curation', curation_report),                             # curation_report handler
     Rule('/staff_access', staff_access),                            # staff_access
     Rule('/admin_change_email', admin_change_email),                # admin page for changing a user's email
+    Rule('/admin_change_password', admin_change_password),             # admin page for changing a user's password
 
     Rule('/nameresolver/<resolver>/<target>', nameresolver),        # Name resolver proxy
     Rule('/fileontape/<filename>', fileontape),                     # The fileontape handler
