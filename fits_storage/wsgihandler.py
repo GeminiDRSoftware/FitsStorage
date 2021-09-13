@@ -34,7 +34,7 @@ from fits_storage.web.fileserver import fileserver, download, download_post
 from fits_storage.web.qastuff import qareport, qametrics, qaforgui
 from fits_storage.web.statistics import content, stats
 from fits_storage.web.user import request_account, password_reset, request_password_reset, login, logout, whoami, \
-    change_password, change_email, admin_change_email, orcid
+    change_password, change_email, admin_change_email, orcid, admin_change_password
 from fits_storage.web.user import staff_access, user_list
 from fits_storage.web.userprogram import my_programs
 from fits_storage.web.searchform import searchform, nameresolver

@@ -579,6 +579,52 @@ def admin_change_email():
     return template_args
 
 
+@templating.templated("user/admin_change_password.html")
+def admin_change_password():
+    """
+    Allows supersusers to set passwords on user accounts
+    """
+
+    ctx = get_context()
+
+    # Process the form data first if there is any
+    formdata = ctx.get_form_data()
+    username = ''
+    password = ''
+
+    # Parse the form data
+    if formdata:
+        if 'username' in list(formdata.keys()):
+            username = formdata['username'].value
+        if 'password' in list(formdata.keys()):
+            password = formdata['password'].value
+
+    # Permission requires either superuser or user_admin
+    thisuser = ctx.user
+    if thisuser is None or (thisuser.superuser is not True and thisuser.user_admin is not True):
+        return dict(allowed=False)
+
+    template_args = dict(allowed=True)
+    template_args['user_list'] = ctx.session.query(User).order_by(User.gemini_staff, User.username)
+
+    if username:
+        try:
+            user = ctx.session.query(User).filter(User.username == username).one()
+            user.reset_password(password)
+            ctx.session.commit()
+            template_args['password_changed'] = True
+            template_args['action_user'] = user
+        except NoResultFound:
+            template_args['no_result'] = True
+
+    # Have applied changes, now generate list of staff users
+    template_args['user_list'] = ctx.session.query(User).order_by(User.gemini_staff, User.username)
+
+    ctx.session.commit()
+
+    return template_args
+
+
 @templating.templated("user/login.html")
 def login(things):
     """
