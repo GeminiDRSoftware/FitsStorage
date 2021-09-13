@@ -281,12 +281,22 @@ def add_collection():
     try:
         ctx = get_context()
 
+        if ctx.req.user is None:
+            ctx.resp.status = Return.FORBIDDEN
+            return
+        if not ctx.req.user.superuser:
+            ctx.resp.status = Return.FORBIDDEN
+            return
+
         session = ctx.session
 
         formdata = get_context().get_form_data(large_file=True)
 
         collection_name = formdata['collection_name'].value
-        program_id = formdata['program_id'].value
+        if 'program_id' in formdata:
+            program_id = formdata['program_id'].value
+        else:
+            program_id = ''
         description = formdata['description'].value
 
         if collection_name:
@@ -337,6 +347,9 @@ def add_folder():
     folder = None
 
     if collection_name:
+        if ctx.req.user is None:
+            ctx.resp.status = Return.FORBIDDEN
+            return
         collection = session.query(MiscFileCollection) \
             .filter(MiscFileCollection.name == collection_name).first()
         if not collection:
