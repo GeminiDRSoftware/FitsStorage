@@ -282,10 +282,10 @@ def add_collection():
         ctx = get_context()
 
         if ctx.req.user is None:
-            ctx.resp.status = Return.FORBIDDEN
+            ctx.resp.status = Return.HTTP_FORBIDDEN
             return
         if not ctx.req.user.superuser:
-            ctx.resp.status = Return.FORBIDDEN
+            ctx.resp.status = Return.HTTP_FORBIDDEN
             return
 
         session = ctx.session
@@ -348,7 +348,7 @@ def add_folder():
 
     if collection_name:
         if ctx.req.user is None:
-            ctx.resp.status = Return.FORBIDDEN
+            ctx.resp.status = Return.HTTP_FORBIDDEN
             return
         collection = session.query(MiscFileCollection) \
             .filter(MiscFileCollection.name == collection_name).first()
@@ -356,7 +356,7 @@ def add_folder():
             ctx.resp.status = Return.HTTP_BAD_REQUEST
             return
         if ctx.req.user.superuser is False and ctx.req.user not in collection.users:
-            ctx.resp.status = Return.FORBIDDEN
+            ctx.resp.status = Return.HTTP_FORBIDDEN
             return
         else:
             # now find the parent folder
