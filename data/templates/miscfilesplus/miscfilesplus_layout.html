@@ -28,6 +28,21 @@ div.collapseButton {
 {% block title %}MiscFiles Plus{% endblock %}
 
 {% block bootstrap_body %}
+<!-- modal, for long running operations -->
+<script>
+function showLoading(){
+    document.getElementById("modal_overlay").style = "visibility: visible";
+}
+function hideLoading(){
+    document.getElementById("modal_overlay").style = "visibility: hidden";
+}
+</script>
+<div class="modal_overlay" id="modal_overlay">
+    <div class="modal_textbox">
+        <b>Uploading File...</b>
+    </div>
+</div>
+
 <!-- TODO refactor titlebar into an upstream template -->
 <div class="titlebar">
  <!-- Uncomment this to display an announcement line at the top of the searchform page
@@ -275,7 +290,7 @@ div.collapseButton {
 <!-- Upload File Dialog -->
 <div class="modal fade" id="uploadFileModal" tabindex="-1" aria-labelledby="uploadFileModalLabel" aria-hidden="true">
   <div class="modal-dialog">
-    <form action="/miscfilesplus/upload_file" method="post"
+    <form id="uploadFileForm" action="/miscfilesplus/upload_file" method="post"
           enctype="multipart/form-data">
     <div class="modal-content">
       <div class="modal-header">
@@ -305,20 +320,27 @@ div.collapseButton {
                       id="file_description" rows="5" placeholder="Description..."></textarea>
         </div>
 <!--        <input type="hidden" name="filename" id="filename" value=""/>-->
-        <input type="hidden" name="collection_name" value="{{ collection.name }}"/>
+        <input type="hidden" name="collection_name" id="collection_name" value="{{ collection.name }}"/>
         {% if folder %}
-        <input type="hidden" name="path" value="{{ folder.path() }}"/>
+        <input type="hidden" name="path" id="path" value="{{ folder.path() }}"/>
         {% endif %}
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="submit" class="btn btn-success" id="uploadFileButton">Upload File</button>
+        <button type="button" class="btn btn-success" id="uploadFileButton">Upload File</button>
       </div>
     </div>
     </form>
   </div>
 </div>
 
+        <script>
+            $("#uploadFileButton").click(function () {
+                showLoading();
+                $("#uploadFileForm").submit();
+                // hideLoading();
+            });
+        </script>
 
 {% endblock %}
 {% endblock %}

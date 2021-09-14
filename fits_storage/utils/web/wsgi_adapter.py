@@ -54,7 +54,7 @@ class ItemizedFieldStorage(FieldStorage):
         FieldStorage.__init__(self, fp, headers=headers, outerboundary=outerboundary,
                               environ=environ, keep_blank_values=keep_blank_values,
                               strict_parsing=strict_parsing, limit=limit, encoding=encoding,
-                              errors=errors, max_num_fields=max_num_fields, separator=separator)
+                              errors=errors, max_num_fields=max_num_fields)
         if self.filename is None:
             self.uploaded_file = None
         else:

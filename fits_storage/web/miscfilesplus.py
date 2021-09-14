@@ -509,8 +509,13 @@ def upload_file():
 
     formdata = get_context().get_form_data(large_file=True)
 
-    collection_name = formdata['collection_name'].value
-    file_name = formdata['uploadFile'].filename
+    if 'collection_name' in formdata:
+        collection_name = formdata['collection_name'].value
+    else: collection_name = ''
+    if 'uploadFile' in formdata:
+        file_name = formdata['uploadFile'].filename
+    else:
+        file_name = None
     if not file_name:
         ctx.resp.status = Return.HTTP_BAD_REQUEST
         return
