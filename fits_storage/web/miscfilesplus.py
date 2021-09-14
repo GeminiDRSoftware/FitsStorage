@@ -546,7 +546,7 @@ def upload_file():
         if not collection:
             ctx.resp.status = Return.HTTP_BAD_REQUEST
             return
-        elif ctx.req.user.superuser is False and ctx.req.user in collection.users:
+        elif ctx.req.user is None or (ctx.req.user.superuser is False and ctx.req.user in collection.users):
             ctx.resp.status = Return.HTTP_FORBIDDEN
             return
         else:
