@@ -49,12 +49,12 @@ class ItemizedFieldStorage(FieldStorage):
     def __init__(self, fp=None, headers=None, outerboundary=b'',
                  environ=os.environ, keep_blank_values=0, strict_parsing=0,
                  limit=None, encoding='utf-8', errors='replace',
-                 max_num_fields=None):
+                 max_num_fields=None, separator=None):
 
         FieldStorage.__init__(self, fp, headers=headers, outerboundary=outerboundary,
                               environ=environ, keep_blank_values=keep_blank_values,
                               strict_parsing=strict_parsing, limit=limit, encoding=encoding,
-                              errors=errors, max_num_fields=max_num_fields)
+                              errors=errors, max_num_fields=max_num_fields, separator=separator)
         if self.filename is None:
             self.uploaded_file = None
         else:
