@@ -131,6 +131,7 @@ def jsonsummary(selection, orderby=None):
 
     ctx.resp.send_json(thelist, indent=4)
 
+
 def jsonqastate(selection):
     """
     This generates a JSON list giving datalabel, entrytime, data_md5 and qa_state.
@@ -144,8 +145,6 @@ def jsonqastate(selection):
     # Like the summaries, only list canonical files by default
     if 'canonical' not in list(selection.keys()):
         selection['canonical']=True
-
-    logger.warn("Entered jsonqastate, selection: %s" % selection)
 
     # We do this directly rather than with list_headers for efficiency
     # as this could be used on very large queries bu the ODB
@@ -161,8 +160,6 @@ def jsonqastate(selection):
                         'data_md5': _for_json(diskfile.data_md5),
                         'entrytime': _for_json(diskfile.entrytime),
                         'qa_state': _for_json(header.qa_state)})
-
-    logger.warn("Query: %s - Done, sending json, duration: %s" % (selection, (datetime.now() - then)))
 
     ctx.resp.send_json(thelist)
 
