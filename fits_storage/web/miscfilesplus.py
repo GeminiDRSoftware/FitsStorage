@@ -207,9 +207,12 @@ def miscfilesplus(collection=None, folders=None):
                 url_subpath = f"{url_subpath}/{folder.path()}"
             if ctx.req.user is not None and (ctx.req.user.superuser is True or ctx.req.user in collection.users):
                 collection_permission = True
+        can_add_collection = False
+        if ctx.req.user is not None and (ctx.req.user.superuser is True or ctx.req.user.misc_upload):
+            can_add_collection = True
         return dict(collections=collections, collection=collection, folder=folder, folders=folders, files=files,
                     url_subpath=url_subpath, is_staffer=get_context().is_staffer,
-                    collection_permission=collection_permission)
+                    can_add_collection=can_add_collection, collection_permission=collection_permission)
     finally:
         if formdata and formdata.uploaded_file is not None:
             try:
@@ -289,7 +292,7 @@ def add_collection():
         if ctx.req.user is None:
             ctx.resp.status = Return.HTTP_FORBIDDEN
             return
-        if not ctx.req.user.superuser:
+        if not ctx.req.user.superuser and not ctx.req.user.misc_upload:
             ctx.resp.status = Return.HTTP_FORBIDDEN
             return
 

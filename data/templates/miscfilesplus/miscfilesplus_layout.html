@@ -132,7 +132,7 @@ function hideLoading(){
                 </div>
             </div>
             {% endif %}
-            {% if is_staffer and not collection %}
+            {% if can_add_collection and not collection %}
             <div class="collapseButton">
                 <button id="addCollectionCollapserButton" class="btn btn-primary" type="button" data-toggle="collapse"
                         data-target="#collapseAddCollection" aria-expanded="false"
