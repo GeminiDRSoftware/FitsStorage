@@ -37,7 +37,7 @@ function hideLoading(){
     document.getElementById("modal_overlay").style = "visibility: hidden";
 }
 </script>
-<div class="modal_overlay" id="modal_overlay">
+<div class="modal_overlay" id="modal_overlay" style="visibility: hidden;">
     <div class="modal_textbox">
         <b>Uploading File...</b>
     </div>
@@ -87,6 +87,7 @@ function hideLoading(){
                     <span id="folder_span" class="navbar-brand h2">{{ folder.linkpath() }}</span>
                 </li>
                 {% endif %}
+                {% if collection_permission %}
                 <li class="nav-item">
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createFolder">
                         Create Folder
@@ -97,6 +98,7 @@ function hideLoading(){
                         Upload File
                     </button>
                 </li>
+                {% endif %}
                 <li class="nav-item">
                     <form class="navbar-form navbar-left form-inline" action="/miscfilesplus/search" method="get"
                           enctype="multipart/form-data">
@@ -130,7 +132,7 @@ function hideLoading(){
                 </div>
             </div>
             {% endif %}
-            {% if can_add and not collection %}
+            {% if is_staffer and not collection %}
             <div class="collapseButton">
                 <button id="addCollectionCollapserButton" class="btn btn-primary" type="button" data-toggle="collapse"
                         data-target="#collapseAddCollection" aria-expanded="false"
@@ -194,7 +196,7 @@ function hideLoading(){
                         {% if folders %}
                             {% for folder in folders %}
                             <tr><td></td><td><span class="fa fa-folder-open">&nbsp;&nbsp;</span><a href="{{ folder.name | urlencode }}/">{{ folder.name }}</a></td><td></td><td></td><td>{{ folder.program_id }}</td><td></td>
-                            {% if can_add %}
+                            {% if collection_permission %}
                             <td><a href="/miscfilesplus/delete/{{ collection.name }}/{{ folder.path() }}/">&nbsp;&nbsp;<span class="fa fa-trash"></span></a></td></tr>
                             {% else %}
                             </tr>
@@ -215,7 +217,7 @@ function hideLoading(){
                                 {% endif %}
                             </td>
                             <td>{{ file.size }}</td><td>{{ file.last_modified }}</td><td>{{ file.program_id }}</td><td>{{ file.release.strftime('%Y-%m-%d') }}</td>
-                            {% if file.check_download_permission() %}
+                            {% if collection_permission %}
                                 <td><a href="/miscfilesplus/delete/{{ url_subpath }}/{{ file.filename | urlencode }}">&nbsp;&nbsp;<span class="fa fa-trash"></span></a></td>
                             {% else %}
                             <td></td>
@@ -227,7 +229,7 @@ function hideLoading(){
                         <div class="col-md-12 text-center">
                             <button type="submit" class="btn btn-success" id="download_button" name="bulk_action"
                                     value="download_selected">Download Selected</button>
-                            {% if can_add %}
+                            {% if collection_permission %}
                             <button type="submit" class="btn btn-warning" id="bulk_delete_button" name="bulk_action"
                                     value="delete_selected">Delete Selected</button>
                             {% endif %}

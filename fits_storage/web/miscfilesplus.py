@@ -165,6 +165,8 @@ def miscfilesplus(collection=None, folders=None):
 
         formdata = ctx.get_form_data()
 
+        collection_permission = False
+
         if collection is None:
             # No collection, we are just going to show the list of all available collections
             collections = session.query(MiscFileCollection).order_by(MiscFileCollection.name).all()
@@ -203,8 +205,11 @@ def miscfilesplus(collection=None, folders=None):
             url_subpath = collection.name
             if folder:
                 url_subpath = f"{url_subpath}/{folder.path()}"
+            if ctx.req.user is not None and (ctx.req.user.superuser is True or ctx.req.user in collection.users):
+                collection_permission = True
         return dict(collections=collections, collection=collection, folder=folder, folders=folders, files=files,
-                    url_subpath=url_subpath, can_add=get_context().is_staffer)
+                    url_subpath=url_subpath, is_staffer=get_context().is_staffer,
+                    collection_permission=collection_permission)
     finally:
         if formdata and formdata.uploaded_file is not None:
             try:
