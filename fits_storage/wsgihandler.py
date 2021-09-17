@@ -13,6 +13,7 @@ from fits_storage.utils.web import RequestRedirect, ClientError
 from fits_storage.utils.web.routing import Map, Rule, BaseConverter
 
 from fits_storage.fits_storage_config import blocked_urls, use_as_archive
+from fits_storage.web.console import console, console_ingest_queue, console_export_queue, console_ingest_errors
 from fits_storage.web.gmoscalfilelist import gmoscalbiasfiles
 from fits_storage.web.gmoscaltwilightdetails import gmoscaltwilightdetails, gmoscaltwilightfiles
 from fits_storage.web.programs import programs
@@ -289,9 +290,13 @@ url_map = Map([
     Rule('/preview/<filenamegiven>/<int:number>', preview),         # previews
     Rule('/num_previews/<filenamegiven>', num_previews),            # number of available previews related to the given file
 
+    Rule('/console', console),
+    Rule('/console/ingest_queue', console_ingest_queue),
+    Rule('/console/ingest_errors', console_ingest_errors),
+    Rule('/console/export_queue', console_export_queue),
     Rule('/queuestatus', queuestatus_summary),                      # Show some info on what's going on with the queues
     Rule('/queuestatus/json', queuestatus_update),                  # Show some info on what's going on with the queues
-    Rule('/queuestatus/<qshortname>/<int:oid>', queuestatus_tb),         # Show some info on what's going on with the queues
+    Rule('/queuestatus/<qshortname>/<int:oid>', queuestatus_tb),    # Show some info on what's going on with the queues
 
     Rule('/miscfiles', miscfiles.miscfiles),                        # Miscellanea (Opaque files)
     Rule('/miscfiles/<int:handle>', miscfiles.miscfiles),           # Miscellanea (Opaque files)
