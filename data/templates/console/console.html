@@ -5,7 +5,7 @@
 {% block bootstrap_body %}
 <table class="table">
     <tr><th>Queue</th><th>Count</th><th>Failures</th></tr>
-    <tr><td>Ingest</td><td><a href="ingest_queue/">{{ ingest_count }}</a></td><td>{{ ingest_fail_count }}</td></tr>
+    <tr><td>Ingest</td><td><a href="ingest_queue/">{{ ingest_count }}</a></td><td><a href="ingest_errors/">{{ ingest_fail_count }}</a></td></tr>
     <tr><td>Export</td><td>{{ export_count }}</td><td>{{ export_fail_count }}</td></tr>
 </table>
 {% endblock %}
