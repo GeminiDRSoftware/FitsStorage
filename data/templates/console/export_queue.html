@@ -1,0 +1,12 @@
+{% extends "bootstrap_layout.html" %}
+
+{% block title %}Export Queue{% endblock %}
+
+{% block bootstrap_body %}
+    <table class="table">
+        <tr><th>Filename</th><th>In Progress</th><th>Failed</th><th>Added</th></tr>
+        {% for eq in export_queue %}
+        <tr><td>{{ eq.filename }}</td><td>{{ eq.in_progress }}</td><td>{{ eq.failed }}</td><td>{{ eq.added }}</td></tr>
+        {% endfor %}
+    </table>
+{% endblock %}
