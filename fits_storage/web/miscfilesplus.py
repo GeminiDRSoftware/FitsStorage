@@ -608,6 +608,11 @@ def upload_file():
     ctx.resp.redirect_to(f"/miscfilesplus/browse/{collection_name}/{path}/")
 
 
+_mime_types = {
+    '.pdf': 'application/pdf'
+}
+
+
 def get_file(collection, folders=None, filename=None):
     ctx = get_context()
 
@@ -652,6 +657,9 @@ def get_file(collection, folders=None, filename=None):
         with open(url, 'rb', transport_params={
                 'client': session.client('s3', **_get_session_client_kwargs())}) as fin:
             # resp.content_length = diskfile.data_size
+            for extension, content_type in _mime_types.items():
+                if filename.lower().endswith(extension.lower()):
+                    ctx.resp.set_header('Content-Type', content_type)
             ctx.resp.sendfile_obj(BZ2OnTheFlyDecompressor(fin))
 
 
@@ -692,6 +700,9 @@ def bulk_action():
         download_zip(ctx, formdata)
     elif formdata['bulk_action'].value == 'delete_selected':
         delete_selected(ctx, formdata)
+        redirect_path = formdata['redirect_path'].value
+        if redirect_path:
+            ctx.resp.redirect_to(redirect_path)
 
 
 def download_zip(ctx, formdata):
@@ -779,7 +790,7 @@ def delete_selected(ctx, formdata):
             if file.folder:
                 key = f'{file.collection.name}/{file.folder.path}/{file.filename}'
             else:
-                key = f'{file.collection.name}/{file.folder.ßpath}/{file.filename}'
+                key = f'{file.collection.name}/{file.filename}'
 
             s3 = boto3.client('s3', **_get_boto3_client_kwargs())
             s3.delete_object(Bucket='miscfilesplus', Key=key)
