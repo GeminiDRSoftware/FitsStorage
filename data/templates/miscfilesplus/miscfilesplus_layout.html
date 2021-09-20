@@ -197,7 +197,9 @@ function hideLoading(){
                             </tr>
                         {% if folders %}
                             {% for folder in folders %}
-                            <tr><td></td><td><span class="fa fa-folder-open">&nbsp;&nbsp;</span><a href="{{ folder.name | urlencode }}/">{{ folder.name }}</a></td><td></td><td></td><td>{{ folder.program_id }}</td><td></td>
+                            <tr><td>
+                            <input type="checkbox" id="folders" name="folders" value="{{ folder.id }}">
+                            </td><td><span class="fa fa-folder-open">&nbsp;&nbsp;</span><a href="{{ folder.name | urlencode }}/">{{ folder.name }}</a></td><td></td><td></td><td>{{ folder.program_id }}</td><td></td>
                             {% if collection_permission %}
                             <td><a href="/miscfilesplus/delete/{{ collection.name }}/{{ folder.path() }}/">&nbsp;&nbsp;<span class="fa fa-trash"></span></a></td></tr>
                             {% else %}
