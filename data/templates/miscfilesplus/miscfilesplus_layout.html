@@ -231,6 +231,9 @@ function hideLoading(){
                         {% endif %}
                         </table>
                         <div class="col-md-12 text-center">
+                            {% if folder %}
+                            <input type="hidden" name="path" id="current_folder" value="{{ folder.path() }}"/>
+                            {% endif %}
                             <button type="submit" class="btn btn-success" id="download_button" name="bulk_action"
                                     value="download_selected">Download Selected</button>
                             {% if collection_permission %}

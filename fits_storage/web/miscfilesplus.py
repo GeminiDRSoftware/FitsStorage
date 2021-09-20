@@ -723,6 +723,12 @@ def download_zip(ctx, formdata):
         else:
             return [int(data.value)]
 
+    if 'path' in formdata:
+        current_folder = formdata['path'].value
+    else:
+        current_folder = None
+
+    folders = make_list(formdata, 'folders')
     files = make_list(formdata, 'files')
 
     def iter_zip(session, stream):
@@ -731,10 +737,31 @@ def download_zip(ctx, formdata):
         # stored requested files as it goes.  The stream passed in is an
         # UnseekableStream as defined above.  This keeps our data off disk and
         # our memory footprint small.
+
+        def _unpack_folder(folder_id):
+            subfolders = session.query(MiscFileFolder).filter(MiscFileFolder.folder_id == folder_id)
+            for subfolder in subfolders:
+                for result in _unpack_folder(subfolder.id):
+                    yield result
+            subfiles = session.query(MiscFilePlus).filter(MiscFilePlus.folder_id == folder_id)
+            for subfile in subfiles:
+                yield subfile
+
         with ZipFile(stream, mode='w') as zf:
-            for file in session.query(MiscFilePlus).filter(MiscFilePlus.id.in_(files)):
+            files_to_dl = list()
+            for folder_id in folders:
+                files_to_dl.extend(_unpack_folder(folder_id))
+            files_to_dl.extend(session.query(MiscFilePlus).filter(MiscFilePlus.id.in_(files)).all())
+            for file in files_to_dl:  # session.query(MiscFilePlus).filter(MiscFilePlus.id.in_(files)):
                 if file.check_download_permission():
-                    zi = zipfile.ZipInfo(filename=file.filename)
+                    if file.folder:
+                        filename = f'{file.folder.path()}/{file.filename}'
+                        if current_folder:
+                            if filename.startswith(current_folder):
+                                filename = filename[len(current_folder)+1:]
+                    else:
+                        filename = file.filename
+                    zi = zipfile.ZipInfo(filename=filename)
                     with zf.open(zi, mode='w') as dest:
                         collection = file.collection
                         folder = file.folder
