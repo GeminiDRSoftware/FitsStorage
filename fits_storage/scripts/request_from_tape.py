@@ -15,6 +15,7 @@ if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("--file-re", action="store", type="string", dest="filere", help="Regular expression used to select files to extract")
     parser.add_option("--tape-label", action="store", type="string", dest="tape_label", help="Request only files that are on this tape.")
+    parser.add_option("--no-really", action="store_true", dest="noreally", help="over-ride the usual requirement to supply a --file-re or --tape-label. Only usefull when you really do want to request all files in the database. May the force be with you.")
     parser.add_option("--all", action="store_true", dest="all", help="When multiple versions of a file are on tape, get them all, not just the most recent")
     parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
     parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
@@ -30,7 +31,7 @@ if __name__ == "__main__":
     # Annouce startup
     logger.info("*********    request_from_tape.py - starting up at %s" % datetime.datetime.now())
 
-    if((not options.filere) and (not options.tape_label)):
+    if((not options.filere) and (not options.tape_label) and (not options.noreally)):
         logger.error("You must specify a file-re or a tape-label. You probably want a file-re")
         sys.exit(1)
 
@@ -87,4 +88,6 @@ if __name__ == "__main__":
 
 
     session.close()
+
+    logger.info("*********    request_from_tape.py - exiting at %s" % datetime.datetime.now())
 
