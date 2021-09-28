@@ -58,8 +58,10 @@ if __name__ == "__main__":
 
         for diskfile in query:
             fullpath = diskfile.fullpath()
-            dbmd5 = diskfile.file_md5
+            dbmd5 = diskfile.data_md5
             dbfilename = diskfile.filename
+            if dbfilename.endswith(".bz2"):
+                dbfilename = dbfilename[:-4]
 
             url = "http://%s/fileontape/%s" % (options.tapeserver, dbfilename)
             logger.debug("Querying tape server DB at %s" % url)
@@ -71,11 +73,13 @@ if __name__ == "__main__":
             tapeids = []
             for fe in fileelements:
                 filename = fe.getElementsByTagName("filename")[0].childNodes[0].data
-                md5 = fe.getElementsByTagName("md5")[0].childNodes[0].data
+                if filename.endswith(".bz2"):
+                    filename = filename[:-4]
+                data_md5 = fe.getElementsByTagName("data_md5")[0].childNodes[0].data
                 tapeid = int(fe.getElementsByTagName("tapeid")[0].childNodes[0].data)
                 tapeset = int(fe.getElementsByTagName("tapeset")[0].childNodes[0].data)
-                logger.debug("Filename: %s; md5=%s, tapeid=%d, tapeset=%d" % (filename, md5, tapeid, tapeset))
-                if (filename == dbfilename) and (md5 == dbmd5) and (tapeid not in tapeids):
+                logger.debug("Filename: %s; md5=%s, tapeid=%d, tapeset=%d" % (filename, data_md5, tapeid, tapeset))
+                if (filename == dbfilename) and (data_md5 == dbmd5) and (tapeid not in tapeids):
                     logger.debug("Found it on tape id %d" % tapeid)
                     if options.tapeset is not None and tapeset != options.tapeset:
                         logger.debug("But this tape id is not in the requested tapeset")

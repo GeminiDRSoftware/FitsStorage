@@ -7,9 +7,22 @@ from . import templating
 
 from ..utils.web import get_context
 
-from sqlalchemy import join, desc, func
+from sqlalchemy import join, desc, func, or_
 
 import datetime
+
+def bzornot(thing):
+    """
+    Given a filename thing, which may or may not end in .bz2, return a list of
+    two filenames, that do and do not end in .bz2
+    """
+    retval = [thing]
+    if thing.endswith(".bz2"):
+        retval.append(thing[:-4])
+    else:
+        retval.append(thing+".bz2")
+
+    return retval
 
 
 @templating.templated("tapestuff/fileontape.xml", content_type='text/xml', with_generator=True)
@@ -18,12 +31,12 @@ def fileontape(filename):
     Outputs xml describing the tapes that the specified file is on
     """
 
-#    filename = things[0]
+    filenames = bzornot(filename)
 
     query = (
         get_context().session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape)))
                 .filter(Tape.active == True).filter(TapeWrite.suceeded == True)
-                .filter(TapeFile.filename == filename)
+                .filter(TapeFile.filename.in_(filenames))
         )
 
     return dict(

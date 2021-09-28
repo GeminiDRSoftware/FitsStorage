@@ -202,7 +202,7 @@ if __name__ == "__main__":
             query = query.filter(DiskFile.present == True)
 
         if options.olderthan and options.olderthan > 0:
-            dt = datetime.now()
+            dt = datetime.datetime.now()
             dt = dt - datetime.timedelta(days=options.olderthan)
             query = query.filter(DiskFile.datafile_timestamp < dt)
 
@@ -235,6 +235,7 @@ if __name__ == "__main__":
 
             fullpath = diskfile.fullpath()
             dbmd5 = diskfile.file_md5
+            dbdatamd5 = diskfile.data_md5
             dbfilename = diskfile.filename
 
             logger.debug("Full path filename: %s" % fullpath)
@@ -262,12 +263,20 @@ if __name__ == "__main__":
                     tapeids = []
                     for fe in fileelements:
                         filename = fe.getElementsByTagName("filename")[0].childNodes[0].data
-                        md5 = fe.getElementsByTagName("md5")[0].childNodes[0].data
+                        datamd5 = fe.getElementsByTagName("data_md5")[0].childNodes[0].data
                         tapeid = int(fe.getElementsByTagName("tapeid")[0].childNodes[0].data)
-                        logger.debug("Filename: %s; md5=%s, tapeid=%d" % (filename, md5, tapeid))
-                        found = (filename == dbfilename) and (tapeid not in tapeids)
+                        logger.debug("Filename: %s; data_md5=%s, tapeid=%d" % (filename, datamd5, tapeid))
+
+                        filename_clean = filename
+                        if filename_clean.endswith(".bz2"):
+                            filename_clean = filename_clean[:-4]
+                        dbfilename_clean = dbfilename
+                        if dbfilename_clean.endswith(".bz2"):
+                            dbfilename_clean = dbfilename_clean[:-4]
+
+                        found = (filename_clean == dbfilename_clean) and (tapeid not in tapeids)
                         if not options.skipmd5:
-                            found = found and (md5 == filemd5)
+                            found = found and (datamd5 == dbdatamd5)
 
                         if found:
                             logger.debug("Found it on tape id %d" % tapeid)
