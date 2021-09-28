@@ -14,9 +14,75 @@ calmgr.py
 
 - Now able to handle Section() objects passed from DRAGONS cal requests
 
+
+2020-2.21
+=========
+
+Web Services
+------------
+
+tapestuff.py
+^^^^^^^^^^^^
+
+- bzip2 support
+
 Scripts
 -------
 
+check_on_tape.py
+^^^^^^^^^^^^^^^^
+
+- bzip2 updates
+
+delete_files.py
+^^^^^^^^^^^^^^^
+
+- Using new XML format and support for bzipped data
+
+read_from_tape.py
+^^^^^^^^^^^^^^^^^
+
+- enhanced query options
+
+request_from_tape.py
+^^^^^^^^^^^^^^^^^^^^
+
+- added --no-really option to override requirement for a --file-re or --tape-label
+
+verify_tape.py
+^^^^^^^^^^^^^^
+
+- added --start-from option for an initial file number
+- logfile suffix standardized handling
+- bzip2 support
+
+write_to_tape.py
+^^^^^^^^^^^^^^^^
+
+- order by ut_datetime
+
+Other
+-----
+
+fits_store_config.py
+^^^^^^^^^^^^^^^^^^^^
+
+- Configuration records for tape server
+- Configurable delete min age setting, set to 14 for tape server
+
+fileontape.xml
+^^^^^^^^^^^^^^
+
+- Added data size/md5s and compression flag
+
+
+2020-2.20
+=========
+
+Scripts
+-------
+
+<<<<<<< HEAD
 local_delete_files.py
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -75,6 +141,11 @@ httpd-patched-centos8.conf
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Updated log rotation to cap count and base on filesize
+=======
+run_new_photstandards.py
+^^^^^^^^^^^^^^^^^^^^^^^^
+>>>>>>> 6187a9ae... updated about/changelog for 2020-2.21 with tape changes
+
 
 
 2020-2.19
