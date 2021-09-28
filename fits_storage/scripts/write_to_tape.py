@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
     with session_scope() as session:
         logger.info("Getting header object list")
-        orderby = []
+        orderby = ['ut_datetime']
         headers = list_headers(selection, orderby, session=session, unlimit=True)
 
         # For some reason, looping through the header list directly for the add
