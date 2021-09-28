@@ -202,7 +202,7 @@ if __name__ == "__main__":
             query = query.filter(DiskFile.present == True)
 
         if options.olderthan and options.olderthan > 0:
-            dt = datetime.now()
+            dt = datetime.datetime.now()
             dt = dt - datetime.timedelta(days=options.olderthan)
             query = query.filter(DiskFile.datafile_timestamp < dt)
 
