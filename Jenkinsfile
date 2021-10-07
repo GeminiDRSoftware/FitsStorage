@@ -36,14 +36,14 @@ pipeline {
                 echo 'Checking Out FitsStorage'
                 dir('FitsStorage') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorage.git',
-                    branch: '2021-2',
+                    branch: 'master',
                     credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
                 }
 
                 echo 'Checking Out FitsStorageConfig'
                 dir('FitsStorageConfig') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorageConfig.git',
-                    branch: '2021-2',
+                    branch: 'master',
                     credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
                 }
 
@@ -83,7 +83,7 @@ pipeline {
                                     sh  '''
                                         mkdir -p /tmp/archive_test_images
                                         mkdir -p /tmp/cached_archive_test_images
-                                        env PYTEST_SERVER=http://archive-jenkins coverage run --omit "/usr/lib/*,/usr/local/*,/opt/DRAGONS/*,/opt/FitsStorage/tests/*" -m pytest /opt/FitsStorage/tests
+                                        env PYTEST_SERVER=http://archive-jenkins coverage run --omit "/usr/lib/*,/usr/local/*,/opt/DRAGONS/*" -m pytest /opt/FitsStorage/tests
                                         coverage report -m --fail-under=63
                                         '''
                                 }
