@@ -318,14 +318,14 @@ if __name__ == "__main__":
                 if not check_old_enough_to_delete(dbfilename):
                     add_to_msg(logger.info, "File is too young to delete: %s" % dbfilename)
                     add_to_errmsg(None, "File is too young to delete: %s" % dbfilename)
-                    break
+                    continue
                 if options.maxgb:
                     if sumgb>options.maxgb:
                         add_to_msg(logger.info, "Already deleted %.2f GB - stopping now" % sumgb)
                         break
                 if not check_not_on_export_queue(session, dbfilename):
                     add_to_msg(logger.info, "File is in export queue, skipping: %s" % dbfilename)
-                    break
+                    continue
                 if options.auto:
                     if (numtodelete > 0) and (sumfiles >= numtodelete):
                         add_to_msg(
