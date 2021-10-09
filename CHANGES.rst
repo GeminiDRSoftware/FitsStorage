@@ -9,6 +9,16 @@ local_delete_files.py
 
 - fix for detecting files on tape that are `.bz2`
 
+delete_files.py
+^^^^^^^^^^^^^^^
+
+- fix to skip recent/export queues files but not abort
+
+header_fixer2.py
+^^^^^^^^^^^^^^^^
+
+- Using z_staging_area when decompressing/compressing to fix files
+
 add_to_preview_queue.py
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -37,6 +47,11 @@ add_to_calcache_queue.py
 
 Other
 -----
+
+exportqueue
+^^^^^^^^^^^
+
+- Alternate handling for >2GB files to work around limits in older python library ``urllib``
 
 local_calibs
 ^^^^^^^^^^^^
