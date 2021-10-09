@@ -1,5 +1,71 @@
-2021-1 (unreleased)
+2021-2 (unreleased)
 ===================
+
+Scripts
+-------
+
+local_delete_files.py
+^^^^^^^^^^^^^^^^^^^^^
+
+- fix for detecting files on tape that are `.bz2`
+
+add_to_preview_queue.py
+^^^^^^^^^^^^^^^^^^^^^^^
+
+- Added a new `force` option to recreate previews even if they already exist [#387]
+
+copy_from_dhs.py
+^^^^^^^^^^^^^^^^
+
+- Batching email for validation errors to not spam when first starting up [#391]
+- No longer ignoring DHS files without a TELESCOP field in the header, these are legal
+
+problem_checker.py
+^^^^^^^^^^^^^^^^^^
+
+- Added check for filesize difference over 10% between DHS and Dataflow [GL#8]
+
+service_target_queue.py
+^^^^^^^^^^^^^^^^^^^^^^^
+
+- Properly detect location of Gemini North and South for target calculation, skip GPI [GL#5]
+
+add_to_calcache_queue.py
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Changed option to ignore_mdbad and accepting bad metadata inputs by default
+
+Other
+-----
+
+local_calibs
+^^^^^^^^^^^^
+
+- Major refactor to separate out calibration logic into GeminiCalMgr project
+
+fits_storage.orm
+^^^^^^^^^^^^^^^^
+
+- Major refactor to separate out database logic into FitsStorageDB project
+
+archive-httpd.conf
+^^^^^^^^^^^^^^^^^^
+
+- Updated log rotation to cap count and base on filesize
+
+arcdev-httpd.conf
+^^^^^^^^^^^^^^^^^
+
+- Updated log rotation to cap count and base on filesize
+
+httpd-patched-centos8.conf
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Updated log rotation to cap count and base on filesize
+
+
+2021-1
+======
 
 Updated Web Services
 --------------------
@@ -82,70 +148,10 @@ fileontape.xml
 Scripts
 -------
 
-<<<<<<< HEAD
-local_delete_files.py
-^^^^^^^^^^^^^^^^^^^^^
-
-- fix for detecting files on tape that are `.bz2`
-
-add_to_preview_queue.py
-^^^^^^^^^^^^^^^^^^^^^^^
-
-- Added a new `force` option to recreate previews even if they already exist [#387]
-
-copy_from_dhs.py
-^^^^^^^^^^^^^^^^
-
-- Batching email for validation errors to not spam when first starting up [#391]
-- No longer ignoring DHS files without a TELESCOP field in the header, these are legal
-
-problem_checker.py
-^^^^^^^^^^^^^^^^^^
-
-- Added check for filesize difference over 10% between DHS and Dataflow [GL#8]
-
-service_target_queue.py
-^^^^^^^^^^^^^^^^^^^^^^^
-
-- Properly detect location of Gemini North and South for target calculation, skip GPI [GL#5]
-
-add_to_calcache_queue.py
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-- Changed option to ignore_mdbad and accepting bad metadata inputs by default
-
-Other
------
-
-local_calibs
-^^^^^^^^^^^^
-
-- Major refactor to separate out calibration logic into GeminiCalMgr project
-
-fits_storage.orm
-^^^^^^^^^^^^^^^^
-
-- Major refactor to separate out database logic into FitsStorageDB project
-
-archive-httpd.conf
-^^^^^^^^^^^^^^^^^^
-
-- Updated log rotation to cap count and base on filesize
-
-arcdev-httpd.conf
-^^^^^^^^^^^^^^^^^
-
-- Updated log rotation to cap count and base on filesize
-
-httpd-patched-centos8.conf
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-- Updated log rotation to cap count and base on filesize
-=======
 run_new_photstandards.py
 ^^^^^^^^^^^^^^^^^^^^^^^^
->>>>>>> 6187a9ae... updated about/changelog for 2020-2.21 with tape changes
 
+- New script to assist in populating mappings for new standards without a full rerun
 
 
 2020-2.19
