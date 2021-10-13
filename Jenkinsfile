@@ -85,6 +85,10 @@ pipeline {
                                         mkdir -p /tmp/cached_archive_test_images
                                         env PYTEST_SERVER=http://archive-jenkins coverage run --omit "/usr/lib/*,/usr/local/*,/opt/DRAGONS/*" -m pytest /opt/FitsStorage/tests
                                         coverage report -m --fail-under=72
+
+                                        rm -rf /tmp/jenkinsrobottests/*
+                                        mkdir -p /tmp/jenkinsrobottests
+                                        python3 -m robot.run --argumentfile robot/jenkins.args
                                         '''
                                 }
                             } catch (exc) {

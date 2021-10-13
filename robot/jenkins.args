@@ -1,0 +1,3 @@
+--outputdir /tmp/jenkinsrobottests
+--variable URL:http://archive-jenkins
+PagesAndTabs.robot
