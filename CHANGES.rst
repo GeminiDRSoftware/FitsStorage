@@ -18,6 +18,7 @@ header_fixer2.py
 ^^^^^^^^^^^^^^^^
 
 - Using z_staging_area when decompressing/compressing to fix files
+- Fixing OBSERVAT keyword when corrupt in IGRINS datafiles
 
 add_to_preview_queue.py
 ^^^^^^^^^^^^^^^^^^^^^^^

@@ -238,6 +238,10 @@ def fix_igrins(fits):
         return False
     retval = False
     progid = None
+    if 'OBSERVAT' not in pheader or pheader['OBSERVAT'] is None:
+        print("fixing OBSERVAT")
+        pheader['OBSERVAT'] = "Gemini-South"
+        retval = True
     if 'GEMPRGID' in pheader:
         progid = pheader['GEMPRGID']
     elif 'GEMPRID' in pheader:
