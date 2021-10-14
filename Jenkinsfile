@@ -107,6 +107,7 @@ pipeline {
                                    cd FitsStorage/robot
                                    env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile jenkins.args
                                    cd ../..
+                                   '''
                             } catch (exc) {
                                 sh "docker logs ${a.id}"
                                 sh "docker logs archive-jenkins"
