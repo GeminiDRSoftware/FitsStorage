@@ -105,11 +105,20 @@ pipeline {
                                 //    get it from https://www.google.com/chrome/?platform=linux
                                 //    use `yum` to install it to get the dependencies right
                                 sh '''
+                                   echo Loading files for robot tests
+                                   env PYTHONPATH=/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr:/opt/DRAGONS python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py
+                                   env PYTHONPATH=/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr:/opt/DRAGONS python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --empty
+                                   echo Done loading files for robot tests
+
+                                   echo Setting up folder for robot reports
                                    rm -rf reports/*
                                    mkdir -p reports
                                    cd FitsStorage/robot
+
+                                   echo Running robot checks
                                    env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile jenkins.args
                                    cd ../..
+                                   echo Done with robot
                                    '''
                             } catch (exc) {
                                 sh "docker logs ${a.id}"
