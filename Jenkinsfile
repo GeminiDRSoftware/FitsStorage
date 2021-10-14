@@ -88,9 +88,22 @@ pipeline {
                                         '''
                                 }
                                 // run Robot while container is up
+                                //
+                                // You will need:
+                                //
+                                // Xvfb:
+                                //    sudo yum install Xvfb
+                                //    run it with: sudo -u jenkins nohup Xvfb :0 >& /dev/null &
+                                // selenium chromedriver
+                                //    sudo pip3 install robotframework-selenium2library
+                                // chrome driver
+                                //    get it from: https://chromedriver.chromium.org/
+                                // chrome browser
+                                //    get it from https://www.google.com/chrome/?platform=linux
+                                //    use `yum` to install it to get the dependencies right
                                 sh "rm -rf /tmp/jenkinsrobottests/*"
                                 sh "mkdir -p /tmp/jenkinsrobottests"
-                                sh "/usr/local/bin/robot --argumentfile FitsStorage/robot/jenkins.args"
+                                sh "env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile FitsStorage/robot/jenkins.args"
                             } catch (exc) {
                                 sh "docker logs ${a.id}"
                                 sh "docker logs archive-jenkins"
