@@ -101,9 +101,12 @@ pipeline {
                                 // chrome browser
                                 //    get it from https://www.google.com/chrome/?platform=linux
                                 //    use `yum` to install it to get the dependencies right
-                                sh "rm -rf reports/*"
-                                sh "mkdir -p reports"
-                                sh "env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile FitsStorage/robot/jenkins.args"
+                                sh '''
+                                   rm -rf reports/*
+                                   mkdir -p reports
+                                   cd FitsStorage/robot
+                                   env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile jenkins.args
+                                   cd ../..
                             } catch (exc) {
                                 sh "docker logs ${a.id}"
                                 sh "docker logs archive-jenkins"

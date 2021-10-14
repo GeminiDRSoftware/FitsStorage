@@ -1,3 +1,3 @@
 --outputdir reports
 --variable URL:http://hbffits-lv4
-FitsStorage/robot/PagesAndTabs.robot
+PagesAndTabs.robot
