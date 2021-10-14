@@ -103,7 +103,7 @@ pipeline {
                                 //    use `yum` to install it to get the dependencies right
                                 sh "rm -rf /tmp/jenkinsrobottests/*"
                                 sh "mkdir -p /tmp/jenkinsrobottests"
-                                sh "env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile FitsStorage/robot/jenkins.args"
+                                sh "env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile FitsStorage/robot/jenkins.args"
                             } catch (exc) {
                                 sh "docker logs ${a.id}"
                                 sh "docker logs archive-jenkins"
