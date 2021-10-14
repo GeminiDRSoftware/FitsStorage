@@ -101,8 +101,8 @@ pipeline {
                                 // chrome browser
                                 //    get it from https://www.google.com/chrome/?platform=linux
                                 //    use `yum` to install it to get the dependencies right
-                                sh "rm -rf /tmp/jenkinsrobottests/*"
-                                sh "mkdir -p /tmp/jenkinsrobottests"
+                                sh "rm -rf reports/*"
+                                sh "mkdir -p reports"
                                 sh "env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile FitsStorage/robot/jenkins.args"
                             } catch (exc) {
                                 sh "docker logs ${a.id}"
@@ -145,6 +145,19 @@ pipeline {
              docker rmi gemini/archive:jenkins || true
              docker network rm fitsstorage-jenkins || true
           '''
+          step(
+                [
+                  $class              : 'RobotPublisher',
+                  outputPath          : 'reports',
+                  outputFileName      : '**/output.xml',
+                  reportFileName      : '**/report.html',
+                  logFileName         : '**/log.html',
+                  disableArchiveOutput: false,
+                  passThreshold       : 50,
+                  unstableThreshold   : 40,
+                  otherFiles          : "**/*.png,**/*.jpg",
+                ]
+            )
         }
         success {
             echo 'SUCCESSFUL'
