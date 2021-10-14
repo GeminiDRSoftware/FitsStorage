@@ -70,6 +70,9 @@ pipeline {
                     def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f FitsStorage/docker/fitsstorage-jenkins/Dockerfile .")
                     def archiveimage = docker.build("gemini/archive:jenkins", " -f FitsStorage/docker/archive-jenkins/Dockerfile .")
                     sh '''
+                    echo "Pulling test data into checkout for later robot tests"
+                    bash ./FitsStorage/robot/setuptestdata.sh
+                    echo "Clear existing Docker infrastructure to start with a blank slate"
                     docker network create fitsstorage-jenkins || true
                     docker container rm fitsdata-jenkins || true
                     docker container rm archive-jenkins || true
