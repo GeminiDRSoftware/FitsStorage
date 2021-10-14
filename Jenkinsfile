@@ -90,7 +90,7 @@ pipeline {
                                 // run Robot while container is up
                                 sh "rm -rf /tmp/jenkinsrobottests/*"
                                 sh "mkdir -p /tmp/jenkinsrobottests"
-                                sh "/usr/local/bin/robot --argumentfile FirsStorage/robot/jenkins.args"
+                                sh "/usr/local/bin/robot --argumentfile FitsStorage/robot/jenkins.args"
                             } catch (exc) {
                                 sh "docker logs ${a.id}"
                                 sh "docker logs archive-jenkins"
