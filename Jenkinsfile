@@ -84,8 +84,8 @@ pipeline {
                                     sh 'python3 /opt/FitsStorage/fits_storage/scripts/create_tables.py'
                                     sh '''
                                         # ensure anything in that testdata folder are ingested
-                                        RUN env PYTHONPATH=/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr:/opt/DRAGONS python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --filename=N20130711S0203.fits
-                                        RUN env PYTHONPATH=/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr:/opt/DRAGONS python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --empty
+                                        python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --filename=N20130711S0203.fits
+                                        python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --empty
                                     '''
                                     echo "Running tests against docker containers"
                                     sh  '''
