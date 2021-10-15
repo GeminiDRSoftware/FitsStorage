@@ -12,3 +12,6 @@ for file in \
   do
     wget --no-check-certificate https://archive.gemini.edu/file/$file
   done
+
+echo "Done loading files"
+ls /tmp/jenkins_pytest/dataflow/
