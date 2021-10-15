@@ -1,5 +1,5 @@
 --outputdir ../../reports
---variable URL:http://hbffits-lv4
+--variable URL:http://archive-jenkins
 LoadObsLogs.robot
 MiscTests.robot
 MissingCalibration.robot
