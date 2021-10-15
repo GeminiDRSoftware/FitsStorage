@@ -82,6 +82,11 @@ pipeline {
                             try {
                                 docker.image('gemini/fitsarchiveutils:jenkins').inside(" -v /data/pytest_tmp:/tmp  --network fitsstorage-jenkins -e STORAGE_ROOT=/tmp/jenkins_pytest/dataflow -e FITS_DB_SERVER=\"fitsdata:fitsdata@fitsdata-jenkins\" -e PYTEST_SERVER=http://archive-jenkins -e TEST_IMAGE_PATH=/tmp/archive_test_images -e TEST_IMAGE_CACHE=/tmp/cached_archive_test_images -e BLOCKED_URLS=\"\" -e CREATE_TEST_DB=False -e PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/FitsStorageDB:/opt/GeminiCalMgr -p 8180:80") {
                                     sh 'python3 /opt/FitsStorage/fits_storage/scripts/create_tables.py'
+                                    sh '''
+                                        # ensure anything in that testdata folder are ingested
+                                        RUN env PYTHONPATH=/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr:/opt/DRAGONS python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --filename=N20130711S0203.fits
+                                        RUN env PYTHONPATH=/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr:/opt/DRAGONS python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --empty
+                                    '''
                                     echo "Running tests against docker containers"
                                     sh  '''
                                         mkdir -p /tmp/archive_test_images

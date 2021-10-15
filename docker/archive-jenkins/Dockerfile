@@ -33,10 +33,6 @@ COPY FitsStorage/testdata /sci/dataflow
 # write a program to do the patch? could also do this by just copying in a fixed config file that we maintain, probably better
 COPY FitsStorage/otherfiles/httpd-patched-centos8.conf /opt/modwsgi-default/httpd.conf
 
-# ensure anything in that testdata folder are ingested
-RUN env PYTHONPATH=/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr:/opt/DRAGONS python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py
-RUN env PYTHONPATH=/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr:/opt/DRAGONS python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --empty
-
 EXPOSE 80
 EXPOSE 443
 
