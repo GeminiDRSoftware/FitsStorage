@@ -795,7 +795,7 @@ class RuleSetFactory(object):
 
         source = self._cls.get_raw(sourcename)
 
-        data = yaml.load(source)
+        data = yaml.load(source, None)
         if not data:
             return self._cls.build_empty(sourcename, *args, **kw)
 
