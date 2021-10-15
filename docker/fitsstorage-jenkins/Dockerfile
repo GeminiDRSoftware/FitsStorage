@@ -30,6 +30,7 @@ RUN echo "140.211.169.196 mirrors.fedoraproject.org" >> /etc/hosts && yum -y --n
 RUN yum -y --nogpgcheck install glibc-langpack-en glibc-common
 
 # SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
+RUN python3 -m pip install -U pip
 RUN pip3 install psycopg2-binary && \
     pip3 install sqlalchemy && \
     pip3 install pyyaml && \
