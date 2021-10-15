@@ -5,8 +5,7 @@ LABEL maintainer="oliver.oberdorf@noirlab.edu"
 RUN yum -y --nogpgcheck install httpd \
                    httpd-devel \
                    mod_ssl \
-                   platform-python-devel \
-                   wget
+                   platform-python-devel
 
 # SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
 RUN dnf -y install redhat-rpm-config

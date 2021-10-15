@@ -19,7 +19,8 @@ RUN yum -y install openssl \
                    python3-pillow \
                    redhat-rpm-config \
                    python3-devel \
-                   bzip2
+                   bzip2 \
+                   wget
 
 # WOW, Docker sucks.  You can't modify the hosts file except like this, just in time to run a command.  Because magical.  Or, magically bad.
 # IT Workaround - we can't resolve this host within Gemini network
