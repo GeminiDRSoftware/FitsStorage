@@ -70,8 +70,6 @@ pipeline {
                     def utilsimage = docker.build("gemini/fitsarchiveutils:jenkins", " -f FitsStorage/docker/fitsstorage-jenkins/Dockerfile .")
                     def archiveimage = docker.build("gemini/archive:jenkins", " -f FitsStorage/docker/archive-jenkins/Dockerfile .")
                     sh '''
-                    echo "Pulling test data into checkout for later robot tests"
-                    bash ./FitsStorage/robot/setuptestdata.sh
                     echo "Clear existing Docker infrastructure to start with a blank slate"
                     docker network create fitsstorage-jenkins || true
                     docker container rm fitsdata-jenkins || true
@@ -92,6 +90,9 @@ pipeline {
                                         '''
                                     echo "Prepping for robot tests"
                                     sh '''
+                                        echo "Pulling test data into checkout for later robot tests"
+                                        bash ./FitsStorage/robot/setuptestdata.sh
+
                                         # ensure anything in that testdata folder are ingested
                                         python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --filename=N20130711S0203.fits
                                         python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --empty
