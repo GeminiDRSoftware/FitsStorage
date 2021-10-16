@@ -92,6 +92,9 @@ pipeline {
                                         echo "Pulling test data into checkout for later robot tests"
                                         bash ./FitsStorage/robot/setuptestdata.sh
 
+                                        # check contents
+                                        ls /tmp/jenkins_pytest/dataflow
+
                                         # ensure anything in that testdata folder are ingested
                                         python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --filename=N20130711S0203.fits
                                         python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --empty
@@ -118,9 +121,10 @@ pipeline {
                                    mkdir -p reports
                                    cd FitsStorage/robot
 
-                                   echo Page dump to debug issues
-                                   wget http://localhost:8180/searchform -O -
-
+                                   # echo Page dump to debug issues
+                                   # wget http://localhost:8180/searchform -O -
+                                   wget http://localhost:8180/searchform/cols=CTOWEQ/PIname=Hirst/notengineering/20130711/not_site_monitoring/NotFail -O -
+                                   
                                    echo Running robot checks
                                    env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile jenkins.args
                                    cd ../..
