@@ -118,6 +118,9 @@ pipeline {
                                    mkdir -p reports
                                    cd FitsStorage/robot
 
+                                   echo Page dump to debug issues
+                                   wget http://localhost/searchform -O -
+
                                    echo Running robot checks
                                    env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile jenkins.args
                                    cd ../..
