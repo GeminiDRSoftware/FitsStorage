@@ -1,5 +1,5 @@
 --outputdir ../../reports
---variable URL:http://archive-jenkins
+--variable URL:http://localhost
 LoadObsLogs.robot
 MiscTests.robot
 MissingCalibration.robot
