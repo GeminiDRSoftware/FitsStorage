@@ -1,5 +1,5 @@
 --outputdir ../../reports
---variable URL:http://localhost
+--variable URL:http://localhost:8180
 LoadObsLogs.robot
 MiscTests.robot
 MissingCalibration.robot
