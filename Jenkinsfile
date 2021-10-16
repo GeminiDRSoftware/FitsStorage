@@ -96,8 +96,8 @@ pipeline {
                                         ls /tmp/jenkins_pytest/dataflow
 
                                         # ensure anything in that testdata folder are ingested
-                                        python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --filename=N20130711S0203.fits
-                                        python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --empty
+                                        env STORAGE_ROOT=/tmp/jenkins_pytest/dataflow env FITS_DB_SERVER="fitsdata:fitsdata@fitsdata-jenkins" python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --filename=N20130711S0203.fits
+                                        env STORAGE_ROOT=/tmp/jenkins_pytest/dataflow env FITS_DB_SERVER="fitsdata:fitsdata@fitsdata-jenkins" python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --empty
                                     '''
                                 }
                                 // run Robot while container is up
@@ -124,7 +124,7 @@ pipeline {
                                    # echo Page dump to debug issues
                                    # wget http://localhost:8180/searchform -O -
                                    wget http://localhost:8180/searchform/cols=CTOWEQ/PIname=Hirst/notengineering/20130711/not_site_monitoring/NotFail -O -
-                                   
+
                                    echo Running robot checks
                                    env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile jenkins.args
                                    cd ../..
