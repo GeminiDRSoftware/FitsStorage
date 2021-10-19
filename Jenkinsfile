@@ -136,7 +136,7 @@ pipeline {
                                    wget http://localhost:8180/searchform/cols=CTOWEQ/notengineering/20130711/not_site_monitoring/NotFail -O -
                                    echo ============================================================
                                    echo fullheader check for test file
-                                   wget http://localhost:8180/fullheader/N20130711S0203.fits
+                                   wget http://localhost:8180/fullheader/N20130711S0203.fits -O -
                                    echo Running robot checks
                                    env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile jenkins.args
                                    cd ../..
