@@ -125,7 +125,15 @@ pipeline {
 
                                    # echo Page dump to debug issues
                                    # wget http://localhost:8180/searchform -O -
+                                   echo ============================================================
+                                   echo port 80 check
+                                   wget http://localhost:80/searchform/cols=CTOWEQ/PIname=Hirst/notengineering/20130711/not_site_monitoring/NotFail -O -
+                                   echo ============================================================
+                                   echo port 8180 check
                                    wget http://localhost:8180/searchform/cols=CTOWEQ/PIname=Hirst/notengineering/20130711/not_site_monitoring/NotFail -O -
+                                   echo ============================================================
+                                   echo port 8180 date only
+                                   wget http://localhost:8180/searchform/cols=CTOWEQ/notengineering/20130711/not_site_monitoring/NotFail -O -
 
                                    echo Running robot checks
                                    env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile jenkins.args
