@@ -14,7 +14,7 @@ LoadObsLogs
   input text  name=PIname  Hirst
   input text  name=date  20130711
   click button  name=Search
-  Sleep  1s  Waiting for tab to load
+  Sleep  10s  Waiting for tab to load
   Page Should Contain  N20130711S0203.fits
   Click Link  id=obslogstab
   Sleep  1s  Waiting for tab to load
