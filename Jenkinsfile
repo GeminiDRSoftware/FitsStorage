@@ -126,11 +126,8 @@ pipeline {
 
                                    # echo Page dump to debug issues
                                    echo ============================================================
-                                   echo port 8180 date
-                                   wget http://localhost:8180/searchform/cols=CTOWEQ/notengineering/20130711/not_site_monitoring/NotFail -O -
-                                   echo ============================================================
                                    echo port 8180 date ONLY
-                                   wget http://localhost:8180/searchform/cols=CTOWEQ/20130711 -O -
+                                   wget http://localhost:8180/searchform/AnyQA/cols=CTOWEQ/filepre=N20130711S0203/includeengineering/not_site_monitoring -O -
                                    echo ============================================================
                                    echo fullheader check for test file
                                    wget http://localhost:8180/fullheader/N20130711S0203.fits -O -
