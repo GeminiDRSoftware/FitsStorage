@@ -103,6 +103,7 @@ pipeline {
                                         env PGPASSWORD=fitsdata psql -h fitsdata-jenkins -U fitsdata fitsdata -c "select h.ut_datetime from header h, diskfile df where h.diskfile_id=df.id and df.canonical and df.filename='N20130711S0203.fits'"
                                         echo ============================================================
                                         echo checking date conversions
+                                        echo hostname: `hostname`
                                         python3 /opt/FitsStorage/date_query_debug.py
                                         # echo Page dump to debug issues
                                     '''
