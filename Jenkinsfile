@@ -127,10 +127,7 @@ pipeline {
                                    # echo Page dump to debug issues
                                    echo ============================================================
                                    echo port 8180 date ONLY
-                                   wget http://localhost:8180/searchform/AnyQA/cols=CTOWEQ/filepre=N20130711S0203/includeengineering/not_site_monitoring -O -
-                                   echo ============================================================
-                                   echo fullheader check for test file
-                                   wget http://localhost:8180/fullheader/N20130711S0203.fits -O -
+                                   wget http://localhost:8180/searchform/AnyQA/cols=CTOWEQ/20130711/includeengineering/not_site_monitoring -O -
                                    echo Running robot checks
                                    env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile jenkins.args
                                    cd ../..
