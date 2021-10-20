@@ -100,7 +100,7 @@ pipeline {
                                         env STORAGE_ROOT=/tmp/jenkins_pytest/dataflow env FITS_DB_SERVER="fitsdata:fitsdata@fitsdata-jenkins" python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --empty
                                         echo "Done loading file, did it go in?"
                                         env PGPASSWORD=fitsdata psql -h fitsdata-jenkins -U fitsdata fitsdata -c "select filename, present, canonical from diskfile order by filename"
-                                        env PGPASSWORD=fitsdata psql -h fitsdata-jenkins -U fitsdata fitsdata -c "select h.ut_datetime from header h, diskfile df where h.diskfile_id=df.id and df.canonical and df.filename=\\\"N20130711S0203.fits\\\""
+                                        env PGPASSWORD=fitsdata psql -h fitsdata-jenkins -U fitsdata fitsdata -c "select h.ut_datetime from header h, diskfile df where h.diskfile_id=df.id and df.canonical and df.filename='N20130711S0203.fits'"
                                     '''
                                 }
                                 // run Robot while container is up
