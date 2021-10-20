@@ -124,6 +124,9 @@ pipeline {
                                    mkdir -p reports
                                    cd FitsStorage/robot
 
+                                   echo ============================================================
+                                   echo checking date conversions
+                                   python /opt/FitsStorage/date_query_debug.py
                                    # echo Page dump to debug issues
                                    echo ============================================================
                                    echo port 8180 date ONLY
@@ -132,8 +135,6 @@ pipeline {
                                    echo Running robot checks
                                    env DISPLAY=:0 env PATH=/usr/local/bin:$PATH /usr/local/bin/robot --argumentfile jenkins.args
                                    cd ../..
-                                   echo checking date conversions
-                                   python /opt/FitsStorage/date_query_debug.py
                                    echo Done with robot
                                    '''
                             } catch (exc) {
