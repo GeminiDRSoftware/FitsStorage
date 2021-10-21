@@ -9,5 +9,5 @@ ${BROWSER}   Chrome
 *** Test Cases ***
 QAForGUI
   [Documentation]  Web API link for QA GUI
-  Open Browser  ${URL}/qaforgui/20191216  ${BROWSER}
+  Open Browser  ${URL}/qaforgui/20191215-20191216  ${BROWSER}
   Page Should Contain  metadata

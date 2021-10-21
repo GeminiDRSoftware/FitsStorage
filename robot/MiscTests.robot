@@ -11,7 +11,7 @@ FullHeader
   [Documentation]  Get Full Header
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
-  input text  name=date  20120629
+  input text  name=date  20120628-20120629
   input text  name=object  m101
   click button  name=Search
   click link  N20120629S0171.fits
