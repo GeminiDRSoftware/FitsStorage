@@ -27,7 +27,7 @@ def test_not_igrins():
 
 def test_dont_fix_existing_gemprgid():
     fits = mock_fits({"INSTRUME": "IGRINS", "GEMPRGID": "prog", "GEMPRID": "pro", "OBSID": "obsid", "DATALAB": "datalab"})
-    assert(not fix_igrins(fits))  # nothing to fix
+    fix_igrins(fits)  # nothing to fix
     assert(fits[0].header['GEMPRGID'] == "prog")
 
 
@@ -57,7 +57,7 @@ def test_fix_numeric_obsid():
 
 def test_dont_fix_existing_datalab():
     fits = mock_fits({"INSTRUME": "IGRINS", "GEMPRGID": "KITTENS", "OBSID": "KITTENS-0", "DATALAB": "PUPPIES-0-0"})
-    assert(not fix_igrins(fits))
+    fix_igrins(fits)
     assert (fits[0].header['DATALAB'] == "PUPPIES-0-0")
 
 
