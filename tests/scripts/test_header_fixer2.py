@@ -44,9 +44,9 @@ def test_fix_missing_obsid():
 
 
 def test_dont_fix_existing_obsid():
-    fits = mock_fits({"INSTRUME": "IGRINS", "GEMPRID": "prog", "OBSID": "obsid"})
+    fits = mock_fits({"INSTRUME": "IGRINS", "GEMPRID": "KITTENS", "OBSID": "PUPPIES-0"})
     assert(fix_igrins(fits))
-    assert (fits[0].header['OBSID'] == "obsid")
+    assert (fits[0].header['OBSID'] == "PUPPIES-0")
 
 
 def test_fix_numeric_obsid():
@@ -56,15 +56,15 @@ def test_fix_numeric_obsid():
 
 
 def test_dont_fix_existing_datalab():
-    fits = mock_fits({"INSTRUME": "IGRINS", "GEMPRGID": "prog", "OBSID": "obsid", "DATALAB": "datalab"})
+    fits = mock_fits({"INSTRUME": "IGRINS", "GEMPRGID": "KITTENS", "OBSID": "KITTENS-0", "DATALAB": "PUPPIES-0-0"})
     assert(not fix_igrins(fits))
-    assert (fits[0].header['DATALAB'] == "datalab")
+    assert (fits[0].header['DATALAB'] == "PUPPIES-0-0")
 
 
 def test_fix_datalab():
-    fits = mock_fits({"INSTRUME": "IGRINS", "GEMPRGID": "prog", "OBSID": "obsid"})
+    fits = mock_fits({"INSTRUME": "IGRINS", "GEMPRGID": "KITTENS", "OBSID": "KITTENS-0"})
     assert(fix_igrins(fits))
-    assert (fits[0].header['DATALAB'] == "obsid-0")
+    assert (fits[0].header['DATALAB'] == "KITTENS-0-0")
 
 
 def test_dont_fix_exiting_release():
