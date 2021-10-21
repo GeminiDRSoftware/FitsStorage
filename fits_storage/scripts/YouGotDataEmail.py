@@ -1,3 +1,5 @@
+from urllib.error import HTTPError
+
 import urllib.request
 import urllib.parse
 import sys
@@ -11,6 +13,7 @@ from optparse import OptionParser
 from fits_storage.orm.notification import Notification
 from fits_storage.logger import logger, setdebug, setdemon
 from fits_storage.fits_storage_config import fits_servername, smtp_server
+from fits_storage.utils.retry import retry
 
 from gemini_obs_db.db import session_scope
 
@@ -102,8 +105,21 @@ if __name__ == "__main__":
                     searchform_url = "%s/searchform/%s/%s" % (url_base, options.date, notif.selection)
 
                     logger.debug("URL is: %s", url)
-                    html = str(urllib.request.urlopen(url).read(), 'utf-8')
 
+                    @retry(tries=3)
+                    def get_search_results():
+                        return str(urllib.request.urlopen(url).read(), 'utf-8')
+                    try:
+                        html = get_search_results()
+                    except HTTPError as hex:
+                        html = ''
+                        logger.warn(f"Unable to get results from {url}")
+                        errmsg = "Error getting results for notif: %d %s Exception: %s: %s" % (notif.id,
+                                                                                               notif.selection,
+                                                                                               sys.exc_info()[0],
+                                                                                               sys.exc_info()[1])
+                        logger.error(errmsg)
+                        errors.append(errmsg)
                     if warning_cre.search(html):
                         logger.warn("Invalid selection seen when querying archive: %s" % notif.selection)
                         errors.append("Invalid selection seen when querying archive: %s" % notif.selection)
