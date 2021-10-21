@@ -2,6 +2,8 @@
 This module provides various utility function used to manage the export queue
 """
 import os
+
+import requests
 import urllib.request
 import urllib.error
 import urllib.parse
@@ -16,7 +18,7 @@ from sqlalchemy import join
 from sqlalchemy.orm import make_transient
 from sqlalchemy.exc import IntegrityError
 
-from ..fits_storage_config import storage_root, using_s3, export_bzip, export_upload_auth_cookie
+from ..fits_storage_config import storage_root, using_s3, export_bzip, export_upload_auth_cookie, z_staging_area
 from . import queue
 
 from gemini_obs_db.orm.file import File
@@ -240,15 +242,33 @@ class ExportQueueUtil(object):
             self.l.info("Transferring file %s to destination %s", filename, destination)
             postdata = bytearray(data)
             data = None
-            request = urllib.request.Request(url, data=postdata)
-            request.add_header('Cache-Control', 'no-cache')
-            request.add_header('Content-Length', '%d' % len(postdata))
-            request.add_header('Content-Type', 'application/octet-stream')
-            request.add_header('Cookie', 'gemini_fits_upload_auth=%s' % export_upload_auth_cookie)
-            u = urllib.request.urlopen(request, timeout=600)
-            response = u.read()
-            u.close()
-            http_status = u.getcode()
+
+            if len(postdata) < 2147483647:
+                request = urllib.request.Request(url, data=postdata)
+                request.add_header('Cache-Control', 'no-cache')
+                request.add_header('Content-Length', '%d' % len(postdata))
+                request.add_header('Content-Type', 'application/octet-stream')
+                request.add_header('Cookie', 'gemini_fits_upload_auth=%s' % export_upload_auth_cookie)
+                u = urllib.request.urlopen(request, timeout=600)
+                response = u.read()
+                u.close()
+                http_status = u.getcode()
+            else:
+                tmpfilename = os.path.join(z_staging_area, filename)
+
+                with open(tmpfilename, 'wb') as tmpfile:
+                    tmpfile.write(postdata)
+                    tmpfile.close()
+
+                with open(tmpfilename, 'rb') as tmpfile:
+                    self.l.info("Large file %s in export, using alternate method to send the data" % filename)
+                    headers = {'Cache-Control': 'no-cache', 'Content-Length': '%d' % len(postdata)}
+                    cookies = {'gemini_fits_upload_auth': export_upload_auth_cookie}
+                    r = requests.post(url, headers=headers, cookies=cookies, data=tmpfile, timeout=600)
+                    response = r.text
+                    http_status = r.status_code
+                os.unlink(tmpfilename)
+
             self.l.debug("Got status code: %d and response: %s", http_status, response)
 
             # verify that it transfered OK
