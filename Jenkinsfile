@@ -91,21 +91,9 @@ pipeline {
                                     sh '''
                                         echo "Pulling test data into checkout for later robot tests"
                                         bash ./FitsStorage/robot/setuptestdata.sh
-
-                                        # check contents
-                                        ls /tmp/jenkins_pytest/dataflow
-
                                         # ensure anything in that testdata folder are ingested
-                                        env STORAGE_ROOT=/tmp/jenkins_pytest/dataflow env FITS_DB_SERVER="fitsdata:fitsdata@fitsdata-jenkins" python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py --filename=N20130711S0203.fits
+                                        env STORAGE_ROOT=/tmp/jenkins_pytest/dataflow env FITS_DB_SERVER="fitsdata:fitsdata@fitsdata-jenkins" python3 /opt/FitsStorage/fits_storage/scripts/add_to_ingest_queue.py
                                         env STORAGE_ROOT=/tmp/jenkins_pytest/dataflow env FITS_DB_SERVER="fitsdata:fitsdata@fitsdata-jenkins" python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --empty
-                                        echo "Done loading file, did it go in?"
-                                        env PGPASSWORD=fitsdata psql -h fitsdata-jenkins -U fitsdata fitsdata -c "select filename, present, canonical from diskfile order by filename"
-                                        env PGPASSWORD=fitsdata psql -h fitsdata-jenkins -U fitsdata fitsdata -c "select h.ut_datetime from header h, diskfile df where h.diskfile_id=df.id and df.canonical and df.filename='N20130711S0203.fits'"
-                                        echo ============================================================
-                                        echo checking date conversions
-                                        echo hostname: `hostname`
-                                        python3 /opt/FitsStorage/date_query_debug.py
-                                        # echo Page dump to debug issues
                                     '''
                                 }
                                 // run Robot while container is up

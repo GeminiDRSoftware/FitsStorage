@@ -72,8 +72,7 @@ for file in \
   r01dec10_008.fits \
   rS20120605S0120.fits
   do
-    rm -f /tmp/jenkins_pytest/dataflow/$file
-    wget --no-check-certificate https://archive.gemini.edu/file/$file
+    test -e /tmp/jenkins_pytest/dataflow/$file || wget --no-check-certificate https://archive.gemini.edu/file/$file
   done
 
 echo "Done loading files"
