@@ -12,7 +12,7 @@ SearchGNIRS
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GNIRS
-  input text  name=date  20190719
+  input text  name=date  20190718-20190719
   click button  name=Search
   Page Should Contain  N20190719S0011.fits
 
@@ -21,7 +21,7 @@ SearchGNIRSDisperser
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GNIRS
-  input text  name=date  20190719
+  input text  name=date  20190718-20190719
   Select From List By Value  id:gnirs_disperser  111_mm
   click button  name=Search
   Page Should Contain  N20190719S0012.fits
@@ -31,7 +31,7 @@ SearchGNIRSCamera
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GNIRS
-  input text  name=date  20190719
+  input text  name=date  20190718-20190719
   Select From List By Value  id:gnirs_cam  GnirsShort
   click button  name=Search
   Page Should Contain  N20190719S0008.fits
@@ -41,7 +41,7 @@ SearchGNIRSMask
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GNIRS
-  input text  name=date  20190719
+  input text  name=date  20190718-20190719
   Select From List By Value  id:gnirs_mask  0.30arcsec
   click button  name=Search
   Page Should Contain  N20190719S0007.fits
@@ -51,7 +51,7 @@ SearchGNIRSFilter
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GNIRS
-  input text  name=date  20190719
+  input text  name=date  20190718-20190719
   Select From List By Value  id:gnirs_filter  XD
   click button  name=Search
   Page Should Contain  N20190719S0045.fits
@@ -61,7 +61,7 @@ SearchGNIRSExposureTime
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GNIRS
-  input text  name=date  20190719
+  input text  name=date  20190718-20190719
   input text  id=GNIRSexpT  5
   click button  name=Search
   Page Should Contain  N20190719S0045.fits
@@ -71,7 +71,7 @@ SearchGNIRSWellDepth
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GNIRS
-  input text  name=date  20190719
+  input text  name=date  20190718-20190719
   Select From List By Value  id:gnirs_depth  Shallow
   click button  name=Search
   Page Should Contain  N20190719S0006.fits
@@ -81,7 +81,7 @@ SearchGNIRSReadMode
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GNIRS
-  input text  name=date  20190719
+  input text  name=date  20190718-20190719
   Select From List By Value  id:gnirs_readmode  Bright_Objects
   click button  name=Search
   Page Should Contain  N20190719S0005.fits

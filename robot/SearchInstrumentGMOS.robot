@@ -22,7 +22,7 @@ SearchGMOSAllExposureTime
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GMOS
-  input text  name=date  20130712
+  input text  name=date  20130711-20130712
   input text  id=GMOSexpT  4
   click button  name=Search
   Page Should Contain  S20130712S0200.fits
@@ -42,7 +42,7 @@ SearchGMOSAllDisperser
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GMOS
-  input text  name=date  20130712
+  input text  name=date  20130711-20130712
   Select From List By Value  id:gmos_disperser  R400
   click button  name=Search
   Page Should Contain  S20130712S0118.fits
@@ -62,7 +62,7 @@ SearchGMOSAllMask
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GMOS
-  input text  name=date  20130712
+  input text  name=date  20130711-20130712
   Select From List By Value  id:gmos_mask  1.0arcsec
   click button  name=Search
   Page Should Contain  S20130712S0100.fits
@@ -102,7 +102,7 @@ SearchGMOSAllROI
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GMOS
-  input text  name=date  20130712
+  input text  name=date  20130711-20130712
   Select From List By Value  id:gmos_roi  Central Spectrum
   click button  name=Search
   Page Should Contain  GS20130712S0238_BIAS.fits
@@ -112,7 +112,7 @@ SearchGMOSN
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GMOS-N
-  input text  name=date  20130712
+  input text  name=date  20130711-20130712
   click button  name=Search
   Page Should Contain  N20130712S0134.fits
 
@@ -121,7 +121,7 @@ SearchGMOSS
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GMOS-S
-  input text  name=date  20130712
+  input text  name=date  20130711-20130712
   click button  name=Search
   Page Should Contain  S20130712S0094.fits
 
