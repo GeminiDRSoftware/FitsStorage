@@ -541,10 +541,10 @@ def upload_file():
         program_id = None
     if 'file_release_date' in formdata:
         release_date = formdata['file_release_date'].value
-        try:
+        if release_date:
             release_date = datetime.strptime(release_date, '%Y%m%d')
-        except:
-            release_date = None
+        else:
+            release_date = datetime.utcnow()
     else:
         release_date = None
     if 'file_description' in formdata:
