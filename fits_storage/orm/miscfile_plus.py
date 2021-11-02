@@ -182,7 +182,7 @@ class MiscFileFolder(Base):
         # Note: this odd approach is because __init__ doesn't mesh well with SQLAlchemy.  So we just
         # hasattr() here and lazy init the cached composite values if needed
         if not hasattr(self, '_composites_initialized') or not self._composites_initialized:
-            self._release = None
+            # self._release = None
             self._last_modified = None
             self._size = 0
             for folder in self.folder_children:
@@ -194,9 +194,9 @@ class MiscFileFolder(Base):
                     self._last_modified = folder_lm
                 self._size += folder.size()
             for file in self.file_children:
-                file_rd = file.release
-                if self._release is None or (file_rd is not None and file_rd > self._release):
-                    self._release = file_rd
+                # file_rd = file.release
+                # if self._release is None or (file_rd is not None and file_rd > self._release):
+                #     self._release = file_rd
                 file_lm = file.last_modified
                 if self._last_modified is None or (file_lm is not None and file_lm > self._last_modified):
                     self._last_modified = file_lm
@@ -204,9 +204,9 @@ class MiscFileFolder(Base):
 
             self._composites_initialized = True
 
-    def release(self):
-        self._maybe_initialize_composites()
-        return self._release
+    # def release(self):
+    #     self._maybe_initialize_composites()
+    #     return self._release
 
     def last_modified(self):
         self._maybe_initialize_composites()
