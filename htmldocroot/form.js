@@ -69,6 +69,11 @@ function setCurrentTab(tabName) {
 	 frame.hide();
       }
    });
+   if (tabName === 'caltab') {
+       $("div#download_all_area").hide();
+   } else {
+       $("div#download_all_area").show();
+   }
 }
 
 function recodeUrl() {
@@ -98,6 +103,8 @@ function CalsTab(selected) {
                     // attach listeners to them (unmarkAll does this work on the
                     // first call)
                     unmarkAll('associated_cals');
+                    // TODO setCurrentTab should handle this, but fails silently for some reason
+                    $("div#download_all_area").hide();
                 });
             } else {
                 $("#not_loading_cals").show();
@@ -128,6 +135,8 @@ function CalsTab(selected) {
                     // first call)
                     unmarkAll('associated_cals');
                     $('#calibration_results').html(data);
+                    // TODO setCurrentTab should handle this, but fails silently for some reason
+                    $("div#download_all_area").hide();
                     $("#caltab").html('Selected Calibrations');
                 });
             }

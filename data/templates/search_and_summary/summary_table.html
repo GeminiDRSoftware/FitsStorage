@@ -34,7 +34,6 @@
    <span id="previewboxmain">Click this box to close it. Click [P] or [#] links to switch image.<br>
 <img id="previewimage" src="/static/ajax-loading.gif" alt="">
 </span>
-<span id="previewboxlinks">HERE IS SOME TEXT IN THE PREVIEWBOXLINKS SPAN</span>
 </span>
 <span id="infobox"><p>Click this box to close it. <a id="infolink" target='_blank' href="">
 Click Here to open in a new tab</a></p><br>
@@ -62,6 +61,7 @@ Click Here to open in a new tab</a></p><br>
 <P>WARNING: Your search generated more than the limit of {{ closed_limit }} results. You might want
    to constrain your search more.
 {% elif data_rows.downloadable == True %}
+<div id="download_all_area">
 <FORM method='GET' action='{{ down_all_link }}'>
 {% if data_rows.all_downloadable == True %}
 <INPUT type='submit' value='Download all {{ data_rows.down }} files totalling {{ data_rows.size_in_gb }} GB'>
@@ -70,6 +70,7 @@ Click Here to open in a new tab</a></p><br>
 {% endif %}
 - this is always available at <a href="{{ down_all_link }}">this link</a>
 </FORM>
+</div>
 {% endif %}
 {% if clickable == True and data_rows.downloadable == True %}
 <INPUT id='load_cals_for_marked' type='button' value='Load Cals for Marked' onclick='CalsTab(true)'>
