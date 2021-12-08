@@ -151,6 +151,7 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
         **sumtable_data
         )
 
+
 def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_progid_list=None, user_obsid_list=None,
                   user_file_list=None, additional_columns=()):
     """
@@ -241,14 +242,15 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
         #__next__ = next
 
     template_args = dict(
-        clickable     = sumtype in {'searchresults', 'customsearch', 'associated_cals'},
-        insert_prev   = sumtype in {'searchresults', 'customsearch'},
-        uri           = sumgen.uri,
-        headers       = sumgen.table_header(),
-        data_rows     = RowYielder(sumgen, headers, sumtype),
-        down_all_link = download_all_url,
-        json_res_link = json_results_url,
-        sumtype       = sumtype,
+        clickable        = sumtype in {'searchresults', 'customsearch', 'associated_cals'},
+        insert_prev      = sumtype in {'searchresults', 'customsearch'},
+        uri              = sumgen.uri,
+        deprogrammed_uri = sumgen.deprogrammed_uri,
+        headers          = sumgen.table_header(),
+        data_rows        = RowYielder(sumgen, headers, sumtype),
+        down_all_link    = download_all_url,
+        json_res_link    = json_results_url,
+        sumtype          = sumtype,
         )
 
     return template_args

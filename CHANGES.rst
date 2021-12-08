@@ -1,6 +1,14 @@
 2021-2 (unreleased)
 ===================
 
+User-Facing Changes
+-------------------
+
+/searchform
+^^^^^^^^^^^
+
+- Fix for datalabel links still having any obsid/datalabel terms present, making search too narrow
+
 Scripts
 -------
 

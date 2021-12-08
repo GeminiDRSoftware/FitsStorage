@@ -26,7 +26,7 @@
   {%- elif column.content != None -%}
     {%- if column.content.prop_message -%}{{ prop_message(column.content) }}
       {%- elif column.key == 'filename' -%}{{ generate_filename(column.content) }}
-      {%- elif column.key == 'data_label' -%}{{ generate_datalabel(column.content, row.uri) }}
+      {%- elif column.key == 'data_label' -%}{{ generate_datalabel(column.content, row.deprogrammed_uri) }}
       {%- elif column.key == 'ut_datetime' -%}{{ generate_utdatetime(column.content, row.uri) }}
       {%- elif column.key == 'instrument' -%}{{ generate_instrument(column.content, row.uri) }}
       {%- elif column.key == 'observation_class' -%}{{ generate_uri_link(column.content, row.uri) }}
