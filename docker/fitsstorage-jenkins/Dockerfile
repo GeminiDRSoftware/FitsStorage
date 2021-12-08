@@ -1,4 +1,4 @@
-FROM centos:centos8.1.1911
+FROM rockylinux/rockylinux:8.5
 LABEL maintainer="oliver.oberdorf@noirlab.edu"
 
 # ENABLE EPEL

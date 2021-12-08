@@ -1,4 +1,4 @@
-FROM fitsstorageutils:latest
+FROM fitsstorageutils:2022-1
 LABEL maintainer="oliver.oberdorf@noirlab.edu"
 
 # INSTALL HTTPD AND POSTGRESQL

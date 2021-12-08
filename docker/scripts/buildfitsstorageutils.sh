@@ -11,6 +11,12 @@ then
 elif [[ "$BRANCH" == "2021-1" ]]
 then
   LABEL="2021-1"
+elif [[ "$BRANCH" == "2021-2" ]]
+then
+  LABEL="2021-2"
+elif [[ "$BRANCH" == "2022-1" ]]
+then
+  LABEL="2022-1"
 else
   LABEL="latest"
 fi
