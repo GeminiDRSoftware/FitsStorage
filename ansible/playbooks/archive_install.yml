@@ -73,16 +73,16 @@
           name:
             - dnf-plugins-core
           state: latest
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
 #      - name: install Repos for Sphinx
 #        shell: yum config-manager --set-enabled PowerTools
 #        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
-      - name: install CentOS8 packages
+      - name: install CentOS8/Rocky8 packages
         yum:
           name:
             - libnsl
 #            - python3-sphinx
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
       - name: install Sphinx (have to pull direct from the mirror)
         yum:
           name:
@@ -266,10 +266,10 @@
           owner: apache
       - name: install psycopg2 binary (so we don't have to compile it) (CentOS 7)
         command: bash -c "python -m pip install psycopg2-binary==2.8.4"
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version < '8'
       - name: install psycopg2 binary (so we don't have to compile it) (CentOS 8)
         command: bash -c "python3 -m pip install psycopg2-binary==2.9.1"
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
 #      - name: install python packages for DB
 #        command: bash -c "cd /opt/FitsStorageDB && python3 -m pip install -r requirements.txt --upgrade"
       - name: install python packages
@@ -279,10 +279,10 @@
           name: 
             - python-pip
           state: latest
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version < '8'
       - name: install imexam for DRAGONS (Centos 8)
         command: bash -c "python3 -m pip install imexam specutils"
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
       - name: make dummy specutils folder to satisfy the library's bad logic
         file:
           path: /usr/share/httpd/.specutils
@@ -293,7 +293,7 @@
         become: true
       - name: install imexam and specutils for DRAGONS (Centos 7)
         command: bash -c "python3 -m pip install imexam specutils"
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version < '8'
       - name: Create folders for FitsStorage to work with files
         file:
           path: '{{ item.path }}'
@@ -332,12 +332,12 @@
         command: gcc -L /lib64 -I /usr/include/cfitsio -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -lcfitsio -lm -lnsl-2.28
         args:
           chdir: /opt/fitsverify/
-        when: copiedfitsverify.changed and ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+        when: copiedfitsverify.changed and (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
       - name: Compile fitsverify
         command: gcc -L /lib64 -I /usr/include/cfitsio -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -lcfitsio -lm -lnsl
         args:
           chdir: /opt/fitsverify/
-        when: copiedfitsverify.changed and ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+        when: copiedfitsverify.changed and (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version < '8'
 # unset SPHINXOPTS if you want to see all the warnings from sphinx
       - name: Build Sphinx documentation (hbffits-lv4 only)
         become: true
@@ -458,7 +458,7 @@
 #          path_to_script: /opt/FitsStorage/sql/views.sql
 #        become: yes
 #        become_user: fitsdata
-#        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+#        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
       - name: Setup Migrations
         command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
         become: yes
