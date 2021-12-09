@@ -19,7 +19,9 @@ RUN yum -y install openssl \
                    python3-pillow \
                    redhat-rpm-config \
                    python3-devel \
-                   bzip2
+                   bzip2 \
+                   zlib \
+                   zlib-devel
 
 RUN yum -y --nogpgcheck install python3-pip
 

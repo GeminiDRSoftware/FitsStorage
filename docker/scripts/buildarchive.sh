@@ -3,7 +3,7 @@ BASEDIR=$(dirname "$0")
 UPLOAD=$1
 pushd "$BASEDIR/../../.."
 
-BRANCH=`git rev-parse --abbrev-ref HEAD`
+BRANCH=`cd FitsStorage && git rev-parse --abbrev-ref HEAD`
 echo Branch is $BRANCH
 if [[ "$BRANCH" == "2020-2" ]]
 then
@@ -21,7 +21,7 @@ else
   LABEL="latest"
 fi
 
-docker image build -t fitsimage:$LABEL -f FitsStorage/docker/archive//Dockerfile .
+docker image build -t fitsimage:$LABEL -f FitsStorage/docker/archive/Dockerfile .
 
 if [[ $UPLOAD == "-u" ]]
 then
