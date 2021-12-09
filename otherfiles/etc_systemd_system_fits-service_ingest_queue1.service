@@ -3,7 +3,7 @@ Description=Fits Service Ingest Queue 1
 After=syslog.target network.target postgresql.service
 
 [Service]
-Environment=PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
+Environment=PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/FitsStorageDB:/opt/GeminiCalMgr
 User=fitsdata
 ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_ingest_queue.py --demon --lockfile --name=siq1
 Restart=always

@@ -472,7 +472,7 @@
         become_user: postgres
         when: fitsdata_db_created.changed
       - name: Apply Migrations (Idempotent, always apply)
-        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py upgrade postgresql:///fitsdata dbmigration"
+        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr python3 dbmigration/manage.py upgrade postgresql:///fitsdata dbmigration"
         become: yes
         become_user: fitsdata
         when: apply_migrations
