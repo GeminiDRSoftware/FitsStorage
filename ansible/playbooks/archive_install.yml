@@ -312,7 +312,7 @@
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
-          version: 201e1d04018af9769707aaf9d9260aea052e6345
+          version: e3076d985e41360903906b9f9efe795bacaa210b
           #version: release/3.0.x
         register: dragonscheckout
       - name: Cythonize DRAGONS
