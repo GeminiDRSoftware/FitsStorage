@@ -219,7 +219,7 @@
         become: false
         local_action:
           module: shell
-          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../FitsStorageDB fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/FitsStorageDB/
+          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../FitsStorageDB fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/FitsStorageDB
         when: is_aws
         notify: restart services
         register: checkedout_fitsstoragedb
@@ -227,7 +227,7 @@
         become: false
         local_action:
           module: shell
-          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../GeminiCalMgr fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/GeminiCalMgr/
+          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../GeminiCalMgr fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/GeminiCalMgr
         when: is_aws
         register: checkedout_geminicalmgr
       - name: Install FitsStorageDB
@@ -460,7 +460,7 @@
 #        become_user: fitsdata
 #        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
       - name: Setup Migrations
-        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
+        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr python3 dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
         become: yes
         become_user: postgres
         when: fitsdata_db_created.changed

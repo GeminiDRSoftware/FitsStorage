@@ -52,7 +52,7 @@ def lookup_config(name, default_value):
             if hostname is not None and '.' in hostname:
                 hostname = hostname[:hostname.find('.')]
             if hostname is not None:
-                if os.path.exists('/etc/fiststorage.conf'):
+                if os.path.exists('/etc/fitsstorage.conf'):
                     config_path = '/etc/fitsstorage.conf'
                 else:
                     config_path = '~/fitsstorage.conf'
