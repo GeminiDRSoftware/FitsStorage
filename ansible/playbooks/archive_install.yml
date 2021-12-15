@@ -237,13 +237,13 @@
           chdir: /opt/FitsStorageDB
         when: checkedout_fitsstoragedb
         notify: restart services
-      - name: Install GeminiCalMgr
-        become: true
-        command: bash -c "python3 setup.py install"
-        args:
-          chdir: /opt/GeminiCalMgr
-        when: checkedout_geminicalmgr
-        notify: restart services
+#      - name: Install GeminiCalMgr
+#        become: true
+#        command: bash -c "python3 setup.py install"
+#        args:
+#          chdir: /opt/GeminiCalMgr
+#        when: checkedout_geminicalmgr
+#        notify: restart services
       - name: Rsync FitsStorage into /opt (AWS)
         become: false
         local_action: 
@@ -451,14 +451,14 @@
         become: yes
         become_user: fitsdata
         when: fitsdata_db_created.changed
-#      - name: Create Materialized Views
-#        postgresql_query:
-#          db: fitsdata
-#          login_user: fitsdata
-#          path_to_script: /opt/FitsStorage/sql/views.sql
-#        become: yes
-#        become_user: fitsdata
-#        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
+      - name: Create Materialized Views
+        postgresql_query:
+          db: fitsdata
+          login_user: fitsdata
+          path_to_script: /opt/FitsStorage/sql/views.sql
+        become: yes
+        become_user: fitsdata
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
       - name: Setup Migrations
         command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr python3 dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
         become: yes
@@ -525,12 +525,10 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue1.service
           dest: /etc/systemd/system/fits-service_ingest_queue1.service
-        when: enable_ingest_services
       - name: Install ingest queue 2
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue2.service
           dest: /etc/systemd/system/fits-service_ingest_queue2.service
-        when: enable_ingest_services
       - name: Install ingest queue 3
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue.service
@@ -573,83 +571,70 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
           dest: /etc/systemd/system/fits-service_preview_queue1.service
-        when: is_archive
       - name: Setup preview 1
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue1.service
           line: Description=Fits Service Preview Queue 1
           regex: Description=
           create: no
-        when: is_archive
       - name: Setup preview 1 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue1.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq1
           regex: ExecStart=
           create: no
-        when: is_archive
       - name: Install preview queue 2
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
           dest: /etc/systemd/system/fits-service_preview_queue2.service
-        when: is_archive
       - name: Setup preview 2
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue2.service
           line: Description=Fits Service Preview Queue 2
           regex: Description=
           create: no
-        when: is_archive
       - name: Setup preview 2 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue2.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq2
           regex: ExecStart=
           create: no
-        when: is_archive
       - name: Install preview queue 3
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
           dest: /etc/systemd/system/fits-service_preview_queue3.service
-        when: is_archive
       - name: Setup preview 3
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue3.service
           line: Description=Fits Service Preview Queue 3
           regex: Description=
           create: no
-        when: is_archive
       - name: Setup preview 3 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue3.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq3
           regex: ExecStart=
           create: no
-        when: is_archive
       - name: Install preview queue 4
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
           dest: /etc/systemd/system/fits-service_preview_queue4.service
-        when: is_archive
       - name: Setup preview 4
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue4.service
           line: Description=Fits Service Preview Queue 4
           regex: Description=
           create: no
-        when: is_archive
       - name: Setup preview 4 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue4.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq4
           regex: ExecStart=
           create: no
-        when: is_archive
       - name: Install calcache queue 1
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_calcache_queue.service
           dest: /etc/systemd/system/fits-service_calcache_queue1.service
-        when: is_archive
       - name: Install export queue
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_export_queue1.service
