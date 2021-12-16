@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 import datetime
 import bz2
 
-from ..utils.hashes import md5sum, md5sum_size_bz2
+from gemini_obs_db.utils.hashes import md5sum, md5sum_size_bz2
 
 from gemini_obs_db.db import Base
 
