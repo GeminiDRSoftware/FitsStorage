@@ -7,7 +7,7 @@ Other
 exportqueue
 ^^^^^^^^^^^
 
-- Added distinct sortkey column to allow for smarter ordering vs relying on the filename
+- Added distinct sortkey column to allow for smarter ordering vs relying on the filename [GL#28]
 
 
 2021-2
