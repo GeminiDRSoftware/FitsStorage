@@ -1,9 +1,39 @@
+import re
+
 import datetime
 from sqlalchemy import desc, func
 from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Integer, Boolean, Text, DateTime
 
 from gemini_obs_db.db import Base
+
+_standard_filename_re = re.compile('[NS](\d{8}).*')
+_igrins_filename_re = re.compile('SDC[HK]_(\d{8})_.*')
+_skycam_filename_re = re.compile('img_(\d{8})_.*')
+_obslog_filename_re = re.compile('(\d{8})_.*_obslog.txt')
+
+_regexes = [_standard_filename_re,
+            _igrins_filename_re,
+            _skycam_filename_re,
+            _obslog_filename_re]
+
+
+def _sortkey(filename):
+    """
+    Generate a sort key for the given filename.
+
+    For recognized filename patterns, this will extract a datestring.  For
+    other filenames, it will prepend a 0000 so that they will sort sensibly
+    amongst their set but will come after the files we know about.
+    """
+    if filename is None:
+        return None
+    for rex in _regexes:
+        m = rex.match(filename)
+        if m:
+            return m.group(1)
+    return '0000%s' % filename  # push to back of the sort vs any reasonable year value
+
 
 # ------------------------------------------------------------------------------
 class ExportQueue(Base):
@@ -23,6 +53,7 @@ class ExportQueue(Base):
     destination = Column(Text, nullable=False, unique=False, index=True)
     inprogress = Column(Boolean, index=True)
     failed = Column(Boolean)
+    sortkey = Column(Text, index=True)
     added = Column(DateTime)
     lastfailed = Column(DateTime)
 
@@ -42,6 +73,7 @@ class ExportQueue(Base):
             URL of the server to export to
         """
         self.filename = filename
+        self.sortkey = _sortkey(filename)
         self.path = path
         self.destination = destination
         self.added = datetime.datetime.now()
@@ -84,7 +116,7 @@ class ExportQueue(Base):
                 .filter(ExportQueue.inprogress == False)
                 .filter(ExportQueue.failed == False)
                 .filter(~ExportQueue.filename.in_(inprogress_filenames))
-                .order_by(desc(ExportQueue.filename))
+                .order_by(desc(ExportQueue.sortkey), desc(ExportQueue.filename))
         )
 
 # TODO seems to be out of use, removing for now

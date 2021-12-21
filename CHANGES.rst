@@ -1,6 +1,14 @@
 2022-1
 ======
 
+Other
+-----
+
+exportqueue
+^^^^^^^^^^^
+
+- Added distinct sortkey column to allow for smarter ordering vs relying on the filename
+
 
 2021-2
 ======
