@@ -102,11 +102,11 @@ class IngestQueueUtil(object):
         try:
             self.s.commit()
         except IntegrityError:
-            self.l.debug("File %s seems to be in the queue", iq.filename)
+            self.l.debug("File %s seems to be in the queue" % iq.filename)
             self.s.rollback()
         else:
             make_transient(iq)
-            self.l.debug("Added id %s for filename %s to ingestqueue", iq.id, iq.filename)
+            self.l.debug("Added id %s for filename %s to ingestqueue" % (iq.id, iq.filename))
 
             return iq
 
@@ -170,7 +170,7 @@ class IngestQueueUtil(object):
                                 .filter(DiskFile.present == False)
 
             for olddiskfile in olddiskfiles:
-                self.l.debug("Marking old diskfile id %d as no longer canonical", olddiskfile.id)
+                self.l.debug("Marking old diskfile id %d as no longer canonical" % olddiskfile.id)
                 olddiskfile.canonical = False
             self.s.commit()
 
@@ -188,20 +188,20 @@ class IngestQueueUtil(object):
         query = self.s.query(File).filter(File.name == filename)
         try:
             # Assume that there's a file entry for this one
-            self.l.debug("%s is present in file table", filename)
+            self.l.debug("%s is present in file table" % filename)
             fileobj = query.one()
             # OK, is there a diskfile that's present for it
             query = self.s.query(DiskFile).filter(DiskFile.file_id == fileobj.id).filter(DiskFile.present == True)
 
             # Assume that there's a diskfile entry for this
             diskfile = query.one()
-            self.l.debug("%s is present=True in diskfile table at diskfile_id = %s", filename, diskfile.id)
+            self.l.debug("%s is present=True in diskfile table at diskfile_id = %s" % (filename, diskfile.id))
             # Is the file actually present on disk?
             if diskfile.exists():
                 self.l.debug("%s is actually present on disk. That's good", filename)
             else:
-                self.l.info("%s is present in diskfile table id %d but missing on the disk.", filename, diskfile.id)
-                self.l.info("Marking diskfile id %d as not present", diskfile.id)
+                self.l.info("%s is present in diskfile table id %d but missing on the disk." % (filename, diskfile.id))
+                self.l.info("Marking diskfile id %d as not present" % diskfile.id)
                 diskfile.present = False
                 self.s.commit()
         except NoResultFound:
@@ -221,8 +221,8 @@ class IngestQueueUtil(object):
             self.s.add(diskfile)
             self.s.flush()
             if diskfile.uncompressed_cache_file:
-                self.l.debug("diskfile uncompressed cache file = %s, access=%s", diskfile.uncompressed_cache_file,
-                                os.access(diskfile.uncompressed_cache_file, os.F_OK))
+                self.l.debug("diskfile uncompressed cache file = %s, access=%s" % (diskfile.uncompressed_cache_file,
+                                os.access(diskfile.uncompressed_cache_file, os.F_OK)))
 
             if is_miscfile(filename):
                 meta = miscfile_meta(filename)
@@ -256,11 +256,11 @@ class IngestQueueUtil(object):
                 else:
                     fullpath_for_ad = diskfile.fullpath()
 
-                self.l.debug("Instantiating AstroData object on %s", fullpath_for_ad)
+                self.l.debug("Instantiating AstroData object on %s" % fullpath_for_ad)
                 try:
                     diskfile.ad_object = astrodata.open(fullpath_for_ad)
                 except:
-                    self.l.error("Failed to open astrodata object on file: %s. Giving up", fullpath_for_ad)
+                    self.l.error("Failed to open astrodata object on file: %s. Giving up" % fullpath_for_ad)
 
                     self.delete_file(diskfile, fullpath)
 
@@ -324,12 +324,12 @@ class IngestQueueUtil(object):
                     # For debug
                     string = traceback.format_tb(sys.exc_info()[2])
                     string = "".join(string)
-                    self.l.error("Error making preview for %s", diskfile.filename)
-                    self.l.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
+                    self.l.error("Error making preview for %s" % diskfile.filename)
+                    self.l.error("Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
 
                 # If we are in archive mode, add to calcachequeue here
                 if fsc.use_as_archive:
-                    self.l.info("Adding header id %d to calcachequeue", header.id)
+                    self.l.info("Adding header id %d to calcachequeue" % header.id)
                     cq = CalCacheQueue(header.id, diskfile.filename, sortkey=header.ut_datetime)
                     self.s.add(cq)
                     self.s.flush()
@@ -338,8 +338,8 @@ class IngestQueueUtil(object):
             # For debug
             string = traceback.format_tb(sys.exc_info()[2])
             string = "".join(string)
-            self.l.error("Error making diskfile entry for %s", diskfile.filename)
-            self.l.error("Exception: %s : %s... %s", sys.exc_info()[0], sys.exc_info()[1], string)
+            self.l.error("Error making diskfile entry for %s" % diskfile.filename)
+            self.l.error("Exception: %s : %s... %s" % (sys.exc_info()[0], sys.exc_info()[1], string))
             raise
         finally:
             # really really try to clean up the cache file if we have one
@@ -405,7 +405,7 @@ class IngestQueueUtil(object):
         return value is a boolean to say whether we added a new diskfile or not
         """
 
-        self.l.debug("ingest_file %s", filename)
+        self.l.debug("ingest_file %s" % filename)
 
         if path is None:
             path = ""
@@ -414,14 +414,14 @@ class IngestQueueUtil(object):
         if fsc.using_s3:
             fullpath = os.path.join(fsc.storage_root, filename)
             if not self.s3.exists_key(filename):
-                self.l.error("cannot access %s in S3 bucket", filename)
+                self.l.error("cannot access %s in S3 bucket" % filename)
                 self.check_present(filename)
                 return
         else:
             fullpath = os.path.join(fsc.storage_root, path, filename)
             exists = os.access(fullpath, os.F_OK | os.R_OK) and os.path.isfile(fullpath)
             if not exists:
-                self.l.error("cannot access %s", fullpath)
+                self.l.error("cannot access %s" % fullpath)
                 self.check_present(filename)
                 return
 
@@ -429,7 +429,7 @@ class IngestQueueUtil(object):
             # Assume that there exists a file table entry for this
             trimmed_name = File.trim_name(filename)
             fileobj = self.s.query(File).filter(File.name == trimmed_name).one()
-            self.l.debug("Already in file table as %s", trimmed_name)
+            self.l.debug("Already in file table as %s" % trimmed_name)
         except NoResultFound:
             # Make a file instance
             fileobj = File(filename)
@@ -446,17 +446,17 @@ class IngestQueueUtil(object):
 
     def delete_file(self, diskfile, fullpath):
         if fsc.using_s3:
-            self.l.debug("deleting %s from s3_staging_area", os.path.basename(fullpath))
+            self.l.debug("deleting %s from s3_staging_area" % os.path.basename(fullpath))
             os.unlink(fullpath)
 
         if diskfile.uncompressed_cache_file:
-            self.l.debug("deleting %s from gz_staging_area", diskfile.uncompressed_cache_file)
+            self.l.debug("deleting %s from gz_staging_area" % diskfile.uncompressed_cache_file)
             if os.access(diskfile.uncompressed_cache_file, os.F_OK | os.R_OK):
                 os.unlink(diskfile.uncompressed_cache_file)
                 diskfile.uncompressed_cache_file = None
             else:
-                self.l.debug("diskfile claimed to have an diskfile.uncompressed_cache_file, but cannot access it: %s",
-                                diskfile.uncompressed_cache_file)
+                self.l.debug("diskfile claimed to have an diskfile.uncompressed_cache_file, but cannot access it: %s" %
+                             diskfile.uncompressed_cache_file)
 
     def length(self):
         """
@@ -500,7 +500,7 @@ class IngestQueueUtil(object):
             age = now - lastmod
             defer = datetime.timedelta(seconds=fsc.defer_seconds)
             if age < defer:
-                self.l.info("Deferring ingestion of recently modified file %s", iq.filename)
+                self.l.info("Deferring ingestion of recently modified file %s" % iq.filename)
                 # Defer ingestion of this file for defer_secs
                 after = now + defer
         else:
@@ -510,12 +510,12 @@ class IngestQueueUtil(object):
                     try:
                         fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     except IOError:
-                        self.l.info("Deferring ingestion of locked file %s", iq.filename)
+                        self.l.info("Deferring ingestion of locked file %s" % iq.filename)
                         # Defer ingestion of this file for 15 secs
                         after = datetime.datetime.now() + datetime.timedelta(seconds=15)
             except IOError:
                 # Probably don't have write permission to the file
-                self.l.warning("Could not open %s for update to test lock", fullpath)
+                self.l.warning("Could not open %s for update to test lock" % fullpath)
 
         if after is not None:
             # iq is a transient ORM object, find it in the db

@@ -115,7 +115,7 @@ class ExportQueueUtil(object):
         :class:`~fits_storage.orm.ExportQueue`
             queue item if successful
         """
-        self.l.info("Adding file %s to %s to exportqueue", filename, destination)
+        self.l.info(f"Adding file {filename} to {destination} to exportqueue")
 
         query = self.s.query(ExportQueue)\
                     .filter(ExportQueue.filename == filename)\
@@ -123,7 +123,7 @@ class ExportQueueUtil(object):
                     .filter(ExportQueue.destination == destination)
         check_export = query.one_or_none()
         if check_export is not None:
-            self.l.info("Already have entry to export file %s to %s, ignoring", filename, destination)
+            self.l.info(f"Already have entry to export file {filename} to {destination}, ignoring")
             return check_export
 
         eq = ExportQueue(filename, path, destination)
@@ -134,11 +134,11 @@ class ExportQueueUtil(object):
             self.s.commit()
         except IntegrityError:
             # table is not sufficiently constrained
-            self.l.debug("File %s seems to be in the queue", eq.filename)
+            self.l.debug(f"File {eq.filename} seems to be in the queue")
             self.s.rollback()
         else:
             make_transient(eq)
-            self.l.debug("Added id %s for filename %s to exportqueue", eq.id, eq.filename)
+            self.l.debug(f"Added id {eq.id} for filename {eq.filename} to exportqueue")
             return eq
 
     def export_file(self, filename, path, destination):
@@ -158,7 +158,7 @@ class ExportQueueUtil(object):
         -------
         bool : True if sucessfull, False otherwise
         """
-        self.l.debug("export_file %s to %s", filename, destination)
+        self.l.debug(f"export_file {filename} to {destination}")
 
         # First, lookup the md5 of the file we have, and see if the
         # destination server already has it with that md5
@@ -185,9 +185,9 @@ class ExportQueueUtil(object):
             return False
 
         if (dest_md5 is not None) and (dest_md5 == our_md5):
-            self.l.info("Data %s is already at %s with md5 %s", filename, destination, dest_md5)
+            self.l.info(f"Data {filename} is already at {destination} with md5 {dest_md5}")
             return True
-        self.l.debug("Data not present at destination: dest_md5: %s, our_md5: %s - reading file", dest_md5, our_md5)
+        self.l.debug(f"Data not present at destination: dest_md5: {dest_md5}, our_md5: {our_md5} - reading file")
 
         # Read the file into the payload postdata buffer to HTTP POST
         data = None
@@ -196,7 +196,7 @@ class ExportQueueUtil(object):
             keyname = os.path.join(path, filename)
             s3 = get_helper()
             if not s3.exists_key(keyname):
-                self.l.error("cannot access %s in S3 bucket", filename)
+                self.l.error(f"cannot access {filename} in S3 bucket")
             else:
                 data = s3.get_as_string(keyname).get_contents_as_string()
         else:
@@ -205,7 +205,7 @@ class ExportQueueUtil(object):
             try:
                 data = open(fullpath, 'rb').read()
             except IOError:
-                self.l.error("cannot access %s", fullpath)
+                self.l.error(f"cannot access {fullpath}")
 
         # Do we need to compress or uncompress the data?
         # If the data are already compressed, we're not going to re-compress it
@@ -239,7 +239,7 @@ class ExportQueueUtil(object):
         # NB need to make the data buffer into a bytearray not a str
         # Otherwise get ascii encoding errors from httplib layer
         try:
-            self.l.info("Transferring file %s to destination %s", filename, destination)
+            self.l.info(f"Transferring file {filename} to destination {destination}")
             postdata = bytearray(data)
             data = None
 
@@ -261,7 +261,7 @@ class ExportQueueUtil(object):
                     tmpfile.close()
 
                 with open(tmpfilename, 'rb') as tmpfile:
-                    self.l.info("Large file %s in export, using alternate method to send the data" % filename)
+                    self.l.info(f"Large file {filename} in export, using alternate method to send the data")
                     headers = {'Cache-Control': 'no-cache', 'Content-Length': '%d' % len(postdata)}
                     cookies = {'gemini_fits_upload_auth': export_upload_auth_cookie}
                     r = requests.post(url, headers=headers, cookies=cookies, data=tmpfile, timeout=600)
@@ -269,7 +269,7 @@ class ExportQueueUtil(object):
                     http_status = r.status_code
                 os.unlink(tmpfilename)
 
-            self.l.debug("Got status code: %d and response: %s", http_status, response)
+            self.l.debug(f"Got status code: {http_status} and response: {response}")
 
             # verify that it transfered OK
             ok = True
@@ -277,16 +277,18 @@ class ExportQueueUtil(object):
                 # response is a short json document
                 verification = json.loads(response)[0]
                 if verification['filename'] != filename:
-                    self.l.error("Transfer Verification Filename mismatch: %s vs %s", verification['filename'], filename)
+                    self.l.error("Transfer Verification Filename mismatch: %s vs %s" %
+                                 (verification['filename'], filename))
                     ok = False
                 if verification['size'] != len(postdata):
-                    self.l.error("Transfer Verification size mismatch: %s vs %s", verification['size'], len(postdata))
+                    self.l.error("Transfer Verification size mismatch: %s vs %s" %
+                                 (verification['size'], len(postdata)))
                     ok = False
                 if verification['md5'] != our_md5:
-                    self.l.error("Transfer Verification md5 mismatch: %s vs %s", verification['md5'], our_md5)
+                    self.l.error("Transfer Verification md5 mismatch: %s vs %s" % (verification['md5'], our_md5))
                     ok = False
             else:
-                self.l.error("Bad HTTP status code transferring %s to %s", filename, destination)
+                self.l.error("Bad HTTP status code transferring %s to %s" % (filename, destination))
                 ok = False
 
             if ok:
@@ -297,11 +299,11 @@ class ExportQueueUtil(object):
                 return False
 
         except (urllib.error.URLError, http.client.IncompleteRead, ssl.SSLError):
-            self.l.info("Error posting %d bytes of data to destination server at: %s", len(postdata), url)
+            self.l.info("Error posting %d bytes of data to destination server at: %s" % (len(postdata), url))
             self.l.debug("Transfer Failed")
             return False
         except:
-            self.l.error("Problem posting %d bytes of data to destination server at: %s", len(postdata), url)
+            self.l.error("Problem posting %d bytes of data to destination server at: %s" % (len(postdata), url))
             raise
 
     def retry_failures(self, interval):
@@ -319,7 +321,7 @@ class ExportQueueUtil(object):
 
         num = query.update({"inprogress": False})
         if num > 0:
-            self.l.info("There are %d failed ExportQueue items to retry", num)
+            self.l.info("There are %d failed ExportQueue items to retry" % num)
         else:
             self.l.debug("There are no failed ExportQueue items to retry")
 
@@ -342,17 +344,17 @@ def get_destination_data_md5(filename, logger, destination):
         json_data = u.read()
         u.close()
     except (urllib.error.URLError, http.client.IncompleteRead):
-        logger.debug("Failed to get json data from destination server at URL: %s", url)
+        logger.debug("Failed to get json data from destination server at URL: %s" % url)
         return "ERROR"
 
     try:
         thelist = json.loads(json_data)
     except ValueError:
-        logger.debug("JSON decode failed. JSON data: %s", json_data)
+        logger.debug("JSON decode failed. JSON data: %s" % json_data)
         return "ERROR"
 
     if len(thelist) == 0:
-        logger.debug("Destination server does not have filename %s", filename)
+        logger.debug("Destination server does not have filename %s" % filename)
         return None
     if len(thelist) > 1:
         logger.debug("Got multiple results from destination server")

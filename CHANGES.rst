@@ -8,6 +8,22 @@ exportqueue
 ^^^^^^^^^^^
 
 - Added distinct sortkey column to allow for smarter ordering vs relying on the filename [GL#28]
+- Fixed logging messages to use % string format, the logger does not handle an args list approach [GL#30]
+
+header_fixer2
+^^^^^^^^^^^^^
+
+- IGRINS detects malformed "Gemini South" (or "Gemini North") telescope values and fixes file header to Gemini-X [GL#29]
+
+file_parser
+^^^^^^^^^^^
+
+- IGRINS parser detects malformed "Gemini South" (or "Gemini North") telescope values and returns Gemini-X [GL#29]
+
+ingestqueue
+^^^^^^^^^^^
+
+- Fixed logging messages to use % string format, the logger does not handle an args list approach [GL#30]
 
 
 2021-2

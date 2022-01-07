@@ -29,6 +29,10 @@ RUN yum -y --nogpgcheck install python3-pip
 RUN yum -y --nogpgcheck install glibc-langpack-en glibc-common
 
 # SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
+# DRAGONS now also needs specutils
+RUN pip3 install gwcs==0.16.1
+RUN pip3 install asdf==2.7.4
+RUN pip3 install specutils==1.2
 RUN pip3 install psycopg2-binary && \
     pip3 install sqlalchemy && \
     pip3 install pyyaml && \
@@ -57,7 +61,9 @@ RUN yum -y install make
 RUN pip3 install imexam
 
 # DRAGONS now also needs specutils
-RUN pip3 install specutils
+#RUN pip3 install gwcs==0.16.1
+#RUN pip3 install asdf==2.7.4
+#RUN pip3 install specutils==1.2
 
 # CREATE FITSDATA USER AND GROUP
 RUN /usr/sbin/groupadd -g 5179 fitsdata
