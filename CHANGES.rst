@@ -25,6 +25,11 @@ ingestqueue
 
 - Fixed logging messages to use % string format, the logger does not handle an args list approach [GL#30]
 
+calmgr
+^^^^^^
+
+- Migrated to safer eval call with manual handling for Section, NonLinCoeffs and datetime types [GL#31]
+
 
 2021-2
 ======

@@ -34,6 +34,8 @@ import datetime
 import sys
 import traceback
 
+from ast import literal_eval
+
 no_func = lambda x: None
 
 NonLinCoeffs = lambda *args, **kwargs : ""
@@ -120,6 +122,39 @@ def cals_info(cal_obj, caltype, procmode=None, qtype='UNKNOWN', log=no_func, add
                 type  = ct,
                 cals  = None
                 )
+
+
+def _cal_eval(str):
+    """
+    Modified safe eval() for calibration requests.
+
+    The
+    """
+    str = re.sub(r'NonLinCoeffs\([^\)]*\)', '""', str)
+    str = re.sub(r'Section\( *x1=(\d+), *x2=(\d*), *y1=(\d*), *y2=(\d*)\)', '"[\\1, \\2, \\3, \\4]"', str)
+
+    # handle datetime.datetime, datetime.date, datetime.time
+    datetimes_dict = {}
+    for typ, typfn in (('datetime', datetime.datetime),
+                       ('date', datetime.date),
+                       ('time', datetime.time)):
+        rex = r'\'([\w\d]+)\': *(datetime.)?' + typ + r'\(([ \d,]+)\)'
+        datetimes = re.findall(rex, str)
+        for dt in datetimes:
+            key = dt[0]
+            args = dt[2]
+            args = [int(a) for a in args.split(',')]
+            val = typfn(*args)
+            datetimes_dict[key] = val
+    # now we need to remove those datetimes, as we'll get them from datetimes_dict
+    # this gets any datetimes that have a , after them
+    str = re.sub(r'\'([\w\d]+)\': *(datetime.)?(datetime|date|time)\(([ \d,]+)\),', '', str)
+    # this gets any remaining datetimes that have a , before them or the single k:v datetime
+    str = re.sub(r',? *\'([\w\d]+)\': *(datetime.)?(datetime|date|time)\(([ \d,]+)\)', '', str)
+    retval = literal_eval(str)
+    retval.update(datetimes_dict)
+    return retval
+
 
 def generate_post_calmgr(selection, caltype, procmode=None):
     # OK, get the details from the POST data
