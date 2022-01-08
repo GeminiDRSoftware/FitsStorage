@@ -46,4 +46,5 @@ def test_list_publications(session, monkeypatch):
 
     list_publications()
     assert(mock_context.resp.status == 200)
-    assert(re.match(r'\nbibcode   https://[\w.]+(:\d+)?/searchform/publication=bibcode\n', mock_context.resp.stuff )
+    assert(re.match(r'\nbibcode   https://[\w.]+(:\d+)?/searchform/publication=bibcode\n', mock_context.resp.stuff))
+
