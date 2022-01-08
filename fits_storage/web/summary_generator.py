@@ -131,6 +131,9 @@ class Row(object):
 
 
 def _deprogrammed_uri(uri):
+    if uri is None:
+        return None
+    
     pieces = uri.split('/')
 
     def is_prog(piece):
