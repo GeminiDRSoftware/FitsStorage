@@ -1,6 +1,11 @@
 2022-1
 ======
 
+User-Facing Changes
+-------------------
+
+- preview requests fixed to properly 404 on requests for previews that we don't have [GL#32]
+
 Other
 -----
 
