@@ -219,15 +219,40 @@
         become: false
         local_action:
           module: shell
-          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../FitsStorageDB fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/FitsStorageDB
+          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../FitsStorageDB/ "fitsdata@{{ inventory_hostname }}".gemini.edu:/opt/FitsStorageDB
         when: is_aws
         notify: restart services
         register: checkedout_fitsstoragedb
+#      - name: Copy FitsStorageDB directory to the remote server
+#        become: true
+#        become_user: fitsdata
+#        copy:
+#          src: ../../../FitsStorageDB
+#          dest: /opt/FitsStorageDB
+#        when: is_aws
+#        notify: restart services
+#        register: checkedout_fitsstoragedb
+#      - name: Sync FitsStorageDB directory to the remote server
+#        remote_user: fitsdata
+#        synchronize:
+#          src: ../../../FitsStorageDB
+#          dest: /opt/FitsStorageDB
+#          rsync_opts:
+#            - "--exclude=.git"
+#          private_key: "~/id_rsa"
+#          use_ssh_args: yes
+#          ssh_args:
+#           - "-2"
+#           - "-l"
+#           - "fitsdata"
+#        when: is_aws
+#        notify: restart services
+#        register: checkedout_fitsstoragedb
       - name: Rsync GeminiCalMgr into /opt (AWS)
         become: false
         local_action:
           module: shell
-          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../GeminiCalMgr fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/GeminiCalMgr
+          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../GeminiCalMgr/ fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/GeminiCalMgr
         when: is_aws
         register: checkedout_geminicalmgr
       - name: Install FitsStorageDB
