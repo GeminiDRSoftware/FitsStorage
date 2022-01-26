@@ -219,7 +219,7 @@
         become: false
         local_action:
           module: shell
-          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../FitsStorageDB fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/FitsStorageDB
+          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../FitsStorageDB fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/FitsStorageDB"
         when: is_aws
         notify: restart services
         register: checkedout_fitsstoragedb
