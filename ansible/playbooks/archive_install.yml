@@ -506,12 +506,20 @@
         become: yes
         become_user: postgres
         when: fitsdata_db_created.changed
-      - name: If we have a fresh DB, set version to 24 since we are already up to date with the migrations
-        postgresql_query:
+      - name: Set migrate_version owner in PostgreSQL
+        postgresql_owner:
           db: fitsdata
-          query: update migrate_version set version=24
+          obj_name: migrate_version
+          obj_type: table
+          new_owner: fitsdata
         become: yes
         become_user: postgres
+      - name: If we have a fresh DB, set version to 25 since we are already up to date with the migrations
+        postgresql_query:
+          db: fitsdata
+          query: update migrate_version set version=25
+        become: yes
+        become_user: fitsdata
         when: fitsdata_db_created.changed
       - name: Apply Migrations (Idempotent, always apply)
         command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr python3 dbmigration/manage.py upgrade postgresql:///fitsdata dbmigration"
