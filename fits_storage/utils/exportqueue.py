@@ -117,14 +117,15 @@ class ExportQueueUtil(object):
         """
         self.l.info(f"Adding file {filename} to {destination} to exportqueue")
 
-        query = self.s.query(ExportQueue)\
-                    .filter(ExportQueue.filename == filename)\
-                    .filter(ExportQueue.path == path)\
-                    .filter(ExportQueue.destination == destination)
-        check_export = query.one_or_none()
-        if check_export is not None:
-            self.l.info(f"Already have entry to export file {filename} to {destination}, ignoring")
-            return check_export
+        # Trying without this, seems it is causing a race condition where a file is updated during an existing export
+        # query = self.s.query(ExportQueue)\
+        #             .filter(ExportQueue.filename == filename)\
+        #             .filter(ExportQueue.path == path)\
+        #             .filter(ExportQueue.destination == destination)
+        # check_export = query.one_or_none()
+        # if check_export is not None:
+        #     self.l.info(f"Already have entry to export file {filename} to {destination}, ignoring")
+        #     return check_export
 
         eq = ExportQueue(filename, path, destination)
         self.l.debug("Instantiated ExportQueue object")
