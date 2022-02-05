@@ -5,11 +5,11 @@ conditions:
 range limits:
   - DATEIMAG:     2006-7-1 .. *
 
-import: [ fac-pdu, ext, wcs ]
+import: [ fac-pdu, ext, wcs, provenance ]
 
 validation(final):
   - primary-hdu: nifs-pdu
-  - extension  : ext.image
+  - extension  : [ ext.image, provenance.provenance ]
 
 nifs-pdu:
   - merge: fac-pdu

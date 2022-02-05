@@ -2,11 +2,11 @@ conditions:
   - matching(pdu):
     - INSTRUME:   NICI
 
-import: [ fac-pdu, ext, wcs ]
+import: [ fac-pdu, ext, wcs, provenance ]
 
 validation(final):
   - primary-hdu: nici-pdu
-  - extension  : [ nici-blue, nici-red ]
+  - extension  : [ nici-blue, nici-red, provenance.provenance ]
 
 nici-pdu:
   - merge: fac-pdu
