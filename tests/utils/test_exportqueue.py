@@ -127,11 +127,6 @@ def test_export_queue_util_add_to_queue(monkeypatch):
 
     equ = ExportQueueUtil(ms, DummyLogger())
 
-    # simulate we already have the entry
-    mq.result = ExportQueue('filename', 'path', 'destination')
-    check = equ.add_to_queue('filename', 'path', 'destination')
-    assert(check == mq.result)
-
     # simulate we do not have the entry
     mq.result = None
     check = equ.add_to_queue('filename', 'path', 'destination')

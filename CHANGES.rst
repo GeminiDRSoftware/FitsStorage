@@ -14,6 +14,7 @@ exportqueue
 
 - Added distinct sortkey column to allow for smarter ordering vs relying on the filename [GL#28]
 - Fixed logging messages to use % string format, the logger does not handle an args list approach [GL#30]
+- Fixed test to not check old logic of existing entries
 
 header_fixer2
 ^^^^^^^^^^^^^
@@ -34,6 +35,16 @@ calmgr
 ^^^^^^
 
 - Migrated to safer eval call with manual handling for Section, NonLinCoeffs and datetime types [GL#31]
+
+tapestuff
+^^^^^^^^^
+
+- added extra notations to avoid warnings in latest SQLAlchemy
+
+miscfile_plus
+^^^^^^^^^^^^^
+
+- added extra notations to avoid warnings in latest SQLAlchemy
 
 
 2021-2

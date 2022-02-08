@@ -151,7 +151,7 @@ class MiscFileFolder(Base):
     description   = Column(Text)
     program_id    = Column(Text, index=True)
     file_children = relationship("MiscFilePlus")
-    folder_children = relationship("MiscFileFolder")
+    folder_children = relationship("MiscFileFolder", overlaps="folder")
 
     def path(self):
         """
@@ -228,7 +228,7 @@ class MiscFilePlus(Base):
 
     id            = Column(Integer, primary_key=True)
     folder_id     = Column(Integer, ForeignKey('miscfile_folder.id'), nullable=True, index=True)
-    folder        = relation(MiscFileFolder, order_by=id)
+    folder        = relation(MiscFileFolder, order_by=id, overlaps="file_children")
     collection_id = Column(Integer, ForeignKey('miscfile_collection.id'), nullable=True, index=True)
     collection    = relation(MiscFileCollection, order_by=id)
     release       = Column(DateTime, nullable=False)
