@@ -54,7 +54,7 @@ class TapeWrite(Base):
 
     id = Column(Integer, primary_key=True)
     tape_id = Column(Integer, ForeignKey('tape.id'), nullable=False, index=True)
-    tape = relation(Tape, order_by=id, overlaps="tapewrites")
+    tape = relation(Tape, order_by=id)
     filenum = Column(Integer, index=True)
     startdate = Column(DateTime(timezone=False))
     enddate = Column(DateTime(timezone=False))
@@ -78,7 +78,7 @@ class TapeFile(Base):
 
     id = Column(Integer, primary_key=True)
     tapewrite_id = Column(Integer,ForeignKey('tapewrite.id'),nullable=False,index=True)
-    tapewrite = relation(TapeWrite, order_by=id, overlaps="tapefiles")
+    tapewrite = relation(TapeWrite, order_by=id)
     filename = Column(Text, index=True)
     size = Column(Integer, index=True)
     md5 = Column(Text, index=True)
