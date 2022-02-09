@@ -9,6 +9,11 @@ User-Facing Changes
 Other
 -----
 
+repair_alopeke_zorro_wcs
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Refactored to handle local-to-local file fixes without S3 or DB updates [GL#34]
+
 exportqueue
 ^^^^^^^^^^^
 

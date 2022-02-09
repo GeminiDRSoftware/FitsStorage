@@ -18,9 +18,6 @@ from datetime import datetime, timedelta
 import astropy.io.fits as pf
 from bz2 import BZ2File
 
-# TODO perhaps we need a better way to override the gemini_obs_db settings than to use an import
-import fits_storage
-
 from gemini_obs_db.db import session_scope
 from gemini_obs_db.orm.diskfile import DiskFile
 from gemini_obs_db.orm.header import Header
@@ -67,7 +64,6 @@ def output_file(path):
     return open(path, 'wb')
 
 
-
 def get_files(session, instrument, prefix):
         # Get a list of all diskfile_ids marked as present
         q = session.query(DiskFile, Header) \
@@ -79,9 +75,14 @@ def get_files(session, instrument, prefix):
             yield df
 
 
+def get_files_local(source, prefix):
+    import glob
+    return glob.iglob(f"{source}/{prefix}*.fits.bz2")
+
+
 def get_file(s3, filename):
     print("fetching S3 filename: %s" % filename)
-    fullname = os.path.join('/tmp/repairin', filename)
+    fullname = os.path.join('/data/z_staging/repairin', filename)
     if not s3.fetch_to_staging(filename, fullname):
         print("Failed to fetch %s" % filename)
         return None
@@ -89,8 +90,7 @@ def get_file(s3, filename):
     return fullname
 
 
-
-def patch_file(localname):
+def patch_file(localname, dest="/data/z_staging/repairout"):
     fits = pf.open(open_image(localname), do_not_scale_image_data=True)
     pheader = fits[0].header
     fixed = False
@@ -107,7 +107,7 @@ def patch_file(localname):
             pheader['CTYPE2'] = 'RA---TAN'
             fixed = True
     if fixed:
-        bzoutfile = os.path.join("/tmp/repairout", os.path.basename(localname))
+        bzoutfile = os.path.join(dest, os.path.basename(localname))
         outfile = bzoutfile[:-4]
         print("outfile is %s" % outfile)
         #fits.writeto(output_file(bzoutfile), output_verify='silentfix+exception')
@@ -126,51 +126,91 @@ def put_file(s3, localname, filename):
 if __name__ == "__main__":
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("--instrument", action="store", type="string", default="zorro", dest="instrument", help="instrument to correct (zorro or alopeke).")
-    parser.add_option("--prefix", action="store", type="string", default="none", dest="prefix", help="filename prefix ([SN]YYYYMMDD).")
+    parser.add_option("--instrument", action="store", type="string", default="none", dest="instrument", help="instrument to correct (zorro or alopeke).")
+    parser.add_option("--prefix", action="store", type="string", default="", dest="prefix", help="filename prefix ([SN]YYYYMMDD).")
+    parser.add_option("--source", action="store", type="string", default="s3", dest="source", help="source folder for input datafiles, or s3")
+    parser.add_option("--dest", action="store", type="string", default="s3", dest="dest", help="destination for repaired datafiles, or s3")
+    parser.add_option("--staging", action="store", type="string", default="none", dest="staging", help="staging area for bz2")
 
     (options, args) = parser.parse_args()
 
     instrument = options.instrument
-    if instrument.upper() not in ('ALOPEKE', 'ZORRO'):
-        print("Specify instrument (alopeke or zorro)")
+    prefix = options.prefix
+    source = options.source
+    dest = options.dest
+    staging = options.staging
+
+    if source != dest and (source == "s3" or dest == "s3"):
+        print("Source and destination must both be s3, or neither")
         exit(1)
 
-    if not os.path.exists("/tmp/repairin"):
-        os.mkdir("/tmp/repairin")
-    if not os.path.exists("/tmp/repairout"):
-        os.mkdir("/tmp/repairout")
+    if dest != "s3" and not os.path.exists(dest):
+        print("Destination folder not found, aborting")
+        exit(2)
 
-    prefix = options.prefix
+    if source == "s3" and instrument.upper() not in ('ALOPEKE', 'ZORRO'):
+        print("Specify instrument (alopeke or zorro)")
+        exit(3)
+    elif source != "s3" and instrument != "none":
+        print("Instrument should not be specified for a local disk source")
+        exit(4)
 
-    print("Running instrument of: %s" % instrument)
+    repairin = f"{staging}/repairin"
+    repairout = f"{staging}/repairout"
+    if not os.path.exists(repairin):
+        os.mkdir(repairin)
+    if not os.path.exists(repairout):
+        os.mkdir(repairout)
+
+    if source == "s3":
+        print("Running instrument of: %s" % instrument)
     print("Saw prefix to run of: %s" % prefix)
+    print("    source to run of: %s" % source)
+    print("    dest to run of: %s" % dest)
+    print("    staging to run of: %s" % staging)
 
-    from fits_storage.utils.aws_s3 import get_helper
-    s3 = get_helper()
+    if source == "s3":
+        # For now, disabling S3 to remind the user this should be done with care/testing
+        print("While I expect this to still work, it is a big refactor.  If we need S3/DB updates, please retest "
+              "carefully on a single file before running this wholesale.")
+        exit(5)
 
-    with session_scope() as session:
-        try:
-            for df in get_files(session, instrument, prefix):
-                filename = df.filename
-                localname = get_file(s3, filename)
-                print("Stored file in %s" % localname)
-                outfile, bzoutfile = patch_file(localname)
-                if outfile is not None:
-                    print("%s (%s)\n%s (%s)\n"% (outfile, md5sum(outfile), bzoutfile, md5sum(bzoutfile)))
-                    put_file(s3, bzoutfile, filename)
-                    df.file_md5 = md5sum(bzoutfile)
-                    df.file_size = os.path.getsize(bzoutfile)
-                    df.data_md5 = md5sum(outfile)
-                    df.data_size = os.path.getsize(outfile)
-                    session.flush()
-                    os.unlink(outfile)
-                    os.unlink(bzoutfile)
-                else:
-                    print("Unable to repair %s" % filename)
-                os.unlink(localname)
-                if localname.endswith('.bz2'):
-                    os.unlink(localname[:-4])
-        finally:
-            session.commit()
+        from fits_storage.utils.aws_s3 import get_helper
+        s3 = get_helper()
 
+        with session_scope() as session:
+            try:
+                for df in get_files(session, instrument, prefix):
+                    filename = df.filename
+                    localname = get_file(s3, filename)
+                    print("Stored file in %s" % localname)
+                    outfile, bzoutfile = patch_file(localname)
+                    if outfile is not None:
+                        print("%s (%s)\n%s (%s)\n" % (outfile, md5sum(outfile), bzoutfile, md5sum(bzoutfile)))
+                        put_file(s3, bzoutfile, filename)
+                        df.file_md5 = md5sum(bzoutfile)
+                        df.file_size = os.path.getsize(bzoutfile)
+                        df.data_md5 = md5sum(outfile)
+                        df.data_size = os.path.getsize(outfile)
+                        session.flush()
+                        os.unlink(outfile)
+                        os.unlink(bzoutfile)
+                    else:
+                        print("Unable to repair %s" % filename)
+                    os.unlink(localname)
+                    if localname.endswith('.bz2'):
+                        os.unlink(localname[:-4])
+            finally:
+                session.commit()
+    else:
+        # glob filename from source directory
+        for localname in get_files_local(source, prefix):
+            print("Fixing file from %s" % localname)
+            filename = os.path.basename(localname)
+            print(filename)
+            outfile, bzoutfile = patch_file(localname, dest)
+            if outfile is not None:
+                print("%s (%s)\n%s (%s)\n" % (outfile, md5sum(outfile), bzoutfile, md5sum(bzoutfile)))
+                os.unlink(outfile)
+            else:
+                print("Unable to repair %s" % localname)
