@@ -6,13 +6,22 @@ User-Facing Changes
 
 - preview requests fixed to properly 404 on requests for previews that we don't have [GL#32]
 
-Other
------
+Scripts
+-------
+
+read_from_tape
+^^^^^^^^^^^^^^
+
+- list_tape_sizes option for tape sizes
+- split log handling for parallel tape runs
 
 repair_alopeke_zorro_wcs
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Refactored to handle local-to-local file fixes without S3 or DB updates [GL#34]
+
+Other
+-----
 
 exportqueue
 ^^^^^^^^^^^
