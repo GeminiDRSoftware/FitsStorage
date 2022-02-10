@@ -331,7 +331,8 @@ if __name__ == "__main__":
                         tapefile.data_size = backup_file.disk_file.data_size
                         tapefile.data_md5 = backup_file.disk_file.data_md5
                         session.add(tapefile)
-                        session.commit()
+                        # moved below to speed up
+                        # session.commit()
                         bytecount += int(backup_file.disk_file.file_size)
                     except:
                         logger.error("Error adding file to tar archive - Exception: %s : %s" % (sys.exc_info()[0], sys.exc_info()[1]))
@@ -341,6 +342,7 @@ if __name__ == "__main__":
                         tarok = False
                         break
 
+                session.commit()
                 logger.info("Completed writing tar archive on tape %s in drive %s" % (tape.label, td.dev))
                 logger.info("Wrote %d bytes = %.2f GB" % (bytecount , (bytecount/1.0E9)))
                 try:

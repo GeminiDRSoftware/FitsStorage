@@ -15,6 +15,11 @@ read_from_tape
 - list_tape_sizes option for tape sizes
 - split log handling for parallel tape runs
 
+write_to_tape
+^^^^^^^^^^^^^
+
+- holding commits after a bulk job is done instead of per file to speed things up
+
 repair_alopeke_zorro_wcs
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
