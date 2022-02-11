@@ -144,7 +144,7 @@ class MiscFileFolder(Base):
     id            = Column(Integer, primary_key=True)
     name          = Column(Text, index=True)
     folder_id     = Column(Integer, ForeignKey('miscfile_folder.id'), nullable=True, index=True)
-    folder        = relation('MiscFileFolder', remote_side=[id])
+    folder        = relation('MiscFileFolder', remote_side=[id], back_populates="folder_children")
     collection_id = Column(Integer, ForeignKey('miscfile_collection.id'), nullable=True, index=True)
     collection    = relation(MiscFileCollection, order_by=id)
     release       = Column(DateTime, nullable=False)
@@ -228,7 +228,7 @@ class MiscFilePlus(Base):
 
     id            = Column(Integer, primary_key=True)
     folder_id     = Column(Integer, ForeignKey('miscfile_folder.id'), nullable=True, index=True)
-    folder        = relation(MiscFileFolder, order_by=id)
+    folder        = relation(MiscFileFolder, order_by=id, back_populates="file_children")
     collection_id = Column(Integer, ForeignKey('miscfile_collection.id'), nullable=True, index=True)
     collection    = relation(MiscFileCollection, order_by=id)
     release       = Column(DateTime, nullable=False)
