@@ -61,10 +61,16 @@ def report(thing):
         resp.append('Cannot find report for: %s\n' % diskfile.filename)
     else:
         if this == 'fitsverify':
-            resp.append(diskfilereport.fvreport)
+            if diskfilereport.fvreport is None:
+                resp.append("No fitsverify report found for file\n")
+            else:
+                resp.append(diskfilereport.fvreport)
         elif this == 'mdreport':
             try:
-                resp.append(diskfilereport.mdreport)
+                if diskfilereport.mdreport is None:
+                    resp.append("No Metadata report found for file\n")
+                else:
+                    resp.append(diskfilereport.mdreport)
             except TypeError:
                 resp.append('No report was generated\n')
         elif this == 'fullheader':

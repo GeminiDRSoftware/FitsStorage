@@ -80,10 +80,10 @@ class TapeFile(Base):
     tapewrite_id = Column(Integer, ForeignKey('tapewrite.id'), nullable=False, index=True)
     tapewrite = relation(TapeWrite, order_by=id, back_populates="tapefiles")
     filename = Column(Text, index=True)
-    size = Column(Integer, index=True)
+    size = Column(BigInteger, index=True)
     md5 = Column(Text, index=True)
     compressed = Column(Boolean)
-    data_size = Column(Integer)
+    data_size = Column(BigInteger)
     data_md5 = Column(Text)
     lastmod = Column(DateTime(timezone=True), index=True)
 

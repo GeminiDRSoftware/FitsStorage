@@ -331,7 +331,7 @@ if __name__ == "__main__":
                         tapefile.data_size = backup_file.disk_file.data_size
                         tapefile.data_md5 = backup_file.disk_file.data_md5
                         session.add(tapefile)
-                        # moved below to speed up
+                        # Do the commit at the end for speed. There's one in the except clause too.
                         # session.commit()
                         bytecount += int(backup_file.disk_file.file_size)
                     except:

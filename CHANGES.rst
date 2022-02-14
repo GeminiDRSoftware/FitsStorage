@@ -6,6 +6,11 @@ User-Facing Changes
 
 - preview requests fixed to properly 404 on requests for previews that we don't have [GL#32]
 
+reporting
+^^^^^^^^^
+
+- fitsverify and metadata reports view handling null values in database
+
 Scripts
 -------
 
@@ -59,6 +64,7 @@ tapestuff
 ^^^^^^^^^
 
 - added extra notations to avoid warnings in latest SQLAlchemy
+- support for large values for disk size (BigInteger)
 
 miscfile_plus
 ^^^^^^^^^^^^^
