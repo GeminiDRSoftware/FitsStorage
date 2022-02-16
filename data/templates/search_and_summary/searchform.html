@@ -45,7 +45,7 @@
 <input type="hidden" id="things" name="things" value="{{ thing_string }}">
 <input type="hidden" id="args" name="args" value="{{ args_string }}">
 <div class="page">
-<form class="searchform" action="/searchform" method="POST">
+<form id="searchform" class="searchform" action="/searchform" method="POST">
 {% include "search_and_summary/searchform_detail.html" %}
 </form>
 {% if debugging -%}

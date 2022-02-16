@@ -687,7 +687,7 @@
 
 
 <div class="next center">
-<input type="submit" name="Search" value="Search" />
+<input type="submit" name="Search" value="Search" onclick="if (validateDateRange()) {document.getElementById('searchform').submit();}" />
 <input type="reset" value="Reset to previous search" />
 <input type="button" value="Start Over" onclick="window.location='/searchform'" />
 <input type="submit" name="ObsLogsOnly" value="Search ObsLogs Only" />

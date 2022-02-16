@@ -1,3 +1,34 @@
+function validateDateRange() {
+  //get posted resource name value
+  var inputString = document.getElementsByName("date")[0].value;
+  //should be in the word\word\word format
+  var blankre=/^$/;
+  var ymdre=/^20[0123][0-9][01][0-9][0-3][0-9]$/;
+  var ymdrangere=/^20[0123][0-9][01][0-9][0-3][0-9]-20[0123][0-9][01][0-9][0-3][0-9]$/;
+  var ymdtre=/^20[0123][0-9][01][0-9][0-3][0-9]T[012][0-9]:[0-6][0-9]:[0-6][0-9]$/;
+  var ymdtrangere=/^20[0123][0-9][01][0-9][0-3][0-9]T[012][0-9]:[0-6][0-9]:[0-6][0-9]-20[0123][0-9][01][0-9][0-3][0-9]T[012][0-9]:[0-6][0-9]:[0-6][0-9]$/;
+  var todayyesterdayre=/^(today|yesterday)$/;
+  //If the inputString is NOT a match
+  if (blankre.test(inputString)) {
+  } else if (ymdre.test(inputString)) {
+  } else if (ymdrangere.test(inputString)) {
+    els = inputString.split('-')
+    if (els[0] > els[1]) {
+      return confirm("Date range inverted, search anyway (this is supported)?")
+    }
+  } else if (ymdtre.test(inputString)) {
+  } else if (ymdtrangere.test(inputString)) {
+    els = inputString.split('-')
+    if (els[0] > els[1]) {
+      return confirm("Date range inverted, search anyway (this is supported)?")
+    }
+  } else if (todayyesterdayre.test(inputString)) {
+  } else {
+    return confirm("Date input appears incorrect, search anyway?")
+  }
+  return True;
+};
+
 function setInstVisibility() {
     var instPairs = {
     	"GMOS":     "#GMOS",
