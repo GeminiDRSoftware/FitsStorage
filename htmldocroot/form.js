@@ -24,9 +24,13 @@ function validateDateRange() {
     }
   } else if (todayyesterdayre.test(inputString)) {
   } else {
-    return confirm("Date input appears incorrect, search anyway?")
+    if (confirm("Date input appears incorrect, search anyway?")) {
+      return true;
+    } else {
+      return false;
+    }
   }
-  return True;
+  return true;
 };
 
 function setInstVisibility() {
