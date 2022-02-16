@@ -19,7 +19,7 @@ from fits_storage.web.gmoscaltwilightdetails import gmoscaltwilightdetails, gmos
 from fits_storage.web.programs import programs
 from fits_storage.web.summary import summary
 from fits_storage.web.file_list import xmlfilelist, jsonfilelist, jsonsummary, jsonqastate
-from fits_storage.web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead
+from fits_storage.web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead, jsontapefilelist
 from fits_storage.web.xml_tape import xmltape
 from fits_storage.web.progsobserved import progsobserved
 from fits_storage.web.gmoscal import gmoscal_html, gmoscal_json
@@ -279,6 +279,7 @@ url_map = Map([
     Rule('/tapewrite', tapewrite),                                  # TapeWrite handler
     Rule('/tapewrite/<label>', tapewrite),                          # TapeWrite handler
     Rule('/tapefile/<int:tapewrite_id>', tapefile),                 # TapeFile handler
+    Rule('/jsontapefile/<filepre>', jsontapefilelist),              # json tape file list handler)
     Rule('/request_account/<seq_of:things>', request_account),      # new account request
     Rule('/password_reset/<int:userid>/<token>', password_reset),   # account password reset request
     Rule('/login/<seq_of:things>', login),                          # login form

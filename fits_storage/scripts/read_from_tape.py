@@ -83,8 +83,8 @@ if __name__ == "__main__":
                 query = query.filter(TapeFile.md5 == TapeRead.md5)
                 query = query.filter(Tape.label == l)
                 sumsize = query.one()[0]
-                sumsize /= 1E9
-                logger.info("There are %.1f GB to read on tape %s" % (sumsize, l))
+                gbs = float(sumsize) / 1E9
+                logger.info("There are %.1f GB to read on tape %s" % (gbs, l))
             else:
                 logger.info("There is data to read on tape: %s" % l)
 

@@ -19,6 +19,7 @@ read_from_tape
 
 - list_tape_sizes option for tape sizes
 - split log handling for parallel tape runs
+- handle large sizes in logging tape read size
 
 write_to_tape
 ^^^^^^^^^^^^^
@@ -65,6 +66,7 @@ tapestuff
 
 - added extra notations to avoid warnings in latest SQLAlchemy
 - support for large values for disk size (BigInteger)
+- support for JSON list of files on tape
 
 miscfile_plus
 ^^^^^^^^^^^^^
