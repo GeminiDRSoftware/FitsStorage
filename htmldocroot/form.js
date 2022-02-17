@@ -9,21 +9,12 @@ function validateDateRange() {
   var ymdtrangere=/^20[0123][0-9][01][0-9][0-3][0-9]T[012][0-9]:[0-6][0-9]:[0-6][0-9]-20[0123][0-9][01][0-9][0-3][0-9]T[012][0-9]:[0-6][0-9]:[0-6][0-9]$/;
   var todayyesterdayre=/^(today|yesterday)$/;
   //If the inputString is NOT a match
-  if (blankre.test(inputString)) {
-  } else if (ymdre.test(inputString)) {
-  } else if (ymdrangere.test(inputString)) {
-    els = inputString.split('-')
-    if (els[0] > els[1]) {
-      return confirm("Date range inverted, search anyway (this is supported)?")
-    }
-  } else if (ymdtre.test(inputString)) {
-  } else if (ymdtrangere.test(inputString)) {
-    els = inputString.split('-')
-    if (els[0] > els[1]) {
-      return confirm("Date range inverted, search anyway (this is supported)?")
-    }
-  } else if (todayyesterdayre.test(inputString)) {
-  } else {
+  if (! (blankre.test(inputString) ||
+      ymdre.test(inputString) ||
+      ymdrangere.test(inputString) ||
+      ymdtre.test(inputString) ||
+      ymdtrangere.test(inputString) ||
+      todayyesterdayre.test(inputString))) {
     if (confirm("Date input appears incorrect, search anyway?")) {
       return true;
     } else {
