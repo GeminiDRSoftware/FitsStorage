@@ -73,32 +73,49 @@
           name:
             - dnf-plugins-core
           state: latest
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
 #      - name: install Repos for Sphinx
 #        shell: yum config-manager --set-enabled PowerTools
 #        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
-      - name: install CentOS8 packages
+      - name: install CentOS8/Rocky8 packages
         yum:
           name:
             - libnsl
 #            - python3-sphinx
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
       - name: install Sphinx (have to pull direct from the mirror)
         yum:
           name:
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-sphinx-1.7.6-2.el8.noarch.rpm
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-sphinx-theme-alabaster-0.7.9-7.el8.noarch.rpm
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python-sphinx-locale-1.7.6-2.el8.noarch.rpm
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-mock-2.0.0-11.el8.noarch.rpm
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-packaging-16.8-9.el8.noarch.rpm
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-imagesize-1.0.0-2.el8.noarch.rpm
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-snowballstemmer-1.2.1-6.el8.noarch.rpm
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-sphinx_rtd_theme-0.3.1-3.el8.noarch.rpm
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-sphinxcontrib-websupport-1.0.1-10.20180316git.el8.noarch.rpm
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/fontawesome-fonts-web-4.7.0-4.el8.noarch.rpm
-            - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-whoosh-2.7.4-9.el8.noarch.rpm
+            - python3-sphinx-theme-alabaster-0.7.9-7
+            - python3-sphinx-1.7.6-2
+            - python-sphinx-locale-1.7.6-2
+            - python3-mock-2.0.0-11
+            - python3-packaging-16.8-9
+            - python3-imagesize-1.0.0-2
+            - python3-snowballstemmer-1.2.1-6
+            - python3-sphinx_rtd_theme-0.3.1-3
+            - python3-sphinxcontrib-websupport-1.0.1-10.20180316git
+            - fontawesome-fonts-web-4.7.0-4
+            - python3-whoosh-2.7.4-9
           state: present
+          enablerepo: powertools
         when: build_sphinx
+#      - name: install Sphinx (have to pull direct from the mirror)
+#        yum:
+#          name:
+#            - https://dl.rockylinux.org/pub/rocky/8/PowerTools/aarch64/os/Packages/python3-sphinx-theme-alabaster-0.7.9-7.el8.noarch.rpm
+#            - https://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os/Packages/python3-sphinx-1.7.6-2.el8.noarch.rpm
+#            - https://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os/Packages/python-sphinx-locale-1.7.6-2.el8.noarch.rpm
+#            - https://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os/Packages/python3-mock-2.0.0-11.el8.noarch.rpm
+#            - https://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os/Packages/python3-packaging-16.8-9.el8.noarch.rpm
+#            - https://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os/Packages/python3-imagesize-1.0.0-2.el8.noarch.rpm
+#            - https://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os/Packages/python3-snowballstemmer-1.2.1-6.el8.noarch.rpm
+#            - https://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os/Packages/python3-sphinx_rtd_theme-0.3.1-3.el8.noarch.rpm
+#            - https://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os/Packages/python3-sphinxcontrib-websupport-1.0.1-10.20180316git.el8.noarch.rpm
+#            - https://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os/Packages/fontawesome-fonts-web-4.7.0-4.el8.noarch.rpm
+#            - https://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os/Packages/python3-whoosh-2.7.4-9.el8.noarch.rpm
+#          state: present
+#        when: build_sphinx
 # tweak this to deploy when we are about to go live
       - name: install postfix
         yum:
@@ -190,7 +207,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git"
-          version: v1.0.0
+          version: v1.0.9
           dest: /opt/FitsStorageDB
           accept_hostkey: yes
         when: not is_aws
@@ -200,7 +217,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git"
-          version: v1.1.0
+          version: v1.1.2
           dest: /opt/GeminiCalMgr
           accept_hostkey: yes
         when: not is_aws
@@ -210,7 +227,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorage.git"
-          version: master
+          version: 2022-1
           dest: /opt/FitsStorage
           accept_hostkey: yes
         when: not is_aws
@@ -219,15 +236,40 @@
         become: false
         local_action:
           module: shell
-          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../FitsStorageDB fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/FitsStorageDB/
+          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../FitsStorageDB/ "fitsdata@{{ inventory_hostname }}".gemini.edu:/opt/FitsStorageDB
         when: is_aws
         notify: restart services
         register: checkedout_fitsstoragedb
+#      - name: Copy FitsStorageDB directory to the remote server
+#        become: true
+#        become_user: fitsdata
+#        copy:
+#          src: ../../../FitsStorageDB
+#          dest: /opt/FitsStorageDB
+#        when: is_aws
+#        notify: restart services
+#        register: checkedout_fitsstoragedb
+#      - name: Sync FitsStorageDB directory to the remote server
+#        remote_user: fitsdata
+#        synchronize:
+#          src: ../../../FitsStorageDB
+#          dest: /opt/FitsStorageDB
+#          rsync_opts:
+#            - "--exclude=.git"
+#          private_key: "~/id_rsa"
+#          use_ssh_args: yes
+#          ssh_args:
+#           - "-2"
+#           - "-l"
+#           - "fitsdata"
+#        when: is_aws
+#        notify: restart services
+#        register: checkedout_fitsstoragedb
       - name: Rsync GeminiCalMgr into /opt (AWS)
         become: false
         local_action:
           module: shell
-          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../GeminiCalMgr fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/GeminiCalMgr/
+          _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../GeminiCalMgr/ fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/GeminiCalMgr
         when: is_aws
         register: checkedout_geminicalmgr
       - name: Install FitsStorageDB
@@ -237,13 +279,13 @@
           chdir: /opt/FitsStorageDB
         when: checkedout_fitsstoragedb
         notify: restart services
-      - name: Install GeminiCalMgr
-        become: true
-        command: bash -c "python3 setup.py install"
-        args:
-          chdir: /opt/GeminiCalMgr
-        when: checkedout_geminicalmgr
-        notify: restart services
+#      - name: Install GeminiCalMgr
+#        become: true
+#        command: bash -c "python3 setup.py install"
+#        args:
+#          chdir: /opt/GeminiCalMgr
+#        when: checkedout_geminicalmgr
+#        notify: restart services
       - name: Rsync FitsStorage into /opt (AWS)
         become: false
         local_action: 
@@ -266,10 +308,10 @@
           owner: apache
       - name: install psycopg2 binary (so we don't have to compile it) (CentOS 7)
         command: bash -c "python -m pip install psycopg2-binary==2.8.4"
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version < '8'
       - name: install psycopg2 binary (so we don't have to compile it) (CentOS 8)
         command: bash -c "python3 -m pip install psycopg2-binary==2.9.1"
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
 #      - name: install python packages for DB
 #        command: bash -c "cd /opt/FitsStorageDB && python3 -m pip install -r requirements.txt --upgrade"
       - name: install python packages
@@ -279,10 +321,10 @@
           name: 
             - python-pip
           state: latest
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version < '8'
       - name: install imexam for DRAGONS (Centos 8)
         command: bash -c "python3 -m pip install imexam specutils"
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
       - name: make dummy specutils folder to satisfy the library's bad logic
         file:
           path: /usr/share/httpd/.specutils
@@ -293,7 +335,7 @@
         become: true
       - name: install imexam and specutils for DRAGONS (Centos 7)
         command: bash -c "python3 -m pip install imexam specutils"
-        when: ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version < '8'
       - name: Create folders for FitsStorage to work with files
         file:
           path: '{{ item.path }}'
@@ -312,7 +354,7 @@
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
-          version: 201e1d04018af9769707aaf9d9260aea052e6345
+          version: e3076d985e41360903906b9f9efe795bacaa210b
           #version: release/3.0.x
         register: dragonscheckout
       - name: Cythonize DRAGONS
@@ -332,12 +374,12 @@
         command: gcc -L /lib64 -I /usr/include/cfitsio -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -lcfitsio -lm -lnsl-2.28
         args:
           chdir: /opt/fitsverify/
-        when: copiedfitsverify.changed and ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+        when: copiedfitsverify.changed and (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
       - name: Compile fitsverify
         command: gcc -L /lib64 -I /usr/include/cfitsio -o fitsverify ftverify.c fvrf_data.c fvrf_file.c fvrf_head.c fvrf_key.c fvrf_misc.c -DSTANDALONE -L. -lcfitsio -lm -lnsl
         args:
           chdir: /opt/fitsverify/
-        when: copiedfitsverify.changed and ansible_distribution == 'CentOS' and ansible_distribution_version < '8'
+        when: copiedfitsverify.changed and (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version < '8'
 # unset SPHINXOPTS if you want to see all the warnings from sphinx
       - name: Build Sphinx documentation (hbffits-lv4 only)
         become: true
@@ -458,21 +500,29 @@
 #          path_to_script: /opt/FitsStorage/sql/views.sql
 #        become: yes
 #        become_user: fitsdata
-#        when: ansible_distribution == 'CentOS' and ansible_distribution_version >= '8'
+#        when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
       - name: Setup Migrations
-        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
+        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr python3 dbmigration/manage.py version_control postgresql:///fitsdata dbmigration"
         become: yes
         become_user: postgres
         when: fitsdata_db_created.changed
-      - name: If we have a fresh DB, set version to 24 since we are already up to date with the migrations
+      - name: Set migrate_version owner in PostgreSQL
+        postgresql_owner:
+          db: fitsdata
+          obj_name: migrate_version
+          obj_type: table
+          new_owner: fitsdata
+        become: yes
+        become_user: postgres
+      - name: If we have a fresh DB, set version to 25 since we are already up to date with the migrations
         postgresql_query:
           db: fitsdata
-          query: update migrate_version set version=24
+          query: update migrate_version set version=25
         become: yes
-        become_user: postgres
+        become_user: fitsdata
         when: fitsdata_db_created.changed
       - name: Apply Migrations (Idempotent, always apply)
-        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage python3 dbmigration/manage.py upgrade postgresql:///fitsdata dbmigration"
+        command: bash -c "cd /opt/FitsStorage/ && env PYTHONPATH=/opt/DRAGONS:/opt/FitsStorage:/opt/FitsStorageDB:/opt/GeminiCalMgr python3 dbmigration/manage.py upgrade postgresql:///fitsdata dbmigration"
         become: yes
         become_user: fitsdata
         when: apply_migrations
@@ -525,12 +575,10 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue1.service
           dest: /etc/systemd/system/fits-service_ingest_queue1.service
-        when: enable_ingest_services
       - name: Install ingest queue 2
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue2.service
           dest: /etc/systemd/system/fits-service_ingest_queue2.service
-        when: enable_ingest_services
       - name: Install ingest queue 3
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_ingest_queue.service
@@ -573,83 +621,70 @@
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
           dest: /etc/systemd/system/fits-service_preview_queue1.service
-        when: is_archive
       - name: Setup preview 1
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue1.service
           line: Description=Fits Service Preview Queue 1
           regex: Description=
           create: no
-        when: is_archive
       - name: Setup preview 1 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue1.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq1
           regex: ExecStart=
           create: no
-        when: is_archive
       - name: Install preview queue 2
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
           dest: /etc/systemd/system/fits-service_preview_queue2.service
-        when: is_archive
       - name: Setup preview 2
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue2.service
           line: Description=Fits Service Preview Queue 2
           regex: Description=
           create: no
-        when: is_archive
       - name: Setup preview 2 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue2.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq2
           regex: ExecStart=
           create: no
-        when: is_archive
       - name: Install preview queue 3
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
           dest: /etc/systemd/system/fits-service_preview_queue3.service
-        when: is_archive
       - name: Setup preview 3
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue3.service
           line: Description=Fits Service Preview Queue 3
           regex: Description=
           create: no
-        when: is_archive
       - name: Setup preview 3 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue3.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq3
           regex: ExecStart=
           create: no
-        when: is_archive
       - name: Install preview queue 4
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_preview_queue.service
           dest: /etc/systemd/system/fits-service_preview_queue4.service
-        when: is_archive
       - name: Setup preview 4
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue4.service
           line: Description=Fits Service Preview Queue 4
           regex: Description=
           create: no
-        when: is_archive
       - name: Setup preview 4 exec
         lineinfile:
           path: /etc/systemd/system/fits-service_preview_queue4.service
           line: ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/service_preview_queue.py --demon --lockfile --name=spq4
           regex: ExecStart=
           create: no
-        when: is_archive
       - name: Install calcache queue 1
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_calcache_queue.service
           dest: /etc/systemd/system/fits-service_calcache_queue1.service
-        when: is_archive
       - name: Install export queue
         copy:
           src: ../../otherfiles/etc_systemd_system_fits-service_export_queue1.service

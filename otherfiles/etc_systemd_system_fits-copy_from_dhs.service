@@ -3,7 +3,7 @@ Description=Fits Copy From DHS
 After=syslog.target network.target postgresql.service
 
 [Service]
-Environment=PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS
+Environment=PYTHONPATH=/opt/FitsStorage:/opt/DRAGONS:/opt/FitsStorageDB:/opt/GeminiCalMgr
 User=fitsdata
 Group=geminidata
 ExecStart=/usr/bin/python3 /opt/FitsStorage/fits_storage/scripts/copy_from_dhs.py --debug --demon 

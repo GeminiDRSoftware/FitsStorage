@@ -61,7 +61,7 @@ def group_digits(value, decimals=0):
             return '{:,.{pre}f}'.format(value, pre=decimals)
         else:
             return '{:,}'.format(value)
-    except ValueError:
+    except (ValueError, TypeError):
         return ''
 
 

@@ -2,11 +2,11 @@ conditions:
   - matching(pdu):
     - INSTRUME:   GPI
 
-import:  [ fac-pdu, ext ]
+import:  [ fac-pdu, ext, provenance ]
 
 validation(final):
   - primary-hdu:   gpi-pdu
-  - extension:   [ sci-ext, gpi-ext ]
+  - extension:   [ sci-ext, gpi-ext, provenance.provenance ]
 
 gpi-pdu:
   - merge: fac-pdu

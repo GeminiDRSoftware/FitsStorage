@@ -54,7 +54,9 @@ def get_route(environ, routes):
 #   API Code
 #
 
-import pyfits as pf
+#import pyfits as pf
+from astropy.io import fits as pf
+
 from fits_storage.utils.fitseditor import compare_cards, modify_multiple_cards, all_cards_exist
 
 def fits_is_unchanged(path, new_values):

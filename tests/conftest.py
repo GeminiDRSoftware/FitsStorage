@@ -9,6 +9,7 @@ import sys
 
 # import fits_storage to drive reconfiguration of the sqlalchemy connection based on postgresql
 import fits_storage
+import gemini_obs_db
 
 from gemini_obs_db.db import sessionfactory
 from fits_storage.orm import createtables
@@ -101,7 +102,7 @@ class DatabaseCreation(object):
             conn.close()
             self.conn = None
 
-            orm.pg_db.dispose()
+            gemini_obs_db.db.pg_db.dispose()
 
             eng = sqlalchemy.create_engine('postgresql://%s/postgres' % fsc.pytest_database_server)
             conn = eng.connect()

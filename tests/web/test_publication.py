@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 import pytest
@@ -45,4 +46,5 @@ def test_list_publications(session, monkeypatch):
 
     list_publications()
     assert(mock_context.resp.status == 200)
-    assert(mock_context.resp.stuff == '\nbibcode   https://archive.gemini.edu/searchform/publication=bibcode\n')
+    assert(re.match(r'\nbibcode   https://[\w.]+(:\d+)?/searchform/publication=bibcode\n', mock_context.resp.stuff))
+

@@ -11,7 +11,7 @@ from urllib.request import pathname2url
 from urllib.parse import unquote
 
 from ..fits_storage_config import storage_root
-from .hashes import md5sum
+from gemini_obs_db.utils.hashes import md5sum
 from contextlib import contextmanager
 
 from .null_logger import EmptyLogger

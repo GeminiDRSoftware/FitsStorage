@@ -16,7 +16,7 @@ services:
       - POSTGRES_DB=fitsdata
 
   postgres-init-onsite:
-    image: fitsstorageutils:latest
+    image: fitsstorageutils:2022-1
     depends_on:
       - postgres-onsite
     environment:
@@ -24,7 +24,7 @@ services:
     command: python3 ./fits_storage/scripts/create_tables.py
 
   postgres-init-onsite-views:
-    image: fitsstorageutils:latest
+    image: fitsstorageutils:2022-1
     depends_on:
       - postgres-init-onsite
     environment:
@@ -32,7 +32,7 @@ services:
     command: psql fitsdata < ./sql/views.sql
 
   postgres-init-archive:
-    image: fitsstorageutils:latest
+    image: fitsstorageutils:2022-1
     depends_on:
       - postgres-archive
     environment:
@@ -40,7 +40,7 @@ services:
     command: python3 ./fits_storage/scripts/create_tables.py
 
   postgres-init-archive-views:
-    image: fitsstorageutils:latest
+    image: fitsstorageutils:2022-1
     depends_on:
       - postgres-init-archive
     environment:
@@ -48,7 +48,7 @@ services:
     command: psql fitsdata < ./sql/views.sql
 
   api:
-    image: fitsimage:latest
+    image: fitsimage:2022-1
     depends_on:
       - postgres-init-archive
       - postgres-archive
@@ -66,7 +66,7 @@ services:
     command: bash -c "/wait-for-postgres.sh postgres-archive python3 fits_storage/scripts/api_backend.py"
 
   archive:
-    image: fitsimage:latest
+    image: fitsimage:2022-1
     depends_on:
       - postgres-init-archive
       - postgres-archive
@@ -86,7 +86,7 @@ services:
       - "443:443"
 
   archive-ingest-service:
-    image: fitsstorageutils:latest
+    image: fitsstorageutils:2022-1
     depends_on:
       - api
     environment:
@@ -101,7 +101,7 @@ services:
     command: bash -c "/wait-for-postgres.sh postgres-archive python3 fits_storage/scripts/service_ingest_queue.py"
 
   onsite:
-    image: fitsimage:latest
+    image: fitsimage:2022-1
     depends_on:
       - postgres-init-onsite
       - postgres-onsite
@@ -121,7 +121,7 @@ services:
       - "8443:443"
 
   add-to-ingest-queue:
-    image: fitsstorageutils:latest
+    image: fitsstorageutils:2022-1
     depends_on:
       - postgres-init-onsite
       - postgres-onsite
@@ -135,7 +135,7 @@ services:
     command: bash -c "/wait-for-postgres.sh postgres-onsite python3 fits_storage/scripts/add_to_ingest_queue.py"
 
   onsite-ingest-service:
-    image: fitsstorageutils:latest
+    image: fitsstorageutils:2022-1
     depends_on:
       - postgres-init-onsite
       - postgres-onsite
@@ -151,7 +151,7 @@ services:
     command: bash -c "/wait-for-postgres.sh postgres-onsite python3 fits_storage/scripts/service_ingest_queue.py"
 
   onsite-export-service:
-    image: fitsstorageutils:latest
+    image: fitsstorageutils:2022-1
     depends_on:
       - postgres-init-onsite
       - postgres-onsite
@@ -170,7 +170,7 @@ services:
 
 
   archive-calcache-service:
-    image: fitsstorageutils:latest
+    image: fitsstorageutils:2022-1
     depends_on:
       - postgres-init-archive
       - postgres-archive
@@ -185,7 +185,7 @@ services:
 
 
   archive-preview-service:
-    image: fitsstorageutils:latest
+    image: fitsstorageutils:2022-1
     depends_on:
       - postgres-init-archive
       - postgres-archive

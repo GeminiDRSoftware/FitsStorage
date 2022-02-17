@@ -5,7 +5,8 @@ This module contains the web summary generator class.
 from collections import OrderedDict, namedtuple
 from html import escape
 
-from gemini_obs_db.utils.gemini_metadata_utils import GeminiDataLabel, degtora, degtodec
+from gemini_obs_db.utils.gemini_metadata_utils import GeminiDataLabel, degtora, degtodec, GeminiProgram, \
+    GeminiObservation
 
 from ..utils.userprogram import canhave_header, canhave_coords
 
@@ -128,6 +129,29 @@ class Row(object):
     def add(self, coltext):
         self.columns.append(coltext)
 
+
+def _deprogrammed_uri(uri):
+    if uri is None:
+        return None
+    
+    pieces = uri.split('/')
+
+    def is_prog(piece):
+        if piece == '':
+            return True
+        gp = GeminiProgram(piece)
+        if gp.valid:
+            return False
+        go = GeminiObservation(piece)
+        if go.valid:
+            return False
+        gd = GeminiDataLabel(piece)
+        if gd.valid:
+            return False
+        return True
+    return '/'.join([p for p in pieces if is_prog(p)])
+
+
 class SummaryGenerator(object):
     """
     This is the web summary generator class. You instantiate this class and
@@ -171,6 +195,7 @@ class SummaryGenerator(object):
         self.wanted = sum_type_defs[sumtype] + list(additional_columns)
         self.links = links
         self.uri = uri
+        self.deprogrammed_uri = _deprogrammed_uri(uri)
         self.my_progids = []
 
     # These are "caches" of values used to figure out whether the user
@@ -320,6 +345,7 @@ class SummaryGenerator(object):
         row = Row()
 
         row.uri = self.uri
+        row.deprogrammed_uri = self.deprogrammed_uri
         row.procmode = header.procmode
         if diskfile.provenance:
             row.has_provenance = True

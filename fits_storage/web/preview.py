@@ -87,6 +87,10 @@ def preview(filenamegiven, number=0):
                 .filter(File.name == filename) \
                 .first()
         diskfile = header.diskfile
+        if diskfile.previews is None or number >= len(diskfile.previews):
+            # asking for a preview we do not have
+            ctx.resp.status = Return.HTTP_NOT_FOUND
+            return
         preview = diskfile.previews[number]
     except TypeError: # Will happen if .first() returns None
         ctx.resp.status = Return.HTTP_NOT_FOUND

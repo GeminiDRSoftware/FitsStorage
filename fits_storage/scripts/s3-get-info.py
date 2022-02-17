@@ -28,7 +28,7 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     from fits_storage.utils.aws_s3 import get_helper
-    from fits_storage.utils.hashes import md5sum, md5sum_size_fp
+    from gemini_obs_db.utils.hashes import md5sum, md5sum_size_fp
 
     s3 = get_helper()
     logger.info("Querying files from S3 bucket: %s" % s3.bucket.name)

@@ -1,3 +1,29 @@
+function validateDateRange() {
+  //get posted resource name value
+  var inputString = document.getElementsByName("date")[0].value;
+  //should be in the word\word\word format
+  var blankre=/^$/;
+  var ymdre=/^20[0123][0-9][01][0-9][0-3][0-9]$/;
+  var ymdrangere=/^20[0123][0-9][01][0-9][0-3][0-9]-20[0123][0-9][01][0-9][0-3][0-9]$/;
+  var ymdtre=/^20[0123][0-9][01][0-9][0-3][0-9]T[012][0-9]:[0-6][0-9]:[0-6][0-9]$/;
+  var ymdtrangere=/^20[0123][0-9][01][0-9][0-3][0-9]T[012][0-9]:[0-6][0-9]:[0-6][0-9]-20[0123][0-9][01][0-9][0-3][0-9]T[012][0-9]:[0-6][0-9]:[0-6][0-9]$/;
+  var todayyesterdayre=/^(today|yesterday)$/;
+  //If the inputString is NOT a match
+  if (! (blankre.test(inputString) ||
+      ymdre.test(inputString) ||
+      ymdrangere.test(inputString) ||
+      ymdtre.test(inputString) ||
+      ymdtrangere.test(inputString) ||
+      todayyesterdayre.test(inputString))) {
+    if (confirm("Date input appears incorrect, search anyway?")) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  return true;
+};
+
 function setInstVisibility() {
     var instPairs = {
     	"GMOS":     "#GMOS",

@@ -40,7 +40,7 @@ pipeline {
                 echo 'Checking Out FitsStorage'
                 dir('FitsStorage') {
                     git url: 'git@gitlab.gemini.edu:DRSoftware/FitsStorage.git',
-                    branch: 'master',
+                    branch: '2022-1',
                     credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7'
                 }
 
@@ -149,7 +149,7 @@ pipeline {
                 dir('FitsStorage') {
                     echo "Deploying to ${deploy_target} Host"
                     ansiblePlaybook(
-                        inventory: 'ansible/${deploy_target}',
+                        inventory: 'ansible/${deploy_target}_jenkins',
                         playbook: 'ansible/playbooks/archive_install.yml',
                         disableHostKeyChecking: true,
                         credentialsId: '23171fd7-22a8-459a-bbf3-ec2e65ec56b7',

@@ -54,7 +54,7 @@ class TapeWrite(Base):
 
     id = Column(Integer, primary_key=True)
     tape_id = Column(Integer, ForeignKey('tape.id'), nullable=False, index=True)
-    tape = relation(Tape, order_by=id)
+    tape = relation(Tape, order_by=id, back_populates="tapewrites")
     filenum = Column(Integer, index=True)
     startdate = Column(DateTime(timezone=False))
     enddate = Column(DateTime(timezone=False))
@@ -77,13 +77,13 @@ class TapeFile(Base):
     __tablename__ = 'tapefile'
 
     id = Column(Integer, primary_key=True)
-    tapewrite_id = Column(Integer,ForeignKey('tapewrite.id'),nullable=False,index=True)
-    tapewrite = relation(TapeWrite, order_by=id)
+    tapewrite_id = Column(Integer, ForeignKey('tapewrite.id'), nullable=False, index=True)
+    tapewrite = relation(TapeWrite, order_by=id, back_populates="tapefiles")
     filename = Column(Text, index=True)
-    size = Column(Integer, index=True)
+    size = Column(BigInteger, index=True)
     md5 = Column(Text, index=True)
     compressed = Column(Boolean)
-    data_size = Column(Integer)
+    data_size = Column(BigInteger)
     data_md5 = Column(Text)
     lastmod = Column(DateTime(timezone=True), index=True)
 

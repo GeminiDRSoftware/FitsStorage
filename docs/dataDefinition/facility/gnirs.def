@@ -2,11 +2,11 @@ conditions:
   - matching(pdu):
     - INSTRUME:   GNIRS
 
-import:           [ fac-pdu, ext, wcs ]
+import:           [ fac-pdu, ext, wcs, provenance ]
 
 validation(final):
   - primary-hdu:   gnirs-pdu
-  - extension  :   ext.image
+  - extension  :   [ ext.image, provenance.provenance ]
 
 gnirs-pdu:
   - merge: fac-pdu

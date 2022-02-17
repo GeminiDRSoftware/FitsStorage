@@ -2,11 +2,11 @@ conditions:
   - matching(pdu):
     - INSTRUME:   NIRI
 
-import: [ fac-pdu, ext, wcs ]
+import: [ fac-pdu, ext, wcs, provenance ]
 
 validation(final):
   - primary-hdu: niri-pdu
-  - extension:   niri-ext
+  - extension:  [ niri-ext, provenance.provenance ]
 
 niri-pdu:
   - merge: fac-pdu

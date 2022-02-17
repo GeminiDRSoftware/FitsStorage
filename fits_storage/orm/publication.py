@@ -35,7 +35,7 @@ class Publication(Base):
     too = Column(String(10))
     partner = Column(String(35))
     last_refreshed = Column(DateTime, server_default=func.now(), onupdate=func.now())
-    programs = association_proxy('publication_programs', 'program')
+    # programs = association_proxy('publication_programs', 'program')
 
     def __init__(self, bibcode, author='', title='', year='', journal=''):
         """

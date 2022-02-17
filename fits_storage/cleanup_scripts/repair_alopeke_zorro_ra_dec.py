@@ -18,7 +18,7 @@ from gemini_obs_db.orm.diskfile import DiskFile
 from gemini_obs_db.orm.header import Header
 from fits_storage.orm.fulltextheader import FullTextHeader
 #from fits_storage.scripts.header_fixer2 import open_image
-from fits_storage.utils.hashes import md5sum
+from gemini_obs_db.utils.hashes import md5sum
 
 
 def get_records(session, instrument, prefix):

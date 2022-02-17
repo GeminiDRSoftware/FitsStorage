@@ -1,9 +1,11 @@
+from datetime import date, time
+
 import pytest
 
 import fits_storage
 from fits_storage.web import calmgr
 from fits_storage.utils.web import Return
-from fits_storage.web.calmgr import calmgr
+from fits_storage.web.calmgr import calmgr, _cal_eval
 from tests.web_helper import MockContext
 
 
@@ -38,6 +40,47 @@ from tests.web_helper import MockContext
 #     assert(mock_context.resp.status == 200)
 #
 #     session.rollback()
+
+
+def test_cal_eval():
+    from datetime import datetime
+    str = '{\'foo\': "foo", \'num\': 1, \'section\': Section(x1=1, x2=2, y1=3, y2=4), ' \
+          '\'coeffs\': NonLinCoeffs(1, \'bar\', 3.4, True), \'dt\': datetime.datetime(2020, 1, 1, 0, 0),' \
+          '\'bl\': True, \'nn\': None}'
+    val = _cal_eval(str)
+    assert(len(val.keys()) == 7)
+    assert(val["foo"] == "foo")
+    assert(val["num"] == 1)
+    assert(val["section"] == "[1, 2, 3, 4]")
+    assert(val["coeffs"] == '')
+    assert(val["dt"] == datetime(2020, 1, 1, 0, 0))
+    assert(val["bl"] == True)
+    assert(val["nn"] is None)
+    # now try datetime at start
+    val = _cal_eval('{\'dt\': datetime.datetime(2020, 1, 1, 0, 0), \'foo\': \'foo\'}')
+    assert(len(val.keys()) == 2)
+    assert(val['foo'] == 'foo')
+    assert(val['dt'] == datetime(2020, 1, 1, 0, 0))
+    # now try datetime at end
+    val = _cal_eval('{\'foo\': \'foo\', \'dt\': datetime.datetime(2020, 1, 1, 0, 0)}')
+    assert(len(val.keys()) == 2)
+    assert(val['foo'] == 'foo')
+    assert(val['dt'] == datetime(2020, 1, 1, 0, 0))
+    # now try datetime alone
+    val = _cal_eval('{\'dt\': datetime.datetime(2020, 1, 1, 0, 0)}')
+    assert(len(val.keys()) == 1)
+    assert(val['dt'] == datetime(2020, 1, 1, 0, 0))
+    # now try date
+    val = _cal_eval('{\'dt\': datetime.date(2020, 1, 1), \'foo\': \'foo\'}')
+    assert(len(val.keys()) == 2)
+    assert(val['foo'] == 'foo')
+    assert(val['dt'] == date(2020, 1, 1))
+    # now try time
+    val = _cal_eval('{\'dt\': datetime.time(13, 12, 11), \'foo\': \'foo\'}')
+    assert(len(val.keys()) == 2)
+    assert(val['foo'] == 'foo')
+    assert(val['dt'] == time(13, 12, 11))
+
 
 
 @pytest.mark.usefixtures("rollback")
