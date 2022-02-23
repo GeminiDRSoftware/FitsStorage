@@ -128,12 +128,12 @@ export_upload_auth_cookie = lookup_config('EXPORT_UPLOAD_AUTH_COOKIE', 'f3c6986f
 # without any other form of authentication
 # The cookie name is 'gemini_fits_authorization'
 # Leave it as None to disable this feature
-magic_download_cookie = 'good_to_go'
+magic_download_cookie = lookup_config('MAGIC_DOWNLOAD_COOKIE', None)
 
 # This is the magic cookie value needed to allow API access without
 # any other authentication.
 # Leave it as None to disable this feature
-magic_api_cookie = 'f0a49ab56f80da436b59e1d8f20067f4'
+magic_api_cookie = lookup_config('MAGIC_API_COOKIE', None)
 
 # API backend stuff
 provides_api = True
