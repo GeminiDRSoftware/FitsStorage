@@ -155,7 +155,7 @@ class DHSProblemChecker(ProblemChecker):
     def __init__(self):
         super().__init__()
         # self._date_re = re.compile(r'[A-Z]{4}_(\d{8})_\d{4}.*\.fits')
-        self._file_re = re.compile(r'[NS](\d{4})(\d{2})(\d{2}).*\.fits')
+        self._file_re = re.compile(r'[NS](\d{4})(\d{2})(\d{2}).*\.fits$')
         self._staging_dir = dhs_perm
 
     def name(self):
