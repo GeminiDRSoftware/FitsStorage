@@ -89,7 +89,7 @@ pipeline {
                                         mkdir -p /tmp/archive_test_images
                                         mkdir -p /tmp/cached_archive_test_images
                                         env PYTEST_SERVER=http://archive-jenkins coverage run --omit "/usr/lib/*,/usr/local/*,/opt/DRAGONS/*" -m pytest /opt/FitsStorage/tests
-                                        coverage report -m --fail-under=72
+                                        coverage report -m --fail-under=71
                                         '''
                                     echo "Prepping for robot tests"
                                     sh '''
