@@ -52,6 +52,16 @@
  <p>selection: {{ selection }}</p>
 {%- endif %}
 {% if selection %}
+{% if insert_prev %}
+<span id="previewbox">
+   <span id="previewboxmain">Click this box to close it. Click [P] or [#] links to switch image.<br>
+<img id="previewimage" src="/static/ajax-loading.gif" alt="">
+</span>
+</span>
+<span id="infobox"><p>Click this box to close it. <a id="infolink" target='_blank' href="">
+Click Here to open in a new tab</a></p><br>
+<span id="infopayload"></span></span>
+{%- endif %}
  <ul class="tabs">
   <li><a href="#" id="resultstab" class="current">Search Results</a></li>
   <li><a href="#" id="caltab">Load Associated Calibrations</a></li>

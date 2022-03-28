@@ -31,6 +31,11 @@ repair_alopeke_zorro_wcs
 
 - Refactored to handle local-to-local file fixes without S3 or DB updates [GL#34]
 
+problem_checker
+^^^^^^^^^^^^^^^
+
+- Only check DHS files ending in .fits, so not .fits.temp or whatever is used for in-progress
+
 Other
 -----
 
