@@ -34,6 +34,8 @@ def summary(sumtype, selection, orderby, links=True, body_only=False):
     This function just wraps that in the relevant html
     tags to make it a page in it's own right.
     """
+    if sumtype == 'associated_cals_json':
+        return json_summary(sumtype, selection, orderby, links)
     if body_only:
         return embeddable_summary(sumtype, selection, orderby, links)
     else:
@@ -52,6 +54,10 @@ def full_page_summary(sumtype, selection, orderby, links):
 
 @templating.templated("search_and_summary/summary_body.html", with_generator=True)
 def embeddable_summary(sumtype, selection, orderby, links):
+    return summary_body(sumtype, selection, orderby, links)
+
+@templating.templated("search_and_summary/summary.json", content_type="text/json", with_generator=True)
+def json_summary(sumtype, selection, orderby, links):
     return summary_body(sumtype, selection, orderby, links)
 
 def summary_body(sumtype, selection, orderby, links=True, additional_columns=()):
@@ -174,12 +180,15 @@ def summary_table(sumtype, headers, selection, links=ALL_LINKS, user=None, user_
         uri = uri.replace("searchresults", "searchform")
         uri = uri.replace("customsearch", "searchform")
 
-    sumgen = SummaryGenerator(sumtype, links, uri, user, user_progid_list, user_obsid_list, user_file_list,
-                              additional_columns)
 
     url_prefix = "/download"
     if sumtype == 'associated_cals':
         url_prefix += '/associated_calibrations'
+
+    if sumtype == 'associated_cals_json':
+        sumtype = 'associated_cals'
+    sumgen = SummaryGenerator(sumtype, links, uri, user, user_progid_list, user_obsid_list, user_file_list,
+                              additional_columns)
 
     download_all_url = '{}{}'.format(url_prefix, selection_to_URL(selection))
     json_results_url = '{}{}'.format('/jsonsummary', selection_to_URL(selection))
