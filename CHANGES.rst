@@ -4,6 +4,14 @@
 User-Facing Changes
 -------------------
 
+associated_cals_json
+^^^^^^^^^^^^^^^^^^^^
+
+- new webpage added for associated calibrations as json [GL#41]
+
+preview
+^^^^^^^
+
 - preview requests fixed to properly 404 on requests for previews that we don't have [GL#32]
 
 reporting
