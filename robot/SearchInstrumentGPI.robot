@@ -31,7 +31,7 @@ SearchGPIDisperser
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GPI
-  input text  name=date  20190810-20190811
+  input text  name=date  20190810-20190812
   Select From List By Value  id:gpi_disperser  DISP_PRISM
   click button  name=Search
   Page Should Contain  S20190811S0227.fits
@@ -41,7 +41,7 @@ SearchGPIMask
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GPI
-  input text  name=date  20190810-20190811
+  input text  name=date  20190810-20190812
   Select From List By Value  id:GPI_mask  FPM_H
   click button  name=Search
   Page Should Contain  S20190811S0862.fits
@@ -51,7 +51,7 @@ SearchGPIApodizer
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GPI
-  input text  name=date  20190810-20190811
+  input text  name=date  20190810-20190813
   Select From List By Value  id:GPI_pupil  APOD_H
   click button  name=Search
   Page Should Contain  S20190812S0005.fits

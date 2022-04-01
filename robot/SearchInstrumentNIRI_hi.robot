@@ -21,7 +21,7 @@ SearchNIRIFilter
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  NIRI
-  input text  name=date  20190630-20190701
+  input text  name=date  20190630-20190702
   Select From List By Value  id:niri_filter  J
   click button  name=Search
   Page Should Contain  N20190701S0724.fits

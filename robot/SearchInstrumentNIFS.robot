@@ -21,7 +21,7 @@ SearchNIFSDisperser
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  NIFS
-  input text  name=date  20140504-20140505
+  input text  name=date  20140504-20140506
   Select From List By Value  id:nifs_disperser  K
   click button  name=Search
   Page Should Contain  N20140505S0111.fits

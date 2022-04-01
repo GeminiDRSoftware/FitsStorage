@@ -31,7 +31,7 @@ SearchF2Disperser
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  F2
-  input text  name=date  20150504-20150505
+  input text  name=date  20150504-20150506
   Select From List By Value  id:F2_disperser  JH
   click button  name=Search
   Page Should Contain  S20150505S0292.fits
