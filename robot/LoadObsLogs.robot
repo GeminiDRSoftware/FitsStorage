@@ -11,7 +11,7 @@ LoadObsLogs
   [Documentation]  Load Associated Observation Logs
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
-  input text  name=PIname  Hirst
+  # input text  name=PIname  Hirst
   input text  name=date  20130710-20130712
   click button  name=Search
   Sleep  20s  Waiting for tab to load
