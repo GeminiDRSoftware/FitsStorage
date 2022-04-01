@@ -15,7 +15,7 @@ LoadObsLogs
   input text  name=date  20130710-20130712
   click button  name=Search
   Sleep  20s  Waiting for tab to load
-  Page Should Contain  N20130711S0203.fits
+  # Page Should Contain  N20130711S0203.fits
   Click Link  id=obslogstab
   Sleep  1s  Waiting for tab to load
   Page Should Contain  20130711_GN-2013B-Q-60_obslog.txt
