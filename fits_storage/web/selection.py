@@ -458,9 +458,11 @@ def queryselection(query, selection):
             elif selection['disperser'] == '111lXD':
                 query = query.filter(or_(Header.disperser == '111_mm&SXD', Header.disperser == '111_mm&LXD'))
             else:
-                query = query.filter(Header.disperser == selection['disperser'])
+                like_arg = selection['disperser'] + '_%'
+                query = query.filter(or_(Header.disperser == selection['disperser'], Header.disperser.like(like_arg)))
         else:
-            query = query.filter(Header.disperser == selection['disperser'])
+            like_arg = selection['disperser'] + '_%'
+            query = query.filter(or_(Header.disperser == selection['disperser'], Header.disperser.like(like_arg)))
 
     if 'camera' in selection:
         # Hack for GNIRS camera names - find both the Red and Blue options for each case
