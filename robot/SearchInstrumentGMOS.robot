@@ -25,6 +25,7 @@ SearchGMOSAllExposureTime
   input text  name=date  20130711-20130713
   input text  id=GMOSexpT  4
   click button  name=Search
+  Sleep  1s  Waiting for search - is this needed?
   Page Should Contain  S20130712S0200.fits
 
 SearchGMOSAllBinning
@@ -63,7 +64,7 @@ SearchGMOSAllMask
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GMOS
   input text  name=date  20130711-20130713
-  Select From List By Value  id:gmos_mask  1.0arcsec
+  Select From List By Value  id:gmos_mask  1.0 arcsec
   click button  name=Search
   Page Should Contain  S20130712S0100.fits
 
@@ -105,7 +106,7 @@ SearchGMOSAllROI
   input text  name=date  20130711-20130713
   Select From List By Value  id:gmos_roi  Central Spectrum
   click button  name=Search
-  Page Should Contain  GS20130712S0238_BIAS.fits
+  Page Should Contain  S20130712S0118.fits
 
 SearchGMOSN
   [Documentation]  Search GMOS North
@@ -114,7 +115,7 @@ SearchGMOSN
   Select From List By Value  id:instselect  GMOS-N
   input text  name=date  20130711-20130713
   click button  name=Search
-  Page Should Contain  N20130712S0134.fits
+  Page Should Contain  N20130711S0203.fits
 
 SearchGMOSS
   [Documentation]  Search GMOS South
@@ -123,5 +124,5 @@ SearchGMOSS
   Select From List By Value  id:instselect  GMOS-S
   input text  name=date  20130711-20130713
   click button  name=Search
-  Page Should Contain  S20130712S0094.fits
+  Page Should Contain  S20130712S0078.fits
 
