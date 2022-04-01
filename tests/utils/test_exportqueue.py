@@ -11,6 +11,10 @@ from datetime import datetime, timedelta
 
 import fits_storage
 import gemini_obs_db
+
+gemini_obs_db.db_config.database_url = "sqlite:///"
+
+from fits_storage.orm.createtables import create_tables
 from gemini_obs_db.db import sessionfactory
 from gemini_obs_db.orm.diskfile import DiskFile
 from fits_storage.orm.exportqueue import ExportQueue
@@ -20,7 +24,6 @@ from fits_storage.utils.null_logger import EmptyLogger
 from fits_storage.utils import queue
 
 from tests.log_helper import DummyLogger
-
 
 def test_export_queue_util_pop(monkeypatch):
     def mock_pop_queue(queue_class, session, logger, fast_rebuild=False):
@@ -390,3 +393,13 @@ def test_get_destination_data_md5(monkeypatch):
     mock_url = MockUrl(raises=lambda: IncompleteRead(partial=''))
     md5 = get_destination_data_md5('filename', DummyLogger(), 'destination')
     assert(md5 == "ERROR")
+
+
+def test_export_queue_util_add_during_export(monkeypatch):
+    session = sessionfactory()
+    create_tables(session)
+    session.commit()
+    equ = ExportQueueUtil(session, DummyLogger())
+    equ.add_to_queue("foo.fits", "", "http://localhost")
+    # should be able to add a duplicate
+    equ.add_to_queue("foo.fits", "", "http://localhost")
