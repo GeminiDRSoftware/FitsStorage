@@ -6,14 +6,25 @@ MissingCalibration.robot
 PagesAndTabs.robot
 SearchInstrumentbHROS.robot
 SearchInstrumentCIRPASS.robot
+SearchInstrumentF2.robot
 SearchInstrumentFLAMINGOS.robot
+SearchInstrumentGMOS.robot
+SearchInstrumentGNIRS.robot
+SearchInstrumentGPI.robot
 SearchInstrumentGRACES.robot
+SearchInstrumentGSAOI.robot
 SearchInstrumentHokupaaQUIRC.robot
 SearchInstrumentHRWFS.robot
 SearchInstrumentMichelle.robot
 SearchInstrumentNICI.robot
+SearchInstrumentNIFS.robot
+SearchInstrumentNIRI.robot
+SearchInstrumentNIRI_hi.robot
 SearchInstrumentOSCIR.robot
 SearchInstrumentPHOENIX.robot
 SearchInstrumentTEXES.robot
 SearchInstrumentTReCS.robot
+SearchOther.robot
+SearchPI.robot
+ViewCalibrations.robot
 
