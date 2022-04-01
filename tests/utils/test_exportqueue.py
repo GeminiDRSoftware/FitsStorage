@@ -12,8 +12,6 @@ from datetime import datetime, timedelta
 import fits_storage
 import gemini_obs_db
 
-gemini_obs_db.db_config.database_url = "sqlite:///"
-
 from fits_storage.orm.createtables import create_tables
 from gemini_obs_db.db import sessionfactory
 from gemini_obs_db.orm.diskfile import DiskFile
@@ -396,6 +394,8 @@ def test_get_destination_data_md5(monkeypatch):
 
 
 def test_export_queue_util_add_during_export(monkeypatch):
+    monkeypatch.setattr(gemini_obs_db.db_config, "database_url", "sqlite:///")
+
     session = sessionfactory()
     create_tables(session)
     session.commit()
