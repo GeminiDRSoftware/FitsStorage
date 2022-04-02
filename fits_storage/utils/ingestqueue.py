@@ -274,7 +274,7 @@ class IngestQueueUtil(object):
                 self.l.debug("Adding new Header entry")
                 # This will use the diskfile ad_object if it exists, else
                 # it will use the DiskFile unzipped cache file if it exists
-                header = Header(diskfile)
+                header = Header(diskfile, self.l)
                 self.s.add(header)
 
                 ingest_provenance(diskfile)
