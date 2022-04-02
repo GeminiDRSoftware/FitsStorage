@@ -263,7 +263,7 @@ queryselection_pair_source = (
                            or_(Header.proprietary_coordinates == False,
                                Header.release <= func.now()))),
     (('cenwlen', '0.7-0.8'), and_(Header.central_wavelength > 0.7, Header.central_wavelength < 0.8)),
-    (('disperser', '10lXD'), Header.disperser),
+    (('disperser', '10lXD'), or_(Header.disperser == '10lXD', Header.disperser.like('10lXD_%'))),
     )
 
 def generate_queryselection_pairs():
