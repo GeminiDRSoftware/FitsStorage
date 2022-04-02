@@ -12,7 +12,7 @@ ViewCalibrations
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   input text  name=PIname  Hirst
-  input text  name=date  20130710-20130713
+  input text  name=date  20130709-20130713
   click button  name=Search
   Page Should Contain  N20130711S0203.fits
   Click Link  id=caltab

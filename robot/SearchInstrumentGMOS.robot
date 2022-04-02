@@ -19,6 +19,13 @@ SearchGMOSAll
 
 SearchGMOSAllExposureTime
   [Documentation]  Search GMOS All with Exp Time
+  # try baseline search first to narrow down the problem
+  Open Browser  ${URL}/searchform  ${BROWSER}
+  Page Should Contain  PI/CoI Name
+  Select From List By Value  id:instselect  GMOS
+  input text  name=date  20130711-20130713
+  click button  name=Search
+  Page Should Contain  S20130712S0200.fits
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GMOS
@@ -60,11 +67,18 @@ SearchGMOSAllFilter
 
 SearchGMOSAllMask
   [Documentation]  Search GMOS All with Mask
+  # try baseline search first to narrow down the problem
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   Select From List By Value  id:instselect  GMOS
   input text  name=date  20130711-20130713
-  Select From List By Value  id:gmos_mask  1.0 arcsec
+  click button  name=Search
+  Page Should Contain  S20130712S0100.fits
+  Open Browser  ${URL}/searchform  ${BROWSER}
+  Page Should Contain  PI/CoI Name
+  Select From List By Value  id:instselect  GMOS
+  input text  name=date  20130711-20130713
+  Select From List By Value  id:gmos_mask  1.0arcsec
   click button  name=Search
   Page Should Contain  S20130712S0100.fits
 

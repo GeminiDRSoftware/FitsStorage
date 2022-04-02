@@ -12,7 +12,7 @@ SearchPICoIName
   Open Browser  ${URL}/searchform  ${BROWSER}
   Page Should Contain  PI/CoI Name
   input text  name=PIname  Hirst
-  input text  name=date  20130711
+  input text  name=date  20130710-20130712
   click button  name=Search
   Page Should Contain  N20130711S0203.fits
 
