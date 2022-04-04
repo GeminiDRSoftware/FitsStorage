@@ -68,7 +68,6 @@ for file in \
   S20190811S0862.fits \
   S20190812S0005.fits \
   TX20170321_raw.2504.fits \
-  abu01aug16_001.fits \
   r01dec10_008.fits \
   rS20120605S0120.fits
   do
