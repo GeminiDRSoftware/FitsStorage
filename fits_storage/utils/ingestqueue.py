@@ -142,7 +142,9 @@ class IngestQueueUtil(object):
                     # Set the present and canonical flags on the current one to false and create a new entry
                     diskfile.present = False
                     diskfile.canonical = False
-                    self.s.commit()
+                    # Not comitting yet, this will happen later when we add the diskfile.
+                    # So at no point are we missing the 'present' DiskFile record.
+                    self.s.flush()
                     return True
 
             # Has the file changed since we last ingested it?
