@@ -25,6 +25,5 @@ SearchInstrumentPHOENIX.robot
 SearchInstrumentTEXES.robot
 SearchInstrumentTReCS.robot
 SearchOther.robot
-SearchPI.robot
 ViewCalibrations.robot
 
