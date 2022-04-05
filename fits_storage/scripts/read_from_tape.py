@@ -25,8 +25,6 @@ if __name__ == "__main__":
     parser.add_option("--tapedrive", action="store", type="string", default="/dev/nst0", dest="tapedrive", help="tapedrive to use.")
     parser.add_option("--file-re", action="store", type="string", dest="filere", help="Regular expression used to select files to extract")
     parser.add_option("--list-tapes", action="store_true", dest="list_tapes", help="lists the tapes in TapeRead")
-    parser.add_option("--list-tapes-only", action="store_true", dest="list_tapes_only", help="only lists the tapes in TapeRead, then exit")
-    parser.add_option("--list-tapes-sizes", action="store_true", dest="list_tapes_sizes", help="Calculate the amount of data to be read from each tape")
     parser.add_option("--maxtars", action="store", type="int", dest="maxtars", help="Read a maximum of maxfiles tar archives")
     parser.add_option("--maxgbs", action="store", type="int", dest="maxgbs", help="Stop at the end of the tarfile after we read maxgbs GBs")
     parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually do anything")
@@ -53,7 +51,7 @@ if __name__ == "__main__":
     # non identical version of the file on tapes too.
     session = sessionfactory()
  
-    if options.list_tapes or options.list_tapes_only or options.list_tapes_sizes:
+    if options.list_tapes:
         # Generate a list of the tapes that would be useful to satisfy this read
         query = session.query(Tape).select_from(Tape, TapeWrite, TapeFile, TapeRead)
         query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
@@ -75,20 +73,19 @@ if __name__ == "__main__":
         labels.sort()
         logger.info("The following tapes contain requested files: %s" % labels)
         for l in labels:
-            if options.list_tapes_sizes:
-                query = session.query(func.sum(TapeFile.size)).select_from(Tape, TapeWrite, TapeFile, TapeRead)
-                query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
-                query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
-                query = query.filter(TapeFile.filename == TapeRead.filename)
-                query = query.filter(TapeFile.md5 == TapeRead.md5)
-                query = query.filter(Tape.label == l)
-                sumsize = query.one()[0]
-                gbs = float(sumsize) / 1E9
-                logger.info("There are %.1f GB to read on tape %s" % (gbs, l))
-            else:
-                logger.info("There is data to read on tape: %s" % l)
+            query = session.query(func.sum(TapeFile.size)).select_from(Tape, TapeWrite, TapeFile, TapeRead)
+            query = query.filter(Tape.id == TapeWrite.tape_id).filter(TapeWrite.id == TapeFile.tapewrite_id)
+            query = query.filter(Tape.active == True).filter(TapeWrite.suceeded == True)
+            query = query.filter(TapeFile.filename == TapeRead.filename)
+            query = query.filter(TapeFile.md5 == TapeRead.md5)
+            query = query.filter(Tape.label == l)
+            sumsize = query.one()[0]
+            gbs = float(sumsize) / 1E9
+            logger.info("There are %.1f GB to read on tape %s" % (gbs, l))
+          se:
+            logger.info("There is data to read on tape: %s" % l)
 
-        if options.list_tapes_only:
+        if options.list_tapes:
             sys.exit(0)
 
     try:
