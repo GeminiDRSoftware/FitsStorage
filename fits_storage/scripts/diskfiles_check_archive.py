@@ -10,9 +10,9 @@ import logging
 from gemini_obs_db.db import sessionfactory
 from fits_storage import fits_storage_config
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.orm.tapestuff import TapeRead
+from gemini_obs_db.orm.diskfile import DiskFile
 
-# This script loops through entries in the taperead table, and checks them against the archive
+# This script loops through entries in the diskfile table, and checks them against the archive
 # It reports (and by default downloads from the archive) files whose data_md5 in the archive
 # is different from the one in the taperead table
 
@@ -26,22 +26,16 @@ def get_archive_md5(filename):
     global cache_misses
 
     if filename.endswith('.bz2'):
-        compressed = True
         name = filename[:-4]
     else:
-        compressed = False
         name = filename
 
     # Get the data_md5 from the archive for canonical file filename
 
     # If it's in the cache, delete and return it
-    # 0 element is data_md5, 1 is file_md5
     if name in archive_cache:
         cache_hits += 1
-        if compressed:
-            return archive_cache.pop(name)[1]
-        else:
-            return archive_cache.pop(name)[0]
+        return archive_cache.pop(name)
 
 
     # Cache miss
@@ -70,13 +64,10 @@ def get_archive_md5(filename):
         fn = f['filename']
         if fn.endswith('.bz2'):
             fn = fn[:-4]
-        archive_cache[fn]= [f['data_md5'], f['file_md5']]
+        archive_cache[fn]= f['data_md5']
 
     if name in archive_cache:
-        if compressed:
-            return archive_cache.pop(name)[1]
-        else:
-            return archive_cache.pop(name)[0]
+        return archive_cache.pop(name)
 
     return None
    
@@ -111,7 +102,7 @@ if __name__ == "__main__":
     from optparse import OptionParser
     parser = OptionParser()
     parser.add_option("--dryrun", action="store_true", dest="dryrun", help="Dry Run - do not actually download anything")
-    parser.add_option("--requester", action="store", dest="requester", help="Check files for a given requester")
+    parser.add_option("--filepre", action="store", dest="filepre", help="File prefix to check")
     parser.add_option("--debug", action="store_true", dest="debug", help="Increase log level to debug")
     parser.add_option("--demon", action="store_true", dest="demon", help="Run as a background demon, do not generate stdout")
 
@@ -124,30 +115,31 @@ if __name__ == "__main__":
     setdemon(options.demon)
 
     # Annouce startup
-    logger.info("*********    taperead_check_archive.py - starting up at %s" % datetime.datetime.now())
+    logger.info("*********    diskfile_check_archive.py - starting up at %s" % datetime.datetime.now())
 
     # Query the DB to get a list of files to check
     session = sessionfactory()
  
-    query = session.query(TapeRead)
-    if options.requester:
-        query = query.filter(TapeRead.requester == options.requester)
+    query = session.query(DiskFile)
+    query = query.filter(DiskFile.present==True)
+    if options.filepre:
+        query = query.filter(DiskFile.filename.startswith(options.filepre))
 
-    query = query.order_by(TapeRead.filename)
+    query = query.order_by(DiskFile.filename)
 
-    tapereads = query.all()
+    diskfiles = query.all()
 
-    logger.info("Got %d files to check", len(tapereads))
+    logger.info("Got %d files to check", len(diskfiles))
 
     to_download = []
     problem_files = []
     i=0
-    for tr in tapereads:
-      logger.debug("Checked %d / %d : %d to download : %d problems; cache size: %d hits: %d misses: %d" % (i, len(tapereads), len(to_download), len(problem_files), len(archive_cache), cache_hits, cache_misses))
+    for df in diskfiles:
+      logger.debug("Checked %d / %d : %d to download : %d problems; cache size: %d hits: %d misses: %d" % (i, len(diskfiles), len(to_download), len(problem_files), len(archive_cache), cache_hits, cache_misses))
       i += 1
       if i % 1000 == 0:
-          logger.info("Checked %d / %d : %d to download : %d problems; cache size: %d hits: %d misses: %d" % (i, len(tapereads), len(to_download), len(problem_files), len(archive_cache), cache_hits, cache_misses))
-      fn = tr.filename
+          logger.info("Checked %d / %d : %d to download : %d problems; cache size: %d hits: %d misses: %d" % (i, len(diskfiles), len(to_download), len(problem_files), len(archive_cache), cache_hits, cache_misses))
+      fn = df.filename
       if fn.endswith('.bz2'):
           fn = fn[:-4]
 
@@ -158,17 +150,20 @@ if __name__ == "__main__":
           problem_files.append(fn)
           continue
 
-      if archive_md5 == tr.md5:
-          logger.debug("File %s matches- taperead md5 %s - archive md5 %s" % (fn, archive_md5, tr.md5))
+      if archive_md5 == df.data_md5:
+          logger.debug("File %s matches- taperead md5 %s - archive md5 %s" % (fn, archive_md5, df.data_md5))
       else:
-          logger.info("File %s differs - taperead md5 %s - archive md5 %s" % (fn, archive_md5, tr.md5))
+          logger.info("File %s differs - taperead md5 %s - archive md5 %s" % (fn, archive_md5, df.data_md5))
           to_download.append(fn)
 
     if options.dryrun:
         logger.info("Dry run - not downloading %d files" % len(to_download))
     else:
-        logger.info("Downloading %d files" % len(to_download))
-        download(to_download) 
+        if len(to_download) == 0:
+            logger.info("Nothing to Download")
+        else:
+            logger.info("Downloading %d files" % len(to_download))
+            download(to_download) 
 
     if len(problem_files):
         logger.info("%d problem files being written to problem_files.txt" % len(problem_files))
@@ -180,4 +175,4 @@ if __name__ == "__main__":
         logger.info("There were no problem files")
 
     session.close()
-    logger.info("taperead archive check complete. Exiting")
+    logger.info("diskfile archive check complete. Exiting")
