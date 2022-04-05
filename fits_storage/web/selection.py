@@ -844,7 +844,7 @@ def selection_to_URL(selection, with_columns=False):
             # We need to double-escape this because the webserver/wsgi code (outside our control) will
             # de-escape it for us and we'll be left with, for instance, /s that we can't differentiate
             # from those in the path.
-            urlstring += '/object=%s' % urllib.parse.quote(selection[key])
+            urlstring += '/object=%s' % urllib.parse.quote(selection[key]).replace('/', '%252F')
         elif key == 'publication':
             urlstring += '/publication=%s' % urllib.parse.quote(selection[key])
         elif key == 'spectroscopy':
