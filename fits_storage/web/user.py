@@ -672,6 +672,13 @@ def admin_file_permissions():
 
     # If we got an action, do it
     if usernames and item:
+        if not item.endswith('.fits'):
+            try:
+                obscheck = GeminiObservation(item)
+                if not obscheck.valid:
+                    warnings.append(f'Observation ID {item} has invalid format, adding anyway')
+            except Exception as e:
+                warnings.append(f'Observation ID {item} has invalid format, adding anyway')
         for username in usernames.split(','):
             username = username.strip()
             try:
@@ -687,9 +694,6 @@ def admin_file_permissions():
                     up = ctx.session.query(UserProgram).filter(UserProgram.observation_id == item) \
                         .filter(UserProgram.user_id == user.id).first()
                     if up is None:
-                        obscheck = GeminiObservation(item)
-                        if not obscheck.valid:
-                            warnings.append(f'Observation ID {item} has invalid format, adding anyway')
                         up = UserProgram(user_id=user.id, observation_id=item)
                         ctx.session.add(up)
                         ctx.session.flush()
