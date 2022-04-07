@@ -7,10 +7,11 @@ import urllib
 import requests
 from urllib.parse import urlencode
 
-from sqlalchemy import desc
+from sqlalchemy import desc, and_, or_
 
 from sqlalchemy.orm.exc import NoResultFound
 from ..orm.user import User
+from ..orm.userprogram import UserProgram
 
 from ..utils.web import get_context, Return
 
@@ -619,6 +620,107 @@ def admin_change_password():
 
     # Have applied changes, now generate list of staff users
     template_args['user_list'] = ctx.session.query(User).order_by(User.gemini_staff, User.username)
+
+    ctx.session.commit()
+
+    return template_args
+
+
+@templating.templated("user/admin_file_permissions.html")
+def admin_file_permissions():
+    """
+    Allows supersusers to set emails on user accounts
+    """
+
+    ctx = get_context()
+
+    # Process the form data first if there is any
+    formdata = ctx.get_form_data()
+    usernames = ''
+    item = ''
+    action = ''
+    filter = ''
+    delete = None
+    obs_page = 1
+    file_page = 1
+    per_page = 20
+
+    # Parse the form data
+    if formdata:
+        if 'username' in list(formdata.keys()):
+            usernames = formdata['username'].value
+        if 'item' in list(formdata.keys()):
+            item = formdata['item'].value
+        if 'filter' in list(formdata.keys()):
+            filter = formdata['filter'].value
+        if 'delete' in list(formdata.keys()):
+            delete = int(formdata['delete'].value)
+
+    # Permission requires either superuser or user_admin
+    thisuser = ctx.user
+    if thisuser is None or (thisuser.superuser is not True and thisuser.user_admin is not True):
+        return dict(allowed=False)
+
+    template_args = dict(allowed=True)
+
+    if delete:
+        up = ctx.session.query(UserProgram).filter(UserProgram.id == delete).delete()
+
+    # If we got an action, do it
+    if usernames and item:
+        for username in usernames.split(','):
+            username = username.strip()
+            try:
+                user = ctx.session.query(User).filter(User.username == username).one()
+                if item.endswith('.fits'):
+                    up = ctx.session.query(UserProgram).filter(UserProgram.filename == item) \
+                        .filter(UserProgram.user_id == user.id).first()
+                    if up is None:
+                        up = UserProgram(user_id=user.id, filename=item)
+                        ctx.session.add(up)
+                        ctx.session.flush()
+                else:
+                    up = ctx.session.query(UserProgram).filter(UserProgram.observation_id == item) \
+                        .filter(UserProgram.user_id == user.id).first()
+                    if up is None:
+                        up = UserProgram(user_id=user.id, observation_id=item)
+                        ctx.session.add(up)
+                        ctx.session.flush()
+            except NoResultFound:
+                template_args['no_user'] = True
+
+    observation_list = list()
+    q = ctx.session.query(UserProgram, User).filter(and_(UserProgram.observation_id != None,
+                                                         UserProgram.observation_id != ''),
+                                                    User.id == UserProgram.user_id)
+    if filter:
+        q = q.filter(or_(UserProgram.observation_id == filter,
+                         User.username == filter))
+    for up, usr in q.order_by(UserProgram.observation_id, User.username):
+        obs_perm = dict()
+        obs_perm['id'] = up.id
+        obs_perm['username'] = usr.username
+        obs_perm['observation_id'] = up.observation_id
+        observation_list.append(obs_perm)
+
+    file_list = list()
+    q = ctx.session.query(UserProgram, User).filter(and_(UserProgram.filename != None,
+                                                         UserProgram.filename != ''),
+                                                    User.id == UserProgram.user_id)
+    if filter:
+        q = q.filter(or_(UserProgram.filename == filter,
+                         User.username == filter))
+    for up, usr in q.order_by(UserProgram.filename, User.username):
+        obs_perm = dict()
+        obs_perm['id'] = up.id
+        obs_perm['username'] = usr.username
+        obs_perm['filename'] = up.filename
+        file_list.append(obs_perm)
+
+    # Have applied changes, now generate list of staff users
+    template_args['observation_list'] = observation_list
+    template_args['file_list'] = file_list
+    template_args['filter'] = filter
 
     ctx.session.commit()
 

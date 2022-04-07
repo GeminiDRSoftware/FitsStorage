@@ -1,0 +1,121 @@
+{% extends "bootstrap_layout.html" %}
+
+{% block title %}Gemini Archive Staff Password Change {% endblock %}
+
+{% block bootstrap_body %}
+<div class="container">
+<div class="row">
+    <h1>Gemini Archive Staff Password Change</h1>
+</div>
+    {% if allowed %}
+     {% if password_changed %}
+       <p>Password updated for username: {{ action_user.username }} - {{ action_user.fullname }} - {{ action_user.email }}</p>
+     {% elif no_result %}
+       <p>Could not locate user in database</p>
+     {% endif %}
+        <div class="row">
+            <div class="col-12">
+                <h2>Add Permission</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <form action="/admin_file_permissions" method="POST">
+                    <div class="form-group">
+                        <label for="username">Username(s) (comma separate):</label>
+                        <input class="form-control" type="text" name="username" id="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="item">Data (Obs ID or Filename):</label>
+                        <input class="form-control" type="text" name="item" id="item">
+                    </div>
+                    <button type="submit" class="btn btn-primary" value="Submit">Submit</button>
+                </form>
+                <br/>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <h2>Filter</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <form action="/admin_file_permissions" method="POST">
+                    <div class="form-group">
+                        <label for="filter">Filter (Username, Obs ID or Filename):</label>
+                        <input class="form-control" type="text" name="filter" id="filter" value="{{ filter }}" />
+                    </div>
+                    <button type="submit" class="btn btn-primary" value="Submit">Filter</button>
+                </form>
+                <br/>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <h2>Observation Permissions</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <table class="table table-striped table-hover" id="observationtable">
+                 <thead>
+                 <tr><th>Username</th><th>Observation ID</th><th>Action</th><tr>
+                 </thead>
+                 <tbody>
+                   {% for observation in observation_list %}
+                     <tr><td>{{ observation.username }}</td><td>{{ observation.observation_id }}</td>
+                         <td>
+                             <form action="/admin_file_permissions" method="POST">
+                                 <input type="hidden" name="delete" id="delete" value="{{ observation.id }}">
+                                 <button type="submit" class="btn btn-warning" value="Submit">Delete</button>
+                             </form>
+                         </td></tr>
+                   {% endfor %}
+                 </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <h2>File Permissions</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <table class="table table-striped table-hover" id="filetable">
+                 <thead>
+                 <tr><th>Username</th><th>Filename</th><th>Action</th><tr>
+                 </thead>
+                 <tbody>
+                   {% for file in file_list %}
+                     <tr><td>{{ file.username }}</td><td>{{ file.filename }}</td>
+                         <td>
+                             <form action="/admin_file_permissions" method="POST">
+                                 <input type="hidden" name="delete" id="delete_file" value="{{ file.id }}">
+                                 <button type="submit" class="btn btn-warning" value="Submit">Delete</button>
+                             </form>
+                         </td></tr>
+                   {% endfor %}
+                 </tbody>
+                </table>
+            </div>
+        </div>
+</div>
+{% else %}
+ <p>You don't appear to be logged in as a superuser. Sorry.</p>
+{% endif %}
+{% endblock %}
+
+{% block bootstrap_end_body %}
+<script>
+$(function() {
+    $("#username").on("keyup", function() {
+        var value = $(this).val();
+        $("#usertable > tbody > tr").filter(function() {
+            $(this).toggle($(this).text().indexOf(value) > -1)
+        });
+    });
+});
+</script>
+{% endblock %}
