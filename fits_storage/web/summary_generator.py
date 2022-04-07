@@ -621,7 +621,8 @@ class SummaryGenerator(object):
         """
         # Determine if this user has access to this file
         if canhave_header(None, self.user, header, user_progid_list=self.user_progid_list,
-                          user_obsid_list=self.user_obsid_list):
+                          user_obsid_list=self.user_obsid_list, user_file_list=self.user_file_list,
+                          path=diskfile.path, filename=diskfile.filename):
             ret = dict(name=file.name)
             # Preview link
             if using_previews and preview is not None:
