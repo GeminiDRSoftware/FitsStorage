@@ -10,6 +10,8 @@ from urllib.parse import urlencode
 from sqlalchemy import desc, and_, or_
 
 from sqlalchemy.orm.exc import NoResultFound
+
+from gemini_obs_db.utils.gemini_metadata_utils import GeminiObservation
 from ..orm.user import User
 from ..orm.userprogram import UserProgram
 
@@ -644,6 +646,7 @@ def admin_file_permissions():
     obs_page = 1
     file_page = 1
     per_page = 20
+    warnings = list()
 
     # Parse the form data
     if formdata:
@@ -658,7 +661,8 @@ def admin_file_permissions():
 
     # Permission requires either superuser or user_admin
     thisuser = ctx.user
-    if thisuser is None or (thisuser.superuser is not True and thisuser.user_admin is not True):
+    if thisuser is None or (thisuser.superuser is not True and thisuser.user_admin is not True
+                            and thisuser.file_permission_admin is not True):
         return dict(allowed=False)
 
     template_args = dict(allowed=True)
@@ -683,11 +687,14 @@ def admin_file_permissions():
                     up = ctx.session.query(UserProgram).filter(UserProgram.observation_id == item) \
                         .filter(UserProgram.user_id == user.id).first()
                     if up is None:
+                        obscheck = GeminiObservation(item)
+                        if not obscheck.valid:
+                            warnings.append(f'Observation ID {item} has invalid format, adding anyway')
                         up = UserProgram(user_id=user.id, observation_id=item)
                         ctx.session.add(up)
                         ctx.session.flush()
             except NoResultFound:
-                template_args['no_user'] = True
+                warnings.append(f'Username: {username} not found in system')
 
     observation_list = list()
     q = ctx.session.query(UserProgram, User).filter(and_(UserProgram.observation_id != None,
@@ -702,6 +709,15 @@ def admin_file_permissions():
         obs_perm['username'] = usr.username
         obs_perm['observation_id'] = up.observation_id
         observation_list.append(obs_perm)
+
+    user_list = list()
+    q = ctx.session.query(User).order_by(User.username)
+    for u in q.all():
+        usr = dict()
+        usr['username'] = u.username
+        usr['fullname'] = u.fullname
+        usr['email'] = u.email
+        user_list.append(usr)
 
     file_list = list()
     q = ctx.session.query(UserProgram, User).filter(and_(UserProgram.filename != None,
@@ -719,8 +735,10 @@ def admin_file_permissions():
 
     # Have applied changes, now generate list of staff users
     template_args['observation_list'] = observation_list
+    template_args['user_list'] = user_list
     template_args['file_list'] = file_list
     template_args['filter'] = filter
+    template_args['warnings'] = warnings
 
     ctx.session.commit()
 
@@ -848,6 +866,7 @@ def whoami(things):
         template_args['fullname'] = user.fullname
         template_args['is_superuser'] = user.superuser
         template_args['user_admin'] = user.user_admin
+        template_args['file_permission_admin'] = user.file_permission_admin
     except AttributeError:
         # no user
         pass
