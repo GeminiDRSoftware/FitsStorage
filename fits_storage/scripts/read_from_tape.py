@@ -82,7 +82,7 @@ if __name__ == "__main__":
             sumsize = query.one()[0]
             gbs = float(sumsize) / 1E9
             logger.info("There are %.1f GB to read on tape %s" % (gbs, l))
-          se:
+        else:
             logger.info("There is data to read on tape: %s" % l)
 
         if options.list_tapes:
