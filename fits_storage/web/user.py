@@ -671,14 +671,16 @@ def admin_file_permissions():
         up = ctx.session.query(UserProgram).filter(UserProgram.id == delete).delete()
 
     # If we got an action, do it
-    if usernames and item:
+    if item:
         if not item.endswith('.fits'):
             try:
                 obscheck = GeminiObservation(item)
                 if not obscheck.valid:
-                    warnings.append(f'Observation ID {item} has invalid format, adding anyway')
+                    warnings.append(f'Observation ID <b>{item}</b> has invalid format, adding anyway')
             except Exception as e:
-                warnings.append(f'Observation ID {item} has invalid format, adding anyway')
+                warnings.append(f'Observation ID <b>{item}</b> has invalid format, adding anyway')
+
+    if usernames and item:
         for username in usernames.split(','):
             username = username.strip()
             try:
@@ -698,7 +700,7 @@ def admin_file_permissions():
                         ctx.session.add(up)
                         ctx.session.flush()
             except NoResultFound:
-                warnings.append(f'Username: {username} not found in system')
+                warnings.append(f'Username <b>{username}</b> not found in system, ignoring')
 
     observation_list = list()
     q = ctx.session.query(UserProgram, User).filter(and_(UserProgram.observation_id != None,
