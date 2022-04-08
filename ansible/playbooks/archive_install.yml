@@ -240,31 +240,6 @@
         when: is_aws
         notify: restart services
         register: checkedout_fitsstoragedb
-#      - name: Copy FitsStorageDB directory to the remote server
-#        become: true
-#        become_user: fitsdata
-#        copy:
-#          src: ../../../FitsStorageDB
-#          dest: /opt/FitsStorageDB
-#        when: is_aws
-#        notify: restart services
-#        register: checkedout_fitsstoragedb
-#      - name: Sync FitsStorageDB directory to the remote server
-#        remote_user: fitsdata
-#        synchronize:
-#          src: ../../../FitsStorageDB
-#          dest: /opt/FitsStorageDB
-#          rsync_opts:
-#            - "--exclude=.git"
-#          private_key: "~/id_rsa"
-#          use_ssh_args: yes
-#          ssh_args:
-#           - "-2"
-#           - "-l"
-#           - "fitsdata"
-#        when: is_aws
-#        notify: restart services
-#        register: checkedout_fitsstoragedb
       - name: Rsync GeminiCalMgr into /opt (AWS)
         become: false
         local_action:
@@ -272,13 +247,13 @@
           _raw_params: rsync -r --exclude .git -e "ssh -l fitsdata -2 -i ~/id_rsa" ../../../GeminiCalMgr/ fitsdata@"{{ inventory_hostname }}".gemini.edu:/opt/GeminiCalMgr
         when: is_aws
         register: checkedout_geminicalmgr
-      - name: Install FitsStorageDB
-        become: true
-        command: bash -c "python3 setup.py install"
-        args:
-          chdir: /opt/FitsStorageDB
-        when: checkedout_fitsstoragedb
-        notify: restart services
+#      - name: Install FitsStorageDB
+#        become: true
+#        command: bash -c "python3 setup.py install"
+#        args:
+#          chdir: /opt/FitsStorageDB
+#        when: checkedout_fitsstoragedb.changed
+#        notify: restart services
 #      - name: Install GeminiCalMgr
 #        become: true
 #        command: bash -c "python3 setup.py install"
@@ -312,8 +287,8 @@
       - name: install psycopg2 binary (so we don't have to compile it) (CentOS 8)
         command: bash -c "python3 -m pip install psycopg2-binary==2.9.1"
         when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky') and ansible_distribution_version >= '8'
-#      - name: install python packages for DB
-#        command: bash -c "cd /opt/FitsStorageDB && python3 -m pip install -r requirements.txt --upgrade"
+      - name: install python packages for DB
+        command: bash -c "cd /opt/FitsStorageDB && python3 -m pip install -r requirements.txt --upgrade"
       - name: install python packages
         command: bash -c "cd /opt/FitsStorage && python3 -m pip install -r requirements.txt --upgrade"
       - name: install pip for python2 if on CentOS 7
@@ -354,7 +329,8 @@
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
-          version: e3076d985e41360903906b9f9efe795bacaa210b
+          version: 0474bfe83d7ca7ad5b554630d19d247e97a469df
+#          version: e3076d985e41360903906b9f9efe795bacaa210b
           #version: release/3.0.x
         register: dragonscheckout
       - name: Cythonize DRAGONS
