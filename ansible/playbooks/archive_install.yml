@@ -541,13 +541,13 @@
           state=present
         become: yes
         become_user: postgres
-      - name: WORKAROUND Grant PostgreSQL table access to apache
+      - name: Grant PostgreSQL table access to apache
         postgresql_query:
           db: fitsdata
           query: GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO apache   
         become: yes
         become_user: postgres
-      - name: WORKAROUND Grant PostgreSQL sequence access to apache
+      - name: Grant PostgreSQL sequence access to apache
         postgresql_query:
           db: fitsdata
           query: GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO apache
