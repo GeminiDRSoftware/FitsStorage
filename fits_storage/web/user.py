@@ -709,7 +709,7 @@ def admin_file_permissions():
     if filter:
         q = q.filter(or_(UserProgram.observation_id == filter,
                          User.username == filter))
-    for up, usr in q.order_by(UserProgram.observation_id, User.username):
+    for up, usr in q.order_by(UserProgram.observation_id.desc(), User.username):
         obs_perm = dict()
         obs_perm['id'] = up.id
         obs_perm['username'] = usr.username
@@ -732,7 +732,7 @@ def admin_file_permissions():
     if filter:
         q = q.filter(or_(UserProgram.filename == filter,
                          User.username == filter))
-    for up, usr in q.order_by(UserProgram.filename, User.username):
+    for up, usr in q.order_by(UserProgram.filename.desc(), User.username):
         obs_perm = dict()
         obs_perm['id'] = up.id
         obs_perm['username'] = usr.username
