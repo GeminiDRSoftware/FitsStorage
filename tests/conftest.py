@@ -2,7 +2,7 @@ import pytest
 import datetime as dt
 import os
 
-from future.backports.datetime import datetime
+# from future.backports.datetime import datetime
 from subprocess import call
 from bz2 import BZ2File
 import sys

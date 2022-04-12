@@ -22,6 +22,11 @@ reporting
 Scripts
 -------
 
+copy_from_visiting_instrument
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Added date regex option for only adding files with a certain date prefix
+
 read_from_tape
 ^^^^^^^^^^^^^^
 
