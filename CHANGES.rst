@@ -22,6 +22,11 @@ reporting
 Scripts
 -------
 
+copy_from_visiting_instrument
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Added date regex option for only adding files with a certain date prefix
+
 read_from_tape
 ^^^^^^^^^^^^^^
 
@@ -46,6 +51,11 @@ problem_checker
 
 Other
 -----
+
+admin_file_permissions
+^^^^^^^^^^^^^^^^^^^^^^
+
+- Admin web form for adding/removing per-file and per-obsid permissions to specific users
 
 exportqueue
 ^^^^^^^^^^^

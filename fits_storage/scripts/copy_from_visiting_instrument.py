@@ -312,7 +312,7 @@ class AlopekeZorroABC(VisitingInstrumentABC):
         if not os.path.exists(os.path.join(self.storage_root, self._instrument)):
             os.mkdir(os.path.join(self.storage_root, self._instrument))
 
-    def get_files(self):
+    def get_files(self, date_pre=None):
         """
         Get the files to copy.
 
@@ -320,6 +320,9 @@ class AlopekeZorroABC(VisitingInstrumentABC):
         -------
             list of str : paths relative to the staging area for the files to copy
         """
+        rex = None
+        if date_pre:
+            rex = re.compile(date_pre)
         for f in os.listdir(self.base_path):
             fullpath = os.path.join(self.base_path, f)
             if os.path.isdir(fullpath) and re.search(r'^\d{8}$', f):
@@ -328,7 +331,7 @@ class AlopekeZorroABC(VisitingInstrumentABC):
                     for rex in self._filename_res:
                         if rex.search(datafile):
                             matched = True
-                    if matched:
+                    if matched and (rex is None or rex.search(datafile)):
                         yield os.path.join(f, datafile)
 
     def get_dest_path(self, filename):
@@ -385,7 +388,7 @@ class IGRINS(VisitingInstrumentABC):
         if not os.path.exists(os.path.join(self.storage_root, 'igrins')):
             os.mkdir(os.path.join(self.storage_root, 'igrins'))
 
-    def get_files(self):
+    def get_files(self, date_pre=None):
         """
         Get the files within the staging area to ingest.
 
@@ -393,6 +396,9 @@ class IGRINS(VisitingInstrumentABC):
         -------
         list of str : list of files in the top level to be copied
         """
+        rex = None
+        if date_pre:
+            rex = re.compile(date_pre)
         for f in os.listdir(self.base_path):
             fullpath = os.path.join(self.base_path, f)
             if os.path.isdir(fullpath) and re.search(r'^\d{4}\w$', f):
@@ -400,7 +406,7 @@ class IGRINS(VisitingInstrumentABC):
                     fulldatepath = os.path.join(fullpath, datedir)
                     if os.path.isdir(fulldatepath) and re.search(r'^\d{8}$', datedir):
                         for datafile in os.listdir(fulldatepath):
-                            if self.filename_re.search(datafile):
+                            if self.filename_re.search(datafile) and (rex is None or rex.search(datafile)):
                                 yield os.path.join(fulldatepath, datafile)
 
     def get_dest_path(self, filename):
@@ -435,6 +441,8 @@ if __name__ == "__main__":
                       help="Copy Old Zorro data (from /sci/dataflow/zorro-old)")
     parser.add_option("--igrins", action="store_true", dest="igrins", default=False, help="Copy IGRINS data")
     parser.add_option("--emailto", action="store", dest="emailto", default=None, help="Where to send error emails")
+    parser.add_option("--date-pre", action="store", dest="datepre", default=None,
+                      help="Date prefix to filter for (to narrow scope of the copy)")
 
     (options, args) = parser.parse_args()
 
@@ -444,6 +452,12 @@ if __name__ == "__main__":
 
     if options.emailto:
         _mailto = options.emailto
+
+    date_pre = None
+    if options.datepre:
+        date_pre = options.datepre
+    if date_pre and len(date_pre < 8):
+        date_pre = f'{date_pre}\\d{{{8-len(date_pre)}}}'
 
     # Annouce startup
     logger.info("*********  copy_from_visiting_instrument.py - starting up at %s" % datetime.datetime.now())
@@ -501,7 +515,7 @@ if __name__ == "__main__":
             while not done:
                 for ingester in ingesters:
                     # Get initial Alopeke directory listing
-                    dir_list = set(ingester.get_files())
+                    dir_list = set(ingester.get_files(date_pre))
                     logger.info("... found %d files", len(dir_list))
 
                     logger.debug("Instantiating IngestQueueUtil object")

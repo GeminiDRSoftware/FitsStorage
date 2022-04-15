@@ -89,6 +89,9 @@ def is_users_program(session, user, user_progid_list, program_id, filedownloadlo
 
 
 def is_user_file_permission(session, user, user_file_list, path, filename, filedownloadlog):
+    # normalize filename by removing .bz2 if present
+    if filename and filename.endswith('.bz2'):
+        filename = filename[:-4]
     if path is None:
         path = ""
     if user_file_list is None:
@@ -113,7 +116,7 @@ def is_user_obsid(session, user, user_obsid_list, obsid, filedownloadlog):
 
 
 def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False, user_progid_list=None,
-                   user_obsid_list=None, user_file_list=None):
+                   user_obsid_list=None, user_file_list=None, path=None, filename=None):
     """
     Returns a boolean saying whether or not the given user can have
     access to the given header.
@@ -147,6 +150,8 @@ def canhave_header(session, user, header, filedownloadlog=None, gotmagic=False, 
     if is_users_program(session, user, user_progid_list, header.program_id, filedownloadlog):
         return True
     if is_user_obsid(session, user, user_obsid_list, header.observation_id, filedownloadlog):
+        return True
+    if is_user_file_permission(session, user, user_file_list, path, filename, filedownloadlog):
         return True
     return False
 

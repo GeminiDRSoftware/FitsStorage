@@ -47,6 +47,7 @@ def test_target_found():
 
 def igrins_init(remove_sri=False):
     pathlib.Path('/tmp/test/cfvii/igrins/2020A/20200101').mkdir(parents=True, exist_ok=True)
+    pathlib.Path('/tmp/test/cfvii/igrins/2020A/20210101').mkdir(parents=True, exist_ok=True)
     pathlib.Path('/tmp/test/cfvii/storage_root').mkdir(parents=True, exist_ok=True)
 
     igrins = IGRINS(base_path='/tmp/test/cfvii/igrins', storage_root='/tmp/test/cfvii/storage_root')
@@ -65,8 +66,15 @@ def test_prep():
     assert(os.path.exists('/tmp/test/cfvii/storage_root/igrins'))
 
 
+def _maybe_del(pth):
+    if os.path.exists(pth):
+        os.unlink(pth)
+
+
 def test_get_files():
     igrins = igrins_init()
+    _maybe_del('/tmp/test/cfvii/igrins/2020A/20200101/SDCS_20210101_0001.fits')
+    _maybe_del('/tmp/test/cfvii/igrins/2020A/20210101/SDCS_20210202_0001.fits')
     f = open('/tmp/test/cfvii/igrins/2020A/20200101/SDCS_20200101_0001.fits', "w+")
     f.close()
     lst = list()
@@ -74,6 +82,21 @@ def test_get_files():
     assert(lst)
     assert(len(lst) == 1)
     assert(lst[0] == '/tmp/test/cfvii/igrins/2020A/20200101/SDCS_20200101_0001.fits')
+
+
+def test_get_files_date_pre():
+    igrins = igrins_init()
+    f = open('/tmp/test/cfvii/igrins/2020A/20200101/SDCS_20210101_0001.fits', "w+")
+    f.close()
+    f = open('/tmp/test/cfvii/igrins/2020A/20210101/SDCS_20210202_0001.fits', "w+")
+    f.close()
+    lst = list()
+    lst.extend(igrins.get_files('202101\\d{2}'))
+    _maybe_del('/tmp/test/cfvii/igrins/2020A/20200101/SDCS_20210101_0001.fits')
+    _maybe_del('/tmp/test/cfvii/igrins/2020A/20210101/SDCS_20210202_0001.fits')
+    assert(lst)
+    assert(len(lst) == 1)
+    assert(lst[0] == '/tmp/test/cfvii/igrins/2020A/20200101/SDCS_20210101_0001.fits')
 
 
 def test_get_dest_path():
