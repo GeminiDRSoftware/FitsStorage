@@ -1,5 +1,8 @@
-FROM fitsstorageutils:2022-1
+FROM fitsservices:latest
 LABEL maintainer="oliver.oberdorf@noirlab.edu"
+
+# Note, we extend from fitsstorageservices just so we can have the static folder to serve css/etc from
+# for the FITS Services.
 
 # INSTALL HTTPD AND POSTGRESQL
 RUN yum -y install --nogpgcheck httpd \
@@ -30,6 +33,11 @@ COPY FitsStorage/otherfiles/etc-sysconfig-httpd /etc/sysconfig/httpd
 
 # write a program to do the patch? could also do this by just copying in a fixed config file that we maintain, probably better
 COPY FitsStorage/otherfiles/httpd-patched-centos8.conf /opt/modwsgi-default/httpd.conf
+
+RUN   sed -i "s|#ProxyPass /services/rest http://127.0.0.1:8090/services/rest|ProxyPass /services/rest http://fitsservices:8090/services/rest |g" /opt/modwsgi-default/httpd.conf
+RUN   sed -i "s|#ProxyPassReverse /services/rest http://127.0.0.1:8090/services/rest|ProxyPassReverse /services/rest http://fitsservices:8090/services/rest |g" /opt/modwsgi-default/httpd.conf
+RUN   sed -i "s|#ProxyPass /services/calibrations http://127.0.0.1:8090/services/calibrations|ProxyPass /services/calibrations http://fitsservices:8090/services/calibrations |g" /opt/modwsgi-default/httpd.conf
+RUN   sed -i "s|#ProxyPassReverse /services/calibrations http://127.0.0.1:8090/services/calibrations|ProxyPassReverse /services/calibrations http://fitsservices:8090/services/calibrations |g" /opt/modwsgi-default/httpd.conf
 
 EXPOSE 80
 EXPOSE 443
