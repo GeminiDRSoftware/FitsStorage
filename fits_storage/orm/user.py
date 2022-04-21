@@ -31,6 +31,7 @@ class User(Base):
     gemini_staff = Column(Boolean)
     misc_upload = Column(Boolean)
     user_admin = Column(Boolean)
+    file_permission_admin = Column(Boolean)
     superuser = Column(Boolean)
     reset_token = Column(Text)
     reset_token_expires = Column(DateTime)

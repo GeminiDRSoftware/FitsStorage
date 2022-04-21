@@ -19,7 +19,7 @@ from fits_storage.web.gmoscaltwilightdetails import gmoscaltwilightdetails, gmos
 from fits_storage.web.programs import programs
 from fits_storage.web.summary import summary
 from fits_storage.web.file_list import xmlfilelist, jsonfilelist, jsonsummary, jsonqastate
-from fits_storage.web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead
+from fits_storage.web.tapestuff import fileontape, tape, tapewrite, tapefile, taperead, jsontapefilelist
 from fits_storage.web.xml_tape import xmltape
 from fits_storage.web.progsobserved import progsobserved
 from fits_storage.web.gmoscal import gmoscal_html, gmoscal_json
@@ -35,7 +35,7 @@ from fits_storage.web.fileserver import fileserver, download, download_post
 from fits_storage.web.qastuff import qareport, qametrics, qaforgui
 from fits_storage.web.statistics import content, stats
 from fits_storage.web.user import request_account, password_reset, request_password_reset, login, logout, whoami, \
-    change_password, change_email, admin_change_email, orcid, admin_change_password
+    change_password, change_email, admin_change_email, orcid, admin_change_password, admin_file_permissions
 from fits_storage.web.user import staff_access, user_list
 from fits_storage.web.userprogram import my_programs
 from fits_storage.web.searchform import searchform, nameresolver
@@ -262,7 +262,9 @@ url_map = Map([
     Rule('/curation', curation_report),                             # curation_report handler
     Rule('/staff_access', staff_access),                            # staff_access
     Rule('/admin_change_email', admin_change_email),                # admin page for changing a user's email
-    Rule('/admin_change_password', admin_change_password),             # admin page for changing a user's password
+    Rule('/admin_change_password', admin_change_password),          # admin page for changing a user's password
+    Rule('/admin_file_permissions', admin_file_permissions),        # admin page for changing custom per-file/obsid
+                                                                    #   permissions
 
     Rule('/nameresolver/<resolver>/<target>', nameresolver),        # Name resolver proxy
     Rule('/fileontape/<filename>', fileontape),                     # The fileontape handler
@@ -279,6 +281,7 @@ url_map = Map([
     Rule('/tapewrite', tapewrite),                                  # TapeWrite handler
     Rule('/tapewrite/<label>', tapewrite),                          # TapeWrite handler
     Rule('/tapefile/<int:tapewrite_id>', tapefile),                 # TapeFile handler
+    Rule('/jsontapefile/<filepre>', jsontapefilelist),              # json tape file list handler)
     Rule('/request_account/<seq_of:things>', request_account),      # new account request
     Rule('/password_reset/<int:userid>/<token>', password_reset),   # account password reset request
     Rule('/login/<seq_of:things>', login),                          # login form
@@ -393,6 +396,9 @@ url_map = Map([
     Rule('/searchresults/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'searchresults'),
          collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
     Rule('/associated_cals/<selection(SEL,NOLNK,BONLY):selection,links,body_only>', partial(summary, 'associated_cals'),
+         collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
+    Rule('/associated_cals_json/<selection(SEL,NOLNK,BONLY):selection,links,body_only>',
+         partial(summary, 'associated_cals_json'),
          collect_qs_args=dict(orderby='orderby'), defaults=dict(orderby=None)),
 
     # ORCID login handling/account setup

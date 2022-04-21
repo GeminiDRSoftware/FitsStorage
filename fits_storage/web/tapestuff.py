@@ -11,6 +11,8 @@ from sqlalchemy import join, desc, func, or_
 
 import datetime
 
+from .file_list import _for_json
+
 def bzornot(thing):
     """
     Given a filename thing, which may or may not end in .bz2, return a list of
@@ -23,6 +25,26 @@ def bzornot(thing):
         retval.append(thing+".bz2")
 
     return retval
+
+
+def jsontapefilelist(filepre):
+    """
+    This generates a JSON list of tapefiles where the filename starts with filepre
+    """
+    tfs = get_context().session.query(TapeFile).select_from(join(TapeFile, join(TapeWrite, Tape))).filter(Tape.active == True).filter(TapeWrite.suceeded == True).filter(TapeFile.filename.startswith(filepre)).all()
+
+    thelist = []
+    for tf in tfs:
+        thelist.append({'filename': _for_json(tf.filename),
+                        'size': _for_json(tf.size),
+                        'md5': _for_json(tf.size),
+                        'tape_id': _for_json(tf.tapewrite.tape.id),
+                        'tape_set': _for_json(tf.tapewrite.tape.set),
+                        'data_size': _for_json(tf.data_size),
+                        'data_md5': _for_json(tf.data_md5)
+                        })
+
+    get_context().resp.send_json(thelist)
 
 
 @templating.templated("tapestuff/fileontape.xml", content_type='text/xml', with_generator=True)

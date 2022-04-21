@@ -7,10 +7,13 @@ import urllib
 import requests
 from urllib.parse import urlencode
 
-from sqlalchemy import desc
+from sqlalchemy import desc, and_, or_
 
 from sqlalchemy.orm.exc import NoResultFound
+
+from gemini_obs_db.utils.gemini_metadata_utils import GeminiObservation
 from ..orm.user import User
+from ..orm.userprogram import UserProgram
 
 from ..utils.web import get_context, Return
 
@@ -625,6 +628,129 @@ def admin_change_password():
     return template_args
 
 
+@templating.templated("user/admin_file_permissions.html")
+def admin_file_permissions():
+    """
+    Allows supersusers to set emails on user accounts
+    """
+
+    ctx = get_context()
+
+    # Process the form data first if there is any
+    formdata = ctx.get_form_data()
+    usernames = ''
+    item = ''
+    action = ''
+    filter = ''
+    delete = None
+    obs_page = 1
+    file_page = 1
+    per_page = 20
+    warnings = list()
+
+    # Parse the form data
+    if formdata:
+        if 'username' in list(formdata.keys()):
+            usernames = formdata['username'].value
+        if 'item' in list(formdata.keys()):
+            item = formdata['item'].value
+        if 'filter' in list(formdata.keys()):
+            filter = formdata['filter'].value
+        if 'delete' in list(formdata.keys()):
+            delete = int(formdata['delete'].value)
+
+    # Permission requires either superuser or user_admin
+    thisuser = ctx.user
+    if thisuser is None or (thisuser.superuser is not True and thisuser.user_admin is not True
+                            and thisuser.file_permission_admin is not True):
+        return dict(allowed=False)
+
+    template_args = dict(allowed=True)
+
+    if delete:
+        up = ctx.session.query(UserProgram).filter(UserProgram.id == delete).delete()
+
+    # If we got an action, do it
+    if item:
+        if not item.endswith('.fits'):
+            try:
+                obscheck = GeminiObservation(item)
+                if not obscheck.valid:
+                    warnings.append(f'Observation ID <b>{item}</b> has invalid format, adding anyway')
+            except Exception as e:
+                warnings.append(f'Observation ID <b>{item}</b> has invalid format, adding anyway')
+
+    if usernames and item:
+        for username in usernames.split(','):
+            username = username.strip()
+            try:
+                user = ctx.session.query(User).filter(User.username == username).one()
+                if item.endswith('.fits'):
+                    up = ctx.session.query(UserProgram).filter(UserProgram.filename == item) \
+                        .filter(UserProgram.user_id == user.id).first()
+                    if up is None:
+                        up = UserProgram(user_id=user.id, filename=item)
+                        ctx.session.add(up)
+                        ctx.session.flush()
+                else:
+                    up = ctx.session.query(UserProgram).filter(UserProgram.observation_id == item) \
+                        .filter(UserProgram.user_id == user.id).first()
+                    if up is None:
+                        up = UserProgram(user_id=user.id, observation_id=item)
+                        ctx.session.add(up)
+                        ctx.session.flush()
+            except NoResultFound:
+                warnings.append(f'Username <b>{username}</b> not found in system, ignoring')
+
+    observation_list = list()
+    q = ctx.session.query(UserProgram, User).filter(and_(UserProgram.observation_id != None,
+                                                         UserProgram.observation_id != ''),
+                                                    User.id == UserProgram.user_id)
+    if filter:
+        q = q.filter(or_(UserProgram.observation_id == filter,
+                         User.username == filter))
+    for up, usr in q.order_by(UserProgram.observation_id.desc(), User.username):
+        obs_perm = dict()
+        obs_perm['id'] = up.id
+        obs_perm['username'] = usr.username
+        obs_perm['observation_id'] = up.observation_id
+        observation_list.append(obs_perm)
+
+    user_list = list()
+    q = ctx.session.query(User).order_by(User.username)
+    for u in q.all():
+        usr = dict()
+        usr['username'] = u.username
+        usr['fullname'] = u.fullname
+        usr['email'] = u.email
+        user_list.append(usr)
+
+    file_list = list()
+    q = ctx.session.query(UserProgram, User).filter(and_(UserProgram.filename != None,
+                                                         UserProgram.filename != ''),
+                                                    User.id == UserProgram.user_id)
+    if filter:
+        q = q.filter(or_(UserProgram.filename == filter,
+                         User.username == filter))
+    for up, usr in q.order_by(UserProgram.filename.desc(), User.username):
+        obs_perm = dict()
+        obs_perm['id'] = up.id
+        obs_perm['username'] = usr.username
+        obs_perm['filename'] = up.filename
+        file_list.append(obs_perm)
+
+    # Have applied changes, now generate list of staff users
+    template_args['observation_list'] = observation_list
+    template_args['user_list'] = user_list
+    template_args['file_list'] = file_list
+    template_args['filter'] = filter
+    template_args['warnings'] = warnings
+
+    ctx.session.commit()
+
+    return template_args
+
+
 @templating.templated("user/login.html")
 def login(things):
     """
@@ -746,6 +872,7 @@ def whoami(things):
         template_args['fullname'] = user.fullname
         template_args['is_superuser'] = user.superuser
         template_args['user_admin'] = user.user_admin
+        template_args['file_permission_admin'] = user.file_permission_admin
     except AttributeError:
         # no user
         pass

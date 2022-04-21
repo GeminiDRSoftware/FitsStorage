@@ -2,11 +2,11 @@ conditions:
   - matching(pdu):
     - INSTRUME:   bHROS
 
-import:           [ fac-pdu, ext, wcs ]
+import:           [ fac-pdu, ext, wcs, provenance ]
 
 validation(final):
   - primary-hdu: bhros-pdu
-  - extension  : bhros-ext
+  - extension  : [ bhros-ext, provenance.provenance ]
 
 bhros-pdu:
   - merge: fac-pdu

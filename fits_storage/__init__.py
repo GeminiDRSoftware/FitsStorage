@@ -1,4 +1,4 @@
-__version__ = '1.0.0.dev'
+__version__ = '2022-1.8'
 
 
 from fits_storage import fits_storage_config

@@ -458,9 +458,11 @@ def queryselection(query, selection):
             elif selection['disperser'] == '111lXD':
                 query = query.filter(or_(Header.disperser == '111_mm&SXD', Header.disperser == '111_mm&LXD'))
             else:
-                query = query.filter(Header.disperser == selection['disperser'])
+                like_arg = selection['disperser'] + '_%'
+                query = query.filter(or_(Header.disperser == selection['disperser'], Header.disperser.like(like_arg)))
         else:
-            query = query.filter(Header.disperser == selection['disperser'])
+            like_arg = selection['disperser'] + '_%'
+            query = query.filter(or_(Header.disperser == selection['disperser'], Header.disperser.like(like_arg)))
 
     if 'camera' in selection:
         # Hack for GNIRS camera names - find both the Red and Blue options for each case
@@ -842,7 +844,7 @@ def selection_to_URL(selection, with_columns=False):
             # We need to double-escape this because the webserver/wsgi code (outside our control) will
             # de-escape it for us and we'll be left with, for instance, /s that we can't differentiate
             # from those in the path.
-            urlstring += '/object=%s' % urllib.parse.quote(selection[key])
+            urlstring += '/object=%s' % urllib.parse.quote(selection[key]).replace('/', '%252F')
         elif key == 'publication':
             urlstring += '/publication=%s' % urllib.parse.quote(selection[key])
         elif key == 'spectroscopy':

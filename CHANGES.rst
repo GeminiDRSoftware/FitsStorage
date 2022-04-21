@@ -4,16 +4,65 @@
 User-Facing Changes
 -------------------
 
+associated_cals_json
+^^^^^^^^^^^^^^^^^^^^
+
+- new webpage added for associated calibrations as json [GL#41]
+
+preview
+^^^^^^^
+
 - preview requests fixed to properly 404 on requests for previews that we don't have [GL#32]
+
+reporting
+^^^^^^^^^
+
+- fitsverify and metadata reports view handling null values in database
+
+Scripts
+-------
+
+copy_from_visiting_instrument
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Added date regex option for only adding files with a certain date prefix
+
+read_from_tape
+^^^^^^^^^^^^^^
+
+- list_tape_sizes option for tape sizes
+- split log handling for parallel tape runs
+- handle large sizes in logging tape read size
+
+write_to_tape
+^^^^^^^^^^^^^
+
+- holding commits after a bulk job is done instead of per file to speed things up
+
+repair_alopeke_zorro_wcs
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Refactored to handle local-to-local file fixes without S3 or DB updates [GL#34]
+
+problem_checker
+^^^^^^^^^^^^^^^
+
+- Only check DHS files ending in .fits, so not .fits.temp or whatever is used for in-progress
 
 Other
 -----
+
+admin_file_permissions
+^^^^^^^^^^^^^^^^^^^^^^
+
+- Admin web form for adding/removing per-file and per-obsid permissions to specific users
 
 exportqueue
 ^^^^^^^^^^^
 
 - Added distinct sortkey column to allow for smarter ordering vs relying on the filename [GL#28]
 - Fixed logging messages to use % string format, the logger does not handle an args list approach [GL#30]
+- Fixed test to not check old logic of existing entries
 
 header_fixer2
 ^^^^^^^^^^^^^
@@ -34,6 +83,18 @@ calmgr
 ^^^^^^
 
 - Migrated to safer eval call with manual handling for Section, NonLinCoeffs and datetime types [GL#31]
+
+tapestuff
+^^^^^^^^^
+
+- added extra notations to avoid warnings in latest SQLAlchemy
+- support for large values for disk size (BigInteger)
+- support for JSON list of files on tape
+
+miscfile_plus
+^^^^^^^^^^^^^
+
+- added extra notations to avoid warnings in latest SQLAlchemy
 
 
 2021-2

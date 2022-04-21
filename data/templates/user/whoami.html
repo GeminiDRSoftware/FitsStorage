@@ -25,10 +25,15 @@
       <li class="whoami"><i>Admin:</i></li>
       <li class="whoami"><a href="/admin_change_email/">Change User's Email</a></li>
       <li class="whoami"><a href="/admin_change_password/">Change User's Password</a></li>
+      <li class="whoami"><a href="/admin_file_permissions/">Set Obs/File Permissions</a></li>
       <li class="whoami"><a href="/staff_access/">Edit Staff Access</a></li>
   {% elif user_admin %}
       <li class="whoami"><i>User Admin:</i></li>
       <li class="whoami"><a href="/admin_change_email/">Change User's Email</a></li>
+      <li class="whoami"><a href="/admin_file_permissions/">Set Obs/File Permissions</a></li>
+  {% elif file_permission_admin %}
+      <li class="whoami"><i>Permission Admin:</i></li>
+      <li class="whoami"><a href="/admin_file_permissions/">Set Obs/File Permissions</a></li>
   {% endif %}
   </ul>
 {% else %}

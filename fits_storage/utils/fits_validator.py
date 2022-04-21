@@ -549,12 +549,12 @@ class KeywordDescriptor(object):
             elif restriction.startswith('since '):
                 coerced = coerceValue(restriction[5:].strip())
                 if not isinstance(coerced, datetime):
-                    raise ValueError("Wrong value for 'since': {0}".format(value))
+                    raise ValueError("Wrong value for 'since': {0}".format(coerced))
                 self.reqs.append(TestSince(coerced))
             elif restriction.startswith('until '):
                 coerced = coerceValue(restriction[5:].strip())
                 if not isinstance(coerced, datetime):
-                    raise ValueError("Wrong value for 'until': {0}".format(value))
+                    raise ValueError("Wrong value for 'until': {0}".format(coerced))
                 self.reqs.append(TestUntil(coerced))
             else:
                 raise ValueError("Unknown descriptor {0}".format(restriction))

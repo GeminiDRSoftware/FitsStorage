@@ -142,7 +142,9 @@ class IngestQueueUtil(object):
                     # Set the present and canonical flags on the current one to false and create a new entry
                     diskfile.present = False
                     diskfile.canonical = False
-                    self.s.commit()
+                    # Not comitting yet, this will happen later when we add the diskfile.
+                    # So at no point are we missing the 'present' DiskFile record.
+                    self.s.flush()
                     return True
 
             # Has the file changed since we last ingested it?
@@ -274,7 +276,7 @@ class IngestQueueUtil(object):
                 self.l.debug("Adding new Header entry")
                 # This will use the diskfile ad_object if it exists, else
                 # it will use the DiskFile unzipped cache file if it exists
-                header = Header(diskfile)
+                header = Header(diskfile, self.l)
                 self.s.add(header)
 
                 ingest_provenance(diskfile)

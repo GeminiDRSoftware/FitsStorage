@@ -44,7 +44,6 @@ class ExportQueue(Base):
     __tablename__ = 'exportqueue'
     __table_args__ = (
         UniqueConstraint('filename', 'inprogress', 'failed', 'destination'),
-        UniqueConstraint('filename', 'path', 'destination'),
     )
 
     id = Column(Integer, primary_key=True)
