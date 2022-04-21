@@ -217,7 +217,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git"
-          version: v1.1.7
+          version: v1.1.8
           dest: /opt/GeminiCalMgr
           accept_hostkey: yes
         when: not is_aws
