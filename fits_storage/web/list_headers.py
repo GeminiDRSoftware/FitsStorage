@@ -14,7 +14,7 @@ from ..orm.obslog_comment import ObslogComment
 from ..fits_storage_config import fits_open_result_limit, fits_closed_result_limit
 from .selection import queryselection, openquery
 from gemini_obs_db.utils.gemini_metadata_utils import gemini_date, gemini_time_period_from_range
-from sqlalchemy import asc, desc, func
+from sqlalchemy import asc, desc, func, nullslast
 
 from ..utils.web import get_context
 
@@ -78,9 +78,9 @@ def list_headers(selection, orderby, full_query=False, add_previews=False, sessi
 
     # Default sorting by ascending date if closed query, desc date if open query
     if is_openquery:
-        # This makes the query extremely slow on ops
-        # order_criteria.append(nullslast(desc(Header.ut_datetime)))
-        order_criteria.append(desc(Header.ut_datetime))
+        # This makes the query extremely slow on ops - I think we have the custom index needed for 2022-1
+        order_criteria.append(nullslast(desc(Header.ut_datetime)))
+        # order_criteria.append(desc(Header.ut_datetime))
     else:
         order_criteria.append(asc(Header.ut_datetime))
 
