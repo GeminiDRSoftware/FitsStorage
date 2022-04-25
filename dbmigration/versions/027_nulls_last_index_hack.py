@@ -6,7 +6,7 @@ def upgrade(migrate_engine):
     with migrate_engine.connect() as connection:
         # HACK HACK HACK
         # Postgres does poorly with non-default nulls sorting on datetime so need to explicitly add the custom index
-        connection.execute("CREATE INDEX ix_header_ut_datetime_nulls_last ON TABLE header (ut_datetime DESC NULLS LAST)")
+        connection.execute("CREATE INDEX ix_header_ut_datetime_nulls_last ON header (ut_datetime DESC NULLS LAST)")
 
 
 def downgrade(migrate_engine):
