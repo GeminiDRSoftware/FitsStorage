@@ -802,7 +802,8 @@ dropdown_options = {
          ("RONCHI", "RONCHI"),
          ("CAL", "CAL"),
          ("FRINGE", "FRINGE"),
-         ("MASK", "MOS MASK")],
+         ("MASK", "MOS MASK"),
+         ("BPM", "BPM")],
     "ao_options":
         [("NOTAO", "Not AO"),
          ("AO", "AO"),

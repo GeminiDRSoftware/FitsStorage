@@ -5,6 +5,7 @@ from migrate import *
 def upgrade(migrate_engine):
     with migrate_engine.connect() as connection:
         # connection.execute("ALTER TYPE obstype ADD VALUE 'BPM'")
+        # connection.execute("ALTER TYPE reduction_state ADD VALUE 'PROCESSED_BPM'")
         # connection.commit()
 
         # HACK HACK HACK
@@ -15,6 +16,10 @@ def upgrade(migrate_engine):
                            "SELECT 'obstype'::regtype::oid, 'BPM', "
                            "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
                            "WHERE enumtypid = 'obstype'::regtype )")
+        connection.execute("INSERT INTO pg_enum (enumtypid, enumlabel, enumsortorder) "
+                           "SELECT 'reduction_state'::regtype::oid, 'PROCESSED_BPM', "
+                           "( SELECT MAX(enumsortorder) + 1 FROM pg_enum "
+                           "WHERE enumtypid = 'reduction_state'::regtype )")
 
 
 def downgrade(migrate_engine):
@@ -24,4 +29,4 @@ def downgrade(migrate_engine):
 # putting this here since most new migrations begin as a copy/paste
 # DON'T FORGET TO UPDATE ANSIBLE archive_install.yml TO SET VERISON=x ON FRESH DB INSTALL
 # i.e.:
-#              query: update migrate_version set version=26
+#              query: update migrate_version set version=28
