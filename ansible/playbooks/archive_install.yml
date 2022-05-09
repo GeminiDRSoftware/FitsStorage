@@ -207,7 +207,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/FitsStorageDB.git"
-          version: v1.0.20
+          version: enh/5_1.0.x_bpm_support
           dest: /opt/FitsStorageDB
           accept_hostkey: yes
         when: not is_aws
@@ -217,7 +217,7 @@
         become_user: fitsdata
         git:
           repo: "git@gitlab.gemini.edu:DRSoftware/GeminiCalMgr.git"
-          version: v1.1.9
+          version: enh/3_1.1.x_bpm_support
           dest: /opt/GeminiCalMgr
           accept_hostkey: yes
         when: not is_aws
@@ -329,7 +329,8 @@
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
-          version: d8b83446b34c58237cf4f7f2ab5c65bb20d59950
+          version: enh/bpm_support
+#          version: d8b83446b34c58237cf4f7f2ab5c65bb20d59950
 #          version: 0474bfe83d7ca7ad5b554630d19d247e97a469df
 #          version: e3076d985e41360903906b9f9efe795bacaa210b
           #version: release/3.0.x
