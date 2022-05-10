@@ -740,7 +740,7 @@ dropdown_options = {
          ("HK", "HK")],
     "reduction_options":
         [("RAW", "Raw Only"),
-         ("PREPARED", "Reduced (not Cals)"),
+         ("PREPARED", "IRAF Reduced (not Cals)"),
          ("PROCESSED_SCIENCE", "Processed Science Only"),
          ("PROCESSED_BIAS", "Processed Biases Only"),
          ("PROCESSED_FLAT", "Processed Flats Only"),
