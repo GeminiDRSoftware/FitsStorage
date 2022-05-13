@@ -54,6 +54,19 @@ This holds true even if you are logged in as a user that has proprietary access 
 of the data will show up if you find the data by other means (eg by program ID or observation date), but the data will 
 still not show up if you search by coordinates.</p>
 
+<h3>Search by Observation Date</h3>
+<p>You can search for observations by UTC date.  The format for entering a date is YYYYMMDD.  For example, January 1,
+2022 would be 20220101.  Searches for a specific date will find all data observed within that day.  You can also
+specify a date range using a - between two dates.  20220101-20220102 will find all data through the end of the day
+on January 2.  The special inputs <b>today</b> and <b>yesterday</b> will convert to the current date
+or yesterday's date.  Note that if you save these URLs, they will continue to convert based on the date the query is
+run in the future.  So these may not be ideal for bookmarking a specific search.</p>
+<p>You can also add timestamps to the start and end time for finer granularity.  For example:
+20210101T050000-20210101T053000 as seen here:
+<a href="https://archive.gemini.edu/searchform/notengineering/NotFail/20210101T050000-20210101T053000/cols=CTOWEQ/GN-2020B-LP-16-353/not_site_monitoring">
+https://archive.gemini.edu/searchform/notengineering/NotFail/20210101T050000-20210101T053000/cols=CTOWEQ/GN-2020B-LP-16-353/not_site_monitoring
+</a></p>
+
 <h3>More generic searches</h3>
 
 <p>You can of course search by any combination of items on the search form, including any combination of the above.
