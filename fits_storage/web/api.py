@@ -22,7 +22,7 @@ from ..utils.web import get_context
 
 from .user import needs_login
 
-from ..fits_storage_config import storage_root
+from ..fits_storage_config import storage_root, magic_api_server_cookie
 from ..fits_storage_config import magic_api_cookie, api_backend_location
 
 from sqlalchemy import desc
@@ -219,7 +219,7 @@ def process_all_updates(data):
         yield process_update(session, proxy, query, iq)
 
 
-@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], only_magic=True, content_type='json')
+@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_server_cookie)], only_magic=True, content_type='json')
 def update_headers():
     batch = True
 
@@ -288,7 +288,7 @@ def ingest_files():
 
 
 # TODO: "Only_magic" is a temporary thing. Check if it can stay
-@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], only_magic=True, content_type='json')
+@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_server_cookie)], only_magic=True, content_type='json')
 def ingest_programs():
     ctx = get_context()
     resp = ctx.resp
@@ -394,7 +394,7 @@ def process_publication(pub_data):
     session.commit()
 
 
-@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_cookie)], only_magic=True, content_type='json')
+@needs_login(magic_cookies=[('gemini_api_authorization', magic_api_server_cookie)], only_magic=True, content_type='json')
 def ingest_publications():
     ctx = get_context()
     ctx.resp.set_content_type('application/json')

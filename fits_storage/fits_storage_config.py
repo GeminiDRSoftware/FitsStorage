@@ -134,6 +134,8 @@ magic_download_cookie = lookup_config('MAGIC_DOWNLOAD_COOKIE', None)
 # any other authentication.
 # Leave it as None to disable this feature
 magic_api_cookie = lookup_config('MAGIC_API_COOKIE', None)
+magic_api_server_cookie = lookup_config('MAGIC_API_SERVER_COOKIE', magic_api_cookie)
+magic_api_client_cookie = lookup_config('MAGIC_API_CLIENT_COOKIE', magic_api_cookie)
 
 # API backend stuff
 provides_api = True
