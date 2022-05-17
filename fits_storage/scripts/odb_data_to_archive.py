@@ -38,11 +38,11 @@ def update_program_dbtable(url, pinfo):
     for prog in pinfo:
         payload.append(prog)
         if len(payload) >= 20:
-            req = requests.post(url, data=json.dumps(payload), cookies={'gemini_api_authorization': fsc.magic_api_cookie})
+            req = requests.post(url, data=json.dumps(payload), cookies={'gemini_api_authorization': fsc.magic_api_client_cookie})
             req.raise_for_status()
             payload = list()
     if payload:
-        req = requests.post(url, data=json.dumps(payload), cookies={'gemini_api_authorization': fsc.magic_api_cookie})
+        req = requests.post(url, data=json.dumps(payload), cookies={'gemini_api_authorization': fsc.magic_api_client_cookie})
         req.raise_for_status()
 
 # ------------------------------------------------------------------------------

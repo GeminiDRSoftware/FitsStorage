@@ -49,6 +49,16 @@ problem_checker
 
 - Only check DHS files ending in .fits, so not .fits.temp or whatever is used for in-progress
 
+ingest_pubs
+^^^^^^^^^^^
+
+- use new client-side api cookie setting to choose cookie to send in POST
+
+odb_data_to_archive
+^^^^^^^^^^^^^^^^^^^
+
+- use new client-side api cookie setting to choose cookie to send in POST
+
 Other
 -----
 
@@ -95,6 +105,16 @@ miscfile_plus
 ^^^^^^^^^^^^^
 
 - added extra notations to avoid warnings in latest SQLAlchemy
+
+fits_storage_config
+^^^^^^^^^^^^^^^^^^^
+
+- split magic api cookie into client/server versions, defaulting to the old single config value
+
+api
+^^^
+
+- using server-side magic api cookie to validate incoming client requests
 
 
 2021-2
