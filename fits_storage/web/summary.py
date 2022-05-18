@@ -154,6 +154,7 @@ def summary_body(sumtype, selection, orderby, links=True, additional_columns=())
         open_limit       = fits_open_result_limit,
         closed_limit     = fits_closed_result_limit,
         selection        = selection,
+        calibrations     = True if sumtype == 'associated_cals' else False,
         **sumtable_data
         )
 
