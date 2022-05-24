@@ -6,16 +6,16 @@ def upgrade(migrate_engine):
     meta = MetaData(bind = migrate_engine)
     gmos = Table('gmos', meta, autoload=True)
 
-    gmos_ara = Column('amp_read_area', Text, index=True)
+    gmos_ara = Column('array_name', Text, index=True)
 
-    gmos_ara.create(gmos, index_name='gmos_amp_read_area_idx')
+    gmos_ara.create(gmos, index_name='gmos_array_name_idx')
 
 
 def downgrade(migrate_engine):
     meta = MetaData(bind = migrate_engine)
     gmos = Table('gmos', meta, autoload=True)
 
-    gmos.c.amp_read_area.drop()
+    gmos.c.array_name.drop()
 
 
 # putting this here since most new migrations begin as a copy/paste
