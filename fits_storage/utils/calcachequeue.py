@@ -103,6 +103,9 @@ def cache_associations(session, obs_hid):
         # Get the associations for this caltype
         cal_headers = associate_cals(session, [header], caltype=caltype)
         for rank, cal_header in enumerate(cal_headers):
+            if caltype in ('bpm', 'processed_bpm'):
+                # we want BPMs to appear at the top of the associated cal tab search results
+                rank = -1
             cc = CalCache(obs_hid, cal_header.id, caltype, rank)
             session.add(cc)
         session.commit()
