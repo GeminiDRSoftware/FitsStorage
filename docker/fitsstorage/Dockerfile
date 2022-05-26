@@ -88,7 +88,7 @@ RUN mkdir -p /data/logs && \
 
 # COPY STUFFS
 ENV PYTHONPATH /opt/FitsStorage:/opt/DRAGONS:/opt/GeminiCalMgr:/opt/FitsStorageDB
-RUN cd /opt && git clone --branch master https://github.com/GeminiDRSoftware/DRAGONS.git
+RUN cd /opt && git clone --branch enh/bpm_support https://github.com/GeminiDRSoftware/DRAGONS.git
 
 # TODO This will require some sort of ssh key setup, maybe not worth it
 #RUN cd /opt && git clone --branch master git@gitlab.gemini.edu:DRSoftware/FitsStorageConfig.git
