@@ -50,7 +50,7 @@ def bytes_to_GB(value, GiB=False):
 
 def format_float(value, decimals=2):
     try:
-        return '{:.{pre}f}'.format(value, pre=decimals)
+        return '' if value is None else '{:.{pre}f}'.format(value, pre=decimals)
     except ValueError:
         return ''
 

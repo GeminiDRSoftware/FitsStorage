@@ -18,6 +18,13 @@ reporting
 ^^^^^^^^^
 
 - fitsverify and metadata reports view handling null values in database
+- fullheader request for which we don't have a stored full text header will add a text message to that effect in the output
+
+templating
+^^^^^^^^^^
+
+- float formatting helper modified to handle None values
+
 
 Scripts
 -------
