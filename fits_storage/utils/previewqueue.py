@@ -537,6 +537,10 @@ class PreviewQueueUtil(object):
 
             full = norm(full)
 
+        if full.ndim > 1:
+            # flip the image - seems we need this for everything
+            full = numpy.flip(full, 0)
+
         # plot without axes or frame
         fig = plt.figure(frameon=False)
         
