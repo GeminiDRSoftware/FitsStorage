@@ -13,6 +13,7 @@ preview
 ^^^^^^^
 
 - preview requests fixed to properly 404 on requests for previews that we don't have [GL#32]
+- flipping image previews vertically
 
 reporting
 ^^^^^^^^^
