@@ -330,7 +330,7 @@
         git:
           repo: https://github.com/GeminiDRSoftware/DRAGONS.git
           dest: /opt/DRAGONS
-          version: enh/bpm_support
+          version: release/3.1.x
 #          version: d8b83446b34c58237cf4f7f2ab5c65bb20d59950
 #          version: 0474bfe83d7ca7ad5b554630d19d247e97a469df
 #          version: e3076d985e41360903906b9f9efe795bacaa210b
