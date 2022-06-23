@@ -4,6 +4,21 @@
 User-Facing Changes
 -------------------
 
+fac-pdu.def
+^^^^^^^^^^^
+
+- checking for bad filter values
+
+fits_validator
+^^^^^^^^^^^^^^
+
+- support for reporting bad filter values sith custom exception
+
+gemini-fits-validator
+^^^^^^^^^^^^^^^^^^^^^
+
+- logic to check for bad filter values
+
 associated_cals_json
 ^^^^^^^^^^^^^^^^^^^^
 
