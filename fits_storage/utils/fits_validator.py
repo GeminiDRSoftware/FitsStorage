@@ -4,7 +4,7 @@
 
 from functools import partial
 
-__all__ = ['RuleSetFactory', 'RuleSet', 'RuleCollection', 'Environment', 'ValidationError', 'BadData',
+__all__ = ['RuleSetFactory', 'RuleSet', 'RuleCollection', 'Environment', 'ValidationError', 'BadData', 'BadFilter',
            'EngineeringImage', 'GeneralError', 'NoDateError', 'Evaluator',
            'STATUSES', 'Result']
 
@@ -46,6 +46,9 @@ class ValidationError(Exception):
 # TODO: Explain the use for these exceptions
 
 class BadData(ValidationError):
+    pass
+
+class BadFilter(ValidationError):
     pass
 
 class EngineeringImage(ValidationError):
