@@ -78,6 +78,13 @@ def lookup_config_bool(name, default_value):
     return retval_str.lower() in ['true', 't', '1', 'y', 'yes']
 
 
+def lookup_config_int(name, default_value):
+    retval_str = lookup_config(name, None)
+    if retval_str is None:
+        return default_value
+    return int(retval_str)
+
+
 # Is this an archive server
 use_as_archive = lookup_config_bool('USE_AS_ARCHIVE', False)
 
@@ -158,7 +165,8 @@ default_upload_path = lookup_config('DEFAULT_UPLOAD_PATH', '')
 
 # This is the subdirectory in dataroot where preview files live
 using_previews = lookup_config_bool('USING_PREVIEWS', False)
-preview_path = "previews"
+preview_path = lookup_config("PREVIEW_PATH", "previews")
+max_spectra_preview_frames = lookup_config_int("MAX_SPECTRA_PREVIEW_FRAMES", 9)
 
 # The DAS calibration reduction path is used to find the last processing
 # date for the gmoscal page's autodetect daterange feature

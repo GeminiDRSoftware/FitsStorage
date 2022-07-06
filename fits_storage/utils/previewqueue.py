@@ -222,7 +222,7 @@ class PreviewQueueUtil(object):
 
             # Now there should be a diskfile.ad_object, either way...
             if len(diskfile.ad_object) > 1 and len(diskfile.ad_object[0].shape) == 1:
-                for idx in range(len(diskfile.ad_object)):
+                for idx in range(min(len(diskfile.ad_object), fsc.max_spectra_preview_frames):
                     filename = "%s_%03d.jpg" % (preview_fullpath[0:-4], idx)
                     with open(filename, 'wb') as fp:
                         try:
