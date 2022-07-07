@@ -97,6 +97,11 @@ exportqueue
 - Fixed logging messages to use % string format, the logger does not handle an args list approach [GL#30]
 - Fixed test to not check old logic of existing entries
 
+preview_queue
+^^^^^^^^^^^^^
+
+- Limiting number of frames rendered for 1-D with configurable default to 9
+
 header_fixer2
 ^^^^^^^^^^^^^
 
