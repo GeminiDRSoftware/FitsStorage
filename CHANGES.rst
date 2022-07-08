@@ -24,6 +24,11 @@ associated_cals_json
 
 - new webpage added for associated calibrations as json [GL#41]
 
+form.js
+^^^^^^^
+
+- fix for preview popup on calibrations tab
+
 preview
 ^^^^^^^
 
