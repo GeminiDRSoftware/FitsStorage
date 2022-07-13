@@ -55,6 +55,11 @@ copy_from_visiting_instrument
 
 - Added date regex option for only adding files with a certain date prefix
 
+delete_files
+^^^^^^^^^^^^
+
+- skip files if we can't connect to the tape service to check, but don't abort the run
+
 read_from_tape
 ^^^^^^^^^^^^^^
 
