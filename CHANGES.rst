@@ -4,6 +4,11 @@
 User-Facing Changes
 -------------------
 
+searchform
+^^^^^^^^^^
+
+- Added previous/next day buttons where applicable when a date search has been done
+
 fac-pdu.def
 ^^^^^^^^^^^
 

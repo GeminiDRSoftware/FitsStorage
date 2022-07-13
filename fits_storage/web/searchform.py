@@ -9,6 +9,7 @@ from collections import defaultdict
 import urllib.request, urllib.parse, urllib.error
 import urllib
 import contextlib
+from datetime import datetime, timedelta
 
 from xml.dom import minidom
 from xml.parsers.expat import ExpatError
@@ -64,6 +65,9 @@ def searchform(things, orderby):
 
     column_selection = {}
 
+    nextday_search = None
+    prevday_search = None
+
     if formdata:
         if ((len(formdata) == 6) and
             ('engineering' in list(formdata.keys())) and (formdata['engineering'].value == 'EngExclude') and
@@ -117,19 +121,47 @@ def searchform(things, orderby):
     updated = defaultdict(lambda: '')
     for k, v in updated_input.items():
         updated[k] = v
+
+    if 'date' in selection:
+        selection_clone = {k: v for k, v in selection.items()}
+        if selection['date'] == 'today':
+            selection_clone['date'] = "yesterday"
+            prevday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
+        elif selection['date'] == 'yesterday':
+            selection_clone['date'] = "today"
+            nextday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
+            prevday_search = "bar"
+        else:
+            try:
+                searchdt = datetime.strptime(selection_clone['date'], "%Y%m%d")
+                nextsearchdt = searchdt + timedelta(days=1)
+                prevsearchdt = searchdt - timedelta(days=1)
+                selection_clone['date'] = prevsearchdt.strftime("%Y%m%d")
+                prevday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
+                if nextsearchdt <= datetime.now():
+                    selection_clone['date'] = nextsearchdt.strftime("%Y%m%d")
+                    nextday_search = "/searchform%s" % selection_to_URL(selection_clone, with_columns=True)
+            except:
+                # ok if we fail, this is a nice to have
+                pass
+
     template_args = dict(
-        server_title = fits_servertitle,
-        title_suffix = title_suffix,
-        archive_style = use_as_archive,
-        thing_string = thing_string,
-        args_string  = args_string,
-        updated      = updated,  # updateform(selection),
-        debugging    = False, # Enable this to show some debugging data
-        selection    = selection,
-        col_sel      = column_selection,
+        server_title   = fits_servertitle,
+        title_suffix   = title_suffix,
+        archive_style  = use_as_archive,
+        thing_string   = thing_string,
+        args_string    = args_string,
+        updated        = updated,  # updateform(selection),
+        debugging      = False, # Enable this to show some debugging data
+        selection      = selection,
+        col_sel        = column_selection,
         # Look at the end of the file for this
         **dropdown_options
         )
+    if nextday_search:
+        template_args['nextday_search'] = nextday_search
+    if prevday_search:
+        template_args['prevday_search'] = prevday_search
     if selection:
         template_args.update(summary_body('customsearch', selection, orderby,
                                           additional_columns=selection_to_column_names(selection)))
