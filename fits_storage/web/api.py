@@ -1,3 +1,4 @@
+import json
 import os
 import fcntl
 
@@ -180,8 +181,10 @@ def map_changes(changes):
 
 
 def process_update(session, proxy, query, iq):
+    print("in api.process_update")
     reingest = False
     label = None
+    header_fields = None
     try:
         label, df = lookup_diskfile(session, query)
         filename = df.filename
@@ -193,8 +196,22 @@ def process_update(session, proxy, query, iq):
         # It seems like this isn't necessary and it's broken (call to one() with potentially multiple results)
         # reingest = iq.delete_inactive_from_queue(filename)
         # reingest = apply_changes(df, query['values']) or reingest
+        md5_before_header = df.get_file_md5()
+        print("calling set_image_metadata")
+        print("  new_values: %s" % new_values)
+        print("  reject_new: %s" % reject_new)
+        print("  path: %s" % path)
+        print("  md5_before_header: %s" % md5_before_header)
         reingest = proxy.set_image_metadata(path=path, changes=new_values, reject_new=reject_new)
-        return {'result': True, 'id': label}
+        if reingest:
+            print("reingest was true...")
+            header_fields = new_values
+            md5_after_header = df.get_file_md5()
+            print("header_fields: %s" % header_fields)
+            print("md5_after_header: %s" % md5_after_header)
+        else:
+            print("reingest was false")
+        return {'result': True, 'id': label, 'md5': md5_after_header}
     except ItemError as e:
         return error_response(e.message, id=e.label)
     except KeyError as e:
@@ -208,25 +225,40 @@ def process_update(session, proxy, query, iq):
         return error_response("Some of the keywords don't exist in the file", id=label)
     finally:
         if reingest:
-           iq.add_to_queue(filename, os.path.dirname(path))
+            print("reingest was True, adding updated file to queue")
+            print(f"  filename: {filename}\n"
+                  f"  header_fields: {header_fields}\n"
+                  f"  md5_before: {md5_before_header}\n"
+                  f"  md5_after: {md5_after_header}\n")
+            try:
+                iq.add_to_queue(filename, os.path.dirname(path), header_fields=json.dumps(header_fields),
+                                md5_before_header=md5_before_header, md5_after_header=md5_after_header,
+                                reject_new=reject_new)
+            except:
+                print("Error occured during iq.add_to_queue")
+            print("done adding header update to queue")
 
 
 def process_all_updates(data):
+    print("in api.process_all_updates")
     session = get_context().session
     proxy = ApiProxy(api_backend_location)
     iq = IngestQueueUtil(session, DummyLogger())
     for query in data:
+        print("handling query: %s" % query)
         yield process_update(session, proxy, query, iq)
 
 
 @needs_login(magic_cookies=[('gemini_api_authorization', magic_api_server_cookie)], only_magic=True, content_type='json')
 def update_headers():
+    print("in api.update_headers")
     batch = True
 
     resp = get_context().resp
     resp.set_content_type('application/json')
     try:
         message = get_json_data()
+        print("got message:\n%s" % message)
         # The old format for the request was the list now in "request". This will provide compatibility
         # for both formats
         if isinstance(message, dict):
@@ -325,6 +357,7 @@ def ingest_programs():
                 pass
         if 'too' in program and program['too'].lower() in ('standard', 'rapid'):
             prog_obj.too = True
+            print(f"Set TOO to True for {program['reference']}")
         else:
             prog_obj.too = False
 

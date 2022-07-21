@@ -151,8 +151,16 @@ if __name__ == "__main__":
                             # downstream servers and we did add a diskfile
                             if added_diskfile:
                                 for destination in export_destinations:
+                                    print(f"Adding to ExportQueue: \n"
+                                          f"  filename: {iq.filename}\n"
+                                          f"  md5_before: {iq.md5_before_header}\n"
+                                          f"  md5_after: {iq.md5_after_header}\n"
+                                          f"  header_fields: {iq.header_fields}")
                                     export_queue.add_to_queue(iq.filename, iq.path,
-                                                              destination)
+                                                              destination, header_fields=iq.header_fields,
+                                                              md5_before_header=iq.md5_before_header,
+                                                              md5_after_header=iq.md5_after_header,
+                                                              reject_new=iq.reject_new)
                         except Exception as e:
                             logger.info("Problem Ingesting File - Rolling back")
                             logger.error(exc_msg.format(iq.filename, sys.exc_info()[0],

@@ -25,13 +25,14 @@ import wsgiref.simple_server
 from fits_storage.utils.api import json_api_call, WSGIError, NewCardsIncluded
 from fits_storage.utils.api import METHOD_NOT_ALLOWED, NOT_FOUND
 from fits_storage.logger import logger, setdebug, setdemon
-from fits_storage.fits_storage_config import api_backend_location
+from fits_storage.fits_storage_config import api_backend_location, storage_root
 
 from gemini_obs_db.db import session_scope
 
 import logging
 import argparse
 
+from gemini_obs_db.orm.diskfile import DiskFile
 
 
 def get_route(environ, routes):
@@ -59,25 +60,65 @@ from astropy.io import fits as pf
 
 from fits_storage.utils.fitseditor import compare_cards, modify_multiple_cards, all_cards_exist
 
+
 def fits_is_unchanged(path, new_values):
     return all(compare_cards(path, new_values, ext=0))
 
-def fits_apply_changes(path, changes, reject_new):
+
+def before_md5_check(path, before_md5):
+    if before_md5:
+        with session_scope() as session:
+            filename = path.split('/').last()
+            if filename.endswith('.bz2'):
+                query = session.query(DiskFile).where(DiskFile.file_md5 == before_md5,
+                                                      DiskFile.canonical == True,
+                                                      DiskFile.filename == filename)
+            else:
+                query = session.query(DiskFile).where(DiskFile.data_md5 == before_md5,
+                                                      DiskFile.canonical == True,
+                                                      DiskFile.filename == "%s.bz2" % filename)
+            check = query.first()
+            if check:
+                return True
+        return False
+    return True
+
+
+def fits_apply_changes(path, changes, reject_new, before_md5):
+    print("api_backend.fits_apply_changes entered, calling before_md5_check")
+    if not before_md5_check(path, before_md5):
+        # we don't have the file this update targets, no-op
+        print("before_md5_check is False, noop")
+        return
+
+    print("Checking using s3")
+    if using_s3:
+        print("Using S3, raising exception")
+        raise Exception("Implement Me!")
+
+    print("Checking fits_is_unchanged")
     if fits_is_unchanged(path, changes):
+        print("True, not modifying, returning False")
         logger.info("fits_apply_changes: %s [NOT MODIFIED]", path)
         return False
 
+    print("Checking all cards exist or not reject new")
     if reject_new and not all_cards_exist(path, changes):
+        print("Problem seen, raising error for unknown cards")
         raise WSGIError("Operational error", error_object=NewCardsIncluded())
 
+    print("Calling modify_multiple_cards")
     modify_multiple_cards(path, changes, ext=0)
+    print("Done, returning True")
     logger.info("fits_apply_changes: %s [%s]", path, str(changes))
     return True
 
+
 @json_api_call(logger)
-def set_image_metadata(path, changes, reject_new=False):
+def set_image_metadata(path, changes, reject_new=False, before_md5=None):
+    print("in api_backend.set_image_metadata")
     try:
-        return fits_apply_changes(path, changes, reject_new)
+        return fits_apply_changes(path, changes, reject_new, before_md5)
     except (pf.VerifyError, IOError) as e:
         logger.debug("Error: %s", str(e))
         raise WSGIError("There were problems when opening/modifying the file: {}".format(path))

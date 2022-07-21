@@ -98,7 +98,7 @@ from requests.exceptions import ConnectionError
 from functools import partial
 import os
 
-SERVERNAME='fits'
+SERVERNAME = os.environ.get('GEMINI_SERVER', 'fits')
 NORTHPREF = 'N'
 SOUTHPREF = 'S'
 DEFAULTPREF = NORTHPREF
@@ -119,7 +119,10 @@ class ServerAccess(object):
     """
 
     def __init__(self, host, port = '80'):
-        self.server = '{}:{}'.format(host, port)
+        if ':' in host:
+            self.server = '{}'.format(host)
+        else:
+            self.server = '{}:{}'.format(host, port)
 
     def uri(self, *extra):
         return '/'.join(['http://{}'.format(self.server)] + list(extra))
@@ -131,6 +134,7 @@ class ServerAccess(object):
         arguments = {'request': [{'filename': fn, 'values': actions, 'reject_new':reject_new} for fn in file_list],
                      'batch': False}
 
+        print(f"posting json of {arguments}")
         return requests.post(self.uri('update_headers'),
                              json=arguments,
                              cookies=cookies)
@@ -195,7 +199,7 @@ def colorize(text):
          'RESET': None,
     }
     for (tag, code) in list(colors.items()):
-        if tag is 'RESET':
+        if tag == 'RESET':
             color = '\x1b[0m'
         else:
             color = '\x1b[3{0};1m'.format(code)
@@ -418,7 +422,9 @@ if __name__ == '__main__':
     args = parse_args(sys.argv[1:])
     sa = ServerAccess(SERVERNAME)
     try:
+        print(f"getting file list for {args}")
         file_list = get_file_list(sa, args)
+        print(f"{file_list}")
     except ConnectionError:
         print("Cannot connect to the archive server", file=sys.stderr)
         sys.exit(1)

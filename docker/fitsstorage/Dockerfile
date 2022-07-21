@@ -5,6 +5,9 @@ LABEL maintainer="oliver.oberdorf@noirlab.edu"
 RUN rm -r /var/cache/dnf
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 
+# UPDATE REPOS
+RUN dnf -y update
+
 # INSTALL HTTPD AND POSTGRESQL
 RUN yum -y install openssl \
                    postgresql \
@@ -18,26 +21,26 @@ RUN yum -y install openssl \
                    libjpeg-devel \
                    python3-pillow \
                    redhat-rpm-config \
-                   python3-devel \
+                   python39-devel \
+                   python39 \
                    bzip2 \
                    zlib \
                    zlib-devel
 
-RUN yum -y --nogpgcheck install python3-pip
+RUN yum -y --nogpgcheck install python39-pip
 
 # Fix Centos 8 broken Locale
 RUN yum -y --nogpgcheck install glibc-langpack-en glibc-common
 
 # SETUP PYTHON PACKAGES - MOVE THESE TO REQUIREMENTS FILE
 # DRAGONS now also needs specutils
-RUN pip3 install gwcs==0.16.1
+RUN pip3 install gwcs
 RUN pip3 install asdf==2.7.4
 RUN pip3 install specutils==1.2
 RUN pip3 install psycopg2-binary && \
     pip3 install sqlalchemy && \
     pip3 install pyyaml && \
-    pip3 install jinja2 && \
-    pip3 install pyfits && \
+    pip3 install jinja2==3.0.2 && \
     pip3 install dateutils && \
     pip3 install requests && \
     pip3 install matplotlib && \

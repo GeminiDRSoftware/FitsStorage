@@ -18,7 +18,8 @@ from sqlalchemy import join
 from sqlalchemy.orm import make_transient
 from sqlalchemy.exc import IntegrityError
 
-from ..fits_storage_config import storage_root, using_s3, export_bzip, export_upload_auth_cookie, z_staging_area
+from ..fits_storage_config import storage_root, using_s3, export_bzip, export_upload_auth_cookie, z_staging_area, \
+    magic_api_client_cookie
 from . import queue
 
 from gemini_obs_db.orm.file import File
@@ -94,7 +95,8 @@ class ExportQueueUtil(object):
         self.s.query(ExportQueue).get(trans.id).failed = True
         self.s.commit()
 
-    def add_to_queue(self, filename, path, destination):
+    def add_to_queue(self, filename, path, destination, header_fields=None,
+                     md5_before_header=None, md5_after_header=None, reject_new=True):
         """
         Adds a file to the export queue.
 
@@ -117,6 +119,10 @@ class ExportQueueUtil(object):
         """
         self.l.info(f"Adding file {filename} to {destination} to exportqueue")
 
+        if header_fields is not None and isinstance(header_fields, dict):
+            # normalize dict to a json string for storage
+            header_fields = json.dumps(header_fields)
+
         # Trying without this, seems it is causing a race condition where a file is updated during an existing export
         # query = self.s.query(ExportQueue)\
         #             .filter(ExportQueue.filename == filename)\
@@ -127,7 +133,9 @@ class ExportQueueUtil(object):
         #     self.l.info(f"Already have entry to export file {filename} to {destination}, ignoring")
         #     return check_export
 
-        eq = ExportQueue(filename, path, destination)
+        eq = ExportQueue(filename, path, destination, header_fields=header_fields,
+                         md5_before_header=md5_before_header, md5_after_header=md5_after_header,
+                         reject_new=reject_new)
         self.l.debug("Instantiated ExportQueue object")
         self.s.add(eq)
 
@@ -142,7 +150,41 @@ class ExportQueueUtil(object):
             self.l.debug(f"Added id {eq.id} for filename {eq.filename} to exportqueue")
             return eq
 
-    def export_file(self, filename, path, destination):
+    def export_header_update(self, destination, filename, actions, md5_before_headers, md5_after_headers,
+                             reject_new):
+        # Construct upload URL
+        url = "%s/upload_file/%s" % (destination, filename)
+
+        # Connect to the URL and post the data
+        # NB need to make the data buffer into a bytearray not a str
+        # Otherwise get ascii encoding errors from httplib layer
+        try:
+            self.l.info(f"Exporting header keywords for file {filename} to destination {destination}")
+
+            # Construct upload URL
+            url = "%s/update_headers" % destination
+
+            # Connect to the URL and post the data
+            # NB need to make the data buffer into a bytearray not a str
+            # Otherwise get ascii encoding errors from httplib layer
+            arguments = {
+                'request': [{'filename': filename, 'values': actions, 'reject_new': reject_new},],
+                'batch': False}
+            export_upload_auth_cookie
+            cookies = {
+                'gemini_api_authorization': export_upload_auth_cookie
+            }
+            r = requests.post(url, json=arguments, cookies=cookies)
+
+            response = r.text
+            http_status = r.status_code
+            return None  # TODO get md5 back from response
+        except:
+            self.l.error("Unable to export header keywords")
+            return None
+
+    def export_file(self, filename, path, destination, header_fields=None,
+                    md5_before_header=None, md5_after_header=None, reject_new=True):
         """
         Exports a file to a downstream server.
 
@@ -168,6 +210,15 @@ class ExportQueueUtil(object):
         # to re-export it here.
         # To ignore the compression factor, we match against File.name rather than DiskFile.filename
         # and we strip any .bz2 from the local filename
+        try:
+            if header_fields is not None and isinstance(header_fields, str):
+                header_fields = json.loads(header_fields)
+        except:
+            self.l.warning(f"Unable to parse JSON header_fields in exportqueue: {header_fields}, "
+                           f"reverting to file upload for {filename}")
+            header_fields = None
+            md5_before_header = None
+            md5_after_header = None
 
         # Strip any .bz2 from local filename
         filename_nobz2 = File.trim_name(filename)
@@ -189,6 +240,51 @@ class ExportQueueUtil(object):
             self.l.info(f"Data {filename} is already at {destination} with md5 {dest_md5}")
             return True
         self.l.debug(f"Data not present at destination: dest_md5: {dest_md5}, our_md5: {our_md5} - reading file")
+
+        # If header-update equivalent is available, use that for efficiency
+        if header_fields:
+            print("In export_queue but header_fields were defined, activating header update logic")
+            if not md5_before_header or not md5_after_header:
+                print("No md5s defined, unabe to use header update logic, revert to full export")
+                self.l.warning(f"Saw update header fields without md5s while in exportqueue, "
+                               f"reverting to full file export for file {filename}")
+            elif md5_after_header != diskfile.file_md5:
+                print("after MD5 does not match diskfile current MD5, reverting to full export")
+                self.l.info(f"File {filename} no longer resembles post-header-update md5, unable to send header "
+                            f"update, reverting to full file upload")
+            else:
+                print(f"At the update header call now\n"
+                      f"  filename: {filename}\n"
+                      f"  header_fields: {header_fields}")
+                print("unimplemented, reverting to full export")
+                # pack up an update request
+                # TODO update headers call goes here
+                self.l.info(f"*** would call to update headers here for file {filename} with fields {header_fields}")
+                payload = {
+                    'request': [{
+                        'filename': filename,
+                        'values': {
+                            'generic': [(k, v) for k, v in header_fields.items()]
+                        },
+                        'reject_new': reject_new
+                    }],
+                    'batch': False,
+                }
+                cookies = {
+                    'gemini_api_authorization': magic_api_client_cookie
+                }
+
+                print(f"posting json of {payload}")
+                r = requests.post("%s/%s" % (destination, 'update_headers'),
+                                     json=payload,
+                                     cookies=cookies)
+                print(f"post returned, status: {r.status_code}\n"
+                      f"  response: {r.json}")
+                if r.status_code == apache.OK:
+                    # it worked - otherwise, let's fall back to the file export
+                    return True
+                else:
+                    print("falling back to file export")
 
         # Read the file into the payload postdata buffer to HTTP POST
         data = None

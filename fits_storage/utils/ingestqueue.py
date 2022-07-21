@@ -2,6 +2,7 @@
 This module provides various utility functions to
 manage and service the ingestqueue
 """
+import json
 import os
 import datetime
 from sqlalchemy.exc import IntegrityError
@@ -85,29 +86,43 @@ class IngestQueueUtil(object):
         if fsc.using_s3:
             self.s3 = get_helper()
 
-    def add_to_queue(self, filename, path, force_md5=False, force=False, after=None):
+    def add_to_queue(self, filename, path, force_md5=False, force=False, after=None,
+                     header_fields=None, md5_before_header=None, md5_after_header=None,
+                     reject_new=True):
         """
         Adds a file to the ingest queue.
 
         Upon success, returns a transient object representing the queue entry. Otherwise,
         it returns None.
         """
-        iq = IngestQueue(filename, path)
+        print("in ingestqueue.IngestQueueUtil.add_to_queue")
+        if header_fields is not None and isinstance(header_fields, dict):
+            # normalize dict to a json string for storage
+            header_fields = json.dumps(header_fields)
+        iq = IngestQueue(filename, path, header_fields=header_fields, md5_before_header=md5_before_header,
+                         md5_after_header=md5_after_header, reject_new=reject_new)
         iq.force = force
         iq.force_md5 = force_md5
         if after is not None:
             iq.after = after
 
+        print("adding to session")
         self.s.add(iq)
+        print("added to session")
         try:
+            print("committing session")
             self.s.commit()
+            print("done committing session")
         except IntegrityError:
+            print("IntegrityError, rolling back")
             self.l.debug("File %s seems to be in the queue" % iq.filename)
             self.s.rollback()
         else:
+            print("making transient")
             make_transient(iq)
             self.l.debug("Added id %s for filename %s to ingestqueue" % (iq.id, iq.filename))
 
+            print("returning iq")
             return iq
 
         # Now that it's a transient object, it should not do a lookup so this should never fail
